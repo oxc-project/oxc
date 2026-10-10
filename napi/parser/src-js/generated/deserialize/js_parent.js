@@ -8,7 +8,8 @@ let uint8,
   sourceTextLatin,
   sourceStartPos = 0,
   firstNonAsciiPos = 0,
-  baseLo = 0,
+  ptrFlip = 0,
+  ptrBase = 0,
   parent = null;
 
 const { fromCharCode } = String,
@@ -30,7 +31,8 @@ function deserializeWith(buffer, sourceTextInput, sourceStartPosInput, sourceByt
   uint8 = buffer;
   int32 = buffer.int32;
   float64 = buffer.float64;
-  baseLo = buffer.baseLo;
+  ptrFlip = buffer.ptrFlip;
+  ptrBase = buffer.ptrBase;
   sourceText = sourceTextInput;
   sourceStartPos = sourceStartPosInput;
   // Find first non-ASCII byte in source region.
@@ -1991,7 +1993,7 @@ function deserializeFormalParameters(pos) {
   let params = deserializeVecFormalParameter(pos + 16),
     restFieldPos32 = (pos >> 2) + 10;
   if (int32[restFieldPos32] !== 0 && int32[restFieldPos32 + 1] !== 0) {
-    pos = (int32[restFieldPos32] - baseLo) | 0;
+    pos = (int32[restFieldPos32] ^ ptrFlip) - ptrBase;
     let previousParent = parent,
       rest = (parent = {
         type: "RestElement",
@@ -5276,7 +5278,7 @@ function deserializeStr(pos) {
   let pos32 = pos >> 2,
     len = int32[pos32 + 2];
   if (len === 0) return "";
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let end = pos + len,
     isInSourceRegion = pos >= sourceStartPos;
   if (isInSourceRegion && end <= firstNonAsciiPos)
@@ -5306,7 +5308,7 @@ function deserializeStr(pos) {
 function deserializeVecComment(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 24;
   for (; pos !== endPos;) {
     arr.push(deserializeComment(pos));
@@ -5324,7 +5326,7 @@ function deserializeOptionHashbang(pos) {
 function deserializeVecDirective(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 80;
   for (; pos !== endPos;) {
     arr.push(deserializeDirective(pos));
@@ -5336,7 +5338,7 @@ function deserializeVecDirective(pos) {
 function deserializeVecStatement(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeStatement(pos));
@@ -5346,173 +5348,173 @@ function deserializeVecStatement(pos) {
 }
 
 function deserializeBoxBooleanLiteral(pos) {
-  return deserializeBooleanLiteral((int32[pos >> 2] - baseLo) | 0);
+  return deserializeBooleanLiteral((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxNullLiteral(pos) {
-  return deserializeNullLiteral((int32[pos >> 2] - baseLo) | 0);
+  return deserializeNullLiteral((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxNumericLiteral(pos) {
-  return deserializeNumericLiteral((int32[pos >> 2] - baseLo) | 0);
+  return deserializeNumericLiteral((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxBigIntLiteral(pos) {
-  return deserializeBigIntLiteral((int32[pos >> 2] - baseLo) | 0);
+  return deserializeBigIntLiteral((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxRegExpLiteral(pos) {
-  return deserializeRegExpLiteral((int32[pos >> 2] - baseLo) | 0);
+  return deserializeRegExpLiteral((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxStringLiteral(pos) {
-  return deserializeStringLiteral((int32[pos >> 2] - baseLo) | 0);
+  return deserializeStringLiteral((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTemplateLiteral(pos) {
-  return deserializeTemplateLiteral((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTemplateLiteral((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxIdentifierReference(pos) {
-  return deserializeIdentifierReference((int32[pos >> 2] - baseLo) | 0);
+  return deserializeIdentifierReference((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxSuper(pos) {
-  return deserializeSuper((int32[pos >> 2] - baseLo) | 0);
+  return deserializeSuper((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxArrayExpression(pos) {
-  return deserializeArrayExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeArrayExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxArrowFunctionExpression(pos) {
-  return deserializeArrowFunctionExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeArrowFunctionExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxAssignmentExpression(pos) {
-  return deserializeAssignmentExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeAssignmentExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxAwaitExpression(pos) {
-  return deserializeAwaitExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeAwaitExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxBinaryExpression(pos) {
-  return deserializeBinaryExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeBinaryExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxCallExpression(pos) {
-  return deserializeCallExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeCallExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxChainExpression(pos) {
-  return deserializeChainExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeChainExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxClass(pos) {
-  return deserializeClass((int32[pos >> 2] - baseLo) | 0);
+  return deserializeClass((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxConditionalExpression(pos) {
-  return deserializeConditionalExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeConditionalExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxFunction(pos) {
-  return deserializeFunction((int32[pos >> 2] - baseLo) | 0);
+  return deserializeFunction((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxImportExpression(pos) {
-  return deserializeImportExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeImportExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxLogicalExpression(pos) {
-  return deserializeLogicalExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeLogicalExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxNewExpression(pos) {
-  return deserializeNewExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeNewExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxObjectExpression(pos) {
-  return deserializeObjectExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeObjectExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxParenthesizedExpression(pos) {
-  return deserializeParenthesizedExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeParenthesizedExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxSequenceExpression(pos) {
-  return deserializeSequenceExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeSequenceExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTaggedTemplateExpression(pos) {
-  return deserializeTaggedTemplateExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTaggedTemplateExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxThisExpression(pos) {
-  return deserializeThisExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeThisExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxUnaryExpression(pos) {
-  return deserializeUnaryExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeUnaryExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxUpdateExpression(pos) {
-  return deserializeUpdateExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeUpdateExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxYieldExpression(pos) {
-  return deserializeYieldExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeYieldExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxPrivateInExpression(pos) {
-  return deserializePrivateInExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializePrivateInExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxImportMeta(pos) {
-  return deserializeImportMeta((int32[pos >> 2] - baseLo) | 0);
+  return deserializeImportMeta((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxNewTarget(pos) {
-  return deserializeNewTarget((int32[pos >> 2] - baseLo) | 0);
+  return deserializeNewTarget((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXElement(pos) {
-  return deserializeJSXElement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXElement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXFragment(pos) {
-  return deserializeJSXFragment((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXFragment((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSAsExpression(pos) {
-  return deserializeTSAsExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSAsExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSSatisfiesExpression(pos) {
-  return deserializeTSSatisfiesExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSSatisfiesExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTypeAssertion(pos) {
-  return deserializeTSTypeAssertion((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeAssertion((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSNonNullExpression(pos) {
-  return deserializeTSNonNullExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSNonNullExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSInstantiationExpression(pos) {
-  return deserializeTSInstantiationExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSInstantiationExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxV8IntrinsicExpression(pos) {
-  return deserializeV8IntrinsicExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeV8IntrinsicExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecArrayExpressionElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeArrayExpressionElement(pos));
@@ -5522,17 +5524,17 @@ function deserializeVecArrayExpressionElement(pos) {
 }
 
 function deserializeBoxSpreadElement(pos) {
-  return deserializeSpreadElement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeSpreadElement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxElision(pos) {
-  return deserializeElision((int32[pos >> 2] - baseLo) | 0);
+  return deserializeElision((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecObjectPropertyKind(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeObjectPropertyKind(pos));
@@ -5542,7 +5544,7 @@ function deserializeVecObjectPropertyKind(pos) {
 }
 
 function deserializeBoxObjectProperty(pos) {
-  return deserializeObjectProperty((int32[pos >> 2] - baseLo) | 0);
+  return deserializeObjectProperty((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBool(pos) {
@@ -5550,17 +5552,17 @@ function deserializeBool(pos) {
 }
 
 function deserializeBoxIdentifierName(pos) {
-  return deserializeIdentifierName((int32[pos >> 2] - baseLo) | 0);
+  return deserializeIdentifierName((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxPrivateIdentifier(pos) {
-  return deserializePrivateIdentifier((int32[pos >> 2] - baseLo) | 0);
+  return deserializePrivateIdentifier((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecTemplateElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 48;
   for (; pos !== endPos;) {
     arr.push(deserializeTemplateElement(pos));
@@ -5572,7 +5574,7 @@ function deserializeVecTemplateElement(pos) {
 function deserializeVecExpression(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeExpression(pos));
@@ -5582,7 +5584,7 @@ function deserializeVecExpression(pos) {
 }
 
 function deserializeBoxTSTypeParameterInstantiation(pos) {
-  return deserializeTSTypeParameterInstantiation((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeParameterInstantiation((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxTSTypeParameterInstantiation(pos) {
@@ -5596,21 +5598,21 @@ function deserializeOptionStr(pos) {
 }
 
 function deserializeBoxComputedMemberExpression(pos) {
-  return deserializeComputedMemberExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeComputedMemberExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxStaticMemberExpression(pos) {
-  return deserializeStaticMemberExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeStaticMemberExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxPrivateFieldExpression(pos) {
-  return deserializePrivateFieldExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializePrivateFieldExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecArgument(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeArgument(pos));
@@ -5620,11 +5622,11 @@ function deserializeVecArgument(pos) {
 }
 
 function deserializeBoxArrayAssignmentTarget(pos) {
-  return deserializeArrayAssignmentTarget((int32[pos >> 2] - baseLo) | 0);
+  return deserializeArrayAssignmentTarget((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxObjectAssignmentTarget(pos) {
-  return deserializeObjectAssignmentTarget((int32[pos >> 2] - baseLo) | 0);
+  return deserializeObjectAssignmentTarget((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionAssignmentTargetMaybeDefault(pos) {
@@ -5634,7 +5636,7 @@ function deserializeOptionAssignmentTargetMaybeDefault(pos) {
 function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeOptionAssignmentTargetMaybeDefault(pos));
@@ -5644,7 +5646,7 @@ function deserializeVecOptionAssignmentTargetMaybeDefault(pos) {
 }
 
 function deserializeBoxAssignmentTargetRest(pos) {
-  return deserializeAssignmentTargetRest((int32[pos >> 2] - baseLo) | 0);
+  return deserializeAssignmentTargetRest((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxAssignmentTargetRest(pos) {
@@ -5656,7 +5658,7 @@ function deserializeOptionBoxAssignmentTargetRest(pos) {
 function deserializeVecAssignmentTargetProperty(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeAssignmentTargetProperty(pos));
@@ -5666,15 +5668,15 @@ function deserializeVecAssignmentTargetProperty(pos) {
 }
 
 function deserializeBoxAssignmentTargetWithDefault(pos) {
-  return deserializeAssignmentTargetWithDefault((int32[pos >> 2] - baseLo) | 0);
+  return deserializeAssignmentTargetWithDefault((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxAssignmentTargetPropertyIdentifier(pos) {
-  return deserializeAssignmentTargetPropertyIdentifier((int32[pos >> 2] - baseLo) | 0);
+  return deserializeAssignmentTargetPropertyIdentifier((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxAssignmentTargetPropertyProperty(pos) {
-  return deserializeAssignmentTargetPropertyProperty((int32[pos >> 2] - baseLo) | 0);
+  return deserializeAssignmentTargetPropertyProperty((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionExpression(pos) {
@@ -5682,113 +5684,113 @@ function deserializeOptionExpression(pos) {
 }
 
 function deserializeBoxBlockStatement(pos) {
-  return deserializeBlockStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeBlockStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxBreakStatement(pos) {
-  return deserializeBreakStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeBreakStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxContinueStatement(pos) {
-  return deserializeContinueStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeContinueStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxDebuggerStatement(pos) {
-  return deserializeDebuggerStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeDebuggerStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxDoWhileStatement(pos) {
-  return deserializeDoWhileStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeDoWhileStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxEmptyStatement(pos) {
-  return deserializeEmptyStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeEmptyStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxExpressionStatement(pos) {
-  return deserializeExpressionStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeExpressionStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxForInStatement(pos) {
-  return deserializeForInStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeForInStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxForOfStatement(pos) {
-  return deserializeForOfStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeForOfStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxForStatement(pos) {
-  return deserializeForStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeForStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxIfStatement(pos) {
-  return deserializeIfStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeIfStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxLabeledStatement(pos) {
-  return deserializeLabeledStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeLabeledStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxReturnStatement(pos) {
-  return deserializeReturnStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeReturnStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxSwitchStatement(pos) {
-  return deserializeSwitchStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeSwitchStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxThrowStatement(pos) {
-  return deserializeThrowStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeThrowStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTryStatement(pos) {
-  return deserializeTryStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTryStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxWhileStatement(pos) {
-  return deserializeWhileStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeWhileStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxWithStatement(pos) {
-  return deserializeWithStatement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeWithStatement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxVariableDeclaration(pos) {
-  return deserializeVariableDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeVariableDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTypeAliasDeclaration(pos) {
-  return deserializeTSTypeAliasDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeAliasDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSInterfaceDeclaration(pos) {
-  return deserializeTSInterfaceDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSInterfaceDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSEnumDeclaration(pos) {
-  return deserializeTSEnumDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSEnumDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSExternalModuleDeclaration(pos) {
-  return deserializeTSExternalModuleDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSExternalModuleDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSNamespaceDeclaration(pos) {
-  return deserializeTSNamespaceDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSNamespaceDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSGlobalDeclaration(pos) {
-  return deserializeTSGlobalDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSGlobalDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSImportEqualsDeclaration(pos) {
-  return deserializeTSImportEqualsDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSImportEqualsDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecVariableDeclarator(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 56;
   for (; pos !== endPos;) {
     arr.push(deserializeVariableDeclarator(pos));
@@ -5798,7 +5800,7 @@ function deserializeVecVariableDeclarator(pos) {
 }
 
 function deserializeBoxTSTypeAnnotation(pos) {
-  return deserializeTSTypeAnnotation((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeAnnotation((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxTSTypeAnnotation(pos) {
@@ -5824,7 +5826,7 @@ function deserializeOptionLabelIdentifier(pos) {
 function deserializeVecSwitchCase(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 56;
   for (; pos !== endPos;) {
     arr.push(deserializeSwitchCase(pos));
@@ -5834,7 +5836,7 @@ function deserializeVecSwitchCase(pos) {
 }
 
 function deserializeBoxCatchClause(pos) {
-  return deserializeCatchClause((int32[pos >> 2] - baseLo) | 0);
+  return deserializeCatchClause((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxCatchClause(pos) {
@@ -5854,25 +5856,25 @@ function deserializeOptionCatchParameter(pos) {
 }
 
 function deserializeBoxBindingIdentifier(pos) {
-  return deserializeBindingIdentifier((int32[pos >> 2] - baseLo) | 0);
+  return deserializeBindingIdentifier((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxObjectPattern(pos) {
-  return deserializeObjectPattern((int32[pos >> 2] - baseLo) | 0);
+  return deserializeObjectPattern((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxArrayPattern(pos) {
-  return deserializeArrayPattern((int32[pos >> 2] - baseLo) | 0);
+  return deserializeArrayPattern((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxAssignmentPattern(pos) {
-  return deserializeAssignmentPattern((int32[pos >> 2] - baseLo) | 0);
+  return deserializeAssignmentPattern((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecBindingProperty(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 48;
   for (; pos !== endPos;) {
     arr.push(deserializeBindingProperty(pos));
@@ -5882,7 +5884,7 @@ function deserializeVecBindingProperty(pos) {
 }
 
 function deserializeBoxBindingRestElement(pos) {
-  return deserializeBindingRestElement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeBindingRestElement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxBindingRestElement(pos) {
@@ -5898,7 +5900,7 @@ function deserializeOptionBindingPattern(pos) {
 function deserializeVecOptionBindingPattern(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeOptionBindingPattern(pos));
@@ -5914,7 +5916,7 @@ function deserializeOptionBindingIdentifier(pos) {
 }
 
 function deserializeBoxTSTypeParameterDeclaration(pos) {
-  return deserializeTSTypeParameterDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeParameterDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxTSTypeParameterDeclaration(pos) {
@@ -5924,7 +5926,7 @@ function deserializeOptionBoxTSTypeParameterDeclaration(pos) {
 }
 
 function deserializeBoxTSThisParameter(pos) {
-  return deserializeTSThisParameter((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSThisParameter((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxTSThisParameter(pos) {
@@ -5934,11 +5936,11 @@ function deserializeOptionBoxTSThisParameter(pos) {
 }
 
 function deserializeBoxFormalParameters(pos) {
-  return deserializeFormalParameters((int32[pos >> 2] - baseLo) | 0);
+  return deserializeFormalParameters((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxFunctionBody(pos) {
-  return deserializeFunctionBody((int32[pos >> 2] - baseLo) | 0);
+  return deserializeFunctionBody((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxFunctionBody(pos) {
@@ -5950,7 +5952,7 @@ function deserializeOptionBoxFunctionBody(pos) {
 function deserializeVecFormalParameter(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 72;
   for (; pos !== endPos;) {
     arr.push(deserializeFormalParameter(pos));
@@ -5962,7 +5964,7 @@ function deserializeVecFormalParameter(pos) {
 function deserializeVecDecorator(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 5);
   for (; pos !== endPos;) {
     arr.push(deserializeDecorator(pos));
@@ -5972,7 +5974,7 @@ function deserializeVecDecorator(pos) {
 }
 
 function deserializeBoxExpression(pos) {
-  return deserializeExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxExpression(pos) {
@@ -5982,13 +5984,13 @@ function deserializeOptionBoxExpression(pos) {
 }
 
 function deserializeBoxClassBody(pos) {
-  return deserializeClassBody((int32[pos >> 2] - baseLo) | 0);
+  return deserializeClassBody((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecClassElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeClassElement(pos));
@@ -5998,55 +6000,55 @@ function deserializeVecClassElement(pos) {
 }
 
 function deserializeBoxStaticBlock(pos) {
-  return deserializeStaticBlock((int32[pos >> 2] - baseLo) | 0);
+  return deserializeStaticBlock((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxMethodDefinition(pos) {
-  return deserializeMethodDefinition((int32[pos >> 2] - baseLo) | 0);
+  return deserializeMethodDefinition((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxPropertyDefinition(pos) {
-  return deserializePropertyDefinition((int32[pos >> 2] - baseLo) | 0);
+  return deserializePropertyDefinition((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxAccessorProperty(pos) {
-  return deserializeAccessorProperty((int32[pos >> 2] - baseLo) | 0);
+  return deserializeAccessorProperty((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSIndexSignature(pos) {
-  return deserializeTSIndexSignature((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSIndexSignature((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxImportDeclaration(pos) {
-  return deserializeImportDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeImportDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxExportAllDeclaration(pos) {
-  return deserializeExportAllDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeExportAllDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxExportDefaultDeclaration(pos) {
-  return deserializeExportDefaultDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeExportDefaultDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxExportDeclaration(pos) {
-  return deserializeExportDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeExportDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxExportNamedDeclaration(pos) {
-  return deserializeExportNamedDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeExportNamedDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxExportFromDeclaration(pos) {
-  return deserializeExportFromDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeExportFromDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSExportAssignment(pos) {
-  return deserializeTSExportAssignment((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSExportAssignment((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSNamespaceExportDeclaration(pos) {
-  return deserializeTSNamespaceExportDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSNamespaceExportDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionImportPhase(pos) {
@@ -6056,7 +6058,7 @@ function deserializeOptionImportPhase(pos) {
 function deserializeVecImportDeclarationSpecifier(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeImportDeclarationSpecifier(pos));
@@ -6072,7 +6074,7 @@ function deserializeOptionVecImportDeclarationSpecifier(pos) {
 }
 
 function deserializeBoxWithClause(pos) {
-  return deserializeWithClause((int32[pos >> 2] - baseLo) | 0);
+  return deserializeWithClause((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxWithClause(pos) {
@@ -6082,21 +6084,21 @@ function deserializeOptionBoxWithClause(pos) {
 }
 
 function deserializeBoxImportSpecifier(pos) {
-  return deserializeImportSpecifier((int32[pos >> 2] - baseLo) | 0);
+  return deserializeImportSpecifier((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxImportDefaultSpecifier(pos) {
-  return deserializeImportDefaultSpecifier((int32[pos >> 2] - baseLo) | 0);
+  return deserializeImportDefaultSpecifier((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxImportNamespaceSpecifier(pos) {
-  return deserializeImportNamespaceSpecifier((int32[pos >> 2] - baseLo) | 0);
+  return deserializeImportNamespaceSpecifier((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecImportAttribute(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 120;
   for (; pos !== endPos;) {
     arr.push(deserializeImportAttribute(pos));
@@ -6108,7 +6110,7 @@ function deserializeVecImportAttribute(pos) {
 function deserializeVecExportSpecifier(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 7);
   for (; pos !== endPos;) {
     arr.push(deserializeExportSpecifier(pos));
@@ -6130,13 +6132,13 @@ function deserializeU8(pos) {
 }
 
 function deserializeBoxJSXOpeningElement(pos) {
-  return deserializeJSXOpeningElement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXOpeningElement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecJSXChild(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeJSXChild(pos));
@@ -6146,7 +6148,7 @@ function deserializeVecJSXChild(pos) {
 }
 
 function deserializeBoxJSXClosingElement(pos) {
-  return deserializeJSXClosingElement((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXClosingElement((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxJSXClosingElement(pos) {
@@ -6158,7 +6160,7 @@ function deserializeOptionBoxJSXClosingElement(pos) {
 function deserializeVecJSXAttributeItem(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeJSXAttributeItem(pos));
@@ -6168,27 +6170,27 @@ function deserializeVecJSXAttributeItem(pos) {
 }
 
 function deserializeBoxJSXIdentifier(pos) {
-  return deserializeJSXIdentifier((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXIdentifier((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXNamespacedName(pos) {
-  return deserializeJSXNamespacedName((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXNamespacedName((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXMemberExpression(pos) {
-  return deserializeJSXMemberExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXMemberExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXEmptyExpression(pos) {
-  return deserializeJSXEmptyExpression((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXEmptyExpression((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXAttribute(pos) {
-  return deserializeJSXAttribute((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXAttribute((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXSpreadAttribute(pos) {
-  return deserializeJSXSpreadAttribute((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXSpreadAttribute((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionJSXAttributeValue(pos) {
@@ -6196,21 +6198,21 @@ function deserializeOptionJSXAttributeValue(pos) {
 }
 
 function deserializeBoxJSXExpressionContainer(pos) {
-  return deserializeJSXExpressionContainer((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXExpressionContainer((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXText(pos) {
-  return deserializeJSXText((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXText((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSXSpreadChild(pos) {
-  return deserializeJSXSpreadChild((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSXSpreadChild((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecTSEnumMember(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 48;
   for (; pos !== endPos;) {
     arr.push(deserializeTSEnumMember(pos));
@@ -6220,157 +6222,157 @@ function deserializeVecTSEnumMember(pos) {
 }
 
 function deserializeBoxTSAnyKeyword(pos) {
-  return deserializeTSAnyKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSAnyKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSBigIntKeyword(pos) {
-  return deserializeTSBigIntKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSBigIntKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSBooleanKeyword(pos) {
-  return deserializeTSBooleanKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSBooleanKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSIntrinsicKeyword(pos) {
-  return deserializeTSIntrinsicKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSIntrinsicKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSNeverKeyword(pos) {
-  return deserializeTSNeverKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSNeverKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSNullKeyword(pos) {
-  return deserializeTSNullKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSNullKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSNumberKeyword(pos) {
-  return deserializeTSNumberKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSNumberKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSObjectKeyword(pos) {
-  return deserializeTSObjectKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSObjectKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSStringKeyword(pos) {
-  return deserializeTSStringKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSStringKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSSymbolKeyword(pos) {
-  return deserializeTSSymbolKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSSymbolKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSUndefinedKeyword(pos) {
-  return deserializeTSUndefinedKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSUndefinedKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSUnknownKeyword(pos) {
-  return deserializeTSUnknownKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSUnknownKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSVoidKeyword(pos) {
-  return deserializeTSVoidKeyword((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSVoidKeyword((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSArrayType(pos) {
-  return deserializeTSArrayType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSArrayType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSConditionalType(pos) {
-  return deserializeTSConditionalType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSConditionalType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSConstructorType(pos) {
-  return deserializeTSConstructorType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSConstructorType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSFunctionType(pos) {
-  return deserializeTSFunctionType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSFunctionType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSImportType(pos) {
-  return deserializeTSImportType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSImportType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSIndexedAccessType(pos) {
-  return deserializeTSIndexedAccessType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSIndexedAccessType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSInferType(pos) {
-  return deserializeTSInferType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSInferType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSIntersectionType(pos) {
-  return deserializeTSIntersectionType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSIntersectionType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSLiteralType(pos) {
-  return deserializeTSLiteralType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSLiteralType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSMappedType(pos) {
-  return deserializeTSMappedType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSMappedType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSNamedTupleMember(pos) {
-  return deserializeTSNamedTupleMember((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSNamedTupleMember((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTemplateLiteralType(pos) {
-  return deserializeTSTemplateLiteralType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTemplateLiteralType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSThisType(pos) {
-  return deserializeTSThisType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSThisType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTupleType(pos) {
-  return deserializeTSTupleType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTupleType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTypeLiteral(pos) {
-  return deserializeTSTypeLiteral((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeLiteral((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTypeOperator(pos) {
-  return deserializeTSTypeOperator((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeOperator((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTypePredicate(pos) {
-  return deserializeTSTypePredicate((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypePredicate((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTypeQuery(pos) {
-  return deserializeTSTypeQuery((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeQuery((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSTypeReference(pos) {
-  return deserializeTSTypeReference((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeReference((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSUnionType(pos) {
-  return deserializeTSUnionType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSUnionType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSParenthesizedType(pos) {
-  return deserializeTSParenthesizedType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSParenthesizedType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSDocNullableType(pos) {
-  return deserializeJSDocNullableType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSDocNullableType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSDocNonNullableType(pos) {
-  return deserializeJSDocNonNullableType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSDocNonNullableType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxJSDocUnknownType(pos) {
-  return deserializeJSDocUnknownType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeJSDocUnknownType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecTSType(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeTSType(pos));
@@ -6382,7 +6384,7 @@ function deserializeVecTSType(pos) {
 function deserializeVecTSTupleElement(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeTSTupleElement(pos));
@@ -6392,15 +6394,15 @@ function deserializeVecTSTupleElement(pos) {
 }
 
 function deserializeBoxTSOptionalType(pos) {
-  return deserializeTSOptionalType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSOptionalType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSRestType(pos) {
-  return deserializeTSRestType((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSRestType((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSQualifiedName(pos) {
-  return deserializeTSQualifiedName((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSQualifiedName((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionTSType(pos) {
@@ -6410,7 +6412,7 @@ function deserializeOptionTSType(pos) {
 function deserializeVecTSTypeParameter(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 80;
   for (; pos !== endPos;) {
     arr.push(deserializeTSTypeParameter(pos));
@@ -6422,7 +6424,7 @@ function deserializeVecTSTypeParameter(pos) {
 function deserializeVecTSInterfaceHeritage(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 40;
   for (; pos !== endPos;) {
     arr.push(deserializeTSInterfaceHeritage(pos));
@@ -6432,13 +6434,13 @@ function deserializeVecTSInterfaceHeritage(pos) {
 }
 
 function deserializeBoxTSInterfaceBody(pos) {
-  return deserializeTSInterfaceBody((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSInterfaceBody((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeVecTSSignature(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeTSSignature(pos));
@@ -6448,23 +6450,23 @@ function deserializeVecTSSignature(pos) {
 }
 
 function deserializeBoxTSPropertySignature(pos) {
-  return deserializeTSPropertySignature((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSPropertySignature((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSCallSignatureDeclaration(pos) {
-  return deserializeTSCallSignatureDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSCallSignatureDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSConstructSignatureDeclaration(pos) {
-  return deserializeTSConstructSignatureDeclaration((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSConstructSignatureDeclaration((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSMethodSignature(pos) {
-  return deserializeTSMethodSignature((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSMethodSignature((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeBoxTSModuleBlock(pos) {
-  return deserializeTSModuleBlock((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSModuleBlock((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxTSModuleBlock(pos) {
@@ -6474,7 +6476,7 @@ function deserializeOptionBoxTSModuleBlock(pos) {
 }
 
 function deserializeBoxTSTypeParameter(pos) {
-  return deserializeTSTypeParameter((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSTypeParameter((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionBoxObjectExpression(pos) {
@@ -6488,7 +6490,7 @@ function deserializeOptionTSImportTypeQualifier(pos) {
 }
 
 function deserializeBoxTSImportTypeQualifiedName(pos) {
-  return deserializeTSImportTypeQualifiedName((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSImportTypeQualifiedName((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeOptionTSMappedTypeModifierOperator(pos) {
@@ -6496,7 +6498,7 @@ function deserializeOptionTSMappedTypeModifierOperator(pos) {
 }
 
 function deserializeBoxTSExternalModuleReference(pos) {
-  return deserializeTSExternalModuleReference((int32[pos >> 2] - baseLo) | 0);
+  return deserializeTSExternalModuleReference((int32[pos >> 2] ^ ptrFlip) - ptrBase);
 }
 
 function deserializeI32(pos) {
@@ -6512,7 +6514,7 @@ function deserializeOptionNameSpan(pos) {
 function deserializeVecError(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 80;
   for (; pos !== endPos;) {
     arr.push(deserializeError(pos));
@@ -6524,7 +6526,7 @@ function deserializeVecError(pos) {
 function deserializeVecErrorLabel(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 24;
   for (; pos !== endPos;) {
     arr.push(deserializeErrorLabel(pos));
@@ -6536,7 +6538,7 @@ function deserializeVecErrorLabel(pos) {
 function deserializeVecStaticImport(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 56;
   for (; pos !== endPos;) {
     arr.push(deserializeStaticImport(pos));
@@ -6548,7 +6550,7 @@ function deserializeVecStaticImport(pos) {
 function deserializeVecStaticExport(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 5);
   for (; pos !== endPos;) {
     arr.push(deserializeStaticExport(pos));
@@ -6560,7 +6562,7 @@ function deserializeVecStaticExport(pos) {
 function deserializeVecDynamicImport(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 4);
   for (; pos !== endPos;) {
     arr.push(deserializeDynamicImport(pos));
@@ -6572,7 +6574,7 @@ function deserializeVecDynamicImport(pos) {
 function deserializeVecSpan(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + (int32[pos32 + 2] << 3);
   for (; pos !== endPos;) {
     arr.push(deserializeSpan(pos));
@@ -6584,7 +6586,7 @@ function deserializeVecSpan(pos) {
 function deserializeVecImportEntry(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 96;
   for (; pos !== endPos;) {
     arr.push(deserializeImportEntry(pos));
@@ -6596,7 +6598,7 @@ function deserializeVecImportEntry(pos) {
 function deserializeVecExportEntry(pos) {
   let arr = [],
     pos32 = pos >> 2;
-  pos = (int32[pos32] - baseLo) | 0;
+  pos = (int32[pos32] ^ ptrFlip) - ptrBase;
   let endPos = pos + int32[pos32 + 2] * 144;
   for (; pos !== endPos;) {
     arr.push(deserializeExportEntry(pos));

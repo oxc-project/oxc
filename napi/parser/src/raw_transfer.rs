@@ -29,12 +29,19 @@ use crate::{
 // For raw transfer, use a buffer 2 GiB in size. The buffer can be at any address
 // (it only needs to be aligned on `Allocator::RAW_MIN_ALIGN`).
 //
-// JS reads only the lower 32 bits of each 64-bit pointer, and converts it to an offset within the buffer
-// by subtracting the lower 32 bits of the buffer's start address, wrapping to 32 bits:
-// `offset = (lo32(ptr) - lo32(buffer_start)) | 0`.
-// `lo32(x) == x mod 2^32`, so this equals `(ptr - buffer_start) mod 2^32`, which is the real offset,
-// because the offset is always less than buffer size (< 2^31). This holds even if the buffer
-// crosses a 4 GiB boundary.
+// JS reads only the lower 32 bits of each 64-bit pointer (as a signed 32-bit integer), and converts it
+// to an offset within the buffer by subtracting the lower 32 bits of the buffer's start address.
+// `lo32(x) == x mod 2^32`, so `lo32(ptr) - lo32(buffer_start) == (ptr - buffer_start) mod 2^32`,
+// which is the real offset, because the offset is always less than buffer size (< 2^31).
+// This holds even if the buffer crosses a 4 GiB boundary.
+//
+// The subtraction must not overflow signed 32-bit integer range, because although the result would still be
+// correct after `| 0`, overflow degrades V8's type feedback and makes deserialization much slower.
+// Overflow happens only if lower 32 bits of addresses in the buffer cross `0x80000000`. For such buffers,
+// JS flips the top bit of both values first, which moves the crossing point to `0` (harmless).
+// A buffer < 2 GiB cannot cross both. So JS uses `offset = (lo32(ptr) ^ ptrFlip) - ptrBase`,
+// where `ptrFlip` is `0` or `0x80000000`, and `ptrBase = lo32(buffer_start) ^ ptrFlip`.
+// See `createBuffer` in `src-js/raw-transfer/common.js`.
 //
 // Metadata at end of buffer (`RawTransferMetadata`) stores offsets which are already relative
 // to start of buffer, so JS doesn't need to convert them.

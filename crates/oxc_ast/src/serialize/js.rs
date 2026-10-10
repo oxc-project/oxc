@@ -364,7 +364,7 @@ impl ESTree for CatchParameterConverter<'_, '_> {
             pos = int32[restFieldPos32];
             /* END_IF */
             /* IF !LINTER */
-            pos = (int32[restFieldPos32] - baseLo) | 0;
+            pos = (int32[restFieldPos32] ^ ptrFlip) - ptrBase;
             /* END_IF */
 
             let start, end,

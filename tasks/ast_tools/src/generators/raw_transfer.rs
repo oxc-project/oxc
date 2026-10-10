@@ -153,9 +153,9 @@ fn generate_deserializers(
             sourceStartPos = 0, firstNonAsciiPos = 0;
 
         /* IF !LINTER */
-        // Lower 32 bits of address of start of buffer, as a signed 32-bit integer.
-        // Subtracted from lower 32 bits of pointers to convert them to offsets within buffer.
-        let baseLo = 0;
+        // Used to convert pointers (lower 32 bits) to offsets within buffer: `(ptr ^ ptrFlip) - ptrBase`.
+        // See `createBuffer` in `napi/parser/src-js/raw-transfer/common.js`.
+        let ptrFlip = 0, ptrBase = 0;
         /* END_IF */
 
         let parent = null;
@@ -201,7 +201,8 @@ fn generate_deserializers(
             int32 = buffer.int32;
             float64 = buffer.float64;
             /* IF !LINTER */
-            baseLo = buffer.baseLo;
+            ptrFlip = buffer.ptrFlip;
+            ptrBase = buffer.ptrBase;
             /* END_IF */
 
             sourceText = sourceTextInput;
@@ -972,7 +973,7 @@ static STR_DESERIALIZER_BODY: &str = "
     pos = int32[pos32];
     /* END_IF */
     /* IF !LINTER */
-    pos = (int32[pos32] - baseLo) | 0;
+    pos = (int32[pos32] ^ ptrFlip) - ptrBase;
     /* END_IF */
 
     const end = pos + len;
@@ -1165,13 +1166,12 @@ pub(super) fn should_skip_innermost_type(
 /// Wrap a JS expression which reads the lower 32 bits of a pointer from the buffer,
 /// to convert the pointer to an offset within the buffer.
 ///
-/// * Parser: Buffer can be at any address, so subtract lower 32 bits of buffer's start address (`baseLo`).
-///   `| 0` wraps the result to 32 bits, which gives the correct offset even if the buffer crosses
-///   a 4 GiB boundary (see `napi/parser/src/raw_transfer.rs`).
+/// * Parser: Buffer can be at any address. Convert with `(ptr ^ ptrFlip) - ptrBase`,
+///   which never overflows 32-bit signed integer range (see `napi/parser/src/raw_transfer.rs`).
 /// * Linter: Buffers are aligned on 4 GiB, so lower 32 bits of a pointer is already the offset.
 fn ptr_to_pos(read_expr: &str) -> String {
     format!(
-        "/* IF LINTER */ {read_expr} /* END_IF */ /* IF !LINTER */ (({read_expr}) - baseLo) | 0 /* END_IF */"
+        "/* IF LINTER */ {read_expr} /* END_IF */ /* IF !LINTER */ (({read_expr} ^ ptrFlip) - ptrBase) /* END_IF */"
     )
 }
 

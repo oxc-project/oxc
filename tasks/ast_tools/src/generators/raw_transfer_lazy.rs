@@ -961,7 +961,7 @@ static STR_DESERIALIZER_BODY: &str = "
         len = int32[pos32 + 2];
     if (len === 0) return '';
 
-    pos = (int32[pos32] - buffer.baseLo) | 0;
+    pos = (int32[pos32] ^ buffer.ptrFlip) - buffer.ptrBase;
     if (ast.sourceIsAscii) {
         const { sourceStartPos } = ast;
         if (pos >= sourceStartPos) return ast.sourceText.substr(pos - sourceStartPos, len);
@@ -1079,7 +1079,7 @@ fn generate_box(
     write_it!(state.constructors, "
         function {construct_fn_name}(pos, ast) {{
             const {{ buffer }} = ast;
-            return {inner_construct_fn_name}((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast);
+            return {inner_construct_fn_name}((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast);
         }}
     ");
 
@@ -1092,7 +1092,7 @@ fn generate_box(
         write_it!(state.walkers, "
             function {walk_fn_name}(pos, ast, visitors) {{
                 const {{ buffer }} = ast;
-                return {inner_walk_fn_name}((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
+                return {inner_walk_fn_name}((buffer.int32[pos >> 2] ^ buffer.ptrFlip) - buffer.ptrBase, ast, visitors);
             }}
         ");
     }
@@ -1135,10 +1135,10 @@ fn generate_vec(
     #[rustfmt::skip]
     write_it!(state.constructors, "
         function {construct_fn_name}(pos, ast) {{
-            const {{ int32, baseLo }} = ast.buffer,
+            const {{ int32, ptrFlip, ptrBase }} = ast.buffer,
                 pos32 = pos >> 2;
             return new NodeArray(
-                (int32[{ptr_pos32}] - baseLo) | 0,
+                (int32[{ptr_pos32}] ^ ptrFlip) - ptrBase,
                 int32[{len_pos32}],
                 {inner_type_size},
                 {inner_construct_fn_name},
@@ -1157,9 +1157,9 @@ fn generate_vec(
         #[rustfmt::skip]
         write_it!(state.walkers, "
             function {walk_fn_name}(pos, ast, visitors) {{
-                const {{ int32, baseLo }} = ast.buffer,
+                const {{ int32, ptrFlip, ptrBase }} = ast.buffer,
                     pos32 = pos >> 2;
-                pos = (int32[{ptr_pos32}] - baseLo) | 0;
+                pos = (int32[{ptr_pos32}] ^ ptrFlip) - ptrBase;
                 const endPos = pos + int32[{len_pos32}] * {inner_type_size};
                 while (pos < endPos) {{
                     {inner_walk_fn_name}(pos, ast, visitors);

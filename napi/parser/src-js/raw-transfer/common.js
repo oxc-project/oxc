@@ -271,8 +271,7 @@ function clearBuffersCache() {
  * Create a `Uint8Array` which is 2 GiB in size, aligned on `BUFFER_ALIGN`.
  *
  * Buffer does not need to be aligned on 4 GiB. JS converts pointers in the buffer to offsets
- * by subtracting `buffer.baseLo` (lower 32 bits of the address of start of buffer), wrapping to 32 bits.
- * See `napi/parser/src/raw_transfer.rs` for explanation.
+ * with `(ptr ^ buffer.ptrFlip) - buffer.ptrBase` (see below, and `napi/parser/src/raw_transfer.rs`).
  *
  * `buffer` itself, and `int32` and `float64` views of `buffer`, are `BUFFER_SIZE` bytes,
  * which excludes `FixedSizeAllocatorMetadata` and `ChunkFooter`.
@@ -293,6 +292,19 @@ function createBuffer() {
   buffer.int32 = new Int32Array(arrayBuffer, offset, BUFFER_SIZE / 4);
   buffer.float64 = new Float64Array(arrayBuffer, offset, BUFFER_SIZE / 8);
   buffer.block = new Uint8Array(arrayBuffer, offset, BLOCK_SIZE);
-  buffer.baseLo = getBufferBase(buffer);
+
+  // JS converts pointers in the buffer (lower 32 bits, read as signed 32-bit integers) to offsets with
+  // `(ptr ^ ptrFlip) - ptrBase`. That subtraction must never overflow signed 32-bit integer range.
+  // The result would still be correct with `| 0`, but overflow degrades V8's type feedback,
+  // which can make the whole deserializer around 2x slower.
+  //
+  // Overflow happens only if the lower 32 bits of addresses in the buffer cross `0x80000000`
+  // (where signed values wrap from `2^31 - 1` to `-2^31`). In that case, flip the top bit of the pointer
+  // and the base, which moves the crossing point to `0` (`-1` -> `0`), where signed arithmetic doesn't overflow.
+  // Buffer is smaller than 2 GiB, so it cannot cross both `0x80000000` and `0`.
+  const baseLo = getBufferBase(buffer);
+  const crossesSignBoundary = baseLo >= 0 && baseLo + BLOCK_SIZE > 2 ** 31;
+  buffer.ptrFlip = crossesSignBoundary ? 1 << 31 : 0;
+  buffer.ptrBase = baseLo ^ buffer.ptrFlip;
   return buffer;
 }
