@@ -20,8 +20,13 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_statement_with(stmt, |stmt, ctx| {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                     let IfStatement { mut test, span, .. } = if_stmt.unbox();
-                    Self::remove_unused_expression(&mut test, ctx);
-                    Statement::new_expression_statement(span, test, ctx)
+                    if Self::remove_unused_expression(&mut test, ctx) {
+                        // `if (0) {}` => `;`
+                        ctx.drop_expression(&test);
+                        Statement::new_empty_statement(span, ctx)
+                    } else {
+                        Statement::new_expression_statement(span, test, ctx)
+                    }
                 });
                 return;
             }
