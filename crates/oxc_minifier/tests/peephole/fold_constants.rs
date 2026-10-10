@@ -1003,7 +1003,7 @@ fn test_string_add() {
     fold_same("x = 'a' + (4 + p1 + 'a')");
     fold_same("x = p1 / 3 + 4");
     fold_same("foo() + 3 + 'a' + foo()");
-    fold_same("x = 'a' + ('b' + p1 + p2)");
+    fold("x = 'a' + ('b' + p1 + p2)", "x = 'ab' + p1 + p2");
     fold_same("x = 1 + ('a' + p1)");
     fold_same("x = p1 + '' + p2");
     fold_same("x = 'a' + (1 + p1)");
@@ -1017,6 +1017,9 @@ fn test_nested_string_addition() {
     fold("'a' + ('?b=' + Date.now())", "'a?b=' + Date.now()");
     fold("'a' + ('b' + value)", "'ab' + value");
     fold("'a' + ('b' + ('c' + value))", "'abc' + value");
+    fold("'a' + ('b' + value + next)", "'ab' + value + next");
+    fold("'a' + (`b${value}` + next)", "`ab${value}` + next");
+    fold("'a' + (`b${value}` + next + last)", "`ab${value}` + next + last");
     fold("'a' + ('b' + value) + 1", "'ab' + value + 1");
     fold("'é' + ('🙂' + value)", "'é🙂' + value");
     fold("'a' + ('b' + (first(), second()))", "'ab' + (first(), second())");
@@ -1026,7 +1029,7 @@ fn test_nested_string_addition() {
     fold_same("'a' + (value + 'b')");
     fold_same("'a' + ('b' - value)");
     fold_same("prefix() + ('b' + value)");
-    fold("'a' + ((first(), 'b') + value)", "'a' + (first(), 'b' + value)");
+    fold("'a' + ((first(), 'b') + value)", "(first(), 'ab' + value)");
     fold("(first(), 'a') + ('b' + value)", "(first(), 'ab' + value)");
 
     // The escaped representation of lone surrogates cannot be concatenated as UTF-8.
