@@ -329,7 +329,7 @@ When changing linter codegen files such as `tasks/linter_codegen/**` or generate
 
 - Rapidly evolving project - APIs may change
 - Performance is critical for all changes
-- Maintain JS/TS standard compatibility
+- Maintain JS/TS standard compatibility (oxc_minifier crate is JS-only)
 - Breaking changes need documentation and discussion
 
 ---
