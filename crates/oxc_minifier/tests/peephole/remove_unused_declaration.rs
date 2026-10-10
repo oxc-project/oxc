@@ -722,7 +722,7 @@ fn keep_exported_binding_writes_when_a_dead_cycle_held_its_other_reads() {
     );
     test_smallest(
         "export var f; var f = {}; function d1() { console.log(f); d2() } function d2() { d1() } f.x = 1;",
-        "export var f;\nvar f = {};\nf.x = 1;",
+        "export var f;\nvar f = { x: 1 };",
     );
 }
 

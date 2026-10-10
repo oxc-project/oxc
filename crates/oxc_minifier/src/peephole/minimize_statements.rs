@@ -1,4 +1,4 @@
-use std::iter;
+use std::{iter, mem};
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaHashMap, ArenaVec, CloneIn, GetAllocator, TakeIn};
@@ -11,7 +11,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::ScopeFlags;
 use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
-use oxc_syntax::symbol::SymbolId;
+use oxc_syntax::{number::ToJsString, symbol::SymbolId};
 
 use crate::{TraverseCtx, is_terminated::IsTerminated, keep_var::KeepVar};
 
@@ -706,7 +706,7 @@ impl<'a> PeepholeOptimizations {
             return false;
         }
         let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left else {
-            return false;
+            return Self::merge_property_assignment_to_object(assign_expr, result, ctx);
         };
         let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
             return false;
@@ -748,6 +748,121 @@ impl<'a> PeepholeOptimizations {
             }
         }
         false
+    }
+
+    /// Merge a property assignment into the object literal that initializes the
+    /// last declarator of the variable declaration immediately preceding it.
+    ///
+    /// `var o = { a: 1 }; o.a = 2; o.b = 3;` => `var o = { a: 2, b: 3 };`
+    ///
+    /// Defining a key that is not in the literal assumes that `Object.prototype`
+    /// has no setter or read-only property with that key (see `docs/ASSUMPTIONS.md`).
+    fn merge_property_assignment_to_object(
+        assign_expr: &mut AssignmentExpression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool {
+        if ctx.is_tree_shake_only() {
+            return false;
+        }
+        let Some(member) = assign_expr.left.as_member_expression() else {
+            return false;
+        };
+        let Some(key) = KeyName::from_member_expression(member) else {
+            return false;
+        };
+        // `__proto__` changes the prototype instead of defining a property.
+        if matches!(key, KeyName::Str("__proto__")) {
+            return false;
+        }
+        let Expression::Identifier(object) = member.object() else {
+            return false;
+        };
+        let Some(Statement::VariableDeclaration(var_decl)) = result.last_mut() else {
+            return false;
+        };
+        if var_decl.kind.is_using() {
+            return false;
+        }
+        let Some(decl) = var_decl.declarations.last_mut() else {
+            return false;
+        };
+        let BindingPattern::BindingIdentifier(binding) = &decl.id else {
+            return false;
+        };
+        let scoping = ctx.scoping();
+        let symbol_id = binding.symbol_id();
+        if scoping.get_reference(object.reference_id()).symbol_id() != Some(symbol_id) {
+            return false;
+        }
+        // A Script's top-level bindings are shared with other scripts, and a `var` may be a
+        // global accessor (`var name = {}` in browsers).
+        if ctx.source_type().is_script()
+            && scoping.symbol_scope_id(symbol_id) == scoping.root_scope_id()
+        {
+            return false;
+        }
+        let Some(Expression::ObjectExpression(object_expr)) = &mut decl.init else {
+            return false;
+        };
+        // `v` now runs before `o` is initialized, so it must not throw or read `o`.
+        if !assign_expr.right.is_literal_value(true, ctx) {
+            return false;
+        }
+        // The last property with this key, if nothing after it can define the key again.
+        let mut existing_index = None;
+        for (index, property) in object_expr.properties.iter().enumerate() {
+            let ObjectPropertyKind::ObjectProperty(property) = property else {
+                existing_index = None;
+                continue;
+            };
+            // An accessor runs on assignment, and so can a setter on a `__proto__: p` prototype.
+            if property.kind != PropertyKind::Init
+                || property.key.is_specific_static_name("__proto__")
+            {
+                return false;
+            }
+            match KeyName::from_property_key(&property.key) {
+                Some(name) if name.same_as(key) => existing_index = Some(index),
+                Some(_) => {}
+                None => existing_index = None,
+            }
+        }
+        if let Some(index) = existing_index
+            && let ObjectPropertyKind::ObjectProperty(property) = &mut object_expr.properties[index]
+            && !property.method
+            && !property.value.may_have_side_effects(ctx)
+        {
+            // "var o = { a: 1 }; o.a = 2" => "var o = { a: 2 }"
+            // The old value moves into the assignment, which the caller drops. That records the
+            // change and the old value's references, so no `drop_*` is needed here.
+            mem::swap(&mut property.value, &mut assign_expr.right);
+            // "var o = { a }; o.a = 2" => "var o = { a: 2 }"
+            property.shorthand = false;
+        } else {
+            // "var o = { ...a }; o.b = 1" => "var o = { ...a, b: 1 }"
+            let property_key = match &mut assign_expr.left {
+                AssignmentTarget::StaticMemberExpression(e) => {
+                    PropertyKey::new_static_identifier(e.property.span, e.property.name, ctx)
+                }
+                AssignmentTarget::ComputedMemberExpression(e) => {
+                    PropertyKey::from(e.expression.take_in(ctx))
+                }
+                _ => unreachable!(),
+            };
+            let value = assign_expr.right.take_in(ctx);
+            object_expr.properties.push(ObjectPropertyKind::new_object_property(
+                assign_expr.span,
+                PropertyKind::Init,
+                property_key,
+                value,
+                false,
+                false,
+                false,
+                ctx,
+            ));
+        }
+        true
     }
 
     /// Fold leading assignments in `expr` into the variable declaration.
@@ -2293,6 +2408,57 @@ impl<'a> VisitJs<'a> for FindNestedBreak {
                 self.found_unlabelled_break = true;
             }
             _ => walk_js::walk_statement(self, it),
+        }
+    }
+}
+
+/// A property name known statically.
+#[derive(Clone, Copy)]
+enum KeyName<'k> {
+    Str(&'k str),
+    /// A finite number, which names the property `ToString(n)`.
+    Num(f64),
+}
+
+impl<'k> KeyName<'k> {
+    /// The name of a string or finite number literal key.
+    fn from_literal(expr: &'k Expression<'_>) -> Option<Self> {
+        match expr {
+            Expression::StringLiteral(s) if !s.lone_surrogates => Some(Self::Str(s.value.as_str())),
+            Expression::NumericLiteral(n) if n.value.is_finite() => Some(Self::Num(n.value)),
+            _ => None,
+        }
+    }
+
+    /// The property name of a member expression, or `None` if it is not known statically.
+    fn from_member_expression(member: &'k MemberExpression<'_>) -> Option<Self> {
+        match member {
+            MemberExpression::StaticMemberExpression(e) => {
+                Some(Self::Str(e.property.name.as_str()))
+            }
+            MemberExpression::ComputedMemberExpression(e) => Self::from_literal(&e.expression),
+            MemberExpression::PrivateFieldExpression(_) => None,
+        }
+    }
+
+    /// The name of a property key, or `None` if it is not known statically.
+    fn from_property_key(key: &'k PropertyKey<'_>) -> Option<Self> {
+        match key {
+            PropertyKey::StaticIdentifier(id) => Some(Self::Str(id.name.as_str())),
+            _ => key.as_expression().and_then(Self::from_literal),
+        }
+    }
+
+    /// Whether both name the same property. Numbers compare by value: distinct finite
+    /// numbers have distinct `ToString`, and `0 == -0`.
+    #[expect(clippy::float_cmp)]
+    fn same_as(self, other: Self) -> bool {
+        match (self, other) {
+            (Self::Str(a), Self::Str(b)) => a == b,
+            (Self::Num(a), Self::Num(b)) => a == b,
+            (Self::Str(s), Self::Num(n)) | (Self::Num(n), Self::Str(s)) => {
+                s.starts_with(|c: char| c.is_ascii_digit() || c == '-') && s == n.to_js_string()
+            }
         }
     }
 }
