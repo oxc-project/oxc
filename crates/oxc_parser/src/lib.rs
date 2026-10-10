@@ -90,12 +90,14 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
+    CommentContent, CommentPlacement,
     ast::{Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
+use oxc_comment_assignment::assign_remaining;
 use oxc_diagnostics::Diagnostics;
 use oxc_span::{SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
+use oxc_syntax::{module_record::ModuleRecord, node::NodeId};
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
@@ -170,6 +172,8 @@ pub struct ParserReturn<'a> {
     /// Every node has a unique node ID within this AST. Program has ID zero;
     /// other IDs follow construction order and may have gaps from discarded nodes.
     /// Semantic analysis replaces these with its own dense node IDs.
+    /// Every source comment has an attachment using these IDs, including on
+    /// recovered ASTs. Fatal errors attach retained comments to the empty Program.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -656,6 +660,13 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// The end range of the previous token
     prev_token_end: u32,
 
+    /// Changes to comment ownership established during parsing.
+    comment_assignment_epoch: usize,
+
+    /// Start of the statement whose prefix comments are assigned on completion.
+    /// `u32::MAX` means no statement prefix is active.
+    statement_comment_start: u32,
+
     /// Parser state
     state: ParserState<'a>,
 
@@ -697,6 +708,8 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
+            comment_assignment_epoch: 0,
+            statement_comment_start: u32::MAX,
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
@@ -786,6 +799,19 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         };
 
         program.comments = self.lexer.trivia_builder.comments;
+        if has_fatal_error {
+            // The parsed AST was discarded, so only Program can own retained comments.
+            for comment in &mut program.comments {
+                comment.node_id.set(NodeId::ROOT);
+                comment.placement = if comment.content == CommentContent::CoverageIgnoreFile {
+                    CommentPlacement::Leading
+                } else {
+                    CommentPlacement::Dangling
+                };
+            }
+        } else {
+            assign_remaining(&mut program);
+        }
 
         ParserReturn {
             program,
@@ -1041,7 +1067,8 @@ mod test {
     use std::path::Path;
 
     use oxc_ast::ast::{
-        CommentKind, Expression, Statement, TSNamespaceDeclarationBody, TSNamespaceDeclarationKind,
+        Comment, CommentKind, Expression, Statement, TSNamespaceDeclarationBody,
+        TSNamespaceDeclarationKind,
     };
     use oxc_span::GetSpan;
 
@@ -1056,6 +1083,26 @@ mod test {
         assert!(ret.program.is_empty());
         assert!(ret.diagnostics.is_empty());
         assert!(!ret.is_flow_language);
+    }
+
+    #[test]
+    fn recovered_programs_return_attached_comments() {
+        let allocator = Allocator::default();
+        let ret = Parser::new(
+            &allocator,
+            "/* before */ return /* argument */ value; // after",
+            SourceType::mjs(),
+        )
+        .parse();
+        assert!(!ret.diagnostics.is_empty());
+        assert!(!ret.fatal_error);
+        assert_eq!(ret.program.comments.len(), 3);
+        assert!(
+            ret.program
+                .comments
+                .iter()
+                .all(|comment| comment.node_id.get() != Comment::UNASSIGNED_NODE_ID)
+        );
     }
 
     #[test]

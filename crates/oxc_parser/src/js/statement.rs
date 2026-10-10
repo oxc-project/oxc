@@ -1,7 +1,10 @@
+use std::num::NonZeroU32;
+
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
+use oxc_syntax::{GetNodeId, node::NodeId};
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
@@ -96,7 +99,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let string = string.unbox();
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
-                        directives.push(Directive::new(span, string, Str::from(src), self));
+                        let directive = Directive::new(span, string, Str::from(src), self);
+                        if let Some(comments) = self.leading_node_comments_at(span.start) {
+                            self.assign_node_leading_comments(
+                                directive.node_id.get(),
+                                span.start,
+                                comments,
+                            );
+                        }
+                        if self.cur_token().has_preceding_comment() {
+                            self.assign_trailing_comments(directive.node_id.get(), span.end);
+                        }
+                        directives.push(directive);
                         continue;
                     }
                     stmt => {
@@ -129,14 +143,44 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `StatementListItem`[Yield, Await, Return] :
     ///     Statement[?Yield, ?Await, ?Return]
     ///     Declaration[?Yield, ?Await]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_statement_list_item(
         &mut self,
         stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        if self.cur_token().has_preceding_comment() {
+            self.parse_statement_with_comments(stmt_ctx)
+        } else {
+            self.parse_statement_core(stmt_ctx)
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn parse_statement_with_comments(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+        let comments = self.leading_node_comments();
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+        let previous_start = self.statement_comment_start;
+        if comments.is_some() {
+            self.statement_comment_start = self.cur_start();
+        }
+        let mut stmt = self.parse_statement_core(stmt_ctx);
+        self.statement_comment_start = previous_start;
+        if let Some(comments) = no_side_effects_comments
+            && let Some(node_id) = Self::set_pure_on_function_stmt(&mut stmt)
+        {
+            self.mark_no_side_effects_comments_applied(node_id, comments);
+        }
+        if let Some(comments) = comments {
+            self.assign_statement_comments(&stmt, comments);
+        }
+        stmt
+    }
 
-        let mut stmt = match self.cur_kind() {
+    fn parse_statement_core(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
+        let stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => self.parse_empty_statement(),
             Kind::If => self.parse_if_statement(),
@@ -198,56 +242,351 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => self.parse_expression_or_labeled_statement(),
         };
 
-        if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_stmt(&mut stmt)
+        if self.cur_token().has_preceding_comment()
+            && !matches!(&stmt, Statement::ExpressionStatement(node) if matches!(node.expression, Expression::StringLiteral(_)))
         {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+            self.assign_trailing_comments(stmt.node_id(), stmt.span().end);
         }
-
         stmt
     }
 
-    pub(super) fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
+    #[inline]
+    pub(crate) fn leading_node_comments(&self) -> Option<NonZeroU32> {
+        if !self.cur_token().has_preceding_comment() {
+            return None;
+        }
+        self.leading_node_comments_at(self.cur_start())
+    }
+
+    #[inline]
+    #[expect(clippy::cast_possible_truncation, reason = "Comments fit within u32 source offsets")]
+    pub(crate) fn leading_expression_comments(&self) -> Option<NonZeroU32> {
+        if !self.cur_token().has_preceding_comment() {
+            return None;
+        }
+        // Commas and `?` have no AST node of their own. Comments immediately
+        // after them lead the following expression even when lexer trivia
+        // classifies them as trailing the punctuation.
+        if self.prev_token_end == 0
+            || !matches!(self.source_text.as_bytes()[self.prev_token_end as usize - 1], b',' | b'?')
+        {
+            return self.leading_node_comments_at(self.cur_start());
+        }
+        let comments = &self.lexer.trivia_builder.comments;
+        let end = if comments.last().is_none_or(|comment| comment.span.end <= self.cur_start()) {
+            comments.len()
+        } else {
+            comments.partition_point(|comment| comment.span.end <= self.cur_start())
+        };
+        let mut begin = end;
+        while begin != 0 && comments[begin - 1].span.start >= self.prev_token_end {
+            begin -= 1;
+        }
+        (begin != end).then(|| NonZeroU32::new(begin as u32 + 1).unwrap())
+    }
+
+    fn comment_needs_assignment_pass(content: CommentContent) -> bool {
+        matches!(
+            content,
+            CommentContent::Pure
+                | CommentContent::NoSideEffects
+                | CommentContent::PropertyKey
+                | CommentContent::CoverageIgnoreFile
+                | CommentContent::Webpack
+                | CommentContent::Vite
+                | CommentContent::Turbopack
+        )
+    }
+
+    #[inline]
+    #[expect(
+        clippy::cast_possible_truncation,
+        reason = "Comments fit within the parser's u32 source offsets"
+    )]
+    fn leading_node_comments_at(&self, start: u32) -> Option<NonZeroU32> {
+        let comments = &self.lexer.trivia_builder.comments;
+        let end = if comments.last().is_none_or(|comment| comment.span.end <= start) {
+            comments.len()
+        } else {
+            comments.partition_point(|comment| comment.span.end <= start)
+        };
+        let mut begin = end;
+        while begin != 0 && comments[begin - 1].attached_to == start {
+            begin -= 1;
+        }
+        (begin != end).then(|| NonZeroU32::new(begin as u32 + 1).unwrap())
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn parse_with_leading_comments<T: GetSpan + GetNodeId>(
+        &mut self,
+        parse: impl FnOnce(&mut Self) -> T,
+    ) -> T {
+        let comments = self.leading_node_comments();
+        let node = parse(self);
+        if let Some(comments) = comments {
+            self.assign_node_leading_comments(node.node_id(), node.span().start, comments);
+        }
+        node
+    }
+
+    fn assign_statement_comments(&mut self, stmt: &Statement<'a>, comments: NonZeroU32) {
+        self.assign_node_leading_comments(stmt.node_id(), stmt.span().start, comments);
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn assign_node_leading_comments(
+        &mut self,
+        node_id: NodeId,
+        start: u32,
+        begin: NonZeroU32,
+    ) {
+        // Comments preceding one token form a contiguous group. Keeping only
+        // its first index avoids carrying a range through recursive parsing.
+        // Decorators can move a node's start past the token at entry.
+        for comment in &mut self.lexer.trivia_builder.comments[begin.get() as usize - 1..] {
+            if comment.attached_to != start {
+                break;
+            }
+            if Self::comment_needs_assignment_pass(comment.content) {
+                continue;
+            }
+            if comment.is_leading() {
+                comment.node_id.set(node_id);
+                comment.placement = CommentPlacement::Leading;
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn assign_expression_leading_comments(
+        &mut self,
+        node_id: NodeId,
+        start: u32,
+        begin: NonZeroU32,
+    ) {
+        for comment in &mut self.lexer.trivia_builder.comments[begin.get() as usize - 1..] {
+            if comment.span.end > start {
+                break;
+            }
+            if Self::comment_needs_assignment_pass(comment.content)
+                || (comment.node_id.get() != Comment::UNASSIGNED_NODE_ID
+                    && comment.placement == CommentPlacement::Trailing)
+            {
+                continue;
+            }
+            comment.node_id.set(node_id);
+            comment.placement = CommentPlacement::Leading;
+            self.comment_assignment_epoch += 1;
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn assign_sibling_comments(
+        &mut self,
+        left_id: NodeId,
+        left_end: u32,
+        right_id: NodeId,
+        prefix_end: u32,
+    ) {
+        let comments = &mut self.lexer.trivia_builder.comments;
+        let end = comments.partition_point(|comment| comment.span.end <= prefix_end);
+        for comment in comments[..end].iter_mut().rev() {
+            if comment.span.start < left_end {
+                break;
+            }
+            if Self::comment_needs_assignment_pass(comment.content) {
+                continue;
+            }
+            let (node_id, placement) = if comment.is_trailing() && comment.attached_to == left_end {
+                (left_id, CommentPlacement::Trailing)
+            } else {
+                (right_id, CommentPlacement::Leading)
+            };
+            comment.node_id.set(node_id);
+            comment.placement = placement;
+            self.comment_assignment_epoch += 1;
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn mark_pure_comments_applied(
+        &mut self,
+        node_id: NodeId,
+        (begin, end): (u32, NonZeroU32),
+    ) {
+        for comment in &mut self.lexer.trivia_builder.comments[begin as usize..end.get() as usize] {
+            if matches!(comment.content, CommentContent::PureNotApplied | CommentContent::Pure) {
+                comment.content = CommentContent::Pure;
+                comment.node_id.set(node_id);
+                comment.placement = CommentPlacement::Leading;
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn mark_no_side_effects_comments_applied(
+        &mut self,
+        node_id: NodeId,
+        (begin, end): (u32, NonZeroU32),
+    ) {
+        for comment in &mut self.lexer.trivia_builder.comments[begin as usize..end.get() as usize] {
+            if matches!(
+                comment.content,
+                CommentContent::NoSideEffectsNotApplied | CommentContent::NoSideEffects
+            ) {
+                comment.content = CommentContent::NoSideEffects;
+                comment.node_id.set(node_id);
+                comment.placement = CommentPlacement::Leading;
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
+    pub(crate) fn remap_leading_comment_owner(&mut self, start: u32, from: NodeId, to: NodeId) {
+        let comments = &mut self.lexer.trivia_builder.comments;
+        let end = comments.partition_point(|comment| comment.span.end <= start);
+        for comment in comments[..end].iter_mut().rev() {
+            if comment.node_id.get() == from
+                && !Self::comment_needs_assignment_pass(comment.content)
+            {
+                comment.node_id.set(to);
+                self.comment_assignment_epoch += 1;
+            } else if comment.attached_to != start
+                && !Self::comment_needs_assignment_pass(comment.content)
+            {
+                break;
+            }
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn remap_trailing_comment_owner(&mut self, end: u32, from: NodeId, to: NodeId) {
+        let comments = &mut self.lexer.trivia_builder.comments;
+        let begin = comments.partition_point(|comment| comment.span.start < end);
+        for comment in &mut comments[begin..] {
+            if comment.attached_to != end {
+                break;
+            }
+            if comment.node_id.get() == from {
+                comment.node_id.set(to);
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn assign_trailing_comments(&mut self, node_id: NodeId, boundary: u32) {
+        let next_start = self.cur_start();
+        let comments = &mut self.lexer.trivia_builder.comments;
+        let end = if comments.last().is_none_or(|comment| comment.span.end <= next_start) {
+            comments.len()
+        } else {
+            comments.partition_point(|comment| comment.span.end <= next_start)
+        };
+        for comment in comments[..end].iter_mut().rev() {
+            if comment.span.start < boundary {
+                break;
+            }
+            if comment.attached_to == boundary
+                && comment.is_trailing()
+                && comment.content != CommentContent::CoverageIgnoreFile
+            {
+                comment.node_id.set(node_id);
+                comment.placement = CommentPlacement::Trailing;
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
+    #[inline]
+    pub(crate) fn assign_body_end_comments(&mut self, node_id: NodeId, span: Span, start: u32) {
+        if self
+            .lexer
+            .trivia_builder
+            .comments
+            .last()
+            .is_none_or(|comment| comment.span.start < start)
+        {
+            return;
+        }
+        self.assign_body_end_comments_cold(node_id, span, start);
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn assign_body_end_comments_cold(&mut self, node_id: NodeId, span: Span, start: u32) {
+        let comments = &mut self.lexer.trivia_builder.comments;
+        let end = if comments.last().is_some_and(|comment| comment.span.end <= span.end) {
+            comments.len()
+        } else {
+            comments.partition_point(|comment| comment.span.end <= span.end)
+        };
+        for comment in comments[..end].iter_mut().rev() {
+            if comment.span.start < start {
+                break;
+            }
+            if comment.node_id.get() == Comment::UNASSIGNED_NODE_ID
+                && comment.content != CommentContent::CoverageIgnoreFile
+            {
+                comment.node_id.set(node_id);
+                comment.placement = CommentPlacement::Dangling;
+                self.comment_assignment_epoch += 1;
+            }
+        }
+    }
+
+    pub(super) fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> Option<NodeId> {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
             Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
                 ExportDefaultDeclarationKind::FunctionExpression(func)
                 | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
-                _ => false,
+                _ => None,
             },
             Statement::ExportDeclaration(decl) => match &mut decl.declaration {
                 Declaration::FunctionDeclaration(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
                 Declaration::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
                     {
                         Self::set_pure_on_function_expr(expr)
                     } else {
-                        false
+                        None
                     }
                 }
-                _ => false,
+                _ => None,
             },
             Statement::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                 if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
                     Self::set_pure_on_function_expr(expr)
                 } else {
-                    false
+                    None
                 }
             }
-            _ => false,
+            _ => None,
         }
     }
 
@@ -277,7 +616,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
         let block = self.parse_block();
+        self.assign_block_end_comments(&block);
         Statement::BlockStatement(block)
+    }
+
+    fn assign_block_end_comments(&mut self, block: &BlockStatement<'a>) {
+        let start = block.body.last().map_or(block.span.start, |statement| statement.span().end);
+        self.assign_body_end_comments(block.node_id.get(), block.span, start);
     }
 
     /// Section 14.3.2 Variable Statement
@@ -324,8 +669,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `if`
         let test = self.parse_paren_expression();
         let consequent = self.parse_statement_list_item(StatementContext::If);
-        let alternate =
-            self.eat(Kind::Else).then(|| self.parse_statement_list_item(StatementContext::If));
+        let alternate = if self.at(Kind::Else) {
+            let has_comments = self.cur_token().has_preceding_comment();
+            self.bump_any();
+            let prefix_end = self.cur_start();
+            let has_comments = has_comments || self.cur_token().has_preceding_comment();
+            let alternate = self.parse_statement_list_item(StatementContext::If);
+            if has_comments {
+                self.assign_sibling_comments(
+                    consequent.node_id(),
+                    consequent.span().end,
+                    alternate.node_id(),
+                    prefix_end,
+                );
+            }
+            Some(alternate)
+        } else {
+            None
+        };
         Statement::new_if_statement(self.end_span(start), test, consequent, alternate, self)
     }
 
@@ -765,6 +1126,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_switch_case(&mut self) -> SwitchCase<'a> {
+        let leading_comments = self.leading_node_comments();
         let start = self.cur_start();
         let test = match self.cur_kind() {
             Kind::Default => {
@@ -808,7 +1170,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             consequent.push(stmt);
         }
-        SwitchCase::new(self.end_span(start), test, consequent, self)
+        let case = SwitchCase::new(self.end_span(start), test, consequent, self);
+        if let Some(comments) = leading_comments {
+            self.assign_node_leading_comments(case.node_id.get(), case.span.start, comments);
+        }
+        // A case shares its end with its last statement. A trailing comment
+        // outside that boundary belongs to the case in the enclosing switch.
+        if self.cur_token().has_preceding_comment() {
+            self.assign_trailing_comments(case.node_id.get(), case.span.end);
+        }
+        case
     }
 
     /// Section 14.14 Throw Statement
@@ -833,10 +1204,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // bump `try`
 
         let block = self.parse_block();
+        self.assign_block_end_comments(&block);
 
         let handler = self.at(Kind::Catch).then(|| self.parse_catch_clause());
 
-        let finalizer = self.eat(Kind::Finally).then(|| self.parse_block());
+        let finalizer = self.eat(Kind::Finally).then(|| {
+            let block = self.parse_block();
+            self.assign_block_end_comments(&block);
+            block
+        });
 
         if handler.is_none() && finalizer.is_none() {
             let range = Span::empty(block.span.end);
@@ -857,6 +1233,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None
         };
         let body = self.parse_block();
+        self.assign_block_end_comments(&body);
         let param = pattern.map(|(pattern, type_annotation)| {
             CatchParameter::new(
                 Span::new(

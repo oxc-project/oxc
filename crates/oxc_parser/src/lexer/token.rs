@@ -14,7 +14,8 @@ use super::kind::Kind;
 // - Bits 80-87 (8 bits): `escaped` (`bool`)
 // - Bits 88-95 (8 bits): `lone_surrogates` (`bool`)
 // - Bits 96-103 (8 bits): `has_separator` (`bool`)
-// - Bits 104-127 (24 bits): unused
+// - Bits 104-111 (8 bits): `has_preceding_comment` (`bool`)
+// - Bits 112-127 (16 bits): unused
 
 const START_SHIFT: usize = 0;
 const END_SHIFT: usize = 32;
@@ -23,6 +24,7 @@ const IS_ON_NEW_LINE_SHIFT: usize = 72;
 const ESCAPED_SHIFT: usize = 80;
 const LONE_SURROGATES_SHIFT: usize = 88;
 const HAS_SEPARATOR_SHIFT: usize = 96;
+const HAS_PRECEDING_COMMENT_SHIFT: usize = 104;
 
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
@@ -50,6 +52,7 @@ const _: () = {
     assert!(is_valid_shift::<bool>(ESCAPED_SHIFT));
     assert!(is_valid_shift::<bool>(LONE_SURROGATES_SHIFT));
     assert!(is_valid_shift::<bool>(HAS_SEPARATOR_SHIFT));
+    assert!(is_valid_shift::<bool>(HAS_PRECEDING_COMMENT_SHIFT));
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -296,6 +299,21 @@ impl Token {
         unsafe { self.write_bool(HAS_SEPARATOR_SHIFT, value) };
     }
 
+    /// Whether lexing this token crossed a comment, including when re-lexing
+    /// after a checkpoint. This is only a fast-path marker; trivia determines
+    /// whether those comments are leading or trailing.
+    #[inline]
+    pub(crate) fn has_preceding_comment(&self) -> bool {
+        // SAFETY: This byte is initialized to zero and only written as a bool.
+        unsafe { self.read_bool(HAS_PRECEDING_COMMENT_SHIFT) }
+    }
+
+    #[inline]
+    pub(super) fn set_has_preceding_comment(&mut self) {
+        // SAFETY: The shift is checked above as a valid bool field in Token.
+        unsafe { self.write_bool(HAS_PRECEDING_COMMENT_SHIFT, true) };
+    }
+
     /// Read `bool` from 8 bits starting at bit position `shift`.
     ///
     /// # SAFETY
@@ -407,6 +425,7 @@ mod test {
         assert!(!token.escaped());
         assert!(!token.lone_surrogates());
         assert!(!token.has_separator());
+        assert!(!token.has_preceding_comment());
     }
 
     #[test]
@@ -442,6 +461,7 @@ mod test {
             // Assuming set_has_separator is not always called if false
             token.set_has_separator(true);
         }
+        token.set_has_preceding_comment();
 
         assert_eq!(token.kind(), kind);
         assert_eq!(token.start(), start);
@@ -450,6 +470,7 @@ mod test {
         assert_eq!(token.escaped(), escaped);
         assert_eq!(token.lone_surrogates(), lone_surrogates);
         assert_eq!(token.has_separator(), has_separator);
+        assert!(token.has_preceding_comment());
     }
 
     #[test]
@@ -485,6 +506,7 @@ mod test {
         token_with_flags.set_escaped(true);
         token_with_flags.set_lone_surrogates(true);
         token_with_flags.set_has_separator(true);
+        token_with_flags.set_has_preceding_comment();
 
         token_with_flags.set_start(40);
         assert_eq!(token_with_flags.start(), 40);
@@ -492,6 +514,7 @@ mod test {
         assert!(token_with_flags.escaped());
         assert!(token_with_flags.lone_surrogates());
         assert!(token_with_flags.has_separator());
+        assert!(token_with_flags.has_preceding_comment());
 
         // Test that other flags are not affected by set_escaped
         let mut token_with_flags2 = Token::default();
