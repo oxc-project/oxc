@@ -3715,3 +3715,132 @@ fn test_typescript_eslint() {
         .with_snapshot_suffix("typescript-eslint")
         .test_and_snapshot();
 }
+
+#[test]
+fn test_declare_in_definition_file() {
+    use crate::tester::Tester;
+    use std::path::PathBuf;
+
+    // Expected results come from `@typescript-eslint/no-shadow` (8.71.1) run on `types.d.ts`.
+    // In a definition file only a `declare`d variable, class, enum or namespace/module is
+    // exempt itself. Declarations nested in a `declare` construct can still shadow.
+    let dts = || Some(PathBuf::from("types.d.ts"));
+
+    let pass = vec![
+        ("declare const value: number;", None, None, dts()),
+        (
+            "declare namespace A { const x: number; } declare namespace B { const x: string; }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare namespace N { const x: number; } declare namespace N { const x: string; }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare namespace Example { function f(value: string): void; }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare namespace A { class C { m(value: string): void; } }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare class C { m(value: string): void }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare function f(value: string): void;",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare type F = (value: string) => void;",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare global { const value: string; }",
+            None,
+            None,
+            dts(),
+        ),
+    ];
+
+    let fail = vec![
+        (
+            "declare const value: number;\ndeclare namespace Example { const value: string; }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare module 'example' { export const value: boolean; }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare namespace A { namespace B { const value: string; } }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "export declare const value: number;\nexport declare namespace Example { const value: string; }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const value: number;\ndeclare namespace Example { export const value: string; }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const Foo: number;\ndeclare namespace Example { class Foo {} }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare const Foo: number;\ndeclare namespace Example { enum Foo {} }",
+            None,
+            None,
+            dts(),
+        ),
+        (
+            "declare interface Foo {}\ndeclare namespace Example { interface Foo {} }",
+            None,
+            None,
+            dts(),
+        ),
+        ("declare type Foo = 1;\ndeclare namespace Example { type Foo = 2; }", None, None, dts()),
+        ("declare type T = 1;\ndeclare interface I<T> { x: T }", None, None, dts()),
+        ("declare type T = 1;\ndeclare class C<T> { x: T }", None, None, dts()),
+        ("declare const A: number;\ndeclare enum E { A }", None, None, dts()),
+        // The same code is reported in a regular `.ts` file.
+        (
+            "declare const value: number;\ndeclare namespace Example { const value: string; }",
+            None,
+            None,
+            Some(PathBuf::from("types.ts")),
+        ),
+    ];
+
+    Tester::new(NoShadow::NAME, NoShadow::PLUGIN, pass, fail)
+        .with_snapshot_suffix("definition-file")
+        .test_and_snapshot();
+}
