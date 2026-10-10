@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{BinaryExpression, Expression},
@@ -6,8 +9,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -335,8 +336,6 @@ fn test() {
         ("'hello' != 'world'", Some(json!(["smart"]))),
         ("0 == 0", Some(json!(["smart"]))),
         ("true == true", Some(json!(["smart"]))),
-        ("`hello` != `world`", Some(json!(["smart"]))),
-        ("`hello` == 'hello'", Some(json!(["smart"]))),
         ("foo == null", Some(json!(["smart"]))),
         ("foo === null", None),
         // Always use === or !== with `null`
@@ -363,23 +362,22 @@ fn test() {
         ("a == null", Some(serde_json::json!(["always", { "null": "never" }]))),
         ("a != null", Some(serde_json::json!(["always", { "null": "never" }]))),
         ("null != null", Some(serde_json::json!(["always", { "null": "never" }]))),
-        ("a >= null", Some(serde_json::json!(["always", { "null": "never" }]))),
-        ("a + null", Some(serde_json::json!(["always", { "null": "never" }]))),
-        ("null + null", Some(serde_json::json!(["always", { "null": "never" }]))),
-        ("null instanceof Foo", Some(serde_json::json!(["always", { "null": "never" }]))),
-        ("null >= 1", Some(json!(["always", { "null": "never" }]))),
         ("foo === /abc/u", Some(serde_json::json!(["always", { "null": "never" }]))), // { "ecmaVersion": 2015 },
         ("foo === 1n", Some(serde_json::json!(["always", { "null": "never" }]))), // { "ecmaVersion": 2020 }
         // Originally for issue: <https://github.com/oxc-project/oxc/issues/8773>
         // We previously allowed exclusion of the first value, but that
         // causes difficulties in validation, so let's not.
         ("href != null", Some(json!(["always", { "null": "ignore" }]))),
+        ("`hello` != `world`", Some(json!(["smart"]))),
+        ("`hello` == 'hello'", Some(json!(["smart"]))),
+        ("a >= null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("a + null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("null + null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("null instanceof Foo", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("null >= 1", Some(json!(["always", { "null": "never" }]))),
     ];
 
     let fail = vec![
-        ("a === null", Some(json!(["always", { "null": "never" }]))),
-        ("a !== null", Some(json!(["always", { "null": "never" }]))),
-        ("`${a}` == 'x'", Some(json!(["smart"]))),
         ("typeof foo == 'undefined'", None),
         ("'hello' != 'world'", None),
         ("0 == 0", None),
@@ -390,6 +388,10 @@ fn test() {
         ("bananas != 1", None),
         ("value == undefined", None),
         ("null == null", Some(json!(["always", { "null": "always" }]))),
+        ("a === null", Some(json!(["always", { "null": "never" }]))),
+        ("a !== null", Some(json!(["always", { "null": "never" }]))),
+        ("`${a}` == 'x'", Some(json!(["smart"]))),
+        ("`${a}` == `${b}`", Some(json!(["smart"]))),
     ];
 
     let fix = vec![
@@ -399,6 +401,8 @@ fn test() {
         ("1000  !=  1000", "1000 !== 1000", None),
         ("(1000 + 1) != 1000", "(1000 + 1) !== 1000", None),
         ("a == b", "a === b", None),
+        ("`hello` == 'hello'", "`hello` === 'hello'", None),
+        ("`hello` != `world`", "`hello` !== `world`", None),
     ];
 
     Tester::new(Eqeqeq::NAME, Eqeqeq::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

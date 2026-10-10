@@ -2,27 +2,6 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ eslint(eqeqeq): Expected == and instead saw ===
-   ╭─[eqeqeq.tsx:1:1]
- 1 │ a === null
-   · ──────────
-   ╰────
-  help: Prefer == operator
-
-  ⚠ eslint(eqeqeq): Expected != and instead saw !==
-   ╭─[eqeqeq.tsx:1:1]
- 1 │ a !== null
-   · ──────────
-   ╰────
-  help: Prefer != operator
-
-  ⚠ eslint(eqeqeq): Expected === and instead saw ==
-   ╭─[eqeqeq.tsx:1:8]
- 1 │ `${a}` == 'x'
-   ·        ──
-   ╰────
-  help: Prefer === operator
-
   ⚠ eslint(eqeqeq): Expected === and instead saw ==
    ╭─[eqeqeq.tsx:1:12]
  1 │ typeof foo == 'undefined'
@@ -90,5 +69,33 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[eqeqeq.tsx:1:6]
  1 │ null == null
    ·      ──
+   ╰────
+  help: Prefer === operator
+
+  ⚠ eslint(eqeqeq): Expected == and instead saw ===
+   ╭─[eqeqeq.tsx:1:1]
+ 1 │ a === null
+   · ──────────
+   ╰────
+  help: Prefer == operator
+
+  ⚠ eslint(eqeqeq): Expected != and instead saw !==
+   ╭─[eqeqeq.tsx:1:1]
+ 1 │ a !== null
+   · ──────────
+   ╰────
+  help: Prefer != operator
+
+  ⚠ eslint(eqeqeq): Expected === and instead saw ==
+   ╭─[eqeqeq.tsx:1:8]
+ 1 │ `${a}` == 'x'
+   ·        ──
+   ╰────
+  help: Prefer === operator
+
+  ⚠ eslint(eqeqeq): Expected === and instead saw ==
+   ╭─[eqeqeq.tsx:1:8]
+ 1 │ `${a}` == `${b}`
+   ·        ──
    ╰────
   help: Prefer === operator
