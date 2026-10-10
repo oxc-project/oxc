@@ -229,7 +229,15 @@ export function commentsExistBetween(
   );
 }
 
-/** Find the first comment whose `start` is at or after `offset`. */
+/**
+ * Find the first comment whose `start` is at or after `offset`.
+ *
+ * Searched range starts at `startIndex` and ends at `length`.
+ * Returns `length` if all comments have `start` < `offset`.
+ *
+ * Note: Source text is limited to 1 GiB max, so number of comments cannot exceed 2^30.
+ * This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
+ */
 function firstCommentAtOrAfter(
   int32: Int32Array,
   offset: number,
