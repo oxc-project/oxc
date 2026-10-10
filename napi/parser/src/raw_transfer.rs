@@ -332,7 +332,9 @@ unsafe fn parse_raw_impl(
             let mut tokens = ret.tokens;
             update_tokens(&mut tokens, &program, &span_converter, ESTreeTokenOptions::new(is_ts));
 
-            let tokens_offset = offset_in_buffer(tokens.as_ptr(), buffer_ptr);
+            // If there are no tokens, `tokens.as_ptr()` is a dangling pointer, which is not within the buffer
+            let tokens_offset =
+                if tokens.is_empty() { 0 } else { offset_in_buffer(tokens.as_ptr(), buffer_ptr) };
             #[expect(clippy::cast_possible_truncation)]
             let tokens_len = tokens.len() as u32;
             (tokens_offset, tokens_len)
@@ -380,9 +382,10 @@ unsafe fn parse_raw_impl(
 /// Get offset of `ptr` relative to start of buffer.
 ///
 /// `ptr` must point within the buffer, which is less than 2 GiB in size, so offset always fits in a `u32`.
+/// Note: Pointer of an empty `Vec` is dangling, so is not within the buffer.
 #[expect(clippy::cast_possible_truncation)]
 fn offset_in_buffer<T>(ptr: *const T, buffer_ptr: NonNull<u8>) -> u32 {
-    let offset = ptr.addr() - buffer_ptr.addr().get();
-    debug_assert!(offset < BLOCK_SIZE);
-    offset as u32
+    let buffer_addr = buffer_ptr.addr().get();
+    debug_assert!(ptr.addr() >= buffer_addr && ptr.addr() - buffer_addr < BLOCK_SIZE);
+    (ptr.addr() - buffer_addr) as u32
 }
