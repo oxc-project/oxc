@@ -30,6 +30,9 @@ pub fn as_direct_eval_call<'a, 'b>(
 /// deliberately not pruned — no in-loop optimization consumes it and callers
 /// rebuild scoping).
 ///
+/// Every identifier named `arguments`, resolved or not, also sets
+/// `pass_changes.arguments_dropped = true`.
+///
 /// There is deliberately no "resurrect" walk over replacement values: a
 /// `ReferenceId` marked removed can never reappear in a replacement. Subtrees
 /// moved out of the old slot into the new value leave id-less `TakeIn` dummies
@@ -48,6 +51,12 @@ impl<'a, 's> DroppedSubtreeCollector<'a, 's> {
 
 impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
+        // Checked before the early return below because the refresh matches
+        // live identifiers by name alone. A false positive only costs a
+        // refresh.
+        if it.name == "arguments" {
+            self.pass_changes.arguments_dropped = true;
+        }
         // Freshly built `IdentifierReference` nodes (e.g. created via
         // `ast.identifier_reference(...)` or as a `TakeIn` dummy left in place
         // by `take_in`) have no `reference_id` yet. Such nodes carry no

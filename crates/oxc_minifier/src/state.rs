@@ -59,6 +59,11 @@ pub struct PassChanges<'a> {
     /// At least one direct `eval(...)` call was dropped this pass. Gates
     /// the small `LiveDirectEvalCollector` walk at flush time.
     pub(crate) direct_eval_dropped: bool,
+
+    /// At least one identifier named `arguments` was dropped this pass. Gates
+    /// the walk that re-derives which parameters are observable through
+    /// mapped arguments at flush time.
+    pub(crate) arguments_dropped: bool,
 }
 
 impl<'a> PassChanges<'a> {
@@ -67,6 +72,7 @@ impl<'a> PassChanges<'a> {
             revisit_requested: false,
             removed_references: BitSet::new_in(references_len, allocator),
             direct_eval_dropped: false,
+            arguments_dropped: false,
         }
     }
 }
@@ -188,6 +194,7 @@ impl<'a> MinifierState<'a> {
         !self.pass_changes.revisit_requested
             && self.pass_changes.removed_references.is_empty()
             && !self.pass_changes.direct_eval_dropped
+            && !self.pass_changes.arguments_dropped
     }
 }
 
