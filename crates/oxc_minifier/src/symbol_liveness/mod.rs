@@ -32,7 +32,12 @@
 //!    remains even if every reference disappears. The five channels are module
 //!    exports, Script-root bindings, mapped arguments, Annex B aliases, and
 //!    `using` disposal. This metadata protects every count-based removal
-//!    consumer, not only declaration removal.
+//!    consumer, not only declaration removal. The mapped-arguments channel is
+//!    the exception to stability because it is derived from lexical
+//!    reachability: a parameter of a sloppy function with a simple parameter
+//!    list is observable only while that function's `arguments` object is
+//!    reachable (see `MappedArguments`). Like the direct-eval flag, it can
+//!    only clear.
 //! 4. **Analysis runs after scoping is flushed.** Every result is derived from
 //!    the settled resolved-reference lists, so AST rewrites need no parallel
 //!    collection hooks or behind-the-cursor repair log.
@@ -41,7 +46,7 @@
 //!
 //! Functions are registered once during Normalize and the graph is recomputed
 //! only when its settled inputs can change. Peephole transforms must preserve
-//! four invariants:
+//! five invariants:
 //!
 //! 1. **Do not create function declarations.** A new declaration would have no
 //!    entry in `function_by_scope` and therefore could not own references or
@@ -60,6 +65,12 @@
 //!    analysis relies on that flag only ever clearing (dropping an eval
 //!    re-triggers analysis). An eval created after deadness was published could
 //!    reach a removed function. Debug builds assert this never happens.
+//! 5. **Do not create an `arguments` reference in, or move one into, a function
+//!    that had none.** A mapped parameter stops being implicitly observable
+//!    once its function can no longer reach its `arguments` object, and that
+//!    only ever clears (dropping a reference re-derives it). A reference
+//!    appearing later could observe writes that were already removed. Debug
+//!    builds assert this never happens.
 //!
 //! A transform that needs to violate one of these invariants must first extend
 //! function registration or the pass-change analysis signal. Keeping this boundary
@@ -93,12 +104,15 @@
 
 use oxc_allocator::{Allocator, ArenaVec, BitSet, GetAllocator};
 use oxc_ast::ast::*;
-#[cfg(debug_assertions)]
 use oxc_ast_visit::{VisitJs, walk_js::walk_function};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList};
 use oxc_semantic::Scoping;
 use oxc_span::SourceType;
-use oxc_syntax::{reference::ReferenceId, scope::ScopeId, symbol::SymbolId};
+use oxc_syntax::{
+    reference::ReferenceId,
+    scope::{ScopeFlags, ScopeId},
+    symbol::SymbolId,
+};
 
 use crate::{CompressOptions, CompressOptionsUnused, TraverseCtx};
 
@@ -116,7 +130,45 @@ pub struct SymbolLiveness<'a> {
     /// module exports, Script roots, mapped arguments, Annex B aliases, and
     /// `using` disposal.
     implicitly_observable: BitSet<'a>,
+    /// Created by the first sloppy function with a simple parameter list.
+    mapped_arguments: Option<MappedArguments<'a>>,
     recursive_functions: Option<FunctionGraph<'a>>,
+}
+
+/// Parameters aliased by the `arguments` object of their function, and the
+/// functions whose `arguments` object is still reachable.
+///
+/// In a sloppy function with a simple parameter list, `arguments[i]` reads and
+/// writes parameter `i`. Only code holding that function's own `arguments`
+/// object can use the alias: an identifier named `arguments` positioned in the
+/// function or in one of its nested arrow functions, or a direct eval. A
+/// nested non-arrow function has its own object.
+///
+/// References are matched by name and position, not by resolution. Semantic
+/// has no implicit `arguments` binding, so a reference in a nested function
+/// can resolve to an outer binding of that name although it reads the nested
+/// function's own object at runtime. The non-standard `f.arguments` and
+/// `f.caller` are not modeled.
+struct MappedArguments<'a> {
+    /// Parameters of sloppy functions with simple parameter lists.
+    parameters: BitSet<'a>,
+    /// Scopes of non-arrow functions with an identifier named `arguments`
+    /// positioned in them or in their nested arrow functions.
+    arguments_scopes: BitSet<'a>,
+    /// Whether any of `parameters` is still implicitly observable. Set by
+    /// each derivation and gates the refresh.
+    any_observable: bool,
+}
+
+impl<'a> MappedArguments<'a> {
+    fn new(scoping: &Scoping, allocator: &'a Allocator) -> Self {
+        Self {
+            parameters: BitSet::new_in(scoping.symbols_len(), allocator),
+            // No pass creates a function scope, so this covers every one.
+            arguments_scopes: BitSet::new_in(scoping.scopes_len(), allocator),
+            any_observable: false,
+        }
+    }
 }
 
 impl<'a> SymbolLiveness<'a> {
@@ -149,7 +201,7 @@ impl<'a> SymbolLiveness<'a> {
                 implicitly_observable.set_bit(symbol_id.index());
             }
         }
-        Self { implicitly_observable, recursive_functions: None }
+        Self { implicitly_observable, mapped_arguments: None, recursive_functions: None }
     }
 
     #[inline]
@@ -172,6 +224,52 @@ impl<'a> SymbolLiveness<'a> {
                 self.mark_implicitly_observable(symbol_id);
             }
         });
+    }
+
+    /// Record parameters aliased by `arguments`. They start implicitly
+    /// observable and [`Self::derive_mapped_parameters`] can only clear them.
+    fn register_mapped_parameters(
+        &mut self,
+        params: &FormalParameters<'_>,
+        scoping: &Scoping,
+        allocator: &'a Allocator,
+    ) {
+        let mapped =
+            self.mapped_arguments.get_or_insert_with(|| MappedArguments::new(scoping, allocator));
+        params.bound_names(&mut |ident| {
+            if let Some(symbol_id) = ident.symbol_id.get() {
+                mapped.parameters.set_bit(symbol_id.index());
+                self.implicitly_observable.set_bit(symbol_id.index());
+            }
+        });
+    }
+
+    /// Clear the implicit observability of every mapped parameter whose
+    /// function can no longer reach its `arguments` object. Returns whether
+    /// any parameter was cleared.
+    ///
+    /// In a valid program no other channel marks a parameter, so clearing the
+    /// bit cannot hide another observer.
+    fn derive_mapped_parameters(&mut self, scoping: &Scoping) -> bool {
+        let Some(mapped) = &mut self.mapped_arguments else { return false };
+        let mut any_observable = false;
+        let mut cleared = false;
+        for bit in mapped.parameters.ones() {
+            if !self.implicitly_observable.contains(bit) {
+                continue;
+            }
+            let scope_id = scoping.symbol_scope_id(SymbolId::from_usize(bit));
+            if mapped.arguments_scopes.contains(scope_id.index())
+                || scoping.scope_flags(scope_id).contains_direct_eval()
+            {
+                any_observable = true;
+            } else {
+                self.implicitly_observable.unset_bit(bit);
+                cleared = true;
+            }
+        }
+        mapped.any_observable = any_observable;
+        cleared
     }
 
     fn register_function(
@@ -470,20 +568,147 @@ pub fn register_function(function: &Function<'_>, ctx: &mut TraverseCtx<'_>) {
     // through `arguments`, even when a parameter has no resolved reads.
     // A `var` or function redeclaration must not make its writes removable.
     // Single-use substitution runs even when unused declarations are kept, so
-    // the parameters are marked regardless of the `unused` option.
+    // the parameters are recorded regardless of the `unused` option.
     if !scoping.scoping().scope_flags(function.scope_id()).is_strict_mode()
         && function.params.is_simple_parameter_list()
     {
         let liveness = state
             .symbols
             .ensure_liveness(|| SymbolLiveness::new(source_type, scoping.scoping(), allocator));
-        liveness.mark_bound_names(&*function.params);
+        liveness.register_mapped_parameters(&function.params, scoping.scoping(), allocator);
     }
     if recursive_functions_enabled
         && function.is_declaration()
         && let Some(liveness) = state.symbols.liveness_mut()
     {
         liveness.register_function(function, source_type, scoping.scoping(), allocator);
+    }
+}
+
+/// Normalize hook: record the function whose `arguments` object the current
+/// identifier named `arguments` reaches.
+pub fn register_arguments_reference(ctx: &mut TraverseCtx<'_>) {
+    let TraverseCtx { state, scoping, .. } = ctx;
+    // Functions are registered before their bodies are visited, so absent
+    // state means the enclosing function has no mapped parameter.
+    let Some(mapped) =
+        state.symbols.liveness_mut().and_then(|liveness| liveness.mapped_arguments.as_mut())
+    else {
+        return;
+    };
+    let function_scope_id = scoping.ancestor_scopes().find(|&scope_id| {
+        let scope_flags = scoping.scoping().scope_flags(scope_id);
+        scope_flags.is_function() && !scope_flags.is_arrow()
+    });
+    if let Some(scope_id) = function_scope_id {
+        mapped.arguments_scopes.set_bit(scope_id.index());
+    }
+}
+
+/// Normalize hook: every function and `arguments` reference has been
+/// recorded, so settle which mapped parameters are observable.
+pub fn finish_registration(ctx: &mut TraverseCtx<'_>) {
+    let TraverseCtx { state, scoping, .. } = ctx;
+    if let Some(liveness) = state.symbols.liveness_mut() {
+        liveness.derive_mapped_parameters(scoping.scoping());
+    }
+}
+
+/// Re-derive which mapped parameters are observable after a pass dropped an
+/// `arguments` identifier or a direct eval. Returns whether any parameter
+/// stopped being observable.
+///
+/// Direct-eval scope flags must already be refreshed. The walk for live
+/// `arguments` identifiers is skipped unless one was dropped, because
+/// dropping a direct eval leaves the recorded scopes exact.
+pub fn refresh_mapped_parameters(
+    program: &Program<'_>,
+    ctx: &mut TraverseCtx<'_>,
+    arguments_dropped: bool,
+) -> bool {
+    let TraverseCtx { state, scoping, .. } = ctx;
+    let Some(liveness) = state.symbols.liveness_mut() else { return false };
+    let Some(mapped) = &mut liveness.mapped_arguments else { return false };
+    if !mapped.any_observable {
+        return false;
+    }
+    if arguments_dropped {
+        mapped.arguments_scopes.clear();
+        LiveArgumentsCollector { scopes: &mut mapped.arguments_scopes, function_scope_id: None }
+            .visit_program(program);
+    }
+    liveness.derive_mapped_parameters(scoping.scoping())
+}
+
+/// Collects the scopes of non-arrow functions that still have an identifier
+/// named `arguments` positioned in them or in their nested arrow functions.
+struct LiveArgumentsCollector<'s, 'a> {
+    scopes: &'s mut BitSet<'a>,
+    /// Scope of the nearest enclosing non-arrow function.
+    function_scope_id: Option<ScopeId>,
+}
+
+impl<'a> VisitJs<'a> for LiveArgumentsCollector<'_, '_> {
+    fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
+        let outer_scope_id =
+            std::mem::replace(&mut self.function_scope_id, function.scope_id.get());
+        walk_function(self, function, flags);
+        self.function_scope_id = outer_scope_id;
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        if ident.name == "arguments"
+            && let Some(scope_id) = self.function_scope_id
+        {
+            self.scopes.set_bit(scope_id.index());
+        }
+    }
+}
+
+/// Debug contract for the mapped-arguments channel: no identifier named
+/// `arguments` may be positioned in a function that has a mapped parameter
+/// treated as unobservable. Observability is only re-derived when such an
+/// identifier is dropped, so it is sound only while no pass creates one in,
+/// or moves one into, a function that had none.
+#[cfg(debug_assertions)]
+pub fn debug_assert_no_stale_mapped_parameters(program: &Program<'_>, ctx: &TraverseCtx<'_>) {
+    let Some(liveness) = ctx.state.symbols.liveness() else { return };
+    let Some(mapped) = &liveness.mapped_arguments else { return };
+    StaleMappedParameterCheck { liveness, mapped, has_unobservable_parameter: false }
+        .visit_program(program);
+}
+
+#[cfg(debug_assertions)]
+struct StaleMappedParameterCheck<'s, 'a> {
+    liveness: &'s SymbolLiveness<'a>,
+    mapped: &'s MappedArguments<'a>,
+    /// Whether the nearest enclosing non-arrow function has a mapped
+    /// parameter that is not implicitly observable.
+    has_unobservable_parameter: bool,
+}
+
+#[cfg(debug_assertions)]
+impl<'a> VisitJs<'a> for StaleMappedParameterCheck<'_, '_> {
+    fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
+        let mut has_unobservable_parameter = false;
+        function.params.bound_names(&mut |ident| {
+            if let Some(symbol_id) = ident.symbol_id.get() {
+                has_unobservable_parameter |= self.mapped.parameters.contains(symbol_id.index())
+                    && !self.liveness.is_implicitly_observable(symbol_id);
+            }
+        });
+        let outer =
+            std::mem::replace(&mut self.has_unobservable_parameter, has_unobservable_parameter);
+        walk_function(self, function, flags);
+        self.has_unobservable_parameter = outer;
+    }
+
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        assert!(
+            ident.name != "arguments" || !self.has_unobservable_parameter,
+            "stale mapped parameters: an `arguments` identifier is positioned in a function \
+             whose parameters are treated as unobservable; a pass created it or moved it there",
+        );
     }
 }
 
@@ -635,7 +860,7 @@ struct DeadFunctionSweep<'s, 'd, 'a> {
 
 #[cfg(debug_assertions)]
 impl<'a> VisitJs<'a> for DeadFunctionSweep<'_, '_, '_> {
-    fn visit_function(&mut self, function: &Function<'a>, flags: oxc_syntax::scope::ScopeFlags) {
+    fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
         if function.is_declaration()
             && let Some(symbol_id) = function.id.as_ref().and_then(|id| id.symbol_id.get())
         {

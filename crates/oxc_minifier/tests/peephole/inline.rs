@@ -160,6 +160,187 @@ fn parameter_writes_preserve_mapped_arguments_when_keeping_unused() {
 }
 
 #[test]
+fn parameters_without_reachable_arguments_are_optimized() {
+    // https://github.com/oxc-project/oxc/pull/27494#issuecomment-6085972345
+    let options = CompressOptions::smallest();
+    let keep_unused =
+        CompressOptions { unused: CompressOptionsUnused::Keep, ..CompressOptions::smallest() };
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        for (source, expected) in [
+            (
+                "function h(a, b) { var a = b; return typeof a; }",
+                "function h(a, b) { return typeof b; }",
+            ),
+            ("function h(a, b) { var a = b; return !a; }", "function h(a, b) { return !b; }"),
+            ("function h(a) { var a = 1; return a + 1; }", "function h(a) { return 2; }"),
+            (
+                "function h(a) { var a; console.log(a = 'foo', inspect()); }",
+                "function h(a) { console.log('foo', inspect()); }",
+            ),
+            (
+                "function h(a, b, b) { var a = b; return typeof a; }",
+                "function h(a, b, b) { return typeof b; }",
+            ),
+            (
+                "async function h(a, b) { var a = b; return a; }",
+                "async function h(a, b) { return b; }",
+            ),
+            (
+                "var h = function (a, b) { var a = b; return typeof a; };",
+                "var h = function (a, b) { return typeof b; };",
+            ),
+            (
+                "var h = { m(a, b) { var a = b; return typeof a; } };",
+                "var h = { m(a, b) { return typeof b; } };",
+            ),
+            // A nested function has its own `arguments` object.
+            (
+                "function h(a, b) { var a = b; return [function () { return arguments[0]; }, typeof a]; }",
+                "function h(a, b) { return [function () { return arguments[0]; }, typeof b]; }",
+            ),
+            (
+                "function h(a, b) { var a = b; return { m() { return arguments[0]; }, v: typeof a }; }",
+                "function h(a, b) { return { m() { return arguments[0]; }, v: typeof b }; }",
+            ),
+        ] {
+            test_options_source_type(
+                &format!("{source} use(h, h);"),
+                &format!("{expected} use(h, h);"),
+                source_type,
+                &options,
+            );
+        }
+        test_options_source_type(
+            "function h(a, b) { var a = b; return typeof a; } use(h, h);",
+            "function h(a, b) { return typeof b; } use(h, h);",
+            source_type,
+            &keep_unused,
+        );
+    }
+}
+
+#[test]
+fn parameters_with_reachable_arguments_are_preserved() {
+    let options = CompressOptions::smallest();
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        for source in [
+            "function h(a, b) { var a = b; return [a, arguments]; }",
+            "function h(a, b) { var a = b; return () => arguments[0]; }",
+            "function h(a, b) { var a = b; return () => () => arguments[0]; }",
+            "function h(a, b) { var a = b; return (c = arguments[0]) => c; }",
+            "function h(a) { var a = 1; return eval('arguments[0]'); }",
+            "function h(a) { var a = 1; return () => eval('arguments[0]'); }",
+            "function h(a) { var a = 1; try { return arguments[0]; } catch {} }",
+            "function h(a) { var a = 1; return class { [arguments[0]]() {} }; }",
+            // A parameter named `arguments` is kept conservatively.
+            "function h(arguments, a) { var a = 1; return arguments; }",
+            // Semantic resolves these references to the outer binding, but at
+            // runtime they read the arguments object of the inner function.
+            "function h(arguments) { return function (a) { var a = 2; return arguments[0]; }; }",
+            "function h() { { let arguments = use(); return function (a) { var a = 2; return arguments[0]; }; } }",
+        ] {
+            test_same_options_source_type(&format!("{source} use(h, h);"), source_type, &options);
+        }
+        for (source, expected) in [
+            (
+                "function h(a, b) { var args = arguments; var a = b; return [a, args]; }",
+                "function h(a, b) { var args = arguments, a = b; return [a, args]; }",
+            ),
+            (
+                "function h(a) { var arguments; var a = 1; return arguments[0]; }",
+                "function h(a) { var arguments, a = 1; return arguments[0]; }",
+            ),
+            (
+                "function h(a) { var a = 1; arguments[0] = 2; return a; }",
+                "function h(a) { var a = 1; return arguments[0] = 2, a; }",
+            ),
+        ] {
+            test_options_source_type(
+                &format!("{source} use(h, h);"),
+                &format!("{expected} use(h, h);"),
+                source_type,
+                &options,
+            );
+        }
+    }
+}
+
+#[test]
+fn dropped_arguments_references_release_parameters() {
+    let options = CompressOptions::smallest();
+    let keep_unused =
+        CompressOptions { unused: CompressOptionsUnused::Keep, ..CompressOptions::smallest() };
+    let drop_console = CompressOptions { drop_console: true, ..CompressOptions::smallest() };
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        for (source, expected) in [
+            (
+                "function f(a) { var a = 1; if (false) g(arguments); return h(a); }",
+                "function f(a) { return h(1); }",
+            ),
+            (
+                "function f(a) { var a = 1; if (false) eval('arguments'); return h(a); }",
+                "function f(a) { return h(1); }",
+            ),
+            (
+                "function f(a) { var a = 1; if (false) eval(arguments); return h(a); }",
+                "function f(a) { return h(1); }",
+            ),
+            // The function declaration shares the parameter's symbol and is a
+            // candidate of the recursive-function graph.
+            (
+                "function f(a) { function a() {} if (false) g(arguments); return 1; }",
+                "function f(a) { return 1; }",
+            ),
+            (
+                "function f(a) { function a() { return a(); } if (false) g(arguments); return 1; }",
+                "function f(a) { return 1; }",
+            ),
+            // Other references to the same or another `arguments` object remain.
+            (
+                "function f(a) { var a = 1; if (false) g(arguments); return [a, arguments]; }",
+                "function f(a) { var a = 1; return [a, arguments]; }",
+            ),
+            (
+                "function f(a) { var a = 1; if (false) g(arguments); return () => arguments[0]; }",
+                "function f(a) { var a = 1; return () => arguments[0]; }",
+            ),
+            (
+                "function f(a) { var a = 1; if (false) g(arguments); return eval('arguments[0]'); }",
+                "function f(a) { var a = 1; return eval('arguments[0]'); }",
+            ),
+            (
+                "function f(a) { var a = 1; if (false) eval('x'); return [a, arguments]; }",
+                "function f(a) { var a = 1; return [a, arguments]; }",
+            ),
+            (
+                "function f(a) { var a = 1; if (false) g(arguments); return k(a); } function k(a) { var a = 1; return [a, arguments]; }",
+                "function f(a) { return k(1); } function k(a) { var a = 1; return [a, arguments]; }",
+            ),
+        ] {
+            test_options_source_type(
+                &format!("{source} use(f, f);"),
+                &format!("{expected} use(f, f);"),
+                source_type,
+                &options,
+            );
+        }
+        test_options_source_type(
+            "function f(a) { var a = 1; if (false) g(arguments); return h(a); } use(f, f);",
+            "function f(a) { return h(1); } use(f, f);",
+            source_type,
+            &keep_unused,
+        );
+        // Normalize drops the reference before the first peephole pass.
+        test_options_source_type(
+            "function f(a) { var a = 1; console.log(arguments); return h(a); } use(f, f);",
+            "function f(a) { return h(1); } use(f, f);",
+            source_type,
+            &drop_console,
+        );
+    }
+}
+
+#[test]
 fn unmapped_parameters_allow_unused_writes() {
     let options = CompressOptions::smallest();
     test_options_source_type(

@@ -1,10 +1,11 @@
 //! Completion of Normalize and peephole compression passes.
 //!
-//! AST mutations accumulate removed semantic references and dropped direct
-//! `eval` calls on [`crate::state::PassChanges`]. Both Normalize and each
-//! peephole pass cross the same completion boundary: prune those references,
-//! refresh direct-eval scope flags, then derive function reachability from the
-//! settled semantic state.
+//! AST mutations accumulate removed semantic references, dropped direct
+//! `eval` calls, and dropped `arguments` identifiers on
+//! [`crate::state::PassChanges`]. Both Normalize and each peephole pass cross
+//! the same completion boundary: prune those references, refresh direct-eval
+//! scope flags and mapped-parameter observability, then derive function
+//! reachability from the settled semantic state.
 
 #[cfg(debug_assertions)]
 use oxc_ast_visit::Visit;
@@ -199,15 +200,26 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
     DirectEvalFlagCheck { scoping }.visit_program(program);
 }
 
+/// What a flush changed for the analysis and the pass that follow it.
+struct FlushOutcome {
+    /// An input of the function graph changed, so it must be re-analyzed.
+    liveness_inputs_changed: bool,
+    /// A parameter stopped being observable through mapped arguments, which
+    /// lets the next pass apply count-based transforms to it.
+    parameters_released: bool,
+}
+
 /// Consume the [`crate::state::PassChanges`] accumulator: batch-prune removed
 /// resolved references from scoping, refresh direct-eval flags if an
-/// `eval(...)` call was dropped, and re-initialize the accumulator.
+/// `eval(...)` call was dropped, re-derive mapped-parameter observability if
+/// an `arguments` identifier or an `eval(...)` call was dropped, and
+/// re-initialize the accumulator.
 ///
 /// Pass completion calls this after Normalize (so the fixed-point loop starts
 /// against already-pruned scoping and Normalize's drops cost no extra
 /// peephole pass) and after every peephole pass — quiet ones included, where
 /// every step below is a cheap no-op.
-fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool {
+fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> FlushOutcome {
     let had_removed_references = !ctx.state.pass_changes.removed_references.is_empty();
     let liveness_inputs_changed = ctx.state.pass_changes.direct_eval_dropped
         || (had_removed_references && symbol_liveness::dead_references_affect_analysis(ctx));
@@ -240,7 +252,18 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     #[cfg(debug_assertions)]
     debug_assert_no_stale_direct_eval(program, ctx.scoping());
 
-    // (3) Reset the accumulator for the next pass. `references_len` only grows
+    // (3) Mapped arguments — gated on a dropped `arguments` identifier or
+    //     direct eval, the two ways a function reaches its `arguments`
+    //     object. Runs after (2) because it reads the refreshed flags.
+    let arguments_dropped = ctx.state.pass_changes.arguments_dropped;
+    let parameters_released = (arguments_dropped || ctx.state.pass_changes.direct_eval_dropped)
+        && symbol_liveness::refresh_mapped_parameters(program, ctx, arguments_dropped);
+    // Debug-only converse of the gate: no pass may have put an `arguments`
+    // identifier into a function that had none (see the helper).
+    #[cfg(debug_assertions)]
+    symbol_liveness::debug_assert_no_stale_mapped_parameters(program, ctx);
+
+    // (4) Reset the accumulator for the next pass. `references_len` only grows
     //     (helpers mint, never delete, references), so the bitset is
     //     re-allocated only when refs were minted this pass; otherwise a
     //     memset reuses the warm allocation (a bump arena never reclaims the
@@ -254,19 +277,33 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
         ctx.state.pass_changes.removed_references = BitSet::new_in(refs_len, ctx.allocator());
     }
     ctx.state.pass_changes.direct_eval_dropped = false;
-    liveness_inputs_changed
+    ctx.state.pass_changes.arguments_dropped = false;
+    FlushOutcome {
+        // A released parameter can share its symbol with a function
+        // declaration that the graph treated as implicitly observable.
+        liveness_inputs_changed: liveness_inputs_changed || parameters_released,
+        parameters_released,
+    }
 }
 
 /// Complete semantic bookkeeping by flushing accumulated changes into
 /// scoping, then deriving function reachability from those settled references.
 /// Keeping the pair together makes the ordering structural.
+///
+/// Returns whether liveness facts changed in a way the next pass can consume:
+/// a function was newly published dead, or a parameter was released.
 fn finish_pass<'a>(
     program: &Program<'a>,
     ctx: &mut TraverseCtx<'a>,
     force_liveness_analysis: bool,
 ) -> bool {
-    let liveness_inputs_changed = flush_pass_changes(program, ctx);
-    symbol_liveness::analyze(program, ctx, force_liveness_analysis || liveness_inputs_changed)
+    let flushed = flush_pass_changes(program, ctx);
+    let newly_dead = symbol_liveness::analyze(
+        program,
+        ctx,
+        force_liveness_analysis || flushed.liveness_inputs_changed,
+    );
+    newly_dead || flushed.parameters_released
 }
 
 /// Finish Normalize's semantic journal before the unconditional first
@@ -282,8 +319,9 @@ pub fn finish_normalize_pass<'a>(program: &Program<'a>, ctx: &mut TraverseCtx<'a
 /// Run and finish one ordinary peephole pass as a single transaction.
 ///
 /// The returned outcome combines AST/fact progress with newly published dead
-/// functions. A revisit request alone does not force liveness recomputation;
-/// reference removal and dropped direct eval continue to gate that analysis.
+/// functions and released parameters. A revisit request alone does not force
+/// liveness recomputation; reference removal, dropped direct eval, and
+/// released parameters continue to gate that analysis.
 pub fn run_peephole_pass<'a>(
     program: &mut Program<'a>,
     ctx: &mut ReusableTraverseCtx<'a>,
@@ -294,14 +332,14 @@ pub fn run_peephole_pass<'a>(
 
     let ctx = ctx.get_mut();
     let revisit_requested = ctx.state.take_revisit_requested();
-    let newly_dead = finish_pass(program, ctx, /* force_liveness_analysis */ false);
+    let liveness_progress = finish_pass(program, ctx, /* force_liveness_analysis */ false);
     debug_assert!(
-        !newly_dead || revisit_requested,
+        !liveness_progress || revisit_requested,
         "ordinary liveness progress must follow a recorded pass change"
     );
     debug_assert_pass_changes_clean(ctx);
 
-    PassOutcome { needs_another_pass: revisit_requested || newly_dead }
+    PassOutcome { needs_another_pass: revisit_requested || liveness_progress }
 }
 
 #[inline]
