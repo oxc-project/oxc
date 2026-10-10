@@ -272,3 +272,16 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# No Secrets
+###############################################################################
+
+# Clone `eslint-plugin-no-secrets` repo into `submodules/no_secrets`
+clone_repo no_secrets
+
+# Install dependencies
+npm ci
+
+# Return to `submodules` directory
+cd ..
