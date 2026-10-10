@@ -66,7 +66,7 @@ impl Rule for NoStaticOnlyClass {
             return;
         };
 
-        if class.super_class.is_some() {
+        if class.heritage.is_some() {
             return;
         }
         if !class.decorators.is_empty() {
@@ -111,7 +111,6 @@ impl Rule for NoStaticOnlyClass {
         }) {
             return;
         }
-        #[expect(clippy::cast_possible_truncation)]
         ctx.diagnostic_with_dangerous_fix(no_static_only_class_diagnostic(class.span), |fixer| {
             if with_type_annotation
                 || class.is_typescript_syntax()
@@ -154,31 +153,9 @@ impl Rule for NoStaticOnlyClass {
                         } else {
                             class.body.span.end
                         };
-                        let mut search_start = item.span().end;
-                        let mut target_semicolon_pos = None;
-                        while search_start < next_start {
-                            if let Some(pos) = ctx
-                                .source_range(Span::new(search_start, next_start))
-                                .find(';')
-                                .map(|p| search_start + (p as u32))
-                            {
-                                let comments = ctx.comments_range(item.span().end..next_start);
-                                let mut is_in_comment = false;
-                                for comment in comments {
-                                    if comment.span.start < pos && comment.span.end > pos {
-                                        is_in_comment = true;
-                                        break;
-                                    }
-                                }
-                                if !is_in_comment {
-                                    target_semicolon_pos = Some(pos);
-                                    break;
-                                }
-                                search_start = pos + 1;
-                            } else {
-                                break;
-                            }
-                        }
+                        let target_semicolon_pos = ctx
+                            .find_next_token_within(item.span().end, next_start, ";")
+                            .map(|offset| item.span().end + offset);
                         if let Some(pos) = target_semicolon_pos {
                             rule_fixes.push(fixer.delete_range(Span::sized(pos, 1)));
                         }

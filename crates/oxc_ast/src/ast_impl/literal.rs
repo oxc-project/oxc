@@ -5,7 +5,7 @@ use std::{
     fmt::{self, Display},
 };
 
-use oxc_allocator::{Allocator, CloneIn, Dummy};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy};
 use oxc_data_structures::inline_string::InlineString;
 use oxc_span::ContentEq;
 
@@ -79,29 +79,11 @@ impl Display for NumericLiteral<'_> {
 
 impl StringLiteral<'_> {
     /// Static Semantics: `IsStringWellFormedUnicode`
-    /// test for \uD800-\uDFFF
     ///
     /// See: <https://tc39.es/ecma262/multipage/abstract-operations.html#sec-isstringwellformedunicode>
-    pub fn is_string_well_formed_unicode(&self) -> bool {
-        let mut chars = self.value.chars();
-        while let Some(c) = chars.next() {
-            if c == '\\' && chars.next() == Some('u') {
-                let hex = &chars.as_str()[..4];
-                if let Ok(hex) = u32::from_str_radix(hex, 16)
-                    && (0xd800..=0xdfff).contains(&hex)
-                {
-                    return false;
-                }
-            }
-        }
-        true
-    }
-}
-
-impl AsRef<str> for StringLiteral<'_> {
     #[inline]
-    fn as_ref(&self) -> &str {
-        self.value.as_ref()
+    pub fn is_string_well_formed_unicode(&self) -> bool {
+        !self.lone_surrogates
     }
 }
 
@@ -172,7 +154,11 @@ impl ContentEq for RegExpFlags {
 impl<'alloc> CloneIn<'alloc> for RegExpFlags {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self::Cloned {
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        _: &'alloc Allocator,
+    ) -> Self::Cloned {
         *self
     }
 }

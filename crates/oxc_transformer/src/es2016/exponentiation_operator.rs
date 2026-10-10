@@ -33,7 +33,7 @@
 //! * Exponentiation operator specification: <https://tc39.es/ecma262/#sec-exp-operator>
 
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
@@ -550,7 +550,7 @@ impl<'a> ExponentiationOperator<'a> {
         let property = IdentifierName::new(SPAN, "pow", ctx);
         let callee = Expression::new_static_member_expression(span, object, property, false, ctx);
         let arguments = ArenaVec::from_array_in([Argument::from(left), Argument::from(right)], ctx);
-        Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+        Expression::new_call_expression(span, callee, None, arguments, false, ctx)
     }
 
     /// Create a temporary variable.

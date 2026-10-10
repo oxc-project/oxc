@@ -358,6 +358,17 @@ fn test() {
             }
           }
         "#,
+        r"
+          class Hello extends React.Component {
+            update(id) {
+              this.state.x[id] = 1;
+              this.state.x[id].y = 1;
+              this.state.items[id].prop = {};
+              this.state.x[id]++;
+              this.state.items[id].prop++;
+            }
+          }
+        ",
     ];
 
     Tester::new(NoDirectMutationState::NAME, NoDirectMutationState::PLUGIN, pass, fail)

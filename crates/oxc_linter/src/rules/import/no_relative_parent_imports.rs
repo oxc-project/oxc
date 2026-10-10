@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{Argument, Expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -64,11 +61,9 @@ impl Rule for NoRelativeParentImports {
                 ctx.diagnostic(no_relative_parent_imports_diagnostic(import_decl.source.span));
             }
             // ESM export { } from '...'
-            AstKind::ExportNamedDeclaration(export_decl) => {
-                if let Some(source) = &export_decl.source
-                    && is_parent_import(source.value.as_str())
-                {
-                    ctx.diagnostic(no_relative_parent_imports_diagnostic(source.span));
+            AstKind::ExportFromDeclaration(export_decl) => {
+                if is_parent_import(export_decl.source.value.as_str()) {
+                    ctx.diagnostic(no_relative_parent_imports_diagnostic(export_decl.source.span));
                 }
             }
             // ESM export * from '...'
@@ -87,10 +82,7 @@ impl Rule for NoRelativeParentImports {
             }
             // CommonJS require() calls
             AstKind::CallExpression(call_expr) => {
-                if let Expression::Identifier(ident) = &call_expr.callee
-                    && ident.name == "require"
-                    && call_expr.arguments.len() == 1
-                    && let Argument::StringLiteral(str_literal) = &call_expr.arguments[0]
+                if let Some(str_literal) = call_expr.common_js_require()
                     && is_parent_import(str_literal.value.as_str())
                 {
                     ctx.diagnostic(no_relative_parent_imports_diagnostic(str_literal.span));
@@ -150,6 +142,8 @@ fn test() {
         r#"export * from "../parent""#,
         r#"export { foo } from "./..""#,
         r#"export * from "./..""#,
+        // Parenthesized callee still resolves to `require`
+        r#"(require)("../plugin.js")"#,
     ];
 
     Tester::new(NoRelativeParentImports::NAME, NoRelativeParentImports::PLUGIN, pass, fail)

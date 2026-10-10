@@ -395,6 +395,14 @@ fn test() {
         (r#"describe("oo", function () {})"#, None),
         (r#"test("foo", function () {})"#, None),
         ("test(`123`, function () {})", None),
+        (
+            "test(`sfc compile`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
+        (
+            "test(`0 sfc compile`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
     ];
     pass.extend(pass_jest);
 
@@ -403,6 +411,10 @@ fn test() {
         ("test(`Foo MM mm`, function () {})", None),
         (
             "test(`SFC Compile`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
+        (
+            "test(`sfc Compile`, function () {})",
             Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
         ),
         ("bench(`Foo MM mm`, function () {})", None),
@@ -414,6 +426,11 @@ fn test() {
         ("test(`Foo MM mm`, function () {})", "test(`foo MM mm`, function () {})", None),
         (
             "test(`SFC Compile`, function () {})",
+            "test(`sfc compile`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
+        (
+            "test(`sfc Compile`, function () {})",
             "test(`sfc compile`, function () {})",
             Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
         ),

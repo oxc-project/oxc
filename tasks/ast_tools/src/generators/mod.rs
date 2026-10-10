@@ -7,7 +7,6 @@ use crate::{
 mod assert_layouts;
 mod ast_builder;
 mod ast_kind;
-mod builder_methods;
 #[cfg(feature = "generate-js")]
 mod estree_visit;
 mod formatter;
@@ -26,11 +25,11 @@ mod traverse;
 mod typescript;
 mod utf8_to_utf16;
 mod visit;
+mod visit_js;
 
 pub use assert_layouts::AssertLayoutsGenerator;
 pub use ast_builder::AstBuilderGenerator;
 pub use ast_kind::AstKindGenerator;
-pub use builder_methods::BuilderMethodsGenerator;
 #[cfg(feature = "generate-js")]
 pub use estree_visit::ESTreeVisitGenerator;
 pub use formatter::{FormatterAstNodesGenerator, FormatterFormatGenerator};
@@ -49,6 +48,7 @@ pub use traverse::TraverseGenerator;
 pub use typescript::TypescriptGenerator;
 pub use utf8_to_utf16::Utf8ToUtf16ConverterGenerator;
 pub use visit::VisitGenerator;
+pub use visit_js::VisitJsGenerator;
 
 /// Trait to define a generator.
 pub trait Generator: Runner {

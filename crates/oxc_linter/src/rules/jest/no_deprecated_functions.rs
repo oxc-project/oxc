@@ -1,9 +1,7 @@
-use std::borrow::Cow;
-
-use oxc_ast::ast::Expression;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -118,14 +116,23 @@ declare_oxc_lint!(
     short_description = "Disallow Jest functions that have been deprecated, renamed, or replaced.",
 );
 
-fn deprecated_functions_map(deprecated_fn: &str) -> Option<(usize, &'static str)> {
-    match deprecated_fn {
-        "jest.resetModuleRegistry" => Some((15, "jest.resetModules")),
-        "jest.addMatchers" => Some((17, "expect.extend")),
-        "require.requireMock" => Some((21, "jest.requireMock")),
-        "require.requireActual" => Some((21, "jest.requireActual")),
-        "jest.runTimersToTime" => Some((22, "jest.advanceTimersByTime")),
-        "jest.genMockFromModule" => Some((26, "jest.createMockFromModule")),
+fn deprecated_functions_map(
+    object: &str,
+    property: &str,
+) -> Option<(usize, &'static str, &'static str)> {
+    match (object, property) {
+        ("jest", "resetModuleRegistry") => {
+            Some((15, "jest.resetModuleRegistry", "jest.resetModules"))
+        }
+        ("jest", "addMatchers") => Some((17, "jest.addMatchers", "expect.extend")),
+        ("require", "requireMock") => Some((21, "require.requireMock", "jest.requireMock")),
+        ("require", "requireActual") => Some((21, "require.requireActual", "jest.requireActual")),
+        ("jest", "runTimersToTime") => {
+            Some((22, "jest.runTimersToTime", "jest.advanceTimersByTime"))
+        }
+        ("jest", "genMockFromModule") => {
+            Some((26, "jest.genMockFromModule", "jest.createMockFromModule"))
+        }
         _ => None,
     }
 }
@@ -151,32 +158,43 @@ impl Rule for NoDeprecatedFunctions {
     }
 
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        let Some(mem_expr) = node.kind().as_member_expression_kind() else {
+        // Only `jest.*` / `require.*` member accesses with a statically-known
+        // property name can match, so bail before any further work otherwise.
+        let (object, property, span) = match node.kind() {
+            AstKind::StaticMemberExpression(mem_expr) => {
+                let Expression::Identifier(ident) = &mem_expr.object else {
+                    return;
+                };
+                (ident.name.as_str(), mem_expr.property.name.as_str(), mem_expr.span)
+            }
+            AstKind::ComputedMemberExpression(mem_expr) => {
+                let Expression::Identifier(ident) = &mem_expr.object else {
+                    return;
+                };
+                let Some(name) = mem_expr.static_property_name() else {
+                    return;
+                };
+                (ident.name.as_str(), name.as_str(), mem_expr.span)
+            }
+            _ => return,
+        };
+
+        let Some((base_version, deprecated, replacement)) =
+            deprecated_functions_map(object, property)
+        else {
             return;
         };
-        let mut chain: Vec<Cow<'a, str>> = Vec::new();
-        if let Expression::Identifier(ident) = mem_expr.object() {
-            chain.push(Cow::Borrowed(ident.name.as_str()));
-        }
 
-        if let Some(name) = mem_expr.static_property_name() {
-            chain.push(Cow::Borrowed(name.as_str()));
-        }
-
-        let node_name = chain.join(".");
         let jest_version_num: usize = if let Some(jest_version) = ctx.settings().jest.version {
             jest_version
         } else {
             self.jest.version
         };
 
-        if let Some((base_version, replacement)) = deprecated_functions_map(&node_name)
-            && jest_version_num >= base_version
-        {
-            ctx.diagnostic_with_fix(
-                deprecated_function(&node_name, replacement, mem_expr.span()),
-                |fixer| fixer.replace(mem_expr.span(), replacement),
-            );
+        if jest_version_num >= base_version {
+            ctx.diagnostic_with_fix(deprecated_function(deprecated, replacement, span), |fixer| {
+                fixer.replace(span, replacement)
+            });
         }
     }
 }

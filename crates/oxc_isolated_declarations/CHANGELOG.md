@@ -4,6 +4,68 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- 0c601f4 isolated-declarations: Allow adding undefined to keyof parameter types (#27173) (Dunqing)
+- 4896287 isolated-declarations: Support readonly parameter types (#27009) (sama Pyb)
+
+## [0.150.0] - 2026-09-14
+
+### ⚡ Performance
+
+- 1f902a6 isolated_declarations: Key scope maps by `Ident` (#26380) (Dunqing)
+
+## [0.146.0] - 2026-08-19
+
+### 🐛 Bug Fixes
+
+- 134fb22 isolated-declarations: Preserve unresolved parameter types (#25909) (Dunqing)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 53f9295 isolated-declarations: Preserve undefined for defaulted any (#25292) (camc314)
+- b846abc isolated-declarations: Handle ambient expando properties (#25655) (camc314)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 468b970 isolated-declarations: Strip re-export attributes (#25090) (camc314)
+
+### ⚡ Performance
+
+- e07718f isolated_declarations: Avoid large types on stack (#25036) (overlookmotel)
+
+## [0.141.0] - 2026-07-20
+
+### 🐛 Bug Fixes
+
+- a2ef382 isolated-declarations: Reject `window.Symbol`  as global symbol reference (#24689) (camc314)
+
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- f17514b isolated-declarations: Emit const readonly fields as types (#24288) (camc314)
+
 ## [0.139.0] - 2026-07-06
 
 ### ⚡ Performance

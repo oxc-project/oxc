@@ -6,7 +6,7 @@ use oxc_ast::{
         ObjectProperty, PropertyKey, Statement, VariableDeclarator,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -19,8 +19,8 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
     rules::ContextHost,
     utils::{
-        expression_contains_jsx, function_body_contains_jsx, function_contains_jsx, is_hoc_call,
-        is_react_component_name,
+        arrow_function_body_contains_jsx, expression_contains_jsx, function_contains_jsx,
+        is_hoc_call, is_react_component_name,
     },
 };
 
@@ -96,7 +96,7 @@ struct DetectedComponent {
 
 impl Rule for NoMultiComp {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
@@ -138,7 +138,7 @@ impl<'a, 'ctx> ComponentFinder<'a, 'ctx> {
     }
 }
 
-impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
+impl<'a> VisitJs<'a> for ComponentFinder<'a, '_> {
     fn visit_class(&mut self, class: &Class<'a>) {
         if is_es6_component_class(class) {
             let name = class
@@ -147,10 +147,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
                 .map_or_else(|| "UnnamedComponent".into(), |id| id.name.to_string());
             self.record_component(name, class.span, false);
             self.component_depth += 1;
-            walk::walk_class(self, class);
+            walk_js::walk_class(self, class);
             self.component_depth -= 1;
         } else {
-            walk::walk_class(self, class);
+            walk_js::walk_class(self, class);
         }
     }
 
@@ -162,10 +162,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
         {
             self.record_component(func_id.name.to_string(), func.span, true);
             self.component_depth += 1;
-            walk::walk_function(self, func, flags);
+            walk_js::walk_function(self, func, flags);
             self.component_depth -= 1;
         } else {
-            walk::walk_function(self, func, flags);
+            walk_js::walk_function(self, func, flags);
         }
     }
 
@@ -175,14 +175,14 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
             // Store var name for potential createReactClass detection in nested call
             self.current_var_name = decl.id.get_identifier_name().map(|s| s.to_string());
             self.component_depth += 1;
-            walk::walk_variable_declarator(self, decl);
+            walk_js::walk_variable_declarator(self, decl);
             self.component_depth -= 1;
             self.current_var_name = None;
         } else {
             // Check if this might contain a createReactClass call
             let old_name = self.current_var_name.take();
             self.current_var_name = decl.id.get_identifier_name().map(|s| s.to_string());
-            walk::walk_variable_declarator(self, decl);
+            walk_js::walk_variable_declarator(self, decl);
             self.current_var_name = old_name;
         }
     }
@@ -193,10 +193,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
             let name = self.current_var_name.clone().unwrap_or_else(|| "UnnamedComponent".into());
             self.record_component(name, call.span, false);
             self.component_depth += 1;
-            walk::walk_call_expression(self, call);
+            walk_js::walk_call_expression(self, call);
             self.component_depth -= 1;
         } else {
-            walk::walk_call_expression(self, call);
+            walk_js::walk_call_expression(self, call);
         }
     }
 
@@ -207,10 +207,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
         {
             self.record_component("UnnamedComponent".into(), export_decl.span, true);
             self.component_depth += 1;
-            walk::walk_export_default_declaration(self, export_decl);
+            walk_js::walk_export_default_declaration(self, export_decl);
             self.component_depth -= 1;
         } else {
-            walk::walk_export_default_declaration(self, export_decl);
+            walk_js::walk_export_default_declaration(self, export_decl);
         }
     }
 
@@ -225,10 +225,10 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
         {
             self.record_component(id.name.to_string(), prop.span, true);
             self.component_depth += 1;
-            walk::walk_object_property(self, prop);
+            walk_js::walk_object_property(self, prop);
             self.component_depth -= 1;
         } else {
-            walk::walk_object_property(self, prop);
+            walk_js::walk_object_property(self, prop);
         }
     }
 
@@ -245,13 +245,13 @@ impl<'a> Visit<'a> for ComponentFinder<'a, '_> {
                 if is_component {
                     self.record_component(prop_name.to_string(), assign.span, true);
                     self.component_depth += 1;
-                    walk::walk_assignment_expression(self, assign);
+                    walk_js::walk_assignment_expression(self, assign);
                     self.component_depth -= 1;
                     return;
                 }
             }
         }
-        walk::walk_assignment_expression(self, assign);
+        walk_js::walk_assignment_expression(self, assign);
     }
 }
 
@@ -299,7 +299,7 @@ fn is_hoc_component(call: &CallExpression, ctx: &LintContext) -> bool {
                 !is_passthrough_function(func) && function_contains_jsx(func)
             }
             Argument::ArrowFunctionExpression(arrow) => {
-                !is_passthrough_arrow(arrow) && function_body_contains_jsx(&arrow.body)
+                !is_passthrough_arrow(arrow) && arrow_function_body_contains_jsx(&arrow.body)
             }
             _ => false,
         })
@@ -346,7 +346,9 @@ fn is_passthrough_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> bool {
     // Expression arrow: `() => <Comp {...props} />`
     arrow.get_expression().is_some_and(is_simple_jsx_passthrough)
         // Block body with single return: `() => { return <Comp {...props} />; }`
-        || is_single_return_passthrough(&arrow.body.statements)
+        || arrow
+            .get_function_body()
+            .is_some_and(|body| is_single_return_passthrough(&body.statements))
 }
 
 /// Check if statements consist of a single return with a simple JSX passthrough
@@ -391,7 +393,7 @@ fn is_function_returning_null(expr: &Expression) -> bool {
                 return expr.is_null();
             }
             // `() => { return null; }`
-            arrow.body.statements.iter().any(|stmt| {
+            arrow.get_function_body().unwrap().statements.iter().any(|stmt| {
                 matches!(stmt, Statement::ReturnStatement(ret) if ret.argument.as_ref().is_some_and(Expression::is_null))
             })
         }
@@ -406,7 +408,7 @@ fn is_function_returning_null(expr: &Expression) -> bool {
 
 /// Check if a class is an ES6 React component (extends React.Component or React.PureComponent)
 fn is_es6_component_class(class: &Class) -> bool {
-    class.super_class.as_ref().is_some_and(|super_class| {
+    class.heritage_expression().is_some_and(|super_class| {
         if let Some(member_expr) = super_class.as_member_expression()
             && let Expression::Identifier(ident) = member_expr.object()
             && ident.name == "React"

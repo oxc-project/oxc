@@ -5,6 +5,7 @@ use oxc_ast::{
 };
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, SymbolId};
 use oxc_span::{ContentEq, GetSpan, Span};
@@ -133,10 +134,8 @@ impl Rule for BranchesSharingCode {
             if start == 1
                 && let Some(indent) = get_preceding_indent_str(ctx.source_text(), if_stmt.span)
             {
-                let delete_spans = bodies
-                    .iter()
-                    .map(|body| get_duplicated_delete_span(start, body, false))
-                    .collect::<Vec<_>>();
+                let delete_spans =
+                    bodies.iter().map(|body| get_duplicated_delete_span(start, body, false));
                 let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
@@ -162,10 +161,8 @@ impl Rule for BranchesSharingCode {
                 && let Some(indent) = get_preceding_indent_str(ctx.source_text(), if_stmt.span)
                 && !duplicated_end_references_branch_locals(end, &bodies, ctx)
             {
-                let delete_spans = bodies
-                    .iter()
-                    .map(|body| get_duplicated_delete_span(end, body, true))
-                    .collect::<Vec<_>>();
+                let delete_spans =
+                    bodies.iter().map(|body| get_duplicated_delete_span(end, body, true));
                 let moved_code = ctx.source_range(spans[0]);
                 ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                     let fixer = fixer.for_multifix();
@@ -263,7 +260,9 @@ fn collect_lexical_declaration_symbols(stmt: &Statement, symbols: &mut FxHashSet
     if let Statement::VariableDeclaration(decl) = stmt
         && decl.kind.is_lexical()
     {
-        symbols.extend(decl.declarations.iter().flat_map(|decl| decl.id.get_symbol_ids()));
+        decl.bound_names(&mut |ident| {
+            symbols.insert(ident.symbol_id());
+        });
     }
 }
 

@@ -144,7 +144,7 @@ impl Default for PreferLowercaseTitleConfig {
 
 impl PreferLowercaseTitleConfig {
     pub fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     pub fn run_on_jest_node<'a, 'c>(
@@ -211,18 +211,8 @@ impl PreferLowercaseTitleConfig {
             if first_char == lower {
                 return;
             }
-        } else {
-            for n in 0..literal.chars().count() {
-                let Some(next_char) = literal.chars().nth(n) else {
-                    return;
-                };
-
-                let next_lower = next_char.to_ascii_lowercase();
-
-                if next_char != next_lower {
-                    break;
-                }
-            }
+        } else if !literal.bytes().any(|b| b.is_ascii_uppercase()) {
+            return;
         }
 
         let replacement = if self.lowercase_first_character_only {

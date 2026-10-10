@@ -11,5 +11,6 @@
     "gitignore": {
       ".gitignore": "lib/\n"
     }
-  }
+  },
+  { "args": ["--check", "src/*.{js,ts"] }
 ]

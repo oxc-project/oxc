@@ -31,6 +31,11 @@ export type {
 export type ExternalPluginsConfig = Exclude<Oxlintrc["jsPlugins"], undefined | null>;
 
 export interface OxlintConfig extends Oxlintrc {
+  /**
+   * Configuration objects to extend.
+   *
+   * Import configurations and pass them directly instead of using file paths.
+   */
   extends?: OxlintConfig[];
 }
 
@@ -42,6 +47,6 @@ export type { OxlintOverride };
  * @param config - Oxlint configuration
  * @returns Config unchanged
  */
-export function defineConfig<T extends OxlintConfig>(config: T): T {
+export function defineConfig<T extends OxlintConfig>(config: T & OxlintConfig): T {
   return config;
 }

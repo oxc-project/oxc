@@ -1,13 +1,15 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, IdentifierReference, ImportExpression, NewExpression,
-        Statement, TaggedTemplateExpression, VariableDeclarationKind,
+        AccessorProperty, Argument, CallExpression, Expression, FormalParameter,
+        FormalParameterRest, Function, IdentifierReference, ImportExpression, NewExpression,
+        PropertyDefinition, Statement, StaticBlock, TaggedTemplateExpression, ThisExpression,
+        VariableDeclarationKind,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{ReferenceId, SymbolId};
+use oxc_semantic::{ReferenceId, ScopeFlags, SymbolId};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
@@ -111,6 +113,10 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
 
     visitor.visit_expression(return_expression);
 
+    if matches!(expr, Expression::FunctionExpression(_)) && visitor.has_this_expression {
+        return;
+    }
+
     for reference_id in visitor.references {
         if let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id()
             && is_mutable(symbol_id, ctx)
@@ -162,17 +168,21 @@ fn is_mutable(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
 fn get_mock_return<'a>(argument_expression: &'a Expression<'a>) -> Option<&'a Expression<'a>> {
     match argument_expression {
         Expression::ArrowFunctionExpression(arrow_func) => {
-            if arrow_func.r#async
-                || arrow_func.body.statements.len() > 1
-                || arrow_func.params.has_parameter()
-            {
+            if arrow_func.r#async || arrow_func.params.has_parameter() {
                 return None;
             }
 
-            let stmt = arrow_func.body.statements.first()?;
+            if let Some(expression) = arrow_func.get_expression() {
+                return Some(expression);
+            }
+
+            let body = arrow_func.get_function_body()?;
+            if body.statements.len() > 1 {
+                return None;
+            }
+            let stmt = body.statements.first()?;
 
             match stmt {
-                Statement::ExpressionStatement(stmt_expr) => Some(&stmt_expr.expression),
                 Statement::ReturnStatement(return_statement) => {
                     let Some(arg_expr) = &return_statement.argument else {
                         return None;
@@ -225,7 +235,7 @@ struct CallLikeExpressionVisitor {
     contains_call_like_expression: bool,
 }
 
-impl<'a> Visit<'a> for CallLikeExpressionVisitor {
+impl<'a> VisitJs<'a> for CallLikeExpressionVisitor {
     fn visit_call_expression(&mut self, _it: &CallExpression<'a>) {
         self.contains_call_like_expression = true;
     }
@@ -245,16 +255,83 @@ impl<'a> Visit<'a> for CallLikeExpressionVisitor {
 
 struct IdentifierCollectorVisitor {
     references: FxHashSet<ReferenceId>,
+    has_this_expression: bool,
+    this_binding_depth: u32,
 }
 
 impl IdentifierCollectorVisitor {
     fn new() -> Self {
-        Self { references: FxHashSet::default() }
+        Self { references: FxHashSet::default(), has_this_expression: false, this_binding_depth: 0 }
     }
 }
 
-impl<'a> Visit<'a> for IdentifierCollectorVisitor {
+impl<'a> VisitJs<'a> for IdentifierCollectorVisitor {
     fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         self.references.insert(ident.reference_id());
+    }
+
+    fn visit_this_expression(&mut self, _this_expr: &ThisExpression) {
+        if self.this_binding_depth == 0 {
+            self.has_this_expression = true;
+        }
+    }
+
+    fn visit_function(&mut self, function: &Function<'a>, flags: ScopeFlags) {
+        self.this_binding_depth += 1;
+        walk_js::walk_function(self, function, flags);
+        self.this_binding_depth -= 1;
+    }
+
+    fn visit_formal_parameter(&mut self, parameter: &FormalParameter<'a>) {
+        if parameter.decorators.is_empty() || self.this_binding_depth == 0 {
+            walk_js::walk_formal_parameter(self, parameter);
+            return;
+        }
+
+        self.this_binding_depth -= 1;
+        self.visit_decorators(&parameter.decorators);
+        self.this_binding_depth += 1;
+        self.visit_binding_pattern(&parameter.pattern);
+        if let Some(initializer) = &parameter.initializer {
+            self.visit_expression(initializer);
+        }
+    }
+
+    fn visit_formal_parameter_rest(&mut self, parameter: &FormalParameterRest<'a>) {
+        if parameter.decorators.is_empty() || self.this_binding_depth == 0 {
+            walk_js::walk_formal_parameter_rest(self, parameter);
+            return;
+        }
+
+        self.this_binding_depth -= 1;
+        self.visit_decorators(&parameter.decorators);
+        self.this_binding_depth += 1;
+        self.visit_binding_rest_element(&parameter.rest);
+    }
+
+    fn visit_property_definition(&mut self, property: &PropertyDefinition<'a>) {
+        self.visit_decorators(&property.decorators);
+        self.visit_property_key(&property.key);
+        if let Some(value) = &property.value {
+            self.this_binding_depth += 1;
+            self.visit_expression(value);
+            self.this_binding_depth -= 1;
+        }
+    }
+
+    fn visit_accessor_property(&mut self, property: &AccessorProperty<'a>) {
+        self.visit_decorators(&property.decorators);
+        self.visit_property_key(&property.key);
+        if let Some(value) = &property.value {
+            self.this_binding_depth += 1;
+            self.visit_expression(value);
+            self.this_binding_depth -= 1;
+        }
+    }
+
+    fn visit_static_block(&mut self, block: &StaticBlock<'a>) {
+        self.this_binding_depth += 1;
+        walk_js::walk_static_block(self, block);
+        self.this_binding_depth -= 1;
     }
 }

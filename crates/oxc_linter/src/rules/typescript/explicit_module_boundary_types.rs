@@ -3,8 +3,8 @@ use std::{borrow::Cow, ops::Deref};
 use oxc_allocator::{Address, ArenaVec, UnstableAddress};
 use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::{
-    Visit,
-    walk::{self, walk_expression},
+    VisitJs,
+    walk_js::{self, walk_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -174,27 +174,22 @@ declare_oxc_lint!(
 
 impl Rule for ExplicitModuleBoundaryTypes {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             // look for `export function foo() { ... }`, `export const foo = () => { ... }`,
             // etc.
+            AstKind::ExportDeclaration(export) => {
+                let mut checker = ExplicitTypesChecker::new(self, ctx);
+                walk_js::walk_declaration(&mut checker, &export.declaration);
+            }
             AstKind::ExportNamedDeclaration(export) => {
-                // export { foo } from 'bar';
-                if export.source.is_some() {
-                    return;
-                }
-                if let Some(decl) = &export.declaration {
-                    let mut checker = ExplicitTypesChecker::new(self, ctx);
-                    walk::walk_declaration(&mut checker, decl);
-                } else {
-                    let mut checker = ExplicitTypesChecker::new(self, ctx);
-                    for specifier in &export.specifiers {
-                        if let ModuleExportName::IdentifierReference(id) = &specifier.local {
-                            Self::run_on_identifier_reference(ctx, id, &mut checker);
-                        }
+                let mut checker = ExplicitTypesChecker::new(self, ctx);
+                for specifier in &export.specifiers {
+                    if let ModuleExportName::IdentifierReference(id) = &specifier.local {
+                        Self::run_on_identifier_reference(ctx, id, &mut checker);
                     }
                 }
             }
@@ -209,7 +204,7 @@ impl Rule for ExplicitModuleBoundaryTypes {
                     }
                     ExportDefaultDeclarationKind::ClassDeclaration(class) => {
                         let mut checker = ExplicitTypesChecker::new(self, ctx);
-                        walk::walk_class(&mut checker, class);
+                        walk_js::walk_class(&mut checker, class);
                     }
                     ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => {
                         // nada
@@ -278,16 +273,16 @@ impl ExplicitModuleBoundaryTypes {
         let decl = ctx.nodes().get_node(s.symbol_declaration(symbol_id));
         match decl.kind() {
             AstKind::VariableDeclaration(it) => {
-                walk::walk_variable_declaration(checker, it);
+                walk_js::walk_variable_declaration(checker, it);
             }
             AstKind::VariableDeclarator(it) => {
                 checker.visit_variable_declarator(it);
-                // walk::walk_variable_declarator(&mut checker, it)
+                // walk_js::walk_variable_declarator(&mut checker, it)
             }
             AstKind::Function(it) => {
                 checker.visit_function(it, ScopeFlags::Function);
             }
-            AstKind::Class(it) => walk::walk_class(checker, it),
+            AstKind::Class(it) => walk_js::walk_class(checker, it),
             _ => {}
         }
     }
@@ -315,12 +310,19 @@ impl Fn<'_> {
 /// Name and span of the symbol an anonymous function or arrow is assigned to - a variable binding,
 /// class property, or object property key.
 ///
-/// Used so that diagnostics point at, and refer to, that name rather than the anonymous function
-/// expression itself, and so the name can be checked against the `allowedNames` option.
+/// Used so that diagnostics can point at, and refer to, that name rather than the anonymous
+/// function expression itself, and so the name can be checked against the `allowedNames` option.
 #[derive(Clone, Copy)]
 struct TargetSymbol<'a> {
     span: Span,
     name: &'a str,
+    kind: TargetSymbolKind,
+}
+
+#[derive(Clone, Copy)]
+enum TargetSymbolKind {
+    Binding,
+    Property,
 }
 
 struct ExplicitTypesChecker<'a, 'c> {
@@ -354,13 +356,13 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         }
     }
 
-    // fn target_span(&self) -> Option<Span> {
-    //     self.target_symbol.as_ref().map(|id| id.span)
-    // }
-
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
         if let Some(id) = binding {
-            self.target_symbol = Some(TargetSymbol { span: id.span, name: id.name.as_str() });
+            self.target_symbol = Some(TargetSymbol {
+                span: id.span,
+                name: id.name.as_str(),
+                kind: TargetSymbolKind::Binding,
+            });
             true
         } else {
             false
@@ -372,7 +374,8 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return false;
         };
         if let Some(Cow::Borrowed(name)) = id.static_name() {
-            self.target_symbol = Some(TargetSymbol { span: id.span(), name });
+            self.target_symbol =
+                Some(TargetSymbol { span: id.span(), name, kind: TargetSymbolKind::Property });
             true
         } else {
             false
@@ -415,7 +418,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return;
         };
 
-        walk::walk_function_body(self, body);
+        walk_js::walk_function_body(self, body);
 
         // AST is immutable in linter, so `unstable_address` produces stable `Address`es
         let is_hof = self.is_higher_order_function(func.unstable_address());
@@ -499,7 +502,23 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         debug_assert!(arrow.return_type.is_none());
         let target = self.target_symbol.as_ref();
         let target_name = target.map(|t| t.name);
-        let span = target.map_or(arrow.params.span, |t| t.span);
+        let span = match target {
+            Some(TargetSymbol { span, kind: TargetSymbolKind::Property, .. }) => *span,
+            // Match typescript-eslint's function-head location for the exported arrow itself.
+            _ if self.fns.len() == 1 => {
+                let arrow_token_start = self
+                    .ctx
+                    .find_prev_token_within(arrow.params.span.end, arrow.body.span().start, "=>")
+                    .map(|offset| arrow.params.span.end + offset);
+                debug_assert!(
+                    arrow_token_start.is_some(),
+                    "arrow function is missing an arrow token"
+                );
+                arrow_token_start.map_or(arrow.params.span, |start| Span::sized(start, 2))
+            }
+            Some(target) => target.span,
+            None => arrow.params.span,
+        };
         let is_allowed = || self.rule.is_some_allowed_name(target_name);
 
         if !self.rule.allow_higher_order_functions {
@@ -509,7 +528,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             return;
         }
 
-        if arrow.expression {
+        if arrow.is_expression() {
             let Some(expr) = arrow.get_expression() else {
                 debug_assert!(
                     false,
@@ -535,7 +554,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     // `export const foo = () => () => (): number => 1`
                     Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => {
                         debug_assert!(self.rule.allow_higher_order_functions);
-                        walk::walk_function_body(self, &arrow.body);
+                        walk_js::walk_arrow_function_body(self, &arrow.body);
                         return;
                     }
                     _ => {
@@ -544,14 +563,13 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     }
                 }
             }
-        } else {
-            walk::walk_function_body(self, &arrow.body);
+        }
+        walk_js::walk_arrow_function_body(self, &arrow.body);
 
-            // AST is immutable in linter, so `unstable_address` produces stable `Address`es
-            let is_hof = self.is_higher_order_function(arrow.unstable_address());
-            if !is_hof && !is_allowed() {
-                self.ctx.diagnostic(func_missing_return_type(span));
-            }
+        // AST is immutable in linter, so `unstable_address` produces stable `Address`es
+        let is_hof = self.is_higher_order_function(arrow.unstable_address());
+        if !is_hof && !is_allowed() {
+            self.ctx.diagnostic(func_missing_return_type(span));
         }
     }
 
@@ -568,7 +586,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
     }
 }
 
-impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
+impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         match kind {
             AstKind::Function(f) => self.fns.push(Fn::Fn(f)),
@@ -668,9 +686,6 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         // not part of the module boundary. Still inspect the callee so class
         // expressions used with `new` continue to be checked.
         self.visit_expression(&it.callee);
-        if let Some(type_arguments) = &it.type_arguments {
-            self.visit_ts_type_parameter_instantiation(type_arguments);
-        }
     }
 
     fn visit_jsx_element(&mut self, _it: &JSXElement<'a>) {
@@ -682,10 +697,10 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         if self.rule.allow_overload_functions {
             let prev_overloaded = std::mem::take(&mut self.overloaded_methods);
             self.collect_overloaded_methods(class.body.as_ref());
-            walk::walk_class_body(self, class.body.as_ref());
+            walk_js::walk_class_body(self, class.body.as_ref());
             self.overloaded_methods = prev_overloaded;
         } else {
-            walk::walk_class_body(self, class.body.as_ref());
+            walk_js::walk_class_body(self, class.body.as_ref());
         }
         self.reset_target(had_id);
     }
@@ -708,7 +723,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
 
         let is_target = self.with_target_property(el.property_key());
-        walk::walk_class_element(self, el);
+        walk_js::walk_class_element(self, el);
         self.reset_target(is_target);
     }
 
@@ -719,7 +734,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
             self.scope_flags.set(ScopeFlags::SetAccessor, true);
         }
         let had_name = self.with_target_property(Some(&it.key));
-        walk::walk_object_property(self, it);
+        walk_js::walk_object_property(self, it);
         self.scope_flags = prev_flags;
         self.reset_target(had_name);
     }
@@ -743,7 +758,7 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
                     self.reset_target(had_name);
                     return;
                 }
-                walk::walk_method_definition(self, m);
+                walk_js::walk_method_definition(self, m);
             }
         }
     }
@@ -794,7 +809,6 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
-        // let name = param.get_identifier_name();
         if let Some(ty) = &it.type_annotation {
             if !self.rule.allow_arguments_explicitly_typed_as_any
                 && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))
@@ -815,21 +829,21 @@ impl<'a> Visit<'a> for ExplicitTypesChecker<'a, '_> {
         if is_skippable_typed_expression(&it.expression) {
             return;
         }
-        walk::walk_ts_as_expression(self, it);
+        walk_js::walk_ts_as_expression(self, it);
     }
 
     fn visit_ts_satisfies_expression(&mut self, it: &TSSatisfiesExpression<'a>) {
         if is_skippable_typed_expression(&it.expression) {
             return;
         }
-        walk::walk_ts_satisfies_expression(self, it);
+        walk_js::walk_ts_satisfies_expression(self, it);
     }
 
     fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
         if is_skippable_typed_expression(&it.expression) {
             return;
         }
-        walk::walk_ts_type_assertion(self, it);
+        walk_js::walk_ts_type_assertion(self, it);
     }
 }
 
@@ -885,6 +899,18 @@ mod test {
             ("export function test(): void { return; }", None),
             ("export var fn = function (): number { return 1; };", None),
             ("export var arrowFn = (): string => 'test';", None),
+            (
+                "
+            export const showLastActiveUsersWarningDialog = async (
+              users: string[],
+              organization: { id: string }
+              // eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
+            ) => {
+              return { users, organization };
+            };
+            ",
+                None,
+            ),
             (
                 "
             class Test {
@@ -1704,6 +1730,17 @@ mod test {
             ("export function test() { return; }", None),
             ("export var fn = function () { return 1; };", None),
             ("export var arrowFn = () => 'test';", None),
+            (
+                "
+            export const showLastActiveUsersWarningDialog = async (
+              users: string[],
+              organization: { id: string }
+            ) => {
+              return { users, organization };
+            };
+            ",
+                None,
+            ),
             (
                 "
             export class Test {

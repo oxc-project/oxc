@@ -20,9 +20,9 @@ function add(a, b) {
 }
 
 ==================== Output ====================
------------------------------
-{ jsdoc: {}, printWidth: 80 }
------------------------------
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
 /**
  * Adds two numbers.
  *
@@ -40,9 +40,27 @@ function add(a, b) {
   return a + b;
 }
 
-------------------------------
-{ jsdoc: {}, printWidth: 100 }
-------------------------------
+---------- Not idempotent (second pass) ----------
+/**
+ * Adds two numbers.
+ *
+ * @example
+ *   ```js
+ *   const result = add(1, 2);
+ *   console.log(result); // 3
+ *   ```;
+ *
+ * @param {number} a - First number
+ * @param {number} b - Second number
+ * @returns {number} The sum
+ */
+function add(a, b) {
+  return a + b;
+}
+
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
 /**
  * Adds two numbers.
  *
@@ -51,6 +69,24 @@ function add(a, b) {
  *   const result = add(1, 2);
  *   console.log(result); // 3
  *   ```
+ *
+ * @param {number} a - First number
+ * @param {number} b - Second number
+ * @returns {number} The sum
+ */
+function add(a, b) {
+  return a + b;
+}
+
+---------- Not idempotent (second pass) ----------
+/**
+ * Adds two numbers.
+ *
+ * @example
+ *   ```js
+ *   const result = add(1, 2);
+ *   console.log(result); // 3
+ *   ```;
  *
  * @param {number} a - First number
  * @param {number} b - Second number

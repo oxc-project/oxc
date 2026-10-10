@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, ImportOrExportKind},
+    ast::{BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -138,7 +138,7 @@ impl Rule for PreferImportingVitestGlobals {
             };
 
             if is_vitest_import_source(import_decl.source.value.as_str())
-                && import_decl.import_kind == ImportOrExportKind::Value
+                && import_decl.import_kind.is_value()
             {
                 continue;
             }
@@ -191,7 +191,10 @@ impl PreferImportingVitestGlobals {
                 .is_some_and(|import| matches!(import.import_name, ImportImportName::Name(_)))
         {
             let source = ctx.source_range(entry.statement_span);
-            if let Some(close_brace_pos) = source.rfind('}') {
+            if let Some(close_brace_pos) = ctx
+                .find_prev_token_within(entry.statement_span.start, entry.statement_span.end, "}")
+                .map(|offset| offset as usize)
+            {
                 let before_brace = &source[..close_brace_pos];
                 let trimmed = before_brace.trim_end();
                 let needs_comma = !trimmed.ends_with(',');
@@ -374,6 +377,11 @@ fn test() {
     ];
 
     let fix = vec![
+        // the `}` inside the comment is not the end of the specifier list
+        (
+            "import { it } from /* } */ 'vitest';\ndescribe('suite', () => {});",
+            "import { it, describe } from /* } */ 'vitest';\ndescribe('suite', () => {});",
+        ),
         (
             "describe('suite', () => {});",
             "import { describe } from 'vitest';\ndescribe('suite', () => {});",

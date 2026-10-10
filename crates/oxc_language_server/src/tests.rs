@@ -1,40 +1,63 @@
 use std::{
     collections::VecDeque,
+    str::FromStr,
     sync::{Arc, Mutex},
 };
 
 use serde_json::{Value, json};
 use tokio::io::{AsyncReadExt, AsyncWriteExt, DuplexStream};
 use tower_lsp_server::{
-    Client, LspService, Server,
+    Client, Server,
+    gen_lsp_types::*,
     jsonrpc::{ErrorCode, Id, Request, Response},
-    ls_types::*,
 };
 
 use crate::{
-    DiagnosticMode, TextDocument, Tool, ToolBuilder, ToolRestartChanges, WorkerManager,
-    backend::Backend, tool::DiagnosticResult,
+    DiagnosticMode, TextDocument, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
+    WorkerManager,
+    backend::Backend,
+    build_lsp_service,
+    tool::{ClientMessage, DiagnosticResult},
 };
 
 #[derive(Default)]
 pub struct FakeToolBuilder {
     diagnostic_mode: DiagnosticMode,
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    pub build_client_message: Vec<ClientMessage>,
+    delays: FakeToolDelays,
+}
+
+#[derive(Default, Clone, Copy)]
+pub struct FakeToolDelays {
+    run_diagnostic: u64,
 }
 
 impl FakeToolBuilder {
     pub fn new(diagnostic_mode: DiagnosticMode) -> Self {
-        Self { diagnostic_mode, cache_uris: None }
+        Self {
+            diagnostic_mode,
+            cache_uris: None,
+            build_client_message: Vec::new(),
+            delays: FakeToolDelays::default(),
+        }
     }
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
         Self { cache_uris: Some(cache_uris), ..self }
     }
+
+    pub fn with_delays(self, delays: FakeToolDelays) -> Self {
+        Self { delays, ..self }
+    }
 }
 
 impl ToolBuilder for FakeToolBuilder {
-    fn build_boxed(&self, _root_uri: &Uri, _options: serde_json::Value) -> Box<dyn Tool> {
-        Box::new(FakeTool { cache_uris: self.cache_uris.clone() })
+    fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
+        ToolBuildResult {
+            tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone(), delays: self.delays }),
+            client_messages: self.build_client_message.clone(),
+        }
     }
 
     fn server_capabilities(
@@ -47,7 +70,7 @@ impl ToolBuilder for FakeToolBuilder {
         // tell the client we support pull diagnostics
         capabilities.diagnostic_provider =
             if backend_capabilities.diagnostic_mode == DiagnosticMode::Pull {
-                Some(DiagnosticServerCapabilities::Options(DiagnosticOptions::default()))
+                Some(DiagnosticProvider::DiagnosticOptions(DiagnosticOptions::default()))
             } else {
                 None
             };
@@ -56,11 +79,14 @@ impl ToolBuilder for FakeToolBuilder {
 
 pub struct FakeTool {
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
+    delays: FakeToolDelays,
 }
 
 pub const FAKE_COMMAND: &str = "fake.command";
 
 const WORKSPACE: &str = "file:///path/to/workspace";
+
+const NESTED_WORKSPACE: &str = "file:///path/to/workspace/nested";
 
 const WORKSPACE_2: &str = "file:///path/to/another_workspace";
 
@@ -89,24 +115,37 @@ impl Tool for FakeTool {
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
         if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
+            let result = builder.build(root_uri, new_options_json);
             return ToolRestartChanges {
-                tool: Some(builder.build_boxed(root_uri, new_options_json)),
+                tool: Some(result.tool),
                 watch_patterns: None,
+                client_messages: result.client_messages,
             };
         }
         if new_options_json.as_u64() == Some(2) {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
+                client_messages: Vec::new(),
             };
         }
-        ToolRestartChanges { tool: None, watch_patterns: None }
+        if new_options_json.as_u64() == Some(4) {
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_messages: vec![ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::Warning,
+                }],
+            };
+        }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
     }
 
     fn get_watcher_patterns(
         &self,
         options: serde_json::Value,
-    ) -> Vec<tower_lsp_server::ls_types::Pattern> {
+    ) -> Vec<tower_lsp_server::gen_lsp_types::Pattern> {
         if !matches!(options, serde_json::Value::Null) {
             return vec![];
         }
@@ -120,32 +159,43 @@ impl Tool for FakeTool {
         root_uri: &Uri,
         options: serde_json::Value,
     ) -> ToolRestartChanges {
-        if changed_uri.as_str().ends_with("tool.config") {
+        if changed_uri.as_ref().ends_with("tool.config") {
+            let result = builder.build(root_uri, options);
             return ToolRestartChanges {
-                tool: Some(builder.build_boxed(root_uri, options)),
+                tool: Some(result.tool),
                 watch_patterns: None,
+                client_messages: result.client_messages,
             };
         }
-        if changed_uri.as_str().ends_with("watcher.config") {
+        if changed_uri.as_ref().ends_with("watcher.config") {
             return ToolRestartChanges {
                 tool: None,
                 watch_patterns: Some(vec!["**/new_watcher.config".to_string()]),
+                client_messages: Vec::new(),
+            };
+        }
+        if changed_uri.as_ref().ends_with("misconfiguration.config") {
+            return ToolRestartChanges {
+                tool: None,
+                watch_patterns: None,
+                client_messages: vec![ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::Warning,
+                }],
             };
         }
 
-        ToolRestartChanges { tool: None, watch_patterns: None }
+        ToolRestartChanges { tool: None, watch_patterns: None, client_messages: Vec::new() }
     }
 
     fn get_code_actions_or_commands(
         &self,
-        uri: &Uri,
-        _range: &Range,
-        _context: &CodeActionContext,
-    ) -> Vec<CodeActionOrCommand> {
-        if uri.as_str().ends_with("code_action.config") {
-            return vec![CodeActionOrCommand::CodeAction(CodeAction {
+        params: crate::CodeActionParams,
+    ) -> Vec<CodeActionResponse> {
+        if params.uri.as_ref().ends_with("code_action.config") {
+            return vec![CodeActionResponse::CodeAction(CodeAction {
                 title: "Code Action title".to_string(),
-                kind: Some(CodeActionKind::QUICKFIX),
+                kind: Some(CodeActionKind::QuickFix),
                 edit: Some(WorkspaceEdit::default()),
                 ..Default::default()
             })];
@@ -154,36 +204,39 @@ impl Tool for FakeTool {
         vec![]
     }
 
-    fn run_diagnostic(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic(&self, document: TextDocument) -> DiagnosticResult {
+        if self.delays.run_diagnostic > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(self.delays.run_diagnostic));
+        }
         if let Some(cache_uris) = &self.cache_uris {
             cache_uris.lock().unwrap().push(document.uri.clone());
         }
-        if document.uri.as_str().ends_with("diagnostics.config") {
+        if document.uri.as_ref().ends_with("diagnostics.config") {
             return Ok(vec![(
                 document.uri.clone(),
                 vec![Diagnostic {
-                    message: format!(
+                    message: Message::String(format!(
                         "Fake diagnostic for content: {}",
                         document.text.as_deref().unwrap_or("<no content>")
-                    ),
+                    )),
                     ..Default::default()
                 }],
             )]);
         }
 
-        if document.uri.as_str().ends_with("error.config") {
+        if document.uri.as_ref().ends_with("error.config") {
             return Err("Fake diagnostic error".to_string());
         }
 
         Ok(Vec::new())
     }
 
-    fn run_diagnostic_on_change(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic_on_change(&self, document: TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
         self.run_diagnostic(document)
     }
 
-    fn run_diagnostic_on_save(&self, document: &TextDocument) -> DiagnosticResult {
+    fn run_diagnostic_on_save(&self, document: TextDocument) -> DiagnosticResult {
         // For this fake tool, we use the same logic as run_diagnostic
         self.run_diagnostic(document)
     }
@@ -201,6 +254,7 @@ struct TestServer {
     req_stream: DuplexStream,
     res_stream: DuplexStream,
     responses: VecDeque<String>,
+    response_buffer: Vec<u8>,
 }
 
 impl TestServer {
@@ -222,35 +276,64 @@ impl TestServer {
         let (req_client, req_server) = tokio::io::duplex(1024);
         let (res_server, res_client) = tokio::io::duplex(1024);
 
-        let (service, socket) = LspService::build(init)
+        let (service, socket) = build_lsp_service(init)
             .custom_method("test/configuration", test_configuration_handler)
             .finish();
 
         tokio::spawn(Server::new(req_server, res_server, socket).serve(service));
 
-        Self { req_stream: req_client, res_stream: res_client, responses: VecDeque::new() }
+        Self {
+            req_stream: req_client,
+            res_stream: res_client,
+            responses: VecDeque::new(),
+            response_buffer: Vec::new(),
+        }
     }
 
     fn encode(payload: &str) -> String {
         format!("Content-Length: {}\r\n\r\n{}", payload.len(), payload)
     }
 
-    fn decode(text: &str) -> Vec<String> {
+    fn decode(buffer: &mut Vec<u8>) -> Vec<String> {
         let mut ret = Vec::new();
-        let mut temp = text;
 
-        while !temp.is_empty() {
-            let p = temp.find("\r\n\r\n").unwrap();
-            let (header, body) = temp.split_at(p + 4);
+        while !buffer.is_empty() {
+            let Some(p) = buffer.windows(4).position(|window| window == b"\r\n\r\n") else {
+                break;
+            };
+
+            let header = std::str::from_utf8(&buffer[..p + 4]).unwrap();
             let len =
                 header.strip_prefix("Content-Length: ").unwrap().strip_suffix("\r\n\r\n").unwrap();
             let len: usize = len.parse().unwrap();
-            let (body, rest) = body.split_at(len);
-            ret.push(body.to_string());
-            temp = rest;
+            let body_start = p + 4;
+            let body_end = body_start + len;
+            if buffer.len() < body_end {
+                break;
+            }
+
+            let body = String::from_utf8(buffer[body_start..body_end].to_vec()).unwrap();
+            ret.push(body);
+            buffer.drain(..body_end);
         }
 
         ret
+    }
+
+    async fn read_more_messages(&mut self) {
+        let mut buf = vec![0; 1024];
+        let n = self.res_stream.read(&mut buf).await.unwrap();
+        assert_ne!(n, 0);
+        self.response_buffer.extend_from_slice(&buf[..n]);
+        for x in Self::decode(&mut self.response_buffer) {
+            self.responses.push_front(x);
+        }
+    }
+
+    async fn read_until_message(&mut self) {
+        while self.responses.is_empty() {
+            self.read_more_messages().await;
+        }
     }
 
     async fn send_request(&mut self, req: Request) {
@@ -274,48 +357,27 @@ impl TestServer {
 
     async fn recv_response(&mut self) -> Response {
         if self.responses.is_empty() {
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
+            self.read_until_message().await;
         }
         let res = self.responses.pop_back().unwrap();
         serde_json::from_str(&res).unwrap()
     }
 
     async fn recv_notification(&mut self) -> Request {
-        if self.responses.is_empty() {
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
-        }
-        let res = self.responses.pop_back().unwrap();
-        // If the next payload is a response (no `method`), keep it queued for recv_response
-        // and attempt to return the next available notification without looping.
-        let val: serde_json::Value = serde_json::from_str(&res).unwrap();
-        if val.get("method").is_some() {
-            serde_json::from_value(val).unwrap()
-        } else {
-            // Put back the response for recv_response to consume
-            self.responses.push_front(res);
-            // If another message is already queued, return it
-            if let Some(next) = self.responses.pop_back() {
-                return serde_json::from_str(&next).unwrap();
-            }
-            // Otherwise perform a single read to fetch the notification
-            let mut buf = vec![0; 1024];
-            let n = self.res_stream.read(&mut buf).await.unwrap();
-            let ret = String::from_utf8(buf[..n].to_vec()).unwrap();
-            for x in Self::decode(&ret) {
-                self.responses.push_front(x);
-            }
+        let mut skipped_responses = Vec::new();
+        loop {
+            self.read_until_message().await;
+
             let res = self.responses.pop_back().unwrap();
-            serde_json::from_str(&res).unwrap()
+            let val: serde_json::Value = serde_json::from_str(&res).unwrap();
+            if val.get("method").is_some() {
+                for response in skipped_responses.into_iter().rev() {
+                    self.responses.push_back(response);
+                }
+                return serde_json::from_value(val).unwrap();
+            }
+
+            skipped_responses.push(res);
         }
     }
 
@@ -355,7 +417,7 @@ impl TestServer {
             let params: PublishDiagnosticsParams =
                 serde_json::from_value(publish_diagnostics.params().unwrap().clone()).unwrap();
             assert_eq!(params.uri, uri);
-            assert!(params.diagnostics.is_empty());
+            assert_eq!(params.diagnostics, []);
         }
 
         let shutdown_result = self.recv_response().await;
@@ -377,7 +439,9 @@ struct InitializeRequestOptions {
 
 fn initialize_request_workspace_folders(options: InitializeRequestOptions) -> Request {
     let params = InitializeParams {
-        workspace_folders: options.workspace_folders,
+        workspace_folders_initialize_params: WorkspaceFoldersInitializeParams {
+            workspace_folders: options.workspace_folders.map(WorkspaceFolders::WorkspaceFolderList),
+        },
         capabilities: ClientCapabilities {
             text_document: Some(TextDocumentClientCapabilities {
                 diagnostic: if options.pull_mode {
@@ -412,7 +476,7 @@ fn initialize_request_workspace_folders(options: InitializeRequestOptions) -> Re
 
 fn initialize_request(mut options: InitializeRequestOptions) -> Request {
     options.workspace_folders = Some(vec![WorkspaceFolder {
-        uri: WORKSPACE.parse().unwrap(),
+        uri: Uri::from_str(WORKSPACE).unwrap(),
         name: "workspace".to_string(),
     }]);
 
@@ -509,8 +573,8 @@ fn did_change_configuration(new_config: Option<serde_json::Value>) -> Request {
 fn did_open(uri: &str, text: &str) -> Request {
     let params = DidOpenTextDocumentParams {
         text_document: TextDocumentItem {
-            uri: uri.parse().unwrap(),
-            language_id: "plaintext".to_string(),
+            uri: Uri::from_str(uri).unwrap(),
+            language_id: LanguageKind::Plaintext,
             version: 1,
             text: text.to_string(),
         },
@@ -521,12 +585,15 @@ fn did_open(uri: &str, text: &str) -> Request {
 
 fn did_change(uri: &str, text: &str) -> Request {
     let params = DidChangeTextDocumentParams {
-        text_document: VersionedTextDocumentIdentifier { uri: uri.parse().unwrap(), version: 2 },
-        content_changes: vec![TextDocumentContentChangeEvent {
-            text: text.to_string(),
-            range: None,
-            range_length: None,
-        }],
+        text_document: VersionedTextDocumentIdentifier {
+            text_document_identifier: TextDocumentIdentifier { uri: Uri::from_str(uri).unwrap() },
+            version: 2,
+        },
+        content_changes: vec![
+            TextDocumentContentChangeEvent::TextDocumentContentChangeWholeDocument(
+                TextDocumentContentChangeWholeDocument { text: text.to_string() },
+            ),
+        ],
     };
 
     Request::build("textDocument/didChange").params(json!(params)).finish()
@@ -534,7 +601,7 @@ fn did_change(uri: &str, text: &str) -> Request {
 
 fn did_save(uri: &str, text: &str) -> Request {
     let params = DidSaveTextDocumentParams {
-        text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
+        text_document: TextDocumentIdentifier { uri: Uri::from_str(uri).unwrap() },
         text: Some(text.to_string()),
     };
 
@@ -543,7 +610,7 @@ fn did_save(uri: &str, text: &str) -> Request {
 
 fn did_close(uri: &str) -> Request {
     let params = DidCloseTextDocumentParams {
-        text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
+        text_document: TextDocumentIdentifier { uri: Uri::from_str(uri).unwrap() },
     };
 
     Request::build("textDocument/didClose").params(json!(params)).finish()
@@ -551,7 +618,7 @@ fn did_close(uri: &str) -> Request {
 
 fn code_action(id: i64, uri: &str) -> Request {
     let params = CodeActionParams {
-        text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
+        text_document: TextDocumentIdentifier { uri: Uri::from_str(uri).unwrap() },
         range: Range::default(),
         context: CodeActionContext { diagnostics: vec![], only: None, trigger_kind: None },
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -567,7 +634,7 @@ fn test_configuration_request(id: i64) -> Request {
 
 fn diagnostic(id: i64, uri: &str) -> Request {
     let params = DocumentDiagnosticParams {
-        text_document: TextDocumentIdentifier { uri: uri.parse().unwrap() },
+        text_document: TextDocumentIdentifier { uri: Uri::from_str(uri).unwrap() },
         identifier: None,
         previous_result_id: None,
         work_done_progress_params: WorkDoneProgressParams::default(),
@@ -591,23 +658,26 @@ fn create_dynamic_workspace_manager(builder: FakeToolBuilder) -> WorkerManager {
 
 #[cfg(test)]
 mod test_suite {
-    use std::sync::{Arc, Mutex};
+    use std::{
+        str::FromStr,
+        sync::{Arc, Mutex},
+    };
 
     use serde_json::{Value, json};
     use tower_lsp_server::{
-        jsonrpc::{Error, ErrorCode, Id, Response},
-        ls_types::{
-            ApplyWorkspaceEditResponse, InitializeResult, PublishDiagnosticsParams, ServerInfo,
-            WorkspaceEdit, WorkspaceFolder,
+        gen_lsp_types::{
+            ApplyWorkspaceEditResult, InitializeResult, Message, MessageType,
+            PublishDiagnosticsParams, ServerInfo, Uri, WorkspaceEdit, WorkspaceFolder,
         },
+        jsonrpc::{Error, ErrorCode, Id, Response},
     };
 
     use crate::{
-        DiagnosticMode,
+        ClientMessage, DiagnosticMode,
         backend::Backend,
         tests::{
-            FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, TestServer, WORKSPACE,
-            WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
+            FAKE_COMMAND, FakeToolBuilder, InitializeRequestOptions, NESTED_WORKSPACE, TestServer,
+            WORKSPACE, WORKSPACE_2, acknowledge_diagnostic_refresh, acknowledge_registrations,
             acknowledge_unregistrations, code_action, create_workspace_manager,
             create_workspace_manager_with_builder, diagnostic, did_change,
             did_change_configuration, did_change_watched_files, did_close, did_open, did_save,
@@ -619,6 +689,74 @@ mod test_suite {
 
     fn server_info() -> ServerInfo {
         ServerInfo { name: "oxc".to_owned(), version: Some("1.0.0".to_owned()) }
+    }
+
+    #[tokio::test]
+    async fn test_client_message_deferred_until_initialized() {
+        let builder = FakeToolBuilder {
+            build_client_message: vec![ClientMessage {
+                message: "Fake misconfiguration message".to_string(),
+                r#type: MessageType::Warning,
+            }],
+            ..Default::default()
+        };
+        let mut server = TestServer::new(|client| {
+            Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+        });
+
+        // initialize: worker starts here (no workspace_configuration), message must NOT be sent yet
+        server.send_request(initialize_request(InitializeRequestOptions::default())).await;
+        let initialize_result = server.recv_response().await;
+        assert!(initialize_result.is_ok());
+
+        // initialized: message must be sent now
+        server.send_request(initialized_notification()).await;
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+        let params = show_message.params().unwrap();
+        assert_eq!(params["message"], "Fake misconfiguration message");
+
+        server.shutdown(2).await;
+    }
+
+    #[tokio::test]
+    async fn test_client_message_cap_max_messages() {
+        let builder = FakeToolBuilder {
+            build_client_message: (1..=6)
+                .map(|index| ClientMessage {
+                    message: format!("Fake misconfiguration message {index}"),
+                    r#type: MessageType::Warning,
+                })
+                .collect(),
+            ..Default::default()
+        };
+        let mut server = TestServer::new(|client| {
+            Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+        });
+
+        // initialize: worker starts here (no workspace_configuration), messages must NOT be sent yet
+        server.send_request(initialize_request(InitializeRequestOptions::default())).await;
+        let initialize_result = server.recv_response().await;
+        assert!(initialize_result.is_ok());
+
+        // initialized: messages are capped to 5 with the last one being an overflow warning
+        server.send_request(initialized_notification()).await;
+
+        for index in 1..=4 {
+            let show_message = server.recv_notification().await;
+            assert_eq!(show_message.method(), "window/showMessage");
+            let params = show_message.params().unwrap();
+            assert_eq!(params["message"], format!("Fake misconfiguration message {index}"));
+            assert_eq!(params["type"], json!(MessageType::Warning));
+        }
+
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+        let params = show_message.params().unwrap();
+        assert_eq!(params["message"], "2 more messages not shown. See LSP logs for details.");
+        assert_eq!(params["type"], json!(MessageType::Warning));
+
+        server.shutdown(2).await;
     }
 
     #[tokio::test]
@@ -701,7 +839,7 @@ mod test_suite {
                     "fmt.experimental": true
                 }
             })),
-            root_uri: Some(WORKSPACE.parse().unwrap()),
+            root_uri: Some(Uri::from_str(WORKSPACE).unwrap()),
             ..Default::default()
         };
 
@@ -732,7 +870,7 @@ mod test_suite {
     async fn test_initialize_non_file_workspace_uri() {
         let init_options = InitializeRequestOptions {
             workspace_folders: Some(vec![WorkspaceFolder {
-                uri: "file://".parse().unwrap(),
+                uri: Uri::from_str("file://").unwrap(),
                 name: "workspace".to_string(),
             }]),
             ..Default::default()
@@ -799,6 +937,54 @@ mod test_suite {
 
         assert!(shutdown_result.is_ok());
         assert_eq!(shutdown_result.id(), &Id::Number(2));
+    }
+
+    #[tokio::test]
+    async fn test_workspace_configuration_runs_push_diagnostics_for_open_files() {
+        let init_options = InitializeRequestOptions {
+            workspace_configuration: true,
+            workspace_folders: Some(vec![
+                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
+                WorkspaceFolder {
+                    uri: NESTED_WORKSPACE.parse().unwrap(),
+                    name: "nested".to_string(),
+                },
+            ]),
+            ..Default::default()
+        };
+        let mut server = TestServer::new(|client| {
+            Backend::new(
+                client,
+                server_info(),
+                create_workspace_manager_with_builder(FakeToolBuilder::new(DiagnosticMode::Push)),
+            )
+        });
+
+        server.send_request(initialize_request_workspace_folders(init_options)).await;
+        assert!(server.recv_response().await.is_ok());
+
+        let uri = format!("{NESTED_WORKSPACE}/diagnostics.config");
+        let content = "initialized content";
+        server.send_request(did_open(&uri, content)).await;
+
+        // Send initialized notification
+        server.send_request(initialized_notification()).await;
+
+        // workspace configuration request expected
+        response_to_configuration(&mut server, vec![json!(null), json!(null)]).await;
+
+        let diagnostic_response = server.recv_notification().await;
+        assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri, Uri::from_str(&uri).unwrap());
+        assert_eq!(params.diagnostics.len(), 1);
+        assert_eq!(
+            params.diagnostics[0].message,
+            format!("Fake diagnostic for content: {content}").into()
+        );
+
+        server.shutdown_with_diagnostic_clear(2, vec![uri.parse().unwrap()]).await;
     }
 
     #[tokio::test]
@@ -881,7 +1067,7 @@ mod test_suite {
         server
             .send_response(Response::from_ok(
                 apply_edit_request.id().unwrap().clone(),
-                json!(ApplyWorkspaceEditResponse {
+                json!(ApplyWorkspaceEditResult {
                     applied: true,
                     failure_reason: None,
                     failed_change: None
@@ -923,9 +1109,12 @@ mod test_suite {
             },
             ])),
             workspace_folders: Some(vec![
-                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
                 WorkspaceFolder {
-                    uri: WORKSPACE_2.parse().unwrap(),
+                    uri: Uri::from_str(WORKSPACE).unwrap(),
+                    name: "workspace".to_string(),
+                },
+                WorkspaceFolder {
+                    uri: Uri::from_str(WORKSPACE_2).unwrap(),
                     name: "workspace_2".to_string(),
                 },
             ]),
@@ -1011,7 +1200,7 @@ mod test_suite {
         // workspace/didChangeWorkspaceFolders notification
         let folders_changed_notification = workspace_folders_changed(
             vec![WorkspaceFolder {
-                uri: "file:///path/to/new_folder".parse().unwrap(),
+                uri: Uri::from_str("file:///path/to/new_folder").unwrap(),
                 name: "new_folder".to_string(),
             }],
             vec![],
@@ -1029,11 +1218,54 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_workspace_added_shows_client_message() {
+        // workspace/didChangeWorkspaceFolders notification
+        let folders_changed_notification = workspace_folders_changed(
+            vec![WorkspaceFolder {
+                uri: Uri::from_str("file:///path/to/new_folder").unwrap(),
+                name: "new_folder".to_string(),
+            }],
+            vec![],
+        );
+
+        let builder = FakeToolBuilder {
+            build_client_message: vec![ClientMessage {
+                message: "Fake misconfiguration message".to_string(),
+                r#type: MessageType::Warning,
+            }],
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(client, server_info(), create_workspace_manager_with_builder(builder))
+            },
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        // Initial worker startup message is sent on initialized; consume it first.
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+
+        server.send_request(folders_changed_notification).await;
+
+        // Adding a workspace starts a new worker and should surface its client message.
+        let show_message = server.recv_notification().await;
+        assert_eq!(show_message.method(), "window/showMessage");
+        let params = show_message.params().unwrap();
+        assert_eq!(params["message"], "Fake misconfiguration message");
+        assert_eq!(params["type"], json!(MessageType::Warning));
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
     async fn test_workspace_added_watchers() {
         // workspace/didChangeWorkspaceFolders notification
         let folders_changed_notification = workspace_folders_changed(
             vec![WorkspaceFolder {
-                uri: "file:///path/to/new_folder".parse().unwrap(),
+                uri: Uri::from_str("file:///path/to/new_folder").unwrap(),
                 name: "new_folder".to_string(),
             }],
             vec![],
@@ -1060,7 +1292,7 @@ mod test_suite {
         // workspace/didChangeWorkspaceFolders notification
         let folders_changed_notification = workspace_folders_changed(
             vec![WorkspaceFolder {
-                uri: "file:///path/to/new_folder".parse().unwrap(),
+                uri: Uri::from_str("file:///path/to/new_folder").unwrap(),
                 name: "new_folder".to_string(),
             }],
             vec![],
@@ -1091,7 +1323,7 @@ mod test_suite {
         let folders_changed_notification = workspace_folders_changed(
             vec![],
             vec![WorkspaceFolder {
-                uri: WORKSPACE.parse().unwrap(),
+                uri: Uri::from_str(WORKSPACE).unwrap(),
                 name: "workspace".to_string(),
             }],
         );
@@ -1113,7 +1345,7 @@ mod test_suite {
         let folders_changed_notification = workspace_folders_changed(
             vec![],
             vec![WorkspaceFolder {
-                uri: WORKSPACE.parse().unwrap(),
+                uri: Uri::from_str(WORKSPACE).unwrap(),
                 name: "workspace".to_string(),
             }],
         );
@@ -1184,9 +1416,12 @@ mod test_suite {
         let init_options = InitializeRequestOptions {
             dynamic_watchers: true,
             workspace_folders: Some(vec![
-                WorkspaceFolder { uri: WORKSPACE.parse().unwrap(), name: "workspace".to_string() },
                 WorkspaceFolder {
-                    uri: WORKSPACE_2.parse().unwrap(),
+                    uri: Uri::from_str(WORKSPACE).unwrap(),
+                    name: "workspace".to_string(),
+                },
+                WorkspaceFolder {
+                    uri: Uri::from_str(WORKSPACE_2).unwrap(),
                     name: "workspace_2".to_string(),
                 },
             ]),
@@ -1263,14 +1498,14 @@ mod test_suite {
         assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
         let params: PublishDiagnosticsParams =
             serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
-        assert_eq!(params.uri, uri.parse().unwrap());
+        assert_eq!(params.uri.to_string(), uri);
         assert_eq!(params.diagnostics.len(), 1);
         assert_eq!(
             params.diagnostics[0].message,
-            format!("Fake diagnostic for content: {content}")
+            Message::String(format!("Fake diagnostic for content: {content}"))
         );
 
-        server.shutdown_with_diagnostic_clear(3, vec![uri.parse().unwrap()]).await;
+        server.shutdown_with_diagnostic_clear(3, vec![Uri::from_str(&uri).unwrap()]).await;
     }
 
     #[tokio::test]
@@ -1309,6 +1544,65 @@ mod test_suite {
         acknowledge_diagnostic_refresh(&mut server).await;
 
         server.shutdown(3).await;
+    }
+
+    /// A client is entitled to do work before replying to
+    /// `workspace/diagnostic/refresh` — typically re-pulling diagnostics from
+    /// this same server. The server must therefore keep servicing requests
+    /// while refresh replies are outstanding. Before the fix, each in-flight
+    /// refresh pinned one of the transport's 4 concurrency slots inside the
+    /// notification handler that sent it, so 4 unanswered refreshes wedged the
+    /// server permanently (issue #24955): this test then timed out waiting for
+    /// the shutdown response.
+    #[tokio::test]
+    async fn test_outstanding_diagnostic_refreshes_do_not_wedge_the_server() {
+        let init_options = InitializeRequestOptions {
+            dynamic_watchers: true,
+            pull_mode: true,
+            ..Default::default()
+        };
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
+                )
+            },
+            initialize_request(init_options),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+
+        // Fire enough watched-file events to trigger more refresh requests
+        // than the transport has concurrency slots (tower-lsp-server's
+        // default is 4), and read each refresh WITHOUT replying to it.
+        for _ in 0..4 {
+            let file_change_notification =
+                did_change_watched_files(format!("{WORKSPACE}/tool.config").as_str());
+            server.send_request(file_change_notification).await;
+
+            let refresh_request = server.recv_notification().await;
+            assert_eq!(refresh_request.method(), "workspace/diagnostic/refresh");
+            // Deliberately no ack: the client is still busy re-pulling.
+        }
+
+        // With 4 refresh replies outstanding, the server must still answer
+        // new requests — a wedged server never responds and the timeout
+        // fails the test instead of hanging it.
+        server.send_request(shutdown_request(3)).await;
+        let shutdown_result =
+            tokio::time::timeout(std::time::Duration::from_secs(10), server.recv_response())
+                .await
+                .expect(
+                    "server did not answer while diagnostic-refresh replies were outstanding \
+                     (deadlocked, issue #24955)",
+                );
+        assert!(shutdown_result.is_ok());
+        assert_eq!(shutdown_result.id(), &Id::Number(3));
     }
 
     #[tokio::test]
@@ -1455,14 +1749,14 @@ mod test_suite {
         assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
         let params: PublishDiagnosticsParams =
             serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
-        assert_eq!(params.uri, uri.parse().unwrap());
+        assert_eq!(params.uri.to_string(), uri);
         assert_eq!(params.diagnostics.len(), 1);
         assert_eq!(
             params.diagnostics[0].message,
-            format!("Fake diagnostic for content: {content}")
+            Message::String(format!("Fake diagnostic for content: {content}"))
         );
 
-        server.shutdown_with_diagnostic_clear(3, vec![uri.parse().unwrap()]).await;
+        server.shutdown_with_diagnostic_clear(3, vec![Uri::from_str(&uri).unwrap()]).await;
     }
 
     #[tokio::test]
@@ -1549,7 +1843,7 @@ mod test_suite {
         {
             let removed_cache_uris = cache_uris.lock().unwrap();
             assert_eq!(removed_cache_uris.len(), 1);
-            assert_eq!(removed_cache_uris[0], file.parse().unwrap());
+            assert_eq!(removed_cache_uris[0].to_string(), file);
         }
 
         server.send_request(did_change(&file, "changed text")).await;
@@ -1639,14 +1933,14 @@ mod test_suite {
         assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
         let params: PublishDiagnosticsParams =
             serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
-        assert_eq!(params.uri, file.parse().unwrap());
+        assert_eq!(params.uri.to_string(), file);
         assert_eq!(params.diagnostics.len(), 1);
         assert_eq!(
             params.diagnostics[0].message,
-            format!("Fake diagnostic for content: {content}")
+            Message::String(format!("Fake diagnostic for content: {content}"))
         );
 
-        server.shutdown_with_diagnostic_clear(4, vec![file.parse().unwrap()]).await;
+        server.shutdown_with_diagnostic_clear(4, vec![Uri::from_str(&file).unwrap()]).await;
     }
 
     /// This test verifies that the tool is not requested to provide diagnostics,
@@ -1702,14 +1996,14 @@ mod test_suite {
         assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
         let params: PublishDiagnosticsParams =
             serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
-        assert_eq!(params.uri, file.parse().unwrap());
+        assert_eq!(params.uri.to_string(), file);
         assert_eq!(params.diagnostics.len(), 1);
         assert_eq!(
             params.diagnostics[0].message,
-            format!("Fake diagnostic for content: {content}")
+            Message::String(format!("Fake diagnostic for content: {content}"))
         );
 
-        server.shutdown_with_diagnostic_clear(4, vec![file.parse().unwrap()]).await;
+        server.shutdown_with_diagnostic_clear(4, vec![Uri::from_str(&file).unwrap()]).await;
     }
 
     #[tokio::test]
@@ -1745,14 +2039,14 @@ mod test_suite {
         assert_eq!(diagnostic_response.method(), "textDocument/publishDiagnostics");
         let params: PublishDiagnosticsParams =
             serde_json::from_value(diagnostic_response.params().unwrap().clone()).unwrap();
-        assert_eq!(params.uri, file.parse().unwrap());
+        assert_eq!(params.uri.to_string(), file);
         assert_eq!(params.diagnostics.len(), 1);
         assert_eq!(
             params.diagnostics[0].message,
-            format!("Fake diagnostic for content: {content}")
+            Message::String(format!("Fake diagnostic for content: {content}"))
         );
 
-        server.shutdown_with_diagnostic_clear(4, vec![file.parse().unwrap()]).await;
+        server.shutdown_with_diagnostic_clear(4, vec![Uri::from_str(&file).unwrap()]).await;
     }
 
     #[tokio::test]
@@ -1825,6 +2119,8 @@ mod test_suite {
     // ── Single-file mode (no workspace folders / root URI on initialize) ──────
     #[cfg(not(target_os = "windows"))] // TODO: fix Windows paths in single-file mode tests, first guess it the uri->path->uri conversation with non-windows paths
     mod single_file_mode {
+        use tower_lsp_server::gen_lsp_types::Uri;
+
         use super::*;
         /// Helper: build an initialize request that puts the server into single-file mode.
         fn single_file_mode_initialize() -> crate::tests::InitializeRequestOptions {
@@ -1852,7 +2148,7 @@ mod test_suite {
                 .send_request(workspace_folders_changed(
                     vec![],
                     vec![WorkspaceFolder {
-                        uri: WORKSPACE.parse().unwrap(),
+                        uri: Uri::from_str(WORKSPACE).unwrap(),
                         name: "workspace".to_string(),
                     }],
                 ))
@@ -1898,7 +2194,7 @@ mod test_suite {
             server
                 .send_request(workspace_folders_changed(
                     vec![WorkspaceFolder {
-                        uri: WORKSPACE.parse().unwrap(),
+                        uri: Uri::from_str(WORKSPACE).unwrap(),
                         name: "workspace".to_string(),
                     }],
                     vec![],
@@ -1911,6 +2207,49 @@ mod test_suite {
             assert!(response.is_ok());
             let workers = response.result().unwrap().as_array().unwrap();
             assert_eq!(workers.len(), 1);
+
+            server.shutdown(4).await;
+        }
+
+        #[tokio::test]
+        async fn test_dynamic_workers_show_client_message_in_single_file_mode() {
+            let builder = FakeToolBuilder {
+                build_client_message: vec![ClientMessage {
+                    message: "Fake misconfiguration message".to_string(),
+                    r#type: MessageType::Warning,
+                }],
+                ..Default::default()
+            };
+
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_workspace_manager_with_builder(builder),
+                    )
+                },
+                initialize_request_workspace_folders(single_file_mode_initialize()),
+            )
+            .await;
+
+            // Opening files from different parent folders creates distinct dynamic workers.
+            let file_a = "file:///path/to/dir_a/file.js";
+            let file_b = "file:///path/to/dir_b/file.js";
+
+            server.send_request(did_open(file_a, "a")).await;
+            let show_message = server.recv_notification().await;
+            assert_eq!(show_message.method(), "window/showMessage");
+            let params = show_message.params().unwrap();
+            assert_eq!(params["message"], "Fake misconfiguration message");
+            assert_eq!(params["type"], json!(MessageType::Warning));
+
+            server.send_request(did_open(file_b, "b")).await;
+            let show_message = server.recv_notification().await;
+            assert_eq!(show_message.method(), "window/showMessage");
+            let params = show_message.params().unwrap();
+            assert_eq!(params["message"], "Fake misconfiguration message");
+            assert_eq!(params["type"], json!(MessageType::Warning));
 
             server.shutdown(4).await;
         }
@@ -2069,7 +2408,7 @@ mod test_suite {
             assert_eq!(notification.method(), "textDocument/publishDiagnostics");
             let params: PublishDiagnosticsParams =
                 serde_json::from_value(notification.params().unwrap().clone()).unwrap();
-            assert_eq!(params.uri, file.parse().unwrap());
+            assert_eq!(params.uri.to_string(), file);
             assert_eq!(params.diagnostics.len(), 1);
 
             // Closing the file shuts down the dynamic workspace and clears the pushed diagnostics.
@@ -2078,7 +2417,7 @@ mod test_suite {
             assert_eq!(clear_notification.method(), "textDocument/publishDiagnostics");
             let clear_params: PublishDiagnosticsParams =
                 serde_json::from_value(clear_notification.params().unwrap().clone()).unwrap();
-            assert_eq!(clear_params.uri, file.parse().unwrap());
+            assert_eq!(clear_params.uri.to_string(), file);
             assert!(clear_params.diagnostics.is_empty(), "diagnostics should be cleared on close");
 
             server.shutdown(2).await;
@@ -2115,6 +2454,7 @@ mod test_suite {
         use crate::tests::create_dynamic_workspace_manager;
 
         use super::*;
+
         #[tokio::test]
         async fn test_dynamic_mode_pull_diagnostics() {
             let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
@@ -2212,6 +2552,71 @@ mod test_suite {
             server.send_ack(&Id::Number(0)).await;
 
             server.shutdown(2).await;
+        }
+    }
+
+    mod request_locks {
+        use std::time::Instant;
+
+        use crate::tests::{FakeToolDelays, create_dynamic_workspace_manager};
+
+        use super::*;
+        #[tokio::test]
+        #[ignore = "This needs to be fixed"]
+        async fn test_request_locks() {
+            let delay = 100;
+            let mut server = TestServer::new_initialized(
+                |client| {
+                    Backend::new(
+                        client,
+                        server_info(),
+                        create_dynamic_workspace_manager(
+                            FakeToolBuilder::new(DiagnosticMode::Pull)
+                                .with_delays(FakeToolDelays { run_diagnostic: delay }),
+                        ),
+                    )
+                },
+                initialize_request(InitializeRequestOptions::default()),
+            )
+            .await;
+
+            let file = format!("{WORKSPACE}/diagnostics.config");
+            server.send_request(did_open(&file, "content")).await;
+
+            let now = Instant::now();
+
+            // Send multiple diagnostic requests
+            for i in 0..5 {
+                server.send_request(diagnostic(1 + i, &file)).await;
+            }
+            server.send_request(code_action(6, &file)).await;
+
+            let mut diagnostic_responses = 0;
+            loop {
+                let response = server.recv_response().await;
+                if response.id() == &Id::Number(6) {
+                    break;
+                }
+                diagnostic_responses += 1;
+            }
+
+            let elapsed = now.elapsed().as_millis();
+
+            while diagnostic_responses < 5 {
+                let response = server.recv_response().await;
+                assert_ne!(response.id(), &Id::Number(6));
+                diagnostic_responses += 1;
+            }
+
+            server.shutdown(7).await;
+
+            // The diagnostic request should not block the code action request,
+            // so the total elapsed time should be less than delay * number of diagnostic requests.
+            assert!(
+                elapsed < u128::from(delay * 5),
+                "Diagnostic requests are blocking the code action request, elapsed time: {elapsed}ms, expected under {}ms",
+                delay * 5
+            );
         }
     }
 }

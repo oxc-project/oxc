@@ -134,7 +134,6 @@ impl PreferToBeObject {
                     let code = {
                         let not_modifier = parsed_expect_call
                             .modifiers()
-                            .iter()
                             .any(|node| node.name().as_deref() == Some("not"));
                         let is_not_modifier =
                             (matcher.name().as_deref() == Some("toBeFalsy")) != not_modifier;

@@ -62,6 +62,7 @@ pub(crate) mod eslint {
     pub mod getter_return;
     pub mod grouped_accessor_pairs;
     pub mod guard_for_in;
+    pub mod id_denylist;
     pub mod id_length;
     pub mod id_match;
     pub mod init_declarations;
@@ -199,6 +200,7 @@ pub(crate) mod eslint {
     pub mod no_warning_comments;
     pub mod no_with;
     pub mod object_shorthand;
+    pub mod one_var;
     pub mod operator_assignment;
     pub mod prefer_arrow_callback;
     pub mod prefer_const;
@@ -265,6 +267,7 @@ pub(crate) mod typescript {
     pub mod no_extraneous_class;
     pub mod no_floating_promises;
     pub mod no_for_in_array;
+    pub mod no_generated_empty_object_type;
     pub mod no_implied_eval;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
@@ -407,18 +410,78 @@ pub(crate) mod jest {
     pub mod valid_title;
 }
 
+macro_rules! declare_react_compiler_lint {
+    (
+        $(#[$intro:meta])*
+        unlinked_upstream = $upstream_rule:literal,
+        $(#[$rest:meta])*
+        $name:ident,
+        react,
+        $category:ident,
+        $($options:tt)*
+    ) => {
+        oxc_macros::declare_oxc_lint!(
+            $(#[$intro])*
+            #[doc = "Powered by the React Compiler, which runs once per file and is shared"]
+            #[doc = "with the other React Compiler rules. Port of"]
+            #[doc = concat!("`react-hooks/", $upstream_rule, "`.")]
+            $(#[$rest])*
+            $name,
+            react,
+            $category,
+            $($options)*
+        );
+    };
+    (
+        $(#[$intro:meta])*
+        upstream = $upstream_rule:literal,
+        $(#[$rest:meta])*
+        $name:ident,
+        react,
+        $category:ident,
+        $($options:tt)*
+    ) => {
+        oxc_macros::declare_oxc_lint!(
+            $(#[$intro])*
+            #[doc = "Powered by the React Compiler, which runs once per file and is shared"]
+            #[doc = "with the other React Compiler rules. Port of"]
+            #[doc = concat!(
+                "[`react-hooks/",
+                $upstream_rule,
+                "`](https://react.dev/reference/eslint-plugin-react-hooks/lints/",
+                $upstream_rule,
+                ").",
+            )]
+            $(#[$rest])*
+            $name,
+            react,
+            $category,
+            $($options)*
+        );
+    };
+}
+
 /// <https://github.com/jsx-eslint/eslint-plugin-react>
 pub(crate) mod react {
     pub mod button_has_type;
+    pub mod capitalized_calls;
     pub mod checked_requires_onchange_or_readonly;
     pub mod display_name;
+    pub mod error_boundaries;
     pub mod exhaustive_deps;
+    pub mod exhaustive_effect_dependencies;
     pub mod forbid_component_props;
     pub mod forbid_dom_props;
     pub mod forbid_elements;
     pub mod forward_ref_uses_ref;
+    pub mod function_component_definition;
+    pub mod globals;
     pub mod hook_use_state;
+    pub mod hooks;
     pub mod iframe_missing_sandbox;
+    pub mod immutability;
+    pub mod incompatible_library;
+    pub mod invariant;
     pub mod jsx_boolean_value;
     pub mod jsx_curly_brace_presence;
     pub mod jsx_filename_extension;
@@ -437,11 +500,13 @@ pub(crate) mod react {
     pub mod jsx_pascal_case;
     pub mod jsx_props_no_spread_multi;
     pub mod jsx_props_no_spreading;
+    pub mod memo_dependencies;
     pub mod no_array_index_key;
     pub mod no_children_prop;
     pub mod no_clone_element;
     pub mod no_danger;
     pub mod no_danger_with_children;
+    pub mod no_deriving_state_in_effects;
     pub mod no_did_mount_set_state;
     pub mod no_did_update_set_state;
     pub mod no_direct_mutation_state;
@@ -464,14 +529,25 @@ pub(crate) mod react {
     pub mod only_export_components;
     pub mod prefer_es6_class;
     pub mod prefer_function_component;
-    pub mod react_compiler;
+    pub mod preserve_manual_memoization;
+    pub mod purity;
     pub mod react_in_jsx_scope;
+    pub mod refs;
     pub mod require_render_return;
+    pub mod rule_suppression;
     pub mod rules_of_hooks;
     pub mod self_closing_comp;
+    pub mod set_state_in_effect;
+    pub mod set_state_in_render;
     pub mod state_in_constructor;
+    pub mod static_components;
     pub mod style_prop_object;
+    pub mod syntax;
+    pub mod todo;
+    pub mod unsupported_syntax;
+    pub mod use_memo;
     pub mod void_dom_elements_no_children;
+    pub mod void_use_memo;
 }
 
 /// <https://github.com/cvazac/eslint-plugin-react-perf>
@@ -670,6 +746,7 @@ pub(crate) mod oxc {
     pub mod bad_bitwise_operator;
     pub mod bad_char_at_comparison;
     pub mod bad_comparison_sequence;
+    pub mod bad_match_all_arg;
     pub mod bad_min_max_func;
     pub mod bad_object_literal_comparison;
     pub mod bad_replace_all_arg;
@@ -725,6 +802,7 @@ pub(crate) mod jsdoc {
     pub mod check_tag_names;
     pub mod empty_tags;
     pub mod implements_on_classes;
+    pub mod no_blank_blocks;
     pub mod no_defaults;
     pub mod require_param;
     pub mod require_param_description;
@@ -796,6 +874,7 @@ pub(crate) mod vitest {
     pub mod no_test_return_statement;
     pub mod no_unneeded_async_expect_function;
     pub mod padding_around_after_all_blocks;
+    pub mod padding_around_test_blocks;
     pub mod prefer_called_exactly_once_with;
     pub mod prefer_called_once;
     pub mod prefer_called_times;
@@ -843,6 +922,7 @@ pub(crate) mod vitest {
 /// <https://github.com/eslint-community/eslint-plugin-n>
 pub(crate) mod node {
     pub mod callback_return;
+    pub mod exports_style;
     pub mod global_require;
     pub mod handle_callback_err;
     pub mod no_exports_assign;
@@ -851,6 +931,7 @@ pub(crate) mod node {
     pub mod no_path_concat;
     pub mod no_process_env;
     pub mod no_sync;
+    pub mod no_top_level_await;
 }
 
 /// <https://github.com/vuejs/eslint-plugin-vue>

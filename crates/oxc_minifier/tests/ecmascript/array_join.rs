@@ -1,4 +1,4 @@
-use oxc_allocator::{Allocator, ArenaBox, ArenaVec, CloneIn};
+use oxc_allocator::{Allocator, ArenaBox, CloneIn};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_ecmascript::{ArrayJoin, WithoutGlobalReferenceInformation};
 use oxc_span::SPAN;
@@ -9,33 +9,33 @@ fn test() {
     let ast = AstBuilder::new(&allocator);
     let ast = &ast;
 
-    let mut elements = ArenaVec::new_in(ast);
-    elements.push(ArrayExpressionElement::new_elision(SPAN, ast));
-    elements.push(ArrayExpressionElement::new_null_literal(SPAN, ast));
-    elements.push(ArrayExpressionElement::new_numeric_literal(
+    let array = ArrayExpression::new(
         SPAN,
-        42f64,
-        None,
-        NumberBase::Decimal,
+        [
+            ArrayExpressionElement::new_elision(SPAN, ast),
+            ArrayExpressionElement::new_null_literal(SPAN, ast),
+            ArrayExpressionElement::new_numeric_literal(
+                SPAN,
+                42f64,
+                None,
+                NumberBase::Decimal,
+                ast,
+            ),
+            ArrayExpressionElement::new_string_literal(SPAN, "foo", None, ast),
+            ArrayExpressionElement::new_boolean_literal(SPAN, true, ast),
+            ArrayExpressionElement::new_big_int_literal(
+                SPAN,
+                "42",
+                Some(Str::from("42n")),
+                BigintBase::Decimal,
+                ast,
+            ),
+        ],
         ast,
-    ));
-    elements.push(ArrayExpressionElement::new_string_literal(SPAN, "foo", None, ast));
-    elements.push(ArrayExpressionElement::new_boolean_literal(SPAN, true, ast));
-    elements.push(ArrayExpressionElement::new_big_int_literal(
-        SPAN,
-        "42",
-        Some(Str::from("42n")),
-        BigintBase::Decimal,
-        ast,
-    ));
-    let array = ArrayExpression::new(SPAN, elements, ast);
+    );
     let mut array2 = array.clone_in(&allocator);
     array2.elements.push(ArrayExpressionElement::ArrayExpression(ArenaBox::new_in(array, ast)));
-    array2.elements.push(ArrayExpressionElement::new_object_expression(
-        SPAN,
-        ArenaVec::new_in(ast),
-        ast,
-    ));
+    array2.elements.push(ArrayExpressionElement::new_object_expression(SPAN, [], ast));
     let joined = array2.array_join(&WithoutGlobalReferenceInformation {}, Some("_"));
     assert_eq!(joined, Some("__42_foo_true_42_,,42,foo,true,42_[object Object]".to_string()));
 

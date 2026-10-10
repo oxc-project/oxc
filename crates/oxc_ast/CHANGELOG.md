@@ -4,6 +4,149 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🚀 Features
+
+- 07833c0 ast: Tie `debug_name` return lifetime to the underlying AST node (#27295) (sadan)
+- cc82598 minifier: Merge import and export statements against the same module (#25533) (翠)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
+### 📚 Documentation
+
+- cd80e3f ast: Correct `JSXExpressionContainer` example (#26975) (camc314)
+- 8cb05e3 ast: Simplify `JSXAttribute` value description (#26974) (camc314)
+- fda7fbb ast: Correct `TSNumberKeyword` example (#26973) (camc314)
+- e63c439 ast: Clarify `RegExpFlags::V` flag features (#26972) (camc314)
+- 278288e ast: Correct `JSXText` example (#26970) (camc314)
+- e9ff529 ast: Correct `TSIntrinsicKeyword` example (#26967) (camc314)
+- c643ce4 ast: Fix `TSTupleType` example syntax (#26966) (camc314)
+- 895b1a7 ast: Correct `TSPropertySignature` usage example (#26964) (camc314)
+- 8d8cc7c ast: Correct `Class` abstract example values (#26963) (camc314)
+- f7ef2e2 ast: Use valid variance example for `TSTypeParameter` (#26962) (camc314)
+- 145fcdb ast: Attach `pure` comment to `NewExpression` field (#26961) (camc314)
+- 06dfd9f ast: Clarify `TSNonNullExpression` docs (#26960) (camc314)
+- d5f92b5 ast: Add docs for TSNonNullExpression (#26910) (camchenry)
+- 4a76723 ast: Add docs for TSNamespaceExportDeclaration (#26909) (camchenry)
+- de41927 ast: Add docs for `TSInstantiationExpression` (#26908) (camchenry)
+
+## [0.150.0] - 2026-09-14
+
+### 📚 Documentation
+
+- 38533ac ast: Move type annotation span comment to span field (#26522) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+- 1d9b9d3 ast: Add `GetNodeId` trait (#26145) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 5672585 parser: Attach all comments to nodes (#25944) (camc314)
+
+### 🐛 Bug Fixes
+
+- dc09a3a parser: Avoid panic on escaped string export names (#26146) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 8a9bdbd estree: Include decorators in `FormalParameterRest ` spans (#26021) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- 0c68b7f estree: Emit `decorators` on `FormalParameterRest` (#25582) (camc314)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- a0c7788 ast: [**BREAKING**] Change `TSIndexSignatureName::name` to `Ident` (#25150) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### 🚀 Features
+
+- cb5bc08 ast: Derive `GetSpan` for `Comment` (#25147) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 10ec276 ast: Custom AST builder methods take `IntoIn<ArenaBox>` where child method does (#25033) (overlookmotel)
+
+### 📚 Documentation
+
+- 2ea0aa9 ast: Correct grammar in AST builder methods doc comments (#25173) (overlookmotel)
+
+## [0.142.0] - 2026-07-27
+
+### 💥 BREAKING CHANGES
+
+- 1ac5ac7 ast: [**BREAKING**] Tighten bound on `AstBuild` trait (#24925) (overlookmotel)
+
+### 🚀 Features
+
+- ec08afc ast: Re-export `Ident` from `oxc_ast` crate (#24861) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- e80574f estree: Handle empty spans serializing `ImportMeta` and `NewTarget` (#24775) (overlookmotel)
+
+### ⚡ Performance
+
+- b287f29 estree: Avoid ident hash calculations when serializing (#24774) (overlookmotel)
+
+### 📚 Documentation
+
+- 4d2e2bf ast: Fix incorrect return value in `common_js_require` docs (#24945) (connorshea)
+- b539e74 estree: Document custom serializers for `ImportMeta` and `NewTarget` (#24777) (overlookmotel)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 94f99b3 ast: Allow `NONE` to be passed to AST builder methods where `Option<ArenaVec>` is expected (#24629) (overlookmotel)
+- 77230c5 ast: Accept arrays for `ArenaVec` params of AST builder methods (#24621) (overlookmotel)
+
+### ⚡ Performance
+
+- ba65790 semantic, allocator: Branchless `clone_in` for semantic IDs (#24564) (overlookmotel)
+
+## [0.140.0] - 2026-07-13
+
+### ⚡ Performance
+
+- f85f0d8 ast: Delegate inherited enum variants in clone_in and estree derives (#23555) (Boshen)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

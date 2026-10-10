@@ -31,8 +31,8 @@ fn transform(path: &Path, source_text: &str) -> String {
         let error_messages = id_ret
             .diagnostics
             .iter()
-            .map(|d| d.clone().with_source_code(Arc::clone(&source)))
-            .fold(String::new(), |s, error| s + &format!("{error:?}"));
+            .map(|diagnostic| diagnostic.clone().render_with_source_code(Arc::clone(&source)))
+            .fold(String::new(), |output, error| output + &error);
 
         write!(
             snapshot,

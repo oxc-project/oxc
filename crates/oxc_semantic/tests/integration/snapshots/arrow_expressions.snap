@@ -17,7 +17,6 @@ bb2: {
 }
 
 bb3: {
-	statement
 	return
 }
 
@@ -26,7 +25,6 @@ bb4: {
 }
 
 bb5: {
-	statement
 	return
 }
 
@@ -37,11 +35,9 @@ ExpressionStatement
 VariableDeclaration" shape = box]
     2 [ label = "bb2" shape = box]
     3 [ label = "bb3
-ExpressionStatement
 return" shape = box]
     4 [ label = "bb4" shape = box]
     5 [ label = "bb5
-ExpressionStatement
 return" shape = box]
     1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     3 -> 2 [ label="Error(Implicit)", color=red, style=dashed]

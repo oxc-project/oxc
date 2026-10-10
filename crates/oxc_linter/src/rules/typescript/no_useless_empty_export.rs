@@ -1,9 +1,9 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType, ast::Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, rules::ContextHost};
 
 fn no_useless_empty_export_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Empty exports do nothing in module files")
@@ -60,21 +60,35 @@ declare_oxc_lint!(
 impl Rule for NoUselessEmptyExport {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ExportNamedDeclaration(decl) = node.kind() else { return };
-        if decl.declaration.is_some() || !decl.specifiers.is_empty() {
+        if !decl.specifiers.is_empty() {
             return;
         }
         let module_record = ctx.module_record();
-        if module_record.exported_bindings.is_empty()
+        let nodes = ctx.nodes();
+        if module_record.requested_modules.is_empty()
+            && module_record.exported_bindings.is_empty()
             && module_record.local_export_entries.is_empty()
             && module_record.indirect_export_entries.is_empty()
             && module_record.star_export_entries.is_empty()
             && module_record.export_default.is_none()
+            && !(nodes.contains(AstType::TSImportEqualsDeclaration)
+                && nodes.program().body.iter().any(|statement| {
+                    matches!(
+                        statement,
+                        Statement::TSImportEqualsDeclaration(decl)
+                            if decl.module_reference.is_external()
+                    )
+                }))
         {
             return;
         }
         ctx.diagnostic_with_fix(no_useless_empty_export_diagnostic(decl.span), |fixer| {
             fixer.delete(&decl.span)
         });
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        !ctx.source_type().is_typescript_definition()
     }
 }
 
@@ -98,6 +112,8 @@ fn test() {
             export = {};
         ",
         "export {};",
+        "import x = ns.value; export {};",
+        "namespace Foo { import Bar = Baz; } export {};",
     ];
 
     let fail = vec![
@@ -128,10 +144,21 @@ fn test() {
             export { _ };
             export {};
         ",
-        // "
-        // import _ = require('_');
-        // export {};
-        // ",
+        "
+            import {} from '_';
+            export {};",
+        "
+            import _ from '_';
+            export {};",
+        "
+            import '_';
+            export {};",
+        "
+            import * as all from '_';
+            export {};",
+        "
+            import _ = require('_')
+            export {};",
     ];
 
     let fix = vec![
@@ -141,10 +168,45 @@ fn test() {
         ("const _ = {};export default _;export {};", "const _ = {};export default _;"),
         ("export {};const _ = {};export default _;", "const _ = {};export default _;"),
         ("const _ = {};export { _ };export {};", "const _ = {};export { _ };"),
-        // ("import _ = require('_');export {};", "import _ = require('_');"),
+        ("import {} from '_';\n\nexport {};", "import {} from '_';\n\n"),
+        ("import _ from '_';export {};", "import _ from '_';"),
+        ("import '_';export {};", "import '_';"),
+        ("import * as all from '_';export {};", "import * as all from '_';"),
+        ("import _ = require('_')\n\nexport {};", "import _ = require('_')\n\n"),
     ];
 
     Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_declaration() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "
+            export type A = 1;
+            export {};
+        ",
+        "
+            export declare const a = 2;
+            export {};
+        ",
+        "
+            import type { A } from '_';
+            export {};
+        ",
+        "
+            import { A } from '_';
+            export {};
+        ",
+    ];
+
+    let fail = vec![];
+
+    Tester::new(NoUselessEmptyExport::NAME, NoUselessEmptyExport::PLUGIN, pass, fail)
+        .change_rule_path_extension("d.ts")
+        .intentionally_allow_no_fix_tests()
+        .test();
 }

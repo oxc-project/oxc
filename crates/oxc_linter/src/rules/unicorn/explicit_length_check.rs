@@ -13,7 +13,10 @@ use crate::{
     AstNode,
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::{get_boolean_ancestor, is_boolean_call, is_boolean_node, pad_fix_with_token_boundary},
+    utils::{
+        expression_uses_optional_chain, get_boolean_ancestor, is_boolean_call, is_boolean_node,
+        pad_fix_with_token_boundary,
+    },
 };
 
 fn non_zero(span: Span, prop_name: &str, op_and_rhs: &str, help: Option<String>) -> OxcDiagnostic {
@@ -97,10 +100,6 @@ declare_oxc_lint!(
     short_description = "Enforce explicitly comparing the `length` or `size` property of a value.",
 );
 
-fn is_literal(expr: &Expression, value: f64) -> bool {
-    matches!(expr, Expression::NumericLiteral(lit) if (lit.value - value).abs() < f64::EPSILON)
-}
-
 fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> bool {
     matches!(
         expr,
@@ -108,7 +107,7 @@ fn is_compare_left(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> b
             operator,
             left,
             ..
-        } if is_literal(left, value) && op == *operator
+        } if left.is_number_value(value) && op == *operator
     )
 }
 
@@ -119,26 +118,8 @@ fn is_compare_right(expr: &BinaryExpression, op: BinaryOperator, value: f64) -> 
             operator,
             right,
             ..
-        } if is_literal(right, value) && op == *operator
+        } if right.is_number_value(value) && op == *operator
     )
-}
-
-fn expression_uses_optional_chain(expr: &Expression) -> bool {
-    let expr = expr.get_inner_expression();
-
-    if matches!(expr, Expression::ChainExpression(_)) {
-        return true;
-    }
-
-    if let Some(member_expr) = expr.as_member_expression() {
-        return member_expr.optional() || expression_uses_optional_chain(member_expr.object());
-    }
-
-    if let Expression::CallExpression(call_expr) = expr {
-        return call_expr.optional || expression_uses_optional_chain(&call_expr.callee);
-    }
-
-    false
 }
 
 fn get_length_check_node<'a, 'b>(
@@ -278,7 +259,7 @@ impl ExplicitLengthCheck {
 
 impl Rule for ExplicitLengthCheck {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -1,0 +1,23 @@
+/* A selector with more than 2 simple selectors + combinators (counted FLAT,
+   `.x.y:not(...)` = 3) indents its continuation lines: a broken pseudo arg
+   lands at +4 and its `)` at +2 (oxc-project/oxc#24843). */
+
+/* 3 flat (pseudo x3), no combinator: outer indent applies */
+:where(.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaa):where(.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb):where(.cc) {
+  color: red;
+}
+
+/* 2 flat: no outer indent, arg at +2 and `)` at 0 */
+.x:not(.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) {
+  color: red;
+}
+
+/* 3 flat within ONE compound: outer indent applies */
+.x.y:not(.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) {
+  color: red;
+}
+
+/* Combinator case: breaks at the combinator, compound stays flat */
+.parent .x.y:not(.bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb) {
+  color: red;
+}

@@ -255,12 +255,8 @@ impl<'a> VisitMut<'a> for StaticVisitor<'a, '_> {
             }
             // `new.target` is always `undefined` in class static blocks. Replace it before moving
             // the block body outside the class.
-            Expression::MetaProperty(meta_property)
-                if self.this_depth == 0
-                    && meta_property.meta.name == "new"
-                    && meta_property.property.name == "target" =>
-            {
-                *expr = Expression::new_void_0(meta_property.span, self.ctx);
+            Expression::NewTarget(new_target) if self.this_depth == 0 => {
+                *expr = Expression::new_void_0(new_target.span, self.ctx);
                 return;
             }
             // `delete this`

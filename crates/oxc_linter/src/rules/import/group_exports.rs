@@ -75,27 +75,27 @@ impl Rule for GroupExports {
 
         for node in semantic.nodes() {
             match node.kind() {
-                AstKind::ExportNamedDeclaration(export_decl) => match export_decl.export_kind {
+                AstKind::ExportFromDeclaration(export_decl) => match export_decl.export_kind {
                     ImportOrExportKind::Value => {
-                        if let Some(source) = &export_decl.source {
-                            modules_source_record
-                                .entry(source.value.to_string())
-                                .or_default()
-                                .push(export_decl.span);
-                        } else {
-                            modules_nodes.push(export_decl.span);
-                        }
+                        modules_source_record
+                            .entry(export_decl.source.value.to_string())
+                            .or_default()
+                            .push(export_decl.span);
                     }
                     ImportOrExportKind::Type => {
-                        if let Some(source) = &export_decl.source {
-                            type_source_record
-                                .entry(source.value.to_string())
-                                .or_default()
-                                .push(export_decl.span);
-                        } else {
-                            type_nodes.push(export_decl.span);
-                        }
+                        type_source_record
+                            .entry(export_decl.source.value.to_string())
+                            .or_default()
+                            .push(export_decl.span);
                     }
+                },
+                AstKind::ExportNamedDeclaration(export_decl) => match export_decl.export_kind {
+                    ImportOrExportKind::Value => modules_nodes.push(export_decl.span),
+                    ImportOrExportKind::Type => type_nodes.push(export_decl.span),
+                },
+                AstKind::ExportDeclaration(export_decl) => match export_decl.export_kind() {
+                    ImportOrExportKind::Value => modules_nodes.push(export_decl.span),
+                    ImportOrExportKind::Type => type_nodes.push(export_decl.span),
                 },
                 AstKind::AssignmentExpression(assignment_expr) => {
                     let Some(member_expr) = assignment_expr.left.as_member_expression() else {

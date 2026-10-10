@@ -1,11 +1,13 @@
 //! This module checks if an unused variable is allowed. Note that this does not
 //! consider variables ignored by name pattern, but by where they are declared.
 use oxc_ast::{AstKind, ast::*};
+use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, Semantic};
 
 use super::{NoUnusedVars, Symbol, options::ArgsOption};
 use crate::{
-    ModuleRecord,
+    LintContext, ModuleRecord,
+    ast_util::variable_declaration_kind,
     rules::eslint::no_unused_vars::binding_pattern::{BindingContext, HasAnyUsedBinding},
 };
 
@@ -75,7 +77,10 @@ impl Symbol<'_, '_> {
             .map(|scope_id| scopes.get_node_id(scope_id))
             .map(|node_id| nodes.get_node(node_id))
             .any(|node| match node.kind() {
-                AstKind::TSModuleDeclaration(namespace) => {
+                AstKind::TSExternalModuleDeclaration(module) => {
+                    is_ambient_external_module_without_explicit_exports(module)
+                }
+                AstKind::TSNamespaceDeclaration(namespace) => {
                     is_ambient_namespace_without_explicit_exports(namespace)
                 }
                 // No need to check `declare` field, as `global` is only valid in ambient context
@@ -86,31 +91,40 @@ impl Symbol<'_, '_> {
 }
 
 #[inline]
-fn is_ambient_namespace_without_explicit_exports(namespace: &TSModuleDeclaration) -> bool {
+fn is_ambient_external_module_without_explicit_exports(
+    module: &TSExternalModuleDeclaration,
+) -> bool {
     // Must be declared (ambient context)
+    if !module.declare {
+        return false;
+    }
+
+    module.body.as_ref().is_none_or(|block| !has_explicit_exports(block))
+}
+
+#[inline]
+fn is_ambient_namespace_without_explicit_exports(namespace: &TSNamespaceDeclaration) -> bool {
     if !namespace.declare {
         return false;
     }
 
-    // If the module has explicit exports, unused types should still be checked
-    // For modules with string literal names (like `declare module 'foo'`), if they have
-    // an export statement, then only exported items are available externally
-    if let Some(TSModuleDeclarationBody::TSModuleBlock(block)) = &namespace.body {
-        let has_export = block.body.iter().any(|stmt| {
-            matches!(
-                stmt,
-                Statement::ExportAllDeclaration(_)
-                    | Statement::ExportDefaultDeclaration(_)
-                    | Statement::ExportNamedDeclaration(_)
-                    | Statement::TSExportAssignment(_)
-            )
-        });
-        if has_export {
-            return false;
-        }
+    match &namespace.body {
+        TSNamespaceDeclarationBody::TSNamespaceDeclaration(_) => true,
+        TSNamespaceDeclarationBody::TSModuleBlock(block) => !has_explicit_exports(block),
     }
+}
 
-    true
+fn has_explicit_exports(block: &TSModuleBlock) -> bool {
+    block.body.iter().any(|stmt| {
+        matches!(
+            stmt,
+            Statement::ExportAllDeclaration(_)
+                | Statement::ExportDefaultDeclaration(_)
+                | Statement::ExportNamedDeclaration(_)
+                | Statement::ExportFromDeclaration(_)
+                | Statement::TSExportAssignment(_)
+        )
+    })
 }
 
 pub(super) enum FunctionParameterKind<'a> {
@@ -132,17 +146,17 @@ impl NoUnusedVars {
     pub(super) fn is_allowed_ts_namespace<'a>(
         &self,
         symbol: &Symbol<'_, 'a>,
-        namespace: &TSModuleDeclaration<'a>,
+        namespace: &TSNamespaceDeclaration<'a>,
     ) -> bool {
         if namespace.declare || symbol.is_in_declared_module() {
             return true;
         }
         // Segments of a dotted namespace declaration (`namespace A.B.C {}`) are
-        // parsed as nested `TSModuleDeclaration`s. Don't flag any segment as unused.
-        matches!(&namespace.body, Some(TSModuleDeclarationBody::TSModuleDeclaration(_)))
+        // parsed as nested `TSNamespaceDeclaration`s. Don't flag any segment as unused.
+        matches!(&namespace.body, TSNamespaceDeclarationBody::TSNamespaceDeclaration(_))
             || matches!(
                 symbol.nodes().parent_kind(symbol.declaration().id()),
-                AstKind::TSModuleDeclaration(_)
+                AstKind::TSNamespaceDeclaration(_)
             )
     }
 
@@ -152,8 +166,10 @@ impl NoUnusedVars {
         &self,
         symbol: &Symbol<'_, 'a>,
         decl: &VariableDeclarator<'a>,
+        ctx: &LintContext<'a>,
     ) -> bool {
-        if decl.kind.is_var() && self.vars.is_local() && symbol.is_root() {
+        if variable_declaration_kind(decl, ctx).is_var() && self.vars.is_local() && symbol.is_root()
+        {
             return true;
         }
 
@@ -162,7 +178,7 @@ impl NoUnusedVars {
             return true;
         }
 
-        if self.ignore_using_declarations && decl.kind.is_using() {
+        if self.ignore_using_declarations && variable_declaration_kind(decl, ctx).is_using() {
             return true;
         }
 
@@ -206,8 +222,10 @@ impl NoUnusedVars {
         if scope_flags.is_ts_module_block() {
             // get declaration node for the parent scope
             let parent_node_id = scoping.get_node_id(parent_scope_id);
-            if let AstKind::TSModuleDeclaration(namespace) = nodes.get_node(parent_node_id).kind() {
-                return namespace.declare;
+            match nodes.get_node(parent_node_id).kind() {
+                AstKind::TSExternalModuleDeclaration(module) => return module.declare,
+                AstKind::TSNamespaceDeclaration(namespace) => return namespace.declare,
+                _ => {}
             }
         }
 
@@ -282,8 +300,10 @@ impl NoUnusedVars {
             return false;
         };
 
-        // This is the last parameter, so need to check for usages on following parameters
-        if position == params.items.len() - 1 {
+        // If this is the last parameter in `items` and there is no rest
+        // parameter, there are no following parameters to check, so this
+        // parameter is not allowed (it will be reported).
+        if position == params.items.len() - 1 && params.rest.is_none() {
             return false;
         }
 
@@ -297,6 +317,17 @@ impl NoUnusedVars {
             // no need to check if param is in a constructor, because if it's
             // not that's a parse error.
             .any(|p| p.has_modifier() || p.pattern.has_any_used_binding(ctx))
+            // A rest parameter, if present, is always the last parameter.
+            // If it has a used binding, parameters before it are allowed under
+            // `after-used` (they occur before the last used argument).
+            || params.rest.as_ref().is_some_and(|rest| {
+                let mut used = false;
+                rest.rest.argument.bound_names(&mut |ident| {
+                    // Ignored destructured bindings alone do not make a rest parameter used.
+                    used = used || ctx.has_usages(ident.symbol_id(), module_record);
+                });
+                used
+            })
     }
 
     /// The following allowed conditions are handled:

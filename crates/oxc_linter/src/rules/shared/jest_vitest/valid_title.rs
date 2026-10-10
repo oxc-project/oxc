@@ -120,8 +120,9 @@ pub struct ValidTitleConfig {
     ignore_type_of_describe_name: bool,
     /// Whether to allow arguments as titles.
     allow_arguments: bool,
-    /// A list of disallowed words, which will not be allowed in titles.
-    disallowed_words: Vec<CompactStr>,
+    /// Matcher for disallowed words, which will not be allowed in titles.
+    /// `None` when no disallowed words are configured.
+    disallowed_words_reg: Option<Regex>,
     /// Whether to ignore leading and trailing spaces in titles.
     ignore_spaces: bool,
     /// Patterns for titles that must not match.
@@ -147,11 +148,17 @@ impl ValidTitleConfig {
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
         let allow_arguments = get_as_bool("allowArguments");
         let ignore_spaces = get_as_bool("ignoreSpaces");
-        let disallowed_words = config
+        let disallowed_words: Vec<&str> = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
-            .map(|v| v.iter().filter_map(|v| v.as_str().map(CompactStr::from)).collect())
+            .map(|v| v.iter().filter_map(|v| v.as_str()).collect())
             .unwrap_or_default();
+        let disallowed_words_reg = (!disallowed_words.is_empty()).then(|| {
+            let disallowed_words_pattern =
+                disallowed_words.iter().map(|word| regex::escape(word)).join("|");
+            Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
+                .expect("escaped disallowed words should form a valid regex")
+        });
         let must_not_match_patterns = config
             .and_then(|v| v.get("mustNotMatch"))
             .and_then(compile_matcher_patterns)
@@ -165,7 +172,7 @@ impl ValidTitleConfig {
             ignore_type_of_test_name,
             ignore_type_of_describe_name,
             allow_arguments,
-            disallowed_words,
+            disallowed_words_reg,
             ignore_spaces,
             must_not_match_patterns,
             must_match_patterns,
@@ -243,10 +250,10 @@ impl ValidTitleConfig {
                     return;
                 }
 
-                if let Some(quasi) = tagged_template.quasi.single_quasi() {
+                if tagged_template.quasi.is_no_substitution_template() {
                     validate_title(
-                        quasi.as_str(),
-                        tagged_template.span,
+                        tagged_template.quasi.quasis[0].value.raw.as_str(),
+                        tagged_template.quasi.span,
                         config,
                         &jest_fn_call.name,
                         ctx,
@@ -395,6 +402,11 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
     }
 }
 
+fn can_trim_raw_title(cooked: &str, raw: &str) -> bool {
+    cooked.len() - cooked.trim_start().len() == raw.len() - raw.trim_start().len()
+        && cooked.len() - cooked.trim_end().len() == raw.len() - raw.trim_end().len()
+}
+
 fn validate_title(
     title: &str,
     span: Span,
@@ -407,26 +419,25 @@ fn validate_title(
         return;
     }
 
-    if !config.disallowed_words.is_empty() {
-        let disallowed_words_pattern =
-            config.disallowed_words.iter().map(|word| regex::escape(word)).join("|");
-        let disallowed_words_reg = Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
-            .expect("escaped disallowed words should form a valid regex");
-
-        if let Some(matched) = disallowed_words_reg.find(title) {
-            ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
-        }
+    if let Some(disallowed_words_reg) = &config.disallowed_words_reg
+        && let Some(matched) = disallowed_words_reg.find(title)
+    {
+        ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
         return;
     }
 
     let trimmed_title = title.trim();
     if !config.ignore_spaces && trimmed_title != title {
-        ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
-            let inner_span = span.shrink(1);
-            let raw_text = fixer.source_range(inner_span);
-            let trimmed_raw = raw_text.trim().to_string();
-            fixer.replace(inner_span, trimmed_raw)
-        });
+        let inner_span = span.shrink(1);
+        let raw_text = ctx.source_range(inner_span);
+        if can_trim_raw_title(title, raw_text) {
+            ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
+                fixer.replace(inner_span, raw_text.trim().to_string())
+            });
+        } else {
+            // Escaped whitespace cannot be removed by trimming the raw source text.
+            ctx.diagnostic(accidental_space_diagnostic(span));
+        }
     }
 
     let un_prefixed_name = name.trim_start_matches(['f', 'x']);
@@ -435,16 +446,21 @@ fn validate_title(
     };
 
     if first_word == un_prefixed_name {
-        ctx.diagnostic_with_fix(duplicate_prefix_diagnostic(span), |fixer| {
-            // Use raw source text to preserve escape sequences
-            let inner_span = span.shrink(1);
-            let raw_text = fixer.source_range(inner_span);
-            // Find the first space in raw text to avoid byte offset issues
-            // if the prefix word ever contains escapable characters
-            let space_pos = raw_text.find(' ').unwrap_or(raw_text.len());
-            let replaced_raw = raw_text[space_pos..].trim().to_string();
-            fixer.replace(inner_span, replaced_raw)
-        });
+        let inner_span = span.shrink(1);
+        let raw_text = ctx.source_range(inner_span);
+        if let Some(unprefixed_raw) =
+            raw_text.strip_prefix(first_word).and_then(|rest| rest.strip_prefix(' '))
+            && let Some(unprefixed_cooked) =
+                title.strip_prefix(first_word).and_then(|rest| rest.strip_prefix(' '))
+            && can_trim_raw_title(unprefixed_cooked, unprefixed_raw)
+        {
+            ctx.diagnostic_with_fix(duplicate_prefix_diagnostic(span), |fixer| {
+                fixer.replace(inner_span, unprefixed_raw.trim().to_string())
+            });
+        } else {
+            // Escapes in the prefix or whitespace can make trimming the raw source unsafe.
+            ctx.diagnostic(duplicate_prefix_diagnostic(span));
+        }
         return;
     }
 

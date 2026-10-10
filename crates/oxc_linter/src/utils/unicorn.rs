@@ -1,3 +1,5 @@
+use smallvec::SmallVec;
+
 use oxc_ast::{
     AstKind,
     ast::{
@@ -18,9 +20,12 @@ use crate::LintContext;
 mod boolean;
 pub use boolean::*;
 
+mod optional_chain;
+pub use optional_chain::*;
+
 // Built-in Error constructors
 // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error#Error_types
-pub const BUILT_IN_ERRORS: [&str; 9] = [
+pub const BUILT_IN_ERRORS: [&str; 10] = [
     "Error",
     "EvalError",
     "RangeError",
@@ -30,6 +35,7 @@ pub const BUILT_IN_ERRORS: [&str; 9] = [
     "URIError",
     "InternalError",
     "AggregateError",
+    "SuppressedError",
 ];
 
 /// Returns `true` when `ident` resolves to any import binding from `module_name`.
@@ -369,16 +375,18 @@ pub fn is_same_member_expression(
         (Some(_), None) | (None, Some(_)) => {
             return false;
         }
-        (None, None) => {
-            if let (
+        (None, None) => match (left, right) {
+            (
                 MemberExpression::PrivateFieldExpression(left),
                 MemberExpression::PrivateFieldExpression(right),
-            ) = (left, right)
-            {
+            ) => {
                 return left.field.name == right.field.name
                     && is_same_expression(&left.object, &right.object, ctx);
             }
-        }
+            (MemberExpression::PrivateFieldExpression(_), _)
+            | (_, MemberExpression::PrivateFieldExpression(_)) => return false,
+            _ => {}
+        },
     }
 
     if let (
@@ -437,9 +445,10 @@ pub fn call_expr_member_expr_property_span(call_expr: &CallExpression) -> Span {
 pub fn does_expr_match_any_path<'a, P, S>(mut expr: &Expression, paths: P) -> bool
 where
     P: IntoIterator<Item = S>,
-    S: AsRef<[&'a str]>,
+    S: IntoIterator<Item = &'a str>,
 {
-    let mut path = Vec::new();
+    // Member chains are short in practice; keep the segments on the stack.
+    let mut path: SmallVec<[&str; 4]> = SmallVec::new();
 
     while let Some(member_expr) = expr.as_member_expression() {
         let MemberExpression::StaticMemberExpression(static_mem_expr) = member_expr else {
@@ -452,18 +461,9 @@ where
 
     let Expression::Identifier(ident) = expr else { return false };
     path.push(ident.name.as_str());
-    let path = path.iter().rev();
+    let path = path.iter().rev().copied();
 
-    for e in paths {
-        let expected_path = e.as_ref();
-        if expected_path.len() == path.len()
-            && expected_path.iter().zip(path.clone()).all(|(x, y)| x == y)
-        {
-            return true;
-        }
-    }
-
-    false
+    paths.into_iter().any(|expected_path| expected_path.into_iter().eq(path.clone()))
 }
 
 /// Returns the precedence of an expression if it has one.

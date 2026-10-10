@@ -31,11 +31,14 @@ pub fn format_property_key<'a>(
             return;
         }
 
-        // For TypeScript class property declarations, quotes should always be preserved.
-        // https://github.com/prettier/prettier/issues/4516
-        let kind = if matches!(key.parent(), AstNodes::PropertyDefinition(_))
-            && f.context().source_type().is_typescript()
-        {
+        let preserve_quotes = match key.parent() {
+            // For TypeScript class property declarations, quotes should always be preserved.
+            // https://github.com/prettier/prettier/issues/4516
+            AstNodes::PropertyDefinition(_) => f.context().source_type().is_typescript(),
+            AstNodes::TSMethodSignature(method) => is_quoted_new_method_signature(method),
+            _ => false,
+        };
+        let kind = if preserve_quotes {
             StringLiteralParentKind::Expression
         } else {
             StringLiteralParentKind::Member
@@ -88,6 +91,15 @@ pub fn write_member_name<'a>(
     }
 }
 
+/// Determine if this is a method signature named `"new"` via a quoted key, which must keep its quotes.
+/// Unquoting `new(...)` in an interface or type literal would turn it into a construct signature.
+/// Optional (`new?()`) and getter/setter forms would stay a member named `new` even unquoted,
+/// but Prettier keeps the quotes for every method-signature form; only the property form is unquoted.
+pub fn is_quoted_new_method_signature(method: &TSMethodSignature<'_>) -> bool {
+    !method.computed
+        && matches!(&method.key, PropertyKey::StringLiteral(string) if string.value == "new")
+}
+
 /// Determine if the string literal key should preserve its quotes,
 /// i.e. its content cannot be written as a plain identifier.
 pub fn should_preserve_string_quote(string: &StringLiteral<'_>, f: &JsFormatter<'_, '_>) -> bool {
@@ -95,9 +107,15 @@ pub fn should_preserve_string_quote(string: &StringLiteral<'_>, f: &JsFormatter<
     !is_identifier_name_patched(quote_less_content)
 }
 
-/// Determine if the property key string literal should preserve its quotes
-pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    matches!(&key, PropertyKey::StringLiteral(string) if should_preserve_string_quote(string, f))
+/// Determine if the property key string literal should preserve its quotes.
+/// Computed keys are ignored.
+pub fn should_preserve_quote(
+    key: &PropertyKey<'_>,
+    computed: bool,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    !computed
+        && matches!(&key, PropertyKey::StringLiteral(string) if should_preserve_string_quote(string, f))
 }
 
 /// Determine if the enum member name string literal should preserve its quotes.

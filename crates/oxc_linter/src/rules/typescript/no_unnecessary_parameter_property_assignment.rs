@@ -2,13 +2,13 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, AssignmentTarget, ClassElement, Expression,
-        FormalParameter, Function, MethodDefinitionKind, Statement,
+        FormalParameter, Function, IdentifierReference, MethodDefinitionKind, Statement,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::ScopeFlags;
+use oxc_semantic::{NodeId, ScopeFlags};
 use oxc_span::Span;
 use oxc_str::Str;
 use rustc_hash::FxHashSet;
@@ -114,12 +114,59 @@ struct AssignmentVisitor<'a, 'b> {
     assigned_before_constructor: FxHashSet<Str<'a>>,
 }
 
-impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
+impl<'a> VisitJs<'a> for AssignmentVisitor<'a, '_> {
     fn visit_function(&mut self, _it: &Function<'a>, _flags: ScopeFlags) {
         // don't continue walking into functions as they have a different scoped "this"
     }
 
+    fn visit_identifier_reference(&mut self, identifier: &IdentifierReference<'a>) {
+        let reference = self.ctx.scoping().get_reference(identifier.reference_id());
+        if reference.is_write()
+            && self.parameters.iter().any(|param| {
+                param
+                    .pattern
+                    .get_binding_identifier()
+                    .is_some_and(|binding| reference.symbol_id() == Some(binding.symbol_id()))
+            })
+            && self.is_in_constructor_scope(reference.node_id())
+        {
+            // Any prior write may change the value copied by a later `this.x = x`.
+            self.assigned_before_unnecessary.insert(identifier.name.into());
+        }
+    }
+
     fn visit_assignment_expression(&mut self, assignment_expr: &AssignmentExpression<'a>) {
+        self.check_assignment(assignment_expr);
+        walk_js::walk_assignment_expression(self, assignment_expr);
+    }
+}
+
+impl<'a> AssignmentVisitor<'a, '_> {
+    fn is_in_constructor_scope(&self, node_id: NodeId) -> bool {
+        // Match the constructor scope, allowing a single arrow IIFE as upstream does.
+        let mut functions = self.ctx.nodes().ancestors(node_id).filter(|node| {
+            matches!(node.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_))
+        });
+        let mut function = functions.next();
+        if let Some(node) = function
+            && matches!(node.kind(), AstKind::ArrowFunctionExpression(_))
+            && let Some(AstKind::CallExpression(call)) = self
+                .ctx
+                .nodes()
+                .ancestor_kinds(node.id())
+                .find(|kind| !matches!(kind, AstKind::ParenthesizedExpression(_)))
+            && call.callee.without_parentheses().node_id() == node.id()
+        {
+            function = functions.next();
+        }
+        function.is_some_and(|node| matches!(node.kind(), AstKind::Function(_)))
+    }
+
+    fn check_assignment(&mut self, assignment_expr: &AssignmentExpression<'a>) {
+        if !self.is_in_constructor_scope(assignment_expr.node_id()) {
+            return;
+        }
+
         let Some(this_property_name) = get_property_name(&assignment_expr.left) else {
             return;
         };
@@ -169,15 +216,18 @@ impl<'a> Visit<'a> for AssignmentVisitor<'a, '_> {
                 continue; // there already was an assignment outside the constructor
             }
 
-            self.ctx.diagnostic_with_suggestion(
-                no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span),
-                |fixer| {
-                    fixer.delete_range(Span::new(
-                        assignment_expr.span.start,
-                        assignment_expr.span.end + 1,
-                    ))
-                },
-            );
+            let diagnostic =
+                no_unnecessary_parameter_property_assignment_diagnostic(assignment_expr.span);
+            if let AstKind::ExpressionStatement(statement) =
+                self.ctx.nodes().parent_kind(assignment_expr.node_id())
+            {
+                self.ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                    fixer.delete_range(statement.span)
+                });
+            } else {
+                // Nested assignments may supply a value to their surrounding expression.
+                self.ctx.diagnostic(diagnostic);
+            }
         }
     }
 }
@@ -191,9 +241,15 @@ fn get_assignments_inside_expression<'a>(
         Expression::CallExpression(call) => {
             // Immediately Invoked Function Expression (IIFE)
 
+            if let Expression::ArrowFunctionExpression(expr) = call.callee.without_parentheses()
+                && let Some(Expression::AssignmentExpression(assignment)) = expr.get_expression()
+            {
+                assignments.push(assignment);
+            }
+
             let function_body = match call.callee.without_parentheses() {
-                Expression::ArrowFunctionExpression(expr) => Some(&expr.body),
-                Expression::FunctionExpression(expr) => expr.body.as_ref(),
+                Expression::ArrowFunctionExpression(expr) => expr.get_function_body(),
+                Expression::FunctionExpression(expr) => expr.body.as_deref(),
                 _ => None,
             };
 
@@ -482,6 +538,51 @@ fn test() {
           }
         }
         ",
+        "
+        class User {
+          constructor(public name: string) {
+            name = name.trim();
+            this.name = name;
+          }
+        }
+        ",
+        "
+        class User {
+          constructor(public name: string) {
+            name += '!';
+            this.name = name;
+          }
+        }
+        ",
+        "
+        class User {
+          constructor(public name: string, flag: boolean) {
+            if (flag) {
+              name = name.trim();
+            }
+            this.name = name;
+          }
+        }
+        ",
+        "
+        class User {
+          constructor(public name: string, public age: number) {
+            name = name.trim();
+            this.name = name;
+          }
+        }
+        ",
+        "class User { constructor(public name: string) { let local; local = (name = name.trim()); this.name = name; } }",
+        "class User { constructor(public name = '') { name ||= 'other'; this.name = name; } }",
+        "class User { constructor(public name: string) { (() => { name = 'other'; })(); this.name = name; } }",
+        "class User { constructor(public age: number) { age++; this.age = age; } }",
+        "class User { constructor(public age: number) { --age; this.age = age; } }",
+        "class User { constructor(public name: string, names: string[]) { for (name of names) {} this.name = name; } }",
+        "class User { constructor(public name: string, names: object) { for (name in names) {} this.name = name; } }",
+        "class User { constructor(public name: string, values: string[]) { [name] = values; this.name = name; } }",
+        "class User { constructor(public name: string, value: {name: string}) { ({name} = value); this.name = name; } }",
+        "class User { constructor(public names: string[], values: string[]) { [...names] = values; this.names = names; } }",
+        "class User { constructor(public age: number, flag: boolean) { if (flag) age++; this.age = age; } }",
     ];
 
     let fail = vec![
@@ -666,6 +767,40 @@ fn test() {
           }
         }
         ",
+        "
+        class User {
+          constructor(public name: string) {
+            this.name = name;
+            name = name.trim();
+          }
+        }
+        ",
+        "
+        class User {
+          constructor(public name: string, public age: number) {
+            name = name.trim();
+            this.name = name;
+            this.age = age;
+          }
+        }
+        ",
+        "
+        class User {
+          constructor(public name: string) {
+            let local = name;
+            local = local.trim();
+            this.name = name;
+          }
+        }
+        ",
+        "class User { constructor(public name: string) { { let name = ''; name = 'other'; } this.name = name; } }",
+        "class User { constructor(public name: string) { function f() { name = 'other'; } this.name = name; } }",
+        "class User { constructor(public name: string) { const f = () => { name = 'other'; }; this.name = name; } }",
+        "class User { constructor(public name: string) { let local; local = (this.name = name); } }",
+        "class User { constructor(public name: string) { let local; local = this.name = name; } }",
+        "class User { constructor(public name: string) { setTimeout(() => { name = 'later'; }); this.name = name; } }",
+        "class User { constructor(public age: number) { this.age = age; age++; } }",
+        "class User { constructor(public age: number) { { let age = 0; age++; } this.age = age; } }",
     ];
 
     let fix = vec![
@@ -1072,6 +1207,42 @@ fn test() {
               }
             }
             ",
+        ),
+        (
+            "class User { constructor(public name: string) { this.name = name; name = name.trim(); } }",
+            "class User { constructor(public name: string) {  name = name.trim(); } }",
+        ),
+        (
+            "class User { constructor(public name: string, public age: number) { name = name.trim(); this.name = name; this.age = age; } }",
+            "class User { constructor(public name: string, public age: number) { name = name.trim(); this.name = name;  } }",
+        ),
+        (
+            "class User { constructor(public name: string) { let local = name; local = local.trim(); this.name = name; } }",
+            "class User { constructor(public name: string) { let local = name; local = local.trim();  } }",
+        ),
+        (
+            "class User { constructor(public name: string) { let local; local = (this.name = name); } }",
+            "class User { constructor(public name: string) { let local; local = (this.name = name); } }",
+        ),
+        (
+            "class User { constructor(public name: string) { let local; local = this.name = name; } }",
+            "class User { constructor(public name: string) { let local; local = this.name = name; } }",
+        ),
+        (
+            "class User { constructor(public name: string) { this.name = name} }",
+            "class User { constructor(public name: string) { } }",
+        ),
+        (
+            "class User { constructor(public name: string) { setTimeout(() => { name = 'later'; }); this.name = name; } }",
+            "class User { constructor(public name: string) { setTimeout(() => { name = 'later'; });  } }",
+        ),
+        (
+            "class User { constructor(public age: number) { this.age = age; age++; } }",
+            "class User { constructor(public age: number) {  age++; } }",
+        ),
+        (
+            "class User { constructor(public age: number) { { let age = 0; age++; } this.age = age; } }",
+            "class User { constructor(public age: number) { { let age = 0; age++; }  } }",
         ),
     ];
 

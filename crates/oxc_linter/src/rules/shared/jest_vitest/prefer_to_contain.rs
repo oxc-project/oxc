@@ -111,10 +111,8 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
                 .get_inner_expression()
                 .to_boolean(&WithoutGlobalReferenceInformation {})
                 .unwrap_or(false);
-            let has_not = jest_expect_fn_call
-                .modifiers()
-                .iter()
-                .any(|modifier| modifier.is_name_equal("not"));
+            let has_not =
+                jest_expect_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
 
             match (boolean_value, has_not) {
                 (false, true) | (true, false) => "",

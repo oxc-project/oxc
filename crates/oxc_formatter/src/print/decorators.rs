@@ -38,7 +38,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Decorator<
             AstNodes::FormalParameter(_) => {
                 write!(f, should_expand_decorators(self, f).then_some(expand_parent()));
             }
-            AstNodes::ExportNamedDeclaration(_) | AstNodes::ExportDefaultDeclaration(_) => {
+            AstNodes::ExportDeclaration(_) | AstNodes::ExportDefaultDeclaration(_) => {
                 write!(f, [hard_line_break()]);
             }
             _ => {

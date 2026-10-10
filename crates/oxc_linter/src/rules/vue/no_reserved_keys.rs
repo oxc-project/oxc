@@ -121,7 +121,7 @@ declare_oxc_lint!(
 
 impl Rule for NoReservedKeys {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -169,18 +169,17 @@ impl Rule for NoReservedKeys {
                         }
                     }
                     Expression::ArrowFunctionExpression(arrow) => {
-                        if arrow.expression {
+                        if arrow.is_expression() {
                             // `() => ({foo})` expression body
-                            if let Some(Statement::ExpressionStatement(es)) =
-                                arrow.body.statements.first()
+                            if let Some(expression) = arrow.get_expression()
                                 && let Expression::ObjectExpression(obj) =
-                                    es.expression.get_inner_expression()
+                                    expression.get_inner_expression()
                             {
                                 self.check_keys(group, obj, ctx);
                             }
                         } else {
                             // `() => { return {foo} }` block body
-                            for stmt in &arrow.body.statements {
+                            for stmt in &arrow.get_function_body().unwrap().statements {
                                 if let Statement::ReturnStatement(ret) = stmt
                                     && let Some(arg) = &ret.argument
                                     && let Expression::ObjectExpression(obj) =

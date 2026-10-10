@@ -5,9 +5,18 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::prelude::*,
-    print::{ExpressionLeftSide, semicolon::OptionalSemicolon},
-    utils::format_node_without_trailing_comments::format_content_without_comments_after,
+    formatter::{
+        prelude::*,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
+    },
+    print::{
+        ExpressionLeftSide,
+        semicolon::{OptionalSemicolon, assignment_chain_leaf_end},
+    },
+    utils::{
+        format_node_without_trailing_comments::format_content_without_comments_after,
+        typecast::format_leading_comments_and_open_paren,
+    },
     write,
 };
 
@@ -62,14 +71,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
 
         if let Some(argument) = self.argument() {
             write!(f, space());
-            if f.comments().has_comment_in_range(argument.span().end, self.span().end) {
+            let argument_leaf_end = assignment_chain_leaf_end(argument.as_ref(), f);
+            if f.comments().has_comment_in_range(argument_leaf_end, self.span().end) {
                 // Comments inside the argument's source parentheses belong to the argument
                 // and stay in place (`return (\n  a && b // c\n);` keeps the comment inside, like Prettier);
                 // only comments after the closing paren are dangling comments.
                 // Unlike `FormatContentWithSemicolon` they move even without a source `;` (ASI),
                 // matching Prettier's dangling-comment handling for return/throw.
-                let argument_end =
-                    f.comments().end_including_source_parens(argument.span().end, self.span().end);
+                // ... except when the chain-leaf walk descended into the argument:
+                // the chain's inner parens are dropped, so comments inside them move too
+                let argument_end = if argument_leaf_end < argument.span().end {
+                    argument_leaf_end
+                } else {
+                    f.comments().end_including_source_parens(argument.span().end, self.span().end)
+                };
                 if f.comments().has_trailing_suppression_comment(argument_end) {
                     // Keep a trailing suppression comment visible to the argument,
                     // so it preserves its original text.
@@ -92,12 +107,27 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
 
         // The semicolon goes before the dangling comments, like Prettier:
         // `return foo /* comment */;` -> `return foo; /* comment */`
+        // Own-line comments stay own-line:
+        // from the first one on, comments are left for a later pass (the next node's leading comments),
+        // also like Prettier, whose statement `locEnd` excludes the trailing `;`.
         let dangling_comments = f.context().comments().comments_before(self.span().end);
+        let same_line_count =
+            dangling_comments.iter().take_while(|c| !c.preceded_by_newline()).count();
+        let dangling_comments = &dangling_comments[..same_line_count];
 
         write!(f, OptionalSemicolon);
 
         if !dangling_comments.is_empty() {
-            write!(f, [space(), format_dangling_comments(self.span())]);
+            write!(
+                f,
+                [
+                    space(),
+                    FormatDanglingComments::Comments {
+                        comments: dangling_comments,
+                        indent: DanglingIndentMode::None
+                    }
+                ]
+            );
         }
     }
 }
@@ -113,15 +143,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
             // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
             let inner = format_with(|f| {
                 if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    write!(
-                        f,
-                        [
-                            format_leading_comments(argument.span()),
-                            token("("),
-                            argument,
-                            token(")")
-                        ]
-                    );
+                    // The argument's parentheses survive here,
+                    // so even a comment inside the first element's source parens stays inside:
+                    // bound at the span start.
+                    let span = argument.span();
+                    format_leading_comments_and_open_paren(span, span.start, true, f);
+                    write!(f, [argument, token(")")]);
                 } else {
                     write!(f, argument);
                 }

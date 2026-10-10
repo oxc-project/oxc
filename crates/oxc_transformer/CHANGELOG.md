@@ -4,6 +4,104 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- 72d62a1 transformer/explicit-resource-management: Transform classic for loop using declarations (#27148) (camc314)
+- 24b7015 transformer/explicit-resource-management: Lower using in catch and finally (#27142) (camc314)
+
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- 32305e2 transformer: Skip enum reverse mappings for syntactic string initializers (#26724) (Dunqing)
+- 9220158 transformer: Skip recovered using loop patterns (#26722) (camc314)
+
+## [0.150.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 75cd919 transformer: Preserve receivers in private optional chains (#26535) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 116c8b8 transformer/class-properties: Keep private methods in class-expression scope (#26308) (Changsu Seong)
+- 3d95477 transformer: Gate async-only rewrites by owning transform (#26326) (Dunqing)
+- f45a9ee transformer: Limit arguments capture to lowered async functions (#26317) (Dunqing)
+- 789969f transformer: Gate this capture by owning async transform (#26227) (Dunqing)
+
+### 📚 Documentation
+
+- d4b4e61 transformer: Document ES2015 target floor (#26378) (Dunqing)
+
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- 243b685 transformer/object-rest: Lower multiple declarators correctly (#26147) (camc314)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### ⚡ Performance
+
+- 9fb1e3e transformer: Avoid large types on stack (#25035) (overlookmotel)
+
+## [0.142.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 7aa4739 syntax,transformer: Move JSX entity decoder to `oxc_syntax` (#24617) (camc314)
+
+### ⚡ Performance
+
+- a149e95 transformer: Outline rare expression exits (#24512) (camc314)
+
+## [0.140.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- 721eb0b transformer/decorator: Scope accessor class binding (#24330) (camc314)
+- af4922b transformer: Clear lowered namespace redeclarations (#24300) (camc314)
+- f05dfab transformer: Correct symbol flags for lowered namespaces (#24271) (Dunqing)
+- 84eeb55 transformer: Correct symbol flags for lowered enums (#24269) (Dunqing)
+- c3057da transformer: Preserve generated class binding spans (#24220) (camc314)
+- 8260096 transformer: Correct span for lowered namespace symbol (#24222) (camc314)
+
+### ⚡ Performance
+
+- ab22e80 transformer: Fix Rust 1.97 performance regression (#24354) (camc314)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🐛 Bug Fixes

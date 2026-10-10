@@ -83,7 +83,7 @@ declare_oxc_lint!(
 
 impl Rule for ReturnInComputedProperty {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
@@ -96,7 +96,7 @@ impl Rule for ReturnInComputedProperty {
             AstKind::ArrowFunctionExpression(arrow) => {
                 // Expression-body arrow (`() => x`) implicitly returns its expression,
                 // so it always has a return on every code path.
-                if arrow.expression {
+                if arrow.is_expression() {
                     return;
                 }
                 arrow.span

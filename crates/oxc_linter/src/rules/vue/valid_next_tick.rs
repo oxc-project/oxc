@@ -173,16 +173,8 @@ fn is_awaited_promise(call_node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         | AstKind::ReturnStatement(_)
         | AstKind::VariableDeclarator(_)
         | AstKind::AssignmentExpression(_) => true,
-        // `() => nextTick()` (expression body arrow). The call's direct parent is
-        // an `ExpressionStatement` whose grandparent is the arrow's `FunctionBody`.
-        AstKind::ExpressionStatement(_) => {
-            let gp = ctx.nodes().parent_node(parent.id());
-            if !matches!(gp.kind(), AstKind::FunctionBody(_)) {
-                return false;
-            }
-            let ggp = ctx.nodes().parent_node(gp.id());
-            matches!(ggp.kind(), AstKind::ArrowFunctionExpression(arrow) if arrow.expression)
-        }
+        // `() => nextTick()` (expression body arrow).
+        AstKind::ArrowFunctionExpression(arrow) => arrow.is_expression(),
         // `nextTick().then(...)`
         AstKind::StaticMemberExpression(m) => m.property.name == "then",
         // `Promise.all([nextTick()])`

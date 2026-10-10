@@ -5,44 +5,54 @@
  * LICENSE file in the root directory of this source tree.
  */
 use rustc_hash::FxHashMap;
+use smallvec::SmallVec;
+
+use oxc_index::IndexSlice;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::{
-    ArrayElement, ArrayPatternElement, BasicBlock, BlockId, HirFunction, IdentifierId, Instruction,
-    InstructionValue, JsxAttribute, JsxTag, ManualMemoDependencyRoot, ObjectPropertyKey,
-    ObjectPropertyOrSpread, Pattern, Place, PlaceOrSpread, ScopeId, Terminal,
+    ArrayElement, ArrayPatternElement, BasicBlock, BlockId, FunctionId, HirFunction, IdentifierId,
+    Instruction, InstructionValue, JsxAttribute, JsxTag, ManualMemoDependencyRoot,
+    ObjectPropertyKey, ObjectPropertyOrSpread, Pattern, Place, PlaceOrSpread, ScopeId, Terminal,
 };
 
 // =============================================================================
 // Iterator functions (return Vec instead of generators)
 // =============================================================================
 
+/// Operand/lvalue lists are almost always 1-4 entries; keep them inline instead
+/// of heap-allocating a `Vec` for every instruction visited.
+pub type PlaceList = SmallVec<[Place; 4]>;
+
+/// Non-switch terminals reference at most five blocks; keep those block IDs inline.
+pub type TerminalBlockList = SmallVec<[BlockId; 5]>;
+
 /// Yields `instr.lvalue` plus the value's lvalues.
 /// Equivalent to TS `eachInstructionLValue`.
-pub fn each_instruction_lvalue(instr: &Instruction) -> Vec<Place> {
-    let mut result = Vec::new();
-    result.push(instr.lvalue.clone());
+pub fn each_instruction_lvalue(instr: &Instruction) -> PlaceList {
+    let mut result = PlaceList::new();
+    result.push(instr.lvalue);
     result.extend(each_instruction_value_lvalue(&instr.value));
     result
 }
 
 /// Yields lvalues from DeclareLocal/StoreLocal/DeclareContext/StoreContext/Destructure/PostfixUpdate/PrefixUpdate.
 /// Equivalent to TS `eachInstructionValueLValue`.
-pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_instruction_value_lvalue(value: &InstructionValue) -> PlaceList {
+    let mut result = PlaceList::new();
     match value {
         InstructionValue::DeclareContext { lvalue, .. }
         | InstructionValue::StoreContext { lvalue, .. }
         | InstructionValue::DeclareLocal { lvalue, .. }
         | InstructionValue::StoreLocal { lvalue, .. } => {
-            result.push(lvalue.place.clone());
+            result.push(lvalue.place);
         }
         InstructionValue::Destructure { lvalue, .. } => {
             result.extend(each_pattern_operand(&lvalue.pattern));
         }
         InstructionValue::PostfixUpdate { lvalue, .. }
         | InstructionValue::PrefixUpdate { lvalue, .. } => {
-            result.push(lvalue.clone());
+            result.push(*lvalue);
         }
         // All other variants have no lvalues
         InstructionValue::LoadLocal { .. }
@@ -78,22 +88,22 @@ pub fn each_instruction_value_lvalue(value: &InstructionValue) -> Vec<Place> {
         | InstructionValue::IteratorNext { .. }
         | InstructionValue::NextPropertyOf { .. }
         | InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::StartMemoize { .. }
-        | InstructionValue::FinishMemoize { .. }
-        | InstructionValue::UnsupportedNode { .. } => {}
+        | InstructionValue::FinishMemoize { .. } => {}
     }
     result
 }
 
 /// Delegates to each_instruction_value_operand.
 /// Equivalent to TS `eachInstructionOperand`.
-pub fn each_instruction_operand(instr: &Instruction, env: &Environment) -> Vec<Place> {
+pub fn each_instruction_operand(instr: &Instruction, env: &Environment) -> PlaceList {
     each_instruction_value_operand(&instr.value, env)
 }
 
 /// Yields operand places from an InstructionValue.
 /// Equivalent to TS `eachInstructionValueOperand`.
-pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environment) -> Vec<Place> {
+pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environment) -> PlaceList {
     each_instruction_value_operand_with_functions(value, &env.functions)
 }
 
@@ -101,105 +111,105 @@ pub fn each_instruction_value_operand(value: &InstructionValue, env: &Environmen
 /// Useful when borrow splitting prevents passing the full `Environment`.
 pub fn each_instruction_value_operand_with_functions(
     value: &InstructionValue,
-    functions: &[HirFunction],
-) -> Vec<Place> {
-    let mut result = Vec::new();
+    functions: &IndexSlice<FunctionId, [HirFunction]>,
+) -> PlaceList {
+    let mut result = PlaceList::new();
     match value {
         InstructionValue::NewExpression { callee, args, .. }
         | InstructionValue::CallExpression { callee, args, .. } => {
-            result.push(callee.clone());
+            result.push(*callee);
             result.extend(each_call_argument(args));
         }
         InstructionValue::BinaryExpression { left, right, .. } => {
-            result.push(left.clone());
-            result.push(right.clone());
+            result.push(*left);
+            result.push(*right);
         }
         InstructionValue::MethodCall { receiver, property, args, .. } => {
-            result.push(receiver.clone());
-            result.push(property.clone());
+            result.push(*receiver);
+            result.push(*property);
             result.extend(each_call_argument(args));
         }
         InstructionValue::DeclareContext { .. } | InstructionValue::DeclareLocal { .. } => {
             // no operands
         }
         InstructionValue::LoadLocal { place, .. } | InstructionValue::LoadContext { place, .. } => {
-            result.push(place.clone());
+            result.push(*place);
         }
         InstructionValue::StoreLocal { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::StoreContext { lvalue, value: val, .. } => {
-            result.push(lvalue.place.clone());
-            result.push(val.clone());
+            result.push(lvalue.place);
+            result.push(*val);
         }
         InstructionValue::StoreGlobal { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::Destructure { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::PropertyLoad { object, .. } => {
-            result.push(object.clone());
+            result.push(*object);
         }
         InstructionValue::PropertyDelete { object, .. } => {
-            result.push(object.clone());
+            result.push(*object);
         }
         InstructionValue::PropertyStore { object, value: val, .. } => {
-            result.push(object.clone());
-            result.push(val.clone());
+            result.push(*object);
+            result.push(*val);
         }
         InstructionValue::ComputedLoad { object, property, .. } => {
-            result.push(object.clone());
-            result.push(property.clone());
+            result.push(*object);
+            result.push(*property);
         }
         InstructionValue::ComputedDelete { object, property, .. } => {
-            result.push(object.clone());
-            result.push(property.clone());
+            result.push(*object);
+            result.push(*property);
         }
         InstructionValue::ComputedStore { object, property, value: val, .. } => {
-            result.push(object.clone());
-            result.push(property.clone());
-            result.push(val.clone());
+            result.push(*object);
+            result.push(*property);
+            result.push(*val);
         }
         InstructionValue::UnaryExpression { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::JsxExpression { tag, props, children, .. } => {
             if let JsxTag::Place(place) = tag {
-                result.push(place.clone());
+                result.push(*place);
             }
             for attribute in props {
                 match attribute {
                     JsxAttribute::Attribute { place, .. } => {
-                        result.push(place.clone());
+                        result.push(*place);
                     }
                     JsxAttribute::SpreadAttribute { argument, .. } => {
-                        result.push(argument.clone());
+                        result.push(*argument);
                     }
                 }
             }
             if let Some(children) = children {
                 for child in children {
-                    result.push(child.clone());
+                    result.push(*child);
                 }
             }
         }
         InstructionValue::JsxFragment { children, .. } => {
             for child in children {
-                result.push(child.clone());
+                result.push(*child);
             }
         }
         InstructionValue::ObjectExpression { properties, .. } => {
             for property in properties {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        if let ObjectPropertyKey::Computed { name } = &prop.key {
-                            result.push(name.clone());
+                        if let ObjectPropertyKey::Computed { name, .. } = &prop.key {
+                            result.push(*name);
                         }
-                        result.push(prop.place.clone());
+                        result.push(prop.place);
                     }
                     ObjectPropertyOrSpread::Spread(spread) => {
-                        result.push(spread.place.clone());
+                        result.push(spread.place);
                     }
                 }
             }
@@ -208,10 +218,10 @@ pub fn each_instruction_value_operand_with_functions(
             for element in elements {
                 match element {
                     ArrayElement::Place(place) => {
-                        result.push(place.clone());
+                        result.push(*place);
                     }
                     ArrayElement::Spread(spread) => {
-                        result.push(spread.place.clone());
+                        result.push(spread.place);
                     }
                     ArrayElement::Hole => {}
                 }
@@ -219,59 +229,59 @@ pub fn each_instruction_value_operand_with_functions(
         }
         InstructionValue::ObjectMethod { lowered_func, .. }
         | InstructionValue::FunctionExpression { lowered_func, .. } => {
-            let func = &functions[lowered_func.func.0 as usize];
+            let func = &functions[lowered_func.func];
             for ctx_place in &func.context {
-                result.push(ctx_place.clone());
+                result.push(*ctx_place);
             }
         }
         InstructionValue::TaggedTemplateExpression { tag, subexprs, .. } => {
-            result.push(tag.clone());
+            result.push(*tag);
             for subexpr in subexprs {
-                result.push(subexpr.clone());
+                result.push(*subexpr);
             }
         }
         InstructionValue::TypeCastExpression { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::TemplateLiteral { subexprs, .. } => {
             for subexpr in subexprs {
-                result.push(subexpr.clone());
+                result.push(*subexpr);
             }
         }
         InstructionValue::Await { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::GetIterator { collection, .. } => {
-            result.push(collection.clone());
+            result.push(*collection);
         }
         InstructionValue::IteratorNext { iterator, collection, .. } => {
-            result.push(iterator.clone());
-            result.push(collection.clone());
+            result.push(*iterator);
+            result.push(*collection);
         }
         InstructionValue::NextPropertyOf { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::PostfixUpdate { value: val, .. }
         | InstructionValue::PrefixUpdate { value: val, .. } => {
-            result.push(val.clone());
+            result.push(*val);
         }
         InstructionValue::StartMemoize { deps, .. } => {
             if let Some(deps) = deps {
                 for dep in deps {
                     if let ManualMemoDependencyRoot::NamedLocal { value, .. } = &dep.root {
-                        result.push(value.clone());
+                        result.push(*value);
                     }
                 }
             }
         }
         InstructionValue::FinishMemoize { decl, .. } => {
-            result.push(decl.clone());
+            result.push(*decl);
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {
             // no operands
@@ -282,15 +292,15 @@ pub fn each_instruction_value_operand_with_functions(
 
 /// Yields each arg's place.
 /// Equivalent to TS `eachCallArgument`.
-pub fn each_call_argument(args: &[PlaceOrSpread]) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_call_argument(args: &[PlaceOrSpread]) -> PlaceList {
+    let mut result = PlaceList::new();
     for arg in args {
         match arg {
             PlaceOrSpread::Place(place) => {
-                result.push(place.clone());
+                result.push(*place);
             }
             PlaceOrSpread::Spread(spread) => {
-                result.push(spread.place.clone());
+                result.push(spread.place);
             }
         }
     }
@@ -299,17 +309,17 @@ pub fn each_call_argument(args: &[PlaceOrSpread]) -> Vec<Place> {
 
 /// Yields places from array/object patterns.
 /// Equivalent to TS `eachPatternOperand`.
-pub fn each_pattern_operand(pattern: &Pattern) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_pattern_operand(pattern: &Pattern) -> PlaceList {
+    let mut result = PlaceList::new();
     match pattern {
         Pattern::Array(arr) => {
             for item in &arr.items {
                 match item {
                     ArrayPatternElement::Place(place) => {
-                        result.push(place.clone());
+                        result.push(*place);
                     }
                     ArrayPatternElement::Spread(spread) => {
-                        result.push(spread.place.clone());
+                        result.push(spread.place);
                     }
                     ArrayPatternElement::Hole => {}
                 }
@@ -319,10 +329,10 @@ pub fn each_pattern_operand(pattern: &Pattern) -> Vec<Place> {
             for property in &obj.properties {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        result.push(prop.place.clone());
+                        result.push(prop.place);
                     }
                     ObjectPropertyOrSpread::Spread(spread) => {
-                        result.push(spread.place.clone());
+                        result.push(spread.place);
                     }
                 }
             }
@@ -355,8 +365,8 @@ pub fn does_pattern_contain_spread_element(pattern: &Pattern) -> bool {
 
 /// Yields successor block IDs (NOT fallthroughs, this is intentional).
 /// Equivalent to TS `eachTerminalSuccessor`.
-pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
-    let mut result = Vec::new();
+pub fn each_terminal_successor(terminal: &Terminal) -> TerminalBlockList {
+    let mut result = TerminalBlockList::new();
     match terminal {
         Terminal::Goto { block, .. } => {
             result.push(*block);
@@ -421,29 +431,29 @@ pub fn each_terminal_successor(terminal: &Terminal) -> Vec<BlockId> {
 
 /// Yields places used by terminal.
 /// Equivalent to TS `eachTerminalOperand`.
-pub fn each_terminal_operand(terminal: &Terminal) -> Vec<Place> {
-    let mut result = Vec::new();
+pub fn each_terminal_operand(terminal: &Terminal) -> PlaceList {
+    let mut result = PlaceList::new();
     match terminal {
         Terminal::If { test, .. } => {
-            result.push(test.clone());
+            result.push(*test);
         }
         Terminal::Branch { test, .. } => {
-            result.push(test.clone());
+            result.push(*test);
         }
         Terminal::Switch { test, cases, .. } => {
-            result.push(test.clone());
+            result.push(*test);
             for case in cases {
                 if let Some(test) = &case.test {
-                    result.push(test.clone());
+                    result.push(*test);
                 }
             }
         }
         Terminal::Return { value, .. } | Terminal::Throw { value, .. } => {
-            result.push(value.clone());
+            result.push(*value);
         }
         Terminal::Try { handler_binding, .. } => {
             if let Some(binding) = handler_binding {
-                result.push(binding.clone());
+                result.push(*binding);
             }
         }
         Terminal::MaybeThrow { .. }
@@ -476,30 +486,24 @@ pub fn each_terminal_operand(terminal: &Terminal) -> Vec<Place> {
 pub fn map_pattern_operands(pattern: &mut Pattern, f: &mut impl FnMut(Place) -> Place) {
     match pattern {
         Pattern::Array(arr) => {
-            arr.items = arr
-                .items
-                .iter()
-                .map(|item| match item {
-                    ArrayPatternElement::Place(place) => {
-                        ArrayPatternElement::Place(f(place.clone()))
-                    }
+            for item in arr.items.iter_mut() {
+                match item {
+                    ArrayPatternElement::Place(place) => *place = f(*place),
                     ArrayPatternElement::Spread(spread) => {
-                        let mut spread = spread.clone();
-                        spread.place = f(spread.place.clone());
-                        ArrayPatternElement::Spread(spread)
+                        spread.place = f(spread.place);
                     }
-                    ArrayPatternElement::Hole => ArrayPatternElement::Hole,
-                })
-                .collect();
+                    ArrayPatternElement::Hole => {}
+                }
+            }
         }
         Pattern::Object(obj) => {
             for property in obj.properties.iter_mut() {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        prop.place = f(prop.place.clone());
+                        prop.place = f(prop.place);
                     }
                     ObjectPropertyOrSpread::Spread(spread) => {
-                        spread.place = f(spread.place.clone());
+                        spread.place = f(spread.place);
                     }
                 }
             }
@@ -605,8 +609,8 @@ pub fn map_terminal_successors(terminal: &mut Terminal, f: &mut impl FnMut(Block
 /// Yields ALL block IDs referenced by a terminal (successors + fallthroughs + internal blocks).
 /// Unlike `each_terminal_successor` which yields only standard control flow successors,
 /// this function yields every block ID that `map_terminal_successors` would visit.
-pub fn each_terminal_all_successors(terminal: &Terminal) -> Vec<BlockId> {
-    let mut result = Vec::new();
+pub fn each_terminal_all_successors(terminal: &Terminal) -> TerminalBlockList {
+    let mut result = TerminalBlockList::new();
     match terminal {
         Terminal::Goto { block, .. } => {
             result.push(*block);
@@ -859,7 +863,7 @@ pub fn each_terminal_operand_ids(terminal: &Terminal) -> Vec<IdentifierId> {
 //   for_each_instruction_value_operand_mut(&mut instr.value, &mut |place| { ... });
 //   if let InstructionValue::FunctionExpression { lowered_func, .. }
 //       | InstructionValue::ObjectMethod { lowered_func, .. } = &mut instr.value {
-//       let func = &mut env.functions[lowered_func.func.0 as usize];
+//       let func = &mut env.functions[lowered_func.func];
 //       for ctx in func.context.iter_mut() { ... }
 //   }
 //
@@ -943,7 +947,7 @@ pub fn for_each_instruction_value_operand_mut(
             for property in properties.iter_mut() {
                 match property {
                     ObjectPropertyOrSpread::Property(prop) => {
-                        if let ObjectPropertyKey::Computed { name } = &mut prop.key {
+                        if let ObjectPropertyKey::Computed { name, .. } = &mut prop.key {
                             f(name);
                         }
                         f(&mut prop.place);
@@ -1015,10 +1019,10 @@ pub fn for_each_instruction_value_operand_mut(
             f(decl);
         }
         InstructionValue::Debugger { .. }
+        | InstructionValue::TSEnumDeclaration { .. }
         | InstructionValue::RegExpLiteral { .. }
         | InstructionValue::MetaProperty { .. }
         | InstructionValue::LoadGlobal { .. }
-        | InstructionValue::UnsupportedNode { .. }
         | InstructionValue::Primitive { .. }
         | InstructionValue::JSXText { .. } => {}
     }

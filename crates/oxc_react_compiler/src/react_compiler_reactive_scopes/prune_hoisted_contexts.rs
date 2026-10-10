@@ -12,7 +12,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::{
     EvaluationOrder, IdentifierId, InstructionKind, InstructionValue, Place, ReactiveFunction,
     ReactiveInstruction, ReactiveScopeBlock, ReactiveStatement, ReactiveValue,
@@ -81,7 +81,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         scope: &mut ReactiveScopeBlock<'a>,
         state: &mut VisitorState,
     ) -> Result<(), OxcDiagnostic> {
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope];
         let decl_ids: FxHashSet<IdentifierId> =
             scope_data.declarations.iter().map(|(id, _)| *id).collect();
 
@@ -95,7 +95,7 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         state.active_scopes.pop();
 
         // Clean up uninitialized after scope
-        let scope_data = &self.env.scopes[scope.scope.0 as usize];
+        let scope_data = &self.env.scopes[scope.scope];
         for (_, decl) in &scope_data.declarations {
             state.uninitialized.remove(&decl.identifier);
         }
@@ -110,12 +110,13 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
     ) -> Result<(), OxcDiagnostic> {
         if let Some(UninitializedKind::Func { definition }) =
             state.uninitialized.get(&place.identifier)
+            && *definition != Some(place.identifier)
         {
-            if *definition != Some(place.identifier) {
-                return Err(ErrorCategory::Todo
-                    .diagnostic("[PruneHoistedContexts] Rewrite hoisted function references")
-                    .with_labels(place.span));
-            }
+            return Err(
+                diagnostics::todo_prune_hoisted_contexts_rewrite_hoisted_function_references(
+                    place.span,
+                ),
+            );
         }
         Ok(())
     }
@@ -145,32 +146,26 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
 
         if let ReactiveValue::Instruction(InstructionValue::StoreContext { lvalue, .. }) =
             &mut instruction.value
+            && lvalue.kind != InstructionKind::Reassign
         {
-            if lvalue.kind != InstructionKind::Reassign {
-                let lvalue_id = lvalue.place.identifier;
-                let is_declared_by_scope = state.find_in_active_scopes(lvalue_id);
-                if is_declared_by_scope {
-                    if lvalue.kind == InstructionKind::Let || lvalue.kind == InstructionKind::Const
-                    {
-                        lvalue.kind = InstructionKind::Reassign;
-                    } else if lvalue.kind == InstructionKind::Function {
-                        if let Some(kind) = state.uninitialized.get(&lvalue_id) {
-                            if !matches!(kind, UninitializedKind::Func { .. }) {
-                                return Err(ErrorCategory::Invariant
-                                    .diagnostic(
-                                        "[PruneHoistedContexts] Unexpected hoisted function",
-                                    )
-                                    .with_labels(instruction.span));
-                            }
-                            // References to hoisted functions are now "safe" as
-                            // variable assignments have finished.
-                            state.uninitialized.remove(&lvalue_id);
+            let lvalue_id = lvalue.place.identifier;
+            let is_declared_by_scope = state.find_in_active_scopes(lvalue_id);
+            if is_declared_by_scope {
+                if lvalue.kind == InstructionKind::Let || lvalue.kind == InstructionKind::Const {
+                    lvalue.kind = InstructionKind::Reassign;
+                } else if lvalue.kind == InstructionKind::Function {
+                    if let Some(kind) = state.uninitialized.get(&lvalue_id) {
+                        if !matches!(kind, UninitializedKind::Func { .. }) {
+                            return Err(diagnostics::invariant_prune_hoisted_contexts_unexpected_hoisted_function(instruction.span));
                         }
-                    } else {
-                        return Err(ErrorCategory::Todo
-                            .diagnostic("[PruneHoistedContexts] Unexpected kind")
-                            .with_labels(instruction.span));
+                        // References to hoisted functions are now "safe" as
+                        // variable assignments have finished.
+                        state.uninitialized.remove(&lvalue_id);
                     }
+                } else {
+                    return Err(diagnostics::todo_prune_hoisted_contexts_unexpected_kind(
+                        instruction.span,
+                    ));
                 }
             }
         }

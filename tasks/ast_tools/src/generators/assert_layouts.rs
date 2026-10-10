@@ -225,7 +225,7 @@ impl<'s> StructState<'s> {
             layout.size = next_offset;
 
             // Get highest alignment next field can have
-            *current_align = next_offset & next_offset.wrapping_neg();
+            *current_align = next_offset.isolate_lowest_one();
         }
 
         // Return offset of this field

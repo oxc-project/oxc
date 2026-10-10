@@ -1,21 +1,20 @@
-//! Light-weight separated-list helper for JSON,
-//! modelled after `oxc_formatter::formatter::separated::FormatSeparatedIter` but trimmed for JSON's needs:
-//! - only one separator character (`,`),
-//! - one inter-entry break style (`soft_line_break_or_space`),
-//! - and an optional trailing separator that only materializes when the surrounding group breaks
+//! Separated-list writer for JSON containers:
+//! - one separator character (`,`), one inter-entry break style (`soft_line_break_or_space`),
+//! - an optional trailing separator that only materializes when the surrounding group breaks,
+//! - and (the actual core of this module) comment threading around the `,`:
+//!   same-line trailing block comments print before it, a line comment after it via `line_suffix`,
+//!   plus blank-line preservation between entries.
 
 use oxc_formatter_core::{
     Buffer,
-    builders::{
-        empty_line, hard_line_break, if_group_breaks, line_suffix, soft_line_break_or_space, space,
-    },
+    builders::{empty_line, hard_line_break, if_group_breaks, soft_line_break_or_space, space},
     write,
 };
 use oxc_span::Span;
 
 use crate::{
-    comments::{count_newlines, write_single_comment},
-    print::{JsonFormatter, format_with},
+    comments::{FormatCommentBeforeContent, FormatLineCommentSuffix, count_newlines},
+    print::JsonFormatter,
 };
 
 /// Whether a trailing `,` should follow the last entry.
@@ -78,9 +77,9 @@ pub fn write_separated<'a, F>(
 /// Mirrors [`write_inter_entry_separator`]'s rule applied to the final position:
 /// a block comment that sits on the same line as the last value is part of that value's trailing,
 /// so it prints before the separator (`value /* block */,`).
-/// Line comments and own-line comments stay pending for the caller's [`crate::comments::FormatTrailingInsideComments`] pass.
-/// Landing after the comma (`value, // line`) which is correct,
-/// since a line comment terminates the line.
+/// Line comments and own-line comments stay pending for the caller's [`crate::comments::FormatTrailingInsideComments`] pass;
+/// riding a `line_suffix` there, such a comment lands at the end of the printed line,
+/// i.e. after the comma (`value, // line`) correct, since a line comment terminates the line.
 ///
 /// `upper_bound` (the container's closing-delimiter position) bounds the comment scan
 /// so nested/outer comments aren't pulled in.
@@ -96,8 +95,7 @@ fn write_trailing_separator(upper_bound: u32, f: &mut JsonFormatter<'_, '_>) {
 
     if let Some(block_end) = block_end {
         for c in f.context().comments().take_before(block_end) {
-            write!(f, space());
-            write_single_comment(c, f);
+            write!(f, [space(), FormatCommentBeforeContent::new(c)]);
         }
     }
 
@@ -144,8 +142,7 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
     };
 
     for c in block_comments {
-        write!(f, space());
-        write_single_comment(c, f);
+        write!(f, [space(), FormatCommentBeforeContent::new(c)]);
     }
     write!(f, ",");
 
@@ -154,12 +151,7 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
         // so its width doesn't count against the preceding value's group budget.
         // Without this, `"k": [a, b], // long...`
         // would force the array to expand even when it fits on its own.
-        let lc = *lc;
-        let suffix = format_with(move |f: &mut JsonFormatter<'_, '_>| {
-            write!(f, space());
-            write_single_comment(&lc, f);
-        });
-        write!(f, line_suffix(&suffix));
+        write!(f, FormatLineCommentSuffix::new(lc).with_leading_space());
         // Promote to `empty_line` when the source preserves a blank line after the trailing comment;
         // otherwise a hard break (also flushes the line_suffix).
         if has_blank_line(lc.span.end, curr.start, f) {

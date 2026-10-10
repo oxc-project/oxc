@@ -139,6 +139,7 @@ impl Rule for InitDeclarations {
                     return;
                 }
             }
+            let declaration_is_const = decl.kind == VariableDeclarationKind::Const;
             for v in &decl.declarations {
                 let BindingPattern::BindingIdentifier(identifier) = &v.id else {
                     continue;
@@ -166,7 +167,7 @@ impl Rule for InitDeclarations {
                         ));
                     }
                     AlwaysNever::Never if is_initialized && !config.ignore_for_loop_init => {
-                        if matches!(&v.kind, VariableDeclarationKind::Const) {
+                        if declaration_is_const {
                             continue;
                         }
                         ctx.diagnostic(init_declarations_diagnostic(

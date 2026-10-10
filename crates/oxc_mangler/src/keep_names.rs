@@ -256,7 +256,7 @@ mod test {
     fn collect(opts: MangleOptionsKeepNames, source_text: &str) -> FxHashSet<String> {
         let allocator = Allocator::default();
         let ret = Parser::new(&allocator, source_text, SourceType::mjs()).parse();
-        assert!(!ret.panicked, "{source_text}");
+        assert!(!ret.fatal_error, "{source_text}");
         assert!(ret.diagnostics.is_empty(), "{source_text}");
         let ret = SemanticBuilder::new().with_build_nodes(true).build(&ret.program);
         assert!(ret.diagnostics.is_empty(), "{source_text}");

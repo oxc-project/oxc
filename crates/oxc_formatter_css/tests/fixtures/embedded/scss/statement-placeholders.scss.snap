@@ -25,6 +25,14 @@ html {
 
 `PLACEHOLDER-8`
 
+:disabled {
+  cursor: not-allowed;
+}
+
+// DIVERGES: the declaration swallowed by the `;`-less placeholder above it is formatted (Prettier keeps it verbatim); see DIVERGENCES.md#placeholder-swallow-run
+`PLACEHOLDER-9`
+color   :   red;
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -51,6 +59,14 @@ html {
 
 `PLACEHOLDER-8`
 
+:disabled {
+  cursor: not-allowed;
+}
+
+// DIVERGES: the declaration swallowed by the `;`-less placeholder above it is formatted (Prettier keeps it verbatim); see DIVERGENCES.md#placeholder-swallow-run
+`PLACEHOLDER-9`
+color: red;
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -75,5 +91,13 @@ html {
 }
 
 `PLACEHOLDER-8`
+
+:disabled {
+  cursor: not-allowed;
+}
+
+// DIVERGES: the declaration swallowed by the `;`-less placeholder above it is formatted (Prettier keeps it verbatim); see DIVERGENCES.md#placeholder-swallow-run
+`PLACEHOLDER-9`
+color: red;
 
 ===================== End =====================

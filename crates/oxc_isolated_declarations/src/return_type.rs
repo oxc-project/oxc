@@ -1,6 +1,6 @@
 use std::cell::Cell;
 
-use oxc_allocator::{Allocator, ArenaVec, CloneIn, GetAllocator};
+use oxc_allocator::{Allocator, CloneIn, GetAllocator};
 use oxc_ast::ast::{
     ArrowFunctionExpression, BindingIdentifier, Expression, Function, FunctionBody,
     ReturnStatement, TSType, TSTypeAliasDeclaration, TSTypeName, TSTypeQueryExprName,
@@ -112,10 +112,7 @@ impl<'a> FunctionReturnType<'a> {
                 expr_type = TSType::new_ts_parenthesized_type(SPAN, expr_type, transformer);
             }
 
-            let types = ArenaVec::from_array_in(
-                [expr_type, TSType::new_ts_undefined_keyword(SPAN, transformer)],
-                transformer,
-            );
+            let types = [expr_type, TSType::new_ts_undefined_keyword(SPAN, transformer)];
             expr_type = TSType::new_ts_union_type(SPAN, types, transformer);
         }
         Some(expr_type)

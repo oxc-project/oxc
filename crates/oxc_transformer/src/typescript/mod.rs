@@ -319,13 +319,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScript<'a> {
         }
     }
 
-    fn enter_export_named_declaration(
+    fn enter_export_from_declaration(
         &mut self,
-        node: &mut ExportNamedDeclaration<'a>,
+        node: &mut ExportFromDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(rewrite_extensions) = &mut self.rewrite_extensions {
-            rewrite_extensions.enter_export_named_declaration(node, ctx);
+            rewrite_extensions.enter_export_from_declaration(node, ctx);
         }
     }
 

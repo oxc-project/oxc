@@ -70,4 +70,23 @@ fn test_minimize_if() {
                 return pos + 1;
         }",
     );
+
+    test(
+        "function f(){if(a)if(b)var x=1;else var y=2;return x+y}",
+        "function f(){if(a){if(b)var x=1;else var y=2}return x+y}",
+    );
+    test(
+        "function f(){if(a)if(b)if(c)var x=1;else var y=2;return x+y}",
+        "function f(){if(a&&b){if(c)var x=1;else var y=2}return x+y}",
+    );
+    test(
+        "function f(){if(!a){}else if(b)var x=1;else var y=2;return x+y}",
+        "function f(){if(a){if(b)var x=1;else var y=2}return x+y}",
+    );
+    test("function f(){if(a){}else return b;}", "function f(){if(!a)return b;}");
+    test("function f(){if(!a){}else return b;}", "function f(){if(a)return b;}");
+    test("function f(){if(!a)b();else return c;}", "function f(){if(!a)b();else return c;}");
+    test("function f(){if(a)return c;else b();}", "function f(){if(a)return c;b();}");
+    test("function f(){if((a(),b)){}else c();}", "function f(){a(),b||c();}");
+    test("function f(){if(a(),!(b||c)){}else d();}", "function f(){a(),!(b||c)||d();}");
 }

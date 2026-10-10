@@ -204,10 +204,10 @@ export default plugin;
  */
 function unwrapExpression(expr: Expression): Expression {
   while (
-    expr.type === "ParenthesizedExpression" ||
-    expr.type === "TSNonNullExpression" ||
-    expr.type === "TSAsExpression" ||
-    expr.type === "TSSatisfiesExpression"
+    expr.type === "ParenthesizedExpression"
+    || expr.type === "TSNonNullExpression"
+    || expr.type === "TSAsExpression"
+    || expr.type === "TSSatisfiesExpression"
   ) {
     expr = expr.expression;
   }

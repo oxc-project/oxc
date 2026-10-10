@@ -3,13 +3,25 @@
 //! This module provides methods and utilities for working with [`AstKind`],
 //! including type checking, conversions, and tree traversal helpers.
 
+use std::ptr::NonNull;
+
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
 use oxc_str::{Ident, Str};
 
-use super::{AstKind, ast::*};
+use super::{AstKind, AstType, ast::*};
 
 impl<'a> AstKind<'a> {
+    /// Get the [`AstType`] of an [`AstKind`].
+    #[inline]
+    pub fn ty(&self) -> AstType {
+        // SAFETY: `AstKind` is `#[repr(C, u8)]`, so discriminant is stored in first byte,
+        // and it's valid to read it.
+        // `AstType` is also `#[repr(u8)]` and `AstKind` and `AstType` both have the same
+        // discriminants, so it's valid to read `AstKind`'s discriminant as `AstType`.
+        unsafe { *NonNull::from_ref(self).cast::<AstType>().as_ref() }
+    }
+
     /// Check if this AST node is a statement
     ///
     /// Returns `true` for all statement types including iteration statements,
@@ -32,7 +44,8 @@ impl<'a> AstKind<'a> {
     pub fn is_declaration(self) -> bool {
         matches!(self, Self::Function(func) if func.is_declaration())
         || matches!(self, Self::Class(class) if class.is_declaration())
-        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSModuleDeclaration(_) | Self::TSGlobalDeclaration(_)
+        || matches!(self, Self::TSEnumDeclaration(_) | Self::TSExternalModuleDeclaration(_)
+            | Self::TSNamespaceDeclaration(_) | Self::TSGlobalDeclaration(_)
             | Self::VariableDeclaration(_) | Self::TSInterfaceDeclaration(_)
             | Self::TSTypeAliasDeclaration(_) | Self::TSImportEqualsDeclaration(_) | Self::PropertyDefinition(_)
         ) || self.is_module_declaration()
@@ -53,7 +66,9 @@ impl<'a> AstKind<'a> {
         match self {
             Self::ImportDeclaration(decl) => Some(ModuleDeclarationKind::Import(decl)),
             Self::ExportAllDeclaration(decl) => Some(ModuleDeclarationKind::ExportAll(decl)),
+            Self::ExportDeclaration(decl) => Some(ModuleDeclarationKind::Export(decl)),
             Self::ExportNamedDeclaration(decl) => Some(ModuleDeclarationKind::ExportNamed(decl)),
+            Self::ExportFromDeclaration(decl) => Some(ModuleDeclarationKind::ExportFrom(decl)),
             Self::ExportDefaultDeclaration(decl) => {
                 Some(ModuleDeclarationKind::ExportDefault(decl))
             }
@@ -249,7 +264,8 @@ impl<'a> AstKind<'a> {
             Expression::StringLiteral(e) => Self::StringLiteral(e),
             Expression::TemplateLiteral(e) => Self::TemplateLiteral(e),
             Expression::Identifier(e) => Self::IdentifierReference(e),
-            Expression::MetaProperty(e) => Self::MetaProperty(e),
+            Expression::ImportMeta(e) => Self::ImportMeta(e),
+            Expression::NewTarget(e) => Self::NewTarget(e),
             Expression::Super(e) => Self::Super(e),
             Expression::ArrayExpression(e) => Self::ArrayExpression(e),
             Expression::ArrowFunctionExpression(e) => Self::ArrowFunctionExpression(e),
@@ -346,13 +362,13 @@ impl<'a> AstKind<'a> {
     }
 }
 
-impl AstKind<'_> {
+impl<'a> AstKind<'a> {
     /// Get the AST kind name with minimal details. Particularly useful for
     /// when debugging an iteration over an AST.
     ///
     /// Note that this method does not exist in release builds. Do not include
     /// usage of this method within your code.
-    pub fn debug_name(&self) -> std::borrow::Cow<'_, str> {
+    pub fn debug_name(&self) -> std::borrow::Cow<'a, str> {
         use std::borrow::Cow;
 
         const COMPUTED: &str = "<computed>";
@@ -416,7 +432,8 @@ impl AstKind<'_> {
             .into(),
             Self::TemplateElement(_) => "TemplateElement".into(),
 
-            Self::MetaProperty(_) => "MetaProperty".into(),
+            Self::ImportMeta(_) => "ImportMeta".into(),
+            Self::NewTarget(_) => "NewTarget".into(),
             Self::Super(_) => "Super".into(),
 
             Self::AccessorProperty(_) => "AccessorProperty".into(),
@@ -501,7 +518,9 @@ impl AstKind<'_> {
             Self::ImportNamespaceSpecifier(_) => "ImportNamespaceSpecifier".into(),
             Self::ImportAttribute(_) => "ImportAttribute".into(),
             Self::ExportDefaultDeclaration(_) => "ExportDefaultDeclaration".into(),
+            Self::ExportDeclaration(_) => "ExportDeclaration".into(),
             Self::ExportNamedDeclaration(_) => "ExportNamedDeclaration".into(),
+            Self::ExportFromDeclaration(_) => "ExportFromDeclaration".into(),
             Self::ExportAllDeclaration(_) => "ExportAllDeclaration".into(),
             Self::WithClause(_) => "WithClause".into(),
             Self::JSXOpeningElement(_) => "JSXOpeningElement".into(),
@@ -571,7 +590,10 @@ impl AstKind<'_> {
             Self::TSQualifiedName(n) => format!("TSQualifiedName({n})").into(),
             Self::TSInterfaceDeclaration(_) => "TSInterfaceDeclaration".into(),
             Self::TSInterfaceHeritage(_) => "TSInterfaceHeritage".into(),
-            Self::TSModuleDeclaration(m) => format!("TSModuleDeclaration({})", m.id).into(),
+            Self::TSExternalModuleDeclaration(m) => {
+                format!("TSExternalModuleDeclaration({})", m.id).into()
+            }
+            Self::TSNamespaceDeclaration(m) => format!("TSNamespaceDeclaration({})", m.id).into(),
             Self::TSGlobalDeclaration(_) => "TSGlobalDeclaration".into(),
             Self::TSTypeAliasDeclaration(_) => "TSTypeAliasDeclaration".into(),
             Self::TSTypeAnnotation(_) => "TSTypeAnnotation".into(),
@@ -631,28 +653,6 @@ impl<'a> MemberExpressionKind<'a> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
             Self::Static(member_expr) => Some(member_expr.property.name.into()),
-            Self::PrivateField(_) => None,
-        }
-    }
-
-    /// Returns the static property name of this member expression, if it has one, along with the source code [`Span`],
-    /// or `None` otherwise.
-    ///
-    /// If you don't need the [`Span`], use [`MemberExpressionKind::static_property_name`] instead.
-    pub fn static_property_info(&self) -> Option<(Span, &'a str)> {
-        match self {
-            Self::Computed(expr) => match &expr.expression {
-                Expression::StringLiteral(lit) => Some((lit.span, lit.value.as_str())),
-                Expression::TemplateLiteral(lit) => {
-                    if lit.quasis.len() == 1 {
-                        lit.quasis[0].value.cooked.map(|cooked| (lit.span, cooked.as_str()))
-                    } else {
-                        None
-                    }
-                }
-                _ => None,
-            },
-            Self::Static(expr) => Some((expr.property.span, expr.property.name.as_str())),
             Self::PrivateField(_) => None,
         }
     }
@@ -759,8 +759,12 @@ pub enum ModuleDeclarationKind<'a> {
     Import(&'a ImportDeclaration<'a>),
     /// An export all declaration like `export * from 'foo'`
     ExportAll(&'a ExportAllDeclaration<'a>),
+    /// An exported declaration like `export const foo = 1`
+    Export(&'a ExportDeclaration<'a>),
     /// A named export declaration like `export { foo, bar }`
     ExportNamed(&'a ExportNamedDeclaration<'a>),
+    /// A named re-export declaration like `export { foo } from 'bar'`
+    ExportFrom(&'a ExportFromDeclaration<'a>),
     /// A default export declaration like `export default foo`
     ExportDefault(&'a ExportDefaultDeclaration<'a>),
     /// A TypeScript export assignment like `export = foo`
@@ -775,7 +779,9 @@ impl ModuleDeclarationKind<'_> {
         matches!(
             self,
             Self::ExportAll(_)
+                | Self::Export(_)
                 | Self::ExportNamed(_)
+                | Self::ExportFrom(_)
                 | Self::ExportDefault(_)
                 | Self::TSExportAssignment(_)
                 | Self::TSNamespaceExport(_)
@@ -788,7 +794,9 @@ impl GetSpan for ModuleDeclarationKind<'_> {
         match self {
             Self::Import(decl) => decl.span,
             Self::ExportAll(decl) => decl.span,
+            Self::Export(decl) => decl.span,
             Self::ExportNamed(decl) => decl.span,
+            Self::ExportFrom(decl) => decl.span,
             Self::ExportDefault(decl) => decl.span,
             Self::TSExportAssignment(decl) => decl.span,
             Self::TSNamespaceExport(decl) => decl.span,
@@ -802,7 +810,9 @@ impl GetAddress for ModuleDeclarationKind<'_> {
         match *self {
             Self::Import(decl) => decl.unstable_address(),
             Self::ExportAll(decl) => decl.unstable_address(),
+            Self::Export(decl) => decl.unstable_address(),
             Self::ExportNamed(decl) => decl.unstable_address(),
+            Self::ExportFrom(decl) => decl.unstable_address(),
             Self::ExportDefault(decl) => decl.unstable_address(),
             Self::TSExportAssignment(decl) => decl.unstable_address(),
             Self::TSNamespaceExport(decl) => decl.unstable_address(),

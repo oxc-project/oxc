@@ -9,9 +9,10 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Add members to this interface, or use a type alias if it is intentionally empty.
 
-  × Expected `{` but found `EOF`
-   ╭─[no_empty_interface.tsx:1:25]
+  × TS(1097): 'extends' list cannot be empty.
+   ╭─[no_empty_interface.tsx:1:15]
  1 │ interface Foo extends {}
+   ·               ───────
    ╰────
 
   ⚠ typescript(no-empty-interface): an interface declaring no members is equivalent to its supertype

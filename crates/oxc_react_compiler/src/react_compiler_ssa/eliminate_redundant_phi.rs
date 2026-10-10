@@ -1,6 +1,8 @@
 use std::mem::replace;
 
-use rustc_hash::{FxHashMap, FxHashSet};
+use rustc_hash::FxHashSet;
+
+use oxc_index::IndexVec;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors;
@@ -9,11 +11,30 @@ use crate::react_compiler_hir::*;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 // =============================================================================
-// Helper: rewrite_place
+// Rewrite map
 // =============================================================================
 
-fn rewrite_place(place: &mut Place, rewrites: &FxHashMap<IdentifierId, IdentifierId>) {
-    if let Some(&rewrite) = rewrites.get(&place.identifier) {
+/// Rewrites from eliminated phi ids to their canonical ids, indexed densely by
+/// identifier id. `len` counts mapped entries (used for fixpoint detection).
+struct Rewrites {
+    map: IndexVec<IdentifierId, Option<IdentifierId>>,
+    len: usize,
+}
+
+impl Rewrites {
+    fn new(num_identifiers: usize) -> Self {
+        Self { map: IndexVec::from_vec(vec![None; num_identifiers]), len: 0 }
+    }
+
+    fn insert(&mut self, key: IdentifierId, value: IdentifierId) {
+        if self.map[key].replace(value).is_none() {
+            self.len += 1;
+        }
+    }
+}
+
+fn rewrite_place(place: &mut Place, rewrites: &Rewrites) {
+    if let Some(rewrite) = rewrites.map[place.identifier] {
         place.identifier = rewrite;
     }
 }
@@ -23,7 +44,7 @@ fn rewrite_place(place: &mut Place, rewrites: &FxHashMap<IdentifierId, Identifie
 // =============================================================================
 
 pub fn eliminate_redundant_phi(func: &mut HirFunction, env: &mut Environment) {
-    let mut rewrites: FxHashMap<IdentifierId, IdentifierId> = FxHashMap::default();
+    let mut rewrites = Rewrites::new(env.identifiers.len());
     eliminate_redundant_phi_impl(func, env, &mut rewrites);
 }
 
@@ -34,7 +55,7 @@ pub fn eliminate_redundant_phi(func: &mut HirFunction, env: &mut Environment) {
 fn eliminate_redundant_phi_impl(
     func: &mut HirFunction,
     env: &mut Environment,
-    rewrites: &mut FxHashMap<IdentifierId, IdentifierId>,
+    rewrites: &mut Rewrites,
 ) {
     let ir = &mut func.body;
 
@@ -43,7 +64,7 @@ fn eliminate_redundant_phi_impl(
 
     let mut size;
     loop {
-        size = rewrites.len();
+        size = rewrites.len;
 
         let block_ids: Vec<BlockId> = ir.blocks.keys().copied().collect();
         for block_id in &block_ids {
@@ -95,10 +116,10 @@ fn eliminate_redundant_phi_impl(
 
             // Rewrite instructions
             let instruction_ids: Vec<InstructionId> =
-                ir.blocks.get(&block_id).unwrap().instructions.clone();
+                ir.blocks.get(&block_id).unwrap().instructions.iter().copied().collect();
 
             for instr_id in &instruction_ids {
-                let instr_idx = instr_id.0 as usize;
+                let instr_idx = instr_id.index();
                 let instr = &mut func.instructions[instr_idx];
 
                 // Rewrite all lvalues (matches TS eachInstructionLValue)
@@ -127,18 +148,18 @@ fn eliminate_redundant_phi_impl(
 
                 if let Some(fid) = func_expr_id {
                     // Rewrite context places
-                    let context = &mut env.functions[fid.0 as usize].context;
+                    let context = &mut env.functions[fid].context;
                     for place in context.iter_mut() {
                         rewrite_place(place, rewrites);
                     }
 
                     // Take inner function out, process it, put it back
                     let mut inner_func =
-                        replace(&mut env.functions[fid.0 as usize], placeholder_function());
+                        replace(&mut env.functions[fid], placeholder_function(env.allocator));
 
                     eliminate_redundant_phi_impl(&mut inner_func, env, rewrites);
 
-                    env.functions[fid.0 as usize] = inner_func;
+                    env.functions[fid] = inner_func;
                 }
             }
 
@@ -149,7 +170,7 @@ fn eliminate_redundant_phi_impl(
             });
         }
 
-        if !(rewrites.len() > size && has_back_edge) {
+        if !(rewrites.len > size && has_back_edge) {
             break;
         }
     }

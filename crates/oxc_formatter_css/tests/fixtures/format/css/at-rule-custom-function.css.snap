@@ -1,0 +1,37 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+@function --transparent(--color type(<color>), --alpha type(<number>)) returns type(<color>) {
+  result: oklch(from var(--color) l c h / var(--alpha));
+}
+@function --transparent-color-with-a-long-name(--color type(<color>), --alpha type(<number>)) {
+  result: oklch(from var(--color) l c h / var(--alpha));
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+@function --transparent(--color type(<color>), --alpha type(<number>)) returns
+  type(<color>) {
+  result: oklch(from var(--color) l c h / var(--alpha));
+}
+@function --transparent-color-with-a-long-name(
+  --color type(<color>),
+  --alpha type(<number>)
+) {
+  result: oklch(from var(--color) l c h / var(--alpha));
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+@function --transparent(--color type(<color>), --alpha type(<number>)) returns type(<color>) {
+  result: oklch(from var(--color) l c h / var(--alpha));
+}
+@function --transparent-color-with-a-long-name(--color type(<color>), --alpha type(<number>)) {
+  result: oklch(from var(--color) l c h / var(--alpha));
+}
+
+===================== End =====================

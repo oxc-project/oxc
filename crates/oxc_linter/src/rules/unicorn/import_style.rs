@@ -12,7 +12,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         BinaryOperator, BindingPattern, CallExpression, ExportAllDeclaration,
-        ExportNamedDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        ExportFromDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
         ModuleExportName, VariableDeclarator,
     },
 };
@@ -301,7 +301,7 @@ declare_oxc_lint!(
 
 impl Rule for ImportStyle {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -325,7 +325,7 @@ impl Rule for ImportStyle {
             AstKind::ExportAllDeclaration(export_decl) if self.check_export_from => {
                 self.check_export_all_declaration(export_decl, ctx);
             }
-            AstKind::ExportNamedDeclaration(export_decl) if self.check_export_from => {
+            AstKind::ExportFromDeclaration(export_decl) if self.check_export_from => {
                 self.check_export_named_declaration(export_decl, ctx);
             }
             AstKind::ExpressionStatement(statement) if self.check_require => {
@@ -375,14 +375,13 @@ impl ImportStyle {
 
     fn check_export_named_declaration(
         &self,
-        export_decl: &ExportNamedDeclaration<'_>,
+        export_decl: &ExportFromDeclaration<'_>,
         ctx: &LintContext<'_>,
     ) {
-        let Some(source) = &export_decl.source else { return };
         let actual_styles = get_actual_export_declaration_styles(export_decl);
         self.report_if_needed(
             export_decl.span,
-            source.value.as_str(),
+            export_decl.source.value.as_str(),
             actual_styles,
             SourceKind::ModuleSyntax,
             ctx,
@@ -494,7 +493,7 @@ fn get_actual_import_declaration_styles(import_decl: &ImportDeclaration<'_>) -> 
     styles
 }
 
-fn get_actual_export_declaration_styles(export_decl: &ExportNamedDeclaration<'_>) -> StyleSet {
+fn get_actual_export_declaration_styles(export_decl: &ExportFromDeclaration<'_>) -> StyleSet {
     if export_decl.specifiers.is_empty() {
         return StyleSet::unassigned();
     }

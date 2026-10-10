@@ -58,7 +58,7 @@ export type TailwindcssOptions = SortTailwindcssConfig;
 /**
  * Define an oxfmt configuration with type inference.
  */
-export function defineConfig<T extends OxfmtConfig>(config: T): T {
+export function defineConfig<T extends OxfmtConfig>(config: T & OxfmtConfig): T {
   return config;
 }
 
@@ -81,6 +81,9 @@ let BINDINGS_CACHE = null as typeof import("./bindings") | null;
 
 /**
  * Format the given source text according to the specified options.
+ *
+ * Config files are not discovered, `options` are used as is.
+ * Relative paths in `options` (e.g. `sortTailwindcss.config`) are resolved against `process.cwd()`.
  */
 export async function format(fileName: string, sourceText: string, options?: FormatConfig) {
   if (typeof fileName !== "string") throw new TypeError("`fileName` must be a string");
@@ -93,7 +96,7 @@ export async function format(fileName: string, sourceText: string, options?: For
     options ?? {},
     (options, code) => toFormatFileResult(formatFile({ options, code })),
     (options, code) => toNullable(formatEmbeddedCode({ options, code })),
-    (options, texts) => toNullable(formatEmbeddedDoc({ options, texts })),
+    (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
 }
@@ -115,7 +118,7 @@ export async function jsTextToDoc(
     parentContext,
     () => toFormatFileResult(Promise.reject("formatFile is unavailable for jsTextToDoc")),
     (options, code) => toNullable(formatEmbeddedCode({ options, code })),
-    (options, texts) => toNullable(formatEmbeddedDoc({ options, texts })),
+    (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
 }

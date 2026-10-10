@@ -8,8 +8,6 @@
 //!
 //! Corresponds to `src/ReactiveScopes/PruneUnusedLabels.ts`.
 
-use std::mem::take;
-
 use rustc_hash::FxHashSet;
 
 use oxc_diagnostics::OxcDiagnostic;
@@ -72,21 +70,20 @@ impl<'a, 'e> ReactiveFunctionTransform<'a> for Transform<'a, 'e> {
         // Is this terminal reachable via a break/continue to its label?
         let is_reachable_label = stmt.label.as_ref().is_some_and(|label| state.contains(&label.id));
 
-        if let ReactiveTerminal::Label { block, .. } = &mut stmt.terminal {
-            if !is_reachable_label {
-                // Flatten labeled terminals where the label isn't necessary.
-                // Note: In TS, there's a check for `last.terminal.target === null`
-                // to pop a trailing break, but since target is always a BlockId (number),
-                // that check is always false, so the trailing break is never removed.
-                let flattened = take(block);
-                return Ok(Transformed::ReplaceMany(flattened));
-            }
+        if let ReactiveTerminal::Label { block, .. } = &mut stmt.terminal
+            && !is_reachable_label
+        {
+            // Flatten labeled terminals where the label isn't necessary.
+            // Note: In TS, there's a check for `last.terminal.target === null`
+            // to pop a trailing break, but since target is always a BlockId (number),
+            // that check is always false, so the trailing break is never removed.
+            // ReplaceMany keeps a std `Vec`; drain the arena block into one.
+            let flattened = block.drain(..).collect::<Vec<_>>();
+            return Ok(Transformed::ReplaceMany(flattened));
         }
 
-        if !is_reachable_label {
-            if let Some(label) = &mut stmt.label {
-                label.implicit = true;
-            }
+        if !is_reachable_label && let Some(label) = &mut stmt.label {
+            label.implicit = true;
         }
 
         Ok(Transformed::Keep)

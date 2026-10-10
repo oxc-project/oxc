@@ -1,0 +1,55 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/issue-24975.ts
+---
+```
+==================== .D.TS ====================
+
+export declare function exportedFunction(): void;
+export declare namespace exportedFunction {
+	let variable: number;
+	function func(): void;
+	class Class {}
+	enum Enum {}
+}
+export declare function exportedWithLocalNamespace(): void;
+export declare function exportedWithTypeOnlyProperty(): void;
+export declare namespace exportedWithTypeOnlyProperty {
+	interface property {}
+}
+export default function defaultFunction(): void;
+
+
+==================== Errors ====================
+
+  x TS9023: Assigning properties to functions without declaring them is not
+  | supported with --isolatedDeclarations. Add an explicit declaration for the
+  | properties assigned to this function.
+    ,-[29:1]
+ 28 | 
+ 29 | exportedWithLocalNamespace.property = 1;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 30 | 
+    `----
+
+  x TS9023: Assigning properties to functions without declaring them is not
+  | supported with --isolatedDeclarations. Add an explicit declaration for the
+  | properties assigned to this function.
+    ,-[37:1]
+ 36 | 
+ 37 | exportedWithTypeOnlyProperty.property = {};
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 38 | 
+    `----
+
+  x TS9023: Assigning properties to functions without declaring them is not
+  | supported with --isolatedDeclarations. Add an explicit declaration for the
+  | properties assigned to this function.
+    ,-[45:1]
+ 44 | 
+ 45 | defaultFunction.property = 1;
+    : ^^^^^^^^^^^^^^^^^^^^^^^^
+    `----
+
+
+```

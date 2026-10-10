@@ -1,6 +1,7 @@
-pub mod return_checker;
-
 use std::borrow::Cow;
+
+use serde::Deserialize;
+use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
@@ -10,16 +11,17 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use schemars::JsonSchema;
-use serde::Deserialize;
-use serde_json::Value;
 
-use self::return_checker::{StatementReturnStatus, check_function_body, is_void_arrow_return};
 use crate::{
     AstNode,
     ast_util::{get_enclosing_function, outermost_paren},
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
 };
+
+pub mod return_checker;
+
+use self::return_checker::{StatementReturnStatus, check_function_body};
 
 #[derive(Debug, Clone, Copy)]
 enum MissingReturnHint {
@@ -43,14 +45,27 @@ fn guess_missing_return_hint(
     }
 }
 
+fn get_function_head_span(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Span {
+    match node.kind() {
+        AstKind::ArrowFunctionExpression(arrow) => ctx
+            .find_prev_token_within(arrow.span.start, arrow.body.span().start, "=>")
+            .map_or(arrow.span, |offset| Span::sized(arrow.span.start + offset, 2)),
+        AstKind::Function(function) => Span::new(function.span.start, function.params.span.start),
+        _ => unreachable!(),
+    }
+}
+
 fn expect_return(
     method_name: &str,
     array_method_span: Span,
+    function_node: &AstNode<'_>,
     function_body: &FunctionBody<'_>,
     allow_implicit: bool,
+    ctx: &LintContext<'_>,
 ) -> OxcDiagnostic {
-    let (span, hint) = guess_missing_return_hint(function_body)
-        .map_or((function_body.span, None), |(span, hint)| (span, Some(hint)));
+    let hint = guess_missing_return_hint(function_body);
+    let diagnostic_span =
+        hint.map_or(function_body.span, |_| get_function_head_span(function_node, ctx));
 
     let value_requirement = if allow_implicit {
         ""
@@ -58,7 +73,7 @@ fn expect_return(
         "\nReturn a value on each path (or enable `allowImplicit` to allow `return;`)."
     };
 
-    let (message, help) = match hint {
+    let (message, help) = match hint.map(|(_, hint)| hint) {
         Some(MissingReturnHint::SwitchWithoutDefault) => (
             format!(
                 "Callback for array method {method_name:?} may fall through a `switch` without returning"
@@ -83,12 +98,13 @@ fn expect_return(
         ),
     };
 
-    let mut diagnostic = OxcDiagnostic::warn(message).with_help(help).with_label(span);
+    let mut diagnostic = OxcDiagnostic::warn(message).with_help(help).with_label(diagnostic_span);
     if allow_implicit {
         diagnostic = diagnostic.with_note("With `allowImplicit`, callbacks that don't explicitly return a value are considered to return `undefined`.");
     }
-    if hint.is_some() {
+    if let Some((hint_span, _)) = hint {
         diagnostic = diagnostic
+            .and_label(hint_span.label("This path may reach the end of the callback."))
             .and_label(array_method_span.label(format!("{method_name:?} is called here.")));
     }
 
@@ -169,22 +185,29 @@ declare_oxc_lint!(
 
 impl Rule for ArrayCallbackReturn {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let (function_body, always_explicit_return, is_async_empty) = match node.kind() {
+        let (function_body, concise_expression, always_explicit_return, is_async_empty) = match node
+            .kind()
+        {
             // Async, generator, and single expression arrow functions
             // always have explicit return value
-            AstKind::ArrowFunctionExpression(arrow) => (
-                &arrow.body,
-                arrow.r#async || arrow.expression,
-                arrow.r#async && arrow.body.statements.is_empty(),
-            ),
+            AstKind::ArrowFunctionExpression(arrow) => {
+                let function_body = arrow.get_function_body();
+                (
+                    function_body,
+                    arrow.get_expression(),
+                    arrow.r#async || arrow.is_expression(),
+                    arrow.r#async && function_body.is_some_and(|body| body.statements.is_empty()),
+                )
+            }
             AstKind::Function(function) => {
                 if let Some(body) = &function.body {
                     (
-                        body,
+                        Some(body.as_ref()),
+                        None,
                         function.r#async || function.generator,
                         function.r#async && body.statements.is_empty(),
                     )
@@ -207,10 +230,16 @@ impl Rule for ArrayCallbackReturn {
                 ("forEach", false, _, _) => (),
                 ("forEach", true, false, _) => {
                     if return_status.may_return_explicit() {
-                        let return_spans = return_checker::get_explicit_return_spans(function_body)
-                            .into_iter()
-                            .next()
-                            .unwrap_or_else(|| function_body.span());
+                        let return_spans = concise_expression.map_or_else(
+                            || {
+                                let function_body = function_body.unwrap();
+                                return_checker::get_explicit_return_spans(function_body)
+                                    .into_iter()
+                                    .next()
+                                    .unwrap_or_else(|| function_body.span())
+                            },
+                            GetSpan::span,
+                        );
 
                         ctx.diagnostic(expect_no_return(
                             &full_array_method_name(array_method),
@@ -224,9 +253,20 @@ impl Rule for ArrayCallbackReturn {
                         return;
                     }
 
-                    if is_void_arrow_return(&function_body.statements) {
+                    if concise_expression.is_some_and(Expression::is_void) {
                         return;
                     }
+
+                    if let Some(expression) = concise_expression {
+                        ctx.diagnostic(expect_void_return(
+                            &full_array_method_name(array_method),
+                            array_method_span,
+                            expression.span(),
+                        ));
+                        return;
+                    }
+
+                    let function_body = function_body.unwrap();
 
                     let (return_spans, has_void) =
                         return_checker::get_no_voided_return_spans(function_body, self.allow_void);
@@ -251,8 +291,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
-                            function_body,
+                            node,
+                            function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -261,8 +303,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
-                            function_body,
+                            node,
+                            function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -271,8 +315,10 @@ impl Rule for ArrayCallbackReturn {
                         ctx.diagnostic(expect_return(
                             &full_array_method_name(array_method),
                             array_method_span,
-                            function_body,
+                            node,
+                            function_body.unwrap(),
                             self.allow_implicit,
+                            ctx,
                         ));
                     }
                 }
@@ -624,6 +670,17 @@ fn test() {
 }",
             None,
         ),
+        (
+            r#"const out = parts
+  // eslint-disable-next-line array-callback-return
+  .map(p => {
+    switch (p.type) {
+      case "a":
+        return p.value;
+    }
+  });"#,
+            Some(serde_json::json!([{"allowImplicit": true}])),
+        ),
     ];
 
     let fail = vec![
@@ -662,6 +719,15 @@ const _test = fruits.map((fruit) => {
   }
 });"#,
             None,
+        ),
+        (
+            r#"const out = parts.map(p => {
+  switch (p.type) {
+    case "a":
+      return p.value;
+  }
+});"#,
+            Some(serde_json::json!([{"allowImplicit": true}])),
         ),
         ("foo.reduce(function() {})", None),
         ("foo.reduce(function foo() {})", None),

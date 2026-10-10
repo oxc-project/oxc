@@ -35,8 +35,7 @@ fn main() -> io::Result<()> {
         }
         Err(errors) => {
             for error in errors {
-                let error = error.with_source_code(source_text.clone());
-                println!("{error:?}");
+                println!("{}", error.render_with_source_code(source_text.clone()));
             }
         }
     }

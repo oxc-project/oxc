@@ -2,14 +2,16 @@
 
 use bitflags::bitflags;
 
-use oxc_allocator::{Allocator, CloneIn, Dummy};
+use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy};
 use oxc_ast_macros::ast;
 use oxc_index::define_nonmax_u32_index_type;
+
+use crate::semantic_id::SemanticId;
 
 define_nonmax_u32_index_type! {
     /// AST Node ID
     #[ast]
-    #[clone_in(default)]
+    #[clone_in(semantic_id)]
     #[content_eq(skip)]
     #[estree(skip)]
     pub struct NodeId;
@@ -42,15 +44,23 @@ impl<'a> Dummy<'a> for NodeId {
 impl<'alloc> CloneIn<'alloc> for NodeId {
     type Cloned = Self;
 
-    fn clone_in(&self, _: &'alloc Allocator) -> Self {
-        // `clone_in` should never reach this, because `CloneIn` skips `node_id` field
-        unreachable!();
+    #[expect(clippy::inline_always)]
+    #[inline(always)] // Because this method only delegates
+    fn clone_in_impl(&self, with_semantic_ids: CloneInSemanticIds, _: &'alloc Allocator) -> Self {
+        self.clone_id(with_semantic_ids)
     }
+}
 
-    #[inline]
-    fn clone_in_with_semantic_ids(&self, _: &'alloc Allocator) -> Self {
-        *self
-    }
+impl SemanticId for NodeId {}
+
+/// Get the [`NodeId`] of given AST node.
+///
+/// Parser-assigned IDs are unique within the parsed AST but may have gaps and
+/// do not follow visitor order. Semantic analysis replaces them with dense IDs
+/// that index its node store. Synthetically-created nodes may have [`NodeId::DUMMY`].
+pub trait GetNodeId {
+    /// Get the [`NodeId`] for an AST node.
+    fn node_id(&self) -> NodeId;
 }
 
 bitflags! {
@@ -59,8 +69,6 @@ bitflags! {
     pub struct NodeFlags: u8 {
         /// Set if the Node has a JSDoc comment attached
         const JSDoc     = 1 << 0;
-        /// Set functions containing yield statements
-        const HasYield  = 1 << 2;
     }
 }
 
@@ -69,11 +77,5 @@ impl NodeFlags {
     #[inline]
     pub fn has_jsdoc(self) -> bool {
         self.contains(Self::JSDoc)
-    }
-
-    /// Returns `true` if this function has a yield statement.
-    #[inline]
-    pub fn has_yield(self) -> bool {
-        self.contains(Self::HasYield)
     }
 }

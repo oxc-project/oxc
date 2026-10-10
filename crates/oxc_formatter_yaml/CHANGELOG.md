@@ -1,0 +1,94 @@
+# Changelog
+
+All notable changes to this package will be documented in this file.
+
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
+
+## [0.69.0] - 2026-09-21
+
+### 📚 Documentation
+
+- 09ecfa7 formatter_yaml: Unify DIVERGENCES reference (#26746) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d226e6f formatter_yaml: Bump oxc-yaml-parser to 0.0.6 (#26472) (leaysgur)
+- 8b41fc0 formatter_yaml: Clamp `tab_width: 0` to 1 to keep semantics (#26471) (leaysgur)
+- dea2ba0 formatter_core: Do not panic with align(0) (#26468) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- faf11d9 formatter_yaml: Keep trailing whitespace in block scalars (#26072) (leaysgur)
+
+### 📚 Documentation
+
+- b879608 formatter,formatter_graphql,formatter_yaml: Annotate own-line comment inlining as known policy violation (#26131) (leaysgur)
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+
+## [0.64.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- f405789 formatter_yaml: Consistent chomped eos behavior (#25523) (leaysgur)
+- a243311 formatter_yaml: Bump oxc-yaml-parser for contentless block scalar (#25519) (leaysgur)
+
+## [0.63.0] - 2026-08-10
+
+### 🚀 Features
+
+- fd02a89 oxfmt: Dispatch yaml-in-css(frontmatter) to `oxc_formatter_yaml` (#25336) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+- f3c6953 formatter_yaml: Don't rewrite overflowing key to implicit (#25274) (leaysgur)
+
+### 📚 Documentation
+
+- 51224a7 formatter_yaml: Pin EOF blank lines divergence (#25269) (leaysgur)
+
+## [0.62.0] - 2026-08-03
+
+### 🐛 Bug Fixes
+
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+- ee344bd formatter_yaml: Break long keys off a block scalar header (#25014) (leaysgur)
+- d5e3476 formatter_yaml: Let ancestor collection values claim end comments after block scalars (#24897) (leaysgur)
+- ec05297 formatter_yaml: Align sequence container end comments to the dash width (#24891) (leaysgur)
+
+### ⚡ Performance
+
+- b91d5a8 formatter_css,formatter_graphql,formatter_yaml,formatter_json: Pre alloc IR buffers (#25234) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+
+## [0.61.0] - 2026-07-27
+
+### 🚀 Features
+
+- 2357a10 formatter_yaml: Implement YAML formatter (#24534) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 07ff12f formatter_yaml: Fix indent, blank, and spacing issues (#24837) (leaysgur)
+
+### 📚 Documentation
+
+- 69126a0 formatter_css,fomatter_graphql,formatter_yaml: Update AGENTS.md (#24821) (leaysgur)
+

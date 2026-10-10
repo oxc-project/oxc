@@ -10,7 +10,7 @@ import {
   COMMENT_KIND_OFFSET,
   COMMENT_LINE_KIND,
   DATA_POINTER_POS_32,
-  DESERIALIZED_FLAG_OFFSET,
+  COMMENT_DESERIALIZED_FLAG_OFFSET,
 } from "../generated/constants.ts";
 import { computeLoc } from "./location.ts";
 import { FLAG_NOT_DESERIALIZED, FLAG_DESERIALIZED } from "./tokens.ts";
@@ -79,8 +79,8 @@ const DESERIALIZED_COMMENT_INDEXES_MIN_CAPACITY = 16;
 // Reused for all files which don't have any comments. Frozen to avoid rules mutating it.
 const EMPTY_COMMENTS: CommentType[] = Object.freeze([]) as unknown as CommentType[];
 
-const COMMENT_SIZE_SHIFT = 4; // 1 << 4 == 16 bytes, the size of `Comment` in Rust
-debugAssert(COMMENT_SIZE === 1 << COMMENT_SIZE_SHIFT);
+export const COMMENT_SIZE32 = COMMENT_SIZE >> 2;
+debugAssert(COMMENT_SIZE === COMMENT_SIZE32 * 4);
 
 // `defineGetter(obj, prop, getter)` is equivalent to `obj.__defineGetter__(prop, getter)`,
 // but without `Object.prototype` lookup at each call site
@@ -161,8 +161,8 @@ class Comment implements Span {
 }
 
 // Copied into consts here to avoid checks at call site (`let` binding could be re-assigned)
-const getCommentLoc = getCommentLocTemp!;
-const resetCommentLoc = resetCommentLocTemp!;
+const getCommentLoc = getCommentLocTemp;
+const resetCommentLoc = resetCommentLocTemp;
 
 /**
  * Deserialize all comments and build the `comments` array.
@@ -171,7 +171,7 @@ const resetCommentLoc = resetCommentLocTemp!;
 export function initComments(): void {
   debugAssert(comments === null, "Comments already deserialized");
 
-  if (!allCommentsDeserialized) deserializeComments();
+  if (allCommentsDeserialized === false) deserializeComments();
 
   // `initCommentsBuffer` (called by `deserializeComments`) sets `comments` for zero-comment files
   if (comments !== null) return;
@@ -198,7 +198,7 @@ export function initComments(): void {
  * Does NOT build the `comments` array - use `initComments` for that.
  */
 export function deserializeComments(): void {
-  debugAssert(!allCommentsDeserialized, "Comments already deserialized");
+  debugAssert(allCommentsDeserialized === false, "Comments already deserialized");
 
   if (commentsInt32 === null) initCommentsBuffer();
 
@@ -255,7 +255,7 @@ export function initCommentsBuffer(): void {
   const arrayBuffer = buffer.buffer,
     absolutePos = buffer.byteOffset + commentsPos;
   commentsUint8 = new Uint8Array(arrayBuffer, absolutePos, commentsLen * COMMENT_SIZE);
-  commentsInt32 = new Int32Array(arrayBuffer, absolutePos, commentsLen * (COMMENT_SIZE >> 2));
+  commentsInt32 = new Int32Array(arrayBuffer, absolutePos, commentsLen * COMMENT_SIZE32);
 
   // Grow caches if needed. After first few files, caches should have grown large enough to service all files.
   // Later files will skip this step, and allocations stop.
@@ -301,7 +301,7 @@ export function initCommentsBuffer(): void {
  */
 export function getComment(index: number): CommentType {
   // Skip all other checks if all comments have been deserialized
-  if (!allCommentsDeserialized) {
+  if (allCommentsDeserialized === false) {
     const comment = deserializeCommentIfNeeded(index);
 
     if (comment !== null) {
@@ -328,28 +328,34 @@ export function getComment(index: number): CommentType {
  * @returns `Comment` object if newly deserialized, or `null` if already deserialized
  */
 function deserializeCommentIfNeeded(index: number): Comment | null {
-  const pos = index << COMMENT_SIZE_SHIFT;
+  debugAssertIsNonNull(commentsUint8, "Comment buffers should be initialized");
+  debugAssertIsNonNull(commentsInt32, "Comment buffers should be initialized");
+  debugAssertIsNonNull(sourceText, "Source text should be initialized");
+
+  const pos = index * COMMENT_SIZE;
 
   // Fast path: If already deserialized, exit
-  const flagPos = pos + DESERIALIZED_FLAG_OFFSET;
-  if (commentsUint8![flagPos] !== FLAG_NOT_DESERIALIZED) return null;
+  const flagPos = pos + COMMENT_DESERIALIZED_FLAG_OFFSET;
+  if (commentsUint8[flagPos] !== FLAG_NOT_DESERIALIZED) return null;
 
   // Mark comment as deserialized, so it won't be deserialized again
-  commentsUint8![flagPos] = FLAG_DESERIALIZED;
+  commentsUint8[flagPos] = FLAG_DESERIALIZED;
 
   // Deserialize comment into a cached `Comment` object
   const comment = cachedComments[index];
 
-  const isBlock = commentsUint8![pos + COMMENT_KIND_OFFSET] !== COMMENT_LINE_KIND;
+  // HTML comment discriminants equal their delimiter lengths (3 or 4).
+  const kind = commentsUint8[pos + COMMENT_KIND_OFFSET];
+  const isBlock = kind !== COMMENT_LINE_KIND && kind < 3;
 
   const pos32 = pos >> 2,
-    start = commentsInt32![pos32],
-    end = commentsInt32![pos32 + 1];
+    start = commentsInt32[pos32],
+    end = commentsInt32[pos32 + 1];
 
   comment.type = isBlock ? "Block" : "Line";
-  // Line comments: `// text` -> slice `start + 2..end`
+  // Line comments: skip `//`, `-->`, or `<!--`
   // Block comments: `/* text */` -> slice `start + 2..end - 2`
-  comment.value = sourceText!.slice(start + 2, end - (+isBlock << 1));
+  comment.value = sourceText.slice(start + (kind < 3 ? 2 : kind), end - (+isBlock << 1));
   comment.range[0] = comment.start = start;
   comment.range[1] = comment.end = end;
 
@@ -357,16 +363,18 @@ function deserializeCommentIfNeeded(index: number): Comment | null {
 }
 
 /**
- * Check comments buffer has valid ranges and ascending order.
+ * Check all comments in buffer have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckValidRanges(): void {
   if (!DEBUG) return;
 
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
+
   let lastEnd = 0;
   for (let i = 0; i < commentsLen; i++) {
-    const pos32 = i << 2;
+    const pos32 = i * COMMENT_SIZE32;
     const start = commentsInt32![pos32];
     const end = commentsInt32![pos32 + 1];
     if (end <= start) throw new Error(`Invalid comment range: ${start}-${end}`);
@@ -376,22 +384,24 @@ function debugCheckValidRanges(): void {
     lastEnd = end;
   }
 
-  if (lastEnd > sourceText!.length) {
-    throw new Error(`Comments end beyond source text length: ${lastEnd} > ${sourceText!.length}`);
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Comments end beyond source text length: ${lastEnd} > ${sourceText.length}`);
   }
 }
 
 /**
- * Check all deserialized comments are in ascending order.
+ * Check all deserialized comments have valid ranges, are in ascending order, and are within the source text.
  *
  * Only runs in debug build (tests). In release build, this function is entirely removed by minifier.
  */
 function debugCheckDeserializedComments(): void {
   if (!DEBUG) return;
 
+  debugAssertIsNonNull(sourceText, "`sourceText` should be initialized");
+
   let lastEnd = 0;
   for (let i = 0; i < commentsLen; i++) {
-    const flagPos = (i << COMMENT_SIZE_SHIFT) + DESERIALIZED_FLAG_OFFSET;
+    const flagPos = i * COMMENT_SIZE + COMMENT_DESERIALIZED_FLAG_OFFSET;
     if (commentsUint8![flagPos] !== FLAG_DESERIALIZED) {
       throw new Error(
         `Comment ${i} not marked as deserialized after \`deserializeComments()\` call`,
@@ -406,6 +416,10 @@ function debugCheckDeserializedComments(): void {
       );
     }
     lastEnd = end;
+  }
+
+  if (lastEnd > sourceText.length) {
+    throw new Error(`Comments end beyond source text length: ${lastEnd} > ${sourceText.length}`);
   }
 }
 

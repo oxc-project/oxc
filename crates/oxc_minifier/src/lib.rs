@@ -44,14 +44,19 @@
 //!
 //! See the [crate documentation](https://github.com/oxc-project/oxc/tree/main/crates/oxc_minifier) for more details.
 
+mod compression_pass;
 mod compressor;
 pub(crate) mod generated;
+mod is_terminated;
 mod keep_var;
 mod minifier_traverse;
 mod options;
 mod peephole;
+mod property_mangler;
 mod state;
-mod symbol_facts;
+mod symbol_liveness;
+mod symbol_metadata;
+mod symbol_state;
 mod symbol_value;
 mod traverse_context;
 
@@ -64,7 +69,14 @@ use oxc_str::CompactStr;
 use oxc_syntax::class::ClassId;
 use rustc_hash::FxHashMap;
 
+use crate::state::CompressionMode;
+
 pub use oxc_mangler::{MangleOptions, MangleOptionsKeepNames};
+pub use property_mangler::{
+    InvalidManglePropertyCacheTarget, ManglePropertiesOptions, ManglePropertyCache,
+    PropertyMangleCollection, PropertyMangler, PropertyMapping,
+    is_valid_property_mangle_cache_target,
+};
 
 pub(crate) use crate::generated::traverse::Traverse;
 #[doc(hidden)]
@@ -75,12 +87,22 @@ pub use crate::{compressor::Compressor, options::*};
 #[derive(Debug, Clone)]
 pub struct MinifierOptions {
     pub mangle: Option<MangleOptions>,
+    /// Property-name mangling for the current [`Program`].
+    ///
+    /// This option does not coordinate mappings across programs. Bundlers that need cross-file
+    /// consistency must collect all programs with [`PropertyMangler`], assign once, and rewrite
+    /// each program exactly once before emitting chunks.
+    pub mangle_properties: Option<ManglePropertiesOptions>,
     pub compress: Option<CompressOptions>,
 }
 
 impl Default for MinifierOptions {
     fn default() -> Self {
-        Self { mangle: Some(MangleOptions::default()), compress: Some(CompressOptions::default()) }
+        Self {
+            mangle: Some(MangleOptions::default()),
+            mangle_properties: None,
+            compress: Some(CompressOptions::default()),
+        }
     }
 }
 
@@ -90,6 +112,9 @@ pub struct MinifierReturn {
     /// A vector where each element corresponds to a class in declaration order.
     /// Each element is a mapping from original private member names to their mangled names.
     pub class_private_mappings: Option<IndexVec<ClassId, FxHashMap<String, CompactStr>>>,
+
+    /// Updated property-name cache when property mangling ran.
+    pub property_mangle_cache: Option<ManglePropertyCache>,
 
     /// Total number of iterations ran. Useful for debugging performance issues.
     pub iterations: u8,
@@ -105,28 +130,39 @@ impl<'a> Minifier {
     }
 
     pub fn minify(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(false, allocator, program)
+        self.build(CompressionMode::Full, allocator, program)
     }
 
     pub fn dce(self, allocator: &'a Allocator, program: &mut Program<'a>) -> MinifierReturn {
-        self.build(true, allocator, program)
+        self.build(CompressionMode::TreeShakeOnly, allocator, program)
     }
 
     fn build(
         self,
-        dce: bool,
+        mode: CompressionMode,
         allocator: &'a Allocator,
         program: &mut Program<'a>,
     ) -> MinifierReturn {
-        let (stats, iterations) = self
-            .options
-            .compress
+        let Self { options } = self;
+        let MinifierOptions { mangle, mangle_properties, compress } = options;
+
+        // Run property mangling first because compression can change which strings are property
+        // keys.
+        let property_mangle_cache = mangle_properties.map(|options| {
+            let mut mangler = PropertyMangler::new_in(options, allocator);
+            mangler.collect(program);
+            mangler.assign();
+            mangler.rewrite(program);
+            mangler.into_cache()
+        });
+
+        let (stats, iterations) = compress
             .map(|options| {
                 let semantic = SemanticBuilder::new().build(program).semantic;
                 let stats = semantic.stats();
                 let scoping = semantic.into_scoping();
                 let compressor = Compressor::new(allocator);
-                let iterations = if dce {
+                let iterations = if matches!(mode, CompressionMode::TreeShakeOnly) {
                     let options = CompressOptions {
                         target: options.target,
                         treeshake: options.treeshake,
@@ -139,9 +175,7 @@ impl<'a> Minifier {
                 (Some(stats), iterations)
             })
             .unwrap_or_default();
-        let (scoping, class_private_mappings) = self
-            .options
-            .mangle
+        let (scoping, class_private_mappings) = mangle
             .map(|options| {
                 let mut builder =
                     SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
@@ -155,6 +189,6 @@ impl<'a> Minifier {
                 (semantic.into_scoping(), class_private_mappings)
             })
             .map_or((None, None), |(scoping, mappings)| (Some(scoping), Some(mappings)));
-        MinifierReturn { scoping, class_private_mappings, iterations }
+        MinifierReturn { scoping, class_private_mappings, property_mangle_cache, iterations }
     }
 }

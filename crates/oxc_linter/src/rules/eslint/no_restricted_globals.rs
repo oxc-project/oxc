@@ -9,7 +9,10 @@ use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use rustc_hash::FxHashMap;
-use schemars::JsonSchema;
+use schemars::{
+    JsonSchema, SchemaGenerator,
+    schema::{ArrayValidation, Schema, SchemaObject},
+};
 use serde::de::Error;
 use serde_json::Value;
 
@@ -38,8 +41,7 @@ impl Deref for NoRestrictedGlobals {
     }
 }
 
-#[derive(Debug, Clone, JsonSchema)]
-#[serde(rename_all = "camelCase", default)]
+#[derive(Debug, Clone)]
 pub struct NoRestrictedGlobalsConfig {
     /// Objects in the format
     /// `{ "name": "event", "message": "Use local parameter instead." }`, which define what globals
@@ -63,6 +65,79 @@ impl Default for NoRestrictedGlobalsConfig {
             check_global_object: false,
             global_objects: default_globals_objects(),
         }
+    }
+}
+
+/// A restricted global with an optional custom message.
+#[derive(Debug, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[expect(unused)] // only for schemars
+struct RestrictedGlobal {
+    /// The name of the restricted global.
+    name: String,
+    /// A custom message shown when the restricted global is used.
+    message: Option<String>,
+}
+
+#[derive(Debug, JsonSchema)]
+#[serde(untagged)]
+#[expect(unused)] // only for schemars
+enum GlobalNameOrObject {
+    /// The name of a restricted global.
+    String(String),
+    /// A restricted global with an optional custom message.
+    Object(RestrictedGlobal),
+}
+
+/// Object form of the configuration, which additionally allows detecting
+/// restricted globals accessed via global objects.
+#[derive(Debug, JsonSchema)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+#[expect(unused)] // only for schemars
+struct NoRestrictedGlobalsObjectConfig {
+    /// The restricted globals, as names or `{ "name", "message" }` objects.
+    globals: Vec<GlobalNameOrObject>,
+    /// Whether to also detect restricted globals accessed via global objects. Default is `false`.
+    #[serde(default)]
+    check_global_object: bool,
+    /// Additional global object names to check when `checkGlobalObject` is enabled.
+    /// By default, the rule checks these global objects: `globalThis`, `self`, and `window`.
+    #[serde(default)]
+    global_objects: Vec<String>,
+}
+
+#[derive(Debug)]
+#[expect(unused)] // only for schemars
+enum NoRestrictedGlobalsConfigValue {
+    String(String),
+    Simple(RestrictedGlobal),
+    Complex(NoRestrictedGlobalsObjectConfig),
+}
+
+impl JsonSchema for NoRestrictedGlobalsConfigValue {
+    fn schema_name() -> String {
+        "NoRestrictedGlobalsConfigValue".to_string()
+    }
+
+    fn json_schema(r#gen: &mut SchemaGenerator) -> Schema {
+        #[derive(JsonSchema)]
+        #[serde(untagged)]
+        #[expect(unused)] // only for schemars
+        enum NoRestrictedGlobalsConfigEnum {
+            String(String),
+            Simple(RestrictedGlobal),
+            Complex(NoRestrictedGlobalsObjectConfig),
+        }
+
+        Schema::Object(SchemaObject {
+            array: Some(Box::new(ArrayValidation {
+                additional_items: Some(Box::new(
+                    r#gen.subschema_for::<NoRestrictedGlobalsConfigEnum>(),
+                )),
+                ..Default::default()
+            })),
+            ..Default::default()
+        })
     }
 }
 
@@ -98,7 +173,7 @@ declare_oxc_lint!(
     NoRestrictedGlobals,
     eslint,
     restriction,
-    config = NoRestrictedGlobalsConfig,
+    config = NoRestrictedGlobalsConfigValue,
     version = "0.4.0",
     short_description = "Specify global variable names that should not be used in your application.",
 );

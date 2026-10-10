@@ -1,0 +1,39 @@
+# oxc_relay
+#
+# Rust port of the Relay `graphql` tagged template transform
+# (`babel-plugin-relay` / `swc_relay`), backing the `oxc-transform-relay`
+# Node.js binding in `napi/transform-relay`.
+
+[package]
+name = "oxc_relay"
+version = "0.144.0"
+publish = false
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+keywords.workspace = true
+license.workspace = true
+repository.workspace = true
+rust-version.workspace = true
+description = "Relay graphql tagged template transform"
+include = ["src/**/*", "README.md", "CHANGELOG.md"]
+
+[lints]
+workspace = true
+
+[lib]
+doctest = false
+
+[dependencies]
+oxc_allocator = { workspace = true }
+oxc_ast = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_semantic = { workspace = true }
+oxc_span = { workspace = true }
+oxc_str = { workspace = true }
+oxc_traverse = { workspace = true }
+
+[dev-dependencies]
+oxc_codegen = { workspace = true }
+oxc_parser = { workspace = true }

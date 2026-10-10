@@ -3,10 +3,12 @@ use std::ops::Deref;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::{Format, JsFormatter, prelude::*, trivia::FormatLeadingComments},
+    formatter::{JsFormatter, prelude::*, trivia::FormatLeadingComments},
+    utils::{call_expression::callee_opener, statement_body::write_comments_before_opener},
     write,
 };
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 #[derive(Copy, Clone, Debug)]
@@ -83,9 +85,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ChainMember<'a, '_> {
                     ]
                 );
 
-                // `A.b /* comment */ (c)` -> `A.b(/* comment */ c)`
-                if !matches!(member.parent(), AstNodes::CallExpression(call) if call.type_arguments.is_none() && !call.optional)
+                // The callee of `A.b(c)` / `A.b<T>(c)`: its comments keep their side of the opener
+                if let AstNodes::CallExpression(call) = member.parent()
+                    && !call.optional
                 {
+                    write_comments_before_opener(member.span().end, callee_opener(call), f);
+                } else {
                     member.format_trailing_comments(f);
                 }
             }

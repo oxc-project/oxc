@@ -1,5 +1,5 @@
 use crate::{AstNode, context::LintContext, rule::Rule};
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -69,11 +69,7 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferRestParams {
-    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::Function(_) = node.kind() else {
-            return;
-        };
-
+    fn run_once(&self, ctx: &LintContext) {
         let Some(references) = ctx.scoping().root_unresolved_references().get("arguments") else {
             return;
         };
@@ -81,29 +77,29 @@ impl Rule for PreferRestParams {
         for &reference_id in references {
             let reference = ctx.scoping().get_reference(reference_id);
             let reference_node = ctx.nodes().get_node(reference.node_id());
-            if !is_owned_by_function(reference_node, node, ctx) {
+
+            // Only references to the implicit `arguments` object are relevant, i.e.
+            // those inside a (non-arrow) function.
+            if !ctx
+                .nodes()
+                .ancestors(reference_node.id())
+                .any(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
+            {
                 continue;
             }
 
-            if !is_not_normal_member_access(reference_node, ctx) {
+            if !is_normal_member_access(reference_node, ctx) {
                 ctx.diagnostic(prefer_rest_params_diagnostic(reference_node.span()));
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        ctx.semantic().nodes().contains(AstType::Function)
+    }
 }
 
-fn is_owned_by_function(
-    reference_node: &AstNode,
-    function_node: &AstNode,
-    ctx: &LintContext,
-) -> bool {
-    ctx.nodes()
-        .ancestors(reference_node.id())
-        .find(|ancestor| matches!(ancestor.kind(), AstKind::Function(_)))
-        .is_some_and(|ancestor| ancestor.id() == function_node.id())
-}
-
-fn is_not_normal_member_access(identifier: &AstNode, ctx: &LintContext) -> bool {
+fn is_normal_member_access(identifier: &AstNode, ctx: &LintContext) -> bool {
     if let AstKind::StaticMemberExpression(member) = ctx.nodes().parent_kind(identifier.id()) {
         return member.object.span() == identifier.span();
     }

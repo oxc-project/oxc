@@ -10,7 +10,7 @@ use oxc_ast::{
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, IdentifierReference,
         JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement, JSXExpression,
-        JSXFragment, Statement,
+        JSXFragment,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -115,7 +115,7 @@ declare_oxc_lint!(
 
 impl Rule for JsxKey {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -258,10 +258,7 @@ fn is_in_array_or_iter<'a, 'b>(
         let parent = ctx.nodes().parent_node(node.id());
         match parent.kind() {
             AstKind::ArrowFunctionExpression(arrow_expr) => {
-                let is_arrow_expr_statement = matches!(
-                    arrow_expr.body.statements.first(),
-                    Some(Statement::ExpressionStatement(_))
-                );
+                let is_arrow_expr_statement = arrow_expr.is_expression();
                 if !is_explicit_return && !is_arrow_expr_statement {
                     return None;
                 }

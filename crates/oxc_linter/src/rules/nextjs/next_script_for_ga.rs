@@ -148,21 +148,16 @@ fn get_dangerously_set_inner_html_prop_value<'a>(
         return None;
     };
 
-    if let Some(html_prop) = object_expr.properties.iter().find_map(|prop| {
-        if let ObjectPropertyKind::ObjectProperty(html_prop) = prop {
-            if let PropertyKey::StaticIdentifier(html_prop_ident) = &html_prop.key {
-                if html_prop_ident.name == "__html" { Some(html_prop) } else { None }
-            } else {
-                None
-            }
+    object_expr.properties.iter().find_map(|prop| {
+        if let ObjectPropertyKind::ObjectProperty(html_prop) = prop
+            && let PropertyKey::StaticIdentifier(html_prop_ident) = &html_prop.key
+            && html_prop_ident.name == "__html"
+        {
+            Some(&**html_prop)
         } else {
             None
         }
-    }) {
-        return Some(html_prop);
-    }
-
-    None
+    })
 }
 
 #[test]

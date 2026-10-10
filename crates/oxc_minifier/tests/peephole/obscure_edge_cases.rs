@@ -113,15 +113,15 @@ fn test_numeric_comparison_edge_cases() {
 #[test]
 fn test_mathematical_expression_edge_cases() {
     // Test operations with special numeric values get optimized
-    test("return 1 / 0", "return Infinity"); // optimized to Infinity
-    test("return -1 / 0", "return -Infinity"); // optimized to -Infinity
+    test_same("return 1 / 0"); // canonical printed spelling of Infinity
+    test_same("return -1 / 0"); // canonical printed spelling of -Infinity
     test("return 0 / 0", "return NaN"); // optimized to NaN
 
     // Test simple arithmetic - these ARE optimized by oxc
     test("return 2 + 3", "return 5");
     test("return 10 - 4", "return 6");
     test("return 3 * 7", "return 21");
-    test_same("return 15 / 3"); // division might not be optimized consistently
+    test("return 15 / 3", "return 5");
 
     // Test cases that are eliminated as dead code (unused expressions)
     test("NaN + 1", ""); // eliminated as unused expression
@@ -130,8 +130,8 @@ fn test_mathematical_expression_edge_cases() {
     test("Infinity + 1", ""); // eliminated as unused expression
     test("Infinity - Infinity", ""); // eliminated as unused expression
     test("Infinity / Infinity", ""); // eliminated as unused expression
-    test_same("Math.PI * 2"); // runtime value
-    test_same("Math.E + 1"); // runtime value
+    test("Math.PI * 2", ""); // eliminated as unused expression
+    test("Math.E + 1", ""); // eliminated as unused expression
     test("-0 + 0", ""); // eliminated as unused expression
     test("-0 * 1", ""); // eliminated as unused expression
     test("1 / -0", ""); // eliminated as unused expression
@@ -285,8 +285,8 @@ fn test_loop_optimization_edge_cases() {
     test("while (true) { infiniteLoop(); }", "for (;;) infiniteLoop();"); // optimized loop form
 
     // Test do-while loops - false becomes !1, braces may be removed, true becomes !0
-    test("do { executedOnce(); } while (false);", "do\n\texecutedOnce();\nwhile (!1);");
-    test("do { body(); } while (true);", "do\n\tbody();\nwhile (!0);");
+    test("do { executedOnce(); } while (false);", "do\n\texecutedOnce();\nwhile (0);");
+    test("do { body(); } while (true);", "do\n\tbody();\nwhile (1);");
 
     // Test for loops with analyzable bounds
     test(
@@ -303,22 +303,20 @@ fn test_loop_optimization_edge_cases() {
 #[test]
 fn test_switch_statement_edge_cases() {
     // Test switch with constant discriminant - might be optimized in future
-    test_same("switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); break; }");
-    // Could be optimized to just: b();
-
-    test_same("switch ('test') { case 'foo': a(); break; case 'test': b(); break; default: c(); }");
-    // Could be optimized to just: b();
+    test("switch (2) { case 1: a(); break; case 2: b(); break; case 3: c(); }", "b();");
+    test(
+        "switch ('test') { case 'foo': a(); break; case 'test': b(); break; default: c(); }",
+        "b();",
+    );
 
     // Test switch with no matching case
-    test_same("switch (5) { case 1: a(); break; case 2: b(); break; }");
-    // Could be optimized to empty
+    test("switch (5) { case 1: a(); break; case 2: b(); break; }", "");
 
     // Test switch with default
-    test_same("switch (5) { case 1: a(); break; default: b(); break; }");
-    // Could be optimized to just: b();
+    test("switch (5) { case 1: a(); break; default: b(); break; }", "b();");
 
     // Test switch with fall-through - more complex, keep as same for safety
-    test_same("switch (1) { case 1: a(); case 2: b(); break; case 3: c(); }");
+    test("switch (1) { case 1: a(); case 2: b(); break; case 3: c(); }", "a(), b();");
     // Should preserve fall-through behavior
 }
 
@@ -657,4 +655,13 @@ fn test_annotation_comments_preserved_in_dynamic_import() {
         "export async function init() { const bar = 'some-url'.slice(0); return await import(/* @vite-ignore */ /* webpackIgnore: true */ bar); }",
         "export async function init() { let bar = 'some-url'; return await import(/* @vite-ignore */ /* webpackIgnore: true */ 'some-url'); }",
     );
+}
+
+#[test]
+fn test_exponentiation_negative_bigint_base() {
+    // `0n + -1n` folds to a negative BigInt literal. As the base of `**` it must stay
+    // parenthesized, otherwise the output `-1n ** 2n` is a SyntaxError.
+    test("x = (0n + -1n) ** 2n", "x = (-1n) ** 2n");
+    // A positive BigInt base needs no parentheses.
+    test_same("x = 2n ** 3n");
 }

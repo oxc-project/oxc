@@ -1,5 +1,6 @@
 use memchr::memchr;
 
+use oxc_data_structures::branch_hints::cold_path;
 use oxc_span::Span;
 use oxc_syntax::identifier::is_identifier_part;
 
@@ -131,15 +132,14 @@ impl<C: Config> Lexer<'_, C> {
         if !next_byte.is_ascii() {
             // Unicode chars are rare in identifiers, so cold branch to keep common path for ASCII
             // as fast as possible
-            cold_branch(|| {
-                while let Some(c) = self.peek_char() {
-                    if c == '-' || is_identifier_part(c) {
-                        self.consume_char();
-                    } else {
-                        break;
-                    }
+            cold_path();
+            while let Some(c) = self.peek_char() {
+                if c == '-' || is_identifier_part(c) {
+                    self.consume_char();
+                } else {
+                    break;
                 }
-            });
+            }
         }
 
         Some(self.finish_next_retokenized(Kind::Ident))

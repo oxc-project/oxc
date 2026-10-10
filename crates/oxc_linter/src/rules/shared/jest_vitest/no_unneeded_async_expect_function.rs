@@ -105,10 +105,8 @@ pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c L
 /// Returns `None` if the function body doesn't contain exactly one await of a call expression.
 fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> Option<Span> {
     // Case 1: Arrow function with expression body (async () => await doSomething())
-    if arrow.expression {
-        if let Some(first) = arrow.body.statements.first()
-            && let Statement::ExpressionStatement(expr_stmt) = first
-            && let Expression::AwaitExpression(await_expr) = &expr_stmt.expression
+    if arrow.is_expression() {
+        if let Some(Expression::AwaitExpression(await_expr)) = arrow.get_expression()
             && let Expression::CallExpression(call) = &await_expr.argument
         {
             return Some(call.span);
@@ -117,7 +115,7 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
     }
 
     // Case 2: Arrow function with block body
-    get_awaited_call_span_from_block(&arrow.body)
+    get_awaited_call_span_from_block(arrow.get_function_body().unwrap())
 }
 
 fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option<Span> {

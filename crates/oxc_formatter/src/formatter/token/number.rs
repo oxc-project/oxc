@@ -1,7 +1,7 @@
 use oxc_formatter_core::arena_cow_str;
 pub use oxc_formatter_core::spec::{format_trimmed_number, is_simple_number};
 
-use crate::formatter::{Format, JsFormatter, prelude::*};
+use crate::formatter::{JsFormatter, prelude::*};
 
 pub fn format_number_token(
     text: &str,

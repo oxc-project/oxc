@@ -4,6 +4,231 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.86.0] - 2026-09-28
+
+### 🚀 Features
+
+- 9d80eed linter/react/only-export-components: Support `allowCompoundComponents` (#27117) (Kuroda Kayn)
+- e05b155 linter: Add typescript/no-generated-empty-object-type (#26958) (camc314)
+
+### 🐛 Bug Fixes
+
+- 611e4ed linter/plugins: Include executing selectors in JS plugin rule timings (#27111) (overlookmotel)
+- 571cfa3 oxlint: Skip type-aware lint rules in type-check-only mode (#27076) (camc314)
+- d0b2462 oxlint: Skip undefined children in CFG walker (#27075) (camc314)
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
+## [1.85.0] - 2026-09-21
+
+### 🚀 Features
+
+- 415b742 oxlint,oxfmt: Do not discover nested config in Vite+ mode (#26763) (leaysgur)
+
+## [1.84.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+- a047b67 linter: Report JavaScript plugin rule timings (#26415) (Alexander Lichter)
+
+### 🐛 Bug Fixes
+
+- 927bfa4 oxlint/lsp: Align nested config handling with `configPath` semantics (#26762) (leaysgur)
+- 7811f0a parser: Preserve reparsed `await` tokens (#26619) (camc314)
+
+### 📚 Documentation
+
+- aa7de00 lsp: Document that the `run` option only applies to push mode clients (#26670) (im10furry)
+
+## [1.83.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 72bc7f2 oxlint: Replace backlashes path for "no js runtime" diagnostic (#26599) (Sysix)
+
+## [1.82.0] - 2026-09-07
+
+### 🚀 Features
+
+- 6a0e19c linter/eslint/no-unmodified-loop-condition: Support `checkConditionalExpressions` option (#26249) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8c7ea76 ast_visit: Account for trimmed source offsets (#26223) (Cameron)
+- 07851b9 parser: Fix debug assert failure when lexer error with tokens enabled (#26229) (overlookmotel)
+- 9cee146 oxlint/lsp: Don't try to parse fix message, always fallback (#26204) (Sysix)
+- b41bb35 linter: Qualify rules in rules output (#26250) (camc314)
+
+### 🛡️ Security
+
+- 9a612d5 deps: Update npm packages (#26178) (renovate[bot])
+
+## [1.81.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- e412cf2 linter: Clamp invalid JS plugin locations (#26144) (camc314)
+- d86c113 linter: Normalize reversed JS plugin locations (#26138) (camc314)
+- 3910e2b linter/eslint/no-unassigned-vars: Skip Svelte and Vue files (#26042) (Hamody We)
+- 047f7ca linter/plugins: Fix interaction between JS plugins and Vue rules (#26080) (overlookmotel)
+
+### 📚 Documentation
+
+- d5be037 linter/typescript/switch-exhaustiveness-check: Clarify default case comment pattern (#26100) (camc314)
+
+## [1.80.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 8a353a7 linter/eslint/no-control-regex: Refine help message text (#25996) (Rahul Mishra)
+- 8a9bdbd estree: Include decorators in `FormalParameterRest ` spans (#26021) (camc314)
+
+## [1.79.0] - 2026-08-18
+
+### 💥 BREAKING CHANGES
+
+- 8c4552d linter: [**BREAKING**] Split react/react-compiler into per-category rules (#25500) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 228e8e0 linter: Resolve inactive React compiler rules (#25830) (Boshen)
+- aa49d86 linter: Allow spread rule options in config types (#25675) (ch3rry)
+- beb724d linter/eslint/no-unused-vars: Report bare underscore parameters (#25663) (camc314)
+- 4004c10 linter/eslint/no-irregular-whitespace: Check comments by default (#25660) (camc314)
+- 285820e linter/no-large-snapshots: Precompile and document allowed snapshot matchers (#25611) (Mikhail Baev)
+- a38f7b3 oxlint,oxfmt: Apply .gitignore only to walk targets, not explicitly named files (#25531) (leaysgur)
+- 0c68b7f estree: Emit `decorators` on `FormalParameterRest` (#25582) (camc314)
+- 1d22912 linter/plugins: Parse rule-less directive justifications (#25559) (camc314)
+- 4df5835 linter: Allow capitalized built-in calls (#25516) (Boshen)
+
+### ⚡ Performance
+
+- c84ede3 estree_tokens: Share JS token update entry point (#25826) (Boshen)
+- f0121ed linter: Share config deserialization entry point (#25820) (Boshen)
+- 9ed10b7 linter: Use unstable sorts for unique keys (#25778) (Boshen)
+- 2dd7446 diagnostics: Preallocate graphical output (#25721) (Boshen)
+- 9c8abab diagnostics: Batch graphical reports (#25710) (Boshen)
+
+## [1.78.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🚀 Features
+
+- ccb8fe8 linter/jsdoc: Implement `no-blank-blocks` rule (#25207) (Mikhail Baev)
+- d4a897c linter/eslint: Implement `one-var` rule (#24470) (Cole Ellison)
+- 5ab9340 linter/jsx-a11y/anchor-has-content: Add options to match eslint (#24571) (Cole Ellison)
+
+### 🐛 Bug Fixes
+
+- a92c541 linter: Preserve source text for JS plugin ignore fixes (#25280) (Norcleeh)
+- 6b1c479 oxlint: Normalize customized rule names (#25316) (camc314)
+- 9573937 linter/typescript: Validate `ban-ts-comment` description_format (#25320) (Mikhail Baev)
+
+### ⚡ Performance
+
+- 4ec9189 oxlint/lsp: Avoid second lock for getting/removing unused directives (#25350) (Sysix)
+- 6c0d01b oxlint/lsp: Preallocate fix-content vec (#25351) (Sysix)
+- 4abff11 linter: Avoid redundant message work in the agent reporter (#25315) (Connor Shea)
+- 6bb5421 linter: Hoist `current_dir` out of the stylish reporter loop (#25313) (Connor Shea)
+- 9a7c323 linter: Compute diagnostic `Info` once per diagnostic in junit reporter (#25312) (Connor Shea)
+- 1cf7dde oxlint: Render JSON report into a single buffer (#25295) (connorshea)
+
+## [1.77.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 1fb3d70 oxlint: Show file:line:col in github format annotation messages (#25020) (Faris Tristan Fabian)
+
+### 🐛 Bug Fixes
+
+- 9d4592c linter: Reject duplicate JS plugin names (#25243) (camc314)
+- 20f68e7 oxlint,oxfmt: Respect `.gitignore` for walk targets and explicit paths (#25133) (leaysgur)
+- 5c0fa61 linter/eslint/no-warning-comments: Unify config structs and remove manual options docs (#25151) (Mikhail Baev)
+- 2b02711 oxlint: Correct --warn flag help text (#25059) (Faris Tristan Fabian)
+
+### 📚 Documentation
+
+- 9dc7756 linter/typescript/no-unnecessary-condition: Clarify options (#25110) (camc314)
+
+## [1.76.0] - 2026-07-27
+
+### 🚀 Features
+
+- 8d31dfa linter: Verify eslint/no-restricted-globals config schema (#24598) (vigneshwar)
+- 7069621 linter: Verify jest/vitest prefer-lowercase-title config schema (#24724) (Bartok)
+- 016cf2a linter/oxc: Add bad-match-all-arg rule (#24900) (camc314)
+- cdc941e linter/n: Implement `exports-style` rule (#24087) (Mikhail Baev)
+- 1ad6f6c linter/eslint: Implement `id-denylist` rule (#24632) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- a065946 oxlint: Absolutize explicit CLI paths even with --no-ignore (#24646) (Bez Sahara)
+- 9213560 config: Preserve defineConfig field JSDoc (#24326) (周星星同学)
+- e80574f estree: Handle empty spans serializing `ImportMeta` and `NewTarget` (#24775) (overlookmotel)
+
+### ⚡ Performance
+
+- 4c25b91 linter/plugins: Test booleans with explicit `=== false` (#24830) (overlookmotel)
+- b7add00 linter/plugins: Remove check in loop in `getDisableDirectives` (#24833) (overlookmotel)
+
+### 📚 Documentation
+
+- 3ff2e0e linter: Clarify config extends types (#24936) (Boshen)
+
+## [1.75.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 7b045cd minfier: Drop last break from last switch case (#24673) (Armano)
+- dd18383 linter/node: Implement no-top-level-await rule (#24634) (Connor Shea)
+- 16a65f2 linter/react: Implement function-component-definition rule (#24471) (Cole Ellison)
+- 7f1f585 linter: Reuse `jest/padding-around-test-blocks` for `vitest/padding-around-test-blocks` (#24519) (Mikhail Baev)
+- 99978a8 linter/import/consistent-type-specifier-style: Support `prefer-top-level-if-only-type-imports` option (#24502) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8694167 linter/eslint/prefer-destructuring: Handle typed declarations (#24616) (camc314)
+
+### ⚡ Performance
+
+- 7be5cf0 oxlint/lsp: Only invoke lint on code actions when document is not opened (#24676) (Sysix)
+- d3f07a0 diagnostics: Box OxcDiagnosticInner to reduce binary size (#24665) (Boshen)
+- 90ae040 linter/reporter/stylish: Compute diagnostic Info once per diagnostic (#24525) (connorshea)
+
+## [1.74.0] - 2026-07-13
+
+### 🚀 Features
+
+- 0433a83 linter/eslint/no-inner-declarations: Add `namespaces` option (#24044) (Boshen)
+- 92f154a oxlint,oxfmt: Auto-discover `.mts` config files (#24357) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8337835 linter: Error on `ignorePatterns` that cannot match files aoutside the config directory (#24341) (leaysgur)
+- 2ce5a33 linter: Resolve `ignorePatterns` relative to the config dir (#24339) (leaysgur)
+- d193f8e linter: Detect Junie agent env vars (#24277) (Jeevan Mohan Pawar)
+
+### ⚡ Performance
+
+- 7f80cac linter/vue/prop-name-casing: Precompile `ignoreProps` regex pattern (#24413) (connorshea)
+- 33805b9 linter/jsdoc/require-param: Compile checkTypesPattern regex once (#24420) (connorshea)
+
 ## [1.73.0] - 2026-07-06
 
 ### 🚀 Features

@@ -4,6 +4,93 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- f585cb4 napi: Add threadless WASI builds (#26898) (Boshen)
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
+### 📚 Documentation
+
+- d775315 parser: Document AST property order (#27038) (Boshen)
+
+## [0.151.0] - 2026-09-21
+
+### 🚀 Features
+
+- 1fac655 coverage: Support new TypeScript fixture layout (#26226) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- c966aca parser: Do not omit `<` token opening type argument list (#26328) (overlookmotel)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 8a9bdbd estree: Include decorators in `FormalParameterRest ` spans (#26021) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- db44651 napi: Disable reuseWorker in browser bindings (#25640) (leaysgur)
+- 0c68b7f estree: Emit `decorators` on `FormalParameterRest` (#25582) (camc314)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- 2a1058a napi: Omit parser header from WASI declarations (#25254) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- 11f5d1f ast_visit: Add `Utf8ToUtf16::convert_program_and_comments` (#24859) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e80574f estree: Handle empty spans serializing `ImportMeta` and `NewTarget` (#24775) (overlookmotel)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 7b045cd minfier: Drop last break from last switch case (#24673) (Armano)
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
 ## [0.138.0] - 2026-06-29
 
 ### 🛡️ Security

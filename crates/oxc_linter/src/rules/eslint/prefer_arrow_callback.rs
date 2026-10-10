@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Function, FunctionType, IdentifierReference, MetaProperty, Super, ThisExpression,
+        Argument, Function, FunctionType, IdentifierReference, NewTarget, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -85,7 +85,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferArrowCallback {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -377,10 +377,8 @@ impl<'a> Visit<'a> for ScopeScanner {
         self.sup = true;
     }
 
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        if it.meta.name == "new" && it.property.name == "target" {
-            self.meta = true;
-        }
+    fn visit_new_target(&mut self, _it: &NewTarget) {
+        self.meta = true;
     }
 
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
@@ -402,6 +400,7 @@ fn test() {
         ("foo(a => a);", None),
         ("foo(function*() {});", None),
         ("foo(function() { this; });", None),
+        ("foo(function() { let x: typeof this.foo; });", None),
         ("foo(function bar() {});", Some(serde_json::json!([{ "allowNamedFunctions": true }]))),
         ("foo(function() { (() => this); });", None),
         ("foo(function() { this; }.bind(obj));", None),

@@ -98,7 +98,7 @@ declare_oxc_lint!(
 
 impl Rule for SwitchCaseBraces {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -150,7 +150,8 @@ impl Rule for SwitchCaseBraces {
 
             if *self.0 == SwitchCaseBracesConfig::Always && missing_braces {
                 let test_end = case.test.as_ref().map_or(case.span.start, |t| t.span().end);
-                let colon_offset = ctx.find_next_token_from(test_end, ":").unwrap();
+                let colon_offset =
+                    ctx.find_next_token_within(test_end, case.span.end, ":").unwrap();
                 let colon_pos = test_end + colon_offset;
                 let span = Span::new(case.span.start, colon_pos + 1);
 

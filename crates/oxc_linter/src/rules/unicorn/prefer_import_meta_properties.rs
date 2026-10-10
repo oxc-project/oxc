@@ -1,8 +1,7 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, MetaProperty, NewExpression,
-        VariableDeclarator,
+        Argument, BindingPattern, CallExpression, Expression, NewExpression, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -12,7 +11,7 @@ use oxc_syntax::node::NodeId;
 use oxc_syntax::symbol::SymbolId;
 use rustc_hash::FxHashSet;
 
-use crate::{context::LintContext, rule::Rule};
+use crate::{ast_util::variable_declaration_kind, context::LintContext, rule::Rule};
 
 const PATH_MODULES: [&str; 2] = ["path", "node:path"];
 const URL_MODULES: [&str; 2] = ["url", "node:url"];
@@ -102,10 +101,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferImportMetaProperties {
     fn run<'a>(&self, node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::MetaProperty(meta_property) = node.kind() else { return };
-        if !is_import_meta(meta_property) {
-            return;
-        }
+        let AstKind::ImportMeta(meta_property) = node.kind() else { return };
 
         let member_expression_id = ctx.nodes().parent_id(meta_property.node_id());
         let AstKind::StaticMemberExpression(member_expression) =
@@ -183,10 +179,6 @@ fn is_process_get_builtin_module_call(call: &CallExpression<'_>, modules: &[&str
         &call.arguments[0],
         Argument::StringLiteral(lit) if modules.contains(&lit.value.as_str())
     )
-}
-
-fn is_import_meta(meta_property: &MetaProperty<'_>) -> bool {
-    meta_property.meta.name == "import" && meta_property.property.name == "meta"
 }
 
 fn is_parent_literal(argument: &Argument<'_>) -> bool {
@@ -337,7 +329,7 @@ fn check_variable_declarator(
     ctx: &LintContext<'_>,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    if !variable_declarator.kind.is_const() {
+    if !variable_declaration_kind(variable_declarator, ctx).is_const() {
         return false;
     }
 
@@ -400,7 +392,9 @@ fn iterate_problems_from_filename(
     }
 
     let AstKind::VariableDeclarator(parent) = ctx.nodes().kind(parent_id) else { return };
-    if !parent.kind.is_const() || parent.init.as_ref().is_none_or(|init| init.span() != node_span) {
+    if !variable_declaration_kind(parent, ctx).is_const()
+        || parent.init.as_ref().is_none_or(|init| init.span() != node_span)
+    {
         return;
     }
 

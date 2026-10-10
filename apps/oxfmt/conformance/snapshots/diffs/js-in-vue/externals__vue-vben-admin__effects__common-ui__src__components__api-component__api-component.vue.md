@@ -1,7 +1,5 @@
 # externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue
 
-> `<T = any,>() => {}` comma in generic param is removed even in .ts(x) file
-
 ## Option 1
 
 `````json

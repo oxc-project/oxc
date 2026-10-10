@@ -17,7 +17,7 @@ export function fooGood3({a = x, b: [{c = y}]}: object): void {}
 // Incorrect
 export function fnDeclBad<T>(p: T = [], rParam: T = "", r2: T): void { }
 export function fnDeclBad2<T>(p: T = [], r2: T): void { }
-export function fnDeclBad3<T>(p: T = [], rParam?: T, r2: T): void { }
+export function fnDeclBad3<T>(p: T = [], r2: T, rParam?: T): void { }
 
 export function fooBad([a, b] = [1, 2]): number {
   return 2;
@@ -29,7 +29,16 @@ export const fooBad2 = ({a, b} = { a: 1, b: 2 }): number => {
 
 
 export function withAny(a: any = 1, b: string): void { }
+export function withAnyUnion(a: any | string = 1, b: string): void { }
+export function withAnyArrayUnion(a: any | number[] = [], b: string): void { }
+export function withAnyUndefinedUnion(a: any | undefined = 1, b: string): void { }
+type Foo = {};
+export function withAnyTypeReferenceUnion(a: any | Foo = {}, b: string): void { }
+export function withAnyTypeReferenceUndefinedUnion(a: any | Foo | undefined = {}, b: string): void { }
+export function withAnyTypeOperatorUnion(a: any | keyof {} = 1, b: string): void { }
+export function withAnyIntersectionTypeReferenceUnion(a: any | (Foo & {}) = {}, b: string): void { }
 export function withUnknown(a: unknown = 1, b: string): void { }
+export function withUnknownUnion(a: unknown | string = 1, b: string): void { }
 
 export function withTypeAssertion(a = /regular-repression-cannot-infer/ as any): void { }
 

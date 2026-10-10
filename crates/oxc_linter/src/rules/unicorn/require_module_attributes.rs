@@ -135,15 +135,13 @@ impl Rule for RequireModuleAttributes {
                     "import statement",
                 );
             }
-            AstKind::ExportNamedDeclaration(decl) => {
-                if let Some(source) = &decl.source {
-                    check_with_clause(
-                        ctx,
-                        decl.with_clause.as_deref(),
-                        source.span,
-                        "export statement",
-                    );
-                }
+            AstKind::ExportFromDeclaration(decl) => {
+                check_with_clause(
+                    ctx,
+                    decl.with_clause.as_deref(),
+                    decl.source.span,
+                    "export statement",
+                );
             }
             AstKind::ExportAllDeclaration(decl) => {
                 check_with_clause(

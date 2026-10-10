@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 5d8ccf5 react_compiler: Preserve nonfatal diagnostics (#25066) (Boshen)
+- d349e4a react_compiler: Match eslint suppression gating (#25068) (Boshen)
+- 0dc16ba react_compiler: Track catch block declarations (#25067) (Boshen)
+
+### ⚡ Performance
+
+- 7251e52 react_compiler: Avoid large types on stack (#25037) (overlookmotel)
+
+## [0.142.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- 9d7745a react-compiler: Preserve warning bailouts (#24935) (Boshen)
+
+### ⚡ Performance
+
+- 98f2ecb react_compiler: Compare value set pointers before probing in state merge (#24805) (Marius Schulz)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### ⚡ Performance
+
+- ba35a0d react_compiler: Use IndexVec for dense id-keyed maps (#24549) (Boshen)
+- b685062 react_compiler: Keep small hot-path collections inline (#24514) (Marius Schulz)
+- 7808a6e react_compiler: Make aliasing effects cheap to intern and clone (#24506) (Marius Schulz)
+- 3a36f2a react_compiler: Store AbstractValue reasons as a u16 bitmask (#24480) (Boshen)
+- 1c96753 react_compiler: Use FxHashMap for the lookup-only aliasing node map (#24490) (Boshen)
+
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- a3a39f9 react_compiler: Implement enableEmitHookGuards codegen (#24329) (Boshen)
+
+### ⚡ Performance
+
+- dce0f29 react_compiler: Replace all compiled functions in a single AST walk (#24403) (Boshen)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🐛 Bug Fixes

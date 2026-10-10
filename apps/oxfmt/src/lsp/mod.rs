@@ -5,46 +5,19 @@ use std::{
 };
 
 use oxc_language_server::{LanguageId, run_server};
-use tower_lsp_server::ls_types::Uri;
+use tower_lsp_server::gen_lsp_types::Uri;
 
-use crate::core::{ExternalFormatter, JsConfigLoaderCb, utils};
+use crate::core::{ExternalServices, JsConfigLoaderCb, Language};
 
 mod options;
 mod server_formatter;
-
-fn get_file_extension_from_language_id(language_id: &LanguageId) -> Option<&'static str> {
-    match language_id.as_str() {
-        "javascript" => Some("js"),
-        "typescript" => Some("ts"),
-        "javascriptreact" => Some("jsx"),
-        "typescriptreact" => Some("tsx"),
-        "toml" => Some("toml"),
-        "css" => Some("css"),
-        "graphql" => Some("graphql"),
-        "handlebars" => Some("handlebars"),
-        "json" => Some("json"),
-        "jsonc" => Some("jsonc"),
-        "json5" => Some("json5"),
-        "markdown" => Some("md"),
-        "mdx" => Some("mdx"),
-        "mjml" => Some("mjml"),
-        "html" => Some("html"),
-        "scss" => Some("scss"),
-        "less" => Some("less"),
-        "vue" => Some("vue"),
-        "svelte" => Some("svelte"),
-        "yaml" => Some("yaml"),
-        "angular" => Some("component.html"),
-        _ => None,
-    }
-}
 
 pub fn create_fake_file_path_from_language_id(
     language_id: &LanguageId,
     root: &Path,
     uri: &Uri,
 ) -> Option<PathBuf> {
-    let file_extension = get_file_extension_from_language_id(language_id)?;
+    let file_extension = Language::from_lsp_id(language_id.as_str())?.to_lsp_extension();
     // Use the authority (if available) or the last segment of the path as the file name, defaulting to "Untitled" if neither is available
     let mut name = uri.authority().map_or_else(
         || uri.path().rsplit_once('/').map_or_else(|| "Untitled", |(_, s)| s.as_str()),
@@ -60,10 +33,10 @@ pub fn create_fake_file_path_from_language_id(
 }
 
 /// Run the language server
-pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: ExternalFormatter) {
+pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_services: ExternalServices) {
     let version = {
         let mut version = env!("CARGO_PKG_VERSION").to_string();
-        if let Some(vp_version) = utils::vp_version() {
+        if let Some(vp_version) = oxc_config::vp_version() {
             let _ = write!(version, " (VP: {})", vp_version.to_string_lossy());
         }
         version
@@ -73,7 +46,7 @@ pub async fn run_lsp(js_config_loader: JsConfigLoaderCb, external_formatter: Ext
         "oxfmt".to_string(),
         version,
         oxc_language_server::WorkerManager::new_dynamic(Arc::new(
-            server_formatter::ServerFormatterBuilder::new(js_config_loader, external_formatter),
+            server_formatter::ServerFormatterBuilder::new(js_config_loader, external_services),
         )),
     )
     .await;
@@ -84,7 +57,7 @@ mod test {
     use std::str::FromStr;
 
     use oxc_language_server::LanguageId;
-    use tower_lsp_server::ls_types::Uri;
+    use tower_lsp_server::gen_lsp_types::Uri;
 
     use crate::lsp::create_fake_file_path_from_language_id;
 

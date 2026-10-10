@@ -10,9 +10,9 @@ pub fn run_rules(
     output_formatter: &OutputFormatter,
     stdout: &mut dyn std::io::Write,
 ) -> CliRunResult {
-    // Build the set of enabled builtin rule names from the resolved config.
-    let enabled: FxHashSet<&str> =
-        lint_config.rules().iter().map(|(rule, _)| rule.name()).collect();
+    // Build the set of enabled builtin rules from the resolved config.
+    let enabled: FxHashSet<(&str, &str)> =
+        lint_config.rules().iter().map(|(rule, _)| (rule.plugin_name(), rule.name())).collect();
 
     if let Some(output) = output_formatter.all_rules(enabled) {
         print_and_flush_stdout(stdout, &output);

@@ -77,7 +77,7 @@ declare_oxc_lint!(
 
 impl Rule for NoUselessPromiseResolveReject {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -271,16 +271,6 @@ fn is_bind_member_expression(node: &AstNode) -> bool {
     member_expr.static_property_name().is_some_and(|name| name == "bind")
 }
 
-fn match_arrow_function_body<'a>(ctx: &LintContext<'a>, parent: &AstNode<'a>) -> bool {
-    let parent = ctx.nodes().parent_node(parent.id());
-    if !matches!(parent.kind(), AstKind::FunctionBody(_)) {
-        return false;
-    }
-
-    let grand_parent = ctx.nodes().parent_node(parent.id());
-    matches!(grand_parent.kind(), AstKind::ArrowFunctionExpression(_))
-}
-
 fn generate_fix<'a>(
     call_expr: &CallExpression,
     is_reject: bool,
@@ -325,10 +315,8 @@ fn generate_fix<'a>(
         return fixer.noop();
     };
 
-    let is_arrow_function_body = match parent.kind() {
-        AstKind::ExpressionStatement(_) => match_arrow_function_body(ctx, parent),
-        _ => false,
-    };
+    let is_arrow_function_body =
+        matches!(parent.kind(), AstKind::ArrowFunctionExpression(arrow) if arrow.is_expression());
 
     let mut replace_range = if is_reject { parent.kind().span() } else { call_expr.span() };
     let replacement_text = if is_reject {
@@ -342,7 +330,7 @@ fn generate_fix<'a>(
             text = format!("{text};");
             // `=> Promise.reject(error)` -> `=> { throw error; }`
             if is_arrow_function_body {
-                replace_range = outermost_paren(parent, ctx).kind().span();
+                replace_range = node.kind().span();
                 text = format!("{{ {text} }}");
             }
             text

@@ -1,8 +1,7 @@
-use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, IsInt32OrUint32},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ReferenceFlags;
@@ -42,17 +41,16 @@ impl<'a> PeepholeOptimizations {
         let mut b = b;
         // "a op (b op c)" => "(a op b) op c"
         // "a op (b op (c op d))" => "((a op b) op c) op d"
-        loop {
-            if let Expression::LogicalExpression(logical_expr) = &mut b
-                && logical_expr.operator == op
-            {
-                let right = logical_expr.left.take_in(ctx);
-                a = Self::join_with_left_associative_op(span, op, a, right, ctx);
-                b = logical_expr.right.take_in(ctx);
-                continue;
+        let b = loop {
+            match b {
+                Expression::LogicalExpression(logical_expr) if logical_expr.operator == op => {
+                    let LogicalExpression { left, right, .. } = logical_expr.unbox();
+                    a = Self::join_with_left_associative_op(span, op, a, left, ctx);
+                    b = right;
+                }
+                b => break b,
             }
-            break;
-        }
+        };
         // "a op b" => "a op b"
         // "(a op b) op c" => "(a op b) op c"
         let mut logic_expr = Expression::new_logical_expression(span, a, op, b, ctx);
@@ -65,11 +63,24 @@ impl<'a> PeepholeOptimizations {
     // `a instanceof b === true` -> `a instanceof b`
     // `a instanceof b === false` -> `!(a instanceof b)`
     //  ^^^^^^^^^^^^^^ `ctx.expression_value_type(&e.left).is_boolean()` is `true`.
-    // `x >> +y !== 0` -> `x >> +y`
-    //  ^^^^^^^ ctx.expression_value_type(&e.left).is_number()` is `true`.
+    // `x >> +y !== 0` -> `!!(x >> +y)`
+    //  ^^^^^^^ `e.left.is_int32_or_uint32(ctx)` is `true`.
     pub fn minimize_binary(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::BinaryExpression(e) = expr else { return };
         if !e.operator.is_equality() {
+            return;
+        }
+        // `NaN == 0` and `!NaN` differ, so require proof that the left side is a non-NaN Number.
+        if e.right.is_number_0() && e.left.is_int32_or_uint32(ctx) {
+            let inequal =
+                matches!(e.operator, BinaryOperator::Inequality | BinaryOperator::StrictInequality);
+            ctx.replace_expression_with(expr, |old, ctx| {
+                let Expression::BinaryExpression(e) = old else { unreachable!() };
+                let e = e.unbox();
+                let value =
+                    if inequal { Self::minimize_not(e.span, e.left, ctx, true) } else { e.left };
+                Expression::new_unary_expression(e.span, UnaryOperator::LogicalNot, value, ctx)
+            });
             return;
         }
         let left = e.left.value_type(ctx);
@@ -88,33 +99,22 @@ impl<'a> PeepholeOptimizations {
                 _ => {}
             }
         }
-        if !left.is_boolean() {
-            return;
-        }
-        if e.right.may_have_side_effects(ctx) {
+        if !left.is_boolean() || e.right.may_have_side_effects(ctx) {
             return;
         }
         let Some(mut b) = e.right.evaluate_value(ctx).and_then(ConstantValue::into_boolean) else {
             return;
         };
-        match e.operator {
-            BinaryOperator::Inequality | BinaryOperator::StrictInequality => {
-                e.operator = BinaryOperator::Equality;
-                b = !b;
-            }
-            BinaryOperator::StrictEquality => {
-                e.operator = BinaryOperator::Equality;
-            }
-            BinaryOperator::Equality => {}
-            _ => return,
+        if matches!(e.operator, BinaryOperator::Inequality) {
+            b = !b;
         }
-        let new_expr = if b {
-            e.left.take_in(ctx)
-        } else {
-            let argument = e.left.take_in(ctx);
-            Expression::new_unary_expression(e.span, UnaryOperator::LogicalNot, argument, ctx)
-        };
-        ctx.replace_expression(expr, new_expr);
+
+        ctx.drop_expression(&e.right);
+        ctx.replace_expression_with(expr, |old, ctx| {
+            let Expression::BinaryExpression(e) = old else { unreachable!() };
+            let e = e.unbox();
+            if b { e.left } else { Self::minimize_not(e.span, e.left, ctx, false) }
+        });
     }
 
     /// Compress `foo == true` into `foo == 1`.
@@ -129,7 +129,9 @@ impl<'a> PeepholeOptimizations {
         if !matches!(e.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
             return;
         }
-        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx) {
+        if let Some(ConstantValue::Boolean(left_bool)) = e.left.evaluate_value(ctx)
+            && !e.left.may_have_side_effects(ctx)
+        {
             let new_left = Expression::new_numeric_literal(
                 e.left.span(),
                 if left_bool { 1.0 } else { 0.0 },
@@ -140,7 +142,9 @@ impl<'a> PeepholeOptimizations {
             ctx.replace_expression(&mut e.left, new_left);
             return;
         }
-        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx) {
+        if let Some(ConstantValue::Boolean(right_bool)) = e.right.evaluate_value(ctx)
+            && !e.right.may_have_side_effects(ctx)
+        {
             let new_right = Expression::new_numeric_literal(
                 e.right.span(),
                 if right_bool { 1.0 } else { 0.0 },
@@ -205,10 +209,12 @@ impl<'a> PeepholeOptimizations {
         let reference = ctx.scoping_mut().get_reference_mut(write_id_ref.reference_id());
         reference.flags_mut().insert(ReferenceFlags::Read);
 
-        let new_op = logical_expr.operator.to_assignment_operator();
-        let new_right = logical_expr.right.take_in(ctx);
-        expr.operator = new_op;
-        ctx.replace_expression(&mut expr.right, new_right);
+        expr.operator = logical_expr.operator.to_assignment_operator();
+        ctx.drop_expression(&logical_expr.left);
+        ctx.replace_expression_with(&mut expr.right, |e, _ctx| {
+            let Expression::LogicalExpression(e) = e else { unreachable!() };
+            e.unbox().right
+        });
     }
 
     /// Compress `a = a + b` to `a += b`
@@ -219,7 +225,7 @@ impl<'a> PeepholeOptimizations {
         if !matches!(expr.operator, AssignmentOperator::Assign) {
             return;
         }
-        let Expression::BinaryExpression(binary_expr) = &mut expr.right else { return };
+        let Expression::BinaryExpression(binary_expr) = &expr.right else { return };
         let Some(new_op) = binary_expr.operator.to_assignment_operator() else { return };
         if !Self::has_no_side_effect_for_evaluation_same_target(&expr.left, &binary_expr.left, ctx)
         {
@@ -228,9 +234,12 @@ impl<'a> PeepholeOptimizations {
 
         Self::mark_assignment_target_as_read(&expr.left, ctx);
 
-        let new_right = binary_expr.right.take_in(ctx);
         expr.operator = new_op;
-        ctx.replace_expression(&mut expr.right, new_right);
+        ctx.drop_expression(&binary_expr.left);
+        ctx.replace_expression_with(&mut expr.right, |e, _ctx| {
+            let Expression::BinaryExpression(e) = e else { unreachable!() };
+            e.unbox().right
+        });
     }
 
     /// Compress `a -= 1` to `--a` and `a -= -1` to `++a`
@@ -240,7 +249,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         let Expression::AssignmentExpression(e) = expr else { return };
-        if !matches!(e.operator, AssignmentOperator::Subtraction) {
+        if e.operator != AssignmentOperator::Subtraction || !e.left.is_simple_assignment_target() {
             return;
         }
         let operator = if let Expression::NumericLiteral(num) = &e.right {
@@ -254,9 +263,13 @@ impl<'a> PeepholeOptimizations {
         } else {
             return;
         };
-        let Some(target) = e.left.as_simple_assignment_target_mut() else { return };
-        let target = target.take_in(ctx);
-        let new_expr = Expression::new_update_expression(e.span, operator, true, target, ctx);
-        ctx.replace_expression(expr, new_expr);
+        ctx.replace_expression_with(expr, |e, ctx| {
+            let Expression::AssignmentExpression(e) = e else {
+                unreachable!();
+            };
+            let e = e.unbox();
+            let target = e.left.into_simple_assignment_target();
+            Expression::new_update_expression(e.span, operator, true, target, ctx)
+        });
     }
 }

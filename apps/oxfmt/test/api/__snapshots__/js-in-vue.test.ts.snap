@@ -57,3 +57,20 @@ exports[`Format js-in-vue with prettier-plugin-oxfmt > should format .vue w/ tem
 </template>
 "
 `;
+
+exports[`Format js-in-vue with prettier-plugin-oxfmt > should preserve gql block-string blank lines through a .vue script 1`] = `
+"<script setup>
+const q = graphql\`
+  """
+  First paragraph.
+
+
+  Second paragraph after two blanks.
+  """
+  type Query {
+    hello: String
+  }
+\`;
+</script>
+"
+`;

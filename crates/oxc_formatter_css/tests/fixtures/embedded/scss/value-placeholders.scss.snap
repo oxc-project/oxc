@@ -7,6 +7,10 @@ grid-area:       area-`PLACEHOLDER-1`;
 foo: `PLACEHOLDER-2``PLACEHOLDER-3`       `PLACEHOLDER-4`;
 width: `PLACEHOLDER-5``PLACEHOLDER-6`;
 border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
+transform: `PLACEHOLDER-10`(30px);
+transform: `PLACEHOLDER-11` (30px);
+transform: `PLACEHOLDER-12`(`PLACEHOLDER-13`px);
+some-extra-long-property-name: `PLACEHOLDER-14`(`PLACEHOLDER-15`px);
 
 ==================== Output ====================
 ------------------
@@ -17,6 +21,10 @@ grid-area: area-`PLACEHOLDER-1`;
 foo: `PLACEHOLDER-2``PLACEHOLDER-3` `PLACEHOLDER-4`;
 width: `PLACEHOLDER-5``PLACEHOLDER-6`;
 border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
+transform: `PLACEHOLDER-10`(30px);
+transform: `PLACEHOLDER-11` (30px);
+transform: `PLACEHOLDER-12`(`PLACEHOLDER-13`px);
+some-extra-long-property-name: `PLACEHOLDER-14`(`PLACEHOLDER-15`px);
 
 -------------------
 { printWidth: 100 }
@@ -26,5 +34,9 @@ grid-area: area-`PLACEHOLDER-1`;
 foo: `PLACEHOLDER-2``PLACEHOLDER-3` `PLACEHOLDER-4`;
 width: `PLACEHOLDER-5``PLACEHOLDER-6`;
 border: `PLACEHOLDER-7` `PLACEHOLDER-8` solid `PLACEHOLDER-9`;
+transform: `PLACEHOLDER-10`(30px);
+transform: `PLACEHOLDER-11` (30px);
+transform: `PLACEHOLDER-12`(`PLACEHOLDER-13`px);
+some-extra-long-property-name: `PLACEHOLDER-14`(`PLACEHOLDER-15`px);
 
 ===================== End =====================

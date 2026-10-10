@@ -1,7 +1,5 @@
 # externals/webawesome/page/page.styles.ts
 
-> Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md
-
 ## Option 1
 
 `````json
@@ -23,9 +21,9 @@
 -      *
 -    ) {
 +  slot[name]:not(
-+    [name="skip-to-content"],
-+    [name="navigation-toggle"]
-+  )::slotted(*) {
++      [name="skip-to-content"],
++      [name="navigation-toggle"]
++    )::slotted(*) {
      display: flex;
      background-color: var(--wa-color-surface-default);
    }
@@ -60,9 +58,9 @@ export default css`
   }
 
   slot[name]:not(
-    [name="skip-to-content"],
-    [name="navigation-toggle"]
-  )::slotted(*) {
+      [name="skip-to-content"],
+      [name="navigation-toggle"]
+    )::slotted(*) {
     display: flex;
     background-color: var(--wa-color-surface-default);
   }

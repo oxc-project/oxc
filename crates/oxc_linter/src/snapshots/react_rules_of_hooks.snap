@@ -699,6 +699,38 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
 
+  ⚠ react-hooks(rules-of-hooks): React Hook "useTooltipContext" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:5:36]
+ 4 │                     try {
+ 5 │                         captured = useTooltipContext();
+   ·                                    ─────────┬─────────
+   ·                                             ╰── This Hook call is not reachable on every render path.
+ 6 │                         return null;
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:5:29]
+ 3 │                     try {
+ 4 │                         while (cond) {
+   ·                         ──┬──
+   ·                           ╰── This loop may execute the Hook more than once.
+ 5 │                             useState();
+   ·                             ─────┬────
+   ·                                  ╰── Hook is called here
+ 6 │                         }
+   ╰────
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
+   ╭─[rules_of_hooks.tsx:5:25]
+ 4 │                         const value = 1;
+ 5 │                         useState(value);
+   ·                         ───────┬───────
+   ·                                ╰── This Hook call is not reachable on every render path.
+ 6 │                     } catch {}
+   ╰────
+  help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
   ⚠ react-hooks(rules-of-hooks): React Hook "useState" is called conditionally. React Hooks must be called in the exact same order in every component render.
    ╭─[rules_of_hooks.tsx:5:25]
  4 │                         const value = f();
@@ -1118,6 +1150,15 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
   help: Move the Hook call before the condition, or call it unconditionally and branch inside the Hook/effect instead.
+
+  ⚠ react-hooks(rules-of-hooks): React Hook "useState" cannot be called inside a callback. React Hooks must be called in a React function component or a custom React Hook function.
+   ╭─[rules_of_hooks.tsx:4:21]
+ 3 │                 return new Promise.then(() => {
+ 4 │                     useState();
+   ·                     ─────┬────
+   ·                          ╰── This Hook call is inside a nested callback.
+ 5 │                 });
+   ╰────
 
   ⚠ react-hooks(rules-of-hooks): React Hook "useHook" is called in function "foo" that is neither a React function component nor a custom React Hook function. React component names must start with an uppercase letter. React Hook names must start with the word "use".
    ╭─[rules_of_hooks.tsx:1:54]

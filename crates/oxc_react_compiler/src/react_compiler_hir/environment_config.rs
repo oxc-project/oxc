@@ -72,6 +72,7 @@ pub struct EnvironmentConfig {
 
     pub enable_preserve_existing_memoization_guarantees: bool,
     pub validate_preserve_existing_memoization_guarantees: bool,
+    /// Exhaustive manual memo dependency validation, disabled by default.
     pub validate_exhaustive_memoization_dependencies: bool,
     pub validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode,
 
@@ -124,7 +125,9 @@ impl Default for EnvironmentConfig {
             module_type_provider: None,
             enable_preserve_existing_memoization_guarantees: true,
             validate_preserve_existing_memoization_guarantees: true,
-            validate_exhaustive_memoization_dependencies: true,
+            // Keep public defaults compatible with babel-plugin-react-compiler 1.0;
+            // current React enables this validation by default.
+            validate_exhaustive_memoization_dependencies: false,
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::Off,
             enable_optional_dependencies: true,
             enable_name_anonymous_functions: false,
@@ -153,7 +156,8 @@ impl Default for EnvironmentConfig {
             enable_custom_type_definition_for_reanimated: false,
             enable_treat_ref_like_identifiers_as_refs: true,
             enable_treat_set_identifiers_as_state_setters: false,
-            validate_no_void_use_memo: true,
+            // Babel plugin 1.0 leaves this off; current React enables it by default.
+            validate_no_void_use_memo: false,
             enable_allow_set_state_from_refs_in_effects: true,
             enable_verbose_no_set_state_in_effect: false,
             enable_forest: false,

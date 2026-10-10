@@ -136,17 +136,23 @@ impl<'a> GatherNodeParts<'a> for ExportAllDeclaration<'a> {
     }
 }
 
+impl<'a> GatherNodeParts<'a> for ExportDeclaration<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        self.declaration.gather(f);
+    }
+}
+
 impl<'a> GatherNodeParts<'a> for ExportNamedDeclaration<'a> {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        if let Some(source) = &self.source {
-            source.gather(f);
-        } else if let Some(declaration) = &self.declaration {
-            declaration.gather(f);
-        } else {
-            for specifier in &self.specifiers {
-                specifier.gather(f);
-            }
+        for specifier in &self.specifiers {
+            specifier.gather(f);
         }
+    }
+}
+
+impl<'a> GatherNodeParts<'a> for ExportFromDeclaration<'a> {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        self.source.gather(f);
     }
 }
 
@@ -287,7 +293,8 @@ impl<'a> GatherNodeParts<'a> for Expression<'a> {
             Self::UnaryExpression(expr) => expr.gather(f),
             Self::UpdateExpression(expr) => expr.gather(f),
             Self::ChainExpression(expr) => expr.gather(f),
-            Self::MetaProperty(expr) => expr.gather(f),
+            Self::ImportMeta(expr) => expr.gather(f),
+            Self::NewTarget(expr) => expr.gather(f),
             Self::JSXElement(expr) => expr.gather(f),
             Self::JSXFragment(expr) => expr.gather(f),
             Self::StringLiteral(expr) => expr.gather(f),
@@ -430,10 +437,17 @@ impl<'a> GatherNodeParts<'a> for UpdateExpression<'a> {
     }
 }
 
-impl<'a> GatherNodeParts<'a> for MetaProperty<'a> {
+impl GatherNodeParts<'_> for ImportMeta {
     fn gather<F: FnMut(&str)>(&self, f: &mut F) {
-        self.meta.gather(f);
-        self.property.gather(f);
+        f("import");
+        f("meta");
+    }
+}
+
+impl GatherNodeParts<'_> for NewTarget {
+    fn gather<F: FnMut(&str)>(&self, f: &mut F) {
+        f("new");
+        f("target");
     }
 }
 

@@ -57,8 +57,7 @@ fn main() {
     if !ret.diagnostics.is_empty() {
         println!("Parser Errors:");
         for error in ret.diagnostics {
-            let error = error.with_source_code(source_text.clone());
-            println!("{error:?}");
+            println!("{}", error.render_with_source_code(source_text.clone()));
         }
     }
 
@@ -76,8 +75,7 @@ fn main() {
     if !ret.diagnostics.is_empty() {
         println!("Semantic Errors:");
         for error in ret.diagnostics {
-            let error = error.with_source_code(source_text.clone());
-            println!("{error:?}");
+            println!("{}", error.render_with_source_code(source_text.clone()));
         }
     }
 
@@ -106,8 +104,7 @@ fn main() {
     if !ret.diagnostics.is_empty() {
         println!("Transformer Errors:");
         for error in ret.diagnostics {
-            let error = error.with_source_code(source_text.clone());
-            println!("{error:?}");
+            println!("{}", error.render_with_source_code(source_text.clone()));
         }
     }
 

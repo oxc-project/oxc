@@ -54,7 +54,7 @@ impl NoUnusedVars {
             }
             ImportDeclarationSpecifier::ImportSpecifier(_) => {
                 if named_import_count == 1 {
-                    return Self::remove_named_imports_block(fixer, specifiers);
+                    return Self::remove_named_imports_block(fixer, import, specifiers);
                 }
 
                 Self::remove_specifier_from_list(fixer, specifiers, position, specifier)
@@ -112,6 +112,7 @@ impl NoUnusedVars {
     /// Transforms: `import Default, { Unused } from 'module'` -> `import Default from 'module'`
     fn remove_named_imports_block<'a>(
         fixer: RuleFixer<'_, 'a>,
+        import: &ImportDeclaration<'a>,
         specifiers: &[ImportDeclarationSpecifier<'a>],
     ) -> RuleFix {
         let default_specifier = specifiers
@@ -133,11 +134,15 @@ impl NoUnusedVars {
             return fixer.noop();
         };
 
-        let comma_offset = fixer.find_next_token_from(default_spec.span().end, ",").unwrap_or(0);
+        let comma_offset = fixer
+            .find_next_token_within(default_spec.span().end, last_named.span().start, ",")
+            .expect("default and named import specifiers must be separated by a comma");
         let delete_start = default_spec.span().end + comma_offset;
 
-        let brace_offset =
-            fixer.find_next_token_from(last_named.span().end, "}").map_or(0, |i| i + 1);
+        let brace_offset = fixer
+            .find_next_token_within(last_named.span().end, import.span.end, "}")
+            .expect("named import specifiers must be followed by a closing brace")
+            + 1;
         let delete_end = last_named.span().end + brace_offset;
 
         let span = Span::new(delete_start, delete_end);
@@ -270,6 +275,18 @@ impl NoUnusedVars {
 
         let text_after = &source[(span.end as usize)..];
         let trailing = count_whitespace_or_commas(text_after.chars());
+        if let Some((_, next_specifier)) = named_imports.get(named_pos + 1)
+            && let Some(offset) =
+                fixer.find_next_token_within(span.end, next_specifier.span().start, ",")
+            && offset >= trailing
+        {
+            // A comment stopped the whitespace scan before the separator.
+            // Remove the comma separately to preserve the comment.
+            let mut fix = fixer.for_multifix().new_fix_with_capacity(2);
+            fix.push(fixer.delete_range(span));
+            fix.push(fixer.delete_range(Span::sized(span.end + offset, 1)));
+            return fix.with_message("Remove unused import");
+        }
         fixer.delete_range(span.expand_right(trailing))
     }
 }

@@ -4,6 +4,47 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- 02331c8 str: Add `JSStr`, `JSChar` and `JSStrBuilder` types (#26435) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- c55b35d str: Correct clippy reason (#27013) (overlookmotel)
+
+### 📚 Documentation
+
+- dfa6cf9 str: Reformat and simplify comments (#27011) (overlookmotel)
+
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- 32bdc5b allocator: Construct `ArenaHashSet` with any `Default` hasher (#26372) (Dunqing)
+
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- 9107e74 str: Add `static_str!` macro (#24887) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- e7d5c78 str: Fix hygiene of `format_ident!` and `format_str!` macros (#24886) (overlookmotel)
+
+## [0.141.0] - 2026-07-20
+
+### 🚀 Features
+
+- 2b097c4 str: Export `Str` as `ArenaStr` (#24604) (overlookmotel)
+- 3d22307 parser: Add `ParseOptions::enable_ident_hashes` (#24491) (Boshen)
+
+### ⚡ Performance
+
+- ba65790 semantic, allocator: Branchless `clone_in` for semantic IDs (#24564) (overlookmotel)
+
 ## [0.138.0] - 2026-06-29
 
 ### 💥 BREAKING CHANGES

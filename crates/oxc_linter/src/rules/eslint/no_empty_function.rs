@@ -308,7 +308,7 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyFunction {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = serde_json::from_value::<DefaultRuleConfig<NoEmptyFunctionConfig>>(value)
+        let config = DefaultRuleConfig::<NoEmptyFunctionConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)?;
         Ok(NoEmptyFunction::from(config))
     }
@@ -339,7 +339,7 @@ impl Rule for NoEmptyFunction {
 struct ViolationInfo<'a>(pub Option<(&'static str, Option<Cow<'a, str>>)>);
 impl<'a> From<(&'static str, Option<Cow<'a, str>>)> for ViolationInfo<'a> {
     fn from(value: (&'static str, Option<Cow<'a, str>>)) -> Self {
-        debug_assert!(!value.0.is_empty());
+        debug_assert_ne!(value.0, "");
         Self(Some(value))
     }
 }

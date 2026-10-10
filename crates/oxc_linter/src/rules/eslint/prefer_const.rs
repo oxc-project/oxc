@@ -11,6 +11,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
+    ast_util::outermost_paren_parent,
     context::LintContext,
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
@@ -50,6 +51,14 @@ declare_oxc_lint!(
     ///
     /// Requires `const` declarations for variables that are never
     /// reassigned after their initial declaration.
+    ///
+    /// #### Ignored Files
+    /// This rule ignores `.svelte` and `.vue` files entirely. Oxlint only parses the
+    /// `<script>` blocks of these files, so a binding that the template reassigns looks
+    /// like it is never reassigned, and turning it into a `const` makes the framework
+    /// compiler fail. In Svelte the template writes through `bind:this={el}` and
+    /// `bind:value={x}`; in Vue a `<script setup>` `let` is a `setup-let` binding that
+    /// `v-model="x"` and inline handlers such as `@click="x = 1"` assign to directly.
     ///
     /// ### Why is this bad?
     ///
@@ -100,7 +109,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferConst {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -191,6 +200,11 @@ impl Rule for PreferConst {
             }
         }
     }
+
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        // ignore svelte/vue: their templates can reassign a binding, which we can't see.
+        !ctx.file_extension().is_some_and(|ext| ext == "svelte" || ext == "vue")
+    }
 }
 
 impl PreferConst {
@@ -223,7 +237,8 @@ impl PreferConst {
         let decl_span = decl.span();
         let decl_text = decl_span.source_text(ctx.source_text());
 
-        if let Some(let_pos) = decl_text.find("let") {
+        if let Some(let_pos) = fixer.find_next_token_within(decl_span.start, decl_span.end, "let") {
+            let let_pos = let_pos as usize;
             let new_text = format!("{}const{}", &decl_text[..let_pos], &decl_text[let_pos + 3..]);
             fixer.replace(decl_span, new_text)
         } else {
@@ -529,6 +544,44 @@ impl PreferConst {
 
         // If the write is not in the same scope, it can't be const
         if write_scope != symbol_scope {
+            return false;
+        }
+
+        // A separate assignment can become a declaration only when it is a standalone
+        // statement. Assignments used as arguments, initializers, etc. must remain `let`.
+        // Only traverse nodes that can form a binding pattern. In particular, TS
+        // assertions and non-null expressions cannot be used in a const binding.
+        let Some(assignment) = ctx.nodes().ancestors(write_node_id).find(|node| {
+            !matches!(
+                node.kind(),
+                AstKind::ParenthesizedExpression(_)
+                    | AstKind::ArrayAssignmentTarget(_)
+                    | AstKind::ObjectAssignmentTarget(_)
+                    | AstKind::AssignmentTargetRest(_)
+                    | AstKind::AssignmentTargetWithDefault(_)
+                    | AstKind::AssignmentTargetPropertyIdentifier(_)
+                    | AstKind::AssignmentTargetPropertyProperty(_)
+            )
+        }) else {
+            return false;
+        };
+        if !matches!(assignment.kind(), AstKind::AssignmentExpression(_)) {
+            return false;
+        }
+        let Some(statement) = outermost_paren_parent(assignment, ctx.semantic()) else {
+            return false;
+        };
+        if !matches!(statement.kind(), AstKind::ExpressionStatement(_))
+            || !matches!(
+                ctx.nodes().parent_kind(statement.id()),
+                AstKind::Program(_)
+                    | AstKind::BlockStatement(_)
+                    | AstKind::FunctionBody(_)
+                    | AstKind::StaticBlock(_)
+                    | AstKind::SwitchCase(_)
+                    | AstKind::TSModuleBlock(_)
+            )
+        {
             return false;
         }
 
@@ -869,6 +922,26 @@ fn test() {
             "class C { static { () => a; let a = 1; } };",
             Some(serde_json::json!([{ "ignoreReadBeforeAssign": true }])),
         ), // { "ecmaVersion": 2022 }
+        (
+            "let titleWrapper: HTMLElement;
+             let descriptionWrapper: HTMLElement;
+             const item = _.div({ className: [this.attr.classFamily] },
+                 titleWrapper = _.div({ className: [this.attr.classFamily] },
+                     _.div({ className: [this.attr.classFamily] })),
+                 descriptionWrapper = _.div({ className: [this.attr.classFamily] },
+                     _.div({ className: [this.attr.classFamily] }))
+             );",
+            None,
+        ),
+        ("let a; foo(a = 1);", None),
+        ("let a; const b = (a = 1);", None),
+        ("let a; const b = { value: a = 1 };", None),
+        ("function f() { let a; return a = 1; }", None),
+        ("let a; obj.b = a = 1;", None),
+        ("let a; foo(({ a } = obj));", None),
+        ("for (const item of items) { let a; foo(a = item); }", None),
+        ("namespace N { let value; use(value = 1); }", None),
+        ("module N { let value; use(value = 1); }", None),
     ];
 
     let fail = vec![
@@ -1163,6 +1236,115 @@ fn test() {
 }
 
 #[test]
+fn test_typescript_assignment_targets() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "let a: any; (a as number) = 1; use(a);",
+        "let a: any; a! = 1; use(a);",
+        "let a: any; (<number>a) = 1; use(a);",
+        "let a: any; (a satisfies number) = 1; use(a);",
+        "let a: any; [(a as number)] = values; use(a);",
+        "let a: any; ({ value: a! } = obj); use(a);",
+    ];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, vec![])
+        .change_rule_path("test.ts")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_svelte() {
+    use crate::tester::Tester;
+
+    // The markup is stripped before linting; it documents the template-side write
+    // (`bind:this`, `bind:value`) that makes these bindings reassigned in reality.
+    let pass = vec![
+        (
+            "<script lang=\"ts\">
+                let divEl: HTMLElement | null = $state(null);
+             </script>
+             <div bind:this={divEl}></div>",
+            None,
+        ),
+        (
+            "<script>
+                let value = \"\";
+             </script>
+             <input bind:value />",
+            None,
+        ),
+        // Both blocks of a two-script component are linted; neither may report.
+        (
+            "<script module>
+                let shared = 0;
+             </script>
+             <script>
+                let value = \"\";
+             </script>
+             <input bind:value />",
+            None,
+        ),
+    ];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, vec![])
+        .change_rule_path("test.svelte")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_vue() {
+    use crate::tester::Tester;
+
+    // A `<script setup>` `let` is a `setup-let` binding: `v-model` and inline handlers
+    // compile to direct assignments to it, so `const` breaks the render function.
+    let pass = vec![
+        (
+            "<script setup>
+                let msg = \"\";
+             </script>
+             <template><input v-model=\"msg\" /></template>",
+            None,
+        ),
+        (
+            "<script setup lang=\"ts\">
+                let open = false;
+             </script>
+             <template><button @click=\"open = !open\">{{ open }}</button></template>",
+            None,
+        ),
+    ];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, vec![])
+        .change_rule_path("test.vue")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn test_astro() {
+    use crate::tester::Tester;
+
+    // Guards against over-suppressing every partial-loader extension: Astro templates
+    // are expression-only and cannot assign, so the rule must keep reporting there.
+    let fail = vec![(
+        "---
+            let a = 1;
+            console.log(a);
+         ---
+         <p>{a}</p>",
+        None,
+    )];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, vec![], fail)
+        .change_rule_path("test.astro")
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
 fn test_oxc() {
     use crate::tester::Tester;
 
@@ -1341,6 +1523,9 @@ fn test_oxc() {
             }",
             Some(serde_json::json!([{ "ignoreReadBeforeAssign": false }])),
         ),
+        // Unlike ESLint, preserve diagnostics for standalone assignments in TS module blocks.
+        ("namespace N { let value; value = 1; use(value); }", None),
+        ("module N { let value; (value = 1); use(value); }", None),
     ];
 
     let fix = vec![

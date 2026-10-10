@@ -4,11 +4,15 @@ pub mod simple_argument;
 
 use std::iter;
 
+use oxc_ast::ast::*;
+use oxc_formatter_core::{Buffer, Format};
+use oxc_span::GetSpan;
+
 use crate::{
     JsLabels,
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
-    formatter::{Buffer, Comments, Format, JsFormatter, prelude::*},
+    formatter::{Comments, JsFormatter, prelude::*},
     parentheses::NeedsParentheses,
     utils::{
         is_long_curried_call,
@@ -20,10 +24,8 @@ use crate::{
     },
     write,
 };
-use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 
-use super::typecast::is_type_cast_node;
+use super::typecast::is_cast_target;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
@@ -93,7 +95,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                     has_computed_property ||
                     is_factory(&identifier.name) ||
                     // If an identifier has a name that is shorter than the tab width, then we join it with the "head"
-                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(stmt) if !stmt.is_arrow_function_body())
+                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(_))
                         && has_short_name(&identifier.name, f.options().indent_width.value()))
                 }
                 Expression::ThisExpression(_) => true,
@@ -155,8 +157,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         self.tail.any_except_last_will_break(f)
     }
 
-    /// We retrieve all the call expressions inside the group and we check if
-    /// their arguments are not simple.
+    /// Whether the chain ends with a call and the last group will break.
     fn last_call_breaks(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let last_group = self.last_group();
 
@@ -237,10 +238,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
                 write!(f, [group(&format_expanded)]);
             } else {
-                let has_empty_line_before_tail =
-                    self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
-
-                if has_empty_line_before_tail || self.last_group().will_break(f) {
+                if self.last_group().will_break(f) {
                     write!(f, [expand_parent()]);
                 }
 
@@ -435,7 +433,7 @@ fn chain_members_iter<'a, 'b>(
 
         let expression = next.take()?;
 
-        if is_type_cast_node(expression, f).is_some() {
+        if is_cast_target(expression.span(), f) {
             return ChainMember::Node(expression).into();
         }
 

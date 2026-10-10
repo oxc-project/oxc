@@ -9,14 +9,16 @@ use oxc_formatter_core::{
 };
 use oxc_graphql_parser::ast::{ListValue, ObjectValue, Value};
 
-use crate::comments::flush_trailing_inside_comments;
+use crate::comments::{flush_leading_comments, flush_trailing_inside_comments};
 
 use super::{
-    GraphqlFormatter, SeparatorKind, common, format_with, span::close_delim_start, string,
-    write_sequence,
+    GraphqlFormatter, SeparatorKind, common, flush_trailing_before_literal, format_with,
+    span::{close_delim_start, to_span},
+    string, write_sequence,
 };
 
 pub(super) fn write_value<'a>(value: &'a Value<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    flush_leading_comments(value.span().start, f);
     match value {
         Value::Variable(variable) => common::write_variable(variable, f),
         Value::String(sv) => string::write_string_value(sv, f),
@@ -41,6 +43,7 @@ fn write_list_value<'a>(list: &'a ListValue<'a>, f: &mut GraphqlFormatter<'_, 'a
         return;
     }
 
+    // `[ # c`: the comment leads the first value on its own line, as after every opener.
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         // No blank-line preservation (Prettier uses a plain `path.map` for list values).
         let last_end = write_sequence(f, values, SeparatorKind::CommaSoftline, false, |i, f| {
@@ -63,11 +66,13 @@ fn write_object_value<'a>(object: &'a ObjectValue<'a>, f: &mut GraphqlFormatter<
         return;
     }
 
+    // `{ # c`: the comment leads the first field on its own line, as after every opener.
     let bracket_spacing = f.context().options().bracket_spacing.value();
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end = write_sequence(f, fields, SeparatorKind::CommaSoftline, false, |i, f| {
             let field = &fields[i];
             common::write_name(&field.name, f);
+            flush_trailing_before_literal(to_span(field.name.span).end, f);
             write!(f, ": ");
             if let Some(v) = field.value.as_ref() {
                 write_value(v, f);

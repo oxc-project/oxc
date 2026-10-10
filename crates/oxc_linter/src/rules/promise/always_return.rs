@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, Statement, UnaryOperator},
+    ast::{AssignmentTarget, Expression, Statement},
 };
 use oxc_cfg::{
     EdgeType, ErrorEdgeKind, InstructionKind,
@@ -192,7 +192,7 @@ const PROCESS_METHODS: [&str; 2] = ["exit", "abort"];
 
 impl Rule for AlwaysReturn {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -223,7 +223,7 @@ impl Rule for AlwaysReturn {
 
 fn is_function_with_block_statement(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::Function(function_expr) if !function_expr.declare) // e.g. function () {}
-        || matches!(node.kind(), AstKind::ArrowFunctionExpression(arrow_func_expr) if !arrow_func_expr.expression) // e.g. () => {}
+        || matches!(node.kind(), AstKind::ArrowFunctionExpression(arrow_func_expr) if !arrow_func_expr.is_expression()) // e.g. () => {}
 }
 
 fn is_member_call(node: &AstNode, member_name: &str) -> bool {
@@ -263,7 +263,7 @@ fn is_last_callback(node: &AstNode, ctx: &LintContext) -> bool {
             }
             AstKind::UnaryExpression(unary_expr) => {
                 // e.g. void promise.then(() => value)
-                return unary_expr.operator == UnaryOperator::Void;
+                return unary_expr.operator.is_void();
             }
             AstKind::SequenceExpression(sequence_expr) => {
                 // e.g. (promise.then(() => value), expr)
@@ -383,20 +383,30 @@ fn has_ignored_assignment(
     node: &AstNode,
     ignore_assignment_variable: &FxHashSet<Cow<str>>,
 ) -> bool {
+    let is_ignored_assignment = |expression: &Expression| {
+        let Expression::AssignmentExpression(assignment_expr) = expression else { return false };
+        let object_name = get_root_object_name(&assignment_expr.left);
+        object_name.is_some_and(|name| ignore_assignment_variable.contains(name))
+    };
+
+    if let AstKind::ArrowFunctionExpression(arrow) = node.kind()
+        && let Some(expression) = arrow.get_expression()
+    {
+        return is_ignored_assignment(expression);
+    }
+
     let body_statements = match node.kind() {
         AstKind::Function(func_expr) => func_expr.body.as_ref().map(|body| &body.statements),
-        AstKind::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body.statements),
+        AstKind::ArrowFunctionExpression(arrow_func_expr) => {
+            arrow_func_expr.get_function_body().map(|body| &body.statements)
+        }
         _ => None,
     };
     body_statements.is_some_and(|statements| {
         statements.iter().any(|it| match it {
-            Statement::ExpressionStatement(expression) => match &expression.expression {
-                Expression::AssignmentExpression(assignment_expr) => {
-                    let object_name = get_root_object_name(&assignment_expr.left);
-                    object_name.is_some_and(|name| ignore_assignment_variable.contains(name))
-                }
-                _ => false,
-            },
+            Statement::ExpressionStatement(expression) => {
+                is_ignored_assignment(&expression.expression)
+            }
             _ => false,
         })
     })

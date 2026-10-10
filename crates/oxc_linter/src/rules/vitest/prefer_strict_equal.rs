@@ -10,7 +10,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct PreferStrictEqual;
 
-declare_oxc_lint!(PreferStrictEqual, vitest, style, fix, docs = DOCUMENTATION, version = "0.2.13",);
+declare_oxc_lint!(
+    PreferStrictEqual,
+    vitest,
+    style,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.2.13",
+);
 
 impl Rule for PreferStrictEqual {
     fn run_on_jest_node<'a, 'c>(
@@ -24,7 +31,7 @@ impl Rule for PreferStrictEqual {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         ("expect(something).toStrictEqual(somethingElse);", None),
@@ -55,6 +62,25 @@ fn test() {
             None,
         ),
     ];
+
+    let mut fix = fix
+        .into_iter()
+        .map(|(source, expected, config)| (source, expected, config, FixKind::Suggestion))
+        .collect::<Vec<_>>();
+    fix.extend([
+        (
+            "expect({ a: undefined }).toEqual({});",
+            "expect({ a: undefined }).toEqual({});",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "expect({ a: undefined }).toEqual({});",
+            "expect({ a: undefined }).toStrictEqual({});",
+            None,
+            FixKind::Suggestion,
+        ),
+    ]);
 
     Tester::new(PreferStrictEqual::NAME, PreferStrictEqual::PLUGIN, pass, fail)
         .with_vitest_plugin(true)

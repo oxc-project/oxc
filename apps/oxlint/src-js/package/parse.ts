@@ -45,8 +45,8 @@ let rawTransferIsSupported: boolean | null = null;
 export function parse(path: string, sourceText: string, options?: ParseOptions) {
   if (!rawTransferSupported()) {
     throw new Error(
-      "`RuleTester` is not supported on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, " +
-        "versions of Deno prior to v2.0.0, or other runtimes",
+      "`RuleTester` is not supported on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, "
+        + "versions of Deno prior to v2.0.0, or other runtimes",
     );
   }
 

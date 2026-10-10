@@ -84,7 +84,7 @@ impl Rule for NoUnusedExpressions {
     }
 
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 }
 
@@ -99,7 +99,7 @@ fn is_parent_arrow_function_expression<'a>(node: &AstNode<'a>, ctx: &LintContext
         return false;
     };
 
-    arrow_function_expression.expression
+    arrow_function_expression.is_expression()
 }
 
 impl NoUnusedExpressions {
@@ -115,7 +115,8 @@ impl NoUnusedExpressions {
             | Expression::FunctionExpression(_)
             | Expression::ArrayExpression(_)
             | Expression::ComputedMemberExpression(_)
-            | Expression::MetaProperty(_)
+            | Expression::ImportMeta(_)
+            | Expression::NewTarget(_)
             | Expression::ObjectExpression(_)
             | Expression::PrivateFieldExpression(_)
             | Expression::StaticMemberExpression(_)

@@ -90,19 +90,19 @@ function matchesSelectorClass(
 
     case "expression":
       return (
-        type.endsWith("Expression") ||
-        type.endsWith("Literal") ||
+        type.endsWith("Expression")
+        || type.endsWith("Literal")
         // ESLint / ESQuery uses `ancestors[0].type` instead of `node.parent.type`.
         // `node.parent.type` is faster, but functionally equivalent.
-        (type === "Identifier" && node.parent.type !== "MetaProperty") ||
-        type === "MetaProperty"
+        || (type === "Identifier" && node.parent.type !== "MetaProperty")
+        || type === "MetaProperty"
       );
 
     case "function":
       return (
-        type === "FunctionDeclaration" ||
-        type === "FunctionExpression" ||
-        type === "ArrowFunctionExpression"
+        type === "FunctionDeclaration"
+        || type === "FunctionExpression"
+        || type === "ArrowFunctionExpression"
       );
 
     default:

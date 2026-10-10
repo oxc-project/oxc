@@ -1,6 +1,12 @@
-use oxc_ast::ast::*;
+use std::iter;
 
-use crate::ast_nodes::{AstNode, AstNodes};
+use oxc_ast::ast::*;
+use oxc_span::GetSpan;
+
+use crate::{
+    ast_nodes::{AstNode, AstNodes},
+    formatter::Comments,
+};
 
 /// This is a specialized function that checks if the current [call expression]
 /// resembles a call expression usually used by a testing frameworks.
@@ -17,13 +23,26 @@ use crate::ast_nodes::{AstNode, AstNodes};
 /// 4. The third argument, if present, has to be a number literal
 /// 5. The second argument has to be an [arrow function expression] or [function expression]
 /// 6. Both function must have zero or one parameters
+/// 7. No comments around the [arguments]
 ///
 /// [call expression]: CallExpression
 /// [callee]: Expression
 /// [arguments]: CallExpression::arguments
 /// [arrow function expression]: ArrowFunctionExpression
 /// [function expression]: Function
-pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
+pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>, comments: &Comments) -> bool {
+    is_test_call_shape(call, comments) && !has_comment_around_arguments(call, comments)
+}
+
+/// The compact test call layout joins arguments with spaces, which breaks comment order.
+fn has_comment_around_arguments(call: &CallExpression, comments: &Comments) -> bool {
+    let first = call.type_arguments.as_ref().map_or(call.callee.span().end, |t| t.span.end);
+    let starts = iter::once(first).chain(call.arguments.iter().map(|a| a.span().end));
+    let ends = call.arguments.iter().map(|a| a.span().start).chain(iter::once(call.span.end));
+    starts.zip(ends).any(|(start, end)| comments.has_any_comment_in_range(start, end))
+}
+
+fn is_test_call_shape(call: &AstNode<CallExpression<'_>>, comments: &Comments) -> bool {
     if call.optional {
         return false;
     }
@@ -37,7 +56,7 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
         (Some(argument), None, None) if arguments.len() == 1 => {
             if is_angular_test_wrapper(call) && {
                 if let AstNodes::CallExpression(call) = call.parent() {
-                    is_test_call_expression(call)
+                    is_test_call_expression(call, comments)
                 } else {
                     false
                 }
@@ -71,11 +90,12 @@ pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>) -> bool {
             }
 
             let (parameter_count, has_block_body) = match second {
-                Argument::FunctionExpression(function) => {
-                    (function.params.parameters_count(), true)
-                }
+                Argument::FunctionExpression(function) => (
+                    function.params.parameters_count() + usize::from(function.this_param.is_some()),
+                    true,
+                ),
                 Argument::ArrowFunctionExpression(arrow) => {
-                    (arrow.params.parameters_count(), !arrow.expression)
+                    (arrow.params.parameters_count(), !arrow.is_expression())
                 }
                 _ => return false,
             };
@@ -258,5 +278,16 @@ pub fn is_test_each_pattern(expr: &Expression<'_>) -> bool {
             _ => false,
         },
         _ => false,
+    }
+}
+
+/// The first byte of the token right after a call's callee: `?.`, `<` or `(`.
+pub fn callee_opener(call: &CallExpression<'_>) -> u8 {
+    if call.optional {
+        b'?'
+    } else if call.type_arguments.is_some() {
+        b'<'
+    } else {
+        b'('
     }
 }

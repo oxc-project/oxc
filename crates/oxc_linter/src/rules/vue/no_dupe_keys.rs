@@ -84,11 +84,12 @@ declare_oxc_lint!(
     correctness,
     version = "1.70.0",
     config = NoDupeKeys,
+    short_description = "Disallow duplication of field names.",
 );
 
 impl Rule for NoDupeKeys {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -184,7 +185,7 @@ fn has_vue_component_annotation(node: &AstNode, ctx: &LintContext) -> bool {
         if matches!(
             ancestor.kind(),
             AstKind::ExportDefaultDeclaration(_)
-                | AstKind::ExportNamedDeclaration(_)
+                | AstKind::ExportDeclaration(_)
                 | AstKind::ExpressionStatement(_)
                 | AstKind::VariableDeclaration(_)
         ) {
@@ -231,14 +232,18 @@ fn collect_group_keys<'a>(
             }
         }
         Expression::ArrowFunctionExpression(arrow) => {
-            if arrow.expression {
-                if let Some(Statement::ExpressionStatement(es)) = arrow.body.statements.first()
-                    && let Expression::ObjectExpression(obj) = es.expression.without_parentheses()
+            if arrow.is_expression() {
+                if let Some(expression) = arrow.get_expression()
+                    && let Expression::ObjectExpression(obj) = expression.without_parentheses()
                 {
                     collect_object_keys(obj, seen, ctx);
                 }
             } else {
-                collect_returned_object_keys(&arrow.body.statements, seen, ctx);
+                collect_returned_object_keys(
+                    &arrow.get_function_body().unwrap().statements,
+                    seen,
+                    ctx,
+                );
             }
         }
         _ => {}

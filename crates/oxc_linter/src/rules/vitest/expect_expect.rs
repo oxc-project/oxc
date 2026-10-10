@@ -3,7 +3,7 @@ use oxc_macros::declare_oxc_lint;
 use crate::{
     context::LintContext,
     rule::Rule,
-    rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig},
+    rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig, SHORT_DESCRIPTION},
     utils::PossibleJestNode,
 };
 
@@ -17,6 +17,7 @@ declare_oxc_lint!(
     config = ExpectExpectConfig,
     docs = DOCUMENTATION,
     version = "0.0.12",
+    short_description = SHORT_DESCRIPTION,
 );
 
 impl Rule for ExpectExpect {
@@ -363,4 +364,10 @@ fn test() {
     )
     .with_jest_plugin(true)
     .test();
+}
+
+#[test]
+fn invalid_assert_function_pattern_errors_in_from_configuration() {
+    let invalid = serde_json::json!([{ "assertFunctionNames": ["["] }]);
+    assert!(ExpectExpect::from_configuration(invalid).is_err());
 }

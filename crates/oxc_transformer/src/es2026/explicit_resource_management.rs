@@ -38,10 +38,10 @@ use std::mem;
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, ReplaceWith, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{SPAN, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::static_ident;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -80,20 +80,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         }
         let variable_decl_kind = decl.kind;
 
-        // `for (using x of y)` -> `for (const _x of y)`
-        decl.kind = VariableDeclarationKind::Const;
-
         let variable_declarator = decl.declarations.first_mut().unwrap();
-        variable_declarator.kind = VariableDeclarationKind::Const;
 
-        let variable_declarator_binding_ident =
-            variable_declarator.id.get_binding_identifier().unwrap();
+        let Some(variable_declarator_binding_ident) =
+            variable_declarator.id.get_binding_identifier()
+        else {
+            // The parser already reported the invalid binding pattern.
+            return;
+        };
+
         let variable_declarator_binding_name = variable_declarator_binding_ident.name;
 
         let for_of_init_symbol_id = variable_declarator_binding_ident.symbol_id();
 
         let temp_id = ctx.generate_uid_based_on_node(
-            variable_declarator.id.get_binding_identifier().unwrap(),
+            variable_declarator_binding_ident,
             for_of_stmt_scope_id,
             SymbolFlags::ConstVariable | SymbolFlags::BlockScopedVariable,
         );
@@ -101,22 +102,21 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         let binding_pattern =
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
 
+        // `for (using x of y)` -> `for (const _x of y)`
+        decl.kind = VariableDeclarationKind::Const;
+
         // `using x = _x;`
         let using_stmt = Statement::new_variable_declaration(
             SPAN,
             variable_decl_kind,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    variable_decl_kind,
-                    binding_pattern,
-                    NONE,
-                    Some(temp_id.create_read_expression(ctx)),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                binding_pattern,
+                None,
+                Some(temp_id.create_read_expression(ctx)),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         );
@@ -216,7 +216,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
             block.set_scope_id(static_block_new_scope_id);
             block.body = ArenaVec::from_value_in(
                 Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
                     &using_ctx,
                     static_block_new_scope_id,
                     needs_await,
@@ -281,7 +281,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
             body.statements = ArenaVec::from_value_in(
                 Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt_scope_id, ctx),
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, block_stmt_scope_id, ctx),
                     &using_ctx,
                     current_scope_id,
                     needs_await,
@@ -306,11 +306,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         match stmt {
             Statement::BlockStatement(_) => self.transform_block_statement(stmt, ctx),
             Statement::SwitchStatement(_) => self.transform_switch_statement(stmt, ctx),
+            Statement::ForStatement(_) | Statement::LabeledStatement(_) => {
+                Self::transform_for_statement(stmt, ctx);
+            }
             _ => {}
         }
     }
 
-    /// Transform try statement.
+    /// Transform `using` declarations in each of the try, catch, and finally blocks.
     ///
     /// ```js
     /// try {
@@ -331,38 +334,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
     /// } catch (err) { }
     /// ```
     fn enter_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let scope_id = node.block.scope_id();
-
-        if let Some((new_stmts, needs_await, using_ctx)) =
-            self.transform_statements(&mut node.block.body, scope_id, ctx)
-        {
-            let block_stmt_scope_id = ctx.insert_scope_between(
-                ctx.scoping().scope_parent_id(scope_id).unwrap(),
-                scope_id,
-                ScopeFlags::empty(),
-            );
-
-            node.block.body = ArenaVec::from_value_in(
-                Self::create_try_stmt(
-                    BlockStatement::new_with_scope_id(SPAN, new_stmts, scope_id, ctx),
-                    &using_ctx,
-                    block_stmt_scope_id,
-                    needs_await,
-                    SPAN,
-                    ctx,
-                ),
-                ctx,
-            );
-
-            let current_hoist_scope_id = ctx.current_hoist_scope_id();
-            node.block.set_scope_id(block_stmt_scope_id);
-            ctx.scoping_mut().move_binding_by_symbol_id(
-                scope_id,
-                current_hoist_scope_id,
-                using_ctx.symbol_id,
-            );
-
-            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
+        self.transform_try_block(&mut node.block, ctx);
+        if let Some(handler) = &mut node.handler {
+            let original_scope_id = handler.body.scope_id();
+            self.transform_try_block(&mut handler.body, ctx);
+            let new_scope_id = handler.body.scope_id();
+            if new_scope_id != original_scope_id
+                && let Some(param) = &handler.param
+            {
+                param.pattern.bound_names(&mut |ident| {
+                    ctx.scoping_mut().move_binding_by_symbol_id(
+                        original_scope_id,
+                        new_scope_id,
+                        ident.symbol_id(),
+                    );
+                });
+            }
+        }
+        if let Some(finalizer) = &mut node.finalizer {
+            self.transform_try_block(finalizer, ctx);
         }
     }
 
@@ -433,72 +423,65 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             inner_block.push(Statement::new_variable_declaration(
                                 span,
                                 VariableDeclarationKind::Var,
-                                ArenaVec::from_value_in(
-                                    VariableDeclarator::new(
-                                        span,
-                                        VariableDeclarationKind::Var,
-                                        var_id.create_spanned_binding_pattern(span, ctx),
-                                        NONE,
-                                        Some(expr),
-                                        false,
-                                        ctx,
-                                    ),
+                                [VariableDeclarator::new(
+                                    span,
+                                    var_id.create_spanned_binding_pattern(span, ctx),
+                                    None,
+                                    Some(expr),
+                                    false,
                                     ctx,
-                                ),
+                                )],
                                 false,
                                 ctx,
                             ));
 
                             program_body.push(Statement::new_export_named_declaration(
                                 SPAN,
-                                None,
-                                ArenaVec::from_value_in(
-                                    ExportSpecifier::new(
-                                        SPAN,
-                                        ModuleExportName::IdentifierReference(
-                                            var_id.create_read_reference(ctx),
-                                        ),
-                                        ModuleExportName::new_identifier_name(SPAN, "default", ctx),
-                                        ImportOrExportKind::Value,
-                                        ctx,
+                                [ExportSpecifier::new(
+                                    SPAN,
+                                    ModuleExportName::IdentifierReference(
+                                        var_id.create_read_reference(ctx),
                                     ),
+                                    ModuleExportName::new_identifier_name(SPAN, "default", ctx),
+                                    ImportOrExportKind::Value,
                                     ctx,
-                                ),
-                                None,
+                                )],
                                 ImportOrExportKind::Value,
-                                NONE,
                                 ctx,
                             ));
                         }
                         Statement::ExportNamedDeclaration(export_named_declaration) => {
-                            if export_named_declaration.declaration.is_none() {
-                                program_body.push(Statement::ExportNamedDeclaration(
-                                    export_named_declaration,
-                                ));
-                                return (program_body, inner_block);
-                            }
+                            program_body
+                                .push(Statement::ExportNamedDeclaration(export_named_declaration));
+                            return (program_body, inner_block);
+                        }
+                        Statement::ExportFromDeclaration(export_from_declaration) => {
+                            program_body
+                                .push(Statement::ExportFromDeclaration(export_from_declaration));
+                            return (program_body, inner_block);
+                        }
+                        Statement::ExportDeclaration(export_declaration) => {
+                            let decl = &export_declaration.declaration;
 
-                            let decl = export_named_declaration.declaration.as_ref().unwrap();
                             if matches!(
                                 decl,
                                 Declaration::FunctionDeclaration(_)
                                 | Declaration::TSTypeAliasDeclaration(_)
                                 | Declaration::TSInterfaceDeclaration(_)
                                 | Declaration::TSEnumDeclaration(_)
-                                | Declaration::TSModuleDeclaration(_)
+                                | Declaration::TSExternalModuleDeclaration(_)
+                                | Declaration::TSNamespaceDeclaration(_)
                                 // Note: `TSGlobalDeclaration` cannot be exported
                                 | Declaration::TSImportEqualsDeclaration(_)
                             ) {
-                                program_body.push(Statement::ExportNamedDeclaration(
-                                    export_named_declaration,
-                                ));
+                                program_body.push(Statement::ExportDeclaration(export_declaration));
 
                                 return (program_body, inner_block);
                             }
 
-                            let export_kind = export_named_declaration.export_kind;
+                            let export_kind = export_declaration.export_kind();
 
-                            let decl = export_named_declaration.unbox().declaration.unwrap();
+                            let decl = export_declaration.unbox().declaration;
                             let export_specifiers = match decl {
                                 Declaration::ClassDeclaration(class_decl) => {
                                     let class_binding = class_decl.id.as_ref().unwrap();
@@ -533,10 +516,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                                     var_decl.kind = VariableDeclarationKind::Var;
                                     let mut export_specifiers = ArenaVec::new_in(ctx);
 
-                                    for decl in &mut var_decl.declarations {
-                                        decl.kind = VariableDeclarationKind::Var;
-                                    }
-
                                     var_decl.bound_names(&mut |ident| {
                                         *ctx.scoping_mut().symbol_flags_mut(ident.symbol_id()) =
                                             SymbolFlags::FunctionScopedVariable;
@@ -562,11 +541,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 
                             program_body.push(Statement::new_export_named_declaration(
                                 SPAN,
-                                None,
                                 export_specifiers,
-                                None,
                                 export_kind,
-                                NONE,
                                 ctx,
                             ));
                         }
@@ -582,7 +558,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
                             var_declaration.kind = VariableDeclarationKind::Var;
 
                             for decl in &mut var_declaration.declarations {
-                                decl.kind = VariableDeclarationKind::Var;
                                 decl.id.bound_names(&mut |c| {
                                     *ctx.scoping_mut().symbol_flags_mut(c.symbol_id()) =
                                         SymbolFlags::FunctionScopedVariable;
@@ -613,6 +588,128 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 }
 
 impl<'a> ExplicitResourceManagement<'a> {
+    /// Wrap a try, catch, or finally block containing `using` declarations in a disposal try.
+    fn transform_try_block(
+        &mut self,
+        block: &mut ArenaBox<'a, BlockStatement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let scope_id = block.scope_id();
+
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut block.body, scope_id, ctx)
+        {
+            let block_stmt_scope_id = ctx.insert_scope_between(
+                ctx.scoping().scope_parent_id(scope_id).unwrap(),
+                scope_id,
+                ScopeFlags::empty(),
+            );
+
+            block.body = ArenaVec::from_value_in(
+                Self::create_try_stmt(
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    &using_ctx,
+                    block_stmt_scope_id,
+                    needs_await,
+                    SPAN,
+                    ctx,
+                ),
+                ctx,
+            );
+
+            let current_hoist_scope_id = ctx.current_hoist_scope_id();
+            block.set_scope_id(block_stmt_scope_id);
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                scope_id,
+                current_hoist_scope_id,
+                using_ctx.symbol_id,
+            );
+
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
+        }
+    }
+
+    /// Dispose a classic `for` loop's initializers after the entire loop completes.
+    /// Keep any labels inside the `try` so labeled `continue` statements still target the loop.
+    fn transform_for_statement(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut loop_stmt = &mut *stmt;
+        while let Statement::LabeledStatement(labeled) = loop_stmt {
+            loop_stmt = &mut labeled.body;
+        }
+        let Statement::ForStatement(for_stmt) = loop_stmt else { return };
+        let Some(ForStatementInit::VariableDeclaration(decl)) = &mut for_stmt.init else {
+            return;
+        };
+        let is_await_using = match decl.kind {
+            VariableDeclarationKind::Using => false,
+            VariableDeclarationKind::AwaitUsing => true,
+            _ => return,
+        };
+
+        let using_ctx = ctx.generate_uid(
+            "usingCtx",
+            ctx.current_hoist_scope_id(),
+            SymbolFlags::FunctionScopedVariable,
+        );
+        decl.kind = VariableDeclarationKind::Const;
+        for declarator in &mut decl.declarations {
+            if let Some(init) = declarator.init.take() {
+                declarator.init = Some(Expression::new_call_expression(
+                    SPAN,
+                    Expression::new_static_member_expression(
+                        SPAN,
+                        using_ctx.create_read_expression(ctx),
+                        IdentifierName::new(
+                            SPAN,
+                            if is_await_using { static_ident!("a") } else { static_ident!("u") },
+                            ctx,
+                        ),
+                        false,
+                        ctx,
+                    ),
+                    None,
+                    [Argument::from(init)],
+                    false,
+                    ctx,
+                ));
+            }
+        }
+
+        let span = stmt.span();
+        let parent_scope_id = ctx.current_scope_id();
+        let body_scope_id = ctx.insert_scope_below_statement(stmt, ScopeFlags::empty());
+        let callee = helper_load(Helper::UsingCtx, ctx);
+        let context_stmt = Statement::new_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            [VariableDeclarator::new(
+                SPAN,
+                using_ctx.create_binding_pattern(ctx),
+                None,
+                Some(Expression::new_call_expression(SPAN, callee, None, [], false, ctx)),
+                false,
+                ctx,
+            )],
+            false,
+            ctx,
+        );
+        stmt.replace_with(|loop_stmt| {
+            Self::create_try_stmt(
+                BlockStatement::boxed_with_scope_id(
+                    SPAN,
+                    [context_stmt, loop_stmt],
+                    body_scope_id,
+                    ctx,
+                ),
+                &using_ctx,
+                parent_scope_id,
+                is_await_using,
+                span,
+                ctx,
+            )
+        });
+    }
+
     /// Transform block statement.
     ///
     /// Input:
@@ -642,7 +739,7 @@ impl<'a> ExplicitResourceManagement<'a> {
             let current_scope_id = ctx.current_scope_id();
 
             *stmt = Self::create_try_stmt(
-                BlockStatement::new_with_scope_id(SPAN, new_stmts, block_stmt.scope_id(), ctx),
+                BlockStatement::boxed_with_scope_id(SPAN, new_stmts, block_stmt.scope_id(), ctx),
                 &using_ctx,
                 current_scope_id,
                 needs_await,
@@ -734,8 +831,8 @@ impl<'a> ExplicitResourceManagement<'a> {
                                 false,
                                 ctx,
                             ),
-                            NONE,
-                            ArenaVec::from_value_in(Argument::from(old_init), ctx),
+                            None,
+                            [Argument::from(old_init)],
                             false,
                             ctx,
                         ));
@@ -759,25 +856,21 @@ impl<'a> ExplicitResourceManagement<'a> {
                         Statement::new_variable_declaration(
                             SPAN,
                             VariableDeclarationKind::Var,
-                            ArenaVec::from_value_in(
-                                VariableDeclarator::new(
+                            [VariableDeclarator::new(
+                                SPAN,
+                                using_ctx.create_binding_pattern(ctx),
+                                None,
+                                Some(Expression::new_call_expression(
                                     SPAN,
-                                    VariableDeclarationKind::Var,
-                                    using_ctx.create_binding_pattern(ctx),
-                                    NONE,
-                                    Some(Expression::new_call_expression(
-                                        SPAN,
-                                        callee,
-                                        NONE,
-                                        ArenaVec::new_in(ctx),
-                                        false,
-                                        ctx,
-                                    )),
+                                    callee,
+                                    None,
+                                    [],
                                     false,
                                     ctx,
-                                ),
+                                )),
+                                false,
                                 ctx,
-                            ),
+                            )],
                             false,
                             ctx,
                         ),
@@ -786,7 +879,7 @@ impl<'a> ExplicitResourceManagement<'a> {
                     ctx,
                 );
 
-                BlockStatement::new_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
+                BlockStatement::boxed_with_scope_id(SPAN, vec, block_stmt_sid, ctx)
             };
 
             let catch = Self::create_catch_clause(&using_ctx, current_scope_id, ctx);
@@ -879,8 +972,8 @@ impl<'a> ExplicitResourceManagement<'a> {
                             false,
                             ctx,
                         ),
-                        NONE,
-                        ArenaVec::from_value_in(Argument::from(old_init), ctx),
+                        None,
+                        [Argument::from(old_init)],
                         false,
                         ctx,
                     ));
@@ -897,25 +990,14 @@ impl<'a> ExplicitResourceManagement<'a> {
         let helper = Declaration::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    using_ctx.create_binding_pattern(ctx),
-                    NONE,
-                    Some(Expression::new_call_expression(
-                        SPAN,
-                        callee,
-                        NONE,
-                        ArenaVec::new_in(ctx),
-                        false,
-                        ctx,
-                    )),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                using_ctx.create_binding_pattern(ctx),
+                None,
+                Some(Expression::new_call_expression(SPAN, callee, None, [], false, ctx)),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         );
@@ -925,7 +1007,7 @@ impl<'a> ExplicitResourceManagement<'a> {
     }
 
     fn create_try_stmt(
-        body: BlockStatement<'a>,
+        body: ArenaBox<'a, BlockStatement<'a>>,
         using_ctx: &BoundIdentifier<'a>,
         parent_scope_id: ScopeId,
         needs_await: bool,
@@ -958,7 +1040,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         );
 
         let catch_parameter =
-            CatchParameter::new(SPAN, ident.create_binding_pattern(ctx), NONE, ctx);
+            CatchParameter::new(SPAN, ident.create_binding_pattern(ctx), None, ctx);
 
         // `_usingCtx.e = _;`
         let stmt = Statement::new_expression_statement(
@@ -983,12 +1065,7 @@ impl<'a> ExplicitResourceManagement<'a> {
         CatchClause::boxed_with_scope_id(
             SPAN,
             Some(catch_parameter),
-            BlockStatement::new_with_scope_id(
-                SPAN,
-                ArenaVec::from_value_in(stmt, ctx),
-                block_scope_id,
-                ctx,
-            ),
+            BlockStatement::boxed_with_scope_id(SPAN, [stmt], block_scope_id, ctx),
             catch_scope_id,
             ctx,
         )
@@ -1013,8 +1090,8 @@ impl<'a> ExplicitResourceManagement<'a> {
                 false,
                 ctx,
             ),
-            NONE,
-            ArenaVec::new_in(ctx),
+            None,
+            [],
             false,
             ctx,
         );
@@ -1024,7 +1101,7 @@ impl<'a> ExplicitResourceManagement<'a> {
 
         BlockStatement::boxed_with_scope_id(
             SPAN,
-            ArenaVec::from_value_in(Statement::new_expression_statement(SPAN, stmt, ctx), ctx),
+            [Statement::new_expression_statement(SPAN, stmt, ctx)],
             finally_scope_id,
             ctx,
         )
@@ -1043,18 +1120,14 @@ impl<'a> ExplicitResourceManagement<'a> {
         Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    binding.create_spanned_binding_pattern(original_span, ctx),
-                    NONE,
-                    Some(class_expr),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                binding.create_spanned_binding_pattern(original_span, ctx),
+                None,
+                Some(class_expr),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         )

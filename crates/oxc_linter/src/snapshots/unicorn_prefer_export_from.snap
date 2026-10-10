@@ -779,6 +779,55 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
    ╭─[prefer_export_from.tsx:1:1]
+ 1 │ import { a } from "a";
+   · ───────────┬──────────
+   ·            ╰── Imported here.
+ 2 │             import { b } from "b";
+   ╰────
+   ╭─[prefer_export_from.tsx:7:22]
+ 6 │             export { existingC } from "c";
+ 7 │             export { a };
+   ·                      ┬
+   ·                      ╰── Re-exported here.
+ 8 │             export { b };
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:2:13]
+ 1 │ import { a } from "a";
+ 2 │             import { b } from "b";
+   ·             ───────────┬──────────
+   ·                        ╰── Imported here.
+ 3 │             import { c } from "c";
+   ╰────
+   ╭─[prefer_export_from.tsx:8:22]
+ 7 │             export { a };
+ 8 │             export { b };
+   ·                      ┬
+   ·                      ╰── Re-exported here.
+ 9 │             export { c };
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:3:13]
+ 2 │             import { b } from "b";
+ 3 │             import { c } from "c";
+   ·             ───────────┬──────────
+   ·                        ╰── Imported here.
+ 4 │             export { existingA } from "a";
+   ╰────
+   ╭─[prefer_export_from.tsx:9:22]
+ 8 │             export { b };
+ 9 │             export { c };
+   ·                      ┬
+   ·                      ╰── Re-exported here.
+   ╰────
+  help: use `export ... from ...;`
+
+  ⚠ unicorn(prefer-export-from): Prefer re-exporting directly from the source module.
+   ╭─[prefer_export_from.tsx:1:1]
  1 │ import { foo } from "foo";
    · ─────────────┬────────────
    ·              ╰── Imported here.

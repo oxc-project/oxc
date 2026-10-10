@@ -1,0 +1,24 @@
+nested:
+  steps:
+    - with:
+        permissions: |
+          actions: read
+
+        # ancestor collection value claims these
+        # at its content column
+top: |-
+  text
+
+# a direct block scalar value owns no end comments,
+# these lead the next key instead
+next: 1
+seq:
+  - |
+    content
+
+  # a sequence item claims even over a direct block scalar
+  - after
+last: |
+  tail
+
+ # under-indented at eof, dedents to the stream tail

@@ -1,0 +1,21 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/memo-extra-dependency-babel-v1-default.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer" @panicThreshold:"none"
+import { useMemo } from "react";
+export function Component(t0) {
+	const $ = _c(2);
+	const { status, tick } = t0;
+	const value = status.expiresAt;
+	let t1;
+	if ($[0] !== value) {
+		t1 = <div>{value}</div>;
+		$[0] = value;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	return t1;
+}

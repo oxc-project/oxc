@@ -9,7 +9,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/impor
         "children": [],
         "flags": "ScopeFlags(TsModuleBlock)",
         "id": 1,
-        "node": "TSModuleDeclaration(foo)",
+        "node": "TSExternalModuleDeclaration(foo)",
         "symbols": [
           {
             "flags": "SymbolFlags(Import)",

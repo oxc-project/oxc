@@ -1,6 +1,6 @@
 use oxc_allocator::Allocator;
 use oxc_ast::ast::ObjectExpression;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_ecmascript::PropName;
 use oxc_parser::Parser;
 use oxc_span::SourceType;
@@ -10,7 +10,7 @@ fn test_prop_name() {
     #[derive(Debug, Default)]
     struct TestVisitor;
 
-    impl<'a> Visit<'a> for TestVisitor {
+    impl<'a> VisitJs<'a> for TestVisitor {
         fn visit_object_expression(&mut self, obj_expr: &ObjectExpression<'a>) {
             assert_eq!("a", obj_expr.properties[0].prop_name().unwrap().0);
             assert_eq!("b", obj_expr.properties[1].prop_name().unwrap().0);

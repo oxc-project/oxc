@@ -4,6 +4,118 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+
+### ⚡ Performance
+
+- d37d1db codegen: Pre-allocate sourcemap builder vectors (#27230) (codspeed)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+- d79ad19 codegen: Remove redundant dollar escapes in minified templates (#26924) (camc314)
+
+## [0.150.0] - 2026-09-14
+
+### 🚀 Features
+
+- 9ef028c codegen: Add `ascii_only` option (#25994) (Samuel Attard)
+
+### 🐛 Bug Fixes
+
+- d7713ad parser: Classify Unicode line breaks in block comments (#26536) (camc314)
+- 32d00c5 codegen: Preserve instantiation expression precedence (#26424) (camc314)
+- ae6c386 codegen: Preserve in restriction through yield arguments (#26413) (camc314)
+- 42ac916 codegen: Preserve private-in right operand precedence (#26411) (camc314)
+
+### ⚡ Performance
+
+- d198982 codegen: Outline postfix source mapping work (#26450) (camc314)
+- 8bfb8c0 codegen: Avoid duplicate sourcemap name lookups (#26441) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+
+### 🐛 Bug Fixes
+
+- b156333 codegen: Order accessibility before abstract on accessors (#26392) (camc314)
+- 2da73b7 codegen: Print matching quoted import names as identifiers (#26386) (camc314)
+- 0a81d29 codegen: Preserve private-in left operand precedence (#26383) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🐛 Bug Fixes
+
+- 8a9bdbd estree: Include decorators in `FormalParameterRest ` spans (#26021) (camc314)
+- 6c5ad1b codegen: Only add mapping names for `PrivateIdentifier`s which have changed (#25958) (overlookmotel)
+- a185ac3 codegen: Print `#` before private identifier in TS signature key (#25938) (overlookmotel)
+
+### ⚡ Performance
+
+- fe444cc codegen: Avoid allocations for single comment anchors (#25598) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- c1369a7 codegen: Resolve private names in class heritage (#25588) (camc314)
+- c002f29 codegen: Escape sources for empty import specifiers (#25586) (camc314)
+- b4e6a9e codegen: Output newline after `export default interface` (#25487) (overlookmotel)
+- 1645d93 react_compiler: Preserve source spans (#25462) (Boshen)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- bbd6ed3 codegen: Wrap string literal in parens after directives (#25435) (overlookmotel)
+- d07a293 codegen: Preserve cast parentheses in conditional tests (#25115) (camc314)
+- 8b7d441 codegen: Preserve satisfies parentheses before bitwise operators (#25113) (camc314)
+- 4d723ca parser: Report TS1035 for quoted module names (#25305) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+## [0.142.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🐛 Bug Fixes
+
+- 70994ae codegen: Preserve comments before expression operands (#24510) (Dunqing)
+
 ## [0.139.0] - 2026-07-06
 
 ### ⚡ Performance

@@ -9,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
+use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -140,11 +141,18 @@ declare_oxc_lint!(
 
 impl Rule for NoCycle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
+
+        // Gated on unbounded `max_depth` (the default), where the walks below explore the whole
+        // reachable subgraph anyway so the prefilter replaces their work. Under a shallow depth cap
+        // they are cheap and an unbounded prefilter could cost more than it saves.
+        if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
+            return;
+        }
 
         let needle = &module_record.resolved_absolute_path;
         let mut direct_imports = module_record
@@ -200,6 +208,55 @@ impl Rule for NoCycle {
 }
 
 impl NoCycle {
+    /// Is `root` in a cycle at all? True iff some module reachable from it imports it back — one
+    /// traversal answering for every direct import at once, instead of one walk per import.
+    ///
+    /// This only gates those walks, which still decide what is reported, so it must never miss a
+    /// cycle they would find: it follows the same edges under the same filter, and is unbounded
+    /// where they stop at `max_depth`.
+    fn can_be_in_cycle(&self, root: &ModuleRecord) -> bool {
+        // Pointer identity, to avoid cloning a `PathBuf` per node. `root` is never inserted: an
+        // edge back to it is the answer, not a node to expand.
+        let mut visited = FxHashSet::<usize>::default();
+        let mut stack = Vec::<Arc<ModuleRecord>>::new();
+
+        if self.visit_dependencies(root, root, &mut visited, &mut stack) {
+            return true;
+        }
+        while let Some(module_record) = stack.pop() {
+            if self.visit_dependencies(&module_record, root, &mut visited, &mut stack) {
+                return true;
+            }
+        }
+        false
+    }
+
+    /// Pushes `module_record`'s unvisited traversable dependencies onto `stack`; `true` if one of
+    /// them is `root`, closing a cycle.
+    fn visit_dependencies(
+        &self,
+        module_record: &ModuleRecord,
+        root: &ModuleRecord,
+        visited: &mut FxHashSet<usize>,
+        stack: &mut Vec<Arc<ModuleRecord>>,
+    ) -> bool {
+        for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
+            let loaded_module_record = weak_module_record.upgrade().unwrap();
+            if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
+                continue;
+            }
+            // By path, not pointer: that is what the walks report on, and one file can have
+            // several records (one per section).
+            if loaded_module_record.resolved_absolute_path == root.resolved_absolute_path {
+                return true;
+            }
+            if visited.insert(Arc::as_ptr(&loaded_module_record) as usize) {
+                stack.push(loaded_module_record);
+            }
+        }
+        false
+    }
+
     fn should_traverse_module(
         &self,
         key: &CompactStr,
@@ -217,27 +274,28 @@ impl NoCycle {
         }
 
         if self.ignore_types {
-            let import_entries = parent
+            // Equivalent to collecting both entry lists and testing `!is_empty() && all(is_type)`,
+            // without materializing either `Vec`. This runs once per graph edge considered.
+            let mut types = parent
                 .import_entries
                 .iter()
                 .filter(|entry| entry.module_request.name() == key)
-                .collect::<Vec<_>>();
+                .map(|entry| entry.is_type)
+                .chain(
+                    parent
+                        .indirect_export_entries
+                        .iter()
+                        .filter(|entry| {
+                            entry
+                                .module_request
+                                .as_ref()
+                                .is_some_and(|module_request| module_request.name() == key)
+                        })
+                        .map(|entry| entry.is_type),
+                )
+                .peekable();
 
-            let indirect_export_entries = parent
-                .indirect_export_entries
-                .iter()
-                .filter(|entry| {
-                    entry
-                        .module_request
-                        .as_ref()
-                        .is_some_and(|module_request| module_request.name() == key)
-                })
-                .collect::<Vec<_>>();
-
-            if (!import_entries.is_empty() || !indirect_export_entries.is_empty())
-                && import_entries.iter().all(|entry| entry.is_type)
-                && indirect_export_entries.iter().all(|entry| entry.is_type)
-            {
+            if types.peek().is_some() && types.all(|is_type| is_type) {
                 return false;
             }
         }

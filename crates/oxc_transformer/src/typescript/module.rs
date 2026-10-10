@@ -1,5 +1,5 @@
-use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_allocator::{ArenaBox, TakeIn};
+use oxc_ast::ast::*;
 use oxc_semantic::{Reference, SymbolFlags};
 use oxc_span::SPAN;
 use oxc_str::static_ident;
@@ -107,7 +107,7 @@ impl<'a> TypeScriptModule {
         ctx: &mut TraverseCtx<'a>,
     ) -> Option<Declaration<'a>> {
         if !self.only_remove_type_imports
-            && !ctx.parent().is_export_named_declaration()
+            && !ctx.parent().is_export_declaration()
             && ctx.scoping().get_resolved_references(decl.id.symbol_id()).all(Reference::is_type)
         {
             // No value reference, we will remove this declaration in `TypeScriptAnnotations`
@@ -170,19 +170,16 @@ impl<'a> TypeScriptModule {
                     str_lit.lone_surrogates,
                     ctx,
                 );
-                let arguments = ArenaVec::from_value_in(Argument::StringLiteral(str_lit), ctx);
+                let argument = Argument::StringLiteral(str_lit);
                 (
                     VariableDeclarationKind::Const,
-                    Expression::new_call_expression(SPAN, callee, NONE, arguments, false, ctx),
+                    Expression::new_call_expression(SPAN, callee, None, [argument], false, ctx),
                 )
             }
         };
-        let decls = ArenaVec::from_value_in(
-            VariableDeclarator::new(SPAN, kind, binding, NONE, Some(init), false, ctx),
-            ctx,
-        );
+        let decl = VariableDeclarator::new(SPAN, binding, None, Some(init), false, ctx);
 
-        Some(Declaration::new_variable_declaration(SPAN, kind, decls, false, ctx))
+        Some(Declaration::new_variable_declaration(SPAN, kind, [decl], false, ctx))
     }
 
     #[expect(clippy::self_only_used_in_recursion)]

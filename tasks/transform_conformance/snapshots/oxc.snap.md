@@ -1,6 +1,6 @@
-commit: 1fb0b771
+commit: 4f4ef5d4
 
-Passed: 270/398
+Passed: 298/426
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -21,7 +21,7 @@ Passed: 270/398
 * plugin-tagged-template-transform
 
 
-# babel-plugin-transform-explicit-resource-management (3/4)
+# babel-plugin-transform-explicit-resource-management (5/6)
 * export-class-name/input.js
 Symbol reference IDs mismatch for "C":
 after transform: SymbolId(1): [ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(7)]
@@ -34,7 +34,7 @@ after transform: SymbolId(1) "C"
 rebuilt        : SymbolId(3) "C"
 
 
-# babel-plugin-transform-class-properties (29/33)
+# babel-plugin-transform-class-properties (31/35)
 * private-field-resolve-to-method/input.js
 x Output mismatch
 
@@ -48,19 +48,14 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (41/60)
+# babel-plugin-transform-typescript (43/62)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
 rebuilt        : []
 
 * computed-constant-value/input.ts
-Unresolved references mismatch:
-after transform: ["Infinity", "NaN"]
-rebuilt        : ["Infinity"]
-Unresolved reference IDs mismatch for "Infinity":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
-rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
+x Output mismatch
 
 * declare-and-definite-with-initializer/input.ts
 
@@ -488,7 +483,7 @@ Bindings mismatch:
 after transform: ScopeId(3): ["Cls2"]
 rebuilt        : ScopeId(4): []
 Symbol reference IDs mismatch for "dec":
-after transform: SymbolId(0): [ReferenceId(4), ReferenceId(0), ReferenceId(1), ReferenceId(3)]
+after transform: SymbolId(0): [ReferenceId(0), ReferenceId(1), ReferenceId(3), ReferenceId(4)]
 rebuilt        : SymbolId(0): [ReferenceId(1), ReferenceId(10)]
 Symbol scope ID mismatch for "Cls":
 after transform: SymbolId(4): ScopeId(1)

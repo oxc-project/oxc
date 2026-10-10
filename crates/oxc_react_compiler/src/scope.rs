@@ -1,10 +1,12 @@
+use oxc_allocator::Allocator;
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
     BindingIdentifier, BindingPattern, IdentifierReference, ImportDeclaration, ModuleExportName,
-    PropertyKind, TSModuleDeclarationName,
+    PropertyKind,
 };
 use oxc_semantic::{AstNodes, NodeId, Scoping, Semantic};
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
+use oxc_str::{Ident, Str};
 use oxc_syntax::scope::ScopeFlags;
 use oxc_syntax::symbol::SymbolFlags;
 use rustc_hash::FxHashSet;
@@ -86,13 +88,13 @@ impl DeclKind {
 }
 
 #[derive(Debug, Clone)]
-pub struct ImportBindingData {
+pub struct ImportBindingData<'a> {
     /// The module specifier string (e.g., "react" in `import {useState} from 'react'`).
-    pub source: String,
+    pub source: Str<'a>,
     pub kind: ImportBindingKind,
     /// For named imports: the imported name (e.g., "bar" in `import {bar as baz} from 'foo'`).
     /// None for default and namespace imports.
-    pub imported: Option<String>,
+    pub imported: Option<Ident<'a>>,
 }
 
 #[derive(Debug, Clone)]
@@ -108,7 +110,8 @@ pub enum ImportBindingKind {
 /// is derived from `Scoping` on demand.
 pub struct ScopeResolver<'s, 'a> {
     scoping: &'s Scoping,
-    nodes: &'s AstNodes<'a>,
+    nodes: &'s AstNodes<'s>,
+    allocator: &'a Allocator,
     /// All Function-kind scopes, in scope-tree order.
     function_scopes: Vec<ScopeId>,
     /// `(start, end)` source windows of Function-kind scopes, used by the
@@ -116,23 +119,53 @@ pub struct ScopeResolver<'s, 'a> {
     /// starting at the enclosing ObjectProperty (Babel's ObjectMethod spans the
     /// whole property, including `get `/`set ` prefixes and computed keys).
     function_scope_ranges: Vec<(u32, u32)>,
+    /// Non-empty lexical scope ranges sorted by effective source start and then depth.
+    /// Switch scopes start after their discriminant, matching semantic traversal.
+    /// This supports position lookups in `O(log S + depth)` without rescanning
+    /// all scopes for every JSX tag that lacks a semantic reference.
+    scopes_by_start: Vec<(u32, u32, usize, ScopeId)>,
 }
 
 impl<'s, 'a> ScopeResolver<'s, 'a> {
-    pub fn new(semantic: &'s Semantic<'a>) -> Self {
+    pub fn new<'ast>(semantic: &'s Semantic<'ast>, allocator: &'a Allocator) -> Self {
         let scoping = semantic.scoping();
-        let nodes = semantic.nodes();
+        // `AstNodes` is covariant in its lifetime; shrink the AST references to
+        // the `Semantic` borrow so the resolver needs no third lifetime.
+        let nodes: &'s AstNodes<'s> = semantic.nodes();
 
-        let mut resolver =
-            Self { scoping, nodes, function_scopes: Vec::new(), function_scope_ranges: Vec::new() };
+        let mut resolver = Self {
+            scoping,
+            nodes,
+            allocator,
+            function_scopes: Vec::new(),
+            function_scope_ranges: Vec::new(),
+            scopes_by_start: Vec::new(),
+        };
 
+        let mut scope_depths = Vec::new();
         for scope_id in scoping.scope_descendants_from_root() {
+            let depth = scoping
+                .scope_parent_id(scope_id)
+                .map_or(0, |parent| scope_depths[parent.index()] + 1);
+            if scope_depths.len() <= scope_id.index() {
+                scope_depths.resize(scope_id.index() + 1, 0);
+            }
+            scope_depths[scope_id.index()] = depth;
+
+            let node = nodes.get_node(scoping.get_node_id(scope_id));
+            let span = node.kind().span();
+            let scope_start = match node.kind() {
+                AstKind::SwitchStatement(stmt) => stmt.discriminant.span().end,
+                _ => span.start,
+            };
+            if span.end > scope_start {
+                resolver.scopes_by_start.push((scope_start, span.end, depth, scope_id));
+            }
+
             if resolver.scope_kind(scope_id) != ScopeKind::Function {
                 continue;
             }
             resolver.function_scopes.push(scope_id);
-            let node = nodes.get_node(scoping.get_node_id(scope_id));
-            let span = node.kind().span();
             if span.end > span.start {
                 resolver.function_scope_ranges.push((span.start, span.end));
             }
@@ -141,16 +174,24 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             // ObjectMethod extent (which starts at the property, not the function).
             if let AstKind::Function(_) = node.kind() {
                 let parent = nodes.parent_node(node.id());
-                if let AstKind::ObjectProperty(prop) = parent.kind() {
-                    if is_object_method_property(prop) {
-                        let prop_start = parent.kind().span().start;
-                        if prop_start != span.start {
-                            resolver.function_scope_ranges.push((prop_start, span.end));
-                        }
+                if let AstKind::ObjectProperty(prop) = parent.kind()
+                    && is_object_method_property(prop)
+                {
+                    let prop_start = parent.kind().span().start;
+                    if prop_start != span.start {
+                        resolver.function_scope_ranges.push((prop_start, span.end));
                     }
                 }
             }
         }
+
+        resolver.scopes_by_start.sort_unstable_by(|a, b| {
+            a.0.cmp(&b.0)
+                .then(a.2.cmp(&b.2))
+                // Prefer the narrower range when starts and depths match.
+                .then(b.1.cmp(&a.1))
+                .then(a.3.index().cmp(&b.3.index()))
+        });
 
         resolver
     }
@@ -186,6 +227,17 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         self.scoping().symbol_name(symbol_id)
     }
 
+    pub fn symbol_span(&self, symbol_id: SymbolId) -> Span {
+        self.scoping().symbol_span(symbol_id)
+    }
+
+    /// The symbol's name as an arena-lifetime `Ident`, copied into the arena.
+    /// The name in `Scoping` lives in the `Semantic` borrow, not the arena, so
+    /// a copy decouples the compiled output from that borrow.
+    pub fn symbol_ident(&self, symbol_id: SymbolId) -> Ident<'a> {
+        Ident::from_str_in(self.symbol_name(symbol_id), &self.allocator)
+    }
+
     /// The scope a symbol is declared in.
     ///
     /// A symbol whose binding-map entry was overwritten by a same-name shadow
@@ -219,7 +271,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::CatchParameter(_) => return BindingKind::Let,
             AstKind::TSTypeAliasDeclaration(_) => return BindingKind::Local,
             AstKind::TSEnumDeclaration(_) => return BindingKind::Local,
-            AstKind::TSModuleDeclaration(_) => return BindingKind::Local,
+            AstKind::TSNamespaceDeclaration(_) => return BindingKind::Local,
             AstKind::Function(_) => {
                 if flags.contains(SymbolFlags::Function) {
                     return BindingKind::Hoisted;
@@ -300,7 +352,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::CatchClause(_) | AstKind::CatchParameter(_) => DeclKind::CatchClause,
             AstKind::TSTypeAliasDeclaration(_) => DeclKind::TSTypeAliasDeclaration,
             AstKind::TSEnumDeclaration(_) => DeclKind::TSEnumDeclaration,
-            AstKind::TSModuleDeclaration(_) => DeclKind::TSModuleDeclaration,
+            AstKind::TSNamespaceDeclaration(_) => DeclKind::TSModuleDeclaration,
             _ => DeclKind::Unknown,
         }
     }
@@ -308,19 +360,19 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     /// The symbol's declaration identifier (the first declaration for
     /// redeclared symbols). `None` for declaration kinds the old conversion
     /// did not map (e.g. interfaces).
-    pub fn declaration_ident(&self, symbol_id: SymbolId) -> Option<&'a BindingIdentifier<'a>> {
+    pub fn declaration_ident(&self, symbol_id: SymbolId) -> Option<&'s BindingIdentifier<'s>> {
         let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
         find_binding_identifier(decl_node.kind(), self.symbol_name(symbol_id))
     }
 
     /// For import bindings: the source module and import details.
-    pub fn import_data(&self, symbol_id: SymbolId) -> Option<ImportBindingData> {
+    pub fn import_data(&self, symbol_id: SymbolId) -> Option<ImportBindingData<'a>> {
         let decl_node = self.nodes.get_node(self.scoping.symbol_declaration(symbol_id));
         match decl_node.kind() {
             AstKind::ImportDefaultSpecifier(_) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
                 Some(ImportBindingData {
-                    source: import_decl.source.value.to_string(),
+                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
                     kind: ImportBindingKind::Default,
                     imported: None,
                 })
@@ -328,7 +380,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::ImportNamespaceSpecifier(_) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
                 Some(ImportBindingData {
-                    source: import_decl.source.value.to_string(),
+                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
                     kind: ImportBindingKind::Namespace,
                     imported: None,
                 })
@@ -336,14 +388,14 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
             AstKind::ImportSpecifier(spec) => {
                 let import_decl = self.find_import_declaration(decl_node.id())?;
                 let imported_name = match &spec.imported {
-                    ModuleExportName::IdentifierName(ident) => ident.name.to_string(),
-                    ModuleExportName::IdentifierReference(ident) => ident.name.to_string(),
-                    ModuleExportName::StringLiteral(lit) => lit.value.to_string(),
+                    ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
+                    ModuleExportName::IdentifierReference(ident) => ident.name.as_str(),
+                    ModuleExportName::StringLiteral(lit) => lit.value.as_str(),
                 };
                 Some(ImportBindingData {
-                    source: import_decl.source.value.to_string(),
+                    source: Str::from_str_in(import_decl.source.value.as_str(), &self.allocator),
                     kind: ImportBindingKind::Named,
-                    imported: Some(imported_name),
+                    imported: Some(Ident::from_str_in(imported_name, &self.allocator)),
                 })
             }
             _ => None,
@@ -354,7 +406,7 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
     fn find_import_declaration(
         &self,
         specifier_node_id: NodeId,
-    ) -> Option<&'s ImportDeclaration<'a>> {
+    ) -> Option<&'s ImportDeclaration<'s>> {
         let mut current_id = specifier_node_id;
         // Walk up the parent chain (max 10 levels to avoid infinite loop)
         for _ in 0..10 {
@@ -427,6 +479,91 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         self.scoping().find_binding(scope_id, name.into())
     }
 
+    /// Look up a binding by name while preserving the separate parameter and
+    /// function-body environments used at runtime. Oxc stores both environments
+    /// in one function scope after semantic traversal, so a body declaration must
+    /// not shadow an outer binding while a parameter initializer is evaluated.
+    fn find_binding_from_scope_at_position(
+        &self,
+        scope_id: ScopeId,
+        name: &str,
+        position: u32,
+    ) -> Option<SymbolId> {
+        self.ancestors(scope_id).find_map(|scope_id| {
+            let symbol_id = self.get_binding(scope_id, name)?;
+            let node = self.nodes.get_node(self.scoping().get_node_id(scope_id));
+            let body_start = match node.kind() {
+                AstKind::Function(function) => function.body.as_ref().map(|body| body.span.start),
+                AstKind::ArrowFunctionExpression(arrow) => arrow.get_expression().map_or_else(
+                    || arrow.get_function_body().map(|body| body.span.start),
+                    |expression| Some(expression.span().start),
+                ),
+                _ => None,
+            };
+            let Some(body_start) = body_start else {
+                return Some(symbol_id);
+            };
+            if position >= body_start {
+                return Some(symbol_id);
+            }
+
+            // Parameters and named function-expression bindings are declared
+            // before the body. Body-level `var` and function declarations are not
+            // visible until parameter initialization has completed.
+            self.scoping
+                .symbol_declarations(symbol_id)
+                .any(|declaration_id| {
+                    self.nodes.get_node(declaration_id).kind().span().start < body_start
+                })
+                .then_some(symbol_id)
+        })
+    }
+
+    /// Look up a binding by name from the innermost lexical scope containing
+    /// `position`, limited to scopes within `ancestor`.
+    ///
+    /// Lexical scope ranges are properly nested. Start with the last scope that
+    /// begins at or before the position, then walk through its ancestors until
+    /// one contains the position. This avoids scanning every scope for each
+    /// position lookup.
+    pub fn find_binding_at_position(
+        &self,
+        name: &str,
+        ancestor: ScopeId,
+        position: u32,
+    ) -> Option<SymbolId> {
+        let index = self
+            .scopes_by_start
+            .partition_point(|&(start, _, _, _)| start <= position)
+            .checked_sub(1);
+        let Some(index) = index else {
+            return self.find_binding_from_scope_at_position(ancestor, name, position);
+        };
+
+        let mut scope_id = self.scopes_by_start[index].3;
+        loop {
+            let node_id = self.scoping().get_node_id(scope_id);
+            let span = self.nodes.get_node(node_id).kind().span();
+            if position >= span.start && position < span.end {
+                if self.ancestors(scope_id).any(|id| id == ancestor) {
+                    return self.find_binding_from_scope_at_position(scope_id, name, position);
+                }
+                break;
+            }
+            let Some(parent) = self.scope_parent(scope_id) else {
+                break;
+            };
+            scope_id = parent;
+        }
+
+        self.find_binding_from_scope_at_position(ancestor, name, position)
+    }
+
+    /// Whether `name` is referenced as a global (unresolved reference) anywhere in the file.
+    pub fn has_unresolved_reference(&self, name: &str) -> bool {
+        self.scoping().root_unresolved_references().contains_key(name)
+    }
+
     /// Bindings declared directly in a scope.
     pub fn bindings_in(&self, scope_id: ScopeId) -> impl Iterator<Item = SymbolId> + '_ {
         self.scoping().iter_bindings_in(scope_id)
@@ -475,10 +612,10 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
         let node = self.nodes.get_node(node_id);
         if let AstKind::Function(_) = node.kind() {
             let parent = self.nodes.parent_node(node_id);
-            if let AstKind::ObjectProperty(prop) = parent.kind() {
-                if is_object_method_property(prop) {
-                    return parent.id();
-                }
+            if let AstKind::ObjectProperty(prop) = parent.kind()
+                && is_object_method_property(prop)
+            {
+                return parent.id();
             }
         }
         node_id
@@ -533,11 +670,11 @@ impl<'s, 'a> ScopeResolver<'s, 'a> {
                 if descendants.contains(&raw) {
                     continue;
                 }
-                if let Some(parent) = scoping.scope_parent_id(scope_id) {
-                    if descendants.contains(&(parent.index() as u32)) {
-                        descendants.insert(raw);
-                        changed = true;
-                    }
+                if let Some(parent) = scoping.scope_parent_id(scope_id)
+                    && descendants.contains(&(parent.index() as u32))
+                {
+                    descendants.insert(raw);
+                    changed = true;
                 }
             }
         }
@@ -571,10 +708,9 @@ fn find_binding_identifier<'a>(kind: AstKind<'a>, name: &str) -> Option<&'a Bind
             (decl.id.name.as_str() == name).then_some(&decl.id)
         }
         AstKind::TSEnumDeclaration(decl) => (decl.id.name.as_str() == name).then_some(&decl.id),
-        AstKind::TSModuleDeclaration(decl) => match &decl.id {
-            TSModuleDeclarationName::Identifier(id) => (id.name.as_str() == name).then_some(id),
-            _ => None,
-        },
+        AstKind::TSNamespaceDeclaration(decl) => {
+            (decl.id.name.as_str() == name).then_some(&decl.id)
+        }
         _ => None,
     }
 }

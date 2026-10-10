@@ -1,7 +1,7 @@
 use std::io::BufWriter;
 
 use oxlint::{
-    cli::{CliRunResult, CliRunner, init_miette, init_tracing, lint_command},
+    cli::{CliRunResult, CliRunner, init_tracing, lint_command},
     lsp::run_lsp,
 };
 
@@ -31,8 +31,6 @@ fn main() -> CliRunResult {
             CliRunResult::LintSucceeded
         });
     }
-
-    init_miette();
 
     command.handle_threads();
 

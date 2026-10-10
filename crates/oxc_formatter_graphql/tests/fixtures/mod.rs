@@ -1,61 +1,27 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_core::{
-    IndentStyle, IndentWidth, LineEnding, LineWidth,
-    test_support::{FixtureFormatter, OptionSet, build_fixture_snapshot},
-};
-use oxc_formatter_graphql::{GraphqlFormatOptions, format};
+use oxc_formatter_graphql::{GraphqlFormatOptions, format, parse_for_format};
+use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+
+mod options;
+use options::apply_graphql_options;
 
 struct GraphqlHarness;
 
+/// What formatting must leave unchanged, see `FixtureFormatter::Fingerprint`.
+#[derive(Debug, PartialEq)]
+struct Fingerprint {
+    comments: usize,
+}
+
 impl FixtureFormatter for GraphqlHarness {
     type Options = GraphqlFormatOptions;
+    type Fingerprint = Fingerprint;
 
     fn parse_options(json: &OptionSet) -> Self::Options {
         let mut options = GraphqlFormatOptions::default();
-
-        for (key, value) in json {
-            match key.as_str() {
-                "printWidth" => {
-                    if let Some(n) = value.as_u64()
-                        && let Ok(width) = LineWidth::try_from(u16::try_from(n).unwrap())
-                    {
-                        options.line_width = width;
-                    }
-                }
-                "tabWidth" => {
-                    if let Some(n) = value.as_u64()
-                        && let Ok(width) = IndentWidth::try_from(u8::try_from(n).unwrap())
-                    {
-                        options.indent_width = width;
-                    }
-                }
-                "useTabs" => {
-                    if let Some(b) = value.as_bool() {
-                        options.indent_style =
-                            if b { IndentStyle::Tab } else { IndentStyle::Space };
-                    }
-                }
-                "endOfLine" => {
-                    if let Some(s) = value.as_str() {
-                        options.line_ending = match s {
-                            "lf" => LineEnding::Lf,
-                            "crlf" => LineEnding::Crlf,
-                            "cr" => LineEnding::Cr,
-                            _ => LineEnding::default(),
-                        };
-                    }
-                }
-                "bracketSpacing" => {
-                    if let Some(b) = value.as_bool() {
-                        options.bracket_spacing = b.into();
-                    }
-                }
-                _ => {}
-            }
-        }
-
+        apply_graphql_options(&mut options, json);
         options
     }
 
@@ -66,6 +32,12 @@ impl FixtureFormatter for GraphqlHarness {
             .print()
             .expect("print should succeed")
             .into_code()
+    }
+
+    fn fingerprint(source: &str, _path: &Path, _options: &Self::Options) -> Fingerprint {
+        let allocator = Allocator::default();
+        let parsed = parse_for_format(&allocator, source).expect("source should parse");
+        Fingerprint { comments: parsed.comments.len() }
     }
 }
 

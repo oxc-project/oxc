@@ -6,12 +6,6 @@
 const a = 1;
 
 /**
- * - This is a real list item
- * - Another real list item
- */
-const b = 2;
-
-/**
  * This function does something — `await something + other` and returns a value that needs wrapping across lines.
  */
 function foo() {}
@@ -21,12 +15,6 @@ function foo() {}
  * result = first + second + third + fourth + fifth + sixth + more.
  */
 function bar() {}
-
-/**
- * Returns the difference of values according to: result = alpha - beta
- * - gamma - delta - epsilon - zeta - eta and continues more text here.
- */
-function baz() {}
 
 /**
  * @param {string} value - The computed value from applying: result = alpha - beta - gamma - delta - epsilon

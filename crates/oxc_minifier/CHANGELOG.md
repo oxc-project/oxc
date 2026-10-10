@@ -4,6 +4,293 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🚀 Features
+
+- 61003c7 minifier: Fold undefined argument in non delegating yield (#27324) (Armano)
+- adb1139 minifier: Merge import statements against the same module (#25534) (翠)
+- cc82598 minifier: Merge import and export statements against the same module (#25533) (翠)
+- 1c352ce minifier: Minimize bitwise binary expressions (#27107) (Armano)
+- d1a0bcc minifier: Merge statements after terminating if block branches (#26667) (Armano)
+- 7a95376 minifier: Merge adjucent if stmt with the same content (#26445) (Armano)
+
+### 🐛 Bug Fixes
+
+- 565d75d minifier: Correct indopedency when processing nested sequences (#27273) (Armano)
+- da1fed2 minifier: Fold conditional expressions with long sequences (#27083) (Armano)
+- 4cf9ae2 minifier: Preserve sibling declarations in arguments copy rewrite (#27140) (camc314)
+
+### ⚡ Performance
+
+- 99e3c15 minifier: Small performance improvement when merging imports (#27238) (Armano)
+- 466ef10 minifier: Update expressions in place in `merge_import_export` (#27226) (Armano)
+- 028ffb8 minifier: Update nodes in place in `wrap_to_avoid_ambiguous_else` (#27194) (Armano)
+- 6fcd135 minifier: Avoid conversion from ident to str when for substitute symbols (#27209) (Armano)
+- 0b9799d minifier: Reduce usage of minimize_conditional (#26028) (Armano)
+- 3ca3ded minifier: Short-circuit IfStatement termination on alternate (#25198) (Armano)
+
+### 📚 Documentation
+
+- 335ce79 agents: Scope verification for local and stacked work (#27299) (Dunqing)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- c380c85 minifier: Preserve iife with directives (#27060) (Armano)
+- d79ad19 codegen: Remove redundant dollar escapes in minified templates (#26924) (camc314)
+
+### ⚡ Performance
+
+- 0afbf85 minifier: Fold logical expressions in place (#26768) (Armano)
+- 3471f29 minifier: Avoid creation of empty block when folding try finally (#26971) (Armano)
+- 3893d64 minifier: Update boolean context expressions in place (#26823) (Armano)
+- de8af47 minifier: Take return argument directly when converting arrow fn (#26830) (Armano)
+- fc37ba0 minifier: Reduce allocations when minimizing assignments (#26609) (Armano)
+- dce64f6 minifier: Use ident hashes for catch var and arguments (#26907) (Armano)
+- 57610b3 minifier: Use ident hashes in label comparison (#26887) (Armano)
+
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- cd7228f minifier: Add missing negation for boolean literal (#26847) (Armano)
+
+### ⚡ Performance
+
+- 3f1e3aa minifier: Preallocate stmts vec size to avoid excesive reallocs (#26856) (Armano)
+- 5f72954 minifier: Reduce allocations when processing if statements (#26666) (Armano)
+
+## [0.150.0] - 2026-09-14
+
+### 🚀 Features
+
+- ca649e0 ecma: Define math constants as known globals and resolve their types (#26585) (Armano)
+- 80a76a0 minifier: Negate binary comparison for `typeof x < 'u'` (#26367) (Armano)
+
+### ⚡ Performance
+
+- a242469 minfiier: Reduce allocs when creating indirect access (#26601) (Armano)
+- 5b4787f minifier: Update chain expressions in place (#26544) (Armano)
+- 0bc1661 minifier: Try merging before creating new expression statements (#26556) (Armano)
+- c78d707 minifier: Process newly created stmt in handle_if_statement (#26541) (Armano)
+- 029c84b minfier: Update expressions in place when substituting alternate syntax (#26460) (Armano)
+
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 66744f0 parser: [**BREAKING**] Rename `panicked` to `fatal_error` in `ParserReturn` (#26382) (overlookmotel)
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- a17de58 minifier: Process of return/throw in non last position and fix async * inlining (#26214) (Armano)
+
+### 🐛 Bug Fixes
+
+- 853ffab ecmascript: Avoid `charAt` panic on 32-bit (#26244) (camc314)
+
+### ⚡ Performance
+
+- 34a242e minifier: Use `Ident` for property mangler (#26334) (sapphi-red)
+- 5303f5c minifier: Unify merging of last expression into target sequence (#26264) (Armano)
+- 2ca7d29 minifier: Consume nodes in minimize_statements in reverse order (#26258) (Armano)
+- 5b3e335 minifier: Use `Ident` instead of `Str` in `KeepVar` (#26332) (sapphi-red)
+- 51366fb minifier: Use `IdentHashSet` in `PrivateMemberUsageStack` (#26331) (sapphi-red)
+- d19c42a minifier: Merge nested if stmt in place instead of creating dummies (#26351) (Armano)
+
+### 📚 Documentation
+
+- a8ed2a7 minifier: Fix stale validation instructions (#26251) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🚀 Features
+
+- 784e9fa minifier: Invert `!0` and `!1` in place for boolean context to `1` and `0` (#26050) (Armano)
+- 1e902cc minifier: Expand fold leading assignments into the var decl (#26142) (Armano)
+- 3ed4f6a minifier: Expand de morgan's optimization to allow move of `!` (#25930) (Armano)
+
+### 🐛 Bug Fixes
+
+- b874f48 ecmascript: `Math.round` only exact half ties (#26150) (camc314)
+- a625378 minifier: Coerce omitted `indexOf` search argument (#26149) (camc314)
+- dc7398b ecmascript: Trim trailing whitespace in string to number (#26148) (camc314)
+
+## [0.147.0] - 2026-08-24
+
+### 🚀 Features
+
+- b6e9e5e minifier: Fold switch stmt whose parent is not block stmt (#25403) (Armano)
+
+### 🐛 Bug Fixes
+
+- 6f0c7cf minifier: Avoid merging `if` to `for` in sloppy mode when containing function declaration (#25638) (sapphi-red)
+- 58ba651 minifier: Avoid merging `if` to `for` when the body contains a function declaration (#25637) (sapphi-red)
+- af82a07 minifier: Keep unary `+` when the other operand has side effects (#25645) (Kotaro Chikuba)
+
+### ⚡ Performance
+
+- a0aee81 minifier: Do not rebuild expression when substituting void to null (#25964) (Armano)
+- f09c8ab minifier: Avoid creation of unnecessary conditional expressions (#25931) (Armano)
+
+## [0.146.0] - 2026-08-19
+
+### 🚀 Features
+
+- 83cb516 minifier: Improve negation of expressions in boolean context (#25755) (Armano)
+
+### ⚡ Performance
+
+- 5ef0c93 minifier: Unwrap all unary exprs without creating dummy expressions (#25891) (Armano)
+
+## [0.145.0] - 2026-08-18
+
+### 🚀 Features
+
+- 2f5cdb1 minifier: Add property name mangling (#24740) (Dunqing)
+- 4922141 mangler: Deduplicate private accessor names (#25601) (camc314)
+
+### 🐛 Bug Fixes
+
+- ab81f3f minifier: Drop side-effect-free additions (#25639) (Dunqing)
+- 8ab883a codegen: Preserve property key annotations (#25766) (Dunqing)
+- b13fd48 minifier: Model uninitialized module vars as undefined (#25497) (Dunqing)
+- f6000ac ecmascript: Fold `**` with `Number::exponentiate`, not IEEE `pow` (#25644) (Kotaro Chikuba)
+- bb5a232 minifier: Keep variable declaration initilized with class when keepNames is enabled (#25584) (sapphi-red)
+- f49229d minifier: Keep side effects when rotating bitwise operands (#25596) (Kotaro Chikuba)
+- e82495b ecmascript: Derive `ToNumber` of `!x` from `ToBoolean` (#25595) (Kotaro Chikuba)
+- c1369a7 codegen: Resolve private names in class heritage (#25588) (camc314)
+- e75e102 minifier: Preserve block statement in labeled iteration statements (#25162) (Armano)
+- 771d79a mangler: Exclude non-manglable symbols from slot assignment (#25539) (sapphi-red)
+- 76b19f5 minifier: Avoid duplicating large folded strings (#25532) (Dunqing)
+- c3e99d1 minifier: Avoid invalid octal escapes in template folds (#25495) (Dunqing)
+- 5fcf683 minifier: Correct issue with try finally termination (#25185) (Armano)
+
+### ⚡ Performance
+
+- 9a6e862 minifier: Move owned statements directly (#25835) (Dunqing)
+- 61b2aef minifier: Move owned AST nodes directly (#25837) (Dunqing)
+- 673b04b minifier: Replace expressions without take_in dummies (#25836) (Dunqing)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 5c5cdcd ast: [**BREAKING**] Narrow `TSInterfaceHeritage::expression` to TSTypeName (#24360) (camc314)
+- 6be314f ast: [**BREAKING**] Remove duplicated `VariableDeclarator::kind` (#25319) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+### 🐛 Bug Fixes
+
+- e0fb2d7 minifier: Avoid unsafe return removal in labeled blocks (#25406) (Armano)
+- c49f4ce parser: Preserve terminal license comments (#25400) (camc314)
+- 697c629 minifier: Preserve Annex B labeled-function bindings in implicit-return rewrite (#25349) (Armano)
+
+### ⚡ Performance
+
+- 6529d1a minifier: Short-circuit scope check when alternate already determines result (#25318) (Armano)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 067da8c ast: [**BREAKING**] Store single parameter in `TSIndexSignature::parameter` (#25154) (camc314)
+- a0c7788 ast: [**BREAKING**] Change `TSIndexSignatureName::name` to `Ident` (#25150) (camc314)
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+- 7e1199c ast: [**BREAKING**] Remove conversion to `Box` from AST builder methods (#25038) (overlookmotel)
+
+### 🚀 Features
+
+- 8541e18 ast_tools: Generate minifier scope collector (#25088) (camc314)
+- 70d6ece minifier: Fold safe integer exponentiation (#25009) (Dunqing)
+- 73fc747 minifier: Enable termination statement optimization for do while (#24921) (Armano)
+- 5eadfdb minifier: Fold safe integer division and remainder (#24981) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 6c9ee14 minifier: Preserve if-chain idempotency and correct side effects when alternate should not be moved (#25041) (Armano)
+- 8a47ff3 ecmascript: Do not treat lone-surrogate strings as constants (#25084) (Dunqing)
+- e6734a5 minifier: Fold typeof comparisons with known object strings (#25017) (Dunqing)
+- 3a9d5a5 minifier: Keep `typeof foo == ['object']` as-is (#24941) (sapphi-red)
+- fbe8d31 minifier: Respect targets when folding RegExp source (#24790) (Dunqing)
+
+### ⚡ Performance
+
+- fb402b0 minifier: Stop re-deriving printed numeric spellings (#25103) (Dunqing)
+
+## [0.142.0] - 2026-07-27
+
+### 🚀 Features
+
+- c7c5696 minifier: Fold parenthesized boolean ternary tests (#24968) (Dunqing)
+- 82c5806 minifier: Fold sequence branches in boolean ternaries (#24943) (Dunqing)
+- b31713a minifier: Add new IsTerminated trait and use it in exit-point optimization (#24950) (Armano)
+- e9e0f24 minifier: Shorten integer zero comparisons (#24933) (Dunqing)
+- 34f5559 minifier: Convert switch with one case to if statement (#24611) (Armano)
+
+### 🐛 Bug Fixes
+
+- cb5acfb minifier: Optimize termination statements in labeled statements (#24813) (Armano)
+- 4618300 minifier: Avoid longer numeric constant folds (#24875) (Dunqing)
+- f7971f1 minifier: Keep side effects in typeof comparisons (#24940) (sapphi-red)
+- 4597d6f minifier: Keep side effects when compressing `== true` to `== 1` (#24939) (sapphi-red)
+- c3a48df minifier: Keep side effects values in template literals (#24938) (sapphi-red)
+- e19f183 minifier: Keep side effects when folding `Number` call (#24937) (sapphi-red)
+- 0126aba codegen: Preserve orphaned file coverage comments (#24815) (Dunqing)
+- 07e9acc ecmascript: Keep side effects in parent of `toString` calls (#24846) (sapphi-red)
+- 16a40ad ecmascript: Detect side effects in unused arguments to `charCodeAt` (#24845) (sapphi-red)
+- df230d0 minifier: Avoid reordering this in nested class keys (#24785) (Dunqing)
+- d24b76b minifier: Isolate derived constructor this state (#24784) (Dunqing)
+- 23b904f minifier: Preserve default parameter side effects (#24791) (Dunqing)
+- 4b12840 minifier: Do not fold a `-0` ternary branch to `+a` (loses the sign) (#23637) (Jerry Zhao)
+- 133bb35 ecmascript: Detect side effects of `foo().#bar` correctly when PropertyReadSideEffects::None (#24769) (sapphi-red)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🚀 Features
+
+- 7b045cd minfier: Drop last break from last switch case (#24673) (Armano)
+- 7d3c178 minifier: Remove unreachable recursive functions (#24125) (Dunqing)
+- 3acf4c1 minifier: Expand switch optimiation to remove empty cases (#24520) (Armano)
+- 4d0c601 minifier: Fold arithmetic over undefined and null operands (#24485) (Dunqing)
+- 91541dd minifier: Drop empty switch statements  (#24527) (Armano)
+
+### 🐛 Bug Fixes
+
+- 64c2241 minifier: Align class heritage removal with assumptions (#24533) (Dunqing)
+- e750a82 ecmascript: Fix false negative for may_have_side_effects on dynamic property access (#24709) (sapphi-red)
+- f145d73 minifier: Guard reordered identifier reads (#24698) (Dunqing)
+- b1bcf72 minifier: Invalidate facts for redeclared bindings (#24658) (Dunqing)
+- 921b834 minifier: Don't treat a conditionally-assigned var as write-once (#24650) (Dunqing)
+- 061af1f minifier: Avoid stale pure function summaries (#24636) (Dunqing)
+- 128b385 minifier: Clippy warning with no-debug-assertions (#24547) (camc314)
+
+## [0.140.0] - 2026-07-13
+
+### 🚀 Features
+
+- 616bfa2 minifier: Remove unreachable code after terminating statements (#24441) (Dunqing)
+- b79eef7 minifier: Apply De Morgan's law to negated comparison chains in jump guards and loop tests (#24279) (Dunqing)
+- 34ff7b4 minifier: Drop write-only property assignments to unused local bindings by default (#24112) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 7d33363 minifier: Preserve guaranteed throws from class heritage evaluation (#24349) (Dunqing)
+- 40f769d minifier: Make `__proto__` write tracking execution-order independent (#24280) (Dunqing)
+
+### ⚡ Performance
+
+- b227a06 minifier: Use `ReplaceWith` instead of `TakeIn` (#24017) (overlookmotel)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

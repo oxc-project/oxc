@@ -1,7 +1,5 @@
 # externals/ng-zorro-antd/components/style/themes/variable.less
 
-> Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md
-
 ## Option 1
 
 `````json
@@ -14,38 +12,22 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -530,24 +530,18 @@
- @input-padding-horizontal-base: @input-padding-horizontal;
- @input-padding-horizontal-sm: @control-padding-horizontal-sm - @line-width;
- @input-padding-horizontal-lg: @input-padding-horizontal;
- @input-padding-vertical-base: max(
--  (
--      round(
--          ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
--        ) /
--        10
--    ) -
-+  (round(
-+        ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
-+      ) /
-+      10) -
-     @border-width-base,
-   3px
- );
- @input-padding-vertical-sm: max(
--  (
--      round(
--          ((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10
--        ) /
--        10
--    ) -
-+  (round(((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10) /
-+      10) -
-     @border-width-base,
-   0
- );
- @input-padding-vertical-lg: (
-@@ -910,11 +904,12 @@
+@@ -261,13 +261,9 @@
+ @outline-width: 2px;
+ @outline-color: @primary-color; // No use anymore
+ @outline-fade: 20%;
+ 
+-@background-color-light: hsv(
+-  0,
+-  0,
+-  98%
+-); // background of header and selected item
++@background-color-light: hsv(0, 0, 98%); // background of header and selected item
+ @background-color-base: hsv(0, 0, 96%); // Default grey background color
+ @background-color-dark: hsv(0, 0, 94%); // dark grey background color
+ 
+ // Disabled states
+@@ -910,11 +906,12 @@
  @tabs-card-head-background: @background-color-light;
  @tabs-card-height: 40px;
  @tabs-card-active-color: @primary-color;
@@ -331,11 +313,7 @@
 @outline-color: @primary-color; // No use anymore
 @outline-fade: 20%;
 
-@background-color-light: hsv(
-  0,
-  0,
-  98%
-); // background of header and selected item
+@background-color-light: hsv(0, 0, 98%); // background of header and selected item
 @background-color-base: hsv(0, 0, 96%); // Default grey background color
 @background-color-dark: hsv(0, 0, 94%); // dark grey background color
 
@@ -600,16 +578,22 @@
 @input-padding-horizontal-sm: @control-padding-horizontal-sm - @line-width;
 @input-padding-horizontal-lg: @input-padding-horizontal;
 @input-padding-vertical-base: max(
-  (round(
-        ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
-      ) /
-      10) -
+  (
+      round(
+          ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
+        ) /
+        10
+    ) -
     @border-width-base,
   3px
 );
 @input-padding-vertical-sm: max(
-  (round(((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10) /
-      10) -
+  (
+      round(
+          ((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10
+        ) /
+        10
+    ) -
     @border-width-base,
   0
 );

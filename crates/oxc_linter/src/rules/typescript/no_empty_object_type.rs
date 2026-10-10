@@ -15,6 +15,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     AstNode,
     context::LintContext,
+    fixer::RuleFixer,
     rule::{DefaultRuleConfig, Rule},
     utils::deserialize_regex_option,
 };
@@ -161,7 +162,7 @@ declare_oxc_lint!(
     NoEmptyObjectType,
     typescript,
     restriction,
-    pending,
+    conditional_suggestion,
     config = NoEmptyObjectTypeConfig,
     version = "0.12.0",
     short_description = "Disallow accidentally using the \"empty object\" type.",
@@ -169,7 +170,7 @@ declare_oxc_lint!(
 
 impl Rule for NoEmptyObjectType {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<NoEmptyObjectTypeConfig>>(value)
+        DefaultRuleConfig::<NoEmptyObjectTypeConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)
             .map(|config| Self(Box::new(config)))
     }
@@ -180,6 +181,7 @@ impl Rule for NoEmptyObjectType {
                 check_interface_declaration(
                     ctx,
                     interface,
+                    node.id(),
                     self.allow_interfaces,
                     self.allow_with_name.as_ref(),
                 );
@@ -205,6 +207,7 @@ impl Rule for NoEmptyObjectType {
 fn check_interface_declaration(
     ctx: &LintContext,
     interface: &TSInterfaceDeclaration,
+    node_id: NodeId,
     allow_interfaces: AllowInterfaces,
     allow_with_name: Option<&Regex>,
 ) {
@@ -219,10 +222,57 @@ fn check_interface_declaration(
     if interface.extends.is_empty()
         || (allow_interfaces == AllowInterfaces::Never && interface.extends.len() == 1)
     {
-        ctx.diagnostic(no_empty_object_type_diagnostic(
+        let diagnostic = no_empty_object_type_diagnostic(
             interface.body.span,
             "Do not use an empty interface declaration.",
-        ));
+        );
+
+        if matches!(ctx.nodes().parent_kind(node_id), AstKind::ExportDefaultDeclaration(_)) {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+
+        let has_declaration_merge = interface.id.symbol_id.get().is_some_and(|symbol_id| {
+            ctx.scoping().symbol_declarations(symbol_id).any(|declaration| {
+                match ctx.nodes().kind(declaration) {
+                    AstKind::Class(_) => true,
+                    AstKind::TSInterfaceDeclaration(_) => declaration != node_id,
+                    _ => false,
+                }
+            })
+        });
+        if has_declaration_merge {
+            ctx.diagnostic(diagnostic);
+            return;
+        }
+
+        let id = ctx.source_range(interface.id.span);
+        let type_parameters =
+            interface.type_parameters.as_ref().map_or("", |params| ctx.source_range(params.span));
+
+        if let Some(extended) = interface.extends.first() {
+            ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
+                fixer
+                    .replace(
+                        interface.span,
+                        format!("type {id}{type_parameters} = {}", ctx.source_range(extended.span)),
+                    )
+                    .with_message("Replace empty interface with a type alias.")
+            });
+        } else {
+            let fixer = RuleFixer::new(FixKind::Suggestion, ctx);
+            ctx.diagnostic_with_suggestions(
+                diagnostic,
+                [
+                    fixer
+                        .replace(interface.span, format!("type {id}{type_parameters} = object"))
+                        .with_message("Replace empty interface with `object`."),
+                    fixer
+                        .replace(interface.span, format!("type {id}{type_parameters} = unknown"))
+                        .with_message("Replace empty interface with `unknown`."),
+                ],
+            );
+        }
     }
 }
 
@@ -247,15 +297,25 @@ fn check_type_literal(
         }
         _ => (),
     }
-    ctx.diagnostic(no_empty_object_type_diagnostic(
+    let diagnostic = no_empty_object_type_diagnostic(
         type_literal.span,
         "Do not use the empty object type literal.",
-    ));
+    );
+    let fixer = RuleFixer::new(FixKind::Suggestion, ctx);
+    ctx.diagnostic_with_suggestions(
+        diagnostic,
+        [
+            fixer.replace(type_literal.span, "object").with_message("Replace `{}` with `object`."),
+            fixer
+                .replace(type_literal.span, "unknown")
+                .with_message("Replace `{}` with `unknown`."),
+        ],
+    );
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         (
@@ -412,5 +472,179 @@ fn test() {
         ("interface Base {}", Some(serde_json::json!([{ "allowWithName": "Props" }]))),
     ];
 
-    Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::PLUGIN, pass, fail).test_and_snapshot();
+    let fix: Vec<ExpectFixTestCase> = vec![
+        ("interface Base {}", ("type Base = object", "type Base = unknown")).into(),
+        (
+            "interface Base {}",
+            ("type Base = object", "type Base = unknown"),
+            Some(serde_json::json!([{ "allowInterfaces": "never" }])),
+        )
+            .into(),
+        (
+            "
+            interface Base {
+                props: string;
+            }
+
+            interface Derived extends Base {}
+
+            class Other {}
+            ",
+            "
+            interface Base {
+                props: string;
+            }
+
+            type Derived = Base
+
+            class Other {}
+            ",
+        )
+            .into(),
+        (
+            "
+            interface Base {
+                props: string;
+            }
+
+            interface Derived extends Base {}
+
+            const derived = class Derived {};
+            ",
+            "
+            interface Base {
+                props: string;
+            }
+
+            type Derived = Base
+
+            const derived = class Derived {};
+            ",
+        )
+            .into(),
+        (
+            "
+            interface Base {
+                name: string;
+            }
+
+            interface Derived extends Base {}
+            ",
+            "
+            interface Base {
+                name: string;
+            }
+
+            type Derived = Base
+            ",
+        )
+            .into(),
+        ("interface Base extends Array<number> {}", "type Base = Array<number>").into(),
+        (
+            "interface Base extends Array<number | {}> {}",
+            "type Base = Array<number | {}>",
+            Some(serde_json::json!([{ "allowObjectTypes": "always" }])),
+        )
+            .into(),
+        (
+            "interface Base extends Array<number | {}> {}",
+            (
+                "interface Base extends Array<number | object> {}",
+                "interface Base extends Array<number | unknown> {}",
+            ),
+            Some(serde_json::json!([{ "allowInterfaces": "always" }])),
+        )
+            .into(),
+        (
+            "
+            interface Derived {
+                property: string;
+            }
+            interface Base extends Array<Derived> {}
+            ",
+            "
+            interface Derived {
+                property: string;
+            }
+            type Base = Array<Derived>
+            ",
+        )
+            .into(),
+        (
+            "
+            type R = Record<string, unknown>;
+            interface Base extends R {}
+            ",
+            "
+            type R = Record<string, unknown>;
+            type Base = R
+            ",
+        )
+            .into(),
+        ("interface Base<T> extends Derived<T> {}", "type Base<T> = Derived<T>").into(),
+        (
+            "
+            declare namespace BaseAndDerived {
+                type Base = typeof base;
+                export interface Derived extends Base {}
+            }
+            ",
+            "
+            declare namespace BaseAndDerived {
+                type Base = typeof base;
+                export type Derived = Base
+            }
+            ",
+        )
+            .into(),
+        ("type Base = {};", ("type Base = object;", "type Base = unknown;")).into(),
+        (
+            "type Base = {};",
+            ("type Base = object;", "type Base = unknown;"),
+            Some(serde_json::json!([{ "allowObjectTypes": "never" }])),
+        )
+            .into(),
+        ("let value: {};", ("let value: object;", "let value: unknown;")).into(),
+        (
+            "let value: {};",
+            ("let value: object;", "let value: unknown;"),
+            Some(serde_json::json!([{ "allowObjectTypes": "never" }])),
+        )
+            .into(),
+        ("let value: {/* ... */};", ("let value: object;", "let value: unknown;")).into(),
+        (
+            "type MyUnion<T> = T | {};",
+            ("type MyUnion<T> = T | object;", "type MyUnion<T> = T | unknown;"),
+        )
+            .into(),
+        (
+            "type Base = {} | null;",
+            ("type Base = object | null;", "type Base = unknown | null;"),
+            Some(serde_json::json!([{ "allowWithName": "Base" }])),
+        )
+            .into(),
+        (
+            "type Base = {};",
+            ("type Base = object;", "type Base = unknown;"),
+            Some(serde_json::json!([{ "allowWithName": "Mismatch" }])),
+        )
+            .into(),
+        (
+            "interface Base {}",
+            ("type Base = object", "type Base = unknown"),
+            Some(serde_json::json!([{ "allowWithName": ".*Props$" }])),
+        )
+            .into(),
+        // Suggestion is not applied because it would produce invalid typescript syntax
+        ("export default interface Foo {}", "export default interface Foo {}").into(),
+        (
+            "interface Foo {} interface Foo { value: string }",
+            "interface Foo {} interface Foo { value: string }",
+        )
+            .into(),
+    ];
+
+    Tester::new(NoEmptyObjectType::NAME, NoEmptyObjectType::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
 }

@@ -1,5 +1,8 @@
 //! XML Entities
+
 use phf::{Map, phf_map};
+
+use oxc_allocator::{Allocator, ArenaStringBuilder};
 
 /// XML Entities
 ///
@@ -260,3 +263,92 @@ pub const XML_ENTITIES: Map<&'static str, char> = phf_map! {
     "hearts" => '\u{2665}',
     "diams" => '\u{2666}',
 };
+
+/// Replace entities like `&nbsp;`, `&#123;`, and `&#xDEADBEEF;` with the characters they
+/// encode.
+///
+/// If either the text contains an entity to decode or `acc` is already initialized, the decoded
+/// string is appended to `acc`. Otherwise, `acc` remains `None`, allowing callers to reuse the
+/// original string without copying.
+///
+/// See <https://en.wikipedia.org/wiki/List_of_XML_and_HTML_character_entity_references>.
+/// Adapted from TypeScript's JSX transformer:
+/// <https://github.com/microsoft/TypeScript/blob/514f7e639a2a8466c075c766ee9857a30ed4e196/src/compiler/transformers/jsx.ts#L617-L635>.
+pub fn decode_entities<'a>(
+    s: &str,
+    acc: &mut Option<ArenaStringBuilder<'a>>,
+    text_len: usize,
+    allocator: &'a Allocator,
+) {
+    let mut chars = s.char_indices();
+    let mut prev = 0;
+    while let Some((i, c)) = chars.next() {
+        if c == '&' {
+            let mut start = i;
+            let mut end = None;
+            for (j, c) in chars.by_ref() {
+                if c == ';' {
+                    end.replace(j);
+                    break;
+                } else if c == '&' {
+                    start = j;
+                }
+            }
+            if let Some(end) = end {
+                let buffer = acc.get_or_insert_with(|| {
+                    ArenaStringBuilder::with_capacity_in(text_len, allocator)
+                });
+
+                buffer.push_str(&s[prev..start]);
+                prev = end + 1;
+                let word = &s[start + 1..end];
+                if let Some(decimal) = word.strip_prefix('#') {
+                    if let Some(hex) = decimal.strip_prefix('x') {
+                        if let Some(c) = u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
+                        {
+                            // `&#x0123;`
+                            buffer.push(c);
+                            continue;
+                        }
+                    } else if let Some(c) = decimal.parse::<u32>().ok().and_then(char::from_u32) {
+                        // `&#0123;`
+                        buffer.push(c);
+                        continue;
+                    }
+                } else if let Some(c) = XML_ENTITIES.get(word) {
+                    // e.g. `&quote;`, `&amp;`
+                    buffer.push(*c);
+                    continue;
+                }
+                // Fallback
+                buffer.push('&');
+                buffer.push_str(word);
+                buffer.push(';');
+            } else {
+                // Reached end of text without finding a `;` after the `&`.
+                // No point searching for a further `&`, so exit the loop.
+                break;
+            }
+        }
+    }
+
+    if let Some(buffer) = acc.as_mut() {
+        buffer.push_str(&s[prev..]);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+
+    use super::decode_entities;
+
+    #[test]
+    fn entity_after_stray_amp() {
+        let allocator = Allocator::default();
+        let input = "& &amp;";
+        let mut acc = None;
+        decode_entities(input, &mut acc, input.len(), &allocator);
+        assert_eq!(acc.as_ref().unwrap().as_str(), "& &");
+    }
+}

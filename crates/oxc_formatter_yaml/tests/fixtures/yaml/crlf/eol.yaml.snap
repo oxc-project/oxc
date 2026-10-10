@@ -1,0 +1,73 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# oxfmt-ignore
+kept:   verbatim
+block: |
+  literal
+
+  after blank
+plain: multi
+  line scalar
+seq:
+  - a
+
+==================== Output ====================
+-----------------------------------
+{ endOfLine: "lf", printWidth: 80 }
+-----------------------------------
+# oxfmt-ignore
+kept:   verbatim
+block: |
+  literal
+
+  after blank
+plain: multi
+  line scalar
+seq:
+  - a
+
+------------------------------------
+{ endOfLine: "lf", printWidth: 100 }
+------------------------------------
+# oxfmt-ignore
+kept:   verbatim
+block: |
+  literal
+
+  after blank
+plain: multi
+  line scalar
+seq:
+  - a
+
+-------------------------------------
+{ endOfLine: "crlf", printWidth: 80 }
+-------------------------------------
+# oxfmt-ignore
+kept:   verbatim
+block: |
+  literal
+
+  after blank
+plain: multi
+  line scalar
+seq:
+  - a
+
+--------------------------------------
+{ endOfLine: "crlf", printWidth: 100 }
+--------------------------------------
+# oxfmt-ignore
+kept:   verbatim
+block: |
+  literal
+
+  after blank
+plain: multi
+  line scalar
+seq:
+  - a
+
+===================== End =====================

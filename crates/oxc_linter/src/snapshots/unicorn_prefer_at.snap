@@ -788,3 +788,144 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Use `.at()` for index access.
   note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ value.substring(index, index + 1);
+   · ─────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(0, 1)
+   · ──────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(1, 2)
+   · ──────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(2, 1)
+   · ──────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(index, 1 + index)
+   · ──────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(index - 1, index)
+   · ──────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(index + 1, index)
+   · ──────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(1 + index, index)
+   · ──────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(index, /* comment */ index + 1)
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(index, index + /* comment */ 1)
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(0, /* between */ 1)
+   · ────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring((( index )), (( index )) + 1)
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring((( index )) - 1, (( index )))
+   · ──────────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ (( string )).substring(index, index + 1)
+   · ────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string?.substring(index, index + 1)
+   · ───────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring?.(index, index + 1)
+   · ────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string?.substring?.(index, index + 1)
+   · ─────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:1]
+ 1 │ string.substring(object.index, object.index + 1)
+   · ────────────────────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `String#at()` over `String#substring()` when getting one character.
+   ╭─[prefer_at.tsx:1:13]
+ 1 │ result[0] = value.substring(index, index + 1);
+   ·             ─────────────────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+
+  ⚠ unicorn(prefer-at): Prefer `.at()` over `[index]`.
+   ╭─[prefer_at.tsx:1:13]
+ 1 │ result[0] = array[array.length - 1];
+   ·             ───────────────────────
+   ╰────
+  help: Use `.at()` for index access.
+  note: https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/at

@@ -11,7 +11,10 @@ use std::{
 use cow_utils::CowUtils;
 use ignore::{gitignore::Gitignore, overrides::OverrideBuilder};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, GraphicalReportHandler, OxcDiagnostic};
+use oxc_config::GitignoreChecker;
+use oxc_diagnostics::{
+    DiagnosticSender, DiagnosticService, GraphicalReportHandler, GraphicalTheme, OxcDiagnostic,
+};
 use oxc_linter::{
     AllowWarnDeny, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ExternalLinter,
     ExternalPluginStore, InvalidFilterKind, LintFilter, LintOptions, LintRunner,
@@ -25,7 +28,8 @@ use crate::{
         CliRunResult, DebugOption, LintCommand, MiscOptions, ReportUnusedDirectives, WarningOptions,
     },
     config_loader::{
-        CliConfigLoadError, ConfigLoadError, ConfigLoader, materialize_default_plugins,
+        CliConfigLoadError, ConfigLoadError, ConfigLoader, config_discovery,
+        materialize_default_plugins,
     },
     output_formatter::{LintCommandInfo, OutputFormatter},
     walk::Walk,
@@ -111,9 +115,17 @@ impl CliRunner {
         };
 
         let handler = if cfg!(any(test, feature = "testing")) {
-            GraphicalReportHandler::new_themed(miette::GraphicalTheme::none())
+            GraphicalReportHandler::new_themed(GraphicalTheme::none())
         } else {
             GraphicalReportHandler::new()
+        };
+
+        // Absolutizes `p` in place. Skips the extra allocation `absolute()`
+        // would otherwise add on top of `cwd.join()` when `p` is already
+        // absolute (a common case: many CI/automation scripts pass
+        // absolute paths already).
+        let absolutize = |p: &Path| -> std::io::Result<PathBuf> {
+            if p.is_absolute() { absolute(p) } else { absolute(self.cwd.join(p)) }
         };
 
         let mut override_builder = None;
@@ -142,7 +154,7 @@ impl CliRunner {
 
                 paths.retain_mut(|p| {
                     // Try to prepend cwd to all paths
-                    let Ok(mut path) = absolute(self.cwd.join(&p)) else {
+                    let Ok(mut path) = absolutize(p) else {
                         return false;
                     };
 
@@ -158,30 +170,51 @@ impl CliRunner {
             }
 
             override_builder = Some(builder);
+        } else if !paths.is_empty() {
+            // The block above also absolutizes explicit CLI paths as a
+            // side effect of pre-filtering them against ignore rules, but
+            // `--no-ignore` skips that block entirely, so relative paths
+            // would otherwise reach downstream consumers (e.g. the
+            // type-aware tsgolint integration, which requires absolute
+            // paths and panics on a relative one) unabsolutized.
+            paths.retain_mut(|p| {
+                let Ok(mut path) = absolutize(p) else {
+                    return false;
+                };
+                std::mem::swap(p, &mut path);
+                true
+            });
         }
 
-        if paths.is_empty() {
-            // If explicit paths were provided, but all have been
-            // filtered, return early.
-            if provided_path_count > 0 {
-                if debug_files {
-                    return crate::mode::run_debug_files(
-                        std::iter::empty::<&Path>(),
-                        &self.cwd,
-                        stdout,
-                    );
-                }
+        if paths.is_empty() && provided_path_count == 0 {
+            paths.push(self.cwd.clone());
+        }
 
-                return Self::handle_no_files_found(
+        // The walker never filters gitignored walk roots (including roots inside a gitignored directory).
+        // NOTE: Applied regardless of `--no-ignore`.
+        // Currently it only disables Oxlint's own ignore sources (`.eslintignore`, `--ignore-path`, `--ignore-pattern`),
+        // not git's. (Aligns with during walk filtering behavior)
+        let mut gitignore_checker = GitignoreChecker::new();
+        paths.retain(|p| !gitignore_checker.is_gitignored_walk_root(p, &self.cwd));
+
+        // If explicit paths were provided but all have been filtered,
+        // or the default cwd target is gitignored, return early.
+        if paths.is_empty() {
+            if debug_files {
+                return crate::mode::run_debug_files(
+                    std::iter::empty::<&Path>(),
+                    &self.cwd,
                     stdout,
-                    &output_formatter,
-                    now,
-                    None,
-                    misc_options.no_error_on_unmatched_pattern,
                 );
             }
 
-            paths.push(self.cwd.clone());
+            return Self::handle_no_files_found(
+                stdout,
+                &output_formatter,
+                now,
+                None,
+                misc_options.no_error_on_unmatched_pattern,
+            );
         }
 
         let walker = Walk::new(&paths, &self.cwd, &ignore_options, override_builder);
@@ -215,7 +248,8 @@ impl CliRunner {
             // as the passed config file takes absolute precedence.
             basic_options.config.is_none() &&
             !misc_options.print_config &&
-            !self.options.list_rules;
+            !self.options.list_rules &&
+            config_discovery().nested_configs();
 
         let config_result = {
             let mut config_loader =
@@ -393,6 +427,15 @@ impl CliRunner {
             );
             return CliRunResult::InvalidOptionTypeCheckOnlyWithFix;
         }
+        if type_check_only
+            && (suppression_options.suppress_all || suppression_options.prune_suppressions)
+        {
+            print_and_flush_stdout(
+                stdout,
+                "The `--type-check-only` option cannot be used with suppression update flags.\nRemove `--suppress-all` and `--prune-suppressions`.\n",
+            );
+            return CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate;
+        }
         let deny_warnings = warning_options.deny_warnings || config_store.deny_warnings();
         let max_warnings = warning_options.max_warnings.or(config_store.max_warnings());
 
@@ -516,7 +559,13 @@ impl CliRunner {
             }
         }
 
-        let result = suppression_manager.finalize(diff_manager, &tx_error, &cwd);
+        // A suppression file can contain regular lint rules that were not run in type-check-only
+        // mode, so its runtime diff is incomplete and cannot be used to validate the baseline.
+        let result = if type_check_only {
+            Ok(())
+        } else {
+            suppression_manager.finalize(diff_manager, &tx_error, &cwd)
+        };
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
 
         drop(tx_error);
@@ -540,7 +589,12 @@ impl CliRunner {
             threads_count: rayon::current_num_threads(),
             start_time: now.elapsed(),
             oxlint_suppression_file_action,
-            rule_timings: rule_timing_store.as_ref().map(RuleTimingStore::collect),
+            rule_timings: rule_timing_store.as_ref().map(|store| {
+                crate::output_formatter::RuleTimings {
+                    records: store.collect(),
+                    js_plugin_runtime: store.js_plugin_runtime(),
+                }
+            }),
         }) {
             print_and_flush_stdout(stdout, &end);
         }
@@ -713,6 +767,16 @@ mod test {
     use crate::{DEFAULT_OXLINTRC_NAME, tester::Tester};
     use oxc_linter::rules::RULES;
 
+    fn markdown_rule_row<'a>(output: &'a str, plugin: &str, name: &str) -> Vec<&'a str> {
+        output
+            .lines()
+            .find_map(|line| {
+                let cells = line.split('|').skip(1).take(5).map(str::trim).collect::<Vec<_>>();
+                (cells.len() == 5 && cells[0] == name && cells[1] == plugin).then_some(cells)
+            })
+            .unwrap_or_else(|| panic!("Missing rule row for {plugin}/{name}"))
+    }
+
     // lints the full directory of fixtures,
     // so do not snapshot it, test only
     #[test]
@@ -794,6 +858,58 @@ mod test {
             "fixtures/cli/linter/nan.js",
         ];
         Tester::new().test_and_snapshot(args);
+    }
+
+    #[test]
+    // https://github.com/oxc-project/oxc/issues/25107
+    fn gitignored_walk_root() {
+        use crate::cli::CliRunResult;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let repo_path = temp_dir.path().join("repo");
+        let pkg_path = repo_path.join("sub").join("generated").join("pkg");
+        fs::create_dir_all(&pkg_path).unwrap();
+        fs::create_dir(repo_path.join(".git")).unwrap();
+        fs::write(repo_path.join("sub").join(".gitignore"), "generated\n").unwrap();
+        fs::write(pkg_path.join("index.ts"), "debugger;\n").unwrap();
+
+        // Running from inside the ignored tree finds nothing.
+        let (_, result) = Tester::new().with_cwd(pkg_path.clone()).test_output(&[]);
+        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // Explicitly passed gitignored directories are skipped too.
+        let (_, result) = Tester::new().with_cwd(repo_path).test_output(&["sub/generated/pkg"]);
+        assert!(matches!(result, CliRunResult::LintNoFilesFound), "{result:?}");
+
+        // But an explicitly named file is linted even when gitignored;
+        // `.gitignore` only scopes discovery.
+        let (stdout, result) =
+            Tester::new().with_cwd(pkg_path).test_output(&["-D", "no-debugger", "index.ts"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("on 1 file"), "{stdout}");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn gitignore_directory_pattern_does_not_filter_explicit_symlink() {
+        use std::os::unix::fs::symlink;
+
+        use crate::cli::CliRunResult;
+
+        let temp_dir = tempfile::tempdir().unwrap();
+        let repo_path = temp_dir.path().join("repo");
+        let target = repo_path.join("target");
+
+        fs::create_dir_all(repo_path.join(".git")).unwrap();
+        fs::create_dir(&target).unwrap();
+        fs::write(target.join("index.js"), "debugger;\n").unwrap();
+        fs::write(repo_path.join(".gitignore"), "link/\n").unwrap();
+        symlink("target", repo_path.join("link")).unwrap();
+
+        let (stdout, result) =
+            Tester::new().with_cwd(repo_path).test_output(&["-D", "no-debugger", "link"]);
+        assert!(matches!(result, CliRunResult::LintFoundErrors), "{result:?}\n{stdout}");
+        assert!(stdout.contains("on 1 file"), "{stdout}");
     }
 
     #[test]
@@ -1557,6 +1673,39 @@ mod test {
             })
             .collect();
         assert!(rule_names.is_sorted(), "The rules list should be sorted by scope and value");
+
+        for (scope, value, expected) in [
+            ("eslint", "no-implied-eval", false),
+            ("typescript", "no-implied-eval", true),
+            ("typescript", "prefer-string-starts-ends-with", false),
+            ("unicorn", "prefer-string-starts-ends-with", true),
+            ("vue", "no-dupe-keys", false),
+            ("eslint", "no-dupe-keys", true),
+        ] {
+            let rule = rules
+                .iter()
+                .find(|rule| rule["scope"] == scope && rule["value"] == value)
+                .unwrap_or_else(|| panic!("Missing rule {scope}/{value}"));
+            assert_eq!(rule["default"], expected, "Incorrect default for {scope}/{value}");
+        }
+    }
+
+    #[test]
+    fn test_rules_markdown_output_uses_qualified_rule_names() {
+        let (stdout, _) = Tester::new().with_cwd("fixtures".into()).test_output(&["--rules"]);
+
+        for (plugin, name, expected) in [
+            ("eslint", "no-implied-eval", ""),
+            ("typescript", "no-implied-eval", "✅"),
+            ("typescript", "prefer-string-starts-ends-with", ""),
+            ("unicorn", "prefer-string-starts-ends-with", "✅"),
+            ("vue", "no-dupe-keys", ""),
+            ("eslint", "no-dupe-keys", "✅"),
+        ] {
+            let row = markdown_rule_row(&stdout, plugin, name);
+            assert_eq!(row[2], expected, "Incorrect default for {plugin}/{name}");
+            assert_eq!(row[3], expected, "Incorrect enabled state for {plugin}/{name}");
+        }
     }
 
     #[test]
@@ -1642,6 +1791,17 @@ mod test {
     fn test_tsgolint_type_check_only() {
         let args = &["--type-check-only"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_type_error".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_type_check_only_skips_rules() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_type_check_only_rules".into())
+            .test_and_snapshot_multiple(&[
+                &["--type-check-only", "index.ts"],
+                &["--type-check-only", "type-error.ts"],
+            ]);
     }
 
     #[test]
@@ -1840,6 +2000,13 @@ export { redundant };
     }
 
     #[test]
+    fn test_invalid_config_invalid_glob_in_override() {
+        Tester::new()
+            .with_cwd("fixtures/cli/invalid_glob_in_override".into())
+            .test_and_snapshot(&[]);
+    }
+
+    #[test]
     fn test_invalid_config_missing_rule_in_override() {
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_missing_rule_in_override".into())
@@ -1912,6 +2079,12 @@ export { redundant };
         Tester::new()
             .with_cwd("fixtures/cli/invalid_config_tuple_rules".into())
             .test_and_snapshot(&[]);
+    }
+
+    #[test]
+    fn test_no_js_runtime() {
+        let args = &[];
+        Tester::new().with_cwd("fixtures/cli/no_js_runtime".into()).test_and_snapshot(args);
     }
 }
 
@@ -2011,6 +2184,48 @@ mod suppression {
             !matches!(result, CliRunResult::LintFoundErrors),
             "Expected no errors (warnings-only files should not count), got {result:?}"
         );
+    }
+
+    #[test]
+    #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
+    fn test_type_check_only_does_not_validate_regular_rule_suppressions() {
+        let cwd = "fixtures/suppression/type_check_only_with_regular_rule";
+
+        let (stdout, result) = Tester::new().with_cwd(cwd.into()).test_output(&["index.ts"]);
+        assert!(
+            matches!(result, CliRunResult::LintSucceeded),
+            "Expected the suppression fixture to pass regular lint, got {result:?}.\nOutput: {stdout}"
+        );
+
+        let (stdout, result) =
+            Tester::new().with_cwd(cwd.into()).test_output(&["--type-check-only", "index.ts"]);
+
+        assert!(
+            matches!(result, CliRunResult::LintSucceeded),
+            "Expected LintSucceeded, got {result:?}.\nOutput: {stdout}"
+        );
+        assert!(
+            !stdout.contains("suppressions that do not occur anymore"),
+            "Regular lint suppressions must not be validated when their rules did not run.\nOutput: {stdout}"
+        );
+    }
+
+    #[test]
+    fn test_type_check_only_rejects_suppression_update_flags() {
+        for flag in ["--suppress-all", "--prune-suppressions"] {
+            let (stdout, result) = Tester::new()
+                .with_cwd("fixtures/suppression/type_check_only_with_regular_rule".into())
+                .test_output(&["--type-check-only", flag, "index.ts"]);
+
+            assert!(
+                matches!(result, CliRunResult::InvalidOptionTypeCheckOnlyWithSuppressionUpdate),
+                "Expected {flag} to be rejected with --type-check-only, got {result:?}.\nOutput: {stdout}"
+            );
+            assert!(
+                stdout.contains("cannot be used with suppression update flags"),
+                "Expected an invalid option message for {flag}.\nOutput: {stdout}"
+            );
+        }
     }
 
     #[test]
@@ -2240,7 +2455,7 @@ mod suppression {
     #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
     fn test_prunning_errors_update_the_file_when_errors_are_decreased() {
         SuppressionTester::new()
-            .with_cwd("with_arg_and_decreased_errors")
+            .with_cwd("with_arg_and_decreased_errors_prune")
             .with_setup_file(true)
             .with_expected_file(true)
             .with_backup_file(true)

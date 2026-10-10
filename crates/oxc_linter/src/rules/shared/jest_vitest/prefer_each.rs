@@ -1,11 +1,11 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_semantic::{AstNode, NodeId};
+use oxc_semantic::{AstNode, AstTypesBitset, NodeId};
 use oxc_span::{GetSpan, Span};
 use rustc_hash::FxHashSet;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     utils::{JestFnKind, JestGeneralFnKind, PossibleJestNode, parse_jest_fn_call},
 };
 
@@ -59,10 +59,23 @@ describe.each(items)('item', (item) => {
 ```
 ";
 
+/// A diagnostic requires a test call directly inside a `for`/`for-in`/`for-of` loop,
+/// so files without any loop statement (or without any call) can be skipped entirely.
+const LOOP_NODE_TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+    AstType::ForStatement,
+    AstType::ForInStatement,
+    AstType::ForOfStatement,
+]);
+
 #[derive(Debug, Default, Clone)]
 pub struct PreferEachConfig;
 
 impl PreferEachConfig {
+    pub fn should_run(ctx: &ContextHost) -> bool {
+        let nodes = ctx.semantic().nodes();
+        nodes.contains_any(LOOP_NODE_TYPES) && nodes.contains(AstType::CallExpression)
+    }
+
     pub fn run_once(ctx: &LintContext<'_>) {
         let mut skip = FxHashSet::<NodeId>::default();
         ctx.nodes().iter().for_each(|node| {
@@ -71,64 +84,56 @@ impl PreferEachConfig {
     }
 
     fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, skip: &mut FxHashSet<NodeId>) {
-        let kind = node.kind();
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
 
-        let AstKind::CallExpression(call_expr) = kind else { return };
-
-        let Some(vitest_fn_call) =
-            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
-        else {
-            return;
-        };
-
-        if !matches!(
-            vitest_fn_call.kind(),
-            JestFnKind::General(
-                JestGeneralFnKind::Describe | JestGeneralFnKind::Hook | JestGeneralFnKind::Test
-            )
-        ) {
-            return;
-        }
-
+        // Walking up to the nearest enclosing loop is much cheaper than
+        // `parse_jest_fn_call`, so find it first: only calls sitting directly in a
+        // loop (not nested in another call) can be reported.
+        let mut enclosing_loop = None;
         for parent_node in ctx.nodes().ancestors(node.id()) {
             match parent_node.kind() {
                 AstKind::CallExpression(_) => return,
                 AstKind::ForStatement(_)
                 | AstKind::ForInStatement(_)
                 | AstKind::ForOfStatement(_) => {
-                    if skip.contains(&parent_node.id()) || is_in_test(ctx, parent_node.id()) {
-                        return;
-                    }
-
-                    let fn_name = if matches!(
-                        vitest_fn_call.kind(),
-                        JestFnKind::General(JestGeneralFnKind::Test)
-                    ) {
-                        "it"
-                    } else {
-                        "describe"
-                    };
-
-                    let span = match parent_node.kind() {
-                        AstKind::ForStatement(statement) => {
-                            Span::new(statement.span.start, statement.body.span().start)
-                        }
-                        AstKind::ForInStatement(statement) => {
-                            Span::new(statement.span.start, statement.body.span().start)
-                        }
-                        AstKind::ForOfStatement(statement) => {
-                            Span::new(statement.span.start, statement.body.span().start)
-                        }
-                        _ => unreachable!(),
-                    };
-
-                    skip.insert(parent_node.id());
-                    ctx.diagnostic(use_prefer_each(span, fn_name));
-
+                    enclosing_loop = Some(parent_node);
                     break;
                 }
                 _ => {}
             }
         }
+        let Some(loop_node) = enclosing_loop else { return };
+
+        if skip.contains(&loop_node.id()) {
+            return;
+        }
+
+        let Some(jest_fn_call) =
+            parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx)
+        else {
+            return;
+        };
+
+        let fn_name = match jest_fn_call.kind() {
+            JestFnKind::General(JestGeneralFnKind::Test) => "it",
+            JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Hook) => {
+                "describe"
+            }
+            _ => return,
+        };
+
+        if is_in_test(ctx, loop_node.id()) {
+            return;
+        }
+
+        let (loop_span, body) = match loop_node.kind() {
+            AstKind::ForStatement(statement) => (statement.span, &statement.body),
+            AstKind::ForInStatement(statement) => (statement.span, &statement.body),
+            AstKind::ForOfStatement(statement) => (statement.span, &statement.body),
+            _ => unreachable!(),
+        };
+
+        skip.insert(loop_node.id());
+        ctx.diagnostic(use_prefer_each(Span::new(loop_span.start, body.span().start), fn_name));
     }
 }

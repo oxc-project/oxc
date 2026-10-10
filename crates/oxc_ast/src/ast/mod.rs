@@ -172,7 +172,7 @@
 
 // Re-export AST types from other crates
 pub use oxc_span::{Language, LanguageVariant, ModuleKind, SourceType, Span};
-pub use oxc_str::Str;
+pub use oxc_str::{Ident, Str};
 pub use oxc_syntax::{
     number::{BigintBase, NumberBase},
     operator::{

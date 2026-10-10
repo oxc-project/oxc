@@ -9,10 +9,7 @@ use oxc_syntax::operator::BinaryOperator;
 use crate::{
     context::LintContext,
     fixer::{FixKind, RuleFixer},
-    utils::{
-        KnownMemberExpressionProperty, PossibleJestNode, is_equality_matcher,
-        parse_expect_jest_fn_call,
-    },
+    utils::{ParsedExpectFnCall, PossibleJestNode, is_equality_matcher, parse_expect_jest_fn_call},
 };
 
 fn use_equality_matcher_diagnostic(span: Span) -> OxcDiagnostic {
@@ -101,8 +98,7 @@ pub fn run_on_jest_node<'a, 'c>(
         return;
     };
 
-    let modifiers = jest_fn_call.modifiers();
-    let has_not_modifier = modifiers.iter().any(|modifier| modifier.is_name_equal("not"));
+    let has_not_modifier = jest_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
     let add_not_modifier = (if binary_expr.operator == BinaryOperator::StrictInequality {
         !matcher_arg_value.value
     } else {
@@ -120,8 +116,7 @@ pub fn run_on_jest_node<'a, 'c>(
             binary_expr,
             call_span_end,
             arg_span_end,
-            &jest_fn_call.local,
-            &modifiers,
+            &jest_fn_call,
             eq_matcher,
             add_not_modifier,
             fixer,
@@ -136,19 +131,18 @@ fn build_code<'a>(
     binary_expr: &BinaryExpression<'a>,
     call_span_end: &str,
     arg_span_end: &str,
-    local_name: &str,
-    modifiers: &[&KnownMemberExpressionProperty<'a>],
+    expect_call: &ParsedExpectFnCall<'a>,
     equality_matcher: &str,
     add_not_modifier: bool,
     fixer: RuleFixer<'_, 'a>,
 ) -> String {
     let mut content = fixer.codegen();
-    content.print_str(local_name);
+    content.print_str(&expect_call.local);
     content.print_ascii_byte(b'(');
     content.print_expression(&binary_expr.left);
     content.print_str(call_span_end);
     content.print_ascii_byte(b'.');
-    for modifier in modifiers {
+    for modifier in expect_call.modifiers() {
         let Some(modifier_name) = modifier.name() else {
             continue;
         };

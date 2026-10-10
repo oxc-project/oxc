@@ -1,0 +1,84 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# Trailing whitespace in a block scalar is part of the VALUE and is preserved:
+# last-line spaces/tabs, and space-only lines more-indented than the block.
+# DIVERGES from the pinned Prettier (drops them, corrupting the value);
+# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
+strip-chomped-last-line: |-
+  value  
+folded-tab: >-
+  value	
+ws-only-line: >
+  x
+   
+# The blank line after `last  ` stays: trailing spaces and the blank are
+# independent (the unified blank-line rule).
+last-line-before-blank: |
+  mid  
+  last  
+
+after: 1
+# `|+` additionally keeps its trailing blank run as value.
+keep-is-verbatim: |+
+  kept  
+
+tail: 2
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# Trailing whitespace in a block scalar is part of the VALUE and is preserved:
+# last-line spaces/tabs, and space-only lines more-indented than the block.
+# DIVERGES from the pinned Prettier (drops them, corrupting the value);
+# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
+strip-chomped-last-line: |-
+  value  
+folded-tab: >-
+  value	
+ws-only-line: >
+  x
+   
+# The blank line after `last  ` stays: trailing spaces and the blank are
+# independent (the unified blank-line rule).
+last-line-before-blank: |
+  mid  
+  last  
+
+after: 1
+# `|+` additionally keeps its trailing blank run as value.
+keep-is-verbatim: |+
+  kept  
+
+tail: 2
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# Trailing whitespace in a block scalar is part of the VALUE and is preserved:
+# last-line spaces/tabs, and space-only lines more-indented than the block.
+# DIVERGES from the pinned Prettier (drops them, corrupting the value);
+# see DIVERGENCES.md#block-scalar-trailing-whitespace (prettier#19764).
+strip-chomped-last-line: |-
+  value  
+folded-tab: >-
+  value	
+ws-only-line: >
+  x
+   
+# The blank line after `last  ` stays: trailing spaces and the blank are
+# independent (the unified blank-line rule).
+last-line-before-blank: |
+  mid  
+  last  
+
+after: 1
+# `|+` additionally keeps its trailing blank run as value.
+keep-is-verbatim: |+
+  kept  
+
+tail: 2
+
+===================== End =====================

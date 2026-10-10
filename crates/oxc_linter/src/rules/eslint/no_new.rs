@@ -56,16 +56,6 @@ impl Rule for NoNew {
         let Some(node) = outermost_paren_parent(node, ctx) else { return };
 
         if matches!(node.kind(), AstKind::ExpressionStatement(_)) {
-            let mut ancestors = ctx
-                .nodes()
-                .ancestors(node.id())
-                .filter(|a| !matches!(a.kind(), AstKind::ParenthesizedExpression(_)));
-            ancestors.next(); // skip `FunctionBody`
-            if let Some(node) = ancestors.next()
-                && matches!(node.kind(), AstKind::ArrowFunctionExpression(e) if e.expression)
-            {
-                return;
-            }
             let span = Span::new(expr.span.start, expr.callee.span().end);
             ctx.diagnostic(no_new_diagnostic(span));
         }

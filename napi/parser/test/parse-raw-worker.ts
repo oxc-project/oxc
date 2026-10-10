@@ -240,10 +240,10 @@ async function runTsCase(
         });
 
         if (
-          errors.length > 0 &&
-          program.start === 0 &&
-          program.end === 0 &&
-          program.body.length === 0
+          errors.length > 0
+          && program.start === 0
+          && program.end === 0
+          && program.body.length === 0
         ) {
           // Fatal error
           continue;
@@ -369,11 +369,11 @@ function testRangeParent(
     for (const key in node) {
       if (!Object.hasOwn(node, key)) continue;
       if (
-        key === "type" ||
-        key === "start" ||
-        key === "end" ||
-        key === "range" ||
-        key === "parent"
+        key === "type"
+        || key === "start"
+        || key === "end"
+        || key === "range"
+        || key === "parent"
       ) {
         continue;
       }

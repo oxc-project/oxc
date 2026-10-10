@@ -220,9 +220,9 @@ impl Rule for ConstructorSuper {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::Class(class) = node.kind() else { return };
 
-        let super_class_type = Self::classify_super_class(class.super_class.as_ref());
+        let super_class_type = Self::classify_super_class(class.heritage_expression());
         let super_class_context =
-            Self::super_class_context(super_class_type, class.super_class.as_ref());
+            Self::super_class_context(super_class_type, class.heritage_expression());
 
         let Some(constructor) = class.body.body.iter().find_map(|elem| {
             if let ClassElement::MethodDefinition(method) = elem
@@ -276,7 +276,7 @@ impl Rule for ConstructorSuper {
                     // Treat as single path
                     if super_call_spans.len() > 1 {
                         let mut sorted_spans = super_call_spans;
-                        sorted_spans.sort_by_key(|s| s.start);
+                        sorted_spans.sort_unstable_by_key(|s| s.start);
                         let first_super_span = sorted_spans[0];
 
                         for &span in sorted_spans.iter().skip(1) {
@@ -311,7 +311,7 @@ impl Rule for ConstructorSuper {
 
                     if has_duplicate && super_call_spans.len() > 1 {
                         let mut sorted_spans = super_call_spans;
-                        sorted_spans.sort_by_key(|s| s.start);
+                        sorted_spans.sort_unstable_by_key(|s| s.start);
                         let first_super_span = sorted_spans[0];
 
                         for &span in sorted_spans.iter().skip(1) {

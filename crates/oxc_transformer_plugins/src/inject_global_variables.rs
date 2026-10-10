@@ -5,7 +5,7 @@ use cow_utils::CowUtils;
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 use oxc_ast::{
     ast::*,
-    builder::{AstBuilder, GetAstBuilder, NONE},
+    builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_semantic::Scoping;
 use oxc_span::SPAN;
@@ -221,7 +221,7 @@ impl<'a> InjectGlobalVariables<'a> {
                 StringLiteral::new(SPAN, Str::from_str_in(&inject.source, self), None, self);
             let kind = ImportOrExportKind::Value;
             let import_decl = ModuleDeclaration::new_import_declaration(
-                SPAN, specifiers, source, None, NONE, kind, self,
+                SPAN, specifiers, source, None, None, kind, self,
             );
             Statement::from(import_decl)
         });
@@ -292,30 +292,28 @@ impl<'a> InjectGlobalVariables<'a> {
                     }
                 }
             }
-            Expression::MetaProperty(meta_property)
-                // Check if this is import.meta and if it should be replaced
-                if meta_property.meta.name == "import" && meta_property.property.name == "meta" => {
-                    for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
-                        // Check if dot_define is exactly ["import", "meta"]
-                        if dot_define.parts.len() == 2
-                            && dot_define.parts[0].as_str() == "import"
-                            && dot_define.parts[1].as_str() == "meta"
-                        {
-                            // If this is first replacement made for this dot define,
-                            // create `Str` for replacement, and record in `replaced_dot_defines`
-                            let value_str = *value_str.get_or_insert_with(|| {
-                                self.replaced_dot_defines
-                                    .push((dot_define.parts[0].clone(), dot_define.value.clone()));
-                                Str::from_str_in(dot_define.value.as_str(), &self.ast)
-                            });
+            Expression::ImportMeta(_) => {
+                for DotDefineState { dot_define, value_str } in &mut self.dot_defines {
+                    // Check if dot_define is exactly ["import", "meta"]
+                    if dot_define.parts.len() == 2
+                        && dot_define.parts[0].as_str() == "import"
+                        && dot_define.parts[1].as_str() == "meta"
+                    {
+                        // If this is first replacement made for this dot define,
+                        // create `Str` for replacement, and record in `replaced_dot_defines`
+                        let value_str = *value_str.get_or_insert_with(|| {
+                            self.replaced_dot_defines
+                                .push((dot_define.parts[0].clone(), dot_define.value.clone()));
+                            Str::from_str_in(dot_define.value.as_str(), &self.ast)
+                        });
 
-                            let value = Expression::new_identifier(SPAN, value_str, self);
-                            *expr = value;
-                            self.mark_as_changed();
-                            break;
-                        }
+                        let value = Expression::new_identifier(SPAN, value_str, self);
+                        *expr = value;
+                        self.mark_as_changed();
+                        break;
                     }
                 }
+            }
             _ => {}
         }
     }

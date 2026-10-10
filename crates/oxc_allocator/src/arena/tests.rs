@@ -11,17 +11,6 @@ use super::{
     create::{OVERHEAD, TYPICAL_PAGE_SIZE},
 };
 
-/// This function tests that `Arena` isn't `Sync`.
-/// ```compile_fail
-/// use oxc_allocator::arena::Arena;
-/// fn _requires_sync<T: Sync>(_value: T) {}
-/// fn _arena_not_sync(b: Arena) {
-///    _requires_sync(b);
-/// }
-/// ```
-#[cfg(doctest)]
-fn arena_not_sync() {}
-
 // Uses private `DEFAULT_CHUNK_SIZE_WITHOUT_FOOTER`, `OVERHEAD`, and `TYPICAL_PAGE_SIZE`
 #[test]
 fn allocated_and_used_bytes() {

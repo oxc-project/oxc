@@ -17,7 +17,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/namespaces/value-module.ts
         ],
         "flags": "ScopeFlags(TsModuleBlock)",
         "id": 1,
-        "node": "TSModuleDeclaration(N1)",
+        "node": "TSNamespaceDeclaration(N1)",
         "symbols": [
           {
             "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
@@ -51,7 +51,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/namespaces/value-module.ts
         "flags": "SymbolFlags(ValueModule)",
         "id": 0,
         "name": "N1",
-        "node": "TSModuleDeclaration(N1)",
+        "node": "TSNamespaceDeclaration(N1)",
         "references": [
           {
             "flags": "ReferenceFlags(Type)",

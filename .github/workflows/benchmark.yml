@@ -32,7 +32,12 @@ jobs:
   determine-matrix:
     name: Determine Benchmark
     runs-on: ubuntu-latest
-    if: ${{ github.event_name != 'pull_request' || !contains(github.event.pull_request.labels.*.name, '0-merge') }}
+    if: >
+      github.repository == 'oxc-project/oxc' &&
+      (
+        github.event_name != 'pull_request' ||
+        !contains(github.event.pull_request.labels.*.name, '0-merge')
+      )
     outputs:
       matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
@@ -73,6 +78,8 @@ jobs:
           save-cache: ${{ github.ref_name == 'main' }}
           tools: cargo-codspeed
 
+      # Memory mode reuses these binaries: cargo-codspeed maps both simulation and
+      # memory modes to the same `analysis` build (`--cfg codspeed`) and directory.
       - name: Build benchmark
         env:
           RUSTFLAGS: "-C debuginfo=1 -C strip=none -g --cfg codspeed"
@@ -90,8 +97,8 @@ jobs:
           rm target/codspeed/analysis/oxc_benchmark/*.d
 
       - name: Run benchmark
-        uses: CodSpeedHQ/action@a4a36bb07c0638b0b4ca52bf1f3dad1b4289e52f # v4.18.1
+        uses: CodSpeedHQ/action@373d6868929f444bc08d901fd0eb0ad52a8875ea # v5.2.1
         timeout-minutes: 30
         with:
-          mode: simulation
+          mode: ${{ matrix.mode }}
           run: cargo codspeed run ${{ matrix.component }}

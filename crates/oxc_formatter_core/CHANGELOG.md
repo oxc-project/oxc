@@ -4,6 +4,123 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- dd72fbf formatter_markdown: Keep container columns as spaces under `useTabs` (#27277) (leaysgur)
+- c2de02b formatter: Decide embedded template layout from AST, not source shape (#27218) (leaysgur)
+- 36e14df formatter: Keep comments between callee and its opener on the callee side (#27172) (leaysgur)
+
+### ⚡ Performance
+
+- cea47e3 formatter_core: Avoid exponential `will_break` check on nested interned (#27211) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 7717813 formatter_markdown: Implement markdown formatter (#26434) (leaysgur)
+
+### 📚 Documentation
+
+- e012542 formatter_core: Add note for blanked front matter (#26786) (leaysgur)
+- 11ff089 formatter_markdown: Follow updated DIVERGENCES policy (#26776) (leaysgur)
+- 0c16983 formatter_core: Clean up FORMATTER_POLICY (#26745) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- 586f27a formatter_core: Add `prefix_align` builder and `Tag::(Start|End)Prefix` (#26520) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- dea2ba0 formatter_core: Do not panic with align(0) (#26468) (leaysgur)
+
+### 📚 Documentation
+
+- 66fda4f formatter: Update AGENTS.md comment handling (#26551) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 104061b formatter: Keep JSDoc cast parens with a comment inside them (#26374) (leaysgur)
+- 172ddb6 formatter_css: Keep a same-line line comment on its line (#26321) (leaysgur)
+- 534a0fe formatter_css: Keep a line comment on its comma's line (#26319) (leaysgur)
+- 2028896 formatter_css: Preserve comments around SCSS/Less variable values (#26276) (leaysgur)
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+
+### 📚 Documentation
+
+- 32084d4 formatter_core: Clarify printer hard_line compression (#26312) (leaysgur)
+- 26a1fa4 formatter_core: Refine FORMATTER_POLICY (#26266) (leaysgur)
+
+## [0.66.0] - 2026-08-31
+
+### 📚 Documentation
+
+- 181953b oxfmt,formatter_core,formatter,formatter_yaml,formatter_css,formatter_graphql: Extract `DIVERGENCES.md` out from `AGENTS.md` (#26121) (leaysgur)
+- a67cb9d formatter,formatter_core: Document comment moving policy (#26075) (leaysgur)
+- fc175b0 formatter_core: Clarify idempotency test infra (#26069) (leaysgur)
+
+## [0.63.0] - 2026-08-10
+
+### 🚀 Features
+
+- fd02a89 oxfmt: Dispatch yaml-in-css(frontmatter) to `oxc_formatter_yaml` (#25336) (leaysgur)
+- ab12665 formatter_core: Add `hardlineWithoutBreakParent` equivalent IR (#25273) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- ab52a59 formatter: Format xxx-in-js inside JSDoc js fence (#25414) (leaysgur)
+- 1a2c64a formatter,oxfmt: Apply effective print width for JSDoc fence (#25413) (leaysgur)
+- 2eaede9 formatter_core: Unify leading-BOM handlings (#25340) (leaysgur)
+- c29b587 formatter_core: Measure decided-flat fill separator as flat during group re-measure (#25276) (leaysgur)
+
+### 📚 Documentation
+
+- 6eae5c9 formatter,oxfmt: Record embed-layer decisions in place (#25422) (leaysgur)
+
+## [0.62.0] - 2026-08-03
+
+### 🐛 Bug Fixes
+
+- f56009a oxfmt: Correct prose about comment width in fits measurement (#25054) (leaysgur)
+
+### 📚 Documentation
+
+- eaa7c69 formatter_core: Extract FORMATTER_POLICY (#25233) (leaysgur)
+
+## [0.61.0] - 2026-07-27
+
+### ⚡ Performance
+
+- bb73b23 formatter_core: Bound the thread-local scratch cache (#24793) (leaysgur)
+- a5f7b15 formatter: Stage assignment-like left hand side on the heap (#24613) (leaysgur)
+- 94de05f formatter: Accumulate JSX child-list builders on the heap (#24585) (leaysgur)
+- 7810e8a formatter_core: Share one thread-cached scratch vector across staging buffers (#24583) (leaysgur)
+- c191f51 formatter_core: Stage IR buffers on the heap to reduce arena memory (#24582) (leaysgur)
+
+## [0.59.0] - 2026-07-13
+
+### 🚀 Features
+
+- a9a5cd6 formatter_core: Expose `SourceText::as_str()` (#24281) (leaysgur)
+
+### ⚡ Performance
+
+- eeb1913 formatter_core: Avoid per-call `Vec` work-stack in soft-line removal (#23775) (Marius Schulz)
+
 ## [0.58.0] - 2026-07-06
 
 ### 🚀 Features

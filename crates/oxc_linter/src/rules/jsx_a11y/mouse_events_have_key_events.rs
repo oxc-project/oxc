@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::JSXAttributeValue};
+use oxc_ast::{
+    AstKind,
+    ast::{Expression, JSXAttributeItem, JSXAttributeValue},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -80,7 +83,7 @@ declare_oxc_lint!(
 
 impl Rule for MouseEventsHaveKeyEvents {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -96,22 +99,12 @@ impl Rule for MouseEventsHaveKeyEvents {
 
         for handler in &self.0.hover_in_handlers {
             if let Some(jsx_attr) = has_jsx_prop(jsx_opening_el, handler) {
-                if get_prop_value(jsx_attr).is_none() {
+                if !has_handler_value(jsx_attr) {
                     continue;
                 }
 
-                match has_jsx_prop(jsx_opening_el, "onFocus").and_then(get_prop_value) {
-                    Some(JSXAttributeValue::ExpressionContainer(container)) => {
-                        if let Some(expr) = container.expression.as_expression()
-                            && expr.is_undefined()
-                        {
-                            ctx.diagnostic(miss_on_focus(jsx_attr.span(), handler));
-                        }
-                    }
-                    None => {
-                        ctx.diagnostic(miss_on_focus(jsx_attr.span(), handler));
-                    }
-                    _ => {}
+                if !has_jsx_prop(jsx_opening_el, "onFocus").is_some_and(has_handler_value) {
+                    ctx.diagnostic(miss_on_focus(jsx_attr.span(), handler));
                 }
 
                 break;
@@ -120,20 +113,12 @@ impl Rule for MouseEventsHaveKeyEvents {
 
         for handler in &self.0.hover_out_handlers {
             if let Some(jsx_attr) = has_jsx_prop(jsx_opening_el, handler) {
-                if get_prop_value(jsx_attr).is_none() {
+                if !has_handler_value(jsx_attr) {
                     continue;
                 }
 
-                match has_jsx_prop(jsx_opening_el, "onBlur").and_then(get_prop_value) {
-                    Some(JSXAttributeValue::ExpressionContainer(container))
-                        if container.expression.is_undefined() =>
-                    {
-                        ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
-                    }
-                    None => {
-                        ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
-                    }
-                    _ => {}
+                if !has_jsx_prop(jsx_opening_el, "onBlur").is_some_and(has_handler_value) {
+                    ctx.diagnostic(miss_on_blur(jsx_attr.span(), handler));
                 }
 
                 break;
@@ -142,9 +127,28 @@ impl Rule for MouseEventsHaveKeyEvents {
     }
 }
 
+fn has_handler_value(attribute: &JSXAttributeItem<'_>) -> bool {
+    match get_prop_value(attribute) {
+        Some(JSXAttributeValue::ExpressionContainer(container)) => {
+            let Some(expression) = container.expression.as_expression() else {
+                return true;
+            };
+            let expression = expression.get_inner_expression();
+            !expression.is_undefined() && !matches!(expression, Expression::NullLiteral(_))
+        }
+        Some(_) => true,
+        None => false,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
+
+    let configured = Some(serde_json::json!([{
+        "hoverInHandlers": ["onMouseOver", "onMouseEnter"],
+        "hoverOutHandlers": ["onMouseOut", "onMouseLeave"]
+    }]));
 
     let pass = vec![
         ("<div onMouseOver={() => void 0} onFocus={() => void 0} />;", None),
@@ -197,6 +201,21 @@ fn test() {
             "<div onMouseLeave={() => {}} />",
             Some(serde_json::json!([{ "hoverOutHandlers": ["onPointerLeave"] }])),
         ),
+        ("<div onMouseOver={undefined} />", None),
+        ("<div onMouseOut={undefined} />", None),
+        ("<div onMouseOver={null} />", None),
+        ("<div onMouseOut={null} />", None),
+        ("<div onMouseOver={undefined} onMouseOut={null} />", None),
+        ("<div onMouseOver />", None),
+        ("<div onMouseOut />", None),
+        ("<div onMouseOver={handler} onFocus={handler} />", None),
+        ("<div onMouseOut={handler} onBlur={handler} />", None),
+        ("<div onMouseOver={null} onMouseEnter={handler} onFocus={handler} />", configured.clone()),
+        (
+            "<div onMouseOut={undefined} onMouseLeave={handler} onBlur={handler} />",
+            configured.clone(),
+        ),
+        ("<Custom onMouseOver={handler} onFocus={null} />", None),
     ];
 
     let fail = vec![
@@ -234,6 +253,16 @@ fn test() {
             "<div onPointerLeave={() => {}} />",
             Some(serde_json::json!([{ "hoverOutHandlers": ["onPointerLeave"] }])),
         ),
+        ("<div onMouseOver={handler} onFocus={null} />", None),
+        ("<div onMouseOut={handler} onBlur={null} />", None),
+        ("<div onMouseOver={handler} onFocus={undefined} />", None),
+        ("<div onMouseOut={handler} onBlur={undefined} />", None),
+        ("<div onMouseOver={handler} onFocus />", None),
+        ("<div onMouseOut={handler} onBlur />", None),
+        ("<div onMouseOver={null} onMouseEnter={handler} />", configured.clone()),
+        ("<div onMouseOut={undefined} onMouseLeave={handler} />", configured.clone()),
+        ("<div onMouseOver={null} onMouseEnter={handler} onFocus={null} />", configured.clone()),
+        ("<div onMouseOut={undefined} onMouseLeave={handler} onBlur={null} />", configured),
     ];
 
     Tester::new(MouseEventsHaveKeyEvents::NAME, MouseEventsHaveKeyEvents::PLUGIN, pass, fail)

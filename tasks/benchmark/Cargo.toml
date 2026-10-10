@@ -9,6 +9,9 @@ license.workspace = true
 publish = false
 repository.workspace = true
 description.workspace = true
+# Every bench is declared below. Without this, Cargo would also treat `benches/lexer_common.rs`
+# (code shared by the lexer benches) as a benchmark.
+autobenches = false
 
 [lints]
 workspace = true
@@ -21,6 +24,17 @@ doctest = false
 [[bench]]
 name = "lexer"
 harness = false
+
+# Wallclock only - not run on CodSpeed. Built separately from each other. See `just bench-lexer`.
+[[bench]]
+name = "lexer_wallclock_old"
+harness = false
+required-features = ["lexer_wallclock"]
+
+[[bench]]
+name = "lexer_wallclock_new"
+harness = false
+required-features = ["lexer_wallclock"]
 
 [[bench]]
 name = "parser"
@@ -70,12 +84,13 @@ bench = false
 [dependencies]
 oxc = { workspace = true, optional = true, features = ["full"] }
 oxc_allocator = { workspace = true, optional = true }
-oxc_ast = { workspace = true, optional = true, features = ["disable_old_builder", "serialize"] }
+oxc_ast = { workspace = true, optional = true, features = ["serialize"] }
 oxc_ast_visit = { workspace = true, optional = true, features = ["serialize"] }
 oxc_codegen = { workspace = true, optional = true, features = ["sourcemap"] }
 oxc_estree_tokens = { workspace = true, optional = true }
 oxc_formatter = { workspace = true, optional = true }
 oxc_isolated_declarations = { workspace = true, optional = true }
+oxc_lexer = { workspace = true, optional = true }
 oxc_linter = { workspace = true, optional = true }
 oxc_mangler = { workspace = true, optional = true }
 oxc_minifier = { workspace = true, optional = true }
@@ -91,7 +106,7 @@ oxc_transformer = { workspace = true, optional = true }
 
 criterion2 = { workspace = true }
 
-# Only for lexer benchmark
+# Only for lexer benchmarks
 cow-utils = { workspace = true, optional = true }
 
 # Only for NAPI benchmark
@@ -141,6 +156,17 @@ react_compiler = [
   "dep:oxc_span",
   "dep:oxc_tasks_common",
 ]
+# `oxc_lexer` vs `oxc_parser`'s lexer, wallclock. Not part of "compiler", so CodSpeed doesn't build it.
+lexer_wallclock = [
+  "dep:oxc_allocator",
+  "dep:oxc_ast",
+  "dep:oxc_ast_visit",
+  "dep:oxc_lexer",
+  "dep:oxc_parser",
+  "dep:oxc_span",
+  "dep:oxc_tasks_common",
+  "dep:cow-utils",
+]
 
 [dev-dependencies]
 rustc-hash = { workspace = true }
@@ -155,6 +181,7 @@ ignored = [
   "oxc_estree_tokens",
   "oxc_formatter",
   "oxc_isolated_declarations",
+  "oxc_lexer",
   "oxc_linter",
   "oxc_mangler",
   "oxc_minifier",

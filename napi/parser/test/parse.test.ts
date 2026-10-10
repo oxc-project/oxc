@@ -2,6 +2,7 @@ import { Worker } from "node:worker_threads";
 import { describe, expect, it, test } from "vitest";
 
 import { parse, parseSync } from "../src-js/index.js";
+import { parseSync as parseRawSync } from "./parser.ts";
 import type {
   ExpressionStatement,
   ParserOptions,
@@ -44,6 +45,12 @@ describe("parse", () => {
       showSemanticErrors: true,
     });
     expect(ret.errors.length).toBe(1);
+  });
+
+  it("rejects module syntax in script without semantic checks", () => {
+    const ret = parseSync("test.js", 'import "foo";\nexport {};', { sourceType: "script" });
+    // Reported at `import` and `export` keywords
+    expect(ret.errors.map((error) => error.labels[0].start)).toEqual([0, 14]);
   });
 
   describe("sets lang and sourceType", () => {
@@ -895,6 +902,13 @@ describe("error", () => {
       message: "Expected a semicolon or an implicit semicolon after a statement, but found none",
       severity: "Error",
     });
+  });
+
+  it("renders raw-transfer diagnostics", () => {
+    const standard = parseSync("test.js", code);
+    const raw = parseRawSync("test.js", code, { experimentalRawTransfer: true });
+
+    expect(raw.errors[0].codeframe).toBe(standard.errors[0].codeframe);
   });
 });
 

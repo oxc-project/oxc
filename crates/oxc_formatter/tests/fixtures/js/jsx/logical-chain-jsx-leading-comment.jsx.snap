@@ -3,8 +3,10 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // 1. Long `&&` chain whose final JSX operand has a `(`-trailing inline `//`
-//    comment. The chain must break because the inline comment forces a newline
-//    that pushes the collapsed line past `printWidth`.
+//    comment. The chain must break because the inline comment forces a newline.
+//    The break is structural, not width-driven: the comment rides a `line_suffix`
+//    and never counts toward `printWidth` (case 3 breaks the same way with a
+//    tiny comment).
 const A = () => (
   <div>
     {someLongConditionA &&
@@ -47,13 +49,38 @@ const D = () => (
   </div>
 );
 
+// 5. An own-line `//` comment only breaks the JSX operand, not the chain (#26466).
+function App() {
+  return (
+    <>
+      {!isEditing && isTruncated && (
+        // This comment breaks the formatting
+        <div />
+      )}
+    </>
+  );
+}
+
+// 6. Own-line comments before a JSX fragment also keep the conditions together.
+const E = () => (
+  <div>
+    {a || b || (
+      // First comment
+      // Second comment
+      <><span>x</span></>
+    )}
+  </div>
+);
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
 // 1. Long `&&` chain whose final JSX operand has a `(`-trailing inline `//`
-//    comment. The chain must break because the inline comment forces a newline
-//    that pushes the collapsed line past `printWidth`.
+//    comment. The chain must break because the inline comment forces a newline.
+//    The break is structural, not width-driven: the comment rides a `line_suffix`
+//    and never counts toward `printWidth` (case 3 breaks the same way with a
+//    tiny comment).
 const A = () => (
   <div>
     {someLongConditionA &&
@@ -92,6 +119,31 @@ const D = () => (
   <div>
     {a && ( // tiny
       <span>x</span>
+    )}
+  </div>
+);
+
+// 5. An own-line `//` comment only breaks the JSX operand, not the chain (#26466).
+function App() {
+  return (
+    <>
+      {!isEditing && isTruncated && (
+        // This comment breaks the formatting
+        <div />
+      )}
+    </>
+  );
+}
+
+// 6. Own-line comments before a JSX fragment also keep the conditions together.
+const E = () => (
+  <div>
+    {a || b || (
+      // First comment
+      // Second comment
+      <>
+        <span>x</span>
+      </>
     )}
   </div>
 );
@@ -100,8 +152,10 @@ const D = () => (
 { printWidth: 100 }
 -------------------
 // 1. Long `&&` chain whose final JSX operand has a `(`-trailing inline `//`
-//    comment. The chain must break because the inline comment forces a newline
-//    that pushes the collapsed line past `printWidth`.
+//    comment. The chain must break because the inline comment forces a newline.
+//    The break is structural, not width-driven: the comment rides a `line_suffix`
+//    and never counts toward `printWidth` (case 3 breaks the same way with a
+//    tiny comment).
 const A = () => (
   <div>
     {someLongConditionA &&
@@ -140,6 +194,31 @@ const D = () => (
   <div>
     {a && ( // tiny
       <span>x</span>
+    )}
+  </div>
+);
+
+// 5. An own-line `//` comment only breaks the JSX operand, not the chain (#26466).
+function App() {
+  return (
+    <>
+      {!isEditing && isTruncated && (
+        // This comment breaks the formatting
+        <div />
+      )}
+    </>
+  );
+}
+
+// 6. Own-line comments before a JSX fragment also keep the conditions together.
+const E = () => (
+  <div>
+    {a || b || (
+      // First comment
+      // Second comment
+      <>
+        <span>x</span>
+      </>
     )}
   </div>
 );

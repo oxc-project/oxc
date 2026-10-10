@@ -70,9 +70,9 @@ function baz() {}
 function qux() {}
 
 ==================== Output ====================
------------------------------
-{ jsdoc: {}, printWidth: 80 }
------------------------------
+-------------------------------
+{ jsdoc: true, printWidth: 80 }
+-------------------------------
 /**
  * @remarks
  *   This is a remark that should always be on the next line.
@@ -140,9 +140,9 @@ function baz() {}
  */
 function qux() {}
 
-------------------------------
-{ jsdoc: {}, printWidth: 100 }
-------------------------------
+--------------------------------
+{ jsdoc: true, printWidth: 100 }
+--------------------------------
 /**
  * @remarks
  *   This is a remark that should always be on the next line.

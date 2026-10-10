@@ -21,34 +21,13 @@ use rustc_hash::FxHashMap;
 
 use oxc_diagnostics::OxcDiagnostic;
 
-use crate::diagnostics::ErrorCategory;
+use crate::diagnostics;
 use crate::react_compiler_hir::visitors::each_pattern_operand;
 use crate::react_compiler_hir::{
     BlockKind, DeclarationId, HirFunction, InstructionKind, InstructionValue, ParamPattern, Place,
-    Span,
 };
 
 use crate::react_compiler_hir::environment::Environment;
-
-/// Create an invariant diagnostic (matches TS CompilerError.invariant).
-/// When a span is provided, it is attached as a labelled span
-/// (matching TS CompilerError.invariant which uses .withDetails()).
-fn invariant_error(reason: &str, description: Option<String>) -> OxcDiagnostic {
-    invariant_error_with_span(reason, description, None)
-}
-
-fn invariant_error_with_span(
-    reason: &str,
-    description: Option<String>,
-    span: Option<Span>,
-) -> OxcDiagnostic {
-    let mut diagnostic =
-        ErrorCategory::Invariant.diagnostic(reason).with_labels(span.map(|s| s.label(reason)));
-    if let Some(description) = description {
-        diagnostic = diagnostic.with_help(description);
-    }
-    diagnostic
-}
 
 /// Format an InstructionKind variant name (matches TS `${kind}` interpolation).
 fn format_kind(kind: Option<InstructionKind>) -> &'static str {
@@ -67,19 +46,29 @@ fn format_kind(kind: Option<InstructionKind>) -> &'static str {
 
 /// Format a Place like TS `printPlace()`: `<effect> <name>$<id>[<range>]{reactive}`
 fn format_place(place: &Place, env: &Environment) -> String {
-    let ident = &env.identifiers[place.identifier.0 as usize];
+    let ident = &env.identifiers[place.identifier];
     let name = ident.name.as_ref().map_or("", |name| name.value());
-    let scope =
-        ident.scope.map_or(Cow::Borrowed(""), |scope_id| Cow::Owned(format!("_@{}", scope_id.0)));
-    let mutable_range = if ident.mutable_range.end.0 > ident.mutable_range.start.0 + 1 {
-        Cow::Owned(format!("[{}:{}]", ident.mutable_range.start.0, ident.mutable_range.end.0))
+    let scope = ident
+        .scope
+        .map_or(Cow::Borrowed(""), |scope_id| Cow::Owned(format!("_@{}", scope_id.index())));
+    let mutable_range = if ident.mutable_range.end > ident.mutable_range.start + 1 {
+        Cow::Owned(format!(
+            "[{}:{}]",
+            ident.mutable_range.start.index(),
+            ident.mutable_range.end.index()
+        ))
     } else {
         Cow::Borrowed("")
     };
     let reactive = if place.reactive { "{reactive}" } else { "" };
     format!(
         "{} {}${}{}{}{}",
-        place.effect, name, place.identifier.0, scope, mutable_range, reactive
+        place.effect,
+        name,
+        place.identifier.index(),
+        scope,
+        mutable_range,
+        reactive
     )
 }
 
@@ -120,7 +109,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
             ParamPattern::Place(p) => p,
             ParamPattern::Spread(s) => &s.place,
         };
-        let ident = &env.identifiers[place.identifier.0 as usize];
+        let ident = &env.identifiers[place.identifier];
         if ident.name.is_some() {
             declarations.insert(ident.declaration_id, DeclarationLoc::ParamOrContext);
         }
@@ -128,10 +117,17 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
 
     // Seed with context variables
     for place in &func.context {
-        let ident = &env.identifiers[place.identifier.0 as usize];
+        let ident = &env.identifiers[place.identifier];
         if ident.name.is_some() {
             declarations.insert(ident.declaration_id, DeclarationLoc::ParamOrContext);
         }
+    }
+
+    // Seed with the private name of a named function expression. The binding is
+    // created by the function expression itself, so stores to it are reassignments.
+    if let Some(place) = &func.self_binding {
+        let ident = &env.identifiers[place.identifier];
+        declarations.insert(ident.declaration_id, DeclarationLoc::ParamOrContext);
     }
 
     // Process all blocks
@@ -140,18 +136,13 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
         let block = &func.body.blocks[block_id];
         let block_kind = block.kind;
         for (local_idx, instr_id) in block.instructions.iter().enumerate() {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::DeclareLocal { lvalue, .. } => {
-                    let decl_id =
-                        env.identifiers[lvalue.place.identifier.0 as usize].declaration_id;
+                    let decl_id = env.identifiers[lvalue.place.identifier].declaration_id;
                     if declarations.contains_key(&decl_id) {
-                        return Err(invariant_error_with_span(
-                            "Expected variable not to be defined prior to declaration",
-                            Some(format!(
-                                "{} was already defined",
-                                format_place(&lvalue.place, env),
-                            )),
+                        return Err(diagnostics::ssa_variable_already_defined(
+                            &format_place(&lvalue.place, env),
                             lvalue.place.span,
                         ));
                     }
@@ -161,7 +152,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                     );
                 }
                 InstructionValue::StoreLocal { lvalue, .. } => {
-                    let ident = &env.identifiers[lvalue.place.identifier.0 as usize];
+                    let ident = &env.identifiers[lvalue.place.identifier];
                     if ident.name.is_some() {
                         let decl_id = ident.declaration_id;
                         if let Some(existing) = declarations.get(&decl_id) {
@@ -182,12 +173,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             // First store — mark as Const
                             // Mirrors TS: Diagnostics.invariant(!declarations.has(...))
                             if declarations.contains_key(&decl_id) {
-                                return Err(invariant_error_with_span(
-                                    "Expected variable not to be defined prior to declaration",
-                                    Some(format!(
-                                        "{} was already defined",
-                                        format_place(&lvalue.place, env),
-                                    )),
+                                return Err(diagnostics::ssa_variable_already_defined(
+                                    &format_place(&lvalue.place, env),
                                     lvalue.place.span,
                                 ));
                             }
@@ -205,16 +192,12 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                 InstructionValue::Destructure { lvalue, .. } => {
                     let mut kind: Option<InstructionKind> = None;
                     for place in each_pattern_operand(&lvalue.pattern) {
-                        let ident = &env.identifiers[place.identifier.0 as usize];
+                        let ident = &env.identifiers[place.identifier];
                         if ident.name.is_none() {
                             if !(kind.is_none() || kind == Some(InstructionKind::Const)) {
-                                return Err(invariant_error_with_span(
-                                    "Expected consistent kind for destructuring",
-                                    Some(format!(
-                                        "other places were `{}` but '{}' is const",
-                                        format_kind(kind),
-                                        format_place(&place, env),
-                                    )),
+                                return Err(diagnostics::ssa_inconsistent_unnamed_const(
+                                    format_kind(kind),
+                                    &format_place(&place, env),
                                     place.span,
                                 ));
                             }
@@ -224,13 +207,9 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             if let Some(existing) = declarations.get(&decl_id) {
                                 // Reassignment
                                 if !(kind.is_none() || kind == Some(InstructionKind::Reassign)) {
-                                    return Err(invariant_error_with_span(
-                                        "Expected consistent kind for destructuring",
-                                        Some(format!(
-                                            "Other places were `{}` but '{}' is reassigned",
-                                            format_kind(kind),
-                                            format_place(&place, env),
-                                        )),
+                                    return Err(diagnostics::ssa_inconsistent_reassignment(
+                                        format_kind(kind),
+                                        &format_place(&place, env),
                                         place.span,
                                     ));
                                 }
@@ -249,11 +228,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             } else {
                                 // New declaration
                                 if block_kind == BlockKind::Value {
-                                    return Err(invariant_error_with_span(
-                                        "TODO: Handle reassignment in a value block where the original declaration was removed by dead code elimination (DCE)",
-                                        None,
-                                        place.span,
-                                    ));
+                                    return Err(diagnostics::ssa_dce_reassignment(place.span));
                                 }
                                 declarations.insert(
                                     decl_id,
@@ -263,13 +238,9 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                                     },
                                 );
                                 if !(kind.is_none() || kind == Some(InstructionKind::Const)) {
-                                    return Err(invariant_error_with_span(
-                                        "Expected consistent kind for destructuring",
-                                        Some(format!(
-                                            "Other places were `{}` but '{}' is const",
-                                            format_kind(kind),
-                                            format_place(&place, env),
-                                        )),
+                                    return Err(diagnostics::ssa_inconsistent_const(
+                                        format_kind(kind),
+                                        &format_place(&place, env),
                                         place.span,
                                     ));
                                 }
@@ -277,18 +248,16 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                             }
                         }
                     }
-                    let kind =
-                        kind.ok_or_else(|| invariant_error("Expected at least one operand", None))?;
+                    let kind = kind.ok_or_else(diagnostics::ssa_expected_operand)?;
                     destructure_kind_spans.push((block_index, local_idx, kind));
                 }
                 InstructionValue::PostfixUpdate { lvalue, .. }
                 | InstructionValue::PrefixUpdate { lvalue, .. } => {
-                    let ident = &env.identifiers[lvalue.identifier.0 as usize];
+                    let ident = &env.identifiers[lvalue.identifier];
                     let decl_id = ident.declaration_id;
                     let Some(existing) = declarations.get(&decl_id) else {
-                        return Err(invariant_error_with_span(
-                            "Expected variable to have been defined",
-                            Some(format!("No declaration for {}", format_place(lvalue, env),)),
+                        return Err(diagnostics::ssa_missing_declaration(
+                            &format_place(lvalue, env),
                             lvalue.span,
                         ));
                     };
@@ -313,7 +282,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     for (bi, ili) in const_spans {
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
-        let instr = &mut func.instructions[instr_id.0 as usize];
+        let instr = &mut func.instructions[instr_id.index()];
         if let InstructionValue::StoreLocal { lvalue, .. } = &mut instr.value {
             lvalue.kind = InstructionKind::Const;
         }
@@ -322,7 +291,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     for (bi, ili) in reassign_spans {
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
-        let instr = &mut func.instructions[instr_id.0 as usize];
+        let instr = &mut func.instructions[instr_id.index()];
         if let InstructionValue::StoreLocal { lvalue, .. } = &mut instr.value {
             lvalue.kind = InstructionKind::Reassign;
         }
@@ -337,7 +306,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     for (bi, ili, kind) in destructure_kind_spans {
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
-        let instr = &mut func.instructions[instr_id.0 as usize];
+        let instr = &mut func.instructions[instr_id.index()];
         if let InstructionValue::Destructure { lvalue, .. } = &mut instr.value {
             lvalue.kind = kind;
         }
@@ -346,7 +315,7 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
     for (bi, ili) in let_spans {
         let block_id = &block_keys[bi];
         let instr_id = func.body.blocks[block_id].instructions[ili];
-        let instr = &mut func.instructions[instr_id.0 as usize];
+        let instr = &mut func.instructions[instr_id.index()];
         match &mut instr.value {
             InstructionValue::DeclareLocal { lvalue, .. }
             | InstructionValue::StoreLocal { lvalue, .. } => {

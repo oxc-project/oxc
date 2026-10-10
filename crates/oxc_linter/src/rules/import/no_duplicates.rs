@@ -73,6 +73,7 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// Reports if a resolved path is imported more than once in the same module.
+    /// Imports with different import attributes are treated as distinct modules.
     /// This helps avoid unnecessary duplicate imports and keeps the code clean.
     ///
     /// ### Why is this bad?
@@ -113,7 +114,7 @@ declare_oxc_lint!(
 
 impl Rule for NoDuplicates {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once<'a>(&self, ctx: &LintContext<'a>) {
@@ -151,88 +152,116 @@ impl Rule for NoDuplicates {
                 .into_iter()
                 .flat_map(|(_path, requested_modules)| requested_modules)
                 .filter(|requested_module| requested_module.is_import);
-            // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
-            // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
-            let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
-                FxHashMap::default();
-            // Side-effect and top-level type-only imports cannot be merged directly. A runtime
-            // import with specifiers (including inline type specifiers) can absorb either.
-            let mut key0_side_effect_imports = Vec::new();
-            let mut key0_type_only_imports = Vec::new();
-            let mut key0_has_runtime_specifiers = false;
-            for requested_module in requested_modules {
-                let import_entries = module_record
-                    .import_entries
-                    .iter()
-                    .filter(|entry| entry.module_request.span == requested_module.span)
+            let requested_modules = requested_modules.collect::<Vec<_>>();
+            if requested_modules.len() <= 1 {
+                continue;
+            }
+
+            let declarations =
+                import_declarations.get_or_insert_with(|| build_import_declarations(ctx));
+            // Attribute order and key spelling do not affect module identity. An empty
+            // clause is equivalent to having no attributes.
+            let mut attribute_groups = FxHashMap::<_, Vec<_>>::default();
+            for module in requested_modules {
+                let mut attributes = declarations
+                    .get(&module.statement_span)
+                    .and_then(|decl| decl.with_clause.as_ref())
+                    .into_iter()
+                    .flat_map(|clause| &clause.with_entries)
+                    .map(|attribute| {
+                        (attribute.key.as_arena_str().as_str(), attribute.value.value.as_str())
+                    })
                     .collect::<Vec<_>>();
-                if import_entries.is_empty() {
-                    let key = u8::from(requested_module.is_type && !self.prefer_inline);
-                    import_entries_maps.entry(key).or_default().push(requested_module);
-                    if key == 0 {
+                attributes.sort_unstable();
+                attribute_groups.entry(attributes).or_default().push(module);
+            }
+
+            for (_, requested_modules) in
+                attribute_groups.into_iter().sorted_by(|(a, _), (b, _)| a.cmp(b))
+            {
+                // When prefer_inline is false, 0 is value, 1 is type named, 2 is type namespace and 3 is type default
+                // When prefer_inline is true, 0 is value and type named, 2 is type // namespace and 3 is type default
+                let mut import_entries_maps: FxHashMap<u8, Vec<&RequestedModule>> =
+                    FxHashMap::default();
+                // Side-effect and top-level type-only imports cannot be merged directly. A runtime
+                // import with specifiers (including inline type specifiers) can absorb either.
+                let mut key0_side_effect_imports = Vec::new();
+                let mut key0_type_only_imports = Vec::new();
+                let mut key0_has_runtime_specifiers = false;
+                for requested_module in requested_modules {
+                    let import_entries = module_record
+                        .import_entries
+                        .iter()
+                        .filter(|entry| entry.module_request.span == requested_module.span)
+                        .collect::<Vec<_>>();
+                    if import_entries.is_empty() {
+                        let key = u8::from(requested_module.is_type && !self.prefer_inline);
+                        import_entries_maps.entry(key).or_default().push(requested_module);
+                        if key == 0 {
+                            if requested_module.is_type {
+                                key0_type_only_imports.push(requested_module);
+                            } else {
+                                key0_side_effect_imports.push(requested_module);
+                            }
+                        }
+                        continue;
+                    }
+                    let mut flags = [true; 4];
+                    let mut pushed_to_key0 = false;
+                    for import_entry in import_entries {
+                        let key = if import_entry.is_type {
+                            match import_entry.import_name {
+                                ImportImportName::Name(_) => u8::from(!self.prefer_inline),
+                                ImportImportName::NamespaceObject => 2,
+                                ImportImportName::Default(_) => 3,
+                            }
+                        } else {
+                            match import_entry.import_name {
+                                ImportImportName::NamespaceObject => 2,
+                                _ => 0,
+                            }
+                        };
+
+                        if flags[key as usize] {
+                            flags[key as usize] = false;
+                            import_entries_maps.entry(key).or_default().push(requested_module);
+                            if key == 0 {
+                                pushed_to_key0 = true;
+                            }
+                        }
+                    }
+                    if pushed_to_key0 {
                         if requested_module.is_type {
                             key0_type_only_imports.push(requested_module);
                         } else {
-                            key0_side_effect_imports.push(requested_module);
+                            key0_has_runtime_specifiers = true;
                         }
                     }
-                    continue;
                 }
-                let mut flags = [true; 4];
-                let mut pushed_to_key0 = false;
-                for import_entry in import_entries {
-                    let key = if import_entry.is_type {
-                        match import_entry.import_name {
-                            ImportImportName::Name(_) => u8::from(!self.prefer_inline),
-                            ImportImportName::NamespaceObject => 2,
-                            ImportImportName::Default(_) => 3,
-                        }
-                    } else {
-                        match import_entry.import_name {
-                            ImportImportName::NamespaceObject => 2,
-                            _ => 0,
-                        }
-                    };
 
-                    if flags[key as usize] {
-                        flags[key as usize] = false;
-                        import_entries_maps.entry(key).or_default().push(requested_module);
-                        if key == 0 {
-                            pushed_to_key0 = true;
-                        }
+                for i in 0..4 {
+                    if i == 0 && !key0_has_runtime_specifiers {
+                        check_duplicates(
+                            ctx,
+                            &mut import_declarations,
+                            self.prefer_inline,
+                            Some(&key0_side_effect_imports),
+                        );
+                        check_duplicates(
+                            ctx,
+                            &mut import_declarations,
+                            self.prefer_inline,
+                            Some(&key0_type_only_imports),
+                        );
+                        continue;
                     }
-                }
-                if pushed_to_key0 {
-                    if requested_module.is_type {
-                        key0_type_only_imports.push(requested_module);
-                    } else {
-                        key0_has_runtime_specifiers = true;
-                    }
-                }
-            }
-
-            for i in 0..4 {
-                if i == 0 && !key0_has_runtime_specifiers {
                     check_duplicates(
                         ctx,
                         &mut import_declarations,
                         self.prefer_inline,
-                        Some(&key0_side_effect_imports),
+                        import_entries_maps.get(&i),
                     );
-                    check_duplicates(
-                        ctx,
-                        &mut import_declarations,
-                        self.prefer_inline,
-                        Some(&key0_type_only_imports),
-                    );
-                    continue;
                 }
-                check_duplicates(
-                    ctx,
-                    &mut import_declarations,
-                    self.prefer_inline,
-                    import_entries_maps.get(&i),
-                );
             }
         }
     }
@@ -446,19 +475,22 @@ fn merge_imports_fix<'a>(
         }
     }
 
+    let should_inline_type_imports = prefer_inline
+        || !first.import_kind.is_type()
+        || specifiers.iter().any(|specifier| !specifier.is_type);
     let specifiers_text = build_specifiers_text(
         &specifiers,
         &mut existing,
         first_has_trailing_comma,
         first_is_empty,
-        prefer_inline,
+        should_inline_type_imports,
     );
 
     let fixer = fixer.for_multifix();
     let mut fixes = fixer.new_fix_with_capacity(decls.len() + 1);
 
-    if should_add_specifiers && prefer_inline && first.import_kind.is_type() {
-        if let Some(offset) = ctx.find_next_token_from(first.span.start, "type") {
+    if should_add_specifiers && should_inline_type_imports && first.import_kind.is_type() {
+        if let Some(offset) = ctx.find_next_token_within(first.span.start, first.span.end, "type") {
             let type_start = first.span.start + offset;
             let mut type_end = type_start + u32::try_from("type".len()).unwrap();
             if ctx.semantic().source_text().as_bytes().get(type_end as usize) == Some(&b' ') {
@@ -522,7 +554,7 @@ fn build_specifiers_text<'a>(
     existing: &mut FxHashSet<&'a str>,
     first_has_trailing_comma: bool,
     first_is_empty: bool,
-    prefer_inline: bool,
+    inline_type_imports: bool,
 ) -> String {
     let mut result = String::new();
     let mut needs_comma = !first_has_trailing_comma && !first_is_empty;
@@ -531,9 +563,16 @@ fn build_specifiers_text<'a>(
         let mut specifier_text = String::new();
         for cur in &specifier.identifiers {
             let trimmed = cur.trim();
-            let with_type: Cow<str> = if !trimmed.is_empty() && prefer_inline && specifier.is_type {
-                Cow::Owned(format!("type {trimmed}"))
-            } else if !trimmed.is_empty() && ends_with_line_comment(trimmed) {
+            if trimmed.is_empty() {
+                continue;
+            }
+            let with_type: Cow<str> = if inline_type_imports && specifier.is_type {
+                if ends_with_line_comment(trimmed) {
+                    Cow::Owned(format!("type {trimmed}\n"))
+                } else {
+                    Cow::Owned(format!("type {trimmed}"))
+                }
+            } else if ends_with_line_comment(trimmed) {
                 Cow::Owned(format!("{trimmed}\n"))
             } else if cur.contains('\n') {
                 Cow::Borrowed(strip_leading_inline_whitespace(cur.trim_end()))
@@ -680,6 +719,33 @@ fn test() {
         (r"import type {} from './foo'; import './foo';", None),
         (r"import type {} from './foo'; import './foo';", Some(json!([{ "preferInline": true }]))),
         (r"import { RouterModule, Routes } from '@angular/router';", None),
+        (
+            r#"import { compile } from "../src/macro.ts" with { type: "macro" };
+import { compile as compileNoMacro } from "../src/macro.ts";"#,
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' };",
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { mode: 'one' }; import {y} from './foo' with { mode: 'two' };",
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { mode: 'one' }; import {y} from './foo' with { other: 'one' };",
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json', mode: 'one' };",
+            None,
+        ),
+        (r"import './foo' with { type: 'json' }; import './foo';", None),
+        (r"import * as x from './foo' with { type: 'json' }; import * as y from './foo';", None),
+        (
+            r"import './foo'; import type { Foo } from './foo'; import { Bar } from './foo' with { type: 'macro' };",
+            Some(json!([{ "prefer-inline": true }])),
+        ),
     ];
 
     let fail = vec![
@@ -922,6 +988,24 @@ fn test() {
             r"import { type Foo } from './foo'; import './foo'",
             Some(json!([{ "preferInline": true }])),
         ),
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' };",
+            None,
+        ),
+        (
+            r"import {x} from './foo' with { type: 'json', mode: 'one' }; import {y} from './foo' with { 'mode': 'one', 'type': 'json' };",
+            None,
+        ),
+        (r"import {x} from './foo' with {}; import {y} from './foo';", None),
+        (
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }; import {z} from './foo' with { type: 'json' };",
+            None,
+        ),
+        (r"import './foo' with { mode: 'one' }; import './foo' with { mode: 'one' };", None),
+        (
+            r"import * as x from './foo' with { mode: 'one' }; import * as y from './foo' with { mode: 'one' };",
+            None,
+        ),
     ];
 
     let fix = vec![
@@ -933,6 +1017,11 @@ fn test() {
         (
             r"import {x} from './foo'; import {y} from './foo'; import { z } from './foo'",
             r"import {x,y,z} from './foo';  ",
+            None,
+        ),
+        (
+            r"import {a} from 'foo'; import {b,} from 'foo'; import {c} from 'foo'",
+            r"import {a,b,c} from 'foo';  ",
             None,
         ),
         (r"import './foo'; import {x} from './foo'", r"import {x} from './foo'; ", None),
@@ -964,6 +1053,25 @@ fn test() {
             r"import type {x} from 'foo'; import {type y} from 'foo'",
             r"import {type x,type y} from 'foo'; ",
             Some(json!([{ "prefer-inline": true }])),
+        ),
+        (
+            r"import type { ZodError } from 'zod'; import { ZodParsedType, util, type ZodIssue } from 'zod'",
+            r"import { type ZodError,ZodParsedType,util,type ZodIssue } from 'zod'; ",
+            None,
+        ),
+        (
+            r"import { ZodParsedType, util, type ZodIssue } from 'zod'; import type { ZodError } from 'zod'",
+            r"import { ZodParsedType, util, type ZodIssue,type ZodError } from 'zod'; ",
+            None,
+        ),
+        (
+            r"import {Foo, type Existing} from 'm';
+import type {Bar // comment
+} from 'm'",
+            r"import {Foo, type Existing,type Bar // comment
+} from 'm';
+",
+            None,
         ),
         // Namespace as the first import cannot be merged.
         (
@@ -1008,8 +1116,8 @@ fn test() {
         ),
         // Import attributes can change module semantics and must not be discarded by a merge.
         (
-            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }",
-            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'css' }",
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' }",
+            r"import {x} from './foo' with { type: 'json' }; import {y} from './foo' with { type: 'json' }",
             None,
         ),
     ];

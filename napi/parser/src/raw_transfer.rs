@@ -266,7 +266,6 @@ unsafe fn parse_raw_impl(
         // Parse
         let ret = parse_impl(allocator, source_type, source_text, &options);
         let mut program = ret.program;
-        let mut comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));
         let mut module_record = ret.module_record;
 
         // Convert errors.
@@ -314,8 +313,7 @@ unsafe fn parse_raw_impl(
         let (tokens_offset, tokens_len) = (0, 0);
 
         // Convert spans to UTF-16
-        span_converter.convert_program(&mut program);
-        span_converter.convert_comments(&mut comments);
+        span_converter.convert_program_and_comments(&mut program);
         span_converter.convert_module_record(&mut module_record);
         if let Some(mut converter) = span_converter.converter() {
             for error in &mut errors {
@@ -324,6 +322,8 @@ unsafe fn parse_raw_impl(
                 }
             }
         }
+
+        let comments = mem::replace(&mut program.comments, ArenaVec::new_in(&allocator));
 
         // Convert module record
         let module = EcmaScriptModule::from_in(module_record, allocator);

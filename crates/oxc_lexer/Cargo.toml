@@ -21,11 +21,14 @@ doctest = false
 
 [dependencies]
 oxc_ast = { workspace = true }
+oxc_data_structures = { workspace = true, features = ["assert_unchecked", "branch_hints", "str"] }
+oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
+constcat = { workspace = true }
 memchr = { workspace = true }
+rustc-hash = { workspace = true }
 
 oxc_diagnostics = { workspace = true, optional = true }
-oxc_span = { workspace = true, optional = true }
 
 [features]
-oxc_diagnostics = ["dep:oxc_diagnostics", "dep:oxc_span"]
+oxc_diagnostics = ["dep:oxc_diagnostics"]

@@ -70,6 +70,13 @@ fn cross_member_reference() {
 }
 
 #[test]
+fn enum_member_shadows_outer_binding() {
+    let source = "var X = 4; enum A { X = 1, Y = X + 1 }";
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(1.0)));
+    assert_eq!(get_enum_member_value(source, "Y"), Some(ConstantValue::Number(2.0)));
+}
+
+#[test]
 fn infinity_nan() {
     let source = "enum A { X = Infinity, Y = NaN }";
     debug_assert_eq!(
@@ -80,6 +87,34 @@ fn infinity_nan() {
         Some(ConstantValue::Number(n)) => assert!(n.is_nan(), "Expected NaN, got {n}"),
         other => panic!("Expected Some(Number(NaN)), got {other:?}"),
     }
+}
+
+#[test]
+fn shadowed_infinity_nan_are_not_evaluated_as_globals() {
+    let source =
+        "function f() { const Infinity = 1; const NaN = 2; enum A { X = Infinity, Y = NaN } }";
+    assert_eq!(get_enum_member_value(source, "X"), None);
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+}
+
+#[test]
+fn merged_enum_members_named_infinity_nan_take_precedence_over_globals() {
+    let source = "enum A { Infinity = 1, NaN = 2 } enum A { X = Infinity, Y = NaN }";
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(1.0)));
+    assert_eq!(get_enum_member_value(source, "Y"), Some(ConstantValue::Number(2.0)));
+}
+
+#[test]
+fn unevaluated_merged_enum_member_shadows_global() {
+    let source = "enum A { Infinity = foo() } enum A { X = Infinity }";
+    assert_eq!(get_enum_member_value(source, "X"), None);
+}
+
+#[test]
+fn merged_enum_member_shadows_outer_binding() {
+    let source =
+        "function f() { const Infinity = 3; enum A { Infinity = 1 } enum A { X = Infinity } }";
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::Number(1.0)));
 }
 
 #[test]
@@ -183,15 +218,23 @@ fn merged_enum_cross_declaration_reference() {
 
 #[test]
 fn unary_on_string() {
-    // Babel uses JS coercion: +"s" → "s" (identity), -"s" → NaN, ~"s" → -1
+    // TypeScript leaves unary-on-string initializers unevaluated, so the enum
+    // member keeps its verbatim initializer instead of folding to a wrong value.
     let source = r#"enum A { X = +"hello", Y = -"hello", Z = ~"hello" }"#;
-    debug_assert_eq!(
-        get_enum_member_value(source, "X"),
-        Some(ConstantValue::String("hello".into()))
-    );
-    match get_enum_member_value(source, "Y") {
-        Some(ConstantValue::Number(n)) => assert!(n.is_nan()),
-        other => panic!("Expected Some(Number(NaN)), got {other:?}"),
-    }
-    debug_assert_eq!(get_enum_member_value(source, "Z"), Some(ConstantValue::Number(-1.0)));
+    assert_eq!(get_enum_member_value(source, "X"), None);
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+    assert_eq!(get_enum_member_value(source, "Z"), None);
+}
+
+#[test]
+fn unary_on_string_member_reference() {
+    // A unary operation on a member whose value is a string must decline for the
+    // same reason — `+"4"` would otherwise fold to the string "4" (tsc: number 4)
+    // and `-"3"`/`~"4"` to NaN/-1 instead of -3/-5, also breaking the reverse
+    // mapping and any auto-increment member after it.
+    let source = r#"enum A { X = "4", Y = -X, Z = ~X, W = +X }"#;
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::String("4".into())));
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+    assert_eq!(get_enum_member_value(source, "Z"), None);
+    assert_eq!(get_enum_member_value(source, "W"), None);
 }

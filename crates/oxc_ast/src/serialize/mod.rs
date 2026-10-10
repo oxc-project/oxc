@@ -86,10 +86,10 @@ impl Program<'_> {
 /// from the `Program` start span.
 /// See <https://github.com/oxc-project/oxc/pull/10134> for more info.
 ///
-/// Special case where first statement is an `ExportNamedDeclaration` or `ExportDefaultDeclaration`
+/// Special case where first statement is an `ExportDeclaration` or `ExportDefaultDeclaration`
 /// exporting a class with decorators, where one of the decorators is before `export`.
 /// In these cases, the span of the statement starts after the span of the decorators.
-/// e.g. `@dec export class C {}` - `ExportNamedDeclaration` span start is 5, `Decorator` span start is 0.
+/// e.g. `@dec export class C {}` - `ExportDeclaration` span start is 5, `Decorator` span start is 0.
 /// `Program` span start is 0 (not 5).
 #[ast_meta]
 #[estree(raw_deser = "
@@ -189,8 +189,8 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 
     let start = first_stmt.span().start;
     match first_stmt {
-        Statement::ExportNamedDeclaration(decl) => {
-            if let Some(Declaration::ClassDeclaration(class)) = &decl.declaration
+        Statement::ExportDeclaration(decl) => {
+            if let Declaration::ClassDeclaration(class) = &decl.declaration
                 && let Some(decorator) = class.decorators.first()
             {
                 return cmp::min(start, decorator.span.start);
@@ -218,7 +218,11 @@ fn get_ts_start_span(program: &Program<'_>) -> u32 {
 #[ast_meta]
 #[estree(
     ts_type = "string",
-    raw_deser = "SOURCE_TEXT.slice(THIS.start + 2, THIS.end - (THIS.type === 'Line' ? 0 : 2))",
+    raw_deser = "
+        // HTML comment discriminants equal their delimiter lengths (3 or 4).
+        const kind = DESER[u8](POS_OFFSET.kind);
+        SOURCE_TEXT.slice(THIS.start + (kind < 3 ? 2 : kind), THIS.end - (THIS.type === 'Line' ? 0 : 2))
+    ",
     raw_deser_inline
 )]
 pub struct CommentValue<'b>(#[expect(dead_code)] pub &'b Comment);

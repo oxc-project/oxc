@@ -3,17 +3,18 @@
 //! [`convert_envelope`] is the public entry point:
 //! it unwraps the `[doc, metadata]` envelope sent from the JS side
 //! and converts the doc through the private `convert_*` walkers into a flat `FormatElement` IR.
-//! Language-specific routing and postprocessing live in `core::embed`.
+//! Language-specific routing lives in `core::embed`;
+//! [`postprocess`] here is the conversion's finishing pass (Prettier-fallback path only).
 
-use std::num::NonZeroU8;
+use std::num::{NonZeroU8, NonZeroU32};
 
 use rustc_hash::FxHashMap;
 use serde_json::Value;
 
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_formatter_core::{
     Align, Condition, DedentMode, FormatElement, Group, GroupId, GroupMode, IndentWidth, LineMode,
-    PrintMode, Tag, TextWidth, UniqueGroupIdBuilder,
+    Prefix, PrintMode, Tag, TextWidth, UniqueGroupIdBuilder, format_element::BestFittingElement,
 };
 
 /// Marker string used to represent `-Infinity` in JSON.
@@ -69,6 +70,17 @@ impl<'a, 'b> FmtCtx<'a, 'b> {
     }
 }
 
+/// A `Text` element measured with the default `IndentWidth`.
+///
+/// NOTE: `IndentWidth` only affects tab character width calculation.
+/// If the text contained `\t` (e.g. inside a string literal like `"\t"`?),
+/// the width could be miscalculated when `options.indent_width` != 2.
+/// However, the default value is sufficient in practice.
+pub fn text_element(text: &str) -> FormatElement<'_> {
+    let width = TextWidth::from_text(text, IndentWidth::default());
+    FormatElement::Text { text, width }
+}
+
 fn convert_doc<'a>(
     doc: &Value,
     out: &mut ArenaVec<'a, FormatElement<'a>>,
@@ -76,14 +88,21 @@ fn convert_doc<'a>(
 ) -> Result<(), String> {
     match doc {
         Value::String(s) => {
-            if !s.is_empty() {
-                let text = ctx.allocator.alloc_str(s);
-                // NOTE: `IndentWidth` only affects tab character width calculation.
-                // If a `Doc = string` node contained `\t` (e.g. inside a string literal like `"\t"`?),
-                // the width could be miscalculated when `options.indent_width` != 2.
-                // However, the default value is sufficient in practice.
-                let width = TextWidth::from_text(text, IndentWidth::default());
-                out.push(FormatElement::Text { text, width });
+            // A trailing space maps to `Space` (pending space), not text:
+            // Prettier's printer trims trailing whitespace at every line break,
+            // so a Doc string's trailing space is semantically "a space only if content follows on the same line".
+            // Exactly the core printer's pending-space.
+            // Kept as text it would leak before a soft break (the core printer never trims);
+            // e.g. css-in-html `prop: ` before an `indent([softline, ...])` value.
+            let (content, trailing_space) = match s.strip_suffix(' ') {
+                Some(content) => (content, true),
+                None => (s.as_str(), false),
+            };
+            if !content.is_empty() {
+                out.push(text_element(ctx.allocator.alloc_str(content)));
+            }
+            if trailing_space {
+                out.push(FormatElement::Space);
             }
             Ok(())
         }
@@ -146,9 +165,16 @@ fn convert_line<'a>(
         // after a COLUMN-0 literal line is absorbed (Prettier prints both newlines).
         // This mechanical conversion cannot apply the `empty_line()` workaround;
         // see `hard_line_after_column_zero_literal_line_is_absorbed` in `oxc_formatter_core`.
+        // Known gap: a bare `{line, hard, literal}` (Prettier's `literallineWithoutBreakParent`)
+        // also lands here and over-propagates.
+        // `Literal` expands enclosing groups and no non-propagating literal mode exists
+        // (the paired `literalline` form is unaffected, its propagation rides the following `break-parent`).
         out.push(FormatElement::Line(LineMode::Literal));
     } else if hard {
-        out.push(FormatElement::Line(LineMode::Hard));
+        // `{line, hard}` alone is Prettier's `hardlineWithoutBreakParent`;
+        // its `hardline` arrives as the `[{line, hard}, {break-parent}]` pair,
+        // whose propagation the following `break-parent` → `ExpandParent` carries.
+        out.push(FormatElement::Line(LineMode::HardWithoutExpand));
     } else if soft {
         out.push(FormatElement::Line(LineMode::Soft));
     } else {
@@ -161,17 +187,104 @@ fn convert_group<'a>(
     out: &mut ArenaVec<'a, FormatElement<'a>>,
     ctx: &mut FmtCtx<'a, '_>,
 ) -> Result<(), String> {
-    if obj.contains_key("expandedStates") {
-        return Err("Unsupported: group with 'expandedStates' (conditionalGroup)".to_string());
-    }
-
     let should_break = obj.get("break").and_then(Value::as_bool).unwrap_or(false);
     let id = extract_group_id(obj, "id")?;
-
     let gid = id.map(|n| ctx.resolve_group_id(n));
+
+    let Some(expanded_states) = obj.get("expandedStates") else {
+        return convert_group_contents(obj.get("contents"), gid, should_break, out, ctx);
+    };
+    let Value::Array(expanded_states) = expanded_states else {
+        return Err("group 'expandedStates' must be an array".to_string());
+    };
+    let contents = obj
+        .get("contents")
+        .ok_or_else(|| "group with 'expandedStates' missing 'contents'".to_string())?;
+
+    // `conditionalGroup(states, options)` stores `states[0]` in `contents` as well as in `expandedStates`.
+    // The first representation is therefore `contents`, followed by `expandedStates[1..]`.
+    // A forced group skips fitting altogether and uses the final state.
+    if should_break {
+        let final_state = expanded_states.last().unwrap_or(contents);
+        return convert_group_contents(Some(final_state), gid, true, out, ctx);
+    }
+    let mut variants = ArenaVec::with_capacity_in(expanded_states.len().max(2), &ctx.allocator);
+    if expanded_states.len() <= 1 {
+        // A single state still goes through `BestFitting`, as `[flat, expanded]`:
+        // Prettier never propagates a hardline's break into a conditional group,
+        // it prints the state flat when it fits up to its first hardline (YAML's `key: >-`), expanded otherwise.
+        // Without an id the two variants are the same elements, so convert once:
+        // single-state groups nest per YAML mapping level, converting twice would double per level.
+        let flat = convert_variant(contents, GroupMode::Flat, gid, ctx)?;
+        let expanded = if gid.is_some() {
+            convert_variant(contents, GroupMode::Expand, gid, ctx)?
+        } else {
+            flat
+        };
+        variants.push(flat);
+        variants.push(expanded);
+    } else {
+        for (index, state) in
+            std::iter::once(contents).chain(expanded_states.iter().skip(1)).enumerate()
+        {
+            let mode = if index + 1 == expanded_states.len() {
+                GroupMode::Expand
+            } else {
+                GroupMode::Flat
+            };
+            variants.push(convert_variant(state, mode, gid, ctx)?);
+        }
+    }
+
+    // SAFETY: Both branches emit at least two variants.
+    out.push(FormatElement::BestFitting(unsafe {
+        BestFittingElement::from_vec_unchecked(variants)
+    }));
+    Ok(())
+}
+
+/// One `BestFitting` variant of a conditional group's `state`, printed in `mode`.
+fn convert_variant<'a>(
+    state: &Value,
+    mode: GroupMode,
+    gid: Option<GroupId>,
+    ctx: &mut FmtCtx<'a, '_>,
+) -> Result<&'a [FormatElement<'a>], String> {
+    let mut variant = ArenaVec::new_in(&ctx.allocator);
+    variant.push(FormatElement::Tag(Tag::StartEntry));
+    // `BestFitting` itself supplies the selected variant's print mode.
+    // A wrapper group is only needed to publish that mode under Prettier's group ID for `if-break(groupId)` consumers.
+    // Wrapping an ID-less variant would remeasure it after selection
+    // and can incorrectly expand an intermediate state that Prettier prints flat.
+    //
+    // (No core Prettier printer passes an id to `conditionalGroup`; this branch is defensive.
+    // Note the same remeasure hazard reappears here via `propagate_expand` if a variant contains a top-level hard line,
+    // so revisit before relying on it for real inputs.)
+    if gid.is_some() {
+        variant
+            .push(FormatElement::Tag(Tag::StartGroup(Group::new().with_id(gid).with_mode(mode))));
+    }
+    convert_doc(state, &mut variant, ctx)?;
+    if gid.is_some() {
+        variant.push(FormatElement::Tag(Tag::EndGroup));
+    }
+    variant.push(FormatElement::Tag(Tag::EndEntry));
+    // The trailing `EndEntry` tag keeps postprocess's trailing-hardline strip from firing:
+    // a variant retains its trailing hardline (content may follow the `BestFitting`).
+    postprocess(&mut variant, ctx.allocator);
+    Ok(variant.into_arena_slice())
+}
+
+fn convert_group_contents<'a>(
+    contents: Option<&Value>,
+    gid: Option<GroupId>,
+    should_break: bool,
+    out: &mut ArenaVec<'a, FormatElement<'a>>,
+    ctx: &mut FmtCtx<'a, '_>,
+) -> Result<(), String> {
     let mode = if should_break { GroupMode::Expand } else { GroupMode::Flat };
     out.push(FormatElement::Tag(Tag::StartGroup(Group::new().with_id(gid).with_mode(mode))));
-    if let Some(contents) = obj.get("contents") {
+    if let Some(contents) = contents {
         convert_doc(contents, out, ctx)?;
     }
     out.push(FormatElement::Tag(Tag::EndGroup));
@@ -236,31 +349,23 @@ fn convert_align<'a>(
             out.push(FormatElement::Tag(Tag::EndDedent(DedentMode::Root)));
             Ok(())
         }
-        Value::String(s) => {
-            // String alignment (e.g., "  " for markdown list continuation indent).
-            // Prettier uses the string length as the number of spaces to align by.
-            if s.is_empty() {
-                // Empty string → no alignment, just render contents
-                if let Some(contents) = obj.get("contents") {
-                    convert_doc(contents, out, ctx)?;
-                }
-                return Ok(());
+        // A string align is a prefix on every line, never turned into a tab under `useTabs`:
+        // markdown's blockquote `"> "` (the only visible one Prettier's own printers emit, intern here if a plugin brings another)
+        // and its container columns `" ".repeat(n)` (`""` aligns nothing)
+        Value::String(s) if s == "> " || s.bytes().all(|b| b == b' ') => {
+            let prefixes: Vec<Prefix> = if s == "> " {
+                vec![Prefix::new(&"> ")]
+            } else {
+                Prefix::spaces(s.len()).collect()
+            };
+            for &prefix in &prefixes {
+                out.push(FormatElement::Tag(Tag::StartPrefix(prefix)));
             }
-            debug_assert!(
-                s.len() <= 255,
-                "align string length {} exceeds NonZeroU8 range",
-                s.len()
-            );
-            #[expect(clippy::cast_possible_truncation)]
-            if let Some(nz) = NonZeroU8::new(s.len() as u8) {
-                out.push(FormatElement::Tag(Tag::StartAlign(Align::new(nz))));
-                if let Some(contents) = obj.get("contents") {
-                    convert_doc(contents, out, ctx)?;
-                }
-                out.push(FormatElement::Tag(Tag::EndAlign));
-                return Ok(());
+            if let Some(contents) = obj.get("contents") {
+                convert_doc(contents, out, ctx)?;
             }
-            Err(format!("Unsupported align value: {n}"))
+            out.extend(prefixes.iter().map(|_| FormatElement::Tag(Tag::EndPrefix)));
+            Ok(())
         }
         Value::Object(obj_val) => {
             // `align({type: "root"}, ...)` = Prettier's `markAsRoot()`:
@@ -374,5 +479,267 @@ fn extract_group_id(
             .map(Some)
             .ok_or_else(|| format!("Invalid group ID: {n}")),
         Some(other) => Err(format!("Invalid group ID: {other}")),
+    }
+}
+
+/// Post-process converted FormatElements in a single compaction pass —
+/// the finishing step of the Doc→IR conversion (Prettier-fallback path only;
+/// Rust formatters write IR that never needs it):
+/// - strip trailing hardline (useless for embedded parts)
+/// - a hardline right after a line break prints its own newline (`ExactLineBreaks(1)`):
+///   Prettier's hardline always does, the core printer's drops on an empty line.
+///   Tags in between are looked through (`fill(["a", hardline, "", hardline, "b"])`, whitespace-sensitive HTML text),
+///   so every blank line survives.
+/// - merge consecutive Text nodes (the Prettier Doc path can emit adjacent `Text`s)
+/// - trim a Text's trailing spaces/tabs when a hard/empty line follows:
+///   Prettier's own printer trims at every line break,
+///   so a Doc can rightfully carry them, but the core printer does not.
+///   Untrimmed they would leak into the output verbatim.
+///   (A single trailing space before a MAY-break line is already mapped to `Space` at conversion,
+///   see `convert_doc`'s String arm; this pass covers the statically-known hard breaks,
+///   where full runs and tabs can be dropped.)
+pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a Allocator) {
+    // Strip trailing hardline
+    if ir.len() >= 2
+        && matches!(ir[ir.len() - 1], FormatElement::ExpandParent)
+        && matches!(ir[ir.len() - 2], FormatElement::Line(LineMode::HardWithoutExpand))
+    {
+        let new_len = ir.len() - 2;
+        ir.truncate(new_len);
+    }
+
+    let mut write = 0;
+    let mut read = 0;
+    while read < ir.len() {
+        // A `hardline` pair (its break-parent keeps the propagation as is) right after a line break
+        if matches!(ir[read], FormatElement::Line(LineMode::HardWithoutExpand))
+            && matches!(ir.get(read + 1), Some(FormatElement::ExpandParent))
+            && ir[..write]
+                .iter()
+                .rev()
+                .find(|el| !matches!(el, FormatElement::Tag(_) | FormatElement::ExpandParent))
+                .is_some_and(|el| {
+                    matches!(
+                        el,
+                        FormatElement::Line(
+                            LineMode::HardWithoutExpand | LineMode::ExactLineBreaks(_)
+                        )
+                    )
+                })
+        {
+            ir[write] = FormatElement::Line(LineMode::ExactLineBreaks(NonZeroU32::MIN));
+            write += 1;
+            read += 1;
+        } else if matches!(ir[read], FormatElement::Text { .. }) {
+            // Merge consecutive Text nodes
+            let run_start = read;
+            read += 1;
+            while read < ir.len() && matches!(ir[read], FormatElement::Text { .. }) {
+                read += 1;
+            }
+            let single = read - run_start == 1;
+            let text: &str = if single {
+                let FormatElement::Text { text, .. } = ir[run_start] else { unreachable!() };
+                text
+            } else {
+                let mut sb = ArenaStringBuilder::new_in(allocator);
+                for element in &ir[run_start..read] {
+                    if let FormatElement::Text { text, .. } = element {
+                        sb.push_str(text);
+                    }
+                }
+                sb.into_str()
+            };
+            // Prettier's own printer trims at every line break regardless of the doc structure around it,
+            // so a break hiding behind tags (`Text("a  "), StartIndent, <hard line>`
+            // from `["a  ", indent([hardline, ..])]`) still trims,
+            // look through tag/expand-parent markers for it (only when there is anything to trim in the first place).
+            let trimmed = if text.ends_with([' ', '\t'])
+                && ir[read..]
+                    .iter()
+                    .find(|el| !matches!(el, FormatElement::Tag(_) | FormatElement::ExpandParent))
+                    .is_some_and(|el| {
+                        matches!(
+                            el,
+                            FormatElement::Line(LineMode::HardWithoutExpand | LineMode::Empty)
+                        )
+                    }) {
+                text.trim_end_matches([' ', '\t'])
+            } else {
+                text
+            };
+            if single && trimmed.len() == text.len() {
+                if write != run_start {
+                    ir[write] = ir[run_start].clone();
+                }
+            } else {
+                ir[write] = text_element(trimmed);
+            }
+            write += 1;
+        } else {
+            if write != read {
+                ir[write] = ir[read].clone();
+            }
+            write += 1;
+            read += 1;
+        }
+    }
+    ir.truncate(write);
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_allocator::Allocator;
+    use oxc_formatter_core::{
+        Document, IndentStyle, PrintWidth, PrinterOptions, UniqueGroupIdBuilder,
+    };
+    use serde_json::{Value, json};
+
+    use super::{convert_envelope, postprocess};
+
+    fn print_doc(doc: &Value, print_width: u32) -> String {
+        print_doc_with(
+            doc,
+            PrinterOptions::default().with_print_width(PrintWidth::new(print_width)),
+        )
+    }
+
+    fn print_doc_with(doc: &Value, options: PrinterOptions) -> String {
+        let allocator = Allocator::default();
+        let group_id_builder = UniqueGroupIdBuilder::default();
+        let (mut ir, _) =
+            convert_envelope(json!([doc, {}]), &allocator, &group_id_builder).unwrap();
+        postprocess(&mut ir, &allocator);
+        Document::new(ir, vec![]).print(0, options).unwrap().into_code()
+    }
+
+    #[test]
+    fn space_string_align_stays_spaces_under_tabs() {
+        let doc = json!([
+            "a",
+            {
+                "type": "align",
+                "n": "  ",
+                "contents": [
+                    { "type": "line", "hard": true },
+                    "b",
+                    { "type": "indent", "contents": [{ "type": "line", "hard": true }, "c"] }
+                ]
+            }
+        ]);
+        let options = PrinterOptions::default().with_indent_style(IndentStyle::Tab);
+        // Prettier's markdown list item: the item's columns, then the child's tab
+        assert_eq!(print_doc_with(&doc, options), "a\n  b\n  \tc");
+    }
+
+    #[test]
+    fn fill_keeps_blank_lines_of_empty_parts() {
+        let hardline = json!([{ "type": "line", "hard": true }, { "type": "break-parent" }]);
+        let doc = json!({
+            "type": "fill",
+            "parts": ["a", hardline, "", hardline, "b", hardline, "", hardline, "", hardline, "c"]
+        });
+        assert_eq!(print_doc(&doc, 80), "a\n\nb\n\n\nc");
+    }
+
+    #[test]
+    fn blockquote_string_align_keeps_its_prefix() {
+        let doc = json!([
+            "> ",
+            { "type": "align", "n": "> ", "contents": ["a", { "type": "line", "hard": true }, "b"] }
+        ]);
+        assert_eq!(print_doc(&doc, 80), "> a\n> b");
+    }
+
+    #[test]
+    fn conditional_group_selects_the_first_fitting_state() {
+        let group = json!({
+            "type": "group",
+            "contents": "1234567890",
+            "expandedStates": [
+                "1234567890",
+                ["12345", { "type": "line" }, "678"],
+                ["1234", { "type": "line" }, "5678"]
+            ]
+        });
+
+        assert_eq!(print_doc(&group, 10), "1234567890");
+        assert_eq!(print_doc(&group, 9), "12345 678");
+        assert_eq!(print_doc(&group, 4), "1234\n5678");
+    }
+
+    #[test]
+    fn conditional_group_with_one_state_fits_up_to_its_first_hardline() {
+        let state = json!([
+            "a:",
+            { "type": "line" },
+            ">-",
+            { "type": "line", "hard": true },
+            { "type": "break-parent" },
+            "b"
+        ]);
+        let group = json!({ "type": "group", "contents": state, "expandedStates": [state] });
+
+        // A hardline does not break a conditional group (Prettier's YAML block scalar key)
+        assert_eq!(print_doc(&group, 80), "a: >-\nb");
+        assert_eq!(print_doc(&group, 3), "a:\n>-\nb");
+    }
+
+    #[test]
+    fn forced_conditional_group_uses_only_the_final_state() {
+        let group = json!({
+            "type": "group",
+            "break": true,
+            "contents": "flat",
+            "expandedStates": [
+                "flat",
+                ["final", { "type": "line" }, "state"]
+            ]
+        });
+
+        assert_eq!(print_doc(&group, 80), "final\nstate");
+    }
+
+    #[test]
+    fn conditional_group_id_exposes_the_selected_mode_to_if_break() {
+        let flat_if_break = json!({
+            "type": "if-break",
+            "breakContents": "B",
+            "flatContents": "F",
+            "groupId": 1
+        });
+        let group = json!({
+            "type": "group",
+            "id": 1,
+            "contents": ["flat", flat_if_break],
+            "expandedStates": [
+                ["flat", flat_if_break],
+                ["x", { "type": "line" }, "y", flat_if_break]
+            ]
+        });
+
+        assert_eq!(print_doc(&group, 80), "flatF");
+        assert_eq!(print_doc(&group, 1), "x\nyB");
+    }
+
+    #[test]
+    fn conditional_group_variant_keeps_its_trailing_hardline() {
+        let hardline = json!([
+            { "type": "line", "hard": true },
+            { "type": "break-parent" }
+        ]);
+        let doc = json!([
+            {
+                "type": "group",
+                "contents": ["flat", hardline],
+                "expandedStates": [
+                    ["flat", hardline],
+                    ["expanded", hardline]
+                ]
+            },
+            "after"
+        ]);
+
+        assert_eq!(print_doc(&doc, 80), "flat\nafter");
     }
 }

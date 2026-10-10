@@ -309,7 +309,8 @@ fn generate_scope_code(struct_def: &StructDef) -> (TokenStream, TokenStream, boo
             | "Function"
             | "ArrowFunctionExpression"
             | "StaticBlock"
-            | "TSModuleDeclaration"
+            | "TSExternalModuleDeclaration"
+            | "TSNamespaceDeclaration"
             | "TSGlobalDeclaration"
     );
     if is_block_scope {

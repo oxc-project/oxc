@@ -1,13 +1,35 @@
 use std::borrow::Cow;
 
 use rustc_hash::{FxHashMap, FxHashSet};
+use smallvec::SmallVec;
 
-use oxc_ast::{Comment, CommentKind, ast::Program};
+use oxc_ast::{
+    Comment, CommentKind,
+    ast::{Expression, Program},
+};
+use oxc_span::GetSpan;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 
 use crate::{Codegen, LegalComment, options::CommentOptions};
 
-pub type CommentsMap = FxHashMap</* attached_to */ u32, Vec<Comment>>;
+type CommentList = SmallVec<[Comment; 1]>;
+
+pub type CommentsMap = FxHashMap</* attached_to */ u32, CommentList>;
+
+/// Whether a comment remains meaningful if its original AST anchor is removed.
+fn preserve_when_orphaned(comment: &Comment) -> bool {
+    comment.is_legal() || comment.is_coverage_ignore_file()
+}
+
+/// A `pife`-marked arrow or function expression prints its leading comments
+/// inside its own `(` wrap, so operand emission sites must not consume them.
+fn is_pife_function(expression: &Expression<'_>) -> bool {
+    match expression {
+        Expression::ArrowFunctionExpression(arrow) => arrow.pife,
+        Expression::FunctionExpression(function) => function.pife,
+        _ => false,
+    }
+}
 
 /// Which annotation kind an emission site expects to recover from
 /// [`Codegen::annotation_comments`].
@@ -53,6 +75,9 @@ impl Codegen<'_> {
         if self.options.comments == CommentOptions::disabled() {
             return;
         }
+        // Each retained comment can create at most one map entry. Reserving
+        // this upper bound avoids incremental map growth while preprocessing.
+        self.comments.reserve(comments.len());
         for comment in comments {
             // Stash pure / no-side-effects comments by `attached_to` so the
             // emission site can recover the verbatim source text instead of
@@ -62,32 +87,27 @@ impl Codegen<'_> {
             // back to the canonical literal for the dropped ones.
             if comment.is_pure() || comment.is_no_side_effects() {
                 if comment.is_leading() && self.options.print_annotation_comment() {
-                    self.annotation_comments.insert(comment.attached_to, *comment);
+                    self.annotation_comments.insert(comment.attached_to, comment.clone());
                 }
                 continue;
             }
+
             let mut add = false;
             if comment.is_leading() {
-                if comment.is_legal() && self.options.print_legal_comment() {
-                    add = true;
-                }
-                if comment.is_jsdoc() && self.options.print_jsdoc_comment() {
-                    add = true;
-                }
-                if comment.is_annotation() && self.options.print_annotation_comment() {
-                    add = true;
-                }
-                if comment.is_normal() && self.options.print_normal_comment() {
-                    add = true;
-                }
+                add = (comment.is_legal() && self.options.print_legal_comment())
+                    || (comment.is_jsdoc() && self.options.print_jsdoc_comment())
+                    || (comment.is_annotation() && self.options.print_annotation_comment())
+                    || (comment.is_normal() && self.options.print_normal_comment());
             }
+
             if add {
-                if comment.is_legal()
-                    && let Err(idx) = self.legal_comment_keys.binary_search(&comment.attached_to)
+                self.has_property_key_annotations |= comment.is_property_key_annotation();
+                if preserve_when_orphaned(comment)
+                    && let Err(idx) = self.orphan_comment_keys.binary_search(&comment.attached_to)
                 {
-                    self.legal_comment_keys.insert(idx, comment.attached_to);
+                    self.orphan_comment_keys.insert(idx, comment.attached_to);
                 }
-                self.comments.entry(comment.attached_to).or_default().push(*comment);
+                self.comments.entry(comment.attached_to).or_default().push(comment.clone());
             }
         }
     }
@@ -121,7 +141,7 @@ impl Codegen<'_> {
         newline_after: bool,
     ) {
         if self.source_text.is_some()
-            && let Some(comment) = self.annotation_comments.get(&start).copied()
+            && let Some(comment) = self.annotation_comments.get(&start).cloned()
             && kind.matches(&comment)
             // Inline line comments would swallow the rest of the line.
             && (!comment.is_line() || newline_after)
@@ -144,7 +164,7 @@ impl Codegen<'_> {
         }
     }
 
-    pub(crate) fn get_comments(&mut self, start: u32) -> Option<Vec<Comment>> {
+    pub(crate) fn get_comments(&mut self, start: u32) -> Option<CommentList> {
         if self.comments.is_empty() {
             return None;
         }
@@ -158,59 +178,139 @@ impl Codegen<'_> {
         }
     }
 
-    /// Print leading comments at `start` and consume any pending indent-as-space,
-    /// so the next token glues to the comment instead of breaking onto a new line.
+    /// Print leading comments at `start` and glue the next token to them: after a
+    /// group ending in a newline (line comment / `followed_by_newline`), print the
+    /// indent — mid-expression callers have no statement machinery to do it, and an
+    /// unindented next token renders differently once the parser re-anchors the
+    /// comments to it (codegen would no longer be idempotent). Otherwise consume the
+    /// pending indent-as-space so the token glues with a single space.
     #[inline]
     pub(crate) fn print_leading_comments_anchored_to_self(&mut self, start: u32) {
         if let Some(comments) = self.get_comments(start) {
             self.print_comments(&comments);
-            self.consume_pending_indent_space();
+            if self.last_byte() == Some(b'\n') {
+                self.print_indent();
+            } else {
+                self.consume_pending_indent_space();
+            }
         }
     }
 
-    /// Whether a legal-comment orphan with `attached_to < end` is still
-    /// pending. Used by block emitters to keep an empty body multi-line.
+    /// Print a property-key annotation attached directly to a string or template literal.
     #[inline]
-    pub(crate) fn has_legal_orphans_before(&self, end: u32) -> bool {
-        self.legal_comment_keys
+    pub(crate) fn print_property_key_annotation(&mut self, start: u32) {
+        if !self.has_property_key_annotations {
+            return;
+        }
+        if self
+            .comments
+            .get(&start)
+            .is_some_and(|comments| comments.iter().any(Comment::is_property_key_annotation))
+        {
+            self.print_leading_comments_anchored_to_self(start);
+        }
+    }
+
+    /// Print comments attached to an expression that survives codegen.
+    ///
+    /// Probes the parenthesized layers too: `a || /* c */ (x)` anchors the
+    /// comment at the `(`, `a || (/* c */ x)` at `x` — an operand printer only
+    /// sees one node, so the walk happens here for every emission site.
+    pub(crate) fn print_leading_comments_before_expression(&mut self, expression: &Expression<'_>) {
+        if self.comments.is_empty() || is_pife_function(expression) {
+            return;
+        }
+        self.print_leading_comments_anchored_to_self(expression.span().start);
+        if let Expression::ParenthesizedExpression(paren) = expression {
+            self.print_leading_comments_before_expression(&paren.expression);
+        }
+    }
+
+    /// Print an expression's comment group only when it contains an annotation
+    /// comment, probing parenthesized layers like
+    /// [`Self::print_leading_comments_before_expression`].
+    ///
+    /// This is the variant for emission sites that mutating consumers move
+    /// statements into (the minifier merges `if(a)x;if(b)x;` into
+    /// `if(a||(b,..))x`; rolldown finalizes moved nodes with their original
+    /// spans). Comments are anchored by source position, so a dissolved
+    /// statement's leading normal-comment group can coincide with the moved
+    /// operand's span start — printing it there misplaces statement-level
+    /// trivia inside an expression and is not idempotent
+    /// (`test_normal_comment_before_logical_rhs_not_printed` documents the
+    /// falsifier). Annotations are the one comment kind with expression-level
+    /// meaning, so they still pass through.
+    pub(crate) fn print_annotation_comments_before_expression(
+        &mut self,
+        expression: &Expression<'_>,
+    ) {
+        if self.comments.is_empty() || is_pife_function(expression) {
+            return;
+        }
+        let start = expression.span().start;
+        if self
+            .comments
+            .get(&start)
+            .is_some_and(|comments| comments.iter().any(Comment::is_annotation))
+        {
+            self.print_leading_comments_anchored_to_self(start);
+        }
+        if let Expression::ParenthesizedExpression(paren) = expression {
+            self.print_annotation_comments_before_expression(&paren.expression);
+        }
+    }
+
+    /// Whether an orphan comment with `attached_to < end` is still pending.
+    /// Used by block emitters to keep an empty body multi-line.
+    #[inline]
+    pub(crate) fn has_orphan_comments_before(&self, end: u32) -> bool {
+        self.orphan_comment_keys
             .iter()
             .take_while(|&&k| k < end)
             .any(|k| self.comments.contains_key(k))
     }
 
-    /// Drain pending legal-comment orphans with `attached_to < end` and emit
-    /// them in source order. Called at every statement boundary so legal
-    /// comments survive when their original anchor was removed by DCE.
+    /// Drain pending orphan comments with `attached_to < end` and emit them in
+    /// source order. Called at every statement boundary so legal and file-level
+    /// coverage comments survive when their original anchor was removed by an
+    /// upstream pass.
     #[inline]
-    pub(crate) fn print_legal_orphans_before(&mut self, end: u32) {
-        if self.legal_comment_keys.is_empty() {
+    pub(crate) fn print_orphan_comments_before(&mut self, end: u32) {
+        if self.orphan_comment_keys.is_empty() {
             return;
         }
-        let idx = self.legal_comment_keys.partition_point(|&k| k < end);
+        let idx = self.orphan_comment_keys.partition_point(|&k| k < end);
         if idx == 0 {
             return;
         }
         // Concatenate across keys so `print_comments` sees one sequence;
         // per-key calls would leak `print_next_indent_as_space` and produce
         // stray leading spaces.
-        let mut legals: Vec<Comment> = Vec::new();
+        let mut orphans: Vec<Comment> = Vec::new();
         let comments = &mut self.comments;
-        for k in self.legal_comment_keys.drain(..idx) {
+        for k in self.orphan_comment_keys.drain(..idx) {
             let Some(entry) = comments.get_mut(&k) else { continue };
-            debug_assert!(entry.iter().any(|c| c.is_legal()));
-            legals.extend(entry.extract_if(.., |c| c.is_legal()));
+            debug_assert!(entry.iter().any(preserve_when_orphaned));
+            entry.retain(|comment| {
+                if preserve_when_orphaned(comment) {
+                    orphans.push(comment.clone());
+                    false
+                } else {
+                    true
+                }
+            });
             if entry.is_empty() {
                 comments.remove(&k);
             }
         }
-        if let Some(last) = legals.last_mut() {
+        if let Some(last) = orphans.last_mut() {
             // Orphans aren't in their original position, so the source's
             // `followed_by_newline` hint no longer applies. Force it on so
             // `print_comments` emits a trailing newline instead of setting
             // `print_next_indent_as_space` — otherwise the next indent (often
             // before `}`) collapses to a space and pass 2 stops matching.
             last.set_followed_by_newline(true);
-            self.print_comments(&legals);
+            self.print_comments(&orphans);
         }
     }
 
@@ -267,7 +367,12 @@ impl Codegen<'_> {
                     }
                 }
             }
-        } else {
+        } else if !self.consume_pending_indent_space()
+            && matches!(self.last_byte(), None | Some(b'\n'))
+        {
+            // Only indent at a line start. Mid-line emission sites (`a ?? /* c */ b`,
+            // `key: /* c */ value`, `${/* c */ expr}`) would otherwise get a full
+            // indent injected mid-line, growing indentation on every codegen pass.
             self.print_indent();
         }
         self.print_comment(first);
@@ -313,8 +418,25 @@ impl Codegen<'_> {
         };
         let comment_source = comment.span.source_text(source_text);
         match comment.kind {
-            CommentKind::Line | CommentKind::SingleLineBlock => {
+            CommentKind::Line | CommentKind::HtmlOpen | CommentKind::SingleLineBlock => {
                 self.print_str_escaping_script_close_tag(comment_source);
+            }
+            CommentKind::HtmlClose => {
+                // `-->` is only a comment at the start of a line, allowing indentation.
+                // Annotation emission can place it after code even without minification.
+                let is_mid_line = self
+                    .code()
+                    .as_bytes()
+                    .iter()
+                    .rfind(|&&byte| !matches!(byte, b' ' | b'\t'))
+                    .is_some_and(|&byte| byte != b'\n');
+                let text = if is_mid_line {
+                    self.print_str("//");
+                    comment.content_span().source_text(source_text)
+                } else {
+                    comment_source
+                };
+                self.print_str_escaping_script_close_tag(text);
             }
             CommentKind::MultiLineBlock => {
                 for line in LineTerminatorSplitter::new(comment_source) {
@@ -363,7 +485,7 @@ impl Codegen<'_> {
                 text = Cow::Owned(buffer);
             }
             if set.insert(text) {
-                comments.push(*comment);
+                comments.push(comment.clone());
             }
         }
 

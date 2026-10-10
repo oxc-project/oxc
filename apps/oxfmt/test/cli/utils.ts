@@ -69,8 +69,10 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
   const cwd = testCase.cwd ? join(fixture.fixturesPath, testCase.cwd) : fixture.fixturesPath;
 
   // Read all files before execution (for diff detection and tree)
-  const filesBefore = await readAllFiles(fixture.fixturesPath);
-  const tree = new Set(filesBefore.keys());
+  const { files: filesBefore, symlinks } = await readAllFiles(fixture.fixturesPath);
+  // path -> symlink target (if any)
+  const tree = new Map<string, string | undefined>(symlinks);
+  for (const path of filesBefore.keys()) tree.set(path, undefined);
 
   // Setup: create .gitignore files if specified
   const gitignoreFiles: string[] = [];
@@ -80,7 +82,7 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
       await fs.writeFile(fullPath, content);
       gitignoreFiles.push(fullPath);
       // Show generated files in the tree
-      tree.add(path);
+      tree.set(path, undefined);
     }
   }
 
@@ -91,6 +93,10 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
       input = await fs.readFile(join(fixture.fixturesPath, testCase.stdin), "utf8");
     }
 
+    // Drop `CI` and `FORCE_COLOR` so diagnostics always render with the ASCII theme;
+    // otherwise CI runs emit unicode markers that diverge from locally generated snapshots
+    const { CI: _ci, FORCE_COLOR: _forceColor, ...inheritedEnv } = process.env;
+
     // Execute
     const { stdout, stderr, exitCode } = await execa(
       "node",
@@ -100,7 +106,9 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
         reject: false,
         timeout: 5000,
         input,
-        env: { ...process.env, ...testCase.env },
+        // `extendEnv: false` prevents execa from merging `process.env` back in
+        env: { ...inheritedEnv, ...testCase.env },
+        extendEnv: false,
       },
     );
 
@@ -134,18 +142,24 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
 
 // --- File reading ---
 
-async function readAllFiles(dir: string): Promise<Map<string, string>> {
+async function readAllFiles(
+  dir: string,
+): Promise<{ files: Map<string, string>; symlinks: Map<string, string> }> {
   const files = new Map<string, string>();
+  const symlinks = new Map<string, string>(); // path -> link target
   const entries = await fs.readdir(dir, { withFileTypes: true, recursive: true });
 
   for (const entry of entries) {
-    if (!entry.isFile()) continue;
     const fullPath = join(entry.parentPath, entry.name);
     const relPath = relative(dir, fullPath).replace(/\\/g, "/");
-    files.set(relPath, await fs.readFile(fullPath, "utf8"));
+    if (entry.isFile()) {
+      files.set(relPath, await fs.readFile(fullPath, "utf8"));
+    } else if (entry.isSymbolicLink()) {
+      symlinks.set(relPath, (await fs.readlink(fullPath)).replace(/\\/g, "/"));
+    }
   }
 
-  return files;
+  return { files, symlinks };
 }
 
 // --- Diff detection and restore ---
@@ -209,7 +223,7 @@ interface SnapshotData {
   args: string[];
   env: Record<string, string> | undefined;
   cwdRelative: string | null; // relative path from fixtures/ to cwd, null if fixtures/ is cwd
-  tree: Set<string>;
+  tree: Map<string, string | undefined>; // relative path -> symlink target (if any)
   stdout: string;
   stderr: string;
   exitCode: number;
@@ -255,14 +269,15 @@ function buildSnapshot(data: SnapshotData): string {
   return snapshot;
 }
 
-function buildTreeView(files: Set<string>, cwdRelative: string | null): string {
+function buildTreeView(files: Map<string, string | undefined>, cwdRelative: string | null): string {
   // Build a nested structure from flat file paths
   interface TreeNode {
     children: Map<string, TreeNode>;
+    link?: string;
   }
   const root: TreeNode = { children: new Map() };
 
-  for (const file of files) {
+  for (const [file, link] of files) {
     const parts = file.split("/");
     let node = root;
     for (const part of parts) {
@@ -271,6 +286,7 @@ function buildTreeView(files: Set<string>, cwdRelative: string | null): string {
       }
       node = node.children.get(part)!;
     }
+    node.link = link;
   }
 
   // Determine which path segments are the cwd
@@ -284,13 +300,14 @@ function buildTreeView(files: Set<string>, cwdRelative: string | null): string {
       const isDir = child.children.size > 0;
       const currentPath = [...pathFromFixtures, name];
       const isCwd =
-        cwdParts.length > 0 &&
-        currentPath.length === cwdParts.length &&
-        currentPath.every((p, i) => p === cwdParts[i]);
+        cwdParts.length > 0
+        && currentPath.length === cwdParts.length
+        && currentPath.every((p, i) => p === cwdParts[i]);
       const indent = "  ".repeat(depth);
       const suffix = isDir ? "/" : "";
       const marker = isCwd ? " <CWD>" : "";
-      lines.push(`${indent}- ${name}${suffix}${marker}`);
+      const link = child.link === undefined ? "" : ` -> ${child.link}`;
+      lines.push(`${indent}- ${name}${suffix}${link}${marker}`);
       if (isDir) {
         render(child, depth + 1, currentPath);
       }
@@ -316,21 +333,20 @@ function normalizeOutput(output: string, cwd: string): string {
 
   return (
     output
+      // Collapse Vite+ diagnostics first, they contain ANSI codes of their own
+      .replace(
+        // oxlint-disable-next-line no-control-regex
+        /vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯(?:\x1b\[[0-9;]*m)*\n?/g,
+        "<Vite+ diagnostic>\n",
+      )
+      // Make ANSI style codes visible so snapshots can pin color behavior
       // oxlint-disable-next-line no-control-regex
-      .replace(/\x1b\[[0-9;]*m/g, "")
+      .replace(/\x1b/g, "<esc>")
       .replace(/\d+(?:\.\d+)?s|\d+ms/g, "<time>")
       .replace(/\.timestamp-[0-9a-f-]+/g, ".timestamp-<timestamp-hash>")
-      .replace(/vite\.config\.ts \(\d+:\d+\) [\s\S]*?─╯\n?/g, "<Vite+ diagnostic>\n")
       .replace(/\\/g, "/")
       .replace(new RegExp(RegExp.escape(cwdPath), "g"), "<cwd>")
       .replace(new RegExp(RegExp.escape(rootPath), "g"), "<root>")
-      .replace(/×/g, "x")
-      .replace(/╭/g, ",")
-      .replace(/─/g, "-")
-      .replace(/│/g, "|")
-      .replace(/·/g, ":")
-      .replace(/┬/g, "|")
-      .replace(/╰/g, "`")
       .replace(/[^\S\n]+$/gm, "")
   );
 }

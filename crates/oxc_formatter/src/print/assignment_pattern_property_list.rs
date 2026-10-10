@@ -1,10 +1,11 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _},
+    formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 

@@ -4,6 +4,7 @@ use oxc_ast::{
     ast::{BindingPattern, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_ecmascript::BoundNames;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::Scoping;
 use oxc_span::{GetSpan, Span};
@@ -200,10 +201,10 @@ fn run_for_all_redeclarations(
 
 fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &LintContext) {
     // e.g. "var [a, b] = [1, 2]"
-    for ident in pattern.get_binding_identifiers() {
+    pattern.bound_names(&mut |ident| {
         let name = ident.name;
         let Some(symbol) = ctx.scoping().find_binding(node_scope_id, name) else {
-            continue;
+            return;
         };
 
         let binding = (pattern, name, &symbol);
@@ -215,7 +216,7 @@ fn run_for_declaration(pattern: &BindingPattern, node_scope_id: ScopeId, ctx: &L
 
         // e.g. "var a = 4; console.log(a);"
         run_for_all_references(binding, node_scope_id, ctx);
-    }
+    });
 }
 
 /// Returns true if the reference is outside the declaration scope

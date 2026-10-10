@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::*, match_module_declaration};
+use oxc_ast::{AstKind, ast::*};
 
 use crate::builder::SemanticBuilder;
 
@@ -37,10 +37,6 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         AstKind::StringLiteral(lit) => js::check_string_literal(lit, ctx),
 
         AstKind::Directive(dir) => js::check_directive(dir, ctx),
-        match_module_declaration!(AstKind) => {
-            let mod_decl_kind = kind.as_module_declaration_kind().unwrap();
-            js::check_module_declaration(&mod_decl_kind, ctx);
-        }
 
         AstKind::WithStatement(stmt) => {
             js::check_function_declaration(&stmt.body, false, ctx);
@@ -105,7 +101,12 @@ pub fn check<'a>(kind: AstKind<'a>, ctx: &SemanticBuilder<'a>) {
         }
         AstKind::TSTypeAnnotation(annot) => ts::check_ts_type_annotation(annot, ctx),
         AstKind::TSTypePredicate(predicate) => ts::check_ts_type_predicate(predicate, ctx),
-        AstKind::TSModuleDeclaration(decl) => ts::check_ts_module_declaration(decl, ctx),
+        AstKind::TSExternalModuleDeclaration(decl) => {
+            ts::check_ts_external_module_declaration(decl, ctx);
+        }
+        AstKind::TSNamespaceDeclaration(decl) => {
+            ts::check_ts_namespace_declaration(decl, ctx);
+        }
         AstKind::TSGlobalDeclaration(decl) => ts::check_ts_global_declaration(decl, ctx),
         AstKind::TSEnumDeclaration(decl) => ts::check_ts_enum_declaration(decl, ctx),
         AstKind::TSInferType(infer_type) => ts::check_ts_infer_type(infer_type, ctx),

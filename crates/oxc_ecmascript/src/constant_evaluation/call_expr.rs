@@ -231,6 +231,13 @@ fn try_fold_string_char_code_at<'a>(
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
+    if args
+        .iter()
+        .skip(1)
+        .any(|arg| arg.as_expression().is_none_or(|e| e.may_have_side_effects(ctx)))
+    {
+        return None;
+    }
     let Expression::StringLiteral(s) = object else { return None };
     let char_at_index = match args.first() {
         Some(Argument::SpreadElement(_)) => return None,
@@ -364,7 +371,7 @@ fn try_fold_to_string<'a>(
         Expression::RegExpLiteral(lit) if args.is_empty() => {
             lit.to_js_string(ctx).map(ConstantValue::String)
         }
-        e if args.is_empty() => e
+        e if args.is_empty() && !e.may_have_side_effects(ctx) => e
             .evaluate_value(ctx)
             // `null` and `undefined` returns type errors
             .filter(|v| !v.is_undefined() && !v.is_null())
@@ -465,8 +472,7 @@ fn try_fold_math_unary<'a>(
             // In Rust, when facing `.5`, it may follow `half-away-from-zero` instead of round to upper bound.
             // So we need to handle it manually.
             let frac_part = arg_val.fract();
-            let epsilon = 2f64.powi(-52);
-            if (frac_part.abs() - 0.5).abs() < epsilon {
+            if frac_part.abs() == 0.5 {
                 // We should ceil it.
                 arg_val.ceil()
             } else {

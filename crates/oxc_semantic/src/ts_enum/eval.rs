@@ -3,7 +3,7 @@ use oxc_ast::ast::{
     UnaryExpression,
 };
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, Ident};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::ToJsString,
@@ -19,6 +19,12 @@ struct EnumEvalCtx<'s> {
     scope_id: ScopeId,
     enum_symbol_id: Option<SymbolId>,
     scoping: &'s Scoping,
+}
+
+enum SiblingLookup {
+    Missing,
+    Unknown,
+    Value(ConstantValue),
 }
 
 /// Evaluate all enum member values in a `TSEnumDeclaration` and store them in `Scoping`.
@@ -120,9 +126,9 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
 /// Resolve an identifier or member expression to a previously evaluated enum value.
 ///
 /// Uses a three-level lookup strategy for bare identifiers:
-/// 1. Resolved reference — `enum A { X = 1, Y = X }` (X is resolved in the same scope)
-/// 2. Scope binding fallback — handles cases where references aren't yet resolved
-/// 3. Sibling enum fallback — `enum A { X = 1 } enum A { Y = X }` (merged declarations)
+/// 1. Sibling enum fallback — `enum A { X = 1 } enum A { Y = X }` (merged declarations)
+/// 2. Lexical binding — `enum A { X = 1, Y = X }` (X is resolved in the same scope)
+/// 3. Unbound globals — `Infinity` and `NaN`
 ///
 /// Also handles cross-enum member access:
 /// ```ts
@@ -133,39 +139,33 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
 fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<ConstantValue> {
     match expr {
         Expression::Identifier(ident) => {
-            if ident.name == "Infinity" {
-                return Some(ConstantValue::Number(f64::INFINITY));
-            }
-            if ident.name == "NaN" {
-                return Some(ConstantValue::Number(f64::NAN));
-            }
-
-            if let Some(ref_id) = ident.reference_id.get()
-                && let Some(symbol_id) = ctx.scoping.get_reference(ref_id).symbol_id()
-            {
-                return ctx.scoping.get_enum_member_value(symbol_id).cloned();
-            }
-
-            // Fallback: look up as a binding in the current enum body scope.
-            if let Some(symbol_id) =
-                ctx.scoping.get_binding(ctx.scope_id, ident.name.as_str().into())
-                && let Some(value) = ctx.scoping.get_enum_member_value(symbol_id)
-            {
-                return Some(value.clone());
-            }
-
-            // Sibling enum fallback for merged enums.
-            find_in_sibling_enum_scopes(
+            match find_in_sibling_enum_scopes(
                 ident.name.as_str(),
                 ctx.scope_id,
                 ctx.enum_symbol_id,
                 ctx.scoping,
-            )
+            ) {
+                SiblingLookup::Value(value) => return Some(value),
+                SiblingLookup::Unknown => return None,
+                SiblingLookup::Missing => {}
+            }
+
+            if let Some(symbol_id) = resolve_identifier_symbol(ident, ctx) {
+                return ctx.scoping.get_enum_member_value(symbol_id).cloned();
+            }
+
+            match ident.name.as_str() {
+                "Infinity" => return Some(ConstantValue::Number(f64::INFINITY)),
+                "NaN" => return Some(ConstantValue::Number(f64::NAN)),
+                _ => {}
+            }
+
+            None
         }
         Expression::StaticMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(member_expr.property.name.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(member_expr.property.name, obj_symbol_id, ctx.scoping)
         }
         Expression::ComputedMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
@@ -173,7 +173,7 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
                 return None;
             };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(prop_lit.value.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(prop_lit.value.into(), obj_symbol_id, ctx.scoping)
         }
         _ => None,
     }
@@ -258,18 +258,13 @@ fn eval_unary_expression(
 ) -> Option<ConstantValue> {
     let value = evaluate_expression(&expr.argument, ctx)?;
 
-    // Babel uses JS coercion for unary on strings: `+"s"` → `"s"`, `-"s"` → NaN, `~"s"` → -1.
-    // TypeScript would leave these unevaluated (computed members). We align with Babel.
+    // TypeScript leaves unary operations on strings unevaluated (computed members),
+    // so we decline here too — folding them would need ToNumber coercion, and a
+    // folded value that does not match the runtime result is worse than none at
+    // all (`-"3"` must produce -3, `~"4"` -5).
     let value = match value {
         ConstantValue::Number(v) => v,
-        ConstantValue::String(_) => {
-            return match expr.operator {
-                UnaryOperator::UnaryPlus => Some(value),
-                UnaryOperator::UnaryNegation => Some(ConstantValue::Number(f64::NAN)),
-                UnaryOperator::BitwiseNot => Some(ConstantValue::Number(-1.0)),
-                _ => None,
-            };
-        }
+        ConstantValue::String(_) => return None,
     };
 
     match expr.operator {
@@ -289,13 +284,13 @@ fn eval_unary_expression(
 /// // The symbol `A` has two body scopes — this searches both.
 /// ```
 fn find_in_enum_body_scopes(
-    member_name: &str,
+    member_name: Ident<'_>,
     enum_symbol_id: SymbolId,
     scoping: &Scoping,
 ) -> Option<ConstantValue> {
     let body_scopes = scoping.get_enum_body_scopes(enum_symbol_id)?;
     for &body_scope in body_scopes {
-        if let Some(member_symbol_id) = scoping.get_binding(body_scope, member_name.into())
+        if let Some(member_symbol_id) = scoping.get_binding(body_scope, member_name)
             && let Some(value) = scoping.get_enum_member_value(member_symbol_id)
         {
             return Some(value.clone());
@@ -312,20 +307,29 @@ fn find_in_enum_body_scopes(
 /// enum Foo { A = 1 }
 /// enum Foo { B = A + 1 }  // `A` is in the first Foo's scope, not the current one
 /// ```
+///
+/// Returns [`SiblingLookup::Unknown`] when the member exists but could not be evaluated, so
+/// callers do not fall back to a global with the same name.
 fn find_in_sibling_enum_scopes(
     name: &str,
     current_scope_id: ScopeId,
     enum_symbol_id: Option<SymbolId>,
     scoping: &Scoping,
-) -> Option<ConstantValue> {
-    let body_scopes = scoping.get_enum_body_scopes(enum_symbol_id?)?;
+) -> SiblingLookup {
+    let Some(enum_symbol_id) = enum_symbol_id else { return SiblingLookup::Missing };
+    let Some(body_scopes) = scoping.get_enum_body_scopes(enum_symbol_id) else {
+        return SiblingLookup::Missing;
+    };
+
     for &body_scope in body_scopes {
         if body_scope != current_scope_id
             && let Some(member_sym) = scoping.get_binding(body_scope, name.into())
-            && let Some(value) = scoping.get_enum_member_value(member_sym)
         {
-            return Some(value.clone());
+            return scoping
+                .get_enum_member_value(member_sym)
+                .cloned()
+                .map_or(SiblingLookup::Unknown, SiblingLookup::Value);
         }
     }
-    None
+    SiblingLookup::Missing
 }

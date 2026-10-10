@@ -282,9 +282,23 @@ pub struct Oxlintrc {
     /// are rejected as a configuration error.
     #[serde(rename = "ignorePatterns")]
     pub ignore_patterns: Vec<String>,
-    /// Paths of configuration files that this configuration file extends (inherits from). The files
-    /// are resolved relative to the location of the configuration file that contains the `extends`
-    /// property. The configuration files are merged from the first to the last, with the last file
+    /// Configurations that this configuration file extends (inherits from).
+    ///
+    /// In `.oxlintrc.json`, `extends` has type `string[]`. Each string is a path to a configuration
+    /// file, resolved relative to the location of the configuration file that contains the
+    /// `extends` property.
+    ///
+    /// In `oxlint.config.ts`, `extends` has type `OxlintConfig[]`. Import each configuration and
+    /// pass the configuration object directly:
+    ///
+    /// ```ts
+    /// import { defineConfig } from "oxlint";
+    /// import baseConfig from "./base-config.ts";
+    ///
+    /// export default defineConfig({ extends: [baseConfig] });
+    /// ```
+    ///
+    /// Configurations are merged from the first to the last, with the last configuration
     /// overriding the previous ones.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     pub extends: Vec<PathBuf>,
@@ -340,7 +354,7 @@ impl Oxlintrc {
             )));
         }
 
-        let mut config = Self::deserialize(&json).map_err(|err| {
+        let mut config = Self::from_json_value(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })?;
 
@@ -375,9 +389,26 @@ impl Oxlintrc {
             ));
         }
 
-        Self::deserialize(&json).map_err(|err| {
+        Self::from_json_value(&json).map_err(|err| {
             OxcDiagnostic::error(format!("Failed to parse config with error {err:?}"))
         })
+    }
+
+    /// Deserialize a configuration from an already parsed JSON value.
+    ///
+    /// This is the single entry point for turning JSON into an [`Oxlintrc`]; every caller
+    /// (config files, JS configs in `oxlint`, ...) should go through it rather than calling
+    /// `Oxlintrc::deserialize` with a deserializer of their own. `Deserialize::deserialize` is
+    /// generic, so each crate that calls it compiles its own copy of the whole configuration
+    /// type tree; this non-generic function is compiled once and shared. It is `#[inline(never)]`
+    /// so that it is not inlined across crates, which would re-instantiate the tree in the caller.
+    ///
+    /// # Errors
+    ///
+    /// Returns the deserialization error if `json` does not describe a valid configuration.
+    #[inline(never)]
+    pub fn from_json_value(json: &serde_json::Value) -> Result<Self, serde_json::Error> {
+        Self::deserialize(json)
     }
 
     /// Merges two [Oxlintrc] files together.
