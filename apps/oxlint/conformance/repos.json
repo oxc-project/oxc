@@ -53,5 +53,10 @@
     "repoUrl": "https://github.com/ota-meshi/eslint-plugin-regexp",
     "commitSha": "788787a7e9e820c40321fe2f1095d00d4a486866",
     "version": "v3.1.0"
+  },
+  "formatjs": {
+    "repoUrl": "https://github.com/formatjs/formatjs",
+    "commitSha": "6fbaf6d8d3ab828768ca94f9f42fdb837e3af930",
+    "version": "8.0.0"
   }
 }
