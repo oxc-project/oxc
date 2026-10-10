@@ -21,6 +21,13 @@ test = false
 bench = false
 doctest = false
 
+# Stand-in for `tsgolint` that the `linter_type_aware` benchmark (in `benches/linter.rs`) runs.
+[[bin]]
+name = "fake_tsgolint"
+test = false
+bench = false
+required-features = ["linter"]
+
 [[bench]]
 name = "lexer"
 harness = false
@@ -146,6 +153,7 @@ linter = [
   "dep:oxc_semantic",
   "dep:oxc_span",
   "dep:oxc_tasks_common",
+  "dep:serde_json",
   "oxc_semantic/cfg",
 ]
 react_compiler = [
@@ -192,6 +200,5 @@ ignored = [
   "oxc_tasks_common",
   "oxc_transformer",
   "serde",
-  "serde_json",
   "cow-utils",
 ]
