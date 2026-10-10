@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast_visit::Visit;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
@@ -633,7 +633,14 @@ fn test_define_then_transform(
     expected: &str,
     define_config: &ReplaceGlobalDefinesConfig,
 ) {
-    test_define_then_transform_impl(source_text, expected, define_config, SourceType::mjs());
+    test_define_then_transform_impl(
+        source_text,
+        expected,
+        define_config,
+        SourceType::mjs(),
+        true,
+        "es2019",
+    );
 }
 
 #[track_caller]
@@ -647,6 +654,8 @@ fn test_define_then_transform_ts(
         expected,
         define_config,
         SourceType::ts().with_module(true),
+        true,
+        "es2019",
     );
 }
 
@@ -656,12 +665,16 @@ fn test_define_then_transform_impl(
     expected: &str,
     define_config: &ReplaceGlobalDefinesConfig,
     source_type: SourceType,
+    preserve_parens: bool,
+    target: &str,
 ) {
     use oxc_transformer::{TransformOptions, Transformer};
     use std::path::Path;
 
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Parser::new(&allocator, source_text, source_type)
+        .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+        .parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
 
@@ -674,8 +687,8 @@ fn test_define_then_transform_impl(
     let scoping =
         SemanticBuilder::new().with_excess_capacity(2.0).build(&program).semantic.into_scoping();
 
-    // Step 3: Run transformer with ES2019 target (lowers optional chaining)
-    let options = TransformOptions::from_target("es2019").unwrap();
+    // Step 3: Run transformer with a target that lowers optional chaining.
+    let options = TransformOptions::from_target(target).unwrap();
     let filename = if source_type.is_typescript() { "test.ts" } else { "test.mjs" };
     let ret = Transformer::new(&allocator, Path::new(filename), &options)
         .build_with_scoping(scoping, &mut program);
@@ -686,7 +699,10 @@ fn test_define_then_transform_impl(
         .build(&program)
         .code;
     let expected = codegen(expected, source_type);
-    assert_eq!(result, expected, "for source {source_text}");
+    assert_eq!(
+        result, expected,
+        "for source {source_text}, {target}, preserve_parens={preserve_parens}"
+    );
 }
 
 #[test]
@@ -711,4 +727,36 @@ fn define_then_transform_optional_chain() {
         "var _replaced; (_replaced = 'replaced') === null || _replaced === void 0 ? void 0 : _replaced.c",
         &c2,
     );
+}
+
+// https://github.com/rolldown/rolldown/issues/11172
+#[test]
+fn define_then_transform_optional_chain_with_non_null_assertion() {
+    // An unrelated define must not remove the chain wrapper when `!` hides an optional member.
+    let c = config(&[("process.env.NODE_ENV", "'production'")]);
+    for (source, expected) in [
+        ("c?.a!.b", "c === null || c === void 0 ? void 0 : c.a.b"),
+        ("c?.[a]!.b", "c === null || c === void 0 ? void 0 : c[a].b"),
+        ("c?.a!['b']", "c === null || c === void 0 ? void 0 : c.a['b']"),
+        ("c?.a!()", "c === null || c === void 0 ? void 0 : c.a()"),
+        ("c?.()!.b", "c === null || c === void 0 ? void 0 : c().b"),
+        ("c?.a!!.b!", "c === null || c === void 0 ? void 0 : c.a.b"),
+        ("delete c?.a!.b", "c === null || c === void 0 ? true : delete c.a.b"),
+        ("c?.a.b", "c === null || c === void 0 ? void 0 : c.a.b"),
+        ("(c?.a)!.b", "(c === null || c === void 0 ? void 0 : c.a).b"),
+        ("c!?.a.b", "c === null || c === void 0 ? void 0 : c.a.b"),
+    ] {
+        for preserve_parens in [true, false] {
+            for target in ["es2015", "es2017", "es2019"] {
+                test_define_then_transform_impl(
+                    &format!("declare const c: any; {source}"),
+                    expected,
+                    &c,
+                    SourceType::ts().with_module(true),
+                    preserve_parens,
+                    target,
+                );
+            }
+        }
+    }
 }
