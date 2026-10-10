@@ -1187,6 +1187,7 @@ impl<'a> PeepholeOptimizations {
                     let declaration_kind = var_decl.kind;
                     if let Some(first_decl) = var_decl.declarations.first_mut()
                         && let Some(first_decl_init) = first_decl.init.as_mut()
+                        && !FindInOperatorInArrowBody::check_trailing_declarations(result)
                     {
                         let is_block_scoped_decl = !declaration_kind.is_var();
                         Self::substitute_single_use_symbol_in_statement(
@@ -1204,7 +1205,9 @@ impl<'a> PeepholeOptimizations {
                 }
                 match_expression!(ForStatementInit) => {
                     let init = init.to_expression_mut();
-                    Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
+                    if !FindInOperatorInArrowBody::check_trailing_declarations(result) {
+                        Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
+                    }
                     // "var a; for (a = b(), c; ;) d;" => "var a = b(); for (c; ;) d;"
                     if Self::merge_leading_assignments_to_declaration(init, true, result, ctx)
                         && let Some(old_init) = for_stmt.init.take()
@@ -1242,7 +1245,17 @@ impl<'a> PeepholeOptimizations {
         }
 
         if ctx.options().sequences {
+            let moves_arrow_body_in = match result.last() {
+                Some(Statement::ExpressionStatement(stmt)) => {
+                    FindInOperatorInArrowBody::check_expression(&stmt.expression)
+                }
+                Some(Statement::VariableDeclaration(decl)) => {
+                    FindInOperatorInArrowBody::check_declarations(&decl.declarations)
+                }
+                _ => false,
+            };
             match result.last_mut() {
+                _ if moves_arrow_body_in => {}
                 Some(Statement::ExpressionStatement(_)) => {
                     if let Some(init) = &mut for_stmt.init {
                         if let Some(init) = init.as_expression_mut() {
@@ -2294,5 +2307,74 @@ impl<'a> VisitJs<'a> for FindNestedBreak {
             }
             _ => walk_js::walk_statement(self, it),
         }
+    }
+}
+
+/// Finds an `in` operator inside the body of a block-bodied arrow function.
+///
+/// JavaScriptCore applies the `for` initializer's `[~In]` restriction to the statements of
+/// arrow function bodies nested in the initializer, so Safari fails to parse
+/// `for (f = () => { if ('a' in b) return 1 };;);` (<https://bugs.webkit.org/show_bug.cgi?id=313669>).
+/// Such code must not be moved into a `for` initializer. `in` in a concise body is printed in
+/// parentheses there, which JavaScriptCore accepts.
+#[derive(Default)]
+struct FindInOperatorInArrowBody {
+    arrow_body_depth: u32,
+    found: bool,
+}
+
+impl FindInOperatorInArrowBody {
+    fn check_expression(expr: &Expression) -> bool {
+        let mut visitor = Self::default();
+        visitor.visit_expression(expr);
+        visitor.found
+    }
+
+    fn check_declarations(declarations: &[VariableDeclarator]) -> bool {
+        declarations.iter().filter_map(|decl| decl.init.as_ref()).any(Self::check_expression)
+    }
+
+    /// Checks the declarations that `substitute_single_use_symbol_in_statement` can inline from.
+    fn check_trailing_declarations(stmts: &[Statement]) -> bool {
+        stmts
+            .iter()
+            .rev()
+            .map_while(|stmt| match stmt {
+                Statement::VariableDeclaration(decl) => Some(decl),
+                _ => None,
+            })
+            .any(|decl| Self::check_declarations(&decl.declarations))
+    }
+}
+
+impl<'a> VisitJs<'a> for FindInOperatorInArrowBody {
+    fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
+        if self.found {
+            return;
+        }
+        let is_block_body = !it.is_expression();
+        if is_block_body {
+            self.arrow_body_depth += 1;
+        }
+        walk_js::walk_arrow_function_expression(self, it);
+        if is_block_body {
+            self.arrow_body_depth -= 1;
+        }
+    }
+
+    fn visit_binary_expression(&mut self, it: &BinaryExpression<'a>) {
+        if self.arrow_body_depth > 0 && it.operator == BinaryOperator::In {
+            self.found = true;
+            return;
+        }
+        walk_js::walk_binary_expression(self, it);
+    }
+
+    fn visit_private_in_expression(&mut self, it: &PrivateInExpression<'a>) {
+        if self.arrow_body_depth > 0 {
+            self.found = true;
+            return;
+        }
+        walk_js::walk_private_in_expression(self, it);
     }
 }
