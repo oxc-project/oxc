@@ -132,13 +132,14 @@ impl ESTree for BigIntLiteralBigint<'_, '_> {
 /// Serializer for `value` field of `RegExpLiteral`.
 ///
 /// Serialized as `null` in JSON, but updated on JS side to contain a `RegExp`, if the regexp is valid.
+/// `regex` in `raw_deser` is initialized by `RegExpLiteralRegex`.
 #[ast_meta]
 #[estree(
     ts_type = "RegExp | null",
     raw_deser = "
         let value = null;
         try {
-            value = new RegExp(THIS.regex.pattern, THIS.regex.flags);
+            value = new RegExp(regex.pattern, regex.flags);
         } catch (e) {}
         value
     "
@@ -150,6 +151,38 @@ impl ESTree for RegExpLiteralValue<'_, '_> {
         // Record that this node needs fixing on JS side
         serializer.record_fix_path();
         Null(()).serialize(serializer);
+    }
+}
+
+/// Serializer for the `regex` field, preserving source flag order when raw text is available.
+#[ast_meta]
+#[estree(
+    ts_type = "{ pattern: string; flags: string; }",
+    raw_deser = "
+        const pattern = DESER[Str](POS_OFFSET.regex.pattern.text);
+        const hasRaw = DESER[u32](POS_OFFSET.raw) !== 0 || DESER[u32](POS_OFFSET.raw + 4) !== 0;
+        const flags = hasRaw
+            ? SOURCE_TEXT.slice(THIS.start + pattern.length + 2, THIS.end)
+            : DESER[RegExpFlags](POS_OFFSET.regex.flags);
+        const regex = { pattern, flags };
+        regex
+    ",
+    raw_deser_inline
+)]
+pub struct RegExpLiteralRegex<'a, 'b>(pub &'b RegExpLiteral<'a>);
+
+impl ESTree for RegExpLiteralRegex<'_, '_> {
+    fn serialize<S: Serializer>(&self, serializer: S) {
+        let literal = self.0;
+        let mut state = serializer.serialize_struct();
+        state.serialize_field("pattern", &literal.regex.pattern.text);
+        if let Some(raw) = literal.raw {
+            let flags = &raw.as_str()[literal.regex.pattern.text.len() + 2..];
+            state.serialize_field("flags", &JsonSafeString(flags));
+        } else {
+            state.serialize_field("flags", &literal.regex.flags);
+        }
+        state.end();
     }
 }
 
@@ -267,5 +300,46 @@ impl TemplateElementValue<'_, '_> {
         state.serialize_field("cooked", &cooked);
 
         state.end();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::cell::Cell;
+
+    use oxc_estree::{CompactSerializer, ESTree};
+    use oxc_span::Span;
+
+    use crate::ast::{RegExp, RegExpFlags, RegExpLiteral, RegExpPattern};
+
+    fn serialize_regex(raw: Option<&str>, flags: RegExpFlags) -> String {
+        let literal = RegExpLiteral {
+            node_id: Cell::default(),
+            span: Span::default(),
+            regex: RegExp { pattern: RegExpPattern { text: "a".into(), pattern: None }, flags },
+            raw: raw.map(Into::into),
+        };
+        let mut serializer = CompactSerializer::with_capacity(128, false, false);
+        literal.serialize(&mut serializer);
+        serializer.into_string()
+    }
+
+    #[test]
+    fn regexp_preserves_source_flag_order() {
+        let flags = RegExpFlags::G | RegExpFlags::I;
+        assert!(
+            serialize_regex(Some("/a/ig"), flags)
+                .contains(r#""regex":{"pattern":"a","flags":"ig"}"#)
+        );
+        assert!(
+            serialize_regex(Some("/a/"), RegExpFlags::empty())
+                .contains(r#""regex":{"pattern":"a","flags":""}"#)
+        );
+    }
+
+    #[test]
+    fn regexp_uses_canonical_flags_without_raw() {
+        let flags = RegExpFlags::G | RegExpFlags::I;
+        assert!(serialize_regex(None, flags).contains(r#""regex":{"pattern":"a","flags":"gi"}"#));
     }
 }
