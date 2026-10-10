@@ -1212,6 +1212,10 @@ parser_diagnostics! {
         ts_error("8005", "'implements' clauses can only be used in TypeScript files.").with_label(span)
     };
 
+    interface_in_ts(span: Span) => {
+        ts_error("8006", "'interface' declarations can only be used in TypeScript files.").with_label(span)
+    };
+
     implementation_in_ambient(span: Span) => {
         ts_error("1183", "An implementation cannot be declared in ambient contexts.").with_label(span)
     };
