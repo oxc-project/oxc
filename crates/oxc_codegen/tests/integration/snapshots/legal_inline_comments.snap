@@ -45,8 +45,7 @@ bar;
 /* @license *//*! KEEP */
 foo;bar;
 ----------
-/* @license */
-/*! KEEP */
+/* @license */ /*! KEEP */
 foo;
 bar;
 

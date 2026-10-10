@@ -28,6 +28,9 @@ bitflags! {
         const TYPESCRIPT  = 1 << 2;
         /// The current template literal is tagged, so preserve its raw quasis.
         const TAGGED_TEMPLATE = 1 << 3;
+        /// The immediate function or arrow already has an emitted parenthesis wrapper.
+        /// Its printer consumes this flag before printing descendants.
+        const PARENTHESIZED = 1 << 4;
     }
 }
 

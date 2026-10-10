@@ -80,18 +80,7 @@ function foo() {
  * @preserve
  */
 ----------
-function foo(){(()=>{
-/**
-* @preserve
-*/
-})()
-/**
-* @preserve
-*/
-}
-/**
-* @preserve
-*/
+function foo(){(()=>{})()}
 /**
 * @preserve
 */
@@ -102,9 +91,6 @@ function foo(){(()=>{
 */
 
 ----------
-/**
-* @preserve
-*/
 
 /**
 * @preserve

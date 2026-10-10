@@ -17,11 +17,13 @@ use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
     identifier::{is_identifier_part, is_identifier_part_ascii},
+    node::NodeId,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
 use rustc_hash::FxHashMap;
 
+mod attached_comments;
 mod binary_expr_visitor;
 mod cjs_module_lexer;
 mod comment;
@@ -33,6 +35,7 @@ mod options;
 mod sourcemap_builder;
 mod str;
 
+use attached_comments::AttachedComments;
 use binary_expr_visitor::BinaryExpressionVisitor;
 use comment::CommentsMap;
 use operator::Operator;
@@ -77,12 +80,13 @@ pub struct CodegenReturn<'a> {
 /// use oxc_span::SourceType;
 ///
 /// let allocator = Allocator::default();
-/// let source = "const a = 1 + 2;";
+/// let source = "const a = 1 + 2; // result";
 /// let parsed = Parser::new(&allocator, source, SourceType::mjs()).parse();
 /// assert!(parsed.diagnostics.is_empty());
 ///
-/// let js = Codegen::new().build(&parsed.program);
-/// assert_eq!(js.code, "const a = 1 + 2;\n");
+/// let mut program = parsed.program;
+/// let js = Codegen::new().build(&program);
+/// assert_eq!(js.code, "const a = 1 + 2; // result\n");
 /// ```
 pub struct Codegen<'a> {
     pub(crate) options: CodegenOptions,
@@ -129,6 +133,7 @@ pub struct Codegen<'a> {
 
     // Builders
     comments: CommentsMap,
+    attached_comments: AttachedComments,
     has_property_key_annotations: bool,
 
     /// Pure / no-side-effects annotation comments keyed by `attached_to`,
@@ -214,6 +219,7 @@ impl<'a> Codegen<'a> {
             indent: 0,
             quote: Quote::Double,
             comments: CommentsMap::default(),
+            attached_comments: AttachedComments::default(),
             has_property_key_annotations: false,
             annotation_comments: FxHashMap::default(),
             orphan_comment_keys: Vec::new(),
@@ -282,6 +288,7 @@ impl<'a> Codegen<'a> {
             self.sourcemap_builder = Some(SourcemapBuilder::new(path, program.source_text));
         }
         program.print(&mut self, Context::default());
+        self.print_unclaimed_attached_comments();
         let legal_comments = self.handle_eof_linked_or_external_comments(program);
         let code = self.code.into_string();
         #[cfg(feature = "sourcemap")]
@@ -652,6 +659,14 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    /// Padding before a closing delimiter must not become indentation after a comment.
+    #[inline]
+    fn print_soft_space_if_not_line_start(&mut self) {
+        if !self.options.minify && self.last_byte() != Some(b'\n') {
+            self.print_ascii_byte(b' ');
+        }
+    }
+
     #[inline]
     fn print_hard_space(&mut self) {
         self.print_ascii_byte(b' ');
@@ -659,7 +674,9 @@ impl<'a> Codegen<'a> {
 
     #[inline]
     fn print_soft_newline(&mut self) {
-        if !self.options.minify {
+        if !self.options.minify
+            && (self.attached_comments.is_empty() || self.last_byte() != Some(b'\n'))
+        {
             self.print_ascii_byte(b'\n');
         }
     }
@@ -758,6 +775,10 @@ impl<'a> Codegen<'a> {
         if self.consume_pending_indent_space() {
             return;
         }
+        if !self.attached_comments.is_empty() && self.last_byte().is_some_and(|byte| byte != b'\n')
+        {
+            return;
+        }
         self.code.print_indent(self.indent as usize);
     }
 
@@ -787,7 +808,14 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn print_semicolon_after_statement(&mut self) {
         if self.options.minify {
-            self.needs_semicolon = true;
+            // Ordinary comments can change the token anchored to an omitted
+            // semicolon. Applied PURE/NO_SIDE_EFFECTS annotations cannot, and
+            // compression may synthesize them on the first pass.
+            if self.attached_comments.has_statement_comments() {
+                self.print_semicolon();
+            } else {
+                self.needs_semicolon = true;
+            }
         } else {
             self.print_str(";\n");
         }
@@ -816,7 +844,14 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'=');
     }
 
-    fn print_curly_braces<F: FnOnce(&mut Self)>(&mut self, span: Span, single_line: bool, op: F) {
+    fn print_curly_braces<F: FnOnce(&mut Self)>(
+        &mut self,
+        node_id: NodeId,
+        span: Span,
+        single_line: bool,
+        op: F,
+    ) {
+        let single_line = single_line && !self.has_inside_comments(node_id);
         self.add_source_mapping(span);
         self.print_ascii_byte(b'{');
         if !single_line {
@@ -824,7 +859,11 @@ impl<'a> Codegen<'a> {
             self.indent();
         }
         op(self);
+        self.print_inside_comments(node_id);
         if !single_line {
+            if self.last_byte() != Some(b'\n') {
+                self.print_soft_newline();
+            }
             self.dedent();
             self.print_indent();
         }
@@ -832,14 +871,18 @@ impl<'a> Codegen<'a> {
         self.print_ascii_byte(b'}');
     }
 
-    fn print_block_start(&mut self, span: Span) {
+    fn print_block_start(&mut self, node_id: NodeId, span: Span) {
         self.add_source_mapping(span);
         self.print_ascii_byte(b'{');
         self.print_soft_newline();
         self.indent();
+        self.print_inside_comments(node_id);
     }
 
     fn print_block_end(&mut self, span: Span) {
+        if self.last_byte() != Some(b'\n') {
+            self.print_soft_newline();
+        }
         self.dedent();
         self.print_indent();
         self.add_source_mapping_end(span);
@@ -869,11 +912,13 @@ impl<'a> Codegen<'a> {
     }
 
     fn print_block_statement(&mut self, stmt: &BlockStatement<'_>, ctx: Context) {
+        let comments = self.start_node_comments(stmt.node_id());
         let single_line = stmt.body.is_empty() && !self.has_orphan_comments_before(stmt.span.end);
-        self.print_curly_braces(stmt.span, single_line, |p| {
+        self.print_curly_braces(stmt.node_id(), stmt.span, single_line, |p| {
             p.print_stmts_with_orphan_flush(&stmt.body, stmt.span.end, ctx);
         });
         self.needs_semicolon = false;
+        self.finish_node_comments(comments);
     }
 
     /// Print `stmts`, flushing orphan comments before each and at `scope_end`.
@@ -929,20 +974,29 @@ impl<'a> Codegen<'a> {
             && let expr = stmt.expression.without_parentheses()
             && let Expression::StringLiteral(string) = expr
         {
+            let comments = self.start_node_comments(stmt.node_id());
             // Mirror `ExpressionStatement`'s printer, which this path stands in for
             self.print_comments_at(stmt.span.start);
             if self.indent > 0 || self.print_next_indent_as_space {
                 self.print_indent();
                 self.add_source_mapping(stmt.span);
             }
-            if self.options.minify {
+            if !self.attached_comments.is_empty() {
+                // Parsers can omit ParenthesizedExpression nodes. A bare string
+                // here still needs a wrapper to avoid introducing a directive.
+                self.wrap(matches!(stmt.expression, Expression::StringLiteral(_)), |p| {
+                    p.print_expression(&stmt.expression);
+                });
+            } else if self.options.minify {
                 self.print_string_literal_as_template(string);
             } else {
                 self.print_ascii_byte(b'(');
                 self.print_string_literal(string, /* allow_backtick */ true);
                 self.print_ascii_byte(b')');
             }
+            self.print_inside_comments(stmt.node_id());
             self.print_semicolon_after_statement();
+            self.finish_node_comments(comments);
         } else {
             first.print(self, ctx);
         }
@@ -976,7 +1030,13 @@ impl<'a> Codegen<'a> {
         }
     }
 
-    fn print_arguments(&mut self, span: Span, arguments: &[Argument<'_>], ctx: Context) {
+    fn print_arguments(
+        &mut self,
+        node_id: NodeId,
+        span: Span,
+        arguments: &[Argument<'_>],
+        ctx: Context,
+    ) {
         self.print_ascii_byte(b'(');
 
         let has_comment_before_right_paren = span.end > 0 && self.has_comment(span.end - 1);
@@ -1000,8 +1060,37 @@ impl<'a> Codegen<'a> {
         }
         // End mapping at the gen position OF `)`, not past it. Matches
         // esbuild/Babel and avoids shadowing the next AST node's start.
+        self.print_inside_comments(node_id);
         self.add_source_mapping_end(span);
         self.print_ascii_byte(b')');
+    }
+
+    /// Parameter spans include their parentheses. Keep their comment frame open
+    /// through the closing delimiter, so trailing comments stay outside it.
+    fn print_formal_parameters(
+        &mut self,
+        params: &FormalParameters<'_>,
+        this_param: Option<&TSThisParameter<'_>>,
+        wrap: bool,
+        ctx: Context,
+    ) {
+        let comments = self.start_node_comments(params.node_id());
+        if wrap {
+            self.print_ascii_byte(b'(');
+        }
+        if let Some(this_param) = this_param {
+            this_param.print(self, ctx);
+            if !params.is_empty() || params.rest.is_some() {
+                self.print_comma();
+                self.print_soft_space();
+            }
+        }
+        params.print(self, ctx);
+        self.print_inside_comments(params.node_id());
+        if wrap {
+            self.print_ascii_byte(b')');
+        }
+        self.finish_node_comments(comments);
     }
 
     fn print_list_with_comments(&mut self, items: &[Argument<'_>], ctx: Context) {

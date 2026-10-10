@@ -54,7 +54,7 @@ fn test_comments_before_expression_operands() {
     );
     test(
         "condition ?\n  /* v8 ignore next */ uncovered() :\n  coveredAlternate();",
-        "condition ? \n/* v8 ignore next */ uncovered() : coveredAlternate();\n",
+        "condition ?\n/* v8 ignore next */ uncovered() : coveredAlternate();\n",
     );
     test(
         "const value = { aFunction: /* istanbul ignore next */ () => {} };",
@@ -94,14 +94,14 @@ object[/* #__KEY__ */ `_field`];
     );
     crate::tester::test_options(
         "use(/* @__KEY__ */ \"_field\");",
-        "use(\n\t/* @__KEY__ */\n\t\"_field\"\n);\n",
+        "use(/* @__KEY__ */ \"_field\");\n",
         annotation_only.clone(),
     );
 
     let minify_with_annotations = CodegenOptions { minify: true, ..annotation_only.clone() };
     crate::tester::test_options(
         "(/* @__KEY__ */ \"_field\");",
-        "/* @__KEY__ */`_field`;",
+        "(/* @__KEY__ */`_field`);",
         minify_with_annotations.clone(),
     );
 
@@ -127,7 +127,7 @@ object[/* #__KEY__ */ `_field`];
 fn test_comment_before_indented_object_property_value() {
     test(
         "function f(source) {\n\treturn {\n\t\tsource: /** @type {string} */ (source),\n\t\tother: 1\n\t};\n}",
-        "function f(source) {\n\treturn {\n\t\t/** @type {string} */ source,\n\t\tother: 1\n\t};\n}\n",
+        "function f(source) {\n\treturn {\n\t\tsource: /** @type {string} */ (source),\n\t\tother: 1\n\t};\n}\n",
     );
     test_idempotency(
         "function f(source) {\n\treturn {\n\t\tsource: /** @type {string} */ (source),\n\t\tother: 1\n\t};\n}",
@@ -143,7 +143,7 @@ fn test_comment_before_indented_object_property_value() {
 fn test_newline_comment_group_before_object_property_value() {
     test(
         "function f(argument) {\n\treturn {\n\t\ttype: 1,\n\t\targument:\n\t\t// c1\n\t\t/** @type {Expression} */\n\t\t(argument)\n\t};\n}",
-        "function f(argument) {\n\treturn {\n\t\ttype: 1,\n\t\t// c1\n\t\t/** @type {Expression} */\n\t\targument\n\t};\n}\n",
+        "function f(argument) {\n\treturn {\n\t\ttype: 1,\n\t\targument:\n\t\t// c1\n\t\t/** @type {Expression} */\n\t\t(argument)\n\t};\n}\n",
     );
     test_idempotency(
         "function f(argument) {\n\treturn {\n\t\ttype: 1,\n\t\targument:\n\t\t// c1\n\t\t/** @type {Expression} */\n\t\t(argument)\n\t};\n}",
@@ -161,15 +161,13 @@ fn test_annotation_before_parenthesized_logical_rhs() {
         "x = a || /* istanbul ignore next */ (b ? c : d);\n",
     );
     test_idempotency("x = a || /* istanbul ignore next */ (b ? c : d);");
-    // The comment can also anchor INSIDE the parens — the helpers probe
-    // every parenthesized layer, at all emission sites. It hoists before the
-    // `(`, where the reparse re-anchors it, so the rendering is stable.
+    // Comments attached inside explicit parentheses stay inside them.
     test(
         "x = a || (/* istanbul ignore next */ b ? c : d);",
-        "x = a || /* istanbul ignore next */ (b ? c : d);\n",
+        "x = a || (/* istanbul ignore next */ b ? c : d);\n",
     );
     test_idempotency("x = a || (/* istanbul ignore next */ b ? c : d);");
-    test("y = { k: (/* lingui */ v) };", "y = { k: /* lingui */ v };\n");
+    test("y = { k: (/* lingui */ v) };", "y = { k: (/* lingui */ v) };\n");
     test_idempotency("y = { k: (/* lingui */ v) };");
 }
 
@@ -184,7 +182,7 @@ fn test_minify_comment_glue_idempotency() {
     let minify_with_comments = CodegenOptions { minify: true, ..CodegenOptions::default() };
     crate::tester::test_options(
         "const x = { source: /** @type {string} */ (source), other: 1 };",
-        "const x={/** @type {string} */source,other:1};",
+        "const x={source:/** @type {string} */(source),other:1};",
         minify_with_comments.clone(),
     );
     test_idempotency_options(
@@ -197,12 +195,15 @@ fn test_minify_comment_glue_idempotency() {
 // merges statements into logical right-hand sides (`if(a)x;if(b)x;` ->
 // `if(a||(b,..))x`), which can anchor a removed statement's banner comments at
 // the RHS span start; printing them mid-expression breaks minify idempotency
-// (minifier_test262 `language/asi/S7.9_A5.8_T1.js`). Only annotation-bearing
-// groups (coverage directives etc.) are printed.
+// (minifier_test262 `language/asi/S7.9_A5.8_T1.js`). Attached normal comments
+// must also survive without introducing an automatic semicolon.
 #[test]
-fn test_normal_comment_before_logical_rhs_not_printed() {
-    test("const value = a ?? /* plain comment */ [];", "const value = a ?? [];\n");
-    test("const value = a || //\n////////\n(b, c);", "const value = a || (b, c);\n");
+fn test_normal_comment_before_logical_rhs() {
+    test(
+        "const value = a ?? /* plain comment */ [];",
+        "const value = a ?? /* plain comment */ [];\n",
+    );
+    test("const value = a || //\n////////\n(b, c);", "const value = a || //\n////////\n(b, c);\n");
 }
 
 #[test]
@@ -227,7 +228,7 @@ fn test_comment_before_template_literal_interpolation() {
 #[test]
 fn test_comment_at_top_of_file() {
     use oxc_allocator::Allocator;
-    use oxc_ast::CommentPosition;
+    use oxc_ast::{Comment, CommentPosition};
     use oxc_codegen::Codegen;
     use oxc_parser::Parser;
     use oxc_span::SourceType;
@@ -235,6 +236,7 @@ fn test_comment_at_top_of_file() {
     let allocator = Allocator::default();
     let mut ret = Parser::new(&allocator, "export{} /** comment */", source_type).parse();
     // Move comment to top of the file.
+    ret.program.comments[0].node_id.set(Comment::UNASSIGNED_NODE_ID);
     ret.program.comments[0].attached_to = 0;
     ret.program.comments[0].position = CommentPosition::Leading;
     let code = Codegen::new().build(&ret.program).code;
@@ -251,11 +253,11 @@ fn test_html_closing_annotation_after_code() {
     let allocator = Allocator::default();
     let source_type = SourceType::script();
     for (source, pretty_delimiter, minified_delimiter) in [
-        ("foo();\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "//"),
-        ("if (true)\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
-        ("label:\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("foo();\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
+        ("if (true)\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
+        ("label:\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
         ("--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
-        ("{\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}\n}", "-->", "//"),
+        ("{\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}\n}", "-->", "-->"),
     ] {
         let ret = Parser::new(&allocator, source, source_type).parse();
         assert!(ret.diagnostics.is_empty(), "Invalid source: {source}");
@@ -266,7 +268,10 @@ fn test_html_closing_annotation_after_code() {
             let reparsed = Parser::new(&allocator, &code, source_type).parse();
             assert!(reparsed.diagnostics.is_empty(), "Invalid output: {code}");
             let expected_comment = if minify { minified_delimiter } else { pretty_delimiter };
-            assert!(code.contains(&format!("{expected_comment} @__NO_SIDE_EFFECTS__\n")));
+            assert!(
+                code.contains(&format!("{expected_comment} @__NO_SIDE_EFFECTS__\n")),
+                "{source}: {code:?}"
+            );
             let second = Codegen::new().with_options(options).build(&reparsed.program).code;
             assert_eq!(code, second);
         }
@@ -286,12 +291,12 @@ fn unit() {
         "console.log(<div x={/*before*/ \"y\"} />);\n",
     );
     test("console.log(<div x={/*before*/ true} />)", "console.log(<div x={/*before*/ true} />);\n");
-    test("console.log(<div {/*before*/ ...x} />)", "console.log(<div {/*before*/ ...x} />);\n");
+    test("console.log(<div {/*before*/ ...x} />)", "console.log(<div {... /*before*/ x} />);\n");
     test("console.log(<div>{/*before*/ x}</div>)", "console.log(<div>{/*before*/ x}</div>);\n");
     test("console.log(<>{/*before*/ x}</>)", "console.log(<>{/*before*/ x}</>);\n");
     // https://lingui.dev/ref/macro#definemessage
-    test("const message = /*i18n*/{};", "const message = (/*i18n*/ {});\n");
-    test("function foo() { return /*i18n*/ {} }", "function foo() {\n\treturn (/*i18n*/ {});\n}\n");
+    test("const message = /*i18n*/{};", "const message = /*i18n*/ {};\n");
+    test("function foo() { return /*i18n*/ {} }", "function foo() {\n\treturn /*i18n*/ {};\n}\n");
 
     test_same("export { /** @deprecated */ parseAst } from \"rolldown/parseAst\";\n");
     test_same("export { /** @deprecated */ parseAst };\n");
@@ -510,7 +515,7 @@ pub mod coverage {
     }
 
     #[test]
-    fn do_not_preserve_non_file_coverage_comment_when_anchor_is_removed() {
+    fn drop_attached_coverage_comment_when_owner_is_removed() {
         for comment in [
             "/* v8 ignore next */",
             "/* v8 ignore filename */",

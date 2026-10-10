@@ -309,32 +309,28 @@ fn remove_unused_use_strict_directive() {
     test("'use strict';", "");
 }
 
-// Legal comments anchored to a removed `"use strict"` directive are rescued
-// by the same preserved-comment orphan flush used for #19750: the
-// directive's `span.start` is gone, but the orphan re-anchors at the next
-// surviving statement. Pin that for the legal-comment subset of #19748.
-// Normal comments above a removed directive are not covered; only comments
-// with file-level meaning are preserved when their anchor is removed.
+// Comments whose directive owners are removed are orphaned and preserved at EOF.
+// Pin that behavior for legal comments above removed `"use strict"` directives.
 
 #[test]
 fn preserve_legal_comment_above_removed_use_strict() {
     // Both `//!` and `/*! ... */` forms.
     test(
         "//! license\n'use strict';\nexport function foo(){}",
-        "//! license\nexport function foo() {}",
+        "export function foo() {}\n//! license\n",
     );
     test(
         "/*! banner */\n'use strict';\nexport function foo(){}",
-        "/*! banner */\nexport function foo() {}",
+        "export function foo() {}\n/*! banner */\n",
     );
 }
 
 #[test]
 fn preserve_legal_comment_above_removed_inner_function_use_strict() {
     // Redundant inner `"use strict"` is dropped under a strict outer scope;
-    // the comment must stay inside the function body, not escape outward.
+    // its orphaned comment is emitted at EOF with the outer orphan.
     test(
         "//! outer\n'use strict';\nexport function f() {\n  //! inner\n  'use strict';\n  bar();\n}",
-        "//! outer\nexport function f() {\n\t//! inner\n\tbar();\n}",
+        "export function f() {\n\tbar();\n}\n//! outer\n//! inner\n",
     );
 }

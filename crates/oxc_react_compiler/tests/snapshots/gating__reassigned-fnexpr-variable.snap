@@ -36,10 +36,10 @@ const MemoTwo = React.memo(Foo);
 export const FIXTURE_ENTRYPOINT = {
 	fn: () => {
 		"use no memo";
-		return <>
+		return (<>
         <MemoOne />
         <MemoTwo />
-      </>;
+      </>);
 	},
 	params: []
 };

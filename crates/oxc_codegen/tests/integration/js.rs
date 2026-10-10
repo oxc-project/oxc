@@ -338,7 +338,7 @@ fn do_while_stmt() {
     test_minify("do try{} catch{} while (true)", "do try{}catch{}while(true);");
     test_minify(
         "try { x } catch (err) /* v8 ignore next */ { y }",
-        "try{x}catch(err)/* v8 ignore next */{y}",
+        "try{x;}catch(err)/* v8 ignore next */{y;}",
     );
     test_minify("do do ; while(true) while (true)", "do do;while(true);while(true);");
 }
@@ -596,15 +596,15 @@ fn equality() {
 fn vite_special_comments() {
     test(
         "new URL(/* @vite-ignore */ 'non-existent', import.meta.url)",
-        "new URL(\n\t/* @vite-ignore */\n\t\"non-existent\",\n\timport.meta.url\n);\n",
+        "new URL(/* @vite-ignore */ \"non-existent\", import.meta.url);\n",
     );
     test(
         "const importPromise = import(\n/* @vite-ignore */\nbase + '.js'\n);",
-        "const importPromise = import(\n\t/* @vite-ignore */\n\tbase + \".js\"\n);\n",
+        "const importPromise = import(\n/* @vite-ignore */\n base + \".js\");\n",
     );
     test(
         "import(/* @vite-ignore */ module1Url).then((module1) => {\nself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL)})",
-        "import(\n\t/* @vite-ignore */\n\tmodule1Url\n).then((module1) => {\n\tself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL);\n});\n",
+        "import(/* @vite-ignore */ module1Url).then((module1) => {\n\tself.postMessage(module.default + module1.msg1 + import.meta.env.BASE_URL);\n});\n",
     );
 }
 
@@ -621,20 +621,20 @@ fn import_phase() {
 fn pure_comment() {
     test_same("/* @__PURE__ */ pureOperation();\n");
     test_same("/* @__PURE__ */ new PureConsutrctor();\n");
-    test("/* @__PURE__ */\npureOperation();\n", "/* @__PURE__ */ pureOperation();\n");
+    test("/* @__PURE__ */\npureOperation();\n", "/* @__PURE__ */\npureOperation();\n");
     test_same("/* @__PURE__ The comment may contain additional text */ pureOperation();\n");
     test_same(
         "/* #__PURE__ -- @preserve */ pureOperation();\n", // rolldown#9408
     );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
 
-    test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
-    test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
-    test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ foo(), bar();\n"); // INVALID, there is a comma expression in the parentheses
+    test("/* @__PURE__ */ (foo());", "(\n/* @__PURE__ */ foo());\n");
+    test("/* @__PURE__ */ (new Foo());\n", "(\n/* @__PURE__ */ new Foo());\n");
+    test("/*#__PURE__*/ (foo(), bar());", "/*#__PURE__*/ (foo(), bar());\n"); // INVALID, there is a comma expression in the parentheses
 
     test_same("/* @__PURE__ */ a.b().c.d();\n");
     // PURE applies to the innermost call; codegen wraps to keep the annotation on the call.
-    test("/* @__PURE__ */ a().b;", "(/* @__PURE__ */ a()).b;\n");
+    test("/* @__PURE__ */ a().b;", "(\n/* @__PURE__ */ a()).b;\n");
     test_same("(/* @__PURE__ */ a()).b;\n");
 
     // More
@@ -658,7 +658,33 @@ fn unapplied_annotation_comments() {
     // valid pure-call annotation.
     test(
         "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
-        "/* @__NO_SIDE_EFFECTS__ */ /* @__PURE__ */ pureOperation();\n",
+        "/* @__NO_SIDE_EFFECTS__ */\n/* @__PURE__ */ pureOperation();\n",
+    );
+}
+
+#[test]
+fn jsx_expression_precedence() {
+    for preserve_parens in [false, true] {
+        let parse_options =
+            oxc_parser::ParseOptions { preserve_parens, ..oxc_parser::ParseOptions::default() };
+        test_with_parse_options(
+            "let i = <InferParamComponent values={[1, 2, 3, 4]} selectHandler={(val) => {}} />;",
+            "let i = <InferParamComponent values={[\n\t1,\n\t2,\n\t3,\n\t4\n]} selectHandler={(val) => {}} />;\n",
+            parse_options,
+        );
+        test_with_parse_options(
+            "const i = <C value={a = b} sequence={(a, b)}>{(val) => {}}</C>;",
+            "const i = <C value={a = b} sequence={(a, b)}>{(val) => {}}</C>;\n",
+            parse_options,
+        );
+    }
+    test_minify(
+        "let i = <InferParamComponent values={[1, 2, 3, 4]} selectHandler={(val) => {}} />;",
+        "let i=<InferParamComponent values={[1,2,3,4]} selectHandler={val=>{}}/>;",
+    );
+    test_minify(
+        "const i = <C value={a = b} sequence={(a, b)}>{(val) => {}}</C>;",
+        "const i=<C value={a=b} sequence={(a,b)}>{val=>{}}</C>;",
     );
 }
 
@@ -1199,7 +1225,7 @@ fn html_comments() {
     );
     test_unambiguous(
         "const test = 'a'; <!-- comment\nconsole.log('test');\n",
-        "const test = \"a\";\nconsole.log(\"test\");\n",
+        "const test = \"a\"; <!-- comment\nconsole.log(\"test\");\n",
     );
     test_unambiguous("const x = 1;\n--> comment\n", "const x = 1;\n--> comment\n");
     test_unambiguous(
@@ -1209,12 +1235,12 @@ fn html_comments() {
     // `<!--` comments out rest of line - everything after is a comment
     test_unambiguous(
         "const test = 'a'; <!-- Test --> console.log('not executed'); //\n",
-        "const test = \"a\";\n",
+        "const test = \"a\"; <!-- Test --> console.log('not executed'); //\n",
     );
     // Injection: `<!--` comments out rest of line, but code on NEXT line executes
     test_unambiguous(
         "const test = 'a'; <!--\nconsole.log('injection');\n",
-        "const test = \"a\";\nconsole.log(\"injection\");\n",
+        "const test = \"a\"; <!--\nconsole.log(\"injection\");\n",
     );
     // `-->` at start of line is also a comment
     test_unambiguous(

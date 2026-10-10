@@ -10,10 +10,10 @@ import { useIdentity, ValidateMemoization } from "shared-runtime";
 */
 function Validate({ x, val1, val2 }) {
 	"use no memo";
-	return <>
+	return (<>
       <ValidateMemoization inputs={[val1]} output={x[0]} onlyCheckCompiled={true} />
       <ValidateMemoization inputs={[val2]} output={x[1]} onlyCheckCompiled={true} />
-    </>;
+    </>);
 }
 function useFoo(t0) {
 	"use memo";

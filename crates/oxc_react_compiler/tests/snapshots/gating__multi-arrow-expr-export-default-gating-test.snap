@@ -28,7 +28,7 @@ export default isForgetEnabled_Fixtures() ? (props) => {
 		t0 = $[0];
 	}
 	return t0;
-} : (props) => <Foo>
+} : (props) => (<Foo>
     <Bar></Bar>
     <ErrorView></ErrorView>
-  </Foo>;
+  </Foo>);

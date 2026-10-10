@@ -39,10 +39,10 @@ x([
 x([
 	/* #__NO_SIDE_EFFECTS__ */ (y) => y,
 	/* #__NO_SIDE_EFFECTS__ */ () => {},
-	/* #__NO_SIDE_EFFECTS__ */ (y) => y,
+	/* #__NO_SIDE_EFFECTS__ */ (y) => (y),
 	/* #__NO_SIDE_EFFECTS__ */ async (y) => y,
 	/* #__NO_SIDE_EFFECTS__ */ async () => {},
-	/* #__NO_SIDE_EFFECTS__ */ async (y) => y
+	/* #__NO_SIDE_EFFECTS__ */ async (y) => (y)
 ]);
 
 ########## 2
@@ -59,10 +59,10 @@ x([
 x([
 	/* #__NO_SIDE_EFFECTS__ */ (y) => y,
 	/* #__NO_SIDE_EFFECTS__ */ () => {},
-	/* #__NO_SIDE_EFFECTS__ */ (y) => y,
+	/* #__NO_SIDE_EFFECTS__ */ (y) => (y),
 	/* #__NO_SIDE_EFFECTS__ */ async (y) => y,
 	/* #__NO_SIDE_EFFECTS__ */ async () => {},
-	/* #__NO_SIDE_EFFECTS__ */ async (y) => y
+	/* #__NO_SIDE_EFFECTS__ */ async (y) => (y)
 ]);
 
 ########## 3
@@ -114,14 +114,10 @@ async function* d() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function c() {}
 /* @__NO_SIDE_EFFECTS__ */ export async function* d() {}
 ----------
-/* @__NO_SIDE_EFFECTS__ */
-export function a() {}
-/* @__NO_SIDE_EFFECTS__ */
-export function* b() {}
-/* @__NO_SIDE_EFFECTS__ */
-export async function c() {}
-/* @__NO_SIDE_EFFECTS__ */
-export async function* d() {}
+/* @__NO_SIDE_EFFECTS__ */ export function a() {}
+/* @__NO_SIDE_EFFECTS__ */ export function* b() {}
+/* @__NO_SIDE_EFFECTS__ */ export async function c() {}
+/* @__NO_SIDE_EFFECTS__ */ export async function* d() {}
 
 ########## 6
 /* @__NO_SIDE_EFFECTS__ */ export function a() {}
@@ -132,18 +128,12 @@ export default /* @__NO_SIDE_EFFECTS__ */ async function() {}
 export default /* @__NO_SIDE_EFFECTS__ */ function() {}
         
 ----------
-/* @__NO_SIDE_EFFECTS__ */
-export function a() {}
-/* @__NO_SIDE_EFFECTS__ */
-export function* b() {}
-/* @__NO_SIDE_EFFECTS__ */
-export async function c() {}
-/* @__NO_SIDE_EFFECTS__ */
-export async function* d() {}
-/* @__NO_SIDE_EFFECTS__ */
-export default async function() {}
-/* @__NO_SIDE_EFFECTS__ */
-export default function() {}
+/* @__NO_SIDE_EFFECTS__ */ export function a() {}
+/* @__NO_SIDE_EFFECTS__ */ export function* b() {}
+/* @__NO_SIDE_EFFECTS__ */ export async function c() {}
+/* @__NO_SIDE_EFFECTS__ */ export async function* d() {}
+/* @__NO_SIDE_EFFECTS__ */ export default async function() {}
+/* @__NO_SIDE_EFFECTS__ */ export default function() {}
 
 ########## 7
 
@@ -157,10 +147,12 @@ export default function() {}
 ----------
 /* #__NO_SIDE_EFFECTS__ */ export var v0 = function() {}, v1 = function() {};
 /* #__NO_SIDE_EFFECTS__ */ export let l0 = function() {}, l1 = function() {};
-export const c0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
+export const c0 =
+/* #__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
 /* #__NO_SIDE_EFFECTS__ */ export var v2 = () => {}, v3 = () => {};
 /* #__NO_SIDE_EFFECTS__ */ export let l2 = () => {}, l3 = () => {};
-export const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
+export const c2 =
+/* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 
 ########## 8
 
@@ -174,10 +166,12 @@ export const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 ----------
 /* #__NO_SIDE_EFFECTS__ */ var v0 = function() {}, v1 = function() {};
 /* #__NO_SIDE_EFFECTS__ */ let l0 = function() {}, l1 = function() {};
-const c0 = /* @__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
+const c0 =
+/* #__NO_SIDE_EFFECTS__ */ function() {}, c1 = function() {};
 /* #__NO_SIDE_EFFECTS__ */ var v2 = () => {}, v3 = () => {};
 /* #__NO_SIDE_EFFECTS__ */ let l2 = () => {}, l3 = () => {};
-const c2 = /* @__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
+const c2 =
+/* #__NO_SIDE_EFFECTS__ */ () => {}, c3 = () => {};
 
 ########## 9
 
@@ -189,7 +183,9 @@ isFunction(options)
 : options
                 
 ----------
-isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
+isFunction(options) ? // #8326: extend call and options.name access are considered side-effects
+// by Rollup, so we have to wrap it in a pure-annotated IIFE.
+/*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
 
 ########## 10
 isFunction(options) ? /*#__PURE__*/ (() => extend({ name: options.name }, extraOptions, { setup: options }))() : options;
@@ -230,7 +226,9 @@ const builtInSymbols = new Set(
 )
         
 ----------
-const builtInSymbols = new Set(/*#__PURE__*/ Object.getOwnPropertyNames(Symbol).filter((key) => key !== 'arguments' && key !== 'caller'));
+const builtInSymbols = new Set(
+/*#__PURE__*/
+Object.getOwnPropertyNames(Symbol).filter((key) => key !== 'arguments' && key !== 'caller'));
 
 ########## 14
 (/* @__PURE__ */ new Foo()).bar();
@@ -267,7 +265,9 @@ const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (
 };
         
 ----------
-const defineSSRCustomElement = /* @__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {
+const defineSSRCustomElement =
+/* #__NO_SIDE_EFFECTS__ */
+/* @__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {
 	return /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
 };
 
@@ -279,7 +279,7 @@ const defineSSRCustomElement = () => {
         
 ----------
 const defineSSRCustomElement = () => {
-	return /* @__PURE__ */ defineCustomElement(options, extraOptions, hydrate);
+	return /* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ /* #__NO_SIDE_EFFECTS__ */ defineCustomElement(options, extraOptions, hydrate);
 };
 
 ########## 20
@@ -288,7 +288,8 @@ const defineSSRCustomElement = () => {
         React.forwardRef((props, ref) => {});
         
 ----------
-const Component = /* @__PURE__ */ React.forwardRef((props, ref) => {});
+const Component = // #__PURE__
+React.forwardRef((props, ref) => {});
 
 ########## 21
 
@@ -395,18 +396,26 @@ let new_nested_no = [
 	/* @__PURE__ */ new foo(bar()),
 	2
 ];
-let single_at_yes = /* @__PURE__ */ foo(bar);
-let single_at_no = /* @__PURE__ */ foo(bar());
-let new_single_at_yes = /* @__PURE__ */ new foo(bar);
-let new_single_at_no = /* @__PURE__ */ new foo(bar());
-let single_num_yes = /* @__PURE__ */ foo(bar);
-let single_num_no = /* @__PURE__ */ foo(bar());
-let new_single_num_yes = /* @__PURE__ */ new foo(bar);
-let new_single_num_no = /* @__PURE__ */ new foo(bar());
-let bad_no = foo(bar);
-let new_bad_no = new foo(bar);
-let parens_no = foo(bar);
-let new_parens_no = new foo(bar);
+let single_at_yes = // @__PURE__
+foo(bar);
+let single_at_no = // @__PURE__
+foo(bar());
+let new_single_at_yes = // @__PURE__
+new foo(bar);
+let new_single_at_no = // @__PURE__
+new foo(bar());
+let single_num_yes = // #__PURE__
+foo(bar);
+let single_num_no = // #__PURE__
+foo(bar());
+let new_single_num_yes = // #__PURE__
+new foo(bar);
+let new_single_num_no = // #__PURE__
+new foo(bar());
+let bad_no = /* __PURE__ */ foo(bar);
+let new_bad_no = /* __PURE__ */ new foo(bar);
+let parens_no = (/* @__PURE__ */ foo)(bar);
+let new_parens_no = new (/* @__PURE__ */ foo)(bar);
 let exp_no = /* @__PURE__ */ foo() ** foo();
 let new_exp_no = /* @__PURE__ */ new foo() ** foo();
 
@@ -433,13 +442,13 @@ delete /* @__PURE__ */ (() => {})();
 ----------
 void /* @__PURE__ */ function() {}();
 typeof /* @__PURE__ */ function() {}();
-!/* @__PURE__ */ function() {}();
+! /* @__PURE__ */ function() {}();
 delete /* @__PURE__ */ (() => {})();
 
 ########## 25
 const Foo = /* @__PURE__ */ (((() => {})()))
 ----------
-const Foo = /* @__PURE__ */ (() => {})();
+const Foo = ((/* @__PURE__ */ (() => {})()));
 
 ########## 26
 const Foo = /* @__PURE__ */ (() => { })() as unknown as { new (): any }
@@ -473,21 +482,25 @@ const Foo = (<Foo>(/* @__PURE__ */ (() => {})())! as X) satisfies Y;
   return defineCustomElement(options, extraOptions, hydrate);
 })
 ----------
-/* @__NO_SIDE_EFFECTS__ */ ((options, extraOptions) => {
+(
+/* @__NO_SIDE_EFFECTS__ */ (options, extraOptions) => {
 	return defineCustomElement(options, extraOptions, hydrate);
 });
 
 ########## 32
 /* @__NO_SIDE_EFFECTS__ */ ((x) => x)
 ----------
-/* @__NO_SIDE_EFFECTS__ */ ((x) => x);
+(
+/* @__NO_SIDE_EFFECTS__ */ (x) => x);
 
 ########## 33
 /* @__NO_SIDE_EFFECTS__ */ (function() {})
 ----------
-/* @__NO_SIDE_EFFECTS__ */ (function() {});
+(
+/* @__NO_SIDE_EFFECTS__ */ function() {});
 
 ########## 34
 /* @__NO_SIDE_EFFECTS__ */ (function foo() {})
 ----------
-/* @__NO_SIDE_EFFECTS__ */ (function foo() {});
+(
+/* @__NO_SIDE_EFFECTS__ */ function foo() {});

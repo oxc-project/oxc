@@ -84,18 +84,9 @@ function foo() {
  */
 ----------
 function foo() {
-	(() => {
-		/**
-		* @preserve
-		*/
-	})();
-	/**
-	* @preserve
-	*/
+	(() => {})();
 }
-/**
-* @preserve
-*/
+
 /*! For license information please see test.js */
 ########## 8
 /**
@@ -103,9 +94,6 @@ function foo() {
 */
 
 ----------
-/**
-* @preserve
-*/
 
 /*! For license information please see test.js */
 ########## 9

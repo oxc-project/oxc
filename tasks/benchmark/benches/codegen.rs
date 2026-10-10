@@ -2,7 +2,7 @@ use std::path::{Path, PathBuf};
 
 use oxc_allocator::Allocator;
 use oxc_benchmark::{BenchmarkId, Criterion, criterion_group, criterion_main};
-use oxc_codegen::{Codegen, CodegenOptions};
+use oxc_codegen::{Codegen, CodegenOptions, CommentOptions};
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
 use oxc_tasks_common::TestFiles;
@@ -55,5 +55,54 @@ fn bench_codegen(criterion: &mut Criterion) {
     }
 }
 
-criterion_group!(codegen, bench_codegen);
+fn bench_attached_comments(criterion: &mut Criterion) {
+    let mut inputs: Vec<_> = TestFiles::minimal()
+        .files()
+        .iter()
+        .map(|file| (file.file_name.clone(), file.source_text.clone(), file.source_type))
+        .collect();
+    inputs.extend([
+        (
+            "comment_free".into(),
+            "value = left + right;\n".repeat(1024),
+            oxc_span::SourceType::mjs(),
+        ),
+        (
+            "sparse".into(),
+            ("value = left + right;\n".repeat(127) + "value = /* sparse */ left + right;\n")
+                .repeat(8),
+            oxc_span::SourceType::mjs(),
+        ),
+        (
+            "dense".into(),
+            "/* leading */ value = /* operand */ left + right; // trailing\n".repeat(1024),
+            oxc_span::SourceType::mjs(),
+        ),
+    ]);
+    for (name, source, source_type) in inputs {
+        let allocator = Allocator::default();
+        let parsed = Parser::new(&allocator, &source, source_type).parse();
+        assert!(parsed.diagnostics.is_empty(), "{name}: {:?}", parsed.diagnostics);
+        let program = parsed.program;
+        let mut group = criterion.benchmark_group(format!("codegen_attached/{name}"));
+        for (name, comments) in [
+            ("without_comments", CommentOptions::disabled()),
+            ("with_comments", CommentOptions::default()),
+        ] {
+            group.bench_function(name, |b| {
+                b.iter_with_large_drop(|| {
+                    Codegen::new()
+                        .with_options(CodegenOptions {
+                            comments: comments.clone(),
+                            ..CodegenOptions::default()
+                        })
+                        .build(&program)
+                });
+            });
+        }
+        group.finish();
+    }
+}
+
+criterion_group!(codegen, bench_codegen, bench_attached_comments);
 criterion_main!(codegen);

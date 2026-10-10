@@ -377,11 +377,78 @@ fn run_codegen(code: &str, source_type: SourceType) -> TestResult {
         return result;
     }
     // Minified idempotency
-    Driver { codegen: true, remove_whitespace: true, ..Driver::default() }.idempotency(
-        "Minify",
-        code,
-        source_type,
-    )
+    let result = Driver { codegen: true, remove_whitespace: true, ..Driver::default() }
+        .idempotency("Minify", code, source_type);
+    if result != TestResult::Passed {
+        return result;
+    }
+    for minify in [false, true] {
+        let result = run_attached_codegen(code, source_type, minify);
+        if result != TestResult::Passed {
+            return result;
+        }
+    }
+    TestResult::Passed
+}
+
+/// Exercise ownership established by the parser without a semantic build.
+fn run_attached_codegen(code: &str, source_type: SourceType, minify: bool) -> TestResult {
+    let allocator = Allocator::default();
+    let parsed = Parser::new(&allocator, code, source_type).parse();
+    // Some upstream fixtures intentionally contain invalid syntax; the legacy
+    // driver still tests printing their recovered ASTs.
+    if !parsed.diagnostics.is_empty() {
+        return TestResult::Passed;
+    }
+    let program = parsed.program;
+    let source_type = program.source_type;
+    let options =
+        oxc::codegen::CodegenOptions { minify, ..oxc::codegen::CodegenOptions::default() };
+    let printed = oxc::codegen::Codegen::new().with_options(options.clone()).build(&program).code;
+    let reparsed = Parser::new(&allocator, &printed, source_type).parse();
+    if !reparsed.diagnostics.is_empty() {
+        return TestResult::ParseError(
+            format!("Attached comments: {:?}\n{printed}", reparsed.diagnostics),
+            reparsed.fatal_error,
+        );
+    }
+    // Compare normalized comment contents, since multiline indentation can change.
+    let contents = |program: &oxc::ast::ast::Program<'_>| {
+        let mut contents: Vec<_> = program
+            .comments
+            .iter()
+            .map(|comment| {
+                comment
+                    .content_span()
+                    .source_text(program.source_text)
+                    .split(['\r', '\n', '\u{2028}', '\u{2029}'])
+                    .map(str::trim)
+                    .filter(|line| !line.is_empty())
+                    .collect::<Vec<_>>()
+                    .join("\n")
+                    .trim()
+                    .to_string()
+            })
+            .collect();
+        contents.sort_unstable();
+        contents
+    };
+    let original_comments = contents(&program);
+    let printed_comments = contents(&reparsed.program);
+    if original_comments != printed_comments {
+        return TestResult::Mismatch(
+            "Attached comment retention",
+            original_comments.join("\n"),
+            printed_comments.join("\n"),
+        );
+    }
+    let program = reparsed.program;
+    let printed2 = oxc::codegen::Codegen::new().with_options(options).build(&program).code;
+    if printed == printed2 {
+        TestResult::Passed
+    } else {
+        TestResult::Mismatch(if minify { "Attached minify" } else { "Attached" }, printed, printed2)
+    }
 }
 
 pub fn run_codegen_test262(files: &[Test262File]) -> Vec<CoverageResult> {
