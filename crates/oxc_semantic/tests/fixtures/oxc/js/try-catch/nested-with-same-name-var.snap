@@ -1,0 +1,113 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/nested-with-same-name-var.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "BlockStatement",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(0x0)",
+                "id": 4,
+                "node": "BlockStatement",
+                "symbols": []
+              },
+              {
+                "children": [
+                  {
+                    "children": [],
+                    "flags": "ScopeFlags(0x0)",
+                    "id": 6,
+                    "node": "BlockStatement",
+                    "symbols": [
+                      {
+                        "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                        "id": 1,
+                        "name": "e",
+                        "node": "CatchParameter",
+                        "references": [
+                          {
+                            "flags": "ReferenceFlags(Read)",
+                            "id": 1,
+                            "name": "e",
+                            "node_id": 26,
+                            "scope_id": 6
+                          },
+                          {
+                            "flags": "ReferenceFlags(Read)",
+                            "id": 3,
+                            "name": "e",
+                            "node_id": 32,
+                            "scope_id": 0
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ],
+                "flags": "ScopeFlags(CatchClause)",
+                "id": 5,
+                "node": "CatchClause",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 3,
+            "node": "BlockStatement",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+                "id": 0,
+                "name": "e",
+                "node": "CatchParameter",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(CatchClause)",
+        "id": 2,
+        "node": "CatchClause",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+        "id": 1,
+        "name": "e",
+        "node": "CatchParameter",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "e",
+            "node_id": 26,
+            "scope_id": 6
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "e",
+            "node_id": 32,
+            "scope_id": 0
+          }
+        ]
+      }
+    ]
+  }
+]
