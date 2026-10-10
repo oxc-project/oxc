@@ -4930,9 +4930,9 @@ function walkOptionHashbang(pos, ast, visitors) {
 }
 
 function walkVecStatement(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkStatement(pos, ast, visitors);
@@ -4941,173 +4941,214 @@ function walkVecStatement(pos, ast, visitors) {
 }
 
 function walkBoxBooleanLiteral(pos, ast, visitors) {
-  return walkBooleanLiteral(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkBooleanLiteral((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxNullLiteral(pos, ast, visitors) {
-  return walkNullLiteral(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkNullLiteral((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxNumericLiteral(pos, ast, visitors) {
-  return walkNumericLiteral(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkNumericLiteral((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxBigIntLiteral(pos, ast, visitors) {
-  return walkBigIntLiteral(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkBigIntLiteral((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxRegExpLiteral(pos, ast, visitors) {
-  return walkRegExpLiteral(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkRegExpLiteral((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxStringLiteral(pos, ast, visitors) {
-  return walkStringLiteral(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkStringLiteral((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTemplateLiteral(pos, ast, visitors) {
-  return walkTemplateLiteral(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTemplateLiteral((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxIdentifierReference(pos, ast, visitors) {
-  return walkIdentifierReference(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkIdentifierReference((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxSuper(pos, ast, visitors) {
-  return walkSuper(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkSuper((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxArrayExpression(pos, ast, visitors) {
-  return walkArrayExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkArrayExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxArrowFunctionExpression(pos, ast, visitors) {
-  return walkArrowFunctionExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkArrowFunctionExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxAssignmentExpression(pos, ast, visitors) {
-  return walkAssignmentExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkAssignmentExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxAwaitExpression(pos, ast, visitors) {
-  return walkAwaitExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkAwaitExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxBinaryExpression(pos, ast, visitors) {
-  return walkBinaryExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkBinaryExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxCallExpression(pos, ast, visitors) {
-  return walkCallExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkCallExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxChainExpression(pos, ast, visitors) {
-  return walkChainExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkChainExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxClass(pos, ast, visitors) {
-  return walkClass(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkClass((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxConditionalExpression(pos, ast, visitors) {
-  return walkConditionalExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkConditionalExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxFunction(pos, ast, visitors) {
-  return walkFunction(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkFunction((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxImportExpression(pos, ast, visitors) {
-  return walkImportExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkImportExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxLogicalExpression(pos, ast, visitors) {
-  return walkLogicalExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkLogicalExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxNewExpression(pos, ast, visitors) {
-  return walkNewExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkNewExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxObjectExpression(pos, ast, visitors) {
-  return walkObjectExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkObjectExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxParenthesizedExpression(pos, ast, visitors) {
-  return walkParenthesizedExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkParenthesizedExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxSequenceExpression(pos, ast, visitors) {
-  return walkSequenceExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkSequenceExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTaggedTemplateExpression(pos, ast, visitors) {
-  return walkTaggedTemplateExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTaggedTemplateExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxThisExpression(pos, ast, visitors) {
-  return walkThisExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkThisExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxUnaryExpression(pos, ast, visitors) {
-  return walkUnaryExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkUnaryExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxUpdateExpression(pos, ast, visitors) {
-  return walkUpdateExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkUpdateExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxYieldExpression(pos, ast, visitors) {
-  return walkYieldExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkYieldExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxPrivateInExpression(pos, ast, visitors) {
-  return walkPrivateInExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkPrivateInExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxImportMeta(pos, ast, visitors) {
-  return walkImportMeta(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkImportMeta((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxNewTarget(pos, ast, visitors) {
-  return walkNewTarget(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkNewTarget((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXElement(pos, ast, visitors) {
-  return walkJSXElement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXElement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXFragment(pos, ast, visitors) {
-  return walkJSXFragment(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXFragment((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSAsExpression(pos, ast, visitors) {
-  return walkTSAsExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSAsExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSSatisfiesExpression(pos, ast, visitors) {
-  return walkTSSatisfiesExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSSatisfiesExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTypeAssertion(pos, ast, visitors) {
-  return walkTSTypeAssertion(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeAssertion((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSNonNullExpression(pos, ast, visitors) {
-  return walkTSNonNullExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSNonNullExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSInstantiationExpression(pos, ast, visitors) {
-  return walkTSInstantiationExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSInstantiationExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxV8IntrinsicExpression(pos, ast, visitors) {
-  return walkV8IntrinsicExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkV8IntrinsicExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecArrayExpressionElement(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkArrayExpressionElement(pos, ast, visitors);
@@ -5116,17 +5157,19 @@ function walkVecArrayExpressionElement(pos, ast, visitors) {
 }
 
 function walkBoxSpreadElement(pos, ast, visitors) {
-  return walkSpreadElement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkSpreadElement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxElision(pos, ast, visitors) {
-  return walkElision(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkElision((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecObjectPropertyKind(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkObjectPropertyKind(pos, ast, visitors);
@@ -5135,21 +5178,24 @@ function walkVecObjectPropertyKind(pos, ast, visitors) {
 }
 
 function walkBoxObjectProperty(pos, ast, visitors) {
-  return walkObjectProperty(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkObjectProperty((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxIdentifierName(pos, ast, visitors) {
-  return walkIdentifierName(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkIdentifierName((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxPrivateIdentifier(pos, ast, visitors) {
-  return walkPrivateIdentifier(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkPrivateIdentifier((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecTemplateElement(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 48;
   while (pos < endPos) {
     walkTemplateElement(pos, ast, visitors);
@@ -5158,9 +5204,9 @@ function walkVecTemplateElement(pos, ast, visitors) {
 }
 
 function walkVecExpression(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkExpression(pos, ast, visitors);
@@ -5169,7 +5215,12 @@ function walkVecExpression(pos, ast, visitors) {
 }
 
 function walkBoxTSTypeParameterInstantiation(pos, ast, visitors) {
-  return walkTSTypeParameterInstantiation(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeParameterInstantiation(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkOptionBoxTSTypeParameterInstantiation(pos, ast, visitors) {
@@ -5178,21 +5229,24 @@ function walkOptionBoxTSTypeParameterInstantiation(pos, ast, visitors) {
 }
 
 function walkBoxComputedMemberExpression(pos, ast, visitors) {
-  return walkComputedMemberExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkComputedMemberExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxStaticMemberExpression(pos, ast, visitors) {
-  return walkStaticMemberExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkStaticMemberExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxPrivateFieldExpression(pos, ast, visitors) {
-  return walkPrivateFieldExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkPrivateFieldExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecArgument(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkArgument(pos, ast, visitors);
@@ -5201,11 +5255,13 @@ function walkVecArgument(pos, ast, visitors) {
 }
 
 function walkBoxArrayAssignmentTarget(pos, ast, visitors) {
-  return walkArrayAssignmentTarget(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkArrayAssignmentTarget((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxObjectAssignmentTarget(pos, ast, visitors) {
-  return walkObjectAssignmentTarget(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkObjectAssignmentTarget((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionAssignmentTargetMaybeDefault(pos, ast, visitors) {
@@ -5213,9 +5269,9 @@ function walkOptionAssignmentTargetMaybeDefault(pos, ast, visitors) {
 }
 
 function walkVecOptionAssignmentTargetMaybeDefault(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkOptionAssignmentTargetMaybeDefault(pos, ast, visitors);
@@ -5224,9 +5280,9 @@ function walkVecOptionAssignmentTargetMaybeDefault(pos, ast, visitors) {
 }
 
 function walkVecAssignmentTargetProperty(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkAssignmentTargetProperty(pos, ast, visitors);
@@ -5235,15 +5291,30 @@ function walkVecAssignmentTargetProperty(pos, ast, visitors) {
 }
 
 function walkBoxAssignmentTargetWithDefault(pos, ast, visitors) {
-  return walkAssignmentTargetWithDefault(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkAssignmentTargetWithDefault(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkBoxAssignmentTargetPropertyIdentifier(pos, ast, visitors) {
-  return walkAssignmentTargetPropertyIdentifier(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkAssignmentTargetPropertyIdentifier(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkBoxAssignmentTargetPropertyProperty(pos, ast, visitors) {
-  return walkAssignmentTargetPropertyProperty(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkAssignmentTargetPropertyProperty(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkOptionExpression(pos, ast, visitors) {
@@ -5251,113 +5322,143 @@ function walkOptionExpression(pos, ast, visitors) {
 }
 
 function walkBoxBlockStatement(pos, ast, visitors) {
-  return walkBlockStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkBlockStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxBreakStatement(pos, ast, visitors) {
-  return walkBreakStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkBreakStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxContinueStatement(pos, ast, visitors) {
-  return walkContinueStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkContinueStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxDebuggerStatement(pos, ast, visitors) {
-  return walkDebuggerStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkDebuggerStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxDoWhileStatement(pos, ast, visitors) {
-  return walkDoWhileStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkDoWhileStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxEmptyStatement(pos, ast, visitors) {
-  return walkEmptyStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkEmptyStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxExpressionStatement(pos, ast, visitors) {
-  return walkExpressionStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkExpressionStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxForInStatement(pos, ast, visitors) {
-  return walkForInStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkForInStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxForOfStatement(pos, ast, visitors) {
-  return walkForOfStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkForOfStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxForStatement(pos, ast, visitors) {
-  return walkForStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkForStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxIfStatement(pos, ast, visitors) {
-  return walkIfStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkIfStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxLabeledStatement(pos, ast, visitors) {
-  return walkLabeledStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkLabeledStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxReturnStatement(pos, ast, visitors) {
-  return walkReturnStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkReturnStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxSwitchStatement(pos, ast, visitors) {
-  return walkSwitchStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkSwitchStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxThrowStatement(pos, ast, visitors) {
-  return walkThrowStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkThrowStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTryStatement(pos, ast, visitors) {
-  return walkTryStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTryStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxWhileStatement(pos, ast, visitors) {
-  return walkWhileStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkWhileStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxWithStatement(pos, ast, visitors) {
-  return walkWithStatement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkWithStatement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxVariableDeclaration(pos, ast, visitors) {
-  return walkVariableDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkVariableDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTypeAliasDeclaration(pos, ast, visitors) {
-  return walkTSTypeAliasDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeAliasDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSInterfaceDeclaration(pos, ast, visitors) {
-  return walkTSInterfaceDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSInterfaceDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSEnumDeclaration(pos, ast, visitors) {
-  return walkTSEnumDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSEnumDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSExternalModuleDeclaration(pos, ast, visitors) {
-  return walkTSExternalModuleDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSExternalModuleDeclaration(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkBoxTSNamespaceDeclaration(pos, ast, visitors) {
-  return walkTSNamespaceDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSNamespaceDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSGlobalDeclaration(pos, ast, visitors) {
-  return walkTSGlobalDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSGlobalDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSImportEqualsDeclaration(pos, ast, visitors) {
-  return walkTSImportEqualsDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSImportEqualsDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecVariableDeclarator(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 56;
   while (pos < endPos) {
     walkVariableDeclarator(pos, ast, visitors);
@@ -5366,7 +5467,8 @@ function walkVecVariableDeclarator(pos, ast, visitors) {
 }
 
 function walkBoxTSTypeAnnotation(pos, ast, visitors) {
-  return walkTSTypeAnnotation(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeAnnotation((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionBoxTSTypeAnnotation(pos, ast, visitors) {
@@ -5388,9 +5490,9 @@ function walkOptionLabelIdentifier(pos, ast, visitors) {
 }
 
 function walkVecSwitchCase(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 56;
   while (pos < endPos) {
     walkSwitchCase(pos, ast, visitors);
@@ -5399,7 +5501,8 @@ function walkVecSwitchCase(pos, ast, visitors) {
 }
 
 function walkBoxCatchClause(pos, ast, visitors) {
-  return walkCatchClause(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkCatchClause((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionBoxCatchClause(pos, ast, visitors) {
@@ -5417,25 +5520,29 @@ function walkOptionCatchParameter(pos, ast, visitors) {
 }
 
 function walkBoxBindingIdentifier(pos, ast, visitors) {
-  return walkBindingIdentifier(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkBindingIdentifier((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxObjectPattern(pos, ast, visitors) {
-  return walkObjectPattern(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkObjectPattern((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxArrayPattern(pos, ast, visitors) {
-  return walkArrayPattern(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkArrayPattern((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxAssignmentPattern(pos, ast, visitors) {
-  return walkAssignmentPattern(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkAssignmentPattern((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecBindingProperty(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 48;
   while (pos < endPos) {
     walkBindingProperty(pos, ast, visitors);
@@ -5448,9 +5555,9 @@ function walkOptionBindingPattern(pos, ast, visitors) {
 }
 
 function walkVecOptionBindingPattern(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkOptionBindingPattern(pos, ast, visitors);
@@ -5464,7 +5571,12 @@ function walkOptionBindingIdentifier(pos, ast, visitors) {
 }
 
 function walkBoxTSTypeParameterDeclaration(pos, ast, visitors) {
-  return walkTSTypeParameterDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeParameterDeclaration(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkOptionBoxTSTypeParameterDeclaration(pos, ast, visitors) {
@@ -5473,11 +5585,13 @@ function walkOptionBoxTSTypeParameterDeclaration(pos, ast, visitors) {
 }
 
 function walkBoxFormalParameters(pos, ast, visitors) {
-  return walkFormalParameters(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkFormalParameters((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxFunctionBody(pos, ast, visitors) {
-  return walkFunctionBody(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkFunctionBody((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionBoxFunctionBody(pos, ast, visitors) {
@@ -5486,9 +5600,9 @@ function walkOptionBoxFunctionBody(pos, ast, visitors) {
 }
 
 function walkVecFormalParameter(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 72;
   while (pos < endPos) {
     walkFormalParameter(pos, ast, visitors);
@@ -5497,9 +5611,9 @@ function walkVecFormalParameter(pos, ast, visitors) {
 }
 
 function walkVecDecorator(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 32;
   while (pos < endPos) {
     walkDecorator(pos, ast, visitors);
@@ -5508,7 +5622,8 @@ function walkVecDecorator(pos, ast, visitors) {
 }
 
 function walkBoxExpression(pos, ast, visitors) {
-  return walkExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionBoxExpression(pos, ast, visitors) {
@@ -5517,9 +5632,9 @@ function walkOptionBoxExpression(pos, ast, visitors) {
 }
 
 function walkVecTSClassImplements(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 40;
   while (pos < endPos) {
     walkTSClassImplements(pos, ast, visitors);
@@ -5528,13 +5643,14 @@ function walkVecTSClassImplements(pos, ast, visitors) {
 }
 
 function walkBoxClassBody(pos, ast, visitors) {
-  return walkClassBody(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkClassBody((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecClassElement(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkClassElement(pos, ast, visitors);
@@ -5543,61 +5659,78 @@ function walkVecClassElement(pos, ast, visitors) {
 }
 
 function walkBoxStaticBlock(pos, ast, visitors) {
-  return walkStaticBlock(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkStaticBlock((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxMethodDefinition(pos, ast, visitors) {
-  return walkMethodDefinition(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkMethodDefinition((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxPropertyDefinition(pos, ast, visitors) {
-  return walkPropertyDefinition(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkPropertyDefinition((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxAccessorProperty(pos, ast, visitors) {
-  return walkAccessorProperty(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkAccessorProperty((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSIndexSignature(pos, ast, visitors) {
-  return walkTSIndexSignature(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSIndexSignature((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxImportDeclaration(pos, ast, visitors) {
-  return walkImportDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkImportDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxExportAllDeclaration(pos, ast, visitors) {
-  return walkExportAllDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkExportAllDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxExportDefaultDeclaration(pos, ast, visitors) {
-  return walkExportDefaultDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkExportDefaultDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxExportDeclaration(pos, ast, visitors) {
-  return walkExportDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkExportDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxExportNamedDeclaration(pos, ast, visitors) {
-  return walkExportNamedDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkExportNamedDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxExportFromDeclaration(pos, ast, visitors) {
-  return walkExportFromDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkExportFromDeclaration((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSExportAssignment(pos, ast, visitors) {
-  return walkTSExportAssignment(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSExportAssignment((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSNamespaceExportDeclaration(pos, ast, visitors) {
-  return walkTSNamespaceExportDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSNamespaceExportDeclaration(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkVecImportDeclarationSpecifier(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkImportDeclarationSpecifier(pos, ast, visitors);
@@ -5611,7 +5744,8 @@ function walkOptionVecImportDeclarationSpecifier(pos, ast, visitors) {
 }
 
 function walkBoxWithClause(pos, ast, visitors) {
-  return walkWithClause(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkWithClause((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionBoxWithClause(pos, ast, visitors) {
@@ -5620,21 +5754,24 @@ function walkOptionBoxWithClause(pos, ast, visitors) {
 }
 
 function walkBoxImportSpecifier(pos, ast, visitors) {
-  return walkImportSpecifier(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkImportSpecifier((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxImportDefaultSpecifier(pos, ast, visitors) {
-  return walkImportDefaultSpecifier(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkImportDefaultSpecifier((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxImportNamespaceSpecifier(pos, ast, visitors) {
-  return walkImportNamespaceSpecifier(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkImportNamespaceSpecifier((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecImportAttribute(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 120;
   while (pos < endPos) {
     walkImportAttribute(pos, ast, visitors);
@@ -5643,9 +5780,9 @@ function walkVecImportAttribute(pos, ast, visitors) {
 }
 
 function walkVecExportSpecifier(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 128;
   while (pos < endPos) {
     walkExportSpecifier(pos, ast, visitors);
@@ -5658,13 +5795,14 @@ function walkOptionModuleExportName(pos, ast, visitors) {
 }
 
 function walkBoxJSXOpeningElement(pos, ast, visitors) {
-  return walkJSXOpeningElement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXOpeningElement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecJSXChild(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkJSXChild(pos, ast, visitors);
@@ -5673,7 +5811,8 @@ function walkVecJSXChild(pos, ast, visitors) {
 }
 
 function walkBoxJSXClosingElement(pos, ast, visitors) {
-  return walkJSXClosingElement(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXClosingElement((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionBoxJSXClosingElement(pos, ast, visitors) {
@@ -5682,9 +5821,9 @@ function walkOptionBoxJSXClosingElement(pos, ast, visitors) {
 }
 
 function walkVecJSXAttributeItem(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkJSXAttributeItem(pos, ast, visitors);
@@ -5693,27 +5832,33 @@ function walkVecJSXAttributeItem(pos, ast, visitors) {
 }
 
 function walkBoxJSXIdentifier(pos, ast, visitors) {
-  return walkJSXIdentifier(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXIdentifier((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXNamespacedName(pos, ast, visitors) {
-  return walkJSXNamespacedName(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXNamespacedName((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXMemberExpression(pos, ast, visitors) {
-  return walkJSXMemberExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXMemberExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXEmptyExpression(pos, ast, visitors) {
-  return walkJSXEmptyExpression(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXEmptyExpression((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXAttribute(pos, ast, visitors) {
-  return walkJSXAttribute(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXAttribute((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXSpreadAttribute(pos, ast, visitors) {
-  return walkJSXSpreadAttribute(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXSpreadAttribute((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionJSXAttributeValue(pos, ast, visitors) {
@@ -5721,21 +5866,24 @@ function walkOptionJSXAttributeValue(pos, ast, visitors) {
 }
 
 function walkBoxJSXExpressionContainer(pos, ast, visitors) {
-  return walkJSXExpressionContainer(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXExpressionContainer((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXText(pos, ast, visitors) {
-  return walkJSXText(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXText((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSXSpreadChild(pos, ast, visitors) {
-  return walkJSXSpreadChild(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSXSpreadChild((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecTSEnumMember(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 48;
   while (pos < endPos) {
     walkTSEnumMember(pos, ast, visitors);
@@ -5744,157 +5892,194 @@ function walkVecTSEnumMember(pos, ast, visitors) {
 }
 
 function walkBoxTSAnyKeyword(pos, ast, visitors) {
-  return walkTSAnyKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSAnyKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSBigIntKeyword(pos, ast, visitors) {
-  return walkTSBigIntKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSBigIntKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSBooleanKeyword(pos, ast, visitors) {
-  return walkTSBooleanKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSBooleanKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSIntrinsicKeyword(pos, ast, visitors) {
-  return walkTSIntrinsicKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSIntrinsicKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSNeverKeyword(pos, ast, visitors) {
-  return walkTSNeverKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSNeverKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSNullKeyword(pos, ast, visitors) {
-  return walkTSNullKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSNullKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSNumberKeyword(pos, ast, visitors) {
-  return walkTSNumberKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSNumberKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSObjectKeyword(pos, ast, visitors) {
-  return walkTSObjectKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSObjectKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSStringKeyword(pos, ast, visitors) {
-  return walkTSStringKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSStringKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSSymbolKeyword(pos, ast, visitors) {
-  return walkTSSymbolKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSSymbolKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSUndefinedKeyword(pos, ast, visitors) {
-  return walkTSUndefinedKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSUndefinedKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSUnknownKeyword(pos, ast, visitors) {
-  return walkTSUnknownKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSUnknownKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSVoidKeyword(pos, ast, visitors) {
-  return walkTSVoidKeyword(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSVoidKeyword((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSArrayType(pos, ast, visitors) {
-  return walkTSArrayType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSArrayType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSConditionalType(pos, ast, visitors) {
-  return walkTSConditionalType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSConditionalType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSConstructorType(pos, ast, visitors) {
-  return walkTSConstructorType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSConstructorType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSFunctionType(pos, ast, visitors) {
-  return walkTSFunctionType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSFunctionType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSImportType(pos, ast, visitors) {
-  return walkTSImportType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSImportType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSIndexedAccessType(pos, ast, visitors) {
-  return walkTSIndexedAccessType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSIndexedAccessType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSInferType(pos, ast, visitors) {
-  return walkTSInferType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSInferType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSIntersectionType(pos, ast, visitors) {
-  return walkTSIntersectionType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSIntersectionType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSLiteralType(pos, ast, visitors) {
-  return walkTSLiteralType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSLiteralType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSMappedType(pos, ast, visitors) {
-  return walkTSMappedType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSMappedType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSNamedTupleMember(pos, ast, visitors) {
-  return walkTSNamedTupleMember(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSNamedTupleMember((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTemplateLiteralType(pos, ast, visitors) {
-  return walkTSTemplateLiteralType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTemplateLiteralType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSThisType(pos, ast, visitors) {
-  return walkTSThisType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSThisType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTupleType(pos, ast, visitors) {
-  return walkTSTupleType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTupleType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTypeLiteral(pos, ast, visitors) {
-  return walkTSTypeLiteral(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeLiteral((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTypeOperator(pos, ast, visitors) {
-  return walkTSTypeOperator(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeOperator((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTypePredicate(pos, ast, visitors) {
-  return walkTSTypePredicate(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypePredicate((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTypeQuery(pos, ast, visitors) {
-  return walkTSTypeQuery(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeQuery((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSTypeReference(pos, ast, visitors) {
-  return walkTSTypeReference(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeReference((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSUnionType(pos, ast, visitors) {
-  return walkTSUnionType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSUnionType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSParenthesizedType(pos, ast, visitors) {
-  return walkTSParenthesizedType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSParenthesizedType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSDocNullableType(pos, ast, visitors) {
-  return walkJSDocNullableType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSDocNullableType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSDocNonNullableType(pos, ast, visitors) {
-  return walkJSDocNonNullableType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSDocNonNullableType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxJSDocUnknownType(pos, ast, visitors) {
-  return walkJSDocUnknownType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkJSDocUnknownType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecTSType(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkTSType(pos, ast, visitors);
@@ -5903,9 +6088,9 @@ function walkVecTSType(pos, ast, visitors) {
 }
 
 function walkVecTSTupleElement(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkTSTupleElement(pos, ast, visitors);
@@ -5914,15 +6099,18 @@ function walkVecTSTupleElement(pos, ast, visitors) {
 }
 
 function walkBoxTSOptionalType(pos, ast, visitors) {
-  return walkTSOptionalType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSOptionalType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSRestType(pos, ast, visitors) {
-  return walkTSRestType(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSRestType((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSQualifiedName(pos, ast, visitors) {
-  return walkTSQualifiedName(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSQualifiedName((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionTSType(pos, ast, visitors) {
@@ -5930,9 +6118,9 @@ function walkOptionTSType(pos, ast, visitors) {
 }
 
 function walkVecTSTypeParameter(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 80;
   while (pos < endPos) {
     walkTSTypeParameter(pos, ast, visitors);
@@ -5941,9 +6129,9 @@ function walkVecTSTypeParameter(pos, ast, visitors) {
 }
 
 function walkVecTSInterfaceHeritage(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 40;
   while (pos < endPos) {
     walkTSInterfaceHeritage(pos, ast, visitors);
@@ -5952,13 +6140,14 @@ function walkVecTSInterfaceHeritage(pos, ast, visitors) {
 }
 
 function walkBoxTSInterfaceBody(pos, ast, visitors) {
-  return walkTSInterfaceBody(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSInterfaceBody((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkVecTSSignature(pos, ast, visitors) {
-  const { int32 } = ast.buffer,
+  const { int32, baseLo } = ast.buffer,
     pos32 = pos >> 2;
-  pos = int32[pos32];
+  pos = (int32[pos32] - baseLo) | 0;
   const endPos = pos + int32[pos32 + 2] * 16;
   while (pos < endPos) {
     walkTSSignature(pos, ast, visitors);
@@ -5967,23 +6156,36 @@ function walkVecTSSignature(pos, ast, visitors) {
 }
 
 function walkBoxTSPropertySignature(pos, ast, visitors) {
-  return walkTSPropertySignature(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSPropertySignature((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSCallSignatureDeclaration(pos, ast, visitors) {
-  return walkTSCallSignatureDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSCallSignatureDeclaration(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkBoxTSConstructSignatureDeclaration(pos, ast, visitors) {
-  return walkTSConstructSignatureDeclaration(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSConstructSignatureDeclaration(
+    (buffer.int32[pos >> 2] - buffer.baseLo) | 0,
+    ast,
+    visitors,
+  );
 }
 
 function walkBoxTSMethodSignature(pos, ast, visitors) {
-  return walkTSMethodSignature(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSMethodSignature((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSModuleBlock(pos, ast, visitors) {
-  return walkTSModuleBlock(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSModuleBlock((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionBoxTSModuleBlock(pos, ast, visitors) {
@@ -5992,7 +6194,8 @@ function walkOptionBoxTSModuleBlock(pos, ast, visitors) {
 }
 
 function walkBoxTSTypeParameter(pos, ast, visitors) {
-  return walkTSTypeParameter(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSTypeParameter((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkOptionBoxObjectExpression(pos, ast, visitors) {
@@ -6005,9 +6208,11 @@ function walkOptionTSImportTypeQualifier(pos, ast, visitors) {
 }
 
 function walkBoxTSImportTypeQualifiedName(pos, ast, visitors) {
-  return walkTSImportTypeQualifiedName(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSImportTypeQualifiedName((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }
 
 function walkBoxTSExternalModuleReference(pos, ast, visitors) {
-  return walkTSExternalModuleReference(ast.buffer.int32[pos >> 2], ast, visitors);
+  const { buffer } = ast;
+  return walkTSExternalModuleReference((buffer.int32[pos >> 2] - buffer.baseLo) | 0, ast, visitors);
 }

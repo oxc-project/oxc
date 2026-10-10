@@ -23,8 +23,8 @@ if (!nativeBinding && globalThis.process?.versions?.["webcontainer"]) {
 ` + s,
 );
 
-data += `const { getBufferOffset, parseRaw, parseRawSync } = nativeBinding
-export { getBufferOffset, parseRaw, parseRawSync }
+data += `const { getBufferBase, getBufferOffset, parseRaw, parseRawSync } = nativeBinding
+export { getBufferBase, getBufferOffset, parseRaw, parseRawSync }
 `;
 
 fs.writeFileSync(filename, data);
