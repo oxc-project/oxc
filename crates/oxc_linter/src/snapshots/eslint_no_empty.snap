@@ -45,16 +45,9 @@ source: crates/oxc_linter/src/tester.rs
   help: Remove this block or add a comment inside it
 
   ⚠ eslint(no-empty): Unexpected empty block statements
-   ╭─[no_empty.tsx:1:1]
+   ╭─[no_empty.tsx:1:13]
  1 │ switch(foo) {}
-   · ──────────────
-   ╰────
-  help: Remove this switch or add a comment inside it
-
-  ⚠ eslint(no-empty): Unexpected empty block statements
-   ╭─[no_empty.tsx:1:1]
- 1 │ switch (foo) { /* empty */ }
-   · ────────────────────────────
+   ·             ──
    ╰────
   help: Remove this switch or add a comment inside it
 
@@ -99,3 +92,17 @@ source: crates/oxc_linter/src/tester.rs
    ·                                      ──
    ╰────
   help: Remove this block or add a comment inside it
+
+  ⚠ eslint(no-empty): Unexpected empty block statements
+   ╭─[no_empty.tsx:1:62]
+ 1 │ switch /* empty */ (/* empty */ foo /* empty */) /* empty */ {} /* empty */
+   ·                                                              ──
+   ╰────
+  help: Remove this switch or add a comment inside it
+
+  ⚠ eslint(no-empty): Unexpected empty block statements
+   ╭─[no_empty.tsx:1:32]
+ 1 │ switch (foo) /* { outside } */ {}
+   ·                                ──
+   ╰────
+  help: Remove this switch or add a comment inside it
