@@ -2,8 +2,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, ArrowFunctionExpression, BindingPattern, CatchClause, Expression, Function,
-        IdentifierReference, ObjectExpression, ObjectPropertyKind, PropertyKey, StaticBlock,
-        ThrowStatement, TryStatement,
+        IdentifierReference, ObjectExpression, ObjectPropertyKind, StaticBlock, ThrowStatement,
+        TryStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -164,15 +164,31 @@ impl<'a> VisitJs<'a> for ThrowFinder<'a, '_> {
 
                     // if the second argument is an existing object, merge into it
                     if let Argument::ObjectExpression(obj_expr) = &args[1] {
-                        let cause_prop = obj_expr.properties.iter().find(|prop| match prop {
-                            ObjectPropertyKind::ObjectProperty(prop) => {
-                                let PropertyKey::StaticIdentifier(ident) = &prop.key else {
-                                    return false;
-                                };
-                                ident.name == "cause"
-                            }
-                            ObjectPropertyKind::SpreadProperty(_) => true,
-                        });
+                        // With several `cause` properties a fix could be confusing.
+                        let cause_count = obj_expr
+                            .properties
+                            .iter()
+                            .filter(|prop| {
+                                matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
+                                    if prop.key.is_specific_static_name("cause"))
+                            })
+                            .count();
+                        if cause_count > 1 {
+                            return fixer.noop();
+                        }
+
+                        let cause_prop = obj_expr
+                            .properties
+                            .iter()
+                            .find(|prop| matches!(prop, ObjectPropertyKind::SpreadProperty(_)))
+                            .or_else(|| {
+                                obj_expr.properties.iter().rfind(|prop| match prop {
+                                    ObjectPropertyKind::ObjectProperty(prop) => {
+                                        prop.key.is_specific_static_name("cause")
+                                    }
+                                    ObjectPropertyKind::SpreadProperty(_) => false,
+                                })
+                            });
 
                         if let Some(cause_prop) = cause_prop {
                             // if the identifier name is not the catch parameter, replace it
@@ -252,20 +268,19 @@ fn has_cause_property(
     catch_param: &BindingPattern,
     ctx: &LintContext,
 ) -> bool {
+    // A spread makes the cause unknown. Otherwise the last `cause` wins.
+    let mut last_cause = None;
     for prop in &obj_expr.properties {
         match prop {
             ObjectPropertyKind::ObjectProperty(prop) => {
-                let PropertyKey::StaticIdentifier(ident) = &prop.key else {
-                    continue;
-                };
-                if ident.name == "cause" {
-                    return is_catch_parameter(&prop.value, catch_param, ctx);
+                if prop.key.is_specific_static_name("cause") {
+                    last_cause = Some(prop);
                 }
             }
             ObjectPropertyKind::SpreadProperty(_) => return true,
         }
     }
-    false
+    last_cause.is_some_and(|prop| is_catch_parameter(&prop.value, catch_param, ctx))
 }
 
 fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &LintContext) -> bool {
@@ -539,6 +554,38 @@ fn test() {
 				} catch (err) {
 					throw new Error("Something failed", obj.options);
 				}"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { 'cause': error }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { "cause": error }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { ['cause']: error }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { ["cause"]: error }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { [`cause`]: error }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { cause: anotherError, cause: error }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { "cause": anotherError, "cause": error }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { cause: anotherError, "cause": error }); }"#,
             None,
         ),
     ];
@@ -819,6 +866,14 @@ fn test() {
         ("try { doSomething(); } catch ({ message }) { throw new Error(...args); }", None),
         (
             r#"try { doSomething(); } catch ([error]) { throw new Error("Something failed", { ...options }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { cause: error, cause: anotherError }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("Something failed", { cause: error, "cause": anotherError }); }"#,
             None,
         ),
     ];
@@ -1251,6 +1306,22 @@ fn test() {
         (
             "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\"); }",
             "try { doSomething(); } catch (err) { throw new SyntaxError(\"Invalid JSON\", { cause: err }); }",
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("x", { "cause": unrelated }); }"#,
+            r#"try {} catch (error) { throw new Error("x", { "cause": error }); }"#,
+            None,
+        ),
+        (
+            r#"try {} catch (error) { throw new Error("x", { ["cause"]: unrelated }); }"#,
+            r#"try {} catch (error) { throw new Error("x", { ["cause"]: error }); }"#,
+            None,
+        ),
+        // several `cause` properties are reported without a fix
+        (
+            r#"try {} catch (error) { throw new Error("x", { cause: error, "cause": unrelated }); }"#,
+            r#"try {} catch (error) { throw new Error("x", { cause: error, "cause": unrelated }); }"#,
             None,
         ),
     ];
