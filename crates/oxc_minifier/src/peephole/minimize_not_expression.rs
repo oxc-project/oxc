@@ -119,6 +119,51 @@ impl<'a> PeepholeOptimizations {
         e.unbox().argument
     }
 
+    fn de_morgan_expr_size_delta(
+        expr: &Expression<'a>,
+        parent_op: LogicalOperator,
+        boolean_context: bool,
+    ) -> Option<i32> {
+        let mut delta = 0;
+        match expr {
+            Expression::BinaryExpression(b)
+                if b.operator.is_equality() || Self::is_typeof_undefined_comparison(b) => {}
+            Expression::UnaryExpression(u) if u.operator.is_not() => {
+                delta += if boolean_context { -1 } else { 1 };
+            }
+            Expression::LogicalExpression(child) => {
+                delta += Self::de_morgan_paren_delta(child, boolean_context)?;
+                // `&&` under `||` prints bare but its inversion (`||` under
+                // `&&`) needs parens; the reverse drops parens.
+                match (parent_op, child.operator) {
+                    (LogicalOperator::Or, LogicalOperator::And) => delta += 2,
+                    (LogicalOperator::And, LogicalOperator::Or) => delta -= 2,
+                    _ => {}
+                }
+            }
+            Expression::Identifier(_)
+            | Expression::ThisExpression(_)
+            | Expression::NullLiteral(_)
+            | Expression::NumericLiteral(_)
+            | Expression::BigIntLiteral(_)
+            | Expression::RegExpLiteral(_)
+            | Expression::StringLiteral(_)
+            | Expression::TemplateLiteral(_)
+            | Expression::ImportMeta(_)
+            | Expression::Super(_)
+            | Expression::StaticMemberExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::CallExpression(_)
+            | Expression::ChainExpression(_)
+            | Expression::ImportExpression(_)
+            | Expression::NewExpression(_)
+            | Expression::AwaitExpression(_) => delta += 1,
+            Expression::BooleanLiteral(_) => {}
+            _ => return None,
+        }
+        Some(delta)
+    }
+
     /// Character delta from parentheses added or removed by De Morgan's law
     /// (flipping `&&` <-> `||` changes which nested operands need parens), or
     /// `None` if some operand cannot invert its operator in place.
@@ -128,42 +173,7 @@ impl<'a> PeepholeOptimizations {
         }
         let mut delta = 0;
         for side in [&e.left, &e.right] {
-            match side {
-                Expression::BinaryExpression(b)
-                    if b.operator.is_equality() || Self::is_typeof_undefined_comparison(b) => {}
-                Expression::UnaryExpression(u) if u.operator.is_not() => {
-                    delta += if boolean_context { -1 } else { 1 }
-                }
-                Expression::LogicalExpression(child) => {
-                    delta += Self::de_morgan_paren_delta(child, boolean_context)?;
-                    // `&&` under `||` prints bare but its inversion (`||` under
-                    // `&&`) needs parens; the reverse drops parens.
-                    match (e.operator, child.operator) {
-                        (LogicalOperator::Or, LogicalOperator::And) => delta += 2,
-                        (LogicalOperator::And, LogicalOperator::Or) => delta -= 2,
-                        _ => {}
-                    }
-                }
-                Expression::Identifier(_)
-                | Expression::ThisExpression(_)
-                | Expression::NullLiteral(_)
-                | Expression::NumericLiteral(_)
-                | Expression::BigIntLiteral(_)
-                | Expression::RegExpLiteral(_)
-                | Expression::StringLiteral(_)
-                | Expression::TemplateLiteral(_)
-                | Expression::ImportMeta(_)
-                | Expression::Super(_)
-                | Expression::StaticMemberExpression(_)
-                | Expression::ComputedMemberExpression(_)
-                | Expression::CallExpression(_)
-                | Expression::ChainExpression(_)
-                | Expression::ImportExpression(_)
-                | Expression::NewExpression(_)
-                | Expression::AwaitExpression(_) => delta += 1,
-                Expression::BooleanLiteral(_) => {}
-                _ => return None,
-            }
+            delta += Self::de_morgan_expr_size_delta(side, e.operator, boolean_context)?;
         }
         Some(delta)
     }
@@ -188,11 +198,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
         boolean_context: bool,
     ) {
-        e.operator = if e.operator == LogicalOperator::And {
-            LogicalOperator::Or
-        } else {
-            LogicalOperator::And
-        };
+        e.operator = if e.operator.is_and() { LogicalOperator::Or } else { LogicalOperator::And };
         Self::de_morgan_invert(&mut e.left, ctx, boolean_context);
         Self::de_morgan_invert(&mut e.right, ctx, boolean_context);
     }
@@ -214,5 +220,29 @@ impl<'a> PeepholeOptimizations {
                 Expression::new_unary_expression(expr.span(), UnaryOperator::LogicalNot, expr, ctx)
             });
         }
+    }
+
+    pub fn de_morgan_for_void_expr(expr: &mut LogicalExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if expr.operator.is_coalesce() {
+            return;
+        }
+        let Some(mut delta) = Self::de_morgan_expr_size_delta(&expr.left, expr.operator, true)
+        else {
+            return;
+        };
+        let inverse =
+            if expr.operator.is_and() { LogicalOperator::Or } else { LogicalOperator::And };
+        if let Expression::LogicalExpression(right) = &expr.right {
+            let parens = |op: LogicalOperator| i32::from(op.is_and() && right.operator.is_or()) * 2;
+            delta += parens(inverse) - parens(expr.operator);
+        }
+
+        // TODO: use precedence or parent operator to determine if inversion will produce parens
+        if delta >= -2 {
+            return;
+        }
+        Self::de_morgan_invert(&mut expr.left, ctx, true);
+        expr.operator = inverse;
+        ctx.notice_change();
     }
 }
