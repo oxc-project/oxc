@@ -272,3 +272,24 @@ npm install
 
 # Return to `submodules` directory
 cd ..
+
+###############################################################################
+# React plugin
+###############################################################################
+
+# Separate from the React repository above, which supplies React Hooks tests.
+clone_repo react_plugin
+
+# Upstream tests multiple ESLint versions; its development peers conflict.
+npm install --legacy-peer-deps
+
+# The legacy parser uses upstream's TypeScript 3.9. Give the modern parser
+# (the version selected in upstream CI) its own compatible TypeScript version.
+mkdir .oxlint-conformance
+printf '%s\n' '{"private":true}' > .oxlint-conformance/package.json
+npm install --prefix .oxlint-conformance --legacy-peer-deps \
+  @typescript-eslint/parser@8.17.0 typescript@5.7.3
+mv node_modules/@typescript-eslint/parser .oxlint-conformance/original-parser
+ln -s ../../.oxlint-conformance/node_modules/@typescript-eslint/parser node_modules/@typescript-eslint/parser
+
+cd ..
