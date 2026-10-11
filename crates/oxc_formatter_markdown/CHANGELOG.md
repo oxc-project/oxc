@@ -4,6 +4,28 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 71e400b formatter_markdown: Fixed remaining issues found by fuzz (#27334) (leaysgur)
+- 7d0e54d formatter_markdown: Preserve line breaks around Chinese/Japanese characters in all `proseWrap` (#27331) (leaysgur)
+- 2445064 formatter_markdown: Keep a preserved line break before a delimiter row that opens no table (#27278) (leaysgur)
+- dd72fbf formatter_markdown: Keep container columns as spaces under `useTabs` (#27277) (leaysgur)
+
+### ⚡ Performance
+
+- 72f42a3 formatter_markdown: Pre-allocate the IR buffer (#27333) (leaysgur)
+
+### 📚 Documentation
+
+- 656b81c formatter_markdown: Record unclosed fences closing at a directive's closer (#27279) (leaysgur)
+- 66545bf formatter_markdown: Record setext heading wrap divergence (#27221) (leaysgur)
+
 ## [0.71.0] - 2026-09-28
 
 ### 🚀 Features

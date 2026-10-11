@@ -14,7 +14,7 @@ use crate::{
 
 /// Interns an exactly-sized element sequence, the single place encoding the interning policy:
 /// the 0/1-element cases return without ever allocating an `ArenaVec`.
-fn intern_exact<'ast>(
+pub fn intern_exact<'ast>(
     allocator: &'ast Allocator,
     mut elements: impl ExactSizeIterator<Item = FormatElement<'ast>>,
 ) -> Option<FormatElement<'ast>> {

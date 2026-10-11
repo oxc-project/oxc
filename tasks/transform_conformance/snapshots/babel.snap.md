@@ -1,6 +1,6 @@
-commit: fd665901
+commit: 4f4ef5d4
 
-Passed: 731/1165
+Passed: 741/1166
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -369,37 +369,7 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-class-static-block (11/24)
-* class-static-block/before-static-fields/input.js
-x Output mismatch
-
-* class-static-block/class-binding/input.js
-x Output mismatch
-
-* class-static-block/class-declaration/input.js
-x Output mismatch
-
-* class-static-block/class-inferred-name/input.js
-x Output mismatch
-
-* class-static-block/in-class-heritage/input.js
-x Output mismatch
-
-* class-static-block/multiple-static-initializers/input.js
-x Output mismatch
-
-* class-static-block/name-conflict/input.js
-x Output mismatch
-
-* class-static-block/new-target/input.js
-x Output mismatch
-
-* class-static-block/preserve-comments/input.js
-x Output mismatch
-
-* class-static-block/var-scope/input.js
-x Output mismatch
-
+# babel-plugin-transform-class-static-block (21/24)
 * integration/in-class-heritage/input.js
 x Output mismatch
 
@@ -765,7 +735,10 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-private-property-in-object (24/59)
+# babel-plugin-transform-private-property-in-object (24/60)
+* assumption-noUninitializedPrivateFieldAccess/static-field/input.js
+x Output mismatch
+
 * assumption-privateFieldsAsProperties/accessor/input.js
 x Output mismatch
 

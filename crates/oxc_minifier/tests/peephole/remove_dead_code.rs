@@ -235,7 +235,7 @@ fn remove_unused_expressions_in_sequence() {
     // already-`0` element re-records a mutation every iteration, spinning
     // the fixed-point loop into the 10-iteration debug_assert.
     test_same("(sideEffect(), 0, foo.bar)();");
-    test_same("delete (sideEffect(), 0, foo.bar);");
+    test("delete (sideEffect(), 0, foo.bar);", "sideEffect(), foo.bar;");
 
     test("typeof (0, foo);", "foo");
     test_same("v = typeof (0, foo);");
@@ -243,11 +243,11 @@ fn remove_unused_expressions_in_sequence() {
     test("v = function(foo) { return typeof (0, foo) }", "v = function(foo) { return typeof foo }");
     test("typeof 0", "");
 
-    test_same("delete (0, foo);");
-    test_same("delete (0, foo.#bar);");
-    test_same("delete (0, foo.bar);");
-    test_same("delete (0, foo[bar]);");
-    test_same("delete (0, foo?.bar);");
+    test("delete (0, foo);", "foo");
+    test("delete (0, foo.#bar);", "foo.#bar");
+    test("delete (0, foo.bar);", "foo.bar");
+    test("delete (0, foo[bar]);", "foo[bar]");
+    test("delete (0, foo?.bar);", "foo?.bar");
 }
 
 #[test]

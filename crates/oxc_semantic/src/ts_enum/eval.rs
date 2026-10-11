@@ -258,18 +258,13 @@ fn eval_unary_expression(
 ) -> Option<ConstantValue> {
     let value = evaluate_expression(&expr.argument, ctx)?;
 
-    // Babel uses JS coercion for unary on strings: `+"s"` → `"s"`, `-"s"` → NaN, `~"s"` → -1.
-    // TypeScript would leave these unevaluated (computed members). We align with Babel.
+    // TypeScript leaves unary operations on strings unevaluated (computed members),
+    // so we decline here too — folding them would need ToNumber coercion, and a
+    // folded value that does not match the runtime result is worse than none at
+    // all (`-"3"` must produce -3, `~"4"` -5).
     let value = match value {
         ConstantValue::Number(v) => v,
-        ConstantValue::String(_) => {
-            return match expr.operator {
-                UnaryOperator::UnaryPlus => Some(value),
-                UnaryOperator::UnaryNegation => Some(ConstantValue::Number(f64::NAN)),
-                UnaryOperator::BitwiseNot => Some(ConstantValue::Number(-1.0)),
-                _ => None,
-            };
-        }
+        ConstantValue::String(_) => return None,
     };
 
     match expr.operator {

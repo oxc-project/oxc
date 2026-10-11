@@ -40,6 +40,12 @@ a leading BOM is preserved.
 Front matter (`---` / `+++`, `oxc_formatter_core::spec::parse_front_matter`) is blanked before parsing and printed by `envelope::write_front_matter` as CSS does:
 its yaml formats through the session's dispatcher when there is one, anything else stays verbatim; a blank line separates it from the body.
 
+A fenced code block with a language dispatches its content as a `VirtualDocument` (`print/code.rs`), its name as written (decoded), the dispatcher resolving it:
+the child IR is wrapped in `mark_as_root` with every newline in its texts made a literal line, so continuation lines keep the fence's column,
+and the fence outnumbers the backtick runs of the printed content (printed once to count them when a text holds a backtick).
+No dispatcher, an unknown language or a failed parse keeps the block verbatim, as does a meta with line ranges (`apps/oxfmt/DIVERGENCES.md#line-ranged-code-block`).
+Embedding is verified end to end by oxfmt's conformance (`markdown` / `md-in-js` categories), not here.
+
 ## Dialects
 
 Markdown grammars are open-ended (VitePress, Docusaurus, Pandoc, kramdown, Obsidian, ...), and the parser learns none of them:
@@ -81,7 +87,7 @@ Pin fixtures are named after their entry's slug (a comment would be an HTML bloc
 ### Fixture fingerprint
 
 `tests/fixtures/fingerprint.rs` serializes the AST's meaning (structure, decoded text, destinations, labels) and ignores what formatting may change
-(spans, markers, fence style, text splitting, whitespace runs, tightness, whitespace next to Chinese / Japanese characters, trailing whitespace of verbatim lines, info string whitespace).
+(spans, markers, fence style, text splitting, whitespace runs, tightness, trailing whitespace of verbatim lines, info string whitespace).
 The harness asserts it is identical for input and output: every fixture is a `parse(format(x)) ≅ parse(x)` check, which idempotency alone cannot give (a corrupted output is often a fixpoint).
 Extend the ignore set only with a reason written next to it.
 
@@ -90,4 +96,8 @@ Extend the ignore set only with a reason written next to it.
 `tests/invariants.rs` formats a deterministic token-soup corpus (the parser repo's differential generator) under every `proseWrap` and checks the fingerprint and idempotency.
 The default corpus must fail exactly on `KNOWN_FAILURES` (the documents and their classes are listed there);
 remove an entry when its class is fixed, any other failure is a regression.
+
+Other seeds pass (3 / 5 / 7 / 8 / 13 / 21 / 42 / 99) except one known class, seed 11 #5:
+a liquid tag continued on a lazy line (`2. {% x` + `y %}`) is inline in a paragraph,
+re-indented into the item it becomes a liquid flow block (micromark reads the two the same way).
 `MD_FUZZ_SEED` / `MD_FUZZ_COUNT` run other corpora, `MD_FUZZ_FILE` prints one document's fingerprints.

@@ -477,6 +477,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         self.check_module_declaration(stmt_ctx);
         self.bump_any(); // bump `export`
+        // export /* @__NO_SIDE_EFFECTS__ */ ...
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
         // Module goal so the declaration parses under `Await` on the first pass and
         // isn't reparsed. e.g. `@foo export default class C { x = await + 1 }`
@@ -567,7 +570,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 )
             }
         };
-        Statement::from(decl)
+        let mut stmt = Statement::from(decl);
+        if let Some(comments) = no_side_effects_comments
+            && Self::set_pure_on_function_stmt(&mut stmt)
+        {
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        }
+        stmt
     }
 
     // export NamedExports ;

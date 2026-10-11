@@ -31,7 +31,7 @@ pub fn format<'a>(
     options: CssFormatOptions,
 ) -> Result<Formatted<'a, CssFormatContext<'a>>, OxcDiagnostic> {
     // NOTE: this wrapper labels the run `PhysicalFile` with NO services:
-    // front matter is detected but its body degrades to verbatim (`PreserveOriginal`),
+    // front matter is detected but kept verbatim (no dispatcher),
     // and `@apply` Tailwind classes print unsorted.
     // Hosts that want them use `format_with_session` with the services installed.
     format_with_session(
@@ -273,8 +273,6 @@ pub fn to_span(span: &oxc_css_parser::Span) -> Span {
 }
 
 fn write_front_matter<'a>(fm: &FrontMatter<'a>, f: &mut CssFormatter<'_, 'a>) {
-    // NOTE: TOML currently has no IR-capable formatter, so it degrades to verbatim through `PreserveOriginal`.
-    // Still need to specify here since blank TOML frontmatter will be normalized.
     oxc_formatter_core::write_front_matter(fm, &["yaml", "toml"], f);
 }
 

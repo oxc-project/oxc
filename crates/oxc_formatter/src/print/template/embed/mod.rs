@@ -3,14 +3,9 @@ mod graphql;
 mod html;
 mod markdown;
 
-use rustc_hash::FxHashMap;
-
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::{
-    FormatElement,
-    format_element::{BestFittingElement, Interned, TextWidth},
-};
+use oxc_formatter_core::{FormatElement, format_element::TextWidth, map_text_in_ir};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -378,7 +373,7 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
 /// so these characters need escaping.
 fn escape_template_chars_in_ir<'a>(
     ir: &[FormatElement<'a>],
-    f: &mut JsFormatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> ArenaVec<'a, FormatElement<'a>> {
     escape_text_in_ir(ir, f, escape_template_chars)
 }
@@ -387,90 +382,23 @@ fn escape_template_chars_in_ir<'a>(
 /// Used by markdown-in-JS, which uses `.raw` quasi values.
 fn escape_backticks_raw_in_ir<'a>(
     ir: &[FormatElement<'a>],
-    f: &mut JsFormatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
 ) -> ArenaVec<'a, FormatElement<'a>> {
     escape_text_in_ir(ir, f, escape_backticks_raw)
 }
 
 fn escape_text_in_ir<'a>(
     ir: &[FormatElement<'a>],
-    f: &mut JsFormatter<'_, 'a>,
+    f: &JsFormatter<'_, 'a>,
     escape: fn(&'a str, &'a Allocator) -> Option<&'a str>,
 ) -> ArenaVec<'a, FormatElement<'a>> {
     let allocator = f.allocator();
     let indent_width = f.options().indent_width;
-    map_text_in_ir(ir, f, &mut |text, out| {
+    map_text_in_ir(ir, allocator, &mut |text, out| {
         let Some(text) = escape(text, allocator) else { return false };
         out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
         true
     })
-}
-
-/// Rebuild an embedded IR, descending into BestFitting variants and interned content.
-///
-/// `map_text` receives each `Text` run;
-/// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
-/// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
-fn map_text_in_ir<'a, F>(
-    ir: &[FormatElement<'a>],
-    f: &mut JsFormatter<'_, 'a>,
-    map_text: &mut F,
-) -> ArenaVec<'a, FormatElement<'a>>
-where
-    F: FnMut(&'a str, &mut ArenaVec<'a, FormatElement<'a>>) -> bool,
-{
-    let mut interned_cache = FxHashMap::default();
-    map_text_in_ir_impl(ir, f, map_text, &mut interned_cache)
-}
-
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
-fn map_text_in_ir_impl<'a, F>(
-    ir: &[FormatElement<'a>],
-    f: &mut JsFormatter<'_, 'a>,
-    map_text: &mut F,
-    interned_cache: &mut FxHashMap<Interned<'a>, FormatElement<'a>>,
-) -> ArenaVec<'a, FormatElement<'a>>
-where
-    F: FnMut(&'a str, &mut ArenaVec<'a, FormatElement<'a>>) -> bool,
-{
-    let allocator = f.allocator();
-    let mut out = ArenaVec::with_capacity_in(ir.len(), &allocator);
-    for element in ir {
-        match element {
-            FormatElement::Text { text, .. } => {
-                if !map_text(text, &mut out) {
-                    out.push(element.clone());
-                }
-            }
-            FormatElement::BestFitting(best_fitting) => {
-                let mut variants =
-                    ArenaVec::with_capacity_in(best_fitting.variants().len(), &allocator);
-                for variant in best_fitting.variants() {
-                    let mapped = map_text_in_ir_impl(variant, f, map_text, interned_cache);
-                    variants.push(mapped.into_arena_slice());
-                }
-                // SAFETY: This rebuild preserves the original BestFitting's variant count.
-                out.push(FormatElement::BestFitting(unsafe {
-                    BestFittingElement::from_vec_unchecked(variants)
-                }));
-            }
-            FormatElement::Interned(interned) => {
-                if let Some(mapped) = interned_cache.get(interned) {
-                    out.push(mapped.clone());
-                    continue;
-                }
-                let mapped = map_text_in_ir_impl(interned, f, map_text, interned_cache);
-                let mapped = f
-                    .intern(&format_once(move |f| f.write_elements(mapped)))
-                    .expect("rebuilding a non-empty Interned element must remain non-empty");
-                interned_cache.insert(interned.clone(), mapped.clone());
-                out.push(mapped);
-            }
-            _ => out.push(element.clone()),
-        }
-    }
-    out
 }
 
 /// Escape characters that would break template literal syntax.

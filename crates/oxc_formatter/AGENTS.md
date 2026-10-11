@@ -26,6 +26,8 @@ The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(cra
 - `format_program`: Special-purpose AST-in entry point
 - `format_with_session`: session-aware entry whose `FormatSession` carries the host-supplied `SessionServices`
   - the dispatcher (IR channel), the string embedder (JSDoc fences), and the Tailwind sorter (plain `format` / `format_program` wrap a service-less `PhysicalFile` session)
+- `format_to_ir`: Format a whole program as a dispatched child (e.g. a Markdown code block), returning IR for the parent's document
+  - `JsEmbeddedIn` carries what it is embedded in, translated by the orchestrator from the parent's marker
 
 ### Generated code
 

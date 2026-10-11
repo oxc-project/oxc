@@ -1,10 +1,16 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::number::NumberBase;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{integer_literal_loses_precision, pad_fix_with_token_boundary},
+};
 
 fn prefer_bigint_literals_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer bigint literals over `BigInt(...)`.")
@@ -64,7 +70,11 @@ impl Rule for PreferBigintLiterals {
             return;
         };
 
-        if reference.name != "BigInt" || call.optional || call.arguments.len() != 1 {
+        if reference.name != "BigInt"
+            || !reference.is_global_reference(ctx.scoping())
+            || call.optional
+            || call.arguments.len() != 1
+        {
             return;
         }
 
@@ -75,15 +85,27 @@ impl Rule for PreferBigintLiterals {
         };
 
         if argument_expression.is_big_int_literal() {
+            ctx.diagnostic_with_fix(prefer_bigint_literals_diagnostic(arg.span()), |fixer| {
+                let mut replacement = ctx.source_range(argument_expression.span()).to_string();
+                pad_fix_with_token_boundary(ctx.source_text(), call.span, &mut replacement);
+                fixer.replace(call.span, replacement)
+            });
             return;
         }
 
         match argument_expression.get_inner_expression() {
             Expression::StringLiteral(string_literal) => {
-                if let Some(replacement) = bigint_literal_from_string(&string_literal.value) {
+                if let Some(mut replacement) = bigint_literal_from_string(&string_literal.value) {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
-                        |fixer| fixer.replace(call.span, replacement),
+                        |fixer| {
+                            pad_fix_with_token_boundary(
+                                ctx.source_text(),
+                                call.span,
+                                &mut replacement,
+                            );
+                            fixer.replace(call.span, replacement)
+                        },
                     );
                 }
             }
@@ -100,12 +122,24 @@ impl Rule for PreferBigintLiterals {
                     |raw| raw.as_str(),
                 );
 
-                if let Some(replacement) =
+                if integer_literal_loses_precision(numeric_literal) {
+                    ctx.diagnostic(
+                        prefer_bigint_literals_diagnostic(arg.span())
+                            .with_note("Integer literal loses precision"),
+                    );
+                } else if let Some(mut replacement) =
                     bigint_literal_from_numeric(raw_text, numeric_literal.base)
                 {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
-                        |fixer| fixer.replace(call.span, replacement),
+                        |fixer| {
+                            pad_fix_with_token_boundary(
+                                ctx.source_text(),
+                                call.span,
+                                &mut replacement,
+                            );
+                            fixer.replace(call.span, replacement)
+                        },
                     );
                 } else {
                     ctx.diagnostic(prefer_bigint_literals_diagnostic(arg.span()));
@@ -206,7 +240,11 @@ fn test() {
         r"BigInt?.(1)",
         r"BigInt(1.1)",
         r"typeof BigInt",
-        r"BigInt(1n)",
+        r"((BigInt) => BigInt(1n))(() => 2n)",
+        r"function f(BigInt) { return BigInt(1); }",
+        r"const BigInt = () => 2n; BigInt(1n);",
+        r"import BigInt from 'custom-bigint'; BigInt('1');",
+        r"function BigInt() { return 2n; } BigInt(1n);",
         r#"BigInt("not-number")"#,
         r#"BigInt("1_2")"#,
         r#"BigInt("1\\\n2")"#,
@@ -235,16 +273,53 @@ fn test() {
         r"BigInt(0x20000000000001)",
         r"BigInt(9_007_199_254_740_993)",
         r"BigInt(0x20_00_00_00_00_00_01)",
+        r"BigInt(0777777777777777777)",
+        r"BigInt(1000000000000000100)",
+        r"BigInt(100000000000000000000000)",
+        r"BigInt(100_000_000_000_000_010_000)",
+        r"BigInt(0xffffffffffffffff)",
+        r"BigInt(0xffffffffffffffffffff)",
+        r"BigInt(0b1111111111111111111111111111111111111111111111111111111111111111)",
+        r"BigInt(0o1777777777777777777777)",
+        r"BigInt(9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999)",
     ];
 
     let fix = vec![
         (r"BigInt('42')", "42n"),
         (r"BigInt('  0xFF  ')", "0xFFn"),
         (r"BigInt(0)", "0n"),
+        (r"BigInt(1n)", r"1n"),
+        (r"BigInt(1n)in {'1':0}", r"1n in {'1':0}"),
+        (r"BigInt(1n)instanceof Object", r"1n instanceof Object"),
+        (r"BigInt(1n)as bigint", r"1n as bigint"),
+        (r"BigInt(1n)satisfies bigint", r"1n satisfies bigint"),
+        (r"BigInt(1)in {'1':0}", r"1n in {'1':0}"),
+        (r"BigInt('1')instanceof Object", r"1n instanceof Object"),
+        (r"BigInt(1n).toString()", r"1n.toString()"),
         (r"BigInt(0B11_11)", "0B11_11n"),
         (r"BigInt(0O777_777)", "0O777_777n"),
         (r"BigInt(0777)", "0o777n"),
         (r"BigInt(0888)", "888n"),
+        (r"BigInt(1000000000000000100)", r"BigInt(1000000000000000100)"),
+        (r"BigInt(100000000000000000000000)", r"BigInt(100000000000000000000000)"),
+        (r"BigInt(100_000_000_000_000_010_000)", r"BigInt(100_000_000_000_000_010_000)"),
+        (r"BigInt(1000000000000000000)", "1000000000000000000n"),
+        (r"BigInt(9007199254740992)", "9007199254740992n"),
+        (r"BigInt(9_007_199_254_740_992)", "9_007_199_254_740_992n"),
+        (r"BigInt(0xffffffffffffffff)", r"BigInt(0xffffffffffffffff)"),
+        (r"BigInt(0xffffffffffffffffffff)", r"BigInt(0xffffffffffffffffffff)"),
+        (
+            r"BigInt(0b1111111111111111111111111111111111111111111111111111111111111111)",
+            r"BigInt(0b1111111111111111111111111111111111111111111111111111111111111111)",
+        ),
+        (r"BigInt(0o1777777777777777777777)", r"BigInt(0o1777777777777777777777)"),
+        (r"BigInt(0x10000000000000000)", "0x10000000000000000n"),
+        (r"BigInt(0X1_0000_0000_0000_0000)", "0X1_0000_0000_0000_0000n"),
+        (r"BigInt(0o2000000000000000000000)", "0o2000000000000000000000n"),
+        (
+            r"BigInt(0b10000000000000000000000000000000000000000000000000000000000000000)",
+            "0b10000000000000000000000000000000000000000000000000000000000000000n",
+        ),
         (r#"BigInt("0777")"#, "777n"),
         (r#"BigInt("0888")"#, "888n"),
         (r#"BigInt("0b1010")"#, "0b1010n"),
@@ -253,10 +328,6 @@ fn test() {
         (r#"BigInt(" 0001 ")"#, "1n"),
         (
             r"BigInt('9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999')",
-            "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999n",
-        ),
-        (
-            r"BigInt(9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999)",
             "9999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999999n",
         ),
         (r"BigInt(1e2)", r"BigInt(1e2)"),

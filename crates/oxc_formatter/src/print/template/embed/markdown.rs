@@ -2,9 +2,9 @@ use oxc_allocator::{Allocator, ArenaStringBuilder};
 use oxc_ast::ast::*;
 use oxc_formatter_core::dispatch_fragment_ir;
 
-use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
+use crate::{MarkdownInJsTemplate, ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
-/// Format a Markdown-in-JS tagged template literal via the Doc→IR path.
+/// Format a Markdown-in-JS tagged template literal through the dispatcher.
 ///
 /// Unescapes backticks in `.raw`, strips common indentation, formats as markdown,
 /// then re-escapes backticks and applies indented or dedent-to-root layout.
@@ -31,7 +31,7 @@ pub(super) fn try_embed_markdown<'a>(
     let text = if has_indent { strip_indentation(text, indentation, allocator) } else { text };
 
     // Phase 3: Get the IR from the dispatcher
-    let Some(ir) = dispatch_fragment_ir(f, "markdown", text, None) else {
+    let Some(ir) = dispatch_fragment_ir(f, "markdown", text, Some(&MarkdownInJsTemplate)) else {
         return false;
     };
 

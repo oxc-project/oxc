@@ -1,11 +1,9 @@
 use std::{path::Path, sync::Arc};
 
-use editorconfig_parser::EditorConfig;
-
 #[cfg(feature = "napi")]
 use super::js_config::JsConfigLoaderCb;
 use super::{
-    ConfigResolver, NestedConfigCtx,
+    ConfigLoader, ConfigResolver, NestedConfigCtx,
     editorconfig::{load_editorconfig, resolve_editorconfig_path},
 };
 
@@ -41,24 +39,16 @@ impl ConfigScopes {
 
         let editorconfig =
             load_editorconfig(resolve_editorconfig_path(cwd).as_deref()).map_err(load_err)?;
-        let mut root = ConfigResolver::from_config(
-            cwd,
-            explicit_config,
-            editorconfig.clone(),
+        let loader = ConfigLoader::new(
+            editorconfig,
             #[cfg(feature = "napi")]
-            js_config_loader,
-        )
-        .map_err(load_err)?;
+            js_config_loader.cloned(),
+        );
+        let mut root = loader.load_root(cwd, explicit_config).map_err(load_err)?;
         root.build_and_validate()
             .map_err(|err| format!("Failed to parse configuration.\n{err}"))?;
 
-        Ok(Self::new(
-            root,
-            editorconfig,
-            use_nested,
-            #[cfg(feature = "napi")]
-            js_config_loader,
-        ))
+        Ok(Self::new(root, loader, use_nested))
     }
 
     /// Same as [`Self::load`], but with the default (empty) root config.
@@ -79,23 +69,13 @@ impl ConfigScopes {
         // Best effort: an unreadable `.editorconfig` is skipped instead of failing again
         let editorconfig =
             load_editorconfig(resolve_editorconfig_path(cwd).as_deref()).ok().flatten();
-        Self::new(root, editorconfig, use_nested, js_config_loader)
+        Self::new(root, ConfigLoader::new(editorconfig, js_config_loader.cloned()), use_nested)
     }
 
-    fn new(
-        root: ConfigResolver,
-        editorconfig: Option<EditorConfig>,
-        use_nested: bool,
-        #[cfg(feature = "napi")] js_config_loader: Option<&JsConfigLoaderCb>,
-    ) -> Self {
+    fn new(root: ConfigResolver, loader: ConfigLoader, use_nested: bool) -> Self {
         let root = Arc::new(root);
-        let has_editorconfig = editorconfig.is_some();
-        let nested_ctx = NestedConfigCtx::new(
-            &root,
-            editorconfig,
-            #[cfg(feature = "napi")]
-            js_config_loader.cloned(),
-        );
+        let has_editorconfig = loader.editorconfig.is_some();
+        let nested_ctx = NestedConfigCtx::new(&root, loader);
         Self { root, nested_ctx, use_nested, has_editorconfig }
     }
 

@@ -2616,9 +2616,16 @@ impl ContentEq for CommentContent {
     }
 }
 
+impl ContentEq for CommentPlacement {
+    fn content_eq(&self, other: &Self) -> bool {
+        self == other
+    }
+}
+
 impl ContentEq for Comment {
     fn content_eq(&self, other: &Self) -> bool {
         ContentEq::content_eq(&self.attached_to, &other.attached_to)
+            && ContentEq::content_eq(&self.placement, &other.placement)
             && ContentEq::content_eq(&self.kind, &other.kind)
             && ContentEq::content_eq(&self.position, &other.position)
             && ContentEq::content_eq(&self.newlines, &other.newlines)

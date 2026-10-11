@@ -10,9 +10,8 @@ import {
   CAT_INT_DIGIT,
   CAT_LT,
   CAT_OP_UN_NOT,
-  CAT_OP_UN_NOT_AFTER_LT,
+  CAT_OP_LT_THEN_UN_NOT,
   CAT_OTHER,
-  CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
   CAT_START_OF_STMT,
 } from "./categories.ts";
@@ -111,17 +110,22 @@ export function printExpression(
     case "Literal":
       printLiteral(node, state, precedence, ctx);
       break;
-    case "BinaryExpression":
-      if (node.left.type === "PrivateIdentifier") {
+    case "BinaryExpression": {
+      // `node.left` can be any expression, so reading its `type` is a megamorphic load.
+      // Read it once here, for both the private-in check and `printBinaryish`.
+      const leftType = node.left.type;
+      if (leftType === "PrivateIdentifier") {
         typeAssertIs<ESTree.PrivateInExpression>(node);
         printPrivateInExpression(node, state, precedence);
       } else {
         typeAssertIs<ESTree.BinaryExpression>(node);
-        printBinaryish(node, state, precedence, ctx);
+        printBinaryish(node, state, precedence, ctx, leftType);
       }
       break;
+    }
     case "LogicalExpression":
-      printBinaryish(node, state, precedence, ctx);
+      // The left operand of a logical expression can't be a private name, so no private-in check
+      printBinaryish(node, state, precedence, ctx, node.left.type);
       break;
     case "ObjectExpression":
       printObjectExpression(node, state);
@@ -288,15 +292,17 @@ export function printMemberExpression(
   } else {
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
 
-    if (node.optional) {
-      write(state, "?", CAT_QUESTION);
-    } else {
-      debugAssertLastFresh(state);
-      // `0.toExponential()` is invalid; `0 .toExponential()` is valid
-      if (state.last === CAT_INT_DIGIT) write(state, " ", CAT_OTHER);
-    }
-
-    write(state, ".", CAT_OTHER);
+    debugAssertLastFresh(state);
+    write(
+      state,
+      node.optional
+        ? "?."
+        : // `0.toExponential()` is invalid. Add a space before the dot -> `0 .toExponential()`.
+          state.last === CAT_INT_DIGIT
+          ? " ."
+          : ".",
+      CAT_OTHER,
+    );
 
     const { property } = node;
     if (property.type === "PrivateIdentifier") {
@@ -708,7 +714,7 @@ function printUnaryExpression(
     printSpaceBeforeOperator(state, operatorCode);
     debugAssertLastFresh(state);
     if (operatorCode === CAT_OP_UN_NOT && state.last === CAT_LT) {
-      operatorCode = CAT_OP_UN_NOT_AFTER_LT;
+      operatorCode = CAT_OP_LT_THEN_UN_NOT;
     }
     writeWithMap(state, operator, operatorCode, node.start, node.end, node);
   }

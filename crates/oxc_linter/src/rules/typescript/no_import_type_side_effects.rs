@@ -106,7 +106,7 @@ impl Rule for NoImportTypeSideEffects {
         ctx.diagnostic_with_fix(
             no_import_type_side_effects_diagnostic(import_decl.span),
             |fixer| {
-                let mut fix = fixer.new_fix_with_capacity(type_specifiers.len() + 1);
+                let mut fix = fixer.new_fix_with_capacity(type_specifiers.len() + 2);
                 let raw = ctx.source_range(import_decl.span);
 
                 // import type A from 'foo.js'
@@ -123,6 +123,8 @@ impl Rule for NoImportTypeSideEffects {
                         specifier.imported.span().start,
                     )));
                 }
+
+                fix.push(Fix::new("", Span::empty(import_decl.span.end)));
 
                 fix.with_message("Convert to top-level type import")
             },

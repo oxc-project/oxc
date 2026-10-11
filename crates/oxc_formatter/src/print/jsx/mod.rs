@@ -45,7 +45,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
         let name = self.name();
         let comments = f.comments().comments_before(name.span().start);
         let name_has_leading_comment = !comments.is_empty();
-        let name_has_leading_line_comment = comments.iter().any(|c| c.is_line());
+        let name_has_leading_line_comment = comments.iter().any(Comment::is_line);
 
         let format_name = format_with(|f| {
             if name_has_leading_line_comment {
@@ -77,7 +77,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXOpeningFragment> {
             return;
         }
 
-        let has_line_comment = comments.iter().any(|c| c.is_line());
+        let has_line_comment = comments.iter().any(Comment::is_line);
 
         let format_comments = format_with(|f| {
             if has_line_comment {
@@ -106,7 +106,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingFragment> {
             return;
         }
 
-        let has_line_comment = comments.iter().any(|c| c.is_line());
+        let has_line_comment = comments.iter().any(Comment::is_line);
 
         let format_comments = format_with(|f| {
             if has_line_comment {
@@ -152,7 +152,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
         if matches!(self.parent(), AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
             if let JSXExpression::EmptyExpression(_) = self.expression {
                 let comments = f.context().comments().comments_before(self.span.end);
-                let has_line_comment = comments.iter().any(|c| c.is_line());
+                let has_line_comment = comments.iter().any(Comment::is_line);
 
                 write!(f, ["{"]);
 

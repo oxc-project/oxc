@@ -3,15 +3,9 @@ use std::{
     sync::{Arc, Mutex, OnceLock, RwLock},
 };
 
-use editorconfig_parser::EditorConfig;
 use rustc_hash::FxHashMap;
 
-use oxc_config::ConfigDiscovery;
-use oxc_diagnostics::OxcDiagnostic;
-
-#[cfg(feature = "napi")]
-use super::js_config::JsConfigLoaderCb;
-use super::{ConfigResolver, build_resolver_from_discovered, config_discovery};
+use super::{ConfigLoader, ConfigResolver};
 
 /// Result of loading a direct config in a single directory.
 type ConfigLoadResult = Result<Option<Arc<ConfigResolver>>, String>;
@@ -34,25 +28,17 @@ type ScopeByDir = Arc<RwLock<FxHashMap<PathBuf, Arc<ConfigResolver>>>>;
 /// State is centralized to share caches and signals across all callers,
 /// including the parallel walk visitors.
 ///
-/// Cloning is shallow (each field is already `Arc` / `Copy`).
+/// Cloning is shallow.
 #[derive(Clone)]
 pub struct NestedConfigCtx {
-    discovery: ConfigDiscovery,
-    /// Parsed `.editorconfig`, shared with the root resolver.
-    /// Cloned per nested-config load instead of re-reading and re-parsing the same file.
-    editorconfig: Option<Arc<EditorConfig>>,
-    #[cfg(feature = "napi")]
-    js_config_loader: Option<JsConfigLoaderCb>,
+    /// Shared with the root load.
+    loader: ConfigLoader,
     scope_by_dir: ScopeByDir,
     config_load_cache: ConfigLoadCache,
 }
 
 impl NestedConfigCtx {
-    pub fn new(
-        root: &Arc<ConfigResolver>,
-        editorconfig: Option<EditorConfig>,
-        #[cfg(feature = "napi")] js_config_loader: Option<JsConfigLoaderCb>,
-    ) -> Self {
+    pub(super) fn new(root: &Arc<ConfigResolver>, loader: ConfigLoader) -> Self {
         // Register the root, so probing its dir returns the already loaded resolver
         // instead of reading it again or invoking the JS loader twice.
         let mut scope_by_dir = FxHashMap::default();
@@ -60,10 +46,7 @@ impl NestedConfigCtx {
             scope_by_dir.insert(dir.to_path_buf(), Arc::clone(root));
         }
         Self {
-            discovery: config_discovery(),
-            editorconfig: editorconfig.map(Arc::new),
-            #[cfg(feature = "napi")]
-            js_config_loader,
+            loader,
             scope_by_dir: Arc::new(RwLock::new(scope_by_dir)),
             config_load_cache: Arc::new(Mutex::new(FxHashMap::default())),
         }
@@ -71,7 +54,7 @@ impl NestedConfigCtx {
 
     /// Returns `true` if `path`'s file name matches a supported config file.
     pub fn is_config_file(&self, path: &Path) -> bool {
-        self.discovery.discover_config_file(path).is_some()
+        self.loader.discovery.discover_config_file(path).is_some()
     }
 
     /// Look up a registered scope for `dir` without probing.
@@ -106,9 +89,7 @@ impl NestedConfigCtx {
             let entry = guard.entry(dir.to_path_buf()).or_insert_with(|| Arc::new(OnceLock::new()));
             Arc::clone(entry)
         };
-        let load_result = cell
-            .get_or_init(|| self.load_direct_in_dir(dir, self.editorconfig.as_deref().cloned()))
-            .clone();
+        let load_result = cell.get_or_init(|| self.load_direct_in_dir(dir)).clone();
 
         match load_result? {
             Some(loaded) => {
@@ -121,32 +102,11 @@ impl NestedConfigCtx {
     }
 
     /// Load and validate a config file located directly inside `dir`.
-    fn load_direct_in_dir(
-        &self,
-        dir: &Path,
-        editorconfig: Option<EditorConfig>,
-    ) -> ConfigLoadResult {
-        let Some(config_file) = self
-            .discovery
-            .find_unique_config_by_readdir(dir, false)
-            .map_err(|e| Into::<OxcDiagnostic>::into(e).to_string())?
-        else {
-            return Ok(None);
-        };
-
+    fn load_direct_in_dir(&self, dir: &Path) -> ConfigLoadResult {
         let load_err = |err: String| format!("Failed to load config in {}: {err}", dir.display());
-
-        let Some(mut resolver) = build_resolver_from_discovered(
-            config_file,
-            editorconfig,
-            #[cfg(feature = "napi")]
-            self.js_config_loader.as_ref(),
-        )
-        .map_err(load_err)?
-        else {
+        let Some(mut resolver) = self.loader.load_in_dir(dir).map_err(load_err)? else {
             return Ok(None);
         };
-
         resolver.build_and_validate().map_err(load_err)?;
         Ok(Some(Arc::new(resolver)))
     }

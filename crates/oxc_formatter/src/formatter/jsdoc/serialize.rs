@@ -139,7 +139,7 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
                 continue;
             }
             if *normalized_kind == "description" {
-                let desc_content = tag.comment().parsed();
+                let desc_content = tag.comment().parsed_preserving_whitespace();
                 let desc_content = desc_content.trim();
                 if !desc_content.is_empty() {
                     if !merged_desc.is_empty() {
@@ -171,22 +171,18 @@ impl<'a, 'o> JsdocFormatter<'a, 'o> {
 
         // Format and emit the merged description
         if !merged_desc.is_empty() {
+            let tag_prefix = if self.options.description_tag { "@description " } else { "" };
             let desc = format_description_mdast(
                 &merged_desc,
                 self.wrap_width,
-                0,
+                tag_prefix.len(),
                 self.options.capitalize_descriptions,
                 self.format_options,
                 self.session,
             );
-            if self.options.description_tag {
-                // Emit as @description tag
-                let s = self.content_lines.begin_line();
-                s.push_str("@description ");
-                s.push_str(&desc);
-            } else {
-                self.content_lines.push(desc);
-            }
+            let s = self.content_lines.begin_line();
+            s.push_str(tag_prefix);
+            s.push_str(&desc);
         }
 
         // Reorder @param tags to match the function signature order

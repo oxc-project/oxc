@@ -129,6 +129,7 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             .comments()
             .iter_before(start)
             .last()
+            .copied()
             .is_some_and(|c| is_suppression_comment(source, c));
         flush_leading_comments(start, f);
         let end = stmt_end(stmt, f);

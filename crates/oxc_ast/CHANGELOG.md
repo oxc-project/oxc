@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🚀 Features
+
+- 07833c0 ast: Tie `debug_name` return lifetime to the underlying AST node (#27295) (sadan)
+- cc82598 minifier: Merge import and export statements against the same module (#25533) (翠)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🐛 Bug Fixes

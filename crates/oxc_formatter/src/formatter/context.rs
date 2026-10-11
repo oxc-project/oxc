@@ -79,15 +79,11 @@ impl TailwindContextEntry {
 /// Context object storing data relevant when formatting an object.
 pub struct JsFormatContext<'ast> {
     options: JsFormatOptions,
-
     source_text: SourceText<'ast>,
-
     source_type: SourceType,
-
     comments: Comments<'ast>,
 
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
-
     /// One-shot handoff of the assignment layout to the arrow expression on the RHS of an assignment-like,
     /// keyed by the arrow's span so no other node can consume it.
     /// Set (and cleared) by `WithAssignmentLayout` around formatting the arrow, taken by the arrow's `write`.
@@ -103,6 +99,10 @@ pub struct JsFormatContext<'ast> {
     /// Stack tracking whether we're inside a Tailwind class context.
     /// When non-empty, StringLiterals should be sorted as Tailwind classes.
     tailwind_context_stack: Vec<TailwindContextEntry>,
+
+    /// Set only for an embedded program (see [`crate::format_to_ir`]):
+    /// its sole statement prints without its semicolon.
+    embedding_omits_semicolon: bool,
 }
 
 impl std::fmt::Debug for JsFormatContext<'_> {
@@ -147,6 +147,7 @@ impl<'ast> JsFormatContext<'ast> {
             arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
             tailwind_context_stack: Vec::new(),
+            embedding_omits_semicolon: false,
         }
     }
 
@@ -230,6 +231,14 @@ impl<'ast> JsFormatContext<'ast> {
 
     pub fn is_quote_needed(&self) -> bool {
         *self.quote_needed_stack.last().unwrap_or(&false)
+    }
+
+    pub(crate) fn set_embedding_omits_semicolon(&mut self, omit: bool) {
+        self.embedding_omits_semicolon = omit;
+    }
+
+    pub(crate) fn embedding_omits_semicolon(&self) -> bool {
+        self.embedding_omits_semicolon
     }
 
     /// Push a Tailwind context entry onto the stack.

@@ -571,6 +571,7 @@ In the head the declaration has no terminator of its own; we keep it verbatim an
 
 - Why: uniform-rule (same construct, same output: suppressed statement)
 - Pin: `tests/fixtures/js/semicolons/suppressed-statement.js`, `tests/fixtures/ts/semicolons/suppressed-class-member.ts`
+- Oxfmt: `externals/prettier/markdown/markdown/real-world-case.md`
 
 ```js
 // input (semi: true)

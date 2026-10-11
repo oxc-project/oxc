@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+
+### ⚡ Performance
+
+- d37d1db codegen: Pre-allocate sourcemap builder vectors (#27230) (codspeed)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🐛 Bug Fixes

@@ -67,14 +67,14 @@ export async function runMigrateBiome() {
   const cwd = process.cwd();
 
   if (await hasOxfmtrcFile(cwd)) {
-    return exitWithError("Oxfmt configuration file already exists.");
+    return exitWithError("Oxfmt config file already exists.\nRemove it and re-run.");
   }
 
   const biomeConfigPath = await resolveBiomeConfigFile(cwd);
 
   // No Biome config found, fallback with `--init` behavior
   if (!biomeConfigPath) {
-    console.log("No Biome configuration file found.");
+    console.log("No Biome config file found.");
 
     const oxfmtrc = await createBlankOxfmtrcFile(cwd);
     const jsonStr = JSON.stringify(oxfmtrc, null, 2);
@@ -96,9 +96,9 @@ export async function runMigrateBiome() {
     const content = await readFile(biomeConfigPath, "utf8");
     // Biome supports JSONC (JSON with comments)
     biomeConfig = parseJSONC(content);
-    console.log("Found Biome configuration at:", biomeConfigPath);
+    console.log("Found Biome config at:", biomeConfigPath);
   } catch {
-    return exitWithError(`Failed to parse: ${biomeConfigPath}`);
+    return exitWithError(`Failed to load Biome config at: ${biomeConfigPath}`);
   }
 
   // Start with blank, then fill in from `biomeConfig`.
@@ -125,7 +125,7 @@ export async function runMigrateBiome() {
   // Migrate ignore patterns from `files.includes` negated patterns
   const ignores = extractIgnorePatterns(biomeConfig);
   if (ignores.length > 0) {
-    console.log("Migrated ignore patterns from Biome config");
+    console.log(`  - Migrated ignore patterns from "files.includes"`);
   }
   // Keep ignorePatterns at the bottom
   delete oxfmtrc.ignorePatterns;
@@ -133,9 +133,7 @@ export async function runMigrateBiome() {
 
   // TODO: Oxfmt now supports `overrides`,
   // but automatic migration is complex due to different config structures.
-  if (biomeConfig.overrides && biomeConfig.overrides.length > 0) {
-    console.warn(`  - "overrides" cannot be migrated automatically yet`);
-  }
+  const hasOverrides = biomeConfig.overrides && biomeConfig.overrides.length > 0;
 
   const jsonStr = JSON.stringify(oxfmtrc, null, 2);
 
@@ -143,7 +141,10 @@ export async function runMigrateBiome() {
 
   try {
     await saveOxfmtrcFile(cwd, jsonStr);
-    console.log("Created `.oxfmtrc.json`.");
+    console.log("Created `.oxfmtrc.json`.\nIt may not be formatted yet, run `oxfmt` to format it.");
+    if (hasOverrides) {
+      console.error(`\nPlease review:\n  - "overrides" cannot be migrated automatically yet`);
+    }
   } catch {
     return exitWithError("Failed to create `.oxfmtrc.json`.");
   }

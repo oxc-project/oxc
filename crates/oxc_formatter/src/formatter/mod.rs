@@ -33,8 +33,10 @@ pub use self::{
     context::{JsFormatContext, TailwindContextEntry},
     formatter_js::{JsFormatter, JsFormatterExt},
 };
+use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Arguments, Buffer as _, Document, FormatSession, FormatState, Formatted, VecBuffer,
+    Arguments, Buffer as _, Document, FormatElement, FormatSession, FormatState, Formatted,
+    VecBuffer,
 };
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
@@ -45,23 +47,33 @@ pub fn format<'ast>(
     session: &FormatSession<'ast>,
     arguments: Arguments<'_, 'ast, JsFormatContext<'ast>>,
 ) -> Formatted<'ast, JsFormatContext<'ast>> {
+    // A root `Document` owns a fresh class scope;
+    // a root nested on the same session (a JSDoc snippet) must not take its host's classes.
+    let session = session.with_new_tailwind_scope();
+    let (elements, context) = build_ir(context, &session, arguments);
+
+    let ir = Document::new(elements, session.take_sorted_tailwind_classes());
+
+    Formatted::new(ir, context)
+}
+
+/// Builds the IR on `session` as is, returning it with the context.
+/// For embedding into another formatter's document ([`crate::format_to_ir`]),
+/// whose Tailwind classes go into the parent's scope (no fresh scope, no sort).
+pub fn build_ir<'ast>(
+    context: JsFormatContext<'ast>,
+    session: &FormatSession<'ast>,
+    arguments: Arguments<'_, 'ast, JsFormatContext<'ast>>,
+) -> (ArenaVec<'ast, FormatElement<'ast>>, JsFormatContext<'ast>) {
     // Pre-allocate buffer at 40% of source length (source_len * 2 / 5).
     // Analysis of 4,891 VSCode files shows FormatElement buffer length is typically 19% of source (median),
     // with 95th percentile at 30-38% across all file sizes. This 0.4x multiplier avoids reallocation for 95%+ of files.
     let capacity = (context.source_text().len() * 2) / 5;
 
-    // A root `Document` owns a fresh class scope;
-    // a root nested on the same session (a JSDoc snippet) must not take its host's classes.
-    let session = session.with_new_tailwind_scope();
     let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
 
     buffer.write_fmt(arguments);
 
-    let elements = buffer.into_vec();
-    let context = state.into_context();
-
-    let ir = Document::new(elements, session.take_sorted_tailwind_classes());
-
-    Formatted::new(ir, context)
+    (buffer.into_vec(), state.into_context())
 }

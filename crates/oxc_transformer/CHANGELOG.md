@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- 72d62a1 transformer/explicit-resource-management: Transform classic for loop using declarations (#27148) (camc314)
+- 24b7015 transformer/explicit-resource-management: Lower using in catch and finally (#27142) (camc314)
+
 ## [0.151.0] - 2026-09-21
 
 ### 🐛 Bug Fixes

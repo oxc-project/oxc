@@ -57,8 +57,12 @@ impl<'a> SymbolState<'a> {
     }
 
     #[inline]
-    pub fn init_value(&mut self, symbol_id: SymbolId, value: SymbolValue<'a>) {
-        self.values[symbol_id] = Some(value);
+    pub fn init_value(
+        &mut self,
+        symbol_id: SymbolId,
+        value: SymbolValue<'a>,
+    ) -> &mut SymbolValue<'a> {
+        self.values[symbol_id].insert(value)
     }
 
     #[inline]

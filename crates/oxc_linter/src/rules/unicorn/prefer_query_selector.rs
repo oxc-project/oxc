@@ -2,8 +2,15 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use schemars::JsonSchema;
+use serde::Deserialize;
 
-use crate::{AstNode, context::LintContext, rule::Rule, utils::is_node_value_not_dom_node};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::{DefaultRuleConfig, Rule},
+    utils::is_node_value_not_dom_node,
+};
 
 fn prefer_query_selector_diagnostic(
     good_method: &str,
@@ -15,8 +22,13 @@ fn prefer_query_selector_diagnostic(
         .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
-pub struct PreferQuerySelector;
+#[derive(Debug, Default, Clone, JsonSchema, Deserialize)]
+#[serde(rename_all = "camelCase", default, deny_unknown_fields)]
+pub struct PreferQuerySelector {
+    /// When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.
+    /// This avoids the need to manually compose a CSS selector string, which can be less readable.
+    allow_with_variables: bool,
+}
 
 fn get_preferred_identifier_name(ident_name: &str) -> Option<&'static str> {
     match ident_name {
@@ -59,15 +71,27 @@ declare_oxc_lint!(
     /// document.querySelectorAll('li a');
     /// document.querySelector('li').querySelectorAll('a');
     /// ```
+    ///
+    /// Examples of **correct** code for this rule with `{ "allowWithVariables": true }`:
+    /// ```javascript
+    /// document.getElementById(someId);
+    /// document.getElementsByClassName(someClass);
+    /// document.getElementsByClassName(`${someClass}`);
+    /// ```
     PreferQuerySelector,
     unicorn,
     pedantic,
     conditional_fix,
+    config = PreferQuerySelector,
     version = "0.0.15",
     short_description = "Prefer `.querySelector()` over `.getElementById()`, and `.querySelectorAll()` over `.getElementsByClassName()` and `.getElementsByTagName()`.",
 );
 
 impl Rule for PreferQuerySelector {
+    fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
@@ -95,6 +119,13 @@ impl Rule for PreferQuerySelector {
         let Some((property_span, property_name)) = member_expr.static_property_info() else {
             return;
         };
+
+        if self.allow_with_variables
+            && matches!(property_name, "getElementById" | "getElementsByClassName")
+            && is_non_literal_argument(argument_expr)
+        {
+            return;
+        }
 
         if let Some(preferred_selector) = get_preferred_identifier_name(property_name) {
             let diagnostic =
@@ -169,65 +200,176 @@ impl Rule for PreferQuerySelector {
     }
 }
 
+fn is_non_literal_argument(expr: &Expression) -> bool {
+    match expr.get_inner_expression() {
+        Expression::NullLiteral(_)
+        | Expression::StringLiteral(_)
+        | Expression::BinaryExpression(_) => false,
+        Expression::TemplateLiteral(template) => {
+            !template.expressions.is_empty()
+                && template
+                    .quasis
+                    .iter()
+                    .all(|quasi| quasi.value.cooked.is_none_or(|cooked| cooked.trim().is_empty()))
+        }
+        _ => true,
+    }
+}
+
 #[test]
 fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
-        "new document.getElementById(foo);",
-        "getElementById(foo);",
-        "document['getElementById'](bar);",
-        "document[getElementById](bar);",
-        "document.foo(bar);",
-        "document.getElementById();",
-        "document?.getElementById('foo');",
-        "document.getElementById?.('foo');",
-        r#"document.getElementsByClassName("foo", "bar");"#,
-        r#"document.getElementById(...["id"]);"#,
-        r##"document.querySelector("#foo");"##,
-        r#"document.querySelector(".bar");"#,
-        r#"document.querySelector("main #foo .bar");"#,
-        r#"document.querySelectorAll(".foo .bar");"#,
-        r#"document.querySelectorAll("li a");"#,
-        r#"document.querySelector("li").querySelectorAll("a");"#,
-        "document.getElementsByName();",
+        ("new document.getElementById(foo);", None),
+        ("getElementById(foo);", None),
+        ("document['getElementById'](bar);", None),
+        ("document[getElementById](bar);", None),
+        ("document.foo(bar);", None),
+        ("document.getElementById();", None),
+        ("document?.getElementById('foo');", None),
+        ("document.getElementById?.('foo');", None),
+        (r#"document.getElementsByClassName("foo", "bar");"#, None),
+        (r#"document.getElementById(...["id"]);"#, None),
+        (r##"document.querySelector("#foo");"##, None),
+        (r#"document.querySelector(".bar");"#, None),
+        (r#"document.querySelector("main #foo .bar");"#, None),
+        (r#"document.querySelectorAll(".foo .bar");"#, None),
+        (r#"document.querySelectorAll("li a");"#, None),
+        (r#"document.querySelector("li").querySelectorAll("a");"#, None),
+        ("document.getElementsByName();", None),
+        (
+            "document.getElementById(someId);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementsByClassName(someClass);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementsByClassName(fn());",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementsByClassName(`${someClass}`);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementById(`${someId}`);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementById(obj.id);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementById(someId as string);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
     ];
 
     let fail = vec![
-        r#"document.getElementById("foo");"#,
-        r#"document.getElementsByClassName("foo");"#,
-        r#"document.getElementsByClassName("foo bar");"#,
-        r#"document.getElementsByTagName("foo");"#,
-        r#"document.getElementById("");"#,
-        "document.getElementById('foo');",
-        "document.getElementsByClassName('foo');",
-        "document.getElementsByClassName('foo bar');",
-        "document.getElementsByTagName('foo');",
-        "document.getElementsByClassName('');",
-        "document.getElementById(`foo`);",
-        "document.getElementsByClassName(`foo`);",
-        "document.getElementsByClassName(`foo bar`);",
-        "document.getElementsByTagName(`foo`);",
-        "document.getElementsByTagName(``);",
-        "document.getElementsByClassName(`${fn()}`);",
-        "document.getElementsByClassName(`foo ${undefined}`);",
-        "document.getElementsByClassName(null);",
-        "document.getElementsByTagName(null);",
-        "document.getElementsByClassName(fn());",
-        r#"document.getElementsByClassName("foo" + fn());"#,
-        r#"document.getElementsByClassName(foo + "bar");"#,
-        r#"for (const div of document.body.getElementById("id").getElementsByClassName("class")) {
+        (r#"document.getElementById("foo");"#, None),
+        (r#"document.getElementsByClassName("foo");"#, None),
+        (r#"document.getElementsByClassName("foo bar");"#, None),
+        (r#"document.getElementsByTagName("foo");"#, None),
+        (r#"document.getElementById("");"#, None),
+        ("document.getElementById('foo');", None),
+        ("document.getElementsByClassName('foo');", None),
+        ("document.getElementsByClassName('foo bar');", None),
+        ("document.getElementsByTagName('foo');", None),
+        ("document.getElementsByClassName('');", None),
+        ("document.getElementById(`foo`);", None),
+        ("document.getElementsByClassName(`foo`);", None),
+        ("document.getElementsByClassName(`foo bar`);", None),
+        ("document.getElementsByTagName(`foo`);", None),
+        ("document.getElementsByTagName(``);", None),
+        ("document.getElementsByClassName(`${fn()}`);", None),
+        ("document.getElementsByClassName(`foo ${undefined}`);", None),
+        ("document.getElementsByClassName(null);", None),
+        ("document.getElementsByTagName(null);", None),
+        ("document.getElementsByClassName(fn());", None),
+        (r#"document.getElementsByClassName("foo" + fn());"#, None),
+        (r#"document.getElementsByClassName(foo + "bar");"#, None),
+        (
+            r#"for (const div of document.body.getElementById("id").getElementsByClassName("class")) {
                 console.log(div.getElementsByTagName("div"));
             }"#,
-        "e.getElementById(3)",
-        r#"document.getElementsByName("foo");"#,
-        "document.getElementsByName('foo');",
-        "document.getElementsByName(`foo`);",
-        "document.getElementsByName(`${'foo'}`);",
-        "document.getElementsByName(null);",
-        r#"document.getElementsByName("");"#,
-        r#"document.getElementsByName(foo + "bar");"#,
-        r#"document.getElementsByName("multiple name should be fixable");"#,
+            None,
+        ),
+        ("e.getElementById(3)", None),
+        (r#"document.getElementsByName("foo");"#, None),
+        ("document.getElementsByName('foo');", None),
+        ("document.getElementsByName(`foo`);", None),
+        ("document.getElementsByName(`${'foo'}`);", None),
+        ("document.getElementsByName(null);", None),
+        (r#"document.getElementsByName("");"#, None),
+        (r#"document.getElementsByName(foo + "bar");"#, None),
+        (r#"document.getElementsByName("multiple name should be fixable");"#, None),
+        (
+            "document.getElementById(someId);",
+            Some(serde_json::json!([{ "allowWithVariables": false }])),
+        ),
+        (
+            r#"document.getElementById("foo");"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r#"document.getElementById("foo" as string);"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r#"document.getElementsByClassName("foo");"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r#"document.getElementsByClassName("foo"!);"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r#"document.getElementsByTagName("foo");"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r#"document.getElementsByName("foo");"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementsByTagName(someTag);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementsByName(someName);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementsByClassName(null);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementsByClassName(`foo`);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r#"document.getElementsByClassName(variable + "x");"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r#"document.getElementsByClassName("foo" + fn());"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            r#"document.getElementsByClassName(foo + "bar");"#,
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementById(`x${someId}`);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
+        (
+            "document.getElementsByClassName(`foo ${someClass}`);",
+            Some(serde_json::json!([{ "allowWithVariables": true }])),
+        ),
     ];
 
     let fix = vec![

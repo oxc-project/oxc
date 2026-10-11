@@ -94,7 +94,7 @@ pub(super) const R_EXPR: u8 = 5; // `as T` / `satisfies T`: ends at any expressi
 // What an Angle list is (`state`).
 pub(super) const A_VALUE: u8 = 1; // declaration type parameters or `f<T>(x)` type arguments
 pub(super) const A_IN_TYPE: u8 = 3; // a list inside a type
-pub(super) const A_ASSERT: u8 = 4; // `<T>x` assertion or `<T,>() =>` generic arrow
+pub(super) const A_ASSERT: u8 = 4; // an operand follows: an assertion or leading type parameters
 
 // ClassHead: an interface head (reg).
 pub(super) const C_INTERFACE: u8 = 1;
@@ -105,8 +105,6 @@ pub(super) const L_INTERFACE_BODY: u8 = 1;
 #[derive(Clone, Copy, Default)]
 pub(super) struct Frame {
     pub(super) kind: FrameKind,
-    /// Start of the token that opened the frame.
-    pub(super) at: u32,
     pub(super) is_generator: bool,
     pub(super) is_async: bool,
     /// Braces: closing this frame ends a value.

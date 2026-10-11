@@ -2,14 +2,14 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-css compatibility: 142/151 (94.04%), 13 files skipped
+css compatibility: 141/150 (94.00%), 13 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
 | css/comments/declaration.css | 💥 | 98.88% |
-| css/fill-value/fill.css | 💥 | 96.36% |
+| css/fill-value/fill.css | 💥 | 93.33% |
 | css/parens/empty-lines.css | 💥 | 31.58% |
 | css/parens/parens.css | 💥 | 93.12% |
 | css/postcss-8-improment/test.css | 💥 | 88.24% |

@@ -17,18 +17,19 @@ use oxc_allocator::Allocator;
 use oxc_ast::Comment;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter_core::{FormatSession, Formatted, InputKind};
+use oxc_formatter_core::{EmbeddedIr, FormatSession, Formatted, InputKind};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
 // Internal only AST-wrapping IR primitives.
-// External call-sites use the text-in `format`, `format_fragment`,
+// External call-sites use the text-in `format`, `format_with_session`, `format_fragment`, `format_to_ir`,
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
-pub use crate::embed_context::{CssInJsTemplate, HtmlEmbedMeta};
-// `JsFormatContext` is public solely as the type parameter of the `Formatted`
-// returned by `format` / `format_fragment`.
-// Its methods are not part of the public contract.
+pub use crate::embed_context::{
+    CssInJsTemplate, HtmlEmbedMeta, JsEmbeddedIn, MarkdownInJsTemplate,
+};
+// `JsFormatContext` is public solely as the type parameter of the returned `Formatted`;
+// its methods are not part of the public contract.
 pub use crate::formatter::JsFormatContext;
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
@@ -106,6 +107,51 @@ pub fn format_with_session<'a>(
 ) -> Result<Formatted<'a, JsFormatContext<'a>>, OxcDiagnostic> {
     let program = parse(session.allocator(), source_text, source_type)?;
     Ok(format_program_with_session(session, program, options))
+}
+
+/// Parse `source_text` and build the IR for embedding into another formatter's document
+/// (dispatcher path, e.g. a `js` code fence in Markdown).
+///
+/// Unlike [`format_with_session`], this:
+/// - allocates from the session's shared arena and `GroupId` space, so the IR lives as long as the parent's document
+/// - leaves the Tailwind classes unsorted (the parent sorts them in its own batch)
+/// - emits neither a BOM nor the trailing newline
+///
+/// `embedded_in` is what the program is embedded in, for the print rules that depend on it ([`JsEmbeddedIn`]).
+///
+/// # Errors
+/// Same as [`format()`].
+pub fn format_to_ir<'a>(
+    session: &FormatSession<'a>,
+    source_text: &str,
+    source_type: SourceType,
+    options: JsFormatOptions,
+    embedded_in: Option<JsEmbeddedIn>,
+) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
+    let allocator = session.allocator();
+    let program = parse(allocator, allocator.alloc_str(source_text), source_type)?;
+    let node = AstNode::new(program, AstNodes::Dummy(), allocator);
+    let mut context =
+        JsFormatContext::new(program.source_text, program.source_type, &program.comments, options);
+
+    // Special cases for js-in-xxx:
+    // - Single JSX in Markdown code block: omit the semicolon
+    let embedding_omits_semicolon = embedded_in == Some(JsEmbeddedIn::MarkdownCodeBlock)
+        && program.directives.is_empty()
+        && matches!(
+            program.body.as_slice(),
+            [Statement::ExpressionStatement(statement)] if statement.expression.is_jsx()
+        );
+    context.set_embedding_omits_semicolon(embedding_omits_semicolon);
+
+    let (ir, _) = formatter::build_ir(
+        context,
+        session,
+        oxc_formatter_core::Arguments::new(&[oxc_formatter_core::Argument::new(
+            &print::FormatProgramBody(&node),
+        )]),
+    );
+    Ok(EmbeddedIr { ir })
 }
 
 /// Format a pre-wrapped JS/TS-in-xxx fragment from source text.

@@ -1,0 +1,23 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* DIVERGENCES.md#document-url-brace */
+@document url("https://www.example.com/") {}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* DIVERGENCES.md#document-url-brace */
+@document url("https://www.example.com/") {
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* DIVERGENCES.md#document-url-brace */
+@document url("https://www.example.com/") {
+}
+
+===================== End =====================

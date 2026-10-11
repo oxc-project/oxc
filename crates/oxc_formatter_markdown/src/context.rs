@@ -38,6 +38,8 @@ pub struct MarkdownFormatContext<'a> {
     opaque_spans: RefCell<Vec<(Span, bool)>>,
     /// Emphasis markers are printed as written: normalizing them would change what pairs.
     literal_markers: Cell<bool>,
+    /// Embedded in a JS template literal: code fences use `~`.
+    in_js_template: bool,
 }
 
 /// Whether text is printed as written, newlines included.
@@ -61,7 +63,12 @@ pub struct ListFrame {
 }
 
 impl<'a> MarkdownFormatContext<'a> {
-    pub fn new(options: MarkdownFormatOptions, source_code: &'a str, blanks: &'a [Span]) -> Self {
+    pub fn new(
+        options: MarkdownFormatOptions,
+        source_code: &'a str,
+        blanks: &'a [Span],
+        in_js_template: bool,
+    ) -> Self {
         Self {
             options,
             source_text: SourceText::new(source_code),
@@ -74,6 +81,7 @@ impl<'a> MarkdownFormatContext<'a> {
             code_span_literal_runs: RefCell::new(Vec::new()),
             opaque_spans: RefCell::new(Vec::new()),
             literal_markers: Cell::new(false),
+            in_js_template,
         }
     }
 
@@ -130,6 +138,10 @@ impl<'a> MarkdownFormatContext<'a> {
 
     pub fn literal_markers(&self) -> &Cell<bool> {
         &self.literal_markers
+    }
+
+    pub fn in_js_template(&self) -> bool {
+        self.in_js_template
     }
 }
 

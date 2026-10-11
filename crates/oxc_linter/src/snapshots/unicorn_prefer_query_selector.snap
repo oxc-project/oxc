@@ -243,3 +243,115 @@ source: crates/oxc_linter/src/tester.rs
    ·          ─────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementById(someId);
+   ·          ──────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementById("foo");
+   ·          ──────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementById("foo" as string);
+   ·          ──────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByClassName("foo");
+   ·          ──────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByClassName("foo"!);
+   ·          ──────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByTagName("foo");
+   ·          ────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName("foo");
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByTagName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByTagName(someTag);
+   ·          ────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByName(someName);
+   ·          ─────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByClassName(null);
+   ·          ──────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByClassName(`foo`);
+   ·          ──────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByClassName(variable + "x");
+   ·          ──────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByClassName("foo" + fn());
+   ·          ──────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByClassName(foo + "bar");
+   ·          ──────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementById(`x${someId}`);
+   ·          ──────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelectorAll()` over `.getElementsByClassName()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementsByClassName(`foo ${someClass}`);
+   ·          ──────────────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).

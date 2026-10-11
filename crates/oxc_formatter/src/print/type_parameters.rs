@@ -169,7 +169,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
         if params.is_empty() {
             // This shouldn't happen in valid TypeScript code, but handle it gracefully
             let comments = f.context().comments().comments_before(self.span.end);
-            let indent = if comments.iter().any(|c| c.is_line()) {
+            let indent = if comments.iter().any(Comment::is_line) {
                 DanglingIndentMode::Soft
             } else {
                 DanglingIndentMode::None
