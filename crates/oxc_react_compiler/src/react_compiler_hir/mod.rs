@@ -26,7 +26,7 @@ use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
 use oxc_str::{Ident, Str};
-use oxc_syntax::number::ToJsString;
+use oxc_syntax::number::{BigintBase, ToJsString};
 pub use raw::RawTypeCategory;
 pub use reactive::*;
 
@@ -963,6 +963,7 @@ pub enum PrimitiveValue<'a> {
     Boolean(bool),
     Number(FloatValue),
     String(Str<'a>),
+    BigInt { value: Str<'a>, raw: Option<Str<'a>>, base: BigintBase },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
