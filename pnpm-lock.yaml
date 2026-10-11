@@ -235,17 +235,17 @@ importers:
   apps/oxfmt:
     dependencies:
       prettier:
-        specifier: 3.9.9
-        version: 3.9.9
+        specifier: 3.9.10
+        version: 3.9.10
       prettier-plugin-astro:
         specifier: 1.1.1
-        version: 1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.9)
+        version: 1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.10)
       prettier-plugin-svelte:
         specifier: 4.1.1
-        version: 4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.69.0))
+        version: 4.1.1(prettier@3.9.10)(svelte@5.57.1(@typescript-eslint/types@8.69.0))
       prettier-plugin-tailwindcss:
         specifier: 0.0.0-insiders.5b27f94
-        version: 0.0.0-insiders.5b27f94(prettier-plugin-astro@1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.9))(prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.69.0)))(prettier@3.9.9)
+        version: 0.0.0-insiders.5b27f94(prettier-plugin-astro@1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.10))(prettier-plugin-svelte@4.1.1(prettier@3.9.10)(svelte@5.57.1(@typescript-eslint/types@8.69.0)))(prettier@3.9.10)
       tinypool:
         specifier: 2.2.0
         version: 2.2.0
@@ -5410,8 +5410,8 @@ packages:
       prettier-plugin-svelte:
         optional: true
 
-  prettier@3.9.9:
-    resolution: {integrity: sha512-Z/CJHIkdujO/OtN7nXUii0Rf3VT5SRuhjBA82Xvu2XhBUgX3nhP67T0LHceBdQLex7OOFGTox+Q5Yg8Jk2Qivg==}
+  prettier@3.9.10:
+    resolution: {integrity: sha512-skGHTH1Yb9QvaTC4hWnRTzEYtCpApF0UMBPz+t/0ZPzP8ihefo/btKd+QA7pUE0fEwA1SbS/NmhyEcstdXOIdA==}
     engines: {node: '>=14'}
     hasBin: true
 
@@ -10143,7 +10143,7 @@ snapshots:
       js-yaml: 5.4.1
       lodash: 4.18.1
       minimist: 1.2.8
-      prettier: 3.9.9
+      prettier: 3.9.10
       tinyglobby: 0.2.17
 
   json-schema-traverse@0.4.1: {}
@@ -10821,29 +10821,29 @@ snapshots:
 
   prelude-ls@1.2.1: {}
 
-  prettier-plugin-astro@1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.9):
+  prettier-plugin-astro@1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.10):
     dependencies:
       '@astrojs/compiler-rs': 0.4.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)
       '@prettier/parse-srcset': 3.1.0
-      prettier: 3.9.9
+      prettier: 3.9.10
       sass-formatter: 0.8.0
     transitivePeerDependencies:
       - '@emnapi/core'
       - '@emnapi/runtime'
 
-  prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.69.0)):
+  prettier-plugin-svelte@4.1.1(prettier@3.9.10)(svelte@5.57.1(@typescript-eslint/types@8.69.0)):
     dependencies:
-      prettier: 3.9.9
+      prettier: 3.9.10
       svelte: 5.57.1(@typescript-eslint/types@8.69.0)
 
-  prettier-plugin-tailwindcss@0.0.0-insiders.5b27f94(prettier-plugin-astro@1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.9))(prettier-plugin-svelte@4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.69.0)))(prettier@3.9.9):
+  prettier-plugin-tailwindcss@0.0.0-insiders.5b27f94(prettier-plugin-astro@1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.10))(prettier-plugin-svelte@4.1.1(prettier@3.9.10)(svelte@5.57.1(@typescript-eslint/types@8.69.0)))(prettier@3.9.10):
     dependencies:
-      prettier: 3.9.9
+      prettier: 3.9.10
     optionalDependencies:
-      prettier-plugin-astro: 1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.9)
-      prettier-plugin-svelte: 4.1.1(prettier@3.9.9)(svelte@5.57.1(@typescript-eslint/types@8.69.0))
+      prettier-plugin-astro: 1.1.1(@emnapi/core@2.0.0-alpha.5)(@emnapi/runtime@2.0.0-alpha.5)(prettier@3.9.10)
+      prettier-plugin-svelte: 4.1.1(prettier@3.9.10)(svelte@5.57.1(@typescript-eslint/types@8.69.0))
 
-  prettier@3.9.9: {}
+  prettier@3.9.10: {}
 
   pretty-format@27.5.1:
     dependencies:
