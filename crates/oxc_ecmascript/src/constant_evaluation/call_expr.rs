@@ -13,7 +13,9 @@ use smallvec::SmallVec;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_syntax::number::ToJsString;
+use oxc_syntax::{
+    identifier::is_white_space, line_terminator::is_line_terminator, number::ToJsString,
+};
 
 use crate::{
     StringCharAt, StringCharAtResult, StringCharCodeAt, StringIndexOf, StringLastIndexOf,
@@ -121,9 +123,9 @@ fn try_fold_string_casing<'a>(
     let result = match name {
         "toLowerCase" => Str::from_str_in(&value.cow_to_lowercase(), ctx),
         "toUpperCase" => Str::from_str_in(&value.cow_to_uppercase(), ctx),
-        "trim" => Str::from_str_in(value.trim(), ctx),
-        "trimStart" => Str::from_str_in(value.trim_start(), ctx),
-        "trimEnd" => Str::from_str_in(value.trim_end(), ctx),
+        "trim" => Str::from_str_in(value.trim_matches(is_str_white_space_char), ctx),
+        "trimStart" => Str::from_str_in(value.trim_start_matches(is_str_white_space_char), ctx),
+        "trimEnd" => Str::from_str_in(value.trim_end_matches(is_str_white_space_char), ctx),
         _ => return None,
     };
     Some(ConstantValue::String(Cow::Borrowed(result.as_str())))
@@ -689,12 +691,12 @@ fn try_fold_global_parse_float<'a>(
     let arg = args.first().unwrap();
     let expr = arg.as_expression()?;
     let input_string = expr.get_side_free_string_value(ctx)?;
-    let trimmed = input_string.trim_start();
+    let trimmed = input_string.trim_start_matches(is_str_white_space_char);
     let Some(trimmed_prefix) = find_str_decimal_literal_prefix(trimmed) else {
         return Some(ConstantValue::Number(f64::NAN));
     };
 
-    let parsed = trimmed_prefix.cow_replace('_', "").parse::<f64>().unwrap_or_else(|_| {
+    let parsed = trimmed_prefix.parse::<f64>().unwrap_or_else(|_| {
         unreachable!(
             "StrDecimalLiteral should be parse-able with Rust FromStr for f64: {trimmed_prefix}"
         )
@@ -714,24 +716,8 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
             // must have at least one digit
             return None;
         }
-        let mut iter = bytes.iter().enumerate().skip(1);
-        while let Some((i, &b)) = iter.next() {
-            match b {
-                b'0'..=b'9' => {}
-                b'_' => {
-                    let Some((i, &b)) = iter.next() else {
-                        // must have at least one digit after _
-                        return Some(i); // without _
-                    };
-                    if !b.is_ascii_digit() {
-                        // must have at least one digit after _
-                        return Some(i); // without _
-                    }
-                }
-                _ => return Some(i),
-            }
-        }
-        Some(s.len())
+        // `StrDecimalLiteral` uses `DecimalDigits[~Sep]`: numeric separators are not allowed.
+        Some(bytes.iter().position(|b| !b.is_ascii_digit()).unwrap_or(s.len()))
     }
     fn match_exponent_part(mut s: &str) -> Option<usize> {
         if !s.starts_with(['e', 'E']) {
@@ -776,15 +762,14 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
     last_index += end_of_decimal_digits;
     s = &s[end_of_decimal_digits..];
 
-    // DecimalDigits . DecimalDigits ExponentPart
+    // DecimalDigits . DecimalDigits(opt) ExponentPart(opt)
     if s.starts_with('.') {
         last_index += 1;
         s = &s[1..];
-        let Some(end_of_decimal_digits) = match_decimal_digits(s) else {
-            return Some(&input[..last_index - 1]); // without .
-        };
-        last_index += end_of_decimal_digits;
-        s = &s[end_of_decimal_digits..];
+        if let Some(end_of_decimal_digits) = match_decimal_digits(s) {
+            last_index += end_of_decimal_digits;
+            s = &s[end_of_decimal_digits..];
+        }
         let Some(end_of_exponent_part) = match_exponent_part(s) else {
             return Some(&input[..last_index]);
         };
@@ -798,6 +783,13 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
     };
     last_index += end_of_exponent_part;
     Some(&input[..last_index])
+}
+
+/// Whether the char is a `StrWhiteSpaceChar` (`WhiteSpace` or `LineTerminator`), the set removed
+/// by `TrimString`. This is not the same set as Rust's `char::is_whitespace`.
+/// <https://tc39.es/ecma262/#sec-trimstring>
+fn is_str_white_space_char(c: char) -> bool {
+    is_white_space(c) || is_line_terminator(c)
 }
 
 fn try_fold_global_parse_int<'a>(
@@ -817,7 +809,7 @@ fn try_fold_global_parse_int<'a>(
     let string_arg = args.first().unwrap();
     let string_expr = string_arg.as_expression()?;
     let string_value = string_expr.evaluate_value_to_string(ctx)?;
-    let mut string_value = string_value.trim_start();
+    let mut string_value = string_value.trim_start_matches(is_str_white_space_char);
 
     let mut sign = 1;
     if string_value.starts_with('-') {
@@ -884,9 +876,11 @@ fn test_find_str_decimal_literal_prefix() {
     assert_eq!(find_str_decimal_literal_prefix("0a"), Some("0"));
     assert_eq!(find_str_decimal_literal_prefix("+0a"), Some("+0"));
     assert_eq!(find_str_decimal_literal_prefix("-0a"), Some("-0"));
-    assert_eq!(find_str_decimal_literal_prefix("0."), Some("0"));
-    assert_eq!(find_str_decimal_literal_prefix("0.e"), Some("0"));
-    assert_eq!(find_str_decimal_literal_prefix("0.e1"), Some("0"));
+    assert_eq!(find_str_decimal_literal_prefix("0."), Some("0."));
+    assert_eq!(find_str_decimal_literal_prefix("0.e"), Some("0."));
+    assert_eq!(find_str_decimal_literal_prefix("0.e1"), Some("0.e1"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e2"), Some("1.e2"));
+    assert_eq!(find_str_decimal_literal_prefix("1.E+2x"), Some("1.E+2"));
     assert_eq!(find_str_decimal_literal_prefix("0.1"), Some("0.1"));
     assert_eq!(find_str_decimal_literal_prefix("0.1."), Some("0.1"));
     assert_eq!(find_str_decimal_literal_prefix("0.1e"), Some("0.1"));
@@ -895,7 +889,24 @@ fn test_find_str_decimal_literal_prefix() {
     assert_eq!(find_str_decimal_literal_prefix(".1."), Some(".1"));
     assert_eq!(find_str_decimal_literal_prefix(".1e"), Some(".1"));
     assert_eq!(find_str_decimal_literal_prefix(".1e1"), Some(".1e1"));
+    // numeric separators are not part of `StrDecimalLiteral`
     assert_eq!(find_str_decimal_literal_prefix("1_"), Some("1"));
-    assert_eq!(find_str_decimal_literal_prefix("1_1"), Some("1_1"));
-    assert_eq!(find_str_decimal_literal_prefix("1_1_"), Some("1_1"));
+    assert_eq!(find_str_decimal_literal_prefix("1_1"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1_1_"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1.1_1"), Some("1.1"));
+    assert_eq!(find_str_decimal_literal_prefix("1e1_1"), Some("1e1"));
+    assert_eq!(find_str_decimal_literal_prefix("_1"), None);
+}
+
+#[test]
+fn test_is_str_white_space_char() {
+    for c in [
+        '\u{0009}', '\u{000B}', '\u{000C}', '\u{0020}', '\u{00A0}', '\u{1680}', '\u{2000}',
+        '\u{200A}', '\u{202F}', '\u{205F}', '\u{3000}', '\u{FEFF}', '\u{000A}', '\u{000D}',
+        '\u{2028}', '\u{2029}',
+    ] {
+        assert!(is_str_white_space_char(c), "{c:?}");
+    }
+    // White_Space in Unicode, but not in ECMAScript
+    assert!(!is_str_white_space_char('\u{0085}'));
 }
