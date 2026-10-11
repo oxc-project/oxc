@@ -102,7 +102,7 @@ pub unsafe fn coalesce(
             let bad = dend & (wd | dt);
             let mut keep: u64 = if bad != 0 { !0u64 } else { 0 };
             if dg >> 63 != 0 {
-                keep |= 1u64 << (64 - (!dg).leading_zeros());
+                keep |= 1u64 << (!dg).bit_width();
             }
             dige &= keep;
         }
