@@ -773,8 +773,22 @@ impl Linter {
         }
 
         let actual_original_source_text = ctx_host.actual_source_text();
-        let (_actual_source_text, actual_has_bom, actual_span_converter) =
+        let (actual_source_text, actual_has_bom, actual_span_converter) =
             create_span_converter(actual_original_source_text, false);
+
+        // For files which are not partially loaded, the section is the whole file.
+        let actual_source =
+            if ptr::eq(actual_original_source_text, ctx_host.current_sub_host().source_text()) {
+                None
+            } else {
+                #[expect(clippy::cast_possible_truncation)]
+                let mut section_offset = ctx_host.current_sub_host().source_text_offset()
+                    + (program_original_source_text.len() - program_source_text.len()) as u32;
+                if let Some(mut converter) = actual_span_converter.converter() {
+                    converter.convert_offset(&mut section_offset);
+                }
+                Some((actual_source_text.to_string(), section_offset))
+            };
 
         let program_source_text_utf16_len =
             source_text_utf16_len(program_original_source_text, &program_span_converter);
@@ -872,6 +886,7 @@ impl Linter {
             globals_json,
             rule_timing_store.is_some(),
             self.workspace_uri.as_ref().map(ToString::to_string),
+            actual_source,
             allocator,
         );
         match result {

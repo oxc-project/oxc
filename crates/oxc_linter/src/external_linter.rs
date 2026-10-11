@@ -58,6 +58,9 @@ pub type ExternalLinterLintFileCb = Arc<
                 // Workspace URI (e.g. `file:///path/to/workspace`).
                 // `None` in CLI mode (single workspace), `Some` in LSP mode.
                 Option<String>,
+                // Full source text of the file and UTF-16 offset of the linted section within it.
+                // `None` unless file is partially loaded (e.g. Vue, Astro, Svelte).
+                Option<(String, u32)>,
                 // Allocator
                 &Allocator,
             ) -> Result<LintFileOutput, LintFileFailure>
