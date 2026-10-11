@@ -2359,6 +2359,13 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             // `export type { a }` or `export { type a }` -> `a` is a type reference
             if it.export_kind.is_type() || specifier.export_kind.is_type() {
                 self.current_reference_flags = ReferenceFlags::Type;
+            } else if self.in_ambient_context()
+                && self.in_ambient_context()
+                && self.current_scope_flags().is_ts_module_block()
+            {
+                // `declare namespace N { export { X } }` emits nothing, so `X` is never a value
+                // read. `ValueAsType` lets it still resolve to value symbols such as `const`.
+                self.current_reference_flags = ReferenceFlags::Type | ReferenceFlags::ValueAsType;
             } else {
                 // If the export specifier is not an explicit type export, consider it as a potential
                 // type and value reference. Value references lose the type flag during resolution.
