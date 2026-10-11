@@ -419,6 +419,45 @@ fn test() {
             None,
             None,
         ),
+        // https://github.com/oxc-project/oxc/issues/27470
+        // A nested function with no JSDoc of its own must not inherit the outer
+        // function's `@param` tags, whether or not the outer function is exported.
+        (
+            "
+                      /**
+                       * Outer.
+                       *
+                       * @param base - Base value.
+                       * @returns A number.
+                       */
+                      function outer(base) {
+                        function inner(value) {
+                          return value + base;
+                        }
+                        return inner(base);
+                      }
+                  ",
+            None,
+            None,
+        ),
+        (
+            "
+                      /**
+                       * Exported outer.
+                       *
+                       * @param base - Base value.
+                       * @returns A number.
+                       */
+                      export function exportedOuter(base) {
+                        function inner(value) {
+                          return value + base;
+                        }
+                        return inner(base);
+                      }
+                  ",
+            None,
+            None,
+        ),
 
 ("
 			          /**
