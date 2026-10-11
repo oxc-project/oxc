@@ -5,6 +5,7 @@ import { readdir, readFile } from "node:fs/promises";
 import { createRequire } from "node:module";
 import { pathToFileURL } from "node:url";
 import { hasOxfmtrcFile, createBlankOxfmtrcFile, saveOxfmtrcFile, exitWithError } from "./shared";
+import type { Language } from "../../config.generated";
 
 /**
  * Run the `--migrate prettier` command to migrate Prettier's config in the cwd to `.oxfmtrc.json` file.
@@ -74,22 +75,34 @@ export async function runMigratePrettier() {
 
   if (Array.isArray(overrides)) {
     const oxfmtOverrides = [];
+    const associations = [];
     for (const { files, excludeFiles, options = {} } of overrides) {
-      const migrated = {
-        ...migrateOptions(options, false),
-        ...migratePluginOptions(options, enabledPlugins, false),
-      };
-      // e.g. `{ files: "*.svg", options: { parser: "html" } }`
-      if (Object.keys(migrated).length === 0) continue;
-      oxfmtOverrides.push({
+      const globs = {
         files: [files].flat(),
         ...(excludeFiles !== undefined && { excludeFiles: [excludeFiles].flat() }),
-        options: migrated,
-      });
+      };
+      // e.g. `{ files: "*.svg", options: { parser: "html" } }`
+      const { parser, ...rest } = options;
+      const language = PARSER_TO_LANGUAGE.get(parser);
+      if (language) {
+        associations.push({ ...globs, language });
+      } else if (parser !== undefined) {
+        warnings.push(`overrides: "parser": "${parser}" is not supported, skipping...`);
+      }
+      const migrated = {
+        ...migrateOptions(rest, false),
+        ...migratePluginOptions(rest, enabledPlugins, false),
+      };
+      if (Object.keys(migrated).length === 0) continue;
+      oxfmtOverrides.push({ ...globs, options: migrated });
     }
     if (oxfmtOverrides.length > 0) {
       oxfmtrc.overrides = oxfmtOverrides;
       console.log(`  - Migrated "overrides"`);
+    }
+    if (associations.length > 0) {
+      oxfmtrc.associations = associations;
+      console.log(`  - Migrated "parser" in "overrides" to "associations"`);
     }
   }
 
@@ -278,6 +291,39 @@ function migrateOptions(
 
   return result;
 }
+
+// Prettier's `parser` (built-in and known plugins) to Oxfmt's `associations[].language`.
+// Not listed (e.g. `flow`, `hermes`, `json-stringify`, `lwc`, `mjml`) are not supported.
+const PARSER_TO_LANGUAGE = new Map<unknown, Language>([
+  ["babel", "javascript"],
+  ["acorn", "javascript"],
+  ["espree", "javascript"],
+  ["meriyah", "javascript"],
+  // `@prettier/plugin-oxc`, `@prettier/plugin-yuku`
+  ["oxc", "javascript"],
+  ["yuku", "javascript"],
+  ["typescript", "typescript"],
+  ["babel-ts", "typescript"],
+  ["oxc-ts", "typescript"],
+  ["yuku-ts", "typescript"],
+  ["json", "json"],
+  ["jsonc", "jsonc"],
+  ["json5", "json5"],
+  ["css", "css"],
+  ["scss", "scss"],
+  ["less", "less"],
+  ["graphql", "graphql"],
+  ["yaml", "yaml"],
+  ["markdown", "markdown"],
+  ["remark", "markdown"],
+  ["mdx", "mdx"],
+  ["html", "html"],
+  ["angular", "angular-html"],
+  ["vue", "vue"],
+  ["glimmer", "handlebars"],
+  ["svelte", "svelte"],
+  ["astro", "astro"],
+]);
 
 // Plugin options: only enable when the corresponding Prettier plugin is used.
 // Empty object means "enabled with defaults"; Tailwind, Svelte and Astro are disabled by default.

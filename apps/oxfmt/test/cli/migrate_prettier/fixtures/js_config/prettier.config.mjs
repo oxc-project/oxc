@@ -4,6 +4,8 @@ export default {
   tailwindFunctions: ["clsx"],
   overrides: [
     { files: "*.svg", options: { parser: "html" } },
+    { files: "*.js.flow", options: { parser: "flow" } },
+    { files: "src/**/*.html", excludeFiles: "src/index.html", options: { parser: "angular", tabWidth: 4 } },
     {
       files: ["*.md"],
       excludeFiles: "CHANGELOG.md",
