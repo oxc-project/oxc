@@ -463,7 +463,7 @@ impl<'a> PeepholeOptimizations {
     }
 
     fn is_mergeable_string_addition_prefix(expr: &Expression<'a>) -> bool {
-        match expr.get_inner_expression() {
+        match expr {
             Expression::StringLiteral(literal) => !literal.lone_surrogates,
             Expression::TemplateLiteral(_) => true,
             Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
@@ -1894,13 +1894,13 @@ impl<'a> PeepholeOptimizations {
 
     fn is_immutable_primitive_literal(expr: &Expression<'a>) -> bool {
         matches!(
-            expr.get_inner_expression(),
+            expr,
             Expression::BooleanLiteral(_)
                 | Expression::BigIntLiteral(_)
                 | Expression::NullLiteral(_)
                 | Expression::NumericLiteral(_)
                 | Expression::StringLiteral(_)
-        ) || expr.get_inner_expression().is_no_substitution_template()
+        ) || expr.is_no_substitution_template()
     }
 
     fn catch_body_has_same_name_var(body: &BlockStatement<'a>, name: Ident<'a>) -> bool {
