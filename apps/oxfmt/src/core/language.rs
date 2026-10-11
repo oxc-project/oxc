@@ -4,6 +4,9 @@
 //! The aliases used by embedded code, the LSP `languageId`s and the fake path extension all live here,
 //! so adding a language never needs syncing several tables.
 
+use schemars::JsonSchema;
+use serde::{Deserialize, Serialize};
+
 use oxc_formatter_css::CssVariant;
 use oxc_formatter_json::JsonVariant;
 use oxc_span::{FileExtension, SourceType};
@@ -35,7 +38,8 @@ pub enum Route {
     Unsupported,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Debug, Clone, Copy, Deserialize, Serialize, JsonSchema)]
+#[serde(rename_all = "kebab-case")]
 pub enum Language {
     Javascript,
     Jsx,
@@ -110,7 +114,7 @@ impl Language {
     }
 
     /// LSP only: the extension of the fake path for an in-memory document,
-    /// which `classify_file` and `overrides` see as a real file.
+    /// so that config scopes, `ignorePatterns` and `overrides` see it as a file of this language.
     #[cfg(feature = "napi")]
     pub fn to_lsp_extension(self) -> &'static str {
         match self {
@@ -169,6 +173,19 @@ impl Language {
 #[cfg(all(test, feature = "napi"))]
 mod tests {
     use super::*;
+
+    /// The config ids (serde names) are the canonical embedded names, so both stay one vocabulary.
+    #[test]
+    fn serde_names_are_embedded_names() {
+        let schema = serde_json::to_value(schemars::schema_for!(Language)).unwrap();
+        let names = schema["enum"].as_array().expect("`Language` is a plain string enum");
+        for name in names {
+            let name = name.as_str().unwrap();
+            let language = Language::from_embedded(name)
+                .unwrap_or_else(|| panic!("`{name}` is not an embedded name"));
+            assert_eq!(serde_json::to_value(language).unwrap(), name);
+        }
+    }
 
     /// Prettier-served fences (native ones are covered by `every_native_language_dispatches`)
     /// and the LSP ids that differ from embedded names or extensions.
