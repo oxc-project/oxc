@@ -442,8 +442,14 @@ fn try_fold_roots<'a>(
     if arg_val == f64::INFINITY || arg_val.is_nan() || arg_val == 0.0 {
         return Some(ConstantValue::Number(arg_val));
     }
-    if arg_val < 0.0 {
+    // `Math.sqrt` returns NaN for negative numbers, but `Math.cbrt` does not:
+    // <https://tc39.es/ecma262/#sec-math.sqrt>, <https://tc39.es/ecma262/#sec-math.cbrt>
+    if arg_val < 0.0 && name == "sqrt" {
         return Some(ConstantValue::Number(f64::NAN));
+    }
+    if arg_val == f64::NEG_INFINITY {
+        // `Math.cbrt(-Infinity)` is `-Infinity`
+        return Some(ConstantValue::Number(arg_val));
     }
     let calculated_val = match name {
         "sqrt" => arg_val.sqrt(),
