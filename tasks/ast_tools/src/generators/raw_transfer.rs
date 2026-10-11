@@ -1116,22 +1116,20 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
     let len_pos32 = pos32_offset(VEC_LEN_FIELD_OFFSET);
 
-    // Use shift if possible (stride is a power of 2)
-    let end_pos_offset = if inner_type_size.is_power_of_two() {
-        format!("(int32[{len_pos32}] << {})", inner_type_size.trailing_zeros())
-    } else {
-        format!("int32[{len_pos32}] * {inner_type_size}")
-    };
-
+    // Create array with exact capacity with `new Array(len)`.
+    // Creating with `[]` and pushing to it allocates space for at least 17 elements on first `push`,
+    // which is wasted memory for the many short arrays in an AST, and more work for garbage collector.
+    // Arrays created this way are "holey" in V8. That doesn't slow down iterating over them,
+    // but `structuredClone`, `postMessage` and `v8.serialize` use a slower encoding for holey arrays.
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
-            const arr = [],
-                pos32 = pos >> 2;
+            const pos32 = pos >> 2,
+                len = int32[{len_pos32}],
+                arr = new Array(len);
             pos = int32[{ptr_pos32}];
-            const endPos = pos + {end_pos_offset};
-            while (pos !== endPos) {{
-                arr.push({value});
+            for (let i = 0; i < len; i++) {{
+                arr[i] = {value};
                 pos += {inner_type_size};
             }}
             return arr;
