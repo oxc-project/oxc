@@ -647,3 +647,38 @@ fn small_value() {
         &options,
     );
 }
+
+// https://github.com/oxc-project/oxc/issues/23844
+// An ordinary function reads its own arguments object, so an outer binding
+// named `arguments` must not be inlined into it.
+#[test]
+fn outer_arguments_binding_not_inlined_into_function() {
+    let options = CompressOptions::smallest();
+    // Outer block `let`.
+    test_options_source_type(
+        "use(function () { { let arguments = 1; return function () { return arguments[0]; }; } });",
+        "use(function () { return function () { return arguments[0]; }; });",
+        SourceType::cjs(),
+        &options,
+    );
+    // Outer `var` in an enclosing function.
+    test_options_source_type(
+        "use(function () { var arguments = 1; return function () { return arguments[0]; }; });",
+        "use(function () { return function () { return arguments[0]; }; });",
+        SourceType::cjs(),
+        &options,
+    );
+    // Top-level `const` in CommonJS and in a script.
+    test_options_source_type(
+        "const arguments = 1; use(function () { return arguments[0]; });",
+        "use(function () { return arguments[0]; });",
+        SourceType::cjs(),
+        &options,
+    );
+    test_options_source_type(
+        "const arguments = 1; use(function () { return arguments[0]; });",
+        "const arguments = 1; use(function () { return arguments[0]; });",
+        SourceType::cjs().with_script(true),
+        &options,
+    );
+}
