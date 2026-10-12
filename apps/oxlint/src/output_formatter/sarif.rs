@@ -232,8 +232,7 @@ impl SarifBuilder {
         }
     }
 
-    fn add_diagnostic(&mut self, diagnostic: &Error) {
-        let info = Info::new(diagnostic);
+    fn add_diagnostic(&mut self, diagnostic: &Error, info: Info) {
         let severity = diagnostic.severity().unwrap_or(info.severity);
         let level = sarif_level(severity);
         let message = sarif_message(if info.message.is_empty() {
@@ -454,9 +453,10 @@ fn nonzero(value: usize) -> Option<usize> {
 
 fn format_sarif(diagnostics: &mut Vec<Error>) -> String {
     let mut builder = SarifBuilder::new();
-    for diagnostic in diagnostics.drain(..) {
-        builder.add_diagnostic(&diagnostic);
+    for (diagnostic, info) in diagnostics.iter().zip(Info::new_all(diagnostics)) {
+        builder.add_diagnostic(diagnostic, info);
     }
+    diagnostics.clear();
 
     serde_json::to_string_pretty(&builder.finish()).expect("Failed to serialize")
 }

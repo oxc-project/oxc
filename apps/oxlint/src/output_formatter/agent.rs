@@ -30,12 +30,18 @@ impl DiagnosticReporter for AgentReporter {
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        Some(format_agent(&error))
+        Some(format_agent(&error, Info::new(&error)))
+    }
+
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        for (error, info) in errors.iter().zip(Info::new_all(&errors)) {
+            emit(&format_agent(error, info));
+        }
     }
 }
 
-fn format_agent(diagnostic: &Error) -> String {
-    let Info { start, filename, message: info_message, rule_id, .. } = Info::new(diagnostic);
+fn format_agent(diagnostic: &Error, info: Info) -> String {
+    let Info { start, filename, message: info_message, rule_id, .. } = info;
     let filename = if filename.is_empty() {
         diagnostic
             .source_code()

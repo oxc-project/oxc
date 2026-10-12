@@ -39,13 +39,20 @@ impl DiagnosticReporter for UnixReporter {
 
     fn render_error(&mut self, error: Error) -> Option<String> {
         self.total += 1;
-        Some(format_unix(&error))
+        Some(format_unix(Info::new(&error)))
+    }
+
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        for info in Info::new_all(&errors) {
+            self.total += 1;
+            emit(&format_unix(info));
+        }
     }
 }
 
 /// <https://github.com/fregante/eslint-formatters/tree/ae1fd9748596447d1fd09625c33d9e7ba9a3d06d/packages/eslint-formatter-unix>
-fn format_unix(diagnostic: &Error) -> String {
-    let Info { start, end: _, filename, message, severity, rule_id } = Info::new(diagnostic);
+fn format_unix(info: Info) -> String {
+    let Info { start, end: _, filename, message, severity, rule_id } = info;
     let severity = match severity {
         Severity::Error => "Error",
         _ => "Warning",

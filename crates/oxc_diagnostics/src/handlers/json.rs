@@ -46,11 +46,49 @@ impl JSONReportHandler {
     /// # Errors
     ///
     /// Returns an error when writing the rendered report fails.
-    #[expect(clippy::unused_self, reason = "keeps a consistent renderer API")]
     pub fn render_report(
         &self,
         f: &mut impl fmt::Write,
         diagnostic: &dyn Diagnostic,
+    ) -> fmt::Result {
+        let mut scanner =
+            diagnostic.source_code().map(|source| SpanScanner::new(source.data(), 0, 0));
+        self.render_report_with_scanner(f, diagnostic, scanner.as_mut())
+    }
+
+    /// Render [`Diagnostic`]s in order, separated by `separator`, reusing line indexes for shared sources.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error when writing the rendered reports fails.
+    pub fn render_reports<'a>(
+        &self,
+        f: &mut impl fmt::Write,
+        diagnostics: impl IntoIterator<Item = &'a dyn Diagnostic>,
+        separator: &str,
+    ) -> fmt::Result {
+        let mut scanner: Option<SpanScanner<'a>> = None;
+        for (index, diagnostic) in diagnostics.into_iter().enumerate() {
+            if index > 0 {
+                f.write_str(separator)?;
+            }
+            match diagnostic.source_code() {
+                Some(source)
+                    if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
+                Some(source) => scanner = Some(SpanScanner::new(source.data(), 0, 0)),
+                None => scanner = None,
+            }
+            self.render_report_with_scanner(f, diagnostic, scanner.as_mut())?;
+        }
+        Ok(())
+    }
+
+    #[expect(clippy::unused_self, reason = "keeps a consistent renderer API")]
+    fn render_report_with_scanner(
+        &self,
+        f: &mut impl fmt::Write,
+        diagnostic: &dyn Diagnostic,
+        mut scanner: Option<&mut SpanScanner<'_>>,
     ) -> fmt::Result {
         write!(f, r#"{{"message": "{}","#, escape(&diagnostic.to_string()))?;
         if let Some(code) = diagnostic.code() {
@@ -76,7 +114,6 @@ impl JSONReportHandler {
             write!(f, r#""filename": "{}","#, escape(source.name().unwrap_or_default()))?;
         }
         f.write_str(r#""labels": ["#)?;
-        let mut scanner = source.map(|source| SpanScanner::new(source.data(), 0, 0));
         for (index, label) in diagnostic.labels().iter().enumerate() {
             if index > 0 {
                 f.write_char(',')?;
@@ -90,7 +127,7 @@ impl JSONReportHandler {
             write!(f, r#""length": {},"#, label.len())?;
 
             if let Some(location) =
-                scanner.as_mut().and_then(|scanner| scanner.read_span(label.span()))
+                scanner.as_deref_mut().and_then(|scanner| scanner.read_span(label.span()))
             {
                 write!(f, r#""line": {},"#, location.line() + 1)?;
                 write!(f, r#""column": {}"#, location.column() + 1)?;

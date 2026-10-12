@@ -62,7 +62,7 @@ impl StylishReporter {
         let mut total_warnings = 0;
 
         let mut entries: Vec<(Info, &Error)> =
-            self.diagnostics.iter().map(|diagnostic| (Info::new(diagnostic), diagnostic)).collect();
+            Info::new_all(&self.diagnostics).into_iter().zip(&self.diagnostics).collect();
 
         entries.sort_by_key(|(info, _)| info.start.line);
 

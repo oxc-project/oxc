@@ -38,7 +38,7 @@ impl DiagnosticReporter for CheckstyleReporter {
 }
 
 fn format_checkstyle(diagnostics: &[Error]) -> String {
-    let infos = diagnostics.iter().map(Info::new).collect::<Vec<_>>();
+    let infos = Info::new_all(diagnostics);
     let mut grouped: FxHashMap<String, Vec<Info>> = FxHashMap::default();
     for info in infos {
         grouped.entry(info.filename.clone()).or_default().push(info);

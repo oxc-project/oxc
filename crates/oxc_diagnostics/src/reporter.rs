@@ -164,8 +164,92 @@ fn line_column(data: &[u8], mut offset: usize) -> Option<InfoPosition> {
     Some(InfoPosition { line, column: offset - line_start + 1 })
 }
 
+/// Index of line breaks in a source, for resolving byte offsets to line and column positions.
+///
+/// Resolves positions with a binary search, instead of scanning the source from the start as [`line_column`] does.
+/// Produces identical results to [`line_column`].
+struct LineBreaks {
+    /// Pointer to start of source data this index was built for. Only used to identify the source.
+    source_ptr: *const u8,
+    /// Length of source data this index was built for
+    source_len: usize,
+    /// Byte offsets of line breaks (`\r`, `\n`, or the `\r` of a `\r\n` pair), in ascending order
+    breaks: Vec<usize>,
+}
+
+impl LineBreaks {
+    fn new(data: &[u8]) -> Self {
+        let breaks = memchr::memchr2_iter(b'\r', b'\n', data)
+            .filter(|&index| !(data[index] == b'\n' && index > 0 && data[index - 1] == b'\r'))
+            .collect();
+        Self { source_ptr: data.as_ptr(), source_len: data.len(), breaks }
+    }
+
+    fn is_for(&self, data: &[u8]) -> bool {
+        std::ptr::eq(self.source_ptr, data.as_ptr()) && self.source_len == data.len()
+    }
+
+    fn line_column(&self, data: &[u8], mut offset: usize) -> Option<InfoPosition> {
+        if offset > data.len() {
+            return None;
+        }
+        if offset > 0 && offset < data.len() && data[offset - 1] == b'\r' && data[offset] == b'\n' {
+            offset -= 1;
+        }
+
+        // Number of line breaks before `offset`
+        let line_index = self.breaks.partition_point(|&index| index < offset);
+        let line_start = match line_index.checked_sub(1) {
+            None => 0,
+            Some(break_index) => {
+                let index = self.breaks[break_index];
+                if data[index] == b'\r' && index + 1 < offset && data[index + 1] == b'\n' {
+                    index + 2
+                } else {
+                    index + 1
+                }
+            }
+        };
+        Some(InfoPosition { line: line_index + 1, column: offset - line_start + 1 })
+    }
+}
+
 impl Info {
     pub fn new(diagnostic: &Error) -> Self {
+        Self::new_with(diagnostic, line_column)
+    }
+
+    /// Create [`Info`] for each of `diagnostics`.
+    ///
+    /// Produces the same results as calling [`Info::new`] for each diagnostic, but is much faster for large files
+    /// with many diagnostics. [`Info::new`] scans the source from the start to find each diagnostic's position,
+    /// so total cost is proportional to file size multiplied by number of diagnostics. This function instead
+    /// indexes the line breaks in a source once, and reuses the index for consecutive diagnostics with the same source.
+    ///
+    /// Sources are identified by address and length of their data. All sources are borrowed for the duration of
+    /// this call, and two slices which are alive at the same time with the same address and length have the same
+    /// contents, so a cached index is always correct for a source it's reused for.
+    pub fn new_all(diagnostics: &[Error]) -> Vec<Self> {
+        let mut line_breaks: Option<LineBreaks> = None;
+        diagnostics
+            .iter()
+            .map(|diagnostic| {
+                Self::new_with(diagnostic, |data, offset| {
+                    if let Some(line_breaks) = &line_breaks
+                        && line_breaks.is_for(data)
+                    {
+                        return line_breaks.line_column(data, offset);
+                    }
+                    line_breaks.insert(LineBreaks::new(data)).line_column(data, offset)
+                })
+            })
+            .collect()
+    }
+
+    fn new_with(
+        diagnostic: &Error,
+        mut line_column: impl FnMut(&[u8], usize) -> Option<InfoPosition>,
+    ) -> Self {
         let mut start = InfoPosition { line: 0, column: 0 };
         let mut end = InfoPosition { line: 0, column: 0 };
         let mut filename = String::new();
@@ -204,9 +288,13 @@ impl Info {
 
 #[cfg(test)]
 mod test {
+    use std::sync::Arc;
+
+    use oxc_span::Span;
+
     use crate::{Error, NamedSource, OxcDiagnostic};
 
-    use super::Info;
+    use super::{Info, LineBreaks, line_column};
 
     #[test]
     fn includes_source_name_for_unlabelled_diagnostic() {
@@ -214,5 +302,68 @@ mod test {
             .with_source_code(NamedSource::new("file.js", ""));
 
         assert_eq!(Info::new(&error).filename, "file.js");
+    }
+
+    #[test]
+    fn line_breaks_matches_line_column() {
+        let sources = [
+            "",
+            "a",
+            "\n",
+            "\r",
+            "\r\n",
+            "\n\r",
+            "a\nb\rc\r\nd",
+            "\r\n\r\n",
+            "\r\r\n\n",
+            "ab\r\ncd\n\nef\r\rgh\r\n",
+            "x\r",
+            "\u{2028}a\u{2029}b\nc",
+        ];
+        for source in sources {
+            let data = source.as_bytes();
+            let line_breaks = LineBreaks::new(data);
+            for offset in 0..=data.len() + 1 {
+                assert_eq!(
+                    line_breaks.line_column(data, offset),
+                    line_column(data, offset),
+                    "source {source:?}, offset {offset}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn new_all_matches_new() {
+        let source_a = "let a = 1;\r\nlet b = 2;\nlet c = 3;\r\n";
+        let source_b = "x\ny\nz";
+        let named_a = Arc::new(NamedSource::new("a.js", source_a.to_string()));
+        let named_b = Arc::new(NamedSource::new("b.js", source_b.to_string()));
+        let diagnostic = |source: &Arc<NamedSource<String>>, start: u32, end: u32| -> Error {
+            OxcDiagnostic::error("message")
+                .with_label(Span::new(start, end))
+                .with_source_code(Arc::clone(source))
+        };
+        let diagnostics = vec![
+            diagnostic(&named_a, 0, 3),
+            diagnostic(&named_a, 12, 15),
+            diagnostic(&named_a, 23, 33),
+            diagnostic(&named_b, 2, 3),
+            diagnostic(&named_a, 11, 12),
+            diagnostic(&named_b, 4, 5),
+            OxcDiagnostic::error("no label").with_source_code(Arc::clone(&named_b)),
+            OxcDiagnostic::error("no source").into(),
+        ];
+
+        let all = Info::new_all(&diagnostics);
+        assert_eq!(all.len(), diagnostics.len());
+        for (info, diagnostic) in all.iter().zip(&diagnostics) {
+            let expected = Info::new(diagnostic);
+            assert_eq!(info.start, expected.start);
+            assert_eq!(info.end, expected.end);
+            assert_eq!(info.filename, expected.filename);
+            assert_eq!(info.message, expected.message);
+            assert_eq!(info.rule_id, expected.rule_id);
+        }
     }
 }

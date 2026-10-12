@@ -35,12 +35,18 @@ impl DiagnosticReporter for GithubReporter {
     }
 
     fn render_error(&mut self, error: Error) -> Option<String> {
-        Some(format_github(&error))
+        Some(format_github(&error, Info::new(&error)))
+    }
+
+    fn render_errors(&mut self, errors: Vec<Error>, emit: &mut dyn FnMut(&str)) {
+        for (error, info) in errors.iter().zip(Info::new_all(&errors)) {
+            emit(&format_github(error, info));
+        }
     }
 }
 
-fn format_github(diagnostic: &Error) -> String {
-    let Info { start, end, filename, message, severity, rule_id } = Info::new(diagnostic);
+fn format_github(diagnostic: &Error, info: Info) -> String {
+    let Info { start, end, filename, message, severity, rule_id } = info;
     let severity = match severity {
         Severity::Error => "error",
         Severity::Warning | Severity::Advice => "warning",

@@ -34,9 +34,9 @@ impl DiagnosticReporter for JUnitReporter {
 }
 
 fn format_junit(diagnostics: &[Error]) -> String {
-    // `Info::new` scans the source to resolve the span, so build it exactly once per
+    // Resolving spans requires indexing the source, so build `Info` exactly once per
     // diagnostic and group by index rather than re-deriving it inside the render loop.
-    let infos: Vec<Info> = diagnostics.iter().map(Info::new).collect();
+    let infos: Vec<Info> = Info::new_all(diagnostics);
 
     let mut grouped: FxHashMap<&str, Vec<usize>> = FxHashMap::default();
     for (index, info) in infos.iter().enumerate() {

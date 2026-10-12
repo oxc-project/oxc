@@ -112,8 +112,10 @@ impl DiagnosticReporter for GitlabReporter {
 }
 
 fn format_gitlab(diagnostics: &mut Vec<Error>, repo_path_prefix: Option<&Path>) -> String {
-    let errors = diagnostics.drain(..).map(|error| {
-        let Info { start, end, filename, message, severity, rule_id } = Info::new(&error);
+    let infos = Info::new_all(diagnostics);
+    diagnostics.clear();
+    let errors = infos.into_iter().map(|info| {
+        let Info { start, end, filename, message, severity, rule_id } = info;
         let severity = match severity {
             Severity::Error => "critical".to_string(),
             Severity::Warning => "major".to_string(),
