@@ -92,12 +92,10 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
     const { value } = node;
     if (value.type === "AssignmentPattern") {
       typeAssertIs<ESTree.IdentifierReference>(value.left);
-      printSpaceBeforeIdentifier(state);
       writeWithMapNamed(state, value.left.name, value.left.start, value.left.end, value.left);
       write(state, " = ", CAT_OTHER);
       printExpression(value.right, state, PREC_COMMA, CTX_NONE);
     } else {
-      printSpaceBeforeIdentifier(state);
       writeWithMapNamed(state, value.name, value.start, value.end, value);
     }
   } else {
