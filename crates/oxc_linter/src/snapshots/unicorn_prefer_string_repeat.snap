@@ -1,0 +1,194 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "   ";
+   ·                ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "    ";
+   ·                ──────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "\t\t\t";
+   ·                ────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "\n\n\n";
+   ·                ────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "\r\r\r";
+   ·                ────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "\v\v\v";
+   ·                ────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "\f\f\f";
+   ·                ────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "\u00A0\u00A0\u00A0";
+   ·                ────────────────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "\u2003\u2003\u2003";
+   ·                ────────────────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "\uFEFF\uFEFF\uFEFF";
+   ·                ────────────────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = `   `;
+   ·                ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = `\t\t\t`;
+   ·                ────────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:23]
+ 1 │ function foo() {return"   "}
+   ·                       ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:8]
+ 1 │ foo(); "   ";
+   ·        ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:18]
+ 1 │ const object = {["   "]: value};
+   ·                  ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "  "; // minimumRepetitions: 2
+   ·                ────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ const string = "    "; // minimumRepetitions: 4
+   ·                ──────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ class Class { ["   "] = 1 }
+   ·                ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:16]
+ 1 │ class Class { ["   "]() {} }
+   ·                ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:25]
+ 1 │ class Class { accessor ["   "] = 1 }
+   ·                         ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:33]
+ 1 │ formatter.toMatchInlineSnapshot("   ");
+   ·                                 ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:43]
+ 1 │ custom.toThrowErrorMatchingInlineSnapshot("   ");
+   ·                                           ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:36]
+ 1 │ expect(foo)?.toMatchInlineSnapshot("   ");
+   ·                                    ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:37]
+ 1 │ expect(foo).toMatchInlineSnapshot?.("   ");
+   ·                                     ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:37]
+ 1 │ expect?.(foo).toMatchInlineSnapshot("   ");
+   ·                                     ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:1:23]
+ 1 │ <Component attribute={"   "} />
+   ·                       ─────
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
+
+  ⚠ unicorn(prefer-string-repeat): Use `String#repeat()` for repeated whitespace.
+   ╭─[prefer_string_repeat.tsx:2:23]
+ 1 │ function foo() {
+ 2 │                 return'   ';
+   ·                       ─────
+ 3 │             }
+   ╰────
+  help: Replace the repeated whitespace with a call to `String#repeat()`.
