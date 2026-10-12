@@ -81,9 +81,11 @@ export function printFunction(node: ESTree.Function, state: State): void {
     wrap = (state.last | 1) === CAT_START_OF_STMT;
   }
 
-  if (wrap) write(state, "(", CAT_OTHER);
-
-  printSpaceBeforeIdentifier(state);
+  if (wrap) {
+    writeNoLast(state, "(");
+  } else {
+    printSpaceBeforeIdentifier(state);
+  }
 
   // The node's mapping goes on whatever keyword begins the function, which is written as a single string.
   //
