@@ -744,18 +744,15 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
   printIndent(state);
   printSpaceBeforeIdentifier(state);
 
-  writeWithMap(state, "for", CAT_IDENT, node.start, node.end, node);
-
-  if (node.await) writeIdent(state, " await");
-
-  write(state, " (", CAT_OTHER);
+  const isNotAwait = node.await !== true;
+  writeWithMap(state, isNotAwait ? "for (" : "for await (", CAT_OTHER, node.start, node.end, node);
 
   const { left } = node;
   const leftType = left.type;
   if (leftType === "VariableDeclaration") {
     printVariableDeclaration(left, state, CTX_NONE);
   } else {
-    const wrap = forOfHeadNeedsWrapping(left, leftType, node.await !== true);
+    const wrap = forOfHeadNeedsWrapping(left, leftType, isNotAwait);
 
     if (wrap) write(state, "(", CAT_OTHER);
     printAssignmentTarget(left, state);
