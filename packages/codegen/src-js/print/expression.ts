@@ -83,6 +83,8 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * Parens are not preserved from the input - every printer re-derives its own from `precedence`,
  * so a `ParenthesizedExpression` mostly prints straight through.
  *
+ * @param node - Expression
+ * @param state - Printer state
  * @param precedence - Precedence of the position this expression sits in.
  *   A printer compares its own precedence against it and parenthesizes itself when it would otherwise bind too loosely.
  * @param ctx - `CTX_FORBID_IN` / `CTX_FORBID_CALL` flags describing the enclosing position, so that an `in` operator
@@ -648,6 +650,9 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
  * Wraps from `PREC_ASSIGN` upwards. An object destructuring target forces parens as well at the start of
  * a statement or a concise arrow body, where the leading `{` would be read as a block.
  *
+ * @param node - Assignment expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
  * @param ctx - Handed to the right operand unchanged, so a `for` head's `CTX_FORBID_IN`
  *   still reaches an `in` operator there.
  */

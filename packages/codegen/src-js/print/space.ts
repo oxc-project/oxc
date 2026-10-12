@@ -80,6 +80,7 @@ if (DEBUG) {
  * An operator category in `last` proves that operator was the immediately preceding token,
  * because every write replaces `last`, so no position has to be recorded alongside it.
  *
+ * @param state - Printer state
  * @param next - Category of the operator about to be written
  */
 export function printSpaceBeforeOperator(state: State, next: Category): void {
@@ -106,6 +107,7 @@ export function printSpaceBeforeOperator(state: State, next: Category): void {
  * asymmetry is the Rust original's, where it is live in minified mode - unpadded `(x++)+y` must
  * print `x+++y` with no space, while unary `+ +y` must keep one.)
  *
+ * @param state - Printer state
  * @param prev - Category of the operator written last
  * @param next - Category of the operator about to be written
  */

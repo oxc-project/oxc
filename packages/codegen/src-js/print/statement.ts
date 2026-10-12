@@ -354,6 +354,8 @@ function printExpressionStatement(node: ESTree.ExpressionStatement, state: State
  * Shared by the standalone declaration and the `for` and `for-in` heads, which is why it writes no
  * indent and no terminator - the caller supplies both.
  *
+ * @param node - Variable declaration
+ * @param state - Printer state
  * @param ctx - Passed to every initializer, so a `for` head can hand down `CTX_FORBID_IN` and stop an
  *   `in` operator there being read as the head's own.
  */

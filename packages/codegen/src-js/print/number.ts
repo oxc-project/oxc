@@ -189,6 +189,8 @@ function printExponent(state: State, formatted: string, exponentIndex: number): 
  * `BigInt` rather than `value.toString(16)`, whose result the specification leaves implementation-approximated
  * for every radix but 10, where the output here has to be exact.
  *
+ * @param state - Printer state
+ * @param value - Number to print
  * @param length - Length of the shortest text found for `value` so far
  */
 function printHexIfShorter(state: State, value: number, length: number): boolean {
