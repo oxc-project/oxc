@@ -45,7 +45,7 @@ import {
 } from "./typescript.ts";
 
 import type { State } from "../state.ts";
-import type { UnknownNode } from "./types.ts";
+import type { Literal, UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -86,17 +86,29 @@ export function printDirectivesAndStatements(
       stmt = body[i];
     } else {
       // Ensure a string literal (only possible via parentheses, since a bare one would be a directive)
-      // as 1st statement or after other real directives, is not re-parsed as a directive
-      const inner = withoutParens(stmt.expression);
-      if (inner.type === "Literal" && typeof inner.value === "string") {
-        const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
-        printIndent(state);
-        if (mapsIndent) markMapStart(state, stmt.start, stmt.end, stmt);
-        writeNoLast(state, "(");
-        printString(state, inner.value, inner.start, inner.end, inner);
-        write(state, ");\n", CAT_OTHER);
-        i++;
+      // as 1st statement or after other real directives, is not re-parsed as a directive.
+      // The expression can be anything, so its `type` is a megamorphic load - read it once while unwrapping parens.
+      let inner = stmt.expression,
+        innerType = inner.type;
+      while (innerType === "ParenthesizedExpression") {
+        inner = (inner as ESTree.ParenthesizedExpression).expression;
+        innerType = inner.type;
       }
+
+      if (innerType === "Literal") {
+        typeAssertIs<Literal>(inner);
+        const innerValue = inner.value;
+        if (typeof innerValue === "string") {
+          const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
+          printIndent(state);
+          if (mapsIndent) markMapStart(state, stmt.start, stmt.end, stmt);
+          writeNoLast(state, "(");
+          printString(state, innerValue, inner.start, inner.end, inner);
+          write(state, ");\n", CAT_OTHER);
+          i++;
+        }
+      }
+
       break;
     }
   }
