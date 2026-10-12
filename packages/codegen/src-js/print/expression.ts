@@ -276,9 +276,15 @@ export function printMemberExpression(
 ): void {
   const { object } = node;
   if (node.computed) {
-    // `(let)[0]` - a bare `let` object must be wrapped
-    const inner = withoutParens(object);
-    const wrap = inner.type === "Identifier" && inner.name === "let";
+    // `(let)[0]` - a bare `let` object must be wrapped.
+    // `object` can be any expression, so its `type` is a megamorphic load - read it once while unwrapping parens.
+    let inner = object,
+      innerType = inner.type;
+    while (innerType === "ParenthesizedExpression") {
+      inner = (inner as ESTree.ParenthesizedExpression).expression;
+      innerType = inner.type;
+    }
+    const wrap = innerType === "Identifier" && (inner as ESTree.IdentifierReference).name === "let";
 
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
