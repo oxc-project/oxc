@@ -248,6 +248,9 @@ export function printExpression(
       printTSTypeAssertion(node, state, precedence, ctx);
       break;
     /* END_IF */
+    case "V8IntrinsicExpression":
+      printV8IntrinsicExpression(node, state, precedence, ctx);
+      break;
     default:
       throw new Error(`Unknown expression type: ${node.type}`);
   }
@@ -365,7 +368,7 @@ function printCallExpression(
  * Arguments print at `PREC_COMMA`, so a sequence expression parenthesizes itself instead of reading as more arguments.
  */
 function printArguments(
-  node: ESTree.CallExpression | ESTree.NewExpression,
+  node: ESTree.CallExpression | ESTree.NewExpression | ESTree.V8IntrinsicExpression,
   args: ESTree.Argument[],
   state: State,
 ): void {
@@ -1028,4 +1031,27 @@ function printChainExpression(
   } else {
     printExpression(node.expression, state, precedence, ctx);
   }
+}
+
+/**
+ * A V8 runtime call, e.g. `%DebugPrint(x)`, which the parser only produces with its `allowV8Intrinsics` option.
+ *
+ * Parenthesized wherever a postfix operator follows it - a member access, a call or a tagged template -
+ * and under `new`, as `oxc_codegen` does: `(%DebugPrint(x)).y`.
+ */
+function printV8IntrinsicExpression(
+  node: ESTree.V8IntrinsicExpression,
+  state: State,
+  precedence: number,
+  ctx: number,
+): void {
+  const wrap = precedence >= PREC_POSTFIX || (ctx & CTX_FORBID_CALL) !== 0;
+  if (wrap) write(state, "(", CAT_OTHER);
+
+  writeWithMap(state, "%", CAT_OTHER, node.start, node.end, node);
+  const { name } = node;
+  writeWithMapNamed(state, name.name, name.start, name.end, name);
+  printArguments(node, node.arguments, state);
+
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }

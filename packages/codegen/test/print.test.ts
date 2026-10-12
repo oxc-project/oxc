@@ -78,6 +78,14 @@ const call = (callee: ESTree.Expression, args: ESTree.Argument[] = []) =>
     arguments: args,
     optional: false,
   });
+const newExpr = (callee: ESTree.Expression, args: ESTree.Argument[] = []) =>
+  node<ESTree.NewExpression>({ type: "NewExpression", callee, arguments: args });
+const v8 = (name: string, args: ESTree.Argument[] = []) =>
+  node<ESTree.V8IntrinsicExpression>({
+    type: "V8IntrinsicExpression",
+    name: node<ESTree.IdentifierName>({ type: "Identifier", name }),
+    arguments: args,
+  });
 const unary = (operator: ESTree.UnaryOperator, argument: ESTree.Expression) =>
   node<ESTree.UnaryExpression>({ type: "UnaryExpression", operator, argument, prefix: true });
 const update = (
@@ -476,6 +484,29 @@ describe("for-of heads starting with `async` or `let`", () => {
       program(forOf(paren(computedMember(id("let"), str("x"))))),
       'for ((let)["x"] of y);\n',
     ],
+  ]);
+});
+
+// V8 runtime calls, e.g. `%DebugPrint(x)`. The parser only produces them with its `allowV8Intrinsics` option,
+// which neither `oxc-parser`'s Node.js API nor the conformance binding exposes, so only a hand-built AST reaches
+// them. Each expected output is what `oxc_codegen` prints for the same source, parsed with `allow_v8_intrinsics`.
+describe("V8 intrinsics", () => {
+  const debugPrint = () => v8("DebugPrint", [id("x")]);
+
+  checkCases([
+    ["statement", e(debugPrint()), "%DebugPrint(x);\n"],
+    ["no-args", e(v8("DebugPrint")), "%DebugPrint();\n"],
+    ["string-arg", e(v8("DebugPrint", [str("hi")])), '%DebugPrint("hi");\n'],
+    ["nested", e(v8("DebugPrint", [v8("GetFoo"), id("x")])), "%DebugPrint(%GetFoo(), x);\n"],
+    // Parenthesized where a postfix operator follows, and under `new`
+    ["member", e(member(debugPrint(), id("y"))), "(%DebugPrint(x)).y;\n"],
+    ["computed-member", e(computedMember(debugPrint(), num(0))), "(%DebugPrint(x))[0];\n"],
+    ["callee", e(call(debugPrint())), "(%DebugPrint(x))();\n"],
+    ["new-callee", e(newExpr(debugPrint())), "new (%DebugPrint(x))();\n"],
+    // Not parenthesized as an operand or an argument
+    ["unary-operand", e(unary("!", debugPrint())), "!%DebugPrint(x);\n"],
+    ["binary-operand", e(bin("+", debugPrint(), num(1))), "%DebugPrint(x) + 1;\n"],
+    ["argument", e(call(id("f"), [debugPrint()])), "f(%DebugPrint(x));\n"],
   ]);
 });
 
