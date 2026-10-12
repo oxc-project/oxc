@@ -513,7 +513,7 @@ export class RuleTester {
     describe(ruleName, () => {
       if (tests.valid.length > 0) {
         describe("valid", () => {
-          const seenTestCases = new Set<string>();
+          const seenTestCases: SeenTestCases = new Map();
           for (let test of tests.valid) {
             if (typeof test === "string") test = { code: test };
 
@@ -527,7 +527,7 @@ export class RuleTester {
 
       if (tests.invalid.length > 0) {
         describe("invalid", () => {
-          const seenTestCases = new Set<string>();
+          const seenTestCases: SeenTestCases = new Map();
           for (const test of tests.invalid) {
             const it = getIt(test.only);
             it(getTestName(test), () => {
@@ -556,14 +556,14 @@ if (CONFORMANCE) {
  * @param test - Valid test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
- * @param seenTestCases - Set of serialized test cases to check for duplicates
+ * @param seenTestCases - Serialized test cases seen so far, to check for duplicates
  * @throws {AssertionError} If the test case fails
  */
 function runValidTestCase(
   test: ValidTestCase,
   plugin: Plugin,
   config: Config,
-  seenTestCases: Set<string>,
+  seenTestCases: SeenTestCases,
 ): void {
   try {
     runBeforeHook(test);
@@ -593,14 +593,14 @@ function assertValidTestCasePasses(test: ValidTestCase, plugin: Plugin, config: 
  * @param test - Invalid test case
  * @param plugin - Plugin containing rule being tested
  * @param config - Config from `RuleTester` instance
- * @param seenTestCases - Set of serialized test cases to check for duplicates
+ * @param seenTestCases - Serialized test cases seen so far, to check for duplicates
  * @throws {AssertionError} If the test case fails
  */
 function runInvalidTestCase(
   test: InvalidTestCase,
   plugin: Plugin,
   config: Config,
-  seenTestCases: Set<string>,
+  seenTestCases: SeenTestCases,
 ): void {
   const ruleName = Object.keys(plugin.rules)[0];
   try {
@@ -1604,10 +1604,10 @@ function runHook<T extends TestCase>(
  * Optional properties are checked for correct types.
  *
  * @param test - Valid test case object to check
- * @param seenTestCases - Set of serialized test cases to check for duplicates
+ * @param seenTestCases - Serialized test cases seen so far, to check for duplicates
  * @throws {AssertionError} If the test case is not valid
  */
-function assertValidTestCaseIsWellFormed(test: ValidTestCase, seenTestCases: Set<string>): void {
+function assertValidTestCaseIsWellFormed(test: ValidTestCase, seenTestCases: SeenTestCases): void {
   assertTestCaseCommonPropertiesAreWellFormed(test);
 
   // Must not have properties of invalid test cases
@@ -1629,13 +1629,13 @@ function assertValidTestCaseIsWellFormed(test: ValidTestCase, seenTestCases: Set
  * Optional properties are checked for correct types.
  *
  * @param test - Invalid test case object to check
- * @param seenTestCases - Set of serialized test cases to check for duplicates
+ * @param seenTestCases - Serialized test cases seen so far, to check for duplicates
  * @param ruleName - Name of the rule being tested
  * @throws {AssertionError} If the test case is not valid
  */
 function assertInvalidTestCaseIsWellFormed(
   test: InvalidTestCase,
-  seenTestCases: Set<string>,
+  seenTestCases: SeenTestCases,
   ruleName: string,
 ): void {
   assertTestCaseCommonPropertiesAreWellFormed(test);
@@ -1703,12 +1703,17 @@ function assertTestCaseCommonPropertiesAreWellFormed(test: TestCase): void {
 const DUPLICATION_IGNORED_PROPS = new Set(["name", "errors", "output"]);
 
 /**
+ * Serialized test cases seen so far in a `valid` or `invalid` block, each mapped to the test case object it came from.
+ */
+type SeenTestCases = Map<string, TestCase>;
+
+/**
  * Assert that this test case is not a duplicate of one we have seen before.
  * @param test - Test case object
- * @param seenTestCases - Set of serialized test cases we have seen so far (managed by this function)
+ * @param seenTestCases - Serialized test cases we have seen so far (managed by this function)
  * @throws {AssertionError} If the test case is a duplicate
  */
-function assertNotDuplicateTestCase(test: TestCase, seenTestCases: Set<string>): void {
+function assertNotDuplicateTestCase(test: TestCase, seenTestCases: SeenTestCases): void {
   // If we can't serialize a test case (because it contains a function, RegExp, etc), skip the check.
   // This might happen with properties like: `options`, `plugins`, `settings`, `languageOptions.parser`,
   // `languageOptions.parserOptions`.
@@ -1721,8 +1726,11 @@ function assertNotDuplicateTestCase(test: TestCase, seenTestCases: Set<string>):
     },
   });
 
-  assert(!seenTestCases.has(serializedTestCase), "Detected duplicate test case");
-  seenTestCases.add(serializedTestCase);
+  // A test runner can run the same test case more than once (e.g. Vitest's `--repeats` option, or retries).
+  // That is not a duplicate - only a different test case object which serializes the same is.
+  const seenTestCase = seenTestCases.get(serializedTestCase);
+  assert(seenTestCase === undefined || seenTestCase === test, "Detected duplicate test case");
+  seenTestCases.set(serializedTestCase, test);
 }
 
 /**

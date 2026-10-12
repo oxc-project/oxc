@@ -250,6 +250,24 @@ describe("RuleTester", () => {
         ]
       `);
     });
+
+    it("which are run again", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", simpleRule, {
+        valid: ["let x;", "let y;", "let x;"],
+        invalid: [],
+      });
+
+      // A test runner can run the same test cases more than once (e.g. Vitest's `--repeats` option).
+      // A case run again is not a duplicate. A different case which is the same as an earlier one is.
+      const expected = [
+        null,
+        null,
+        expect.objectContaining({ message: "Detected duplicate test case" }),
+      ];
+      expect(runCases()).toEqual(expected);
+      expect(runCases()).toEqual(expected);
+    });
   });
 
   describe("tests invalid cases", () => {
@@ -782,6 +800,37 @@ describe("RuleTester", () => {
             [AssertionError: Detected duplicate test case],
           ]
         `);
+      });
+
+      it("run again", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [],
+          invalid: [
+            {
+              code: "let foo;",
+              errors: 1,
+            },
+            {
+              code: "foo;",
+              errors: 1,
+            },
+            {
+              code: "let foo;",
+              errors: 1,
+            },
+          ],
+        });
+
+        // A test runner can run the same test cases more than once (e.g. Vitest's `--repeats` option).
+        // A case run again is not a duplicate. A different case which is the same as an earlier one is.
+        const expected = [
+          null,
+          null,
+          expect.objectContaining({ message: "Detected duplicate test case" }),
+        ];
+        expect(runCases()).toEqual(expected);
+        expect(runCases()).toEqual(expected);
       });
     });
 
