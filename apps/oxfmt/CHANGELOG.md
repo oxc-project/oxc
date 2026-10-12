@@ -4,6 +4,36 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.0] - 2026-10-12
+
+### 💥 BREAKING CHANGES
+
+- 1ef2888 oxfmt: [**BREAKING**] Improve `--migrate prettier` (#27444) (leaysgur)
+- c2e6d5f formatter_toml: [**BREAKING**] Add `oxc_formatter_toml` crate wrapping `oxc-toml` (#27365) (leaysgur)
+
+### 🚀 Features
+
+- ce4e8dc oxfmt: Support `overrides[].parser` -> `associations[].language` migration (#27475) (leaysgur)
+- a495e82 oxfmt: Support `associations` config to specify language over filepath (#27437) (leaysgur)
+- 77f8156 oxfmt/lsp: Show root config errors to LSP client (#26014) (Sysix)
+- c1adce3 oxfmt/lsp: Support astro language (#27388) (leaysgur)
+- 4f024a1 oxfmt: Support astro plugin in `--migrate prettier` (#27387) (leaysgur)
+- 5db28fa oxfmt: Support Astro via `prettier-plugin-astro@1.x` (#27386) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- b6eb914 oxfmt: Normalize symlink targets in CLI snapshots (#27498) (camc314)
+- 5dae56f oxfmt/lsp: Return error on config resolving error (#26003) (Sysix)
+- 2349a31 oxfmt: Follow symlinked configs in discovery (#27389) (leaysgur)
+- db360de oxfmt: Load svelte plugin for svelte-in-mdx-in-md (#27369) (leaysgur)
+- 6e573f9 oxlint,oxfmt: Set stderr blocking (#27363) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+### 📚 Documentation
+
+- 408d87f oxfmt: Simplify oxfmtrc docs (#27432) (leaysgur)
+- 902e188 oxfmt: Update how `embeddedLanguageFormatting` option works (#27362) (leaysgur)
+
 ## [0.72.0] - 2026-10-05
 
 ### 💥 BREAKING CHANGES

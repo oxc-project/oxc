@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.0] - 2026-10-12
+
+### 🐛 Bug Fixes
+
+- 676cc60 formatter/jsdoc: Preserve paragraphs by checking `@description` tag width (#27439) (leaysgur)
+
 ## [0.72.0] - 2026-10-05
 
 ### 💥 BREAKING CHANGES
