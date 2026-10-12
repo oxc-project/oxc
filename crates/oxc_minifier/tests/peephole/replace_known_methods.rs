@@ -53,6 +53,13 @@ fn test_string_index_of() {
     test("x = `abcdef`.indexOf('b')", "x = 1");
     test_same("x = `Hello ${name}`.indexOf('a')");
     test_same("x = tag `Hello ${name}`.indexOf('a')");
+
+    // Indices count UTF-16 code units, and positions are not wrapped to 32 bits.
+    test("x = 'éx'.indexOf('x')", "x = 1");
+    test("x = '😀x'.indexOf('x', 1)", "x = 2");
+    test("x = 'abc'.indexOf('a', 4294967296)", "x = -1");
+    test("x = 'éb'.lastIndexOf('b')", "x = 1");
+    test("x = 'abab'.lastIndexOf('b', NaN)", "x = 3");
 }
 
 #[test]
@@ -214,6 +221,14 @@ fn test_fold_string_substring() {
     // Template strings
     test("x = `abcdef`.substring(0,2)", "x = 'ab'");
     test_same("x = `abcdef ${abc}`.substring(0,2)");
+
+    // Positions count UTF-16 code units, so a boundary may split a surrogate pair.
+    test("x = 'a😀b'.substring(1, 2)", "x = '\\ud83d'");
+    test("x = 'é😀b'.substring(1)", "x = '😀b'");
+    // An `undefined` end is not folded: its number value NaN would mean index 0.
+    test_same("x = 'abc'.substring(1, void 0)");
+    // A NaN start is index 0.
+    test("x = 'abc'.substring(NaN, 2)", "x = 'ab'");
 }
 
 #[test]
@@ -221,6 +236,8 @@ fn test_fold_string_slice() {
     test("x = 'abcde'.slice(0,2)", "x = 'ab'");
     test("x = 'abcde'.slice(1,2)", "x = 'b'");
     test("x = 'abcde'.slice(2)", "x = 'cde'");
+    // Positions count UTF-16 code units, so a boundary may split a surrogate pair.
+    test("x = '😀a'.slice(1)", "x = '\\ude00a'");
 
     // we should be leaving negative, out-of-bound, and inverted indices alone for now
     test_same("x = 'abcde'.slice(-1)");
@@ -228,6 +245,10 @@ fn test_fold_string_slice() {
     test_same("x = 'abcde'.slice(1, 2, 3)");
     test_same("x = 'abcde'.slice(2, 0)");
     test_same("x = 'a'.slice(0, 2)");
+    // A NaN or `undefined` end is not folded, and a NaN or `undefined` start is index 0.
+    test_same("x = 'abc'.slice(1, void 0)");
+    test_same("x = 'abc'.slice(0, NaN)");
+    test("x = 'abc'.slice(void 0, 1)", "x = 'a'");
 
     // Template strings
     test("x = `abcdef`.slice(0, 2)", "x = 'ab'");
@@ -251,8 +272,8 @@ fn test_fold_string_char_at() {
     test_same("x = 'abcde'.charAt(y)");
     test("x = 'abcde'.charAt(null)", "x = 'a'");
     test("x = 'abcde'.charAt(!0)", "x = 'b'");
-    test_same("x = '\\ud834\\udd1e'.charAt(0)"); // or x = '\\ud834'
-    test_same("x = '\\ud834\\udd1e'.charAt(1)"); // or x = '\\udd1e'
+    test("x = '\\ud834\\udd1e'.charAt(0)", "x = '\\ud834'");
+    test("x = '\\ud834\\udd1e'.charAt(1)", "x = '\\udd1e'");
 
     // Template strings
     test("x = `abcdef`.charAt(0)", "x = 'a'");
@@ -1009,7 +1030,8 @@ fn test_fold_string_from_char_code() {
     test("x = String.fromCharCode(0)", "x = '\\0'");
     test("x = String.fromCharCode(120)", "x = 'x'");
     test("x = String.fromCharCode(120, 121)", "x = 'xy'");
-    test_same("x = String.fromCharCode(55358, 56768)");
+    test("x = String.fromCharCode(55358, 56768)", "x = '\u{1F9C0}'");
+    test("x = String.fromCharCode(55296)", "x = '\\ud800'");
     test("x = String.fromCharCode(0x10000)", "x = '\\0'");
     test("x = String.fromCharCode(0x10078, 0x10079)", "x = 'xy'");
     test("x = String.fromCharCode(0x1_0000_FFFF)", "x = '\u{ffff}'");
@@ -1028,6 +1050,11 @@ fn test_fold_string_from_char_code() {
 
 #[test]
 fn test_fold_string_concat() {
+    // A lone surrogate is kept as an escape in the template's raw text.
+    test(r#"x = "\uD800".concat(a, b)"#, "x = `\\ud800${a}${b}`");
+    test(r#"x = "\uD800".concat(a).concat(b())"#, "x = `\\ud800${a}${b()}`");
+    test(r#"x = "\uD83D".concat(a, "\uDE00")"#, "x = `\\ud83d${a}\\ude00`");
+    test(r#"x = "\uD83D".concat("\uDE00", a)"#, "x = `\u{1F600}${a}`");
     test_same("x = ''.concat()");
     test("x = ''.concat(a, b)", "x = `${a}${b}`");
     test("x = ''.concat(a, b, c)", "x = `${a}${b}${c}`");
