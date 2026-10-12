@@ -17,6 +17,9 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *
  * Destructuring targets look like object and array literals but are a separate set of node types,
  * with their own rules - which is why they are printed here rather than by the expression printer.
+ *
+ * @param node - Assignment target
+ * @param state - Printer state
  */
 export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: State): void {
   switch (node.type) {
@@ -52,6 +55,9 @@ export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: Stat
 
 /**
  * Print an object destructuring target, as in `({ a, b: c } = obj)`.
+ *
+ * @param node - Object assignment target
+ * @param state - Printer state
  */
 function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state: State): void {
   writeWithMap(state, "{", CAT_OTHER, node.start, node.end, node);
@@ -75,6 +81,9 @@ function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state:
 
 /**
  * Print one property of an object destructuring target, in shorthand where the AST says so.
+ *
+ * @param node - Assignment target property
+ * @param state - Printer state
  */
 function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, state: State): void {
   // Shorthand from the AST flag (assignment targets are not re-derived).
@@ -110,6 +119,9 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
 
 /**
  * Print a destructuring target which may carry a default, as the `a = 1` in `({ a = 1 } = obj)`.
+ *
+ * @param node - Assignment target, possibly with a default
+ * @param state - Printer state
  */
 function printAssignmentTargetMaybeDefault(
   node: ESTree.AssignmentTargetMaybeDefault,
@@ -126,6 +138,9 @@ function printAssignmentTargetMaybeDefault(
 
 /**
  * Print an array destructuring target, holes and rest element included.
+ *
+ * @param node - Array assignment target
+ * @param state - Printer state
  */
 function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: State): void {
   const { elements } = node;

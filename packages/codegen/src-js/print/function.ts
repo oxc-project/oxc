@@ -69,6 +69,9 @@ const ANONYMOUS_FUNCTION_PREFIXES = TS
  *
  * A function expression is parenthesized where the statement or an `export default` starts with it,
  * since it would otherwise be read as a declaration.
+ *
+ * @param node - Function
+ * @param state - Printer state
  */
 export function printFunction(node: ESTree.Function, state: State): void {
   let wrap = false;
@@ -132,6 +135,9 @@ export function printFunction(node: ESTree.Function, state: State): void {
 
 /**
  * Print a parameter list in parentheses.
+ *
+ * @param params - Parameters
+ * @param state - Printer state
  */
 export function printParenParams(params: ESTree.ParamPattern[], state: State): void {
   // `(params)`, as a single write when there are none
@@ -150,6 +156,9 @@ export function printParenParams(params: ESTree.ParamPattern[], state: State): v
  *
  * TypeScript parameter properties carry the modifiers which make them a property as well as a
  * parameter, and decorators can appear on either kind.
+ *
+ * @param params - Parameters
+ * @param state - Printer state
  */
 function printParams(params: ESTree.ParamPattern[], state: State): void {
   const { length } = params;
@@ -210,6 +219,9 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
  *
  * A function body has a directive prologue, so it goes through the same printer as a program does,
  * rather than through the block statement printer.
+ *
+ * @param body - Function body
+ * @param state - Printer state
  */
 export function printFunctionBody(body: ESTree.FunctionBody, state: State): void {
   // `body` is a BlockStatement holding directives + statements.
@@ -233,6 +245,9 @@ export function printFunctionBody(body: ESTree.FunctionBody, state: State): void
  * Print an arrow function's parameter list along with its `=>`.
  *
  * Oxc keeps the parentheses even around a lone parameter, so there is no single-parameter form.
+ *
+ * @param params - Parameters
+ * @param state - Printer state
  */
 export function printParenParamsArrow(params: ESTree.ParamPattern[], state: State): void {
   // `(params) => `, as a single write when there are none

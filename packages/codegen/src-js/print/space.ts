@@ -41,6 +41,8 @@ if (DEBUG) {
  * Call it before writing anything starting with an identifier character - a name, a keyword, or a
  * number. The categories needing the space are the lowest codes in the numbering, so the test is
  * one compare.
+ *
+ * @param state - Printer state
  */
 export function printSpaceBeforeIdentifier(state: State): void {
   debugAssertLastFresh(state);

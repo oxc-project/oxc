@@ -27,6 +27,9 @@ type BindingPatternNode =
 
 /**
  * Print anything which can be bound to - a name, a destructuring pattern, or one carrying a default.
+ *
+ * @param node - Binding pattern
+ * @param state - Printer state
  */
 export function printBindingPattern(node: BindingPatternNode, state: State): void {
   switch (node.type) {
@@ -63,6 +66,9 @@ export function printBindingPattern(node: BindingPatternNode, state: State): voi
 
 /**
  * Print an object destructuring pattern, as in `const { a, b } = obj`.
+ *
+ * @param node - Object pattern
+ * @param state - Printer state
  */
 function printObjectBindingPattern(node: ESTree.ObjectPattern, state: State): void {
   const { properties } = node;
@@ -91,6 +97,9 @@ function printObjectBindingPattern(node: ESTree.ObjectPattern, state: State): vo
 
 /**
  * Print one property of an object pattern, in shorthand where the key and the binding agree.
+ *
+ * @param node - Binding property
+ * @param state - Printer state
  */
 function printBindingProperty(node: ESTree.BindingProperty, state: State): void {
   // Shorthand is re-derived from names (matching Oxc), not from the flag.
@@ -129,6 +138,9 @@ function printBindingProperty(node: ESTree.BindingProperty, state: State): void 
  *
  * The caller decides between this and printing the key as an expression in brackets,
  * because whether a key must be computed depends on what it is, not on how the source wrote it.
+ *
+ * @param key - Property key
+ * @param state - Printer state
  */
 export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
   switch (key.type) {
@@ -153,6 +165,9 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
 
 /**
  * Print an array destructuring pattern, holes and rest element included.
+ *
+ * @param node - Array pattern
+ * @param state - Printer state
  */
 function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void {
   // Oxc stores the rest element separately from the other elements.

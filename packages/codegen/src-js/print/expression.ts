@@ -293,6 +293,10 @@ export function printExpression(
  * Two shapes need more than precedence to stay valid:
  * 1. A bare `let` as the object.
  * 2. Member access straight onto an integer literal.
+ *
+ * @param node - Member expression
+ * @param state - Printer state
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 export function printMemberExpression(
   node: ESTree.MemberExpression,
@@ -350,6 +354,11 @@ export function printMemberExpression(
  *
  * Writing that paren also re-marks the start of a statement or of an `export default`,
  * so the callee inside the parens is still read as the leftmost token of the construct.
+ *
+ * @param node - Call expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printCallExpression(
   node: ESTree.CallExpression,
@@ -388,6 +397,10 @@ function printCallExpression(
  * The argument list shared by `printCallExpression` and `printNewExpression`.
  *
  * Arguments print at `PREC_COMMA`, so a sequence expression parenthesizes itself instead of reading as more arguments.
+ *
+ * @param node - Call, `new` expression or V8 runtime call the arguments belong to, which the closing `)` is mapped to
+ * @param args - Arguments
+ * @param state - Printer state
  */
 function printArguments(
   node: ESTree.CallExpression | ESTree.NewExpression | ESTree.V8IntrinsicExpression,
@@ -420,6 +433,10 @@ function printArguments(
  * It sits at the `in` operator's own level, so it wraps from `PREC_COMPARE` upwards. The right
  * operand also prints at `PREC_COMPARE`, preserving parentheses around relational and
  * lower-precedence expressions, with `CTX_FORBID_IN` set.
+ *
+ * @param node - Private-in expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
  */
 export function printPrivateInExpression(
   node: ESTree.PrivateInExpression,
@@ -443,6 +460,9 @@ export function printPrivateInExpression(
  *
  * Layout follows the property count alone - two or more break across lines, exactly one prints
  * inside spaces on a single line, and none gives `{}`.
+ *
+ * @param node - Object expression
+ * @param state - Printer state
  */
 function printObjectExpression(node: ESTree.ObjectExpression, state: State): void {
   debugAssertLastFresh(state);
@@ -485,6 +505,9 @@ function printObjectExpression(node: ESTree.ObjectExpression, state: State): voi
  *
  * Shorthand and computed-ness are both worked out here rather than taken from the AST,
  * so the output stays valid however a transform left those flags.
+ *
+ * @param node - Object property or spread element
+ * @param state - Printer state
  */
 function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): void {
   if (node.type === "SpreadElement") {
@@ -610,6 +633,9 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
  *
  * Holes print as nothing between the commas, and a hole in final position needs one further comma
  * written after it, since `[a,]` holds one element and `[a,,]` holds two.
+ *
+ * @param node - Array expression
+ * @param state - Printer state
  */
 function printArrayExpression(node: ESTree.ArrayExpression, state: State): void {
   const { elements } = node;
@@ -688,6 +714,11 @@ function printAssignmentExpression(
  *
  * The operator's own category is recorded as it is written, which is how an adjacent `+` or `-`
  * knows to leave a space rather than glue into `---x`.
+ *
+ * @param node - Update expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printUpdateExpression(
   node: ESTree.UpdateExpression,
@@ -721,6 +752,11 @@ function printUpdateExpression(
  *
  * A `!` written straight after a `<` records a category of its own, so that a `--`
  * printed next is spaced off it and cannot complete `<!--`.
+ *
+ * @param node - Unary expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printUnaryExpression(
   node: ESTree.UnaryExpression,
@@ -764,6 +800,11 @@ function printUnaryExpression(
  *
  * The consequent is fenced by the `?` and `:` either side of it, so it alone never needs
  * the `in` restriction passed down.
+ *
+ * @param node - Conditional expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printConditionalExpression(
   node: ESTree.ConditionalExpression,
@@ -812,6 +853,11 @@ function printConditionalExpression(
  * Wraps from `PREC_COMMA` upwards.
  * `CTX_FORBID_CALL` is cleared for the elements, since every position which sets that flag
  * also passes a precedence at or above `PREC_COMMA`, so the parens are already written by then.
+ *
+ * @param node - Sequence expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printSequenceExpression(
   node: ESTree.SequenceExpression,
@@ -840,6 +886,11 @@ function printSequenceExpression(
  * A concise body marks `last`, which is how an object literal body knows to parenthesize itself.
  * A TS return type has to sit between the parameters and the arrow, so those are printed separately,
  * instead of through `printParenParamsArrow`.
+ *
+ * @param node - Arrow function expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printArrowFunctionExpression(
   node: ESTree.ArrowFunctionExpression,
@@ -884,6 +935,10 @@ function printArrowFunctionExpression(
  *
  * The callee prints at `PREC_NEW` with `CTX_FORBID_CALL`, so a call inside it parenthesizes itself,
  * rather than being taken for this `new`'s own argument list.
+ *
+ * @param node - New expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
  */
 function printNewExpression(node: ESTree.NewExpression, state: State, precedence: number): void {
   const wrap = precedence >= PREC_CALL;
@@ -903,6 +958,9 @@ function printNewExpression(node: ESTree.NewExpression, state: State, precedence
  * is written before the loop and each iteration ends with the chunk after its substitution.
  *
  * Substitutions print from `PREC_LOWEST` with no context flags, since `${` and `}` fence them from everything around.
+ *
+ * @param node - Template literal
+ * @param state - Printer state
  */
 function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void {
   writeWithMapNoLast(state, "`", node.start, node.end, node);
@@ -933,6 +991,8 @@ function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void 
  *
  * It also runs the `</script` escape, since a template can hold that sequence verbatim
  * and would otherwise close a surrounding script element.
+ *
+ * @param quasi - Template element
  */
 function templateQuasiRaw(quasi: ESTree.TemplateElement): string {
   // Line terminators in template raws are normalized to LF at parse time.
@@ -945,6 +1005,11 @@ function templateQuasiRaw(quasi: ESTree.TemplateElement): string {
 /**
  * Wraps from `PREC_PREFIX` upwards like the other unary operators, and prints its argument
  * at `PREC_EXPONENTIATION` - `await a ** b` does not parse, so the `**` takes parens.
+ *
+ * @param node - Await expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printAwaitExpression(
   node: ESTree.AwaitExpression,
@@ -965,6 +1030,11 @@ function printAwaitExpression(
 /**
  * Wraps from `PREC_ASSIGN` upwards. The argument prints at `PREC_YIELD`, one level below assignment,
  * so a nested `yield` or an assignment stays bare while a comma sequence parenthesizes.
+ *
+ * @param node - Yield expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printYieldExpression(
   node: ESTree.YieldExpression,
@@ -994,6 +1064,11 @@ function printYieldExpression(
  * attach the argument list to the `new`.
  *
  * A `phase` prints as `import.<phase>(...)`, and import options follow the source as a second argument.
+ *
+ * @param node - Import expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printImportExpression(
   node: ESTree.ImportExpression,
@@ -1030,6 +1105,11 @@ function printImportExpression(
  * From `PREC_POSTFIX` upwards, or under `CTX_FORBID_CALL`, the whole chain is parenthesized
  * and printed from `PREC_LOWEST` - the chain has to stop at the paren, instead of running on
  * into the enclosing member access or `new`.
+ *
+ * @param node - Chain expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printChainExpression(
   node: ESTree.ChainExpression,
@@ -1052,6 +1132,11 @@ function printChainExpression(
  *
  * Parenthesized wherever a postfix operator follows it - a member access, a call or a tagged template -
  * and under `new`, as `oxc_codegen` does: `(%DebugPrint(x)).y`.
+ *
+ * @param node - V8 runtime call
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printV8IntrinsicExpression(
   node: ESTree.V8IntrinsicExpression,

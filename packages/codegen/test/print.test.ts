@@ -136,7 +136,12 @@ function checkCases(cases: Case[]): void {
 // --- Tests ----------------------------------------------------------------------------------
 
 describe("single statements", () => {
-  /** Parse one source statement for public-API tests which do not print a whole program. */
+  /**
+   * Parse one source statement for public-API tests which do not print a whole program.
+   *
+   * @param filename - Filename, which decides the language
+   * @param sourceText - Source text
+   */
   function parseStatement(filename: string, sourceText: string): ESTree.Statement {
     const { program: parsed, errors } = parseSync(filename, sourceText, PARSE_OPTIONS);
     if (errors.length > 0) throw new Error(`fixture parse failed: ${errors[0].message}`);

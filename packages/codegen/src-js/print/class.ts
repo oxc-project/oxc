@@ -49,6 +49,9 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *
  * A class expression is parenthesized where the statement or an `export default` starts with it,
  * as `printFunction` does for functions.
+ *
+ * @param node - Class
+ * @param state - Printer state
  */
 export function printClass(node: ESTree.Class, state: State): void {
   let wrap = false;
@@ -117,6 +120,9 @@ export function printClass(node: ESTree.Class, state: State): void {
 
 /**
  * Print a run of decorators separated by spaces, parenthesizing any whose expression needs it.
+ *
+ * @param decorators - Decorators
+ * @param state - Printer state
  */
 export function printDecorators(decorators: ESTree.Decorator[], state: State): void {
   const { length } = decorators;
@@ -140,6 +146,8 @@ export function printDecorators(decorators: ESTree.Decorator[], state: State): v
  *
  * The grammar allows a name, a chain of plain member accesses, and a call on either, and nothing
  * else - so a computed access needs parentheses even though a static one does not.
+ *
+ * @param expr - Decorator's expression
  */
 function decoratorNeedsWrap(expr: ESTree.Expression): boolean {
   for (;;) {
@@ -160,6 +168,9 @@ function decoratorNeedsWrap(expr: ESTree.Expression): boolean {
 
 /**
  * Print the members of a class in braces, empty ones tight.
+ *
+ * @param node - Class body
+ * @param state - Printer state
  */
 function printClassBody(node: ESTree.ClassBody, state: State): void {
   const { body } = node;
@@ -223,6 +234,9 @@ function printClassBody(node: ESTree.ClassBody, state: State): void {
 
 /**
  * Print a method, including getters, setters, constructors and their modifiers.
+ *
+ * @param node - Method definition
+ * @param state - Printer state
  */
 function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
   markMapStart(state, node.start, node.end, node);
@@ -295,6 +309,9 @@ function printMethodDefinition(node: MethodDefinitionNode, state: State): void {
 
 /**
  * Print a class field, with its modifiers and initializer.
+ *
+ * @param node - Property definition
+ * @param state - Printer state
  */
 function printPropertyDefinition(node: PropertyDefinitionNode, state: State): void {
   markMapStart(state, node.start, node.end, node);
@@ -356,6 +373,9 @@ function printPropertyDefinition(node: PropertyDefinitionNode, state: State): vo
  *
  * Its body has no directive prologue, unlike a function body, so a string statement at the top of
  * one needs no protection from being read back as a directive.
+ *
+ * @param node - Static block
+ * @param state - Printer state
  */
 function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
   printSpaceBeforeIdentifier(state);
@@ -386,6 +406,9 @@ function printStaticBlock(node: ESTree.StaticBlock, state: State): void {
 
 /**
  * Print an `accessor` field.
+ *
+ * @param node - Accessor property
+ * @param state - Printer state
  */
 function printAccessorProperty(node: AccessorPropertyNode, state: State): void {
   markMapStart(state, node.start, node.end, node);
