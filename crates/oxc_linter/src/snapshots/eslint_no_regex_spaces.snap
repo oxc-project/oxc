@@ -183,3 +183,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                              ────
    ╰────
   help: Use a quantifier: ` {4}`
+
+  ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:14]
+ 1 │ var foo = /a\   b/;
+   ·              ───
+   ╰────
+  help: Use a quantifier: ` {3}`
+
+  ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:23]
+ 1 │ var foo = /\x20\x20foo  bar/;
+   ·                       ──
+   ╰────
+  help: Use a quantifier: ` {2}`
+
+  ⚠ eslint(no-regex-spaces): Multiple consecutive spaces are hard to count.
+   ╭─[no_regex_spaces.tsx:1:22]
+ 1 │ var foo = RegExp('a\\   b');
+   ·                      ───
+   ╰────
+  help: Use a quantifier: ` {3}`
