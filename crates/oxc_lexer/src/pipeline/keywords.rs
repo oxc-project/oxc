@@ -579,11 +579,11 @@ mod tests {
 
     /// Run [`kw_match`] on `word`, followed by `after` (which is not part of the word).
     fn kw_match_str(word: &[u8], after: &[u8], is_ts: bool) -> TokenKind {
+        assert!((1..=16).contains(&word.len()));
+
         let mut buf = [0u8; 48];
         buf[..word.len()].copy_from_slice(word);
         buf[word.len()..word.len() + after.len()].copy_from_slice(after);
-
-        assert!((1usize..=16).contains(&word.len()));
 
         // SAFETY: `buf` is 48 bytes. `word.len()` is between 1-16 bytes.
         unsafe {
@@ -601,8 +601,9 @@ mod tests {
         for kw in &KEYWORDS_JS {
             in_set[kw.word.as_bytes()[0] as usize] = true;
         }
-        for c in 0..256usize {
-            assert!(is_kw_init(c as u8) == in_set[c], "KWINIT_LO/HI wrong at byte {c:#04x}");
+
+        for b in 0..=255 {
+            assert!(is_kw_init(b) == in_set[b as usize], "KWINIT_LO/HI wrong at byte {b:#04x}");
         }
     }
 
@@ -612,8 +613,12 @@ mod tests {
         for kw in &KEYWORDS_TS {
             in_set_ts[kw.word.as_bytes()[0] as usize] = true;
         }
-        for c in 0..256usize {
-            assert!(is_kw_init_ts(c as u8) == in_set_ts[c], "KWINIT_TS_LO wrong at byte {c:#04x}");
+
+        for b in 0..=255 {
+            assert!(
+                is_kw_init_ts(b) == in_set_ts[b as usize],
+                "KWINIT_TS_LO wrong at byte {b:#04x}"
+            );
         }
     }
 
@@ -755,15 +760,16 @@ mod tests {
         };
 
         let mut words: Vec<Vec<u8>> = vec![];
-        for a in b'a'..=b'z' {
-            words.push(vec![a]);
-            for b in b'a'..=b'z' {
-                words.push(vec![a, b]);
-                for c in b'a'..=b'z' {
-                    words.push(vec![a, b, c]);
+        for b1 in b'a'..=b'z' {
+            words.push(vec![b1]);
+            for b2 in b'a'..=b'z' {
+                words.push(vec![b1, b2]);
+                for b3 in b'a'..=b'z' {
+                    words.push(vec![b1, b2, b3]);
                 }
             }
         }
+
         let replacements =
             (b'a'..=b'z').chain([b'A', b'Z', b'0', b'9', b'_', b'$', 0x80, 0xC3, 0xFF]);
         for kw in &KEYWORDS_TS {
