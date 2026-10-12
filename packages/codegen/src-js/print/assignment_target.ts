@@ -3,7 +3,7 @@
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
-import { write, writeWithMap, writeWithMapNamed } from "./write.ts";
+import { write, writeNoLast, writeWithMap, writeWithMapNamed } from "./write.ts";
 import { printExpression, printMemberExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { CTX_NONE } from "./operators.ts";
@@ -141,36 +141,43 @@ function printAssignmentTargetMaybeDefault(
  * @param state - Printer state
  */
 function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: State): void {
-  const { elements } = node;
-  let { length } = elements;
-
-  let rest: ESTree.BindingRestElement | ESTree.AssignmentTargetRest | null = null;
-  if (length > 0) {
-    const lastElement = elements[length - 1];
-    if (lastElement != null && lastElement.type === "RestElement") {
-      rest = lastElement;
-      length--;
-    }
-  }
-
   writeWithMap(state, "[", CAT_OTHER, node.start, node.end, node);
 
-  for (let i = 0; i < length; i++) {
-    if (i !== 0) write(state, ", ", CAT_OTHER);
-    const element = elements[i];
-    if (element != null) {
-      typeAssertIs<ESTree.AssignmentTargetMaybeDefault>(element);
-      printAssignmentTargetMaybeDefault(element, state);
-    }
-    if (i === length - 1 && (element == null || rest !== null)) {
-      write(state, ",", CAT_OTHER);
-    }
-  }
+  const { elements } = node,
+    { length } = elements;
 
-  if (rest !== null) {
-    if (length > 0) write(state, " ", CAT_OTHER);
-    writeWithMap(state, "...", CAT_OTHER, rest.start, rest.end, rest);
-    printAssignmentTarget(rest.argument, state);
+  if (length !== 0) {
+    const lastElement = elements[length - 1];
+    if (lastElement !== null && lastElement.type === "RestElement") {
+      // Print elements before the `RestElement`
+      const restIndex = length - 1;
+      for (let i = 0; i < restIndex; i++) {
+        // `RestElement` can only be last, and this loop stops before it
+        const element = elements[i] as ESTree.AssignmentTargetMaybeDefault | null;
+        if (element !== null) printAssignmentTargetMaybeDefault(element, state);
+        write(state, ", ", CAT_OTHER);
+      }
+
+      // Print `RestElement`
+      writeWithMap(state, "...", CAT_OTHER, lastElement.start, lastElement.end, lastElement);
+      printAssignmentTarget(lastElement.argument, state);
+    } else {
+      // `RestElement` can only be last, and the last element is not one
+      typeAssertIs<(ESTree.AssignmentTargetMaybeDefault | null)[]>(elements);
+
+      const firstElement = elements[0];
+      if (firstElement !== null) printAssignmentTargetMaybeDefault(firstElement, state);
+
+      for (let i = 1; i < length; i++) {
+        write(state, ", ", CAT_OTHER);
+
+        const element = elements[i];
+        if (element !== null) printAssignmentTargetMaybeDefault(element, state);
+      }
+
+      // A trailing hole needs a comma after it
+      if (lastElement === null) writeNoLast(state, ",");
+    }
   }
 
   write(state, "]", CAT_CLOSE_BRACKET);

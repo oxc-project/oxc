@@ -632,35 +632,50 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
  * @param state - Printer state
  */
 function printArrayExpression(node: ESTree.ArrayExpression, state: State): void {
-  const { elements } = node;
-  const { length } = elements;
-  const isMultiLine = length > 2;
-
   writeWithMap(state, "[", CAT_OTHER, node.start, node.end, node);
 
-  if (isMultiLine) state.indentLevel++;
+  const { elements } = node,
+    { length } = elements;
 
-  for (let i = 0; i < length; i++) {
-    if (isMultiLine) {
-      write(state, i !== 0 ? ",\n" : "\n", CAT_OTHER);
-      printIndent(state);
-    } else if (i !== 0) {
-      write(state, ", ", CAT_OTHER);
-    }
+  if (length > 2) {
+    // 3 or more elements, each on its own line
+    state.indentLevel++;
+    writeNoLast(state, "\n");
+    printIndent(state);
 
-    const element = elements[i];
     // `printExpression` prints a spread too
-    if (element != null) printExpression(element, state, PREC_COMMA, CTX_NONE);
+    const firstElement = elements[0];
+    if (firstElement !== null) printExpression(firstElement, state, PREC_COMMA, CTX_NONE);
 
-    if (i === length - 1 && element == null) {
-      write(state, ",", CAT_OTHER);
+    for (let i = 1; i < length; i++) {
+      // Indent level is at least 1, so `printIndent` always writes, which refreshes `last`
+      writeNoLast(state, ",\n");
+      printIndent(state);
+
+      const element = elements[i];
+      if (element !== null) printExpression(element, state, PREC_COMMA, CTX_NONE);
     }
-  }
 
-  if (isMultiLine) {
-    write(state, "\n", CAT_OTHER);
+    // A trailing hole needs a comma after it.
+    // The last element is read again here, rather than kept from the loop,
+    // because keeping it would spill it to the stack on every turn of the loop.
+    writeNoLast(state, elements[length - 1] === null ? ",\n" : "\n");
     state.indentLevel--;
     printIndent(state);
+  } else if (length !== 0) {
+    // 1 or 2 elements, on one line
+    const firstElement = elements[0];
+    if (firstElement !== null) printExpression(firstElement, state, PREC_COMMA, CTX_NONE);
+
+    if (length === 2) {
+      write(state, ", ", CAT_OTHER);
+
+      const secondElement = elements[1];
+      if (secondElement !== null) printExpression(secondElement, state, PREC_COMMA, CTX_NONE);
+    }
+
+    // A trailing hole needs a comma after it
+    if (elements[length - 1] === null) writeNoLast(state, ",");
   }
 
   writeWithMapEnd(state, "]", CAT_CLOSE_BRACKET, node.start, node.end, node);
