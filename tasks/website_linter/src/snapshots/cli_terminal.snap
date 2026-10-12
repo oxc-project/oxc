@@ -96,6 +96,12 @@ Inline Configuration Comments
                               severity level of the reported errors. Only one of these two options
                               can be used at a time.
 
+Caching
+        --cache               Only check changed files.
+        --cache-location=PATH  Path to the cache file or directory. Defaults to `.oxlintcache`.
+        --cache-strategy=STRATEGY  Strategy for detecting changed files. Possible values:
+                              `metadata`, `content`
+
 Available positional items:
     PATH                      Single file, single path or list of paths
 

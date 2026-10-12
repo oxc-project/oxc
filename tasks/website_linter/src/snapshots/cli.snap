@@ -148,6 +148,22 @@ Arguments:
 
 
 
+## Caching
+- **`    --cache`** &mdash; 
+  Only check changed files.
+
+  Results are stored in `.oxlintcache` (see `--cache-location`) and reused while a file and the configuration are unchanged. Like ESLint, dependencies between files are not tracked, so results of rules that depend on other files (type-aware rules, `--type-check`, and cross-module rules of the `import` plugin) can be stale. Running without `--cache` deletes the cache file.
+- **`    --cache-location`**=_`PATH`_ &mdash; 
+  Path to the cache file or directory. Defaults to `.oxlintcache`.
+
+  If a directory is given, the cache file is created inside it with a name derived from the current working directory.
+- **`    --cache-strategy`**=_`STRATEGY`_ &mdash; 
+  Strategy for detecting changed files. Possible values: `metadata`, `content`
+
+  `metadata` compares file size and modification time. `content` compares a hash of the file contents, which survives tools that touch files, such as `git clone`.
+
+
+
 ## Available positional items:
 - _`PATH`_ &mdash; 
   Single file, single path or list of paths

@@ -68,6 +68,9 @@ pub struct LintCommand {
     #[bpaf(external)]
     pub suppression_options: SuppressionOptions,
 
+    #[bpaf(external(super::cache::cache_options))]
+    pub cache_options: super::CacheOptions,
+
     /// Single file, single path or list of paths
     #[bpaf(positional("PATH"), many, guard(validate_paths, PATHS_ERROR_MESSAGE))]
     pub paths: Vec<PathBuf>,

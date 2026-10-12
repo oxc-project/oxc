@@ -478,6 +478,14 @@ impl CliRunner {
             }
         }
 
+        let lint_cache = crate::cache::LintCache::open(
+            &self.options.cache_options,
+            &self.cwd,
+            &suppression_manager.file_action,
+            basic_options.tsconfig.as_deref(),
+            &(&config_store, type_aware, type_check, type_check_only, report_unused_directives),
+        );
+
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
             .with_report_unused_directives(report_unused_directives);
@@ -536,6 +544,12 @@ impl CliRunner {
         };
 
         let diff_manager = suppression_manager.build_diff();
+        let (files_to_lint, tx_error, lint_cache) = lint_cache.begin(
+            files_to_lint,
+            tx_error,
+            fix_options.is_enabled(),
+            misc_options.silent,
+        );
 
         let rule_timing_store = debug_timings.then(RuleTimingStore::new);
         let lint_result = if let Some(rule_timing_store) = &rule_timing_store {
@@ -569,6 +583,7 @@ impl CliRunner {
         let suppress_all_succeeded = suppression_options.suppress_all && result.is_ok();
 
         drop(tx_error);
+        lint_cache.finish();
 
         let diagnostic_result = diagnostic_service.run(stdout);
 

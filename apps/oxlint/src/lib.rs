@@ -2,6 +2,7 @@
 #![cfg_attr(not(feature = "napi"), allow(dead_code))]
 
 mod agent_detection;
+mod cache;
 mod command;
 mod config_loader;
 mod init;

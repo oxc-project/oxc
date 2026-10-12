@@ -1,3 +1,4 @@
+mod cache;
 mod ignore;
 mod lint;
 
@@ -6,6 +7,7 @@ use std::path::PathBuf;
 use bpaf::Bpaf;
 
 pub use self::{
+    cache::{CacheOptions, CacheStrategy},
     ignore::IgnoreOptions,
     lint::{
         DebugOption, LintCommand, OutputOptions, ReportUnusedDirectives, WarningOptions,
