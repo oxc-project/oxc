@@ -9530,6 +9530,26 @@
             }
           ]
         },
+        "unicorn/prefer-queue-microtask": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferQueueMicrotaskConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "unicorn/prefer-reflect-apply": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -18064,6 +18084,24 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferQueueMicrotaskConfig": {
+      "type": "object",
+      "properties": {
+        "checkSetImmediate": {
+          "description": "Whether to also check `setImmediate(callback)`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also check `setImmediate(callback)`."
+        },
+        "checkSetTimeout": {
+          "description": "Whether to also check `setTimeout(callback, 0)`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to also check `setTimeout(callback, 0)`."
         }
       },
       "additionalProperties": false

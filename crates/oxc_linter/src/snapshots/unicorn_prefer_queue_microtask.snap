@@ -1,0 +1,172 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `process.nextTick()`.
+   ╭─[prefer_queue_microtask.tsx:1:9]
+ 1 │ process.nextTick(callback);
+   ·         ────────
+   ╰────
+  help: Replace `process.nextTick()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `process.nextTick()`.
+   ╭─[prefer_queue_microtask.tsx:1:24]
+ 1 │ const result = process.nextTick(callback);
+   ·                        ────────
+   ╰────
+  help: Replace `process.nextTick()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `process.nextTick()`.
+   ╭─[prefer_queue_microtask.tsx:1:21]
+ 1 │ process /* keep */ .nextTick(callback);
+   ·                     ────────
+   ╰────
+  help: Replace `process.nextTick()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `process.nextTick()`.
+   ╭─[prefer_queue_microtask.tsx:1:9]
+ 1 │ process.nextTick(...argumentsArray);
+   ·         ────────
+   ╰────
+  help: Replace `process.nextTick()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `process.nextTick()`.
+   ╭─[prefer_queue_microtask.tsx:1:9]
+ 1 │ process.nextTick(callback, value);
+   ·         ────────
+   ╰────
+  help: Replace `process.nextTick()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `process.nextTick()`.
+   ╭─[prefer_queue_microtask.tsx:1:22]
+ 1 │ const tick = process.nextTick;
+   ·                      ────────
+   ╰────
+  help: Replace `process.nextTick()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `process.nextTick()`.
+   ╭─[prefer_queue_microtask.tsx:1:13]
+ 1 │ foo(process.nextTick);
+   ·             ────────
+   ╰────
+  help: Replace `process.nextTick()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `process.nextTick()`.
+   ╭─[prefer_queue_microtask.tsx:1:9]
+ 1 │ process.nextTick;
+   ·         ────────
+   ╰────
+  help: Replace `process.nextTick()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setImmediate()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setImmediate(callback);
+   · ────────────
+   ╰────
+  help: Replace `setImmediate()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setImmediate()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setImmediate(callback, value);
+   · ────────────
+   ╰────
+  help: Replace `setImmediate()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(callback, 0);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(callback, 0, value);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(callback, /* delay */ 0);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(callback, 0 /* delay */);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(callback, 0 // delay
+   · ──────────
+ 2 │             );
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(callback, 0,);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(callback, 0, /* trailing */);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(callback /* keep */, 0);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(function () { this.x; }, 0);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setImmediate()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setImmediate(function () { this.x; });
+   · ────────────
+   ╰────
+  help: Replace `setImmediate()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(function () { return () => this.x; }, 0);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(() => { this.x; }, 0);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(function () { x; }, 0);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
+
+  ⚠ unicorn(prefer-queue-microtask): Prefer `queueMicrotask()` over `setTimeout()`.
+   ╭─[prefer_queue_microtask.tsx:1:1]
+ 1 │ setTimeout(function () { function inner() { return this; } }, 0);
+   · ──────────
+   ╰────
+  help: Replace `setTimeout()` with `queueMicrotask()`.
