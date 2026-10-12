@@ -70,9 +70,10 @@ import {
   printTypeArguments,
   printTypeParameters,
 } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { UnknownNode } from "./types.ts";
+import type { UnhandledNodes } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -88,7 +89,7 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *   inside a `for` head, or a call under a `new`, knows to parenthesize itself.
  */
 export function printExpression(
-  node: ESTree.Expression | UnknownNode,
+  node: ESTree.Expression,
   state: State,
   precedence: number,
   ctx: number,
@@ -252,7 +253,18 @@ export function printExpression(
       printV8IntrinsicExpression(node, state, precedence, ctx);
       break;
     default:
-      throw new Error(`Unknown expression type: ${node.type}`);
+      throwUnknownNode(
+        node as Exclude<
+          UnhandledNodes<typeof node, typeof node.type>,
+          // Declarations, which are never expressions
+          | (ESTree.Function & { type: "FunctionDeclaration" })
+          | (ESTree.Function & { type: "TSDeclareFunction" })
+          | (ESTree.Class & { type: "ClassDeclaration" })
+          // A method's `value` when it has no body, which methods print themselves without coming here
+          | (ESTree.Function & { type: "TSEmptyBodyFunctionExpression" })
+        >,
+        "expression",
+      );
   }
 
   // Rust adds an exclusive-end mapping after a postfix operand which ended in `)` or `]`,

@@ -42,9 +42,10 @@ import {
   printTSTypeAliasDeclaration,
   printTypeAnnotation,
 } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { Literal, UnknownNode } from "./types.ts";
+import type { Literal, UnhandledNodes } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -155,7 +156,7 @@ function printDirective(stmt: ESTree.Directive, state: State): void {
  * Each case owns its own leading indent and its trailing newline, so a statement always leaves
  * the output at the start of a fresh line for the next one.
  */
-export function printStatement(node: ESTree.Statement | UnknownNode, state: State): void {
+export function printStatement(node: ESTree.Statement, state: State): void {
   // Arms are ordered roughly in order of most common nodes.
   // V8 turns this into (essentially) as chain of `if ... else if ... else if...`,
   // so making common nodes short-circuit early is a large perf boost.
@@ -320,7 +321,17 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       break;
     /* END_IF */
     default:
-      throw new Error(`Unknown statement type: ${node.type}`);
+      throwUnknownNode(
+        node as Exclude<
+          UnhandledNodes<typeof node, typeof node.type>,
+          // Expressions, which are never statements - in statement position they're wrapped in an `ExpressionStatement`
+          | (ESTree.Function & { type: "FunctionExpression" })
+          | (ESTree.Class & { type: "ClassExpression" })
+          // Only ever the `value` of a method with no body, never a statement
+          | (ESTree.Function & { type: "TSEmptyBodyFunctionExpression" })
+        >,
+        "statement",
+      );
   }
 }
 

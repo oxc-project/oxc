@@ -10,9 +10,9 @@ import { CTX_NONE } from "./operators.ts";
 import { PREC_COMMA } from "./precedence.ts";
 import { printString } from "./string.ts";
 import { printTypeAnnotation } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -28,7 +28,7 @@ type BindingPatternNode =
 /**
  * Print anything which can be bound to - a name, a destructuring pattern, or one carrying a default.
  */
-export function printBindingPattern(node: BindingPatternNode | UnknownNode, state: State): void {
+export function printBindingPattern(node: BindingPatternNode, state: State): void {
   switch (node.type) {
     case "Identifier":
       printSpaceBeforeIdentifier(state);
@@ -57,7 +57,7 @@ export function printBindingPattern(node: BindingPatternNode | UnknownNode, stat
       if (TS && node.typeAnnotation != null) printTypeAnnotation(node.typeAnnotation, state);
       break;
     default:
-      throw new Error(`Unknown binding pattern type: ${node.type}`);
+      throwUnknownNode(node, "binding pattern");
   }
 }
 

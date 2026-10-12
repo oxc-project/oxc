@@ -39,9 +39,9 @@ import {
 } from "./precedence.ts";
 import { printDirectivesAndStatements } from "./statement.ts";
 import { printString } from "./string.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -77,10 +77,7 @@ export function printTSAsOrSatisfiesExpression(
  * A prefix `TSJSDocNullableType` spaces itself off a preceding `?`, as `?` followed by `?T`
  * would otherwise merge into `??`.
  */
-function printTSType(
-  node: ESTree.TSTupleElement | ESTree.TSQualifiedName | UnknownNode,
-  state: State,
-): void {
+function printTSType(node: ESTree.TSTupleElement | ESTree.TSQualifiedName, state: State): void {
   switch (node.type) {
     case "TSTypeReference":
       printTSTypeName(node.typeName, state);
@@ -280,7 +277,7 @@ function printTSType(
       }
       break;
     default:
-      throw new Error(`Unknown type node: ${node.type}`);
+      throwUnknownNode(node, "TS type");
   }
 }
 
@@ -473,7 +470,7 @@ function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
  * Accessor signatures keep their `get`/`set` prefix, index signatures go to `printTSIndexSignature`,
  * and an unrecognized member type throws.
  */
-function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, ctx: number): void {
+function printTSSignature(node: ESTree.TSSignature, state: State, ctx: number): void {
   switch (node.type) {
     case "TSPropertySignature":
       if (node.readonly) write(state, "readonly ", CAT_OTHER);
@@ -524,7 +521,7 @@ function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, 
       if (node.returnType != null) printTypeAnnotation(node.returnType, state);
       break;
     default:
-      throw new Error(`Unknown signature type: ${node.type}`);
+      throwUnknownNode(node, "signature");
   }
 }
 

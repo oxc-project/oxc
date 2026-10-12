@@ -18,9 +18,10 @@ import {
   printTSModuleDeclaration,
   printTSTypeAliasDeclaration,
 } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { ExportNamedDeclarationNode } from "./types.ts";
+import type { UnhandledNodes } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -204,7 +205,10 @@ function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
  * Print an `export` statement which names what it exports, whether that is a declaration,
  * a list of specifiers, or a list re-exported from another module.
  */
-export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, state: State): void {
+export function printExportNamedDeclaration(
+  node: ESTree.ExportNamedDeclaration,
+  state: State,
+): void {
   printIndent(state);
 
   writeWithMap(state, "export ", CAT_OTHER, node.start, node.end, node);
@@ -250,7 +254,18 @@ export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, st
         break;
       /* END_IF */
       default:
-        throw new Error(`Unknown export declaration type: ${declaration.type}`);
+        throwUnknownNode(
+          declaration as Exclude<
+            UnhandledNodes<typeof declaration, typeof declaration.type>,
+            // Expressions, which are never declarations - `export default function () {}`
+            // and `export default class {}` are `ExportDefaultDeclaration`s, not handled here
+            | (ESTree.Function & { type: "FunctionExpression" })
+            | (ESTree.Class & { type: "ClassExpression" })
+            // Only ever the `value` of a method with no body, never a declaration
+            | (ESTree.Function & { type: "TSEmptyBodyFunctionExpression" })
+          >,
+          "export declaration",
+        );
     }
     return;
   }

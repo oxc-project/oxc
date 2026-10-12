@@ -34,11 +34,11 @@ import {
   printTypeArguments,
   printTypeParameters,
 } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
 import type {
   AccessorPropertyNode,
-  ClassBodyNode,
   MethodDefinitionNode,
   PropertyDefinitionNode,
 } from "./types.ts";
@@ -161,7 +161,7 @@ function decoratorNeedsWrap(expr: ESTree.Expression): boolean {
 /**
  * Print the members of a class in braces, empty ones tight.
  */
-function printClassBody(node: ClassBodyNode, state: State): void {
+function printClassBody(node: ESTree.ClassBody, state: State): void {
   const { body } = node;
   const { length } = body;
   if (length === 0) {
@@ -211,7 +211,7 @@ function printClassBody(node: ClassBodyNode, state: State): void {
         break;
       /* END_IF */
       default:
-        throw new Error(`Unknown class element type: ${element.type}`);
+        throwUnknownNode(element, "class element");
     }
   }
 
