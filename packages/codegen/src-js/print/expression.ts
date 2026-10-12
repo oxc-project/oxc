@@ -528,7 +528,7 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
     if (key.type === "Identifier") {
       const keyName = key.name;
       if (keyName === "__proto__") {
-        shorthand = node.shorthand;
+        shorthand = node.shorthand === true;
       } else {
         const inner = withoutParens(value);
         if (inner.type === "Identifier" && inner.name === keyName) {
