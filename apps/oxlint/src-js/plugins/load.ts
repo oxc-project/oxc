@@ -1,5 +1,4 @@
 import { createContext } from "./context.ts";
-import { deepFreezeJsonArray } from "./json.ts";
 import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
 import { switchWorkspace } from "./workspace.ts";
 import { getErrorMessage } from "../utils/utils.ts";
@@ -56,7 +55,10 @@ interface RuleDetailsBase {
   readonly isFixable: boolean;
   readonly hasSuggestions: boolean;
   readonly messages: Readonly<Record<string, string>> | null;
+  // Not validated against schema or frozen until rule is first used. Access via `getDefaultOptions`.
   readonly defaultOptions: Readonly<Options>;
+  // `true` once `defaultOptions` has been validated against schema and deep frozen
+  isDefaultOptionsValidated: boolean;
   // Function to validate options against schema.
   // `false` means validation is disabled. Rule accepts any options.
   // `null` means no validator provided. Rule does not accept any options.
@@ -193,6 +195,7 @@ export function registerPlugin(
       hasSuggestions = false,
       messages: Record<string, string> | null = null,
       defaultOptions: Readonly<Options> = DEFAULT_OPTIONS,
+      isDefaultOptionsValidated = true,
       schemaValidator: SchemaValidator | false | null = null;
     const ruleMeta = rule.meta;
     if (ruleMeta != null) {
@@ -220,7 +223,8 @@ export function registerPlugin(
         throw new TypeError("Invalid `rule.meta.hasSuggestions`");
       }
 
-      // If `schema` provided, compile schema to validator for applying schema defaults to options
+      // If `schema` provided, create validator for applying schema defaults to options.
+      // Schema is compiled lazily, on first use of the validator.
       schemaValidator = compileSchema(ruleMeta.schema);
 
       // Get default options
@@ -235,10 +239,6 @@ export function registerPlugin(
         if (inputDefaultOptions.length !== 0) {
           defaultOptions = conformDefaultOptions(inputDefaultOptions);
 
-          // Validate default options against schema, if schema was provided.
-          // This also applies any defaults from schema.
-          // `schemaValidator` can mutate original `rule.meta.defaultOptions` object in place,
-          // but that's what ESLint does, so it's OK.
           if (schemaValidator === null) {
             throw new Error(
               `Rule ${fullRuleName}:\n`
@@ -246,12 +246,10 @@ export function registerPlugin(
                 + "or disable schema validation with `rule.meta.schema: false` (not recommended).",
             );
           }
-          // Note: `defaultOptions` is not frozen yet
-          if (schemaValidator !== false) {
-            schemaValidator(defaultOptions as Writable<typeof defaultOptions>, fullRuleName);
-          }
 
-          deepFreezeJsonArray(defaultOptions as Writable<typeof defaultOptions>);
+          // Default options are validated against schema (which also applies any defaults from schema)
+          // and deep frozen by `getDefaultOptions`, when rule is first used
+          isDefaultOptionsValidated = false;
         }
       }
 
@@ -273,6 +271,7 @@ export function registerPlugin(
       hasSuggestions,
       messages,
       defaultOptions,
+      isDefaultOptionsValidated,
       optionsSchemaValidator: schemaValidator,
       ruleIndex: 0,
       visitor: null,

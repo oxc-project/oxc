@@ -1,7 +1,7 @@
 import { walkProgramWithCfg, resetCfgWalk } from "./cfg.ts";
 import { setupFileContext, resetFileContext } from "./context.ts";
 import { registeredRules } from "./load.ts";
-import { allOptions, DEFAULT_OPTIONS_ID } from "./options.ts";
+import { allOptions, DEFAULT_OPTIONS_ID, getDefaultOptions } from "./options.ts";
 import { diagnostics } from "./report.ts";
 import { setSettingsForFile, resetSettings } from "./settings.ts";
 import { ast, initAst, resetSourceAndAst, setupSourceForFile } from "./source_code.ts";
@@ -233,7 +233,7 @@ export function lintFileImpl(
     // options (which falls back to `DEFAULT_OPTIONS`).
     // Reuse `OPTIONS_DESCRIPTOR` object to avoid unnecessarily creating a temporary object each time.
     OPTIONS_DESCRIPTOR.value =
-      optionsId === DEFAULT_OPTIONS_ID ? ruleDetails.defaultOptions : allOptions[optionsId];
+      optionsId === DEFAULT_OPTIONS_ID ? getDefaultOptions(ruleDetails) : allOptions[optionsId];
     Object.defineProperty(ruleDetails.context, "options", OPTIONS_DESCRIPTOR);
 
     let { visitor } = ruleDetails;

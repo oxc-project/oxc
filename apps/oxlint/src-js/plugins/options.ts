@@ -102,6 +102,10 @@ AJV.addMetaSchema(metaSchema);
  *
  * This function should be called once when loading a rule, and the returned validator stored in `RuleDetails`.
  *
+ * Schema is not compiled until the validator is first called. Compiling a schema with AJV is expensive,
+ * and plugins often contain many rules which are not enabled. ESLint likewise only compiles schemas of rules
+ * which are used in config.
+ *
  * ESLint allows array shorthand: `schema: [item1, item2]` which means `options[0]` must match `item1`, etc.
  * This function converts that to a proper JSON Schema, before compiling it.
  *
@@ -109,7 +113,7 @@ AJV.addMetaSchema(metaSchema);
  * https://github.com/eslint/eslint/blob/v9.39.2/lib/config/config.js#L177-L210
  *
  * @param schema - Rule's schema from `meta.schema`
- * @returns Compiled AJV validator, or `null` if no options accepted, or `false` if validation is disabled
+ * @returns Validator function, or `null` if no options accepted, or `false` if validation is disabled
  */
 export function compileSchema(
   schema: RuleOptionsSchema | null | undefined,
@@ -136,17 +140,21 @@ export function compileSchema(
     };
   }
 
-  const validate = AJV.compile(schema);
-  return wrapSchemaValidator(validate);
+  return createSchemaValidator(schema);
 }
 
 /**
- * Wrap AJV validator function to throw if validation fails.
- * @param validate - AJV validator function
- * @returns Wrapped validator function, which throws if validation fails
+ * Create validator function for a schema, which throws if validation fails.
+ * Schema is compiled with AJV on first call to the validator.
+ * @param schema - JSON Schema
+ * @returns Validator function, which throws if validation fails
  */
-function wrapSchemaValidator(validate: Ajv.ValidateFunction): SchemaValidator {
+function createSchemaValidator(schema: JSONSchema4): SchemaValidator {
+  let validate: Ajv.ValidateFunction | null = null;
+
   return (options: Options, ruleName: string): void => {
+    if (validate === null) validate = AJV.compile(schema);
+
     validate(options);
 
     if (!validate.errors) return;
@@ -263,7 +271,6 @@ export function setOptions(optionsJson: string): void {
  * https://github.com/eslint/eslint/blob/v9.39.2/lib/config/config.js#L532-L637
  *
  * Returned options are deep frozen.
- * `defaultOptions` must already be deep frozen before calling this function.
  * `configOption` may be mutated.
  *
  * Default options merging follows the same logic as ESLint's `getRuleOptions`:
@@ -288,7 +295,7 @@ function processOptions(configOptions: Options, ruleDetails: RuleDetails): Reado
   }
 
   // Merge with `defaultOptions` first
-  const { defaultOptions } = ruleDetails;
+  const defaultOptions = getDefaultOptions(ruleDetails);
 
   const options =
     defaultOptions === DEFAULT_OPTIONS
@@ -305,6 +312,35 @@ function processOptions(configOptions: Options, ruleDetails: RuleDetails): Reado
 
   deepFreezeJsonArray(options);
   return options;
+}
+
+/**
+ * Get default options for a rule.
+ *
+ * On first call for a rule, validates `defaultOptions` against the rule's schema, which also applies any defaults
+ * from the schema, and deep freezes them. This is deferred until the rule is used, rather than done when loading
+ * the plugin, so that schemas of rules which are not enabled are never compiled.
+ *
+ * @param ruleDetails - Rule details
+ * @returns Default options (deep frozen)
+ * @throws `Error` if default options fail validation
+ */
+export function getDefaultOptions(ruleDetails: RuleDetails): Readonly<Options> {
+  const { defaultOptions } = ruleDetails;
+  if (!ruleDetails.isDefaultOptionsValidated) {
+    // `registerPlugin` only leaves `isDefaultOptionsValidated` as `false` if rule has a validator
+    const validator = ruleDetails.optionsSchemaValidator;
+    debugAssertIsNonNull(validator, "Rule with `defaultOptions` should have a schema validator");
+
+    // Note: `defaultOptions` is not frozen yet
+    if (validator !== false) {
+      validator(defaultOptions as Writable<typeof defaultOptions>, ruleDetails.context.id);
+    }
+    deepFreezeJsonArray(defaultOptions as Writable<typeof defaultOptions>);
+
+    ruleDetails.isDefaultOptionsValidated = true;
+  }
+  return defaultOptions;
 }
 
 /**

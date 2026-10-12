@@ -1,0 +1,10 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "options-unused-rules-plugin/default-options": "error",
+    "options-unused-rules-plugin/config-options": ["error", { "fromConfig": 1 }]
+  }
+}
