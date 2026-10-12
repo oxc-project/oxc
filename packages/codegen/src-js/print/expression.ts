@@ -407,15 +407,9 @@ function printArguments(
   args: ESTree.Argument[],
   state: State,
 ): void {
-  const { length } = args;
-  if (length === 0) {
-    writeNoLast(state, "(");
-    writeWithMapEnd(state, ")", CAT_CLOSE_BRACKET, node.start, node.end, node);
-    return;
-  }
-
   write(state, "(", CAT_OTHER);
 
+  const { length } = args;
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
 
