@@ -49,9 +49,9 @@ antd.js:
   sys deallocs: 824
   sys alloc bytes: 29973448 # 29.97 MB
   sys peak growth: 19934725 # 19.93 MB
-  arena allocs: 176490
-  arena reallocs: 34406
-  arena size: 44072664 # 44.07 MB
+  arena allocs: 176364
+  arena reallocs: 34349
+  arena size: 44065688 # 44.07 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB
