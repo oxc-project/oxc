@@ -47,6 +47,31 @@ if (DEBUG) {
 export function printSpaceBeforeIdentifier(state: State): void {
   debugAssertLastFresh(state);
 
+  // Pretty output never needs this space, so this function is always a no-op.
+  // Only a minifying printer needs the check.
+  //
+  // `last` is never one of the categories the check looks for:
+  //
+  // - The next thing written after a keyword is always either a space (`return x`, `function f`),
+  //   or punctuation (`return;`, `default:`, `function(`, `function<`).
+  //   A space replaces the keyword's `CAT_IDENT` with `CAT_OTHER` before anything which calls this.
+  //   Punctuation does not start with an identifier character, so is never preceded by a call to this.
+  //
+  // - Everything else which writes one of the relevant categories ends a name, an expression or a type:
+  //   - an identifier, `this` or `true` (`CAT_IDENT`)
+  //   - a number (`CAT_INT_DIGIT`)
+  //   - a regex (`CAT_REGEX_SLASH`)
+  //   Nothing starting with an identifier character is ever written straight after one of those.
+  //   The keywords which can follow them (`in`, `of`, `as`, `from`, `extends` etc)
+  //   are always written with a space before them, so do not call this function.
+  //
+  // Release builds remove the calls entirely. Debug builds keep the assertion above,
+  // to ensure `last` stays fresh at every call site, ready for a minify mode.
+  if (!MINIFY) {
+    debugAssert(state.last > CAT_REGEX_SLASH);
+    return;
+  }
+
   // `last` starts as `CAT_OTHER` (start of output behaves like after whitespace),
   // so no empty-output check is needed.
   // Everything needing a space before an identifier is one of the lowest codes, so this is one compare -
