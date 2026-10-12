@@ -87,9 +87,13 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *   A printer compares its own precedence against it and parenthesizes itself when it would otherwise bind too loosely.
  * @param ctx - `CTX_FORBID_IN` / `CTX_FORBID_CALL` flags describing the enclosing position, so that an `in` operator
  *   inside a `for` head, or a call under a `new`, knows to parenthesize itself.
+ *
+ * Also prints a `SpreadElement` in an argument list or array, though it is not an expression.
+ * An argument or array element can be any expression, so reading its `type` is a megamorphic load.
+ * Dispatching spreads here too means the caller doesn't read it a second time to check for a spread.
  */
 export function printExpression(
-  node: ESTree.Expression,
+  node: ESTree.Expression | ESTree.SpreadElement,
   state: State,
   precedence: number,
   ctx: number,
@@ -227,6 +231,10 @@ export function printExpression(
       break;
     case "JSXFragment":
       printJSXFragment(node, state);
+      break;
+    case "SpreadElement":
+      writeWithMap(state, "...", CAT_OTHER, node.start, node.end, node);
+      printExpression(node.argument, state, precedence, ctx);
       break;
     /* IF TS */
     case "TSAsExpression":
@@ -396,13 +404,8 @@ function printArguments(
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
 
-    const arg = args[i];
-    if (arg.type === "SpreadElement") {
-      writeWithMap(state, "...", CAT_OTHER, arg.start, arg.end, arg);
-      printExpression(arg.argument, state, PREC_COMMA, CTX_NONE);
-    } else {
-      printExpression(arg, state, PREC_COMMA, CTX_NONE);
-    }
+    // `printExpression` prints a spread too
+    printExpression(args[i], state, PREC_COMMA, CTX_NONE);
   }
 
   writeWithMapEnd(state, ")", CAT_CLOSE_BRACKET, node.start, node.end, node);
@@ -624,14 +627,8 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
     }
 
     const element = elements[i];
-    if (element != null) {
-      if (element.type === "SpreadElement") {
-        writeWithMap(state, "...", CAT_OTHER, element.start, element.end, element);
-        printExpression(element.argument, state, PREC_COMMA, CTX_NONE);
-      } else {
-        printExpression(element, state, PREC_COMMA, CTX_NONE);
-      }
-    }
+    // `printExpression` prints a spread too
+    if (element != null) printExpression(element, state, PREC_COMMA, CTX_NONE);
 
     if (i === length - 1 && element == null) {
       write(state, ",", CAT_OTHER);
