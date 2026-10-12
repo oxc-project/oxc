@@ -770,7 +770,13 @@ function printConditionalExpression(
   // round trip: `value as Type ? /x/ : y` re-lexes the `/` as a division.
   let testPrecedence = PREC_CONDITIONAL;
   if (TS) {
-    const testType = withoutParens(node.test).type;
+    let { test } = node;
+    let testType = test.type;
+    while (testType === "ParenthesizedExpression") {
+      test = (test as ESTree.ParenthesizedExpression).expression;
+      testType = test.type;
+    }
+
     if (testType === "TSAsExpression" || testType === "TSSatisfiesExpression") {
       testPrecedence = PREC_COMPARE;
     }
