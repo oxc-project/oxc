@@ -182,6 +182,18 @@ fn test() {
                    expect(numbers[i]).toBeGreaterThan(7);
                  }
                   });"#,
+        // `describe` / `test` imported from a module other than `vitest` are not test functions.
+        r#"import { describe, test } from "./helpers.ts";
+            describe("probe", () => {
+              for (const item of ["a", "b"]) {
+                test(`handles ${item}`, () => {});
+              }
+            });"#,
+        // A locally declared `test` shadows the global.
+        r#"function test(name, fn) { fn(); }
+            for (const item of ["a", "b"]) {
+              test(`handles ${item}`, () => {});
+            }"#,
     ];
 
     let fail_vitest = vec![
@@ -297,6 +309,13 @@ fn test() {
                   });
                    }
                  "#,
+        // An aliased import of vitest's `it` is still a test function.
+        r#"import { describe, it as check } from "vitest";
+            describe("probe", () => {
+              for (const item of ["a", "b"]) {
+                check(`handles ${item}`, () => {});
+              }
+            });"#,
     ];
 
     let mut pass = vec![];
