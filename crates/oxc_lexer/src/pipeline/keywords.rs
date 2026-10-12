@@ -329,19 +329,14 @@ static KW_TEXT: Aligned128<[[u64; 2]; SLOT_COUNT]> = {
     let mut text = [[0; 2]; SLOT_COUNT];
 
     let mut i = 0;
-    while i < KEYWORDS_JS.len() {
-        let kw = &KEYWORDS_JS[i];
-        if !matches!(kw.kind, TokenKind::Ident) {
-            text[kw.slot(false)] = kw.padded();
-        }
-        i += 1;
-    }
-
-    let mut i = 0;
     while i < KEYWORDS_TS.len() {
         let kw = &KEYWORDS_TS[i];
         if !matches!(kw.kind, TokenKind::Ident) {
-            text[kw.slot(true)] = kw.padded();
+            let padded = kw.padded();
+            if i < KEYWORDS_JS.len() {
+                text[kw.slot(false)] = padded;
+            }
+            text[kw.slot(true)] = padded;
         }
         i += 1;
     }
