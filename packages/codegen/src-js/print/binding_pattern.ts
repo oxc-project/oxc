@@ -175,7 +175,7 @@ function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void
   const { elements } = node;
   let { length } = elements;
 
-  let rest: ESTree.BindingRestElement | ESTree.AssignmentTargetRest | null = null;
+  let rest: ESTree.BindingRestElement | null = null;
   if (length > 0) {
     const lastElement = elements[length - 1];
     if (lastElement != null && lastElement.type === "RestElement") {
@@ -197,7 +197,12 @@ function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void
 
   if (rest !== null) {
     write(state, " ", CAT_OTHER);
-    printBindingPattern(rest, state);
+    writeWithMap(state, "...", CAT_OTHER, rest.start, rest.end, rest);
+    printBindingPattern(rest.argument, state);
+    if (TS) {
+      const { typeAnnotation } = rest;
+      if (typeAnnotation != null) printTypeAnnotation(typeAnnotation, state);
+    }
   }
 
   write(state, "]", CAT_CLOSE_BRACKET);
