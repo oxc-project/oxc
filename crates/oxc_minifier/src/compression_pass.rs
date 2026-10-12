@@ -254,6 +254,11 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
         ctx.state.pass_changes.removed_references = BitSet::new_in(refs_len, ctx.allocator());
     }
     ctx.state.pass_changes.direct_eval_dropped = false;
+
+    // (4) Removed declarations — keep symbol metadata in sync with the live AST
+    for (symbol_id, span) in ctx.state.pass_changes.removed_declarations.drain(..) {
+        ctx.scoping.scoping_mut().remove_symbol_declaration(symbol_id, span);
+    }
     liveness_inputs_changed
 }
 
