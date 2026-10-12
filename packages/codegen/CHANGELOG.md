@@ -4,6 +4,26 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-12
+
+### 🐛 Bug Fixes
+
+- f50257e codegen: Avoid extra indent before empty do-while bodies (#27407) (camc314)
+- 5461c1a packages/codegen: Fix printing negative `BigIntLiteral` after `-` (#27377) (overlookmotel)
+- bebef88 packages/codegen: Fix debug assert fail printing `TSJSDocNonNullableType` (#27373) (overlookmotel)
+
+### ⚡ Performance
+
+- 961f318 packages/codegen: Reduce megamorphic `type` reads in `binCheckAndPrepare` (#27460) (overlookmotel)
+- 3d2f93f packages/codegen: Reduce megamorphic property accesses for `BinaryExpression`s (#27459) (overlookmotel)
+- 675ec5e packages/codegen: Reduce megamorphic property accesses in `printBinaryish` (#27458) (overlookmotel)
+- b0dbfff packages/codegen: Reduce writes and branches printing functions (#27455) (overlookmotel)
+- 5f3865c packages/codegen: Reduce writes for optional `MemberExpression`s (#27454) (overlookmotel)
+
+### 📚 Documentation
+
+- 12dfa25 packages/codegen: Correct doc comment for `printBinaryish` (#27456) (overlookmotel)
+
 ## [0.151.0] - 2026-09-21
 
 ### 🚀 Features
