@@ -221,7 +221,21 @@ Exclude or reserve property names that are constructed this way.
 Code does not depend on function or class names being preserved by default.
 In the Rust API, set `CompressOptions::keep_names` and, when identifier mangling
 is enabled, `MangleOptions::keep_names` for the names you need to preserve.
-The Node.js API exposes this as `keepNames`.
+When both stages are enabled in the Node.js API, configure both options:
+
+- `compress.keepNames` takes an object with Boolean `function` and `class` fields.
+- `mangle.keepNames` takes a Boolean (for both kinds of names) or an object with
+  Boolean `function` and `class` fields.
+
+For example, to preserve both function and class names during compression and
+identifier mangling:
+
+```javascript
+const options = {
+  compress: { keepNames: { function: true, class: true } },
+  mangle: { keepNames: true },
+};
+```
 
 ```javascript
 // The minifier assumes this never happens:
