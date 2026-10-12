@@ -523,27 +523,27 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   // the expression printer what it is.
   // A `__proto__` shorthand leaves this null, since its flag says nothing about the value it carries.
   let shorthandIdentifier: ESTree.IdentifierReference | null = null;
-  if (!node.computed && key.type === "Identifier") {
-    if (key.name === "__proto__") {
-      shorthand = node.shorthand;
-    } else {
-      const inner = withoutParens(value);
-      if (inner.type === "Identifier" && key.name === inner.name) {
-        shorthand = true;
-        shorthandIdentifier = inner;
-      }
-    }
-  }
-
   let { computed } = node;
-  // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
-  if (
-    !computed
-    && key.type === "Literal"
-    && typeof key.value === "number"
-    && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
-  ) {
-    computed = true;
+  if (!computed) {
+    if (key.type === "Identifier") {
+      const keyName = key.name;
+      if (keyName === "__proto__") {
+        shorthand = node.shorthand;
+      } else {
+        const inner = withoutParens(value);
+        if (inner.type === "Identifier" && inner.name === keyName) {
+          shorthand = true;
+          shorthandIdentifier = inner;
+        }
+      }
+    } else if (
+      key.type === "Literal"
+      && typeof key.value === "number"
+      && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
+    ) {
+      // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
+      computed = true;
+    }
   }
 
   if (shorthand) {
