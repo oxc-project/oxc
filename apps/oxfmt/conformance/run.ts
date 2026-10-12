@@ -12,6 +12,7 @@ import {
 } from "node:fs";
 import { join, relative } from "node:path";
 import prettier from "prettier";
+import * as astroPlugin from "prettier-plugin-astro";
 import * as sveltePlugin from "prettier-plugin-svelte";
 import { format } from "../dist/index.js";
 
@@ -167,6 +168,26 @@ const categories: Category[] = [
           indentScriptAndStyle: true,
           sortOrder: "options-scripts-styles-markup",
         },
+      },
+    ],
+  },
+  {
+    name: "astro",
+    sources: [
+      { dir: join(EXTERNALS_DIR, "plugin-astro"), ext: "input.astro" },
+      { dir: join(FIXTURES_DIR, "edge-cases", "astro") },
+    ],
+    optionSets: [
+      { printWidth: 80, astro: {} },
+      {
+        printWidth: 120,
+        singleQuote: true,
+        semi: false,
+        // For prettier
+        astroAllowShorthand: true,
+        astroCompressHTML: "html",
+        // For oxfmt
+        astro: { allowShorthand: true, compressHTML: "html" },
       },
     ],
   },
@@ -392,7 +413,7 @@ async function compareWithPrettier(
     prettierResult = await prettier.format(content, {
       ...options,
       filepath: fileName,
-      plugins: [sveltePlugin],
+      plugins: [sveltePlugin, astroPlugin],
     });
   } catch {
     prettierResult = "ERROR";

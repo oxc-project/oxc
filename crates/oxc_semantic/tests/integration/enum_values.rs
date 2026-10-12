@@ -218,15 +218,23 @@ fn merged_enum_cross_declaration_reference() {
 
 #[test]
 fn unary_on_string() {
-    // Babel uses JS coercion: +"s" → "s" (identity), -"s" → NaN, ~"s" → -1
+    // TypeScript leaves unary-on-string initializers unevaluated, so the enum
+    // member keeps its verbatim initializer instead of folding to a wrong value.
     let source = r#"enum A { X = +"hello", Y = -"hello", Z = ~"hello" }"#;
-    debug_assert_eq!(
-        get_enum_member_value(source, "X"),
-        Some(ConstantValue::String("hello".into()))
-    );
-    match get_enum_member_value(source, "Y") {
-        Some(ConstantValue::Number(n)) => assert!(n.is_nan()),
-        other => panic!("Expected Some(Number(NaN)), got {other:?}"),
-    }
-    debug_assert_eq!(get_enum_member_value(source, "Z"), Some(ConstantValue::Number(-1.0)));
+    assert_eq!(get_enum_member_value(source, "X"), None);
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+    assert_eq!(get_enum_member_value(source, "Z"), None);
+}
+
+#[test]
+fn unary_on_string_member_reference() {
+    // A unary operation on a member whose value is a string must decline for the
+    // same reason — `+"4"` would otherwise fold to the string "4" (tsc: number 4)
+    // and `-"3"`/`~"4"` to NaN/-1 instead of -3/-5, also breaking the reverse
+    // mapping and any auto-increment member after it.
+    let source = r#"enum A { X = "4", Y = -X, Z = ~X, W = +X }"#;
+    assert_eq!(get_enum_member_value(source, "X"), Some(ConstantValue::String("4".into())));
+    assert_eq!(get_enum_member_value(source, "Y"), None);
+    assert_eq!(get_enum_member_value(source, "Z"), None);
+    assert_eq!(get_enum_member_value(source, "W"), None);
 }

@@ -1,8 +1,207 @@
 use oxc_span::SourceType;
 
 use crate::{
-    CompressOptions, test_options, test_options_source_type, test_same_options, test_smallest,
+    CompressOptions, CompressOptionsUnused, test_options, test_options_source_type,
+    test_same_options, test_same_options_source_type, test_smallest,
 };
+
+#[test]
+fn inline_constant_iife_arguments() {
+    // https://github.com/oxc-project/oxc/issues/27379
+    test_smallest("const f = x => x + 1; f(1);", "");
+    test_smallest("const foo = x => x + 1; foo(1); export const bar = 1;", "export const bar = 1;");
+    test_smallest("(x => x + 1)(1);", "");
+    test_smallest("((x, y) => x + y)(1, 2);", "");
+    test_smallest("(x => x + 1)(1 + 2);", "");
+    test_smallest("(x => { return x + 1 })(1);", "");
+    test_smallest("(x => x + 'b')('a');", "");
+    test_smallest("(x => x + 1n)(1n);", "");
+
+    // Parameter facts also reach nested closures, respecting shadowing.
+    test_smallest("use((x => () => x + 1)(1));", "use((x => () => 2)(1));");
+    test_smallest("use((x => x + (x => x + 1)(2))(1));", "use((x => x + (x => 3)(2))(1));");
+    // Recording the argument must not duplicate it at a bare parameter read.
+    test_smallest(
+        "(x => effect(x))('a long string with many characters');",
+        "(x => effect(x))('a long string with many characters');",
+    );
+}
+
+#[test]
+fn inline_iife_arguments_preserves_side_effects() {
+    test_smallest("(x => effect(x + 1))(1);", "(x => effect(2))(1);");
+    test_smallest(
+        "(x => effect(x + 1))((sideEffect(), 1));",
+        "(x => effect(2))((sideEffect(), 1));",
+    );
+    test_smallest("(x => x + 1)(1, sideEffect());", "(x => 2)(1, sideEffect());");
+
+    // The type of a nonconstant argument is unknown; a mixed BigInt addition throws.
+    test_smallest("(x => x + 1)(value);", "(x => x + 1)(value);");
+    test_smallest("(x => x + 1)(1n);", "(x => x + 1)(1n);");
+    test_smallest("(x => x + 1)(Symbol());", "(x => x + 1)(Symbol());");
+
+    let options = CompressOptions::smallest();
+    for source in [
+        "use((x => (x++, () => x))(1));",
+        "use((x => () => x++)(1));",
+        "(x => (eval('x = 2'), effect(x)))(1);",
+        "((x = sideEffect()) => effect(x))(1);",
+        "(({ x }) => effect(x))(1);",
+        "((...x) => effect(x))(1);",
+        "((x, y) => effect(x, y))(...values, 1);",
+        "((x, y) => effect(x, y))(1, ...values);",
+    ] {
+        test_same_options(source, &options);
+    }
+
+    // Redeclarations may replace the parameter before an earlier closure reads it.
+    test_smallest(
+        "(x => { function read() { effect(x) } function x() { sideEffect() } read() })(1);",
+        "(x => { function read() { effect(x) } function x() { sideEffect() } read() })(1);",
+    );
+}
+
+#[test]
+fn inline_constant_function_iife_arguments() {
+    test_smallest("(function (x) { return x + 1 })(1);", "");
+    test_smallest("const f = function (x) { return x + 1 }; f(1);", "");
+    test_smallest("(function unused(x, y) { return x + y })(1, 2);", "");
+    test_smallest("(function (x) { effect(x + 1) })(1);", "(function (x) { effect(2) })(1);");
+    test_smallest(
+        "(function (x) { effect(x + 1) })((sideEffect(), 1));",
+        "(function (x) { effect(2) })((sideEffect(), 1));",
+    );
+    test_smallest(
+        "use((function (x) { return () => x + 1 })(1));",
+        "use((function (x) { return () => 2 })(1));",
+    );
+    test_smallest(
+        "(function (x) { effect(x) })('a long string with many characters');",
+        "(function (x) { effect(x) })('a long string with many characters');",
+    );
+
+    // Explicit strict mode also makes regular script IIFEs eligible.
+    test_options_source_type(
+        "(function (x) { 'use strict'; effect(x + 1) })(1);",
+        "(function (x) { 'use strict'; effect(2) })(1);",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+}
+
+#[test]
+fn inline_function_iife_arguments_preserves_arguments_aliasing() {
+    let options = CompressOptions::smallest();
+    // Sloppy-mode parameters can change through mapped arguments or caller
+    // introspection, without a resolved write to the parameter binding.
+    for source in [
+        "(function (x) { effect(x + 1) })(1);",
+        "(function (x) { arguments[0] = 2, effect(x + 1) })(1);",
+        "(function (x) { use(arguments), effect(x + 1) })(1);",
+        "(function (x) { use(() => (arguments[0] = 2, x + 1)) })(1);",
+        "(function (x) { var arguments; arguments[0] = 2, effect(x + 1) })(1);",
+        "(function (x, x) { effect(x + 1) })(1, value);",
+        "(function (x) { mutateCaller(), effect(x + 1) })(1);",
+    ] {
+        test_same_options_source_type(source, SourceType::cjs(), &options);
+    }
+
+    // Strict arguments objects do not alias the parameters, even in closures.
+    test_smallest(
+        "(function (x) { arguments[0] = 2, effect(x + 1) })(1);",
+        "(function (x) { arguments[0] = 2, effect(2) })(1);",
+    );
+    test_smallest(
+        "use((function (x) { return () => (arguments[0] = 2, x + 1) })(1));",
+        "use((function (x) { return () => (arguments[0] = 2, 2) })(1));",
+    );
+}
+
+#[test]
+fn parameter_writes_preserve_mapped_arguments() {
+    // https://github.com/oxc-project/oxc/issues/27473
+    let options = CompressOptions::smallest();
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        test_same_options_source_type(
+            "(function (a) { console.log(a = 'foo', arguments[0]) })('bar');",
+            source_type,
+            &options,
+        );
+        // Redeclarations create symbol-value metadata, but the parameter is
+        // still observable through the mapped arguments object.
+        for source in [
+            "(function (a) { var a; console.log(a = 'foo', arguments[0]) })('bar');",
+            "(function (a) { var a = 'baz'; console.log(a = 'foo', arguments[0]) })('bar');",
+            "(function (a) { function a() {} console.log(a = 'foo', arguments[0]) })('bar');",
+            "(function (a) { var a = 'foo'; console.log(arguments[0]) })('bar');",
+            "(function (a, b) { var a, b; console.log(a = 'foo', b = 2, arguments[0], arguments[1]) })('bar', 1);",
+            "(function (a, a) { var a; console.log(a = 'foo', arguments[0], arguments[1]) })('bar', 'baz');",
+        ] {
+            test_same_options_source_type(source, source_type, &options);
+        }
+    }
+}
+
+#[test]
+fn parameter_writes_preserve_mapped_arguments_when_keeping_unused() {
+    // Single-use substitution still runs when unused declarations are kept.
+    let options =
+        CompressOptions { unused: CompressOptionsUnused::Keep, ..CompressOptions::smallest() };
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        for source in [
+            "function f(a) { var a = function() {}; return [arguments, a]; } use(f);",
+            "function s3(a) { var a = arguments; return a; } use(s3);",
+            "(function (a) { var a = 'foo'; console.log(arguments[0]) })('bar');",
+        ] {
+            test_same_options_source_type(source, source_type, &options);
+        }
+    }
+}
+
+#[test]
+fn unmapped_parameters_allow_unused_writes() {
+    let options = CompressOptions::smallest();
+    test_options_source_type(
+        "(function (a) { 'use strict'; var a; console.log(a = 'foo', arguments[0]) })('bar');",
+        "(function (a) { 'use strict'; console.log('foo', arguments[0]) })('bar');",
+        SourceType::cjs(),
+        &options,
+    );
+    test_options_source_type(
+        "(function (a = 'baz') { var a; console.log(a = 'foo', arguments[0]) })('bar');",
+        "(function (a = 'baz') { console.log('foo', arguments[0]) })('bar');",
+        SourceType::cjs(),
+        &options,
+    );
+    test_options_source_type(
+        "(function (outer) { (a => { var a; console.log(a = 'foo', arguments[0]) })('bar') })('outer');",
+        "(function (outer) { (a => { console.log('foo', arguments[0]) })('bar') })('outer');",
+        SourceType::cjs(),
+        &options,
+    );
+    test_smallest(
+        "(function (a) { var a; console.log(a = 'foo', arguments[0]) })('bar');",
+        "(function (a) { console.log('foo', arguments[0]) })('bar');",
+    );
+}
+
+#[test]
+fn inline_function_iife_arguments_preserves_reentry_and_writes() {
+    let options = CompressOptions::smallest();
+    // The function's own name may be used to call it with different arguments.
+    for source in [
+        "(function f(x) { x && f(0), effect(x + 1) })(1);",
+        "use((function f(x) { return () => (use(f), x + 1) })(1));",
+        "(function (x) { use(() => x++), effect(x + 1) })(1);",
+        "(function (x) { eval('x = 2'), effect(x + 1) })(1);",
+        "(function (x) { function x() {} effect(x + 1) })(1);",
+        "(function (x) { return x + 1 })(1n);",
+        "(function (x) { return x + 1 })(value);",
+    ] {
+        test_same_options(source, &options);
+    }
+}
 
 // https://github.com/oxc-project/oxc/issues/24531
 // A `var` assigned only inside a conditional holds its hoisted `undefined`
@@ -513,6 +712,41 @@ fn small_value() {
         console.log(frag);
         "#,
         r#"console.log('<p autocapitalize="words" contenteditable="false"/>');"#,
+        &options,
+    );
+}
+
+// https://github.com/oxc-project/oxc/issues/23844
+// An ordinary function reads its own arguments object, so an outer binding
+// named `arguments` must not be inlined into it.
+#[test]
+fn outer_arguments_binding_not_inlined_into_function() {
+    let options = CompressOptions::smallest();
+    // Outer block `let`.
+    test_options_source_type(
+        "use(function () { { let arguments = 1; return function () { return arguments[0]; }; } });",
+        "use(function () { return function () { return arguments[0]; }; });",
+        SourceType::cjs(),
+        &options,
+    );
+    // Outer `var` in an enclosing function.
+    test_options_source_type(
+        "use(function () { var arguments = 1; return function () { return arguments[0]; }; });",
+        "use(function () { return function () { return arguments[0]; }; });",
+        SourceType::cjs(),
+        &options,
+    );
+    // Top-level `const` in CommonJS and in a script.
+    test_options_source_type(
+        "const arguments = 1; use(function () { return arguments[0]; });",
+        "use(function () { return arguments[0]; });",
+        SourceType::cjs(),
+        &options,
+    );
+    test_options_source_type(
+        "const arguments = 1; use(function () { return arguments[0]; });",
+        "const arguments = 1; use(function () { return arguments[0]; });",
+        SourceType::cjs().with_script(true),
         &options,
     );
 }

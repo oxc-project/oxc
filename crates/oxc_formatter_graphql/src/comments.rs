@@ -245,7 +245,7 @@ fn is_suppression_comment(source: SourceText<'_>, span: Span) -> bool {
 /// Returns `true` if any pending comment up to `before` is a suppression marker.
 pub fn is_suppressed_before(f: &GraphqlFormatter<'_, '_>, before: u32) -> bool {
     let source = f.context().source_text();
-    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, c))
+    f.context().comments().iter_before(before).copied().any(|c| is_suppression_comment(source, c))
 }
 
 /// Emits a node's leading comments, then the node's source verbatim,

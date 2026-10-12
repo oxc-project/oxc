@@ -17,6 +17,7 @@ import type { Options, Plugin } from "prettier";
 const CACHES = {
   prettier: null as typeof import("prettier") | null,
   sveltePlugin: null as Plugin | null,
+  astroPlugin: null as Plugin | null,
   tailwindPlugin: null as typeof import("prettier-plugin-tailwindcss") | null,
   tailwindSorter: null as typeof import("prettier-plugin-tailwindcss/sorter") | null,
   oxfmtPlugin: null as Plugin | null,
@@ -86,6 +87,8 @@ export async function formatFile({ code, options }: FormatFileParam): Promise<st
   // NOTE: Plugins order matters here!
   // This plugin add `svelte` parser to support for `.svelte` files, and is also needed for `svelte-in-mdx` to work
   if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
+  // Same as above, for `.astro` files and `astro-in-mdx`
+  if ("_useAstroPlugin" in options) await setupAstroPlugin(options);
   // Enable Tailwind CSS plugin, this plugin transforms `parsers` already installed by prior plugins
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
   // This plugin overrides `babel(-ts)` and `typescript` parsers to use `oxc_formatter` instead of built-in parsers
@@ -175,6 +178,8 @@ export async function formatEmbeddedDoc({
   // NOTE: Plugins order matters here, same as `formatFile()`
   // Add `svelte` parser for ` ```svelte ` code blocks in Markdown
   if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
+  // Add `astro` parser for ` ```astro ` code blocks in Markdown
+  if ("_useAstroPlugin" in options) await setupAstroPlugin(options);
   // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
 
@@ -283,6 +288,22 @@ async function setupSveltePlugin(options: Options): Promise<void> {
   );
   options.plugins ??= [];
   options.plugins.push(CACHES.sveltePlugin);
+}
+
+// ---
+// Astro plugin support
+// ---
+
+/**
+ * Load prettier-plugin-astro to provide the `astro` parser.
+ */
+async function setupAstroPlugin(options: Options): Promise<void> {
+  CACHES.astroPlugin ??= await loadCached(
+    "astroPlugin",
+    async () => (await import("prettier-plugin-astro")) as Plugin,
+  );
+  options.plugins ??= [];
+  options.plugins.push(CACHES.astroPlugin);
 }
 
 // ---

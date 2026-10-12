@@ -24,6 +24,47 @@ import type { State } from "../state.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
+ * The keywords a named function begins with, indexed as described in `printFunction`.
+ *
+ * Each ends with a space, which separates it from the name.
+ * After `*` the space is not needed, but matches `oxc_codegen`'s style.
+ *
+ * Only TS builds include the `declare` forms.
+ */
+const NAMED_FUNCTION_PREFIXES = TS
+  ? [
+      "function ",
+      "async function ",
+      "function* ",
+      "async function* ",
+      "declare function ",
+      "declare async function ",
+      "declare function* ",
+      "declare async function* ",
+    ]
+  : ["function ", "async function ", "function* ", "async function* "];
+
+/**
+ * The keywords an anonymous function begins with, indexed as described in `printFunction`.
+ *
+ * No trailing space is needed. The generator forms have one after `*` anyway, to match `oxc_codegen`'s style.
+ *
+ * Only TS builds include the `declare` forms.
+ */
+const ANONYMOUS_FUNCTION_PREFIXES = TS
+  ? [
+      "function",
+      "async function",
+      "function* ",
+      "async function* ",
+      "declare function",
+      "declare async function",
+      "declare function* ",
+      "declare async function* ",
+    ]
+  : ["function", "async function", "function* ", "async function* "];
+
+/**
  * Print a function declaration or expression, from `async` through to the closing brace of its body.
  *
  * A function expression is parenthesized where the statement or an `export default` starts with it,
@@ -41,28 +82,36 @@ export function printFunction(node: ESTree.Function, state: State): void {
 
   printSpaceBeforeIdentifier(state);
 
-  // The node's mapping goes on whichever of these is written first
-  const declare = TS && node.declare;
-  if (declare) {
-    writeWithMap(state, "declare ", CAT_OTHER, node.start, node.end, node);
-    writeIdent(state, node.async ? "async function" : "function");
+  // The node's mapping goes on whatever keyword begins the function, which is written as a single string.
+  //
+  // The string comes from a table, rather than from testing each flag in turn.
+  // Real code mixes `async` and plain functions freely, so a branch on `async` would often be mispredicted.
+  // Bit 0 of the index is `async`, bit 1 is generator, and bit 2 is `declare` (TS builds only).
+  //
+  // V8 compiles each `flag === true` to a single compare against the `true` object, with no branch.
+  // Any value other than `true` (e.g. `null` or `undefined`) counts as `false`.
+  const generator = node.generator === true;
+  const prefixIndex = TS
+    ? ((node.async === true) as unknown as number)
+      | (((generator === true) as unknown as number) << 1)
+      | (((node.declare === true) as unknown as number) << 2)
+    : ((node.async === true) as unknown as number)
+      | (((generator === true) as unknown as number) << 1);
+
+  const { id } = node;
+  if (id != null) {
+    writeWithMapNoLast(state, NAMED_FUNCTION_PREFIXES[prefixIndex], node.start, node.end, node);
+    writeWithMapNamed(state, id.name, id.start, id.end, id);
   } else {
     writeWithMap(
       state,
-      node.async ? "async function" : "function",
-      CAT_IDENT,
+      ANONYMOUS_FUNCTION_PREFIXES[prefixIndex],
+      // Only the generator prefixes end with a space
+      generator === true ? CAT_OTHER : CAT_IDENT,
       node.start,
       node.end,
       node,
     );
-  }
-
-  if (node.generator) write(state, "* ", CAT_OTHER);
-
-  const { id } = node;
-  if (id != null) {
-    printSpaceBeforeIdentifier(state);
-    writeWithMapNamed(state, id.name, id.start, id.end, id);
   }
 
   if (TS) printTypeParameters(node.typeParameters, state);

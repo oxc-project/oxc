@@ -5,7 +5,7 @@
 //! this module is its concrete counterpart owned by the orchestrator (Oxfmt).
 //!
 //! - [`dispatcher`] (every build):
-//!   the routing table (`route`: one function answering "which formatter serves this language?"),
+//!   routed by `language::route_embedded` (one function answering "which formatter serves this language?"),
 //!   `ResolvedDispatchConfig` (lazy per-language options) + `build_dispatcher` with a Rust branch per `NativeLanguage`;
 //!   IR integrates into the parent's arena / `GroupId` space
 //! - [`services`] (every build): the root `SessionServices` assembly (`for_root`, one definition per build)

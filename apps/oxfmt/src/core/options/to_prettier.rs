@@ -7,11 +7,14 @@ use serde_json::Value;
 use oxc_formatter_core::LineWidth;
 
 use super::super::oxfmtrc::{
-    ArrowParensConfig, EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
+    ArrowParensConfig, AstroCompressHtmlConfig, AstroConfig, AstroUserConfig,
+    EmbeddedLanguageFormattingConfig, EndOfLineConfig, FormatConfig,
     HtmlWhitespaceSensitivityConfig, ObjectWrapConfig, OperatorPositionConfig, ProseWrapConfig,
     QuotePropsConfig, SortTailwindcssUserConfig, SvelteConfig, SvelteUserConfig,
     TrailingCommaConfig,
 };
+#[cfg(feature = "napi")]
+use super::super::support::PrettierLanguage;
 
 /// Build base Prettier-compatible options from a typed `FormatConfig`.
 ///
@@ -227,14 +230,33 @@ pub fn build_prettier_options(config: &FormatConfig, path: &Path) -> Value {
     prettier_options
 }
 
+/// Inject the payloads of the opt-in plugins `language` may need:
+/// its own plugin, plus `mdx` which allows ```svelte / ```astro code blocks.
+///
+/// The single table for both whole files (`format_by_prettier`)
+/// and embedded parts through the Doc→IR fallback (`ResolvedDispatchConfig::prettier_options_for`).
+#[cfg(feature = "napi")]
+pub fn inject_opt_in_plugin_payloads(
+    opts: &mut Value,
+    language: PrettierLanguage,
+    config: &FormatConfig,
+) {
+    use PrettierLanguage::{Astro, Mdx, Svelte};
+
+    if matches!(language, Svelte | Mdx) {
+        inject_svelte_plugin_payload(opts, config);
+    }
+    if matches!(language, Astro | Mdx) {
+        inject_astro_plugin_payload(opts, config);
+    }
+}
+
 /// Inject Svelte plugin keys derived from `config.svelte`.
 ///
-/// No-ops when `svelte` is disabled (unset or `false`) — `Bool(true)` falls back to defaults.
-/// The callers gate this on capability: a `.svelte` / `.mdx` file,
-/// and a Markdown code block through the Doc→IR fallback (`ResolvedDispatchConfig::prettier_options_for`).
+/// No-ops when `svelte` is disabled (unset or `false`), `Bool(true)` falls back to defaults.
 ///
 /// See: <https://github.com/sveltejs/prettier-plugin-svelte#options>
-pub fn inject_svelte_plugin_payload(opts: &mut Value, config: &FormatConfig) {
+fn inject_svelte_plugin_payload(opts: &mut Value, config: &FormatConfig) {
     let Some(SvelteConfig { sort_order, allow_shorthand, indent_script_and_style }) =
         config.svelte.clone().and_then(SvelteUserConfig::into_config)
     else {
@@ -252,6 +274,38 @@ pub fn inject_svelte_plugin_payload(opts: &mut Value, config: &FormatConfig) {
         map.insert("svelteIndentScriptAndStyle".to_string(), Value::from(v));
     }
     map.insert("_useSveltePlugin".to_string(), Value::Number(1.into()));
+}
+
+/// Inject Astro plugin keys derived from `config.astro`.
+///
+/// No-ops when `astro` is disabled (unset or `false`), `Bool(true)` falls back to defaults.
+///
+/// See: <https://github.com/withastro/prettier-plugin-astro#configuration>
+fn inject_astro_plugin_payload(opts: &mut Value, config: &FormatConfig) {
+    let Some(AstroConfig { allow_shorthand, skip_frontmatter, compress_html }) =
+        config.astro.clone().and_then(AstroUserConfig::into_config)
+    else {
+        return;
+    };
+    let map = as_object_mut(opts);
+
+    if let Some(v) = allow_shorthand {
+        map.insert("astroAllowShorthand".to_string(), Value::from(v));
+    }
+    if let Some(v) = skip_frontmatter {
+        map.insert("astroSkipFrontmatter".to_string(), Value::from(v));
+    }
+    if let Some(v) = compress_html {
+        map.insert(
+            "astroCompressHTML".to_string(),
+            Value::from(match v {
+                AstroCompressHtmlConfig::Jsx => "jsx",
+                AstroCompressHtmlConfig::Html => "html",
+                AstroCompressHtmlConfig::None => "none",
+            }),
+        );
+    }
+    map.insert("_useAstroPlugin".to_string(), Value::Number(1.into()));
 }
 
 /// Inject `_oxfmtPluginOptionsJson` carrying the typed [`FormatConfig`] plus

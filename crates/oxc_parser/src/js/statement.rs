@@ -207,7 +207,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         stmt
     }
 
-    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
+    pub(super) fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;

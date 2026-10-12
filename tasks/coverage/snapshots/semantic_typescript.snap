@@ -18194,8 +18194,8 @@ rebuilt        : ["ValidSomeCondition", "directory", "getSpecifier", "moduleFile
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/enums/enumClassification.ts
 Missing ReferenceId: "E20"
 Symbol reference IDs mismatch for "E20":
-after transform: SymbolId(56): [ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(80), ReferenceId(81), ReferenceId(82), ReferenceId(83), ReferenceId(84)]
-rebuilt        : SymbolId(23): [ReferenceId(72), ReferenceId(73), ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(81)]
+after transform: SymbolId(56): [ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(80), ReferenceId(81), ReferenceId(82), ReferenceId(83), ReferenceId(84), ReferenceId(85)]
+rebuilt        : SymbolId(23): [ReferenceId(72), ReferenceId(73), ReferenceId(74), ReferenceId(75), ReferenceId(76), ReferenceId(77), ReferenceId(78), ReferenceId(79), ReferenceId(80), ReferenceId(82)]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/enums/enumConstantMemberWithStringEmitDeclaration.ts
 Bindings mismatch:

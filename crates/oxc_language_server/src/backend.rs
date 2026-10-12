@@ -961,6 +961,7 @@ impl LanguageServer for Backend {
                 Ok(Some(edits))
             }
             Err(err) => {
+                error!(err);
                 Err(Error { code: ErrorCode::ServerError(1), message: Cow::Owned(err), data: None })
             }
         }
@@ -1056,6 +1057,18 @@ impl Backend {
     /// Send multiple messages to the client, if any.
     /// Will cap the number of messages to 5, to avoid flooding the client.
     async fn send_client_messages(&self, messages: Vec<ClientMessage>) {
+        // Log every message before limiting what is shown in the client. In particular, this
+        // ensures messages omitted by the client-facing cap remain available on LSP stderr.
+        for message in &messages {
+            match message.r#type {
+                MessageType::Error => error!("{}", message.message),
+                MessageType::Warning => warn!("{}", message.message),
+                MessageType::Info => info!("{}", message.message),
+                MessageType::Log => debug!("{}", message.message),
+                message_type => warn!(?message_type, "{}", message.message),
+            }
+        }
+
         let max_messages = 5;
         let messages_to_send = if messages.len() > max_messages {
             let extra_message = ClientMessage {

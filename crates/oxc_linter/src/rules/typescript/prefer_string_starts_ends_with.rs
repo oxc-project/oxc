@@ -50,6 +50,7 @@ declare_oxc_lint!(
     PreferStringStartsEndsWith(tsgolint),
     typescript,
     style,
+    conditional_fix,
     config = PreferStringStartsEndsWithConfig,
     version = "0.0.8",
     short_description = "Prefer `startsWith` and `endsWith` over manual string boundary checks.",

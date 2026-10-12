@@ -74,7 +74,7 @@ mod generated {
 }
 pub use generated::ast_kind;
 
-pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPosition};
+pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPlacement, CommentPosition};
 pub use ast_kind::{AstKind, AstType};
 pub use ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind};
 pub use trivia::{

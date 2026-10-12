@@ -46,7 +46,7 @@ pnpm --dir tasks/e2e test # End-to-end tests
 just ready         # Optional broad integration checkpoint
 ```
 
-Before selecting verification checks, read the [verification guidance](../../../.agents/verification.md).
+Before selecting verification checks, read the [verification guidance](../../.agents/verification.md).
 
 ### Common Patterns
 
@@ -79,7 +79,6 @@ explaining why.
 ```rust
 // In peephole/mod.rs
 fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-    let ctx = &mut Ctx::new(ctx);
     match expr {
         Expression::BinaryExpression(_) => {
             Self::optimize_binary(expr, ctx);
@@ -114,6 +113,7 @@ fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'
 3. **TDZ**: Be careful with `let`/`const` transformations
 4. **Evaluation Order**: Preserve execution order
 5. **Edge Cases**: Test with `NaN`, `Infinity`, `-0`, etc.
+6. **Unsupported Syntax**: Do not add or imply support for TypeScript, TSX, or JSX syntax.
 
 ### Debugging
 
@@ -167,10 +167,11 @@ cargo run -p oxc_minifier --example minifier test.js --twice
 ```rust
 // Use TakeIn for moving nodes
 use oxc_allocator::TakeIn;
-let moved = node.take_in(ctx.ast);
+
+let moved = node.take_in(ctx);
 
 // Use arena for allocations
-ctx.ast.expression_boolean_literal(span, true)
+Expression::new_boolean_literal(span, true, ctx);
 
 // Check node types
 if let Expression::BinaryExpression(e) = expr {

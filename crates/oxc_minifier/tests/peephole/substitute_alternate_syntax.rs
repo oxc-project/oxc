@@ -54,7 +54,7 @@ fn test_undefined() {
     test_same("var [] = void 0");
     // `delete undefined` returns `false`
     // `delete void 0` returns `true`
-    test_same("delete undefined");
+    test("delete undefined", "");
 }
 
 #[test]

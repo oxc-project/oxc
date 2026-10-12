@@ -320,7 +320,9 @@ fn for_stmt() {
 #[test]
 fn do_while_stmt() {
     test("do ; while (true)", "do;\nwhile (true);\n");
+    test("function f() { do; while (test()); }", "function f() {\n\tdo;\n\twhile (test());\n}\n");
     test_minify("do ; while (true)", "do;while(true);");
+    test_minify("function f() { do; while (test()); }", "function f(){do;while(test())}");
     test_minify("do break; while (true)", "do break;while(true);");
     test_minify("do continue; while (true)", "do continue;while(true);");
     test_minify("do debugger; while (true)", "do debugger;while(true);");

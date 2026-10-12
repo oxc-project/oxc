@@ -2,7 +2,7 @@
 //!
 //! JSDoc fenced code blocks (` ```css `, ` ```yaml `, …) reach this channel through the session's `StringEmbedder` contract.
 //!
-//! Fence routing follows ONE rule, the shared routing table ([`dispatcher::route`]):
+//! Fence routing follows ONE rule, the shared routing table ([`route_embedded`]):
 //! a `Route::Native` language formats through the dispatcher via [`super::jsdoc_fence::format_native_fence`] (the build-independent adapter);
 //! the `Route::Prettier` set stays on the Prettier string path
 //! (their Doc→IR conversion has unrepresentable cases, so forcing them through the dispatcher would regress to verbatim;
@@ -19,11 +19,8 @@ use tracing::{debug, debug_span};
 use oxc_formatter_core::{StringEmbedder, TailwindSorter};
 
 use crate::core::{
-    embed::{
-        FormatEmbeddedWithConfigCallback,
-        dispatcher::{self, Route},
-        jsdoc_fence,
-    },
+    embed::{FormatEmbeddedWithConfigCallback, dispatcher, jsdoc_fence},
+    language::{Route, route_embedded},
     options::inject_print_width,
 };
 
@@ -43,7 +40,7 @@ pub fn build_string_embedder(
     // so one is invariant across the callback's lifetime: build it once, not per fence.
     let fence_dispatcher = dispatcher::build_dispatcher(Arc::clone(&dispatch_config), None);
     Arc::new(move |language: &str, code: &str, print_width: usize| {
-        let prettier_language = match dispatcher::route(language) {
+        let prettier_language = match route_embedded(language) {
             // Native branch (JSDoc fenced code blocks): through the dispatcher, never Prettier.
             Route::Native(_) => {
                 return jsdoc_fence::format_native_fence(

@@ -483,7 +483,13 @@ impl Gen for DoWhileStatement<'_> {
                 p.print_block_statement(block, ctx);
                 p.print_soft_space();
             }
-            Statement::EmptyStatement(s) => s.print(p, ctx),
+            Statement::EmptyStatement(s) => {
+                p.print_comments_at(s.span.start);
+                p.add_source_mapping(s.span);
+                p.print_semicolon();
+                p.print_soft_newline();
+                p.print_indent();
+            }
             _ => {
                 p.print_soft_newline();
                 p.indent();

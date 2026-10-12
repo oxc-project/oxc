@@ -69,17 +69,17 @@ fn write_comment_text(comment: &Comment, f: &mut JsonFormatter<'_, '_>) {
 /// Callers today pass block comments only; the line branch keeps the contract uniform.
 #[must_use = "formatted comments must be written to the formatter"]
 #[derive(Clone, Copy, Debug)]
-pub struct FormatCommentBeforeContent(Comment);
+pub struct FormatCommentBeforeContent<'c>(&'c Comment);
 
-impl FormatCommentBeforeContent {
-    pub const fn new(comment: Comment) -> Self {
+impl<'c> FormatCommentBeforeContent<'c> {
+    pub const fn new(comment: &'c Comment) -> Self {
         Self(comment)
     }
 }
 
-impl<'a> Format<'a, JsonFormatContext<'a>> for FormatCommentBeforeContent {
+impl<'a> Format<'a, JsonFormatContext<'a>> for FormatCommentBeforeContent<'_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
-        write_comment_text(&self.0, f);
+        write_comment_text(self.0, f);
         if self.0.is_line() {
             write!(f, [expand_parent(), hard_line_break()]);
         }
@@ -90,13 +90,13 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FormatCommentBeforeContent {
 /// cannot swallow later tokens, not measured.
 #[must_use = "formatted comments must be written to the formatter"]
 #[derive(Clone, Copy, Debug)]
-pub struct FormatLineCommentSuffix {
-    comment: Comment,
+pub struct FormatLineCommentSuffix<'c> {
+    comment: &'c Comment,
     leading_space: bool,
 }
 
-impl FormatLineCommentSuffix {
-    pub const fn new(comment: Comment) -> Self {
+impl<'c> FormatLineCommentSuffix<'c> {
+    pub const fn new(comment: &'c Comment) -> Self {
         Self { comment, leading_space: false }
     }
 
@@ -106,14 +106,14 @@ impl FormatLineCommentSuffix {
     }
 }
 
-impl<'a> Format<'a, JsonFormatContext<'a>> for FormatLineCommentSuffix {
+impl<'a> Format<'a, JsonFormatContext<'a>> for FormatLineCommentSuffix<'_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
         debug_assert!(self.comment.is_line(), "expected a line comment");
         let comment = self.comment;
         let leading_space = self.leading_space;
         let suffix = format_with(move |f: &mut JsonFormatter<'_, 'a>| {
             write!(f, maybe_space(leading_space));
-            write_comment_text(&comment, f);
+            write_comment_text(comment, f);
         });
         write!(f, line_suffix(&suffix));
     }
@@ -244,7 +244,7 @@ pub fn write_empty_container_comments(comments: &[Comment], f: &mut JsonFormatte
             write_comment_text(comment, f);
         }
     });
-    if comments.iter().any(|c| c.is_line()) {
+    if comments.iter().any(Comment::is_line) {
         write!(f, block_indent(&inner));
     } else {
         write!(f, group(&soft_block_indent(&inner)));
@@ -325,7 +325,7 @@ pub fn is_suppression_comment(source: SourceText<'_>, comment: &Comment) -> bool
 /// `before` is typically the next AST node's `span.start`.
 pub fn is_suppressed_before(f: &JsonFormatter<'_, '_>, before: u32) -> bool {
     let source = f.context().source_text();
-    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, &c))
+    f.context().comments().iter_before(before).any(|c| is_suppression_comment(source, c))
 }
 
 /// `Format` adapter that emits a node's leading comments, then the node's source

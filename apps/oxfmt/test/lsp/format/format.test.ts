@@ -14,6 +14,7 @@ describe("LSP formatting", () => {
       ["format/test.json", "json"],
       ["format/test.vue", "vue"],
       ["format/test.svelte", "svelte"],
+      ["format/test.astro", "astro"],
       ["format/test.toml", "toml"],
       ["format/formatted.ts", "typescript"],
       ["format/test.txt", "plaintext"],
@@ -30,6 +31,8 @@ describe("LSP formatting", () => {
       ["config-no-sort-package-json/package.json", "json"],
       ["config-vue-indent/test.vue", "vue"],
       ["config-svelte/test.svelte", "svelte"],
+      ["config-astro/test.astro", "astro"],
+      ["config-associations/test.html", "html"],
       ["config-sort-imports/test.js", "javascript"],
       ["config-sort-tailwindcss/test.tsx", "typescriptreact"],
       ["config-sort-tailwindcss/test.vue", "vue"],
@@ -109,6 +112,8 @@ describe("LSP formatting", () => {
       ["untitled://Untitled-4", "format/test.toml", "toml"],
       ["untitled://Untitled-5", "format/formatted.ts", "typescript"],
       ["untitled://Untitled-6", "format/test.txt", "plaintext"],
+      // `associations` (`**/*.html` as Angular) do not apply, the `languageId` decides
+      ["untitled://Untitled-7", "config-associations/test.html", "html"],
       // with path
       ["vscode-userdata:/c%3A/Users/User/settings.json", "format/test.tsx", "typescriptreact"],
     ])("should format uri %s", async (uri, path, languageId) => {
@@ -162,6 +167,15 @@ describe("LSP formatting", () => {
         await fs.rm(dir, { recursive: true, force: true });
       }
     });
+  });
+
+  describe("error handling on format", () => {
+    it.each([["config-invalid-override/test.ts", "typescript"]])(
+      "should handle %s",
+      async (path, languageId) => {
+        expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+      },
+    );
   });
 
   describe("initializationOptions", () => {
