@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import type { Plugin } from "#oxlint/plugins";
 
 const plugin: Plugin = {
@@ -15,6 +16,40 @@ const plugin: Plugin = {
                 message: "Negative location",
                 loc: { start: { line: 1, column: -1 } },
               });
+              context.report({
+                message: "Range starts before source",
+                loc: { start: { line: 1, column: -1 }, end: { line: 1, column: 1 } },
+              });
+              context.report({
+                message: "Range ends before source",
+                loc: { start: { line: 1, column: -2 }, end: { line: 1, column: -1 } },
+              });
+              context.report({
+                message: "Negative shorthand location",
+                loc: { line: 1, column: -1 },
+              });
+              context.report({
+                message: "Negative column on later line",
+                loc: { start: { line: 2, column: -2 }, end: { line: 2, column: -1 } },
+              });
+              context.report({
+                message: "Range after source",
+                loc: { start: { line: 1, column: 999 }, end: { line: 1, column: 1000 } },
+              });
+              context.report({ message: "Following finding", node: _node });
+
+              assert.throws(
+                () => context.report({ message: "Invalid line", loc: { line: -1, column: 0 } }),
+                RangeError,
+              );
+              assert.throws(
+                () => context.report({ message: "Invalid column", loc: { line: 1, column: NaN } }),
+                TypeError,
+              );
+              assert.throws(
+                () => context.sourceCode.getIndexFromLoc({ line: 1, column: -1 }),
+                RangeError,
+              );
               return;
             }
 
