@@ -24,7 +24,7 @@ pub trait GlobalContext<'a>: Sized {
     ///
     /// Cheaper than [`Self::get_constant_value_for_reference_id`] when only the
     /// type discriminant is needed, since it avoids cloning the value
-    /// (relevant for `BigInt` / owned `String`).
+    /// (relevant for `BigInt`).
     fn value_type_for_reference_id(&self, _reference_id: ReferenceId) -> Option<ValueType> {
         None
     }

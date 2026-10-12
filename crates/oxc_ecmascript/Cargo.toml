@@ -37,6 +37,10 @@ oxc_syntax = { workspace = true, features = ["to_js_string"] }
 cow-utils = { workspace = true, optional = true }
 dragonbox_ecma = { workspace = true }
 itoa = { workspace = true }
+memchr = { workspace = true }
 num-bigint = { workspace = true }
 num-traits = { workspace = true }
 smallvec = { workspace = true, optional = true }
+
+[dev-dependencies]
+oxc_allocator = { workspace = true }
