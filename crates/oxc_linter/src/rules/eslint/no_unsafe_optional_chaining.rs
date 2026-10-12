@@ -101,24 +101,11 @@ impl NoUnsafeOptionalChaining {
         for parent in ctx.nodes().ancestors(chain_id) {
             let parent_id = parent.id();
             match parent.kind() {
+                // Parentheses are transparent; a TypeScript cast (`as`, `satisfies`, `!`,
+                // `<T>expr`) is the author asserting the value, and ESLint's rule stops
+                // there too: `(a?.b as T).c` is not reported. `x?.y!` has its own rule,
+                // `typescript/no-non-null-asserted-optional-chain`.
                 AstKind::ParenthesizedExpression(expr)
-                    if expr.expression.node_id() == current_id =>
-                {
-                    current_id = parent_id;
-                }
-                AstKind::TSAsExpression(expr) if expr.expression.node_id() == current_id => {
-                    current_id = parent_id;
-                }
-                AstKind::TSSatisfiesExpression(expr) if expr.expression.node_id() == current_id => {
-                    current_id = parent_id;
-                }
-                AstKind::TSTypeAssertion(expr) if expr.expression.node_id() == current_id => {
-                    current_id = parent_id;
-                }
-                AstKind::TSNonNullExpression(expr) if expr.expression.node_id() == current_id => {
-                    current_id = parent_id;
-                }
-                AstKind::TSInstantiationExpression(expr)
                     if expr.expression.node_id() == current_id =>
                 {
                     current_id = parent_id;
@@ -334,6 +321,21 @@ fn test() {
         ("f?.<Q>();", None),
         ("a?.c?.b<c>", None),
         ("const baz = {...obj?.foo };", None),
+        // A TypeScript cast between the chain and the usage ends the check, as in ESLint
+        // with @typescript-eslint/parser.
+        ("(calls?.[0] as [{ id: string }])[0];", None),
+        ("(obj?.foo as Foo).bar;", None),
+        ("(obj?.foo as Foo)();", None),
+        ("new (obj?.foo as Foo)();", None),
+        ("(obj?.foo satisfies unknown as Foo).bar;", None),
+        ("(obj?.foo)!.bar;", None),
+        ("const { bar } = obj?.foo as Foo;", None),
+        ("for (const x of obj?.foo as Foo[]);", None),
+        ("class A extends (obj?.foo as Foo) {}", None),
+        (
+            "(obj?.foo as number) + 1;",
+            Some(serde_json::json!([{ "disallowArithmeticOperators": true }])),
+        ),
     ];
 
     let fail = vec![
