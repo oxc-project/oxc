@@ -447,11 +447,12 @@ function printIf(node: ESTree.IfStatement, state: State): void {
 
     writeIdent(state, "else");
 
-    if (alternate.type === "BlockStatement") {
+    const alternateType = alternate.type;
+    if (alternateType === "BlockStatement") {
       write(state, " ", CAT_OTHER);
       printBlockStatement(alternate, state);
       write(state, "\n", CAT_OTHER);
-    } else if (alternate.type === "IfStatement") {
+    } else if (alternateType === "IfStatement") {
       write(state, " ", CAT_OTHER);
       printIf(alternate, state);
     } else {
@@ -634,11 +635,12 @@ function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): voi
   writeWithMap(state, "do", CAT_IDENT, node.start, node.end, node);
 
   const { body } = node;
-  if (body.type === "BlockStatement") {
+  const bodyType = body.type;
+  if (bodyType === "BlockStatement") {
     write(state, " ", CAT_OTHER);
     printBlockStatement(body, state);
     write(state, " ", CAT_OTHER);
-  } else if (body.type === "EmptyStatement") {
+  } else if (bodyType === "EmptyStatement") {
     writeWithMap(state, ";\n", CAT_OTHER, body.start, body.end, body);
     printIndent(state);
   } else {
@@ -797,11 +799,12 @@ function forOfHeadStartsWithLet(left: ESTree.Expression): boolean {
  * on the current line.
  */
 function printBody(stmt: ESTree.Statement, state: State): void {
-  if (stmt.type === "BlockStatement") {
+  const stmtType = stmt.type;
+  if (stmtType === "BlockStatement") {
     write(state, " ", CAT_OTHER);
     printBlockStatement(stmt, state);
     write(state, "\n", CAT_OTHER);
-  } else if (stmt.type === "EmptyStatement") {
+  } else if (stmtType === "EmptyStatement") {
     write(state, ";\n", CAT_OTHER);
   } else {
     state.pendingIndentAsSpace = true;

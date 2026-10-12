@@ -723,10 +723,11 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
  */
 function printTSConditionalType(node: ESTree.TSConditionalType, state: State): void {
   const { checkType, extendsType } = node;
+  const checkTypeType = checkType.type;
   const checkWrap =
-    checkType.type === "TSFunctionType"
-    || checkType.type === "TSConstructorType"
-    || checkType.type === "TSConditionalType";
+    checkTypeType === "TSFunctionType"
+    || checkTypeType === "TSConstructorType"
+    || checkTypeType === "TSConditionalType";
 
   if (checkWrap) write(state, "(", CAT_OTHER);
   printTSType(checkType, state);
