@@ -171,7 +171,7 @@ export function printPropertyKey(key: ESTree.PropertyKey, state: State): void {
  */
 function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void {
   // Oxc stores the rest element separately from the other elements.
-  // A trailing comma is printed before it, and a space always precedes it.
+  // A comma and a space separate it from any elements before it.
   const { elements } = node;
   let { length } = elements;
 
@@ -196,7 +196,7 @@ function printArrayBindingPattern(node: ESTree.ArrayPattern, state: State): void
   }
 
   if (rest !== null) {
-    write(state, " ", CAT_OTHER);
+    if (length > 0) write(state, " ", CAT_OTHER);
     writeWithMap(state, "...", CAT_OTHER, rest.start, rest.end, rest);
     printBindingPattern(rest.argument, state);
     if (TS) {
