@@ -1,4 +1,6 @@
-use crate::{test, test_same, test_target};
+use oxc_minifier::{CompressOptions, TreeShakeOptions};
+
+use crate::{default_options, test, test_options, test_same, test_target, test_target_same};
 
 #[track_caller]
 fn test_value(code: &str, expected: &str) {
@@ -938,6 +940,33 @@ fn test_fold_concat_chaining() {
     test("var x, y; v = ''.concat(x).concat(y)", "var x, y; v = `${x}${y}`");
     test("var y; v = ''.concat(x).concat(y)", "var y; v = `${x}${y}`"); // x might have a getter that updates y, but that side effect is preserved correctly
     test("var x; v = ''.concat(x.a).concat(x)", "var x; v = `${x.a}${x}`"); // x.a might have a getter that updates x, but that side effect is preserved correctly
+    // A chain coerces each call's arguments before evaluating the next call's,
+    // as a template literal does, so it folds even where merging the calls would not.
+    test(
+        "function f(arr) { return ''.concat(arr, ' ').concat(arr.pop()) }",
+        "function f(arr) { return `${arr} ${arr.pop()}` }",
+    );
+    test("var a; v = 'a'.concat(a, 'b').concat(c())", "var a; v = `a${a}b${c()}`");
+    // The read and the side effect are in the same call, so merging keeps their order.
+    test(
+        "function f(arr) { return ''.concat(arr, arr.pop()).concat('') }",
+        "function f(arr) { return ''.concat(arr, arr.pop(), '') }",
+    );
+    // Without template literals, the chain stays.
+    test_target_same("function f(arr) { return ''.concat(arr).concat(arr.pop()) }", "chrome40");
+    // The chain stays when it is shorter than the template.
+    test_same(
+        "function f(a, b, c, d, e, g, h, k) { return ''.concat(a, b, c, d, e, g, h, k).concat(i()) }",
+    );
+    // Merging array calls would read `arr` after `arr.pop()`.
+    test_same("function f(arr) { return [].concat(arr).concat(arr.pop()) }");
+    // Merging delays only the reads of earlier calls: arguments of one call are already
+    // evaluated together, and an array literal is a fresh array.
+    test("var y; x = [].concat([1]).concat(y, f())", "var y; x = [1].concat(y, f())");
+    test("x = [].concat([a]).concat(f())", "x = [a].concat(f())");
+    // A spread iterates when evaluated, and nothing is read before it.
+    test("x = [].concat(1).concat(...b)", "x = [1].concat(...b)");
+    test_same("function g(arr) { return [].concat(arr).concat(...arr) }");
 
     // other
     test("x = []['concat'](1)", "x = [1]");
@@ -1051,15 +1080,15 @@ fn test_fold_string_from_char_code() {
 #[test]
 fn test_fold_string_concat() {
     // A lone surrogate is kept as an escape in the template's raw text.
-    test(r#"x = "\uD800".concat(a, b)"#, "x = `\\ud800${a}${b}`");
+    test(r#"var a, b; x = "\uD800".concat(a, b)"#, "var a, b; x = `\\ud800${a}${b}`");
     test(r#"x = "\uD800".concat(a).concat(b())"#, "x = `\\ud800${a}${b()}`");
     test(r#"x = "\uD83D".concat(a, "\uDE00")"#, "x = `\\ud83d${a}\\ude00`");
     test(r#"x = "\uD83D".concat("\uDE00", a)"#, "x = `\u{1F600}${a}`");
     test_same("x = ''.concat()");
-    test("x = ''.concat(a, b)", "x = `${a}${b}`");
-    test("x = ''.concat(a, b, c)", "x = `${a}${b}${c}`");
-    test("x = ''.concat(a, b, c, d)", "x = `${a}${b}${c}${d}`");
-    test_same("x = ''.concat(a, b, c, d, e)");
+    test("var a, b; x = ''.concat(a, b)", "var a, b; x = `${a}${b}`");
+    test("var a, b, c; x = ''.concat(a, b, c)", "var a, b, c; x = `${a}${b}${c}`");
+    test("var a, b, c, d; x = ''.concat(a, b, c, d)", "var a, b, c, d; x = `${a}${b}${c}${d}`");
+    test_same("var a, b, c, d, e; x = ''.concat(a, b, c, d, e)");
     test("x = ''.concat('a')", "x = 'a'");
     test("x = ''.concat('a', 'b')", "x = 'ab'");
     test("x = ''.concat('a', 'b', 'c')", "x = 'abc'");
@@ -1067,17 +1096,46 @@ fn test_fold_string_concat() {
     test("x = ''.concat('a', 'b', 'c', 'd', 'e')", "x = 'abcde'");
     test("x = ''.concat(a, 'b')", "x = `${a}b`");
     test("x = ''.concat('a', b)", "x = `a${b}`");
-    test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
+    test("var a, c; x = ''.concat(a, 'b', c)", "var a, c; x = `${a}b${c}`");
     test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
     test(
-        "x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)",
-        "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`",
+        "var b, d, f, h, j, l, n, p, r, t; x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)",
+        "var b, d, f, h, j, l, n, p, r, t; x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`",
     );
     test("x = ''.concat(a, 1)", "x = `${a}1`");
 
     test("x = '\\\\s'.concat(a)", "x = `\\\\s${a}`");
     test("x = '`'.concat(a)", "x = `\\`${a}`");
     test("x = '${'.concat(a)", "x = `\\${${a}`");
+
+    // `concat` evaluates every argument before coercing any, while a template literal coerces
+    // each substitution before evaluating the next. The orders agree unless an argument with
+    // side effects follows a coerced one.
+    test_same("function f(arr) { return ''.concat(arr, arr.pop()) }");
+    test(
+        "function f(arr) { return ''.concat(arr.pop(), arr) }",
+        "function f(arr) { return `${arr.pop()}${arr}` }",
+    );
+    // Reading an unresolved global may run a getter that changes an earlier argument.
+    test_same("x = ''.concat(a, b)");
+    // Coercing an array literal reads its elements.
+    test_same("function g(x) { return ''.concat([x], f()) }");
+    // Coercing a primitive reads no state.
+    test("x = ''.concat(typeof a, f())", "x = `${typeof a}${f()}`");
+
+    // A property write still changes the value that was read before it, even when
+    // `propertyWriteSideEffects: false` says that it runs no setter.
+    let options = CompressOptions {
+        treeshake: TreeShakeOptions {
+            property_write_side_effects: false,
+            ..TreeShakeOptions::default()
+        },
+        ..default_options()
+    };
+    let code = "function f(arr) { return ''.concat(arr, arr[0] = 9) }";
+    test_options(code, code, &options);
+    let code = "function f(arr) { return [].concat(arr).concat(arr[0] = 9) }";
+    test_options(code, code, &options);
 }
 
 #[test]
