@@ -525,7 +525,7 @@ fn test_fold_iife() {
     test("(() => { return o.f })()()", "(0, o.f)()");
     test("(() => o?.f)()``", "(0, o?.f)``");
     test("(() => eval)()(x)", "(0, eval)(x)");
-    test("delete (() => o.f)()", "delete (0, o.f)");
+    test("delete (() => o.f)()", "o.f");
     test("v = typeof (() => x)()", "v = typeof (0, x)");
     test("(() => o.f())()()", "o.f()()");
 
@@ -713,7 +713,7 @@ fn remove_unused_assignment_expression() {
     );
     test_options(
         "function foo() { let t; return delete (t = o.f) } foo();",
-        "function foo() { return delete (0, o.f) } foo();",
+        "function foo() { return o.f, !0 } foo();",
         &options,
     );
     test_options(
