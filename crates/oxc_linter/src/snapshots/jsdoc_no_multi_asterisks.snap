@@ -1,0 +1,201 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on middle lines.
+   ╭─[no_multi_asterisks.tsx:4:21]
+ 3 │                    *
+ 4 │                    **
+   ·                     ─
+ 5 │                    */
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on middle lines.
+   ╭─[no_multi_asterisks.tsx:4:21]
+ 3 │                    *
+ 4 │                    **
+   ·                     ─
+ 5 │                    */
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on middle lines.
+   ╭─[no_multi_asterisks.tsx:4:21]
+ 3 │                    *
+ 4 │                    **
+   ·                     ─
+ 5 │                    */
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on middle lines.
+   ╭─[no_multi_asterisks.tsx:5:21]
+ 4 │                    * @tag {SomeType} and a tag with details
+ 5 │                    **
+   ·                     ─
+ 6 │                    */
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on middle lines.
+   ╭─[no_multi_asterisks.tsx:3:21]
+ 2 │                   /**
+ 3 │                    **
+   ·                     ─
+ 4 │                    *
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:5:20]
+ 4 │                    *
+ 5 │                    **/
+   ·                    ─
+ 6 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:5:20]
+ 4 │                    *
+ 5 │                    **/
+   ·                    ─
+ 6 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:5:23]
+ 4 │                    *
+ 5 │                    abc * **/
+   ·                       ────
+ 6 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:5:20]
+ 4 │                    *
+ 5 │                    **/
+   ·                    ─
+ 6 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:2:29]
+ 1 │ 
+ 2 │                   /** Desc. **/
+   ·                             ─
+ 3 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:2:43]
+ 1 │ 
+ 2 │                   /** @someTag name desc. **/
+   ·                                           ─
+ 3 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:2:27]
+ 1 │ 
+ 2 │                   /** abc * */
+   ·                           ──
+ 3 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:6:20]
+ 5 │                    *
+ 6 │                    * */
+   ·                    ─
+ 7 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on middle lines.
+   ╭─[no_multi_asterisks.tsx:4:22]
+ 3 │                    * The method does 2 things:
+ 4 │                    * * Thing 1
+   ·                      ──
+ 5 │                    * * Thing 2
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on middle lines.
+   ╭─[no_multi_asterisks.tsx:4:22]
+ 3 │                    * This multi-line comment contains some
+ 4 │                    * *non-standard bold* syntax
+   ·                      ─
+ 5 │                    */
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:2:29]
+ 1 │ 
+ 2 │                   /** Desc. **/
+   ·                             ─
+ 3 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:3:25]
+ 2 │                   /**
+ 3 │                    * foo **/
+   ·                         ──
+ 4 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:2:28]
+ 1 │ 
+ 2 │                   /** @tag **/
+   ·                            ─
+ 3 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:3:26]
+ 2 │                   /**
+ 3 │                    * @tag **/
+   ·                          ──
+ 4 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:3:24]
+ 2 │                   /**
+ 3 │                    * é **/
+   ·                       ──
+ 4 │                   
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on middle lines.
+   ╭─[no_multi_asterisks.tsx:4:3]
+ 3 │  * a
+ 4 │  **
+   ·   ─
+ 5 │  */
+   ╰────
+  help: Remove the extra asterisks.
+
+  ⚠ jsdoc(no-multi-asterisks): Should be no multiple asterisks on end lines.
+   ╭─[no_multi_asterisks.tsx:3:20]
+ 2 │                   /**
+ 3 │                    * */
+   ·                    ─
+ 4 │                   
+   ╰────
+  help: Remove the extra asterisks.

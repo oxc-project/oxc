@@ -3618,6 +3618,26 @@
             }
           ]
         },
+        "jsdoc/no-multi-asterisks": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/NoMultiAsterisks"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "jsdoc/require-param": {
           "anyOf": [
             {
@@ -14999,6 +15019,30 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When set to `true`, the rule allows chains that don't include initializing a variable in a declaration or initializing a class field.\n\nExamples of **correct** code for this option set to `true`:\n```js\nlet a;\nlet b;\na = b = \"baz\";\n\nconst x = {};\nconst y = {};\nx.one = y.one = 1;\n```\n\nExamples of **incorrect** code for this option set to `true`:\n```js\nlet a = b = \"baz\";\n\nconst foo = bar = 1;\n\nclass Foo {\na = b = 10;\n}\n```"
+        }
+      },
+      "additionalProperties": false
+    },
+    "NoMultiAsterisks": {
+      "type": "object",
+      "properties": {
+        "allowWhitespace": {
+          "description": "Whether to allow asterisks after a space, as with Markdown emphasis such as `*bold*`\nat the start of a line's text.\n\nDefaults to `false`.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Whether to allow asterisks after a space, as with Markdown emphasis such as `*bold*`\nat the start of a line's text.\n\nDefaults to `false`."
+        },
+        "preventAtEnd": {
+          "description": "Whether to report extra asterisks at the end of a comment, for example when it is closed\nwith two asterisks and a slash.\n\nDefaults to `true`.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to report extra asterisks at the end of a comment, for example when it is closed\nwith two asterisks and a slash.\n\nDefaults to `true`."
+        },
+        "preventAtMiddleLines": {
+          "description": "Whether to report extra asterisks at the start of the lines in the middle of a comment,\nfor example a line that starts with `**`.\n\nDefaults to `true`.",
+          "default": true,
+          "type": "boolean",
+          "markdownDescription": "Whether to report extra asterisks at the start of the lines in the middle of a comment,\nfor example a line that starts with `**`.\n\nDefaults to `true`."
         }
       },
       "additionalProperties": false
