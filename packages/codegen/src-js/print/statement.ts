@@ -1,6 +1,6 @@
 // Statements.
 
-import { typeAssertIs } from "../asserts.ts";
+import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { printAssignmentTarget } from "./assignment_target.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
 import {
@@ -32,7 +32,6 @@ import {
   printImportDeclaration,
 } from "./module.ts";
 import { CTX_FORBID_IN, CTX_NONE } from "./operators.ts";
-import { withoutParens } from "./parens.ts";
 import { PREC_COMMA, PREC_LOWEST } from "./precedence.ts";
 import { printString } from "./string.ts";
 import {
@@ -752,14 +751,12 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
   write(state, " (", CAT_OTHER);
 
   const { left } = node;
-  if (left.type === "VariableDeclaration") {
+  const leftType = left.type;
+  if (leftType === "VariableDeclaration") {
     printVariableDeclaration(left, state, CTX_NONE);
   } else {
-    typeAssertIs<ESTree.Expression>(left);
-    const bare = withoutParens(left);
-    const wrap =
-      forOfHeadStartsWithLet(left)
-      || (!node.await && bare.type === "Identifier" && bare.name === "async");
+    const wrap = forOfHeadNeedsWrapping(left, leftType, node.await !== true);
+
     if (wrap) write(state, "(", CAT_OTHER);
     printAssignmentTarget(left, state);
     if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
@@ -773,28 +770,51 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
 }
 
 /**
- * The restriction is on the first token of the head rather than on the target as a whole,
- * so this walks down the leftmost spine - through member objects and parens -
- * to whatever prints first.
+ * Returns `true` if `left` needs wrapping in parentheses.
+ *
+ * This is the case if either:
+ * 1. The leading token when printing `left` would be `let`.
+ * 2. `left` is an identifier `async` and `wrapAsync` is `true`.
+ *
+ * `leftType` must be the `type` of `left`.
+ *
+ * The restriction for `let` is on the first token of the head rather than on the target as a whole,
+ * so this walks down the leftmost spine - through member objects and parens - to whatever prints first.
  */
-function forOfHeadStartsWithLet(left: ESTree.Expression): boolean {
-  // Whether the leading token would be `let`.
+function forOfHeadNeedsWrapping(
+  left: ESTree.AssignmentTarget | ESTree.Expression,
+  leftType: (ESTree.AssignmentTarget | ESTree.Expression)["type"],
+  wrapAsync: boolean,
+): boolean {
+  debugAssert(leftType === left.type, "`leftType` must equal `left.type`");
+
+  let computed = false;
+
   for (;;) {
-    switch (left.type) {
-      case "Identifier":
-        return left.name === "let";
+    switch (leftType) {
+      case "Identifier": {
+        // Computed member: `let[...]` is emitted as `(let)[...]`, so no longer starts with `let`.
+        //   Any other identifier isn't `let` either, so return `false` for all of them.
+        // Non-computed member: If identifier name is `let` (`let.x`), it needs to be wrapped.
+        // Not part of a member expression: `let` needs to be wrapped. `async` does too if `wrapAsync` is set.
+        if (computed) return false;
+
+        const leftName = (left as ESTree.IdentifierReference).name;
+        if (leftName === "let") return true;
+        return wrapAsync && leftName === "async";
+      }
       case "MemberExpression":
-        if (left.computed) {
-          const inner = withoutParens(left.object);
-          if (inner.type === "Identifier" && inner.name === "let") {
-            // `let[...]` is emitted as `(let)[...]`, so no longer starts with `let`
-            return false;
-          }
-        }
+        typeAssertIs<ESTree.MemberExpression>(left);
+        computed = left.computed;
         left = left.object;
+        leftType = left.type;
+        // `async` only needs wrapping when it's a plain identifier e.g. `for ((async) of arr)`,
+        // but not when part of a `MemberExpression` e.g. `for (async.x of arr)`
+        wrapAsync = false;
         break;
       case "ParenthesizedExpression":
-        left = left.expression;
+        left = (left as ESTree.ParenthesizedExpression).expression;
+        leftType = left.type;
         break;
       default:
         return false;
