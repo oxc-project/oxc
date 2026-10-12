@@ -12,8 +12,19 @@ pub fn validate_glob_pattern(pattern: &str) -> Result<(), String> {
     fast_glob::validate(pattern).map_err(|err| format!("Invalid glob pattern `{pattern}`: {err}"))
 }
 
-/// A set of glob patterns.
+/// A set of glob patterns matched with [`fast_glob`](https://crates.io/crates/fast-glob).
+///
 /// Patterns are matched against paths relative to the configuration file's directory.
+/// Patterns without a `/` are treated as recursive (for example `*.ts` matches
+/// `src/foo.ts` as well as `foo.ts`).
+///
+/// ## Examples
+///
+/// ```json
+/// ["*.test.ts", "*.spec.ts"]
+/// ["src/**/*.{ts,tsx}", "scripts/*.mjs"]
+/// ["lib/*.js"]
+/// ```
 #[derive(Debug, Default, Clone, Eq, PartialEq, Serialize, JsonSchema)]
 pub struct GlobSet(Vec<String>);
 
