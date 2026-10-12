@@ -157,13 +157,19 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     if (i > 0) write(state, ", ", CAT_OTHER);
 
     const param = params[i];
+    // In TS builds `param` can be any of several node types, so its `type` is a megamorphic load.
+    // Read it only once, and avoid reading it at all in JS builds.
+    const paramType = TS ? param.type : null;
 
     // Oxc stores TypeScript's special `this` parameter separately from formal parameters
-    // and prints it without a source mapping.
-    if (TS && param.type === "Identifier" && param.name === "this") {
-      writeIdent(state, "this");
-      if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
-      continue;
+    // and prints it without a source mapping
+    if (TS && paramType === "Identifier") {
+      typeAssertIs<ESTree.BindingIdentifier>(param);
+      if (param.name === "this") {
+        writeIdent(state, "this");
+        if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
+        continue;
+      }
     }
 
     const { decorators } = param;
@@ -173,7 +179,8 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
       markMapStart(state, param.start, param.end, param);
     }
 
-    if (TS && param.type === "TSParameterProperty") {
+    if (TS && paramType === "TSParameterProperty") {
+      typeAssertIs<ESTree.TSParameterProperty>(param);
       if (param.accessibility != null) {
         printSpaceBeforeIdentifier(state);
         writeNoLast(state, param.accessibility);
