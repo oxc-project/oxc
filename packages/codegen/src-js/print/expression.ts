@@ -474,10 +474,8 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   }
 
   const { key, value } = node;
-  if (
-    value.type === "FunctionExpression"
-    || (TS && value.type === "TSEmptyBodyFunctionExpression")
-  ) {
+  const valueType = value.type;
+  if (valueType === "FunctionExpression" || (TS && valueType === "TSEmptyBodyFunctionExpression")) {
     markMapStart(state, node.start, node.end, node);
 
     const { kind } = node;
@@ -525,19 +523,30 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   let shorthandIdentifier: ESTree.IdentifierReference | null = null;
   let { computed } = node;
   if (!computed) {
-    if (key.type === "Identifier") {
+    const keyType = key.type;
+    if (keyType === "Identifier") {
       const keyName = key.name;
       if (keyName === "__proto__") {
         shorthand = node.shorthand === true;
       } else {
-        const inner = withoutParens(value);
-        if (inner.type === "Identifier" && inner.name === keyName) {
-          shorthand = true;
-          shorthandIdentifier = inner;
+        // Unwrap any parens, starting from the `type` already read
+        let inner = value,
+          innerType = valueType;
+        while (innerType === "ParenthesizedExpression") {
+          inner = (inner as ESTree.ParenthesizedExpression).expression;
+          innerType = inner.type;
+        }
+
+        if (innerType === "Identifier") {
+          typeAssertIs<ESTree.IdentifierReference>(inner);
+          if (inner.name === keyName) {
+            shorthand = true;
+            shorthandIdentifier = inner;
+          }
         }
       }
     } else if (
-      key.type === "Literal"
+      keyType === "Literal"
       && typeof key.value === "number"
       && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
     ) {
