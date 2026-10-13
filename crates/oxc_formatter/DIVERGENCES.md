@@ -779,3 +779,29 @@ Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as our
 Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
 Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
 Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
+
+## instantiation-expression-parens
+
+- Why: semantics (Prettier's output no longer parses; prettier/prettier#20177)
+- Pin: `tests/fixtures/ts/parenthesis/instantiation-expression-parens.ts`
+
+```ts
+// input
+const a = (make<T>)!;
+export default (class {})<string>;
+(class {})<string>;
+
+// ours
+const a = (make<T>)!;
+export default (class {}<string>);
+(class {})<string>;
+
+// prettier
+const a = make<T>!;
+export default class {}<string>;
+class {}<string>;
+```
+
+Prettier drops the parens around an instantiation expression before `!`,
+and the ones that keep a leading `class`/`function` from starting a declaration or statement.
+Fixed in Prettier `main` by prettier/prettier#20177; we follow that output.

@@ -55,6 +55,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
                 AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
                 AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),
                 AstNodes::TSNonNullExpression(expr) => Some(expr.expression().into()),
+                AstNodes::TSInstantiationExpression(expr) => Some(expr.expression().into()),
                 AstNodes::AssignmentExpression(expr) => Some(Self::AssignmentTarget(expr.left())),
                 AstNodes::UpdateExpression(expr) => {
                     if expr.prefix {

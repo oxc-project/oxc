@@ -960,14 +960,18 @@ fn class_extends_needs_parens_through_non_null(expression: &Expression<'_>) -> b
 
 impl NeedsParentheses<'_> for AstNode<'_, TSInstantiationExpression<'_>> {
     fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
-        let expr = match self.parent() {
-            AstNodes::StaticMemberExpression(expr) => &expr.object,
-            AstNodes::ComputedMemberExpression(expr) => &expr.object,
-            AstNodes::PrivateFieldExpression(expr) => &expr.object,
-            _ => return false,
-        };
-
-        self.span == expr.span()
+        match self.parent() {
+            AstNodes::StaticMemberExpression(expr) => self.span == expr.object.span(),
+            AstNodes::ComputedMemberExpression(expr) => self.span == expr.object.span(),
+            AstNodes::PrivateFieldExpression(expr) => self.span == expr.object.span(),
+            // `(f<T>)!`, since `f<T>!` does not parse
+            AstNodes::TSNonNullExpression(_) => true,
+            // `export default (class {}<T>)`
+            AstNodes::ExportDefaultDeclaration(_) => {
+                export_default_leftmost_needs_parens(self.expression())
+            }
+            _ => false,
+        }
     }
 }
 
@@ -1151,7 +1155,8 @@ fn is_first_in_statement(
             | AstNodes::ChainExpression(_)
             | AstNodes::TSAsExpression(_)
             | AstNodes::TSSatisfiesExpression(_)
-            | AstNodes::TSNonNullExpression(_) => {}
+            | AstNodes::TSNonNullExpression(_)
+            | AstNodes::TSInstantiationExpression(_) => {}
             AstNodes::SequenceExpression(sequence) => {
                 if sequence.expressions.first().unwrap().span() != current_span {
                     break;
@@ -1228,26 +1233,27 @@ fn ts_as_or_satisfies_needs_parens(
         | AstNodes::LogicalExpression(_)
         | AstNodes::BinaryExpression(_) => true,
         // `export default (function foo() {} as bar)` and `export default (class {} as bar)`.
-        // Without parens, the leading `function`/`class` token makes `export default` parse the RHS as a declaration,
-        // detaching the cast.
-        // The leftmost expression is checked (not just `inner`) so chained casts and member chains are covered too,
-        // e.g. `export default (function () {} as A as B)` and `export default (function () {}.bar as A)`.
-        //
-        // When the leftmost function/class already wraps itself,
-        // the outer cast doesn't need its own parens, or we'd emit `((function () {})() as A)`.
-        // Mirrors `Function::needs_parentheses`.
-        AstNodes::ExportDefaultDeclaration(_) => {
-            let leftmost = ExpressionLeftSide::leftmost(inner);
-            matches!(
-                leftmost.as_ref(),
-                Expression::FunctionExpression(_) | Expression::ClassExpression(_)
-            ) && !matches!(leftmost.parent(), AstNodes::TaggedTemplateExpression(_))
-                && !leftmost.is_call_like_callee()
-        }
+        AstNodes::ExportDefaultDeclaration(_) => export_default_leftmost_needs_parens(inner),
         _ => {
             type_cast_like_needs_parens(span, parent)
         }
     }
+}
+
+/// Whether a wrapper directly under `export default` needs parens because its leftmost expression is a function/class.
+/// Without parens, the leading `function`/`class` token makes `export default` parse the RHS as a declaration,
+/// detaching the wrapper (e.g. a cast or type arguments).
+/// The leftmost expression is checked (not just `expr`) so chained wrappers and member chains are covered too,
+/// e.g. `export default (function () {} as A as B)` and `export default (function () {}.bar as A)`.
+///
+/// When the leftmost function/class already wraps itself,
+/// the wrapper doesn't need its own parens, or we'd emit `((function () {})() as A)`.
+/// Mirrors `Function::needs_parentheses`.
+fn export_default_leftmost_needs_parens(expr: &AstNode<'_, Expression<'_>>) -> bool {
+    let leftmost = ExpressionLeftSide::leftmost(expr);
+    matches!(leftmost.as_ref(), Expression::FunctionExpression(_) | Expression::ClassExpression(_))
+        && !matches!(leftmost.parent(), AstNodes::TaggedTemplateExpression(_))
+        && !leftmost.is_call_like_callee()
 }
 
 fn is_class_extends(span: Span, parent: &AstNodes<'_>) -> bool {
