@@ -1,4 +1,4 @@
-use oxc_linter::{RuleCategory, RuleFlags, RuleMeta, rules::RULES};
+use oxc_linter::{FixKind, RuleCategory, RuleFixMeta, RuleFlags, RuleMeta, rules::RULES};
 use oxc_macros::declare_oxc_lint_test;
 
 struct TestRule;
@@ -13,6 +13,12 @@ struct TestRuleWithSharedConfig;
 struct TestTsgolintRule;
 
 struct TestTsgolintRuleWithConfig;
+
+struct TestRecommendedRule;
+
+struct TestRecommendedRuleWithFix;
+
+struct TestRecommendedTsgolintRuleWithConfig;
 
 declare_oxc_lint_test!(
     /// Dummy description
@@ -62,6 +68,36 @@ declare_oxc_lint_test!(
     config = shared_config::Config,
 );
 
+declare_oxc_lint_test!(
+    /// Recommended rule without fixes or configuration
+    TestRecommendedRule,
+    eslint,
+    restriction,
+    recommended,
+    version = "next",
+);
+
+declare_oxc_lint_test!(
+    /// Recommended rule with a fix kind after the recommended keyword
+    TestRecommendedRuleWithFix,
+    eslint,
+    restriction,
+    recommended,
+    conditional_fix,
+    version = "next",
+);
+
+declare_oxc_lint_test!(
+    /// Recommended type-aware rule with configuration and a fix kind before the keyword
+    TestRecommendedTsgolintRuleWithConfig(tsgolint),
+    typescript,
+    correctness,
+    conditional_fix,
+    version = "next",
+    config = shared_config::Config,
+    recommended,
+);
+
 #[test]
 fn test_declare_oxc_lint() {
     // Simple, multiline documentation
@@ -105,6 +141,19 @@ fn test_rule_flags() {
         TestTsgolintRuleWithConfig::FLAGS,
         RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG
     );
+}
+
+#[test]
+fn test_recommended_rule_flags() {
+    assert_eq!(TestRecommendedRule::FLAGS, RuleFlags::IS_RECOMMENDED);
+    assert_eq!(TestRecommendedRule::FIX, RuleFixMeta::None);
+    assert_eq!(TestRecommendedRuleWithFix::FLAGS, RuleFlags::IS_RECOMMENDED);
+    assert_eq!(TestRecommendedRuleWithFix::FIX, RuleFixMeta::Conditional(FixKind::Fix));
+    assert_eq!(
+        TestRecommendedTsgolintRuleWithConfig::FLAGS,
+        RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG | RuleFlags::IS_RECOMMENDED
+    );
+    assert_eq!(TestRecommendedTsgolintRuleWithConfig::FIX, RuleFixMeta::Conditional(FixKind::Fix));
 }
 
 #[test]

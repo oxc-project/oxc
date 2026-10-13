@@ -30,6 +30,7 @@ pub struct LintRuleMeta {
     name: Ident,
     // Whether this rule should be exposed to tsgolint integration
     is_tsgolint_rule: bool,
+    is_recommended: bool,
     plugin: Ident,
     category: Ident,
     /// Describes what auto-fixing capabilities the rule has
@@ -118,11 +119,11 @@ impl Parse for LintRuleMeta {
         let mut fix: Option<Ident> = None;
         let mut config: Option<Path> = None;
         let mut version: Option<LitStr> = None;
+        let mut is_recommended = false;
         #[cfg(feature = "ruledocs")]
         let mut short_description: Option<ShortDescriptionSource> = None;
 
-        // remaining options are `key = value` pairs, with the exception of
-        // fix kinds. Those can be short-handed to just the fix kind
+        // Remaining options are `key = value` pairs, standalone fix kinds, or `recommended`.
         while input.peek(Token!(,)) {
             input.parse::<Token!(,)>()?;
             if input.is_empty() {
@@ -130,6 +131,9 @@ impl Parse for LintRuleMeta {
             }
             let key: Ident = input.parse()?;
             match key.to_string().as_str() {
+                "recommended" => {
+                    is_recommended = true;
+                }
                 "fix" => {
                     if input.peek(Token!(=)) {
                         // `fix = some-fix-kind`
@@ -224,6 +228,7 @@ impl Parse for LintRuleMeta {
         Ok(Self {
             name: struct_name,
             is_tsgolint_rule,
+            is_recommended,
             plugin,
             category,
             fix,
@@ -246,6 +251,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     let LintRuleMeta {
         name,
         is_tsgolint_rule,
+        is_recommended,
         plugin,
         category,
         fix,
@@ -310,6 +316,9 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
     }
     if config.is_some() {
         flags = quote! { #flags.union(RuleFlags::HAS_CONFIG) };
+    }
+    if is_recommended {
+        flags = quote! { #flags.union(RuleFlags::IS_RECOMMENDED) };
     }
 
     #[cfg(not(feature = "ruledocs"))]
