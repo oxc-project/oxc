@@ -461,6 +461,8 @@ bitflags! {
         const IS_TSGOLINT_RULE = 1 << 0;
         /// Whether this rule declares a configuration type in `declare_oxc_lint!`.
         const HAS_CONFIG = 1 << 1;
+        /// Whether this rule is recommended.
+        const IS_RECOMMENDED = 1 << 2;
     }
 }
 

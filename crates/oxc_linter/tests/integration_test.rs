@@ -128,6 +128,11 @@ fn test_rule_enum_flags() {
             "unexpected tsgolint status for {plugin}/{name}"
         );
         assert_eq!(
+            rule.is_recommended(),
+            expected.contains(RuleFlags::IS_RECOMMENDED),
+            "unexpected recommended status for {plugin}/{name}"
+        );
+        assert_eq!(
             rule.has_config(),
             expected.contains(RuleFlags::HAS_CONFIG),
             "unexpected configuration status for {plugin}/{name}"
