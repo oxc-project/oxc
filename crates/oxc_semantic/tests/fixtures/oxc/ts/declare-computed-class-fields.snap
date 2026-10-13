@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_semantic/tests/main.rs
+assertion_line: 151
 input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-fields.ts
 ---
 [
@@ -67,7 +68,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-fie
         "node": "VariableDeclarator(declaredKey)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Read | ValueAsType)",
             "id": 0,
             "name": "declaredKey",
             "node_id": 25,
@@ -82,7 +83,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-fie
         "node": "VariableDeclarator(ambientKey)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Read | ValueAsType)",
             "id": 3,
             "name": "ambientKey",
             "node_id": 40,
@@ -97,7 +98,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/declare-computed-class-fie
         "node": "VariableDeclarator(abstractKey)",
         "references": [
           {
-            "flags": "ReferenceFlags(Type)",
+            "flags": "ReferenceFlags(Read | ValueAsType)",
             "id": 5,
             "name": "abstractKey",
             "node_id": 51,
