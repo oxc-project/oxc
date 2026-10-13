@@ -432,6 +432,11 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 self.flags().contains(RuleFlags::IS_TSGOLINT_RULE)
             }
 
+            /// Whether this rule is recommended.
+            pub fn is_recommended(&self) -> bool {
+                self.flags().contains(RuleFlags::IS_RECOMMENDED)
+            }
+
             /// The version of oxlint in which this rule was first available.
             #[cfg(feature = "ruledocs")]
             pub fn version(&self) -> &'static str {

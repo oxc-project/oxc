@@ -17027,6 +17027,10 @@ impl RuleEnum {
     pub fn is_tsgolint_rule(&self) -> bool {
         self.flags().contains(RuleFlags::IS_TSGOLINT_RULE)
     }
+    #[doc = r" Whether this rule is recommended."]
+    pub fn is_recommended(&self) -> bool {
+        self.flags().contains(RuleFlags::IS_RECOMMENDED)
+    }
     #[doc = r" The version of oxlint in which this rule was first available."]
     #[cfg(feature = "ruledocs")]
     pub fn version(&self) -> &'static str {
