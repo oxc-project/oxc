@@ -527,14 +527,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
     }
 
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // The operand of `delete` is a reference, not a value: member accesses
-        // there must not be folded to their value (`delete [].length` -> `delete 0`).
-        if expr.is_member_expression()
-            && matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
-        {
-            return;
-        }
-
         // Tree-shaking mode: fewer passes than full minify below. Only the ones
         // that remove code, plus the constant folds those removals need. The
         // folds stay on because the removal passes don't evaluate compound

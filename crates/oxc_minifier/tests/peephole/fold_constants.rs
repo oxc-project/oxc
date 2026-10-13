@@ -1535,8 +1535,16 @@ fn test_fold_delete_member_operand() {
     fold_same("delete [1, 2][0]");
     fold_same("delete Number.EPSILON");
     fold_same("delete /a/.source");
-    fold("delete []?.length", "delete [].length");
     fold("delete ([].length)", "delete [].length");
+
+    // An optional chain on a known non-nullish object turns into a plain member
+    // access, which then stays the operand of `delete`.
+    fold("delete []?.length", "delete [].length");
+    fold("delete 'abc'?.length", "delete 'abc'.length");
+    fold("delete 'abc'?.[0]", "delete 'abc'[0]");
+    fold("delete [1, 2]?.[0]", "delete [1, 2][0]");
+    // A short-circuited chain is not a reference: `delete null?.x` is `true`.
+    fold("delete null?.x", "!0");
 
     // Only the `delete` operand itself is kept as a reference.
     fold("delete [].length.x", "delete 0..x");
