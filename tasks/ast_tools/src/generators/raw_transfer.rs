@@ -794,9 +794,7 @@ impl<'s> StructDeserializerGenerator<'s> {
                 _ => false,
             };
 
-            let value_fn = field_type.deser_name(self.schema);
-            let pos = pos_offset(field_offset);
-            format!("{value_fn}({pos})")
+            deser_call(field_type, &pos_offset(field_offset), self.schema)
         };
 
         self.fields.insert(field_name, StructFieldValue { value, deser_type, inline });
@@ -888,9 +886,8 @@ fn generate_enum(
                 let ret = apply_converter_for_enum(converter_name, payload_offset, schema).unwrap();
                 switch_cases.push_str(&ret);
             } else if let Some(variant_type) = variant.field_type(schema) {
-                let variant_fn_name = variant_type.deser_name(schema);
-                let payload_pos = pos_offset(payload_offset);
-                write_it!(switch_cases, "return {variant_fn_name}({payload_pos});");
+                let value = deser_call(variant_type, &pos_offset(payload_offset), schema);
+                write_it!(switch_cases, "return {value};");
             } else {
                 write_it!(
                     switch_cases,
@@ -920,17 +917,19 @@ fn generate_enum(
 
 /// Generate deserialize function for a primitive.
 fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &Schema) {
+    let inline_ret;
     #[expect(clippy::match_same_arms)]
     let ret = match primitive_def.name() {
         // Reuse deserializer for `&str`
         "Str" | "Ident" => return,
         // Dummy type
         "PointerAlign" => return,
-        "bool" => "return uint8[pos] === 1;",
-        "u8" => "return uint8[pos];",
+        "bool" | "u8" | "u32" | "i32" | "f64" => {
+            let value = inline_primitive_deser(primitive_def, "pos", schema).unwrap();
+            inline_ret = format!("return {value};");
+            &inline_ret
+        }
         // "u16" => "return uint16[pos >> 1];",
-        "u32" => "return int32[pos >> 2] >>> 0;",
-        "i32" => "return int32[pos >> 2];",
         // Will be approximate if larger than `Number.MAX_SAFE_INTEGER`
         #[rustfmt::skip]
         "u64" => "
@@ -947,7 +946,6 @@ fn generate_primitive(primitive_def: &PrimitiveDef, code: &mut String, schema: &
                 + (int32[pos32 + 2] >>> 0) * /* 2^64 */ 18446744073709551616
                 + (int32[pos32 + 3] >>> 0) * /* 2^96 */ 79228162514264337593543950336;
         ",
-        "f64" => "return float64[pos >> 3];",
         "&str" => STR_DESERIALIZER_BODY,
         // Reuse deserializers for zeroed and atomic types
         type_name if type_name.starts_with("NonZero") => return,
@@ -1038,15 +1036,15 @@ fn generate_option(
     }
 
     let fn_name = option_def.deser_name(schema);
-    let inner_fn_name = inner_type.deser_name(schema);
 
     let (none_condition, payload_offset) =
         get_option_none_condition_and_offset(option_def, inner_type, 0);
+    let value = deser_call(inner_type, &payload_offset, schema);
 
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
-            return ({none_condition}) ? null : {inner_fn_name}({payload_offset});
+            return ({none_condition}) ? null : {value};
         }}
     ");
 }
@@ -1094,12 +1092,12 @@ fn generate_box(box_def: &BoxDef, code: &mut String, estree_derive_id: DeriveId,
     }
 
     let fn_name = box_def.deser_name(schema);
-    let inner_fn_name = inner_type.deser_name(schema);
+    let value = deser_call(inner_type, "int32[pos >> 2]", schema);
 
     #[rustfmt::skip]
     write_it!(code, "
         function {fn_name}(pos) {{
-            return {inner_fn_name}(int32[pos >> 2]);
+            return {value};
         }}
     ");
 }
@@ -1112,7 +1110,7 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
     }
 
     let fn_name = vec_def.deser_name(schema);
-    let inner_fn_name = inner_type.deser_name(schema);
+    let value = deser_call(inner_type, "pos", schema);
     let inner_type_size = inner_type.layout_64().size;
 
     let ptr_pos32 = pos32_offset(VEC_PTR_FIELD_OFFSET);
@@ -1133,7 +1131,7 @@ fn generate_vec(vec_def: &VecDef, code: &mut String, estree_derive_id: DeriveId,
             pos = int32[{ptr_pos32}];
             const endPos = pos + {end_pos_offset};
             while (pos !== endPos) {{
-                arr.push({inner_fn_name}(pos));
+                arr.push({value});
                 pos += {inner_type_size};
             }}
             return arr;
@@ -1211,6 +1209,54 @@ where
     if offset32 == 0 { Cow::Borrowed("pos32") } else { format_cow!("pos32 + {offset32}") }
 }
 
+/// Get JS expression which deserializes a value of type `type_def` at `pos`.
+///
+/// Usually this is a call to the type's deserializer function e.g. `deserializeFoo(pos + 8)`.
+///
+/// But `Box`es and simple primitives are deserialized inline, e.g. for a `Box<Foo>`,
+/// `deserializeFoo(int32[(pos + 8) >> 2])`, and for an `i32`, `int32[(pos + 8) >> 2]`.
+/// V8 doesn't inline function calls until the caller is optimized, so before that
+/// (e.g. the first file that a process deserializes), calls to these tiny functions are a significant cost.
+/// Their deserializer functions are still generated, but the minifier removes them if they're unused.
+fn deser_call(type_def: &TypeDef, pos: &str, schema: &Schema) -> String {
+    match type_def {
+        TypeDef::Box(box_def) => {
+            let ptr = format!("int32[{}]", shift_pos(pos, 2));
+            deser_call(box_def.inner_type(schema), &ptr, schema)
+        }
+        TypeDef::Primitive(primitive_def) => {
+            if let Some(value) = inline_primitive_deser(primitive_def, pos, schema) {
+                format!("({value})")
+            } else {
+                format!("{}({pos})", type_def.deser_name(schema))
+            }
+        }
+        _ => format!("{}({pos})", type_def.deser_name(schema)),
+    }
+}
+
+/// Get JS expression which deserializes a primitive at `pos`, if it's simple enough to inline.
+fn inline_primitive_deser(
+    primitive_def: &PrimitiveDef,
+    pos: &str,
+    schema: &Schema,
+) -> Option<String> {
+    let value = match &*primitive_def.plain_name(schema) {
+        "Bool" => format!("uint8[{pos}] === 1"),
+        "U8" => format!("uint8[{pos}]"),
+        "U32" => format!("int32[{}] >>> 0", shift_pos(pos, 2)),
+        "I32" => format!("int32[{}]", shift_pos(pos, 2)),
+        "F64" => format!("float64[{}]", shift_pos(pos, 3)),
+        _ => return None,
+    };
+    Some(value)
+}
+
+/// Generate `pos >> <shift>` string, with `pos` in parentheses if it's an expression.
+fn shift_pos(pos: &str, shift: u32) -> String {
+    if pos == "pos" { format!("pos >> {shift}") } else { format!("({pos}) >> {shift}") }
+}
+
 // `raw_deser` replacements
 
 /// Get `raw_deser` for converter and replace `POS`, `DESER` and `SOURCE_TEXT` within it.
@@ -1253,7 +1299,8 @@ impl Replacer for ThisReplacer<'_> {
     }
 }
 
-static DESER_REGEX: Lazy<Regex> = lazy_regex!(r"DESER\[([A-Za-z0-9<>_]+)\]");
+/// Matches `DESER[Type]`, and the call's arguments if they contain no parentheses e.g. `DESER[Type](POS)`.
+static DESER_REGEX: Lazy<Regex> = lazy_regex!(r"DESER\[([A-Za-z0-9<>_]+)\](?:\(([^()]*)\))?");
 
 struct DeserReplacer<'s> {
     schema: &'s Schema,
@@ -1267,11 +1314,15 @@ impl<'s> DeserReplacer<'s> {
 
 impl Replacer for DeserReplacer<'_> {
     fn replace_append(&mut self, caps: &Captures, dst: &mut String) {
-        assert_eq!(caps.len(), 2);
+        assert_eq!(caps.len(), 3);
         let type_name = caps.get(1).unwrap().as_str();
         let type_def = self.schema.type_by_name(type_name);
-        let fn_name = type_def.deser_name(self.schema);
-        dst.push_str(&fn_name);
+        if let Some(pos) = caps.get(2) {
+            dst.push_str(&deser_call(type_def, pos.as_str(), self.schema));
+        } else {
+            // Arguments contain parentheses. Output function name, leaving arguments as they are.
+            dst.push_str(&type_def.deser_name(self.schema));
+        }
     }
 }
 
