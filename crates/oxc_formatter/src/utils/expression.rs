@@ -54,8 +54,8 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
 
     /// Returns the child that starts `node` (e.g. `a` of `a.b`, `a + b`, `a ? b : c`),
     /// or [None] if `node` starts with its own token.
-    pub fn left_of(node: &'b AstNodes<'a>) -> Option<Self> {
-        match node {
+    fn left_of(node: &'b AstNodes<'a>) -> Option<Self> {
+        let left = match node {
             AstNodes::SequenceExpression(expr) => expr.expressions().first().map(Into::into),
             AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
             AstNodes::ComputedMemberExpression(expr) => Some(expr.object().into()),
@@ -78,6 +78,37 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
             AstNodes::BinaryExpression(binary) => Some(binary.left().into()),
             AstNodes::LogicalExpression(logical) => Some(logical.left().into()),
             AstNodes::ChainExpression(chain) => Self::left_of(chain.expression().as_ast_nodes()),
+            _ => None,
+        };
+        // Keep the two tables in sync
+        debug_assert_eq!(left.map(|left| left.span()), Self::left_span_of(node));
+        left
+    }
+
+    /// Same as [Self::left_of], but reads the span from the field directly,
+    /// so no [AstNode] is allocated.
+    pub fn left_span_of(node: &AstNodes<'_>) -> Option<Span> {
+        match node {
+            AstNodes::SequenceExpression(expr) => expr.expressions.first().map(GetSpan::span),
+            AstNodes::StaticMemberExpression(expr) => Some(expr.object.span()),
+            AstNodes::ComputedMemberExpression(expr) => Some(expr.object.span()),
+            AstNodes::PrivateFieldExpression(expr) => Some(expr.object.span()),
+            AstNodes::TaggedTemplateExpression(expr) => Some(expr.tag.span()),
+            AstNodes::CallExpression(expr) => Some(expr.callee.span()),
+            AstNodes::ConditionalExpression(expr) => Some(expr.test.span()),
+            AstNodes::TSAsExpression(expr) => Some(expr.expression.span()),
+            AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression.span()),
+            AstNodes::TSNonNullExpression(expr) => Some(expr.expression.span()),
+            AstNodes::TSInstantiationExpression(expr) => Some(expr.expression.span()),
+            AstNodes::AssignmentExpression(expr) => Some(expr.left.span()),
+            AstNodes::UpdateExpression(expr) => (!expr.prefix).then(|| expr.argument.span()),
+            AstNodes::BinaryExpression(binary) => Some(binary.left.span()),
+            AstNodes::LogicalExpression(logical) => Some(logical.left.span()),
+            AstNodes::ChainExpression(chain) => match &chain.expression {
+                ChainElement::CallExpression(call) => Some(call.callee.span()),
+                ChainElement::TSNonNullExpression(expr) => Some(expr.expression.span()),
+                element => element.as_member_expression().map(|member| member.object().span()),
+            },
             _ => None,
         }
     }

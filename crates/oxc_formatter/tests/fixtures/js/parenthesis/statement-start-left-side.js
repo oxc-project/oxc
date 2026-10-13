@@ -10,3 +10,6 @@ class A {
   }
 }
 new ({}).a();
+// A type cast prints its own parens
+/** @type {A} */ ({}.a).b;
+/** @type {A} */ (function () {}.a);

@@ -20,9 +20,9 @@ export default (class {})<string> as A;
 const a = (make<T>)!;
 (make<T>)!.b;
 (make<T>)!();
-export default (class {}<string>);
-export default (function () {}<string>);
-export default (class {}<string> as A);
+export default (class {})<string>;
+export default (function () {})<string>;
+export default (class {})<string> as A;
 (class {})<string>;
 (function () {})<string>;
 
@@ -33,9 +33,9 @@ export default (class {}<string> as A);
 const a = (make<T>)!;
 (make<T>)!.b;
 (make<T>)!();
-export default (class {}<string>);
-export default (function () {}<string>);
-export default (class {}<string> as A);
+export default (class {})<string>;
+export default (function () {})<string>;
+export default (class {})<string> as A;
 (class {})<string>;
 (function () {})<string>;
 
