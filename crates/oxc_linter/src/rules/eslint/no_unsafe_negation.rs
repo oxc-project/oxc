@@ -69,6 +69,7 @@ declare_oxc_lint!(
     NoUnsafeNegation,
     eslint,
     correctness,
+    recommended,
     fix,
     config = NoUnsafeNegation,
     version = "0.0.3",

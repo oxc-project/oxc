@@ -91,6 +91,7 @@ declare_oxc_lint!(
     NoUselessEscape,
     eslint,
     correctness,
+    recommended,
     fix,
     config = NoUselessEscapeConfig,
     version = "0.0.5",

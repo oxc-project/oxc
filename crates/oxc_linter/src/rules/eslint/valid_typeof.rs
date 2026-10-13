@@ -89,6 +89,7 @@ declare_oxc_lint!(
     ValidTypeof,
     eslint,
     correctness,
+    recommended,
     conditional_fix,
     config = ValidTypeof,
     version = "0.0.3",

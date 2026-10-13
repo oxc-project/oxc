@@ -159,7 +159,8 @@ fn test_recommended_rule_flags() {
 #[test]
 fn test_rule_enum_flags() {
     let cases = [
-        ("eslint", "no-debugger", RuleFlags::empty()),
+        ("eslint", "no-alert", RuleFlags::empty()),
+        ("eslint", "no-debugger", RuleFlags::IS_RECOMMENDED),
         ("eslint", "eqeqeq", RuleFlags::HAS_CONFIG),
         ("typescript", "no-unsafe-assignment", RuleFlags::IS_TSGOLINT_RULE),
         ("typescript", "no-floating-promises", RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG),
@@ -187,6 +188,84 @@ fn test_rule_enum_flags() {
             "unexpected configuration status for {plugin}/{name}"
         );
     }
+}
+
+#[test]
+fn test_eslint_recommended_rules() {
+    // https://github.com/eslint/eslint/blob/v10.12.0/packages/js/src/configs/eslint-recommended.js
+    // `no-dupe-args` and `no-octal` have no corresponding Oxc lint rules.
+    const EXPECTED: [&str; 62] = [
+        "constructor-super",
+        "for-direction",
+        "getter-return",
+        "no-async-promise-executor",
+        "no-case-declarations",
+        "no-class-assign",
+        "no-compare-neg-zero",
+        "no-cond-assign",
+        "no-const-assign",
+        "no-constant-binary-expression",
+        "no-constant-condition",
+        "no-control-regex",
+        "no-debugger",
+        "no-delete-var",
+        "no-dupe-class-members",
+        "no-dupe-else-if",
+        "no-dupe-keys",
+        "no-duplicate-case",
+        "no-empty",
+        "no-empty-character-class",
+        "no-empty-pattern",
+        "no-empty-static-block",
+        "no-ex-assign",
+        "no-extra-boolean-cast",
+        "no-fallthrough",
+        "no-func-assign",
+        "no-global-assign",
+        "no-import-assign",
+        "no-invalid-regexp",
+        "no-irregular-whitespace",
+        "no-loss-of-precision",
+        "no-misleading-character-class",
+        "no-new-native-nonconstructor",
+        "no-nonoctal-decimal-escape",
+        "no-obj-calls",
+        "no-prototype-builtins",
+        "no-redeclare",
+        "no-regex-spaces",
+        "no-self-assign",
+        "no-setter-return",
+        "no-shadow-restricted-names",
+        "no-sparse-arrays",
+        "no-this-before-super",
+        "no-unassigned-vars",
+        "no-undef",
+        "no-unexpected-multiline",
+        "no-unreachable",
+        "no-unsafe-finally",
+        "no-unsafe-negation",
+        "no-unsafe-optional-chaining",
+        "no-unused-labels",
+        "no-unused-private-class-members",
+        "no-unused-vars",
+        "no-useless-assignment",
+        "no-useless-backreference",
+        "no-useless-catch",
+        "no-useless-escape",
+        "no-with",
+        "preserve-caught-error",
+        "require-yield",
+        "use-isnan",
+        "valid-typeof",
+    ];
+
+    let mut recommended = RULES
+        .iter()
+        .filter(|rule| rule.plugin_name() == "eslint" && rule.is_recommended())
+        .map(oxc_linter::rules::RuleEnum::name)
+        .collect::<Vec<_>>();
+    recommended.sort_unstable();
+    assert_eq!(recommended, EXPECTED);
 }
 
 #[test]

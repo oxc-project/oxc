@@ -64,6 +64,7 @@ declare_oxc_lint!(
     NoObjCalls,
     eslint,
     correctness,
+    recommended,
     version = "0.0.7",
     short_description = "Disallow calling some global objects as functions.",
 );

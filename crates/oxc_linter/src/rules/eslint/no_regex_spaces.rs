@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoRegexSpaces,
     eslint,
     restriction,
+    recommended,
     fix,
     version = "0.0.18",
     short_description = "Disallow 2+ consecutive spaces in regular expressions.",

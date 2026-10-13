@@ -101,7 +101,7 @@ declare_oxc_lint!(
     /// ```
     NoUselessAssignment,
     eslint,
-    nursery,
+    nursery, // TODO: Add to recommended
     version = "1.59.0",
     short_description = "Disallow variable assignments when the value is not used.",
 );

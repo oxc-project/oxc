@@ -96,6 +96,7 @@ declare_oxc_lint!(
     UseIsnan,
     eslint,
     correctness,
+    recommended,
     conditional_fix,
     config = UseIsnan,
     version = "0.0.3",
