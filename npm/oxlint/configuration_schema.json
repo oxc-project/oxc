@@ -9331,6 +9331,9 @@
         "unicorn/prefer-add-event-listener": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-add-event-listener-options": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-array-find": {
           "$ref": "#/definitions/RuleNoConfig"
         },

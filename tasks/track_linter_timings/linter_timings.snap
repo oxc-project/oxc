@@ -617,6 +617,7 @@ unicorn/no-zero-fractions                                  |  14295
 unicorn/number-literal-case                                |  14334
 unicorn/numeric-separators-style                           |  14334
 unicorn/prefer-add-event-listener                          |  13005
+unicorn/prefer-add-event-listener-options                  |  62606
 unicorn/prefer-array-find                                  | 130863
 unicorn/prefer-array-flat                                  |  62606
 unicorn/prefer-array-flat-map                              |  62606

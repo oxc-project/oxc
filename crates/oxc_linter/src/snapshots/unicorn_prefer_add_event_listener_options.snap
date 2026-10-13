@@ -1,0 +1,75 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: true}` over `true`.
+   ╭─[prefer_add_event_listener_options.tsx:1:44]
+ 1 │ window.addEventListener("click", listener, true)
+   ·                                            ────
+   ╰────
+  help: Replace `true` with `{capture: true}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: false}` over `false`.
+   ╭─[prefer_add_event_listener_options.tsx:1:44]
+ 1 │ window.addEventListener("click", listener, false)
+   ·                                            ─────
+   ╰────
+  help: Replace `false` with `{capture: false}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: true}` over `true`.
+   ╭─[prefer_add_event_listener_options.tsx:1:45]
+ 1 │ window.addEventListener("click", listener, (true))
+   ·                                             ────
+   ╰────
+  help: Replace `true` with `{capture: true}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: true}` over `true`.
+   ╭─[prefer_add_event_listener_options.tsx:1:44]
+ 1 │ window.addEventListener("click", () => {}, true)
+   ·                                            ────
+   ╰────
+  help: Replace `true` with `{capture: true}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: false}` over `false`.
+   ╭─[prefer_add_event_listener_options.tsx:1:50]
+ 1 │ window.addEventListener("click", function () {}, false)
+   ·                                                  ─────
+   ╰────
+  help: Replace `false` with `{capture: false}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: true}` over `true`.
+   ╭─[prefer_add_event_listener_options.tsx:1:51]
+ 1 │ document.body.addEventListener("click", listener, true)
+   ·                                                   ────
+   ╰────
+  help: Replace `true` with `{capture: true}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: false}` over `false`.
+   ╭─[prefer_add_event_listener_options.tsx:1:46]
+ 1 │ (window).addEventListener("click", listener, false)
+   ·                                              ─────
+   ╰────
+  help: Replace `false` with `{capture: false}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: true}` over `true`.
+   ╭─[prefer_add_event_listener_options.tsx:1:61]
+ 1 │ window.addEventListener("click", listener, /* useCapture */ true)
+   ·                                                             ────
+   ╰────
+  help: Replace `true` with `{capture: true}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: true}` over `true`.
+   ╭─[prefer_add_event_listener_options.tsx:1:44]
+ 1 │ window.addEventListener("click", listener, true /* useCapture */)
+   ·                                            ────
+   ╰────
+  help: Replace `true` with `{capture: true}`.
+
+  ⚠ unicorn(prefer-add-event-listener-options): Prefer `{capture: true}` over `true`.
+   ╭─[prefer_add_event_listener_options.tsx:4:2]
+ 3 │     listener,
+ 4 │     true
+   ·     ────
+ 5 │ )
+   ╰────
+  help: Replace `true` with `{capture: true}`.
