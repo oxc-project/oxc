@@ -130,7 +130,8 @@ impl Rule for InteractiveSupportsFocus {
             return;
         }
 
-        if !is_interactive_role(role) || is_non_interactive_role(role) {
+        // The original rule treats `toolbar` as both interactive and non-interactive, so it is never reported.
+        if !is_interactive_role(role) || is_non_interactive_role(role) || role == "toolbar" {
             return;
         }
 
@@ -285,6 +286,9 @@ fn test() {
         (r#"<div role="slider" onClick={() => void 0} tabIndex="0" />"#, None, None),
         (r#"<div role="tab" onClick={() => void 0} tabIndex="0" />"#, None, None),
         (r#"<div role="treeitem" onClick={() => void 0} tabIndex="0" />"#, None, None),
+        // `toolbar` is not reported by the original rule
+        (r#"<div role="toolbar" onClick={() => void 0} />"#, None, None),
+        (r#"<div role="toolbar" onMouseDown={(e) => e.preventDefault()} />"#, None, None),
     ];
 
     let fail = vec![
