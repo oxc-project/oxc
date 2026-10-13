@@ -16,7 +16,7 @@ use tracing::debug;
 
 use crate::{
     ClientMessage,
-    capabilities::DiagnosticMode,
+    capabilities::{Capabilities, DiagnosticMode},
     file_system::ResolvedPath,
     tool::ToolBuilder,
     uri_utils::{file_path_to_uri, uri_to_file_path},
@@ -369,11 +369,10 @@ impl WorkerManager {
     pub async fn ensure_worker_for_file_uri(
         &self,
         uri: &Uri,
-        diagnostic_mode: DiagnosticMode,
-        dynamic_watchers: bool,
+        capabilities: &Capabilities,
     ) -> (Option<Registration>, Vec<ClientMessage>) {
-        // Bail out immediately if we are not in single-file mode.
-        if !self.is_single_file_mode() {
+        // This only applies to file opens in single-file mode.
+        if !self.is_single_file_mode() || uri.scheme().as_str() != "file" {
             return (None, vec![]);
         }
 
@@ -390,10 +389,14 @@ impl WorkerManager {
         }
 
         debug!("single file mode: creating workspace worker for {parent_uri}");
-        let worker =
-            WorkspaceWorker::new(parent_uri, Arc::clone(&self.tool_builder), diagnostic_mode);
+        let worker = WorkspaceWorker::new(
+            parent_uri,
+            Arc::clone(&self.tool_builder),
+            capabilities.diagnostic_mode.clone(),
+        );
         let client_messages = worker.start_worker(Value::Null).await;
-        let registration = if dynamic_watchers { worker.init_watchers().await } else { None };
+        let registration =
+            if capabilities.dynamic_watchers { worker.init_watchers().await } else { None };
 
         // Acquire the write lock to insert the worker.  Re-check both the mode
         // flag and the worker list because a concurrent call (e.g., another
