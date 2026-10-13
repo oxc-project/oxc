@@ -600,9 +600,10 @@ impl<'a> PeepholeOptimizations {
                         false
                     }
                     (false, false) => {
-                        let new_expr = Expression::new_sequence_expression(
+                        let new_expr = Self::join_sequence(
                             binary_expr.span,
-                            [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
+                            binary_expr.left.take_in(ctx),
+                            binary_expr.right.take_in(ctx),
                             ctx,
                         );
                         ctx.replace_expression(e, new_expr);

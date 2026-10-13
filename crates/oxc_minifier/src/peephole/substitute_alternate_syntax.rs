@@ -1934,9 +1934,10 @@ impl<'a> PeepholeOptimizations {
                     } else if let Some(taken) =
                         Self::try_take_iife_body(&mut expr_stmt.expression, is_pure, ctx)
                     {
-                        Expression::new_sequence_expression(
+                        Self::join_sequence(
                             expr_stmt.span,
-                            [taken, Expression::new_void_0(call_expr.span, ctx)],
+                            taken,
+                            Expression::new_void_0(call_expr.span, ctx),
                             ctx,
                         )
                     } else {
