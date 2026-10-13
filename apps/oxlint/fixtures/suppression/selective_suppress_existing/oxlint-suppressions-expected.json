@@ -1,0 +1,10 @@
+{
+  "test.js": {
+    "no-console": {
+      "count": 2
+    },
+    "no-debugger": {
+      "count": 7
+    }
+  }
+}
