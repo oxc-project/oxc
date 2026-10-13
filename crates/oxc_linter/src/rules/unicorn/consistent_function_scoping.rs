@@ -155,7 +155,7 @@ declare_oxc_lint!(
     /// ```
     ConsistentFunctionScoping,
     unicorn,
-    suspicious,
+    style,
     pending,
     config = ConsistentFunctionScoping,
     version = "0.8.0",
