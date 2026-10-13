@@ -225,6 +225,18 @@ fn generate_deserializers(
             // Clear buffer and source text strings to allow them to be garbage collected
             uint8 = int32 = float64 = sourceText = sourceTextLatin = undefined;
         }}
+
+        // Append elements of `arr2` to `arr`, and return the combined array.
+        // Not `arr.push(...arr2)`, which throws a stack overflow error if `arr2` is very long
+        // (e.g. a file with 150k top-level statements).
+        // If `arr` is empty (e.g. no directives), return `arr2` instead of copying it.
+        function appendArray(arr, arr2) {{
+            if (arr.length === 0) return arr2;
+            for (let i = 0; i < arr2.length; i++) {{
+                arr.push(arr2[i]);
+            }}
+            return arr;
+        }}
     ");
 
     // Type definition for deserialize.js (linter variant)
@@ -701,10 +713,11 @@ impl<'s> StructDeserializerGenerator<'s> {
                         let field_fn = vec_def.deser_name(self.schema);
                         if index == 0 {
                             self.assignments_preamble
-                                .push(format!("const {field_name} = {field_fn}({field_pos});"));
+                                .push(format!("let {field_name} = {field_fn}({field_pos});"));
                         } else {
-                            self.assignments_preamble
-                                .push(format!("{field_name}.push(...{field_fn}({field_pos}));"));
+                            self.assignments_preamble.push(format!(
+                                "{field_name} = appendArray({field_name}, {field_fn}({field_pos}));"
+                            ));
                         }
                     }
                     TypeDef::Option(option_def) => {
@@ -714,7 +727,7 @@ impl<'s> StructDeserializerGenerator<'s> {
                             .push(format!("const {option_field_name} = {field_fn}({field_pos});"));
                         if index == 0 {
                             self.assignments_preamble.push(format!(
-                                "const {field_name} = {option_field_name} === null ? [] : [{option_field_name}];"
+                                "let {field_name} = {option_field_name} === null ? [] : [{option_field_name}];"
                             ));
                         } else {
                             self.assignments_preamble.push(format!(
