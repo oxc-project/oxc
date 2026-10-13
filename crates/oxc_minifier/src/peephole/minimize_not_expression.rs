@@ -14,9 +14,6 @@ impl<'a> PeepholeOptimizations {
         boolean_context: bool,
     ) -> Expression<'a> {
         if Self::try_negate_expression(&mut expr, ctx, boolean_context) {
-            if boolean_context {
-                Self::minimize_expression_in_boolean_context(&mut expr, ctx);
-            }
             expr
         } else {
             Expression::new_unary_expression(span, UnaryOperator::LogicalNot, expr, ctx)
@@ -105,9 +102,8 @@ impl<'a> PeepholeOptimizations {
         if !e.operator.is_not() {
             return;
         }
-        Self::minimize_expression_in_boolean_context(&mut e.argument, ctx);
-
-        if Self::try_negate_expression(&mut e.argument, ctx, false) {
+        let boolean_context = ctx.in_boolean_context();
+        if Self::try_negate_expression(&mut e.argument, ctx, boolean_context) {
             ctx.replace_expression_with(expr, Self::unwrap_unary);
         }
     }

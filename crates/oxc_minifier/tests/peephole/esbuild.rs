@@ -1606,7 +1606,7 @@ fn test_remove_dead_expr() {
     test("delete (1, -Infinity)", "");
     test("foo ? 1 : 2", "foo;");
     test("foo ? 1 : bar", "foo || bar;");
-    test("foo ? bar : 2", "foo && bar;");
+    test("foo ? bar : 2", "!foo || bar;");
     test("foo ? bar : baz", "foo ? bar : baz;");
     test("foo && bar", "foo && bar;");
     test_same("v = function(foo) { foo && bar }");

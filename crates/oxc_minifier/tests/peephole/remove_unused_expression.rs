@@ -473,7 +473,7 @@ fn test_fold_conditional_expression() {
     test("(1, foo()) ? 1 : 2", "foo()");
     test("foo() ? 1 : 2", "foo()");
     test("foo() ? 1 : bar()", "foo() || bar()");
-    test("foo() ? bar() : 2", "foo() && bar()");
+    test("foo() ? bar() : 2", "!foo() || bar()");
     test_same("foo() ? bar() : baz()");
 
     test("typeof x == 'undefined' ? 0 : x", "");

@@ -74,12 +74,20 @@ impl<'a> PeepholeOptimizations {
         if e.right.is_number_0() && e.left.is_int32_or_uint32(ctx) {
             let inequal =
                 matches!(e.operator, BinaryOperator::Inequality | BinaryOperator::StrictInequality);
+            let boolean_context = ctx.in_boolean_context();
             ctx.replace_expression_with(expr, |old, ctx| {
                 let Expression::BinaryExpression(e) = old else { unreachable!() };
                 let e = e.unbox();
-                let value =
-                    if inequal { Self::minimize_not(e.span, e.left, ctx, true) } else { e.left };
-                Expression::new_unary_expression(e.span, UnaryOperator::LogicalNot, value, ctx)
+                if boolean_context {
+                    if inequal { e.left } else { Self::minimize_not(e.span, e.left, ctx, true) }
+                } else {
+                    let value = if inequal {
+                        Self::minimize_not(e.span, e.left, ctx, true)
+                    } else {
+                        e.left
+                    };
+                    Expression::new_unary_expression(e.span, UnaryOperator::LogicalNot, value, ctx)
+                }
             });
             return;
         }
@@ -113,7 +121,8 @@ impl<'a> PeepholeOptimizations {
         ctx.replace_expression_with(expr, |old, ctx| {
             let Expression::BinaryExpression(e) = old else { unreachable!() };
             let e = e.unbox();
-            if b { e.left } else { Self::minimize_not(e.span, e.left, ctx, false) }
+            let boolean_context = ctx.in_boolean_context();
+            if b { e.left } else { Self::minimize_not(e.span, e.left, ctx, boolean_context) }
         });
     }
 
