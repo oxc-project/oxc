@@ -3,6 +3,33 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <Markdown content={`\\* Want to learn more`} />
+   ·                    ────────────────────────
+   ╰────
+  help: Replace `{`\\* Want to learn more`}` with `"\* Want to learn more"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <Markdown content={"\\* Want to learn more"} />
+   ·                    ────────────────────────
+   ╰────
+  help: Replace `{"\\* Want to learn more"}` with `"\* Want to learn more"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <Markdown content={"\x26copy;"} />
+   ·                    ───────────
+   ╰────
+  help: Replace `{"\x26copy;"}` with `"&amp;copy;"`.
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
+   ╭─[jsx_curly_brace_presence.tsx:1:20]
+ 1 │ <Markdown content={"\tWant to learn more"} />
+   ·                    ──────────────────────
+   ╰────
+
+  ⚠ react(jsx-curly-brace-presence): Curly braces are unnecessary here.
    ╭─[jsx_curly_brace_presence.tsx:1:12]
  1 │ <App prop={`foo`} />
    ·            ─────
