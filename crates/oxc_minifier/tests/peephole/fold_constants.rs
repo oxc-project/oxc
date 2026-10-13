@@ -1523,6 +1523,30 @@ fn test_fold_delete() {
     fold_same("function(NaN){ return delete NaN; }");
 }
 
+/// The operand of `delete` is a reference, not a value: `delete [].length` is
+/// `false` (sloppy) or throws (strict), unlike `delete 0`.
+#[test]
+fn test_fold_delete_member_operand() {
+    fold_same("delete [].length");
+    fold_same("delete [1, 2].length");
+    fold_same("delete 'abc'.length");
+    fold("delete 'abc'['length']", "delete 'abc'.length");
+    fold_same("delete 'abc'[0]");
+    fold_same("delete [1, 2][0]");
+    fold_same("delete Number.EPSILON");
+    fold_same("delete /a/.source");
+    fold("delete []?.length", "delete [].length");
+    fold("delete ([].length)", "delete [].length");
+
+    // Only the `delete` operand itself is kept as a reference.
+    fold("delete [].length.x", "delete 0..x");
+    fold("delete ([].length, 1)", "!0");
+    fold("x = [].length", "x = 0");
+    fold("x = 'abc'.length", "x = 3");
+    fold("x = 'abc'[0]", "x = 'a'");
+    fold("x = [1, 2][0]", "x = 1");
+}
+
 #[test]
 fn test_inline_values_in_template_literal() {
     fold("`foo${1}`", "'foo1'");

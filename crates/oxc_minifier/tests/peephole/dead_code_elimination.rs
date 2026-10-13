@@ -402,6 +402,12 @@ fn fold_number_nan() {
     test_same("let Number; foo(Number.NaN)");
 }
 
+#[test]
+fn keep_delete_member_operand() {
+    test_same("foo(delete [].length)");
+    test_same("foo(delete 'abc'[0])");
+}
+
 // https://github.com/terser/terser/blob/v5.9.0/test/compress/dead-code.js
 #[test]
 fn dce_from_terser() {
