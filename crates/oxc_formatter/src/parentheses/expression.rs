@@ -125,25 +125,10 @@ impl NeedsParentheses<'_> for AstNode<'_, IdentifierReference<'_>> {
                         AstNodes::ForInStatement(s) => {
                             return s.left.span().contains_inclusive(self.span);
                         }
-                        AstNodes::ComputedMemberExpression(m) => m.object.span() == child_span,
-                        AstNodes::StaticMemberExpression(m) => m.object.span() == child_span,
-                        AstNodes::CallExpression(c) => c.callee.span() == child_span,
-                        AstNodes::ChainExpression(c) => c.expression.span() == child_span,
-                        AstNodes::AssignmentExpression(a) => a.left.span() == child_span,
-                        AstNodes::BinaryExpression(b) => b.left.span() == child_span,
-                        AstNodes::LogicalExpression(l) => l.left.span() == child_span,
-                        AstNodes::ConditionalExpression(c) => c.test.span() == child_span,
-                        AstNodes::SequenceExpression(s) => {
-                            s.expressions.first().is_some_and(|e| e.span() == child_span)
-                        }
-                        AstNodes::TaggedTemplateExpression(t) => t.tag.span() == child_span,
-                        AstNodes::UpdateExpression(u) => {
-                            !u.prefix && u.argument.span() == child_span
-                        }
-                        AstNodes::TSAsExpression(e) => e.expression.span() == child_span,
-                        AstNodes::TSSatisfiesExpression(e) => e.expression.span() == child_span,
-                        AstNodes::TSNonNullExpression(e) => e.expression.span() == child_span,
-                        _ => false,
+                        // The chain and its element share a span, `left_of` would skip the element
+                        AstNodes::ChainExpression(_) => true,
+                        _ => ExpressionLeftSide::left_of(parent)
+                            .is_some_and(|left| left.span() == child_span),
                     };
                     if !dominated {
                         return false;
@@ -1150,49 +1135,15 @@ fn is_first_in_statement(
                 }
                 return false;
             }
-            AstNodes::StaticMemberExpression(_)
-            | AstNodes::TaggedTemplateExpression(_)
-            | AstNodes::ChainExpression(_)
-            | AstNodes::TSAsExpression(_)
-            | AstNodes::TSSatisfiesExpression(_)
-            | AstNodes::TSNonNullExpression(_)
-            | AstNodes::TSInstantiationExpression(_) => {}
-            AstNodes::SequenceExpression(sequence) => {
-                if sequence.expressions.first().unwrap().span() != current_span {
-                    break;
-                }
-            }
-            AstNodes::ComputedMemberExpression(member) => {
-                if member.object.span() != current_span {
-                    break;
-                }
-            }
-            AstNodes::AssignmentExpression(assignment) => {
-                if assignment.left.span() != current_span {
-                    break;
-                }
-            }
-            AstNodes::ConditionalExpression(conditional) => {
-                if conditional.test.span() != current_span {
-                    break;
-                }
-            }
-            AstNodes::BinaryExpression(binary) => {
-                if binary.left.span() != current_span {
-                    break;
-                }
-            }
-            AstNodes::LogicalExpression(logical) => {
-                if logical.left.span() != current_span {
-                    break;
-                }
-            }
             AstNodes::ExportDefaultDeclaration(_)
                 if mode == FirstInStatementMode::ExpressionOrExportDefault =>
             {
                 return !is_not_first_iteration;
             }
-            _ if ancestor.is_call_like_callee_span(current_span) => {}
+            // The chain and its element share a span, `left_of` would skip the element
+            AstNodes::ChainExpression(_) => {}
+            _ if ExpressionLeftSide::left_of(ancestor)
+                .is_some_and(|left| left.span() == current_span) => {}
             _ => break,
         }
         current_span = ancestor.span();

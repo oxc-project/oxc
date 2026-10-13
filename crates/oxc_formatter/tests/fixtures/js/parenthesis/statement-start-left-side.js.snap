@@ -1,0 +1,51 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+({}).a++;
+(function () {}).a++;
+(class {}).a--;
+class A {
+  #x;
+  m() {
+    (function () {}).#x;
+    ({}).#x;
+    (class {}).#x = 1;
+  }
+}
+new ({}).a();
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+({}).a++;
+(function () {}).a++;
+(class {}).a--;
+class A {
+  #x;
+  m() {
+    (function () {}).#x;
+    ({}).#x;
+    (class {}).#x = 1;
+  }
+}
+new {}.a();
+
+-------------------
+{ printWidth: 100 }
+-------------------
+({}).a++;
+(function () {}).a++;
+(class {}).a--;
+class A {
+  #x;
+  m() {
+    (function () {}).#x;
+    ({}).#x;
+    (class {}).#x = 1;
+  }
+}
+new {}.a();
+
+===================== End =====================
