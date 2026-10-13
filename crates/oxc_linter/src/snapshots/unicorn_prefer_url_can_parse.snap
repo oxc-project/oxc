@@ -1,0 +1,251 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value); return true; } catch { return false; } }
+   ·                               ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:3:3]
+ 2 │     try {
+ 3 │         new URL(value, base);
+   ·         ────────────────────
+ 4 │         return true;
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value); return false; } catch { return true; } }
+   ·                               ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value, base); return true; } catch { return false; } }
+   ·                               ────────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL((value)); return true; } catch { return false; } }
+   ·                               ────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:65]
+ 1 │ function isValidUrl() { const Symbol = {iterator: value}; try { new URL(Symbol.iterator); return true; } catch { return false; } }
+   ·                                                                 ────────────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:7]
+ 1 │ try { new URL(value); valid = true; } catch { valid = false; }
+   ·       ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:7]
+ 1 │ try { new URL(value); valid = false; } catch { valid = true; }
+   ·       ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:18]
+ 1 │ let valid; try { new URL(value); valid = true; } catch { valid = false; }
+   ·                  ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:18]
+ 1 │ let valid; try { new URL(value); valid = false; } catch { valid = true; }
+   ·                  ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:32]
+ 1 │ let valid; /* comment */ try { new URL(value); valid = true; } catch { valid = false; }
+   ·                                ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:18]
+ 1 │ let valid; try { new URL(valid); valid = true; } catch { valid = false; }
+   ·                  ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:18]
+ 1 │ let valid; try { new URL(value); valid = true; } catch { valid = false; } valid = maybe;
+   ·                  ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:64]
+ 1 │ const value = {toString() { return valid; }}; let valid; try { new URL(value); valid = true; } catch { valid = false; }
+   ·                                                                ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:7]
+ 1 │ try { new URL(value); valid = true; } catch (error) { valid = false; }
+   ·       ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:61]
+ 1 │ import {URL} from 'node:url'; function isValidUrl() { try { new URL(value); return true; } catch { return false; } }
+   ·                                                             ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:67]
+ 1 │ import {URL as NodeURL} from 'url'; function isValidUrl() { try { new NodeURL(value); return true; } catch { return false; } }
+   ·                                                                   ──────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:67]
+ 1 │ import {URL as NodeURL} from 'url'; function isValidUrl() { try { new NodeURL(value, base); return true; } catch { return false; } }
+   ·                                                                   ────────────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:66]
+ 1 │ import type {URL} from "node:url"; function isValidUrl() { try { new URL(value); return true; } catch { return false; } }
+   ·                                                                  ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:66]
+ 1 │ declare const URL: URLConstructor; function isValidUrl() { try { new URL(value); return true; } catch { return false; } }
+   ·                                                                  ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value); return true; } catch (error) { return false; } }
+   ·                               ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:2:7]
+ 1 │ function isValidUrl() { const foo = 1
+ 2 │ try { new URL(value); return true; } catch { return false; } }
+   ·       ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value as string); return true; } catch { return false; } }
+   ·                               ────────────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:27]
+ 1 │ let valid: boolean; try { new URL(value); valid = true; } catch { valid = false; }
+   ·                           ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:45]
+ 1 │ function isValidUrl() { try { /* comment */ new URL(value); return true; } catch { return false; } }
+   ·                                             ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value); /* comment */ return true; } catch { return false; } }
+   ·                               ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value); return true; } catch { /* comment */ return false; } }
+   ·                               ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:7]
+ 1 │ try { new URL(value); /* comment */ valid = true; } catch { valid = false; }
+   ·       ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:7]
+ 1 │ try { new URL(value); valid = true; } catch { /* comment */ valid = false; }
+   ·       ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL((a, b)); return true; } catch { return false; } }
+   ·                               ───────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value.href, base.href); return true; } catch { return false; } }
+   ·                               ──────────────────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(value, "https://example.com"); return true; } catch { return false; } }
+   ·                               ─────────────────────────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(`https://example.com`); return true; } catch { return false; } }
+   ·                               ──────────────────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:31]
+ 1 │ function isValidUrl() { try { new URL(() => value); return true; } catch { return false; } }
+   ·                               ────────────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.
+
+  ⚠ unicorn(prefer-url-can-parse): Prefer `URL.canParse()` over constructing a `URL` in a try/catch for validation.
+   ╭─[prefer_url_can_parse.tsx:1:32]
+ 1 │ function isValidUrl() { try { (new URL(value)); return true; } catch { return false; } }
+   ·                                ──────────────
+   ╰────
+  help: Replace the `try`/`catch` with `URL.canParse()`.

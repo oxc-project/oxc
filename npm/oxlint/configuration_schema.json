@@ -9629,6 +9629,9 @@
         "unicorn/prefer-type-error": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-url-can-parse": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/relative-url-style": {
           "anyOf": [
             {
