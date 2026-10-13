@@ -135,9 +135,7 @@ export function printDecorators(decorators: ESTree.Decorator[], state: State): v
     const wrap = decoratorNeedsWrap(expression);
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(expression, state, PREC_LOWEST, CTX_NONE);
-    if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
-
-    write(state, " ", CAT_OTHER);
+    write(state, wrap ? ") " : " ", CAT_OTHER);
   }
 }
 
