@@ -227,6 +227,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         modifiers: &Modifiers,
     ) -> Declaration<'a> {
         let id = self.parse_binding_identifier();
+        if !self.is_ts {
+            self.error(diagnostics::interface_in_ts(id.span));
+        }
         self.check_reserved_type_name(&id, "Interface");
         let type_parameters = self.parse_ts_type_parameters_with_variance();
         if let Some(type_parameters) = &type_parameters {
