@@ -1,13 +1,12 @@
 // Functions.
 
-import { typeAssertIs } from "../asserts.ts";
+import { debugAssert, typeAssertIs } from "../asserts.ts";
 import { printBindingPattern } from "./binding_pattern.ts";
 import { CAT_CLOSE_BRACKET, CAT_IDENT, CAT_OTHER, CAT_START_OF_STMT } from "./categories.ts";
 import {
   debugAssertLastFresh,
   markMapStart,
   write,
-  writeIdent,
   writeNoLast,
   writeWithMap,
   writeWithMapEnd,
@@ -163,6 +162,9 @@ export function printParenParams(params: ESTree.ParamPattern[], state: State): v
  * @param state - Printer state
  */
 function printParams(params: ESTree.ParamPattern[], state: State): void {
+  debugAssertLastFresh(state);
+  debugAssert(state.last === CAT_OTHER && state.lastCharWritten === "(");
+
   const { length } = params;
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
@@ -177,7 +179,10 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
     if (TS && paramType === "Identifier") {
       typeAssertIs<ESTree.BindingIdentifier>(param);
       if (param.name === "this") {
-        writeIdent(state, "this");
+        // `printTypeAnnotation` prints `: ` first. On next turn of loop, `, ` is written.
+        // Or if this is last param, we return to caller, who immediately writes `)` or `) =>`.
+        // In any of these cases, nothing reads `last`, so writing it is redundant.
+        writeNoLast(state, "this");
         if (param.typeAnnotation != null) printTypeAnnotation(param.typeAnnotation, state);
         continue;
       }
@@ -192,20 +197,25 @@ function printParams(params: ESTree.ParamPattern[], state: State): void {
 
     if (TS && paramType === "TSParameterProperty") {
       typeAssertIs<ESTree.TSParameterProperty>(param);
+
+      // * At start of function, last char written was `(`.
+      // * On each turn of loop after the first, `, ` is written.
+      // * `printDecorators` prints a trailing ` `.
+      // * The 3 conditions below all print something ending with ` `.
+      // So in all cases, `last` is `CAT_OTHER`. Therefore there's no need to rewrite `last` as `CAT_OTHER`
+      // in the 3 conditions below. Set `lastIsStale = false` after so no error in `printBindingPattern`.
+      debugAssertLastFresh(state);
+      debugAssert(state.last === CAT_OTHER);
+
       if (param.accessibility != null) {
-        printSpaceBeforeIdentifier(state);
         writeNoLast(state, param.accessibility);
-        write(state, " ", CAT_OTHER);
+        writeNoLast(state, " ");
       }
 
-      if (param.override) {
-        printSpaceBeforeIdentifier(state);
-        write(state, "override ", CAT_OTHER);
-      }
-      if (param.readonly) {
-        printSpaceBeforeIdentifier(state);
-        write(state, "readonly ", CAT_OTHER);
-      }
+      if (param.override) writeNoLast(state, "override ");
+      if (param.readonly) writeNoLast(state, "readonly ");
+
+      if (DEBUG) state.lastIsStale = false;
 
       printBindingPattern(param.parameter, state);
     } else {
