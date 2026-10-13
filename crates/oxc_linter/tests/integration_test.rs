@@ -1,4 +1,4 @@
-use oxc_linter::{RuleCategory, RuleMeta, rules::RULES};
+use oxc_linter::{RuleCategory, RuleFlags, RuleMeta, rules::RULES};
 use oxc_macros::declare_oxc_lint_test;
 
 struct TestRule;
@@ -9,6 +9,10 @@ mod shared_config {
 }
 
 struct TestRuleWithSharedConfig;
+
+struct TestTsgolintRule;
+
+struct TestTsgolintRuleWithConfig;
 
 declare_oxc_lint_test!(
     /// Dummy description
@@ -41,6 +45,23 @@ declare_oxc_lint_test!(
     config = shared_config::Config,
 );
 
+declare_oxc_lint_test!(
+    /// Type-aware rule without configuration
+    TestTsgolintRule(tsgolint),
+    typescript,
+    correctness,
+    version = "next",
+);
+
+declare_oxc_lint_test!(
+    /// Type-aware rule with configuration
+    TestTsgolintRuleWithConfig(tsgolint),
+    typescript,
+    correctness,
+    version = "next",
+    config = shared_config::Config,
+);
+
 #[test]
 fn test_declare_oxc_lint() {
     // Simple, multiline documentation
@@ -58,12 +79,60 @@ fn test_declare_oxc_lint() {
     assert_eq!(TestRule::PLUGIN, "eslint");
 
     // Shared config paths can be used as config schema sources.
-    let has_config = TestRuleWithSharedConfig::HAS_CONFIG;
-    assert!(has_config);
+    assert_eq!(TestRuleWithSharedConfig::FLAGS, RuleFlags::HAS_CONFIG);
 
     let mut generator =
         schemars::r#gen::SchemaGenerator::new(schemars::r#gen::SchemaSettings::default());
     assert!(TestRuleWithSharedConfig::config_schema(&mut generator).is_some());
+}
+
+#[test]
+fn test_rule_flags() {
+    struct DefaultFlagsRule;
+
+    impl RuleMeta for DefaultFlagsRule {
+        const NAME: &'static str = "default-flags-rule";
+        const PLUGIN: &'static str = "eslint";
+        const CATEGORY: RuleCategory = RuleCategory::Correctness;
+        const VERSION: &'static str = "next";
+    }
+
+    assert_eq!(DefaultFlagsRule::FLAGS, RuleFlags::empty());
+    assert_eq!(TestRule::FLAGS, RuleFlags::empty());
+    assert_eq!(TestRuleWithSharedConfig::FLAGS, RuleFlags::HAS_CONFIG);
+    assert_eq!(TestTsgolintRule::FLAGS, RuleFlags::IS_TSGOLINT_RULE);
+    assert_eq!(
+        TestTsgolintRuleWithConfig::FLAGS,
+        RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG
+    );
+}
+
+#[test]
+fn test_rule_enum_flags() {
+    let cases = [
+        ("eslint", "no-debugger", RuleFlags::empty()),
+        ("eslint", "eqeqeq", RuleFlags::HAS_CONFIG),
+        ("typescript", "no-unsafe-assignment", RuleFlags::IS_TSGOLINT_RULE),
+        ("typescript", "no-floating-promises", RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG),
+    ];
+
+    for (plugin, name, expected) in cases {
+        let rule = RULES
+            .iter()
+            .find(|rule| rule.plugin_name() == plugin && rule.name() == name)
+            .unwrap_or_else(|| panic!("Rule {plugin}/{name} must be registered"));
+        assert_eq!(rule.flags(), expected, "unexpected flags for {plugin}/{name}");
+        assert_eq!(
+            rule.is_tsgolint_rule(),
+            expected.contains(RuleFlags::IS_TSGOLINT_RULE),
+            "unexpected tsgolint status for {plugin}/{name}"
+        );
+        assert_eq!(
+            rule.has_config(),
+            expected.contains(RuleFlags::HAS_CONFIG),
+            "unexpected configuration status for {plugin}/{name}"
+        );
+    }
 }
 
 #[test]

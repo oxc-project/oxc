@@ -282,7 +282,7 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         None
     } else {
         Some(quote! {
-            use crate::{rule::{RuleCategory, RuleMeta, RuleInfo, RuleFixMeta, RuleRunner}, fixer::FixKind};
+            use crate::{rule::{RuleCategory, RuleMeta, RuleInfo, RuleFixMeta, RuleFlags, RuleRunner}, fixer::FixKind};
             use oxc_semantic::AstTypesBitset;
         })
     };
@@ -304,11 +304,13 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
         },
     });
 
-    let has_config = if config.is_some() {
-        quote! { const HAS_CONFIG: bool = true; }
-    } else {
-        quote! { const HAS_CONFIG: bool = false; }
-    };
+    let mut flags = quote! { RuleFlags::empty() };
+    if is_tsgolint_rule {
+        flags = quote! { #flags.union(RuleFlags::IS_TSGOLINT_RULE) };
+    }
+    if config.is_some() {
+        flags = quote! { #flags.union(RuleFlags::HAS_CONFIG) };
+    }
 
     #[cfg(not(feature = "ruledocs"))]
     let config_schema: Option<proc_macro2::TokenStream> = {
@@ -361,13 +363,11 @@ pub fn declare_oxc_lint(metadata: LintRuleMeta) -> TokenStream {
 
             const CATEGORY: RuleCategory = #category;
 
-            const IS_TSGOLINT_RULE: bool = #is_tsgolint_rule;
+            const FLAGS: RuleFlags = #flags;
 
             #fix
 
             #docs
-
-            #has_config
 
             #config_schema
 
