@@ -28,6 +28,24 @@ mod declare_oxc_lint;
 /// documentation](https://oxc.rs/docs/contribute/linter.html#rule-category) for
 /// a full list of categories and their descriptions.
 ///
+/// ## Recommended rules
+///
+/// Add the standalone `recommended` keyword among the options after the category
+/// to set `RuleFlags::IS_RECOMMENDED` in `RuleMeta::FLAGS`. It can appear before
+/// or after a fix kind or other options.
+///
+/// ```rust,ignore
+/// declare_oxc_lint!(
+///     /// Docs...
+///     MyRule,
+///     eslint,
+///     restriction,
+///     recommended,
+///     conditional_fix,
+///     version = "next",
+/// );
+/// ```
+///
 /// ## Auto-fixes
 ///
 /// Lints that support auto-fixes **must** specify what kind of auto-fixes they
