@@ -50,7 +50,7 @@
 
 ## css-in-js
 
-### Option 1: 22/24 (91.67%)
+### Option 1: 23/25 (92.00%)
 
 ```json
 {"printWidth":80}
@@ -61,7 +61,7 @@
 - [externals/prettier/js/multiparser-css/styled-components.js](diffs/css-in-js/externals__prettier__js__multiparser-css__styled-components.js.md)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 
-### Option 2: 22/24 (91.67%)
+### Option 2: 23/25 (92.00%)
 
 ```json
 {"printWidth":100}

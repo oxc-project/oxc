@@ -107,6 +107,7 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
   - The `;` is kept only when the source has one; consecutive placeholders preserve the source whitespace (`${a} ${b}` on one line, `${a}\n${b}` on two)
   - A `;`-less placeholder opens a postcss "swallow" run: following declarations keep a source-driven `;` until a source `;` ends the run (`write_statement_sequence_bounded`)
   - `${foo}: ${bar}` parses as a declaration whose property NAME is a placeholder
+  - Glued placeholders and static parts interpolate into one name like `#{}` (`${a}-${b}`, `x-${a}`); see DIVERGENCES.md#placeholder-property-name
 - Value position: `ComponentValue::Placeholder`; rides existing gap-based separator rules
   - One added rule: glued to a paren group → `Separator::SoftBreak` (`${fn}(30px)` breaks BEFORE the parens)
 - Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector still triggers "garbage mode" in `write_selector_list`

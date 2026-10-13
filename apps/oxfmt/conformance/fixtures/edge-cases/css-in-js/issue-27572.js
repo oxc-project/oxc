@@ -17,3 +17,16 @@ export const C = createGlobalStyle`
   @import url(x) ${a};
   @import url(x) screen, ${b};
 `;
+
+export const D = css`
+@media screen and ${mobile} {
+color: blue;
+}
+@media ${a} and ${b} { color: blue; }
+@supports ${feature} {
+color: blue;
+}
+@supports not ${feature} { color: blue; }
+@media print-${x} { color: blue; }
+@media ${a}${b} { color: blue; }
+`;

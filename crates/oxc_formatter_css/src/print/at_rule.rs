@@ -35,7 +35,7 @@ use crate::{
     print::{
         CssFormatter, format_with, is_glued, normalize_whitespace, scss, selector, statement,
         value::{self, ValueContext},
-        write_maybe_lowercase, write_placeholder,
+        write_maybe_lowercase,
     },
 };
 
@@ -1984,8 +1984,8 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
 
 /// A css-in-js placeholder stays typed, a keyword is lowercased.
 fn write_media_type<'a>(media_type: &InterpolableIdent<'a>, f: &mut CssFormatter<'_, 'a>) {
-    if let InterpolableIdent::Placeholder(placeholder) = media_type {
-        write_placeholder(placeholder, f);
+    if media_type.has_placeholder() {
+        selector::write_interpolable_ident(media_type, f);
     } else {
         let source = f.context().source_text();
         write_maybe_lowercase(source.text_for(&to_span(media_type.span())), f);
@@ -2064,8 +2064,8 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
         }
         // `@media screen and #{$query}` — the interpolation prints verbatim,
         // like Prettier (no parens of its own).
-        MediaInParensKind::SassInterpolation(interpolation) => {
-            let span = to_span(&interpolation.span);
+        MediaInParensKind::Interpolation(interpolation) => {
+            let span = to_span(interpolation.span());
             write!(f, text(f.context().source_text().text_for(&span)));
         }
         // W3C `<general-enclosed>` forward-compat fallback:

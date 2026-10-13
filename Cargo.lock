@@ -1685,9 +1685,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-css-parser"
-version = "0.0.16"
+version = "0.0.17"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "217104b217848101d1024c24d6cafe8e216c4cdbb94b2cd7982d570d172f50f1"
+checksum = "ae9b30d35c09734e9d99e0955a35f3450a7dd811b617bdf985c9876bd82bd2a1"
 dependencies = [
  "oxc_allocator",
 ]

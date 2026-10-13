@@ -250,6 +250,26 @@ color   :   red;
 A declaration swallowed by a `;`-less css-in-js placeholder is parsed structurally and FORMATTED (spacing/hex/number normalization);
 Prettier keeps it verbatim because postcss swallows the run as an opaque prelude string it can't format.
 
+## placeholder-property-name
+
+- Why: uniform-rule (same construct, same output: `${a}-${b}: 1rem`)
+- Pin: `tests/fixtures/embedded/scss/placeholder-property-name.scss`
+
+```scss
+/* input (css-in-js: ${a} is a template placeholder) */
+x-${a}:    1rem;
+
+/* ours */
+x-${a}: 1rem;
+
+/* prettier */
+x-${a}:    1rem;
+```
+
+A property name with a placeholder formats the same wherever the placeholder sits, and its case is kept.
+Prettier formats the template only when a placeholder leads the name (postcss reads it as an at-rule);
+otherwise it fails and the whole template stays verbatim.
+
 ## selector-interpolation-spaces
 
 - Why: uniform-rule (same construct, same output: `#{ }` in value position)
