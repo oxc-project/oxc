@@ -1,0 +1,112 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:3:21]
+ 2 │           /**
+ 3 │            * @param {number} foo
+   ·                     ────────
+ 4 │            */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:4:19]
+ 3 │         /**
+ 4 │          * @param {number} foo
+   ·                   ────────
+ 5 │          */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:3:21]
+ 2 │           /**
+ 3 │            * @param {number} foo
+   ·                     ────────
+ 4 │            */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:4:19]
+ 3 │         /**
+ 4 │          * @param {number} foo
+   ·                   ────────
+ 5 │          */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:4:21]
+ 3 │            * @function
+ 4 │            * @param {number} foo
+   ·                     ────────
+ 5 │            */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:4:21]
+ 3 │            * @callback
+ 4 │            * @param {number} foo
+   ·                     ────────
+ 5 │            */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@returns`.
+   ╭─[no_types.tsx:3:23]
+ 2 │           /**
+ 3 │            * @returns {number}
+   ·                       ────────
+ 4 │            */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@returns`.
+   ╭─[no_types.tsx:6:23]
+ 5 │            *
+ 6 │            * @returns {number}
+   ·                       ────────
+ 7 │            */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:4:21]
+ 3 │           /**
+ 4 │            * @param {string} paramA
+   ·                     ────────
+ 5 │            */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@property`.
+   ╭─[no_types.tsx:4:22]
+ 3 │          * @class
+ 4 │          * @property {object} x
+   ·                      ────────
+ 5 │          */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:5:19]
+ 4 │          *
+ 5 │          * @param {number} ms - The number of ...
+   ·                   ────────
+ 6 │          */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:5:19]
+ 4 │          *
+ 5 │          * @param {number} ms - The number of ...
+   ·                   ────────
+ 6 │          */
+   ╰────
+  help: Remove the JSDoc type annotation.

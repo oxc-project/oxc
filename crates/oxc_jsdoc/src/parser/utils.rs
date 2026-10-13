@@ -1,8 +1,20 @@
-// Find the type annotation range `{...}` at the start of the string (after whitespace).
+// Find the type annotation range `{...}` at the start of the string, skipping
+// whitespace and the optional `*` prefix on continuation lines.
 // According to JSDoc spec, type annotations must appear at the beginning of the tag body.
 // Curly braces appearing later (e.g. `{@link Foo}` in descriptions) are not type annotations.
 pub fn find_type_range(s: &str) -> Option<(usize, usize)> {
-    let trimmed = s.trim_start();
+    let mut at_line_start = false;
+    let trimmed = s.trim_start_matches(|ch: char| match ch {
+        '\n' | '\r' => {
+            at_line_start = true;
+            true
+        }
+        '*' if at_line_start => {
+            at_line_start = false;
+            true
+        }
+        _ => ch.is_whitespace(),
+    });
     if !trimmed.starts_with('{') {
         return None;
     }
@@ -105,6 +117,15 @@ mod test {
             ("x{{ t3: string }}x", None),
             ("{t4} name", Some("{t4}")),
             (" {t5} ", Some("{t5}")),
+            ("\n * {number} value", Some("{number}")),
+            ("\r\n *\r\n * {number} value", Some("{number}")),
+            ("\n {number} value", Some("{number}")),
+            ("\n * {{value: number}} value", Some("{{value: number}}")),
+            (" * {number} value", None),
+            ("\n ** {number} value", None),
+            ("\n * value\n * {number}", None),
+            ("\n * value See {@link Number}", None),
+            ("\n *", None),
             ("{t6 x", None),
             ("t7", None),
             ("{{t8}", None),

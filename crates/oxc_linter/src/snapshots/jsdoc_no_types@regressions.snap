@@ -1,0 +1,172 @@
+---
+source: crates/oxc_linter/src/tester.rs
+assertion_line: 505
+---
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:12]
+ 1 │ /** @param {number} value */ export const a = 1, f = value => value;
+   ·            ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:12]
+ 1 │ /** @param {number} value */ const f = value => value, g = value => value;
+   ·            ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:22]
+ 1 │ class C { /** @param {number} value */ f = value => value; }
+   ·                      ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:24]
+ 1 │ const c = { /** @param {number} value */ f(value) {} };
+   ·                        ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:24]
+ 1 │ const c = { /** @param {number} value */ f: value => value };
+   ·                        ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:25]
+ 1 │ const a = 1, /** @param {number} value */ f = value => value;
+   ·                         ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:22]
+ 1 │ class C { /** @param {number} value */ f(value) {} }
+   ·                      ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@arg`.
+   ╭─[no_types.tsx:1:10]
+ 1 │ /** @arg {number} value */ function f(value) {}
+   ·          ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@argument`.
+   ╭─[no_types.tsx:1:15]
+ 1 │ /** @argument {number} value */ function f(value) {}
+   ·               ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@return`.
+   ╭─[no_types.tsx:1:13]
+ 1 │ /** @return {number} */ function f() { return 1; }
+   ·             ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@prop`.
+   ╭─[no_types.tsx:1:11]
+ 1 │ /** @prop {number} value */ class C {}
+   ·           ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:12]
+ 1 │ /** @param { } value */ function f(value) {}
+   ·            ───
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:12]
+ 1 │ /** @param {number} value */ declare function f(value: number): void;
+   ·            ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:12]
+ 1 │ /** @param {number} value */ declare function f(value: number): void;
+   ·            ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:12]
+ 1 │ /** @param {number} value */ const f = function(value) {};
+   ·            ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:12]
+ 1 │ /** @param {number} value */ const f = (value) => {};
+   ·            ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@property`.
+   ╭─[no_types.tsx:1:15]
+ 1 │ /** @property {number} value */ export class C {}
+   ·               ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@property`.
+   ╭─[no_types.tsx:1:15]
+ 1 │ /** @property {number} value */ export default class C {}
+   ·               ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@property`.
+   ╭─[no_types.tsx:2:14]
+ 1 │ /** @function
+ 2 │  * @property {number} value */ class C {}
+   ·              ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:2:11]
+ 1 │ /** @func f
+ 2 │  * @param {number} value
+   ·           ────────
+ 3 │  */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@returns`.
+   ╭─[no_types.tsx:2:13]
+ 1 │ /** @method f
+ 2 │  * @returns {number}
+   ·             ────────
+ 3 │  */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:2:11]
+ 1 │ const value = 1; /** @callback F
+ 2 │  * @param {number} value
+   ·           ────────
+ 3 │  */
+   ╰────
+  help: Remove the JSDoc type annotation.
+
+  ⚠ jsdoc(no-types): Types are not permitted on `@param`.
+   ╭─[no_types.tsx:1:12]
+ 1 │ /** @param {number} value */ function f(value) {}
+   ·            ────────
+   ╰────
+  help: Remove the JSDoc type annotation.
