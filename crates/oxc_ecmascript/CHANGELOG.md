@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-13
+
+### ⚡ Performance
+
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+
 ## [0.150.0] - 2026-09-14
 
 ### 🚀 Features
