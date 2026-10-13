@@ -697,6 +697,44 @@ pub fn run_minifier_babel(files: &[BabelFile]) -> Vec<CoverageResult> {
 // ESTree
 // ================================
 
+// Reference fixtures deliberately sort regexp flags. Normalize only that field
+// in our pretty JSON, preserving all other bytes, including lone surrogates and
+// the 1e+400 representation of Infinity which JSON value parsers may reject.
+fn estree_json_matches(actual: &str, expected: &str) -> bool {
+    if actual == expected {
+        return true;
+    }
+    // Token snapshots are arrays and preserve flag order, so compare them exactly.
+    if actual.starts_with('[') {
+        return false;
+    }
+    lazy_regex::regex!(
+        r#"("regex": \{\n\s*"pattern": "(?:[^"\\]|\\.)*",\n\s*"flags": ")([a-z]*)(")"#
+    )
+    .replace_all(actual, |captures: &lazy_regex::Captures<'_>| {
+        let mut flags: Vec<_> = captures[2].chars().collect();
+        flags.sort_unstable();
+        format!("{}{}{}", &captures[1], flags.into_iter().collect::<String>(), &captures[3])
+    }) == expected
+}
+
+#[test]
+fn estree_comparison_only_normalizes_regexp_flag_order() {
+    let actual = r#"{"regex": {
+  "pattern": "a\\\"",
+  "flags": "ig"
+}, "value": "\ud800", "extra": 1e+400, "flags": "ig"}"#;
+    let expected = actual.replacen("\"flags\": \"ig\"", "\"flags\": \"gi\"", 1);
+    assert!(estree_json_matches(actual, &expected));
+    assert!(!estree_json_matches(&format!("[{actual}]"), &format!("[{expected}]")));
+    assert!(!estree_json_matches(actual, &expected.replace("gi", "gm")));
+    assert!(!estree_json_matches(
+        actual,
+        &expected.replace(r#""pattern": "a"#, r#""pattern": "b"#)
+    ));
+    assert!(!estree_json_matches(actual, &expected.replace("ig", "gi")));
+}
+
 pub fn run_estree_test262(files: &[Test262File]) -> Vec<CoverageResult> {
     run_estree_test262_impl(
         files,
@@ -784,7 +822,7 @@ fn run_estree_test262_impl(
             }
 
             let actual_json = get_json(ret);
-            let result = if actual_json == expected_json {
+            let result = if estree_json_matches(&actual_json, &expected_json) {
                 TestResult::Passed
             } else {
                 TestResult::Mismatch("Mismatch", actual_json, expected_json)
@@ -886,7 +924,7 @@ fn run_estree_acorn_jsx_impl(
             };
 
             let actual_json = get_json(ret);
-            let result = if actual_json == expected_json {
+            let result = if estree_json_matches(&actual_json, &expected_json) {
                 TestResult::Passed
             } else {
                 TestResult::Mismatch("Mismatch", actual_json, expected_json)
@@ -998,7 +1036,7 @@ fn run_estree_typescript_impl(
                 }
 
                 let actual_json = get_json(ret);
-                if actual_json != expected_json {
+                if !estree_json_matches(&actual_json, expected_json) {
                     return CoverageResult {
                         path: test_file.path.clone(),
                         should_fail: false,

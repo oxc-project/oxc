@@ -2801,6 +2801,14 @@ function deserializeBigIntLiteral(pos) {
 function deserializeRegExpLiteral(pos) {
   let start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
+    pattern = deserializeStr(pos + 16),
+    regex = {
+      pattern,
+      flags:
+        deserializeU32(pos + 48) !== 0 || deserializeU32(pos + 52) !== 0
+          ? sourceText.slice(start + pattern.length + 2, end)
+          : deserializeRegExpFlags(pos + 40),
+    },
     node = {
       type: "Literal",
       value: null,
@@ -2808,25 +2816,16 @@ function deserializeRegExpLiteral(pos) {
         int32[(pos >> 2) + 12] === 0 && int32[(pos >> 2) + 13] === 0
           ? null
           : sourceText.slice(start, end),
-      regex: null,
+      regex,
       start,
       end,
     },
-    regex = deserializeRegExp(pos + 16),
     value = null;
   try {
     value = new RegExp(regex.pattern, regex.flags);
   } catch {}
   node.value = value;
-  node.regex = regex;
   return node;
-}
-
-function deserializeRegExp(pos) {
-  return {
-    pattern: deserializeStr(pos),
-    flags: deserializeRegExpFlags(pos + 24),
-  };
 }
 
 function deserializeRegExpFlags(pos) {
@@ -6279,6 +6278,10 @@ function deserializeOptionTSMappedTypeModifierOperator(pos) {
 
 function deserializeBoxTSExternalModuleReference(pos) {
   return deserializeTSExternalModuleReference(int32[pos >> 2]);
+}
+
+function deserializeU32(pos) {
+  return int32[pos >> 2] >>> 0;
 }
 
 function deserializeI32(pos) {

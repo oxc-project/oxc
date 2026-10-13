@@ -524,6 +524,13 @@ function stringifyAcornTest262Style(obj: any): string {
       if (typeof value === "bigint" || (typeof value === "object" && value instanceof RegExp)) {
         return null;
       }
+      // Reference fixtures deliberately canonicalize regexp flags.
+      if (value?.type === "Literal" && value.regex) {
+        return {
+          ...value,
+          regex: { ...value.regex, flags: value.regex.flags.split("").sort().join("") },
+        };
+      }
       if (value === Infinity) {
         containsInfinity = true;
         return INFINITY_PLACEHOLDER;
