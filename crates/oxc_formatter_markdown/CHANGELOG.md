@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.0] - 2026-10-13
+
+### 📚 Documentation
+
+- 37b3c48 formatter_markdown: Fix DIVERGENCES.md examples and slug to match behavior (#27358) (leaysgur)
+
 ## [0.72.0] - 2026-10-05
 
 ### 💥 BREAKING CHANGES

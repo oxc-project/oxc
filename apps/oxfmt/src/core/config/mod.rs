@@ -1,3 +1,4 @@
+mod associations;
 mod editorconfig;
 #[cfg(feature = "napi")]
 mod js_config;
@@ -11,6 +12,7 @@ pub use nested::NestedConfigCtx;
 pub use scopes::ConfigScopes;
 
 use std::{
+    borrow::Cow,
     path::{Path, PathBuf},
     sync::Arc,
 };
@@ -24,17 +26,25 @@ use tracing::instrument;
 use oxc_config::{ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version};
 
 use self::{
+    associations::OxfmtrcAssociations,
     editorconfig::{apply_editorconfig, resolve_editorconfig_overrides, root_properties},
     overrides::OxfmtrcOverrides,
 };
 use super::{
-    FormatPlan,
+    FormatPlan, Language,
     global_ignore::matches_with_ancestors,
     options::{ValidatedOptions, validate},
     oxfmtrc::{FormatConfig, Oxfmtrc},
-    support::FormatStrategy,
+    support::{FormatStrategy, classify_as, classify_file},
     utils,
 };
+
+/// `path` relative to the config directory, as written glob patterns expect.
+fn relative_path<'a>(base_dir: Option<&Path>, path: &'a Path) -> Cow<'a, str> {
+    // NOTE: On Windows, `to_string_lossy()` produces `\`-separated paths.
+    // This is OK since `fast_glob::glob_match()` supports both `/` and `\` via `std::path::is_separator`.
+    base_dir.and_then(|dir| path.strip_prefix(dir).ok()).unwrap_or(path).to_string_lossy()
+}
 
 pub fn config_discovery() -> ConfigDiscovery {
     if cfg!(feature = "napi") && vp_version().is_some() {
@@ -275,6 +285,8 @@ pub struct ConfigResolver {
     base: Option<(Arc<FormatConfig>, Arc<ValidatedOptions>)>,
     /// Resolved overrides from `.oxfmtrc` for file-specific matching.
     oxfmtrc_overrides: Option<OxfmtrcOverrides>,
+    /// Resolved `associations` from `.oxfmtrc`, consulted before the built-in classification.
+    associations: Option<OxfmtrcAssociations>,
     /// Ignore glob built from this config's `ignorePatterns`.
     ignore_glob: Option<Gitignore>,
     /// Parsed `.editorconfig`, if any.
@@ -295,6 +307,7 @@ impl ConfigResolver {
             config_dir,
             base: None,
             oxfmtrc_overrides: None,
+            associations: None,
             ignore_glob: None,
             editorconfig,
         }
@@ -348,6 +361,7 @@ impl ConfigResolver {
     /// - `self.base` is set to the validated `FormatConfig` snapshot
     ///   (with `.editorconfig` `[*]` already folded in) paired with its gate artifacts
     /// - `self.oxfmtrc_overrides` is set if `overrides` exists
+    /// - `self.associations` is set if `associations` is not empty
     /// - `self.ignore_glob` is built from `ignorePatterns`
     ///
     /// Validation runs eagerly via `validate()`,
@@ -359,10 +373,14 @@ impl ConfigResolver {
     pub fn build_and_validate(&mut self) -> Result<(), String> {
         let oxfmtrc = Oxfmtrc::deserialize(&self.raw_config).map_err(|err| err.to_string())?;
 
-        // Resolve `overrides` from `Oxfmtrc` for later per-file matching
-        let base_dir = self.config_dir.clone();
-        self.oxfmtrc_overrides =
-            oxfmtrc.overrides.map(|overrides| OxfmtrcOverrides::new(overrides, base_dir));
+        // Resolve `overrides` and `associations` from `Oxfmtrc` for later per-file matching
+        self.oxfmtrc_overrides = oxfmtrc
+            .overrides
+            .map(|overrides| OxfmtrcOverrides::new(overrides, self.config_dir.clone()));
+        self.associations = oxfmtrc
+            .associations
+            .filter(|associations| !associations.is_empty())
+            .map(|associations| OxfmtrcAssociations::new(associations, self.config_dir.clone()));
 
         let mut format_config = oxfmtrc.format_config;
 
@@ -388,6 +406,18 @@ impl ConfigResolver {
         self.ignore_glob = build_ignore_glob(self.config_dir.as_deref(), &ignore_patterns)?;
 
         Ok(())
+    }
+
+    /// Classify `path`: the given `language` first (e.g. LSP `languageId`),
+    /// then this config's `associations`, then the file name.
+    ///
+    /// A given or matched language decides alone, see [`classify_as`] for when it yields `None`.
+    pub fn classify(&self, path: &Path, language: Option<Language>) -> Option<FormatStrategy> {
+        let language = language.or_else(|| self.associations.as_ref()?.matching(path));
+        match language {
+            Some(language) => classify_as(language, path),
+            None => classify_file(path),
+        }
     }
 
     /// Resolve options for a pre-classified file and build a [`ResolveOutcome`].

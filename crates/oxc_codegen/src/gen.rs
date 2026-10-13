@@ -3205,7 +3205,9 @@ impl Gen for ArrayPattern<'_> {
             }
         }
         if let Some(rest) = &self.rest {
-            p.print_soft_space();
+            if !self.elements.is_empty() {
+                p.print_soft_space();
+            }
             rest.print(p, ctx);
         }
         p.print_ascii_byte(b']');

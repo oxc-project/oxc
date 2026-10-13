@@ -153,7 +153,7 @@ A fenced code block's fence outnumbers the backtick (or tilde) runs of the conte
 Markdown in a code block formats its own fences, so `~~~` becomes a backtick fence the outer one must outnumber;
 Prettier keeps the outer fence at three and the inner fence closes it on the next parse.
 The same holds for markdown-in-js, whose fences are `~`.
-Prettier `main` counts the printed content since #19908; the pin (3.9.9) still counts the source.
+Prettier `main` counts the printed content since #19908; the pin (3.9.10) still counts the source.
 
 ## line-ranged-code-block
 

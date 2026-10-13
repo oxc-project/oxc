@@ -913,6 +913,11 @@ impl Scoping {
     ///
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
+    ///
+    /// This lookup does not model the implicit `arguments` object. It walks past
+    /// function boundaries, so `arguments` can resolve to a binding in an outer
+    /// scope. A transform that needs a function's own `arguments` must create an
+    /// unbound reference instead of looking the name up.
     pub fn find_binding(&self, mut scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
         let cell = self.cell.borrow_dependent();
         loop {

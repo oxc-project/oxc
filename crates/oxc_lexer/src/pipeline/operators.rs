@@ -46,7 +46,7 @@ const OP3_MUL: u32 = 0x010E_2F79;
 
 /// An operator and its corresponding [`TokenKind`].
 struct OpDef {
-    txt: &'static [u8],
+    txt: &'static str,
     kind: TokenKind,
 }
 
@@ -54,7 +54,7 @@ impl OpDef {
     /// Create new [`OpDef`].
     const fn new(txt: &'static str, kind: TokenKind) -> Self {
         assert!(txt.len() == 2 || txt.len() == 3, "`txt` must be 2 or 3 bytes long");
-        Self { txt: txt.as_bytes(), kind }
+        Self { txt, kind }
     }
 
     /// Get length of this operator as a `u32`.
@@ -64,7 +64,7 @@ impl OpDef {
 
     /// Get a `[u8; 4]` containing all the bytes of this operator and 0 for any remaining bytes.
     const fn bytes(&self) -> [u8; 4] {
-        first_4_bytes(self.txt)
+        first_4_bytes(self.txt.as_bytes())
     }
 
     /// Get hash key for this operator.
@@ -372,9 +372,13 @@ mod tests {
 
     #[test]
     fn test_op_defs_token_kind_range() {
-        for (i, op_def) in OPMAP_OPS.iter().enumerate() {
+        for op_def in &OPMAP_OPS {
             let kind = op_def.kind as u8;
-            assert!(kind >= OP_KIND_BASE && kind <= OP_KIND_MAX, "OpDef {i}: `kind` out of range");
+            assert!(
+                kind >= OP_KIND_BASE && kind <= OP_KIND_MAX,
+                "OpDef {}: `kind` out of range",
+                op_def.txt
+            );
         }
     }
 
@@ -390,20 +394,29 @@ mod tests {
 
     #[test]
     fn test_op_defs_no_key_collisions() {
-        for (index1, op_def1) in OPMAP_OPS.iter().enumerate() {
-            for (index2, op_def2) in OPMAP_OPS.iter().enumerate().skip(index1 + 1) {
-                assert!(op_def1.key() != op_def2.key(), "OpDef {index1}, {index2}: key collision");
+        for (i, op_def1) in OPMAP_OPS.iter().enumerate() {
+            for op_def2 in OPMAP_OPS.iter().skip(i + 1) {
+                assert!(
+                    op_def1.key() != op_def2.key(),
+                    "OpDef {}, {}: key collision",
+                    op_def1.txt,
+                    op_def2.txt
+                );
             }
         }
     }
 
     #[test]
     fn test_optable_lookup_correct_kinds() {
-        for (i, op_def) in OPMAP_OPS.iter().enumerate() {
+        for op_def in &OPMAP_OPS {
             let bytes = op_def.bytes();
             let lookup_kind =
                 if op_def.len() == 2 { OP2_TABLE.lookup(bytes) } else { OP3_TABLE.lookup(bytes) };
-            assert!(lookup_kind == Some(op_def.kind), "OpDef {i}: `lookup` produced wrong kind");
+            assert!(
+                lookup_kind == Some(op_def.kind),
+                "OpDef {}: `lookup` produced wrong kind",
+                op_def.txt
+            );
         }
     }
 

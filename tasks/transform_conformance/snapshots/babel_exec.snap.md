@@ -15,14 +15,14 @@ SyntaxError: Unexpected eval or arguments in strict mode
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
-    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1286:80)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1193:73)
+    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1288:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js
 AssertionError: expected { value: 2, done: true } to deeply equal { value: 4, done: false }
     at test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js:28:44)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
 
 ./fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js
 TypeError: Cannot destructure property 'b' of 'undefined' as it is undefined.
@@ -46,9 +46,9 @@ SyntaxError: Unexpected token '['
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
-    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1286:80)
-    at processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1193:73)
+    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1288:80)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js
 AssertionError: expected undefined to be 'hello' // Object.is equality
@@ -162,8 +162,8 @@ At file: /fixtures/babel/babel-plugin-transform-explicit-resource-management-tes
     at normalizeParseError (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:25:9)
     at wrap (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:5:39)
     at parseAstAsync (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:54:9)
-    at ssrTransformScript (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/chunks/node.js:16361:9)
-    at loadAndTransform (./node_modules/.pnpm/vite@8.3.2_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/chunks/node.js:20022:64)
+    at async ssrTransformScript (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/chunks/node.js:16527:9)
+    at async loadAndTransform (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/chunks/node.js:20218:64)
 
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization

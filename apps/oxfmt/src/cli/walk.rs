@@ -16,7 +16,7 @@ use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
 
 use crate::core::{
     ConfigResolver, ConfigScopes, FormatPlan, ResolveOutcome, build_global_ignore_matchers,
-    classify_file, is_ignored,
+    is_ignored,
 };
 
 /// Orchestrates file discovery with nested config and ignore handling.
@@ -640,7 +640,7 @@ fn resolve_format_plan(
     tx_error: &DiagnosticSender,
     cwd: &Path,
 ) -> Option<FormatPlan> {
-    let strategy = classify_file(path)?;
+    let strategy = resolver.classify(path, None)?;
     match resolver.resolve(path, strategy) {
         Ok(ResolveOutcome::Format(plan)) => Some(plan),
         Ok(ResolveOutcome::MissingPlugin(_)) => None,

@@ -779,3 +779,89 @@ Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as our
 Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
 Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
 Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
+
+## instantiation-expression-parens
+
+- Why: semantics (Prettier's output no longer parses; prettier/prettier#20177)
+- Pin: `tests/fixtures/ts/parenthesis/instantiation-expression-parens.ts`
+
+```ts
+// input
+const a = (make<T>)!;
+export default (class {})<string>;
+(class {})<string>;
+
+// ours
+const a = (make<T>)!;
+export default (class {})<string>;
+(class {})<string>;
+
+// prettier
+const a = make<T>!;
+export default class {}<string>;
+class {}<string>;
+```
+
+Prettier drops the parens around an instantiation expression before `!`,
+and the ones that keep a leading `class`/`function` from starting a declaration or statement.
+Fixed in Prettier `main` by prettier/prettier#20177, which we follow except after `export default` (DIVERGENCES.md#export-default-leftmost-parens).
+
+## export-default-leftmost-parens
+
+- Why: uniform-rule (same construct, same output: expression statement)
+- Pin: `tests/fixtures/ts/parenthesis/export-default-leftmost-parens.ts`
+- Conformance: `js/export-default/class_instance.js`, `js/export-default/function_tostring.js`, `typescript/as/export_default_as.ts`, `typescript/export-default/function_as.ts`, `typescript/satisfies-operators/export-default-as.ts`
+
+```ts
+// input
+export default (class {}).getInstance();
+export default (function () {}) as A;
+
+// ours
+export default (class {}).getInstance();
+export default (function () {}) as A;
+
+// prettier
+export default (class {}.getInstance());
+export default (function () {} as A);
+```
+
+A leading `class`/`function` after `export default` would start a declaration, as at the start of a statement.
+We apply the statement rule there, as Prettier does for statements (`(class {}).getInstance();`):
+the parens go around the `class`/`function` itself,
+or nowhere when an ancestor already prints its own (DIVERGENCES.md#start-token-no-double-parens).
+Prettier wraps the whole expression after `export default` instead.
+Prettier's wrapping came from a syntax fix (prettier/prettier#6133), whose changelog shows the statement-start shape `export default (function log() {}).toString();`.
+
+## start-token-no-double-parens
+
+- Why: uniform-rule (same construct, same output: `export default` and sequence arrow body)
+- Pin: `tests/fixtures/ts/parenthesis/start-token-no-double-parens.ts`
+- Conformance: `js/identifier/parentheses/let.js`
+
+```ts
+// input
+(function () {} as A)!;
+({} + foo)``;
+({}).a, b;
+((let)[0] + 1) * 2;
+const get = (key: K) => ({ a: 1, b: 2 } as const)[key];
+
+// ours
+(function () {} as A)!;
+({} + foo)``;
+({}.a, b);
+(let[0] + 1) * 2;
+const get = (key: K) => ({ a: 1, b: 2 } as const)[key];
+
+// prettier
+((function () {}) as A)!;
+(({}) + foo)``;
+(({}).a, b);
+((let)[0] + 1) * 2;
+const get = (key: K) => (({ a: 1, b: 2 }) as const)[key];
+```
+
+When an ancestor gets its own parens, a leading `{`/`function`/`class`/`let[` inside it needs none.
+Prettier already does this after `export default` (`` export default (function () {} + foo)`` ``) and for a sequence arrow body (`() => ({}, 1)`),
+but not at statement start or for other arrow bodies, e.g. the object lookup idiom above.

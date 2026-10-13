@@ -50,7 +50,7 @@
 
 ## css-in-js
 
-### Option 1: 20/22 (90.91%)
+### Option 1: 23/25 (92.00%)
 
 ```json
 {"printWidth":80}
@@ -61,7 +61,7 @@
 - [externals/prettier/js/multiparser-css/styled-components.js](diffs/css-in-js/externals__prettier__js__multiparser-css__styled-components.js.md)
   - apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 
-### Option 2: 20/22 (90.91%)
+### Option 2: 23/25 (92.00%)
 
 ```json
 {"printWidth":100}
@@ -220,7 +220,7 @@
 
 ## astro
 
-### Option 1: 107/112 (95.54%)
+### Option 1: 108/113 (95.58%)
 
 ```json
 {"printWidth":80,"astro":{}}
@@ -237,7 +237,7 @@
 - [externals/plugin-astro/styles/with-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-sass__input.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
 
-### Option 2: 108/112 (96.43%)
+### Option 2: 109/113 (96.46%)
 
 ```json
 {"printWidth":120,"singleQuote":true,"semi":false,"astroAllowShorthand":true,"astroCompressHTML":"html","astro":{"allowShorthand":true,"compressHTML":"html"}}

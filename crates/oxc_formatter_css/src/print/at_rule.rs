@@ -7,8 +7,8 @@ use cow_utils::CowUtils;
 use oxc_css_parser::{
     ast::{
         AtRule, AtRulePrelude, ComponentValue, CustomMediaValue, Ident, ImportPrelude,
-        ImportPreludeHref, ImportPreludeSupports, ImportPreludeSupportsKind, InterpolableStr,
-        KeyframesName, LessImportOptions, LessImportPrelude, MediaCondition,
+        ImportPreludeHref, ImportPreludeSupports, ImportPreludeSupportsKind, InterpolableIdent,
+        InterpolableStr, KeyframesName, LessImportOptions, LessImportPrelude, MediaCondition,
         MediaConditionAfterMediaType, MediaConditionKind, MediaFeature, MediaFeatureComparisonKind,
         MediaFeatureName, MediaInParens, MediaInParensKind, MediaQuery, MediaQueryList,
         NamespacePreludeUri, SassAtRootKind, SimpleBlock, SupportsAnd, SupportsCondition,
@@ -1488,8 +1488,10 @@ enum ImportWord<'b, 'a> {
     LessOptions(&'b LessImportOptions<'a>),
     Href(&'b ImportPreludeHref<'a>),
     Supports(&'b ImportPreludeSupports<'a>),
-    /// A media keyword (`screen`, `and`, `not`): lowercased
+    /// A media keyword (`only`, `and`, `not`): lowercased
     Keyword(oxc_span::Span),
+    /// A media type (`screen`), see `write_media_type`
+    MediaType(&'b InterpolableIdent<'a>),
     InParens(&'b MediaInParens<'a>),
     /// `and(...)` / `not(...)`: a function call to Prettier's value parser
     /// (keyword glued, the inside printed like any `(cond)`); `@media` reads it as one word
@@ -1520,6 +1522,7 @@ fn write_import_words<'a>(comma_groups: &[Vec<ImportWord<'_, 'a>>], f: &mut CssF
                 ImportWord::Href(href) => write_import_href(href, f),
                 ImportWord::Supports(supports) => write_import_supports(supports, f),
                 ImportWord::Keyword(span) => write_maybe_lowercase(source.text_for(span), f),
+                ImportWord::MediaType(media_type) => write_media_type(media_type, f),
                 ImportWord::InParens(in_parens) => write_media_in_parens(in_parens, f),
                 ImportWord::GluedCall(keyword, in_parens) => {
                     write_maybe_lowercase(source.text_for(&to_span(keyword.span())), f);
@@ -1604,7 +1607,7 @@ fn push_media_query_list_words<'b, 'a>(
                 if let Some(modifier) = &with_type.modifier {
                     words.push(ImportWord::Keyword(to_span(modifier.span())));
                 }
-                words.push(ImportWord::Keyword(to_span(with_type.media_type.span())));
+                words.push(ImportWord::MediaType(&with_type.media_type));
                 if let Some(condition) = &with_type.condition {
                     let kinds = &condition.condition.conditions;
                     // `screen and(...)`: the glued `and` and the first parens are one word
@@ -1948,7 +1951,9 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
                 write_word(to_span(modifier.span()), f);
                 write!(f, space());
             }
-            write_word(to_span(with_type.media_type.span()), f);
+            value::write_with_comments(to_span(with_type.media_type.span()), query_end, f, |f| {
+                write_media_type(&with_type.media_type, f);
+            });
             if let Some(condition) = &with_type.condition {
                 write!(f, space());
                 // `screen and(max-width: 1px)`: the glued `and(...)` is one word
@@ -1974,6 +1979,16 @@ fn write_media_query<'a>(query: &MediaQuery<'a>, f: &mut CssFormatter<'_, 'a>) {
             let span = to_span(query.span());
             write!(f, text(source.text_for(&span)));
         }
+    }
+}
+
+/// A css-in-js placeholder stays typed, a keyword is lowercased.
+fn write_media_type<'a>(media_type: &InterpolableIdent<'a>, f: &mut CssFormatter<'_, 'a>) {
+    if media_type.has_placeholder() {
+        selector::write_interpolable_ident(media_type, f);
+    } else {
+        let source = f.context().source_text();
+        write_maybe_lowercase(source.text_for(&to_span(media_type.span())), f);
     }
 }
 
@@ -2049,8 +2064,8 @@ fn write_media_in_parens<'a>(in_parens: &MediaInParens<'a>, f: &mut CssFormatter
         }
         // `@media screen and #{$query}` — the interpolation prints verbatim,
         // like Prettier (no parens of its own).
-        MediaInParensKind::SassInterpolation(interpolation) => {
-            let span = to_span(&interpolation.span);
+        MediaInParensKind::Interpolation(interpolation) => {
+            let span = to_span(interpolation.span());
             write!(f, text(f.context().source_text().text_for(&span)));
         }
         // W3C `<general-enclosed>` forward-compat fallback:

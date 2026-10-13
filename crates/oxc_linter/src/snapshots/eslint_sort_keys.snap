@@ -301,6 +301,76 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ eslint(sort-keys): Object keys should be sorted
    ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a100:1, a12:2}
+   ·           ───────────────
+   ╰────
+  help: Replace `a100:1, a12:2` with `a12:2, a100:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {item10Name:1, item1Name:2}
+   ·           ───────────────────────────
+   ╰────
+  help: Replace `item10Name:1, item1Name:2` with `item1Name:2, item10Name:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {step1Build:1, step01Init:2}
+   ·           ────────────────────────────
+   ╰────
+  help: Replace `step1Build:1, step01Init:2` with `step01Init:2, step1Build:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a00:1, a0:2}
+   ·           ─────────────
+   ╰────
+  help: Replace `a00:1, a0:2` with `a0:2, a00:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a1:1, a01:2}
+   ·           ─────────────
+   ╰────
+  help: Replace `a1:1, a01:2` with `a01:2, a1:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {a100:1, A12:2}
+   ·           ───────────────
+   ╰────
+  help: Replace `a100:1, A12:2` with `A12:2, a100:1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"/user-list": 1, "/user/list": 2}
+   ·           ──────────────────────────────────
+   ╰────
+  help: Replace `"/user-list": 1, "/user/list": 2` with `"/user/list": 2, "/user-list": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"a-b": 1, a_b: 2}
+   ·           ──────────────────
+   ╰────
+  help: Replace `"a-b": 1, a_b: 2` with `a_b: 2, "a-b": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"€": 1, a: 2}
+   ·           ──────────────
+   ╰────
+  help: Replace `"€": 1, a: 2` with `a: 2, "€": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
+ 1 │ var obj = {"b\0a": 1, "a\0b": 2}
+   ·           ──────────────────────
+   ╰────
+  help: Replace `"b\0a": 1, "a\0b": 2` with `"a\0b": 2, "b\0a": 1`.
+
+  ⚠ eslint(sort-keys): Object keys should be sorted
+   ╭─[sort_keys.tsx:1:11]
  1 │ var obj = {1:1, 2:4, A:3, '11':2}
    ·           ───────────────────────
    ╰────

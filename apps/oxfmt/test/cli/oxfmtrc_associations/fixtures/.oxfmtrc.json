@@ -1,0 +1,9 @@
+{
+  "associations": [
+    { "files": ["**/*.html"], "excludeFiles": ["index.html"], "language": "angular-html" },
+    { "files": ["**/*.wxml"], "language": "html" },
+    { "files": ["**/*.conf"], "language": "json" },
+    { "files": ["src/**/*.conf"], "excludeFiles": ["src/keep.conf"], "language": "jsonc" },
+    { "files": ["*.lock"], "language": "json" }
+  ]
+}

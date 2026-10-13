@@ -2448,6 +2448,9 @@ pub(super) fn write_sass_interpolated_ident<'a>(
                 write_component_value(expr, ctx, f);
                 write!(f, "}");
             }
+            SassInterpolatedIdentElement::Placeholder(placeholder) => {
+                super::write_placeholder(placeholder, f);
+            }
         }
     }
 }

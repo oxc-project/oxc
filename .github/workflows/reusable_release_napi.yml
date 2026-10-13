@@ -159,7 +159,7 @@ jobs:
           # `*-pc-windows-msvc` targets and let cc-rs pick `cl.exe`.
           TARGET_CC: ${{ !contains(matrix.target, 'pc-windows-msvc') && 'clang' || '' }} # for mimalloc
 
-      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           if-no-files-found: error
           name: bindings-${{ matrix.target }}
@@ -193,7 +193,7 @@ jobs:
         run: pnpm build --target x86_64-unknown-freebsd -x
 
       - name: Upload artifact
-        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           if-no-files-found: error
           name: bindings-freebsd
@@ -218,7 +218,7 @@ jobs:
 
       - parallel:
           - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-          - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+          - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
             with:
               path: artifacts
 

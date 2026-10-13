@@ -90,7 +90,9 @@ declare_oxc_lint!(
     ///	  }
     ///	  return doBar;
     /// }
+    /// ```
     ///
+    /// ```js
     /// function doFoo(foo) {
     ///   const doBar = bar => {
     ///     return bar === 'bar';
@@ -107,7 +109,9 @@ declare_oxc_lint!(
     /// export function doFoo(foo) {
     ///   return doBar;
     /// }
+    /// ```
     ///
+    /// ```js
     /// export function doFoo(foo) {
     ///   function doBar(bar) {
     ///     return bar === 'bar' && foo.doBar(bar);

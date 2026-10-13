@@ -214,6 +214,8 @@ function binCheckAndPrepare(
 
 /**
  * Whether an operator is one of the three which `??` may not mix with unparenthesized.
+ *
+ * @param operator - Operator
  */
 function isLogicalOperator(operator: string): boolean {
   return operator === "&&" || operator === "||" || operator === "??";
@@ -224,6 +226,9 @@ function isLogicalOperator(operator: string): boolean {
  *
  * The operator is written space-padded as one token, which is why nothing here consults `last` -
  * the spacing checks cannot observe an operator which already has a space either side of it.
+ *
+ * @param v - Level of the chain to finish
+ * @param state - Printer state
  */
 function binVisitRightAndFinish(v: BinaryVisitor, state: State): void {
   // The operator is always surrounded by spaces here, which makes the token glue checks

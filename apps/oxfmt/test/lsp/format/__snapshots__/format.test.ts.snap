@@ -104,6 +104,26 @@ const x = 1;
 --------------------"
 `;
 
+exports[`LSP formatting > config options > should apply config from config-associations/test.html 1`] = `
+"--- URI -----------
+file://<fixture>/config-associations/test.html
+--- BEFORE ---------
+@if (user) {
+<p>{{user.name}}</p>
+} @else {
+<p>Guest</p>
+}
+
+--- AFTER ----------
+@if (user) {
+  <p>{{ user.name }}</p>
+} @else {
+  <p>Guest</p>
+}
+
+--------------------"
+`;
+
 exports[`LSP formatting > config options > should apply config from config-astro/test.astro 1`] = `
 "--- URI -----------
 file://<fixture>/config-astro/test.astro
@@ -521,6 +541,26 @@ hello   world
 
 --- AFTER ----------
 hello   world
+
+--------------------"
+`;
+
+exports[`LSP formatting > in-memory document > should format uri untitled://Untitled-7 1`] = `
+"--- URI -----------
+untitled://Untitled-7
+--- BEFORE ---------
+@if (user) {
+<p>{{user.name}}</p>
+} @else {
+<p>Guest</p>
+}
+
+--- AFTER ----------
+@if (user) {
+<p>{{user.name}}</p>
+} @else {
+<p>Guest</p>
+}
 
 --------------------"
 `;

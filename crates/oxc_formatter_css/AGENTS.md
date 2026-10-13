@@ -107,14 +107,16 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
   - The `;` is kept only when the source has one; consecutive placeholders preserve the source whitespace (`${a} ${b}` on one line, `${a}\n${b}` on two)
   - A `;`-less placeholder opens a postcss "swallow" run: following declarations keep a source-driven `;` until a source `;` ends the run (`write_statement_sequence_bounded`)
   - `${foo}: ${bar}` parses as a declaration whose property NAME is a placeholder
+  - Glued placeholders and static parts interpolate into one name like `#{}` (`${a}-${b}`, `x-${a}`); see DIVERGENCES.md#placeholder-property-name
 - Value position: `ComponentValue::Placeholder`; rides existing gap-based separator rules
   - One added rule: glued to a paren group → `Separator::SoftBreak` (`${fn}(30px)` breaks BEFORE the parens)
 - Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector still triggers "garbage mode" in `write_selector_list`
   - Emits the raw source slice with whitespace runs collapsed (sentinels split back out to `EmbedPlaceholder` via `write_text_with_placeholders`), never breaking
   - Mirrors `postcss-selector-parser` degrading on at-words
   - A statement-position placeholder-led selector must not absorb across a newline (oxc-css-parser `placeholder_starts_qualified_rule`): `${mixin}\n& > .x {}` is two statements
-- String / `url()` position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
-  - The JS host (`oxc_formatter`) counts these and substitutes them inline through its `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
+- String / `url()` / comment position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
+  - The JS host (`oxc_formatter`) counts these and substitutes them through its `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
+  - The expression prints the same as an `EmbedPlaceholder` one; inside a comment it may sit in a `line_suffix`
 
 `tests/fixtures/embedded/scss/*-placeholders.scss` is the source of truth for which positions parse and how they print (the `embedded/` harness runs `format_to_ir` with the option on); add a fixture there when extending coverage.
 

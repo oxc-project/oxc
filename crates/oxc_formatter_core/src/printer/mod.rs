@@ -1437,10 +1437,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 self.state.has_line_suffix = true;
             }
 
-            FormatElement::Tag(EndLineSuffix) => {
-                return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
-            }
-
             FormatElement::Tag(tag @ StartFill) => {
                 self.fill_depth += 1;
                 self.stack.push(tag.kind(), args);
@@ -1488,7 +1484,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
                 self.stack.pop(tag.kind())?;
             }
-            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndPrefix)) => {
+            // `EndLineSuffix` is reached only when measuring inside flushed line suffix content
+            // (`flush_line_suffixes` pushes the frame and its end tag), so leave it like the printer does
+            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndPrefix | EndLineSuffix)) => {
                 self.stack.pop(tag.kind())?;
                 self.indent_stack.pop();
             }
@@ -2187,6 +2185,26 @@ a",
         );
 
         assert_eq!("a // c\nb", result.as_code());
+    }
+
+    #[test]
+    fn group_inside_line_suffix() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(
+                token("a"),
+                line_suffix(&group(&format_args!(
+                    token(" b"),
+                    soft_line_break_or_space(),
+                    token("c")
+                ))),
+                hard_line_break(),
+                token("d")
+            ),
+        );
+
+        assert_eq!("a b c\nd", result.as_code());
     }
 
     #[test]

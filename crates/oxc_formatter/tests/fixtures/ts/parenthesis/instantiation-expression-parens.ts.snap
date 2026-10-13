@@ -1,0 +1,42 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Every line deviates from Prettier (DIVERGENCES.md#instantiation-expression-parens).
+const a = (make<T>)!;
+(make<T>)!.b;
+(make<T>)!();
+export default (class {})<string>;
+export default (function () {})<string>;
+export default (class {})<string> as A;
+(class {})<string>;
+(function () {})<string>;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Every line deviates from Prettier (DIVERGENCES.md#instantiation-expression-parens).
+const a = (make<T>)!;
+(make<T>)!.b;
+(make<T>)!();
+export default (class {})<string>;
+export default (function () {})<string>;
+export default (class {})<string> as A;
+(class {})<string>;
+(function () {})<string>;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Every line deviates from Prettier (DIVERGENCES.md#instantiation-expression-parens).
+const a = (make<T>)!;
+(make<T>)!.b;
+(make<T>)!();
+export default (class {})<string>;
+export default (function () {})<string>;
+export default (class {})<string> as A;
+(class {})<string>;
+(function () {})<string>;
+
+===================== End =====================
