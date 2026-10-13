@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 4b75662 transformer_plugins: Preserve optional chains through non-null assertions (#27526) (Dunqing)
+
 ## [0.148.0] - 2026-08-31
 
 ### 🐛 Bug Fixes
