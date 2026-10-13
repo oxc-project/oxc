@@ -9422,6 +9422,9 @@
             }
           ]
         },
+        "unicorn/prefer-global-number-constants": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-global-this": {
           "$ref": "#/definitions/RuleNoConfig"
         },
