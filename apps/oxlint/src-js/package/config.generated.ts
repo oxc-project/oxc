@@ -1603,6 +1603,7 @@ export interface DummyRuleMap {
   "unicorn/no-useless-iterator-to-array"?: RuleNoConfig;
   "unicorn/no-useless-length-check"?: RuleNoConfig;
   "unicorn/no-useless-promise-resolve-reject"?: RuleNoConfig | [AllowWarnDeny, NoUselessPromiseResolveRejectOptions];
+  "unicorn/no-useless-re-export"?: RuleNoConfig;
   "unicorn/no-useless-spread"?: RuleNoConfig;
   "unicorn/no-useless-switch-case"?: RuleNoConfig;
   "unicorn/no-useless-undefined"?: RuleNoConfig | [AllowWarnDeny, NoUselessUndefined];

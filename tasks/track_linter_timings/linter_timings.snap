@@ -610,6 +610,7 @@ unicorn/no-useless-fallback-in-spread                      |  12119
 unicorn/no-useless-iterator-to-array                       |  65257
 unicorn/no-useless-length-check                            |  12119
 unicorn/no-useless-promise-resolve-reject                  |  62606
+unicorn/no-useless-re-export                               |      7
 unicorn/no-useless-spread                                  |  18240
 unicorn/no-useless-switch-case                             |    284
 unicorn/no-useless-undefined                               | 272171
