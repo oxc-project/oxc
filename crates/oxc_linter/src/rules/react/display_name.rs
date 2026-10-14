@@ -835,12 +835,10 @@ fn has_create_react_class_display_name(
 fn class_has_static_display_name(class: &oxc_ast::ast::Class) -> bool {
     class.body.body.iter().any(|element| match element {
         ClassElement::MethodDefinition(method_def) => {
-            method_def.r#static
-                && method_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
+            method_def.r#static && method_def.key.is_specific_static_name("displayName")
         }
         ClassElement::PropertyDefinition(prop_def) => {
-            prop_def.r#static
-                && prop_def.key.static_name() == Some(std::borrow::Cow::Borrowed("displayName"))
+            prop_def.r#static && prop_def.key.is_specific_static_name("displayName")
         }
         _ => false,
     })

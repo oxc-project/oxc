@@ -131,12 +131,15 @@ impl Rule for NoAccessorRecursion {
                 match func_parent.kind() {
                     // e.g. "const foo = { get bar() { return this.bar }}"
                     AstKind::ObjectProperty(property) => {
+                        let Some(prop_key_name) = property.key.name() else {
+                            return;
+                        };
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&property.key, PropertyKey::PrivateIdentifier(_))
-                                    && is_key_named(&property.key, expr_key_name)
+                                    && prop_key_name == expr_key_name
                             } else {
-                                is_key_named(&property.key, expr_key_name)
+                                prop_key_name == expr_key_name
                             }
                         };
                         if !is_same_key {
@@ -158,12 +161,15 @@ impl Rule for NoAccessorRecursion {
                     }
                     // e.g. "class Foo { get bar(value) { return this.bar } }"
                     AstKind::MethodDefinition(method_def) => {
+                        let Some(prop_key_name) = method_def.key.name() else {
+                            return;
+                        };
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
-                                    && is_key_named(&method_def.key, expr_key_name)
+                                    && prop_key_name == expr_key_name
                             } else {
-                                is_key_named(&method_def.key, expr_key_name)
+                                prop_key_name == expr_key_name
                             }
                         };
                         if !is_same_key {
@@ -267,15 +273,6 @@ fn get_member_expr_key_name<'a>(expr: &MemberExpressionKind<'a>) -> Option<JSStr
     }
 }
 
-// String and template keys are compared as `JSStr` so names with lone surrogates still match.
-fn is_key_named(key: &PropertyKey, name: JSStr) -> bool {
-    match key {
-        PropertyKey::StringLiteral(lit) => lit.value == name,
-        PropertyKey::TemplateLiteral(lit) => lit.single_quasi() == Some(name),
-        _ => key.name().is_some_and(|key_name| name == key_name.as_ref()),
-    }
-}
-
 fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
     match parent.kind() {
         AstKind::ObjectProperty(obj_prop) => {
@@ -307,10 +304,12 @@ fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
     if matches!(parent.kind(), AstKind::Function(_)) { Some(parent) } else { None }
 }
 
-fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<String> {
+fn get_property_or_method_def_name<'a>(
+    parent: &'a AstNode<'a>,
+) -> Option<oxc_ast::StaticPropertyName<'a>> {
     match parent.kind() {
         AstKind::ObjectProperty(ObjectProperty { key, .. })
-        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => Some(key.name()?.to_string()),
+        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => key.name(),
         _ => None,
     }
 }

@@ -1,7 +1,7 @@
 use std::{fmt::Debug, sync::Arc};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{BindingPattern, ObjectPattern},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -321,7 +321,8 @@ fn check_deep_namespace_for_object_pattern(
     ctx: &LintContext<'_>,
 ) {
     for property in &pattern.properties {
-        let Some(name) = property.key.name() else {
+        let name = property.key.name().and_then(StaticPropertyName::into_cow_str);
+        let Some(name) = name else {
             continue;
         };
 

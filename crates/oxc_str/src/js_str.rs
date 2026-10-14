@@ -1,5 +1,5 @@
 use std::{
-    fmt::{self, Debug, Write},
+    fmt::{self, Debug, Display, Write},
     hash::{Hash, Hasher},
     iter::FusedIterator,
     marker::PhantomData,
@@ -226,6 +226,17 @@ impl<'a> JSStr<'a> {
         EncodeUtf16 { chars: JSChars { remaining: self.as_bytes() }, pending: 0 }
     }
 
+    /// Return an adapter that implements [`Display`], like [`Path::display`].
+    ///
+    /// UTF-8 text is written as is, and each lone surrogate is written as `\uXXXX` in lowercase hex.
+    /// The output is for diagnostics, not for source code.
+    ///
+    /// [`Path::display`]: std::path::Path::display
+    #[inline]
+    pub fn display(self) -> impl Display + 'a {
+        JSStrDisplay(self)
+    }
+
     /// Borrow the underlying canonical WTF-8 bytes.
     ///
     /// Together with [`has_lone_surrogate`], the bytes are a complete representation.
@@ -379,6 +390,25 @@ impl Debug for JSStr<'_> {
             }
         }
         f.write_char('"')
+    }
+}
+
+/// [`Display`] adapter returned by [`JSStr::display`].
+struct JSStrDisplay<'a>(JSStr<'a>);
+
+impl Display for JSStrDisplay<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(value) = self.0.as_str() {
+            return f.write_str(value);
+        }
+        for c in self.0.chars() {
+            if let Some(c) = c.to_char() {
+                f.write_char(c)?;
+            } else {
+                write!(f, "\\u{:04x}", c.to_u32())?;
+            }
+        }
+        Ok(())
     }
 }
 

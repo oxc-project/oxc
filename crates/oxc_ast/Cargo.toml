@@ -32,6 +32,9 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 
+[dev-dependencies]
+rustc-hash = { workspace = true }
+
 [features]
 default = []
 serialize = [

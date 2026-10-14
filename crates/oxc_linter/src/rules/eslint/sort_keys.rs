@@ -1,12 +1,13 @@
 use std::{borrow::Cow, cmp::Ordering, iter::Peekable};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{Expression, ObjectExpression, ObjectProperty, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::line_terminator::LineTerminatorSplitter;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -133,7 +134,7 @@ impl Rule for SortKeys {
 }
 
 struct FixableProperty<'a> {
-    key: Cow<'a, str>,
+    key: StaticPropertyName<'a>,
     span: Span,
     text: Cow<'a, str>,
     /// `text` already includes the inter-property `,` (lifted with a same-line `// ...` comment).
@@ -148,7 +149,7 @@ fn is_object_sorted(
     sort_order: &SortOrder,
     options: &SortKeysOptions,
 ) -> bool {
-    let mut prev_key: Option<Cow<'_, str>> = None;
+    let mut prev_key: Option<StaticPropertyName<'_>> = None;
 
     for (i, prop) in object.properties.iter().enumerate() {
         match prop {
@@ -190,14 +191,26 @@ fn is_object_sorted(
     true
 }
 
-/// Compare two keys according to sort options, without allocating.
-fn compare_keys(a: &str, b: &str, options: &SortKeysOptions) -> Ordering {
+/// Compare two keys according to sort options.
+fn compare_keys(
+    a: &StaticPropertyName<'_>,
+    b: &StaticPropertyName<'_>,
+    options: &SortKeysOptions,
+) -> Ordering {
+    compare_key_names(a.as_js_str(), b.as_js_str(), options)
+}
+
+fn compare_key_names(a: JSStr<'_>, b: JSStr<'_>, options: &SortKeysOptions) -> Ordering {
     if options.natural {
-        natural_compare(a, b, options.case_sensitive)
-    } else if options.case_sensitive {
+        return natural_compare(a, b, options.case_sensitive);
+    }
+    // Canonical WTF-8 bytes order like code points, so lone surrogates need no decoding.
+    // ESLint compares UTF-16 code units instead, which differs for astral characters (#26242).
+    let (a, b) = (a.as_bytes(), b.as_bytes());
+    if options.case_sensitive {
         a.cmp(b)
     } else {
-        a.bytes().map(|b| b.to_ascii_lowercase()).cmp(b.bytes().map(|b| b.to_ascii_lowercase()))
+        a.iter().map(u8::to_ascii_lowercase).cmp(b.iter().map(u8::to_ascii_lowercase))
     }
 }
 
@@ -448,7 +461,7 @@ fn build_property_text<'a>(
 /// so each key is compared up to its first NUL.
 ///
 /// Case-insensitive mode lowercases ASCII only, where ESLint lowercases with `toLowerCase`.
-fn natural_compare(a: &str, b: &str, case_sensitive: bool) -> Ordering {
+fn natural_compare(a: JSStr<'_>, b: JSStr<'_>, case_sensitive: bool) -> Ordering {
     compare_natural(
         a.encode_utf16().take_while(|&unit| unit != 0).map(u32::from),
         b.encode_utf16().take_while(|&unit| unit != 0).map(u32::from),
@@ -554,6 +567,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (
+            r#"var obj = {"a1\uD800": 1, "a2": 2, "a10": 3}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
         ("var obj = {'':1, [``]:2}", Some(serde_json::json!([]))), // { "ecmaVersion": 6 },
         ("var obj = {[``]:1, '':2}", Some(serde_json::json!([]))), // { "ecmaVersion": 6 },
         ("var obj = {'':1, a:2}", Some(serde_json::json!([]))),
@@ -1013,9 +1030,30 @@ fn test() {
                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 }
+        // Lone surrogates order by code point, like every other key.
+        (r#"var obj = {"\uD800": 1, "\uDC00": 2}"#, None),
+        (r#"var obj = {"a": 1, "\uD800": 2}"#, None),
+        (r#"var obj = {"\uDC00": 1, "𐀀": 2}"#, None),
+        (r#"var obj = {"\uE000": 1, "😀": 2}"#, None),
+        (r#"var obj = {"\uD800": 1, "\uD800\uDC00": 2}"#, None),
+        (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, Some(serde_json::json!(["desc"]))),
+        // Natural mode compares UTF-16 code units like natural-compare, so a lone surrogate sorts
+        // after ASCII.
+        (
+            r#"var obj = {"a1": 1, "\uD800": 2}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (
+            r#"var obj = {"A": 1, "b": 2, "\uD800": 3}"#,
+            Some(serde_json::json!(["asc", { "caseSensitive": false }])),
+        ),
     ];
 
     let fail = vec![
+        (
+            r#"var obj = {"a2": 2, "a10": 3, "a1\uD800": 1}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
         ("var obj = {a:1, '':2} // default", None),
         ("var obj = {a:1, [``]:2} // default", None), // { "ecmaVersion": 6 },
         ("var obj = {a:1, _:2, b:3} // default", None),
@@ -1380,6 +1418,21 @@ fn test() {
                         ",
             Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
         ), // { "ecmaVersion": 2018 }
+        // Lone surrogates order by code point, like every other key.
+        (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, None),
+        (r#"var obj = {"\uD800": 1, "a": 2}"#, None),
+        (r#"var obj = {"\uD800\uDC00": 1, "\uD800": 2}"#, None),
+        (r#"var obj = {"\uD800": 1, "\uDC00": 2}"#, Some(serde_json::json!(["desc"]))),
+        // Natural mode compares UTF-16 code units like natural-compare, so a lone surrogate sorts
+        // after ASCII.
+        (
+            r#"var obj = {"\uD800": 1, "a1": 2}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (
+            r#"var obj = {"\uD800": 1, "b": 2, "A": 3}"#,
+            Some(serde_json::json!(["asc", { "caseSensitive": false }])),
+        ),
     ];
 
     // Add comprehensive fixer tests: the rule now advertises conditional fixes,
@@ -1390,6 +1443,9 @@ fn test() {
             "var obj = {n:0, b:1, g:2, t:3, i:4, s:5, h:6, b:7, c:8, u:9, r:10, q:11, d:12, f:13, j:14, l:15, p:16, e:17, a:18, k:19, o:20, m:21}",
             "var obj = {a:18, b:1, b:7, c:8, d:12, e:17, f:13, g:2, h:6, i:4, j:14, k:19, l:15, m:21, n:0, o:20, p:16, q:11, r:10, s:5, t:3, u:9}",
         ),
+        // Lone surrogates keep their source spelling.
+        (r#"var obj = {"\uDC00": 1, "\uD800": 2}"#, r#"var obj = {"\uD800": 2, "\uDC00": 1}"#),
+        (r#"var obj = {"\uD800": 1, a: 2}"#, r#"var obj = {a: 2, "\uD800": 1}"#),
         // Basic alphabetical sorting
         ("var obj = {b:1, a:2}", "var obj = {a:2, b:1}"),
         // Case sensitivity - lowercase comes after uppercase, so a:2 should come after B:1
@@ -1641,17 +1697,30 @@ fn test() {
 #[test]
 fn test_natural_fix() {
     use crate::tester::Tester;
-    let fix = vec![(
-        "var obj = {a100:1, a12:2, a2:3}",
-        "var obj = {a2:3, a12:2, a100:1}",
-        Some(serde_json::json!(["asc", { "natural": true }])),
-    )];
+    let fix = vec![
+        (
+            "var obj = {a100:1, a12:2, a2:3}",
+            "var obj = {a2:3, a12:2, a100:1}",
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (
+            r#"var obj = {"a2": 2, "a10": 3, "a1\uD800": 1}"#,
+            r#"var obj = {"a1\uD800": 1, "a2": 2, "a10": 3}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+    ];
     Tester::new::<&str>(SortKeys::NAME, SortKeys::PLUGIN, vec![], vec![]).expect_fix(fix).test();
 }
 
 /// Sorting the fix relies on a total order: an inconsistent comparator can panic in `sort_by`.
 #[test]
 fn natural_order_is_total() {
+    use oxc_allocator::Allocator;
+    use oxc_str::JSStrBuilder;
+    let allocator = Allocator::new();
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_utf16(&[0x61, 0x31, 0xD800]);
+    let surrogate = builder.into_js_str();
     let names = [
         "",
         "0",
@@ -1679,13 +1748,17 @@ fn natural_order_is_total() {
         "\0a",
         "\0b",
         "a\0z",
-    ];
+    ]
+    .into_iter()
+    .map(JSStr::from)
+    .chain([surrogate])
+    .collect::<Vec<_>>();
     for case_sensitive in [true, false] {
-        for a in names {
-            for b in names {
+        for &a in &names {
+            for &b in &names {
                 let ab = natural_compare(a, b, case_sensitive);
                 assert_eq!(ab, natural_compare(b, a, case_sensitive).reverse(), "{a:?} {b:?}");
-                for c in names {
+                for &c in &names {
                     if ab != Ordering::Greater
                         && natural_compare(b, c, case_sensitive) != Ordering::Greater
                     {
@@ -1699,4 +1772,5 @@ fn natural_order_is_total() {
             }
         }
     }
+    assert_eq!(natural_compare(surrogate, JSStr::from("a2"), true), Ordering::Less);
 }

@@ -8,7 +8,10 @@ use oxc_syntax::class::ElementKind;
 
 use crate::{context::LintContext, rule::Rule};
 
-fn no_unused_private_class_members_diagnostic(name: &str, span: Span) -> OxcDiagnostic {
+fn no_unused_private_class_members_diagnostic(
+    name: impl std::fmt::Display,
+    span: Span,
+) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("'{name}' is defined but never used."))
         .with_help("Remove the declaration or use it in the code.")
         .with_label(span)

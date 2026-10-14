@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{CallExpression, Expression, ObjectExpression, ObjectPropertyKind, TemplateLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -133,8 +133,11 @@ impl NoReservedComponentNames {
         };
         for entry in &components_obj.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = entry else { continue };
-            let Some(name) = prop.key.static_name() else { continue };
-            self.report_if_reserved(name.as_ref(), prop.key.span(), ctx);
+            let Some(name) = prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
+            else {
+                continue;
+            };
+            self.report_if_reserved(&name, prop.key.span(), ctx);
         }
     }
 
