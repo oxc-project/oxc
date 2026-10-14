@@ -393,6 +393,11 @@ impl ConfigStore {
         self.base.base.config.options.respect_eslint_disable_directives.unwrap_or(true)
     }
 
+    /// Whether all inline disable and enable directives are ignored, as set in the root config.
+    pub fn no_inline_config(&self) -> bool {
+        self.base.base.config.options.no_inline_config.unwrap_or(false)
+    }
+
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
         if self.nested_configs.is_empty() {
             &self.base
@@ -1476,6 +1481,35 @@ mod test {
         );
         let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
         assert_eq!(store.report_unused_disable_directives(), None);
+    }
+
+    #[test]
+    fn test_no_inline_config_from_root_config() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig {
+                options: OxlintOptions { no_inline_config: Some(true), ..OxlintOptions::default() },
+                ..LintConfig::default()
+            },
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(store.no_inline_config());
+    }
+
+    #[test]
+    fn test_no_inline_config_disabled_by_default() {
+        let base = Config::new(
+            vec![],
+            vec![],
+            OxlintCategories::default(),
+            LintConfig::default(),
+            ResolvedOxlintOverrides::new(vec![]),
+        );
+        let store = ConfigStore::new(base, FxHashMap::default(), ExternalPluginStore::default());
+        assert!(!store.no_inline_config());
     }
 
     #[test]

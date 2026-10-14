@@ -480,7 +480,8 @@ impl CliRunner {
 
         let linter = Linter::new(LintOptions::default(), config_store, external_linter)
             .with_fix(fix_options.fix_kind())
-            .with_report_unused_directives(report_unused_directives);
+            .with_report_unused_directives(report_unused_directives)
+            .with_no_inline_config(inline_config_options.no_inline_config);
 
         let number_of_files = files_to_lint.len();
         let tsconfig = basic_options.tsconfig;
@@ -1495,6 +1496,29 @@ mod test {
     }
 
     #[test]
+    fn test_no_inline_config_from_config() {
+        let args = &["-c", ".oxlintrc.json"];
+
+        Tester::new().with_cwd("fixtures/cli/no_inline_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_no_inline_config_cli_overrides_config() {
+        // The CLI flag enables inline-config bypass even though the config sets `false`.
+        let args = &["-c", "inline-config-enabled.json", "--no-inline-config"];
+
+        Tester::new().with_cwd("fixtures/cli/no_inline_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    fn test_no_inline_config_disabled_keeps_directives() {
+        // `noInlineConfig: false` must preserve the current directive behavior.
+        let args = &["-c", "inline-config-enabled.json"];
+
+        Tester::new().with_cwd("fixtures/cli/no_inline_config".into()).test_and_snapshot(args);
+    }
+
+    #[test]
     fn test_root_config_ancestor() {
         Tester::new()
             .with_cwd("fixtures/cli/root_config_ancestor/cwd".into())
@@ -1911,6 +1935,22 @@ mod test {
     fn test_tsgolint_disable_directives() {
         // Test that disable directives work with type-aware rules
         let args = &["--type-aware"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_disable_directives".into())
+            .test_and_snapshot(args);
+    }
+
+    #[cfg(not(target_endian = "big"))]
+    #[test]
+    fn test_tsgolint_no_inline_config() {
+        // Test that `--no-inline-config` makes type-aware rules ignore disable
+        // directives, and that no unused-directive diagnostic is reported.
+        let args = &[
+            "--type-aware",
+            "--no-inline-config",
+            "--report-unused-disable-directives",
+            "test.ts",
+        ];
         Tester::new()
             .with_cwd("fixtures/cli/tsgolint_disable_directives".into())
             .test_and_snapshot(args);

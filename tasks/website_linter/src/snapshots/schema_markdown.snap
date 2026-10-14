@@ -445,6 +445,20 @@ Specify a warning threshold. Exits with an error status if warnings exceed this 
 Equivalent to passing `--max-warnings` on the CLI.
 
 
+### options.noInlineConfig
+
+type: `boolean`
+
+
+Ignore all supported inline disable and enable directives
+(`oxlint-*` and `eslint-*`).
+
+Defaults to `false`.
+Equivalent to passing `--no-inline-config` on the CLI.
+Takes precedence over `respectEslintDisableDirectives`.
+Only supported in the root configuration file.
+
+
 ### options.reportUnusedDisableDirectives
 
 type: `"allow" | "off" | "warn" | "error" | "deny" | integer`
@@ -466,6 +480,8 @@ Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
 directives in addition to its native `oxlint-*` directives.
 
 Defaults to `true`.
+
+Has no effect when `noInlineConfig` is `true`.
 Only supported in the root configuration file.
 
 

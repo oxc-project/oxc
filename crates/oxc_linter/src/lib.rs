@@ -290,10 +290,12 @@ pub struct Linter {
 
 impl Linter {
     pub fn new(
-        options: LintOptions,
+        mut options: LintOptions,
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
+        // The root config can enable (but never disable) inline config handling.
+        options.no_inline_config |= config.no_inline_config();
         Self { options, config, external_linter, workspace_uri: None }
     }
 
@@ -316,12 +318,25 @@ impl Linter {
         self
     }
 
+    /// Ignore all inline disable and enable directives.
+    ///
+    /// Calling this with `false` will not override a root configuration value of `true`.
+    #[must_use]
+    pub fn with_no_inline_config(mut self, yes: bool) -> Self {
+        self.options.no_inline_config |= yes;
+        self
+    }
+
     pub(crate) fn options(&self) -> &LintOptions {
         &self.options
     }
 
     pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
         self.config.respect_eslint_disable_directives()
+    }
+
+    pub(crate) fn no_inline_config(&self) -> bool {
+        self.options.no_inline_config
     }
 
     /// Returns the number of rules that will are being used, unless there
