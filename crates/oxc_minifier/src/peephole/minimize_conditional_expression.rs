@@ -418,8 +418,11 @@ impl<'a> PeepholeOptimizations {
         ) {
             (Some(true), Some(false)) => {
                 let test = expr.test.take_in(ctx);
+                if ctx.in_boolean_context() {
+                    return Some(test);
+                }
                 let test = Self::minimize_not(expr.span, test, ctx, true);
-                let test = Self::minimize_not(expr.span, test, ctx, ctx.in_boolean_context());
+                let test = Self::minimize_not(expr.span, test, ctx, false);
                 return Some(test);
             }
             (Some(false), Some(true)) => {
