@@ -1,6 +1,6 @@
 name oxfmt
 bin oxfmt
-version "0.70.0"
+version "0.73.0"
 usage "oxfmt [-c=PATH] [PATH]..."
 help_template #"""
 {{usage}}
