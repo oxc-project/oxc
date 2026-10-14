@@ -25,7 +25,7 @@ catalog:
   rolldown: 1.2.13
   tsdown: 0.23.1
   vite: 8.3.4
-  vite-plus: 1.1.0
+  vite-plus: 1.2.0
   vitest: 5.0.3
 
 overrides:
