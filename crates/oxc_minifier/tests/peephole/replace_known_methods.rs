@@ -773,6 +773,51 @@ fn test_fold_parse_numbers() {
 }
 
 #[test]
+fn test_fold_parse_float_numeric_separators() {
+    test("x = parseFloat('1_2')", "x = 1");
+    test("x = parseFloat('-1_2')", "x = -1");
+    test("x = parseFloat('-0_1')", "x = -0");
+    test("x = parseFloat('1_')", "x = 1");
+    test("x = parseFloat('1__2')", "x = 1");
+    test("x = parseFloat('1_é')", "x = 1");
+    test("x = parseFloat('1_.2')", "x = 1");
+    test("x = parseFloat('1.2_3')", "x = 1.2");
+    test("x = parseFloat('.1_2')", "x = 0.1");
+    test("x = parseFloat('1._2')", "x = 1");
+    test("x = parseFloat('1.2_e3')", "x = 1.2");
+    test("x = parseFloat('1e_2')", "x = 1");
+    test("x = parseFloat('1e+_2')", "x = 1");
+    test("x = parseFloat('1e-_2')", "x = 1");
+    test("x = parseFloat('1e2_3')", "x = 100");
+    test("x = parseFloat('1e+2_3')", "x = 100");
+    test("x = parseFloat('1e-2_3')", "x = 0.01");
+    test("x = parseFloat('1.2e3_4')", "x = 1200");
+    test("x = parseFloat('_1')", "x = NaN");
+    test("x = parseFloat('+_1')", "x = NaN");
+    test("x = parseFloat('._1')", "x = NaN");
+}
+
+#[test]
+fn test_fold_parse_float_exponent_after_decimal_point() {
+    test("x = parseFloat('1.e2')", "x = 100");
+    test("x = parseFloat('+1.E2')", "x = 100");
+    test("x = parseFloat('1.e+2')", "x = 100");
+    test("x = parseFloat('1.e-2')", "x = 0.01");
+    test("x = parseFloat('-1.e2')", "x = -100");
+    test("x = parseFloat('-0.e2')", "x = -0");
+    test("x = parseFloat('1.e2é')", "x = 100");
+    test("x = parseFloat('1.e2_3')", "x = 100");
+    test("x = parseFloat('1.e_2')", "x = 1");
+    test("x = parseFloat('1.e+_2')", "x = 1");
+    test("x = parseFloat('1.e')", "x = 1");
+    test("x = parseFloat('1.e+')", "x = 1");
+    test("x = parseFloat('1.e-')", "x = 1");
+    test("x = parseFloat('1.')", "x = 1");
+    test("x = parseFloat('1..e2')", "x = 1");
+    test("x = parseFloat('.e2')", "x = NaN");
+}
+
+#[test]
 fn test_fold_parse_octal_numbers() {
     test("x = parseInt('021', 8)", "x = 17");
     test("x = parseInt('-021', 8)", "x = -17");

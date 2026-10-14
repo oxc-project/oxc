@@ -702,7 +702,7 @@ fn try_fold_global_parse_float<'a>(
         return Some(ConstantValue::Number(f64::NAN));
     };
 
-    let parsed = trimmed_prefix.cow_replace('_', "").parse::<f64>().unwrap_or_else(|_| {
+    let parsed = trimmed_prefix.parse::<f64>().unwrap_or_else(|_| {
         unreachable!(
             "StrDecimalLiteral should be parse-able with Rust FromStr for f64: {trimmed_prefix}"
         )
@@ -719,24 +719,11 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
     fn match_decimal_digits(s: &str) -> Option<usize> {
         let bytes = s.as_bytes();
         if bytes.first().is_none_or(|b| !b.is_ascii_digit()) {
-            // must have at least one digit
             return None;
         }
-        let mut iter = bytes.iter().enumerate().skip(1);
-        while let Some((i, &b)) = iter.next() {
-            match b {
-                b'0'..=b'9' => {}
-                b'_' => {
-                    let Some((i, &b)) = iter.next() else {
-                        // must have at least one digit after _
-                        return Some(i); // without _
-                    };
-                    if !b.is_ascii_digit() {
-                        // must have at least one digit after _
-                        return Some(i); // without _
-                    }
-                }
-                _ => return Some(i),
+        for (i, b) in bytes.iter().enumerate().skip(1) {
+            if !b.is_ascii_digit() {
+                return Some(i);
             }
         }
         Some(s.len())
@@ -784,23 +771,15 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
     last_index += end_of_decimal_digits;
     s = &s[end_of_decimal_digits..];
 
-    // DecimalDigits . DecimalDigits ExponentPart
     if s.starts_with('.') {
         last_index += 1;
         s = &s[1..];
-        let Some(end_of_decimal_digits) = match_decimal_digits(s) else {
-            return Some(&input[..last_index - 1]); // without .
-        };
-        last_index += end_of_decimal_digits;
-        s = &s[end_of_decimal_digits..];
-        let Some(end_of_exponent_part) = match_exponent_part(s) else {
-            return Some(&input[..last_index]);
-        };
-        last_index += end_of_exponent_part;
-        return Some(&input[..last_index]);
+        if let Some(end_of_decimal_digits) = match_decimal_digits(s) {
+            last_index += end_of_decimal_digits;
+            s = &s[end_of_decimal_digits..];
+        }
     }
 
-    // DecimalDigits ExponentPart
     let Some(end_of_exponent_part) = match_exponent_part(s) else {
         return Some(&input[..last_index]);
     };
@@ -892,9 +871,17 @@ fn test_find_str_decimal_literal_prefix() {
     assert_eq!(find_str_decimal_literal_prefix("0a"), Some("0"));
     assert_eq!(find_str_decimal_literal_prefix("+0a"), Some("+0"));
     assert_eq!(find_str_decimal_literal_prefix("-0a"), Some("-0"));
-    assert_eq!(find_str_decimal_literal_prefix("0."), Some("0"));
-    assert_eq!(find_str_decimal_literal_prefix("0.e"), Some("0"));
-    assert_eq!(find_str_decimal_literal_prefix("0.e1"), Some("0"));
+    assert_eq!(find_str_decimal_literal_prefix("0."), Some("0."));
+    assert_eq!(find_str_decimal_literal_prefix("0.e"), Some("0."));
+    assert_eq!(find_str_decimal_literal_prefix("0.e1"), Some("0.e1"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e+2"), Some("1.e+2"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e-2"), Some("1.e-2"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e+"), Some("1."));
+    assert_eq!(find_str_decimal_literal_prefix("1.e-"), Some("1."));
+    assert_eq!(find_str_decimal_literal_prefix("1.e2_3"), Some("1.e2"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e_2"), Some("1."));
+    assert_eq!(find_str_decimal_literal_prefix("1.e2é"), Some("1.e2"));
+    assert_eq!(find_str_decimal_literal_prefix(".e2"), None);
     assert_eq!(find_str_decimal_literal_prefix("0.1"), Some("0.1"));
     assert_eq!(find_str_decimal_literal_prefix("0.1."), Some("0.1"));
     assert_eq!(find_str_decimal_literal_prefix("0.1e"), Some("0.1"));
@@ -904,6 +891,14 @@ fn test_find_str_decimal_literal_prefix() {
     assert_eq!(find_str_decimal_literal_prefix(".1e"), Some(".1"));
     assert_eq!(find_str_decimal_literal_prefix(".1e1"), Some(".1e1"));
     assert_eq!(find_str_decimal_literal_prefix("1_"), Some("1"));
-    assert_eq!(find_str_decimal_literal_prefix("1_1"), Some("1_1"));
-    assert_eq!(find_str_decimal_literal_prefix("1_1_"), Some("1_1"));
+    assert_eq!(find_str_decimal_literal_prefix("1_1"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1_1_"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1_é"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1.2_3"), Some("1.2"));
+    assert_eq!(find_str_decimal_literal_prefix(".1_2"), Some(".1"));
+    assert_eq!(find_str_decimal_literal_prefix("1e_2"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1e+_2"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1e2_3"), Some("1e2"));
+    assert_eq!(find_str_decimal_literal_prefix("_1"), None);
+    assert_eq!(find_str_decimal_literal_prefix("._1"), None);
 }
