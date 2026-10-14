@@ -658,17 +658,21 @@ jobs:
     # 2. Neon on aarch64.
     # 3. Generic everywhere else.
     #
-    # This job runs on x86_64, so it covers AVX2 and generic only.
+    # Each leg of this job builds one of them. The AVX2 and generic legs run on x86_64, the Neon leg on aarch64.
     #
-    # None of `avx2`, `bmi2` and `popcnt` is in the x86_64 baseline on any platform, so the AVX2 implementation
-    # is never built unless asked for explicitly - which means no other job here lints, tests or runs it.
+    # Coverage by other jobs:
+    # - None of `avx2`, `bmi2` and `popcnt` is in the x86_64 baseline on any platform, so the AVX2 implementation
+    #   is never built unless asked for explicitly - which means no other job here lints, tests or runs it.
+    # - No other job builds Neon on PRs (the aarch64 test jobs only run on `main`), and no other job lints it.
+    # - Generic is already linted by the "Lint" job and tested by the "Test Linux" job,
+    #   so this job only runs conformance for it.
     #
-    # Both legs regenerate the committed conformance snapshots and fail on any diff,
-    # which ensures the 2 implementations behave identically to each other.
+    # All legs regenerate the committed conformance snapshots and fail on any diff,
+    # which ensures the 3 implementations behave identically to each other.
     #
-    # See the LEXER section of `justfile` for the flags.
+    # See the LEXER section of `justfile` for the recipes.
     name: Lexer (${{ matrix.variant }})
-    runs-on: namespace-profile-linux-x64-default
+    runs-on: ${{ matrix.runner }}
     env:
       CARGO_BUILD_WARNINGS: deny
     strategy:
@@ -676,9 +680,14 @@ jobs:
       matrix:
         include:
           - variant: generic
+            runner: namespace-profile-linux-x64-default
             suffix: ""
           - variant: AVX2
+            runner: namespace-profile-linux-x64-default
             suffix: "-avx2"
+          - variant: Neon
+            runner: ubuntu-24.04-arm
+            suffix: ""
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
@@ -698,14 +707,15 @@ jobs:
           node-compat-table: false
         background: true
 
+      # The x86_64 legs run on Namespace runners, which provide the cache
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        if: steps.filter.outputs.changed == 'true'
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'Neon' }}
         with:
           path: /home/runner/.rustup
           cache: rust
 
       - uses: taiki-e/install-action@f7e5d7c961414b23f5b25b2da9294395d08513ad # v2.87.26
-        if: steps.filter.outputs.changed == 'true'
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'Neon' }}
         with:
           tool: just
 
@@ -713,20 +723,30 @@ jobs:
         # No need to run on generic - linting already covered by "Lint" job
         if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
 
+      # The Neon leg runs on a GitHub-hosted runner, where Namespace's cache isn't available.
+      # Set up the same way as the "Test Linux ARM64" job, but with its own cache.
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'Neon' }}
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: lexer-aarch64
+          tools: just
+          components: clippy
+
       - name: Lint
         # No need to run on generic - already covered by "Lint" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
-        run: just lint-lexer-avx2
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'generic' }}
+        run: just lint-lexer${{ matrix.suffix }}
 
       - name: Test
         # No need to run on generic - already covered by "Test Linux" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
-        run: just test-lexer-avx2
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'generic' }}
+        run: just test-lexer${{ matrix.suffix }}
 
       - wait: lexer-fixtures
 
       - name: Conformance
-        # Run on both AVX2 and generic - neither is run anywhere else.
+        # Run on all 3 implementations - none of them is run anywhere else.
         # The harness prints which implementation it was built with (`oxc_lexer::IMPLEMENTATION`).
         # Checking it here is what guarantees this leg exercised the build it asked for.
         if: steps.filter.outputs.changed == 'true'
@@ -774,7 +794,7 @@ jobs:
       - name: Benchmark
         # The `oxc_lexer` benchmark prints which implementation it was built with (`oxc_lexer::IMPLEMENTATION`).
         # Checking it here is what guarantees this job benchmarked the AVX2 implementation.
-        # The `oxc_parser` benchmark checks for itself that it was built without the SIMD flags.
+        # `just bench-lexer-avx2` builds the `oxc_parser` benchmark without the AVX2 flags (not checked here).
         if: steps.filter.outputs.changed == 'true'
         env:
           # Keep criterion's saved results out of `target`, which may be cached.
