@@ -189,6 +189,7 @@ declare_oxc_lint!(
     BanTsComment,
     typescript,
     pedantic,
+    recommended,
     conditional_fix,
     config = BanTsCommentConfig,
     version = "0.0.8",

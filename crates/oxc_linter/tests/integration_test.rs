@@ -162,8 +162,16 @@ fn test_rule_enum_flags() {
         ("eslint", "no-alert", RuleFlags::empty()),
         ("eslint", "no-debugger", RuleFlags::IS_RECOMMENDED),
         ("eslint", "eqeqeq", RuleFlags::HAS_CONFIG),
-        ("typescript", "no-unsafe-assignment", RuleFlags::IS_TSGOLINT_RULE),
-        ("typescript", "no-floating-promises", RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG),
+        (
+            "typescript",
+            "no-unsafe-assignment",
+            RuleFlags::IS_TSGOLINT_RULE | RuleFlags::IS_RECOMMENDED,
+        ),
+        (
+            "typescript",
+            "no-floating-promises",
+            RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG | RuleFlags::IS_RECOMMENDED,
+        ),
     ];
 
     for (plugin, name, expected) in cases {
