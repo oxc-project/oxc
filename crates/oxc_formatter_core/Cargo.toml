@@ -22,6 +22,7 @@ oxc_data_structures = { workspace = true, features = ["code_buffer"] }
 oxc_span = { workspace = true }
 
 cow-utils = { workspace = true }
+memchr = { workspace = true }
 rustc-hash = { workspace = true }
 unicode-width = { workspace = true }
 

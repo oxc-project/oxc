@@ -2081,6 +2081,7 @@ name = "oxc_formatter_core"
 version = "0.73.0"
 dependencies = [
  "cow-utils",
+ "memchr",
  "oxc_allocator",
  "oxc_data_structures",
  "oxc_span",
