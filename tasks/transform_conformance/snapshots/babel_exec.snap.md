@@ -145,7 +145,7 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
 RolldownError: Parse failure: Parse failed with 2 errors:
 'export statement' declaration can only be used at the top level of a module
-2: import _usingCtx2 from "/@id/__x00__@oxc-project+runtime@0.153.0/helpers/esm/usingCtx.js";
+2: import _usingCtx2 from "/@id/__x00__@oxc-project+runtime@0.154.0/helpers/esm/usingCtx.js";
 3: test("exec", () => {
 4:   export { A };
      ^
