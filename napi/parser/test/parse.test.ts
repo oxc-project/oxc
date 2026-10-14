@@ -912,6 +912,19 @@ describe("error", () => {
   });
 });
 
+describe("raw transfer", () => {
+  // `parse-raw.test.ts` does not run on Windows, so this test checks raw transfer works there
+  it("allocates buffer on Rust side", () => {
+    const code = 'const s = "日本"; function f(a, b) { return a + b; }';
+    const raw = parseRawSync("test.js", code, { experimentalRawTransfer: true });
+    expect(JSON.stringify(raw.program)).toBe(JSON.stringify(parseSync("test.js", code).program));
+
+    // Buffer is allocated on Rust side, and passed to JS as an external `ArrayBuffer`, which is not counted in
+    // `arrayBuffers`. If it was allocated on JS side instead, it would be a 6 GiB `ArrayBuffer`.
+    expect(process.memoryUsage().arrayBuffers).toBeLessThan(2 ** 32);
+  });
+});
+
 describe("worker", () => {
   it("should run", async () => {
     const code = await new Promise((resolve, reject) => {

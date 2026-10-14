@@ -277,7 +277,7 @@ function clearBuffersCache() {
  * Preferably, the buffer is allocated on Rust side by `createRawTransferBuffer`, which reserves
  * only 2 GiB of virtual memory for it. Rust frees the memory when the `ArrayBuffer` is garbage collected.
  *
- * Where that's not possible (e.g. on Windows, or in Electron, which does not support external `ArrayBuffer`s),
+ * Where that's not possible (e.g. in Electron, which does not support external `ArrayBuffer`s),
  * `createRawTransferBuffer` returns `null`, and we allocate the buffer on JS side instead.
  * JS cannot allocate an `ArrayBuffer` with a specific alignment, so we create a 6 GiB `ArrayBuffer`,
  * get the offset within it that's aligned to 4 GiB, chop off that number of bytes from the start,

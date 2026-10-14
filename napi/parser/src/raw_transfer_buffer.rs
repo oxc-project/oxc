@@ -8,7 +8,7 @@
 //! virtual address space per buffer.
 //!
 //! [`create_raw_transfer_buffer`] instead allocates an aligned region of 2 GiB directly, using OS APIs
-//! (`mmap` on Unix). The buffer then only occupies 2 GiB of address space.
+//! (`mmap` on Unix, `VirtualAlloc` on Windows). The buffer then only occupies 2 GiB of address space.
 //! The memory is passed to JS as an external `ArrayBuffer`, and is freed when that `ArrayBuffer`
 //! is garbage collected.
 
@@ -187,8 +187,97 @@ mod block {
     }
 }
 
+/// Windows cannot release part of a reservation, so the approach used on Unix (reserve an oversized region,
+/// then release the parts outside the aligned region) is not possible.
+///
+/// Instead, reserve an oversized region to find an address aligned on `BLOCK_ALIGN`, release it,
+/// and then reserve and commit just the aligned region at that address. Another thread could reserve memory
+/// in that range in between, in which case try again.
+///
+/// The whole region is committed up front. The parser writes to it through an `Allocator` created with
+/// `Allocator::from_raw_parts`, which cannot commit pages on demand. Physical memory is only used for pages
+/// which are written to.
+#[cfg(windows)]
+mod block {
+    use std::{
+        ffi::c_void,
+        ptr::{self, NonNull},
+    };
+
+    use windows_sys::Win32::System::Memory::{
+        MEM_COMMIT, MEM_RELEASE, MEM_RESERVE, PAGE_NOACCESS, PAGE_READWRITE, VirtualAlloc,
+        VirtualFree,
+    };
+
+    use crate::raw_transfer_constants::{BLOCK_ALIGN, BLOCK_SIZE};
+
+    /// Size of region backing each buffer: `BLOCK_SIZE` rounded up to a multiple of page size.
+    /// `BLOCK_SIZE` is 16 bytes less than 2 GiB, so this is 2 GiB.
+    const REGION_SIZE: usize = 1 << 31;
+
+    /// Size of region reserved to find an aligned address. Large enough to always contain a region of
+    /// `REGION_SIZE` bytes aligned on `BLOCK_ALIGN`.
+    const PROBE_SIZE: usize = REGION_SIZE + BLOCK_ALIGN;
+
+    /// Maximum number of attempts to reserve the aligned region, in case another thread reserves memory
+    /// in that range after we release the probe reservation.
+    const MAX_ATTEMPTS: usize = 8;
+
+    const _: () = assert!(BLOCK_SIZE <= REGION_SIZE && REGION_SIZE - BLOCK_SIZE < 4096);
+
+    /// Allocate a zeroed region of `REGION_SIZE` bytes, aligned on `BLOCK_ALIGN`.
+    ///
+    /// Returns `None` if allocation fails.
+    pub fn alloc() -> Option<NonNull<u8>> {
+        for _ in 0..MAX_ATTEMPTS {
+            // Reserve address space (no memory) to find an address aligned on `BLOCK_ALIGN`.
+            // SAFETY: Reserving without specifying an address does not affect any existing memory.
+            let probe_ptr =
+                unsafe { VirtualAlloc(ptr::null(), PROBE_SIZE, MEM_RESERVE, PAGE_NOACCESS) };
+            if probe_ptr.is_null() {
+                return None;
+            }
+            let aligned_addr = probe_ptr.addr().next_multiple_of(BLOCK_ALIGN);
+
+            // SAFETY: `probe_ptr` is the base address of the reservation made above, which is not used.
+            let result = unsafe { VirtualFree(probe_ptr, 0, MEM_RELEASE) };
+            debug_assert_ne!(result, 0);
+
+            // Reserve and commit the aligned region. Committed pages are zero-initialized.
+            // `aligned_addr` is a multiple of the allocation granularity (64 KiB), as `VirtualAlloc` requires
+            // when reserving at a specific address. If any memory in the range has been reserved since
+            // the probe reservation was released, `VirtualAlloc` fails, and we try again.
+            // SAFETY: Reserving at a specific address cannot affect existing memory.
+            // It fails if any part of the range is already in use.
+            let ptr = unsafe {
+                VirtualAlloc(
+                    ptr::without_provenance(aligned_addr),
+                    REGION_SIZE,
+                    MEM_RESERVE | MEM_COMMIT,
+                    PAGE_READWRITE,
+                )
+            };
+            if let Some(ptr) = NonNull::new(ptr.cast::<u8>()) {
+                debug_assert_eq!(ptr.addr().get(), aligned_addr);
+                return Some(ptr);
+            }
+        }
+        None
+    }
+
+    /// Free a region allocated by [`alloc`].
+    ///
+    /// # SAFETY
+    /// `ptr` must have been returned by [`alloc`], and must not be used after this call.
+    pub unsafe fn free(ptr: NonNull<u8>) {
+        // SAFETY: Caller guarantees `ptr` was returned by `alloc`, so is the base address of a reservation
+        let result = unsafe { VirtualFree(ptr.as_ptr().cast::<c_void>(), 0, MEM_RELEASE) };
+        debug_assert_ne!(result, 0);
+    }
+}
+
 /// Fallback for other platforms. Allocation is not supported, so JS falls back to allocating the buffer itself.
-#[cfg(not(unix))]
+#[cfg(not(any(unix, windows)))]
 mod block {
     use std::ptr::NonNull;
 
