@@ -270,6 +270,7 @@ declare_oxc_lint!(
     ExhaustiveDeps,
     react,
     correctness,
+    recommended,
     safe_fixes_and_dangerous_suggestions,
     config = ExhaustiveDepsConfig,
     version = "0.12.0",

@@ -226,6 +226,7 @@ declare_oxc_lint!(
     JsxNoTargetBlank,
     react,
     pedantic,
+    recommended,
     conditional_suggestion,
     config = JsxNoTargetBlank,
     version = "0.2.5",
