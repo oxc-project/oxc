@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -186,7 +187,9 @@ fn find_mutation_span<'a>(
     let mut last_static_name: Option<&str> = if seed_start {
         match start_node.kind() {
             AstKind::StaticMemberExpression(m) => Some(m.property.name.as_str()),
-            AstKind::ComputedMemberExpression(m) => m.static_property_name().map(|s| s.as_str()),
+            AstKind::ComputedMemberExpression(m) => {
+                m.static_property_name().and_then(JSStr::as_str)
+            }
             _ => None,
         }
     } else {
@@ -205,7 +208,7 @@ fn find_mutation_span<'a>(
             // Resolve string-literal keys (e.g. `this.arr['push']`) so mutating methods are
             // detected; dynamic keys (variables) remain None and correctly produce no match.
             AstKind::ComputedMemberExpression(mem) if mem.object.span() == current.span() => {
-                last_static_name = mem.static_property_name().map(|s| s.as_str());
+                last_static_name = mem.static_property_name().and_then(JSStr::as_str);
                 current = parent;
             }
 

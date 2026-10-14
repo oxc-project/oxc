@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, fixer::Fix, rule::Rule, utils::is_same_expression};
 
@@ -78,7 +79,7 @@ impl Rule for PreferNegativeIndex {
             callee_object_expr.is_member_expression() && (is_prototype_call || is_prototype_apply);
 
         let Some(callee_name) = (if is_prototype {
-            callee_object_expr.to_member_expression().static_property_name()
+            callee_object_expr.to_member_expression().static_property_name().and_then(JSStr::as_str)
         } else {
             Some(name)
         }) else {

@@ -545,7 +545,7 @@ fn is_map_callback(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
         .callee
         .as_member_expression()
         .and_then(oxc_ast::ast::MemberExpression::static_property_name)
-        != Some("map")
+        .is_none_or(|name| name != "map")
     {
         return false;
     }

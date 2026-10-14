@@ -120,6 +120,7 @@ impl Rule for PreferQuerySelector {
         let Some((property_span, property_name)) = member_expr.static_property_info() else {
             return;
         };
+        let Some(property_name) = property_name.as_str() else { return };
 
         if self.allow_with_variables
             && matches!(property_name, "getElementById" | "getElementsByClassName")

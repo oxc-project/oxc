@@ -424,7 +424,7 @@ impl<'a> MayHaveSideEffects<'a> for MemberExpression<'a> {
 
 impl<'a> MayHaveSideEffects<'a> for StaticMemberExpression<'a> {
     fn may_have_side_effects(&self, ctx: &impl MayHaveSideEffectsContext<'a>) -> bool {
-        property_access_may_have_side_effects(&self.object, self.property.name.into(), ctx)
+        property_access_may_have_side_effects(&self.object, self.property.name.as_js_str(), ctx)
     }
 }
 

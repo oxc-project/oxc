@@ -13,6 +13,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use oxc_syntax::{identifier::is_identifier_name, keyword::is_reserved_keyword};
 
 use crate::{
@@ -423,7 +424,11 @@ fn assignment_target_name<'a>(target: &'a AssignmentTarget<'a>) -> Option<(&'a s
         AssignmentTarget::AssignmentTargetIdentifier(identifier) => {
             Some((identifier.name.as_str(), false))
         }
-        target => target.as_member_expression()?.static_property_name().map(|name| (name, true)),
+        target => target
+            .as_member_expression()?
+            .static_property_name()
+            .and_then(JSStr::as_str)
+            .map(|name| (name, true)),
     }
 }
 
@@ -435,7 +440,8 @@ fn is_module_exports(target: &AssignmentTarget) -> bool {
         return false;
     };
 
-    object.name == "module" && member_expr.static_property_name() == Some("exports")
+    object.name == "module"
+        && member_expr.static_property_name().is_some_and(|name| name == "exports")
 }
 
 fn property_key_is_identifier(key: &PropertyKey) -> bool {

@@ -9,7 +9,7 @@ use oxc_ast::{
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
@@ -343,7 +343,7 @@ impl PromiseExpectScanner {
 
         let first_arg = call_expr.arguments.first().and_then(|a| a.as_expression());
 
-        match member.static_property_name() {
+        match member.static_property_name().and_then(JSStr::as_str) {
             Some("all" | "allSettled" | "race" | "any") => {
                 if let Some(Expression::ArrayExpression(arr)) = first_arg {
                     for elem in &arr.elements {
@@ -368,6 +368,7 @@ fn is_promise_call_expression(call_expr: &CallExpression<'_>) -> bool {
         .callee
         .as_member_expression()
         .and_then(MemberExpression::static_property_name)
+        .and_then(JSStr::as_str)
         .is_some_and(|prop| matches!(prop, "then" | "catch" | "finally"))
 }
 

@@ -7,7 +7,7 @@ use std::ptr::NonNull;
 
 use oxc_allocator::{Address, GetAddress, UnstableAddress};
 use oxc_span::GetSpan;
-use oxc_str::{Ident, JSStr, Str};
+use oxc_str::{Ident, JSStr};
 
 use super::{AstKind, AstType, ast::*};
 
@@ -467,9 +467,11 @@ impl<'a> AstKind<'a> {
             Self::NewExpression(n) => {
                 let callee = match &n.callee {
                     Expression::Identifier(id) => Some(id.name.as_str()),
-                    match_member_expression!(Expression) => {
-                        n.callee.to_member_expression().static_property_name()
-                    }
+                    match_member_expression!(Expression) => n
+                        .callee
+                        .to_member_expression()
+                        .static_property_name()
+                        .and_then(JSStr::as_str),
                     _ => None,
                 };
                 format!("NewExpression({})", callee.unwrap_or(COMPUTED)).into()
@@ -657,12 +659,13 @@ pub enum MemberExpressionKind<'a> {
 
 impl<'a> MemberExpressionKind<'a> {
     /// Returns the property name of the member expression, otherwise `None`.
+    /// The name may contain lone surrogates.
     ///
     /// Example: returns the `prop` in `obj.prop` or `obj["prop"]`.
-    pub fn static_property_name(&self) -> Option<Str<'a>> {
+    pub fn static_property_name(&self) -> Option<JSStr<'a>> {
         match self {
             Self::Computed(member_expr) => member_expr.static_property_name(),
-            Self::Static(member_expr) => Some(member_expr.property.name.into()),
+            Self::Static(member_expr) => Some(member_expr.property.name.as_js_str()),
             Self::PrivateField(_) => None,
         }
     }
@@ -910,5 +913,69 @@ mod tests {
             BooleanLiteral { span: test_span, node_id: Cell::new(NodeId::DUMMY), value: true };
         let bool_kind = AstKind::BooleanLiteral(&bool_lit);
         assert!(!bool_kind.is_callee_with_span(test_span));
+    }
+
+    #[test]
+    fn static_member_names_preserve_utf16() {
+        use crate::builder::AstBuilder;
+        use oxc_allocator::Allocator;
+        use oxc_str::JSStrBuilder;
+
+        let allocator = Allocator::new();
+        let builder = AstBuilder::new(&allocator);
+        let property_span = Span::new(4, 12);
+        let cases: &[&[u16]] = &[
+            &[],
+            &[0x61, 0x62],
+            &[0xE9],
+            &[0xD800],
+            &[0xDC00],
+            &[0x61, 0xD800, 0x62],
+            &[0xD800, 0xDC00],
+            &[0xDC00, 0xD800],
+        ];
+        for &units in cases {
+            let mut value = JSStrBuilder::new_in(&&allocator);
+            value.push_utf16(units);
+            let value = value.into_js_str();
+            // Test actual decoded values, independently of source escape spelling.
+            let string = Expression::new_string_literal(property_span, value, None, &builder);
+            let template = Expression::new_template_literal(
+                property_span,
+                [TemplateElement::new(
+                    property_span,
+                    TemplateElementValue { raw: "".into(), cooked: Some(value) },
+                    true,
+                    &builder,
+                )],
+                [],
+                &builder,
+            );
+            for property in [string, template] {
+                let member = MemberExpression::new_computed_member_expression(
+                    Span::new(0, 13),
+                    Expression::new_identifier(Span::new(0, 3), "obj", &builder),
+                    property,
+                    false,
+                    &builder,
+                );
+                let MemberExpression::ComputedMemberExpression(computed) = &member else {
+                    unreachable!();
+                };
+                let kind = MemberExpressionKind::Computed(computed);
+                for name in [
+                    member.static_property_name(),
+                    computed.static_property_name(),
+                    kind.static_property_name(),
+                ] {
+                    assert_eq!(name.unwrap().encode_utf16().collect::<Vec<_>>(), units);
+                }
+                for info in [member.static_property_info(), computed.static_property_info()] {
+                    let (span, name) = info.unwrap();
+                    assert_eq!(span, property_span);
+                    assert_eq!(name.encode_utf16().collect::<Vec<_>>(), units);
+                }
+            }
+        }
     }
 }

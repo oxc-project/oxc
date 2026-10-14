@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -109,7 +110,7 @@ impl Rule for PreferPrototypeMethods {
         };
         // TODO: Replace `static_property_name` with a function similar to `getPropertyName`
         // in @eslint-community/eslint-utils to generate better error messages for some cases.
-        let method_name = method_expr.static_property_name();
+        let method_name = method_expr.static_property_name().and_then(JSStr::as_str);
 
         ctx.diagnostic_with_fix(
             method_name.map_or_else(

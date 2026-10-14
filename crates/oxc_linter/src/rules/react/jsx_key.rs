@@ -294,7 +294,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
                 if let Some(member_expr) = callee.as_member_expression()
                     && let Some((span, ident)) = member_expr.static_property_info()
-                    && TARGET_METHODS.contains(&ident)
+                    && TARGET_METHODS.iter().any(|method| *method == ident)
                 {
                     // Early exit if no arguments to check
                     if v.arguments.is_empty() {
