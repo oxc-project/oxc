@@ -415,14 +415,16 @@ fn try_fold_number_methods<'a>(
         return None;
     }
     let extracted = extracted_expr.get_side_free_number_value(ctx)?;
+    // An "integral Number" is a finite Number whose mathematical value is an integer:
+    // <https://tc39.es/ecma262/#integral-number>
+    let is_integral = extracted.is_finite() && extracted.trunc() == extracted;
     let result = match name {
         "isFinite" => Some(extracted.is_finite()),
-        "isInteger" => Some(extracted.fract().abs() < f64::EPSILON),
+        "isInteger" => Some(is_integral),
         "isNaN" => Some(extracted.is_nan()),
         "isSafeInteger" => {
-            let integer = extracted.fract().abs() < f64::EPSILON;
             let safe = extracted.abs() <= 2f64.powi(53) - 1.0;
-            Some(safe && integer)
+            Some(safe && is_integral)
         }
         _ => None,
     };
