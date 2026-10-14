@@ -43,6 +43,19 @@ impl DirectivePrefix {
         }
     }
 
+    /// Kind of fix used to remove an unused directive with this prefix.
+    ///
+    /// `oxlint-` directives are only read by oxlint, so removing them is safe.
+    /// `eslint-` directives may still be needed by ESLint (e.g. for rules oxlint
+    /// does not support), so removing them is only a suggestion.
+    #[must_use]
+    pub const fn unused_directive_fix_kind(self) -> FixKind {
+        match self {
+            Self::Eslint => FixKind::Suggestion,
+            Self::Oxlint => FixKind::Fix,
+        }
+    }
+
     #[must_use]
     pub fn unused_disable_message(self) -> String {
         format!("Unused {} directive (no problems were reported).", self.disable_directive_name())
@@ -213,7 +226,7 @@ impl RuleCommentRule {
                 comment_span.start + before_trimmed.len() as u32 - 1,
                 self.name_span.end,
             ))
-            .with_kind(FixKind::Suggestion);
+            .with_kind(self.directive_prefix.unused_directive_fix_kind());
         }
 
         let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
@@ -225,7 +238,7 @@ impl RuleCommentRule {
                 self.name_span.start,
                 self.name_span.end + whitespace_after as u32 + 1 + whitespace_after_comma as u32,
             ))
-            .with_kind(FixKind::Suggestion);
+            .with_kind(self.directive_prefix.unused_directive_fix_kind());
         }
 
         if whitespace_after > 0
@@ -237,7 +250,7 @@ impl RuleCommentRule {
                 self.name_span.start,
                 self.name_span.end + whitespace_after as u32,
             ))
-            .with_kind(FixKind::Suggestion);
+            .with_kind(self.directive_prefix.unused_directive_fix_kind());
         }
 
         let whitespace_before = before_source.len() - before_trimmed.len();
@@ -246,7 +259,7 @@ impl RuleCommentRule {
                 self.name_span.start - whitespace_before as u32,
                 self.name_span.end,
             ))
-            .with_kind(FixKind::Suggestion);
+            .with_kind(self.directive_prefix.unused_directive_fix_kind());
         }
 
         unreachable!(
@@ -1387,14 +1400,14 @@ pub fn create_unused_directives_messages(
         let span = unused_comment.span;
         let prefix = unused_comment.directive_prefix;
         let fix_source_text = fix
-            .filter(|(kind, _)| kind.can_apply(FixKind::Suggestion))
+            .filter(|(kind, _)| kind.can_apply(prefix.unused_directive_fix_kind()))
             .map(|(_, source_text)| source_text);
         match unused_comment.r#type {
             RuleCommentType::All => {
                 let fixes = if fix_source_text.is_some() {
                     PossibleFixes::Single(
                         Fix::delete(unused_comment.fix_span)
-                            .with_kind(FixKind::Suggestion)
+                            .with_kind(prefix.unused_directive_fix_kind())
                             .with_message(fix_message),
                     )
                 } else {
