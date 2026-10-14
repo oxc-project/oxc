@@ -840,6 +840,7 @@ impl Runtime {
 
                         let respect_eslint_disable_directives =
                             me.linter.respect_eslint_disable_directives();
+                        let no_inline_config = me.linter.no_inline_config();
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
@@ -853,6 +854,7 @@ impl Runtime {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
+                                        no_inline_config,
                                         ..Default::default()
                                     },
                                 )),
@@ -984,6 +986,7 @@ impl Runtime {
 
                             let respect_eslint_disable_directives =
                                 me.linter.respect_eslint_disable_directives();
+                            let no_inline_config = me.linter.no_inline_config();
                             let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                                 .section_module_records
                                 .into_iter()
@@ -997,6 +1000,7 @@ impl Runtime {
                                             framework_options: section.source.framework_options,
                                             parser_tokens: section.parser_tokens,
                                             respect_eslint_disable_directives,
+                                            no_inline_config,
                                             ..Default::default()
                                         },
                                     )),
@@ -1127,6 +1131,7 @@ impl Runtime {
 
                         let respect_eslint_disable_directives =
                             me.linter.respect_eslint_disable_directives();
+                        let no_inline_config = me.linter.no_inline_config();
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
@@ -1140,6 +1145,7 @@ impl Runtime {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
+                                        no_inline_config,
                                         ..Default::default()
                                     },
                                 )),

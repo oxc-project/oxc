@@ -61,9 +61,20 @@ pub struct OxlintOptions {
     /// directives in addition to its native `oxlint-*` directives.
     ///
     /// Defaults to `true`.
+    ///
+    /// Has no effect when `noInlineConfig` is `true`.
     /// Only supported in the root configuration file.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub respect_eslint_disable_directives: Option<bool>,
+    /// Ignore all supported inline disable and enable directives
+    /// (`oxlint-*` and `eslint-*`).
+    ///
+    /// Defaults to `false`.
+    /// Equivalent to passing `--no-inline-config` on the CLI.
+    /// Takes precedence over `respectEslintDisableDirectives`.
+    /// Only supported in the root configuration file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub no_inline_config: Option<bool>,
 }
 
 impl OxlintOptions {
@@ -75,6 +86,7 @@ impl OxlintOptions {
             && self.max_warnings.is_none()
             && self.report_unused_disable_directives.is_none()
             && self.respect_eslint_disable_directives.is_none()
+            && self.no_inline_config.is_none()
     }
 
     #[must_use]
@@ -90,6 +102,7 @@ impl OxlintOptions {
             respect_eslint_disable_directives: self
                 .respect_eslint_disable_directives
                 .or(other.respect_eslint_disable_directives),
+            no_inline_config: self.no_inline_config.or(other.no_inline_config),
         }
     }
 }
@@ -545,6 +558,7 @@ mod test {
         assert_eq!(config.options.max_warnings, None);
         assert_eq!(config.options.report_unused_disable_directives, None);
         assert_eq!(config.options.respect_eslint_disable_directives, None);
+        assert_eq!(config.options.no_inline_config, None);
     }
 
     #[test]
@@ -639,6 +653,14 @@ mod test {
         )
         .unwrap();
         assert_eq!(config.options.respect_eslint_disable_directives, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "noInlineConfig": true } })).unwrap();
+        assert_eq!(config.options.no_inline_config, Some(true));
+
+        let config: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "noInlineConfig": false } })).unwrap();
+        assert_eq!(config.options.no_inline_config, Some(false));
     }
 
     #[test]
@@ -661,6 +683,9 @@ mod test {
 
         let config: Result<Oxlintrc, _> =
             serde_json::from_value(json!({ "respectEslintDisableDirectives": false }));
+        assert!(config.is_err());
+
+        let config: Result<Oxlintrc, _> = serde_json::from_value(json!({ "noInlineConfig": true }));
         assert!(config.is_err());
     }
 
@@ -733,6 +758,25 @@ mod test {
         base.path = PathBuf::from("/root/base.json");
         let merged = root.merge(base);
         assert_eq!(merged.options.respect_eslint_disable_directives, Some(false));
+
+        // root wins over base for noInlineConfig
+        let mut root: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "noInlineConfig": true } })).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "noInlineConfig": false } })).unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.no_inline_config, Some(true));
+
+        // base value propagates when root does not set the field
+        let mut root: Oxlintrc = serde_json::from_value(json!({})).unwrap();
+        root.path = PathBuf::from("/root/.oxlintrc.json");
+        let mut base: Oxlintrc =
+            serde_json::from_value(json!({ "options": { "noInlineConfig": true } })).unwrap();
+        base.path = PathBuf::from("/root/base.json");
+        let merged = root.merge(base);
+        assert_eq!(merged.options.no_inline_config, Some(true));
     }
 
     #[test]

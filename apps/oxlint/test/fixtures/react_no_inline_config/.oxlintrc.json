@@ -1,0 +1,10 @@
+{
+  "plugins": ["react"],
+  "categories": { "correctness": "off" },
+  "options": { "noInlineConfig": true },
+  "rules": {
+    "react/purity": "error",
+    "react/exhaustive-effect-dependencies": "error",
+    "react/rule-suppression": "error"
+  }
+}

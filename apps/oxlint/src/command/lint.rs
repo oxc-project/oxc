@@ -557,6 +557,10 @@ pub enum ReportUnusedDirectives {
 pub struct InlineConfigOptions {
     #[bpaf(external)]
     pub report_unused_directives: ReportUnusedDirectives,
+
+    /// Prevent inline disable and enable comments from suppressing diagnostics
+    #[bpaf(long("no-inline-config"), switch, hide_usage)]
+    pub no_inline_config: bool,
 }
 
 #[cfg(test)]
@@ -864,5 +868,17 @@ mod inline_config_options {
             options.inline_config_options.report_unused_directives,
             ReportUnusedDirectives::WithSeverity(Some(AllowWarnDeny::Deny))
         );
+    }
+
+    #[test]
+    fn no_inline_config_default() {
+        let options = get_lint_options(".");
+        assert!(!options.inline_config_options.no_inline_config);
+    }
+
+    #[test]
+    fn no_inline_config_enabled() {
+        let options = get_lint_options("--no-inline-config");
+        assert!(options.inline_config_options.no_inline_config);
     }
 }
