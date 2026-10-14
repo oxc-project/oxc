@@ -607,11 +607,6 @@ fn test() {
             Some(serde_json::json!([{"ignore": ["unicorn"]}])),
         ),
         (
-            "try { } catch (notMatching) { }",
-            "try { } catch (error) { }",
-            Some(serde_json::json!([{"ignore": ["unicorn"]}])),
-        ),
-        (
             "try { } catch (_) { console.log(_) }",
             "try { } catch (error) { console.log(error) }",
             None,

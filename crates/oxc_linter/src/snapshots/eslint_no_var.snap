@@ -234,13 +234,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace var with let or const
 
   ⚠ eslint(no-var): Unexpected var, use let or const instead.
-   ╭─[no_var.tsx:1:1]
- 1 │ var foo = 1
-   · ───
-   ╰────
-  help: Replace var with let or const
-
-  ⚠ eslint(no-var): Unexpected var, use let or const instead.
    ╭─[no_var.tsx:1:9]
  1 │ declare var foo: 2;
    ·         ───

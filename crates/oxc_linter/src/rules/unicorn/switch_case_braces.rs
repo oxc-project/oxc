@@ -193,7 +193,6 @@ fn test() {
         "switch(foo){ case 1: { break; } }",
         "switch(foo){ case 1: { ; /* <-- not empty */} }",
         "switch(foo){ case 1: { {} /* <-- not empty */} }",
-        "switch(foo){ case 1: { break; } }",
         "switch(foo){ default: { doSomething(); } }",
     ];
 

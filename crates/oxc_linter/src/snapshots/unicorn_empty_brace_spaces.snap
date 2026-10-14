@@ -122,13 +122,6 @@ source: crates/oxc_linter/src/tester.rs
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:15]
- 1 │ function foo(){ }
-   ·               ───
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:7]
  1 │ foo = { }
    ·       ───
@@ -283,23 +276,9 @@ source: crates/oxc_linter/src/tester.rs
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:13]
- 1 │ foo = () => {   }
-   ·             ─────
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:18]
  1 │ foo = function (){  }
    ·                  ────
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:15]
- 1 │ function foo(){ }
-   ·               ───
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
@@ -461,13 +440,6 @@ source: crates/oxc_linter/src/tester.rs
    ╭─[empty_brace_spaces.tsx:1:18]
  1 │ foo = function (){       }
    ·                  ─────────
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:15]
- 1 │ function foo(){          }
-   ·               ────────────
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
@@ -650,14 +622,6 @@ source: crates/oxc_linter/src/tester.rs
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
 
   ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:15]
- 1 │ ╭─▶ function foo(){
- 2 │ │   
- 3 │ ╰─▶ }
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:7]
  1 │ ╭─▶ foo = {
  2 │ │   
@@ -820,13 +784,6 @@ source: crates/oxc_linter/src/tester.rs
   ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
    ╭─[empty_brace_spaces.tsx:1:18]
  1 │ ╭─▶ foo = function (){
- 2 │ ╰─▶ }
-   ╰────
-  help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.
-
-  ⚠ unicorn(empty-brace-spaces): No spaces inside empty pair of braces allowed
-   ╭─[empty_brace_spaces.tsx:1:15]
- 1 │ ╭─▶ function foo(){
  2 │ ╰─▶ }
    ╰────
   help: There should be no spaces or new lines inside a pair of empty braces as it affects the overall readability of the code.

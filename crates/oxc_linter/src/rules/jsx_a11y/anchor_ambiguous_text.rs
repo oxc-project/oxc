@@ -227,13 +227,6 @@ fn test() {
             ),
         ),
         (
-            r#"<a><Image alt="documentation" /></a>;"#,
-            None,
-            Some(
-                serde_json::json!({ "settings": { "jsx-a11y": { "components": { "Image": "img" } } } }),
-            ),
-        ),
-        (
             "<Link>${here}</Link>;",
             None,
             Some(

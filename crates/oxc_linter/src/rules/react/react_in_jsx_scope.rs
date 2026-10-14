@@ -92,7 +92,6 @@ fn test() {
         ("var React; <x-gif />;", None),
         ("var React, App, a=1; <App attr={a} />;", None),
         ("var React, App, a=1; function elem() { return <App attr={a} />; }", None),
-        ("var React, App; <App />;", None),
         (
             "
 			        import React from 'react/addons';

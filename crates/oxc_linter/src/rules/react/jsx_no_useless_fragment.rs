@@ -429,7 +429,6 @@ fn test() {
         (r"<Eeee><>foo</></Eeee>", None),
         (r"<div><>foo</></div>", None),
         (r#"<div><>{"a"}{"b"}</></div>"#, None),
-        (r#"<div><>{"a"}{"b"}</></div>"#, None),
         (
             r#"
             <section>

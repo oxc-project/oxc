@@ -1003,8 +1003,6 @@ fn test() {
         "const otherVariable = 1,
                 object = {foo: 1};
             Object.assign(object, bar);",
-        "const object = {foo: 1}; object.bar = 2; foo()",
-        "const object = {foo: 1}; object.bar = 2;",
         "const object = {foo: 1};
             Object.assign(object, bar) // comment",
         "const object = {foo: 1};

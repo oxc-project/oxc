@@ -141,7 +141,6 @@ fn test() {
                   });
                 ",
         "if (foo) {}",
-        "it('foo', () => {})",
         r#"it("foo", function () {})"#,
         "it('foo', () => {}); function myTest() { if ('bar') {} }",
         "

@@ -215,12 +215,8 @@ fn test() {
         ("expect(value).toBeGreaterThanOrEqual(1);", None),
         ("expect(value).not.toBeLessThan(1);", None),
         ("expect(value).not.toBeGreaterThanOrEqual(1)", None),
-        ("expect(value).toBeGreaterThanOrEqual(1);", None),
-        ("expect(value).toBeLessThan(1);", None),
         ("expect(value).not.toBeGreaterThanOrEqual(1);", None),
         ("expect(value).not.toBeLessThan(1)", None),
-        ("expect(value).toBeLessThanOrEqual(1);", None),
-        ("expect(value).toBeGreaterThan(1);", None),
         ("expect(value).not.toBeLessThanOrEqual(1);", None),
         ("expect(value).not.toBeGreaterThan(1)", None),
     ];

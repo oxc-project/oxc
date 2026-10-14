@@ -417,17 +417,6 @@ fn test() {
         ),
         (
             r#"
-			        import { myFunction } from "./myFunction"
-			        describe("myFunction", () => {})
-			      "#,
-            r#"
-			        import { myFunction } from "./myFunction"
-			        describe(myFunction, () => {})
-			      "#,
-            None,
-        ),
-        (
-            r#"
 			        import type { Button } from "./button"
 			        describe("Button", () => {})
 			      "#,

@@ -67,13 +67,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Rewrite into one string literal.
 
   ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
-   ╭─[no_useless_concat.tsx:1:7]
- 1 │ foo + 'a' + 'b'
-   ·       ─────────
-   ╰────
-  help: Rewrite into one string literal.
-
-  ⚠ eslint(no-useless-concat): Unexpected string concatenation of literals.
    ╭─[no_useless_concat.tsx:2:9]
  1 │ 'a' +
  2 │         'b' + 'c'

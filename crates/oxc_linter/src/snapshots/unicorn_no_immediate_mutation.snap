@@ -460,20 +460,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move the properties from `Object.assign()` into the object initializer.
 
-  ⚠ unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:1:26]
- 1 │ const object = {foo: 1}; object.bar = 2; foo()
-   ·                          ──────────────
-   ╰────
-  help: Move the property into the object initializer.
-
-  ⚠ unicorn(no-immediate-mutation): Do not assign a property immediately after initializing an object literal.
-   ╭─[no_immediate_mutation.tsx:1:26]
- 1 │ const object = {foo: 1}; object.bar = 2;
-   ·                          ──────────────
-   ╰────
-  help: Move the property into the object initializer.
-
   ⚠ unicorn(no-immediate-mutation): Do not call `Object.assign()` immediately after initializing an object.
    ╭─[no_immediate_mutation.tsx:2:13]
  1 │ const object = {foo: 1};

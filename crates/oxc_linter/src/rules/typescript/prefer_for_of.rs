@@ -349,9 +349,6 @@ fn test() {
         "const input = []; for (let i = 0; i < input.length; i++) { const el = input[i]; i++; console.log(i, el); }",
         "const input = []; for (let i = 0; i < input.length; i++) { const el = input[i]; i = 4; console.log(i, el); }",
         "const arr = []; for (let i = 0; i < arr.length; i++) { arr[i] = i + 2; }",
-        "for (;;);",
-        "for (;;) {}",
-        "for (var j = 0; j < 10; j++) {}",
         "const arr = [];
         for (i = 0; i < arr.length; i++) { el = arr[i]; console.log(i, el); }",
         "for (let x = 0; x < series.data.length; x++) { let newValue = series.data[x].y; for (const otherSeries of subseries) { newValue -= otherSeries.data[x].y; } series.data[x].y = newValue; }",

@@ -149,7 +149,6 @@ fn test() {
         r#"<div role="rowgroup" />"#,
         r#"<span role="checkbox" />"#,
         r#"<other role="checkbox" />"#,
-        r#"<other role="checkbox" />"#,
         r#"<div role="banner" />"#,
         r#"<div role="listbox" />"#,
         r#"<div role="region" />"#,

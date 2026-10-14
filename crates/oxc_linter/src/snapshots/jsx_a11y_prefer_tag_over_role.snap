@@ -58,13 +58,6 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
 
-  ⚠ jsx-a11y(prefer-tag-over-role): Prefer `input` over `role` attribute `checkbox`.
-   ╭─[prefer_tag_over_role.tsx:1:8]
- 1 │ <other role="checkbox" />
-   ·        ───────────────
-   ╰────
-  help: Replace HTML elements with `role` attribute `checkbox` to corresponding semantic HTML tag `input`.
-
   ⚠ jsx-a11y(prefer-tag-over-role): Prefer `header` over `role` attribute `banner`.
    ╭─[prefer_tag_over_role.tsx:1:6]
  1 │ <div role="banner" />

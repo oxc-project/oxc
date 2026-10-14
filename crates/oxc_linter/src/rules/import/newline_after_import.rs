@@ -910,14 +910,6 @@ export import Foo = ns.baz.bar.Foo;",
             None,
         ),
         (
-            r"import stub from './stub';
-
-export {
-  stub
-}",
-            None,
-        ),
-        (
             r"import path from 'path';
 import foo from 'foo';
 /**

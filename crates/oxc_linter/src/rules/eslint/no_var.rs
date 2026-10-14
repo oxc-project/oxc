@@ -185,7 +185,6 @@ fn test() {
         ("var foo = 1", None),
         ("{ var foo = 1 }", None),
         ("if (true) { var foo = 1 }", None),
-        ("var foo = 1", None),
         ("declare var foo: 2;", None),
         ("function foo() { var let; }", None),
         ("function foo() { var { let } = {}; }", None),

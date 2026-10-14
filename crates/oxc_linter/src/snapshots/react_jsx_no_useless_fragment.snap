@@ -111,13 +111,6 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace `<>{"a"}{"b"}</>` with `{"a"}{"b"}`.
 
   ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
-   ╭─[jsx_no_useless_fragment.tsx:1:6]
- 1 │ <div><>{"a"}{"b"}</></div>
-   ·      ──
-   ╰────
-  help: Replace `<>{"a"}{"b"}</>` with `{"a"}{"b"}`.
-
-  ⚠ react(jsx-no-useless-fragment): Passing a fragment to a HTML element is useless.
    ╭─[jsx_no_useless_fragment.tsx:5:15]
  4 │               <Eeee />
  5 │               <>{"a"}{"b"}</>

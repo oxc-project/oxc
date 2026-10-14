@@ -806,16 +806,6 @@ fn test() {
             None,
         ),
         (
-            "function foo() { var a; if (bar) { return true; } else { var a; } }",
-            "function foo() { var a; if (bar) { return true; } var a;  }",
-            None,
-        ),
-        (
-            "function foo() { if (bar) { var a; if (baz) { return true; } else { var a; } } }",
-            "function foo() { if (bar) { var a; if (baz) { return true; } var a;  } }",
-            None,
-        ),
-        (
             "function foo() {let a; if (bar) { if (baz) { return true; } else { let a; } } }",
             "function foo() {let a; if (bar) { if (baz) { return true; } let a;  } }",
             None,

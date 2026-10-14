@@ -446,16 +446,6 @@ fn test() {
             Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
         ),
         (
-            "function name() {
-            var x = 5;
-
-
-
-            var x = 2;
-            }",
-            Some(serde_json::json!([{ "max": 2, "skipComments": true, "skipBlankLines": true }])),
-        ),
-        (
             "function name() { // end of line comment
             var x = 5; /* mid line comment */
                 // single line comment taking up whole line

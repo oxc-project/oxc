@@ -111,7 +111,6 @@ fn test() {
         ),
         ("ReactDOM.render(<div ref={ref => this.node = ref}/>, document.body);", None),
         ("React.render(<div ref={ref => this.node = ref}/>, document.body);", None),
-        ("React.render(<div ref={ref => this.node = ref}/>, document.body);", None),
         ("var foo = React.render(<div />, root);", None),
         ("var foo = render(<div />, root)", None),
         ("var foo = ReactDom.renderder(<div />, root)", None),

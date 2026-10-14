@@ -319,16 +319,6 @@ fn test() {
         ),
         (
             "
-              class Hello extends React.Component {
-                componentDidMount() {
-                  var component = this.refs.hello;
-                }
-              }
-            ",
-            None,
-        ),
-        (
-            "
               class Hello extends React.PureComponent {
                 componentDidMount() {
                   var component = this.refs.hello;

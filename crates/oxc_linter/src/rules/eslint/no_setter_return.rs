@@ -84,7 +84,6 @@ fn test() {
         "({ set a(val) { }}); (() => { return 1; });",
         "({ set a(val) { }}); (() => 1);",
         "return 1;",
-        "return 1;",
         "return 1; function foo(){ return 1; } return 1;",
         "function foo(){} return 1; var bar = function*(){ return 1; }; return 1; var baz = () => {}; return 1;",
         "({ set foo(val) { return; } })",

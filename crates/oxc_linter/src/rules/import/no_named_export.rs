@@ -87,7 +87,6 @@ fn test() {
 
     let pass = vec![
         "module.export.foo = function () {}",
-        "module.export.foo = function () {}",
         "export default function bar() {};",
         "let foo; export { foo as default }",
         "import * as foo from './foo';",
@@ -106,7 +105,6 @@ fn test() {
             export const foo = 'foo';
             export function bar() {};
         ",
-        "export const foo = 'foo';",
         "
             const foo = 'foo';
             export { foo };

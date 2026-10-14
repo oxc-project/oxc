@@ -2153,15 +2153,6 @@ fn test_typescript_eslint() {
         ), // { parserOptions },
         (
             "
-            a();
-            function a() {
-              alert(arguments);
-            }
-                  ",
-            Some(serde_json::json!([{ "functions": false }])),
-        ),
-        (
-            "
             'use strict';
             {
               a();
@@ -2583,13 +2574,6 @@ fn test_typescript_eslint() {
                   ",
             None,
         ), // { parserOptions },
-        (
-            "
-            a++;
-            var a = 19;
-                  ",
-            None,
-        ),
         (
             "
             a();
