@@ -56,7 +56,7 @@ impl<'a> PeepholeOptimizations {
                 } else {
                     ctx.replace_expression_with(expr, Self::unwrap_unary);
                     ctx.replace_expression_with(expr, |e, ctx| {
-                        Self::join_sequence(e, new_expr, ctx)
+                        Self::join_sequence(e.span(), e, new_expr, ctx)
                     });
                 }
             }
@@ -125,11 +125,7 @@ impl<'a> PeepholeOptimizations {
             }
             ChainFold::Collapse { base, base_has_side_effects } => {
                 let new_expr = if base_has_side_effects {
-                    Expression::new_sequence_expression(
-                        span,
-                        [base, Expression::new_void_0(span, ctx)],
-                        ctx,
-                    )
+                    Self::join_sequence(span, base, Expression::new_void_0(span, ctx), ctx)
                 } else {
                     // `base` was `take_in`'d out of the old chain into our
                     // local variable, so `replace_expression`'s walk over the
@@ -252,7 +248,7 @@ impl<'a> PeepholeOptimizations {
         let mut e = e.unbox();
         if !Self::remove_unused_expression(&mut e.left, ctx) {
             // `(a(), V) OP 1` => `(a(), V, 1)`
-            Self::join_sequence(e.left, e.right, ctx)
+            Self::join_sequence(e.span, e.left, e.right, ctx)
         } else if Self::should_keep_indirect_access(&e.right, ctx) {
             // `(V OP o.f)` => `(0, o.f)`
             ctx.drop_expression(&e.left);

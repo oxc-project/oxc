@@ -549,8 +549,9 @@ impl<'a> PeepholeOptimizations {
         if ctx.options().sequences
             && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
         {
+            let span = prev_expr_stmt.span;
             ctx.replace_expression_with(&mut prev_expr_stmt.expression, |a, ctx| {
-                Self::join_sequence(a, expr, ctx)
+                Self::join_sequence(span, a, expr, ctx)
             });
         } else {
             result.push(Statement::new_expression_statement(expr.span(), expr, ctx));
@@ -572,8 +573,8 @@ impl<'a> PeepholeOptimizations {
         }
         let last_epr = result.pop().unwrap();
         let Statement::ExpressionStatement(prev_expr_stmt) = last_epr else { unreachable!() };
-        let a = prev_expr_stmt.unbox().expression;
-        ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(a, b, ctx));
+        let ExpressionStatement { span, expression: a, .. } = prev_expr_stmt.unbox();
+        ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(span, a, b, ctx));
     }
 
     /// For variable declarations:

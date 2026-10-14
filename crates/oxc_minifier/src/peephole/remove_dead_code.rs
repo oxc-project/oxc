@@ -445,7 +445,7 @@ impl<'a> PeepholeOptimizations {
                 }
             } else {
                 // `(a, true) ? b : c` => `a, b`
-                Expression::new_sequence_expression(e.span, [e.test, result_expr], ctx)
+                Self::join_sequence(e.span, e.test, result_expr, ctx)
             }
         });
     }
