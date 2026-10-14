@@ -90,6 +90,45 @@ fn test_fold_useless_for() {
 }
 
 #[test]
+fn test_fold_dead_for_lexical_initializer() {
+    for kind in ["let", "const"] {
+        test_unused(
+            &format!("function f(){{for({kind} x=console.log('effect');false;){{}}}} f();"),
+            "function f(){console.log('effect')} f();",
+        );
+        test(
+            &format!("for ({kind} x = foo(); false; update()) {{ body(); }}"),
+            "{ let x = foo(); }",
+        );
+        test(
+            &format!("for ({kind} x = foo(), y = bar(x); false;) {{}}"),
+            "{ let x = foo(), y = bar(x); }",
+        );
+        test(
+            &format!("let x = 1; for ({kind} x = foo(); false;) {{}} use(x);"),
+            "let x = 1; { let x = foo(); } use(1);",
+        );
+        test(
+            &format!("for ({kind} x = eval('x'); false;) {{}}"),
+            &format!("{{ {kind} x = eval('x'); }}"),
+        );
+        test(&format!("for ({kind} x = x; false;) {{}}"), "{ let x = x; }");
+        test(&format!("if (a) for ({kind} x = foo(); false;) {{}}"), "if (a) { let x = foo(); }");
+        test(
+            &format!("for ({kind} x = foo(); false;) {{ var y = bar(); }} use(y);"),
+            "{ let x = foo(); var y; } use(y);",
+        );
+        // Destructuring can invoke getters, iterators, and default initializers.
+        for pattern in ["{x}", "[x]", "{x = foo()}", "[x = foo()]"] {
+            test_unused(
+                &format!("for ({kind} {pattern} = source; false;) {{}}"),
+                &format!("{{ let {pattern} = source; }}"),
+            );
+        }
+    }
+}
+
+#[test]
 fn test_minimize_loop_with_constant_condition_vanilla_for() {
     test("for(;true;) foo()", "for(;;) foo()");
     test("for(;0;) foo()", "");
