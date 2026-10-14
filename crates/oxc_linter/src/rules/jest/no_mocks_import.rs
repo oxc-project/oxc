@@ -12,6 +12,7 @@ declare_oxc_lint!(
     NoMocksImport,
     jest,
     style,
+    recommended,
     docs = SharedNoMocksImport::DOCUMENTATION,
     version = "0.0.13",
 );
