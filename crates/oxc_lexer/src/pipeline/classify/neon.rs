@@ -2,8 +2,10 @@ use std::arch::aarch64::*;
 
 use crate::token::tk;
 
-use super::luts::{MERGED_LUTS, WORD_LUTS};
-use super::punct1_luts::{PH_A, PH_B, PH_T0, PH_T1};
+use super::{
+    luts::{MERGED_LUTS, WORD_LUTS},
+    punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
+};
 
 struct Luts {
     wb_lo: uint8x16_t,
