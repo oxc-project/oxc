@@ -13,6 +13,7 @@ use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
+use oxc_allocator::Allocator;
 use oxc_css_parser::{
     ast::{
         BracketBlock, Calc, CalcOperatorKind, ComponentValue, Delimiter, DelimiterKind, Dimension,
@@ -98,20 +99,21 @@ fn print_unit<'a>(raw_unit: &'a str, f: &mut CssFormatter<'_, 'a>) {
 /// unless the content contains quotes that would need extra escaping.
 ///
 /// The actual escape rewrite delegates to [`normalize_string`].
-fn print_string<'a>(raw: &'a str, options: &CssFormatOptions) -> Cow<'a, str> {
+fn print_string<'a>(raw: &'a str, options: &CssFormatOptions, allocator: &'a Allocator) -> &'a str {
     let content = &raw[1..raw.len() - 1];
     let enclosing = options.preferred_quote(content);
 
     if raw.as_bytes()[0] == enclosing {
-        return Cow::Borrowed(raw);
+        return raw;
     }
 
-    let normalized = normalize_string(content, enclosing, true);
-    let mut out = String::with_capacity(raw.len());
-    out.push(enclosing as char);
-    out.push_str(&normalized);
-    out.push(enclosing as char);
-    Cow::Owned(out)
+    quoted(enclosing, &normalize_string(content, enclosing, true), allocator)
+}
+
+/// `content` in `quote`s, in the arena.
+pub(super) fn quoted<'a>(quote: u8, content: &str, allocator: &'a Allocator) -> &'a str {
+    let quote = if quote == b'"' { "\"" } else { "'" };
+    allocator.alloc_concat_strs_array([quote, content, quote])
 }
 
 pub(super) fn write_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
@@ -121,8 +123,7 @@ pub(super) fn write_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
 /// [`write_str`] for a raw quoted-string slice
 /// (callers that only hold the source text, no AST node).
 pub(super) fn write_str_raw<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    let printed = print_string(raw, f.options());
-    write!(f, text(arena_cow_str(&printed, f)));
+    write!(f, text(print_string(raw, f.options(), f.allocator())));
 }
 
 /// [`write_str`] for attribute-selector values.
@@ -130,15 +131,14 @@ pub(super) fn write_str_raw<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
 /// an escaped literal newline inside the value prints verbatim,
 /// but must not force a break in front of the selector.
 pub(super) fn write_attribute_str<'a>(str: &Str<'a>, f: &mut CssFormatter<'_, 'a>) {
-    let printed = print_string(str.raw, f.options());
-    write!(f, text(arena_cow_str(&printed, f)).without_expand_parent());
+    write!(f, text(print_string(str.raw, f.options(), f.allocator())).without_expand_parent());
 }
 
 /// Emit a raw source slice with [`adjust_numbers_and_strings`] applied
 /// (Prettier's raw selector-text print path:
 /// spacing and newlines stay verbatim and nothing ever breaks on line width).
 pub(super) fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
-    let adjusted = adjust_numbers_and_strings(raw, f.options());
+    let adjusted = adjust_numbers_and_strings(raw, f.options(), f.allocator());
     write!(f, text(arena_cow_str(&adjusted, f)));
 }
 
@@ -150,6 +150,7 @@ pub(super) fn write_adjusted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_,
 pub(super) fn adjust_numbers_and_strings<'a>(
     raw: &'a str,
     options: &CssFormatOptions,
+    allocator: &'a Allocator,
 ) -> Cow<'a, str> {
     let bytes = raw.as_bytes();
     // Only strings and numbers ever change: most params / guards have neither
@@ -218,9 +219,10 @@ pub(super) fn adjust_numbers_and_strings<'a>(
                 j += if bytes[j] == b'\\' { 2 } else { 1 };
             }
             if j < bytes.len() {
-                let printed = print_string(&raw[i..=j], options);
-                changed |= matches!(printed, Cow::Owned(_));
-                out.push_str(&printed);
+                let string = &raw[i..=j];
+                let printed = print_string(string, options, allocator);
+                changed |= printed != string;
+                out.push_str(printed);
                 i = j + 1;
                 continue;
             }
@@ -320,9 +322,7 @@ pub(super) fn write_requoted_verbatim<'a>(raw: &'a str, f: &mut CssFormatter<'_,
     if raw.as_bytes()[0] == enclosing {
         write!(f, text(raw));
     } else {
-        let q = enclosing as char;
-        let out = format!("{q}{content}{q}");
-        write!(f, text(f.allocator().alloc_str(&out)));
+        write!(f, text(quoted(enclosing, content, f.allocator())));
     }
 }
 
