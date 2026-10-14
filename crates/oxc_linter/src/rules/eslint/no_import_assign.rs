@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoImportAssign,
     eslint,
     correctness,
+    recommended,
     version = "0.0.5",
     short_description = "Disallow assigning to imported bindings.",
 );

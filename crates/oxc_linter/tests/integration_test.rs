@@ -159,7 +159,8 @@ fn test_recommended_rule_flags() {
 #[test]
 fn test_rule_enum_flags() {
     let cases = [
-        ("eslint", "no-debugger", RuleFlags::empty()),
+        ("eslint", "no-alert", RuleFlags::empty()),
+        ("eslint", "no-debugger", RuleFlags::IS_RECOMMENDED),
         ("eslint", "eqeqeq", RuleFlags::HAS_CONFIG),
         ("typescript", "no-unsafe-assignment", RuleFlags::IS_TSGOLINT_RULE),
         ("typescript", "no-floating-promises", RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG),
