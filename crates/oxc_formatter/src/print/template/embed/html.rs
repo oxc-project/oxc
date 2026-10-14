@@ -73,7 +73,7 @@ pub(super) fn format_html_doc<'a>(
 
         // Re-escape template chars in `Text` runs:
         // the IR is reinserted into a JS template literal built from `.cooked` values.
-        let ir = super::escape_template_chars_in_ir(&ir, f);
+        let ir = super::escape_template_chars_in_ir(ir, f);
 
         let content = format_once(|f| f.write_elements(ir));
         let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
@@ -159,7 +159,7 @@ pub(super) fn format_html_doc<'a>(
     // and substituting placeholders inside every `BestFitting` variant.
     // Escaping cannot alter placeholders: the sentinel is ASCII word characters only.
     let indent_width = f.options().indent_width;
-    let ir = map_text_in_ir(&ir, allocator, &mut |text, out| {
+    let ir = map_text_in_ir(ir, allocator, &mut |text, out| {
         let escaped = super::escape_template_chars(text, allocator);
         let text = escaped.unwrap_or(text);
         if text.contains(PLACEHOLDER_PREFIX) {

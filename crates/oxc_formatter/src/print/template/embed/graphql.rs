@@ -90,7 +90,7 @@ pub(super) fn format_graphql_doc<'a>(
             };
             Some(ir)
         };
-        let ir = ir.map(|ir| super::escape_template_chars_in_ir(&ir, f));
+        let ir = ir.map(|ir| super::escape_template_chars_in_ir(ir, f));
         ir_parts.push(ir);
     }
 
