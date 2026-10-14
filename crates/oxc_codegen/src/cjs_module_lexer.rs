@@ -158,7 +158,7 @@ pub fn try_print_equality_string(
     let Expression::StringLiteral(str_lit) = operand else {
         return false;
     };
-    if !matches!(str_lit.value.as_str(), "default" | "__esModule") {
+    if !matches!(str_lit.value.as_str(), Some("default" | "__esModule")) {
         return false;
     }
     p.print_string_literal(str_lit, false);

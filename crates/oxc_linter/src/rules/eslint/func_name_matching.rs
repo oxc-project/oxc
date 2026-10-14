@@ -444,14 +444,14 @@ fn property_key_is_identifier(key: &PropertyKey) -> bool {
 
 fn string_literal_key_name<'a>(key: &'a PropertyKey<'a>) -> Option<&'a str> {
     match key {
-        PropertyKey::StringLiteral(lit) => Some(lit.value.as_str()),
+        PropertyKey::StringLiteral(lit) => lit.value.as_str(),
         _ => None,
     }
 }
 
 fn string_literal_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a str> {
     match argument.as_expression()?.without_parentheses() {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+        Expression::StringLiteral(lit) => lit.value.as_str(),
         _ => None,
     }
 }

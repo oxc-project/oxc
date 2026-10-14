@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
@@ -135,7 +136,10 @@ impl RequirePropTypes {
                     return;
                 }
             }
-            ctx.diagnostic(require_type_diagnostic(call_expr.span, lit.value.as_str()));
+            ctx.diagnostic(require_type_diagnostic(
+                call_expr.span,
+                lit.value.as_str().unwrap_or_else(|| ctx.source_range(lit.span)),
+            ));
             return;
         }
 
@@ -240,10 +244,10 @@ impl RequirePropTypes {
         for elem in &arr.elements {
             let Some(expr) = elem.as_expression() else { continue };
             let name = match expr {
-                Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+                Expression::StringLiteral(lit) => lit.value.as_str(),
                 Expression::Identifier(id) => Some(id.name.as_str()),
                 Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                    lit.quasis.first().and_then(|q| q.value.cooked.as_deref())
+                    lit.quasis.first().and_then(|q| q.value.cooked.and_then(JSStr::as_str))
                 }
                 _ => None,
             }

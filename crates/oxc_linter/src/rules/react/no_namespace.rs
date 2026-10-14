@@ -67,8 +67,10 @@ impl Rule for NoNamespace {
                     return;
                 };
 
-                if str_lit.value.contains(':') {
-                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, &str_lit.value));
+                if let Some(value) = str_lit.value.as_str()
+                    && value.contains(':')
+                {
+                    ctx.diagnostic(no_namespace_diagnostic(str_lit.span, value));
                 }
             }
             _ => {}

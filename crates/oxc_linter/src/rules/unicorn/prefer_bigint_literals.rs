@@ -95,7 +95,9 @@ impl Rule for PreferBigintLiterals {
 
         match argument_expression.get_inner_expression() {
             Expression::StringLiteral(string_literal) => {
-                if let Some(mut replacement) = bigint_literal_from_string(&string_literal.value) {
+                if let Some(mut replacement) =
+                    string_literal.value.as_str().and_then(bigint_literal_from_string)
+                {
                     ctx.diagnostic_with_fix(
                         prefer_bigint_literals_diagnostic(arg.span()),
                         |fixer| {
