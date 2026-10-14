@@ -108,6 +108,7 @@ declare_oxc_lint!(
     RequireParam,
     jsdoc,
     pedantic,
+    recommended,
     pending,
     config = RequireParamConfig,
     version = "0.4.3",
