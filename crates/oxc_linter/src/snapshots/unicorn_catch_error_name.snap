@@ -2,32 +2,32 @@
 source: crates/oxc_linter/src/tester.rs
 ---
 
-  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error_"
    ╭─[catch_error_name.tsx:4:26]
  3 │                     doSomething();
  4 │                 } catch (foo) {
    ·                          ───
  5 │                     console.log(foo);
    ╰────
-  help: Rename `foo` to `error`
+  help: Rename `foo` to `error_`
 
-  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error_"
    ╭─[catch_error_name.tsx:5:26]
  4 │                     doSomething();
  5 │                 } catch (foo) {
    ·                          ───
  6 │                     console.log(foo);
    ╰────
-  help: Rename `foo` to `error`
+  help: Rename `foo` to `error_`
 
-  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error"
+  ⚠ unicorn(catch-error-name): The catch parameter "foo" should be named "error__"
    ╭─[catch_error_name.tsx:3:27]
  2 │                 const error_ = new Error('foo bar');
  3 │                 obj.catch(foo => { });
    ·                           ───
  4 │             }
    ╰────
-  help: Replace `foo` with `error`.
+  help: Replace `foo` with `error__`.
 
   ⚠ unicorn(catch-error-name): The catch parameter "err" should be named "error"
    ╭─[catch_error_name.tsx:1:11]
