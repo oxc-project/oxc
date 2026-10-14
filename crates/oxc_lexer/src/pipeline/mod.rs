@@ -148,6 +148,22 @@ impl Lexer {
             self.sig_len = 0;
             return 0;
         }
+
+        let w = self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8);
+        self.sig_len = w;
+        w
+    }
+
+    unsafe fn pipeline(
+        &mut self,
+        src: &[u8],
+        n: usize,
+        out_kinds: *mut u8,
+        out_spans: *mut Span,
+        jsx: bool,
+        ts: bool,
+        vutf8: bool,
+    ) -> usize {
         let nb = n.div_ceil(64);
         let sp = src.as_ptr();
         let word = self.word.as_mut_ptr();
@@ -168,7 +184,7 @@ impl Lexer {
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
         misc_post(sp, n, st, word, misc, kind, nesc);
-        let w = compress(
+        compress(
             src,
             n,
             nb,
@@ -179,9 +195,7 @@ impl Lexer {
             out_kinds,
             out_spans,
             &mut self.lanes,
-        );
-        self.sig_len = w;
-        w
+        )
     }
 
     fn ensure(&mut self, n: usize) {
