@@ -3,13 +3,16 @@ import { rawTransferSupported as rawTransferSupportedBinding } from "../bindings
 let rawTransferIsSupported = null;
 
 /**
- * Returns `true` if `experimentalRawTransfer` is option is supported.
+ * Returns `true` if `experimentalRawTransfer` option is supported.
  *
  * Raw transfer is only supported on 64-bit little-endian systems,
- * and NodeJS >= v22.0.0 or Deno >= v2.0.0.
+ * and NodeJS >= v22.0.0, Deno >= v2.0.0, or Bun >= v1.2.0 (not on Windows).
  *
- * Versions of NodeJS prior to v22.0.0 do not support creating an `ArrayBuffer` larger than 4 GiB.
- * Bun (as at v1.2.4) also does not support creating an `ArrayBuffer` larger than 4 GiB.
+ * Where raw transfer buffers cannot be allocated on Rust side (e.g. in Electron), they're allocated on JS side,
+ * which requires creating an `ArrayBuffer` larger than 4 GiB (see `createBuffer` in `common.js`).
+ * Versions of NodeJS prior to v22.0.0 do not support that, and nor does Bun.
+ * Bun before v1.2.0 fails to read from buffers allocated on Rust side.
+ * Bun on Windows has not been tested, so is treated as unsupported.
  * Support on Deno v1 is unknown and it's EOL, so treating Deno before v2.0.0 as unsupported.
  *
  * No easy way to determining pointer width (64 bit or 32 bit) in JS,
@@ -36,7 +39,11 @@ function rawTransferRuntimeSupported() {
   }
 
   const isBun = !!global.Bun || !!global.process?.versions?.bun;
-  if (isBun) return false;
+  if (isBun) {
+    if (global.process?.platform === "win32") return false;
+    const match = global.process?.versions?.bun?.match(/^(\d+)\.(\d+)\./);
+    return !!match && (match[1] * 1 > 1 || (match[1] * 1 === 1 && match[2] * 1 >= 2));
+  }
 
   const isDeno = !!global.Deno;
   if (isDeno) {
