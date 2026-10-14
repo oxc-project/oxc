@@ -15,4 +15,6 @@ pub struct LintOptions {
     pub report_unused_directive: Option<AllowWarnDeny>,
     // If true, the linter will create "ignore this section / line" fixes for all diagnostics
     pub with_ignore_fixes: bool,
+    // If true, all inline disable/enable directives are ignored.
+    pub no_inline_config: bool,
 }

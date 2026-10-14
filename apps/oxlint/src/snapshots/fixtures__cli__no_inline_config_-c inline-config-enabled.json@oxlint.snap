@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c inline-config-enabled.json
+working directory: fixtures/cli/no_inline_config
+----------
+
+  x Unused oxlint-disable directive (no problems were reported).
+    ,-[test.js:20:1]
+ 19 | // Unused directive, reported only when inline configuration is respected.
+ 20 | // oxlint-disable-next-line no-console
+    : ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 21 | const unusedDirective = 1;
+    `----
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 2 files with 2 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
