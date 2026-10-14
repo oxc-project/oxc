@@ -53,6 +53,7 @@ fn merge_into_object_literal() {
 fn existing_key() {
     // the last plain property with the key is replaced in place
     test("var o = { a: 1, b: 2 }; o.a = 3", "var o = { a: 3, b: 2 }");
+    test("var o = { a: 1, b: 2 }; o.a = () => o", "var o = { a: () => o, b: 2 }");
     test("var o = { a: 1, b: 2, a: 3 }; o.a = 4", "var o = { a: 1, b: 2, a: 4 }");
     test("var o = { 1: true, '1': false, b: 2 }; o['1'] = 0", "var o = { 1: !0, 1: 0, b: 2 }");
     test("var o = { 'a b': 1, c: 2 }; o['a b'] = 3", "var o = { 'a b': 3, c: 2 }");
@@ -79,7 +80,7 @@ fn existing_key() {
         "function f(a) { return { a: 1, b: 2 } }",
     );
     test("var o = { Math, b: 2 }; o.Math = 1", "var o = { Math: 1, b: 2 }");
-    // the caller drops the old value, so `h` has no references left
+    // replacing the old value drops its references, so `h` has none left
     test_smallest(
         "export function f() { function h() {} var o = { h, b: 2 }; o.h = 1; return o }",
         "export function f() { return { h: 1, b: 2 } }",
