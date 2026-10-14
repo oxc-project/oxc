@@ -22,7 +22,8 @@ if (!rawTransferSupported()) {
   throw new Error(
     "`experimentalRawTransfer` and `experimentalLazy` options are not supported "
       + "on 32-bit or big-endian systems, versions of NodeJS prior to v22.0.0, "
-      + "versions of Deno prior to v2.0.0, or other runtimes",
+      + "versions of Deno prior to v2.0.0, versions of Bun prior to v1.2.0, Bun on Windows, "
+      + "or other runtimes",
   );
 }
 
@@ -300,7 +301,17 @@ function createBuffer() {
   let arrayBuffer = createRawTransferBuffer(),
     offset = 0;
   if (arrayBuffer === null) {
-    arrayBuffer = new ArrayBuffer(ARRAY_BUFFER_SIZE);
+    try {
+      arrayBuffer = new ArrayBuffer(ARRAY_BUFFER_SIZE);
+    } catch (err) {
+      // e.g. Bun cannot create an `ArrayBuffer` larger than 4 GiB, so if allocating on Rust side fails,
+      // raw transfer cannot work there
+      throw new Error(
+        "Failed to allocate buffer for raw transfer. Allocating it on Rust side was not possible, "
+          + "and this runtime could not allocate a 6 GiB `ArrayBuffer` instead.",
+        { cause: err },
+      );
+    }
     offset = getBufferOffset(new Uint8Array(arrayBuffer));
   }
 
