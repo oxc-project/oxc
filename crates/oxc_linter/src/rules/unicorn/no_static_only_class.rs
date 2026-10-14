@@ -139,7 +139,8 @@ impl Rule for NoStaticOnlyClass {
                         let name = if v.computed {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
-                            key.static_name().unwrap().to_string()
+                            let Some(name) = key.static_name() else { return fixer.noop() };
+                            name.to_string()
                         };
 
                         // we need to check is there have a trailing semicolon
@@ -170,7 +171,8 @@ impl Rule for NoStaticOnlyClass {
                         let name = if v.computed {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
-                            key.static_name().unwrap().to_string()
+                            let Some(name) = key.static_name() else { return fixer.noop() };
+                            name.to_string()
                         };
                         let value_str = if value.is_none() {
                             "undefined"
@@ -238,6 +240,9 @@ fn test() {
     ];
 
     let fail = vec![
+        r#"class A { static "\uD800"() {} }"#,
+        r#"class A { static "\uDC00" = 1; }"#,
+        r#"class A { static a() {}; static "\uD800"() {} }"#,
         "class A { static a() {}; }",
         "class A { static a() {} }",
         "const A = class A { static a() {}; }",
@@ -301,6 +306,12 @@ fn test() {
     ];
 
     let fix = vec![
+        (r#"class A { static "\uD800"() {} }"#, r#"class A { static "\uD800"() {} }"#),
+        (r#"class A { static "\uDC00" = 1; }"#, r#"class A { static "\uDC00" = 1; }"#),
+        (
+            r#"class A { static a() {}; static "\uD800"() {} }"#,
+            r#"class A { static a() {}; static "\uD800"() {} }"#,
+        ),
         ("class A { static a() {}; }", "const A = { a() {}, }"),
         ("class A { static a() {} }", "const A = { a() {}, }"),
         ("const a = class { static bar = 2; static baz() {} }", "const a =  { bar: 2, baz() {}, }"),

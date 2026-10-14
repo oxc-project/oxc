@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{NodeId, Reference};
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 
 use crate::{ast_util::iter_outer_expressions, context::LintContext, rule::Rule};
 
@@ -132,11 +132,11 @@ fn check_reference(reference: &Reference, ctx: &LintContext<'_>) {
     let AstKind::CallExpression(_) = ctx.nodes().parent_kind(parent.node_id()) else {
         return;
     };
-    let Some(name) = member_expr.static_property_name() else {
+    let Some(name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
         return;
     };
-    if ARRAY_METHODS.binary_search(&name.as_str()).is_ok() {
-        ctx.diagnostic(bad_array_method_on_arguments_diagnostic(name.as_str(), member_expr.span()));
+    if ARRAY_METHODS.binary_search(&name).is_ok() {
+        ctx.diagnostic(bad_array_method_on_arguments_diagnostic(name, member_expr.span()));
     }
 }
 

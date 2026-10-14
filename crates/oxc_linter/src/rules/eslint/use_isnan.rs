@@ -5,6 +5,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -196,6 +197,7 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
     if let Some(expr) = callee.as_member_expression() {
         return expr
             .static_property_name()
+            .and_then(JSStr::as_str)
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
@@ -203,6 +205,7 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
         let expr = chain.expression.as_member_expression()?;
         return expr
             .static_property_name()
+            .and_then(JSStr::as_str)
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 

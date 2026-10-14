@@ -865,3 +865,34 @@ const get = (key: K) => (({ a: 1, b: 2 }) as const)[key];
 When an ancestor gets its own parens, a leading `{`/`function`/`class`/`let[` inside it needs none.
 Prettier already does this after `export default` (`` export default (function () {} + foo)`` ``) and for a sequence arrow body (`() => ({}, 1)`),
 but not at statement start or for other arrow bodies, e.g. the object lookup idiom above.
+
+## inline-logical-chain-indent
+
+- Why: uniform-rule (same construct, same output: a single-link inline chain `a ?? [...]`; prettier/prettier#5183, prettier/prettier#19792)
+- Pin: `tests/fixtures/js/logicals/inline-logical-chain-indent.js`
+
+```js
+// input
+const x = $abilities ?? ["foo", "bar", "bar"] ?? ["foo", "bar", "bar", "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey"];
+
+// ours
+const x = $abilities ?? ["foo", "bar", "bar"] ?? [
+  "foo",
+  "bar",
+  "bar",
+  "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey",
+];
+
+// prettier
+const x = $abilities ?? ["foo", "bar", "bar"] ?? [
+    "foo",
+    "bar",
+    "bar",
+    "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey",
+  ];
+```
+
+When every right side of a logical chain is an inlined object/array/JSX literal, the chain never breaks at an operator.
+Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
+A chain with a non-inlined right side breaks at the operators and keeps the indent.
+Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.

@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeId;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{
     AstNode, ast_util::is_method_call, ast_util::variable_declaration_kind, context::LintContext,
@@ -93,7 +94,9 @@ fn is_kind_of_array_expr(expr: &Expression) -> bool {
                 return false;
             }
 
-            let Some(name) = callee.static_property_name() else { return false };
+            let Some(name) = callee.static_property_name().and_then(JSStr::as_str) else {
+                return false;
+            };
 
             is_array_of_or_from(callee) || ARRAY_METHODS_RETURNS_ARRAY.contains(&name)
         }

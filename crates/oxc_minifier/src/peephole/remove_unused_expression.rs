@@ -905,7 +905,7 @@ impl<'a> PeepholeOptimizations {
         match target {
             AssignmentTarget::StaticMemberExpression(e) => Some(e.property.name.as_str()),
             AssignmentTarget::ComputedMemberExpression(e) => match &e.expression {
-                Expression::StringLiteral(s) => Some(s.value.as_str()),
+                Expression::StringLiteral(s) => s.value.as_str(),
                 _ => None,
             },
             _ => None,
