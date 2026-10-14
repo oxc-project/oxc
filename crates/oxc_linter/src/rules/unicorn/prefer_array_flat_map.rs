@@ -51,6 +51,7 @@ declare_oxc_lint!(
     PreferArrayFlatMap,
     unicorn,
     perf,
+    recommended,
     fix_suggestion,
     version = "0.0.14",
     short_description = "Prefer a single `.flatMap()` over `.map().flat()` or `.filter().flatMap()`.",

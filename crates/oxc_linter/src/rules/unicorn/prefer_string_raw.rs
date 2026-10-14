@@ -42,6 +42,7 @@ declare_oxc_lint!(
     PreferStringRaw,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.12.0",
     short_description = "Prefers use of `String.raw` to avoid escaping `\\`.",

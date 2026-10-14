@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoUselessUndefined,
     unicorn,
     pedantic,
+    recommended,
     fix,
     config = NoUselessUndefined,
     version = "0.6.1",

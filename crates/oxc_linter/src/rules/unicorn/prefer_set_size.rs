@@ -49,6 +49,7 @@ declare_oxc_lint!(
     PreferSetSize,
     unicorn,
     correctness,
+    recommended,
     fix,
     version = "0.0.19",
     short_description = "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",

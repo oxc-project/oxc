@@ -124,6 +124,7 @@ declare_oxc_lint!(
     NoInstanceofBuiltins,
     unicorn,
     suspicious,
+    recommended,
     conditional_suggestion,
     config = NoInstanceofBuiltinsConfig,
     version = "0.16.12",

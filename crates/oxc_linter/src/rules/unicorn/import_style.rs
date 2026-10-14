@@ -293,6 +293,7 @@ declare_oxc_lint!(
     ImportStyle,
     unicorn,
     restriction,
+    recommended,
     none,
     config = ImportStyleConfig,
     version = "1.67.0",

@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferDomNodeTextContent,
     unicorn,
     style,
+    recommended,
     conditional_fix,
     version = "0.0.21",
     short_description = "Enforces the use of `.textContent` over `.innerText` for DOM nodes.",

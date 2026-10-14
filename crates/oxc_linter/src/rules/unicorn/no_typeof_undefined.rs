@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoTypeofUndefined,
     unicorn,
     pedantic,
+    recommended,
     fix_or_suggestion,
     config = NoTypeofUndefined,
     version = "0.0.18",

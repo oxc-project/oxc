@@ -69,6 +69,7 @@ declare_oxc_lint!(
     PreferKeyboardEventKey,
     unicorn,
     style,
+    recommended,
     fix,
     version = "1.33.0",
     short_description = "Prefer `KeyboardEvent#key` over `KeyboardEvent#keyCode`.",

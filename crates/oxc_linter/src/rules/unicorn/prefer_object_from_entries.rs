@@ -81,6 +81,7 @@ declare_oxc_lint!(
     PreferObjectFromEntries,
     unicorn,
     style,
+    recommended,
     pending,
     config = PreferObjectFromEntriesConfig,
     version = "0.16.12",

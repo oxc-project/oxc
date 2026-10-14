@@ -70,6 +70,7 @@ declare_oxc_lint!(
     RelativeUrlStyle,
     unicorn,
     style,
+    recommended,
     fix_suggestion,
     config = RelativeUrlStyleConfig,
     version = "1.44.0",

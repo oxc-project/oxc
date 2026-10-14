@@ -61,6 +61,7 @@ declare_oxc_lint!(
     PreferDefaultParameters,
     unicorn,
     style,
+    recommended,
     suggestion,
     version = "1.33.0",
     short_description = "Prefer default parameters over reassignment.",

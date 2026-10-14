@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoArrayFillWithReferenceType,
     unicorn,
     suspicious,
+    recommended,
     version = "1.70.0",
     short_description = "Disallows using reference values as `Array#fill()` values."
 );

@@ -57,6 +57,7 @@ declare_oxc_lint!(
     PreferModule,
     unicorn,
     restriction,
+    recommended,
     pending,
     version = "1.50.0",
     short_description = "Prefer JavaScript modules (ESM) over CommonJS.",
