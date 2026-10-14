@@ -22,7 +22,7 @@ pub enum Tag {
     EndAlign,
 
     /// Prints a string after the indention on every line break inside the content
-    /// (Prettier's `align("> ", doc)`), see [crate::builders::prefix_align].
+    /// (Prettier's string `align("> ", doc)`), see [crate::builders::prefix_align] / [crate::builders::space_align].
     StartPrefix(Prefix),
     EndPrefix,
 
@@ -260,14 +260,46 @@ impl Align {
 
 /// The string a [Tag::StartPrefix] prints after the indention on every new line.
 ///
-/// Prefixes are syntax tokens (`"> "`, `" * "`), so `'static`;
+/// Prefixes are syntax tokens (`"> "`, `" * "`) or syntax columns ([Self::spaces]), so `'static`;
 /// the double reference keeps the payload one pointer wide (see the size assertion in `format_element/mod.rs`).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Prefix(pub(crate) &'static &'static str);
 
+/// The widest single space prefix, wider runs chain several (see [Prefix::spaces]).
+const MAX_SPACES: usize = 32;
+
+/// `SPACE_RUNS[n]` is `n` spaces, the `'static` storage [Prefix::spaces] points into.
+static SPACE_RUNS: [&str; MAX_SPACES + 1] = {
+    const SPACES: &str = "                                ";
+    let mut runs = [""; MAX_SPACES + 1];
+    let mut n = 0;
+    while n <= MAX_SPACES {
+        runs[n] = SPACES.split_at(n).0;
+        n += 1;
+    }
+    runs
+};
+
 impl Prefix {
+    /// A visible token prefix (`"> "`); spaces alone are [Self::spaces].
     pub fn new(text: &'static &'static str) -> Self {
+        debug_assert!(
+            !text.trim().is_empty() && !text.contains(['\n', '\t']),
+            "a prefix is a visible token on its line (spaces alone are `Prefix::spaces`)"
+        );
         Self(text)
+    }
+
+    /// `n` spaces that stay spaces under `useTabs`, unlike an `align` (Prettier's string align `" ".repeat(n)`),
+    /// as the prefixes to nest, outermost first (none for `0`).
+    pub fn spaces(n: usize) -> impl ExactSizeIterator<Item = Self> {
+        (0..n.div_ceil(MAX_SPACES))
+            .map(move |i| Self(&SPACE_RUNS[(n - i * MAX_SPACES).min(MAX_SPACES)]))
+    }
+
+    /// Whether this is a [Self::spaces] prefix, which a blank line trims entirely.
+    pub fn is_spaces(self) -> bool {
+        self.0.bytes().all(|b| b == b' ')
     }
 
     pub fn text(self) -> &'static str {

@@ -1967,7 +1967,7 @@ impl ESTree for StringLiteral<'_> {
     fn serialize<S: Serializer>(&self, serializer: S) {
         let mut state = serializer.serialize_struct();
         state.serialize_field("type", &JsonSafeString("Literal"));
-        state.serialize_field("value", &crate::serialize::literal::StringLiteralValue(self));
+        state.serialize_field("value", &self.value);
         state.serialize_field("raw", &self.raw);
         state.serialize_span(self.span);
         state.end();

@@ -14,9 +14,9 @@ import { printExpression } from "./expression.ts";
 import { CTX_NONE } from "./operators.ts";
 import { PREC_COMMA, PREC_LOWEST } from "./precedence.ts";
 import { printTypeArguments } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -24,6 +24,9 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *
  * An element with no closing element is self-closing and gets ` />`, which is also the only place
  * a space is required before the slash.
+ *
+ * @param node - JSX element
+ * @param state - Printer state
  */
 export function printJSXElement(node: ESTree.JSXElement, state: State): void {
   const { openingElement } = node;
@@ -68,9 +71,12 @@ export function printJSXElement(node: ESTree.JSXElement, state: State): void {
 
 /**
  * Print the name in an opening or closing tag - a name, a namespaced name, a member chain, or `this`.
+ *
+ * @param node - JSX element name, or `this`
+ * @param state - Printer state
  */
 function printJSXElementName(
-  node: ESTree.JSXElementName | ESTree.ThisExpression | UnknownNode,
+  node: ESTree.JSXElementName | ESTree.ThisExpression,
   state: State,
 ): void {
   switch (node.type) {
@@ -97,12 +103,15 @@ function printJSXElementName(
       writeWithMapNoLast(state, "this", node.start, node.end, node);
       break;
     default:
-      throw new Error(`Unknown JSX name type: ${node.type}`);
+      throwUnknownNode(node, "JSX name");
   }
 }
 
 /**
  * Print one attribute, with its value where it has one - a bare attribute is `true`.
+ *
+ * @param node - JSX attribute
+ * @param state - Printer state
  */
 function printJSXAttribute(node: ESTree.JSXAttribute, state: State): void {
   // Attribute names never update `last`.
@@ -136,8 +145,11 @@ function printJSXAttribute(node: ESTree.JSXAttribute, state: State): void {
  *
  * A string value is printed from its raw text, not through the string escaper, because JSX attribute strings
  * have no escape sequences - the quote is picked to suit the contents instead.
+ *
+ * @param node - JSX attribute value
+ * @param state - Printer state
  */
-function printJSXAttributeValue(node: ESTree.JSXAttributeValue | UnknownNode, state: State): void {
+function printJSXAttributeValue(node: ESTree.JSXAttributeValue, state: State): void {
   switch (node.type) {
     case "Literal": {
       // JSX strings have no escape sequences and HTML entities are not decoded by parser at present.
@@ -167,12 +179,15 @@ function printJSXAttributeValue(node: ESTree.JSXAttributeValue | UnknownNode, st
       printJSXFragment(node, state);
       break;
     default:
-      throw new Error(`Unknown JSX attribute value type: ${node.type}`);
+      throwUnknownNode(node, "JSX attribute value");
   }
 }
 
 /**
  * Print a `{ … }` container, which may hold nothing but a comment.
+ *
+ * @param node - JSX expression container
+ * @param state - Printer state
  */
 function printJSXExpressionContainer(node: ESTree.JSXExpressionContainer, state: State): void {
   write(state, "{", CAT_OTHER);
@@ -189,6 +204,9 @@ function printJSXExpressionContainer(node: ESTree.JSXExpressionContainer, state:
 
 /**
  * Print a `<>...</>` fragment.
+ *
+ * @param node - JSX fragment
+ * @param state - Printer state
  */
 export function printJSXFragment(node: ESTree.JSXFragment, state: State): void {
   writeWithMapNoLast(
@@ -220,8 +238,11 @@ export function printJSXFragment(node: ESTree.JSXFragment, state: State): void {
  *
  * Text is written from its raw source, since whitespace between elements is significant
  * and any entities in it must survive untouched.
+ *
+ * @param node - JSX child
+ * @param state - Printer state
  */
-function printJSXChild(node: ESTree.JSXChild | UnknownNode, state: State): void {
+function printJSXChild(node: ESTree.JSXChild, state: State): void {
   switch (node.type) {
     case "JSXText":
       writeWithMapNoLast(
@@ -247,6 +268,6 @@ function printJSXChild(node: ESTree.JSXChild | UnknownNode, state: State): void 
       writeNoLast(state, "}");
       break;
     default:
-      throw new Error(`Unknown JSX child type: ${node.type}`);
+      throwUnknownNode(node, "JSX child");
   }
 }

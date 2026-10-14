@@ -52,6 +52,7 @@ declare_oxc_lint!(
     NoRegexSpaces,
     eslint,
     restriction,
+    recommended,
     fix,
     version = "0.0.18",
     short_description = "Disallow 2+ consecutive spaces in regular expressions.",
@@ -114,7 +115,7 @@ impl NoRegexSpaces {
         let Some(Argument::StringLiteral(pattern)) = args.first() else {
             return None;
         };
-        if !Self::has_double_space(&pattern.value) {
+        if !Self::has_double_space(pattern.value.as_str()?) {
             return None;
         }
 

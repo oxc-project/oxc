@@ -653,7 +653,7 @@ impl<C> std::fmt::Debug for Align<'_, '_, C> {
 /// Inside the prefix, `indent` / `align` add to the right of it,
 /// so `prefix_align(&"> ", indent(..))` prints `>   x`
 /// while `align(2, prefix_align(&"> ", ..))` prints `  > x`.
-/// A blank line inside prints the prefixes up to the last one with its trailing whitespace trimmed (`>`),
+/// A blank line inside prints the prefixes up to the last visible one with its trailing whitespace trimmed (`>`),
 /// as Prettier's end-of-line trimming leaves them.
 #[inline]
 pub fn prefix_align<'a, 'ast, C, Content>(
@@ -663,24 +663,56 @@ pub fn prefix_align<'a, 'ast, C, Content>(
 where
     Content: Format<'ast, C>,
 {
-    debug_assert!(
-        !prefix.trim().is_empty() && !prefix.contains(['\n', '\t']),
-        "a prefix is a visible token on its line (spaces alone are `align`)"
-    );
-    PrefixAlign { prefix, content: Argument::new(content) }
+    PrefixAlign {
+        prefix: PrefixKind::Token(tag::Prefix::new(prefix)),
+        content: Argument::new(content),
+    }
+}
+
+/// Aligns `content` by `count` spaces that stay spaces under `useTabs`.
+///
+/// Unlike [align], whose spaces become a tab when an `indent` or a prefix follows them in tab mode
+/// (Prettier's number align), these columns are syntax:
+/// a markdown container's content column, whose width the next parse counts (a tab is up to 4 columns).
+/// An `indent` inside adds to the right of them (`␣␣\t`), like [prefix_align].
+/// `0` aligns nothing.
+#[inline]
+pub fn space_align<'a, 'ast, C, Content>(
+    count: usize,
+    content: &'a Content,
+) -> PrefixAlign<'a, 'ast, C>
+where
+    Content: Format<'ast, C>,
+{
+    PrefixAlign { prefix: PrefixKind::Spaces(count), content: Argument::new(content) }
+}
+
+#[derive(Copy, Clone, Debug)]
+enum PrefixKind {
+    Token(tag::Prefix),
+    Spaces(usize),
 }
 
 #[derive(Copy, Clone)]
 pub struct PrefixAlign<'a, 'ast, C> {
-    prefix: &'static &'static str,
+    prefix: PrefixKind,
     content: Argument<'a, 'ast, C>,
 }
 
 impl<'ast, C> Format<'ast, C> for PrefixAlign<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        f.write_element(FormatElement::Tag(StartPrefix(tag::Prefix(self.prefix))));
+        let prefixes: &mut dyn ExactSizeIterator<Item = tag::Prefix> = match self.prefix {
+            PrefixKind::Token(prefix) => &mut std::iter::once(prefix),
+            PrefixKind::Spaces(count) => &mut tag::Prefix::spaces(count),
+        };
+        let depth = prefixes.len();
+        for prefix in prefixes {
+            f.write_element(FormatElement::Tag(StartPrefix(prefix)));
+        }
         Arguments::from(&self.content).fmt(f);
-        f.write_element(FormatElement::Tag(EndPrefix));
+        for _ in 0..depth {
+            f.write_element(FormatElement::Tag(EndPrefix));
+        }
     }
 }
 

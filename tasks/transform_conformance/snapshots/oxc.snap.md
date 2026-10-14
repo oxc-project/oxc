@@ -1,6 +1,6 @@
-commit: fd665901
+commit: 4f4ef5d4
 
-Passed: 282/410
+Passed: 300/429
 
 # All Passed:
 * babel-plugin-transform-class-static-block
@@ -48,19 +48,14 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-typescript (43/62)
+# babel-plugin-transform-typescript (43/63)
 * allow-declare-fields-false/input.ts
 Unresolved references mismatch:
 after transform: ["dce"]
 rebuilt        : []
 
 * computed-constant-value/input.ts
-Unresolved references mismatch:
-after transform: ["Infinity", "NaN"]
-rebuilt        : ["Infinity"]
-Unresolved reference IDs mismatch for "Infinity":
-after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(8), ReferenceId(11), ReferenceId(14), ReferenceId(18)]
-rebuilt        : [ReferenceId(2), ReferenceId(5), ReferenceId(8), ReferenceId(12)]
+x Output mismatch
 
 * declare-and-definite-with-initializer/input.ts
 
@@ -113,6 +108,13 @@ rebuilt        : SymbolId(9): [ReferenceId(25), ReferenceId(26), ReferenceId(28)
 Symbol reference IDs mismatch for "Color":
 after transform: SymbolId(4): [ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(12)]
 rebuilt        : SymbolId(0): [ReferenceId(6), ReferenceId(7), ReferenceId(8)]
+
+* enum-surrogate-string-value/input.ts
+Missing ReferenceId: "E"
+Missing ReferenceId: "E"
+Symbol reference IDs mismatch for "E":
+after transform: SymbolId(10): [ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9), ReferenceId(10)]
+rebuilt        : SymbolId(1): [ReferenceId(0), ReferenceId(1), ReferenceId(2), ReferenceId(3), ReferenceId(4), ReferenceId(5), ReferenceId(6), ReferenceId(7), ReferenceId(8), ReferenceId(9)]
 
 * enum-template-literal/input.ts
 Symbol reference IDs mismatch for "Size":
@@ -208,7 +210,7 @@ after transform: [ReferenceId(0), ReferenceId(1), ReferenceId(4), ReferenceId(9)
 rebuilt        : [ReferenceId(5)]
 
 
-# babel-plugin-transform-react-jsx (51/54)
+# babel-plugin-transform-react-jsx (52/55)
 * refresh/import-after-component/input.js
 Missing ScopeId
 Missing ReferenceId: "useFoo"

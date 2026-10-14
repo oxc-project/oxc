@@ -126,8 +126,7 @@ pub fn format_to_ir<'a>(
         return Err(err);
     }
 
-    // JSON never collects Tailwind classes
-    Ok(EmbeddedIr { ir: elements, tailwind_classes: Vec::new() })
+    Ok(EmbeddedIr { ir: elements })
 }
 
 // ---

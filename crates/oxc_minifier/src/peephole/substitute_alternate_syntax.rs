@@ -124,7 +124,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -139,7 +142,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -154,7 +160,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -692,12 +701,12 @@ impl<'a> PeepholeOptimizations {
                         return VerifyArrayArgResult::Invalid;
                     };
                     if test_expr.operator == BinaryOperator::GreaterThan
-                        && test_expr.left.is_specific_id(&name_e)
+                        && test_expr.left.is_specific_id(name_e)
                         && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
                         && cons_expr.operator == BinaryOperator::Subtraction
-                        && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
                         && matches!(&cons_expr.right, Expression::NumericLiteral(n) if n.value == offset)
-                        && matches!(&cond_expr.alternate, Expression::NumericLiteral(n) if n.value == 0.0)
+                        && cons_expr.left.is_specific_id(name_e)
+                        && cond_expr.alternate.is_number_0()
                     {
                         VerifyArrayArgResult::WithOffset
                     } else {
@@ -1049,6 +1058,14 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Remove `void 0` from a non-delegating `yield`.
+    /// `yield void 0` -> `yield`
+    pub fn substitute_yield_expression(expr: &mut YieldExpression<'a>) {
+        if !expr.delegate && expr.argument.as_ref().is_some_and(Expression::is_void_0) {
+            expr.argument = None;
+        }
+    }
+
     fn compress_variable_declarator(
         decl: &mut VariableDeclarator<'a>,
         kind: VariableDeclarationKind,
@@ -1158,7 +1175,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
-                if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
+                if !e.object.is_specific_id("window") {
                     return None;
                 }
                 Some(e.property.name.as_str())
@@ -1393,19 +1410,18 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
-                let value = s.value.as_str();
+                // Bool field flip on an existing AST node, not a slot replacement.
+                *computed = false;
+                // A key with a lone surrogate is neither an identifier name nor a number.
+                let Some(value) = s.value.as_str() else { return };
                 if is_identifier_name_patched(value) {
-                    // Bool field flip on an existing AST node, not a slot replacement.
-                    *computed = false;
-                    let new_key = PropertyKey::new_static_identifier(s.span, s.value, ctx);
+                    let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
                     ctx.replace_property_key(key, new_key);
                     return;
                 }
                 if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
                     && value >= 0.0
                 {
-                    // Bool field flip on an existing AST node, not a slot replacement.
-                    *computed = false;
                     let new_key = PropertyKey::new_numeric_literal(
                         s.span,
                         value,
@@ -1414,11 +1430,6 @@ impl<'a> PeepholeOptimizations {
                         ctx,
                     );
                     ctx.replace_property_key(key, new_key);
-                    return;
-                }
-                if *computed {
-                    // Bool field flip on an existing AST node, not a slot replacement.
-                    *computed = false;
                 }
             }
             _ => {}
@@ -1681,7 +1692,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         let is_all_string = array.elements.iter().all(|element| {
-            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(_)))
+            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(lit) if !lit.value.has_lone_surrogate()))
         });
         if !is_all_string {
             return;
@@ -1697,7 +1708,8 @@ impl<'a> PeepholeOptimizations {
 
         let strings = array.elements.iter().map(|element| {
             let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
-            str.value.as_str()
+            // Checked above before constructing the iterator.
+            str.value.as_str().unwrap()
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 
@@ -1907,7 +1919,8 @@ impl<'a> PeepholeOptimizations {
                 let new_value = if is_pure && Self::is_expression_result_unused(ctx) {
                     Expression::new_void_0(call_expr.span, ctx)
                 } else if let Some(taken) = Self::try_take_iife_body(expr, is_pure, ctx) {
-                    taken
+                    // Replace "(() => o.f)()()" with "(0, o.f)()"
+                    Self::preserve_indirect_access_if_needed(call_expr.span, taken, ctx)
                 } else {
                     return;
                 };
@@ -1926,9 +1939,10 @@ impl<'a> PeepholeOptimizations {
                     } else if let Some(taken) =
                         Self::try_take_iife_body(&mut expr_stmt.expression, is_pure, ctx)
                     {
-                        Expression::new_sequence_expression(
+                        Self::join_sequence(
                             expr_stmt.span,
-                            [taken, Expression::new_void_0(call_expr.span, ctx)],
+                            taken,
+                            Expression::new_void_0(call_expr.span, ctx),
                             ctx,
                         )
                     } else {
@@ -1944,7 +1958,8 @@ impl<'a> PeepholeOptimizations {
                             Expression::new_void_0(call_expr.span, ctx)
                         } else if let Some(taken) = Self::try_take_iife_body(argument, is_pure, ctx)
                         {
-                            taken
+                            // Replace "(() => { return o.f })()()" with "(0, o.f)()"
+                            Self::preserve_indirect_access_if_needed(call_expr.span, taken, ctx)
                         } else {
                             return;
                         };

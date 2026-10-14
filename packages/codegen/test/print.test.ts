@@ -63,12 +63,28 @@ const member = (object: ESTree.Expression, property: ESTree.IdentifierName) =>
     computed: false,
     optional: false,
   });
+const computedMember = (object: ESTree.Expression, property: ESTree.Expression) =>
+  node<ESTree.ComputedMemberExpression>({
+    type: "MemberExpression",
+    object,
+    property,
+    computed: true,
+    optional: false,
+  });
 const call = (callee: ESTree.Expression, args: ESTree.Argument[] = []) =>
   node<ESTree.CallExpression>({
     type: "CallExpression",
     callee,
     arguments: args,
     optional: false,
+  });
+const newExpr = (callee: ESTree.Expression, args: ESTree.Argument[] = []) =>
+  node<ESTree.NewExpression>({ type: "NewExpression", callee, arguments: args });
+const v8 = (name: string, args: ESTree.Argument[] = []) =>
+  node<ESTree.V8IntrinsicExpression>({
+    type: "V8IntrinsicExpression",
+    name: node<ESTree.IdentifierName>({ type: "Identifier", name }),
+    arguments: args,
   });
 const unary = (operator: ESTree.UnaryOperator, argument: ESTree.Expression) =>
   node<ESTree.UnaryExpression>({ type: "UnaryExpression", operator, argument, prefix: true });
@@ -85,6 +101,18 @@ const arr = (...elements: ESTree.ArrayExpressionElement[]) =>
   node<ESTree.ArrayExpression>({ type: "ArrayExpression", elements });
 const ret = (argument: ESTree.Expression) =>
   node<ESTree.ReturnStatement>({ type: "ReturnStatement", argument });
+const paren = (expression: ESTree.Expression) =>
+  node<ESTree.ParenthesizedExpression>({ type: "ParenthesizedExpression", expression });
+// `left` is typed as any expression, because these tests put parens around it,
+// which `ForStatementLeft` does not allow
+const forOf = (left: ESTree.Expression, isAwait = false) =>
+  node<ESTree.ForOfStatement>({
+    type: "ForOfStatement",
+    await: isAwait,
+    left: left as ESTree.ForStatementLeft,
+    right: id("y"),
+    body: node<ESTree.EmptyStatement>({ type: "EmptyStatement" }),
+  });
 
 // One expression statement, which is how nearly every case below is shaped
 const e = (expression: ESTree.Expression) => program(stmt(expression));
@@ -108,7 +136,12 @@ function checkCases(cases: Case[]): void {
 // --- Tests ----------------------------------------------------------------------------------
 
 describe("single statements", () => {
-  /** Parse one source statement for public-API tests which do not print a whole program. */
+  /**
+   * Parse one source statement for public-API tests which do not print a whole program.
+   *
+   * @param filename - Filename, which decides the language
+   * @param sourceText - Source text
+   */
   function parseStatement(filename: string, sourceText: string): ESTree.Statement {
     const { program: parsed, errors } = parseSync(filename, sourceText, PARSE_OPTIONS);
     if (errors.length > 0) throw new Error(`fixture parse failed: ${errors[0].message}`);
@@ -352,6 +385,8 @@ describe("unary and update expressions", () => {
     ["delete-infinity", e(unary("delete", num(Infinity))), "delete (0, Infinity);\n"],
     ["minus-negative-literal", e(unary("-", num(-1))), "- -1;\n"],
     ["plus-negative-literal", e(unary("+", num(-1))), "+-1;\n"],
+    ["minus-negative-bigint", e(unary("-", big("-1"))), "- -1n;\n"],
+    ["plus-negative-bigint", e(unary("+", big("-1"))), "+-1n;\n"],
     ["preinc", e(update("++", id("x"))), "++x;\n"],
     ["postinc", e(update("++", id("x"), false)), "x++;\n"],
     ["predec", e(update("--", id("x"))), "--x;\n"],
@@ -399,6 +434,84 @@ describe("space before identifiers", () => {
     ["typeof-typeof", e(unary("typeof", unary("typeof", id("x")))), "typeof typeof x;\n"],
     ["void-typeof", e(unary("void", unary("typeof", id("x")))), "void typeof x;\n"],
     ["string-concat", e(bin("+", str("a"), id("b"))), '"a" + b;\n'],
+  ]);
+});
+
+// A `for of` head cannot start with `let`, or with `async of`, so such a target must be wrapped in parens.
+// - A computed member on `let` needs no more, because it prints as `(let)[...]` anyway.
+// - A member on `async` needs none, because `async.x of` and `async["x"] of` do not start with `async of`.
+// - Parens in the AST are transparent when printing, so a `ParenthesizedExpression` around the target,
+//   or around its object, changes none of this.
+//
+// `oxc-parser` never produces a `ParenthesizedExpression` in a `for of` head, even with
+// `preserveParens: true`, but Acorn's `preserveParens` does. So only a hand-built AST reaches those cases.
+describe("for-of heads starting with `async` or `let`", () => {
+  checkCases([
+    ["async", program(forOf(id("async"))), "for ((async) of y);\n"],
+    ["paren-async", program(forOf(paren(id("async")))), "for ((async) of y);\n"],
+    ["paren-paren-async", program(forOf(paren(paren(id("async"))))), "for ((async) of y);\n"],
+    // `for await (async of ...)` is allowed
+    ["await-paren-async", program(forOf(paren(id("async")), true)), "for await (async of y);\n"],
+    [
+      "paren-async-member",
+      program(forOf(member(paren(id("async")), id("x")))),
+      "for (async.x of y);\n",
+    ],
+    ["paren-let", program(forOf(paren(id("let")))), "for ((let) of y);\n"],
+    // Computed members
+    [
+      "async-computed",
+      program(forOf(computedMember(id("async"), str("x")))),
+      'for (async["x"] of y);\n',
+    ],
+    [
+      "let-computed",
+      program(forOf(computedMember(id("let"), str("x")))),
+      'for ((let)["x"] of y);\n',
+    ],
+    [
+      "paren-async-computed",
+      program(forOf(computedMember(paren(id("async")), str("x")))),
+      'for (async["x"] of y);\n',
+    ],
+    [
+      "paren-let-computed",
+      program(forOf(computedMember(paren(id("let")), str("x")))),
+      'for ((let)["x"] of y);\n',
+    ],
+    [
+      "paren-whole-async-computed",
+      program(forOf(paren(computedMember(id("async"), str("x"))))),
+      'for (async["x"] of y);\n',
+    ],
+    [
+      "paren-whole-let-computed",
+      program(forOf(paren(computedMember(id("let"), str("x"))))),
+      'for ((let)["x"] of y);\n',
+    ],
+  ]);
+});
+
+// V8 runtime calls, e.g. `%DebugPrint(x)`. The parser only produces them with its `allowV8Intrinsics` option,
+// which neither `oxc-parser`'s Node.js API nor the conformance binding exposes, so only a hand-built AST reaches
+// them. Each expected output is what `oxc_codegen` prints for the same source, parsed with `allow_v8_intrinsics`.
+describe("V8 intrinsics", () => {
+  const debugPrint = () => v8("DebugPrint", [id("x")]);
+
+  checkCases([
+    ["statement", e(debugPrint()), "%DebugPrint(x);\n"],
+    ["no-args", e(v8("DebugPrint")), "%DebugPrint();\n"],
+    ["string-arg", e(v8("DebugPrint", [str("hi")])), '%DebugPrint("hi");\n'],
+    ["nested", e(v8("DebugPrint", [v8("GetFoo"), id("x")])), "%DebugPrint(%GetFoo(), x);\n"],
+    // Parenthesized where a postfix operator follows, and under `new`
+    ["member", e(member(debugPrint(), id("y"))), "(%DebugPrint(x)).y;\n"],
+    ["computed-member", e(computedMember(debugPrint(), num(0))), "(%DebugPrint(x))[0];\n"],
+    ["callee", e(call(debugPrint())), "(%DebugPrint(x))();\n"],
+    ["new-callee", e(newExpr(debugPrint())), "new (%DebugPrint(x))();\n"],
+    // Not parenthesized as an operand or an argument
+    ["unary-operand", e(unary("!", debugPrint())), "!%DebugPrint(x);\n"],
+    ["binary-operand", e(bin("+", debugPrint(), num(1))), "%DebugPrint(x) + 1;\n"],
+    ["argument", e(call(id("f"), [debugPrint()])), "f(%DebugPrint(x));\n"],
   ]);
 });
 

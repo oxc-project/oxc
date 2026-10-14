@@ -10,6 +10,52 @@ use crate::symbol_value::FreshValueKind;
 use super::PeepholeOptimizations;
 
 impl<'a> PeepholeOptimizations {
+    /// Seed parameter constants before traversing an immediately invoked function.
+    /// The arguments stay at the call site, preserving their evaluation order.
+    pub fn init_iife_parameter_values(call: &CallExpression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let params = match &call.callee {
+            Expression::ArrowFunctionExpression(arrow) => &arrow.params,
+            Expression::FunctionExpression(function) => {
+                // Sloppy functions expose mapped arguments and caller introspection.
+                // A referenced function name can escape or recurse with other arguments.
+                if !ctx.scoping().scope_flags(function.scope_id()).is_strict_mode()
+                    || function
+                        .id
+                        .as_ref()
+                        .is_some_and(|id| !ctx.scoping().symbol_is_unused(id.symbol_id()))
+                {
+                    return;
+                }
+                &function.params
+            }
+            _ => return,
+        };
+        if params.items.is_empty()
+            || params.rest.is_some()
+            || params
+                .items
+                .iter()
+                .any(|param| !param.pattern.is_binding_identifier() || param.initializer.is_some())
+            || call.arguments.iter().any(Argument::is_spread)
+        {
+            return;
+        }
+        for (param, argument) in params.items.iter().zip(&call.arguments) {
+            let BindingPattern::BindingIdentifier(id) = &param.pattern else { unreachable!() };
+            let symbol_id = id.symbol_id();
+            // A body declaration can replace a parameter before its first read.
+            if !ctx.scoping().symbol_redeclarations(symbol_id).is_empty() {
+                continue;
+            }
+            if let Some(value) = argument.to_expression().evaluate_value(ctx) {
+                // `init_value` and its consumers reject direct eval and writes,
+                // including writes from nested closures.
+                ctx.init_value(symbol_id, Some(value), FreshValueKind::None, false, false)
+                    .allow_constant_inlining = false;
+            }
+        }
+    }
+
     pub fn init_symbol_value(decl: &VariableDeclarator<'a>, ctx: &mut TraverseCtx<'a>) {
         let Ancestor::VariableDeclarationDeclarations(declaration) = ctx.parent() else {
             unreachable!();

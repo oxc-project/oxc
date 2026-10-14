@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- c2e6d5f formatter_toml: [**BREAKING**] Add `oxc_formatter_toml` crate wrapping `oxc-toml` (#27365) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 76ec31b formatter_css: Support css-in-js placeholders in property names and conditions (#27640) (leaysgur)
+- 99bb268 formatter_css: Keep css-in-js placeholder as media type (#27639) (leaysgur)
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+### 📚 Documentation
+
+- 4a28c91 formatter_css: Clarify `missed-semicolon-accepted` divergence (#27433) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🚀 Features
+
+- b538e3c formatter_css: Parse embedded CSS as a block's contents (#27284) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- e9ae2d8 formatter_css: Fix layouts found in mdn-content repo (css-in-md) (#27326) (leaysgur)
+- 6c08f2a formatter_css: Apply the `url()` import exception to a lone comma group (#27288) (leaysgur)
+- 1967302 formatter_css: Hug a spaced `ident (` only at the at-rule prelude head (#27283) (leaysgur)
+
+### 📚 Documentation
+
+- 51506c6 formatter_css: Record divergences found in mdn-content (css-in-md) (#27327) (leaysgur)
+
 ## [0.69.0] - 2026-09-21
 
 ### 📚 Documentation

@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -171,10 +172,10 @@ impl Rule for NoDeprecatedFunctions {
                 let Expression::Identifier(ident) = &mem_expr.object else {
                     return;
                 };
-                let Some(name) = mem_expr.static_property_name() else {
+                let Some(name) = mem_expr.static_property_name().and_then(JSStr::as_str) else {
                     return;
                 };
-                (ident.name.as_str(), name.as_str(), mem_expr.span)
+                (ident.name.as_str(), name, mem_expr.span)
             }
             _ => return,
         };

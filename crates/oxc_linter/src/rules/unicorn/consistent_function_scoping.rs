@@ -90,7 +90,9 @@ declare_oxc_lint!(
     ///	  }
     ///	  return doBar;
     /// }
+    /// ```
     ///
+    /// ```js
     /// function doFoo(foo) {
     ///   const doBar = bar => {
     ///     return bar === 'bar';
@@ -107,7 +109,9 @@ declare_oxc_lint!(
     /// export function doFoo(foo) {
     ///   return doBar;
     /// }
+    /// ```
     ///
+    /// ```js
     /// export function doFoo(foo) {
     ///   function doBar(bar) {
     ///     return bar === 'bar' && foo.doBar(bar);
@@ -475,7 +479,7 @@ impl<'a> Visit<'a> for ReferencesFinder {
     }
 
     fn visit_private_identifier(&mut self, it: &PrivateIdentifier<'a>) {
-        self.private_references.push(it.node_id.get());
+        self.private_references.push(it.node_id());
     }
 
     fn visit_jsx_element_name(&mut self, _it: &JSXElementName<'a>) {

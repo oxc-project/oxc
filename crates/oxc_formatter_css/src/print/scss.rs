@@ -54,6 +54,7 @@ pub(super) fn write_sass_variable_declaration<'a>(
         .comments()
         .iter_before(value_start)
         .next()
+        .copied()
         .is_some_and(|c| value::comment_is_own_line(c, source));
     let hard_list = top_level_value_breaks_hard(&decl.value, ctx, f);
     let body = format_with(move |f: &mut CssFormatter<'_, 'a>| {
@@ -118,7 +119,7 @@ pub(super) fn top_level_value_breaks_hard<'a>(
         .iter_before(value_span.end)
         .any(|c| c.span.start >= value_span.start);
     has_comments
-        || elements.iter().enumerate().any(|(i, el)| {
+        || elements.iter().any(|el| {
             let group = match el {
                 ComponentValue::SassList(inner) if inner.comma_spans.is_none() => {
                     &inner.elements[..]
@@ -128,7 +129,7 @@ pub(super) fn top_level_value_breaks_hard<'a>(
                 }
                 other => std::slice::from_ref(other),
             };
-            value::comma_group_is_multi(group, i == 0)
+            value::comma_group_is_multi(group)
         })
 }
 

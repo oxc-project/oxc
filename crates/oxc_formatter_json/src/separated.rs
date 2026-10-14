@@ -95,7 +95,7 @@ fn write_trailing_separator(upper_bound: u32, f: &mut JsonFormatter<'_, '_>) {
 
     if let Some(block_end) = block_end {
         for c in f.context().comments().take_before(block_end) {
-            write!(f, [space(), FormatCommentBeforeContent::new(*c)]);
+            write!(f, [space(), FormatCommentBeforeContent::new(c)]);
         }
     }
 
@@ -142,7 +142,7 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
     };
 
     for c in block_comments {
-        write!(f, [space(), FormatCommentBeforeContent::new(*c)]);
+        write!(f, [space(), FormatCommentBeforeContent::new(c)]);
     }
     write!(f, ",");
 
@@ -151,7 +151,6 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
         // so its width doesn't count against the preceding value's group budget.
         // Without this, `"k": [a, b], // long...`
         // would force the array to expand even when it fits on its own.
-        let lc = *lc;
         write!(f, FormatLineCommentSuffix::new(lc).with_leading_space());
         // Promote to `empty_line` when the source preserves a blank line after the trailing comment;
         // otherwise a hard break (also flushes the line_suffix).

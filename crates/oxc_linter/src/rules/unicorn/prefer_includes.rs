@@ -111,19 +111,13 @@ impl Rule for PreferIncludes {
                 None
             }
         } else if bin_expr.operator == BinaryOperator::GreaterEqualThan {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
-                return;
-            };
-            if num_lit.raw.as_ref().unwrap() == "0" {
+            if bin_expr.right.without_parentheses().is_specific_raw_number_literal("0") {
                 Some(ComparisonKind::ExistsOnly)
             } else {
                 None
             }
         } else if bin_expr.operator == BinaryOperator::LessThan {
-            let Expression::NumericLiteral(num_lit) = bin_expr.right.without_parentheses() else {
-                return;
-            };
-            if num_lit.raw.as_ref().unwrap() == "0" {
+            if bin_expr.right.without_parentheses().is_specific_raw_number_literal("0") {
                 Some(ComparisonKind::NotExistsOnly)
             } else {
                 None
@@ -184,11 +178,7 @@ fn is_negative_one(expr: &Expression) -> bool {
         return false;
     }
 
-    let Expression::NumericLiteral(num_lit) = unary_expr.argument.without_parentheses() else {
-        return false;
-    };
-
-    num_lit.raw.as_ref().unwrap() == "1"
+    unary_expr.argument.without_parentheses().is_specific_raw_number_literal("1")
 }
 
 #[test]

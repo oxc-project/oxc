@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- 0c601f4 isolated-declarations: Allow adding undefined to keyof parameter types (#27173) (Dunqing)
+- 4896287 isolated-declarations: Support readonly parameter types (#27009) (sama Pyb)
+
 ## [0.150.0] - 2026-09-14
 
 ### ⚡ Performance

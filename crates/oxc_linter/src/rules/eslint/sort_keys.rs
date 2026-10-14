@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cmp::Ordering, str::Chars};
+use std::{borrow::Cow, cmp::Ordering, iter::Peekable};
 
 use oxc_ast::{
     AstKind,
@@ -408,7 +408,8 @@ fn sorted_property_indices(
 ) -> Vec<usize> {
     let mut indices: Vec<usize> = (0..props.len()).collect();
 
-    indices.sort_unstable_by(|&a, &b| {
+    // A stable sort keeps duplicate keys in source order, so the last one still wins.
+    indices.sort_by(|&a, &b| {
         let cmp = compare_keys(&props[a].key, &props[b].key, options);
         match sort_order {
             SortOrder::Asc => cmp,
@@ -440,61 +441,102 @@ fn build_property_text<'a>(
     Cow::Owned(format!("{before_value}{replacement}{after_value}"))
 }
 
+/// Compare like ESLint's `natural-compare`, which works on UTF-16 code units:
+/// a digit run that starts with `1`-`9` compares by numeric value,
+/// and other code units compare in the order of [`natural_rank`].
+/// `natural-compare` reads a NUL code unit as the end of the string,
+/// so each key is compared up to its first NUL.
+///
+/// Case-insensitive mode lowercases ASCII only, where ESLint lowercases with `toLowerCase`.
 fn natural_compare(a: &str, b: &str, case_sensitive: bool) -> Ordering {
-    let mut a_chars = a.chars();
-    let mut b_chars = b.chars();
+    compare_natural(
+        a.encode_utf16().take_while(|&unit| unit != 0).map(u32::from),
+        b.encode_utf16().take_while(|&unit| unit != 0).map(u32::from),
+        case_sensitive,
+    )
+}
 
+fn compare_natural(
+    a: impl Iterator<Item = u32>,
+    b: impl Iterator<Item = u32>,
+    case_sensitive: bool,
+) -> Ordering {
+    let (mut a, mut b) = (a.peekable(), b.peekable());
+    let normalize = |c: u32| {
+        if !case_sensitive && (u32::from(b'A')..=u32::from(b'Z')).contains(&c) {
+            c + u32::from(b'a' - b'A')
+        } else {
+            c
+        }
+    };
     loop {
-        let a_next = a_chars.next();
-        let b_next = b_chars.next();
-
-        match (a_next, b_next) {
-            (None, None) => return Ordering::Equal,
-            (Some(_), None) => return Ordering::Greater,
-            (None, Some(_)) => return Ordering::Less,
-            (Some(a_raw), Some(b_raw)) => {
-                let a_char = if case_sensitive { a_raw } else { a_raw.to_ascii_lowercase() };
-                let b_char = if case_sensitive { b_raw } else { b_raw.to_ascii_lowercase() };
-
-                if a_char == b_char {
-                    continue;
-                }
-                if a_char.is_ascii_digit() && b_char.is_ascii_digit() {
-                    let n1 = take_numeric(&mut a_chars, a_char);
-                    let n2 = take_numeric(&mut b_chars, b_char);
-                    match n1.cmp(&n2) {
-                        Ordering::Equal => continue,
-                        ord => return ord,
-                    }
-                }
-                if a_char.is_alphanumeric() && !b_char.is_alphanumeric() {
-                    return Ordering::Greater;
-                }
-                if !a_char.is_alphanumeric() && b_char.is_alphanumeric() {
-                    return Ordering::Less;
-                }
-                if a_char == '[' && b_char.is_alphanumeric() {
-                    return Ordering::Greater;
-                }
-                if a_char.is_alphanumeric() && b_char == '[' {
-                    return Ordering::Less;
-                }
-                return a_char.cmp(&b_char);
+        let (Some(&a_char), Some(&b_char)) = (a.peek(), b.peek()) else {
+            return a.peek().is_some().cmp(&b.peek().is_some());
+        };
+        // A leading zero does not start a number, so `a01` compares `0` with `1` as characters.
+        if is_nonzero_digit(a_char) && is_nonzero_digit(b_char) {
+            match compare_digit_runs(&mut a, &mut b) {
+                Ordering::Equal => continue,
+                ordering => return ordering,
             }
+        }
+        a.next();
+        b.next();
+        let (a_char, b_char) = (normalize(a_char), normalize(b_char));
+        if a_char != b_char {
+            return natural_rank(a_char).cmp(&natural_rank(b_char));
         }
     }
 }
 
-fn take_numeric(iter: &mut Chars, first: char) -> u32 {
-    let mut sum = first.to_digit(10).unwrap();
-    for c in iter.by_ref() {
-        if let Some(digit) = c.to_digit(10) {
-            sum = sum * 10 + digit;
-        } else {
-            break;
+/// The order of `natural-compare` for one code unit: ASCII punctuation, `-`, digits, `A-Z`, `a-z`,
+/// then every code unit above U+007F by value.
+fn natural_rank(c: u32) -> u32 {
+    match c {
+        // `-`
+        0x2D => 65,
+        // `.` and `/`
+        0x2E..=0x2F => c - 1,
+        // `0`-`9`
+        0x30..=0x39 => c + 18,
+        // `:` to `@`
+        0x3A..=0x40 => c - 11,
+        // `A`-`Z`
+        0x41..=0x5A => c + 11,
+        // `[` to `` ` ``
+        0x5B..=0x60 => c - 37,
+        // `a`-`z`
+        0x61..=0x7A => c + 5,
+        // `{` to DEL
+        0x7B..=0x7F => c - 63,
+        _ => c,
+    }
+}
+
+fn is_nonzero_digit(c: u32) -> bool {
+    (u32::from(b'1')..=u32::from(b'9')).contains(&c)
+}
+
+/// Compare two digit runs that start with a nonzero digit, by numeric value and without overflow.
+///
+/// A longer run is the larger number, and runs of equal length compare digit by digit.
+/// Equal runs are consumed in full, so the comparison continues after them.
+/// `natural-compare` converts runs to doubles, so runs that differ only beyond 2^53 compare equal
+/// there; here they compare exactly.
+fn compare_digit_runs(
+    a: &mut Peekable<impl Iterator<Item = u32>>,
+    b: &mut Peekable<impl Iterator<Item = u32>>,
+) -> Ordering {
+    let is_digit = |c: &u32| (u32::from(b'0')..=u32::from(b'9')).contains(c);
+    let mut ordering = Ordering::Equal;
+    loop {
+        match (a.next_if(is_digit), b.next_if(is_digit)) {
+            (Some(a_digit), Some(b_digit)) => ordering = ordering.then(a_digit.cmp(&b_digit)),
+            (Some(_), None) => return Ordering::Greater,
+            (None, Some(_)) => return Ordering::Less,
+            (None, None) => return ordering,
         }
     }
-    sum
 }
 
 fn extract_text_between_spans(source_text: &str, current_span: Span, next_span: Span) -> &str {
@@ -603,6 +645,39 @@ fn test() {
             Some(serde_json::json!(["asc", { "natural": true }])),
         ),
         ("var obj = {'a²': 1, 'b³': 2}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        // Digit runs compare by value, and a leading zero compares as a character, like ESLint.
+        ("var obj = {a12:1, a100:2}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        (
+            "var obj = {item1Name:1, item10Name:2}",
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (
+            "var obj = {step01Init:1, step1Build:2}",
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        ("var obj = {a0:1, a00:2}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        ("var obj = {a01:1, a1:2}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        (
+            "var obj = {a9:1, a10:2, a99999999999999999999:3}",
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (
+            "var obj = {A12:1, a100:2}",
+            Some(serde_json::json!(["asc", { "natural": true, "caseSensitive": false }])),
+        ),
+        // Other characters follow natural-compare's order, like ESLint.
+        (
+            r#"var obj = {"/user/list": 1, "/user-list": 2}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (r#"var obj = {a_b: 1, "a-b": 2}"#, Some(serde_json::json!(["asc", { "natural": true }]))),
+        (r#"var obj = {a: 1, "€": 2}"#, Some(serde_json::json!(["asc", { "natural": true }]))),
+        // natural-compare stops at a NUL code unit, like ESLint.
+        (
+            r#"var obj = {"\0b": 1, "\0a": 2}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (r#"var obj = {"a\0z": 1, "a": 2}"#, Some(serde_json::json!(["asc", { "natural": true }]))),
         (
             "var obj = {b_:1, a:2, b:3}",
             Some(serde_json::json!(["asc", { "natural": true, "minKeys": 4 }])),
@@ -1005,6 +1080,33 @@ fn test() {
         ("var obj = {b_:1, a:2, b:3}", Some(serde_json::json!(["asc", { "natural": true }]))),
         ("var obj = {b_:1, c:2, C:3}", Some(serde_json::json!(["asc", { "natural": true }]))),
         ("var obj = {$:1, A:3, _:2, a:4}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        // Digit runs compare by value, and a leading zero compares as a character, like ESLint.
+        ("var obj = {a100:1, a12:2}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        (
+            "var obj = {item10Name:1, item1Name:2}",
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (
+            "var obj = {step1Build:1, step01Init:2}",
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        ("var obj = {a00:1, a0:2}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        ("var obj = {a1:1, a01:2}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        (
+            "var obj = {a100:1, A12:2}",
+            Some(serde_json::json!(["asc", { "natural": true, "caseSensitive": false }])),
+        ),
+        // Other characters follow natural-compare's order, like ESLint.
+        (
+            r#"var obj = {"/user-list": 1, "/user/list": 2}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
+        (r#"var obj = {"a-b": 1, a_b: 2}"#, Some(serde_json::json!(["asc", { "natural": true }]))),
+        (r#"var obj = {"€": 1, a: 2}"#, Some(serde_json::json!(["asc", { "natural": true }]))),
+        (
+            r#"var obj = {"b\0a": 1, "a\0b": 2}"#,
+            Some(serde_json::json!(["asc", { "natural": true }])),
+        ),
         (
             "var obj = {1:1, 2:4, A:3, '11':2}",
             Some(serde_json::json!(["asc", { "natural": true }])),
@@ -1283,6 +1385,11 @@ fn test() {
     // Add comprehensive fixer tests: the rule now advertises conditional fixes,
     // so provide expect_fix cases.
     let fix = vec![
+        // Past 20 properties, an unstable sort could swap the duplicate `b` keys.
+        (
+            "var obj = {n:0, b:1, g:2, t:3, i:4, s:5, h:6, b:7, c:8, u:9, r:10, q:11, d:12, f:13, j:14, l:15, p:16, e:17, a:18, k:19, o:20, m:21}",
+            "var obj = {a:18, b:1, b:7, c:8, d:12, e:17, f:13, g:2, h:6, i:4, j:14, k:19, l:15, m:21, n:0, o:20, p:16, q:11, r:10, s:5, t:3, u:9}",
+        ),
         // Basic alphabetical sorting
         ("var obj = {b:1, a:2}", "var obj = {a:2, b:1}"),
         // Case sensitivity - lowercase comes after uppercase, so a:2 should come after B:1
@@ -1529,4 +1636,67 @@ fn test() {
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
+}
+
+#[test]
+fn test_natural_fix() {
+    use crate::tester::Tester;
+    let fix = vec![(
+        "var obj = {a100:1, a12:2, a2:3}",
+        "var obj = {a2:3, a12:2, a100:1}",
+        Some(serde_json::json!(["asc", { "natural": true }])),
+    )];
+    Tester::new::<&str>(SortKeys::NAME, SortKeys::PLUGIN, vec![], vec![]).expect_fix(fix).test();
+}
+
+/// Sorting the fix relies on a total order: an inconsistent comparator can panic in `sort_by`.
+#[test]
+fn natural_order_is_total() {
+    let names = [
+        "",
+        "0",
+        "1",
+        "01",
+        "a",
+        "a0",
+        "a00",
+        "a01",
+        "a1",
+        "a1b",
+        "a01b",
+        "a2",
+        "a10",
+        "a12",
+        "a20",
+        "a100",
+        "A2",
+        "a2a",
+        "a2b",
+        "a99999999999999999999",
+        "a100000000000000000000",
+        "_",
+        "-",
+        "\0a",
+        "\0b",
+        "a\0z",
+    ];
+    for case_sensitive in [true, false] {
+        for a in names {
+            for b in names {
+                let ab = natural_compare(a, b, case_sensitive);
+                assert_eq!(ab, natural_compare(b, a, case_sensitive).reverse(), "{a:?} {b:?}");
+                for c in names {
+                    if ab != Ordering::Greater
+                        && natural_compare(b, c, case_sensitive) != Ordering::Greater
+                    {
+                        assert_ne!(
+                            natural_compare(a, c, case_sensitive),
+                            Ordering::Greater,
+                            "{a:?} <= {b:?} <= {c:?}"
+                        );
+                    }
+                }
+            }
+        }
+    }
 }

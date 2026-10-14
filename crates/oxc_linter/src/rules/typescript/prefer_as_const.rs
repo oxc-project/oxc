@@ -122,13 +122,9 @@ fn literal_type_span_if_matches(
             }
             _ => None,
         },
-        TSLiteral::NumericLiteral(number_literal) => match initial_value_expression {
-            Expression::NumericLiteral(initial_number) => {
-                ((number_literal.value - initial_number.value).abs() < f64::EPSILON)
-                    .then_some(number_literal.span)
-            }
-            _ => None,
-        },
+        TSLiteral::NumericLiteral(number_literal) => initial_value_expression
+            .is_number_value(number_literal.value)
+            .then_some(number_literal.span),
         _ => None,
     }
 }

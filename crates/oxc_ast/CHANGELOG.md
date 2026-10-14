@@ -4,6 +4,30 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+- b5e8eff parser: [**BREAKING**] Assign node IDs during parsing (#27411) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7e6a050 semantic: Visit `TSMethodSignature` computed method keys in enclosing scope (#27357) (camc314)
+
+### ⚡ Performance
+
+- 5487247 ast: Generate derive for `CloneIn` on `Comment` (#27542) (overlookmotel)
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+
+## [0.153.0] - 2026-10-05
+
+### 🚀 Features
+
+- 07833c0 ast: Tie `debug_name` return lifetime to the underlying AST node (#27295) (sadan)
+- cc82598 minifier: Merge import and export statements against the same module (#25533) (翠)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🐛 Bug Fixes

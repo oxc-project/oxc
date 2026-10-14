@@ -1,5 +1,7 @@
 mod embed;
 
+pub use embed::embed_hug;
+
 use unicode_width::UnicodeWidthStr;
 
 use std::cmp;
@@ -30,20 +32,7 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        // Angular `@Component({ template, styles })`
-        if embed::try_format_angular_component(self, f) {
-            return;
-        }
-        // styled-jsx: <style jsx>{`...`}</style> or <div css={`...`} />
-        if embed::try_format_css_template(self, f) {
-            return;
-        }
-        // graphql(`...`) function call
-        if embed::try_format_graphql_call(self, f) {
-            return;
-        }
-        // Language comment: /* HTML */ `...` or /* GraphQL */ `...`
-        if embed::try_format_comment_embedded(self, f) {
+        if embed::try_format_template_literal(self, f) {
             return;
         }
         let template = TemplateLike::TemplateLiteral(self);
@@ -728,7 +717,10 @@ impl<'a> EachTemplateTable<'a> {
 
             recording.stop();
 
-            let root = Document::new(vec_buffer.into_vec(), Vec::default());
+            // TODO: The printed text IS the output, not just a width measurement,
+            // so a `TailwindClass` inside `expr` (e.g. JSX `className` under `sortTailwindcss`) prints UNSORTED.
+            let root =
+                Document::new(vec_buffer.into_vec(), f.session().unsorted_tailwind_classes());
 
             let print_options = f.options().as_print_options();
             // TODO: if `unwrap()` panics here, it's a internal error

@@ -99,8 +99,7 @@ pub fn format_to_ir<'a>(
 
     write!(&mut buffer, FormatYamlEmbedded { root });
 
-    // YAML never collects Tailwind classes.
-    Ok(EmbeddedIr { ir: buffer.into_vec(), tailwind_classes: Vec::new() })
+    Ok(EmbeddedIr { ir: buffer.into_vec() })
 }
 
 /// Parse the source into the yaml-unist-shaped AST and bridge comment trivia,

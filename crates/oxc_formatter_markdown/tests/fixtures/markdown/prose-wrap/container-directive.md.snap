@@ -29,6 +29,13 @@ A paragraph right before an opener:
 The opener interrupts it, so a blank line separates them.
 :::
 
+<!-- A fence left open inside a directive closes at its closer, printed explicitly -->
+
+::: code-group
+````js
+a
+:::
+
 ==================== Output ====================
 ---------------------------------------
 { printWidth: 80, proseWrap: "always" }
@@ -61,6 +68,14 @@ A paragraph right before an opener:
 The opener interrupts it, so a blank line separates them.
 :::
 
+<!-- A fence left open inside a directive closes at its closer, printed explicitly -->
+
+::: code-group
+```js
+a
+```
+:::
+
 ----------------------------------------
 { printWidth: 100, proseWrap: "always" }
 ----------------------------------------
@@ -88,6 +103,14 @@ A paragraph right before an opener:
 
 :::note
 The opener interrupts it, so a blank line separates them.
+:::
+
+<!-- A fence left open inside a directive closes at its closer, printed explicitly -->
+
+::: code-group
+```js
+a
+```
 :::
 
 --------------------------------------
@@ -119,6 +142,14 @@ A paragraph right before an opener:
 The opener interrupts it, so a blank line separates them.
 :::
 
+<!-- A fence left open inside a directive closes at its closer, printed explicitly -->
+
+::: code-group
+```js
+a
+```
+:::
+
 ---------------------------------------
 { printWidth: 100, proseWrap: "never" }
 ---------------------------------------
@@ -146,6 +177,14 @@ A paragraph right before an opener:
 
 :::note
 The opener interrupts it, so a blank line separates them.
+:::
+
+<!-- A fence left open inside a directive closes at its closer, printed explicitly -->
+
+::: code-group
+```js
+a
+```
 :::
 
 -----------------------------------------
@@ -179,6 +218,14 @@ A paragraph right before an opener:
 The opener interrupts it, so a blank line separates them.
 :::
 
+<!-- A fence left open inside a directive closes at its closer, printed explicitly -->
+
+::: code-group
+```js
+a
+```
+:::
+
 ------------------------------------------
 { printWidth: 100, proseWrap: "preserve" }
 ------------------------------------------
@@ -208,6 +255,14 @@ A paragraph right before an opener:
 
 :::note
 The opener interrupts it, so a blank line separates them.
+:::
+
+<!-- A fence left open inside a directive closes at its closer, printed explicitly -->
+
+::: code-group
+```js
+a
+```
 :::
 
 ===================== End =====================

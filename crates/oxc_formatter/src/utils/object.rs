@@ -107,9 +107,15 @@ pub fn should_preserve_string_quote(string: &StringLiteral<'_>, f: &JsFormatter<
     !is_identifier_name_patched(quote_less_content)
 }
 
-/// Determine if the property key string literal should preserve its quotes
-pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    matches!(&key, PropertyKey::StringLiteral(string) if should_preserve_string_quote(string, f))
+/// Determine if the property key string literal should preserve its quotes.
+/// Computed keys are ignored.
+pub fn should_preserve_quote(
+    key: &PropertyKey<'_>,
+    computed: bool,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    !computed
+        && matches!(&key, PropertyKey::StringLiteral(string) if should_preserve_string_quote(string, f))
 }
 
 /// Determine if the enum member name string literal should preserve its quotes.

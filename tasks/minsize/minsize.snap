@@ -15,7 +15,7 @@ Original   | minified   | minified   | gzip       | gzip       | Iterations | Fi
 
 1.01 MB    | 435.91 kB  | 458.89 kB  | 121.78 kB  | 126.71 kB  |          2 | bundle.min.js
 
-1.25 MB    | 634.24 kB  | 646.76 kB  | 158.44 kB  | 163.73 kB  |          2 | three.js
+1.25 MB    | 634.23 kB  | 646.76 kB  | 158.43 kB  | 163.73 kB  |          2 | three.js
 
 2.14 MB    | 707.61 kB  | 724.14 kB  | 160.07 kB  | 181.07 kB  |          2 | victory.js
 

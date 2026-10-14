@@ -38,6 +38,6 @@ pub const TEMPLATE_PLACEHOLDER_SUFFIX: &str = "`";
 pub use crate::{
     comments::CssComment,
     context::CssFormatContext,
-    format::{ParsedCss, format, format_to_ir, format_with_session, parse_for_format},
+    format::{CssRoot, ParsedCss, format, format_to_ir, format_with_session, parse_for_format},
     options::{CssFormatOptions, CssVariant, SingleQuote, TrailingCommas},
 };

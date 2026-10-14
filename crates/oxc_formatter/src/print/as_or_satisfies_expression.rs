@@ -100,8 +100,8 @@ fn format_as_or_satisfies_expression<'a>(
         let promoted = |c: &Comment| {
             c.followed_by_newline() && (c.preceded_by_newline() || c.is_multiline_block())
         };
-        let type_on_own_line = comments[..pre_glued_count].iter().any(|c| c.is_line())
-            || after_operator_comments[..glued_count].iter().any(|c| c.is_line())
+        let type_on_own_line = comments[..pre_glued_count].iter().any(Comment::is_line)
+            || after_operator_comments[..glued_count].iter().any(Comment::is_line)
             || (!is_union
                 && (pre_moved.iter().any(promoted)
                     || after_operator_comments[glued_count..].iter().any(promoted)));

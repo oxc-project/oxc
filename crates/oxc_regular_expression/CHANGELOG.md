@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- 8f61129 regex: Decode escaped capturing group names (#27156) (camc314)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🚀 Features

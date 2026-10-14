@@ -663,6 +663,11 @@ fn test_fold_math_functions_cbrt() {
     test_value("Math.cbrt(8)", "2");
     test_same_value("Math.cbrt(2)");
     test_same_value("Unknown.cbrt(1)");
+    // unlike `Math.sqrt`, `Math.cbrt` of a negative number is not NaN
+    test_value("Math.cbrt(-1)", "-1");
+    test_value("Math.cbrt(-8)", "-2");
+    test_value("Math.cbrt(-Infinity)", "-Infinity");
+    test_same_value("Math.cbrt(-2)");
 }
 
 #[test]

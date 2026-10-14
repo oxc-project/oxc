@@ -138,7 +138,7 @@ fn is_fixable_includes_call_expression(call_expr: &CallExpression) -> bool {
         return false;
     };
 
-    mem_expr.static_property_name() == Some("includes")
+    mem_expr.static_property_name().is_some_and(|name| name == "includes")
         // handle "expect(a.includes())"
         && !call_expr.arguments.is_empty()
         // handle "expect(a.includes(b,c))"

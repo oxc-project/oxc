@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -271,7 +272,8 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
         else {
             return;
         };
-        let Some(method_name) = callee_member_expr.static_property_name() else {
+        let Some(method_name) = callee_member_expr.static_property_name().and_then(JSStr::as_str)
+        else {
             return;
         };
 
@@ -315,7 +317,8 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
         else {
             return;
         };
-        let Some(method_name) = callee_member_expr.static_property_name() else {
+        let Some(method_name) = callee_member_expr.static_property_name().and_then(JSStr::as_str)
+        else {
             return;
         };
 
@@ -353,7 +356,8 @@ fn check_call_expr(call_expr: &CallExpression, ctx: &LintContext) {
             return;
         };
 
-        let Some(method_name) = callee_member_expr.static_property_name() else {
+        let Some(method_name) = callee_member_expr.static_property_name().and_then(JSStr::as_str)
+        else {
             return;
         };
         let is_reduce_call = method_name == "reduce";

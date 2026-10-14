@@ -2,6 +2,7 @@
 use std::borrow::Cow;
 use std::{fmt, hash::Hash};
 
+use bitflags::bitflags;
 use schemars::{
     JsonSchema, SchemaGenerator,
     schema::{InstanceType, Schema, SchemaObject},
@@ -424,7 +425,10 @@ pub trait RuleMeta {
 
     const CATEGORY: RuleCategory;
 
-    const IS_TSGOLINT_RULE: bool = false;
+    /// Flags describing this rule's capabilities.
+    ///
+    /// Set by `declare_oxc_lint!` based on the rule's declaration.
+    const FLAGS: RuleFlags = RuleFlags::empty();
 
     /// What kind of auto-fixing can this rule do?
     const FIX: RuleFixMeta = RuleFixMeta::None;
@@ -438,12 +442,6 @@ pub trait RuleMeta {
         None
     }
 
-    /// Whether this rule declares a configuration struct in `declare_oxc_lint!`.
-    ///
-    /// Defaults to `false`. Rules that accept configuration options will have
-    /// this set to `true` by the macro-generated impl.
-    const HAS_CONFIG: bool = false;
-
     /// The version of oxlint in which this rule was first available.
     ///
     /// Set via `version = "x.y.z"` or `version = "next"` in `declare_oxc_lint!`.
@@ -453,6 +451,19 @@ pub trait RuleMeta {
     ///
     /// Set via `short_description = "..."` in `declare_oxc_lint!`.
     const INFO: RuleInfo = RuleInfo { short_description: "" };
+}
+
+bitflags! {
+    /// Flags describing a lint rule's capabilities.
+    #[derive(Debug, Default, Clone, Copy, PartialEq, Eq, Hash)]
+    pub struct RuleFlags: u8 {
+        /// Whether this rule is exposed to the tsgolint integration.
+        const IS_TSGOLINT_RULE = 1 << 0;
+        /// Whether this rule declares a configuration type in `declare_oxc_lint!`.
+        const HAS_CONFIG = 1 << 1;
+        /// Whether this rule is recommended.
+        const IS_RECOMMENDED = 1 << 2;
+    }
 }
 
 /// Additional information describing a lint rule.
@@ -686,7 +697,7 @@ mod test {
             );
             // will panic if provided invalid markdown
             let html = to_html_with_options(rule.documentation().unwrap(), &options).unwrap();
-            assert!(!html.is_empty());
+            assert_ne!(html, "");
         }
     }
 

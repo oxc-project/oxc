@@ -54,7 +54,7 @@ fn test_undefined() {
     test_same("var [] = void 0");
     // `delete undefined` returns `false`
     // `delete void 0` returns `true`
-    test_same("delete undefined");
+    test("delete undefined", "");
 }
 
 #[test]
@@ -722,6 +722,20 @@ fn test_property_key() {
         "class C { static accessor __proto__ = 0 }",
     );
 
+    // A key with a lone surrogate keeps its string form without brackets.
+    test("v = { ['\\uD800']: 2 }", "v = { '\\uD800': 2 }");
+    test("v = ({ ['__proto__\\uD800']: 0 })", "v = ({ '__proto__\\uD800': 0 })");
+    test("({ ['\\uD800']: _ } = {})", "({ '\\uD800': _ } = {})");
+    test("var { ['\\uD800']: _ } = {}", "var { '\\uD800': _ } = {}");
+    test(
+        "class C { ['\\uD800'] = 1; static ['prototype\\uD800']() {} }",
+        "class C { '\\uD800' = 1; static 'prototype\\uD800'() {} }",
+    );
+    test(
+        "class C { accessor ['constructor\\uD800'] = 1 }",
+        "class C { accessor 'constructor\\uD800' = 1 }",
+    );
+
     // Patch KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
     // <https://github.com/oxc-project/unicode-id-start/pull/3>
     test_same("x = { 'x・': 0 };");
@@ -1115,7 +1129,7 @@ fn test_flatten_array_spread_elements() {
 }
 
 #[test]
-fn fold_sequence_expression() {
+fn test_fold_sequence_expression() {
     test("(a(), b) + c", "a(), b + c");
     test("(a(), b, c) + d", "a(), b, c + d");
 
@@ -1137,4 +1151,16 @@ fn fold_sequence_expression() {
         "async function a() { await (c(1), d(2), 3) }",
         "async function a() { c(1), d(2), await 3 }",
     );
+}
+
+#[test]
+fn test_substitute_yield_expression() {
+    test("function* a() { yield 2 }", "function* a() { yield 2; }");
+    test("function* a() { yield void 0; }", "function* a() { yield; }");
+    test("function* a() { yield undefined; }", "function* a() { yield; }");
+    test("function* a() { yield fn(); }", "function* a() { yield fn(); }");
+    test_same("function* a() { yield* void 0; }");
+    test("function* a() { yield* undefined; }", "function* a() { yield* void 0; }");
+    test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
+    test_same("function* a(undefined) { yield undefined; }");
 }

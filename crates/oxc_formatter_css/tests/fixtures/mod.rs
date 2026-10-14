@@ -8,7 +8,7 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_css::{CssFormatOptions, CssVariant, format, parse_for_format};
+use oxc_formatter_css::{CssFormatOptions, CssRoot, CssVariant, format, parse_for_format};
 use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
 
 mod options;
@@ -54,7 +54,7 @@ impl FixtureFormatter for CssHarness {
             &allocator,
             source,
             options,
-            /* template_placeholders */ is_embedded(path),
+            if is_embedded(path) { CssRoot::CssInJsTemplate } else { CssRoot::Stylesheet },
         )
         .expect("source should parse");
         Fingerprint { comments: parsed.comments.len() }
@@ -153,7 +153,7 @@ fn parse_error_is_err() {
     let scss = CssFormatOptions { variant: CssVariant::Scss, ..css };
     let less = CssFormatOptions { variant: CssVariant::Less, ..css };
     for (source, options) in [
-        // Root declaration: `TopLevelDeclaration` outside the css-in-js parse mode
+        // Root declaration: `TopLevelDeclaration` in a stylesheet, as opposed to a fragment (`CssRoot`)
         // (dart-sass rejects it; Less parses it like less.js).
         ("display: flex;", scss),
         // EOF/newline-unclosed constructs: oxc-css-parser (0.0.6+) recovers to a

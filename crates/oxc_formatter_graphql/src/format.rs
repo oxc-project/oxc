@@ -96,8 +96,7 @@ pub fn format_to_ir<'a>(
 
     write!(&mut buffer, FormatGraphqlEmbedded { document });
 
-    // GraphQL never collects Tailwind classes.
-    Ok(EmbeddedIr { ir: buffer.into_vec(), tailwind_classes: Vec::new() })
+    Ok(EmbeddedIr { ir: buffer.into_vec() })
 }
 
 /// Parse the source into a direct AST and collect comment trivia,

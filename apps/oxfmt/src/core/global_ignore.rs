@@ -76,7 +76,8 @@ pub fn build_global_ignore_matchers(
 /// Check if a path should be ignored by any of the matchers.
 /// A path is ignored if any matcher says it's ignored (and not whitelisted in that same matcher).
 ///
-/// When `check_ancestors: true`, also checks if any parent directory is ignored.
+/// When `check_ancestors: true`, a path below a parent directory ignored by a matcher is ignored too,
+/// even if the same matcher whitelists the path itself, see [`matches_with_ancestors`].
 /// This is more expensive, but necessary when paths (to be ignored) are passed directly via CLI arguments.
 /// For normal walking, walk is done in a top-down manner, so only the current path needs to be checked.
 pub fn is_ignored(
@@ -85,20 +86,27 @@ pub fn is_ignored(
     is_dir: bool,
     check_ancestors: bool,
 ) -> bool {
-    for matcher in matchers {
-        let matched = if check_ancestors {
-            // `matched_path_or_any_parents()` panics if path is not under matcher's root.
-            // Skip this matcher if the path is outside its scope.
-            if !path.starts_with(matcher.path()) {
-                continue;
-            }
-            matcher.matched_path_or_any_parents(path, is_dir)
+    matchers.iter().any(|matcher| {
+        if check_ancestors {
+            matches_with_ancestors(matcher, path, is_dir)
         } else {
-            matcher.matched(path, is_dir)
-        };
-        if matched.is_ignore() && !matched.is_whitelist() {
-            return true;
+            matcher.matched(path, is_dir).is_ignore()
         }
-    }
-    false
+    })
+}
+
+/// Check if a path is ignored by the matcher, or by one of its parent directories below the matcher's root.
+///
+/// Like Git, a negated pattern cannot re-include a path if one of its parent directories is excluded.
+/// This gives the same result as a top-down walk, which does not descend into an ignored directory.
+/// A path outside the matcher's root is never ignored.
+pub fn matches_with_ancestors(matcher: &Gitignore, path: &Path, is_dir: bool) -> bool {
+    let root = matcher.path();
+    path.starts_with(root)
+        && (matcher.matched(path, is_dir).is_ignore()
+            || path
+                .ancestors()
+                .skip(1)
+                .take_while(|ancestor| *ancestor != root && ancestor.starts_with(root))
+                .any(|ancestor| matcher.matched(ancestor, true).is_ignore()))
 }

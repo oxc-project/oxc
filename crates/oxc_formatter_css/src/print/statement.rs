@@ -129,6 +129,7 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             .comments()
             .iter_before(start)
             .last()
+            .copied()
             .is_some_and(|c| is_suppression_comment(source, c));
         flush_leading_comments(start, f);
         let end = stmt_end(stmt, f);
@@ -169,7 +170,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
         Statement::UnknownQualifiedRule(rule) => write_unknown_qualified_rule(rule, f),
         Statement::Declaration(decl) => {
             write_declaration(decl, f);
-            if matches!(decl.name, InterpolableIdent::Placeholder(_)) {
+            if decl.name.has_placeholder() {
                 // A css-in-js `${foo}: ${bar}` declaration keeps the source `;`
                 // (Prettier preserves it: `${foo}: ${bar};` vs `${foo}: ${bar}`).
                 let end = to_span(decl.span()).end;
@@ -344,10 +345,10 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     if let Some(prefix) = decl.name_prefix {
         write!(f, text(f.allocator().alloc_str(prefix.encode_utf8(&mut [0; 4]))));
     }
-    if let InterpolableIdent::Placeholder(placeholder) = &decl.name {
-        // A css-in-js placeholder property name (`${foo}: ...`) is a typed marker
+    if decl.name.has_placeholder() {
+        // A css-in-js placeholder property name (`${foo}: ...`, `${a}-${b}: ...`) holds typed markers
         // the host replaces with `${expr}`; never lowercase it like a real property.
-        super::write_placeholder(placeholder, f);
+        selector::write_interpolable_ident(&decl.name, f);
     } else if is_custom_property
         || f.context().in_less_detached().get()
         || f.context().in_icss_rule().get()

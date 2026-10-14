@@ -99,10 +99,10 @@ fn cook_block_string_lines(value: &str) -> Vec<&str> {
 
     // Strip leading/trailing blank lines.
     let is_blank = |line: &&str| line.bytes().all(|b| b == b' ' || b == b'\t');
-    while lines.first().is_some_and(&is_blank) {
+    while lines.first().is_some_and(is_blank) {
         lines.remove(0);
     }
-    while lines.last().is_some_and(&is_blank) {
+    while lines.last().is_some_and(is_blank) {
         lines.pop();
     }
     lines

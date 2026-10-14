@@ -512,7 +512,7 @@ impl PreferAt {
             2 => {
                 // Check if second argument is 0, which means slice returns empty array
                 let Some(second_arg) = call_expr.arguments[1].as_expression() else { return false };
-                if is_zero_index(second_arg) {
+                if second_arg.get_inner_expression().is_number_value(0.0) {
                     // slice(-N, 0) returns empty array, so [0] would be undefined
                     // This is not equivalent to .at(-N)
                     return false;
@@ -739,13 +739,6 @@ fn get_negative_integer(expr: &Expression, max_abs_value: Option<u32>) -> Option
     }
 
     Some(value)
-}
-
-fn is_zero_index(expr: &Expression) -> bool {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(num) => num.value.abs() < f64::EPSILON,
-        _ => false,
-    }
 }
 
 // Extract pattern: expression.length - N

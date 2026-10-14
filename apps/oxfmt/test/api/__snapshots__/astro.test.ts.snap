@@ -1,0 +1,49 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`Astro support > Basic > should accept all \`astro.*\` options together 1`] = `
+"---
+import b from "b";
+import a from "a";
+const items = [1, 2, 3];
+if (!items) return Astro.redirect("/404");
+---
+
+<div class="p-4 flex bg-red-500">
+  <Foo title={"x"} />
+  {items.map((i) => <p>{i}</p>)}
+</div>
+<script>
+  const x = 1;
+</script>
+<style>
+  div {
+    color: red;
+  }
+</style>
+"
+`;
+
+exports[`Astro support > Basic > should format \`.astro\` with \`astro: {}\` (defaults) 1`] = `
+"---
+import b from "b";
+import a from "a";
+const items = [1, 2, 3];
+if (!items) return Astro.redirect("/404");
+---
+
+<div class="p-4 flex bg-red-500">
+  <Foo title={"x"} />
+  {items.map((i) => (
+    <p>{i}</p>
+  ))}
+</div>
+<script>
+  const x = 1;
+</script>
+<style>
+  div {
+    color: red;
+  }
+</style>
+"
+`;

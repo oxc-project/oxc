@@ -105,7 +105,7 @@ impl Rule for NoArrayForEach {
                 }
                 match_member_expression!(Expression) => {
                     if let Some(name) = object.to_member_expression().static_property_name()
-                        && IGNORED_OBJECTS.contains(&name)
+                        && IGNORED_OBJECTS.iter().any(|object| *object == name)
                     {
                         return;
                     }

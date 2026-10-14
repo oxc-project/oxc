@@ -354,12 +354,12 @@ fn past_raw_string(src: &[u8], lim: usize, i: usize, quote: u8) -> usize {
     lim
 }
 
-/// For a template head whose backtick is at `i`: the `}` closing its first substitution and the
+/// For a template head whose backtick is at i: the brace closing its last substitution and the
 /// end (exclusive) of the whole literal, over raw bytes. `lim` when the `}` is not found before
 /// `lim`, `lim + 1` when the literal does not end before it. Cold: a template inside a
 /// speculated type-argument list.
 pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize) -> (usize, usize) {
-    let mut first_close = lim;
+    let mut last_close = lim;
     let mut subs: Vec<u32> = Vec::new();
     let mut in_text = true;
     let mut j = i + 1;
@@ -370,7 +370,7 @@ pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize) -> (usize, usiz
                 b'\\' => j += 2,
                 b'`' => {
                     if subs.is_empty() {
-                        return (first_close, j + 1);
+                        return (last_close, j + 1);
                     }
                     in_text = false;
                     j += 1;
@@ -396,8 +396,8 @@ pub(super) fn raw_template_end(src: &[u8], lim: usize, i: usize) -> (usize, usiz
                         _ => {
                             subs.pop();
                             in_text = true;
-                            if subs.is_empty() && first_close == lim {
-                                first_close = j;
+                            if subs.is_empty() {
+                                last_close = j;
                             }
                         }
                     }

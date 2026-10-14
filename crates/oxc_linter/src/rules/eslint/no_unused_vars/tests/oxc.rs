@@ -1929,17 +1929,6 @@ fn test_ambient_export_modifiers() {
         .test();
 }
 
-// #[test]
-// fn test_template() {
-//     let pass = vec![];
-
-//     let fail = vec![];
-
-//     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
-//         .with_snapshot_suffix("<replace>")
-//         .test_and_snapshot();
-// }
-
 #[test]
 fn test_remove_array_element_before_rest() {
     let fix = vec![(

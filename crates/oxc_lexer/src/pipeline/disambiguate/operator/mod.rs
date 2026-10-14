@@ -89,7 +89,7 @@ pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize
                     return context::after(tokens, walks, qi) != After::Value;
                 }
                 if !module && matches_tk!(kw, KwYield | KwAwait) {
-                    return context::after_scoped(tokens, walks, qi) != After::Value;
+                    return context::after(tokens, walks, qi) != After::Value;
                 }
                 return true;
             }

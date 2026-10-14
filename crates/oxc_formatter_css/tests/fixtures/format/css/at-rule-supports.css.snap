@@ -31,6 +31,8 @@ a {
     position: sticky;
   }
 }
+@supports (transform-style: preserve-3d) or ((-moz-transform-style: preserve-3d) or (-webkit-transform-style: preserve-3d)) {}
+@supports not (background-image: light-dark(url("light.png"), url("dark.png"))) {}
 
 ==================== Output ====================
 ------------------
@@ -75,6 +77,16 @@ a {
     position: sticky;
   }
 }
+@supports (transform-style: preserve-3d) or
+  (
+    (-moz-transform-style: preserve-3d) or
+      (-webkit-transform-style: preserve-3d)
+  ) {
+}
+@supports not (
+  background-image: light-dark(url("light.png"), url("dark.png"))
+) {
+}
 
 -------------------
 { printWidth: 100 }
@@ -116,6 +128,11 @@ a {
   @supports (position: sticky) {
     position: sticky;
   }
+}
+@supports (transform-style: preserve-3d) or
+  ((-moz-transform-style: preserve-3d) or (-webkit-transform-style: preserve-3d)) {
+}
+@supports not (background-image: light-dark(url("light.png"), url("dark.png"))) {
 }
 
 ===================== End =====================

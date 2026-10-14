@@ -264,7 +264,7 @@ pub fn write_tailwind_string_literal<'a>(
     let content = &normalized_string[1..normalized_string.len() - 1];
 
     if ctx.preserve_whitespace {
-        let index = f.context_mut().add_tailwind_class(content.to_string());
+        let index = f.session().add_tailwind_class(content.to_string());
         f.write_element(FormatElement::TailwindClass(index));
         write!(f, quote);
         return;
@@ -291,7 +291,7 @@ pub fn write_tailwind_string_literal<'a>(
     }
 
     // Sorted content
-    let index = f.context_mut().add_tailwind_class(trimmed.to_string());
+    let index = f.session().add_tailwind_class(trimmed.to_string());
     f.write_element(FormatElement::TailwindClass(index));
 
     // Trailing space
@@ -343,7 +343,7 @@ pub fn write_tailwind_template_element<'a>(
     // Write sortable content
     if ctx.preserve_whitespace {
         // Whitespace (including whitespace-only content) round-trips through the sorter unchanged
-        let index = f.context_mut().add_tailwind_class(sortable.to_string());
+        let index = f.session().add_tailwind_class(sortable.to_string());
         f.write_element(FormatElement::TailwindClass(index));
     } else if sortable.trim().is_empty() {
         // Whitespace-only → normalize to single space
@@ -362,7 +362,7 @@ pub fn write_tailwind_template_element<'a>(
             write!(f, text(" "));
         }
 
-        let index = f.context_mut().add_tailwind_class(sortable.trim().to_string());
+        let index = f.session().add_tailwind_class(sortable.trim().to_string());
         f.write_element(FormatElement::TailwindClass(index));
 
         // Trailing space: required if not at end of template, or if binary context requires it

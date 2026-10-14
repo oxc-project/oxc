@@ -69,8 +69,10 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
   const cwd = testCase.cwd ? join(fixture.fixturesPath, testCase.cwd) : fixture.fixturesPath;
 
   // Read all files before execution (for diff detection and tree)
-  const filesBefore = await readAllFiles(fixture.fixturesPath);
-  const tree = new Set(filesBefore.keys());
+  const { files: filesBefore, symlinks } = await readAllFiles(fixture.fixturesPath);
+  // path -> symlink target (if any)
+  const tree = new Map<string, string | undefined>(symlinks);
+  for (const path of filesBefore.keys()) tree.set(path, undefined);
 
   // Setup: create .gitignore files if specified
   const gitignoreFiles: string[] = [];
@@ -80,7 +82,7 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
       await fs.writeFile(fullPath, content);
       gitignoreFiles.push(fullPath);
       // Show generated files in the tree
-      tree.add(path);
+      tree.set(path, undefined);
     }
   }
 
@@ -140,18 +142,24 @@ export async function runFixture(fixture: Fixture, testCase: TestCaseOptions): P
 
 // --- File reading ---
 
-async function readAllFiles(dir: string): Promise<Map<string, string>> {
+async function readAllFiles(
+  dir: string,
+): Promise<{ files: Map<string, string>; symlinks: Map<string, string> }> {
   const files = new Map<string, string>();
+  const symlinks = new Map<string, string>(); // path -> link target
   const entries = await fs.readdir(dir, { withFileTypes: true, recursive: true });
 
   for (const entry of entries) {
-    if (!entry.isFile()) continue;
     const fullPath = join(entry.parentPath, entry.name);
     const relPath = relative(dir, fullPath).replace(/\\/g, "/");
-    files.set(relPath, await fs.readFile(fullPath, "utf8"));
+    if (entry.isFile()) {
+      files.set(relPath, await fs.readFile(fullPath, "utf8"));
+    } else if (entry.isSymbolicLink()) {
+      symlinks.set(relPath, (await fs.readlink(fullPath)).replace(/\\/g, "/"));
+    }
   }
 
-  return files;
+  return { files, symlinks };
 }
 
 // --- Diff detection and restore ---
@@ -215,7 +223,7 @@ interface SnapshotData {
   args: string[];
   env: Record<string, string> | undefined;
   cwdRelative: string | null; // relative path from fixtures/ to cwd, null if fixtures/ is cwd
-  tree: Set<string>;
+  tree: Map<string, string | undefined>; // relative path -> symlink target (if any)
   stdout: string;
   stderr: string;
   exitCode: number;
@@ -261,14 +269,15 @@ function buildSnapshot(data: SnapshotData): string {
   return snapshot;
 }
 
-function buildTreeView(files: Set<string>, cwdRelative: string | null): string {
+function buildTreeView(files: Map<string, string | undefined>, cwdRelative: string | null): string {
   // Build a nested structure from flat file paths
   interface TreeNode {
     children: Map<string, TreeNode>;
+    link?: string;
   }
   const root: TreeNode = { children: new Map() };
 
-  for (const file of files) {
+  for (const [file, link] of files) {
     const parts = file.split("/");
     let node = root;
     for (const part of parts) {
@@ -277,6 +286,7 @@ function buildTreeView(files: Set<string>, cwdRelative: string | null): string {
       }
       node = node.children.get(part)!;
     }
+    node.link = link;
   }
 
   // Determine which path segments are the cwd
@@ -296,7 +306,8 @@ function buildTreeView(files: Set<string>, cwdRelative: string | null): string {
       const indent = "  ".repeat(depth);
       const suffix = isDir ? "/" : "";
       const marker = isCwd ? " <CWD>" : "";
-      lines.push(`${indent}- ${name}${suffix}${marker}`);
+      const link = child.link === undefined ? "" : ` -> ${child.link}`;
+      lines.push(`${indent}- ${name}${suffix}${link}${marker}`);
       if (isDir) {
         render(child, depth + 1, currentPath);
       }

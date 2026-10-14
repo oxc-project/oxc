@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.88.0] - 2026-10-13
+
+### 🚀 Features
+
+- 3c361a7 linter/unicorn/prefer-query-selector: Add `allowWithVariables` option (#27346) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 82ecc43 linter/sort-keys: Compare natural order like ESLint (#27579) (Dunqing)
+- 598ac03 linter/unicorn/prefer-bigint-literals: Unwrap redundant constructor call; don't auto-fix for lost precision (#25690) (Jacob Bandes-Storch)
+- 2512213 linter: Prevent conflicting type import fixes (#27409) (camc314)
+
+### ⚡ Performance
+
+- 91b588c linter/oxc/bad-array-method-on-arguments: Check arguments references once (#26930) (camc314)
+- 8c57c5e linter: Share one source per file across type-aware diagnostics (#27462) (Max Schwenk)
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+
+### 📚 Documentation
+
+- 3bb54f6 linter: Update stale comment (#27519) (overlookmotel)
+- 848a4e7 linter: Update fix metadata for tsgolint rules that already provide fixes (#27408) (Mikhail Baev)
+
+## [1.87.0] - 2026-10-05
+
+### 🚀 Features
+
+- 42dcfd2 linter/react/no-unescaped-entities: Implement suggestion (#27292) (Mikhail Baev)
+- cd4510d linter/unicorn/no-useless-switch-case: Implement suggestion (#27245) (Mikhail Baev)
+- 1a7c902 linter/react/jsx-no-target-blank: Implement suggestion (#27181) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 176b4b9 linter/jsx-a11y/label-has-associated-control: Validate label attribute values (#27302) (sama Pyb)
+- 7d381c3 linter/jsx-a11y/mouse-events-have-key-events: Handle nullish event handlers (#27306) (sama Pyb)
+- 4e09837 linter/jsx-a11y/lang: Validate lang expression strings (#27304) (sama Pyb)
+- 7d28a66 linter/unicorn/numeric-separators-style: Report misgrouped BigInt literals (#27207) (breken)
+- e928322 linter/unicorn/no-zero-fractions: Parenthesize separator and large integers in fixer (#27206) (breken)
+- 3d61a59 parser: Validate TypeScript type member separators (#27222) (camc314)
+- f08236b linter/eslint/prefer-exponentiation-operator: Preserve autofix precedence (#27150) (camc314)
+- 7d60ae3 linter/valid-title: Continue checks after allowed words (#27146) (Cameron)
+- ad5dd5d linter/eslint/no-unused-vars: Respect disabled argument checks for used ignore patterns (#26925) (camc314)
+
 ## [1.86.0] - 2026-09-28
 
 ### 🚀 Features

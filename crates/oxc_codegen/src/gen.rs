@@ -4,6 +4,7 @@ use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::{
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
@@ -483,7 +484,13 @@ impl Gen for DoWhileStatement<'_> {
                 p.print_block_statement(block, ctx);
                 p.print_soft_space();
             }
-            Statement::EmptyStatement(s) => s.print(p, ctx),
+            Statement::EmptyStatement(s) => {
+                p.print_comments_at(s.span.start);
+                p.add_source_mapping(s.span);
+                p.print_semicolon();
+                p.print_soft_newline();
+                p.print_indent();
+            }
             _ => {
                 p.print_soft_newline();
                 p.indent();
@@ -1171,14 +1178,19 @@ impl Gen for TSNamespaceExportDeclaration<'_> {
     }
 }
 
+/// Get a module export name for comparison.
+///
+/// Compares as a [`JSStr`], so a string name never needs conversion to UTF-8.
 fn get_module_export_name<'a>(
     module_export_name: &ModuleExportName<'a>,
     p: &Codegen<'a>,
-) -> &'a str {
+) -> JSStr<'a> {
     match module_export_name {
-        ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-        ModuleExportName::IdentifierReference(ident) => p.get_identifier_reference_name(ident),
-        ModuleExportName::StringLiteral(s) => s.value.as_str(),
+        ModuleExportName::IdentifierName(ident) => JSStr::from(ident.name),
+        ModuleExportName::IdentifierReference(ident) => {
+            JSStr::from(p.get_identifier_reference_name(ident))
+        }
+        ModuleExportName::StringLiteral(literal) => literal.value,
     }
 }
 
@@ -1482,17 +1494,24 @@ impl GenExpr for NumericLiteral<'_> {
 
 impl GenExpr for BigIntLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
-        p.print_space_before_identifier();
-        p.add_source_mapping(self.span);
         let value = self.value.as_str();
-        if value.starts_with('-') && precedence >= Precedence::Prefix {
-            p.print_ascii_byte(b'(');
-            p.print_str(value);
-            p.print_str("n)");
+        if value.starts_with('-') {
+            if precedence >= Precedence::Prefix {
+                p.add_source_mapping(self.span);
+                p.print_ascii_byte(b'(');
+                p.print_str(value);
+                p.print_str("n)");
+                return;
+            }
+            // Printed as-is, starting with `-`, so it must not run into a `-` or `--` printed before it,
+            // the same as a negative `NumericLiteral`. `- -1n`, not `--1n`.
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
         } else {
-            p.print_str(value);
-            p.print_ascii_byte(b'n');
+            p.print_space_before_identifier();
         }
+        p.add_source_mapping(self.span);
+        p.print_str(value);
+        p.print_ascii_byte(b'n');
     }
 }
 
@@ -2742,10 +2761,18 @@ impl Gen for JSXAttributeValue<'_> {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
-                p.print_ascii_byte(quote);
-                p.print_str(&lit.value);
-                p.print_ascii_byte(quote);
+                if let Some(value) = lit.value.as_str() {
+                    let quote = if value.contains('"') { b'\'' } else { b'"' };
+                    p.print_ascii_byte(quote);
+                    p.print_str(value);
+                    p.print_ascii_byte(quote);
+                } else {
+                    // A lone surrogate cannot be written directly as UTF-8.
+                    // Use a JavaScript string expression for this generated attribute value.
+                    p.print_ascii_byte(b'{');
+                    p.print_string_literal(lit, false);
+                    p.print_ascii_byte(b'}');
+                }
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
         }
@@ -3192,7 +3219,9 @@ impl Gen for ArrayPattern<'_> {
             }
         }
         if let Some(rest) = &self.rest {
-            p.print_soft_space();
+            if !self.elements.is_empty() {
+                p.print_soft_space();
+            }
             rest.print(p, ctx);
         }
         p.print_ascii_byte(b']');

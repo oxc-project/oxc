@@ -173,7 +173,7 @@ fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Optio
         return None;
     }
     let (span, property_name) = member_expr.static_property_info()?;
-    Some((span, property_name))
+    Some((span, property_name.as_str()?))
 }
 
 fn get_non_jasmine_property_messages(name: &str) -> Option<(&'static str, &'static str)> {

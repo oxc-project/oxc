@@ -9,7 +9,7 @@
 use oxc_allocator::ArenaVec;
 
 use crate::{
-    Buffer as _, BufferExtensions as _, FormatContext, FormatElement, Formatter, TailwindCollector,
+    Buffer as _, BufferExtensions as _, FormatContext, FormatElement, Formatter,
     builders::{hard_line_break, text},
     dispatch_fragment_ir,
     spec::FrontMatter,
@@ -18,27 +18,25 @@ use crate::{
 
 /// Writes a front matter block.
 ///
-/// The body dispatches through the session when its resolved language is in `embeddable_languages`,
-/// the whole block stays verbatim otherwise.
+/// The body dispatches through the session when a dispatcher is installed
+/// and its resolved language is in `embeddable_languages`, the whole block stays verbatim otherwise.
 /// Membership means "gets the frame treatment", not "gets formatted":
 /// a member language without a serving formatter keeps its body verbatim (`PreserveOriginal`),
-/// but its EMPTY block still normalizes through the frame.
-/// Never fails; any refusal (`PreserveOriginal`, operational error, non-embeddable language) keeps the block's bytes as-is
-/// while the host document still formats.
+/// but its EMPTY block still normalizes through the frame when a dispatcher is installed.
+/// Never fails; any refusal (`PreserveOriginal`, operational error, no dispatcher, non-embeddable language)
+/// keeps the block's bytes as-is while the host document still formats.
 ///
 /// The composed shape (Prettier `embed.js` + its css/markdown printers):
 /// opening delimiter with the explicit language re-emitted (`---yaml`),
 /// the body IR between hardlines, then the closing delimiter (a `...` closing stays `...`).
 /// Spacing between the block and the host's body stays the caller's concern.
-pub fn write_front_matter<'a, C>(
+pub fn write_front_matter<'a, C: FormatContext>(
     fm: &FrontMatter<'a>,
     embeddable_languages: &[&str],
     f: &mut Formatter<'_, 'a, C>,
-) where
-    C: FormatContext + TailwindCollector,
-{
+) {
     let language = fm.language();
-    if embeddable_languages.contains(&language) {
+    if f.session().has_dispatcher() && embeddable_languages.contains(&language) {
         let body = fm.value.trim();
         if body.is_empty() {
             write_frame(fm, None, f);

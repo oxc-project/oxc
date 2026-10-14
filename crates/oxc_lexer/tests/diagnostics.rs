@@ -57,7 +57,7 @@ fn unterminated_template() {
     assert_eq!(codes("x = `a${b}c"), [DiagCode::UnterminatedTemplate]);
     // An open substitution at EOF is a parser-level error; oxc_parser's
     // lexer is also silent here.
-    assert!(codes("x = `a${b").is_empty());
+    assert_eq!(codes("x = `a${b"), []);
 }
 
 #[test]
@@ -77,7 +77,7 @@ fn unterminated_in_jsx_path() {
     assert_eq!(codes_jsx("const x = `abc"), [DiagCode::UnterminatedTemplate]);
     assert_eq!(codes_jsx("const x = 1 /* abc"), [DiagCode::UnterminatedBlockComment]);
     assert_eq!(codes_jsx("const x = /abc"), [DiagCode::UnterminatedRegexp]);
-    assert!(codes_jsx("const el = <div className='x'>hi</div>;").is_empty());
+    assert_eq!(codes_jsx("const el = <div className='x'>hi</div>;"), []);
 }
 
 #[test]
@@ -199,20 +199,20 @@ fn valid_numeric_adjacency_never_flagged() {
         assert!(codes(src).is_empty(), "false positive on `{src}`");
     }
     // JSX text and expression containers must not glue text as numbers.
-    assert!(codes_jsx("const el = <div>1.5n</div>;").is_empty());
-    assert!(codes_jsx("const el = <div a=\"3in\">{1.5}</div>;").is_empty());
+    assert_eq!(codes_jsx("const el = <div>1.5n</div>;"), []);
+    assert_eq!(codes_jsx("const el = <div a=\"3in\">{1.5}</div>;"), []);
     // The content-blind TSX type-arg skip must not leak numeric diagnostics
     // from digit-letter adjacency inside a string type-arg.
-    assert!(codes_tsx("const el = <Foo<\"3px\"> x={1}/>;").is_empty());
-    assert!(codes_tsx("const el = <Foo<1.5, \"2xl\"> y/>;").is_empty());
+    assert_eq!(codes_tsx("const el = <Foo<\"3px\"> x={1}/>;"), []);
+    assert_eq!(codes_tsx("const el = <Foo<1.5, \"2xl\"> y/>;"), []);
 }
 
 #[test]
 fn regex_flags() {
     assert_eq!(codes("r = /x/q;"), [DiagCode::InvalidRegexpFlag]); // unknown flag
     assert_eq!(codes("r = /x/gg;"), [DiagCode::DuplicateRegexpFlag]); // duplicate
-    assert!(codes("r = /x/gimsuydv;").is_empty()); // all valid flags, once each
-    assert!(codes("r = /x/;").is_empty()); // no flags
+    assert_eq!(codes("r = /x/gimsuydv;"), []); // all valid flags, once each
+    assert_eq!(codes("r = /x/;"), []); // no flags
 }
 
 #[test]
@@ -227,9 +227,9 @@ fn line_terminator_in_string() {
     assert_eq!(codes("x = 'a\nb';"), [DiagCode::LineTerminatorInString]);
     assert_eq!(codes("x = 'a\r\nb';"), [DiagCode::LineTerminatorInString]);
     // escaped line terminators are legal continuations, CRLF as one sequence
-    assert!(codes("x = 'a\\\nb';").is_empty());
-    assert!(codes("x = 'a\\\rb';").is_empty());
-    assert!(codes("x = 'a\\\r\nb';").is_empty());
+    assert_eq!(codes("x = 'a\\\nb';"), []);
+    assert_eq!(codes("x = 'a\\\rb';"), []);
+    assert_eq!(codes("x = 'a\\\r\nb';"), []);
     // escaped backslash followed by a raw terminator is invalid
     assert_eq!(codes("x = 'a\\\\\r\nb';"), [DiagCode::LineTerminatorInString]);
 
@@ -265,9 +265,9 @@ fn line_terminator_in_regexp() {
     // newline then EOF: the parser stops at the terminator first
     assert_eq!(codes("x = /abc\n"), [DiagCode::LineTerminatorInRegexp]);
     assert_eq!(codes_jsx("x = /a\nb/;"), [DiagCode::LineTerminatorInRegexp]);
-    assert!(codes("x = /a\\nb/g;").is_empty()); // `\n` as two chars
-    assert!(codes("x = a / b\nc / d;").is_empty()); // division across lines
-    assert!(codes("x = /a[b-z]+/;").is_empty());
+    assert_eq!(codes("x = /a\\nb/g;"), []); // `\n` as two chars
+    assert_eq!(codes("x = a / b\nc / d;"), []); // division across lines
+    assert_eq!(codes("x = /a[b-z]+/;"), []);
 }
 
 #[test]
@@ -327,33 +327,33 @@ fn valid_escapes_never_flagged() {
     ] {
         assert!(codes(&format!("x = {s};")).is_empty(), "false positive on `{s}`");
     }
-    assert!(codes("x = 'a\\\nb';").is_empty()); // LF line continuation
-    assert!(codes("x = 'a\\\r\nb';").is_empty()); // CRLF line continuation
+    assert_eq!(codes("x = 'a\\\nb';"), []); // LF line continuation
+    assert_eq!(codes("x = 'a\\\r\nb';"), []); // CRLF line continuation
 }
 
 #[test]
 fn template_invalid_escapes_stay_silent() {
     // An invalid escape in a tagged template is legal, and tagged-ness is
     // parser context; oxc_parser's lexer is also silent here.
-    assert!(codes(r"t = `\uZZZZ`;").is_empty());
-    assert!(codes(r"t = `\u{110000}`;").is_empty());
-    assert!(codes(r"t = `\xGG`;").is_empty());
-    assert!(codes(r"t = tag`\uZZ`;").is_empty());
-    assert!(codes(r"t = `a${b}\uZZ`;").is_empty()); // middle/tail segments
+    assert_eq!(codes(r"t = `\uZZZZ`;"), []);
+    assert_eq!(codes(r"t = `\u{110000}`;"), []);
+    assert_eq!(codes(r"t = `\xGG`;"), []);
+    assert_eq!(codes(r"t = tag`\uZZ`;"), []);
+    assert_eq!(codes(r"t = `a${b}\uZZ`;"), []); // middle/tail segments
 }
 
 #[test]
 fn invalid_unicode_escape_jsx_path() {
     assert_eq!(codes_jsx(r#"const x = "\uZZZZ";"#), [DiagCode::InvalidUnicodeEscape]);
     // JSX attribute strings have no escapes - the value is verbatim source.
-    assert!(codes_jsx(r#"const el = <div a="\uZZ">x</div>;"#).is_empty());
+    assert_eq!(codes_jsx(r#"const el = <div a="\uZZ">x</div>;"#), []);
 }
 
 #[test]
 fn valid_input_emits_nothing() {
-    assert!(codes("let x = 'abc';").is_empty());
-    assert!(codes("const t = `a${b}c`; /* ok */ // ok\nlet r = /x/g;").is_empty());
-    assert!(codes("function f(){ return 1 / 2; }").is_empty());
+    assert_eq!(codes("let x = 'abc';"), []);
+    assert_eq!(codes("const t = `a${b}c`; /* ok */ // ok\nlet r = /x/g;"), []);
+    assert_eq!(codes("function f(){ return 1 / 2; }"), []);
 }
 
 #[test]
@@ -523,7 +523,7 @@ fn invalid_identifier_escape_payload() {
 #[test]
 fn invalid_identifier_escape_jsx_path() {
     assert!(codes_jsx(r"const \u{110000} = 1").contains(&DiagCode::InvalidIdentifierEscape));
-    assert!(codes_jsx(r"const el = <div>a\b</div>;").is_empty()); // JSX text
+    assert_eq!(codes_jsx(r"const el = <div>a\b</div>;"), []); // JSX text
 }
 
 #[test]
@@ -580,8 +580,8 @@ fn unicode_ident_after_number() {
     assert_eq!((d[0].off, d[0].len), (7, 5)); // `abc` + 2-byte pi
     assert_eq!(codes("x = 1.5π;"), [DiagCode::InvalidNumericLiteral]);
     // unicode whitespace after a number stays clean
-    assert!(codes("x = 1\u{a0}+ 2;").is_empty());
-    assert!(codes("x = 1\u{2028}y = 2;").is_empty());
+    assert_eq!(codes("x = 1\u{a0}+ 2;"), []);
+    assert_eq!(codes("x = 1\u{2028}y = 2;"), []);
 }
 
 #[test]
@@ -594,7 +594,7 @@ fn escaped_char_not_identifier() {
     let d = diags(r"var \u{30}x = 1");
     assert_eq!((d[0].off, d[0].len, d[0].code), (10, 0, DiagCode::UnexpectedCharacter));
     // mid-identifier escapes use is_identifier_part: digits fine there,
-    assert!(codes(r"let a\u{30}b = 1;").is_empty());
+    assert_eq!(codes(r"let a\u{30}b = 1;"), []);
     // whitespace not
     assert_eq!(codes(r"let a\u0020b = 1;"), [DiagCode::UnexpectedCharacter]);
     for src in [r"let \u0041 = 1;", r"let \u{24} = 1;", r"let a\u{5F}b = 1;"] {
@@ -613,11 +613,11 @@ fn line_separator_in_regexp() {
     let d = diags("x = /a\\\u{2028}b/;"); // escaped LS: still invalid
     assert_eq!(d.len(), 1);
     assert_eq!((d[0].off, d[0].len), (4, 6));
-    assert!(codes("x = /a\u{2014}b/;").is_empty()); // other E2-led chars are fine
-    assert!(codes("x = /a\u{2713}b/u;").is_empty());
-    assert!(codes(r"x = /a\u2028b/;").is_empty()); // escape text, no raw LS
-    assert!(codes("s = '\u{2028}';").is_empty()); // legal in strings/templates
-    assert!(codes("t = `\u{2028}`;").is_empty());
+    assert_eq!(codes("x = /a\u{2014}b/;"), []); // other E2-led chars are fine
+    assert_eq!(codes("x = /a\u{2713}b/u;"), []);
+    assert_eq!(codes(r"x = /a\u2028b/;"), []); // escape text, no raw LS
+    assert_eq!(codes("s = '\u{2028}';"), []); // legal in strings/templates
+    assert_eq!(codes("t = `\u{2028}`;"), []);
 }
 
 #[test]
@@ -632,8 +632,8 @@ fn misplaced_hash() {
     assert_eq!((d[0].off, d[0].len, d[0].code), (5, 1, DiagCode::UnexpectedCharacter));
     let d = diags("x = #"); // `#` at EOF: empty span at n
     assert_eq!((d[0].off, d[0].len), (5, 0));
-    assert!(codes("#!/usr/bin/env node\nlet x = 1;").is_empty());
-    assert!(codes("class A { #x = 1; m() { return this.#x; } }").is_empty());
+    assert_eq!(codes("#!/usr/bin/env node\nlet x = 1;"), []);
+    assert_eq!(codes("class A { #x = 1; m() { return this.#x; } }"), []);
 }
 
 #[test]
@@ -657,10 +657,10 @@ fn template_cooked_invalid_marker() {
     assert_eq!(get("t = `abc`;"), [false]); // no escapes
     assert_eq!(get(r"t = `a${b}c`;"), [false, false]); // head + tail
     // still zero diagnostics, matching oxc_parser's silent lexer
-    assert!(codes(r"t = `\101`;").is_empty());
-    assert!(codes(r"t = `\uZZ`;").is_empty());
+    assert_eq!(codes(r"t = `\101`;"), []);
+    assert_eq!(codes(r"t = `\uZZ`;"), []);
     // strings are untouched by the marker path
-    assert!(codes(r#"s = "\8";"#).is_empty());
+    assert_eq!(codes(r#"s = "\8";"#), []);
 }
 
 #[test]

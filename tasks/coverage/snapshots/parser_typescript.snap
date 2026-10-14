@@ -1,9 +1,9 @@
-commit: f29aeb9f
+commit: 4f5ddae2
 
 parser_typescript Summary:
-AST Parsed     : 9658/9666 (99.92%)
-Positive Passed: 9651/9666 (99.84%)
-Negative Passed: 1687/2759 (61.15%)
+AST Parsed     : 9661/9669 (99.92%)
+Positive Passed: 9654/9669 (99.84%)
+Negative Passed: 1691/2759 (61.29%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -569,8 +569,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationDuplicateFunctionImplementationFileOrderReversed.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationOptionalClassElementSyntaxOfClass.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationPublicMethodSyntaxOfClass.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsFunctionWithPrototypeNoErrorTruncationNoCrash.ts
 
@@ -1802,8 +1800,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/node/nodeModulesTopLevelAwait.ts
 
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/override/override_js3.ts
-
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript3/Accessors/parserES3Accessors1.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript3/Accessors/parserES3Accessors3.ts
@@ -1837,8 +1833,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration6.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/FunctionDeclarations/parserFunctionDeclaration7.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/MemberAccessorDeclarations/parserMemberAccessor1.ts
 
@@ -2071,8 +2065,6 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/indexSignatures/multipleStringIndexers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/methodSignaturesWithOverloads.ts
-
-Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/objectTypeLiteralSyntax2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/specifyingTypes/typeQueries/typeofANonExportedType.ts
 
@@ -2582,13 +2574,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  17 │ }
     ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorBodyInTypeContext.ts:2:15]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorBodyInTypeContext.ts:2:14]
  1 │ type A = {
  2 │     get foo() { return 0 }
-   ·               ─
+   ·              ▲
  3 │ };
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/accessorParameterAccessibilityModifier.ts:2:11]
@@ -2765,6 +2758,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  6 │     get length() { return 0; }
    ·                  ▲
  7 │ }
+   ╰────
+
+  × TS(8009): The 'declare' modifier can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/ambientPropertyDeclarationInJs.ts:6:5]
+ 5 │ 
+ 6 │     declare prop: string;
+   ·     ───────
+ 7 │ 
    ╰────
 
   × Expected `;` but found `:`
@@ -6177,12 +6178,13 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Only 'readonly' modifier is allowed here.
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts:1:39]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitPrivateMethodSignatures.ts:1:38]
  1 │ interface A<T> { private a(): boolean {} }
-   ·                                       ─
+   ·                                      ▲
  2 │ 
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1049): A 'set' accessor must have exactly one parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitSetAccessorNoParameter.ts:2:10]
@@ -7083,21 +7085,23 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  8 │ };
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInInterfaceProperty.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInInterfaceProperty.ts:2:16]
  1 │ interface Foo {
  2 │     bar: number = 5;
-   ·                 ─
+   ·                ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInObjectTypeLiteralProperty.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/errorOnInitializerInObjectTypeLiteralProperty.ts:2:16]
  1 │ var Foo: {
  2 │     bar: number = 5;
-   ·                 ─
+   ·                ▲
  3 │ };
    ╰────
+  help: Try inserting a semicolon here
 
   × Expected `,` or `)` but found `Identifier`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/errorRecoveryInClassDeclaration.ts:4:20]
@@ -8410,7 +8414,7 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ }
    ╰────
 
-  × Cannot use import statement outside a module
+  × 'import statement' declaration can only be used at the top level of a module
    ╭─[typescript/tsc/testdata/tests/cases/compiler/importDeclarationInModuleDeclaration2.ts:2:5]
  1 │ function container() {
  2 │     import "fs";
@@ -8632,13 +8636,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × TS(1099): Type argument list cannot be empty.
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/instantiateTypeParameter.ts:2:13]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/instantiateTypeParameter.ts:2:8]
  1 │ interface Foo<T> {
  2 │     var x: T<>;
-   ·             ──
+   ·        ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × TS(1021): An index signature must have a type annotation.
     ╭─[typescript/tsc/testdata/tests/cases/compiler/intTypeCheck.ts:37:5]
@@ -8930,6 +8935,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·           ┬ ┬
    ·           │ ╰── `,` or `)` expected
    ·           ╰── Opened here
+   ╰────
+
+  × TS(8009): The 'public' modifier can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsFileCompilationPublicMethodSyntaxOfClass.ts:2:5]
+ 1 │ class C {
+ 2 │     public foo() {
+   ·     ──────
+ 3 │     }
    ╰────
 
   × TS(8012): Parameter modifiers can only be used in TypeScript files.
@@ -10815,13 +10828,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  35 │ }
     ╰────
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
     ╭─[typescript/tsc/testdata/tests/cases/compiler/optionalPropertiesSyntax.ts:11:7]
  10 │     (): any;
  11 │     ()?: any; //err
-    ·       ─
+    ·       ▲
  12 │     ?(): any; //err
     ╰────
+  help: Try inserting a semicolon here
 
   × TS(1051): A 'set' accessor cannot have an optional parameter.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/optionalSetterParam.ts:3:20]
@@ -11061,13 +11075,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ }
    ╰────
 
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/parseErrorIncorrectReturnToken.ts:2:17]
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/parseErrorIncorrectReturnToken.ts:2:16]
  1 │ type F1 = {
  2 │     (n: number) => string; // should be : not =>
-   ·                 ──
+   ·                ▲
  3 │ }
    ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/compiler/parseImportAttributesError.ts:2:30]
@@ -18246,10 +18261,10 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ╰────
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:14]
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/classes/members/privateNames/privateNamesIncompatibleModifiers.ts:32:5]
  31 │ abstract class B {
  32 │     abstract #quux = 3;      // Error
-    ·              ─────
+    ·     ────────
  33 │ }
     ╰────
 
@@ -21632,18 +21647,18 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
 
   × TS(1222): An overload signature cannot be declared as a generator.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:2:7]
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:2:5]
  1 │ class C {
  2 │     *f(s: string): Iterable<any>;
-   ·       ───────────────────────────
+   ·     ─────────────────────────────
  3 │     *f(s: number): Iterable<any>;
    ╰────
 
   × TS(1222): An overload signature cannot be declared as a generator.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:3:7]
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/es6/yieldExpressions/generatorOverloads3.ts:3:5]
  2 │     *f(s: string): Iterable<any>;
  3 │     *f(s: number): Iterable<any>;
-   ·       ───────────────────────────
+   ·     ─────────────────────────────
  4 │     *f(s: any): Iterable<any> { }
    ╰────
 
@@ -24919,18 +24934,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Try inserting a semicolon here
 
-  × Expected `}` but found `EOF`
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClass2.ts:15:6]
-  9 │ 
- 10 │ interface I2 extends Foo { // error
-    ·                          ┬
-    ·                          ╰── Opened here
- 11 │     a: {
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/interfaces/interfacesExtendingClasses/interfaceExtendingClass2.ts:13:19]
  12 │         toString: () => {
  13 │             return 1;
+    ·                   ▲
  14 │         };
- 15 │     }
     ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/conformance/internalModules/exportDeclarations/NonInitializedExportInInternalModule.ts:3:8]
@@ -25981,6 +25992,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  26 │ }
     ╰────
   help: No modifiers are allowed here.
+
+  × TS(8009): The 'override' modifier can only be used in TypeScript files.
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/override/override_js3.ts:7:5]
+ 6 │ class D extends B {
+ 7 │     override foo (v) {}
+   ·     ────────
+ 8 │     /** @override */
+   ╰────
 
   × Cannot use `await` as an identifier in an async context
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript2018/asyncGenerators/parser.asyncGenerators.classMethods.es2018.ts:3:15]
@@ -27396,6 +27415,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·                  ╰── `;` expected
  3 │ }
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration5.ts:2:23]
+ 1 │ class C {
+ 2 │    [a: string]: number public v: number
+   ·                       ▲
+ 3 │ }
+   ╰────
+  help: Try inserting a semicolon here
 
   × TS(1071): 'public' modifier cannot appear on an index signature.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/parser/ecmascript5/IndexMemberDeclarations/parserIndexMemberDeclaration7.ts:2:4]
@@ -31791,13 +31819,22 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  25 │ }
     ╰────
 
-  × Unexpected token
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/methodSignatures/objectTypesWithOptionalProperties2.ts:4:8]
  3 │ var a: {
  4 │     x()?: number; // error
-   ·        ─
+   ·        ▲
  5 │ }
    ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/objectTypeLiteralSyntax2.ts:12:21]
+ 11 │ 
+ 12 │ var z: { foo: string bar: string }
+    ·                     ▲
+    ╰────
+  help: Try inserting a semicolon here
 
   × Expected `,` or `}` but found `decimal`
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/objectTypeLiteral/propertySignatures/numericNamedPropertyDuplicates.ts:20:5]
@@ -32047,26 +32084,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  4 │ type T03 = [...string[]];
    ╰────
 
-  × TS(1265): A rest element cannot follow another rest element.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:7:21]
- 6 │ 
- 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
-   ·                     ─────┬─────  ──────┬─────
-   ·                          │             ╰── Second rest element here
-   ·                          ╰── First seen here
- 8 │ type V11 = [number, ...string[], boolean?];  // Error
-   ╰────
-
-  × TS(1266): An optional element cannot follow a rest element.
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:8:21]
- 7 │ type V10 = [number, ...string[], ...boolean[]];  // Error
- 8 │ type V11 = [number, ...string[], boolean?];  // Error
-   ·                     ─────┬─────  ────┬───
-   ·                          │           ╰── Optional element here
-   ·                          ╰── Rest element seen here
- 9 │ type V12 = [number, string?, boolean];  // Error
-   ╰────
-
   × TS(1257): A required element cannot follow an optional element.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:9:21]
   8 │ type V11 = [number, ...string[], boolean?];  // Error
@@ -32075,46 +32092,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ·                        │        ╰── Required element here
     ·                        ╰── Optional element seen here
  10 │ 
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:11:13]
- 10 │ 
- 11 │ type V15 = [...string[], ...number[]];  // Error
-    ·             ─────┬─────  ─────┬─────
-    ·                  │            ╰── Second rest element here
-    ·                  ╰── First seen here
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:12:13]
- 11 │ type V15 = [...string[], ...number[]];  // Error
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
-    ·             ─────┬─────  ────────┬───────
-    ·                  │               ╰── Second rest element here
-    ·                  ╰── First seen here
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:13:13]
- 12 │ type V16 = [...string[], ...Array<number>];  // Error
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
-    ·             ────────┬───────  ─────┬─────
-    ·                     │              ╰── Second rest element here
-    ·                     ╰── First seen here
- 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
-    ╰────
-
-  × TS(1265): A rest element cannot follow another rest element.
-    ╭─[typescript/tsc/testdata/tests/cases/conformance/types/tuple/variadicTuples2.ts:14:13]
- 13 │ type V17 = [...Array<string>, ...number[]];  // Error
- 14 │ type V18 = [...Array<string>, ...Array<number>];  // Error
-    ·             ────────┬───────  ────────┬───────
-    ·                     │                 ╰── Second rest element here
-    ·                     ╰── First seen here
- 15 │ 
     ╰────
 
   × TS(2457): Type alias name cannot be 'any'

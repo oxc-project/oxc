@@ -157,8 +157,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         self.tail.any_except_last_will_break(f)
     }
 
-    /// We retrieve all the call expressions inside the group and we check if
-    /// their arguments are not simple.
+    /// Whether the chain ends with a call and the last group will break.
     fn last_call_breaks(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let last_group = self.last_group();
 
@@ -239,10 +238,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
             if has_comment || has_new_line_or_comment_between || self.groups_should_break(f) {
                 write!(f, [group(&format_expanded)]);
             } else {
-                let has_empty_line_before_tail =
-                    self.tail.first().is_some_and(MemberChainGroup::needs_empty_line);
-
-                if has_empty_line_before_tail || self.last_group().will_break(f) {
+                if self.last_group().will_break(f) {
                     write!(f, [expand_parent()]);
                 }
 

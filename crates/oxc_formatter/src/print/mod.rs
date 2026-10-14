@@ -23,6 +23,7 @@ mod object_like;
 mod object_pattern_like;
 mod parameters;
 mod program;
+pub use program::FormatProgramBody;
 mod return_or_throw_statement;
 pub mod semicolon;
 mod sequence_expression;
@@ -40,6 +41,7 @@ pub use arrow_function_expression::{
 pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use semicolon::write_comments_before_closing_paren;
+pub use template::embed_hug;
 pub use union_type::{
     alias_union_breaks_after_operator, is_line_ending_trailing_jsdoc_comment, type_alias_left_end,
     union_prints_itself,
@@ -131,6 +133,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, IdentifierName<'a>> {
         let is_property_key_parent = matches!(
             self.parent(),
             AstNodes::ObjectProperty(_)
+                | AstNodes::BindingProperty(_)
+                | AstNodes::AssignmentTargetPropertyProperty(_)
                 | AstNodes::TSPropertySignature(_)
                 | AstNodes::TSMethodSignature(_)
                 | AstNodes::MethodDefinition(_)
@@ -186,7 +190,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ObjectExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.properties.iter().any(|kind| {
-                kind.as_property().is_some_and(|property| should_preserve_quote(&property.key, f))
+                kind.as_property().is_some_and(|property| {
+                    should_preserve_quote(&property.key, property.computed, f)
+                })
             });
             f.context_mut().push_quote_needed(quote_needed);
         }
@@ -433,14 +439,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyIdentifier<'a>>
 
 impl<'a> FormatWrite<'a> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        if self.computed() {
-            write!(f, "[");
-        }
-        write!(f, self.name());
-        if self.computed() {
-            write!(f, "]");
-        }
-        write!(f, [":", space(), self.binding()]);
+        AssignmentLike::AssignmentTargetPropertyProperty(self).fmt(f);
     }
 }
 
@@ -531,6 +530,15 @@ impl<'a> FormatWrite<'a> for AstNode<'a, EmptyStatement> {
     }
 }
 
+/// Whether the embedding decided this program's sole statement prints without its semicolon (see `crate::format_to_ir`):
+/// no trailing one, and no ASI guard under `semi: false` either.
+fn is_semicolon_omitted_by_embedding(
+    stmt: &AstNode<'_, ExpressionStatement<'_>>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    f.context().embedding_omits_semicolon() && matches!(stmt.parent(), AstNodes::Program(_))
+}
+
 /// Returns `true` if the expression needs a leading semicolon to prevent ASI issues.
 ///
 /// `verbatim` is set for a suppressed statement, whose printed form is the source text:
@@ -540,6 +548,10 @@ fn expression_statement_needs_semicolon<'a>(
     f: &JsFormatter<'_, 'a>,
     verbatim: bool,
 ) -> bool {
+    if is_semicolon_omitted_by_embedding(stmt, f) {
+        return false;
+    }
+
     if matches!(
         stmt.parent(),
         // `if (true) (() => {})`
@@ -663,6 +675,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExpressionStatement<'a>> {
         write_leading_comments_with_asi_guard(self, false, f);
 
         let expression = self.expression();
+        if is_semicolon_omitted_by_embedding(self, f) {
+            write!(f, expression);
+            return;
+        }
+
         let content_end = semicolon_terminated_expression_content_end(
             f,
             expression.as_ref(),
@@ -1165,15 +1182,19 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NumericLiteral<'a>> {
         // Check if this numeric literal is a property key (not a value) that should be quoted
         // when quoteProps is "consistent" and another property requires quotes.
         // We need to check that this literal's span matches the key's span, not just that the parent is a property.
-        let is_property_key = match self.parent() {
-            AstNodes::ObjectProperty(prop) => prop.key.span() == self.span(),
-            AstNodes::TSPropertySignature(prop) => prop.key.span() == self.span(),
-            AstNodes::TSMethodSignature(prop) => prop.key.span() == self.span(),
-            AstNodes::MethodDefinition(prop) => prop.key.span() == self.span(),
-            AstNodes::PropertyDefinition(prop) => prop.key.span() == self.span(),
-            AstNodes::AccessorProperty(prop) => prop.key.span() == self.span(),
-            _ => false,
+        // Computed keys like `[1]` are expressions, so they are never quoted.
+        let (key_span, computed) = match self.parent() {
+            AstNodes::ObjectProperty(prop) => (prop.key.span(), prop.computed),
+            AstNodes::BindingProperty(prop) => (prop.key.span(), prop.computed),
+            AstNodes::AssignmentTargetPropertyProperty(prop) => (prop.name.span(), prop.computed),
+            AstNodes::TSPropertySignature(prop) => (prop.key.span(), prop.computed),
+            AstNodes::TSMethodSignature(prop) => (prop.key.span(), prop.computed),
+            AstNodes::MethodDefinition(prop) => (prop.key.span(), prop.computed),
+            AstNodes::PropertyDefinition(prop) => (prop.key.span(), prop.computed),
+            AstNodes::AccessorProperty(prop) => (prop.key.span(), prop.computed),
+            _ => (Span::default(), true),
         };
+        let is_property_key = !computed && key_span == self.span();
 
         if is_property_key && f.context().is_quote_needed() {
             // Get the formatted number text
@@ -1780,18 +1801,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSSignatur
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.as_ref().iter().any(|signature| {
-                let key = match signature {
-                    TSSignature::TSPropertySignature(property) => &property.key,
+                match signature {
+                    TSSignature::TSPropertySignature(property) => {
+                        should_preserve_quote(&property.key, property.computed, f)
+                    }
                     TSSignature::TSMethodSignature(method) => {
                         // A quoted `new` method keeps its quotes, so it forces quoting the sibling members as well
-                        if is_quoted_new_method_signature(method) {
-                            return true;
-                        }
-                        &method.key
+                        is_quoted_new_method_signature(method)
+                            || should_preserve_quote(&method.key, method.computed, f)
                     }
-                    _ => return false,
-                };
-                should_preserve_quote(key, f)
+                    _ => false,
+                }
             });
             f.context_mut().push_quote_needed(quote_needed);
         }

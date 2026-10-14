@@ -315,8 +315,10 @@ impl<'t> Mangler<'t> {
         self
     }
 
-    /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
-    /// Pass the symbol table to oxc_codegen to generate the mangled code.
+    /// Mangles the program, returning scoping information with the mangled symbol names.
+    ///
+    /// Semantic analysis renumbers the node IDs in `program`, but does not rewrite its symbol names.
+    /// Pass the returned scoping and class private mappings to `oxc_codegen` to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
         let mut builder = SemanticBuilder::new().with_build_nodes(true).with_class_table(true);

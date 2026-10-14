@@ -13,8 +13,7 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        Expression, ImportExpression, ImportOrExportKind, StringLiteral, TSImportEqualsDeclaration,
-        TSModuleReference,
+        Expression, ImportExpression, StringLiteral, TSImportEqualsDeclaration, TSModuleReference,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -795,7 +794,10 @@ impl RestrictedPath {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let Some(name) = literal.value.as_str() else {
+            return ImportNameResult::Allowed;
+        };
+        let name = CompactStr::from(name);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -899,7 +901,10 @@ impl RestrictedPattern {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let Some(name) = literal.value.as_str() else {
+            return ImportNameResult::Allowed;
+        };
+        let name = CompactStr::from(name);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -1259,7 +1264,7 @@ impl NoRestrictedImports {
             ctx,
             entry.span,
             &reference.expression,
-            entry.import_kind == ImportOrExportKind::Type,
+            entry.import_kind.is_type(),
             false,
         );
     }
@@ -1289,7 +1294,9 @@ impl NoRestrictedImports {
         is_type: bool,
         is_dynamic_import: bool,
     ) {
-        let source = source_literal.value.as_str();
+        let Some(source) = source_literal.value.as_str() else {
+            return;
+        };
 
         for path in &self.paths {
             if source != path.name.as_str() {

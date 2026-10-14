@@ -239,18 +239,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
             );
         }
 
-        // Check other conditions that require knowing if the expression is flattened
         let inline_logical_expression = self.should_inline_logical_expression();
         let should_indent_if_inlines = should_indent_if_parent_inlines(self.parent());
 
-        // We need to know if it's flattened to make this decision, so we must build parts
         // is_inside_condition is always false here (we returned early if true)
         let parts = split_into_left_and_right_sides(*self, false);
-        let flattened = parts.len() > 2;
+        // Every operator of the flattened chain inlines its right side (`a ?? [..] ?? [..]`),
+        // so the chain never breaks at an operator and an indent would only shift the last literal.
+        // See DIVERGENCES.md#inline-logical-chain-indent
+        let inline_chain = inline_logical_expression
+            && parts.iter().all(|part| match part {
+                BinaryLeftOrRightSide::Left { .. } => true,
+                BinaryLeftOrRightSide::Right { parent, .. } => {
+                    parent.should_inline_logical_expression()
+                }
+            });
 
-        if (inline_logical_expression && !flattened)
-            || (!inline_logical_expression && should_indent_if_inlines)
-        {
+        if inline_chain || (!inline_logical_expression && should_indent_if_inlines) {
             return write!(
                 f,
                 [group(&format_once(|f| {
@@ -513,7 +518,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
                             binary_like_expression.left().span().end < comment.span.start
                                 && right.span().start > comment.span.end
                         })
-                        .any(|comment| comment.is_line());
+                        .any(Comment::is_line);
 
                     write!(f, [group(&operator_and_right_expression).should_expand(should_break)]);
                 } else {

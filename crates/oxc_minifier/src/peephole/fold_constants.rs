@@ -6,10 +6,12 @@ use oxc_ecmascript::{
     side_effects::MayHaveSideEffects,
     with_number_literal,
 };
+use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
+use oxc_str::JSStr;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
-use crate::TraverseCtx;
+use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
 use super::PeepholeOptimizations;
 
@@ -28,6 +30,36 @@ impl<'a> PeepholeOptimizations {
                 {}
             // Do not fold big int.
             UnaryOperator::UnaryNegation if e.argument.is_big_int_literal() => {}
+            UnaryOperator::Delete => {
+                let new_value = match &e.argument {
+                    Expression::Identifier(ident)
+                        if matches!(ident.name.as_str(), "undefined" | "Infinity" | "NaN")
+                            && ident.is_global_reference(ctx.scoping()) =>
+                    {
+                        false
+                    }
+                    Expression::SequenceExpression(seq) if seq.expressions.len() > 1 => true,
+                    Expression::ComputedMemberExpression(_)
+                    | Expression::ChainExpression(_)
+                    | Expression::PrivateFieldExpression(_)
+                    | Expression::StaticMemberExpression(_)
+                    | Expression::Identifier(_)
+                    | Expression::SequenceExpression(_) => {
+                        return;
+                    }
+                    _ => true,
+                };
+                let new_expr = Expression::new_boolean_literal(e.span, new_value, ctx);
+                if Self::remove_unused_expression(&mut e.argument, ctx) {
+                    ctx.drop_expression(&e.argument);
+                    ctx.replace_expression(expr, new_expr);
+                } else {
+                    ctx.replace_expression_with(expr, Self::unwrap_unary);
+                    ctx.replace_expression_with(expr, |e, ctx| {
+                        Self::join_sequence(e.span(), e, new_expr, ctx)
+                    });
+                }
+            }
             _ if e.may_have_side_effects(ctx) => {}
             _ => {
                 if let Some(changed) = e.evaluate_value(ctx).map(|v| ctx.value_to_expr(e.span, v)) {
@@ -93,11 +125,7 @@ impl<'a> PeepholeOptimizations {
             }
             ChainFold::Collapse { base, base_has_side_effects } => {
                 let new_expr = if base_has_side_effects {
-                    Expression::new_sequence_expression(
-                        span,
-                        [base, Expression::new_void_0(span, ctx)],
-                        ctx,
-                    )
+                    Self::join_sequence(span, base, Expression::new_void_0(span, ctx), ctx)
                 } else {
                     // `base` was `take_in`'d out of the old chain into our
                     // local variable, so `replace_expression`'s walk over the
@@ -220,7 +248,7 @@ impl<'a> PeepholeOptimizations {
         let mut e = e.unbox();
         if !Self::remove_unused_expression(&mut e.left, ctx) {
             // `(a(), V) OP 1` => `(a(), V, 1)`
-            Self::join_sequence(e.left, e.right, ctx)
+            Self::join_sequence(e.span, e.left, e.right, ctx)
         } else if Self::should_keep_indirect_access(&e.right, ctx) {
             // `(V OP o.f)` => `(0, o.f)`
             ctx.drop_expression(&e.left);
@@ -261,7 +289,7 @@ impl<'a> PeepholeOptimizations {
     /// filters anyway.
     fn is_cheap_to_number_operand(e: &Expression<'a>) -> bool {
         matches!(
-            e.get_inner_expression(),
+            e,
             Expression::NumericLiteral(_)
                 | Expression::StringLiteral(_)
                 | Expression::BooleanLiteral(_)
@@ -281,6 +309,7 @@ impl<'a> PeepholeOptimizations {
         if e.operator == BinaryOperator::Division
             && matches!(&e.right, Expression::NumericLiteral(r) if r.value == 0.0 && r.value.is_sign_positive())
             && matches!(&e.left, Expression::NumericLiteral(l) if l.value.abs() == 1.0)
+            && !matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
         {
             return;
         }
@@ -361,7 +390,14 @@ impl<'a> PeepholeOptimizations {
             BinaryOperator::Division => Self::try_fold_safe_integer_numeric_expression(e, ctx)
                 .or_else(|| {
                     Self::extract_numeric_values(e, ctx)
-                        .filter(|(_, right)| *right == 0.0 || right.is_nan() || right.is_infinite())
+                        .filter(|(left, right)| {
+                            *left == 0.0
+                                || left.is_nan()
+                                || left.is_infinite()
+                                || *right == 0.0
+                                || right.is_nan()
+                                || right.is_infinite()
+                        })
                         .and_then(|_| ctx.eval_binary(e))
                 }),
             BinaryOperator::ShiftLeft => {
@@ -411,7 +447,7 @@ impl<'a> PeepholeOptimizations {
     /// Lower bound for the minified size of a numeric expression. Parentheses are deliberately
     /// omitted, so accepting a fold based on this count cannot make the output longer.
     fn numeric_expression_size_lower_bound(expr: &Expression<'a>) -> Option<usize> {
-        match expr.get_inner_expression() {
+        match expr {
             Expression::NumericLiteral(lit) => Self::number_literal_source_len(lit.value),
             Expression::UnaryExpression(e)
                 if matches!(
@@ -484,7 +520,7 @@ impl<'a> PeepholeOptimizations {
         expr: &Expression<'a>,
         ctx: &TraverseCtx<'a>,
     ) -> Option<(usize, bool)> {
-        let result = match expr.get_inner_expression() {
+        let result = match expr {
             Expression::StringLiteral(lit) => (lit.value.len() + 2, false),
             Expression::NumericLiteral(lit) => (Self::number_literal_source_len(lit.value)?, false),
             Expression::BooleanLiteral(_) => (2, false),
@@ -602,7 +638,7 @@ impl<'a> PeepholeOptimizations {
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(Str::from_strs_array_in([cooked1.as_str(), cooked2.as_str()], ctx))
+                    Some(JSStr::from_js_strs_array_in([cooked1, cooked2], ctx))
                 } else {
                     None
                 };
@@ -628,7 +664,7 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 );
                 let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    Str::from_strs_array_in([cooked.as_str(), right_str.as_ref()], ctx)
+                    JSStr::from_js_strs_array_in([cooked, JSStr::from(right_str.as_ref())], ctx)
                 });
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
@@ -649,7 +685,7 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 );
                 let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    Str::from_strs_array_in([left_str.as_ref(), cooked.as_str()], ctx)
+                    JSStr::from_js_strs_array_in([JSStr::from(left_str.as_ref()), cooked], ctx)
                 });
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
@@ -812,7 +848,9 @@ impl<'a> PeepholeOptimizations {
             );
 
             let may_be_equal = match &e.right {
-                Expression::StringLiteral(string_lit) => is_typeof_string(&string_lit.value),
+                Expression::StringLiteral(string_lit) => {
+                    string_lit.value.as_str().is_some_and(is_typeof_string)
+                }
                 right => {
                     let ty = right.value_type(ctx);
                     matches!(ty, ValueType::Undetermined | ValueType::String)
@@ -996,7 +1034,7 @@ impl<'a> PeepholeOptimizations {
                 .or_else(|| next_raw.as_bytes().first())
                 .is_some_and(u8::is_ascii_digit);
             let cooked_ends_with_null =
-                quasi.value.cooked.is_some_and(|cooked| cooked.as_str().ends_with('\0'));
+                quasi.value.cooked.is_some_and(|cooked| cooked.as_bytes().last() == Some(&0));
             quasi.value.raw = if starts_with_digit
                 && cooked_ends_with_null
                 && let Some(prefix) = raw.strip_suffix("\\0")
@@ -1008,8 +1046,10 @@ impl<'a> PeepholeOptimizations {
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(Str::from_strs_array_in([cooked1.as_str(), &str, cooked2_str], ctx))
+                Some(JSStr::from_js_strs_array_in(
+                    [cooked1, JSStr::from(str.as_ref()), cooked2.unwrap_or(JSStr::empty())],
+                    ctx,
+                ))
             } else {
                 None
             };
@@ -1063,7 +1103,7 @@ fn try_fold_chain_at_element<'a>(
 }
 
 fn try_fold_chain_at_expr<'a>(expr: &mut Expression<'a>, ctx: &TraverseCtx<'a>) -> ChainFold<'a> {
-    match expr.get_inner_expression_mut() {
+    match expr {
         Expression::CallExpression(c) => try_fold_call_expression(c, ctx),
         match_member_expression!(Expression) => {
             try_fold_member_expression(expr.to_member_expression_mut(), ctx)
@@ -1161,7 +1201,7 @@ fn try_fold_at_optional<'a>(
 /// [`cjs-module-lexer`]: https://github.com/nodejs/cjs-module-lexer
 /// [esbuild]: https://github.com/evanw/esbuild/blob/v0.28.0/internal/linker/linker.go#L5127-L5138
 pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
-    let Expression::AssignmentExpression(assign) = expr.get_inner_expression() else {
+    let Expression::AssignmentExpression(assign) = expr else {
         return false;
     };
     assign.operator == AssignmentOperator::Assign

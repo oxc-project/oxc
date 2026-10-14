@@ -49,15 +49,10 @@ use super::{
 impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
-            let quote_needed = self.body.iter().any(|signature| {
-                let key = match signature {
-                    ClassElement::PropertyDefinition(property) => &property.key,
-                    ClassElement::AccessorProperty(property) => &property.key,
-                    ClassElement::MethodDefinition(method) => &method.key,
-                    _ => return false,
-                };
-
-                should_preserve_quote(key, f)
+            let quote_needed = self.body.iter().any(|element| {
+                element
+                    .property_key()
+                    .is_some_and(|key| should_preserve_quote(key, element.computed(), f))
             });
             f.context_mut().push_quote_needed(quote_needed);
         }
@@ -347,7 +342,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
             // after the class name, maintaining their position before the extends clause.
             if let Some(super_class) = &super_class {
                 let comments = f.context().comments().comments_before(super_class.span().start);
-                if comments.iter().any(|c| c.preceded_by_newline()) {
+                if comments.iter().any(Comment::preceded_by_newline) {
                     indent(&FormatTrailingComments::Comments(comments)).fmt(f);
                 }
             }
@@ -375,8 +370,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     // Check if there are trailing line comments after the extends clause
                     // These comments need special handling to ensure they're placed correctly
                     // relative to the extends expression and any type arguments
-                    let has_trailing_line_comments =
-                        comments.iter().any(|comment| comment.is_line());
+                    let has_trailing_line_comments = comments.iter().any(Comment::is_line);
 
                     let content = format_with(|f| {
                         if let Some(type_arguments) = type_arguments {

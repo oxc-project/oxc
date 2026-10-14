@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.72.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- fd4ddce formatter_json: Flatten block comment only array|object (#27274) (leaysgur)
+
 ## [0.68.0] - 2026-09-14
 
 ### 🚀 Features

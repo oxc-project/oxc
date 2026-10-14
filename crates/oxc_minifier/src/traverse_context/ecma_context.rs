@@ -313,7 +313,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         kind: FreshValueKind,
         falsy_init: bool,
         implicit_undefined_source: bool,
-    ) {
+    ) -> &mut SymbolValue<'a> {
         let mut references = ReferenceCounts::default();
         for reference in self.scoping().get_resolved_references(symbol_id) {
             references.record(reference.flags());
@@ -365,12 +365,13 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
         let symbol_value = SymbolValue {
             initialized_constant,
+            allow_constant_inlining: true,
             implicit_undefined,
             references,
             kind: if has_multiple_value_declarations { FreshValueKind::None } else { kind },
             boolean_falsy,
         };
-        self.state.symbols.init_value(symbol_id, symbol_value);
+        self.state.symbols.init_value(symbol_id, symbol_value)
     }
 
     /// If two expressions are equal.
@@ -429,7 +430,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         if !expr.is_anonymous_function_definition() {
             return false;
         }
-        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+        let is_class = matches!(expr, Expression::ClassExpression(_));
         (options.class && is_class) || (options.function && !is_class)
     }
 

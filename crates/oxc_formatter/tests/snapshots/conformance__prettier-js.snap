@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 765/811 (94.33%), 23 files skipped
+js compatibility: 762/811 (93.96%), 23 files skipped
 
 # Failed
 
@@ -32,11 +32,14 @@ js compatibility: 765/811 (94.33%), 23 files skipped
 | js/comments/in-list/dangling-comment-in-list.js | 💥 | 95.91% |
 | js/comments-closure-typecast/iife.js | 💥 | 76.92% |
 | js/explicit-resource-management/valid-await-using-comments.js | 💥 | 88.24% |
+| js/export-default/class_instance.js | 💥 | 0.00% |
+| js/export-default/function_tostring.js | 💥 | 0.00% |
 | js/for/9812-2.js | 💥 | 88.89% |
 | js/for/continue-and-break-comment-without-blocks.js | 💥 | 67.59% |
 | js/for-of/comments.js | 💥 | 44.83% |
 | js/function/iife.js | 💥 | 14.43% |
 | js/function/issue-12967.js | 💥 | 0.00% |
+| js/identifier/parentheses/let.js | 💥💥 | 92.73% |
 | js/if/expr_and_same_line_comments.js | 💥 | 81.93% |
 | js/if/issue-15168.js | 💥 | 91.43% |
 | js/if/non-block.js | 💥 | 82.35% |

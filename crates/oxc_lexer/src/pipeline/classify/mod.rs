@@ -13,28 +13,65 @@ mod avx2;
 ))]
 use avx2::classify_impl;
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
+#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+mod neon;
+#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+use neon::classify_impl;
+
+#[cfg(not(any(
+    all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ),
+    all(target_arch = "aarch64", target_feature = "neon")
 )))]
 mod generic;
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
+#[cfg(not(any(
+    all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ),
+    all(target_arch = "aarch64", target_feature = "neon")
 )))]
 use generic::classify_impl;
 
 #[cfg(any(
     test,
-    not(all(
+    all(
         target_arch = "x86_64",
         target_feature = "avx2",
         target_feature = "bmi2",
         target_feature = "popcnt"
+    ),
+    all(target_arch = "aarch64", target_feature = "neon")
+))]
+mod luts;
+#[cfg(any(
+    test,
+    all(
+        target_arch = "x86_64",
+        target_feature = "avx2",
+        target_feature = "bmi2",
+        target_feature = "popcnt"
+    ),
+    all(target_arch = "aarch64", target_feature = "neon")
+))]
+mod punct1_luts;
+
+#[cfg(any(
+    test,
+    not(any(
+        all(
+            target_arch = "x86_64",
+            target_feature = "avx2",
+            target_feature = "bmi2",
+            target_feature = "popcnt"
+        ),
+        all(target_arch = "aarch64", target_feature = "neon")
     ))
 ))]
 mod punct1;

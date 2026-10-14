@@ -25,9 +25,11 @@ fn parse_and_build<'a>(
     Some(code)
 }
 
-/// Returns `true` if the fenced code block language is JS/TS/JSX/TSX.
+/// Returns `true` if the fenced code block language is JS/TS/JSX/TSX (case-insensitive).
 pub(super) fn is_js_ts_lang(lang: &str) -> bool {
-    matches!(lang, "js" | "javascript" | "jsx" | "ts" | "typescript" | "tsx")
+    ["js", "javascript", "jsx", "ts", "typescript", "tsx"]
+        .iter()
+        .any(|name| lang.eq_ignore_ascii_case(name))
 }
 
 /// Count unescaped backticks on a line and update template literal depth.
