@@ -1,4 +1,4 @@
-use std::{iter, mem};
+use std::iter;
 
 use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
@@ -334,7 +334,7 @@ impl<'a> PeepholeOptimizations {
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if assign_expr.operator != AssignmentOperator::Assign {
             return false;
@@ -394,7 +394,7 @@ impl<'a> PeepholeOptimizations {
     fn merge_property_assignment_to_object(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &TraverseCtx<'a>,
+        ctx: &mut TraverseCtx<'a>,
     ) -> bool {
         if ctx.is_tree_shake_only() {
             return false;
@@ -468,9 +468,8 @@ impl<'a> PeepholeOptimizations {
             && !property.value.may_have_side_effects(ctx)
         {
             // "var o = { a: 1 }; o.a = 2" => "var o = { a: 2 }"
-            // The old value moves into the assignment, which the caller drops. That records the
-            // change and the old value's references, so no `drop_*` is needed here.
-            mem::swap(&mut property.value, &mut assign_expr.right);
+            let value = assign_expr.right.take_in(ctx);
+            ctx.replace_expression(&mut property.value, value);
             // "var o = { a }; o.a = 2" => "var o = { a: 2 }"
             property.shorthand = false;
         } else {
@@ -2061,6 +2060,9 @@ impl<'a> VisitJs<'a> for FindNestedBreak {
 }
 
 /// A property name known statically.
+///
+/// `PropertyKey::static_name` names numbers with Rust's `Display` (`1e21` is not `1e+21`),
+/// and `static_property_name` has no name for numbers, so neither fits key equality.
 #[derive(Clone, Copy)]
 enum KeyName<'k> {
     Str(&'k str),
