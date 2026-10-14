@@ -41,6 +41,7 @@ declare_oxc_lint!(
     PreferAddEventListener,
     unicorn,
     suspicious,
+    recommended,
     pending,
     version = "0.0.16",
     short_description = "Prefer `.addEventListener()` and `.removeEventListener()` over `on`-functions.",

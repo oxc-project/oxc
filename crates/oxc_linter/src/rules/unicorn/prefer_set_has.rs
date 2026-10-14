@@ -70,6 +70,7 @@ declare_oxc_lint!(
     PreferSetHas,
     unicorn,
     perf,
+    recommended,
     dangerous_fix,
     version = "0.13.2",
     short_description = "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",

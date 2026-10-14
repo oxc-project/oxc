@@ -40,6 +40,7 @@ declare_oxc_lint!(
     PreferNumberCoercion,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "1.71.0",
     short_description = "Prefer `Number()` over `parseFloat()` and base-10 `parseInt()`.",

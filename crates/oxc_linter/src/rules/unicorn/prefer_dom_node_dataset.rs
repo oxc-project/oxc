@@ -56,6 +56,7 @@ declare_oxc_lint!(
     PreferDomNodeDataset,
     unicorn,
     pedantic,
+    recommended,
     conditional_fix,
     version = "0.0.18",
     short_description = "Use `.dataset` on DOM elements over `getAttribute(…)`, `.setAttribute(…)`, `.removeAttribute(…)` and `.hasAttribute(…)`.",

@@ -72,6 +72,7 @@ declare_oxc_lint!(
     NoAccessorRecursion,
     unicorn,
     suspicious,
+    recommended,
     version = "0.16.5",
     short_description = "Disallow recursive access to `this` within getters and setters.",
 );

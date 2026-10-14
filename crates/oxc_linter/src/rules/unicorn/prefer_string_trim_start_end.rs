@@ -43,6 +43,7 @@ declare_oxc_lint!(
     PreferStringTrimStartEnd,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.0.16",
     short_description = "Prefer `trimStart` / `trimEnd` over `trimLeft` / `trimRight` on String.",

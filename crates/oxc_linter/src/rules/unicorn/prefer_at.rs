@@ -94,6 +94,7 @@ declare_oxc_lint!(
     PreferAt,
     unicorn,
     pedantic,
+    recommended,
     dangerous_fix_suggestion,
     config = PreferAtConfig,
     version = "1.20.0",

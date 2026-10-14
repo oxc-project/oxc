@@ -133,6 +133,7 @@ declare_oxc_lint!(
     NoUselessIteratorToArray,
     unicorn,
     nursery,
+    recommended,
     fix_or_suggestion,
     version = "1.59.0",
     short_description = "Disallow unnecessary `.toArray()` on iterators.",

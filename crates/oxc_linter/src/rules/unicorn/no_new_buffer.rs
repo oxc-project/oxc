@@ -43,6 +43,7 @@ declare_oxc_lint!(
     NoNewBuffer,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "0.0.16",
     short_description = "Disallows the deprecated `new Buffer()` constructor.",

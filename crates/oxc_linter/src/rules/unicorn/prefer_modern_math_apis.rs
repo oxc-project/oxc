@@ -57,6 +57,7 @@ declare_oxc_lint!(
     PreferModernMathApis,
     unicorn,
     restriction,
+    recommended,
     pending,
     version = "0.1.1",
     short_description = "Checks for usage of legacy patterns for mathematical operations.",

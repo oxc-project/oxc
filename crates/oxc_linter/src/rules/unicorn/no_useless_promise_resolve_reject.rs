@@ -70,6 +70,7 @@ declare_oxc_lint!(
     NoUselessPromiseResolveReject,
     unicorn,
     pedantic,
+    recommended,
     fix,
     config = NoUselessPromiseResolveRejectOptions,
     version = "0.0.18",

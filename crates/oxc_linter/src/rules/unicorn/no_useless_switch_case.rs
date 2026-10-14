@@ -49,6 +49,7 @@ declare_oxc_lint!(
     NoUselessSwitchCase,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "0.0.18",
     short_description = "Disallows useless `default` cases in `switch` statements.",

@@ -46,6 +46,7 @@ declare_oxc_lint!(
     PreferArrayIndexOf,
     unicorn,
     style,
+    recommended,
     pending,
     version = "0.16.12",
     short_description = "Enforces using `indexOf` or `lastIndexOf` instead of `findIndex` or `findLastIndex` when the callback is a simple strict equality comparison.",

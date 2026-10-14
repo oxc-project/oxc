@@ -61,6 +61,7 @@ declare_oxc_lint!(
     RequireModuleAttributes,
     unicorn,
     style,
+    recommended,
     suggestion,
     version = "1.35.0",
     short_description = "This rule enforces a non-empty attribute list in `import`/`export` statements and `import()` expressions.",

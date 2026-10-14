@@ -43,6 +43,7 @@ declare_oxc_lint!(
     PreferNodeProtocol,
     unicorn,
     restriction,
+    recommended,
     fix,
     version = "0.0.19",
     short_description = "Prefer using the `node:` protocol when importing Node.js built-in modules.",

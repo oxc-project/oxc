@@ -47,6 +47,7 @@ declare_oxc_lint!(
     PreferRegexpTest,
     unicorn,
     pedantic,
+    recommended,
     fix,
     version = "0.0.16",
     short_description = "Prefers `RegExp#test()` over `String#match()` and `String#exec()`.",
