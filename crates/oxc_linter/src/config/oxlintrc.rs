@@ -208,7 +208,7 @@ pub struct Oxlintrc {
     ///
     /// TypeScript plugin files are supported in the following environments:
     /// - Deno and Bun: TypeScript files are supported natively.
-    /// - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+    /// - Node.js >=22.18.0: TypeScript files are supported natively with built-in
     ///   type-stripping enabled by default.
     ///
     /// For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
