@@ -678,7 +678,7 @@ jobs:
           - variant: generic
             suffix: ""
           - variant: AVX2
-            suffix: "-simd"
+            suffix: "-avx2"
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
@@ -687,7 +687,7 @@ jobs:
         uses: $/.github/actions/check-changes
         with:
           packages: oxc_lexer,oxc_coverage
-          paths: crates/oxc_lexer/,tasks/coverage/,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
+          paths: crates/oxc_lexer/,tasks/coverage/,.cargo/lexer-avx2.toml,justfile,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -716,12 +716,12 @@ jobs:
       - name: Lint
         # No need to run on generic - already covered by "Lint" job
         if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
-        run: just lint-lexer-simd
+        run: just lint-lexer-avx2
 
       - name: Test
         # No need to run on generic - already covered by "Test Linux" job
         if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
-        run: just test-lexer-simd
+        run: just test-lexer-avx2
 
       - wait: lexer-fixtures
 
@@ -756,7 +756,7 @@ jobs:
         id: filter
         uses: $/.github/actions/check-changes
         with:
-          paths: crates/oxc_lexer/,tasks/benchmark/benches/lexer_wallclock_old.rs,tasks/benchmark/benches/lexer_wallclock_new.rs,tasks/benchmark/benches/lexer_common.rs,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
+          paths: crates/oxc_lexer/,tasks/benchmark/benches/lexer_wallclock_old.rs,tasks/benchmark/benches/lexer_wallclock_new.rs,tasks/benchmark/benches/lexer_common.rs,.cargo/lexer-avx2.toml,justfile,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -782,7 +782,7 @@ jobs:
           CRITERION_HOME: ${{ runner.temp }}/criterion
         run: |
           set -o pipefail
-          just bench-lexer-simd | tee "$RUNNER_TEMP/bench.log"
+          just bench-lexer-avx2 | tee "$RUNNER_TEMP/bench.log"
           grep -qxF "Lexer implementation: AVX2" "$RUNNER_TEMP/bench.log" ||
             { echo "::error::Expected AVX2, but the benchmark reported otherwise"; exit 1; }
 
