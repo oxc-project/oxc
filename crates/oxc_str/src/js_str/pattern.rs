@@ -5,6 +5,7 @@ use super::{JSChar, JSChars, JSStr};
 mod private {
     pub trait Sealed {}
 }
+use private::Sealed;
 
 /// A search pattern for [`JSStr`]: `&str`, `char`, or `FnMut(char) -> bool`.
 ///
@@ -12,7 +13,7 @@ mod private {
 /// are not called for them. Even a negated predicate such as
 /// `|c: char| !c.is_whitespace()` does not match a lone surrogate.
 /// Use [`JSStr::chars`] to inspect every code point, including surrogates.
-pub trait JSStrPattern: private::Sealed {
+pub trait JSStrPattern: Sealed {
     /// Return the WTF-8 byte offset of the first match in `haystack`, or `None`.
     fn find_in(self, haystack: JSStr<'_>) -> Option<usize>;
 
@@ -27,8 +28,6 @@ pub trait JSStrPattern: private::Sealed {
     #[expect(clippy::wrong_self_convention, reason = "mirrors std's `Pattern::is_suffix_of`")]
     fn is_suffix_of(self, haystack: JSStr<'_>) -> bool;
 }
-
-impl private::Sealed for &str {}
 
 // UTF-8 patterns cannot start or end inside a WTF-8 code point or match a lone
 // surrogate's encoding, so byte searches preserve code point boundaries.
@@ -54,7 +53,7 @@ impl JSStrPattern for &str {
     }
 }
 
-impl private::Sealed for char {}
+impl Sealed for &str {}
 
 // ASCII bytes cannot occur inside a multibyte WTF-8 code point, and other characters
 // search as their UTF-8 encoding.
@@ -88,10 +87,10 @@ impl JSStrPattern for char {
     }
 }
 
+impl Sealed for char {}
+
 // `FnMut` is a fundamental trait, so this blanket impl cannot overlap with the
 // concrete impls above.
-impl<F: FnMut(char) -> bool> private::Sealed for F {}
-
 impl<F: FnMut(char) -> bool> JSStrPattern for F {
     #[inline]
     fn find_in(mut self, haystack: JSStr<'_>) -> Option<usize> {
@@ -134,3 +133,5 @@ impl<F: FnMut(char) -> bool> JSStrPattern for F {
         chars.next_back().and_then(JSChar::to_char).is_some_and(self)
     }
 }
+
+impl<F: FnMut(char) -> bool> Sealed for F {}
