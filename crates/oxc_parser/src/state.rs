@@ -14,6 +14,9 @@ pub struct CoverInitializedName<'a> {
 pub struct ParserState<'a> {
     pub not_parenthesized_arrow: FxHashSet<u32>,
 
+    /// Positions of `<` that failed to parse as type arguments in an expression.
+    pub not_type_arguments: FxHashSet<u32>,
+
     /// Temporary storage for `CoverInitializedName` `({ foo = bar })`.
     /// Keyed by `ObjectProperty`'s span.start.
     pub cover_initialized_name: FxHashMap<u32, CoverInitializedName<'a>>,
@@ -42,6 +45,7 @@ impl ParserState<'_> {
     pub fn new() -> Self {
         Self {
             not_parenthesized_arrow: FxHashSet::default(),
+            not_type_arguments: FxHashSet::default(),
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
             potential_await_reparse: Vec::new(),

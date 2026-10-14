@@ -875,6 +875,10 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
         let mut replacements = ArenaVec::new_in(self);
 
         let checkpoints = std::mem::take(&mut self.state.potential_await_reparse);
+        // Failed speculations were recorded without the await context, which can change their
+        // outcome, so they must not be reused while reparsing.
+        self.state.not_parenthesized_arrow.clear();
+        self.state.not_type_arguments.clear();
         // Ranges refer to the original tokens and to the flat replacement buffer
         let mut edits = ArenaVec::with_capacity_in(
             if self.lexer.config.tokens() { checkpoints.len() } else { 0 },
@@ -1517,5 +1521,24 @@ mod test {
 
         assert!(ret.fatal_error);
         assert!(ret.tokens.is_empty());
+    }
+
+    // Each `<` here is first tried as type arguments, which parses the rest of the input (an
+    // expression nested in a type, e.g. a function type's parameter initializer) before failing.
+    // Without remembering the failed attempt, every level re-parsed its tail several times and
+    // the arena grew 2-3x per repetition: 2-4 MB for these patterns repeated 8 times.
+    #[test]
+    fn failed_type_arguments_in_expression_are_not_retried() {
+        let patterns =
+            ["a=b<c<(", "(a=b<c<", "a<(b,c=", "a<[(b=", "a<{[b<", "new a<(b=", "a<typeof b<(c="];
+        for pattern in patterns {
+            for source_type in [SourceType::ts(), SourceType::tsx()] {
+                let allocator = Allocator::default();
+                let source = pattern.repeat(8);
+                Parser::new(&allocator, &source, source_type).parse();
+                let used_bytes = allocator.used_bytes();
+                assert!(used_bytes < 100_000, "{pattern:?}: {used_bytes} bytes");
+            }
+        }
     }
 }

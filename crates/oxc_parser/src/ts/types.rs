@@ -982,10 +982,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !matches!(self.cur_kind(), Kind::LAngle | Kind::ShiftLeft) {
             return None;
         }
-        let checkpoint = self.checkpoint();
+        // A failed attempt is remembered by position, like `not_parenthesized_arrow`: each attempt
+        // parses the rest of the expression (a type argument can hold a function type, whose
+        // parameter initializers are expressions again), so retrying the same `<` after a rewind
+        // would make input such as `a=b<c<(a=b<c<(...` take time exponential in its nesting.
         let start = self.cur_start();
-        if !self.re_lex_ts_l_angle() {
+        if self.state.not_type_arguments.contains(&start) {
+            return None;
+        }
+        let checkpoint = self.checkpoint();
+        let type_arguments = self.parse_type_arguments_in_expression_impl(start);
+        if type_arguments.is_none() {
+            self.state.not_type_arguments.insert(start);
             self.rewind(checkpoint);
+        }
+        type_arguments
+    }
+
+    /// Body of [`Self::parse_type_arguments_in_expression`]. Returns `None` on failure without
+    /// rewinding; the caller rewinds and records the failure.
+    fn parse_type_arguments_in_expression_impl(
+        &mut self,
+        start: u32,
+    ) -> Option<ArenaBox<'a, TSTypeParameterInstantiation<'a>>> {
+        if !self.re_lex_ts_l_angle() {
             return None;
         }
         let opening_span = self.cur_token().span();
@@ -995,13 +1015,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
         // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
         if matches!(self.re_lex_right_angle(), Kind::GtEq) {
-            self.rewind(checkpoint);
             return None;
         }
         self.re_lex_ts_r_angle();
         self.expect(Kind::RAngle);
         if self.fatal_error.is_some() || !self.can_follow_type_arguments_in_expr() {
-            self.rewind(checkpoint);
             return None;
         }
         let span = self.end_span(start);
