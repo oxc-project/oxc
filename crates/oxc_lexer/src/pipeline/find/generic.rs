@@ -1,7 +1,7 @@
 use crate::pipeline::chunk::{eqm, load64};
 
 #[inline]
-pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
+pub unsafe fn find1_generic(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
     while i + 8 <= n {
         let m = eqm(load64(src, i), a);
         if m != 0 {
@@ -19,7 +19,7 @@ pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
 }
 
 #[inline]
-pub unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usize {
+pub unsafe fn find2_generic(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usize {
     while i + 8 <= n {
         let x = load64(src, i);
         let m = eqm(x, a) | eqm(x, b);
@@ -39,7 +39,7 @@ pub unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usi
 }
 
 #[inline]
-pub unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
+pub unsafe fn find3_generic(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
     while i + 8 <= n {
         let x = load64(src, i);
         let m = eqm(x, a) | eqm(x, b) | eqm(x, c);
@@ -59,7 +59,15 @@ pub unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8)
 }
 
 #[inline]
-pub unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8, d: u8) -> usize {
+pub unsafe fn find4_generic(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    a: u8,
+    b: u8,
+    c: u8,
+    d: u8,
+) -> usize {
     while i + 8 <= n {
         let x = load64(src, i);
         let m = eqm(x, a) | eqm(x, b) | eqm(x, c) | eqm(x, d);
@@ -78,7 +86,7 @@ pub unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8,
     n
 }
 
-macro_rules! define_find_function {
+macro_rules! define_find_function_generic {
     ($(#[$attr:meta])* $name:ident: $($needle:expr),+ $(,)?) => {
         $(#[$attr])*
         #[inline]
@@ -104,11 +112,11 @@ macro_rules! define_find_function {
         }
     };
 }
-pub(super) use define_find_function;
+pub(super) use define_find_function_generic;
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
 #[inline]
-pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
+pub fn bracket_bits_generic(src: &[u8], base: usize) -> u64 {
     let mut out = 0u64;
     for (i, &c) in src[base..base + 64].iter().enumerate() {
         if matches!(c, b'(' | b')' | b'[' | b']' | b'{' | b'}') {

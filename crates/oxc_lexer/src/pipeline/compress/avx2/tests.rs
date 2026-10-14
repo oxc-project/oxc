@@ -1,11 +1,11 @@
 use std::iter;
 
-use super::{compress_blocks, init_pair_luts};
+use super::{compress_blocks_avx2, init_pair_luts_avx2};
 
 #[test]
 fn compress_blocks_matches_scalar_reference() {
-    // Required before calling `compress_blocks`
-    init_pair_luts();
+    // Required before calling `compress_blocks_avx2`
+    init_pair_luts_avx2();
 
     let mut cases: Vec<Vec<u64>> = Vec::new();
     let all_pairs: Vec<u64> = (0..65536u64)
@@ -46,7 +46,7 @@ fn compress_blocks_matches_scalar_reference() {
         let mut starts = vec![0u32; n + 64];
         let mut kinds = vec![0u8; n + 64];
         let m = unsafe {
-            compress_blocks(
+            compress_blocks_avx2(
                 st.as_ptr(),
                 kind.as_ptr(),
                 0,

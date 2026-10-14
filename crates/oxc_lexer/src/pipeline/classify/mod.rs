@@ -11,12 +11,12 @@ mod avx2;
     target_feature = "bmi2",
     target_feature = "popcnt"
 ))]
-use avx2::classify_impl;
+use avx2::classify_avx2 as classify_impl;
 
 #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
 mod neon;
 #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
-use neon::classify_impl;
+use neon::classify_neon as classify_impl;
 
 #[cfg(not(any(
     all(
@@ -37,7 +37,7 @@ mod generic;
     ),
     all(target_arch = "aarch64", target_feature = "neon")
 )))]
-use generic::classify_impl;
+use generic::classify_generic as classify_impl;
 
 #[cfg(any(
     test,

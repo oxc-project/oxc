@@ -29,7 +29,7 @@ struct Classified {
     kind: uint8x16_t,
 }
 
-pub(super) unsafe fn classify_impl(
+pub(super) unsafe fn classify_neon(
     ts: bool,
     src: *const u8,
     n: usize,

@@ -11,7 +11,7 @@ use super::common::{emit_value, invalid_diags};
 
 mod pair_luts;
 use pair_luts::get_pair_luts;
-pub use pair_luts::init_pair_luts;
+pub use pair_luts::init_pair_luts_avx2;
 
 #[cfg(test)]
 mod tests;
@@ -55,7 +55,7 @@ const fn bcompact() -> [[u8; 16]; 256] {
 }
 
 #[inline(never)]
-pub(super) unsafe fn compress_blocks(
+pub(super) unsafe fn compress_blocks_avx2(
     st: *const u64,
     kind: *const u8,
     b0: usize,
@@ -112,7 +112,7 @@ pub(super) unsafe fn compress_blocks(
     m
 }
 
-pub(super) unsafe fn build_spans(
+pub(super) unsafe fn build_spans_avx2(
     stage_kind: *const u8,
     stage_pos: *const u32,
     m: usize,
@@ -175,7 +175,7 @@ pub(super) unsafe fn build_spans(
     w
 }
 
-pub(super) unsafe fn lanes_post(
+pub(super) unsafe fn lanes_post_avx2(
     src: &[u8],
     out_kinds: *const u8,
     out_spans: *const Span,

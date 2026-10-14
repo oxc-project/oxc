@@ -18,14 +18,17 @@ mod avx2;
     target_feature = "bmi2",
     target_feature = "popcnt"
 ))]
-pub(super) use avx2::init_pair_luts;
+pub(super) use avx2::init_pair_luts_avx2 as init_pair_luts;
 #[cfg(all(
     target_arch = "x86_64",
     target_feature = "avx2",
     target_feature = "bmi2",
     target_feature = "popcnt"
 ))]
-use avx2::{build_spans, compress_blocks, lanes_post};
+use avx2::{
+    build_spans_avx2 as build_spans, compress_blocks_avx2 as compress_blocks,
+    lanes_post_avx2 as lanes_post,
+};
 
 #[cfg(not(all(
     target_arch = "x86_64",
@@ -40,14 +43,17 @@ mod generic;
     target_feature = "bmi2",
     target_feature = "popcnt"
 )))]
-pub(super) use generic::init_pair_luts;
+pub(super) use generic::init_pair_luts_generic as init_pair_luts;
 #[cfg(not(all(
     target_arch = "x86_64",
     target_feature = "avx2",
     target_feature = "bmi2",
     target_feature = "popcnt"
 )))]
-use generic::{build_spans, compress_blocks, lanes_post};
+use generic::{
+    build_spans_generic as build_spans, compress_blocks_generic as compress_blocks,
+    lanes_post_generic as lanes_post,
+};
 
 mod common;
 
