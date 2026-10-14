@@ -31,8 +31,7 @@ use lexer_common::cleaned_test_files;
 fn bench_lexer_wallclock_new(criterion: &mut Criterion) {
     // Report which implementation of `oxc_lexer` was built.
     // CI checks this line to make sure the build it expected is the build it got.
-    let implementation = if oxc_lexer::IS_SIMD { "SIMD" } else { "scalar" };
-    println!("Lexer implementation: {implementation}");
+    println!("Lexer implementation: {}", oxc_lexer::IMPLEMENTATION);
 
     // Group name and benchmark IDs must match `lexer_wallclock_old`, so criterion can compare the two
     let mut group = criterion.benchmark_group("lexer_wallclock");

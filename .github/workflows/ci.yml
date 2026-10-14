@@ -653,12 +653,15 @@ jobs:
           git diff --exit-code
 
   lexer:
-    # `oxc_lexer` compiles to one of two implementations, chosen at build time:
-    # 1. SIMD core on x86_64 with `avx2` + `bmi2` + `popcnt`.
-    # 2. Scalar fallback everywhere else.
+    # `oxc_lexer` compiles to one of 3 implementations, chosen at build time:
+    # 1. AVX2 on x86_64 with `avx2` + `bmi2` + `popcnt`.
+    # 2. Neon on aarch64.
+    # 3. Generic everywhere else.
     #
-    # None of these features is in the x86_64 baseline on any platform, so the SIMD core is never built
-    # unless asked for explicitly - which means no other job here lints, tests or runs it.
+    # This job runs on x86_64, so it covers AVX2 and generic only.
+    #
+    # None of `avx2`, `bmi2` and `popcnt` is in the x86_64 baseline on any platform, so the AVX2 implementation
+    # is never built unless asked for explicitly - which means no other job here lints, tests or runs it.
     #
     # Both legs regenerate the committed conformance snapshots and fail on any diff,
     # which ensures the 2 implementations behave identically to each other.
@@ -672,9 +675,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - variant: scalar
+          - variant: generic
             suffix: ""
-          - variant: SIMD
+          - variant: AVX2
             suffix: "-simd"
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -707,24 +710,24 @@ jobs:
           tool: just
 
       - run: rustup component add clippy
-        # No need to run on scalar fallback - linting already covered by "Lint" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        # No need to run on generic - linting already covered by "Lint" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
 
       - name: Lint
-        # No need to run on scalar fallback - already covered by "Lint" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        # No need to run on generic - already covered by "Lint" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
         run: just lint-lexer-simd
 
       - name: Test
-        # No need to run on scalar fallback - already covered by "Test Linux" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        # No need to run on generic - already covered by "Test Linux" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
         run: just test-lexer-simd
 
       - wait: lexer-fixtures
 
       - name: Conformance
-        # Run on both SIMD and scalar fallback - neither is run anywhere else.
-        # The harness prints which implementation it was built with (`oxc_lexer::IS_SIMD`).
+        # Run on both AVX2 and generic - neither is run anywhere else.
+        # The harness prints which implementation it was built with (`oxc_lexer::IMPLEMENTATION`).
         # Checking it here is what guarantees this leg exercised the build it asked for.
         if: steps.filter.outputs.changed == 'true'
         run: |
@@ -735,7 +738,7 @@ jobs:
           git diff --exit-code
 
   lexer-benchmark:
-    # Benchmark `oxc_lexer`'s SIMD core against the lexer in `oxc_parser`, built without the SIMD flags
+    # Benchmark `oxc_lexer`'s AVX2 implementation against the lexer in `oxc_parser`, built without the AVX2 flags
     # (see `lexer` job above).
     #
     # Measures wallclock time, so doesn't use CodSpeed. `oxc_lexer` is designed to exploit out-of-order execution
@@ -769,8 +772,8 @@ jobs:
           tool: just
 
       - name: Benchmark
-        # The `oxc_lexer` benchmark prints which implementation it was built with (`oxc_lexer::IS_SIMD`).
-        # Checking it here is what guarantees this job benchmarked the SIMD core.
+        # The `oxc_lexer` benchmark prints which implementation it was built with (`oxc_lexer::IMPLEMENTATION`).
+        # Checking it here is what guarantees this job benchmarked the AVX2 implementation.
         # The `oxc_parser` benchmark checks for itself that it was built without the SIMD flags.
         if: steps.filter.outputs.changed == 'true'
         env:
@@ -780,8 +783,8 @@ jobs:
         run: |
           set -o pipefail
           just bench-lexer-simd | tee "$RUNNER_TEMP/bench.log"
-          grep -qxF "Lexer implementation: SIMD" "$RUNNER_TEMP/bench.log" ||
-            { echo "::error::Expected SIMD, but the benchmark reported otherwise"; exit 1; }
+          grep -qxF "Lexer implementation: AVX2" "$RUNNER_TEMP/bench.log" ||
+            { echo "::error::Expected AVX2, but the benchmark reported otherwise"; exit 1; }
 
   test-codegen:
     name: Test Codegen
