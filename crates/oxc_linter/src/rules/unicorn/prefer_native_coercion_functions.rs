@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::get_first_parameter_name};
 
@@ -232,7 +233,8 @@ fn check_array_callback_methods(
     if callee_member_expr.optional() {
         return false;
     }
-    let Some(method_name) = callee_member_expr.static_property_name() else {
+    let Some(method_name) = callee_member_expr.static_property_name().and_then(JSStr::as_str)
+    else {
         return false;
     };
     if !ARRAY_METHODS_WITH_BOOLEAN_CALLBACK.contains(&method_name) {

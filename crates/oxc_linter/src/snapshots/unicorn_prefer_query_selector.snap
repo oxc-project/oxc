@@ -355,3 +355,10 @@ source: crates/oxc_linter/src/tester.rs
    ·          ──────────────────────
    ╰────
   help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).
+
+  ⚠ unicorn(prefer-query-selector): Prefer `.querySelector()` over `.getElementById()`.
+   ╭─[prefer_query_selector.tsx:1:10]
+ 1 │ document.getElementById(`\uD800${someId}`);
+   ·          ──────────────
+   ╰────
+  help: It's better to use the same method to query DOM elements. This helps keep consistency and it lends itself to future improvements (e.g. more specific selectors).

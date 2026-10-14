@@ -302,6 +302,7 @@ declare_oxc_lint!(
     PreserveCaughtError,
     eslint,
     suspicious,
+    recommended,
     conditional_fix,
     config = PreserveCaughtErrorOptions,
     version = "1.16.0",

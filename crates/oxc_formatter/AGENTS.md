@@ -210,6 +210,8 @@ The second line of each item is the drift symptom.
   - the right-hand side after `= // prettier-ignore` is reformatted
 - `union_prints_itself` (the layout arms of `AssignmentLike` and the cast site) ⇄ the union's generated `fmt` suppression check
   - a suppressed union prints from column 0, its leading comment hoisted onto the operator's line
+- `Comments::is_quiet` (the generated `fmt` fast path) ⇄ the bound of `get_trailing_comments` (the parent's end), `is_span_suppressed`, `classify_type_cast`
+  - a comment near no other one is dropped or misplaced
 
 ### Open debts
 

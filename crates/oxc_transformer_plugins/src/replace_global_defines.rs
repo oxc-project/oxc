@@ -326,7 +326,7 @@ pub struct ReplaceGlobalDefines<'a> {
     /// Destructuring keys from the parent `VariableDeclarator` when its `id` is an
     /// `ObjectPattern`. Used to optimize object expression replacements by only keeping needed
     /// keys.
-    destructuring_keys: Option<FxHashSet<CompactStr>>,
+    destructuring_keys: Option<FxHashSet<oxc_ast::StaticPropertyName<'a>>>,
 }
 
 impl<'a> VisitJsMut<'a> for ReplaceGlobalDefines<'a> {
@@ -418,7 +418,7 @@ impl<'a> VisitJsMut<'a> for ReplaceGlobalDefines<'a> {
             let mut all_static = true;
             for prop in &pat.properties {
                 if let Some(key) = prop.key.name() {
-                    keys.insert(CompactStr::from(key.as_ref()));
+                    keys.insert(key);
                 } else {
                     all_static = false;
                     break;
@@ -1025,7 +1025,7 @@ impl<'a> ReplaceGlobalDefines<'a> {
                 ObjectPropertyKind::ObjectProperty(prop) => {
                     // not static key just preserve it
                     if let Some(name) = prop.key.name() {
-                        needed_keys.contains(CompactStr::from(name.as_ref()).as_str())
+                        needed_keys.contains(&name)
                     } else {
                         true
                     }
@@ -1081,7 +1081,7 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
                 Some(expr.property.name.as_arena_str())
             }
             DotDefineMemberExpression::ComputedMemberExpression(expr) => {
-                static_property_name_of_computed_expr(expr).copied()
+                static_property_name_of_computed_expr(expr)
             }
         }
     }
@@ -1096,11 +1096,11 @@ impl<'b, 'a> DotDefineMemberExpression<'b, 'a> {
 
 fn static_property_name_of_computed_expr<'b, 'a: 'b>(
     expr: &'b ComputedMemberExpression<'a>,
-) -> Option<&'b Str<'a>> {
+) -> Option<Str<'a>> {
     match &expr.expression {
-        Expression::StringLiteral(lit) => Some(&lit.value),
+        Expression::StringLiteral(lit) => lit.value.as_arena_str(),
         Expression::TemplateLiteral(lit) if lit.expressions.is_empty() && lit.quasis.len() == 1 => {
-            Some(&lit.quasis[0].value.raw)
+            Some(lit.quasis[0].value.raw)
         }
         _ => None,
     }

@@ -349,10 +349,13 @@ impl Rule for ImportStyle {
 
 impl ImportStyle {
     fn check_import_declaration(&self, import_decl: &ImportDeclaration<'_>, ctx: &LintContext<'_>) {
+        let Some(source) = import_decl.source.value.as_str() else {
+            return;
+        };
         let actual_styles = get_actual_import_declaration_styles(import_decl);
         self.report_if_needed(
             import_decl.span,
-            import_decl.source.value.as_str(),
+            source,
             actual_styles,
             SourceKind::ModuleSyntax,
             ctx,
@@ -364,9 +367,12 @@ impl ImportStyle {
         export_decl: &ExportAllDeclaration<'_>,
         ctx: &LintContext<'_>,
     ) {
+        let Some(source) = export_decl.source.value.as_str() else {
+            return;
+        };
         self.report_if_needed(
             export_decl.span,
-            export_decl.source.value.as_str(),
+            source,
             StyleSet::namespace(),
             SourceKind::ModuleSyntax,
             ctx,
@@ -379,9 +385,12 @@ impl ImportStyle {
         ctx: &LintContext<'_>,
     ) {
         let actual_styles = get_actual_export_declaration_styles(export_decl);
+        let Some(source) = export_decl.source.value.as_str() else {
+            return;
+        };
         self.report_if_needed(
             export_decl.span,
-            export_decl.source.value.as_str(),
+            source,
             actual_styles,
             SourceKind::ModuleSyntax,
             ctx,

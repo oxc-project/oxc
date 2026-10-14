@@ -1,5 +1,5 @@
 use std::{
-    fmt::{self, Debug, Write},
+    fmt::{self, Debug, Display, Write},
     hash::{Hash, Hasher},
     iter::FusedIterator,
     marker::PhantomData,
@@ -8,6 +8,8 @@ use std::{
 };
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
+#[cfg(feature = "serialize")]
+use oxc_estree::{ESTree, LoneSurrogatesString, Serializer as ESTreeSerializer};
 
 use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
 
@@ -148,6 +150,16 @@ impl<'a> JSStr<'a> {
         builder.into_js_str()
     }
 
+    /// Borrow the value as an arena [`Str`], or return `None` if it contains a lone surrogate.
+    ///
+    /// This is [`as_str`] for consumers that store the value in the AST.
+    ///
+    /// [`as_str`]: Self::as_str
+    #[inline]
+    pub fn as_arena_str(self) -> Option<Str<'a>> {
+        self.as_str().map(Str::from)
+    }
+
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
     ///
     /// This checks the cached flag in O(1). It does not scan the bytes.
@@ -212,6 +224,17 @@ impl<'a> JSStr<'a> {
     #[inline]
     pub fn encode_utf16(self) -> impl FusedIterator<Item = u16> + Clone + 'a {
         EncodeUtf16 { chars: JSChars { remaining: self.as_bytes() }, pending: 0 }
+    }
+
+    /// Return an adapter that implements [`Display`], like [`Path::display`].
+    ///
+    /// UTF-8 text is written as is, and each lone surrogate is written as `\uXXXX` in lowercase hex.
+    /// The output is for diagnostics, not for source code.
+    ///
+    /// [`Path::display`]: std::path::Path::display
+    #[inline]
+    pub fn display(self) -> impl Display + 'a {
+        JSStrDisplay(self)
     }
 
     /// Borrow the underlying canonical WTF-8 bytes.
@@ -367,6 +390,37 @@ impl Debug for JSStr<'_> {
             }
         }
         f.write_char('"')
+    }
+}
+
+/// [`Display`] adapter returned by [`JSStr::display`].
+struct JSStrDisplay<'a>(JSStr<'a>);
+
+impl Display for JSStrDisplay<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(value) = self.0.as_str() {
+            return f.write_str(value);
+        }
+        for c in self.0.chars() {
+            if let Some(c) = c.to_char() {
+                f.write_char(c)?;
+            } else {
+                write!(f, "\\u{:04x}", c.to_u32())?;
+            }
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl ESTree for JSStr<'_> {
+    #[inline]
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        if let Some(value) = self.as_str() {
+            value.serialize(serializer);
+        } else {
+            LoneSurrogatesString(self.chars().map(JSChar::to_u32)).serialize(serializer);
+        }
     }
 }
 

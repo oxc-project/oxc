@@ -156,18 +156,16 @@ impl<'a> PeepholeOptimizations {
             } else {
                 expr.alternate.take_in(ctx)
             };
-            return Some(Expression::new_sequence_expression(
+            return Some(Self::join_sequence(
                 expr.span,
-                [
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::Or,
-                        expr.test.take_in(ctx),
-                        seq_prefix,
-                        ctx,
-                    ),
-                    last_expr,
-                ],
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::Or,
+                    expr.test.take_in(ctx),
+                    seq_prefix,
+                    ctx,
+                ),
+                last_expr,
                 ctx,
             ));
         }
@@ -186,18 +184,16 @@ impl<'a> PeepholeOptimizations {
                 expr.consequent.take_in(ctx)
             };
 
-            return Some(Expression::new_sequence_expression(
+            return Some(Self::join_sequence(
                 expr.span,
-                [
-                    Self::join_with_left_associative_op(
-                        expr.test.span(),
-                        LogicalOperator::And,
-                        expr.test.take_in(ctx),
-                        seq_prefix,
-                        ctx,
-                    ),
-                    last_expr,
-                ],
+                Self::join_with_left_associative_op(
+                    expr.test.span(),
+                    LogicalOperator::And,
+                    expr.test.take_in(ctx),
+                    seq_prefix,
+                    ctx,
+                ),
+                last_expr,
                 ctx,
             ));
         }
@@ -585,8 +581,9 @@ impl<'a> PeepholeOptimizations {
             }
 
             // "a ? b : b" => "a, b"
-            let expressions = [expr.test.take_in(ctx), expr.consequent.take_in(ctx)];
-            return Some(Expression::new_sequence_expression(expr.span, expressions, ctx));
+            let test = expr.test.take_in(ctx);
+            let consequent = expr.consequent.take_in(ctx);
+            return Some(Self::join_sequence(expr.span, test, consequent, ctx));
         }
 
         None

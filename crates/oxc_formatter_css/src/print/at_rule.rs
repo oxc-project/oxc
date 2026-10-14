@@ -713,8 +713,12 @@ fn write_media_token<'a>(token: &'a str, f: &mut CssFormatter<'_, 'a>) {
     write!(f, text(&token[..=open]));
     let feature = inner[..colon].trim();
     let value = inner[colon + 1..].trim();
-    let normalized = format!("{}: {}", normalize_whitespace(feature), normalize_whitespace(value));
-    write!(f, text(f.allocator().alloc_str(&normalized)));
+    let normalized = f.allocator().alloc_concat_strs_array([
+        &normalize_whitespace(feature),
+        ": ",
+        &normalize_whitespace(value),
+    ]);
+    write!(f, text(normalized));
     write!(f, text(&token[close..]));
 }
 
@@ -1421,8 +1425,7 @@ fn write_raw_str<'a>(raw: &'a str, f: &mut CssFormatter<'_, 'a>) {
     if raw.as_bytes()[0] == enclosing {
         write!(f, text(raw));
     } else {
-        let out = format!("{ch}{content}{ch}", ch = enclosing as char);
-        write!(f, text(f.allocator().alloc_str(&out)));
+        write!(f, text(value::quoted(enclosing, content, f.allocator())));
     }
 }
 

@@ -1773,6 +1773,7 @@ dependencies = [
  "oxc_span",
  "oxc_str",
  "oxc_syntax",
+ "rustc-hash",
 ]
 
 [[package]]
@@ -2015,6 +2016,7 @@ dependencies = [
  "oxc_data_structures",
  "oxc_regular_expression",
  "oxc_span",
+ "oxc_str",
  "oxc_syntax",
  "smallvec",
 ]
@@ -2080,6 +2082,7 @@ name = "oxc_formatter_core"
 version = "0.73.0"
 dependencies = [
  "cow-utils",
+ "memchr",
  "oxc_allocator",
  "oxc_data_structures",
  "oxc_span",
@@ -2132,6 +2135,7 @@ dependencies = [
  "oxc_formatter_tests",
  "oxc_parser",
  "oxc_span",
+ "oxc_str",
  "oxc_syntax",
  "oxc_tasks_common",
  "pico-args",
@@ -2151,7 +2155,6 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
- "rustc-hash",
  "serde_json",
 ]
 
@@ -3331,6 +3334,7 @@ dependencies = [
  "oxc_ast_visit",
  "oxc_parser",
  "oxc_span",
+ "oxc_str",
  "oxc_tasks_common",
  "proc-macro2",
  "rustc-hash",

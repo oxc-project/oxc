@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -136,9 +137,9 @@ impl Rule for NoAccessorRecursion {
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&property.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name.as_ref() == expr_key_name
+                                    && prop_key_name == expr_key_name
                             } else {
-                                prop_key_name.as_ref() == expr_key_name
+                                prop_key_name == expr_key_name
                             }
                         };
                         if !is_same_key {
@@ -166,9 +167,9 @@ impl Rule for NoAccessorRecursion {
                         let is_same_key = {
                             if matches!(member_expr, MemberExpressionKind::PrivateField(_)) {
                                 matches!(&method_def.key, PropertyKey::PrivateIdentifier(_))
-                                    && prop_key_name.as_ref() == expr_key_name
+                                    && prop_key_name == expr_key_name
                             } else {
-                                prop_key_name.as_ref() == expr_key_name
+                                prop_key_name == expr_key_name
                             }
                         };
                         if !is_same_key {
@@ -264,13 +265,11 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     false
 }
 
-fn get_member_expr_key_name<'a>(expr: &'a MemberExpressionKind) -> Option<&'a str> {
+fn get_member_expr_key_name<'a>(expr: &MemberExpressionKind<'a>) -> Option<JSStr<'a>> {
     match expr {
-        MemberExpressionKind::Computed(expr) => {
-            expr.static_property_name().map(|name| name.as_str())
-        }
-        MemberExpressionKind::Static(expr) => Some(expr.property.name.as_str()),
-        MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_str()),
+        MemberExpressionKind::Computed(expr) => expr.static_property_name(),
+        MemberExpressionKind::Static(expr) => Some(expr.property.name.as_js_str()),
+        MemberExpressionKind::PrivateField(priv_field) => Some(priv_field.field.name.as_js_str()),
     }
 }
 
@@ -305,10 +304,12 @@ fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
     if matches!(parent.kind(), AstKind::Function(_)) { Some(parent) } else { None }
 }
 
-fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<String> {
+fn get_property_or_method_def_name<'a>(
+    parent: &'a AstNode<'a>,
+) -> Option<oxc_ast::StaticPropertyName<'a>> {
     match parent.kind() {
         AstKind::ObjectProperty(ObjectProperty { key, .. })
-        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => Some(key.name()?.to_string()),
+        | AstKind::MethodDefinition(MethodDefinition { key, .. }) => key.name(),
         _ => None,
     }
 }
@@ -470,6 +471,7 @@ fn test() {
                 }
             };
         ",
+        r#"const o = { get "\uD800"() { return this["\uDC00"]; } };"#,
     ];
 
     let fail = vec![
@@ -628,6 +630,8 @@ fn test() {
                 }
             }
         ",
+        r#"const o = { get "\uD800"() { return this["\uD800"]; } };"#,
+        r#"class Foo { get "\uD800"() { return this["\uD800"]; } }"#,
     ];
 
     Tester::new(NoAccessorRecursion::NAME, NoAccessorRecursion::PLUGIN, pass, fail)

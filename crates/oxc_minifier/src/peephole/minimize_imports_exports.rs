@@ -2,6 +2,7 @@ use oxc_allocator::{ArenaHashMap, ArenaVec, CloneIn, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_span::ContentEq;
+use oxc_str::JSStr;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::TraverseCtx;
@@ -78,7 +79,7 @@ impl<'a> PeepholeOptimizations {
     /// import { bar } from "other";
     /// ```
     pub fn merge_imports(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut import_cache: ArenaHashMap<'a, &'a str, ArenaVec<'a, usize>> =
+        let mut import_cache: ArenaHashMap<'a, JSStr<'a>, ArenaVec<'a, usize>> =
             ArenaHashMap::new_in(ctx.allocator());
         let mut merges = ArenaVec::new_in(ctx);
 
@@ -92,7 +93,7 @@ impl<'a> PeepholeOptimizations {
                 continue;
             };
             let candidates = import_cache
-                .entry(import_decl.source.value.as_str())
+                .entry(import_decl.source.value)
                 .or_insert_with(|| ArenaVec::new_in(ctx));
             let target_index = candidates.iter().find_map(|&target_index| {
                 let Some(Statement::ImportDeclaration(target)) = stmts.get(target_index) else {

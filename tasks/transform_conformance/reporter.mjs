@@ -3,8 +3,7 @@
 import { join as pathJoin } from "path";
 
 const currentDir = pathJoin(import.meta.dirname, "./"),
-  rootDir = pathJoin(currentDir, "../../"),
-  vitestPath = pathJoin(rootDir, "node_modules/.pnpm/vitest@");
+  rootDir = pathJoin(currentDir, "../../");
 
 export default class CustomReporter {
   onTestRunEnd(testModules) {
@@ -42,7 +41,19 @@ export default class CustomReporter {
 function formatMessage(message) {
   return message
     .split("\n")
-    .filter((line) => !line.includes(vitestPath) && line.trim() !== "at new Promise (<anonymous>)")
-    .map((line) => line.replace("file://", "").replace(rootDir, "./"))
+    .filter(
+      (line) =>
+        !/[\\/]node_modules[\\/]vitest[\\/]/.test(line)
+        && line.trim() !== "at new Promise (<anonymous>)",
+    )
+    .map((line) =>
+      line
+        .replace("file://", "")
+        .replace(rootDir, "./")
+        .replace(
+          /(?:[A-Za-z]:)?\.?[\\/](?:[^\s()"'`]*[\\/])?node_modules[\\/]([^\s()"'`]*)/g,
+          (_, path) => `./node_modules/${path.replaceAll("\\", "/")}`,
+        ),
+    )
     .join("\n");
 }

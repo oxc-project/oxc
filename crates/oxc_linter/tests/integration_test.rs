@@ -1,4 +1,4 @@
-use oxc_linter::{RuleCategory, RuleMeta, rules::RULES};
+use oxc_linter::{FixKind, RuleCategory, RuleFixMeta, RuleFlags, RuleMeta, rules::RULES};
 use oxc_macros::declare_oxc_lint_test;
 
 struct TestRule;
@@ -9,6 +9,16 @@ mod shared_config {
 }
 
 struct TestRuleWithSharedConfig;
+
+struct TestTsgolintRule;
+
+struct TestTsgolintRuleWithConfig;
+
+struct TestRecommendedRule;
+
+struct TestRecommendedRuleWithFix;
+
+struct TestRecommendedTsgolintRuleWithConfig;
 
 declare_oxc_lint_test!(
     /// Dummy description
@@ -41,6 +51,53 @@ declare_oxc_lint_test!(
     config = shared_config::Config,
 );
 
+declare_oxc_lint_test!(
+    /// Type-aware rule without configuration
+    TestTsgolintRule(tsgolint),
+    typescript,
+    correctness,
+    version = "next",
+);
+
+declare_oxc_lint_test!(
+    /// Type-aware rule with configuration
+    TestTsgolintRuleWithConfig(tsgolint),
+    typescript,
+    correctness,
+    version = "next",
+    config = shared_config::Config,
+);
+
+declare_oxc_lint_test!(
+    /// Recommended rule without fixes or configuration
+    TestRecommendedRule,
+    eslint,
+    restriction,
+    recommended,
+    version = "next",
+);
+
+declare_oxc_lint_test!(
+    /// Recommended rule with a fix kind after the recommended keyword
+    TestRecommendedRuleWithFix,
+    eslint,
+    restriction,
+    recommended,
+    conditional_fix,
+    version = "next",
+);
+
+declare_oxc_lint_test!(
+    /// Recommended type-aware rule with configuration and a fix kind before the keyword
+    TestRecommendedTsgolintRuleWithConfig(tsgolint),
+    typescript,
+    correctness,
+    conditional_fix,
+    version = "next",
+    config = shared_config::Config,
+    recommended,
+);
+
 #[test]
 fn test_declare_oxc_lint() {
     // Simple, multiline documentation
@@ -58,12 +115,79 @@ fn test_declare_oxc_lint() {
     assert_eq!(TestRule::PLUGIN, "eslint");
 
     // Shared config paths can be used as config schema sources.
-    let has_config = TestRuleWithSharedConfig::HAS_CONFIG;
-    assert!(has_config);
+    assert_eq!(TestRuleWithSharedConfig::FLAGS, RuleFlags::HAS_CONFIG);
 
     let mut generator =
         schemars::r#gen::SchemaGenerator::new(schemars::r#gen::SchemaSettings::default());
     assert!(TestRuleWithSharedConfig::config_schema(&mut generator).is_some());
+}
+
+#[test]
+fn test_rule_flags() {
+    struct DefaultFlagsRule;
+
+    impl RuleMeta for DefaultFlagsRule {
+        const NAME: &'static str = "default-flags-rule";
+        const PLUGIN: &'static str = "eslint";
+        const CATEGORY: RuleCategory = RuleCategory::Correctness;
+        const VERSION: &'static str = "next";
+    }
+
+    assert_eq!(DefaultFlagsRule::FLAGS, RuleFlags::empty());
+    assert_eq!(TestRule::FLAGS, RuleFlags::empty());
+    assert_eq!(TestRuleWithSharedConfig::FLAGS, RuleFlags::HAS_CONFIG);
+    assert_eq!(TestTsgolintRule::FLAGS, RuleFlags::IS_TSGOLINT_RULE);
+    assert_eq!(
+        TestTsgolintRuleWithConfig::FLAGS,
+        RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG
+    );
+}
+
+#[test]
+fn test_recommended_rule_flags() {
+    assert_eq!(TestRecommendedRule::FLAGS, RuleFlags::IS_RECOMMENDED);
+    assert_eq!(TestRecommendedRule::FIX, RuleFixMeta::None);
+    assert_eq!(TestRecommendedRuleWithFix::FLAGS, RuleFlags::IS_RECOMMENDED);
+    assert_eq!(TestRecommendedRuleWithFix::FIX, RuleFixMeta::Conditional(FixKind::Fix));
+    assert_eq!(
+        TestRecommendedTsgolintRuleWithConfig::FLAGS,
+        RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG | RuleFlags::IS_RECOMMENDED
+    );
+    assert_eq!(TestRecommendedTsgolintRuleWithConfig::FIX, RuleFixMeta::Conditional(FixKind::Fix));
+}
+
+#[test]
+fn test_rule_enum_flags() {
+    let cases = [
+        ("eslint", "no-alert", RuleFlags::empty()),
+        ("eslint", "no-debugger", RuleFlags::IS_RECOMMENDED),
+        ("eslint", "eqeqeq", RuleFlags::HAS_CONFIG),
+        ("typescript", "no-unsafe-assignment", RuleFlags::IS_TSGOLINT_RULE),
+        ("typescript", "no-floating-promises", RuleFlags::IS_TSGOLINT_RULE | RuleFlags::HAS_CONFIG),
+    ];
+
+    for (plugin, name, expected) in cases {
+        let rule = RULES
+            .iter()
+            .find(|rule| rule.plugin_name() == plugin && rule.name() == name)
+            .unwrap_or_else(|| panic!("Rule {plugin}/{name} must be registered"));
+        assert_eq!(rule.flags(), expected, "unexpected flags for {plugin}/{name}");
+        assert_eq!(
+            rule.is_tsgolint_rule(),
+            expected.contains(RuleFlags::IS_TSGOLINT_RULE),
+            "unexpected tsgolint status for {plugin}/{name}"
+        );
+        assert_eq!(
+            rule.is_recommended(),
+            expected.contains(RuleFlags::IS_RECOMMENDED),
+            "unexpected recommended status for {plugin}/{name}"
+        );
+        assert_eq!(
+            rule.has_config(),
+            expected.contains(RuleFlags::HAS_CONFIG),
+            "unexpected configuration status for {plugin}/{name}"
+        );
+    }
 }
 
 #[test]

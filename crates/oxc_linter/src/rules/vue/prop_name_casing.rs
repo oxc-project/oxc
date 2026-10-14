@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
         ObjectPropertyKind, PropertyKey, TSSignature,
@@ -161,7 +161,9 @@ impl PropNameCasing {
     fn check_array_props<'a>(&self, arr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
         for element in &arr.elements {
             let ArrayExpressionElement::StringLiteral(lit) = element else { continue };
-            self.report_if_invalid(lit.value.as_str(), lit.span, ctx);
+            if let Some(value) = lit.value.as_str() {
+                self.report_if_invalid(value, lit.span, ctx);
+            }
         }
     }
 
@@ -179,8 +181,9 @@ impl PropNameCasing {
             TSSignature::TSMethodSignature(sig) => (sig.key.static_name(), sig.key.span()),
             _ => return,
         };
-        let Some(name) = key_opt else { return };
-        self.report_if_invalid(name.as_ref(), span, ctx);
+        let name = key_opt.and_then(StaticPropertyName::into_cow_str);
+        let Some(name) = name else { return };
+        self.report_if_invalid(&name, span, ctx);
     }
 
     fn report_if_invalid(&self, name: &str, span: Span, ctx: &LintContext<'_>) {
@@ -211,13 +214,13 @@ fn property_key_static_name<'a>(
             // unresolvable and skipped.
             let expr = key.as_expression()?.get_inner_expression();
             match expr {
-                Expression::StringLiteral(lit) => Some((lit.value.as_str().into(), lit.span)),
+                Expression::StringLiteral(lit) => Some((lit.value.as_str()?.into(), lit.span)),
                 Expression::TemplateLiteral(tpl)
                     if tpl.expressions.is_empty() && tpl.quasis.len() == 1 =>
                 {
                     let quasi = tpl.quasis.first()?;
                     let cooked = quasi.value.cooked.as_ref()?;
-                    Some((cooked.as_str().into(), tpl.span))
+                    Some((cooked.as_str()?.into(), tpl.span))
                 }
                 Expression::RegExpLiteral(regex) => {
                     Some((regex.raw.as_ref()?.as_str().into(), regex.span))

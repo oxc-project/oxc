@@ -383,8 +383,11 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
                     for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
                         for element in &ctx.class_table_builder.classes.elements[ancestor_class_id]
                         {
-                            if element.is_private {
-                                names.push(element.name.as_ref());
+                            // Private names originate from identifiers, which are always UTF-8.
+                            if element.is_private
+                                && let Some(name) = element.name.as_str()
+                            {
+                                names.push(name);
                             }
                         }
                     }

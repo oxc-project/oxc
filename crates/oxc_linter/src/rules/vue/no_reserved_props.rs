@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ArrayExpression, CallExpression, Expression, ObjectExpression, ObjectPropertyKind,
         TSSignature,
@@ -145,13 +145,16 @@ impl NoReservedProps {
     fn check_array_props<'a>(&self, arr: &ArrayExpression<'a>, ctx: &LintContext<'a>) {
         for elem in &arr.elements {
             let Some(expr) = elem.as_expression() else { continue };
-            let (name, span): (&str, Span) = match expr.get_inner_expression() {
+            let (name, span): (Option<&str>, Span) = match expr.get_inner_expression() {
                 Expression::StringLiteral(lit) => (lit.value.as_str(), lit.span),
                 Expression::TemplateLiteral(tpl) => match tpl.single_quasi() {
                     Some(quasi) => (quasi.as_str(), tpl.span),
                     None => continue,
                 },
                 _ => continue,
+            };
+            let Some(name) = name else {
+                continue;
             };
             self.report(name, span, ctx);
         }
@@ -161,8 +164,10 @@ impl NoReservedProps {
     fn check_object_props<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
         for prop_kind in &obj.properties {
             let ObjectPropertyKind::ObjectProperty(p) = prop_kind else { continue };
-            let Some(name) = p.key.static_name() else { continue };
-            self.report(name.as_ref(), p.key.span(), ctx);
+            let Some(name) = p.key.static_name().and_then(StaticPropertyName::into_cow_str) else {
+                continue;
+            };
+            self.report(&name, p.key.span(), ctx);
         }
     }
 
@@ -201,8 +206,10 @@ impl NoReservedProps {
             TSSignature::TSMethodSignature(method) => &method.key,
             _ => return,
         };
-        let Some(name) = key.static_name() else { return };
-        self.report(name.as_ref(), key.span(), ctx);
+        let Some(name) = key.static_name().and_then(StaticPropertyName::into_cow_str) else {
+            return;
+        };
+        self.report(&name, key.span(), ctx);
     }
 }
 

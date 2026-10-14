@@ -2,12 +2,13 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{CallExpression, Expression, ObjectExpression, ObjectPropertyKind, TemplateLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -132,8 +133,11 @@ impl NoReservedComponentNames {
         };
         for entry in &components_obj.properties {
             let ObjectPropertyKind::ObjectProperty(prop) = entry else { continue };
-            let Some(name) = prop.key.static_name() else { continue };
-            self.report_if_reserved(name.as_ref(), prop.key.span(), ctx);
+            let Some(name) = prop.key.static_name().and_then(StaticPropertyName::into_cow_str)
+            else {
+                continue;
+            };
+            self.report_if_reserved(&name, prop.key.span(), ctx);
         }
     }
 
@@ -147,7 +151,9 @@ impl NoReservedComponentNames {
     fn check_name_expression<'a>(&self, expr: &Expression<'a>, ctx: &LintContext<'a>) {
         match expr {
             Expression::StringLiteral(lit) => {
-                self.report_if_reserved(&lit.value, lit.span, ctx);
+                if let Some(value) = lit.value.as_str() {
+                    self.report_if_reserved(value, lit.span, ctx);
+                }
             }
             Expression::TemplateLiteral(tpl) => {
                 if let Some(value) = single_quasi_value(tpl) {
@@ -232,7 +238,7 @@ fn single_quasi_value<'a>(tpl: &'a TemplateLiteral<'a>) -> Option<&'a str> {
     if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
         return None;
     }
-    tpl.quasis[0].value.cooked.as_deref()
+    tpl.quasis[0].value.cooked.and_then(JSStr::as_str)
 }
 
 fn lower_first_char(name: &str) -> Option<String> {

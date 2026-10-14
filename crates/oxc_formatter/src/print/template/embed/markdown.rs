@@ -39,7 +39,7 @@ pub(super) fn try_embed_markdown<'a>(
     // Markdown uses `.raw` quasi values, so only backticks need raw-style escaping
     // (template chars `${` / `\` are passed through verbatim).
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24
-    let ir = super::escape_backticks_raw_in_ir(&ir, f);
+    let ir = super::escape_backticks_raw_in_ir(ir, f);
 
     // Phase 5: Layout
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/markdown.js#L24-L29

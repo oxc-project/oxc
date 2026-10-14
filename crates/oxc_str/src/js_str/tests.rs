@@ -379,6 +379,17 @@ fn equality_hash_and_debug() {
 }
 
 #[test]
+fn display_escapes_lone_surrogates() {
+    let allocator = Allocator::new();
+    let display = |units: &[u16]| from_utf16_in(units, &allocator).display().to_string();
+    assert_eq!(JSStr::from("a\u{e9}\u{1f600}\"\n").display().to_string(), "a\u{e9}\u{1f600}\"\n");
+    assert_eq!(display(&[0xD800]), "\\ud800");
+    assert_eq!(display(&[0xDFFF]), "\\udfff");
+    assert_eq!(display(&[0xD800, 0xDC00]), "\u{10000}");
+    assert_eq!(display(&[0x61, 0xDC00, 0xD83D, 0xDE00, 0xDBFF, 0x62]), "a\\udc00\u{1f600}\\udbffb");
+}
+
+#[test]
 fn cloned_iterators_and_fused_end() {
     let allocator = Allocator::new();
     let value = from_utf16_in(&[0xD800, 0xDC00, 0xDFFF], &allocator);

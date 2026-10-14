@@ -8,10 +8,11 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
-fn require_type_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
+fn require_type_diagnostic(span: Span, name: impl std::fmt::Display) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Prop \"{name}\" should define at least its type."))
         .with_label(span)
 }
@@ -135,7 +136,10 @@ impl RequirePropTypes {
                     return;
                 }
             }
-            ctx.diagnostic(require_type_diagnostic(call_expr.span, lit.value.as_str()));
+            ctx.diagnostic(require_type_diagnostic(
+                call_expr.span,
+                lit.value.as_str().unwrap_or_else(|| ctx.source_range(lit.span)),
+            ));
             return;
         }
 
@@ -189,7 +193,7 @@ impl RequirePropTypes {
     ) -> Option<&'a ObjectExpression<'a>> {
         let member_expr = call_expr.callee.get_member_expr()?;
 
-        if member_expr.static_property_name() == Some("extend")
+        if member_expr.static_property_name().is_some_and(|name| name == "extend")
             && let Expression::ObjectExpression(obj) =
                 call_expr.arguments.first()?.as_expression()?.get_inner_expression()
         {
@@ -231,7 +235,7 @@ impl RequirePropTypes {
             };
 
             if is_invalid {
-                ctx.diagnostic(require_type_diagnostic(p.span(), key.as_ref()));
+                ctx.diagnostic(require_type_diagnostic(p.span(), key));
             }
         }
     }
@@ -240,10 +244,10 @@ impl RequirePropTypes {
         for elem in &arr.elements {
             let Some(expr) = elem.as_expression() else { continue };
             let name = match expr {
-                Expression::StringLiteral(lit) => Some(lit.value.as_str()),
+                Expression::StringLiteral(lit) => lit.value.as_str(),
                 Expression::Identifier(id) => Some(id.name.as_str()),
                 Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                    lit.quasis.first().and_then(|q| q.value.cooked.as_deref())
+                    lit.quasis.first().and_then(|q| q.value.cooked.and_then(JSStr::as_str))
                 }
                 _ => None,
             }

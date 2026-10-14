@@ -1,11 +1,12 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{BindingPattern, Expression, IdentifierReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use rustc_hash::FxHashMap;
 
 use crate::{context::LintContext, module_record::ImportImportName, rule::Rule};
@@ -129,7 +130,7 @@ impl Rule for NoNamedAsDefaultMember {
                         continue;
                     };
                     let Some(prop_str) =
-                        member_expr_kind.static_property_name().map(|n| n.as_str())
+                        member_expr_kind.static_property_name().and_then(JSStr::as_str)
                     else {
                         continue;
                     };
@@ -153,7 +154,9 @@ impl Rule for NoNamedAsDefaultMember {
                     };
 
                     for prop in &*object_pattern.properties {
-                        let Some(name) = prop.key.static_name() else {
+                        let name =
+                            prop.key.static_name().and_then(StaticPropertyName::into_cow_str);
+                        let Some(name) = name else {
                             continue;
                         };
                         if let Some(module_name) =
