@@ -2,7 +2,7 @@ import { createContext } from "./context.ts";
 import { deepFreezeJsonArray } from "./json.ts";
 import { compileSchema, DEFAULT_OPTIONS } from "./options.ts";
 import { switchWorkspace } from "./workspace.ts";
-import { getErrorMessage } from "../utils/utils.ts";
+import { getErrorMessage, replaceLoneSurrogateEscapes } from "../utils/utils.ts";
 import { debugAssertIsNonNull } from "../utils/asserts.ts";
 
 import type { Writable } from "type-fest";
@@ -137,9 +137,9 @@ export async function loadPlugin(
   try {
     const plugin = (await import(url)).default as Plugin;
     const res = registerPlugin(plugin, pluginName, pluginNameIsAlias, workspaceUri);
-    return JSON.stringify({ Success: res });
+    return replaceLoneSurrogateEscapes(JSON.stringify({ Success: res }));
   } catch (err) {
-    return JSON.stringify({ Failure: getErrorMessage(err) });
+    return replaceLoneSurrogateEscapes(JSON.stringify({ Failure: getErrorMessage(err) }));
   }
 }
 

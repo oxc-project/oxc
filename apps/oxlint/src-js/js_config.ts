@@ -1,5 +1,5 @@
 import { importJsConfig, loadViteConfigField } from "@oxapps/shared";
-import { getErrorMessage } from "./utils/utils.ts";
+import { getErrorMessage, replaceLoneSurrogateEscapes } from "./utils/utils.ts";
 
 interface JsConfigResult {
   path: string;
@@ -126,14 +126,20 @@ async function loadConfigs(
     }
 
     if (errors.length > 0) {
-      return JSON.stringify({ Failures: errors } satisfies LoadJsConfigsResult);
+      return replaceLoneSurrogateEscapes(
+        JSON.stringify({ Failures: errors } satisfies LoadJsConfigsResult),
+      );
     }
 
-    return JSON.stringify({ Success: successes } satisfies LoadJsConfigsResult);
+    return replaceLoneSurrogateEscapes(
+      JSON.stringify({ Success: successes } satisfies LoadJsConfigsResult),
+    );
   } catch (err) {
-    return JSON.stringify({
-      Error: getErrorMessage(err),
-    } satisfies LoadJsConfigsResult);
+    return replaceLoneSurrogateEscapes(
+      JSON.stringify({
+        Error: getErrorMessage(err),
+      } satisfies LoadJsConfigsResult),
+    );
   }
 }
 
