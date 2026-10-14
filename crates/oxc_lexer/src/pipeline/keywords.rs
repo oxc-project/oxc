@@ -501,7 +501,7 @@ unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
 /// # SAFETY
 ///
 /// `ptr` must be valid for reading 16 bytes, and `len` must be between 0 and 16 (inclusive).
-#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+#[cfg(target_arch = "aarch64")]
 #[inline(always)]
 unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
     use std::arch::aarch64::{vandq_u8, veorq_u8, vgetq_lane_u64, vld1q_u8, vreinterpretq_u64_u8};
@@ -527,7 +527,7 @@ unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {
         target_feature = "bmi2",
         target_feature = "popcnt"
     ),
-    all(target_arch = "aarch64", target_feature = "neon")
+    target_arch = "aarch64"
 )))]
 #[inline(always)]
 unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2]) -> bool {

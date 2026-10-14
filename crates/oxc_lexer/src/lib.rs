@@ -25,10 +25,30 @@ pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
 pub const PAD: usize = 64;
 
+// Neon is required on aarch64. In practice, this rules nothing out:
+//
+// - rustc's built-in target list (`rustc --print target-list`, as of rustc 1.99) has 55 targets
+//   with `target_arch = "aarch64"`. All of them enable `neon` by default, except these 3:
+//   - `aarch64-unknown-none-softfloat`
+//   - `aarch64_be-unknown-none-softfloat`
+//   - `aarch64v8r-unknown-none-softfloat`
+//   (checked with `rustc --print cfg --target <target>` for every target in the list).
+//   All of these 3 are bare-metal targets (`target_os = "none"`), which have no standard library.
+//   This crate needs `std` (e.g. `thread_local!` below), so it can't be built for them anyway.
+// - Disabling `neon` on any other aarch64 target with `-C target-feature=-neon` breaks the target's ABI.
+//   rustc already warns that this is "being phased out", and "will become a hard error in a future release".
+//   See https://github.com/rust-lang/rust/issues/116344.
+//
+// So aarch64 builds never need the generic implementation of anything which has a Neon implementation.
+const _: () = assert!(
+    !cfg!(target_arch = "aarch64") || cfg!(target_feature = "neon"),
+    "`oxc_lexer` requires the `neon` target feature on aarch64"
+);
+
 /// Which implementation of the lexer is compiled in.
 ///
 /// - `"AVX2"`: x86_64 with `avx2`, `bmi2` and `popcnt` target features enabled.
-/// - `"Neon"`: aarch64 with `neon` target feature enabled.
+/// - `"Neon"`: aarch64.
 /// - `"generic"`: Everywhere else.
 ///
 /// Parts of the pipeline which have no implementation for a platform use the generic one.
@@ -41,7 +61,7 @@ pub const IMPLEMENTATION: &str = if cfg!(all(
     target_feature = "popcnt"
 )) {
     "AVX2"
-} else if cfg!(all(target_arch = "aarch64", target_feature = "neon")) {
+} else if cfg!(target_arch = "aarch64") {
     "Neon"
 } else {
     "generic"
