@@ -7,8 +7,8 @@
 //! `BLOCK_SIZE + BLOCK_ALIGN` (6 GiB) and uses an aligned region within it. That consumes 6 GiB of
 //! virtual address space per buffer.
 //!
-//! [`create_raw_transfer_buffer`] instead allocates an aligned region of 2 GiB directly, using OS APIs.
-//! The buffer then only occupies 2 GiB of address space.
+//! [`create_raw_transfer_buffer`] instead allocates an aligned region of 2 GiB directly, using OS APIs
+//! (`mmap` on Unix). The buffer then only occupies 2 GiB of address space.
 //! The memory is passed to JS as an external `ArrayBuffer`, and is freed when that `ArrayBuffer`
 //! is garbage collected.
 
@@ -102,8 +102,93 @@ unsafe extern "C" fn finalize_buffer(_env: sys::napi_env, data: *mut c_void, _hi
     unsafe { block::free(NonNull::new_unchecked(data.cast::<u8>())) };
 }
 
-/// Placeholder until allocation is implemented for each platform. `alloc` always fails,
-/// so `create_raw_transfer_buffer` returns `null`, and JS must allocate the buffer itself.
+#[cfg(unix)]
+mod block {
+    use std::ptr::{self, NonNull};
+
+    use crate::raw_transfer_constants::{BLOCK_ALIGN, BLOCK_SIZE};
+
+    /// Size of memory mapping backing each buffer: `BLOCK_SIZE` rounded up to a multiple of page size.
+    /// `BLOCK_SIZE` is 16 bytes less than 2 GiB, so this is 2 GiB.
+    const MAPPING_SIZE: usize = 1 << 31;
+
+    /// Size of region initially reserved. Large enough to always contain a region of `MAPPING_SIZE` bytes
+    /// aligned on `BLOCK_ALIGN`.
+    const RESERVE_SIZE: usize = MAPPING_SIZE + BLOCK_ALIGN;
+
+    const _: () = assert!(BLOCK_SIZE <= MAPPING_SIZE && MAPPING_SIZE - BLOCK_SIZE < 4096);
+
+    /// Map flags. `MAP_NORESERVE` on Linux and Android, so the mapping does not count against overcommit
+    /// limits (memory is only committed when pages are written to, same as for a JS `ArrayBuffer`).
+    #[cfg(any(target_os = "linux", target_os = "android"))]
+    const MAP_FLAGS: libc::c_int = libc::MAP_PRIVATE | libc::MAP_ANONYMOUS | libc::MAP_NORESERVE;
+    #[cfg(not(any(target_os = "linux", target_os = "android")))]
+    const MAP_FLAGS: libc::c_int = libc::MAP_PRIVATE | libc::MAP_ANON;
+
+    /// Allocate a zeroed region of `MAPPING_SIZE` bytes, aligned on `BLOCK_ALIGN`.
+    ///
+    /// Reserves `RESERVE_SIZE` bytes, unmaps the parts before and after the aligned region,
+    /// and then makes the aligned region readable and writable.
+    /// The reservation is inaccessible (`PROT_NONE`), so it is not charged against the commit limit
+    /// when overcommit is disabled (Linux ignores `MAP_NORESERVE` then). Only the aligned region is.
+    /// Returns `None` if allocation fails.
+    pub fn alloc() -> Option<NonNull<u8>> {
+        // SAFETY: Anonymous private mapping, not backed by a file. No existing memory is affected.
+        let start_ptr =
+            unsafe { libc::mmap(ptr::null_mut(), RESERVE_SIZE, libc::PROT_NONE, MAP_FLAGS, -1, 0) };
+        if start_ptr == libc::MAP_FAILED {
+            return None;
+        }
+        let start_ptr = start_ptr.cast::<u8>();
+
+        // `mmap` returns a page-aligned address, and `BLOCK_ALIGN` and `MAPPING_SIZE` are multiples
+        // of page size, so all of these are page-aligned, as `munmap` requires.
+        // `head_size < BLOCK_ALIGN`, so `tail_size > 0`.
+        let start = start_ptr.addr();
+        let head_size = start.next_multiple_of(BLOCK_ALIGN) - start;
+        let tail_size = RESERVE_SIZE - head_size - MAPPING_SIZE;
+
+        // SAFETY: All regions are within the mapping created above, and page-aligned.
+        // Nothing else has access to the mapping yet.
+        unsafe {
+            let aligned_ptr = start_ptr.add(head_size);
+            if head_size > 0 {
+                let result = libc::munmap(start_ptr.cast(), head_size);
+                debug_assert_eq!(result, 0);
+            }
+            let result = libc::munmap(aligned_ptr.add(MAPPING_SIZE).cast(), tail_size);
+            debug_assert_eq!(result, 0);
+
+            let result = libc::mprotect(
+                aligned_ptr.cast(),
+                MAPPING_SIZE,
+                libc::PROT_READ | libc::PROT_WRITE,
+            );
+            if result != 0 {
+                // e.g. commit limit reached
+                let result = libc::munmap(aligned_ptr.cast(), MAPPING_SIZE);
+                debug_assert_eq!(result, 0);
+                return None;
+            }
+
+            debug_assert!(aligned_ptr.addr().is_multiple_of(BLOCK_ALIGN));
+            Some(NonNull::new_unchecked(aligned_ptr))
+        }
+    }
+
+    /// Free a region allocated by [`alloc`].
+    ///
+    /// # SAFETY
+    /// `ptr` must have been returned by [`alloc`], and must not be used after this call.
+    pub unsafe fn free(ptr: NonNull<u8>) {
+        // SAFETY: Caller guarantees `ptr` is start of a mapping of `MAPPING_SIZE` bytes created by `alloc`
+        let result = unsafe { libc::munmap(ptr.as_ptr().cast(), MAPPING_SIZE) };
+        debug_assert_eq!(result, 0);
+    }
+}
+
+/// Fallback for other platforms. Allocation is not supported, so JS falls back to allocating the buffer itself.
+#[cfg(not(unix))]
 mod block {
     use std::ptr::NonNull;
 
