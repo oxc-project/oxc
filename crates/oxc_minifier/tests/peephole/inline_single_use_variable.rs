@@ -320,6 +320,17 @@ fn test_inline_past_readonly_variable() {
 }
 
 #[test]
+fn test_inline_into_tag_keeps_this() {
+    test("function f(a) { let c = a?.b; return c`` }", "function f(a) { return (0, a?.b)`` }");
+    test("function f(a) { let c = a[b]; return c`` }", "function f(a) { return (0, a[b])`` }");
+    test(
+        "function f(a, t) { let c = a.b; return t`${c}` }",
+        "function f(a, t) { return t`${a.b}` }",
+    );
+    test("function f(a) { let c = a; return c.b`` }", "function f(a) { return a.b`` }");
+}
+
+#[test]
 fn test_inline_read_before_await_tdz() {
     // https://github.com/rolldown/rolldown/issues/9959
     // Merging `let num = await foo(); bar(v, num)` into `bar(v, await foo())`
