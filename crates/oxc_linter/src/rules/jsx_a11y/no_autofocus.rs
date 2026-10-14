@@ -71,6 +71,7 @@ declare_oxc_lint!(
     NoAutofocus,
     jsx_a11y,
     correctness,
+    recommended,
     suggestion,
     config = NoAutofocus,
     version = "0.0.19",

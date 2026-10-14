@@ -129,6 +129,7 @@ declare_oxc_lint!(
     LabelHasAssociatedControl,
     jsx_a11y,
     correctness,
+    recommended,
     config = LabelHasAssociatedControlConfig,
     version = "0.9.1",
     short_description = "Enforce that a label tag has a text label and an associated control.",

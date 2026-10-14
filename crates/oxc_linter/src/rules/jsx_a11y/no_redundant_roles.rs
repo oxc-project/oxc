@@ -91,6 +91,7 @@ declare_oxc_lint!(
     NoRedundantRoles,
     jsx_a11y,
     correctness,
+    recommended,
     fix,
     config = NoRedundantRolesConfig,
     version = "0.2.1",

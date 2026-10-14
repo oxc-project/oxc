@@ -55,6 +55,7 @@ declare_oxc_lint!(
     RoleSupportsAriaProps,
     jsx_a11y,
     correctness,
+    recommended,
     version = "0.2.0",
     short_description = "Enforce that elements only contain `aria-*` properties supported by their explicit or implicit role.",
 );

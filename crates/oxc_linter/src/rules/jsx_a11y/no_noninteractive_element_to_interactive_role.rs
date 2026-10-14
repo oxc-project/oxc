@@ -140,6 +140,7 @@ declare_oxc_lint!(
     NoNoninteractiveElementToInteractiveRole,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoNoninteractiveElementToInteractiveRoleConfig,
     version = "1.64.0",
     short_description = "Disallow using an interactive WAI-ARIA role on a non-interactive HTML element.",
