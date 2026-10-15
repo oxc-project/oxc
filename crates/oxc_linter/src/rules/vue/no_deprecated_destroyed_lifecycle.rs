@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression,
+        CallExpression, ExportDefaultDeclarationKind, Expression, ObjectExpression, ObjectProperty,
         ObjectPropertyKind, PropertyKey,
     },
 };
@@ -184,9 +184,7 @@ enum KeyType {
 }
 
 /// Get the property key name, span, whether it's a shorthand property, and key type
-fn get_property_key_info(
-    prop: &oxc_ast::ast::ObjectProperty,
-) -> Option<(String, Span, bool, KeyType)> {
+fn get_property_key_info(prop: &ObjectProperty) -> Option<(String, Span, bool, KeyType)> {
     match &prop.key {
         PropertyKey::StaticIdentifier(ident) => {
             Some((ident.name.to_string(), ident.span, prop.shorthand, KeyType::Identifier))

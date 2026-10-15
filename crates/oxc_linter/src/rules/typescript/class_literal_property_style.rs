@@ -4,8 +4,8 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, Class, ClassBody,
-        ClassElement, Expression, Function, MethodDefinitionKind, PropertyDefinition, PropertyKey,
-        Statement, TSAccessibility,
+        ClassElement, Expression, Function, MethodDefinition, MethodDefinitionKind,
+        PropertyDefinition, PropertyKey, Statement, TSAccessibility,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -277,10 +277,7 @@ fn push_member_key(text: &mut String, key: &str, computed: bool) {
     }
 }
 
-fn has_duplicate_setter<'a>(
-    class_body: &ClassBody<'a>,
-    getter: &oxc_ast::ast::MethodDefinition<'a>,
-) -> bool {
+fn has_duplicate_setter<'a>(class_body: &ClassBody<'a>, getter: &MethodDefinition<'a>) -> bool {
     class_body.body.iter().any(|element| {
         let ClassElement::MethodDefinition(method) = element else {
             return false;

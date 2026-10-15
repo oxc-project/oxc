@@ -94,7 +94,7 @@ impl Rule for RelativeUrlStyle {
             return;
         }
 
-        if new_expr.arguments.last().is_some_and(oxc_ast::ast::Argument::is_spread) {
+        if new_expr.arguments.last().is_some_and(Argument::is_spread) {
             return;
         }
 

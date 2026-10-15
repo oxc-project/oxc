@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Expression, FormalParameter, Statement},
+    ast::{Expression, FormalParameter, MemberExpression, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -72,7 +72,7 @@ impl Rule for PreferArrayIndexOf {
             call_expr
                 .callee
                 .as_member_expression()
-                .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+                .and_then(MemberExpression::static_property_info)
                 .map_or(call_expr.span, |(span, _)| span),
         ));
     }

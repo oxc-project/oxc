@@ -6,7 +6,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
-        VariableDeclarationKind,
+        VariableDeclarationKind, VariableDeclarator,
     },
 };
 use oxc_cfg::{
@@ -541,7 +541,7 @@ impl NoUselessAssignment {
         cfg_ops: &mut CfgOps,
         reference: &Reference,
         compact_idx: u32,
-        var_decl: Option<&oxc_ast::ast::VariableDeclarator>,
+        var_decl: Option<&VariableDeclarator>,
         decl_node: &oxc_semantic::AstNode,
         tracked_symbol: &mut TrackedSymbol,
         previous_value_read: bool,

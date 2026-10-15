@@ -438,7 +438,7 @@ pub fn call_expr_member_expr_property_span(call_expr: &CallExpression) -> Span {
     call_expr
         .callee
         .as_member_expression()
-        .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+        .and_then(MemberExpression::static_property_info)
         .map_or(call_expr.span, |(span, _)| span)
 }
 

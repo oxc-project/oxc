@@ -10,8 +10,9 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionBody, ArrowFunctionExpression,
-        BindingPattern, CallExpression, ChainElement, Expression, FormalParameters, Function,
-        FunctionBody, IdentifierReference, StaticMemberExpression, VariableDeclarationKind,
+        BindingIdentifier, BindingPattern, CallExpression, ChainElement, Expression,
+        FormalParameters, Function, FunctionBody, IdentifierReference, StaticMemberExpression,
+        VariableDeclarationKind,
     },
     match_expression,
 };
@@ -1126,10 +1127,7 @@ fn is_stable_value<'a, 'b>(
                 if let Some(function_body) = function_body {
                     return is_function_stable(
                         function_body,
-                        declaration
-                            .id
-                            .get_binding_identifier()
-                            .map(oxc_ast::ast::BindingIdentifier::symbol_id),
+                        declaration.id.get_binding_identifier().map(BindingIdentifier::symbol_id),
                         ctx,
                         component_scope_id,
                         visited,

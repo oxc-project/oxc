@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentOperator, AssignmentTarget, BindingPattern, Expression, FormalParameter,
-        LogicalOperator, MethodDefinitionKind, PropertyKind, Statement,
+        LogicalOperator, MethodDefinitionKind, PropertyKind, Statement, UnaryOperator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -415,7 +415,7 @@ fn has_no_side_effects_before<'a>(
     false
 }
 
-fn is_side_effect_free_statement(stmt: &oxc_ast::ast::Statement, param_name: &str) -> bool {
+fn is_side_effect_free_statement(stmt: &Statement, param_name: &str) -> bool {
     use oxc_ast::ast::Statement;
 
     match stmt {
@@ -460,7 +460,7 @@ fn is_side_effect_free_expression(expr: &Expression, param_name: &str) -> bool {
                 && is_side_effect_free_expression(&bin.right, param_name)
         }
         Expression::UnaryExpression(unary) => {
-            !matches!(unary.operator, oxc_ast::ast::UnaryOperator::Delete)
+            !matches!(unary.operator, UnaryOperator::Delete)
                 && is_side_effect_free_expression(&unary.argument, param_name)
         }
         _ => false,

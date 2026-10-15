@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ArrayExpressionElement, BindingPattern, CallExpression, Expression, ObjectExpression,
         ObjectPattern, ObjectPropertyKind, PropertyKey, TSSignature, TSType,
@@ -223,17 +223,14 @@ fn check_object_props<'a>(
     }
 }
 
-fn has_destructure_default(
-    pattern: &ObjectPattern,
-    name: &oxc_ast::StaticPropertyName<'_>,
-) -> bool {
+fn has_destructure_default(pattern: &ObjectPattern, name: &StaticPropertyName<'_>) -> bool {
     pattern.properties.iter().any(|prop| {
         matches!(prop.value, BindingPattern::AssignmentPattern(_))
             && prop.key.static_name().is_some_and(|key| key == *name)
     })
 }
 
-fn object_has_key(obj: &ObjectExpression, name: &oxc_ast::StaticPropertyName<'_>) -> bool {
+fn object_has_key(obj: &ObjectExpression, name: &StaticPropertyName<'_>) -> bool {
     obj.properties.iter().any(|prop| {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
             if prop.key.static_name().is_some_and(|key| key == *name))

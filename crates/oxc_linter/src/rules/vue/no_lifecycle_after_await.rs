@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        AwaitExpression, CallExpression, ExportDefaultDeclarationKind, Expression, Function,
-        ObjectExpression,
+        ArrowFunctionExpression, AwaitExpression, CallExpression, ExportDefaultDeclarationKind,
+        Expression, Function, ObjectExpression,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -228,11 +228,7 @@ impl<'a> VisitJs<'a> for LifecycleAfterAwaitVisitor<'a> {
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}
 
-    fn visit_arrow_function_expression(
-        &mut self,
-        _func: &oxc_ast::ast::ArrowFunctionExpression<'a>,
-    ) {
-    }
+    fn visit_arrow_function_expression(&mut self, _func: &ArrowFunctionExpression<'a>) {}
 }
 
 #[test]

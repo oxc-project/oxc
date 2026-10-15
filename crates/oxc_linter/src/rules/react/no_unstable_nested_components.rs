@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         Argument, ArrowFunctionExpression, CallExpression, Class, Function, JSXAttributeName,
-        JSXExpression, JSXExpressionContainer,
+        JSXExpression, JSXExpressionContainer, MemberExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -548,7 +548,7 @@ fn is_map_callback(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {
     if call
         .callee
         .as_member_expression()
-        .and_then(oxc_ast::ast::MemberExpression::static_property_name)
+        .and_then(MemberExpression::static_property_name)
         .is_none_or(|name| name != "map")
     {
         return false;

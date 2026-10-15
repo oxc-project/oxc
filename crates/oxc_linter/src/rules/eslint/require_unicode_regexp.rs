@@ -224,7 +224,7 @@ fn extract_regex_flags<'a>(
     args: &'a ArenaVec<'a, Argument<'a>>,
     ctx: &LintContext<'a>,
 ) -> Option<RegExpFlags> {
-    if args.iter().any(oxc_ast::ast::Argument::is_spread) {
+    if args.iter().any(Argument::is_spread) {
         return None;
     }
     if args.len() <= 1 {

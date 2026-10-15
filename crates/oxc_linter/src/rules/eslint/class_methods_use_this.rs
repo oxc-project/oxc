@@ -5,10 +5,10 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        AccessorProperty, ArrowFunctionBody, Expression, FunctionBody, PropertyDefinition,
-        TSAccessibility,
+        AccessorProperty, ArrowFunctionBody, Expression, Function, FunctionBody,
+        PropertyDefinition, StaticBlock, Super, TSAccessibility, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -22,7 +22,7 @@ use crate::{LintContext, rule::Rule};
 
 fn class_methods_use_this_diagnostic(
     span: Span,
-    name: Option<oxc_ast::StaticPropertyName<'_>>,
+    name: Option<StaticPropertyName<'_>>,
 ) -> OxcDiagnostic {
     let method_name_str = name.map_or(String::new(), |name| format!(" `{name}`"));
     OxcDiagnostic::warn(format!("Expected method{method_name_str} to have this."))
@@ -313,22 +313,17 @@ impl ThisFinder {
 }
 
 impl Visit<'_> for ThisFinder {
-    fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
+    fn visit_this_expression(&mut self, _it: &ThisExpression) {
         self.has_this = true;
     }
 
-    fn visit_super(&mut self, _it: &oxc_ast::ast::Super) {
+    fn visit_super(&mut self, _it: &Super) {
         self.has_this = true;
     }
 
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'_>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _it: &Function<'_>, _flags: oxc_semantic::ScopeFlags) {}
 
-    fn visit_static_block(&mut self, _it: &oxc_ast::ast::StaticBlock<'_>) {}
+    fn visit_static_block(&mut self, _it: &StaticBlock<'_>) {}
 
     fn visit_property_definition(&mut self, it: &PropertyDefinition<'_>) {
         self.visit_property_key(&it.key);

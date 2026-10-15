@@ -1,7 +1,11 @@
-use oxc_ast::ast::{
-    AssignmentTarget, AssignmentTargetMaybeDefault, AssignmentTargetProperty, VariableDeclaration,
+use oxc_ast::{
+    AstKind,
+    ast::{
+        ArrayAssignmentTarget, AssignmentTarget, AssignmentTargetMaybeDefault,
+        AssignmentTargetProperty, ObjectAssignmentTarget, VariableDeclaration,
+        VariableDeclarationKind,
+    },
 };
-use oxc_ast::{AstKind, ast::VariableDeclarationKind};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -305,7 +309,7 @@ impl PreferConst {
         // Check if this symbol is a parameter
         // Parameters can't be changed to const
         let decl_node = symbol_table.symbol_declaration(symbol_id);
-        if matches!(ctx.nodes().kind(decl_node), oxc_ast::AstKind::FormalParameter(_)) {
+        if matches!(ctx.nodes().kind(decl_node), AstKind::FormalParameter(_)) {
             return false;
         }
 
@@ -333,7 +337,7 @@ impl PreferConst {
 
     fn can_all_destructuring_identifiers_be_const(
         &self,
-        array_target: &oxc_ast::ast::ArrayAssignmentTarget,
+        array_target: &ArrayAssignmentTarget,
         symbol_table: &oxc_semantic::Scoping,
         ctx: &LintContext<'_>,
     ) -> bool {
@@ -403,7 +407,7 @@ impl PreferConst {
     /// or if any identifier is reassigned elsewhere
     fn can_all_destructuring_identifiers_be_const_obj(
         &self,
-        obj_target: &oxc_ast::ast::ObjectAssignmentTarget,
+        obj_target: &ObjectAssignmentTarget,
         symbol_table: &oxc_semantic::Scoping,
         ctx: &LintContext<'_>,
     ) -> bool {

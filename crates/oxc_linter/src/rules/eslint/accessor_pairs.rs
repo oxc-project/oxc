@@ -1,9 +1,9 @@
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        Argument, CallExpression, ClassBody, ClassElement, Expression, MethodDefinitionKind,
-        ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind, TSMethodSignatureKind,
-        TSSignature, TSTypeLiteral,
+        Argument, CallExpression, ChainElement, ClassBody, ClassElement, Expression,
+        MethodDefinitionKind, ObjectExpression, ObjectPropertyKind, PropertyKey, PropertyKind,
+        TSMethodSignatureKind, TSSignature, TSTypeLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -349,7 +349,7 @@ impl AccessorPairs {
         let member = match callee {
             Expression::StaticMemberExpression(m) => m,
             Expression::ChainExpression(chain) => match &chain.expression {
-                oxc_ast::ast::ChainElement::StaticMemberExpression(m) => m,
+                ChainElement::StaticMemberExpression(m) => m,
                 _ => return None,
             },
             _ => return None,

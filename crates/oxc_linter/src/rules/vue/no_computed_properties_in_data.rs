@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{Expression, ObjectExpression, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -144,8 +144,8 @@ fn collect_computed_names<'a>(options: &ObjectExpression<'a>) -> FxHashSet<&'a s
         })
         // Numeric keys are not valid identifiers to reference via `this`.
         .filter_map(|prop| match prop.key.static_name()? {
-            oxc_ast::StaticPropertyName::Borrowed(name) => name.as_str(),
-            oxc_ast::StaticPropertyName::Owned(_) => None,
+            StaticPropertyName::Borrowed(name) => name.as_str(),
+            StaticPropertyName::Owned(_) => None,
         })
         .collect()
 }

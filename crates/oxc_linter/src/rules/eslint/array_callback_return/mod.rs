@@ -5,7 +5,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, FunctionBody, Statement},
+    ast::{Expression, FunctionBody, Statement, SwitchCase},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -35,7 +35,7 @@ fn guess_missing_return_hint(
     let last_statement = function_body.statements.last()?;
     match last_statement {
         Statement::SwitchStatement(stmt) => {
-            let has_default = stmt.cases.iter().any(oxc_ast::ast::SwitchCase::is_default_case);
+            let has_default = stmt.cases.iter().any(SwitchCase::is_default_case);
             (!has_default).then_some((stmt.span, MissingReturnHint::SwitchWithoutDefault))
         }
         Statement::IfStatement(stmt) => {

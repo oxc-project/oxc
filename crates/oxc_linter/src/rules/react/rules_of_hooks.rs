@@ -5,7 +5,7 @@ use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_ast::{
     AstKind, StaticPropertyName,
-    ast::{ArrowFunctionExpression, CallExpression, Function},
+    ast::{ArrowFunctionExpression, CallExpression, Function, NewExpression},
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
@@ -752,14 +752,14 @@ impl<'a> VisitJs<'a> for MayThrowBeforeHook {
 
     fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
 
-    fn visit_call_expression(&mut self, expr: &oxc_ast::ast::CallExpression<'a>) {
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
         self.enter_node(AstKind::CallExpression(expr));
         if !self.found {
             walk_js::walk_call_expression(self, expr);
         }
     }
 
-    fn visit_new_expression(&mut self, expr: &oxc_ast::ast::NewExpression<'a>) {
+    fn visit_new_expression(&mut self, expr: &NewExpression<'a>) {
         self.enter_node(AstKind::NewExpression(expr));
         if !self.found {
             walk_js::walk_new_expression(self, expr);
