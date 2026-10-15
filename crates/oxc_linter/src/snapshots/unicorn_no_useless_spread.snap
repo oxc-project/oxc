@@ -450,33 +450,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.mjs:1:20]
- 1 │ for (const foo of [...iterable]);
-   ·                    ───
-   ╰────
-  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
-
-  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.mjs:1:39]
- 1 │ async () => {for await (const foo of [...iterable]);}
-   ·                                       ───
-   ╰────
-  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
-
   ⚠ unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:22]
  1 │ const map = new Map([...iterable,])
    ·                      ───
    ╰────
   help: Consider removing the spread operator.
-
-  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.mjs:1:20]
- 1 │ for (const foo of [...iterable]);
-   ·                    ───
-   ╰────
-  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:22]
@@ -492,33 +471,12 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider removing the spread operator.
 
-  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.mjs:1:20]
- 1 │ for (const foo of [...(( iterable ))]);
-   ·                    ───
-   ╰────
-  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
-
   ⚠ unicorn(no-useless-spread): `Map` accepts an iterable, so it's unnecessary to convert the iterable to an array.
    ╭─[no_useless_spread.mjs:1:25]
  1 │ const map = new Map((( [...(( iterable ))] )))
    ·                         ───
    ╰────
   help: Consider removing the spread operator.
-
-  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.mjs:1:23]
- 1 │ for (const foo of (( [...(( iterable ))] )));
-   ·                       ───
-   ╰────
-  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
-
-  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.mjs:1:20]
- 1 │ for (const foo of [...iterable]);
-   ·                    ───
-   ╰────
-  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:1:2]
@@ -659,20 +617,6 @@ source: crates/oxc_linter/src/tester.rs
    ·  ───
    ╰────
   help: `Promise.allSettled` returns a new array. Spreading it into an array expression to create a new array is redundant.
-
-  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.mjs:1:19]
- 1 │ for (const foo of[...iterable]);
-   ·                   ───
-   ╰────
-  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
-
-  ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
-   ╭─[no_useless_spread.mjs:1:19]
- 1 │ for (const foo of[...iterable2]);
-   ·                   ───
-   ╰────
-  help: `for…of` can iterate over iterable, it's unnecessary to convert to an array.
 
   ⚠ unicorn(no-useless-spread): Using a spread operator here creates a new array unnecessarily.
    ╭─[no_useless_spread.mjs:3:38]
