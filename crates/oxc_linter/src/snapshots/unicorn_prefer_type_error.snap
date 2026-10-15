@@ -3,6 +3,20 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:1:36]
+ 1 │ if (!(x instanceof Y)) { throw new Error('bad'); }
+   ·                                    ─────
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
+   ╭─[prefer_type_error.tsx:1:43]
+ 1 │ if (!(typeof x === 'string')) { throw new Error('bad'); }
+   ·                                           ─────
+   ╰────
+  help: Change to `throw new TypeError(...)`
+
+  ⚠ unicorn(prefer-type-error): Prefer throwing a `TypeError` over a generic `Error` after a type checking if-statement
    ╭─[prefer_type_error.tsx:3:27]
  2 │             if (!isFinite(foo)) {
  3 │                 throw new Error();

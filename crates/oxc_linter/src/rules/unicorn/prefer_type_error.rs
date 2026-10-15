@@ -97,6 +97,9 @@ fn is_type_checking_expr(expr: &Expression) -> bool {
             is_type_checking_member_expr(expr.to_member_expression())
         }
         Expression::CallExpression(call_expr) => is_typechecking_call_expr(call_expr),
+        Expression::ParenthesizedExpression(paren_expr) => {
+            is_type_checking_expr(&paren_expr.expression)
+        }
         Expression::UnaryExpression(unary_expr) => {
             if unary_expr.operator == UnaryOperator::Typeof {
                 return true;
@@ -407,6 +410,8 @@ fn test() {
     ];
 
     let fail = vec![
+        r"if (!(x instanceof Y)) { throw new Error('bad'); }",
+        r"if (!(typeof x === 'string')) { throw new Error('bad'); }",
         r"
             if (!isFinite(foo)) {
                 throw new Error();
@@ -475,6 +480,10 @@ fn test() {
     ];
 
     let fix = vec![
+        (
+            r"if (!(x instanceof Y)) { throw new Error(); }",
+            r"if (!(x instanceof Y)) { throw new TypeError(); }",
+        ),
         (
             r"if (!isFinite(foo)) { throw new Error(); }",
             r"if (!isFinite(foo)) { throw new TypeError(); }",
