@@ -350,9 +350,10 @@ impl NoEmptyFunction {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> ViolationInfo<'a> {
-        let mut ancestors = ctx.nodes().ancestor_kinds(node.id());
-        while let Some(parent) = ancestors.next() {
-            match parent {
+        let nodes = ctx.nodes();
+        let mut parent = nodes.parent_node(node.id());
+        loop {
+            match parent.kind() {
                 AstKind::Function(f) => {
                     if let Some(name) = f.name() {
                         if self.is_allowed_function_expression(f) {
@@ -370,10 +371,9 @@ impl NoEmptyFunction {
                     }
                     if f.is_expression()
                         && self.is_allowed_function_expression(f)
-                        && ancestors
-                            .clone()
-                            .next()
-                            .is_none_or(Self::is_plain_function_expression_container)
+                        && Self::is_plain_function_expression_container(
+                            nodes.parent_kind(parent.id()),
+                        )
                     {
                         return ViolationInfo::default();
                     }
@@ -446,11 +446,8 @@ impl NoEmptyFunction {
                 }
                 _ => return ("function", None).into(),
             }
+            parent = nodes.parent_node(parent.id());
         }
-        #[cfg(debug_assertions)]
-        unreachable!();
-        #[cfg(not(debug_assertions))]
-        ("function", None).into()
     }
 
     fn is_allowed_method(&self, method: &MethodDefinition) -> bool {
