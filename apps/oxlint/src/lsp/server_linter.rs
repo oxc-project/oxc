@@ -9,8 +9,8 @@ use tower_lsp_server::{
     gen_lsp_types::{
         CodeActionKind, CodeActionOptions, CodeActionProvider, CodeActionResponse,
         CodeActionTriggerKind, Diagnostic, DiagnosticOptions, DiagnosticProvider,
-        DiagnosticSeverity, DiagnosticTag, ExecuteCommandOptions, MessageType, Pattern,
-        ServerCapabilities, Uri, WorkDoneProgressOptions, WorkspaceEdit,
+        ExecuteCommandOptions, MessageType, Pattern, ServerCapabilities, Uri,
+        WorkDoneProgressOptions, WorkspaceEdit,
     },
     jsonrpc::ErrorCode,
 };
@@ -1108,7 +1108,7 @@ mod tests_builder {
         let unresolved_source_path = unresolved_workspace_root.join("source.js");
         let partition = suppressions.partition_file(&unresolved_source_path, vec![message]);
 
-        assert!(partition.unsuppressed.is_empty());
+        assert_eq!(partition.unsuppressed, []);
         assert_eq!(partition.suppressed.len(), 1);
     }
 }
