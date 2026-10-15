@@ -1044,8 +1044,10 @@ impl RuleRunner for crate::rules::eslint::no_sequences::NoSequences {
 }
 
 impl RuleRunner for crate::rules::eslint::no_setter_return::NoSetterReturn {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ReturnStatement]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrowFunctionExpression,
+        AstType::ReturnStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

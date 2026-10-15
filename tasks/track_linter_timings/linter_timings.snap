@@ -113,7 +113,7 @@ eslint/no-script-url                                       |  63073
 eslint/no-self-assign                                      |  13005
 eslint/no-self-compare                                     |  20604
 eslint/no-sequences                                        |    356
-eslint/no-setter-return                                    |  14199
+eslint/no-setter-return                                    |  16728
 eslint/no-shadow                                           |      7
 eslint/no-shadow-restricted-names                          |      7
 eslint/no-sparse-arrays                                    |   4115
