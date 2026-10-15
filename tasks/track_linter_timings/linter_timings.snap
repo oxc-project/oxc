@@ -20,7 +20,7 @@ eslint/func-style                                          |  16812
 eslint/getter-return                                       |  10895
 eslint/grouped-accessor-pairs                              |  15349
 eslint/guard-for-in                                        |    105
-eslint/id-length                                           | 178568
+eslint/id-length                                           | 388133
 eslint/init-declarations                                   |  31363
 eslint/logical-assignment-operators                        |  38314
 eslint/max-classes-per-file                                |      3

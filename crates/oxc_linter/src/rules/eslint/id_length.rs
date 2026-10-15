@@ -8,8 +8,8 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, BindingProperty, IdentifierName, IdentifierReference,
-    PrivateIdentifier,
+    BindingIdentifier, BindingPattern, BindingProperty, Expression, IdentifierName,
+    IdentifierReference, PrivateIdentifier, PropertyKey,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -368,20 +368,42 @@ impl IdLength {
         node: &AstNode,
         ctx: &LintContext,
     ) {
-        let is_target = match ctx.nodes().parent_kind(node.id()) {
-            AstKind::ArrayAssignmentTarget(_) | AstKind::AssignmentTargetRest(_) => true,
-            AstKind::AssignmentTargetWithDefault(target) => target.binding.span() == ident.span,
-            AstKind::AssignmentTargetPropertyProperty(property) => {
-                property.binding.span() == ident.span
+        let span = match ctx.nodes().parent_kind(node.id()) {
+            AstKind::ArrayAssignmentTarget(_) | AstKind::AssignmentTargetRest(_) => ident.span,
+            AstKind::AssignmentTargetWithDefault(target) if target.binding.span() == ident.span => {
+                ident.span
+            }
+            AstKind::AssignmentTargetPropertyProperty(property)
+                if property.binding.span() == ident.span =>
+            {
+                let key = match &property.name {
+                    PropertyKey::StaticIdentifier(key) => Some((key.name, key.span)),
+                    key => key.as_expression().and_then(|expr| match expr.without_parentheses() {
+                        Expression::Identifier(key) => Some((key.name, key.span)),
+                        _ => None,
+                    }),
+                };
+                if let Some((key_name, key_span)) = key
+                    && key_name == ident.name
+                {
+                    if self.properties == AlwaysNever::Never {
+                        return;
+                    }
+                    key_span
+                } else {
+                    ident.span
+                }
             }
             // `({ q } = o)` is a property name too, unless it has a default.
-            AstKind::AssignmentTargetPropertyIdentifier(property) => {
-                property.binding.span == ident.span
-                    && (property.init.is_some() || self.properties == AlwaysNever::Always)
+            AstKind::AssignmentTargetPropertyIdentifier(property)
+                if property.binding.span == ident.span
+                    && (property.init.is_some() || self.properties == AlwaysNever::Always) =>
+            {
+                ident.span
             }
-            _ => false,
+            _ => return,
         };
-        if !is_target || self.is_exception(&ident.name) {
+        if self.is_exception(&ident.name) {
             return;
         }
 
@@ -391,10 +413,10 @@ impl IdLength {
             ident.name.graphemes(true).count()
         };
         if self.is_too_long(length) {
-            ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
+            ctx.diagnostic(id_length_is_too_long_diagnostic(span, self.max));
         }
         if self.is_too_short(length) {
-            ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
+            ctx.diagnostic(id_length_is_too_short_diagnostic(span, self.min));
         }
     }
 
@@ -664,6 +686,9 @@ fn test() {
         ("({ obj = r } = foo);", None),
         ("({ [k]: obj } = foo);", None),
         ("({ q } = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({q: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({[q]: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("({[((q))]: q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
     ];
 
     let fail = vec![
@@ -778,6 +803,12 @@ fn test() {
         ("[...q] = foo;", None),
         ("[q = rr] = foo;", None),
         ("({ k: [q] } = foo);", None),
+        ("({q: q} = foo);", None),
+        ("({[q]: q} = foo);", None),
+        ("({[((q))]: q} = foo);", None),
+        ("({q: q = q} = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("for ([q] in foo) {}", None),
+        ("({...q} = foo);", None),
     ];
 
     Tester::new(IdLength::NAME, IdLength::PLUGIN, pass, fail).test_and_snapshot();
