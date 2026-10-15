@@ -356,6 +356,13 @@ impl<'a> ConfigLoader<'a> {
             by_dir.entry(dir).or_default().push(config);
         }
 
+        // Sorted, so the configs, and the problems found in them, come in the same order on every
+        // machine: the hash of a path depends on where the project is checked out. The files are
+        // read in directory order, JavaScript configs in one batch after the JSON ones, and the
+        // configs are then built in directory order whatever their kind.
+        let mut by_dir: Vec<_> = by_dir.into_iter().collect();
+        by_dir.sort_unstable_by(|(a, _), (b, _)| a.cmp(b));
+
         let mut js_configs = Vec::new();
 
         for (dir, config_files) in by_dir {
@@ -389,6 +396,10 @@ impl<'a> ConfigLoader<'a> {
         match self.load_js_configs(&js_configs) {
             Ok(loaded_js_configs) => {
                 configs.extend(loaded_js_configs.into_iter().filter_map(|c| c.config));
+                // Both kinds are already in directory order, the order `by_dir` gives, so this
+                // stable sort only merges two runs. By directory rather than by file path, which
+                // can disagree: `a/-x/.oxlintrc.json` comes before `a/.oxlintrc.json`.
+                configs.sort_by(|a, b| a.path.parent().cmp(&b.path.parent()));
             }
             Err(mut js_errors) => {
                 errors.append(&mut js_errors);
@@ -857,6 +868,88 @@ mod test {
         let result = loader.load_root_config(&temp_dir, None);
         assert!(result.is_ok(), "Expected default config when no config found");
         std::fs::remove_dir_all(&temp_dir).expect("Failed to cleanup temporary test directory");
+    }
+
+    /// Problems come in the order of the config paths, whatever order the configs are found in.
+    #[test]
+    fn test_nested_configs_are_loaded_in_path_order() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let names = ["b", "c", "a", "e", "d"];
+        let paths: Vec<PathBuf> =
+            names.iter().map(|name| root_dir.path().join(name).join(".oxlintrc.json")).collect();
+        for path in &paths {
+            std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+            std::fs::write(path, "{ invalid").unwrap();
+        }
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let (_configs, errors) = loader.load_discovered_with_root_dir(
+            root_dir.path(),
+            paths.into_iter().map(DiscoveredConfigFile::Json),
+        );
+        let error_paths: Vec<_> = errors
+            .iter()
+            .map(|error| match error {
+                ConfigLoadError::Parse { path, .. } => path.strip_prefix(root_dir.path()).unwrap(),
+                error => panic!("unexpected error: {error:?}"),
+            })
+            .collect();
+        let expected: Vec<PathBuf> = ["a", "b", "c", "d", "e"]
+            .iter()
+            .map(|name| PathBuf::from(name).join(".oxlintrc.json"))
+            .collect();
+        assert_eq!(error_paths, expected);
+    }
+
+    /// JavaScript configs are read in a batch after the JSON ones, but built, and so reported, in
+    /// directory order with them.
+    #[cfg(feature = "napi")]
+    #[test]
+    fn test_nested_js_and_json_configs_are_built_in_path_order() {
+        let root_dir = tempfile::tempdir().unwrap();
+        let invalid_rules = serde_json::json!({ "no-such-rule": "error" });
+        let mut discovered = Vec::new();
+        // `a/-x` sorts before `a` by file path, since `-` comes before `.`, but after it by
+        // directory, the order the files were read in.
+        for (name, is_js) in [("c", true), ("b", false), ("a/-x", false), ("a", true)] {
+            let dir = root_dir.path().join(name);
+            std::fs::create_dir_all(&dir).unwrap();
+            if is_js {
+                let path = dir.join("oxlint.config.ts");
+                std::fs::write(&path, "export default {};").unwrap();
+                discovered.push(DiscoveredConfigFile::Js(path));
+            } else {
+                let path = dir.join(".oxlintrc.json");
+                std::fs::write(&path, r#"{ "rules": { "no-such-rule": "error" } }"#).unwrap();
+                discovered.push(DiscoveredConfigFile::Json(path));
+            }
+        }
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
+        let js_loader = make_js_loader(move |paths| {
+            Ok(paths
+                .into_iter()
+                .map(|path| make_js_config_with_rules(PathBuf::from(path), &invalid_rules))
+                .collect())
+        });
+        loader = loader.with_js_config_loader(Some(&js_loader));
+
+        let (_configs, errors) = loader.load_discovered_with_root_dir(root_dir.path(), discovered);
+        let error_paths: Vec<_> = errors
+            .iter()
+            .map(|error| match error {
+                ConfigLoadError::Build { path, .. } => path.strip_prefix(root_dir.path()).unwrap(),
+                error => panic!("unexpected error: {error:?}"),
+            })
+            .collect();
+        let expected: Vec<PathBuf> =
+            ["a/oxlint.config.ts", "a/-x/.oxlintrc.json", "b/.oxlintrc.json", "c/oxlint.config.ts"]
+                .iter()
+                .map(PathBuf::from)
+                .collect();
+        assert_eq!(error_paths, expected);
     }
 
     #[test]
