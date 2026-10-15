@@ -625,7 +625,9 @@ fn is_obviously_non_array_receiver(expr: &Expression, ctx: &LintContext) -> bool
     let AstKind::VariableDeclarator(declarator) = ctx.symbol_declaration(symbol_id).kind() else {
         return false;
     };
-    if variable_declaration_kind(declarator, ctx) != VariableDeclarationKind::Const {
+    if !variable_declaration_kind(declarator, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
+    {
         return false;
     }
     declarator

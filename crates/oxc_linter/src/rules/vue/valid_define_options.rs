@@ -1,6 +1,9 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, IdentifierReference, ObjectPropertyKind},
+    ast::{
+        CallExpression, Expression, IdentifierReference, ObjectPropertyKind,
+        VariableDeclarationKind,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
@@ -209,7 +212,8 @@ fn is_non_local_reference(
         | AstKind::ImportNamespaceSpecifier(_) => true,
         AstKind::VariableDeclarator(declarator) => {
             // `const x = <literal>` is statically resolvable, so allowed
-            variable_declaration_kind(declarator, ctx).is_const()
+            variable_declaration_kind(declarator, ctx.nodes())
+                .is_some_and(VariableDeclarationKind::is_const)
                 && declarator.init.as_ref().is_some_and(is_literal_expression)
         }
         _ => false,

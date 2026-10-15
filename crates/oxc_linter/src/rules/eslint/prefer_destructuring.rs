@@ -1,8 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentTarget, BindingPattern, Expression, MemberExpression, VariableDeclarationKind,
-    },
+    ast::{AssignmentTarget, BindingPattern, Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -255,10 +253,10 @@ impl Rule for PreferDestructuring {
                 }
 
                 // Skip `using` and `await using` declarations - destructuring doesn't apply to them
-                if matches!(
-                    variable_declaration_kind(declarator, ctx),
-                    VariableDeclarationKind::Using | VariableDeclarationKind::AwaitUsing
-                ) {
+                let Some(kind) = variable_declaration_kind(declarator, ctx.nodes()) else {
+                    return;
+                };
+                if kind.is_using() {
                     return;
                 }
                 if let Some(init) = &declarator.init

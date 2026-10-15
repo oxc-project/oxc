@@ -62,7 +62,9 @@ declare_oxc_lint!(
 impl Rule for NoConstAssign {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::VariableDeclarator(decl) = node.kind() else { return };
-        let kind = variable_declaration_kind(decl, ctx);
+        let Some(kind) = variable_declaration_kind(decl, ctx.nodes()) else {
+            return;
+        };
         if kind.is_const() || kind.is_using() {
             decl.id.bound_names(&mut |ident| check_symbol_id(ident.symbol_id(), ctx));
         }

@@ -327,7 +327,8 @@ fn resolve_const_initializer<'a>(
     let declaration = get_declaration_of_variable(ident, ctx.semantic())?;
     let AstKind::VariableDeclarator(decl) = declaration.kind() else { return None };
 
-    if !variable_declaration_kind(decl, ctx).is_const() || !decl.id.is_binding_identifier() {
+    if !variable_declaration_kind(decl, ctx.nodes())?.is_const() || !decl.id.is_binding_identifier()
+    {
         return None;
     }
 
