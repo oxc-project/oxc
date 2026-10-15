@@ -81,6 +81,7 @@ declare_oxc_lint!(
     AnchorHasContent,
     jsx_a11y,
     correctness,
+    recommended,
     config = AnchorHasContentConfig,
     conditional_suggestion,
     version = "0.0.18",
