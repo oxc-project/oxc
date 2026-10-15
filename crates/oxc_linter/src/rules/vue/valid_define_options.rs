@@ -73,6 +73,7 @@ declare_oxc_lint!(
     ValidDefineOptions,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Enforce valid use of the `defineOptions` compiler macro.",
 );

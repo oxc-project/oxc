@@ -61,6 +61,7 @@ declare_oxc_lint!(
     RequirePropTypes,
     vue,
     style,
+    recommended,
     version = "1.69.0",
     short_description = "This rule enforces that a props statement contains a type definition.",
 );

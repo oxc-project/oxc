@@ -114,6 +114,7 @@ declare_oxc_lint!(
     NoReservedKeys,
     vue,
     correctness,
+    recommended,
     config = NoReservedKeys,
     version = "1.69.0",
     short_description = "Disallow overwriting reserved Vue instance keys (e.g. `$data`, `$emit`) or using `_`-prefixed keys inside `data` / `asyncData`.",

@@ -81,6 +81,7 @@ declare_oxc_lint!(
     NoDupeKeys,
     vue,
     correctness,
+    recommended,
     version = "1.70.0",
     config = NoDupeKeys,
     short_description = "Disallow duplication of field names.",

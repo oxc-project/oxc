@@ -132,6 +132,7 @@ declare_oxc_lint!(
     ValidDefineEmits,
     vue,
     correctness,
+    recommended,
     pending,  // TODO: removing empty `defineEmits` and merging multiple `defineEmits` calls
     version = "1.14.0",
     short_description = "Enforce valid usage of the `defineEmits` compiler macro in Vue.",
