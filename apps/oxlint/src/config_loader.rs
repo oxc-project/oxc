@@ -295,13 +295,16 @@ bitflags! {
     /// [`RunOverrides::for_language_server`].
     ///
     /// Also the mask of [`ConfigLoadWarning::unless`]. Which nested config warning is reported in
-    /// which run:
+    /// which run (the type-aware rules one is only for a config which leaves `typeAware` unset):
     ///
-    /// | Run                       | deny/max warnings | `typeCheck` |
-    /// | ------------------------- | ----------------- | ----------- |
-    /// | CLI                       | yes               | yes         |
-    /// | CLI `--type-check(-only)` | yes               | no          |
-    /// | LSP                       | no                | no          |
+    /// | Run                     | deny/max warnings | `typeCheck` | type-aware rules |
+    /// | ----------------------- | ----------------- | ----------- | ---------------- |
+    /// | CLI                     | yes               | yes         | yes              |
+    /// | CLI `--type-aware`      | yes               | yes         | no               |
+    /// | CLI `--type-check`      | yes               | no          | yes              |
+    /// | CLI `--type-check-only` | yes               | no          | no               |
+    /// | LSP                     | no                | no          | yes              |
+    /// | LSP, `typeAware` set    | no                | no          | no               |
     #[derive(Debug, Default, Clone, Copy, PartialEq, Eq)]
     pub struct RunOverrides: u8 {
         /// Whether files are type-checked does not depend on `options.typeCheck`: `--type-check`
@@ -311,20 +314,30 @@ bitflags! {
         /// The exit code does not depend on `options.denyWarnings` and `options.maxWarnings`: the
         /// language server has none, and reads neither option.
         const EXIT_CODE_OVERRIDDEN = 1 << 1;
+        /// `--type-aware`, `--type-check-only`, or the editor's `typeAware: true`: every file is
+        /// linted with type-aware rules.
+        const TYPE_AWARE_FORCED = 1 << 2;
+        /// The editor's `typeAware: false`: no file is linted with type-aware rules.
+        const TYPE_AWARE_DISABLED = 1 << 3;
     }
 }
 
 impl RunOverrides {
-    /// What a CLI run decided. `type_check_flag` is `--type-check` or `--type-check-only`.
-    pub fn for_cli(type_check_flag: bool) -> Self {
+    /// What a CLI run decided. `type_aware_flag` is `--type-aware` or `--type-check-only`,
+    /// `type_check_flag` is `--type-check` or `--type-check-only`.
+    pub fn for_cli(type_aware_flag: bool, type_check_flag: bool) -> Self {
         let mut overrides = Self::empty();
+        overrides.set(Self::TYPE_AWARE_FORCED, type_aware_flag);
         overrides.set(Self::TYPE_CHECK_OVERRIDDEN, type_check_flag);
         overrides
     }
 
-    /// What a language server run decided.
-    pub fn for_language_server() -> Self {
-        Self::TYPE_CHECK_OVERRIDDEN | Self::EXIT_CODE_OVERRIDDEN
+    /// What a language server run decided. `type_aware` is the editor's `typeAware` setting.
+    pub fn for_language_server(type_aware: Option<bool>) -> Self {
+        let mut overrides = Self::TYPE_CHECK_OVERRIDDEN | Self::EXIT_CODE_OVERRIDDEN;
+        overrides.set(Self::TYPE_AWARE_FORCED, type_aware == Some(true));
+        overrides.set(Self::TYPE_AWARE_DISABLED, type_aware == Some(false));
+        overrides
     }
 }
 
@@ -446,10 +459,13 @@ impl<'a> ConfigLoader<'a> {
     /// Load multiple configs, returning successes and errors separately
     ///
     /// This allows callers to decide how to handle errors (fail fast vs continue)
+    ///
+    /// Config paths in warnings are relative to `display_root`, or absolute without one.
     fn load_many(
         &mut self,
         paths: impl IntoIterator<Item = DiscoveredConfigFile>,
         root_config_dir: Option<&Path>,
+        display_root: Option<&Path>,
     ) -> (Vec<LoadedConfig>, Vec<ConfigLoadDiagnostic>) {
         let mut configs = Vec::new();
         let mut diagnostics = Vec::new();
@@ -543,7 +559,7 @@ impl<'a> ConfigLoader<'a> {
             // shared base.
             if !is_root_config {
                 // Only computed for a config which is warned about.
-                let display_path = || config_display_path(&path, root_config_dir);
+                let display_path = || config_display_path(&path, display_root);
                 if config.options.deny_warnings.take().is_some() {
                     diagnostics.push(ConfigLoadDiagnostic::warning_unless(
                         nested_deny_warnings_not_supported(&display_path()),
@@ -570,6 +586,18 @@ impl<'a> ConfigLoader<'a> {
                 }
             }
 
+            // Captured before the config is consumed, to warn below if these rules can never run.
+            // Only nested configs are checked: this is where dropping the implicit inheritance from
+            // the root config changes behaviour. Skipped when the config sets `typeAware` itself,
+            // either way: its own value wins over any config it extends, and `false` is a
+            // deliberate opt-out.
+            let explicit_type_aware_rules = if is_root_config || config.options.type_aware.is_some()
+            {
+                Vec::new()
+            } else {
+                config.rules.explicitly_enabled_type_aware_rules()
+            };
+
             let builder = match ConfigStoreBuilder::from_oxlintrc(
                 false,
                 config,
@@ -591,12 +619,29 @@ impl<'a> ConfigLoader<'a> {
                 .build(self.external_plugin_store)
                 .map_err(|e| ConfigLoadError::Build { path: path.clone(), error: e.to_string() })
             {
-                Ok(config) => built_configs.push(LoadedConfig {
-                    dir,
-                    config,
-                    ignore_patterns,
-                    extended_paths,
-                }),
+                Ok(config) => {
+                    // `typeAware` is resolved from the config which governs the file, and is not
+                    // inherited from the root config, so a nested config which names type-aware
+                    // rules without setting the option, itself or through `extends`, silently
+                    // runs none of them. An explicit `false` is a deliberate opt-out.
+                    if !explicit_type_aware_rules.is_empty() && config.type_aware().is_none() {
+                        // Not reported when the run turns type-aware linting on or off for every
+                        // file, whatever the configs say.
+                        diagnostics.push(ConfigLoadDiagnostic::warning_unless(
+                            nested_type_aware_rules_without_type_aware(
+                                &config_display_path(&path, display_root),
+                                &explicit_type_aware_rules,
+                            ),
+                            RunOverrides::TYPE_AWARE_FORCED | RunOverrides::TYPE_AWARE_DISABLED,
+                        ));
+                    }
+                    built_configs.push(LoadedConfig {
+                        dir,
+                        config,
+                        ignore_patterns,
+                        extended_paths,
+                    });
+                }
                 Err(e) => diagnostics.push(e.into()),
             }
         }
@@ -609,7 +654,9 @@ impl<'a> ConfigLoader<'a> {
         root_dir: &Path,
         configs: impl IntoIterator<Item = DiscoveredConfigFile>,
     ) -> (Vec<LoadedConfig>, Vec<ConfigLoadDiagnostic>) {
-        self.load_many(configs, Some(root_dir))
+        // A language server may serve several workspace folders, so their warnings name config
+        // files by their absolute path.
+        self.load_many(configs, Some(root_dir), None)
     }
 
     /// Try to load config from a specific directory.
@@ -765,7 +812,7 @@ impl<'a> ConfigLoader<'a> {
         let (discovered_configs, conflicts) =
             discover_configs_in_ancestors(&config_paths, &oxlintrc.path);
 
-        let (configs, mut diagnostics) = self.load_many(discovered_configs, Some(cwd));
+        let (configs, mut diagnostics) = self.load_many(discovered_configs, Some(cwd), Some(cwd));
 
         // Propagate upstream conflicts as load errors alongside parse/build failures.
         for conflict in conflicts {
@@ -829,11 +876,11 @@ fn js_config_not_supported_diagnostic(path: &Path) -> OxcDiagnostic {
     .with_help("Run oxlint via the npm package, or use JSON config files (.oxlintrc.json or .oxlintrc.jsonc).")
 }
 
-/// Formats a config file path for a diagnostic, relative to the directory the config search
-/// started from and with `/` separators.
+/// Formats a config file path for a diagnostic, relative to `root` if given, with `/` separators.
 ///
-/// An absolute path would make the rendered message wrap at a different column on every machine,
-/// which snapshot tests cannot rely on.
+/// The CLI passes the directory the config search started from: an absolute path would make the
+/// rendered message wrap at a different column on every machine, which snapshot tests cannot rely
+/// on.
 pub fn config_display_path(path: &Path, root: Option<&Path>) -> String {
     let relative = root.and_then(|root| path.strip_prefix(root).ok()).unwrap_or(path);
     let lossy = relative.to_string_lossy();
@@ -845,6 +892,18 @@ fn nested_deny_warnings_not_supported(path: &str) -> OxcDiagnostic {
         "The `options.denyWarnings` option is only supported in the root config. It was found in {path} and is ignored."
     ))
     .with_help("Move `options.denyWarnings` to the root configuration file.")
+}
+
+fn nested_type_aware_rules_without_type_aware(path: &str, rules: &[String]) -> OxcDiagnostic {
+    let (plural, subject) =
+        if rules.len() == 1 { ("", "it never runs") } else { ("s", "they never run") };
+    OxcDiagnostic::warn(format!(
+        "{path} enables the type-aware rule{plural} {}, but does not set `options.typeAware`, so {subject}.",
+        rules.join(", "),
+    ))
+    .with_help(
+        "Set `options.typeAware` to `true` in this config, or `extends` a config which does. It is not inherited from the root config.",
+    )
 }
 
 fn nested_type_check_is_run_wide(path: &str) -> OxcDiagnostic {
@@ -1118,17 +1177,34 @@ mod test {
     #[test]
     fn test_warnings_by_run() {
         let runs = [
-            ("CLI", RunOverrides::for_cli(false)),
-            ("CLI --type-check", RunOverrides::for_cli(true)),
-            ("language server", RunOverrides::for_language_server()),
+            ("CLI", RunOverrides::for_cli(false, false)),
+            ("CLI --type-aware", RunOverrides::for_cli(true, false)),
+            ("CLI --type-check", RunOverrides::for_cli(false, true)),
+            ("CLI --type-check-only", RunOverrides::for_cli(true, true)),
+            ("language server", RunOverrides::for_language_server(None)),
+            ("language server, typeAware: true", RunOverrides::for_language_server(Some(true))),
+            ("language server, typeAware: false", RunOverrides::for_language_server(Some(false))),
         ];
         let warnings = [
-            ("denyWarnings", r#"{ "options": { "denyWarnings": true } }"#, [true, true, false]),
-            ("maxWarnings", r#"{ "options": { "maxWarnings": 1 } }"#, [true, true, false]),
+            (
+                "denyWarnings",
+                r#"{ "options": { "denyWarnings": true } }"#,
+                [true, true, true, true, false, false, false],
+            ),
+            (
+                "maxWarnings",
+                r#"{ "options": { "maxWarnings": 1 } }"#,
+                [true, true, true, true, false, false, false],
+            ),
             (
                 "typeCheck",
                 r#"{ "options": { "typeAware": true, "typeCheck": true } }"#,
-                [true, false, false],
+                [true, true, false, false, false, false, false],
+            ),
+            (
+                "type-aware rules, typeAware unset",
+                r#"{ "rules": { "typescript/no-floating-promises": "error" } }"#,
+                [true, false, true, false, true, false, false],
             ),
         ];
         for (warning, config, expected) in warnings {
@@ -1157,6 +1233,51 @@ mod test {
         assert!(messages[0].contains("options.denyWarnings"));
     }
 
+    /// Naming type-aware rules without enabling `options.typeAware` is reported, unless the run
+    /// turns type-aware linting on (the rules run after all) or off (the editor's choice) for
+    /// every file.
+    #[test]
+    fn test_nested_json_config_warns_about_type_aware_rules_without_type_aware() {
+        let (configs, diagnostics) =
+            load_nested_json(r#"{ "rules": { "typescript/no-floating-promises": "error" } }"#);
+        assert_eq!(configs, 1);
+        let messages = warning_messages(&diagnostics);
+        assert_eq!(messages.len(), 1);
+        assert!(messages[0].contains("typescript/no-floating-promises"));
+        assert!(messages[0].contains("does not set `options.typeAware`"));
+        assert!(diagnostics[0].is_reported(RunOverrides::default()));
+        assert!(!diagnostics[0].is_reported(RunOverrides::TYPE_AWARE_FORCED));
+        assert!(!diagnostics[0].is_reported(RunOverrides::TYPE_AWARE_DISABLED));
+    }
+
+    /// An explicit `typeAware: false`, in the config or in one it extends, is a deliberate opt-out.
+    #[test]
+    fn test_nested_json_config_does_not_warn_about_type_aware_rules_with_type_aware_false() {
+        let (configs, diagnostics) = load_nested_json(
+            r#"{ "options": { "typeAware": false }, "rules": { "typescript/no-floating-promises": "error" } }"#,
+        );
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty());
+
+        // `load_nested_json_extending` asserts that nothing is reported.
+        assert_eq!(
+            load_nested_json_extending(
+                r#"{ "options": { "typeAware": false } }"#,
+                r#"{ "extends": ["../base/.oxlintrc.json"], "rules": { "typescript/no-floating-promises": "error" } }"#,
+            ),
+            Some(false)
+        );
+    }
+
+    #[test]
+    fn test_nested_json_config_does_not_warn_about_type_aware_rules_with_type_aware() {
+        let (configs, diagnostics) = load_nested_json(
+            r#"{ "options": { "typeAware": true }, "rules": { "typescript/no-floating-promises": "error" } }"#,
+        );
+        assert_eq!(configs, 1);
+        assert!(diagnostics.is_empty());
+    }
+
     #[test]
     fn test_nested_json_config_warns_about_max_warnings() {
         let (configs, diagnostics) = load_nested_json(r#"{ "options": { "maxWarnings": 10 } }"#);
@@ -1182,15 +1303,16 @@ mod test {
         assert!(diagnostics.is_empty());
     }
 
-    #[test]
-    fn test_nested_json_config_allows_type_aware_from_extends() {
+    /// `options` is not inherited from the root config, so `extends` is how a package picks up a
+    /// shared `typeAware`. Returns the `typeAware` of the built nested config.
+    fn load_nested_json_extending(base: &str, nested: &str) -> Option<bool> {
         let root_dir = tempfile::tempdir().unwrap();
         let base_path = root_dir.path().join("base/.oxlintrc.json");
         let nested_path = root_dir.path().join("nested/.oxlintrc.json");
         std::fs::create_dir_all(base_path.parent().unwrap()).unwrap();
         std::fs::create_dir_all(nested_path.parent().unwrap()).unwrap();
-        std::fs::write(&base_path, r#"{ "options": { "typeAware": true } }"#).unwrap();
-        std::fs::write(&nested_path, r#"{ "extends": ["../base/.oxlintrc.json"] }"#).unwrap();
+        std::fs::write(&base_path, base).unwrap();
+        std::fs::write(&nested_path, nested).unwrap();
 
         let mut external_plugin_store = ExternalPluginStore::new(false);
         let mut loader = ConfigLoader::new(None, &mut external_plugin_store, &[], None);
@@ -1200,6 +1322,30 @@ mod test {
         );
         assert!(diagnostics.is_empty());
         assert_eq!(configs.len(), 1);
+        configs[0].config.type_aware()
+    }
+
+    #[test]
+    fn test_nested_json_config_allows_type_aware_from_extends() {
+        assert_eq!(
+            load_nested_json_extending(
+                r#"{ "options": { "typeAware": true } }"#,
+                r#"{ "extends": ["../base/.oxlintrc.json"] }"#,
+            ),
+            Some(true)
+        );
+    }
+
+    #[test]
+    fn test_nested_json_config_can_turn_off_extended_type_aware() {
+        // The child wins over the config it extends, so a package can opt out of a shared setting.
+        assert_eq!(
+            load_nested_json_extending(
+                r#"{ "options": { "typeAware": true } }"#,
+                r#"{ "extends": ["../base/.oxlintrc.json"], "options": { "typeAware": false } }"#,
+            ),
+            Some(false)
+        );
     }
 
     #[cfg(feature = "napi")]
