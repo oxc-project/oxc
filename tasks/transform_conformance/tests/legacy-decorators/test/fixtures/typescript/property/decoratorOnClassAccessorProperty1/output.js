@@ -22,5 +22,5 @@ class C {
 	}
 }
 babelHelpers.decorate([dec], C.prototype, "a", null);
-babelHelpers.decorate([dec], C, "b", null);
 babelHelpers.decorate([dec], C.prototype, "c", null);
+babelHelpers.decorate([dec], C, "b", null);
