@@ -37,17 +37,22 @@ pub enum StatementReturnStatus {
     NotReturn,
 }
 
+#[derive(Clone, Copy)]
+enum ReturnKind {
+    Explicit,
+    Implicit,
+    Mixed,
+}
+
 impl StatementReturnStatus {
-    fn create(must_return: bool, maybe_explicit: bool, maybe_implicit: bool) -> Self {
-        match (must_return, maybe_explicit, maybe_implicit) {
-            (true, true, true) => Self::AlwaysMixed,
-            (true, true, false) => Self::AlwaysExplicit,
-            (true, false, true) => Self::AlwaysImplicit,
-            (false, true, true) => Self::SomeMixed,
-            (false, true, false) => Self::SomeExplicit,
-            (false, false, true) => Self::SomeImplicit,
-            (false, false, false) => Self::NotReturn,
-            (true, false, false) => unreachable!(),
+    fn create(must_return: bool, return_kind: ReturnKind) -> Self {
+        match (must_return, return_kind) {
+            (true, ReturnKind::Mixed) => Self::AlwaysMixed,
+            (true, ReturnKind::Explicit) => Self::AlwaysExplicit,
+            (true, ReturnKind::Implicit) => Self::AlwaysImplicit,
+            (false, ReturnKind::Mixed) => Self::SomeMixed,
+            (false, ReturnKind::Explicit) => Self::SomeExplicit,
+            (false, ReturnKind::Implicit) => Self::SomeImplicit,
         }
     }
 
@@ -171,11 +176,17 @@ pub fn check_function_body(function_node_id: NodeId, semantic: &Semantic) -> Sta
         return StatementReturnStatus::NotReturn;
     }
 
-    StatementReturnStatus::create(
-        terminal_states.iter().all(|exit| !matches!(exit, PendingExit::None)),
+    let must_return = terminal_states.iter().all(|exit| !matches!(exit, PendingExit::None));
+    let return_kind = match (
         terminal_states.iter().any(|exit| matches!(exit, PendingExit::Explicit)),
         terminal_states.iter().any(|exit| matches!(exit, PendingExit::Implicit)),
-    )
+    ) {
+        (true, true) => ReturnKind::Mixed,
+        (true, false) => ReturnKind::Explicit,
+        (false, true) => ReturnKind::Implicit,
+        (false, false) => return StatementReturnStatus::NotReturn,
+    };
+    StatementReturnStatus::create(must_return, return_kind)
 }
 
 /// Collect spans of **explicit** return values (`return <expr>`) in the given function body.
@@ -228,4 +239,20 @@ impl VisitJs<'_> for ReturnStatementFinder {
     fn visit_function(&mut self, _func: &Function<'_>, _flags: ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'_>) {}
+}
+
+#[test]
+fn test_statement_return_status_create() {
+    let cases = [
+        (true, ReturnKind::Explicit, StatementReturnStatus::AlwaysExplicit),
+        (true, ReturnKind::Implicit, StatementReturnStatus::AlwaysImplicit),
+        (true, ReturnKind::Mixed, StatementReturnStatus::AlwaysMixed),
+        (false, ReturnKind::Explicit, StatementReturnStatus::SomeExplicit),
+        (false, ReturnKind::Implicit, StatementReturnStatus::SomeImplicit),
+        (false, ReturnKind::Mixed, StatementReturnStatus::SomeMixed),
+    ];
+
+    for (must_return, return_kind, expected) in cases {
+        assert_eq!(StatementReturnStatus::create(must_return, return_kind), expected);
+    }
 }
