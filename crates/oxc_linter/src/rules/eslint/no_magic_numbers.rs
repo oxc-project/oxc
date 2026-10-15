@@ -258,8 +258,6 @@ struct InternConfig<'a> {
 
 impl InternConfig<'_> {
     pub fn from<'a>(node: &'a AstNode<'a>, parent_node: &'a AstNode<'a>) -> InternConfig<'a> {
-        // Like ESLint, only a sign belongs to the number: `void 0` or `~5` are
-        // checked as the literal in its own position.
         let is_unary = matches!(
             parent_node.kind(),
             AstKind::UnaryExpression(unary)
