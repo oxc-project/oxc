@@ -6,6 +6,9 @@ arguments:
 working directory: fixtures/cli/tsgolint_nested_type_aware
 ----------
 
+  ! packages/plain/.oxlintrc.json enables the type-aware rule typescript/no-floating-promises, but does not set `options.typeAware`, so it never runs.
+  help: Set `options.typeAware` to `true` in this config, or `extends` a config which does. It is not inherited from the root config.
+
   x typescript(no-floating-promises): Promises must be awaited, add void operator to ignore.
    ,-[packages/type-aware/index.ts:2:1]
  1 | const promise = new Promise((resolve, _reject) => resolve("value"));
