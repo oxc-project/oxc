@@ -271,3 +271,66 @@ source: crates/oxc_linter/src/tester.rs
  3 │ 
    ╰────
   help: Switch to `Set`
+
+  ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
+   ╭─[prefer_set_has.tsx:2:19]
+ 1 │ 
+ 2 │             const foo = [1, 2, 3].slice();
+   ·                   ───────────────────────
+ 3 │             foo.includes(1) || foo.includes(2);
+   ╰────
+  help: Switch to `Set`
+
+  ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
+   ╭─[prefer_set_has.tsx:2:19]
+ 1 │ 
+ 2 │             const foo = [1, 2, 3].concat(4);
+   ·                   ─────────────────────────
+ 3 │             foo.includes(1) || foo.includes(2);
+   ╰────
+  help: Switch to `Set`
+
+  ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
+   ╭─[prefer_set_has.tsx:3:19]
+ 2 │             const items = [1, 2, 3];
+ 3 │             const foo = items.slice();
+   ·                   ───────────────────
+ 4 │             foo.includes(1) || foo.includes(2);
+   ╰────
+  help: Switch to `Set`
+
+  ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
+   ╭─[prefer_set_has.tsx:3:19]
+ 2 │             const items = [1, 2, 3];
+ 3 │             const foo = items.concat(4);
+   ·                   ─────────────────────
+ 4 │             foo.includes(1) || foo.includes(2);
+   ╰────
+  help: Switch to `Set`
+
+  ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
+   ╭─[prefer_set_has.tsx:4:19]
+ 3 │             const copy = items.slice();
+ 4 │             const foo = copy.concat(4);
+   ·                   ────────────────────
+ 5 │             function unicorn() {
+   ╰────
+  help: Switch to `Set`
+
+  ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
+   ╭─[prefer_set_has.tsx:5:23]
+ 4 │                 const items = [1, 2, 3];
+ 5 │                 const foo = items.slice();
+   ·                       ───────────────────
+ 6 │                 return foo.includes(1) || foo.includes(2);
+   ╰────
+  help: Switch to `Set`
+
+  ⚠ unicorn(prefer-set-has): should be a `Set`, and use `.has()` to check existence or non-existence.
+   ╭─[prefer_set_has.tsx:2:19]
+ 1 │ 
+ 2 │             const foo = bar.baz.slice();
+   ·                   ─────────────────────
+ 3 │             function unicorn() {
+   ╰────
+  help: Switch to `Set`
