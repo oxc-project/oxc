@@ -47,6 +47,12 @@ fn iterable_to_array(span: Span, ctor_name: &str) -> OxcDiagnostic {
     .with_label(span)
 }
 
+fn iterable_to_array_in_for_of(span: Span) -> OxcDiagnostic {
+    OxcDiagnostic::warn("Using a spread operator here creates a new array unnecessarily.")
+        .with_help("`for…of` can iterate over iterable, it's unnecessary to convert to an array.")
+        .with_label(span)
+}
+
 fn iterable_to_array_in_yield_star(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Using a spread operator here creates a new array unnecessarily.")
         .with_help("`yield*` can delegate to another iterable, so it's unnecessary to convert the iterable to an array.")
@@ -93,8 +99,9 @@ declare_oxc_lint!(
     ///   - `Promise.{all,allSettled,any,race}(…)`
     ///   - `Object.fromEntries(…)`
     ///
-    /// Array snapshots used as the iterable of a `for…of` loop are allowed,
-    /// since the collection can change during iteration.
+    /// The `for…of` loop can iterate over any iterable object not just array,
+    /// so it's unnecessary to convert the iterable to an array.
+    /// This is reported without a fix because the loop can mutate the original collection.
     ///
     /// The `yield*` can delegate to another iterable, so it's unnecessary to
     /// convert the iterable to an array.
@@ -106,6 +113,8 @@ declare_oxc_lint!(
     /// const array = [firstElement, ...[secondElement], thirdElement];
     ///
     /// await Promise.all([...iterable])
+    ///
+    /// for (const foo of [...set]);
     ///
     /// function * foo() {
     /// 	yield * [...anotherGenerator()];
@@ -122,9 +131,7 @@ declare_oxc_lint!(
     ///
     /// await Promise.all(iterable);
     ///
-    /// for (const foo of [...set]) {
-    ///     set.delete(foo);
-    /// }
+    /// for (const foo of set);
     ///
     /// function * foo() {
     /// 	yield * anotherGenerator();
@@ -319,8 +326,11 @@ fn check_useless_iterable_to_array<'a>(
 
     match parent.kind() {
         AstKind::ForOfStatement(for_of_stmt) => {
-            // Preserve snapshots even when the spread argument looks like an array clone.
-            for_of_stmt.right.without_parentheses().span() == array_expr.span
+            if for_of_stmt.right.without_parentheses().span() == array_expr.span {
+                ctx.diagnostic(iterable_to_array_in_for_of(span));
+                return true;
+            }
+            false
         }
         AstKind::YieldExpression(yield_expr) => {
             if yield_expr.delegate
@@ -629,41 +639,10 @@ fn test() {
         "[...new Float64Array(buf).slice(0)]",
         "[...new BigInt64Array(buf).slice(0)]",
         "[...new BigUint64Array(buf).slice(0)]",
-        r"const items = [1, 2, 2.5, 3];
-        for (const item of [...items]) {
-            if (item === Math.floor(item)) {
-                items.splice(items.indexOf(item), 1);
-            }
-        }",
-        r"for (const foo of [...iterable]);",
-        r"async () => {for await (const foo of [...iterable]);}",
-        r"for (const foo of [...(( iterable ))]);",
-        r"for (const foo of (( [...(( iterable ))] )));",
-        r"for (const foo of[...iterable]);",
-        r"for (const foo of[...iterable2]);",
-        r"const set = new Set([1, 2, 3]);
-        for (const item of [...set]) { set.add(item * 2); }",
-        r"const items = [1, 2, 3]; const alias = items;
-        for (const item of [...items]) { alias.pop(); consume(item); }",
-        r"const items = [1, 2, 3]; const remove = () => items.pop();
-        for (const item of [...items]) { remove(); consume(item); }",
-        r"for (const challenge of [...Ladders.challenges.get(id) || []]) {
-            Ladders.challenges.remove(challenge);
-        }",
-        r"const items = [1, 2, 3];
-        for (items[0] of [...items]) { consume(items); }",
-        r"const items = [1, 2, 3];
-        for (const item of (([...((items))]))) { items.shift(); consume(item); }",
-        r"async function remove(items) {
-            for await (const item of [...items]) { items.splice(0, 1); consume(item); }
-        }",
-        r"const items = [1, 2, 3];
-        for (const item of [...items.copyWithin(0)]) { items.pop(); consume(item); }",
-        r"for (const item of [...items.map(f)]) { consume(item); }",
     ];
 
     #[expect(clippy::literal_string_with_formatting_args)]
-    let fail = vec![
+    let mut fail = vec![
         r"const array = [...[a]]",
         r"const object = {...{a}}",
         r"foo(...[a])",
@@ -727,10 +706,16 @@ fn test() {
         r"const array = Array.from([...iterable])",
         r"const typed = BigUint64Array.from([...iterable])",
         r"const object = Object.fromEntries([...iterable])",
+        r"for (const foo of [...iterable]);",
+        r"async () => {for await (const foo of [...iterable]);}",
         r"const map = new Map([...iterable,])",
+        r"for (const foo of [...iterable]);",
         r"const map = new Map([...iterable,],)",
         r"const map = new Map([...(( iterable ))])",
+        r"for (const foo of [...(( iterable ))]);",
         r"const map = new Map((( [...(( iterable ))] )))",
+        r"for (const foo of (( [...(( iterable ))] )));",
+        r"for (const foo of [...iterable]);",
         r"[...foo.concat(bar)]",
         r"[...foo.copyWithin(-2)]",
         r"[...foo.filter(bar)]",
@@ -751,6 +736,8 @@ fn test() {
         r"[...Array.of()]",
         r"[...await Promise.all(foo)]",
         r"[...await Promise.allSettled(foo)]",
+        r"for (const foo of[...iterable]);",
+        r"for (const foo of[...iterable2]);",
         // https://github.com/getsentry/sentry/blob/9e4359030e7ec088aa3f47582f1afbad539a6377/static/app/views/performance/database/useAvailableDurationAggregates.tsx#L15-L17
         r"
         if (organization.features?.includes('performance-database-view-percentiles')) {
@@ -780,7 +767,36 @@ fn test() {
         r"const obj = { ...(foo ? Object.entries(obj).reduce(fn, {}) : { a: 2 }) }",
     ];
 
-    let fix = vec![
+    let snapshot_loops = [
+        r"const items = [1, 2, 2.5, 3];
+        for (const item of [...items]) {
+            if (item === Math.floor(item)) {
+                items.splice(items.indexOf(item), 1);
+            }
+        }",
+        r"const set = new Set([1, 2, 3]);
+        for (const item of [...set]) { set.add(item * 2); }",
+        r"const items = [1, 2, 3]; const alias = items;
+        for (const item of [...items]) { alias.pop(); consume(item); }",
+        r"const items = [1, 2, 3]; const remove = () => items.pop();
+        for (const item of [...items]) { remove(); consume(item); }",
+        r"for (const challenge of [...Ladders.challenges.get(id) || []]) {
+            Ladders.challenges.remove(challenge);
+        }",
+        r"const items = [1, 2, 3];
+        for (items[0] of [...items]) { consume(items); }",
+        r"const items = [1, 2, 3];
+        for (const item of (([...((items))]))) { items.shift(); consume(item); }",
+        r"async function remove(items) {
+            for await (const item of [...items]) { items.splice(0, 1); consume(item); }
+        }",
+        r"const items = [1, 2, 3];
+        for (const item of [...items.copyWithin(0)]) { items.pop(); consume(item); }",
+        r"for (const item of [...items.map(f)]) { consume(item); }",
+    ];
+    fail.extend(snapshot_loops);
+
+    let mut fix = vec![
         // array literals
         ("[...[1,2,3]]", "[1,2,3]"),
         ("[...[1,2,3], ...[4,5,6]]", "[1, 2, 3, 4, 5, 6]"),
@@ -807,10 +823,6 @@ fn test() {
         (r"[...Array.from(iterable)]", r"Array.from(iterable)"),
         ("[...((0, []))]", "((0, []))"),
         ("[...arr.reduce((a, b) => a.push(b), [])]", "arr.reduce((a, b) => a.push(b), [])"),
-        (
-            "for (const item of [...[...items]]) { items.pop(); }",
-            "for (const item of [...items]) { items.pop(); }",
-        ),
         // Issue: <https://github.com/oxc-project/oxc/issues/8115>
         ("setupServer(...[...importHandlers])", "setupServer(...importHandlers)"),
         ("setupServer(...[1, 2, 3])", "setupServer(1, 2, 3)"),
@@ -826,6 +838,8 @@ fn test() {
             "jsxEl(({\n\tclassName,\n\tonClick: () => console.log('click')\n}));",
         ),
     ];
+    fix.extend(snapshot_loops.map(|source| (source, source)));
+
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .change_rule_path_extension("mjs")
         .expect_fix(fix)
