@@ -596,19 +596,18 @@ impl<'a> PeepholeOptimizations {
         expr: &mut Expression<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        let Expression::ConditionalExpression(conditional) = expr else {
+        let Expression::ConditionalExpression(cond_expr) = expr else {
             return;
         };
         if !ctx.in_boolean_context() {
             return;
         }
-
-        if let Some(boolean) = conditional.consequent.get_side_free_boolean_value(ctx) {
-            ctx.drop_expression(&conditional.consequent);
+        if let Some(value) = cond_expr.consequent.get_side_free_boolean_value(ctx) {
+            ctx.drop_expression(&cond_expr.consequent);
             ctx.replace_expression_with(expr, |e, ctx| {
                 let Expression::ConditionalExpression(e) = e else { unreachable!() };
                 let ConditionalExpression { test, alternate, span, .. } = e.unbox();
-                let (op, left) = if boolean {
+                let (op, left) = if value {
                     // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
                     (LogicalOperator::Or, test)
                 } else {
@@ -619,12 +618,12 @@ impl<'a> PeepholeOptimizations {
             });
             return;
         }
-        if let Some(boolean) = conditional.alternate.get_side_free_boolean_value(ctx) {
-            ctx.drop_expression(&conditional.alternate);
+        if let Some(value) = cond_expr.alternate.get_side_free_boolean_value(ctx) {
+            ctx.drop_expression(&cond_expr.alternate);
             ctx.replace_expression_with(expr, |e, ctx| {
                 let Expression::ConditionalExpression(e) = e else { unreachable!() };
                 let ConditionalExpression { test, consequent, span, .. } = e.unbox();
-                let (op, left) = if boolean {
+                let (op, left) = if value {
                     // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
                     (LogicalOperator::Or, Self::minimize_not(test.span(), test, ctx, true))
                 } else {
