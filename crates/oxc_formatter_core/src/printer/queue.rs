@@ -31,29 +31,30 @@ pub(super) trait Queue<'a> {
     /// Pops the element at the end of the queue.
     #[inline]
     fn pop(&mut self) -> Option<&'a FormatElement<'a>> {
-        match self.current().split_first() {
-            Some((element, rest)) => {
-                if rest.is_empty() {
-                    // Slice exhausted, eagerly refill from the stack to uphold the invariant
-                    // that `current` is only empty once the whole queue is exhausted.
-                    let next = match self.stack_mut().pop() {
-                        Some(next) => {
-                            debug_assert!(
-                                !next.is_empty(),
-                                "slices stored on the stack must never be empty"
-                            );
-                            next
-                        }
-                        None => &[],
-                    };
-                    self.set_current(next);
-                } else {
-                    self.set_current(rest);
-                }
+        let (element, rest) = self.current().split_first()?;
+        self.advance(rest);
+        Some(element)
+    }
 
-                Some(element)
-            }
-            None => None,
+    /// Makes `rest` of the current slice the current slice.
+    #[inline]
+    fn advance(&mut self, rest: &'a [FormatElement<'a>]) {
+        if rest.is_empty() {
+            // Slice exhausted, eagerly refill from the stack to uphold the invariant
+            // that `current` is only empty once the whole queue is exhausted.
+            let next = match self.stack_mut().pop() {
+                Some(next) => {
+                    debug_assert!(
+                        !next.is_empty(),
+                        "slices stored on the stack must never be empty"
+                    );
+                    next
+                }
+                None => &[],
+            };
+            self.set_current(next);
+        } else {
+            self.set_current(rest);
         }
     }
 
@@ -72,6 +73,11 @@ pub(super) trait Queue<'a> {
         }
 
         top
+    }
+
+    /// Removes the first `count` elements of the current slice, which has at least as many.
+    fn skip(&mut self, count: usize) {
+        self.advance(&self.current()[count..]);
     }
 
     /// Queues a single element to process before the other elements in this queue.

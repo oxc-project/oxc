@@ -1,4 +1,3 @@
-#![expect(clippy::mutable_key_type)]
 use std::ops::Deref;
 
 use oxc_allocator::ArenaVec;
@@ -7,7 +6,8 @@ use rustc_hash::FxHashMap;
 use crate::{PrintResult, Printed, Printer, PrinterOptions};
 
 use super::{
-    FormatElement, FormatElements, Interned,
+    FormatElement, FormatElements, Interned, LineMode, PrintMode, TextWidth,
+    flat::{Flat, Lead},
     tag::{self, LabelId, Tag, TagKind},
 };
 
@@ -87,109 +87,294 @@ impl Document<'_> {
     /// [`BestFitting`]'s content expands is not propagated past the [`BestFitting`] element.
     ///
     /// [`BestFitting`]: FormatElement::BestFitting
+    ///
+    /// Also notes what each group's content printed flat does to the line ([`Group::flat`](tag::Group::flat)),
+    /// so that a fits measurement can skip it.
+    /// See `format_element/flat.rs` for what it leaves out.
     pub(crate) fn propagate_expand(&self) {
-        #[derive(Debug)]
-        enum Enclosing<'a> {
-            Group(&'a tag::Group),
-            BestFitting,
-        }
+        let mut propagate = Propagate {
+            enclosing: Vec::new(),
+            checked_interned: FxHashMap::default(),
+            runs: Vec::new(),
+            is_balanced: true,
+        };
+        propagate.elements(self);
+    }
+}
 
-        fn expand_parent(enclosing: &[Enclosing]) {
-            if let Some(Enclosing::Group(group)) = enclosing.last() {
-                group.propagate_expand();
+#[derive(Debug)]
+enum Enclosing<'a> {
+    Group(&'a tag::Group),
+    BestFitting,
+}
+
+struct Propagate<'a> {
+    enclosing: Vec<Enclosing<'a>>,
+    checked_interned: FxHashMap<&'a Interned<'a>, (bool, Option<Flat>)>,
+    /// The runs that enclose the current one.
+    runs: Vec<Run<'a>>,
+    /// Whether every group ends in the slice it starts in, as builders write them.
+    /// If not, no [Flat] is noted any more.
+    is_balanced: bool,
+}
+
+/// A run of elements whose [Flat] is being noted: a group's content, or a whole slice.
+struct Run<'a> {
+    /// `None` for a whole slice.
+    group: Option<&'a tag::Group>,
+    /// Index of the start tag in the slice.
+    start: usize,
+    /// `None` if its effect depends on where it is printed.
+    flat: Option<Flat>,
+    /// Open conditional content.
+    conditionals: u32,
+    /// The depth of the conditional content that a flat print leaves out (`if_group_breaks`), 0 if none.
+    left_out: u32,
+}
+
+impl<'a> Run<'a> {
+    fn new(group: Option<&'a tag::Group>, start: usize) -> Self {
+        Self { group, start, flat: Some(Flat::default()), conditionals: 0, left_out: 0 }
+    }
+
+    #[inline]
+    fn then(&mut self, next: impl FnOnce(Flat) -> Option<Flat>) {
+        if self.left_out == 0
+            && let Some(flat) = self.flat
+        {
+            self.flat = next(flat);
+        }
+    }
+
+    fn then_flat(&mut self, next: Option<Flat>) {
+        self.then(|flat| next.map(|next| flat.then(next)));
+    }
+
+    /// The run's effect depends on where it is printed.
+    fn give_up(&mut self) {
+        self.then(|_| None);
+    }
+
+    fn start_conditional(&mut self, condition: &tag::Condition) {
+        self.conditionals += 1;
+        if self.left_out == 0 {
+            if condition.group_id().is_some() {
+                // Depends on another group
+                self.flat = None;
+            } else if condition.mode() == PrintMode::Expanded {
+                self.left_out = self.conditionals;
             }
         }
+    }
 
-        fn propagate_expands<'a>(
-            elements: &'a [FormatElement<'a>],
-            enclosing: &mut Vec<Enclosing<'a>>,
-            checked_interned: &mut FxHashMap<&'a Interned<'a>, bool>,
-        ) -> bool {
-            let mut expands = false;
-            for element in elements {
-                let element_expands = match element {
-                    FormatElement::Tag(Tag::StartGroup(group)) => {
-                        enclosing.push(Enclosing::Group(group));
-                        false
+    /// Returns `false` if there is no conditional content to end.
+    fn end_conditional(&mut self) -> bool {
+        if self.left_out == self.conditionals {
+            self.left_out = 0;
+        }
+        let Some(conditionals) = self.conditionals.checked_sub(1) else { return false };
+        self.conditionals = conditionals;
+        true
+    }
+}
+
+impl<'a> Propagate<'a> {
+    fn expand_parent(&self) {
+        if let Some(Enclosing::Group(group)) = self.enclosing.last() {
+            group.propagate_expand();
+        }
+    }
+
+    /// Ends the group whose content `run` is, at `index`, and continues the run that encloses it.
+    #[inline]
+    fn end_group(&mut self, run: &mut Run<'a>, index: usize) {
+        if !self.is_balanced {
+            return;
+        }
+        let (Some(group), 0, Some(parent)) = (run.group, run.conditionals, self.runs.pop()) else {
+            // The group started in another slice
+            self.is_balanced = false;
+            return;
+        };
+        let content = std::mem::replace(run, parent);
+        group.set_flat(content.flat, index - content.start - 1);
+        // Skipping a group with an id would not note its print mode
+        if group.id().is_some() || !group.mode().is_flat() {
+            run.give_up();
+        } else {
+            run.then_flat(content.flat);
+        }
+    }
+
+    /// Returns whether the elements expand, and their effect printed flat.
+    fn elements(&mut self, elements: &'a [FormatElement<'a>]) -> (bool, Option<Flat>) {
+        let mut run = Run::new(None, 0);
+        let mut expands = false;
+        for (index, element) in elements.iter().enumerate() {
+            let element_expands = match element {
+                FormatElement::Tag(Tag::StartGroup(group)) => {
+                    self.enclosing.push(Enclosing::Group(group));
+                    if self.is_balanced {
+                        let mut content = Run::new(Some(group), index);
+                        // Never printed or measured flat
+                        if !group.mode().is_flat() {
+                            content.flat = None;
+                        }
+                        self.runs.push(std::mem::replace(&mut run, content));
                     }
-                    FormatElement::Tag(Tag::EndGroup) => match enclosing.pop() {
+                    false
+                }
+                FormatElement::Tag(Tag::EndGroup) => {
+                    let expands = match self.enclosing.pop() {
                         Some(Enclosing::Group(group)) => !group.mode().is_flat(),
                         _ => false,
-                    },
-                    FormatElement::Interned(interned) => {
-                        if let Some(interned_expands) = checked_interned.get(interned) {
-                            *interned_expands
-                        } else {
-                            let interned_expands =
-                                propagate_expands(interned, enclosing, checked_interned);
-                            checked_interned.insert(interned, interned_expands);
-                            interned_expands
-                        }
-                    }
-                    FormatElement::BestFitting(best_fitting) => {
-                        enclosing.push(Enclosing::BestFitting);
-
-                        for variant in best_fitting.variants() {
-                            propagate_expands(variant, enclosing, checked_interned);
-                        }
-
-                        enclosing.pop();
-                        // BestFitting acts as a boundary, meaning there is no need to continue
-                        // processing this element and we can move onto the next. However, we
-                        // _don't_ set `expands = false`, because that ends up negating the
-                        // expansion when processing `Interned` elements.
-                        //
-                        // Only interned lists are affected, because they cache the expansion value
-                        // based on the value of `expands` at the end of iterating the children. If
-                        // a `best_fitting` element occurs after the last expanding element, and we
-                        // end up setting `expands = false` here, then the interned element ends up
-                        // thinking that its content doesn't expand, even though it might. Example:
-                        //   group(1,
-                        //     interned 1 [
-                        //       expand_parent,
-                        //       best_fitting,
-                        //     ]
-                        //   )
-                        //   group(2,
-                        //     [ref interned 1]
-                        //   )
-                        // Here, `group(1)` gets expanded directly by the `expand_parent` element.
-                        // This happens immediately, and then `expands = true` is set. The interned
-                        // element continues processing, and encounters the `best_fitting`. If
-                        // we set `expands = false` there, then the interned element's result ends
-                        // up being `false`, even though it does actually expand. Then, when
-                        // `group(2)` checks for expansion, it looks at the ref to `interned 1`,
-                        // which thinks it doesn't expand, and so `group(2)` stays flat.
-                        //
-                        // By _not_ setting `expands = false`, even though `best_fitting` is a
-                        // boundary for expansion, we ensure that any references to the interned
-                        // element will get the correct value for whether the contained content
-                        // actually expands, regardless of the order of elements within it.
-                        //
-                        // Instead, just returning false here enforces that `best_fitting` doesn't
-                        // think it expands _itself_, but allows other sibling elements to still
-                        // propagate their expansion.
-                        false
-                    }
-                    // `FormatElement::Token` cannot contain line breaks
-                    FormatElement::Text { text: _, width } => width.propagates_expand(),
-                    FormatElement::ExpandParent => true,
-                    FormatElement::Line(mode) => mode.propagates_expand(),
-                    _ => false,
-                };
-
-                if element_expands {
-                    expands = true;
-                    expand_parent(enclosing);
+                    };
+                    self.end_group(&mut run, index);
+                    expands
                 }
-            }
+                FormatElement::Interned(interned) => {
+                    let (interned_expands, flat) =
+                        if let Some(checked) = self.checked_interned.get(interned) {
+                            *checked
+                        } else {
+                            let checked = self.elements(interned);
+                            self.checked_interned.insert(interned, checked);
+                            checked
+                        };
+                    run.then_flat(flat);
+                    interned_expands
+                }
+                FormatElement::BestFitting(best_fitting) => {
+                    self.enclosing.push(Enclosing::BestFitting);
 
-            expands
+                    // Printed flat, the most flat variant is printed
+                    let (_, most_flat) = self.elements(best_fitting.most_flat());
+                    for variant in &best_fitting.variants()[1..] {
+                        self.elements(variant);
+                    }
+
+                    self.enclosing.pop();
+                    run.then_flat(most_flat);
+                    // BestFitting acts as a boundary, meaning there is no need to continue
+                    // processing this element and we can move onto the next. However, we
+                    // _don't_ set `expands = false`, because that ends up negating the
+                    // expansion when processing `Interned` elements.
+                    //
+                    // Only interned lists are affected, because they cache the expansion value
+                    // based on the value of `expands` at the end of iterating the children. If
+                    // a `best_fitting` element occurs after the last expanding element, and we
+                    // end up setting `expands = false` here, then the interned element ends up
+                    // thinking that its content doesn't expand, even though it might. Example:
+                    //   group(1,
+                    //     interned 1 [
+                    //       expand_parent,
+                    //       best_fitting,
+                    //     ]
+                    //   )
+                    //   group(2,
+                    //     [ref interned 1]
+                    //   )
+                    // Here, `group(1)` gets expanded directly by the `expand_parent` element.
+                    // This happens immediately, and then `expands = true` is set. The interned
+                    // element continues processing, and encounters the `best_fitting`. If
+                    // we set `expands = false` there, then the interned element's result ends
+                    // up being `false`, even though it does actually expand. Then, when
+                    // `group(2)` checks for expansion, it looks at the ref to `interned 1`,
+                    // which thinks it doesn't expand, and so `group(2)` stays flat.
+                    //
+                    // By _not_ setting `expands = false`, even though `best_fitting` is a
+                    // boundary for expansion, we ensure that any references to the interned
+                    // element will get the correct value for whether the contained content
+                    // actually expands, regardless of the order of elements within it.
+                    //
+                    // Instead, just returning false here enforces that `best_fitting` doesn't
+                    // think it expands _itself_, but allows other sibling elements to still
+                    // propagate their expansion.
+                    false
+                }
+                FormatElement::Text { text: _, width } => {
+                    run.then(|flat| flat.text(*width));
+                    width.propagates_expand()
+                }
+                // `FormatElement::Token` cannot contain line breaks
+                FormatElement::Token { text } => {
+                    #[expect(clippy::cast_possible_truncation)]
+                    let width = TextWidth::single(text.len() as u32);
+                    run.then(|flat| flat.text(width));
+                    false
+                }
+                FormatElement::Space => {
+                    run.then(|flat| Some(flat.space(Lead::IfLineNotEmpty)));
+                    false
+                }
+                FormatElement::Line(mode) => {
+                    match mode {
+                        LineMode::Soft => {}
+                        LineMode::SoftOrSpace => run.then(|flat| Some(flat.space(Lead::Always))),
+                        _ => run.give_up(),
+                    }
+                    mode.propagates_expand()
+                }
+                FormatElement::ExpandParent => {
+                    run.give_up();
+                    true
+                }
+                FormatElement::Tag(Tag::StartConditionalContent(condition)) => {
+                    run.start_conditional(condition);
+                    false
+                }
+                FormatElement::Tag(Tag::EndConditionalContent) => {
+                    if !run.end_conditional() {
+                        self.is_balanced = false;
+                    }
+                    false
+                }
+                FormatElement::Tag(Tag::StartLineSuffix)
+                | FormatElement::LineSuffixBoundary
+                | FormatElement::TailwindClass(_) => {
+                    run.give_up();
+                    false
+                }
+                // Nothing on one line: indents only apply after a line break, a fill fits on the line as a whole.
+                // Listed in full, so that a new element is decided here (and in `Printer::print_flat`)
+                FormatElement::Tag(
+                    Tag::StartIndent
+                    | Tag::EndIndent
+                    | Tag::StartAlign(_)
+                    | Tag::EndAlign
+                    | Tag::StartPrefix(_)
+                    | Tag::EndPrefix
+                    | Tag::StartDedent(_)
+                    | Tag::EndDedent(_)
+                    | Tag::StartIndentIfGroupBreaks(_)
+                    | Tag::EndIndentIfGroupBreaks(_)
+                    | Tag::StartFill
+                    | Tag::EndFill
+                    | Tag::StartEntry
+                    | Tag::EndEntry
+                    | Tag::EndLineSuffix
+                    | Tag::StartLabelled(_)
+                    | Tag::EndLabelled
+                    | Tag::StartMarkAsRoot
+                    | Tag::EndMarkAsRoot,
+                )
+                // Replaced before printing
+                | FormatElement::EmbedPlaceholder(_) => false,
+            };
+
+            if element_expands {
+                expands = true;
+                self.expand_parent();
+            }
         }
 
-        let mut enclosing: Vec<Enclosing> = Vec::new();
-        let mut interned = FxHashMap::default();
-        propagate_expands(self, &mut enclosing, &mut interned);
+        if run.group.is_some() || run.conditionals != 0 {
+            // A group or conditional content that ends in another slice
+            self.is_balanced = false;
+        }
+        let flat = if self.is_balanced { run.flat } else { None };
+
+        (expands, flat)
     }
 }
 
