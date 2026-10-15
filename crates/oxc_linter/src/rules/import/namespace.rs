@@ -110,6 +110,7 @@ declare_oxc_lint!(
     Namespace,
     import,
     correctness,
+    recommended,
     config = Namespace,
     version = "0.2.11",
     short_description = "Ensure imported namespaces contain dereferenced properties as they are dereferenced.",
