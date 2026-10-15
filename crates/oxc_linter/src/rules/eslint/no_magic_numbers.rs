@@ -258,7 +258,11 @@ struct InternConfig<'a> {
 
 impl InternConfig<'_> {
     pub fn from<'a>(node: &'a AstNode<'a>, parent_node: &'a AstNode<'a>) -> InternConfig<'a> {
-        let is_unary = matches!(parent_node.kind(), AstKind::UnaryExpression(_));
+        let is_unary = matches!(
+            parent_node.kind(),
+            AstKind::UnaryExpression(unary)
+                if matches!(unary.operator, UnaryOperator::UnaryNegation | UnaryOperator::UnaryPlus)
+        );
         let is_negative = matches!(parent_node.kind(), AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::UnaryNegation);
 
         match node.kind() {
@@ -734,6 +738,8 @@ fn test() {
 			      ",
             Some(serde_json::json!([{ "ignoreTypeIndexes": true, "ignore": [0, 3] }])),
         ),
+        ("exports.c = -7;", None),
+        ("exports.d = +9;", None),
     ];
 
     let fail = vec![
@@ -951,6 +957,10 @@ fn test() {
             "type Foo = { bar: Bar[((1 & -2) | 3) | 4] };",
             Some(serde_json::json!([{ "ignoreNumericLiteralTypes": true }])),
         ),
+        ("exports.a = void 0;", None),
+        ("exports.b = ~5;", None),
+        ("exports.c = !3;", None),
+        ("var x = typeof 4;", None),
     ];
 
     Tester::new(NoMagicNumbers::NAME, NoMagicNumbers::PLUGIN, pass, fail).test_and_snapshot();
