@@ -8,13 +8,12 @@ use std::num::NonZeroU8;
 use oxc_allocator::ArenaVec;
 
 use crate::{
-    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, FormatState,
-    Formatter, GroupId, HeapVecBuffer,
+    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, Formatter,
+    GroupId,
     format_element::{
         self, LineMode, PrintMode, TextWidth,
         tag::{self, Condition, DedentMode, GroupMode, LabelId, Tag},
     },
-    write,
 };
 
 use Tag::{
@@ -787,15 +786,15 @@ impl<'ast, C> Format<'ast, C> for BlockIndent<'_, 'ast, C> {
         match self.mode {
             IndentMode::Soft => {
                 let line = soft_line_break();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::Block => {
                 let line = hard_line_break();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::SoftLineOrSpace | IndentMode::SoftSpace => {
                 let line = soft_line_break_or_space();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
         }
 
@@ -814,15 +813,15 @@ impl<'ast, C> Format<'ast, C> for BlockIndent<'_, 'ast, C> {
         match self.mode {
             IndentMode::Soft => {
                 let line = soft_line_break();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::Block => {
                 let line = hard_line_break();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::SoftSpace => {
                 let line = soft_line_break_or_space();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::SoftLineOrSpace => (),
         }
@@ -1065,16 +1064,16 @@ impl<'fmt, 'ast, C> BestFitting<'fmt, 'ast, C> {
 ///
 /// This is the single place encoding the variant shape the printer's [`format_element::BestFittingElement`] relies on:
 /// an entry-tag-wrapped, exactly-sized arena slice.
-/// The content is staged on the heap so only that final slice lands in the arena (see [`HeapVecBuffer`]).
 pub fn best_fitting_variant<'ast, C>(
-    state: &mut FormatState<'ast, C>,
-    content: impl FnOnce(&mut HeapVecBuffer<'_, 'ast, C>),
+    f: &mut Formatter<'_, 'ast, C>,
+    content: impl FnOnce(&mut Formatter<'_, 'ast, C>),
 ) -> &'ast [FormatElement<'ast>] {
-    let mut buffer = HeapVecBuffer::new(state);
-    buffer.write_element(FormatElement::Tag(StartEntry));
-    content(&mut buffer);
-    buffer.write_element(FormatElement::Tag(EndEntry));
-    buffer.take_into_arena_slice()
+    f.format_to_vec(|f| {
+        f.write_element(FormatElement::Tag(StartEntry));
+        content(f);
+        f.write_element(FormatElement::Tag(EndEntry));
+    })
+    .into_arena_slice()
 }
 
 impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
@@ -1084,7 +1083,7 @@ impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
         let mut formatted_variants = Vec::with_capacity(variants.len());
 
         for variant in variants {
-            formatted_variants.push(best_fitting_variant(f.state_mut(), |buffer| {
+            formatted_variants.push(best_fitting_variant(f, |buffer| {
                 buffer.write_fmt(Arguments::from(variant));
             }));
         }

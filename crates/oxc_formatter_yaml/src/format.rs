@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
     builders::{hard_line_break, text},
     write,
 };
@@ -36,7 +36,7 @@ pub fn format<'a>(
     // Pre-allocate: measured on 6,925 real-world files (kubernetes, vscode, saleor, bootstrap),
     // 0.3x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 99.9% of the corpus.
     let capacity = (parsed.source.len() * 3 / 10).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatYamlRoot { root: parsed.root, has_bom: parsed.has_bom });
 
@@ -95,7 +95,7 @@ pub fn format_to_ir<'a>(
     let context =
         YamlFormatContext::new(options, source, comments, print::last_descendant_end(root));
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatYamlEmbedded { root });
 

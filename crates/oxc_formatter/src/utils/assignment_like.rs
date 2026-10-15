@@ -909,7 +909,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             // (it can incur in some transformation, like removing some escapes, etc.).
             //
             // 1. we create a scratch accumulator as a temporary heap buffer
-            //    (see `AccumulatorBuffer` for why neither the arena nor the shared scratch fits)
+            //    (see `ScratchBuffer` for why neither the arena nor the element stack fits)
             // 2. we write the left hand side into the buffer and retrieve the `is_left_short` info which is computed only when we format it
             // 3. we compute the layout
             // 4. we write the left node inside the main buffer based on the layout
@@ -921,8 +921,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             let operator_end = self.commented_operator_position(f);
             let view_limit =
                 operator_end.map(|end| f.context_mut().comments_mut().limit_comments_up_to(end));
-            let is_left_short =
-                self.write_left(&mut Formatter::new(&mut formatted_left.writer(f.state_mut())));
+            let is_left_short = formatted_left.write(f, |f| self.write_left(f));
             if let Some(view_limit) = view_limit {
                 f.context_mut().comments_mut().restore_view_limit(view_limit);
             }

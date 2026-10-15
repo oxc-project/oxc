@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
     builders::{hard_line_break, text},
     write,
 };
@@ -32,7 +32,7 @@ pub fn format<'a>(
     // Pre-allocate: measured on 1,241 real-world files (gitlab operations, github/saleor schemas),
     // 0.4x source bytes plus a 1024-element floor for small operation documents avoided reallocation for the entire corpus.
     let capacity = (parsed.source.len() * 2 / 5).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatGraphqlRoot { document: parsed.document, has_bom: parsed.has_bom });
 
@@ -92,7 +92,7 @@ pub fn format_to_ir<'a>(
 
     let context = GraphqlFormatContext::new(options, source, comments);
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatGraphqlEmbedded { document });
 

@@ -5,8 +5,8 @@ pub use super::{
 };
 pub use crate::source_text::SourceTextExt as _;
 pub use oxc_formatter_core::{
-    Buffer as _, BufferExtensions, Format, Format as _, FormatOptions as _, Formatter,
-    MemoizeFormat, Memoized,
+    Buffer as _, BufferExtensions, Format, Format as _, FormatOptions as _, MemoizeFormat,
+    Memoized,
     format_element::{
         tag::{LabelId, Tag, TagKind},
         *,

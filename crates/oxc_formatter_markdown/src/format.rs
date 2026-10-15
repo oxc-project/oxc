@@ -1,8 +1,8 @@
 use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, InputKind,
-    VecBuffer,
+    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
+    InputKind,
     builders::{empty_line, hard_line_break, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter},
     write, write_front_matter,
@@ -62,7 +62,7 @@ pub fn format_with_session<'a>(
     // Pre-allocate: measured on 19,487 real-world files (mdn content, oxc-ecosystem-ci repos),
     // 0.4x source bytes plus a 1024-element floor for small documents avoids reallocation for 97.6% of the corpus.
     let capacity = (parsed.source.len() * 2 / 5).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatMarkdownRoot { parsed: &parsed });
 
@@ -133,7 +133,7 @@ pub fn format_to_ir<'a>(
 
     let context = MarkdownFormatContext::new(options, parsed.source, parsed.blanks, in_js_template);
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatMarkdownEmbedded { parsed: &parsed });
 

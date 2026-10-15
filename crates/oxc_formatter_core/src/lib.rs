@@ -53,12 +53,9 @@ pub use session::embedded::{
 };
 pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
 pub use source::{SourceText, SpanCursor};
+pub use write::Format;
 pub use write::arguments::{Argument, Arguments};
-pub use write::buffer::{
-    AccumulatorBuffer, Buffer, BufferExtensions, HeapVecBuffer, Recorded, Recording,
-    RemoveSoftLinesBuffer, ScratchBuffer, VecBuffer,
-};
+pub use write::buffer::{Buffer, BufferExtensions, Recorded, Recording, ScratchBuffer};
 pub use write::extensions::{MemoizeFormat, Memoized};
 pub use write::formatter::{Formatter, arena_cow_str};
 pub use write::state::FormatState;
-pub use write::{Format, write};

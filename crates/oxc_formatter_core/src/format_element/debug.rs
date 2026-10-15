@@ -17,15 +17,14 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 
 use crate::{
-    Argument, Arguments, Buffer, BufferExtensions, Document, Format, FormatContext, FormatElement,
-    FormatOptions, FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
-    VecBuffer,
+    Buffer, BufferExtensions, Document, Format, FormatContext, FormatElement, FormatOptions,
+    FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
     format_element::{
         LineMode, TextWidth,
         tag::{self, DedentMode, GroupMode, Tag},
     },
-    write, write as w,
+    write as w,
 };
 
 impl<'a> Document<'a> {
@@ -61,10 +60,10 @@ impl std::fmt::Display for DisplayDocument<'_, '_> {
 
         let mut state: FormatState<'_, SimpleFormatContext<'_>> =
             FormatState::new(context, &allocator);
-        let mut buffer = VecBuffer::new(&mut state);
+        let mut buffer = Formatter::new(&mut state);
 
         let elements = FormatElementSlice(self.elements);
-        write(&mut buffer, Arguments::new(&[Argument::new(&elements)]));
+        elements.fmt(&mut buffer);
 
         let elements = buffer.into_vec();
         let document = Document::new(elements, Vec::default());

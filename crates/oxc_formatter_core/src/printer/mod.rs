@@ -1657,8 +1657,8 @@ mod tests {
     use oxc_allocator::Allocator;
 
     use crate::{
-        Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
-        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer, best_fitting,
+        Buffer, Document, Format, FormatState, IndentStyle, LineEnding, Printed, Printer,
+        PrinterOptions, SimpleFormatContext, best_fitting,
         builders::{
             align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
             hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
@@ -1699,8 +1699,8 @@ mod tests {
     {
         let context = SimpleFormatContext::default();
         let mut state = FormatState::new(context, allocator);
-        let mut buffer = VecBuffer::new(&mut state);
-        write(&mut buffer, Arguments::new(&[Argument::new(root)]));
+        let mut buffer = crate::Formatter::new(&mut state);
+        root.fmt(&mut buffer);
 
         let elements = buffer.into_vec();
         Document::new(elements, Vec::default()).print(0, options).expect("Document to be valid")
@@ -2504,8 +2504,7 @@ two lines`,
         let allocator = Allocator::default();
         let context = SimpleFormatContext::default();
         let mut state = FormatState::new(context, &allocator);
-        let mut buffer = VecBuffer::new(&mut state);
-        let mut formatter = crate::Formatter::new(&mut buffer);
+        let mut formatter = crate::Formatter::new(&mut state);
 
         formatter
             .fill()
@@ -2531,7 +2530,7 @@ two lines`,
             )
             .finish();
 
-        let document = Document::new(buffer.into_vec(), Vec::default());
+        let document = Document::new(formatter.into_vec(), Vec::default());
 
         let printed = Printer::new(
             PrinterOptions::default()

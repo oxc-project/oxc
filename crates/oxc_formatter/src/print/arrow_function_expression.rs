@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format, RemoveSoftLinesBuffer, SourceText};
+use oxc_formatter_core::{Buffer, Format, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -750,8 +750,7 @@ fn format_signature<'a, 'b>(
                 write!(f, format_head);
             } else {
                 write!(f, [space()]);
-                let mut buffer = RemoveSoftLinesBuffer::new(f);
-                write!(buffer, format_head);
+                f.remove_soft_lines(|f| write!(f, format_head));
             }
         } else {
             write!(

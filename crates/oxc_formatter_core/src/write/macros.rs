@@ -47,11 +47,11 @@ macro_rules! format_args {
 ///
 /// ```text
 /// use biome_formatter::prelude::*;
-/// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, VecBuffer, write};
+/// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, Formatter, write};
 ///
 /// # fn main()  {
 /// let mut state = FormatState::new(SimpleFormatContext::default());
-/// let mut buffer = VecBuffer::new(&mut state);
+/// let mut buffer = Formatter::new(&mut state);
 /// write!(&mut buffer, [token("Hello"), space()])?;
 /// write!(&mut buffer, [token("World")])?;
 ///

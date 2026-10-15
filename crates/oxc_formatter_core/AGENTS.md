@@ -42,21 +42,23 @@ When changing printer runtime behavior, update that mirror in the same PR; oxfmt
 
 ### Choosing a staging buffer
 
-The arena is a bump allocator and never reclaims, so a vector grown in it strands every grown-out-of allocation for the rest of the format run.
+Every `Formatter` of a format run writes into one element stack owned by the `FormatState`.
+The stack is in the arena, and the root formatter's elements at its bottom become the document without a copy;
+what nested formatters stage on top of them leaves as exactly-sized copies.
+The arena is a bump allocator and never reclaims, so a vector grown in it strands every grown-out-of allocation for the rest of the format run:
+reserve the root's room up front (`Formatter::with_capacity`).
 Pick by what you're building:
 
-- Root document (feeds `Document::new` / `EmbeddedIr`): `VecBuffer` (arena)
-  - it moves into the `Document` for free, and heap-staging it costs an extra copy for no benefit
-- Unknown-length staging that ends interned/sliced: `HeapVecBuffer`
-  - a watermarked view over one scratch vector owned by the format run
-  - the arena receives one exactly-sized copy (see its rustdoc for the full rationale)
+- Root document (feeds `Document::new` / `EmbeddedIr`): `Formatter::new` / `Formatter::with_capacity`, finished with `Formatter::into_vec`
+- Unknown-length staging that ends interned/sliced: `Formatter::intern` / `Formatter::format_to_vec`
+  - a nested formatter appends past its parent's elements and drains them before the parent writes again (LIFO)
   - for `BestFitting` variants, `best_fitting_variant` already wraps this (entry tags + staging in one place)
-- Accumulating across interleaved `write()` calls (multiple builders open at once), or staging that must release the state between writes and consumption: `ScratchBuffer` (one per accumulator)
-  - write through `ScratchBuffer::writer`, finish via `Formatter::intern_elements` (or re-emit via `ScratchBuffer::drain`, abandon via `ScratchBuffer::discard`)
-  - the shared scratch's LIFO rule and its exclusive state borrow rule out `HeapVecBuffer` there (see the JSX child-list builders and `AssignmentLike` in `oxc_formatter`)
+- Accumulating across interleaved `write()` calls (multiple builders open at once), or staging that must release the formatter between writes and consumption: `ScratchBuffer` (one per accumulator)
+  - write through `ScratchBuffer::write`, finish via `Formatter::intern_elements` (or re-emit via `ScratchBuffer::drain`, abandon via `ScratchBuffer::discard`)
+  - the element stack's LIFO rule rules out a nested formatter there (see the JSX child-list builders and `AssignmentLike` in `oxc_formatter`)
 - Known-length sequences: build exact-sized directly (e.g. `ArenaVec::from_iter_in`)
 
-`Formatter::intern` and `BestFitting` already stage on the heap; consumer crates get this for free.
+`Formatter::intern` and `BestFitting` already stage this way; consumer crates get this for free.
 
 ### Generic context design
 
