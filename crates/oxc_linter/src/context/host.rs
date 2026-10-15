@@ -31,7 +31,7 @@ use crate::{
 #[cfg(not(test))]
 use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
 
-use super::LintContext;
+use super::{CrossFileCache, LintContext};
 
 /// Stores shared information about a script block being linted.
 pub struct ContextSubHost<'a> {
@@ -188,6 +188,8 @@ pub struct ContextHost<'a> {
     /// Config-derived environment additions for that shared run (from the
     /// `react/capitalized-calls` rule's options).
     react_compiler_env_options: ReactCompilerEnvOptions,
+    /// State shared by every file in this lint run; see [`CrossFileCache`].
+    pub(super) cross_file_cache: Arc<CrossFileCache>,
 }
 
 impl std::fmt::Debug for ContextHost<'_> {
@@ -205,6 +207,7 @@ impl<'a> ContextHost<'a> {
         allocator: &'a Allocator,
         options: LintOptions,
         config: Arc<LintConfig>,
+        cross_file_cache: Arc<CrossFileCache>,
     ) -> Self {
         const DIAGNOSTICS_INITIAL_CAPACITY: usize = 16;
 
@@ -229,6 +232,7 @@ impl<'a> ContextHost<'a> {
             with_ignore_fixes: options.with_ignore_fixes,
             react_compiler_results: OnceCell::new(),
             react_compiler_env_options: ReactCompilerEnvOptions::default(),
+            cross_file_cache,
         }
         .sniff_for_frameworks()
     }

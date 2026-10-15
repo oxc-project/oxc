@@ -33,6 +33,7 @@ pub fn run(files: &TestFiles) -> io::Result<()> {
             &allocator,
             LintOptions::default(),
             state.config,
+            Arc::default(),
         ));
 
         let mut entries = Vec::new();
