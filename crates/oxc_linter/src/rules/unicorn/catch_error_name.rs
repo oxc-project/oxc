@@ -200,7 +200,7 @@ impl CatchErrorName {
 
             let symbol_id = binding_ident.symbol_id();
             let mut iter = ctx.semantic().symbol_references(symbol_id).peekable();
-            if binding_ident.name.starts_with('_') && iter.peek().is_none() {
+            if binding_ident.name == "_" && iter.peek().is_none() {
                 return;
             }
 
@@ -600,6 +600,8 @@ fn test() {
             export default class A {}"#,
             None,
         ),
+        ("try { y(); } catch (_err) {}", None),
+        ("promise.catch(_err => {})", None),
     ];
 
     let fix = vec![

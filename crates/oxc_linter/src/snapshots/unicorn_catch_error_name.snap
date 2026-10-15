@@ -198,3 +198,17 @@ source: crates/oxc_linter/src/tester.rs
  5 │                         alert("1There was a problem moving these items: " + e);
    ╰────
   help: Rename `e` to `error`
+
+  ⚠ unicorn(catch-error-name): The catch parameter "_err" should be named "error"
+   ╭─[catch_error_name.tsx:1:21]
+ 1 │ try { y(); } catch (_err) {}
+   ·                     ────
+   ╰────
+  help: Replace `_err` with `error`.
+
+  ⚠ unicorn(catch-error-name): The catch parameter "_err" should be named "error"
+   ╭─[catch_error_name.tsx:1:15]
+ 1 │ promise.catch(_err => {})
+   ·               ────
+   ╰────
+  help: Replace `_err` with `error`.
