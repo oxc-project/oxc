@@ -14,6 +14,7 @@ declare_oxc_lint!(
     NoInterpolationInSnapshots,
     vitest,
     style,
+    recommended,
     docs = DOCUMENTATION,
     version = "0.0.13",
 );

@@ -11,6 +11,7 @@ declare_oxc_lint!(
     NoMocksImport,
     vitest,
     style,
+    recommended,
     docs = SharedNoMocksImport::DOCUMENTATION,
     version = "0.0.13",
 );

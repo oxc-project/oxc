@@ -12,7 +12,15 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct NoTestPrefixes;
 
-declare_oxc_lint!(NoTestPrefixes, jest, style, fix, docs = DOCUMENTATION, version = "0.0.7",);
+declare_oxc_lint!(
+    NoTestPrefixes,
+    jest,
+    style,
+    recommended,
+    fix,
+    docs = DOCUMENTATION,
+    version = "0.0.7",
+);
 
 impl Rule for NoTestPrefixes {
     fn run_on_jest_node<'a, 'c>(
