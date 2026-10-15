@@ -47,6 +47,10 @@ pub struct TsGoLintState {
     timings: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
     with_ignore_fixes: bool,
+    /// If `true`, type-aware linting was requested explicitly (CLI flag or editor setting) and
+    /// applies to every file, regardless of the `options.typeAware` value of the config which
+    /// governs that file.
+    type_aware_forced: bool,
 }
 
 impl TsGoLintState {
@@ -65,6 +69,7 @@ impl TsGoLintState {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            type_aware_forced: false,
         }
     }
 
@@ -90,6 +95,7 @@ impl TsGoLintState {
             type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
+            type_aware_forced: false,
         })
     }
 
@@ -136,6 +142,17 @@ impl TsGoLintState {
         self
     }
 
+    /// Set to `true` when type-aware linting was requested explicitly (`--type-aware`,
+    /// `--type-check-only`, or the editor's `typeAware` setting). Every file is then linted with
+    /// type-aware rules, instead of only the files whose config enables `options.typeAware`.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_type_aware_forced(mut self, yes: bool) -> Self {
+        self.type_aware_forced = yes;
+        self
+    }
+
     /// # Panics
     /// - when `stdin` of subprocess cannot be opened
     /// - when `stdout` of subprocess cannot be opened
@@ -158,21 +175,13 @@ impl TsGoLintState {
 
         let mut resolved_configs: FxHashMap<PathBuf, ResolvedLinterState> = FxHashMap::default();
 
-        let json_input = self.json_input(paths, None, &mut resolved_configs);
+        // `all_paths` are the files `tsgolint` is given, in input order. A file skipped because
+        // its config does not enable type-aware linting has no `tsgolint` diagnostics; the regular
+        // linter reports it to the diff manager.
+        let (json_input, all_paths) = self.json_input(paths, None, &mut resolved_configs);
         if json_input.configs.is_empty() {
             return Ok(());
         }
-
-        let all_paths = {
-            let mut paths_buff = vec![];
-            for path in paths {
-                if SourceType::from_path(Path::new(path)).is_ok() {
-                    let path_buf = PathBuf::from(path);
-                    paths_buff.push(path_buf.clone());
-                }
-            }
-            paths_buff
-        };
 
         let should_fix = self.fix || self.fix_suggestions;
         let cwd = self.cwd.clone();
@@ -445,8 +454,12 @@ impl TsGoLintState {
             source_overrides.insert(path.to_string_lossy().to_string(), source_text.to_string());
         }
 
-        let json_input =
+        let (json_input, _) =
             self.json_input(paths, Some(source_overrides.clone()), &mut resolved_configs);
+        if json_input.configs.is_empty() {
+            // No file in this batch is governed by a config which enables type-aware linting.
+            return Ok(vec![]);
+        }
 
         //  Get the file name of the first path for internal diagnostic filtering
         let path_file_name =
@@ -554,7 +567,8 @@ impl TsGoLintState {
         diagnostics
     }
 
-    /// Create a JSON input for STDIN of tsgolint in this format:
+    /// Create a JSON input for STDIN of tsgolint, and the files it sends in the order of `paths`
+    /// (the input groups them by rule set), in this format:
     ///
     /// ```json
     /// {
@@ -572,14 +586,15 @@ impl TsGoLintState {
         paths: &[Arc<OsStr>],
         source_overrides: Option<FxHashMap<String, String>>,
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
-    ) -> Payload {
+    ) -> (Payload, Vec<PathBuf>) {
         if self.type_check_only {
             let file_paths: Vec<String> = paths
                 .iter()
                 .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
                 .map(|path| path.to_string_lossy().into_owned())
                 .collect();
-            return Payload {
+            let sent_paths = file_paths.iter().map(PathBuf::from).collect();
+            let payload = Payload {
                 version: 2,
                 configs: if file_paths.is_empty() {
                     vec![]
@@ -590,17 +605,29 @@ impl TsGoLintState {
                 report_syntactic: self.type_check,
                 report_semantic: self.type_check,
             };
+            return (payload, sent_paths);
         }
 
         let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
+        // The groups are a hash map, so the files are also kept in input order here.
+        let mut sent_paths = Vec::new();
 
         for path in paths {
             if SourceType::from_path(Path::new(path)).is_ok() {
-                let file_path = path.to_string_lossy().to_string();
                 let path_buf = PathBuf::from(path);
+                // Type-aware linting can be enabled by the root config or by a nested config, so
+                // skip the files governed by a config which does not enable it. The governing
+                // config is looked up once, for this check and for the rules below.
+                let config = self.config_store.get_related_config(&path_buf);
+                if !self.type_aware_forced
+                    && !self.config_store.type_aware_enabled_of(&config.base.config)
+                {
+                    continue;
+                }
+                let file_path = path.to_string_lossy().to_string();
                 let resolved_config = resolved_configs
                     .entry(path_buf.clone())
-                    .or_insert_with(|| self.config_store.resolve(&path_buf));
+                    .or_insert_with(|| config.apply_overrides(&path_buf));
 
                 let rules: BTreeSet<Rule> = resolved_config
                     .rules
@@ -620,10 +647,11 @@ impl TsGoLintState {
                     .collect();
 
                 config_groups.entry(rules).or_default().push(file_path);
+                sent_paths.push(path_buf);
             }
         }
 
-        Payload {
+        let payload = Payload {
             version: 2,
             configs: config_groups
                 .into_iter()
@@ -635,7 +663,8 @@ impl TsGoLintState {
             source_overrides,
             report_syntactic: self.type_check,
             report_semantic: self.type_check,
-        }
+        };
+        (payload, sent_paths)
     }
 }
 
@@ -1428,6 +1457,65 @@ mod test {
         fixer::{FixKind, Message, PossibleFixes},
         tsgolint::{Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
     };
+
+    /// The files sent come back in the order they were given, not grouped by rule set, and the
+    /// files whose config does not enable type-aware linting are left out.
+    #[test]
+    fn test_json_input_sent_paths_in_input_order() {
+        use std::{
+            ffi::OsStr,
+            path::{Path, PathBuf},
+            sync::Arc,
+        };
+
+        use rustc_hash::FxHashMap;
+
+        use crate::{
+            ConfigStore, ConfigStoreBuilder, ExternalPluginStore, Oxlintrc, tsgolint::TsGoLintState,
+        };
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let mut build = |json: serde_json::Value| {
+            let oxlintrc: Oxlintrc = serde_json::from_value(json).unwrap();
+            ConfigStoreBuilder::from_oxlintrc(
+                false,
+                oxlintrc,
+                None,
+                &mut external_plugin_store,
+                None,
+            )
+            .unwrap()
+            .build(&mut external_plugin_store)
+            .unwrap()
+        };
+        let root = build(serde_json::json!({
+            "options": { "typeAware": true },
+            "rules": { "typescript/no-floating-promises": "error" }
+        }));
+        let other_rules = build(serde_json::json!({
+            "options": { "typeAware": true },
+            "categories": { "correctness": "off" }
+        }));
+        let skipped = build(serde_json::json!({ "options": { "typeAware": false } }));
+        let mut nested = FxHashMap::default();
+        nested.insert(PathBuf::from("/root/b"), other_rules);
+        nested.insert(PathBuf::from("/root/skip"), skipped);
+        let config_store = ConfigStore::new(root, nested, ExternalPluginStore::default());
+
+        let state = TsGoLintState::new(Path::new("/root"), config_store, FixKind::None);
+        let paths: Vec<Arc<OsStr>> =
+            ["/root/a.ts", "/root/b/x.ts", "/root/c.ts", "/root/skip/y.ts", "/root/b/z.ts"]
+                .iter()
+                .map(|path| Arc::from(OsStr::new(path)))
+                .collect();
+        let (payload, sent_paths) = state.json_input(&paths, None, &mut FxHashMap::default());
+
+        assert_eq!(payload.configs.len(), 2);
+        assert_eq!(
+            sent_paths,
+            ["/root/a.ts", "/root/b/x.ts", "/root/c.ts", "/root/b/z.ts"].map(PathBuf::from)
+        );
+    }
 
     #[test]
     fn test_message_from_tsgo_lint_diagnostic_basic() {

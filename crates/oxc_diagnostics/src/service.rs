@@ -103,6 +103,33 @@ impl DiagnosticService {
         self
     }
 
+    /// Render diagnostics about the run rather than about a linted file, e.g. a problem in a
+    /// config file which did not stop the run.
+    ///
+    /// Call it before [`run`](DiagnosticService::run). The diagnostics go through the same
+    /// reporter and honour [`with_quiet`](DiagnosticService::with_quiet) and
+    /// [`with_silent`](DiagnosticService::with_silent), but they do not count towards the totals
+    /// of [`DiagnosticResult`], so not towards the warning threshold either.
+    ///
+    /// # Panics
+    ///
+    /// * When the writer fails to write
+    pub fn report_uncounted(&mut self, diagnostics: Vec<Error>, writer: &mut dyn Write) {
+        if self.silent {
+            return;
+        }
+        let diagnostics: Vec<Error> = diagnostics
+            .into_iter()
+            .filter(|diagnostic| !(self.quiet && diagnostic.severity() == Some(Severity::Warning)))
+            .collect();
+        if diagnostics.is_empty() {
+            return;
+        }
+        self.reporter.render_errors(diagnostics, &mut |rendered| {
+            writer.write_all(rendered.as_bytes()).or_else(Self::check_for_writer_error).unwrap();
+        });
+    }
+
     /// Check if the max warning threshold, as set by
     /// [`with_max_warnings`](DiagnosticService::with_max_warnings), has been exceeded.
     fn max_warnings_exceeded(&self, warnings_count: usize) -> bool {
@@ -515,6 +542,37 @@ mod tests {
         assert_eq!(*batch_sizes.lock().unwrap(), [1]);
         assert_eq!(result.warnings_count(), 1);
         assert_eq!(result.errors_count(), 1);
+    }
+
+    #[test]
+    fn reports_uncounted_diagnostics() {
+        let batch_sizes = Arc::new(Mutex::new(Vec::new()));
+        let (service, sender) =
+            DiagnosticService::new(Box::new(BatchReporter(Arc::clone(&batch_sizes))));
+        let mut service = service.with_max_warnings(Some(0));
+        drop(sender);
+
+        let mut output = Vec::new();
+        service.report_uncounted(vec![OxcDiagnostic::warn("config warning").into()], &mut output);
+        let result = service.run(&mut output);
+
+        assert_eq!(String::from_utf8(output).unwrap(), "config warning");
+        assert_eq!(result.warnings_count(), 0);
+        assert!(!result.max_warnings_exceeded());
+    }
+
+    #[test]
+    fn quiet_hides_uncounted_warnings() {
+        let batch_sizes = Arc::new(Mutex::new(Vec::new()));
+        let (service, _sender) =
+            DiagnosticService::new(Box::new(BatchReporter(Arc::clone(&batch_sizes))));
+        let mut service = service.with_quiet(true);
+
+        let mut output = Vec::new();
+        service.report_uncounted(vec![OxcDiagnostic::warn("config warning").into()], &mut output);
+
+        assert_eq!(String::from_utf8(output).unwrap(), "");
+        assert_eq!(*batch_sizes.lock().unwrap(), [] as [usize; 0]);
     }
 
     struct MinifiedBatchReporter(Arc<AtomicUsize>);

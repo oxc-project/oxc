@@ -27,11 +27,13 @@ use oxc_language_server::{
     uri_utils::uri_to_file_path, utils::normalize_user_config_path_to_watch_pattern,
 };
 
-use crate::lsp::utils::{config_loader_error_to_message, oxc_diagnostic_to_client_message};
+use crate::lsp::utils::{
+    config_load_diagnostic_to_client_message, oxc_diagnostic_to_client_message,
+};
 use crate::{
     config_loader::{
-        ConfigLoader, build_nested_configs, config_file_names, discover_configs_in_tree,
-        materialize_default_plugins,
+        ConfigLoader, RunOverrides, build_nested_configs, config_file_names,
+        discover_configs_in_tree, materialize_default_plugins,
     },
     lsp::{
         code_actions::{
@@ -193,19 +195,21 @@ impl ServerLinterBuilder {
 
         let lint_options = LintOptions {
             fix: fix_kind,
+            // The editor setting overrides the config. `Some(AllowWarnDeny::Allow)` means
+            // "explicitly off"; `None` lets the config which governs each file decide.
             report_unused_directive: match options.unused_disable_directives {
-                Some(UnusedDisableDirectives::Allow) => None,
+                Some(UnusedDisableDirectives::Allow) => Some(AllowWarnDeny::Allow),
                 Some(UnusedDisableDirectives::Warn) => Some(AllowWarnDeny::Warn),
                 Some(UnusedDisableDirectives::Deny) => Some(AllowWarnDeny::Deny),
-                None => match config_store.report_unused_disable_directives() {
-                    Some(severity) if severity.is_warn_deny() => Some(severity),
-                    _ => None,
-                },
+                None => None,
             },
             with_ignore_fixes: true,
             ..Default::default()
         };
 
+        // The editor setting applies type-aware linting to every file; `options.typeAware` in a
+        // config only applies to the files that config governs.
+        let type_aware_forced = options.type_aware == Some(true);
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
 
@@ -239,6 +243,7 @@ impl ServerLinterBuilder {
 
         let runner = match LintRunnerBuilder::new(lint_service_options.clone(), linter)
             .with_type_aware(type_aware)
+            .with_type_aware_forced(type_aware_forced)
             .with_fix_kind(fix_kind)
             .with_ignore_fixes(true)
             .build()
@@ -270,7 +275,6 @@ impl ServerLinterBuilder {
                 extended_paths,
                 runner,
                 fix_kind,
-                lint_options.report_unused_directive,
                 options.rules_customization,
             ),
             client_messages.into_iter().collect(),
@@ -367,16 +371,15 @@ impl ServerLinterBuilder {
             loader = loader.with_js_config_loader(self.js_config_loader.as_ref());
         }
 
-        let (configs, errors) = loader.load_discovered_with_root_dir(root_path, config_paths);
+        let (configs, diagnostics) = loader.load_discovered_with_root_dir(root_path, config_paths);
 
-        let mut client_messages = Vec::with_capacity(errors.len());
-        for error in errors {
-            // show message to the LSP client
-            client_messages.push(ClientMessage {
-                message: config_loader_error_to_message(error),
-                r#type: MessageType::Error,
-            });
-        }
+        // show messages to the LSP client, which also logs them
+        let overrides = RunOverrides::for_language_server();
+        let client_messages = diagnostics
+            .into_iter()
+            .filter(|diagnostic| diagnostic.is_reported(overrides))
+            .map(config_load_diagnostic_to_client_message)
+            .collect();
 
         (
             build_nested_configs(configs, nested_ignore_patterns, Some(extended_paths)),
@@ -432,7 +435,6 @@ pub struct ServerLinter {
     code_actions: Arc<ConcurrentHashMap<Uri, Vec<LinterCodeAction>>>,
     runner: LintRunner,
     fix_kind: FixKind,
-    unused_directives_severity: Option<AllowWarnDeny>,
     rules_customization: Option<RulesCustomization>,
 }
 
@@ -734,7 +736,6 @@ impl ServerLinter {
         extended_paths: FxHashSet<PathBuf>,
         runner: LintRunner,
         fix_kind: FixKind,
-        unused_directives_severity: Option<AllowWarnDeny>,
         rules_customization: Option<RulesCustomization>,
     ) -> Self {
         Self {
@@ -746,7 +747,6 @@ impl ServerLinter {
             code_actions: Arc::new(ConcurrentHashMap::default()),
             runner,
             fix_kind,
-            unused_directives_severity,
             rules_customization,
         }
     }
@@ -878,8 +878,10 @@ impl ServerLinter {
         // Take directives once to avoid separate get/remove lock acquisitions.
         let directives = self.runner.directives_coordinator().take(path);
 
-        // Add unused directives if configured
-        if let Some(severity) = self.unused_directives_severity
+        // Add unused directives if configured. The severity can differ per package, because a
+        // nested config may set `reportUnusedDisableDirectives` itself.
+        if let Some(severity) =
+            self.runner.report_unused_directive_for(path).filter(|s| s.is_warn_deny())
             && let Some(directives) = directives
         {
             messages.extend(create_unused_directives_report(&directives, severity, source_text));
@@ -1179,6 +1181,37 @@ mod test {
         assert!(configs_dirs[1].ends_with("deep2"));
         assert!(configs_dirs[0].ends_with("deep1"));
         assert_eq!(client_message, []);
+    }
+
+    /// The language server never type-checks and has no exit code, so a nested `typeCheck`,
+    /// `denyWarnings` or `maxWarnings` is not worth a warning there.
+    #[test]
+    fn test_create_nested_configs_does_not_warn_about_run_wide_options() {
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.json"), "{}").unwrap();
+        let nested_dir = root_dir.path().join("nested");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(
+            nested_dir.join(".oxlintrc.json"),
+            r#"{ "options": { "typeCheck": true, "denyWarnings": true, "maxWarnings": 1 } }"#,
+        )
+        .unwrap();
+
+        let builder = ServerLinterBuilder::default();
+        let mut nested_ignore_patterns = Vec::new();
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let mut extended_paths = FxHashSet::default();
+        let (configs, client_messages) = builder.create_nested_configs(
+            root_dir.path(),
+            &root_dir.path().join(".oxlintrc.json"),
+            &mut external_plugin_store,
+            &mut nested_ignore_patterns,
+            &mut extended_paths,
+            None,
+        );
+
+        assert_eq!(configs.len(), 1);
+        assert_eq!(client_messages, []);
     }
 
     #[test]
@@ -1532,7 +1565,9 @@ mod test {
 
     #[test]
     #[cfg(not(target_endian = "big"))]
-    fn test_nested_config_file_type_aware_is_rejected() {
+    /// `options.typeAware` in a nested config enables type-aware linting for the files that
+    /// config governs, and only for those. See <https://github.com/oxc-project/oxc/issues/19937>.
+    fn test_nested_config_file_type_aware_is_applied() {
         let tester = Tester::new("fixtures/lsp/tsgolint/nested_type_aware", json!({}));
         tester.test_and_snapshot_multiple_file(&["test-root.ts", "nested/test.ts"]);
     }

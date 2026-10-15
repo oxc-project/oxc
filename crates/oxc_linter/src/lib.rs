@@ -288,6 +288,20 @@ pub struct Linter {
     workspace_uri: Option<Box<str>>,
 }
 
+/// The config which governs a file, from [`Linter::file_config`].
+pub(crate) struct FileConfig<'a> {
+    config: &'a Config,
+    /// Whether eslint-style disable directives are respected in the file.
+    pub respect_eslint_disable_directives: bool,
+}
+
+impl FileConfig<'_> {
+    /// The rules and the config which apply to the file at `path`, overrides included.
+    pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
+        self.config.apply_overrides(path)
+    }
+}
+
 impl Linter {
     pub fn new(
         options: LintOptions,
@@ -310,6 +324,8 @@ impl Linter {
         self
     }
 
+    /// See [`LintOptions::report_unused_directive`]: `None` lets the config which governs each file
+    /// decide, it does not turn reporting off.
     #[must_use]
     pub fn with_report_unused_directives(mut self, report_config: Option<AllowWarnDeny>) -> Self {
         self.options.report_unused_directive = report_config;
@@ -320,8 +336,36 @@ impl Linter {
         &self.options
     }
 
-    pub(crate) fn respect_eslint_disable_directives(&self) -> bool {
-        self.config.respect_eslint_disable_directives()
+    /// The rules and the config which apply to `path`, overrides included.
+    pub(crate) fn resolve(&self, path: &Path) -> ResolvedLinterState {
+        self.config.resolve(path)
+    }
+
+    /// The config which governs `path`, looked up once for everything a run of that file needs.
+    pub(crate) fn file_config(&self, path: &Path) -> FileConfig<'_> {
+        let config = self.config.get_related_config(path);
+        FileConfig {
+            respect_eslint_disable_directives: self
+                .config
+                .respect_eslint_disable_directives_of(&config.base.config),
+            config,
+        }
+    }
+
+    /// The severity to use when reporting unused disable directives in `path`.
+    ///
+    /// An explicit CLI flag or editor setting takes precedence over the config file value.
+    /// `Some(AllowWarnDeny::Allow)` means "explicitly turned off" and does not fall back to
+    /// the config.
+    pub fn report_unused_directive_for(&self, path: &Path) -> Option<AllowWarnDeny> {
+        self.report_unused_directive_of(&self.config.get_related_config(path).base.config)
+    }
+
+    /// [`Linter::report_unused_directive_for`], given the config which governs the file.
+    fn report_unused_directive_of(&self, config: &LintConfig) -> Option<AllowWarnDeny> {
+        self.options
+            .report_unused_directive
+            .or_else(|| self.config.report_unused_disable_directives_of(config))
     }
 
     /// Returns the number of rules that will are being used, unless there
@@ -364,7 +408,31 @@ impl Linter {
         js_allocator_pool: Option<&AllocatorPool>,
         rule_timing_store: Option<&RuleTimingStore>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
-        let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
+        self.run_resolved::<TIMINGS>(
+            path,
+            self.resolve(path),
+            context_sub_hosts,
+            allocator,
+            js_allocator_pool,
+            rule_timing_store,
+        )
+    }
+
+    /// Same as [`Linter::run_with_disable_directives`], with the config already resolved for
+    /// `path` by [`Linter::resolve`], so that a caller which needs it too resolves it only once.
+    pub(crate) fn run_resolved<'a, const TIMINGS: bool>(
+        &self,
+        path: &Path,
+        resolved: ResolvedLinterState,
+        context_sub_hosts: Vec<ContextSubHost<'a>>,
+        allocator: &'a Allocator,
+        js_allocator_pool: Option<&AllocatorPool>,
+        rule_timing_store: Option<&RuleTimingStore>,
+    ) -> (Vec<Message>, Option<DisableDirectives>) {
+        let ResolvedLinterState { rules, config, external_rules } = resolved;
+        // From the resolved config, rather than through `report_unused_directive_for`, which would
+        // look the governing config up again.
+        let report_unused_directive = self.report_unused_directive_of(&config);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
         let mut ctx_host =
@@ -507,9 +575,9 @@ impl Linter {
         // Pass 3: Report unused enable/disable directives for every sub host.
         // Reporting unused directives is handled differently with type-aware linting,
         // so this only applies to partial loader files (Vue/Astro/Svelte).
-        if let Some(severity) = self.options.report_unused_directive
+        if is_partial_loader_file
+            && let Some(severity) = report_unused_directive
             && severity.is_warn_deny()
-            && is_partial_loader_file
         {
             ctx_host.rewind_sub_hosts();
             loop {
