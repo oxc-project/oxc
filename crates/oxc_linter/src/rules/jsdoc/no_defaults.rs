@@ -49,6 +49,7 @@ declare_oxc_lint!(
     NoDefaults,
     jsdoc,
     correctness,
+    recommended,
     pending,
     config = NoDefaultsConfig,
     version = "0.3.2",
