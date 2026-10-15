@@ -100,7 +100,7 @@ eslint/no-new-wrappers                                     |   1421
 eslint/no-nonoctal-decimal-escape                          |  62460
 eslint/no-obj-calls                                        |  64027
 eslint/no-object-constructor                               |  64027
-eslint/no-param-reassign                                   |  24806
+eslint/no-param-reassign                                   |  24902
 eslint/no-plusplus                                         |    769
 eslint/no-promise-executor-return                          |   1421
 eslint/no-proto                                            |  95297

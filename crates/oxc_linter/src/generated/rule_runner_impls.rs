@@ -933,8 +933,10 @@ impl RuleRunner for crate::rules::eslint::no_object_constructor::NoObjectConstru
 }
 
 impl RuleRunner for crate::rules::eslint::no_param_reassign::NoParamReassign {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::FormalParameter]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::FormalParameter,
+        AstType::FormalParameterRest,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
