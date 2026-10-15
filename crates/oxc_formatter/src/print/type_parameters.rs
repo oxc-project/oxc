@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format, GroupId};
+use oxc_formatter_core::{Format, GroupId};
 use oxc_span::{FileExtension, GetSpan};
 
 use crate::{

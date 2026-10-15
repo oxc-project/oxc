@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
     builders::{hard_line_break, text},
     write,
 };

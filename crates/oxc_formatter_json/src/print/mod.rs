@@ -1,5 +1,5 @@
 use oxc_ast::ast::Expression;
-use oxc_formatter_core::{Buffer, Format, Formatter, builders::FormatWith, builders::text, write};
+use oxc_formatter_core::{Format, Formatter, builders::FormatWith, builders::text, write};
 use oxc_span::{GetSpan, Span};
 
 use crate::{

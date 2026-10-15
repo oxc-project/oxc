@@ -55,7 +55,7 @@ pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, Tai
 pub use source::{SourceText, SpanCursor};
 pub use write::Format;
 pub use write::arguments::{Argument, Arguments};
-pub use write::buffer::{Buffer, BufferExtensions, Recorded, Recording, ScratchBuffer};
+pub use write::buffer::ScratchBuffer;
 pub use write::extensions::{MemoizeFormat, Memoized};
 pub use write::formatter::{Formatter, arena_cow_str};
 pub use write::state::FormatState;

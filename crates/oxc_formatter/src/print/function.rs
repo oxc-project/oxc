@@ -1,7 +1,6 @@
 use std::ops::Deref;
 
 use oxc_ast::ast::*;
-use oxc_formatter_core::Buffer;
 
 use super::{
     FormatWrite, arrow_function_expression::FunctionCacheMode, block_statement::is_empty_block,

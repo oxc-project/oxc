@@ -1,73 +1,17 @@
 #![expect(clippy::mutable_key_type)]
-use std::{fmt::Debug, marker::PhantomData, ops::Deref};
+use std::{fmt::Debug, ops::Deref};
 
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
-    Arguments, FormatElement, FormatState, Formatter,
+    FormatElement, FormatState, Formatter,
     format_element::{
         Interned, LineMode, PrintMode,
         tag::{Condition, Tag},
     },
 };
-
-/// A trait for writing or formatting into `FormatElement`-accepting buffers or streams.
-pub trait Buffer<'ast, C> {
-    /// Writes a [crate::FormatElement] into this buffer, returning whether the write succeeded.
-    fn write_element(&mut self, element: FormatElement<'ast>);
-
-    /// Returns a slice containing all elements written into this buffer.
-    ///
-    /// Prefer using [BufferExtensions::start_recording] over accessing [Buffer::elements] directly.
-    #[doc(hidden)]
-    fn elements(&self) -> &[FormatElement<'ast>];
-
-    /// Glue for usage of the [`write!`] macro with implementors of this trait.
-    ///
-    /// This method should generally not be invoked manually, but rather through the [`write!`] macro itself.
-    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>);
-
-    /// Returns the formatting state relevant for this formatting session.
-    fn state(&self) -> &FormatState<'ast, C>;
-
-    /// Returns the mutable formatting state relevant for this formatting session.
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C>;
-
-    /// Replaces the elements starting at `start` with `replacement`.
-    ///
-    /// Used by streaming IR transforms (currently `SortImportsTransform`)
-    /// to splice a reordered chunk back into the buffer.
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]);
-}
-
-/// Implements the `[Buffer]` trait for all mutable references of objects implementing [Buffer].
-impl<'ast, C, W: Buffer<'ast, C> + ?Sized> Buffer<'ast, C> for &mut W {
-    fn write_element(&mut self, element: FormatElement<'ast>) {
-        (**self).write_element(element);
-    }
-
-    fn elements(&self) -> &[FormatElement<'ast>] {
-        (**self).elements()
-    }
-
-    fn write_fmt(&mut self, args: Arguments<'_, 'ast, C>) {
-        (**self).write_fmt(args);
-    }
-
-    fn state(&self) -> &FormatState<'ast, C> {
-        (**self).state()
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
-        (**self).state_mut()
-    }
-
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        (**self).replace_end(start, replacement);
-    }
-}
 
 /// An owned heap staging vector for accumulators that outlive a single staging scope.
 ///
@@ -103,10 +47,8 @@ impl<'ast> ScratchBuffer<'ast> {
         content: impl FnOnce(&mut Formatter<'_, 'ast, C>) -> R,
     ) -> R {
         // Written past the elements on the stack, then moved here
-        let state = f.state_mut();
-        let start = state.elements().len();
-        let result = content(&mut Formatter::nested(&mut *state));
-        self.0.extend(state.elements_mut().drain(start..));
+        let (start, result) = f.stage(content);
+        self.0.extend(f.state.elements_mut().drain(start..));
         result
     }
 
@@ -359,77 +301,5 @@ fn push_cleaned_element<'ast>(
             }
         }
         element => cleaned.push(element.clone()),
-    }
-}
-
-pub trait BufferExtensions<'ast, C>: Buffer<'ast, C> + Sized {
-    /// Starts a recording that gives you access to all elements that have been written between the start
-    /// and end of the recording.
-    #[must_use]
-    fn start_recording(&mut self) -> Recording<'_, 'ast, Self, C> {
-        Recording::new(self)
-    }
-
-    /// Writes a sequence of elements into this buffer.
-    fn write_elements<I>(&mut self, elements: I)
-    where
-        I: IntoIterator<Item = FormatElement<'ast>>,
-    {
-        for element in elements {
-            self.write_element(element);
-        }
-    }
-}
-
-impl<'ast, C, T> BufferExtensions<'ast, C> for T where T: Buffer<'ast, C> {}
-
-#[derive(Debug)]
-pub struct Recording<'buf, 'ast, B, C> {
-    start: usize,
-    buffer: &'buf mut B,
-    _marker: PhantomData<&'ast C>,
-}
-
-impl<'ast, 'buf, B, C> Recording<'buf, 'ast, B, C>
-where
-    B: Buffer<'ast, C>,
-{
-    fn new(buffer: &'buf mut B) -> Self {
-        Self { start: buffer.elements().len(), buffer, _marker: PhantomData }
-    }
-
-    #[inline(always)]
-    pub fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>) {
-        self.buffer.write_fmt(arguments);
-    }
-
-    #[inline(always)]
-    pub fn write_element(&mut self, element: FormatElement<'ast>) {
-        self.buffer.write_element(element);
-    }
-
-    pub fn stop(self) -> Recorded<'buf, 'ast> {
-        let buffer: &'buf B = self.buffer;
-        let elements = buffer.elements();
-
-        let recorded = if self.start > elements.len() {
-            // May happen if buffer was rewound.
-            &[]
-        } else {
-            &elements[self.start..]
-        };
-
-        Recorded(recorded)
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct Recorded<'buf, 'ast>(&'buf [FormatElement<'ast>]);
-
-impl<'ast> Deref for Recorded<'_, 'ast> {
-    type Target = [FormatElement<'ast>];
-
-    fn deref(&self) -> &Self::Target {
-        self.0
     }
 }

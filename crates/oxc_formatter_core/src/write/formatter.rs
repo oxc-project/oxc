@@ -5,8 +5,7 @@ use std::borrow::Cow;
 use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{
-    Arguments, Buffer, Format, FormatContext, FormatElement, FormatSession, FormatState,
-    ScratchBuffer,
+    Arguments, Format, FormatContext, FormatElement, FormatSession, FormatState, ScratchBuffer,
     builders::{FillBuilder, JoinBuilder},
     format_element::Interned,
     write::buffer::SoftLines,
@@ -114,11 +113,15 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
         std::mem::replace(self.state.elements_mut(), ArenaVec::new_in(&allocator))
     }
 
-    /// Writes what `content` writes past the elements on the stack, and returns where it starts.
-    fn stage(&mut self, content: impl FnOnce(&mut Formatter<'_, 'ast, C>)) -> usize {
+    /// Writes what `content` writes past the elements on the stack,
+    /// and returns where it starts and what `content` returns.
+    pub(crate) fn stage<R>(
+        &mut self,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, C>) -> R,
+    ) -> (usize, R) {
         let mut staged = Formatter::nested(&mut *self.state);
-        content(&mut staged);
-        staged.start
+        let result = content(&mut staged);
+        (staged.start, result)
     }
 
     /// Formats `content` into an exactly-sized arena vector without writing it to this formatter.
@@ -128,7 +131,7 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
         &mut self,
         content: impl FnOnce(&mut Formatter<'_, 'ast, C>),
     ) -> ArenaVec<'ast, FormatElement<'ast>> {
-        let start = self.stage(content);
+        let (start, ()) = self.stage(content);
         let allocator = self.state.allocator();
         take_tail(self.state.elements_mut(), start, allocator)
     }
@@ -148,24 +151,24 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     }
 
     pub fn allocator(&self) -> &'ast Allocator {
-        self.state().allocator()
+        self.state.allocator()
     }
 
     /// The [`FormatSession`] this format run executes under.
     pub fn session(&self) -> &FormatSession<'ast> {
-        self.state().session()
+        self.state.session()
     }
 
     /// Returns the Context specifying how to format the current CST
     #[inline]
     pub fn context(&self) -> &C {
-        self.state().context()
+        self.state.context()
     }
 
     /// Returns a mutable reference to the context.
     #[inline]
     pub fn context_mut(&mut self) -> &mut C {
-        self.state_mut().context_mut()
+        self.state.context_mut()
     }
 
     /// Returns the format options.
@@ -181,7 +184,7 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     /// like [`Formatter::format_to_vec`].
     /// The arena only ever holds the final, exactly-sized interned slice.
     pub fn intern(&mut self, content: &dyn Format<'ast, C>) -> Option<FormatElement<'ast>> {
-        let start = self.stage(|f| content.fmt(f));
+        let (start, ()) = self.stage(|f| content.fmt(f));
         let allocator = self.state.allocator();
         intern_tail(self.state.elements_mut(), start, allocator)
     }
@@ -215,37 +218,56 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
     pub fn fill<'fmt>(&'fmt mut self) -> FillBuilder<'fmt, 'buf, 'ast, C> {
         FillBuilder::new(self)
     }
-}
 
-impl<'ast, C> Buffer<'ast, C> for Formatter<'_, 'ast, C> {
+    /// Writes an element.
     #[inline]
-    fn write_element(&mut self, element: FormatElement<'ast>) {
+    pub fn write_element(&mut self, element: FormatElement<'ast>) {
         match &mut self.soft_lines {
             None => self.state.elements_mut().push_fast(element),
             Some(soft_lines) => soft_lines.write(element, self.state),
         }
     }
 
-    fn elements(&self) -> &[FormatElement<'ast>] {
+    /// Writes a sequence of elements.
+    pub fn write_elements(&mut self, elements: impl IntoIterator<Item = FormatElement<'ast>>) {
+        for element in elements {
+            self.write_element(element);
+        }
+    }
+
+    /// The elements this formatter has written.
+    /// To look at what something writes, note `elements().len()` before writing it.
+    pub fn elements(&self) -> &[FormatElement<'ast>] {
         &self.state.elements()[self.start..]
     }
 
+    /// Glue for the [`write!`](crate::write!) macro.
     #[inline(always)]
-    fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>) {
+    pub fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>) {
         for argument in arguments.items() {
             argument.format(self);
         }
     }
 
-    fn state(&self) -> &FormatState<'ast, C> {
+    /// The state of the format run.
+    pub fn state(&self) -> &FormatState<'ast, C> {
         self.state
     }
 
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
+    /// The mutable state of the format run.
+    pub(crate) fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
         self.state
     }
 
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
+    /// Replaces the elements from `start` (of [`Formatter::elements`]) on with `replacement`.
+    ///
+    /// Used by streaming IR transforms (currently `SortImportsTransform`)
+    /// to splice a reordered chunk back.
+    ///
+    /// # Panics
+    ///
+    /// If `start` is past the elements.
+    pub fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
         let start = self.start + start;
         let elements = self.state.elements_mut();
         // `truncate` silently ignores an out-of-bounds start; fail loudly instead
@@ -258,6 +280,6 @@ impl<'ast, C> Buffer<'ast, C> for Formatter<'_, 'ast, C> {
 impl<'ast, C> GetAllocator<'ast> for Formatter<'_, 'ast, C> {
     #[inline]
     fn allocator(&self) -> &'ast Allocator {
-        self.state().allocator()
+        self.state.allocator()
     }
 }

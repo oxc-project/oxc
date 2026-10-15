@@ -35,8 +35,7 @@ pub use self::{
 };
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Arguments, Buffer as _, Document, FormatElement, FormatSession, FormatState, Formatted,
-    Formatter,
+    Arguments, Document, FormatElement, FormatSession, FormatState, Formatted, Formatter,
 };
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.

@@ -8,8 +8,7 @@ use std::num::NonZeroU8;
 use oxc_allocator::ArenaVec;
 
 use crate::{
-    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, Formatter,
-    GroupId,
+    Argument, Arguments, Format, FormatContext, FormatElement, FormatOptions, Formatter, GroupId,
     format_element::{
         self, LineMode, PrintMode, TextWidth,
         tag::{self, Condition, DedentMode, GroupMode, LabelId, Tag},

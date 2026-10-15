@@ -7,7 +7,7 @@ use oxc_css_parser::ast::{
 use oxc_span::Span;
 
 use oxc_formatter_core::{
-    Buffer, arena_cow_str,
+    arena_cow_str,
     builders::{block_indent, dedent, empty_line, hard_line_break, indent, space, text},
     write,
 };

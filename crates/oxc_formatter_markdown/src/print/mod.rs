@@ -2,7 +2,7 @@ use std::{borrow::Cow, cell::Cell};
 
 use oxc_allocator::StringBuilder;
 use oxc_formatter_core::{
-    Buffer, Format, Formatter,
+    Format, Formatter,
     builders::{FormatWith, Line, empty_line, exact_line_breaks, hard_line_break, text, token},
     write,
 };

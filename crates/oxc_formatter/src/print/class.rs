@@ -2,7 +2,6 @@ use std::ops::Deref;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::Buffer;
 use oxc_span::GetSpan;
 
 use crate::{

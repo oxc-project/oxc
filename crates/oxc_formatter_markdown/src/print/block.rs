@@ -1,7 +1,7 @@
 //! Block dispatch and the blank-line policy between siblings.
 
 use oxc_formatter_core::{
-    Buffer, FormatElements, MemoizeFormat,
+    FormatElements, MemoizeFormat,
     builders::{
         exact_line_breaks, group, hard_line_break, literal_line_break, mark_as_root,
         soft_line_break_or_space, space, space_align, text, token,

@@ -6,7 +6,6 @@
 //!   plus blank-line preservation between entries.
 
 use oxc_formatter_core::{
-    Buffer,
     builders::{empty_line, hard_line_break, if_group_breaks, soft_line_break_or_space, space},
     write,
 };

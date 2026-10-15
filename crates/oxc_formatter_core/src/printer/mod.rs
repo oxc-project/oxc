@@ -1657,8 +1657,8 @@ mod tests {
     use oxc_allocator::Allocator;
 
     use crate::{
-        Buffer, Document, Format, FormatState, IndentStyle, LineEnding, Printed, Printer,
-        PrinterOptions, SimpleFormatContext, best_fitting,
+        Document, Format, FormatState, IndentStyle, LineEnding, Printed, Printer, PrinterOptions,
+        SimpleFormatContext, best_fitting,
         builders::{
             align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
             hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,

@@ -20,7 +20,7 @@ use oxc_css_parser::{
 };
 
 use oxc_formatter_core::{
-    Buffer, Format, FormatElement, arena_cow_str,
+    Format, FormatElement, arena_cow_str,
     builders::{
         empty_line, group, hard_line_break, indent, soft_block_indent, soft_line_break,
         soft_line_break_or_space, space, text,

@@ -1,5 +1,4 @@
 use oxc_formatter_core::{
-    Buffer,
     builders::{hard_line_break, space, text},
     write,
 };

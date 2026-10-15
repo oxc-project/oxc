@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::Comment;
 use oxc_formatter_core::{
-    Buffer, Format, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
+    Format, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
     builders::{
         block_indent, empty_line, expand_parent, group, hard_line_break, line_suffix, maybe_space,
         soft_block_indent, space, text,

@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, FormatElement, ScratchBuffer};
+use oxc_formatter_core::{FormatElement, ScratchBuffer};
 use oxc_span::GetSpan;
 
 use crate::{

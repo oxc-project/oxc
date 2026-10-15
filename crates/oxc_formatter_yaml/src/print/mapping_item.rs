@@ -1,5 +1,5 @@
 use oxc_formatter_core::{
-    Buffer, Format, GroupId, MemoizeFormat, best_fitting,
+    Format, GroupId, MemoizeFormat, best_fitting,
     builders::{
         align, expand_parent, group, hard_line_break, if_group_breaks, if_group_fits_on_line, space,
     },

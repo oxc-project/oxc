@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
-    Buffer, arena_cow_str,
+    arena_cow_str,
     builders::{exact_line_breaks, hard_line_break, soft_line_break_or_space, text},
     write,
 };

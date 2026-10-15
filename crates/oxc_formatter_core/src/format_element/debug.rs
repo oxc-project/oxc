@@ -17,8 +17,8 @@ use cow_utils::CowUtils;
 use oxc_allocator::Allocator;
 
 use crate::{
-    Buffer, BufferExtensions, Document, Format, FormatContext, FormatElement, FormatOptions,
-    FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
+    Document, Format, FormatContext, FormatElement, FormatOptions, FormatState, Formatter,
+    PrintMode, Printer, PrinterOptions, SimpleFormatContext,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
     format_element::{
         LineMode, TextWidth,

@@ -1,6 +1,6 @@
 use oxc_ast::ast::{ArrayExpression, ArrayExpressionElement, Expression};
 use oxc_formatter_core::{
-    Buffer, Format, FormatContext,
+    Format, FormatContext,
     builders::{
         empty_line, group, if_group_breaks, soft_block_indent, soft_line_break_or_space, text,
     },

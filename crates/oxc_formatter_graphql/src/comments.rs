@@ -1,5 +1,5 @@
 use oxc_formatter_core::{
-    Buffer, LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
+    LINE_TERMINATORS, SourceText, SpanCursor, arena_cow_str,
     builders::{
         empty_line, expand_parent, hard_line_break, line_suffix, line_suffix_boundary, space, text,
     },

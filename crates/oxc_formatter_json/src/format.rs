@@ -2,8 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast::{Comment, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatContext, FormatSession, FormatState, Formatted,
-    Formatter,
+    Document, EmbeddedIr, Format, FormatContext, FormatSession, FormatState, Formatted, Formatter,
     builders::{hard_line_break, text},
     write,
 };

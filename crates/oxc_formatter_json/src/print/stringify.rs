@@ -12,7 +12,7 @@ use oxc_ast::ast::{
     ObjectPropertyKind, PropertyKey, StringLiteral, TemplateLiteral,
 };
 use oxc_formatter_core::{
-    Buffer, Format, arena_cow_str,
+    Format, arena_cow_str,
     builders::{block_indent, hard_line_break, space, text},
     write,
 };

@@ -3,8 +3,7 @@ use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Sty
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
-    InputKind,
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter, InputKind,
     builders::{empty_line, hard_line_break, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter, split_bom},
     write,

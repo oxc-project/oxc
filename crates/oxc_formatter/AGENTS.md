@@ -17,7 +17,7 @@ It turns a parsed AST into an IR ("Document") of `FormatElement`s, then prints t
 ### Public API
 
 Call-sites use text-in entry points;
-The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(crate)` and not part of the contract.
+The AST-wrapping IR primitives (`AstNode`, `Format`, …) are `pub(crate)` and not part of the contract.
 
 - `format`: Format a whole file (text-in)
 - `format_fragment`: Format a JS/TSX fragment for js-in-xxx embedding, parameterized by `FragmentContext`

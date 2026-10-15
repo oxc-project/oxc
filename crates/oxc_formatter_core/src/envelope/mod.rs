@@ -9,7 +9,7 @@
 use oxc_allocator::ArenaVec;
 
 use crate::{
-    Buffer as _, BufferExtensions as _, FormatContext, FormatElement, Formatter,
+    FormatContext, FormatElement, Formatter,
     builders::{hard_line_break, text},
     dispatch_fragment_ir,
     spec::FrontMatter,

@@ -1,8 +1,7 @@
 use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
-    InputKind,
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter, InputKind,
     builders::{empty_line, hard_line_break, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter},
     write, write_front_matter,

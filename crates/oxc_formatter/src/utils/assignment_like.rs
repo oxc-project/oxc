@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, BufferExtensions, Format, ScratchBuffer};
+use oxc_formatter_core::{Format, ScratchBuffer};
 use oxc_span::GetSpan;
 
 use crate::{

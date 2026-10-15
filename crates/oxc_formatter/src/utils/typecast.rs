@@ -28,7 +28,7 @@ use oxc_ast::Comment;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Buffer, Format, format_args,
+    Format, format_args,
     formatter::{
         JsFormatter,
         comments::gap_segments,

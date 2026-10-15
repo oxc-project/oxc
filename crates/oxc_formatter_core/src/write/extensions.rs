@@ -1,6 +1,6 @@
 use std::{cell::OnceCell, marker::PhantomData};
 
-use crate::{Buffer, Format, FormatElement, Formatter};
+use crate::{Format, FormatElement, Formatter};
 
 /// Utility trait that allows memorizing the output of a [Format].
 /// Useful to avoid re-formatting the same object twice.
