@@ -129,10 +129,6 @@ fn should_wrap_callback(expr: &Expression) -> bool {
             should_wrap_callback(&cond_expr.consequent)
                 || should_wrap_callback(&cond_expr.alternate)
         }
-        // Like unicorn, ignore every call expression, not only `.bind()`: the
-        // call returns the callback, and wrapping it in an arrow function would
-        // call it once per element instead of once.
-        Expression::CallExpression(_) => false,
         Expression::SequenceExpression(seq_expr) => {
             seq_expr.expressions.last().is_none_or(|e| should_wrap_callback(e))
         }
@@ -148,7 +144,10 @@ fn should_wrap_callback(expr: &Expression) -> bool {
         | Expression::UpdateExpression(_)
         | Expression::NewExpression(_) => true,
 
-        // These can't be callbacks, don't need to wrap
+        // These can't be callbacks, don't need to wrap. Like unicorn, this
+        // includes every call expression, not only `.bind()`: the call returns
+        // the callback, and wrapping it in an arrow function would call it once
+        // per element instead of once.
         _ => false,
     }
 }
