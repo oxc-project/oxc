@@ -200,7 +200,7 @@ impl CatchErrorName {
 
             let symbol_id = binding_ident.symbol_id();
             let mut iter = ctx.semantic().symbol_references(symbol_id).peekable();
-            if binding_ident.name.starts_with('_') && iter.peek().is_none() {
+            if binding_ident.name == "_" && iter.peek().is_none() {
                 return;
             }
 
@@ -488,6 +488,12 @@ fn test() {
         ),
         ("try { } catch (exception) { }", Some(serde_json::json!([{"name": "exception"}]))),
         ("promise.catch(exception__ => {})", Some(serde_json::json!([{"name": "exception_"}]))),
+        ("try {} catch (_error) {}", None),
+        ("try {} catch (_err) {}", Some(serde_json::json!([{"name": "_err"}]))),
+        (
+            "try {} catch (_err) { console.log(_err); }",
+            Some(serde_json::json!([{"ignore": ["^_"]}])),
+        ),
     ];
 
     let fail = vec![
@@ -600,6 +606,13 @@ fn test() {
             export default class A {}"#,
             None,
         ),
+        ("try { y(); } catch (_err) {}", None),
+        ("try { y(); } catch (_err) { console.log(_err); }", None),
+        ("try {} catch (__) {}", None),
+        ("promise.catch(_err => {})", None),
+        ("promise.catch(function (_err) {})", None),
+        ("promise.then(undefined, _err => {})", None),
+        ("promise.then(undefined, function (_err) {})", None),
     ];
 
     let fix = vec![
@@ -736,6 +749,18 @@ fn test() {
         (
             "const error = 1; try {} catch (e) { console.log(error_, e); }",
             "const error = 1; try {} catch (error__) { console.log(error_, error__); }",
+            None,
+        ),
+        ("try { y(); } catch (_err) {}", "try { y(); } catch (error) {}", None),
+        (
+            "try { y(); } catch (_err) { console.log(_err); }",
+            "try { y(); } catch (error) { console.log(error); }",
+            None,
+        ),
+        ("promise.catch(_err => {})", "promise.catch(error => {})", None),
+        (
+            "promise.then(undefined, function (_err) {})",
+            "promise.then(undefined, function (error) {})",
             None,
         ),
     ];
