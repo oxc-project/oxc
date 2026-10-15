@@ -2985,6 +2985,7 @@ dependencies = [
 name = "oxlint"
 version = "1.95.0"
 dependencies = [
+ "bitflags",
  "bpaf",
  "cow-utils",
  "ignore",
