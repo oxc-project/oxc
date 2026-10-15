@@ -95,7 +95,7 @@ impl Rule for NoCaseDeclarations {
                         let span = Span::new(start, end);
                         report_with_add_braces_suggestion(ctx, span, switch_case);
                     }
-                    Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
+                    Statement::VariableDeclaration(var) => {
                         let start = var.span.start;
                         let len = match var.kind {
                             VariableDeclarationKind::Const | VariableDeclarationKind::Using => 5,
@@ -106,7 +106,7 @@ impl Rule for NoCaseDeclarations {
                                     .trim_end()
                                     .len() as u32
                             }
-                            VariableDeclarationKind::Var => unreachable!(),
+                            VariableDeclarationKind::Var => continue,
                         };
                         let end = start + len;
                         let span = Span::new(start, end);
@@ -149,6 +149,7 @@ fn test() {
         ("switch (a) { case 1: { const x = 1; break; } default: { const x = 2; break; } }"),
         ("switch (a) { case 1: { function f() {} break; } default: { function f() {} break; } }"),
         ("switch (a) { case 1: { class C {} break; } default: { class C {} break; } }"),
+        ("switch (a) { case 1: var x = 1; break; default: var y = 2; break; }"),
     ];
 
     let fail = vec![
@@ -204,8 +205,8 @@ fn test() {
                         function baz() { }
                         break;
                     default:
-                        baz();
-                }
+                    baz();
+                    }
         "#,
             r#"switch ("foo") {
                     case "bar":
@@ -215,6 +216,10 @@ fn test() {
                         baz();
                 }
         "#,
+        ),
+        (
+            "switch (a) { case 1: var x = 1; let y = 2; break; }",
+            "switch (a) { case 1: { var x = 1; let y = 2; break; } }",
         ),
     ];
 
