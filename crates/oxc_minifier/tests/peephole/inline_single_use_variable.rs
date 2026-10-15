@@ -584,7 +584,7 @@ fn integration() {
         ",
         "
         var bar = foo.bar;
-        (typeof bar != 'object' || !bar) && console.log('foo')
+        typeof bar == 'object' && bar || console.log('foo')
         ",
     );
 }
