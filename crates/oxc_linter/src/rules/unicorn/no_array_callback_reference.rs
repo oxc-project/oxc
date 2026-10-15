@@ -129,16 +129,10 @@ fn should_wrap_callback(expr: &Expression) -> bool {
             should_wrap_callback(&cond_expr.consequent)
                 || should_wrap_callback(&cond_expr.alternate)
         }
-        Expression::CallExpression(call_expr) => {
-            if let Some(member_expr) = call_expr.callee.get_member_expr()
-                && let Some(prop_name) = member_expr.static_property_name()
-                && prop_name == "bind"
-            {
-                return false;
-            }
-
-            true
-        }
+        // Like unicorn, ignore every call expression, not only `.bind()`: the
+        // call returns the callback, and wrapping it in an arrow function would
+        // call it once per element instead of once.
+        Expression::CallExpression(_) => false,
         Expression::SequenceExpression(seq_expr) => {
             seq_expr.expressions.last().is_none_or(|e| should_wrap_callback(e))
         }
@@ -286,6 +280,10 @@ fn test() {
         "foo.map(function() {})",
         "foo.map(function bar() {})",
         "foo.map(function (a) {}.bind(bar))",
+        "foo.map(make(x))",
+        "arr.forEach(make(x))",
+        "foo.map(lib.make(x))",
+        "foo.map(_ ? make(x) : String)",
         "async function foo() {
                 const clientId = 20
                 const client = await oidc.Client.find(clientId)
