@@ -8,7 +8,7 @@ use crate::{
     write,
 };
 
-use super::FormatWrite;
+use super::{FormatWrite, array_like::ArrayLike};
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSTupleElement<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -29,7 +29,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTupleType<'a>> {
         if element_types.is_empty() {
             write!(f, [format_dangling_comments(self.span).with_soft_block_indent()]);
         } else {
-            write!(f, [group(&soft_block_indent(&element_types))]);
+            let should_expand = ArrayLike::TSTupleType(self).should_wrap(f);
+            write!(f, [group(&soft_block_indent(&element_types)).should_expand(should_expand)]);
         }
 
         write!(f, "]");

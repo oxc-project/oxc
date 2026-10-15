@@ -137,6 +137,7 @@ impl ResolvedDispatchConfig {
                     &self.config,
                     self.validated.core,
                     self.validated.sort_imports.clone(),
+                    self.validated.array_line_pattern.clone(),
                 )
             })
             .clone()
@@ -166,7 +167,15 @@ impl ResolvedDispatchConfig {
             JsonVariant::Json5 => &self.json[2],
             JsonVariant::JsonStringify => &self.json[3],
         };
-        *cell.get_or_init(|| to_oxc_formatter_json(&self.config, self.validated.core, variant))
+        cell.get_or_init(|| {
+            to_oxc_formatter_json(
+                &self.config,
+                self.validated.core,
+                variant,
+                self.validated.array_line_pattern.clone(),
+            )
+        })
+        .clone()
     }
 
     pub fn markdown_options(&self) -> MarkdownFormatOptions {
@@ -373,7 +382,11 @@ mod tests {
     fn dispatch_config() -> Arc<ResolvedDispatchConfig> {
         Arc::new(ResolvedDispatchConfig::new(
             Arc::new(FormatConfig::default()),
-            Arc::new(ValidatedOptions { core: CoreFormatOptions::default(), sort_imports: None }),
+            Arc::new(ValidatedOptions {
+                core: CoreFormatOptions::default(),
+                sort_imports: None,
+                array_line_pattern: None,
+            }),
         ))
     }
 

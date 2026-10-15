@@ -6,8 +6,9 @@
 use std::str::FromStr;
 
 use oxc_formatter::{
-    ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, Expand, JsFormatOptions,
-    JsdocOptions, OperatorPosition, QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+    ArrayExpand, ArrayLinePattern, ArrowParentheses, AttributePosition, BracketSameLine,
+    BracketSpacing, Expand, JsFormatOptions, JsdocOptions, OperatorPosition, QuoteProperties,
+    QuoteStyle, Semicolons, TrailingCommas,
 };
 use oxc_formatter_tests::{OptionSet, apply_core_options};
 
@@ -82,6 +83,34 @@ pub fn apply_js_options(options: &mut JsFormatOptions, json: &OptionSet) {
                         _ => s,
                     })
                     .unwrap_or_default();
+                }
+            }
+            // NOTE: Not a Prettier option
+            "arrayWrap" => {
+                if let Some(s) = value.as_str() {
+                    options.array_expand = match s {
+                        "auto" => ArrayExpand::Auto,
+                        "preserve" => ArrayExpand::Preserve,
+                        "collapse" => ArrayExpand::Never,
+                        _ => options.array_expand,
+                    };
+                } else if let Some(object) = value.as_object() {
+                    options.array_expand = object
+                        .get("wrapThreshold")
+                        .and_then(serde_json::Value::as_u64)
+                        .and_then(|threshold| u32::try_from(threshold).ok())
+                        .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold);
+                    options.array_line_pattern = object
+                        .get("linePattern")
+                        .and_then(serde_json::Value::as_str)
+                        .and_then(|pattern| {
+                            pattern
+                                .split_whitespace()
+                                .map(str::parse)
+                                .collect::<Result<_, _>>()
+                                .ok()
+                        })
+                        .and_then(ArrayLinePattern::new);
                 }
             }
             "arrowParens" => {

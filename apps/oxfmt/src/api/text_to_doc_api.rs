@@ -187,7 +187,12 @@ fn run_fragment(
     // Unlike `run_full()`, only the JS options are needed,
     // since `run_fragment()` does not dispatch external services callbacks.
     let (config, validated, _) = parse_payload(oxfmt_plugin_options_json);
-    let format_options = to_oxc_formatter(&config, validated.core, validated.sort_imports);
+    let format_options = to_oxc_formatter(
+        &config,
+        validated.core,
+        validated.sort_imports,
+        validated.array_line_pattern,
+    );
 
     // Map the Prettier-side fragment kind to the formatter's usage context.
     // The parens-vs-no-parens / quote-style decisions live inside `format_fragment`.
