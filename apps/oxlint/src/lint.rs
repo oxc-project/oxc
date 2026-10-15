@@ -257,7 +257,7 @@ impl CliRunner {
 
         let mut config_loader =
             ConfigLoader::new(external_linter, &mut external_plugin_store, &filters, None)
-                .with_run_overrides(RunOverrides::for_cli(type_check_flag));
+                .with_run_overrides(RunOverrides::for_cli(type_aware_forced, type_check_flag));
         #[cfg(feature = "napi")]
         {
             config_loader = config_loader.with_js_config_loader(self.js_config_loader.as_ref());
@@ -450,9 +450,10 @@ impl CliRunner {
             max_warnings,
         );
 
-        // Non-fatal config problems, e.g. a root-only option set in a nested config, reported
-        // before the files' diagnostics by the formats which can carry a problem that is not about
-        // a linted file. They do not count towards `--deny-warnings` or `--max-warnings`.
+        // Non-fatal config problems, reported before the files' diagnostics, by the formats which
+        // can carry a problem that is not about a linted file. Whether a config which names
+        // type-aware rules without enabling `options.typeAware` is reported depends on
+        // `type_aware_forced`. They do not count towards `--deny-warnings` or `--max-warnings`.
         if !config_warnings.is_empty() && output_formatter.reports_config_warnings() {
             let warnings = config_warnings.into_iter().map(Into::into).collect();
             diagnostic_service.report_uncounted(warnings, stdout);
@@ -2346,6 +2347,18 @@ mod test {
             .test_and_snapshot(&[]);
     }
 
+    /// `options` is not inherited from the root config, so `extends` is how a package picks up a
+    /// shared `typeAware`. End-to-end check of the recommended monorepo pattern.
+    #[test]
+    #[cfg(not(target_endian = "big"))]
+    fn test_tsgolint_nested_config_type_aware_from_extends() {
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_nested_type_aware_extends".into())
+            .test_and_snapshot(&[]);
+    }
+
+    /// `--type-aware` applies to every file, including the packages whose config does not enable
+    /// it.
     #[test]
     #[cfg(not(target_endian = "big"))]
     fn test_tsgolint_nested_config_type_aware_forced_by_cli_flag() {

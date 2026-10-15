@@ -395,6 +395,9 @@ impl LintRunner {
     /// The severity is resolved per file: the explicit CLI/editor setting wins, otherwise the
     /// config which governs the file (root or nested) decides.
     pub fn report_unused_directives(&self, tx_error: &DiagnosticSender) {
+        if !self.lint_service.linter().may_report_unused_directives() {
+            return;
+        }
         self.directives_store.report_unused(
             |path| self.report_unused_directive_for(path),
             self.fix_kind,
