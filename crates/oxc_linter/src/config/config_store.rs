@@ -119,6 +119,15 @@ impl Config {
         &self.base.rules
     }
 
+    /// `options.typeAware` as declared by this config, after `extends` has been resolved.
+    ///
+    /// Only this config decides for the files it governs: an option left unset takes its default
+    /// rather than the root config's value, so a file is linted the same way whichever directory
+    /// the editor or the CLI was started from. Share the option through `extends`.
+    pub fn type_aware(&self) -> Option<bool> {
+        self.base.config.options.type_aware
+    }
+
     pub fn number_of_rules(&self) -> usize {
         self.base.rules.len()
     }
@@ -373,11 +382,17 @@ impl ConfigStore {
                 .any(|config| config.base.config.options.type_aware == Some(true))
     }
 
-    /// Whether type-aware linting is enabled for the files `config` governs.
-    ///
-    /// A nested config which does not set the option itself inherits the root value.
-    pub(crate) fn type_aware_enabled_of(&self, config: &LintConfig) -> bool {
-        config.options.type_aware.or(self.base.base.config.options.type_aware).unwrap_or(false)
+    /// Whether any config, root or nested, sets `reportUnusedDisableDirectives` to a severity
+    /// which reports unused directives.
+    pub(crate) fn any_reports_unused_disable_directives(&self) -> bool {
+        std::iter::once(&self.base).chain(self.nested_configs.values()).any(|config| {
+            config
+                .base
+                .config
+                .options
+                .report_unused_disable_directives
+                .is_some_and(AllowWarnDeny::is_warn_deny)
+        })
     }
 
     /// Whether type-checking diagnostics are enabled by *any* config, root or nested.
@@ -427,32 +442,6 @@ impl ConfigStore {
     /// Max warnings configured in the root config.
     pub fn max_warnings(&self) -> Option<usize> {
         self.base.base.config.options.max_warnings
-    }
-
-    /// The severity for reporting unused disable directives in the files `config` governs.
-    ///
-    /// A nested config which does not set the option itself inherits the root value.
-    pub(crate) fn report_unused_disable_directives_of(
-        &self,
-        config: &LintConfig,
-    ) -> Option<AllowWarnDeny> {
-        config.options.report_unused_disable_directives.or(self
-            .base
-            .base
-            .config
-            .options
-            .report_unused_disable_directives)
-    }
-
-    /// Whether eslint-style disable directives are respected in the files `config` governs.
-    ///
-    /// A nested config which does not set the option itself inherits the root value.
-    pub(crate) fn respect_eslint_disable_directives_of(&self, config: &LintConfig) -> bool {
-        config
-            .options
-            .respect_eslint_disable_directives
-            .or(self.base.base.config.options.respect_eslint_disable_directives)
-            .unwrap_or(true)
     }
 
     pub(crate) fn get_related_config(&self, path: &Path) -> &Config {
@@ -1587,17 +1576,23 @@ mod test {
         store: &ConfigStore,
         path: &Path,
     ) -> Option<AllowWarnDeny> {
-        store.report_unused_disable_directives_of(&store.get_related_config(path).base.config)
+        store.get_related_config(path).base.config.options.report_unused_disable_directives
     }
 
     /// Whether type-aware linting applies to `path`, through the config which governs it.
     fn type_aware_for(store: &ConfigStore, path: &Path) -> bool {
-        store.type_aware_enabled_of(&store.get_related_config(path).base.config)
+        store.get_related_config(path).type_aware().unwrap_or(false)
     }
 
     /// Whether eslint-style disable directives are respected in `path`.
     fn respect_eslint_disable_directives_for(store: &ConfigStore, path: &Path) -> bool {
-        store.respect_eslint_disable_directives_of(&store.get_related_config(path).base.config)
+        store
+            .get_related_config(path)
+            .base
+            .config
+            .options
+            .respect_eslint_disable_directives
+            .unwrap_or(true)
     }
 
     /// Builds a store whose root config uses `root_options` and which has one nested config in
@@ -1636,15 +1631,17 @@ mod test {
     }
 
     #[test]
-    fn test_type_aware_inherited_from_root_config() {
+    fn test_type_aware_not_inherited_from_root_config() {
         let store = store_with_nested_options(
             OxlintOptions { type_aware: Some(true), ..OxlintOptions::default() },
             OxlintOptions::default(),
         );
 
         assert!(store.type_aware_enabled());
-        // A nested config which does not mention `typeAware` keeps the root value.
-        assert!(type_aware_for(&store, Path::new("/root/packages/app/src/index.ts")));
+        // The root value is *not* inherited: only the config which governs the file is consulted,
+        // so that a file is linted the same way whichever directory was opened. Sharing the option
+        // is what `extends` is for.
+        assert!(!type_aware_for(&store, Path::new("/root/packages/app/src/index.ts")));
         assert!(type_aware_for(&store, Path::new("/root/index.ts")));
     }
 
@@ -1694,6 +1691,26 @@ mod test {
     }
 
     #[test]
+    fn test_report_unused_disable_directives_not_inherited_from_root_config() {
+        let store = store_with_nested_options(
+            OxlintOptions {
+                report_unused_disable_directives: Some(AllowWarnDeny::Warn),
+                ..OxlintOptions::default()
+            },
+            OxlintOptions::default(),
+        );
+
+        assert_eq!(
+            report_unused_disable_directives_for(&store, Path::new("/root/packages/app/index.ts")),
+            None
+        );
+        assert_eq!(
+            report_unused_disable_directives_for(&store, Path::new("/root/index.ts")),
+            Some(AllowWarnDeny::Warn)
+        );
+    }
+
+    #[test]
     fn test_respect_eslint_disable_directives_per_config() {
         let store = store_with_nested_options(
             OxlintOptions::default(),
@@ -1706,6 +1723,24 @@ mod test {
         // Defaults to `true` when no config sets it.
         assert!(respect_eslint_disable_directives_for(&store, Path::new("/root/index.ts")));
         assert!(!respect_eslint_disable_directives_for(
+            &store,
+            Path::new("/root/packages/app/index.ts")
+        ));
+    }
+
+    #[test]
+    fn test_respect_eslint_disable_directives_not_inherited_from_root_config() {
+        let store = store_with_nested_options(
+            OxlintOptions {
+                respect_eslint_disable_directives: Some(false),
+                ..OxlintOptions::default()
+            },
+            OxlintOptions::default(),
+        );
+
+        assert!(!respect_eslint_disable_directives_for(&store, Path::new("/root/index.ts")));
+        // Back to the default, rather than the root config's `false`.
+        assert!(respect_eslint_disable_directives_for(
             &store,
             Path::new("/root/packages/app/index.ts")
         ));

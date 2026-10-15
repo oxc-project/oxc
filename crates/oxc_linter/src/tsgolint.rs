@@ -734,9 +734,7 @@ impl TsGoLintState {
                 // skip the files governed by a config which does not enable it. The governing
                 // config is looked up once, for this check and for the rules below.
                 let config = self.config_store.get_related_config(&path_buf);
-                if !self.type_aware_forced
-                    && !self.config_store.type_aware_enabled_of(&config.base.config)
-                {
+                if !self.type_aware_forced && !config.type_aware().unwrap_or(false) {
                     continue;
                 }
                 let file_path = path.to_string_lossy().to_string();

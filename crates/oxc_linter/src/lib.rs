@@ -335,9 +335,12 @@ impl Linter {
     pub(crate) fn file_config(&self, path: &Path) -> FileConfig<'_> {
         let config = self.config.get_related_config(path);
         FileConfig {
-            respect_eslint_disable_directives: self
+            respect_eslint_disable_directives: config
+                .base
                 .config
-                .respect_eslint_disable_directives_of(&config.base.config),
+                .options
+                .respect_eslint_disable_directives
+                .unwrap_or(true),
             config,
         }
     }
@@ -351,11 +354,18 @@ impl Linter {
         self.report_unused_directive_of(&self.config.get_related_config(path).base.config)
     }
 
+    /// Whether [`Linter::report_unused_directive_for`] can return a severity which reports unused
+    /// directives for some file, so that a run where it cannot skips the per-file lookups.
+    pub(crate) fn may_report_unused_directives(&self) -> bool {
+        match self.options.report_unused_directive {
+            Some(severity) => severity.is_warn_deny(),
+            None => self.config.any_reports_unused_disable_directives(),
+        }
+    }
+
     /// [`Linter::report_unused_directive_for`], given the config which governs the file.
     fn report_unused_directive_of(&self, config: &LintConfig) -> Option<AllowWarnDeny> {
-        self.options
-            .report_unused_directive
-            .or_else(|| self.config.report_unused_disable_directives_of(config))
+        self.options.report_unused_directive.or(config.options.report_unused_disable_directives)
     }
 
     /// Returns the number of rules that will are being used, unless there
