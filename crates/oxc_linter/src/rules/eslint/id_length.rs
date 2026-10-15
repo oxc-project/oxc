@@ -8,7 +8,8 @@ use unicode_segmentation::UnicodeSegmentation;
 
 use oxc_ast::AstKind;
 use oxc_ast::ast::{
-    BindingIdentifier, BindingPattern, BindingProperty, IdentifierName, PrivateIdentifier,
+    BindingIdentifier, BindingPattern, BindingProperty, IdentifierName, IdentifierReference,
+    PrivateIdentifier,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -178,6 +179,9 @@ impl Rule for IdLength {
             }
             AstKind::PrivateIdentifier(ident) => {
                 self.handle_private_identifier(ident, node, ctx);
+            }
+            AstKind::IdentifierReference(ident) => {
+                self.handle_assignment_target(ident, node, ctx);
             }
             _ => {}
         }
@@ -352,6 +356,44 @@ impl IdLength {
             ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
         }
         if is_too_short {
+            ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
+        }
+    }
+
+    /// A variable assigned in a destructuring assignment, like `q` in `[q] = a`,
+    /// `({ a: q } = o)` or `for ([k, v] of e)`. A plain `q = 1` is not checked.
+    fn handle_assignment_target(
+        &self,
+        ident: &IdentifierReference,
+        node: &AstNode,
+        ctx: &LintContext,
+    ) {
+        let is_target = match ctx.nodes().parent_kind(node.id()) {
+            AstKind::ArrayAssignmentTarget(_) | AstKind::AssignmentTargetRest(_) => true,
+            AstKind::AssignmentTargetWithDefault(target) => target.binding.span() == ident.span,
+            AstKind::AssignmentTargetPropertyProperty(property) => {
+                property.binding.span() == ident.span
+            }
+            // `({ q } = o)` is a property name too, unless it has a default.
+            AstKind::AssignmentTargetPropertyIdentifier(property) => {
+                property.binding.span == ident.span
+                    && (property.init.is_some() || self.properties == AlwaysNever::Always)
+            }
+            _ => false,
+        };
+        if !is_target || self.is_exception(&ident.name) {
+            return;
+        }
+
+        let length = if ident.name.is_ascii() {
+            ident.name.len()
+        } else {
+            ident.name.graphemes(true).count()
+        };
+        if self.is_too_long(length) {
+            ctx.diagnostic(id_length_is_too_long_diagnostic(node.span(), self.max));
+        }
+        if self.is_too_short(length) {
             ctx.diagnostic(id_length_is_too_short_diagnostic(node.span(), self.min));
         }
     }
@@ -617,6 +659,11 @@ fn test() {
         //     "import('foo.json', { with: { type } })",
         //     Some(serde_json::json!([{ "min": 1, "max": 3, "properties": "always" }])),
         // ), // { "ecmaVersion": 2025 }
+        ("q = 3;", None),
+        ("[obj = r] = foo;", None),
+        ("({ obj = r } = foo);", None),
+        ("({ [k]: obj } = foo);", None),
+        ("({ q } = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
     ];
 
     let fail = vec![
@@ -722,6 +769,15 @@ fn test() {
         ("interface Foo { a(): void; }", None),
         ("type Foo = { a: string };", None),
         ("type Foo = { a(): void };", None),
+        ("[q] = foo;", None),
+        ("for ([ix, s] of foo) {}", None),
+        ("({ a: q } = foo);", None),
+        ("({ q } = foo);", None),
+        ("({ q = rr } = foo);", None),
+        ("({ q = rr } = foo);", Some(serde_json::json!([{ "properties": "never" }]))),
+        ("[...q] = foo;", None),
+        ("[q = rr] = foo;", None),
+        ("({ k: [q] } = foo);", None),
     ];
 
     Tester::new(IdLength::NAME, IdLength::PLUGIN, pass, fail).test_and_snapshot();
