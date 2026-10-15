@@ -442,6 +442,12 @@ fn test_fold_string_trim() {
     test("x = '  abc  '.trimEnd()", "x = '  abc'");
     test("x = 'abc'.trimEnd()", "x = 'abc'");
     test_same("x = 'abc'.trimEnd(1)");
+
+    // `TrimString` removes `WhiteSpace` and `LineTerminator`: U+FEFF is one, U+0085 is not
+    test("x = '\\u{FEFF}a\\u{FEFF}'.trim()", "x = 'a'");
+    test("x = '\\u{FEFF}a'.trimStart()", "x = 'a'");
+    test("x = 'a\\u{FEFF}'.trimEnd()", "x = 'a'");
+    test("x = '\\u0085a\\u0085'.trim()", "x = '\\u0085a\\u0085'");
 }
 
 #[test]
@@ -837,6 +843,11 @@ fn test_fold_parse_numbers_additional() {
     test_value("parseFloat('abc')", "NaN");
     test_value("parseFloat('Infinity')", "Infinity");
     test_value("parseFloat('-Infinity')", "-Infinity");
+    // `TrimString` removes `WhiteSpace` and `LineTerminator`: U+FEFF is one, U+0085 is not
+    test_value("parseFloat('\\u{FEFF}7')", "7");
+    test_value("parseInt('\\u{FEFF}7')", "7");
+    test_value("parseFloat('\\u00857')", "NaN");
+    test_value("parseInt('\\u00857')", "NaN");
     test_value("parseFloat('+Infinity')", "Infinity");
     test_same_value("parseInt(unknown)");
     test_same_value("parseInt((foo, '0'))"); // foo may have side effects
