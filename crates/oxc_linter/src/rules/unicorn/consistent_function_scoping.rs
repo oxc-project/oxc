@@ -332,7 +332,8 @@ impl ConsistentFunctionScoping {
             }
             let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
             if ctx.scoping().scope_is_descendant_of(function_scope_id, scope_id)
-                && symbol_id != function_declaration_symbol_id
+                && (symbol_id != function_declaration_symbol_id
+                    || !ctx.scoping().symbol_flags(symbol_id).is_function())
             {
                 // Both class declarations and expressions have an internal self binding.
                 // Moving past the class body would lose that binding.
@@ -1165,6 +1166,22 @@ fn test() {
             "class Box { #value; method() { const inner = () => class { field = box.#value; }; return inner; } }",
             None,
         ),
+        (
+            "const make = (self) => {
+                const builder = (...args) => builder.apply(null, args);
+                builder.self = self;
+                return builder;
+            };
+            module.exports = make;",
+            None,
+        ),
+        ("function outer() { const inner = function () { return inner(); }; return inner; }", None),
+        (
+            "function outer() { const inner = function recur() { return inner(); }; return inner; }",
+            None,
+        ),
+        ("function outer() { const inner = (value = inner) => value; return inner; }", None),
+        ("function outer() { var inner = () => inner(); return inner; }", None),
     ];
 
     let fail = vec![
@@ -1575,6 +1592,11 @@ fn test() {
             "class External { method() { function outer() { function inner() { return External; } return inner; } return outer; } }",
             None,
         ),
+        (
+            "function outer() { const inner = function recur() { return recur(); }; return inner; }",
+            None,
+        ),
+        ("function outer() { const inner = (inner) => inner(); return inner; }", None),
     ];
 
     Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::PLUGIN, pass, fail)
