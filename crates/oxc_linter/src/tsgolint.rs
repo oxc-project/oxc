@@ -620,7 +620,7 @@ impl TsGoLintState {
                 // config is looked up once, for this check and for the rules below.
                 let config = self.config_store.get_related_config(&path_buf);
                 if !self.type_aware_forced
-                    && !self.config_store.type_aware_enabled_of(&config.base.config)
+                    && !ConfigStore::type_aware_enabled_of(&config.base.config)
                 {
                     continue;
                 }

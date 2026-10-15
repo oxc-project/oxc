@@ -345,9 +345,9 @@ impl Linter {
     pub(crate) fn file_config(&self, path: &Path) -> FileConfig<'_> {
         let config = self.config.get_related_config(path);
         FileConfig {
-            respect_eslint_disable_directives: self
-                .config
-                .respect_eslint_disable_directives_of(&config.base.config),
+            respect_eslint_disable_directives: ConfigStore::respect_eslint_disable_directives_of(
+                &config.base.config,
+            ),
             config,
         }
     }
@@ -365,7 +365,7 @@ impl Linter {
     fn report_unused_directive_of(&self, config: &LintConfig) -> Option<AllowWarnDeny> {
         self.options
             .report_unused_directive
-            .or_else(|| self.config.report_unused_disable_directives_of(config))
+            .or_else(|| ConfigStore::report_unused_disable_directives_of(config))
     }
 
     /// Returns the number of rules that will are being used, unless there

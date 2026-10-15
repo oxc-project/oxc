@@ -113,6 +113,9 @@ impl ServerLinterBuilder {
             }
         }
 
+        // The editor setting applies type-aware linting to every file; `options.typeAware` in a
+        // config only applies to the files that config governs.
+        let type_aware_forced = options.type_aware == Some(true);
         let config_path = options.config_path.as_ref().map(PathBuf::from);
         let loader = ConfigLoader::new(
             external_linter,
@@ -142,6 +145,7 @@ impl ServerLinterBuilder {
                 &mut nested_ignore_patterns,
                 &mut extended_paths,
                 Some(root_uri.as_ref()),
+                options.type_aware,
             )
         } else {
             (FxHashMap::default(), Vec::new())
@@ -207,9 +211,6 @@ impl ServerLinterBuilder {
             ..Default::default()
         };
 
-        // The editor setting applies type-aware linting to every file; `options.typeAware` in a
-        // config only applies to the files that config governs.
-        let type_aware_forced = options.type_aware == Some(true);
         let type_aware = options.type_aware.unwrap_or(config_store.type_aware_enabled());
         let config_store_clone = config_store.clone();
 
@@ -355,6 +356,7 @@ impl ServerLinterBuilder {
         nested_ignore_patterns: &mut Vec<(Vec<String>, PathBuf)>,
         extended_paths: &mut FxHashSet<PathBuf>,
         workspace_uri: Option<&str>,
+        type_aware: Option<bool>,
     ) -> (FxHashMap<PathBuf, Config>, Vec<ClientMessage>) {
         let config_paths = discover_configs_in_tree(root_path, base_config_path);
 
@@ -374,7 +376,7 @@ impl ServerLinterBuilder {
         let (configs, diagnostics) = loader.load_discovered_with_root_dir(root_path, config_paths);
 
         // show messages to the LSP client, which also logs them
-        let overrides = RunOverrides::for_language_server();
+        let overrides = RunOverrides::for_language_server(type_aware);
         let client_messages = diagnostics
             .into_iter()
             .filter(|diagnostic| diagnostic.is_reported(overrides))
@@ -1172,6 +1174,7 @@ mod test {
             &mut nested_ignore_patterns,
             &mut extended_paths,
             None,
+            None,
         );
         let mut configs_dirs = configs.keys().collect::<Vec<&PathBuf>>();
         // sorting the key because for consistent tests results
@@ -1208,10 +1211,55 @@ mod test {
             &mut nested_ignore_patterns,
             &mut extended_paths,
             None,
+            None,
         );
 
         assert_eq!(configs.len(), 1);
         assert_eq!(client_messages, []);
+    }
+
+    /// The editor's `typeAware` setting, either way, decides for every file, so a nested config
+    /// naming type-aware rules without `options.typeAware` is only warned about when it is unset.
+    #[test]
+    fn test_create_nested_configs_type_aware_rules_warning_follows_editor_setting() {
+        use cow_utils::CowUtils;
+
+        let root_dir = tempfile::tempdir().unwrap();
+        std::fs::write(root_dir.path().join(".oxlintrc.json"), "{}").unwrap();
+        let nested_dir = root_dir.path().join("nested");
+        std::fs::create_dir_all(&nested_dir).unwrap();
+        std::fs::write(
+            nested_dir.join(".oxlintrc.json"),
+            r#"{ "rules": { "typescript/no-floating-promises": "error" } }"#,
+        )
+        .unwrap();
+
+        let messages_for = |type_aware: Option<bool>| {
+            let builder = ServerLinterBuilder::default();
+            let mut nested_ignore_patterns = Vec::new();
+            let mut external_plugin_store = ExternalPluginStore::new(false);
+            let mut extended_paths = FxHashSet::default();
+            builder
+                .create_nested_configs(
+                    root_dir.path(),
+                    &root_dir.path().join(".oxlintrc.json"),
+                    &mut external_plugin_store,
+                    &mut nested_ignore_patterns,
+                    &mut extended_paths,
+                    None,
+                    type_aware,
+                )
+                .1
+        };
+
+        let messages = messages_for(None);
+        assert_eq!(messages.len(), 1);
+        // Named by its absolute path: several workspace folders may have the same layout.
+        let nested_config = nested_dir.join(".oxlintrc.json");
+        let nested_config = nested_config.to_string_lossy().cow_replace('\\', "/").into_owned();
+        assert!(messages[0].message.contains(&nested_config), "{}", messages[0].message);
+        assert_eq!(messages_for(Some(true)), []);
+        assert_eq!(messages_for(Some(false)), []);
     }
 
     #[test]
