@@ -1,0 +1,10 @@
+{
+  "files/test.ts": {
+    "no-unused-vars": {
+      "count": 2
+    },
+    "typescript/await-thenable": {
+      "count": 1
+    }
+  }
+}
