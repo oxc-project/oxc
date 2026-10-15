@@ -603,6 +603,12 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(value) = cond_expr.consequent.get_side_free_boolean_value(ctx) {
+            // if parent is void statement and we can rotate test do it
+            let value = if ctx.parent().is_expression_statement() {
+                !Self::is_unary_not(&cond_expr.test)
+            } else {
+                value
+            };
             ctx.drop_expression(&cond_expr.consequent);
             ctx.replace_expression_with(expr, |e, ctx| {
                 let Expression::ConditionalExpression(e) = e else { unreachable!() };
@@ -619,6 +625,11 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         if let Some(value) = cond_expr.alternate.get_side_free_boolean_value(ctx) {
+            let value = if ctx.parent().is_expression_statement() {
+                Self::is_unary_not(&cond_expr.test)
+            } else {
+                value
+            };
             ctx.drop_expression(&cond_expr.alternate);
             ctx.replace_expression_with(expr, |e, ctx| {
                 let Expression::ConditionalExpression(e) = e else { unreachable!() };
