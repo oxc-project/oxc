@@ -2033,6 +2033,13 @@ fn test() {
         ),
         // dynamic `import()` with a string-literal source
         ("import('os');", Some(serde_json::json!(["fs"]))),
+        // A source with a lone surrogate matches no configured name or pattern.
+        (r"import('a\uD800');", Some(serde_json::json!(["a\u{FFFD}"]))),
+        (r"import('a\uD800');", Some(serde_json::json!([{ "patterns": [{ "regex": "^a.$" }] }]))),
+        (
+            r"import('a\uD800/b');",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["a*/b"] }] }])),
+        ),
         ("import('foo/bar');", Some(serde_json::json!([{ "patterns": ["foo/baz"] }]))),
         // non-literal dynamic import sources are ignored
         ("import(foo);", Some(serde_json::json!(["foo"]))),
