@@ -1,3 +1,4 @@
+import { runInNewContext } from "node:vm";
 import { Worker } from "node:worker_threads";
 import { describe, expect, it } from "vitest";
 
@@ -366,5 +367,30 @@ describe("worker", () => {
       });
     });
     expect(code).toBe(0);
+  });
+});
+
+describe("concat evaluation order", () => {
+  // `concat` evaluates every argument before reading any, while a template literal coerces each
+  // substitution before evaluating the next. The minifier must keep the two orders apart when an
+  // argument's side effects change an earlier argument. The chains also check the folds that
+  // remain allowed.
+  const execute = (code: string) => {
+    const output: unknown[][] = [];
+    runInNewContext(code, { console: { log: (...args: unknown[]) => output.push(args) } });
+    return output;
+  };
+  it.each([
+    [`const arr = [1, 2, 3]; console.log("".concat(arr, arr.pop()));`, "esnext"],
+    [`const arr = [1, 2, 3]; console.log("".concat(arr.pop(), arr));`, "esnext"],
+    [`const arr = [1, 2, 3]; console.log("".concat(arr, " ").concat(arr.pop()));`, "esnext"],
+    [`const arr = [1, 2, 3]; console.log("\\uD800".concat(arr).concat(arr.pop()));`, "esnext"],
+    [`const arr = [1, 2, 3]; console.log([].concat(arr).concat(arr.pop()).join());`, "esnext"],
+    // Without template literals, only the merge guard keeps the order.
+    [`const arr = [1, 2, 3]; console.log("".concat(arr).concat(arr.pop()));`, "chrome40"],
+  ])("preserves runtime behavior for %s (%s)", (source, target) => {
+    const result = minifySync("input.js", source, { mangle: false, compress: { target } });
+    expect(result.errors).toEqual([]);
+    expect(execute(result.code)).toEqual(execute(source));
   });
 });

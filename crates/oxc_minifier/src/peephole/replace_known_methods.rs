@@ -4,14 +4,18 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::{ast::*, builder::AstBuilder};
-use oxc_compat::ESFeature;
+use oxc_compat::{ESFeature, EngineTargets};
 use oxc_ecmascript::{
-    ToBigInt, ToIntegerIndex,
-    constant_evaluation::{ConstantEvaluation, DetermineValueType},
-    side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
+    GlobalContext, ToBigInt, ToIntegerIndex,
+    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType, ValueType},
+    side_effects::{
+        MayHaveSideEffects, MayHaveSideEffectsContext, PropertyReadSideEffects,
+        is_regexp_syntax_supported,
+    },
 };
 use oxc_span::SPAN;
 use oxc_str::{JSStr, JSStrBuilder};
+use oxc_syntax::reference::ReferenceId;
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -119,6 +123,7 @@ impl<'a> PeepholeOptimizations {
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
+    /// `"".concat(a).concat(b())` -> `` `${a}${b()}` ``
     pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
@@ -145,23 +150,22 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
-            // We don't need to check if the arguments has a side effect here.
-            //
-            // The only side effect Array::concat / String::concat can cause is throwing an error when the created array is too long.
-            // With the compressor assumption, that error can be moved.
-            //
-            // For example, if we have `[].concat(a).concat(b)`, the steps before the compression is:
+            // Merging the calls moves the evaluation of later arguments before the earlier calls
+            // read their own arguments. For example, if we have `[].concat(a).concat(b)`, the
+            // steps before the compression are:
             // 1. evaluate `a`
-            // 2. `[].concat(a)` creates `[a]`
+            // 2. `[].concat(a)` reads `a` and creates `[a]`
             // 3. evaluate `b`
             // 4. `.concat(b)` creates `[a, b]`
             //
-            // The steps after the compression (`[].concat(a, b)`) is:
+            // The steps after the compression (`[].concat(a, b)`) are:
             // 1. evaluate `a`
             // 2. evaluate `b`
-            // 3. `[].concat(a, b)` creates `[a, b]`
+            // 3. `[].concat(a, b)` reads `a` and creates `[a, b]`
             //
-            // The error that has to be thrown in the second step before the compression will be thrown in the third step.
+            // `concat_calls_keep_order` below decides when step 2 can move after step 3.
+            // The error thrown when the created array is too long can move,
+            // because of the compressor assumption.
 
             let CallExpression { callee, arguments, .. } = ce.as_mut();
             collected_arguments.push(arguments);
@@ -184,6 +188,42 @@ impl<'a> PeepholeOptimizations {
         }
 
         if collected_arguments.len() <= 1 {
+            return;
+        }
+
+        let base_string = match &*new_root_callee {
+            Expression::StaticMemberExpression(member) => match &member.object {
+                Expression::StringLiteral(base) => Some(base.value),
+                _ => None,
+            },
+            _ => None,
+        };
+        let arguments_in_order = || collected_arguments.iter().rev().flat_map(|args| args.iter());
+        let calls_in_order = collected_arguments.iter().rev().map(|args| &**args);
+        if !Self::concat_calls_keep_order(calls_in_order, base_string.is_some(), ctx) {
+            // Calls in a chain read their arguments one call at a time, like a template literal
+            // coerces one substitution at a time. So the chain folds to a template when every
+            // call keeps the order on its own: `"".concat(a).concat(b())` -> `${a}${b()}`.
+            if let Some(base) = base_string
+                && ctx.supports_feature(ESFeature::ES2015TemplateLiterals)
+                && collected_arguments.iter().all(|args| Self::concat_keeps_order(args.iter(), ctx))
+            {
+                let expression_count = arguments_in_order()
+                    .filter(|arg| !matches!(arg, Argument::StringLiteral(_)))
+                    .count();
+                let argument_count = arguments_in_order().count();
+                if Self::is_concat_shorter(
+                    collected_arguments.len(),
+                    argument_count,
+                    expression_count,
+                ) {
+                    return;
+                }
+                let arguments = collected_arguments.into_iter().rev().flat_map(|arg| arg.drain(..));
+                let template =
+                    Self::concat_template(original_span, base, arguments, expression_count, ctx);
+                ctx.replace_expression(node, template);
+            }
             return;
         }
 
@@ -272,45 +312,143 @@ impl<'a> PeepholeOptimizations {
             Expression::StringLiteral(base_str) => {
                 if !ctx.supports_feature(ESFeature::ES2015TemplateLiterals)
                     || args.is_empty()
-                    || !args.iter().all(Argument::is_expression)
+                    || !Self::concat_keeps_order(args.iter(), ctx)
                 {
                     return None;
                 }
 
                 let expression_count =
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
-                let string_count = args.len() - expression_count;
-
-                // whether it is shorter to use `String::concat`
-                if ".concat()".len() + args.len() + "''".len() * string_count
-                    < "${}".len() * expression_count
-                {
+                if Self::is_concat_shorter(1, args.len(), expression_count) {
                     return None;
                 }
-
-                let ast = &ctx.ast;
-                let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
-                let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
-                let mut cooked = JSStrBuilder::new_in(ctx);
-                cooked.push_js_str(base_str.value);
-                for argument in args.drain(..) {
-                    if let Argument::StringLiteral(lit) = argument {
-                        cooked.push_js_str(lit.value);
-                    } else {
-                        let quasi = mem::replace(&mut cooked, JSStrBuilder::new_in(ctx));
-                        quasis.push(Self::template_element(quasi.into_js_str(), false, ast));
-                        expressions.push(argument.into_expression());
-                    }
-                }
-                let tail = cooked.into_js_str();
-                if expressions.is_empty() {
-                    return Some(Expression::new_string_literal(span, tail, None, ast));
-                }
-                quasis.push(Self::template_element(tail, true, ast));
-                Some(Expression::new_template_literal(span, quasis, expressions, ast))
+                Some(Self::concat_template(
+                    span,
+                    base_str.value,
+                    args.drain(..),
+                    expression_count,
+                    ctx,
+                ))
             }
             _ => None,
         }
+    }
+
+    /// Whether the arguments of one `String.prototype.concat` call can be coerced in evaluation
+    /// order, one at a time, as a template literal does.
+    ///
+    /// A call evaluates every argument before `concat` coerces any. Coercion is pure by
+    /// assumption, so the orders differ only when an argument evaluated after a coerced value has
+    /// side effects that could change that value, as in `''.concat(arr, arr.pop())`.
+    fn concat_keeps_order<'b>(
+        arguments: impl IntoIterator<Item = &'b Argument<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool
+    where
+        'a: 'b,
+    {
+        let ctx = WritesHaveSideEffects(ctx);
+        let mut read = false;
+        for argument in arguments {
+            let Some(expression) = argument.as_expression() else {
+                return false;
+            };
+            if read && expression.may_have_side_effects(&ctx) {
+                return false;
+            }
+            read |= Self::concat_reads(expression, true, &ctx);
+        }
+        true
+    }
+
+    /// Whether merging chained `concat` calls into one keeps every read before the side effects
+    /// of later calls.
+    ///
+    /// A call evaluates all of its arguments before it reads any, so merging only delays the reads
+    /// of earlier calls past the evaluation of later calls' arguments. A spread argument counts
+    /// as both, since it iterates when evaluated and its elements are read afterwards.
+    fn concat_calls_keep_order<'b>(
+        calls: impl IntoIterator<Item = &'b Arguments<'a>>,
+        is_string: bool,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool
+    where
+        'a: 'b,
+    {
+        let ctx = WritesHaveSideEffects(ctx);
+        let mut read = false;
+        for arguments in calls {
+            let mut expressions = arguments.iter().map(Argument::as_expression);
+            if read && expressions.clone().any(|e| e.is_none_or(|e| e.may_have_side_effects(&ctx)))
+            {
+                return false;
+            }
+            read |= expressions.any(|e| e.is_none_or(|e| Self::concat_reads(e, is_string, &ctx)));
+        }
+        true
+    }
+
+    /// Whether `concat` reads state through an argument after evaluating it: coercing it to a
+    /// string, or reading its elements. A primitive value has no state to read. An array literal
+    /// is a fresh array that no other argument can reach, but coercing it reads its elements.
+    fn concat_reads(
+        expression: &Expression<'a>,
+        is_string: bool,
+        ctx: &impl GlobalContext<'a>,
+    ) -> bool {
+        if expression.is_literal()
+            || !is_string && matches!(expression, Expression::ArrayExpression(_))
+        {
+            return false;
+        }
+        let value_type = expression.value_type(ctx);
+        value_type.is_object() || value_type.is_undetermined()
+    }
+
+    /// Whether `call_count` chained `concat` calls with these arguments are shorter than the
+    /// template literal that replaces them.
+    ///
+    /// This counts a comma after every argument but the last of the chain, which favors the
+    /// template by one byte for a single call.
+    fn is_concat_shorter(
+        call_count: usize,
+        argument_count: usize,
+        expression_count: usize,
+    ) -> bool {
+        let string_count = argument_count - expression_count;
+        ".concat()".len() * call_count + argument_count + "''".len() * string_count
+            < "${}".len() * expression_count + (call_count - 1)
+    }
+
+    /// Build the template literal for `base.concat(...arguments)`,
+    /// folding string literal arguments into the quasis.
+    fn concat_template(
+        span: Span,
+        base: JSStr<'a>,
+        arguments: impl IntoIterator<Item = Argument<'a>>,
+        expression_count: usize,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let ast = &ctx.ast;
+        let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
+        let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
+        let mut cooked = JSStrBuilder::new_in(ctx);
+        cooked.push_js_str(base);
+        for argument in arguments {
+            if let Argument::StringLiteral(lit) = argument {
+                cooked.push_js_str(lit.value);
+            } else {
+                let quasi = mem::replace(&mut cooked, JSStrBuilder::new_in(ctx));
+                quasis.push(Self::template_element(quasi.into_js_str(), false, ast));
+                expressions.push(argument.into_expression());
+            }
+        }
+        let tail = cooked.into_js_str();
+        if expressions.is_empty() {
+            return Expression::new_string_literal(span, tail, None, ast);
+        }
+        quasis.push(Self::template_element(tail, true, ast));
+        Expression::new_template_literal(span, quasis, expressions, ast)
     }
 
     /// A template quasi holding `cooked`.
@@ -587,5 +725,54 @@ impl<'a> PeepholeOptimizations {
 
     fn validate_arguments(args: &Arguments, expected_len: usize) -> bool {
         (args.len() == expected_len) && args.iter().all(Argument::is_expression)
+    }
+}
+
+/// A side-effect context that counts every property write as a side effect.
+///
+/// `propertyWriteSideEffects: false` asserts that a write runs no setter, not that it leaves the
+/// object unchanged, and a later write can change a value that `concat` reads afterwards.
+struct WritesHaveSideEffects<'b, 'a>(&'b TraverseCtx<'a>);
+
+impl<'a> GlobalContext<'a> for WritesHaveSideEffects<'_, 'a> {
+    fn is_global_reference(&self, reference: &IdentifierReference<'a>) -> bool {
+        self.0.is_global_reference(reference)
+    }
+
+    fn get_constant_value_for_reference_id(
+        &self,
+        reference_id: ReferenceId,
+    ) -> Option<ConstantValue<'a>> {
+        self.0.get_constant_value_for_reference_id(reference_id)
+    }
+
+    fn value_type_for_reference_id(&self, reference_id: ReferenceId) -> Option<ValueType> {
+        self.0.value_type_for_reference_id(reference_id)
+    }
+}
+
+impl<'a> MayHaveSideEffectsContext<'a> for WritesHaveSideEffects<'_, 'a> {
+    fn engine_targets(&self) -> Option<&EngineTargets> {
+        self.0.engine_targets()
+    }
+
+    fn annotations(&self) -> bool {
+        self.0.annotations()
+    }
+
+    fn manual_pure_functions(&self, callee: &Expression) -> bool {
+        self.0.manual_pure_functions(callee)
+    }
+
+    fn property_read_side_effects(&self) -> PropertyReadSideEffects {
+        self.0.property_read_side_effects()
+    }
+
+    fn property_write_side_effects(&self) -> bool {
+        true
+    }
+
+    fn unknown_global_side_effects(&self) -> bool {
+        self.0.unknown_global_side_effects()
     }
 }

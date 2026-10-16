@@ -56,6 +56,14 @@ const obj = {
 String(obj); // Would trigger side effect
 ```
 
+Pure coercion still reads the current state of its argument, so the minifier does not move a
+coercion across a side effect, in either direction. A `concat` call evaluates all of its arguments
+before it coerces any, while a template literal coerces each substitution before evaluating the
+next, so `"".concat(arr, arr.pop())` is not folded to `` `${arr}${arr.pop()}` ``. The reads that
+`Array.prototype.concat` makes on its arguments (`Symbol.isConcatSpreadable`, `length`, and the
+elements) are assumed to be free of side effects too, and are kept in order the same way:
+`[].concat(arr).concat(arr.pop())` is not merged into `[].concat(arr, arr.pop())`.
+
 ### No TDZ Violation
 
 Code doesn't violate Temporal Dead Zones.
