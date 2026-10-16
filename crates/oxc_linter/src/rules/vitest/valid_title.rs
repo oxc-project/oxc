@@ -206,23 +206,6 @@ fn test() {
             None,
         ),
         ("const localTest = test.extend({})", None),
-        (
-            "import { it } from 'vitest'
-
-            const test = it.extend({
-                fixture: [
-                    async ({}, use) => {
-                        setup()
-                        await use()
-                        teardown()
-                    },
-                    { auto: true }
-                ],
-            })
-
-            test('', () => {})",
-            None,
-        ),
         // https://github.com/oxc-project/oxc/issues/22268
         ("it(String.raw`foo`, () => {})", None),
         (
@@ -655,6 +638,23 @@ fn test() {
         // https://github.com/oxc-project/oxc/issues/22268
         ("it(Object.raw`foo`, () => {})", None),
         ("it(String.raw(`foo`), () => {})", None),
+        (
+            "import { it } from 'vitest'
+
+            const test = it.extend({
+                fixture: [
+                    async ({}, use) => {
+                        setup()
+                        await use()
+                        teardown()
+                    },
+                    { auto: true }
+                ],
+            })
+
+            test('', () => {})",
+            None,
+        ),
     ];
 
     let fix = vec![

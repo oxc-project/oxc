@@ -45,6 +45,10 @@ fn test() {
 
     let pass = vec![
         (
+            "import { test as base } from 'vitest'; const test = base.extend({}); test('example', () => {});",
+            Some(serde_json::json!([{ "fn": "it" }])),
+        ),
+        (
             "
                 it(\"shows error\", () => {
                     expect(true).toBe(false);
