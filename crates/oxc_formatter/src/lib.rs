@@ -228,6 +228,14 @@ pub fn format_fragment<'a>(
         }
     };
 
+    // Losing a comment is worse than leaving the fragment as-is (e.g. `v-slot="/* c */"` has no params to attach to).
+    // Prettier also fails and keeps the source then.
+    // NOTE: Keeping the source (whitespace included) is just the cheapest way to match Prettier.
+    // Printing the comments instead is fine once the Vue formatter moves to Rust.
+    if !formatted.context().comments().unprinted_comments().is_empty() {
+        return Err(OxcDiagnostic::error("Some comments in the fragment were not printed"));
+    }
+
     Ok(formatted)
 }
 

@@ -1,6 +1,6 @@
 ## js-in-vue
 
-### Option 1: 423/426 (99.30%)
+### Option 1: 424/427 (99.30%)
 
 ```json
 {"printWidth":80}
@@ -13,7 +13,7 @@
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 
-### Option 2: 424/426 (99.53%)
+### Option 2: 425/427 (99.53%)
 
 ```json
 {"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true}
