@@ -427,7 +427,8 @@ where
         variants.push(("CRLF", source_text.cow_replace('\n', "\r\n").into_owned(), actual.clone()));
         variants.push(("CR", source_text.cow_replace('\n', "\r").into_owned(), actual.clone()));
     }
-    if !source_text.starts_with('\u{feff}') {
+    // BOM + hashbang is a syntax error (Prettier strips the BOM first)
+    if !source_text.starts_with('\u{feff}') && !source_text.starts_with("#!") {
         variants.push(("BOM", format!("\u{feff}{source_text}"), format!("\u{feff}{actual}")));
     }
     for (name, input, expected_output) in variants {

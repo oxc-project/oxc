@@ -26,6 +26,7 @@ use crate::{
         function::FormatFunction,
         parameters::has_only_simple_parameters,
     },
+    source_text::line_breaks,
     utils::{
         call_expression::is_test_call_expression,
         expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
@@ -102,12 +103,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
         let has_empty_line = arguments.windows(2).any(|window| {
             let (cur_arg, next_arg) = (&window[0], &window[1]);
 
-            // Count newlines between arguments, short-circuiting at 2 for performance
-            // Check if there are at least two newlines between arguments
-            f.source_text()
-                .bytes_range(cur_arg.span().end, next_arg.span().start)
-                .iter()
-                .filter(|&&b| b == b'\n')
+            // Check if there are at least two line breaks between arguments
+            line_breaks(f.source_text().slice_range(cur_arg.span().end, next_arg.span().start))
                 .nth(1)
                 .is_some()
         });
