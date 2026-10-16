@@ -88,6 +88,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                 indent: DanglingIndentMode::None
             }
         );
+        // A line comment would swallow the `]` (`[, ,// c]`), so break before it
+        if dangling_comments.last().is_some_and(Comment::is_line) {
+            write!(f, hard_line_break());
+        }
     }
 }
 

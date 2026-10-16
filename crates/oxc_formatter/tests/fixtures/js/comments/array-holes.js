@@ -14,3 +14,7 @@ const d = [,, // line
 const e = [1, 2 /* t */];
 // A real element before the hole (the entry's shape)
 const f = [1, , /* comment */];
+// An own-line line comment before the last hole must not swallow the `]`
+const g = [,
+  // line
+,];
