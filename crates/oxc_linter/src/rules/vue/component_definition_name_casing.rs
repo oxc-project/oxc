@@ -80,6 +80,7 @@ declare_oxc_lint!(
     ComponentDefinitionNameCasing,
     vue,
     style,
+    recommended,
     fix,
     config = CaseType,
     version = "1.68.0",

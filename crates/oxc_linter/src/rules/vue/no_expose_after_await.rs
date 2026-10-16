@@ -58,6 +58,7 @@ declare_oxc_lint!(
     NoExposeAfterAwait,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Disallow asynchronously registered `expose`.",
 );

@@ -113,6 +113,7 @@ declare_oxc_lint!(
     NoAsyncInComputedProperties,
     vue,
     correctness,
+    recommended,
     none,
     config = NoAsyncInComputedProperties,
     version = "1.71.0",

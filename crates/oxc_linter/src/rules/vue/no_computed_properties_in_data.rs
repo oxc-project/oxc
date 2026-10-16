@@ -68,6 +68,7 @@ declare_oxc_lint!(
     NoComputedPropertiesInData,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Disallow accessing computed properties inside `data()`.",
 );

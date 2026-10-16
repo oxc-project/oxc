@@ -74,6 +74,7 @@ declare_oxc_lint!(
     RequireDefaultProp,
     vue,
     style,
+    recommended,
     version = "1.70.0",
     short_description = "Requires a default value to be set for props that are not marked as `required`.",
 );

@@ -80,6 +80,7 @@ declare_oxc_lint!(
     NoRequiredPropWithDefault,
     vue,
     suspicious,
+    recommended,
     suggestion,
     version = "1.17.0",
     short_description = "Enforce props with default values to be optional.",
