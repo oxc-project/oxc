@@ -1202,18 +1202,23 @@ fn is_stable_value<'a, 'b>(
 
             false
         }
-        AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {
-            let function_body = match node.kind() {
-                AstKind::ArrowFunctionExpression(arrow_func) => {
-                    Some(CallbackBody::Arrow(&arrow_func.body))
-                }
-                AstKind::Function(func) => func.body.as_deref().map(CallbackBody::Function),
-                _ => unreachable!(),
-            };
+        AstKind::ArrowFunctionExpression(arrow_func) => is_function_stable(
+            CallbackBody::Arrow(&arrow_func.body),
+            None,
+            ctx,
+            component_scope_id,
+            visited,
+        ),
+        AstKind::Function(func) => {
+            let Some(function_body) = func.body.as_deref() else { return false };
 
-            let Some(function_body) = function_body else { return false };
-
-            is_function_stable(function_body, None, ctx, component_scope_id, visited)
+            is_function_stable(
+                CallbackBody::Function(function_body),
+                None,
+                ctx,
+                component_scope_id,
+                visited,
+            )
         }
         _ => false,
     }
