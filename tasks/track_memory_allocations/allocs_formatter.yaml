@@ -5,7 +5,7 @@ checker.ts:
   sys deallocs: 19385
   sys alloc bytes: 6677609 # 6.68 MB
   sys peak growth: 2973842 # 2.97 MB
-  arena allocs: 1058563
+  arena allocs: 1058560
   arena reallocs: 927
   arena size: 89926872 # 89.93 MB
 
@@ -60,7 +60,7 @@ binder.ts:
   sys deallocs: 973
   sys alloc bytes: 345301 # 345.30 kB
   sys peak growth: 195197 # 195.20 kB
-  arena allocs: 62783
+  arena allocs: 62781
   arena reallocs: 38
   arena size: 5660960 # 5.66 MB
 
