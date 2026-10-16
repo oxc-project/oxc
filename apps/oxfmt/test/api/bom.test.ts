@@ -26,6 +26,25 @@ describe("BOM handling", () => {
     expect(result.code).toBe(expected);
   });
 
+  // Entries parse the BOM-stripped text, but error labels must point into the original source
+  it.each([
+    ["a.js", "let = ;"],
+    ["a.css", "a {"],
+    ["a.yaml", "a: ["],
+    ["a.graphql", "{ a"],
+    ["a.json", '{"a": }'],
+    ["a.json", '{"a": 1 + 2}'],
+    ["a.toml", "a = "],
+  ])("shifts error labels in %s past the BOM", async (filename, source) => {
+    const plain = await format(filename, source);
+    const withBom = await format(filename, "\uFEFF" + source);
+    // Labels are UTF-8 byte offsets, a BOM is 3 bytes
+    expect(withBom.errors[0].labels).toStrictEqual(
+      // oxlint-disable no-map-spread
+      plain.errors[0].labels.map((l) => ({ ...l, start: l.start + 3, end: l.end + 3 })),
+    );
+  });
+
   it("keeps a BOM-only file as-is", async () => {
     const result = await format("a.js", "\uFEFF");
     expect(result.errors).toStrictEqual([]);

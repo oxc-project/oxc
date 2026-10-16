@@ -110,13 +110,16 @@ pub fn parse_for_format<'a>(
     options: CssFormatOptions,
     root: CssRoot,
 ) -> Result<ParsedCss<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = split_bom(source_text);
+    let (has_bom, stripped) = split_bom(source_text);
 
     // A document root owns front matter;
     // the session's dispatcher decides whether its body actually formats (`write_front_matter`).
-    let PreparedSource { source, parse_source, front_matter } =
-        prepare_source(allocator, source_text);
-    let (stylesheet, comments) = parse_stylesheet(allocator, parse_source, options, root)?;
+    let PreparedSource { source, parse_source, front_matter } = prepare_source(allocator, stripped);
+    let (stylesheet, comments) =
+        parse_stylesheet(allocator, parse_source, options, root).map_err(|mut err| {
+            oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+            err
+        })?;
 
     Ok(ParsedCss { stylesheet, comments, source, has_bom, front_matter })
 }

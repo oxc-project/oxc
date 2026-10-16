@@ -70,8 +70,11 @@ pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<ParsedYaml<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let (root, source, comments) = parse_root(allocator, source_text)?;
+    let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    let (root, source, comments) = parse_root(allocator, stripped).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })?;
     Ok(ParsedYaml { root, comments, source, has_bom })
 }
 

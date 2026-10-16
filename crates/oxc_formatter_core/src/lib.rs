@@ -52,7 +52,7 @@ pub use session::embedded::{
     dispatch_fragment_ir, dispatch_ir, map_text_in_ir, push_text_with_literal_lines,
 };
 pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
-pub use source::{SourceText, SpanCursor};
+pub use source::{SourceText, SpanCursor, rebase_labels};
 pub use write::Format;
 pub use write::arguments::{Argument, Arguments};
 pub use write::buffer::ScratchBuffer;
