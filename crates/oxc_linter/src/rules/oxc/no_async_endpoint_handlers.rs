@@ -280,17 +280,12 @@ impl NoAsyncEndpointHandlers {
                     _ => {}
                 }
             }
-            func if utils::is_endpoint_handler(func) => {
-                match func {
-                    // `app.get('/', (async?) function (req, res) {}`
-                    Expression::FunctionExpression(f) => {
-                        self.check_function(ctx, endpoint, registered_at, id_name, f);
-                    }
-                    Expression::ArrowFunctionExpression(f) => {
-                        self.check_arrow(ctx, endpoint, registered_at, id_name, f);
-                    }
-                    _ => unreachable!(),
-                }
+            // `app.get('/', (async?) function (req, res) {}`
+            Expression::FunctionExpression(f) if utils::is_endpoint_handler(arg) => {
+                self.check_function(ctx, endpoint, registered_at, id_name, f);
+            }
+            Expression::ArrowFunctionExpression(f) if utils::is_endpoint_handler(arg) => {
+                self.check_arrow(ctx, endpoint, registered_at, id_name, f);
             }
             _ => {}
         }
