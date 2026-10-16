@@ -3,7 +3,7 @@ use std::{borrow::Cow, cmp::Ordering};
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, VariableDeclarator},
+    ast::{BindingIdentifier, BindingPattern, Expression, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -79,22 +79,22 @@ impl Rule for SortVars {
             return;
         }
 
-        let mut previous: Option<&VariableDeclarator> = None;
-        for current in var_decl
-            .declarations
-            .iter()
-            .filter(|decl| matches!(decl.id, BindingPattern::BindingIdentifier(_)))
-        {
+        let mut previous: Option<&BindingIdentifier> = None;
+        for current in &var_decl.declarations {
+            let Some(identifier) = current.id.get_binding_identifier() else {
+                continue;
+            };
             if let Some(previous) = previous {
                 self.check_declaration_sort_with_fix(
                     previous,
+                    identifier,
                     current,
                     &var_decl.declarations,
                     ctx,
                 );
             }
 
-            previous = Some(current);
+            previous = Some(identifier);
         }
     }
 }
@@ -102,8 +102,9 @@ impl Rule for SortVars {
 impl SortVars {
     fn check_declaration_sort_with_fix<'a>(
         &self,
-        previous: &VariableDeclarator<'a>,
-        current: &VariableDeclarator<'a>,
+        previous: &BindingIdentifier<'a>,
+        current: &BindingIdentifier<'a>,
+        declaration: &VariableDeclarator<'a>,
         declarations: &'a [VariableDeclarator<'a>],
         ctx: &LintContext<'a>,
     ) {
@@ -113,19 +114,17 @@ impl SortVars {
             return;
         }
 
-        let diagnostic = sort_vars_diagnostic(current.span);
-        if let Some((span, replacement)) = self.build_declarations_fix(current, declarations, ctx) {
+        let diagnostic = sort_vars_diagnostic(declaration.span);
+        if let Some((span, replacement)) =
+            self.build_declarations_fix(declaration, declarations, ctx)
+        {
             ctx.diagnostic_with_fix(diagnostic, |fixer| fixer.replace(span, replacement));
         } else {
             ctx.diagnostic(diagnostic);
         }
     }
 
-    fn get_sortable_name<'a>(&self, decl: &VariableDeclarator<'a>) -> Cow<'a, str> {
-        let BindingPattern::BindingIdentifier(ident) = &decl.id else {
-            unreachable!();
-        };
-
+    fn get_sortable_name<'a>(&self, ident: &BindingIdentifier<'a>) -> Cow<'a, str> {
         if self.ignore_case {
             return ident.name.as_str().cow_to_ascii_lowercase();
         }
@@ -176,12 +175,17 @@ impl SortVars {
             .collect();
         paddings.push("");
 
-        let mut sorted_declarations: Vec<_> = declarations.iter().collect();
-        sorted_declarations
-            .sort_unstable_by(|a, b| self.get_sortable_name(a).cmp(&self.get_sortable_name(b)));
+        let mut sorted_declarations = Vec::with_capacity(declarations.len());
+        for declaration in declarations {
+            let identifier = declaration.id.get_binding_identifier()?;
+            sorted_declarations.push((declaration, identifier));
+        }
+        sorted_declarations.sort_unstable_by(|(_, a), (_, b)| {
+            self.get_sortable_name(a).cmp(&self.get_sortable_name(b))
+        });
 
         let mut replacement = String::new();
-        for (declaration, padding) in sorted_declarations.into_iter().zip(paddings) {
+        for ((declaration, _), padding) in sorted_declarations.into_iter().zip(paddings) {
             replacement.push_str(ctx.source_range(declaration.span));
             replacement.push_str(padding);
         }
