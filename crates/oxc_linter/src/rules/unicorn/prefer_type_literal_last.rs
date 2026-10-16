@@ -79,7 +79,6 @@ impl Rule for PreferTypeLiteralLast {
                     } else {
                         ctx.diagnostic_with_fix(diagnostic, |fixer| {
                             let mut replacement = String::with_capacity(union.span.size() as usize);
-                            // Keep source order within each group and retain parentheses.
                             for group in 0..3 {
                                 for ty in &union.types {
                                     if type_group(ty) != group {
@@ -116,7 +115,6 @@ fn type_group(ty: &TSType<'_>) -> u8 {
 fn has_unsafe_comment(union: &TSUnionType<'_>, ctx: &LintContext<'_>) -> bool {
     let comments = ctx.comments();
     let first = comments.partition_point(|comment| comment.span.end <= union.span.start);
-    // A comment next to the union can describe the first or last member.
     if let Some(comment) = first.checked_sub(1).map(|index| &comments[index])
         && ctx
             .source_range(Span::new(comment.span.end, union.span.start))
