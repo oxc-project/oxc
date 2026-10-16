@@ -175,7 +175,6 @@ fn get_callback_info<'a>(
                 just_passed_bind = false;
             }
             AstKind::ConditionalExpression(c) => {
-                // The function is only a callback when it is a branch, not the test.
                 if c.test.span() == current_span {
                     return info;
                 }
