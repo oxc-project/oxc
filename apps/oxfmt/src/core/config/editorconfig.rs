@@ -87,11 +87,11 @@ pub fn resolve_editorconfig_overrides(
 /// Only applies values that are not already set in the user's config.
 /// NOTE: Only properties checked by [`resolve_editorconfig_overrides`] are applied here.
 pub fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties) {
-    #[expect(clippy::cast_possible_truncation)]
     if config.print_width.is_none()
         && let EditorConfigProperty::Value(MaxLineLength::Number(v)) = props.max_line_length
     {
-        config.print_width = Some(v as u16);
+        // Saturate an overflow, so validation rejects it as it does in `.oxfmtrc`
+        config.print_width = Some(u16::try_from(v).unwrap_or(u16::MAX));
     }
 
     if config.end_of_line.is_none()
@@ -114,16 +114,21 @@ pub fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigPropert
     }
 
     if config.tab_width.is_none() {
-        // Match Prettier's behavior: Only use `indent_size` when `useTabs: false`.
+        let value = |p: &EditorConfigProperty<usize>| match p {
+            // Same saturation as `print_width`
+            EditorConfigProperty::Value(v) => Some(u8::try_from(*v).unwrap_or(u8::MAX)),
+            _ => None,
+        };
+        let indent_size = value(&props.indent_size);
+        let tab_width = value(&props.tab_width);
+        // Match Prettier's behavior: Only prefer `indent_size` when `useTabs: false`.
         // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/config/editorconfig/editorconfig-to-prettier.js#L25-L30
-        #[expect(clippy::cast_possible_truncation)]
-        if config.use_tabs == Some(false)
-            && let EditorConfigProperty::Value(size) = props.indent_size
-        {
-            config.tab_width = Some(size as u8);
-        } else if let EditorConfigProperty::Value(size) = props.tab_width {
-            config.tab_width = Some(size as u8);
-        }
+        // Otherwise `tab_width`, which defaults to `indent_size` per the EditorConfig spec.
+        config.tab_width = if config.use_tabs == Some(false) {
+            indent_size.or(tab_width)
+        } else {
+            tab_width.or(indent_size)
+        };
     }
 
     if config.insert_final_newline.is_none()
