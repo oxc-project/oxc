@@ -157,7 +157,6 @@ impl NoCallbackInPromise {
         // Check if the parent is a CallExpression with then/catch
         let parent = ctx.nodes().parent_node(node.id());
         if let Some(call_expr) = parent.kind().as_call_expression() {
-            // Check if this function is one of the arguments
             let is_argument = call_expr
                 .arguments
                 .iter()

@@ -179,7 +179,6 @@ impl Rule for DisplayName {
                     continue; // Name is valid displayName
                 }
 
-                // Check if this symbol has a displayName assignment via semantic references
                 if !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx) {
                     components_to_report.push((component_info.span, component_info.is_context));
                 }
@@ -192,12 +191,10 @@ impl Rule for DisplayName {
                         check_context_assignment_references(symbol_id, decl_node, ctx)
                     });
 
-                if let Some(component_info) = context_assignment_info {
-                    // Check if this symbol has a displayName assignment
-                    if !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx)
-                    {
-                        components_to_report.push((component_info.span, component_info.is_context));
-                    }
+                if let Some(component_info) = context_assignment_info
+                    && !has_display_name_via_semantic(symbol_id, component_info.name.as_ref(), ctx)
+                {
+                    components_to_report.push((component_info.span, component_info.is_context));
                 }
             }
         }
@@ -355,7 +352,6 @@ fn has_display_name_via_semantic(
 ) -> bool {
     let component_name_str = component_name.map(CompactStr::as_str);
 
-    // Check all references to this symbol
     for reference in ctx.scoping().get_resolved_references(symbol_id) {
         if is_display_name_assignment_for_reference(reference, component_name_str, ctx) {
             return true;
@@ -383,7 +379,6 @@ fn check_context_assignment_references(
         None
     };
 
-    // Check all write references to this symbol
     for reference in ctx.scoping().get_resolved_references(symbol_id) {
         if !reference.is_write() {
             continue;
@@ -426,7 +421,6 @@ fn is_react_component_node<'a>(
             // That will be handled by checking write references in Phase 1
             decl.init.as_ref()?;
 
-            // Check for createContext
             if let Some(Expression::CallExpression(call)) = &decl.init
                 && is_create_context_call(call)
             {
@@ -477,7 +471,6 @@ fn is_react_component_node<'a>(
                     });
                 }
 
-                // Check for createReactClass
                 if callee_name == "createClass" || callee_name == "createReactClass" {
                     if !has_create_react_class_display_name(call, ignore_transpiler_name) {
                         return Some(ReactComponentInfo {

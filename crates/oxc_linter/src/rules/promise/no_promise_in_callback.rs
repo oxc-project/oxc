@@ -139,7 +139,6 @@ fn is_within_promise_handler<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> b
         return false;
     }
 
-    // Check if the parent is a CallExpression
     let parent = ctx.nodes().parent_node(node.id());
     let AstKind::CallExpression(call_expr) = parent.kind() else {
         return false;

@@ -389,25 +389,21 @@ pub fn get_array_method_info<'a>(
                 };
 
                 // Array.from
-                if callee.is_specific_member_access("Array", "from") {
-                    // Check that current node is parent's second argument
-                    if call.arguments.len() == 2
-                        && let Some(call_arg) = call.arguments[1].as_expression()
-                        && call_arg.span() == current_node.kind().span()
-                    {
-                        return Some((callee.span(), "from"));
-                    }
+                if callee.is_specific_member_access("Array", "from")
+                    && call.arguments.len() == 2
+                    && let Some(call_arg) = call.arguments[1].as_expression()
+                    && call_arg.span() == current_node.kind().span()
+                {
+                    return Some((callee.span(), "from"));
                 }
 
                 // Array.fromAsync
-                if callee.is_specific_member_access("Array", "fromAsync") {
-                    // Check that current node is parent's second argument
-                    if call.arguments.len() == 2
-                        && let Some(call_arg) = call.arguments[1].as_expression()
-                        && call_arg.span() == current_node.kind().span()
-                    {
-                        return Some((callee.span(), "fromAsync"));
-                    }
+                if callee.is_specific_member_access("Array", "fromAsync")
+                    && call.arguments.len() == 2
+                    && let Some(call_arg) = call.arguments[1].as_expression()
+                    && call_arg.span() == current_node.kind().span()
+                {
+                    return Some((callee.span(), "fromAsync"));
                 }
 
                 // "methods",
@@ -415,12 +411,11 @@ pub fn get_array_method_info<'a>(
                 let array_method = array_method.as_str()?;
 
                 if TARGET_METHODS.contains(&array_method)
-                    // Check that current node is parent's first argument
                     && call.arguments.len() == 1
                     && let Some(call_arg) = call.arguments.first()
-                        && call_arg
-                            .as_expression()
-                            .is_some_and(|arg| arg.span() == current_node.kind().span())
+                    && call_arg
+                        .as_expression()
+                        .is_some_and(|arg| arg.span() == current_node.kind().span())
                 {
                     return Some((array_method_span, array_method));
                 }
