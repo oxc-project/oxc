@@ -322,7 +322,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.context_add(Context::In, Self::parse_function_body),
             )
         } else {
-            // Remove TopLevel context for arrow function expression body
             let expr = self.context_remove(Context::TopLevel, |p| {
                 p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
             });
