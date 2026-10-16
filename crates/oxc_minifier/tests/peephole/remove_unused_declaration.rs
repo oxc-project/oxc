@@ -166,6 +166,77 @@ fn remove_unused_variable_declaration() {
 }
 
 #[test]
+fn remove_unused_object_pattern_properties() {
+    let options = CompressOptions::smallest();
+    test_options(
+        "let { a, b } = { a: 0, b: 1 }; export { b }",
+        "let { b } = { a: 0, b: 1 }; export { b }",
+        &options,
+    );
+    test_options("let { a } = { a: 0 }", "", &options);
+    test_options("let { a, b } = { a: 0, b: 1 }", "", &options);
+    test_options("let { a } = { a: foo() }", "foo()", &options);
+    test_options(
+        "let { a = 1, b } = { b: 2 }; export { b }",
+        "let { b } = { b: 2 }; export { b }",
+        &options,
+    );
+    // TDZ errors are ignored.
+    test_options(
+        "let { a = b, b } = { b: 1 }; export { b }",
+        "let { b } = { b: 1 }; export { b }",
+        &options,
+    );
+    // The reference in the dropped default value is removed too.
+    test_options("let x = 1; let { a = x } = {}", "", &options);
+    test_options(
+        "const { a, 'b': b, c } = { a() {}, ...d, c: 1 }; export { b }",
+        "const { b } = { a() {}, ...d, c: 1 }; export { b }",
+        &options,
+    );
+    test_options(
+        "let { a } = { a: 0 }, { b, c } = { b: 1, c: 2 }; export { c }",
+        "let { c } = { b: 1, c: 2 }; export { c }",
+        &options,
+    );
+    test_options(
+        "export function f() { let { a, b } = { a: 0, b: 1 }; return b }",
+        "export function f() { let { b } = { a: 0, b: 1 }; return b }",
+        &options,
+    );
+    test_same_options_source_type("var { a } = { a: 0 }", SourceType::script(), &options);
+
+    // Reading from an unknown value may have side effects.
+    test_same_options("let { a, b } = c; export { b }", &options);
+    // Removing a property changes the rest object.
+    test_same_options("let { a, ...b } = { a: 0, c: 1 }; export { b }", &options);
+    // An accessor or `__proto__` in the literal can run code when a property is read.
+    test_same_options("let { a } = { get a() { foo() } }", &options);
+    test_same_options("let { a } = { set a(v) { foo() } }", &options);
+    test_same_options("let { a } = { __proto__: foo }", &options);
+    test_same_options("let { a, b } = { '__proto__': x, b: 1 }; export { b }", &options);
+    // A computed `__proto__` key is a plain property.
+    test_options(
+        "let { a, b } = { ['__proto__']: x, b: 1 }; export { b }",
+        "let { b } = { ['__proto__']: x, b: 1 }; export { b }",
+        &options,
+    );
+    test_same_options("let { a, b } = { get c() {}, b: 1 }; export { b }", &options); // can be improved
+    // The default value is evaluated when the property is missing.
+    test_same_options("let { a = foo() } = {}", &options);
+    test_same_options("let { [foo]: a } = {}", &options);
+    test_same_options("let { a: { b } } = { a: {} }", &options);
+    test_same_options("export let { a, b } = { a: 0, b: 1 }", &options);
+    test_same_options("let { a, b } = { a: 0, b: 1 }; a = 2; export { b }", &options);
+    test_same_options("var { a, b } = { a: 0, b: 1 }; export { b }; eval('a')", &options);
+    test_options(
+        "var { a, b } = { a: 0, b: 1 }; export { b }",
+        "var { b } = { a: 0, b: 1 }; export { b }",
+        &options,
+    );
+}
+
+#[test]
 fn remove_unused_pure_iife_init() {
     // https://github.com/oxc-project/oxc/issues/17480
     test_smallest("var x = /* @__PURE__ */ foo()", "");
