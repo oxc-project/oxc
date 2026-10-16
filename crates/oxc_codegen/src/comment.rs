@@ -141,11 +141,12 @@ impl Codegen<'_> {
         newline_after: bool,
     ) {
         if self.source_text.is_some()
-            && let Some(comment) = self.annotation_comments.get(&start).cloned()
-            && kind.matches(&comment)
+            && let Some(comment) = self.annotation_comments.get(&start)
+            && kind.matches(comment)
             // Inline line comments would swallow the rest of the line.
             && (!comment.is_line() || newline_after)
         {
+            let comment = comment.clone();
             self.annotation_comments.remove(&start);
             self.print_comment(&comment);
             if newline_after {
