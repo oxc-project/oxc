@@ -120,8 +120,8 @@ where
         return None;
     }
 
-    let mut total_tested_file_count = 0;
-    let mut total_failed_file_count = 0;
+    let mut total_tested_count = 0;
+    let mut total_passed_count = 0;
     let mut total_skipped_files = vec![];
     let mut total_non_idempotent_files = vec![];
     let mut total_variant_mismatch_files = vec![];
@@ -132,16 +132,10 @@ where
     failed_reports.push_str("| :-------- | :--------------: | :---------: |\n");
     for dir in &test_dirs {
         let inputs = collect_test_files(dir, &format_root, config.ignore, None);
-        // `None`: no spec call targets this language config (shared dir, or every combination skipped).
-        // The files were never exercised, keep them out of the totals instead of counting them as passed.
-        let Some(results) =
-            test_snapshots(config, &mut format, dir, &format_root, &inputs, None, false)
-        else {
-            continue;
-        };
+        let results = test_snapshots(config, &mut format, dir, &format_root, &inputs, None, false);
 
-        total_tested_file_count += results.tested;
-        total_failed_file_count += results.failed.len();
+        total_tested_count += results.tested;
+        total_passed_count += results.passed;
         total_skipped_files.extend(results.skipped);
         total_non_idempotent_files.extend(results.non_idempotent);
         total_variant_mismatch_files.extend(results.variant_mismatch);
@@ -158,13 +152,12 @@ where
         }
     }
 
-    let passed = total_tested_file_count - total_failed_file_count;
     #[expect(clippy::cast_precision_loss)]
-    let percentage = (passed as f64 / total_tested_file_count as f64) * 100.0;
-    // Files the formatter cannot parse are counted as passed above (they have no diff to report);
-    // surface them so the gap is visible.
+    let percentage = (total_passed_count as f64 / total_tested_count as f64) * 100.0;
+    // Counted per `(input, option set)` run.
+    // Runs the formatter cannot parse are not passed; they have no diff to report, so they are listed separately.
     let summary = format!(
-        "{} compatibility: {passed}/{total_tested_file_count} ({percentage:.2}%), {} files skipped",
+        "{} compatibility: {total_passed_count}/{total_tested_count} ({percentage:.2}%), {} files skipped",
         config.language,
         total_skipped_files.len()
     );
@@ -261,8 +254,10 @@ fn collect_test_files(
 /// Per-dir tallies, keyed by the suite-relative report path (see [`report_path`]).
 #[derive(Default)]
 struct SnapshotResults {
-    /// Files plus snippets that were exercised
+    /// `(input, option set)` runs that were exercised, inputs are files plus snippets
     tested: usize,
+    /// `(input, option set)` runs that matched the snapshot
+    passed: usize,
     /// `(path, (failed_count, passed_count, diff_ratio))` per file with at least one mismatch
     failed: Vec<(String, (usize, usize, f32))>,
     /// Files the formatter failed to parse for at least one options combination
@@ -275,8 +270,6 @@ struct SnapshotResults {
 }
 
 /// Run the formatter and compare the output with the Prettier's snapshot.
-///
-/// Returns `None` when no spec call applies to this language config.
 fn test_snapshots<F>(
     config: &ConformanceConfig,
     format: &mut F,
@@ -285,7 +278,7 @@ fn test_snapshots<F>(
     test_files: &[PathBuf],
     filter: Option<&str>,
     debug: bool,
-) -> Option<SnapshotResults>
+) -> SnapshotResults
 where
     F: FnMut(&Path, &str, &OptionSet) -> Option<String>,
 {
@@ -365,11 +358,7 @@ where
         }
     }
 
-    // Nothing here targets this language config (shared dir, every combination skipped, ...).
-    if results.tested == 0 {
-        return None;
-    }
-    Some(results)
+    results
 }
 
 /// Result of one (input, option set) run.
@@ -492,10 +481,12 @@ where
 struct CaseTally {
     total: usize,
     failed: usize,
+    passed: usize,
     skipped: bool,
     non_idempotent: bool,
     second_pass_parse_failed: bool,
     variant_mismatch: Vec<&'static str>,
+    /// Sum of line similarity, a matched case counts as `1.0`
     total_diff_ratio: f32,
 }
 
@@ -506,6 +497,9 @@ impl CaseTally {
         if let Some(ratio) = outcome.mismatch {
             self.failed += 1;
             self.total_diff_ratio += ratio;
+        } else if !outcome.skipped {
+            self.passed += 1;
+            self.total_diff_ratio += 1.0;
         }
         if let Some(second_pass_parse_failed) = outcome.non_idempotent {
             self.non_idempotent = true;
@@ -518,20 +512,14 @@ impl CaseTally {
         }
     }
 
-    /// Records the row; an input with no option set (no spec call for this language) is not counted.
+    /// Records the row.
     fn finish(self, report_path: String, results: &mut SnapshotResults) {
-        if self.total == 0 {
-            return;
-        }
-        results.tested += 1;
+        results.tested += self.total;
+        results.passed += self.passed;
         if self.failed != 0 {
-            let passed = self.total - self.failed;
             #[expect(clippy::cast_precision_loss)]
-            let max_diff_ratio = self.total as f32;
-            results.failed.push((
-                report_path.clone(),
-                (self.failed, passed, self.total_diff_ratio / max_diff_ratio),
-            ));
+            let ratio = self.total_diff_ratio / self.total as f32;
+            results.failed.push((report_path.clone(), (self.failed, self.passed, ratio)));
         }
         if self.skipped {
             results.skipped.push(report_path.clone());
