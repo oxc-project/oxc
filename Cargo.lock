@@ -1728,9 +1728,9 @@ dependencies = [
 
 [[package]]
 name = "oxc-toml"
-version = "0.15.0"
+version = "0.15.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7456e981b4eef3e7c557a302720d1d2f8308ef8cd49ff51f6c00b45637e5bc08"
+checksum = "f321c22ccee109a6fe0aef08d1521af693e4b178dcb7259137ff08f8ce5388d8"
 
 [[package]]
 name = "oxc-yaml-parser"
