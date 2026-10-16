@@ -117,6 +117,7 @@ pub fn parse_for_format<'a>(
     let PreparedSource { source, parse_source, front_matter } = prepare_source(allocator, stripped);
     let (stylesheet, comments) =
         parse_stylesheet(allocator, parse_source, options, root).map_err(|mut err| {
+            oxc_formatter_core::restore_crlf_labels(&mut err.labels, stripped);
             oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
             err
         })?;
