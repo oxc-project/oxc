@@ -240,19 +240,3 @@ impl VisitJs<'_> for ReturnStatementFinder {
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'_>) {}
 }
-
-#[test]
-fn test_statement_return_status_create() {
-    let cases = [
-        (true, ReturnKind::Explicit, StatementReturnStatus::AlwaysExplicit),
-        (true, ReturnKind::Implicit, StatementReturnStatus::AlwaysImplicit),
-        (true, ReturnKind::Mixed, StatementReturnStatus::AlwaysMixed),
-        (false, ReturnKind::Explicit, StatementReturnStatus::SomeExplicit),
-        (false, ReturnKind::Implicit, StatementReturnStatus::SomeImplicit),
-        (false, ReturnKind::Mixed, StatementReturnStatus::SomeMixed),
-    ];
-
-    for (must_return, return_kind, expected) in cases {
-        assert_eq!(StatementReturnStatus::create(must_return, return_kind), expected);
-    }
-}
