@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
-    AstKind, FunctionKind,
+    AstKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
         ObjectPropertyKind, ReturnStatement,
@@ -451,15 +451,14 @@ fn has_reads_after(
         .any(|node| node.span().end > span.end)
 }
 
-fn get_map_callback<'a, 'b>(call_expr: &'b CallExpression<'a>) -> Option<FunctionKind<'a, 'b>> {
+fn get_map_callback<'a, 'b>(call_expr: &'b CallExpression<'a>) -> Option<&'b Expression<'a>> {
     if !is_method_call(call_expr, None, Some(&MAP_FN_NAMES), Some(1), Some(1)) {
         return None;
     }
 
     let arg = call_expr.arguments.first()?.as_expression()?.get_inner_expression();
     match arg {
-        Expression::ArrowFunctionExpression(arrow) => Some(FunctionKind::Arrow(arrow)),
-        Expression::FunctionExpression(function) => Some(FunctionKind::Function(function)),
+        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => Some(arg),
         _ => None,
     }
 }
@@ -589,13 +588,9 @@ impl<'a, 'ctx, F> SpreadInReturnVisitor<'a, 'ctx, F>
 where
     F: FnMut(Spread<'a, '_>),
 {
-    fn iter_spreads(
-        ctx: &'ctx LintContext<'a>,
-        map_cb: FunctionKind<'a, '_>,
-        cb: F,
-    ) -> Option<Self> {
-        let (mut visitor, body) = match map_cb {
-            FunctionKind::Arrow(f) => {
+    fn iter_spreads(ctx: &'ctx LintContext<'a>, map_cb: &Expression<'a>, cb: F) -> Option<Self> {
+        let mut visitor = match map_cb {
+            Expression::ArrowFunctionExpression(f) => {
                 let mut visitor = Self {
                     ctx,
                     cb,
@@ -607,22 +602,19 @@ where
                 visitor.visit_arrow_function_body(&f.body);
                 return Some(visitor);
             }
-            FunctionKind::Function(f) => {
-                let body = f.body.as_deref()?;
-                (
-                    Self {
-                        ctx,
-                        cb,
-                        cb_scope_id: f.scope_id(),
-                        is_in_return: false,
-                        visiting_declarations: Vec::new(),
-                        return_span: None,
-                    },
-                    body,
-                )
-            }
+            Expression::FunctionExpression(f) => Self {
+                ctx,
+                cb,
+                cb_scope_id: f.scope_id(),
+                is_in_return: false,
+                visiting_declarations: Vec::new(),
+                return_span: None,
+            },
+            _ => unreachable!(),
         };
 
+        let Expression::FunctionExpression(function) = map_cb else { unreachable!() };
+        let body = function.body.as_deref()?;
         visitor.visit_function_body(body);
         Some(visitor)
     }
