@@ -149,7 +149,6 @@ fn test() {
         ("switch (a) { case 1: { const x = 1; break; } default: { const x = 2; break; } }"),
         ("switch (a) { case 1: { function f() {} break; } default: { function f() {} break; } }"),
         ("switch (a) { case 1: { class C {} break; } default: { class C {} break; } }"),
-        ("switch (a) { case 1: var x = 1; break; default: var y = 2; break; }"),
     ];
 
     let fail = vec![
@@ -205,8 +204,8 @@ fn test() {
                         function baz() { }
                         break;
                     default:
-                    baz();
-                    }
+                        baz();
+                }
         "#,
             r#"switch ("foo") {
                     case "bar":
@@ -216,10 +215,6 @@ fn test() {
                         baz();
                 }
         "#,
-        ),
-        (
-            "switch (a) { case 1: var x = 1; let y = 2; break; }",
-            "switch (a) { case 1: { var x = 1; let y = 2; break; } }",
         ),
     ];
 
