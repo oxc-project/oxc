@@ -3,14 +3,11 @@ use oxc_span::{GetSpan, SPAN, Span};
 use crate::{
     ast_nodes::AstNode,
     format_args,
-    formatter::{
-        prelude::*,
-        trivia::{FormatCommentBeforeContent, format_trailing_comments},
-    },
+    formatter::{prelude::*, trivia::format_trailing_comments},
     options::FormatTrailingCommas,
     utils::{
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        statement_body::write_trailing_comments_before,
+        statement_body::write_trailing_comments,
     },
     write,
 };
@@ -109,7 +106,7 @@ pub fn write_array_node<'a, T>(
             join.entry(
                 entry_span,
                 &format_once(|f| {
-                    write_hole_slot_comments(span.start, f);
+                    write_unclaimed_comments(span.start, f);
                     write!(f, ",");
                     if let Some(following) = following {
                         write!(f, format_trailing_comments(range, span, following));
@@ -125,35 +122,13 @@ pub fn write_array_node<'a, T>(
     }
 }
 
-/// Comments in a hole's slot, before its `,` at `comma`.
-/// A hole has no content, so the `,` follows a block comment directly (`[a, /* c */, b]`),
-/// as a separator follows any content (`[a /* c */, b]`); an own-line comment keeps its line.
-///
-/// Not [`write_trailing_comments_before`] like an empty for-head slot:
-/// it would space a comment away from the `[` (`[ /* c */, b]`),
-/// and let a line comment right after the `[` ride past the hole's `,` (`[// c` + break + `, b]` -> `, // c`).
-fn write_hole_slot_comments(comma: u32, f: &mut JsFormatter<'_, '_>) {
-    let comments = f.context().comments().comments_before(comma);
-    for (index, comment) in comments.iter().enumerate() {
-        // A line comment ends with a hard break
-        write!(f, FormatCommentBeforeContent::new(comment));
-        if comment.is_block() {
-            if comment.followed_by_newline() {
-                write!(f, hard_line_break());
-            } else if index + 1 < comments.len() {
-                write!(f, space());
-            }
-        }
-    }
-}
-
-/// Comments that no element consumed (e.g. after a trailing hole: `[,, /* comment */]`)
-/// would otherwise escape the brackets; print them before the `]` at `end`,
-/// trailing the last `,` like after any separator (`[, , /* comment */]`).
+/// Prints the comments no element consumed before `end`, in place:
+/// a hole's slot before its `,` (`[a, /* comment */, b]`),
+/// or the comments before the `]` that would otherwise escape the brackets (`[, , /* comment */]`).
 pub fn write_unclaimed_comments(end: u32, f: &mut JsFormatter<'_, '_>) {
-    let Some(first) = f.context().comments().comments_before(end).first() else { return };
+    let comments = f.context().comments().comments_before(end);
     // Discarded flush obligation:
     // a riding line comment's `expand_parent` breaks the array group,
-    // so a real break already follows before the `]`
-    let _line_comment_riding = write_trailing_comments_before(first.span.start, b']', f);
+    // so a real break already follows the `,` or comes before the `]`
+    let _line_comment_riding = write_trailing_comments(comments, f);
 }

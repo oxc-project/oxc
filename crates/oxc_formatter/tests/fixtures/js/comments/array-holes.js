@@ -43,3 +43,8 @@ const m = [/** @type {X} */ (a) /* comment */, , b];
 const n = [/* lead */, 2];
 const o = [1, /* c1 */, /* c2 */, 4];
 const p = [1 /* t */, /* slot */, 3];
+// Right after the `[`, a same-line run ending in a line comment moves to its own line as a whole
+const q = [// comment
+, b];
+const r = [/* a */ // b
+, b];
