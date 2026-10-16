@@ -128,10 +128,10 @@ impl Rule for PreferAt {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ComputedMemberExpression(computed) if !is_assignment_target(node, ctx) => {
-                self.handle_computed_member(computed, node, ctx);
+                self.handle_computed_member(computed, ctx);
             }
             AstKind::CallExpression(call) if !is_assignment_target(node, ctx) => {
-                self.check_call_expression(call, node, ctx);
+                self.check_call_expression(call, ctx);
             }
             _ => {}
         }
@@ -142,12 +142,11 @@ impl PreferAt {
     fn handle_computed_member<'a>(
         &self,
         computed: &ComputedMemberExpression<'a>,
-        node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
         // Check if this is accessing [0] on various expression types
         if computed.expression.get_inner_expression().is_number_0()
-            && Self::check_slice_with_zero_index(computed, node.id(), ctx)
+            && Self::check_slice_with_zero_index(computed, ctx)
         {
             return;
         }
@@ -209,7 +208,6 @@ impl PreferAt {
 
     fn check_slice_with_zero_index<'a>(
         computed: &ComputedMemberExpression<'a>,
-        node_id: oxc_syntax::node::NodeId,
         ctx: &LintContext<'a>,
     ) -> bool {
         let call_expr = match &computed.object {
@@ -233,18 +231,13 @@ impl PreferAt {
             call_expr.callee.get_member_expr()
             && static_member.property.name == "slice"
         {
-            return Self::check_slice_index_access(call_expr, computed, node_id, ctx);
+            return Self::check_slice_index_access(call_expr, computed, ctx);
         }
 
         false
     }
 
-    fn check_call_expression<'a>(
-        &self,
-        call_expr: &CallExpression<'a>,
-        node: &AstNode<'a>,
-        ctx: &LintContext<'a>,
-    ) {
+    fn check_call_expression<'a>(&self, call_expr: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(MemberExpression::StaticMemberExpression(static_member)) =
             call_expr.callee.get_member_expr()
         else {
@@ -261,15 +254,6 @@ impl PreferAt {
                 check_lodash_last(&self.get_last_element_functions, call_expr, static_member, ctx);
             }
             _ => {}
-        }
-
-        // Check for array.slice(-N)[0]
-        let parent_kind = ctx.nodes().parent_kind(node.id());
-        if let AstKind::ComputedMemberExpression(computed) = parent_kind
-            && computed.expression.get_inner_expression().is_number_0()
-        {
-            let parent_id = ctx.nodes().parent_id(node.id());
-            Self::check_slice_index_access(call_expr, computed, parent_id, ctx);
         }
     }
 
@@ -465,27 +449,9 @@ impl PreferAt {
     fn check_slice_index_access<'a>(
         call_expr: &CallExpression<'a>,
         computed: &ComputedMemberExpression<'a>,
-        computed_node_id: oxc_syntax::node::NodeId,
         ctx: &LintContext<'a>,
     ) -> bool {
         if computed.optional {
-            return false;
-        }
-
-        // Skip if this computed member is being assigned to or deleted
-        let computed_parent_kind = ctx.nodes().parent_kind(computed_node_id);
-        if matches!(
-            computed_parent_kind,
-            AstKind::AssignmentExpression(_)
-                | AstKind::UpdateExpression(_)
-                | AstKind::ArrayPattern(_)
-        ) {
-            return false;
-        }
-
-        if let AstKind::UnaryExpression(unary) = computed_parent_kind
-            && unary.operator == UnaryOperator::Delete
-        {
             return false;
         }
 
@@ -528,12 +494,7 @@ impl PreferAt {
                 if is_arguments_object(&static_member.object) {
                     return fixer.noop();
                 }
-                create_at_fix(
-                    &fixer,
-                    static_member.object.span(),
-                    Span::new(static_member.object.span().start, computed.span().end),
-                    value,
-                )
+                create_at_fix(&fixer, static_member.object.span(), computed.span(), value)
             });
             return true;
         }
@@ -553,11 +514,9 @@ fn is_assignment_target<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
     matches!(
         parent_kind,
-        AstKind::UpdateExpression(_)
-            | AstKind::ArrayPattern(_)
-            | AstKind::AssignmentTargetWithDefault(_)
-            | AstKind::ArrayAssignmentTarget(_)
+        AstKind::UpdateExpression(_) | AstKind::ArrayPattern(_) | AstKind::ArrayAssignmentTarget(_)
     ) || matches!(parent_kind, AstKind::UnaryExpression(unary) if unary.operator == UnaryOperator::Delete)
+        || matches!(parent_kind, AstKind::AssignmentTargetWithDefault(target) if target.binding.span() == node.span())
         || matches!(parent_kind, AstKind::AssignmentExpression(assign_expr) if matches!(&assign_expr.left, AssignmentTarget::ComputedMemberExpression(target) if target.span == node.span()))
 }
 
@@ -945,6 +904,10 @@ fn test() {
         ("string['substring'](index, index + 1)", None),
         ("new string.substring(index, index + 1)", None),
         ("string.substring(9007199254740991, 9007199254740992)", None),
+        ("array.slice(-1)[0] = value", None),
+        ("([array.slice(-1)[0]] = values)", None),
+        ("([array.slice(-1)[0] = value] = [])", None),
+        ("({a: array.slice(-1)[0] = value} = {})", None),
     ];
 
     let fail = vec![
@@ -1084,6 +1047,14 @@ fn test() {
         ("string.substring(object.index, object.index + 1)", None),
         ("result[0] = value.substring(index, index + 1);", None),
         ("result[0] = array[array.length - 1];", None),
+        ("export function f(arr) { return arr.slice(-1)[0]; }", None),
+        ("export function f(arr) { let k; k = arr.slice(-1)[0]; return k; }", None),
+        ("result = array?.slice(-1)[0]", None),
+        ("result += array.slice(-1)[0]", None),
+        ("result = (array.slice(-1))[0]", None),
+        ("result = array.slice(-2, -1)[0]", None),
+        ("([a = array.slice(-1)[0]] = [])", None),
+        ("({a: b = array.slice(-1)[0]} = {})", None),
     ];
 
     let fix = vec![
@@ -1171,6 +1142,22 @@ fn test() {
         ),
         ("result[0] = value.substring(index, index + 1);", "result[0] = value.at(index);", None),
         ("result[0] = array[array.length - 1];", "result[0] = array.at(-1);", None),
+        (
+            "export function f(arr) { return arr.slice(-1)[0]; }",
+            "export function f(arr) { return arr.at(-1); }",
+            None,
+        ),
+        (
+            "export function f(arr) { let k; k = arr.slice(-1)[0]; return k; }",
+            "export function f(arr) { let k; k = arr.at(-1); return k; }",
+            None,
+        ),
+        ("result += array.slice(-1)[0]", "result += array.at(-1)", None),
+        ("result = array.slice(-2, -1)[0]", "result = array.at(-2)", None),
+        ("result = (array.slice(-1))[0]", "result = array.at(-1)", None),
+        ("result = ((array.slice(-1)))[0]", "result = array.at(-1)", None),
+        ("([a = array.slice(-1)[0]] = [])", "([a = array.at(-1)] = [])", None),
+        ("({a: b = array.slice(-1)[0]} = {})", "({a: b = array.at(-1)} = {})", None),
     ];
 
     Tester::new(PreferAt::NAME, PreferAt::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
