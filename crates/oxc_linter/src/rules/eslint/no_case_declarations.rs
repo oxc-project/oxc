@@ -95,7 +95,7 @@ impl Rule for NoCaseDeclarations {
                         let span = Span::new(start, end);
                         report_with_add_braces_suggestion(ctx, span, switch_case);
                     }
-                    Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
+                    Statement::VariableDeclaration(var) => {
                         let start = var.span.start;
                         let len = match var.kind {
                             VariableDeclarationKind::Const | VariableDeclarationKind::Using => 5,
@@ -106,7 +106,7 @@ impl Rule for NoCaseDeclarations {
                                     .trim_end()
                                     .len() as u32
                             }
-                            VariableDeclarationKind::Var => unreachable!(),
+                            VariableDeclarationKind::Var => continue,
                         };
                         let end = start + len;
                         let span = Span::new(start, end);
