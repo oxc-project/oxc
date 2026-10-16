@@ -143,6 +143,24 @@ pub fn write_leading_comments(
     }
 }
 
+/// Emit the comments in an array hole's slot, before its `,` at `comma`.
+/// Like [`write_leading_comments`], except that a hole has no value:
+/// the `,` follows a block comment directly (`[a, /* c */, b]`), as a separator follows any value (`[a /* c */, b]`),
+/// even an own-line one, and only a line comment ends its line.
+pub fn write_hole_comments(comma: u32, f: &mut JsonFormatter<'_, '_>) {
+    let comments = f.context().comments().take_before(comma);
+    let Some((last, rest)) = comments.split_last() else { return };
+    // An own-line comment keeps its line, the glued `,` brings no break to expand the array
+    if comments[0].preceded_by_newline() {
+        write!(f, expand_parent());
+    }
+    write_leading_comments(rest, last.span.start, f);
+    write_comment_text(last, f);
+    if last.is_line() {
+        write!(f, hard_line_break());
+    }
+}
+
 /// Recognizes `\n`, lone `\r`, `\r\n`, and LS(U+2028) / PS(U+2029), the full ECMAScript line-terminator set.
 ///
 /// LS/PS recognition is unconditional (no `JsonVariant` threading), keeping this a pure `&[u8]` helper.
