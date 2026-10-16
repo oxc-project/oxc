@@ -156,6 +156,12 @@ fn format(source_text: &str) -> String {
 ///     // ... modify AST ...
 /// }
 /// ```
+///
+/// ## Post-processing
+///
+/// If you need to modify the AST after dead code has been removed, implement `post_process_variant` method.
+///
+/// `post_process_variant` is called for each variant, *after* minifier is applied to AST, and before it's printed.
 pub trait VariantGenerator<const FLAG_COUNT: usize>: Sync {
     /// Names of flag consts in code.
     const FLAG_NAMES: [&str; FLAG_COUNT];
@@ -184,6 +190,19 @@ pub trait VariantGenerator<const FLAG_COUNT: usize>: Sync {
     #[expect(unused_variables)]
     #[inline]
     fn pre_process_variant<'a>(
+        &self,
+        program: &mut Program<'a>,
+        flags: [bool; FLAG_COUNT],
+        allocator: &'a Allocator,
+    ) {
+    }
+
+    /// Perform optional post-processing on AST of a variant after it's minified, before it's printed.
+    ///
+    /// By default, does nothing.
+    #[expect(unused_variables)]
+    #[inline]
+    fn post_process_variant<'a>(
         &self,
         program: &mut Program<'a>,
         flags: [bool; FLAG_COUNT],
@@ -220,11 +239,13 @@ pub trait VariantGenerator<const FLAG_COUNT: usize>: Sync {
                 // Replace flags comment blocks
                 code = replace_flag_comments(&code, flags, &Self::FLAG_NAMES);
 
-                // Parse, preprocess, minify, and print
+                // Parse, preprocess, minify, postprocess, and print
                 let allocator = Allocator::new();
                 let mut program = parse_js(&code, &allocator);
                 self.pre_process_variant(&mut program, flags, &allocator);
-                print_minified(&mut program, &allocator)
+                minify(&mut program, &allocator);
+                self.post_process_variant(&mut program, flags, &allocator);
+                print_minified(&program)
             })
             .collect()
     }
@@ -324,12 +345,11 @@ impl<const FLAG_COUNT: usize> Replacer for FlagCommentReplacer<'_, FLAG_COUNT> {
     }
 }
 
-/// Print AST with minified syntax.
+/// Minify AST.
 ///
-/// Do not remove whitespace, or mangle symbols.
+/// Do not mangle symbols.
 /// Purpose is not to compress length of code, but to remove dead code.
-pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -> String {
-    // Minify
+fn minify<'a>(program: &mut Program<'a>, allocator: &'a Allocator) {
     let minify_options = MinifierOptions {
         mangle: None,
         mangle_properties: None,
@@ -348,8 +368,12 @@ pub fn print_minified<'a>(program: &mut Program<'a>, allocator: &'a Allocator) -
     // Revert minification of `true` to `!0` and `false` to `!1`. It hurts readability.
     let mut unminifier = BooleanUnminifier::new(allocator);
     unminifier.visit_program(program);
+}
 
-    // Print
+/// Print minified AST.
+///
+/// Do not remove whitespace.
+fn print_minified(program: &Program<'_>) -> String {
     let code = Codegen::new().build(program).code;
 
     // Add back line breaks before function, variable, and export declarations, to aid readability.

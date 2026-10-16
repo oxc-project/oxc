@@ -1,23 +1,28 @@
 //! Generator for raw transfer deserializer.
 
-use std::{borrow::Cow, fmt::Debug, str};
+use std::{borrow::Cow, fmt::Debug, mem, str};
 
 use cow_utils::CowUtils;
+use itertools::Itertools;
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::Allocator;
+use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
 use oxc_ast::{
     ast::{
-        Expression, LogicalOperator, ObjectExpression, ObjectPropertyKind, Program, PropertyKey,
-        PropertyKind,
+        Argument, AssignmentOperator, AssignmentTarget, AssignmentTargetPropertyIdentifier,
+        BindingIdentifier, BindingPattern, Expression, Function, IdentifierName,
+        IdentifierReference, LogicalOperator, ObjectExpression, ObjectProperty, ObjectPropertyKind,
+        Program, PropertyKey, PropertyKind, SimpleAssignmentTarget, Statement, VariableDeclaration,
+        VariableDeclarationKind, VariableDeclarator,
     },
     builder::AstBuilder,
 };
-use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_ast_visit::{Visit, VisitMut, walk, walk_mut};
 use oxc_span::SPAN;
+use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
     ALLOCATOR_CRATE_PATH, Generator, NAPI_PARSER_PACKAGE_PATH, OXLINT_APP_PATH,
@@ -167,6 +172,12 @@ fn generate_deserializers(
         }}
 
         /* IF LINTER */
+        // Prototype of all AST nodes. Provides `loc` getter.
+        //
+        // Nodes are created with `Object.create(NodeProto)`, followed by assigning their properties.
+        // V8 creates object literals which contain `__proto__` (`{{ __proto__: NodeProto, ... }}`) on a slow path,
+        // so using `Object.create` makes deserialization much faster.
+        // See `NodeObjectCreateInliner` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
         const NodeProto = Object.create(Object.prototype, {{
             loc: {{
                 // Note: Not configurable
@@ -348,6 +359,18 @@ fn generate_deserializers(
             if flags[2] {
                 // `loc` enabled
                 LocFieldAdder::new(allocator).visit_program(program);
+            }
+        }
+
+        fn post_process_variant<'a>(
+            &self,
+            program: &mut Program<'a>,
+            flags: [bool; 6],
+            allocator: &'a Allocator,
+        ) {
+            if flags[2] {
+                // `loc` enabled
+                NodeObjectCreateInliner::new(allocator).generate(program);
             }
         }
     }
@@ -1820,6 +1843,9 @@ fn get_constants(schema: &Schema) -> Constants {
 /// Visitor to add `__proto__` field to all objects with `range` field in all deserialize functions,
 /// to give access to `loc`.
 ///
+/// After minification, [`NodeObjectCreateInliner`] replaces these object literals with `Object.create(NodeProto)`
+/// followed by property assignments.
+///
 /// Works on AST pre-minification.
 struct LocFieldAdder<'a> {
     ast: AstBuilder<'a>,
@@ -1866,3 +1892,487 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
         walk_mut::walk_object_expression(self, obj_expr);
     }
 }
+
+/// Visitor to replace `{ __proto__: NodeProto, ... }` object literals with `Object.create(NodeProto)`,
+/// followed by assigning the object's properties.
+///
+/// ```js
+/// // Before
+/// let previousParent = parent,
+///   node = (parent = { __proto__: NodeProto, type: "CallExpression", callee: null, /* ... */ parent });
+///
+/// // After
+/// let previousParent = parent,
+///   node = Object.create(NodeProto);
+/// node.type = "CallExpression";
+/// node.callee = null;
+/// // ...
+/// node.parent = parent;
+/// parent = node;
+/// ```
+///
+/// ```js
+/// // Before
+/// return { __proto__: NodeProto, type: "ThisExpression", /* ... */ };
+///
+/// // After
+/// let node = Object.create(NodeProto);
+/// node.type = "ThisExpression";
+/// // ...
+/// return node;
+/// ```
+///
+/// V8 creates object literals containing `__proto__` via a slow path (runtime call to set the prototype),
+/// whereas `Object.create` with a constant prototype, followed by property assignments, is fast.
+/// The objects created are indistinguishable: same prototype (`NodeProto`), same own properties in same order
+/// with same attributes, and `node.constructor` is still `Object` (inherited from `Object.prototype`).
+///
+/// Evaluation order is unchanged. An object literal creates the object first, and then evaluates and defines
+/// its properties in order. So creating the object and then assigning its properties in the same order
+/// is equivalent, as long as no part of the statement which was evaluated before the object literal
+/// is moved to after it. To ensure this:
+///
+/// * Variable declarations are split at the declarator containing the object literal.
+/// * Only object literals which are the last element of a chain of assignments are supported
+///   (`x = y = { ... }`), and only if the assignment targets are identifiers, or member expressions
+///   on a local variable which is not assigned while evaluating the object literal's property values.
+///
+/// Object literals which are not just a list of `key: value` properties (e.g. contain getters or spreads)
+/// are left as they are. Panics if any other `{ __proto__: NodeProto, ... }` object literal is not converted.
+///
+/// Works on AST post-minification, so object literals are in their final form.
+struct NodeObjectCreateInliner<'a> {
+    ast: AstBuilder<'a>,
+    allocator: &'a Allocator,
+    /// Identifiers in each enclosing function. Last entry is for current function.
+    functions: Vec<FunctionIdents<'a>>,
+}
+
+/// Identifiers in a function.
+#[derive(Default)]
+struct FunctionIdents<'a> {
+    /// Names of all identifiers in the function (bindings and references)
+    names: FxHashSet<&'a str>,
+    /// Names of all bindings in the function
+    bindings: FxHashSet<&'a str>,
+}
+
+impl<'a> NodeObjectCreateInliner<'a> {
+    fn new(allocator: &'a Allocator) -> Self {
+        Self { ast: AstBuilder::new(allocator), allocator, functions: vec![] }
+    }
+
+    fn generate(mut self, program: &mut Program<'a>) {
+        self.visit_program(program);
+        UnconvertedNodeLiteralChecker.visit_program(program);
+    }
+
+    /// Replace a statement containing a `{ __proto__: NodeProto, ... }` object literal with `Object.create`
+    /// and property assignments, and push the resulting statements to `stmts`.
+    /// If statement does not contain such an object literal, push it to `stmts` unchanged.
+    fn inline_statement(&mut self, stmt: Statement<'a>, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+        match stmt {
+            Statement::VariableDeclaration(decl) => self.inline_variable_declaration(decl, stmts),
+            Statement::ReturnStatement(mut ret) => {
+                if let Some(argument) = &mut ret.argument {
+                    self.inline_chain_with_new_var(argument, stmts);
+                }
+                stmts.push(Statement::ReturnStatement(ret));
+            }
+            Statement::ExpressionStatement(mut expr_stmt) => {
+                self.inline_chain_with_new_var(&mut expr_stmt.expression, stmts);
+                stmts.push(Statement::ExpressionStatement(expr_stmt));
+            }
+            stmt => stmts.push(stmt),
+        }
+    }
+
+    /// `let a = 1, node = (parent = { __proto__: NodeProto, type: "X" }), b = 2;`
+    /// ->
+    /// ```js
+    /// let a = 1, node = Object.create(NodeProto);
+    /// node.type = "X";
+    /// parent = node;
+    /// let b = 2;
+    /// ```
+    fn inline_variable_declaration(
+        &self,
+        decl: ArenaBox<'a, VariableDeclaration<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+    ) {
+        let is_inlinable = |declarator: &VariableDeclarator<'a>| {
+            matches!(declarator.id, BindingPattern::BindingIdentifier(_))
+                && declarator.init.as_ref().is_some_and(|init| self.is_inlinable_chain(init))
+        };
+
+        if !decl.declarations.iter().any(is_inlinable) {
+            stmts.push(Statement::VariableDeclaration(decl));
+            return;
+        }
+
+        let VariableDeclaration { kind, declarations, .. } = decl.unbox();
+        let mut declarators = ArenaVec::new_in(&self.ast);
+        for mut declarator in declarations {
+            if !is_inlinable(&declarator) {
+                declarators.push(declarator);
+                continue;
+            }
+
+            // Assign `Object.create(NodeProto)` to the variable being declared.
+            // The variable is in TDZ until it's initialized, so object literal's property values cannot read it.
+            let BindingPattern::BindingIdentifier(ident) = &declarator.id else { unreachable!() };
+            let var_name = ident.name.as_str();
+            let mut init = declarator.init.replace(self.object_create()).unwrap();
+            let obj_expr = self.take_node_literal(&mut init, var_name);
+            declarators.push(declarator);
+            let declarators = mem::replace(&mut declarators, ArenaVec::new_in(&self.ast));
+            stmts.push(Statement::new_variable_declaration(
+                SPAN,
+                kind,
+                declarators,
+                false,
+                &self.ast,
+            ));
+
+            self.push_property_assignments(var_name, obj_expr, stmts);
+
+            // If object literal was assigned to other targets too, assign the object to them.
+            // e.g. `node = (parent = { ... })` -> `parent = node;`
+            if !matches!(init.without_parentheses(), Expression::Identifier(_)) {
+                stmts.push(Statement::new_expression_statement(SPAN, init, &self.ast));
+            }
+        }
+
+        if !declarators.is_empty() {
+            stmts.push(Statement::new_variable_declaration(
+                SPAN,
+                kind,
+                declarators,
+                false,
+                &self.ast,
+            ));
+        }
+    }
+
+    /// If `expr` is a chain of assignments ending in a `{ __proto__: NodeProto, ... }` object literal,
+    /// create a new variable containing `Object.create(NodeProto)`, assign the object literal's properties to it,
+    /// and replace the object literal with the new variable.
+    ///
+    /// `let start, end; return { __proto__: NodeProto, type: "X" };`
+    /// ->
+    /// ```js
+    /// let start, end, node = Object.create(NodeProto);
+    /// node.type = "X";
+    /// return node;
+    /// ```
+    fn inline_chain_with_new_var(
+        &mut self,
+        expr: &mut Expression<'a>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+    ) {
+        if !self.is_inlinable_chain(expr) {
+            return;
+        }
+
+        let var_name = self.create_var_name();
+        let obj_expr = self.take_node_literal(expr, var_name);
+
+        let declarator = VariableDeclarator::new(
+            SPAN,
+            BindingPattern::new_binding_identifier(SPAN, var_name, &self.ast),
+            None,
+            Some(self.object_create()),
+            false,
+            &self.ast,
+        );
+        // If previous statement is a `let` declaration, add to it (`let start, end, node = ...;`).
+        // Otherwise, create a new `let` declaration.
+        if let Some(Statement::VariableDeclaration(decl)) = stmts.last_mut()
+            && decl.kind == VariableDeclarationKind::Let
+        {
+            decl.declarations.push(declarator);
+        } else {
+            stmts.push(Statement::new_variable_declaration(
+                SPAN,
+                VariableDeclarationKind::Let,
+                ArenaVec::from_iter_in([declarator], &self.ast),
+                false,
+                &self.ast,
+            ));
+        }
+
+        self.push_property_assignments(var_name, obj_expr, stmts);
+    }
+
+    /// Check if `expr` is a `{ __proto__: NodeProto, ... }` object literal, or a chain of assignments
+    /// ending in one, which can be inlined.
+    fn is_inlinable_chain(&self, expr: &Expression<'a>) -> bool {
+        let mut targets = vec![];
+        let mut expr = expr.without_parentheses();
+        while let Expression::AssignmentExpression(assign_expr) = expr {
+            if assign_expr.operator != AssignmentOperator::Assign {
+                return false;
+            }
+            targets.push(&assign_expr.left);
+            expr = assign_expr.right.without_parentheses();
+        }
+
+        let Expression::ObjectExpression(obj_expr) = expr else { return false };
+        if !is_node_literal(obj_expr) || plain_keys(obj_expr).is_none() {
+            return false;
+        }
+
+        // Object literal's property values are moved to before the statement.
+        // Assigning to an identifier happens after the property values are evaluated anyway.
+        // But in `obj.prop = { ... }`, `obj` is evaluated before the object literal.
+        // So only allow `obj` to be a local variable (which function calls can't modify),
+        // which is not assigned while evaluating the object literal's property values.
+        let mut assigned = None;
+        targets.into_iter().all(|target| match target {
+            AssignmentTarget::AssignmentTargetIdentifier(_) => true,
+            AssignmentTarget::StaticMemberExpression(member_expr) => {
+                let Expression::Identifier(object) = &member_expr.object else { return false };
+                let name = object.name.as_str();
+                let assigned = assigned.get_or_insert_with(|| {
+                    let mut collector = AssignedNamesCollector::default();
+                    collector.visit_object_expression(obj_expr);
+                    collector.names
+                });
+                self.functions.last().unwrap().bindings.contains(name) && !assigned.contains(name)
+            }
+            _ => false,
+        })
+    }
+
+    /// Replace `{ __proto__: NodeProto, ... }` object literal at end of chain of assignments with
+    /// identifier `var_name`, and return the object literal.
+    fn take_node_literal(
+        &self,
+        expr: &mut Expression<'a>,
+        var_name: &'a str,
+    ) -> ArenaBox<'a, ObjectExpression<'a>> {
+        match expr {
+            Expression::ParenthesizedExpression(paren_expr) => {
+                self.take_node_literal(&mut paren_expr.expression, var_name)
+            }
+            Expression::AssignmentExpression(assign_expr) => {
+                self.take_node_literal(&mut assign_expr.right, var_name)
+            }
+            Expression::ObjectExpression(_) => {
+                let ident = Expression::new_identifier(SPAN, var_name, &self.ast);
+                let Expression::ObjectExpression(obj_expr) = mem::replace(expr, ident) else {
+                    unreachable!()
+                };
+                obj_expr
+            }
+            _ => unreachable!(),
+        }
+    }
+
+    /// Push `var_name.key = value;` statements for all properties of object literal (except `__proto__`).
+    fn push_property_assignments(
+        &self,
+        var_name: &'a str,
+        obj_expr: ArenaBox<'a, ObjectExpression<'a>>,
+        stmts: &mut ArenaVec<'a, Statement<'a>>,
+    ) {
+        for prop in obj_expr.unbox().properties.into_iter().skip(1) {
+            let ObjectPropertyKind::ObjectProperty(prop) = prop else { unreachable!() };
+            let ObjectProperty { key, value, .. } = prop.unbox();
+            let PropertyKey::StaticIdentifier(key) = key else { unreachable!() };
+            let target = AssignmentTarget::new_static_member_expression(
+                SPAN,
+                Expression::new_identifier(SPAN, var_name, &self.ast),
+                key.unbox(),
+                false,
+                &self.ast,
+            );
+            let assign_expr = Expression::new_assignment_expression(
+                SPAN,
+                AssignmentOperator::Assign,
+                target,
+                value,
+                &self.ast,
+            );
+            stmts.push(Statement::new_expression_statement(SPAN, assign_expr, &self.ast));
+        }
+    }
+
+    /// Create `Object.create(NodeProto)` expression.
+    fn object_create(&self) -> Expression<'a> {
+        let callee = Expression::new_static_member_expression(
+            SPAN,
+            Expression::new_identifier(SPAN, "Object", &self.ast),
+            IdentifierName::new(SPAN, "create", &self.ast),
+            false,
+            &self.ast,
+        );
+        let args = ArenaVec::from_iter_in(
+            [Argument::from(Expression::new_identifier(SPAN, "NodeProto", &self.ast))],
+            &self.ast,
+        );
+        Expression::new_call_expression(SPAN, callee, None, args, false, &self.ast)
+    }
+
+    /// Get a name for a new variable, which is not used anywhere else in the current function.
+    /// `node`, `node2`, `node3` etc.
+    fn create_var_name(&mut self) -> &'a str {
+        let idents = self.functions.last_mut().unwrap();
+        let mut name = Cow::Borrowed("node");
+        let mut index = 1;
+        while idents.names.contains(&*name) {
+            index += 1;
+            name = Cow::Owned(format!("node{index}"));
+        }
+        let name = self.allocator.alloc_str(&name);
+        idents.names.insert(name);
+        idents.bindings.insert(name);
+        name
+    }
+}
+
+impl<'a> VisitMut<'a> for NodeObjectCreateInliner<'a> {
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
+        let mut idents = FunctionIdents::default();
+        IdentsCollector { idents: &mut idents }.visit_function(func, flags);
+        // `Object.create(NodeProto)` must refer to the globals
+        assert!(
+            !idents.bindings.contains("Object") && !idents.bindings.contains("NodeProto"),
+            "`Object` or `NodeProto` is shadowed in deserializer function"
+        );
+
+        self.functions.push(idents);
+        walk_mut::walk_function(self, func, flags);
+        self.functions.pop();
+    }
+
+    fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+        walk_mut::walk_statements(self, stmts);
+
+        // Only inline object literals in functions
+        if self.functions.is_empty() {
+            return;
+        }
+
+        let old_stmts = mem::replace(stmts, ArenaVec::new_in(&self.ast));
+        for stmt in old_stmts {
+            self.inline_statement(stmt, stmts);
+        }
+    }
+}
+
+/// Visitor to collect names of all identifiers in a function.
+struct IdentsCollector<'a, 'i> {
+    idents: &'i mut FunctionIdents<'a>,
+}
+
+impl<'a> Visit<'a> for IdentsCollector<'a, '_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
+        self.idents.names.insert(ident.name.as_str());
+    }
+
+    fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
+        self.idents.names.insert(ident.name.as_str());
+        self.idents.bindings.insert(ident.name.as_str());
+    }
+}
+
+/// Visitor to collect names of all identifiers which are assigned to.
+#[derive(Default)]
+struct AssignedNamesCollector<'a> {
+    names: FxHashSet<&'a str>,
+}
+
+impl<'a> Visit<'a> for AssignedNamesCollector<'a> {
+    fn visit_simple_assignment_target(&mut self, target: &SimpleAssignmentTarget<'a>) {
+        if let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = target {
+            self.names.insert(ident.name.as_str());
+        }
+        walk::walk_simple_assignment_target(self, target);
+    }
+
+    fn visit_assignment_target_property_identifier(
+        &mut self,
+        prop: &AssignmentTargetPropertyIdentifier<'a>,
+    ) {
+        self.names.insert(prop.binding.name.as_str());
+        walk::walk_assignment_target_property_identifier(self, prop);
+    }
+}
+
+/// Visitor to check that all `{ __proto__: NodeProto, ... }` object literals which can be converted were converted.
+struct UnconvertedNodeLiteralChecker;
+
+impl<'a> Visit<'a> for UnconvertedNodeLiteralChecker {
+    fn visit_object_expression(&mut self, obj_expr: &ObjectExpression<'a>) {
+        assert!(
+            !is_node_literal(obj_expr) || plain_keys(obj_expr).is_none(),
+            "`{{ __proto__: NodeProto, ... }}` object literal in unsupported position in deserializer. \
+            Add support for it to `NodeObjectCreateInliner`."
+        );
+        walk::walk_object_expression(self, obj_expr);
+    }
+}
+
+/// Check if object literal is `{ __proto__: NodeProto, ... }`.
+fn is_node_literal(obj_expr: &ObjectExpression<'_>) -> bool {
+    if let Some(ObjectPropertyKind::ObjectProperty(prop)) = obj_expr.properties.first()
+        && prop.kind == PropertyKind::Init
+        && !prop.computed
+        && !prop.shorthand
+        && !prop.method
+        && let PropertyKey::StaticIdentifier(key) = &prop.key
+        && key.name == "__proto__"
+        && let Expression::Identifier(value) = &prop.value
+        && value.name == "NodeProto"
+    {
+        true
+    } else {
+        false
+    }
+}
+
+/// Get keys of `{ __proto__: NodeProto, ... }` object literal, excluding `__proto__`.
+///
+/// Returns `None` if any property is not a plain `key: value` property (e.g. getter, spread),
+/// or if keys are not unique.
+///
+/// Also returns `None` if any key is the name of a property of `NodeProto` or `Object.prototype`.
+/// Object literals define properties, whereas assignments could hit a getter / setter
+/// on the prototype chain e.g. `loc`.
+fn plain_keys<'a>(obj_expr: &ObjectExpression<'a>) -> Option<Vec<&'a str>> {
+    let keys = obj_expr.properties[1..]
+        .iter()
+        .map(|prop| {
+            if let ObjectPropertyKind::ObjectProperty(prop) = prop
+                && prop.kind == PropertyKind::Init
+                && !prop.computed
+                && !prop.method
+                && let PropertyKey::StaticIdentifier(key) = &prop.key
+                && !PROTOTYPE_KEYS.contains(&key.name.as_str())
+            {
+                Some(key.name.as_str())
+            } else {
+                None
+            }
+        })
+        .collect::<Option<Vec<_>>>()?;
+    keys.iter().all_unique().then_some(keys)
+}
+
+/// Properties of `NodeProto` and `Object.prototype`.
+const PROTOTYPE_KEYS: &[&str] = &[
+    "loc",
+    "__proto__",
+    "__defineGetter__",
+    "__defineSetter__",
+    "__lookupGetter__",
+    "__lookupSetter__",
+    "constructor",
+    "hasOwnProperty",
+    "isPrototypeOf",
+    "propertyIsEnumerable",
+    "toLocaleString",
+    "toString",
+    "valueOf",
+];
