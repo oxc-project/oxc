@@ -59,10 +59,10 @@ impl ESTreeConfig for TokenSerializerConfig {
 }
 
 /// Serializer for tokens to compact JSON.
-type CompactTokenSerializer = ESTreeSerializer<TokenSerializerConfig, CompactFormatter>;
+type CompactTokenSerializer = ESTreeSerializer<'static, TokenSerializerConfig, CompactFormatter>;
 
 /// Serializer for tokens to pretty-printed JSON.
-type PrettyTokenSerializer = ESTreeSerializer<TokenSerializerConfig, PrettyFormatter>;
+type PrettyTokenSerializer = ESTreeSerializer<'static, TokenSerializerConfig, PrettyFormatter>;
 
 /// Serialize tokens to JSON.
 ///
