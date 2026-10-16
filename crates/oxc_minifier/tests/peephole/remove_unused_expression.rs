@@ -476,6 +476,19 @@ fn test_fold_conditional_expression() {
     test("foo() ? bar() : 2", "foo() && bar()");
     test_same("foo() ? bar() : baz()");
 
+    test("a() ? 1 : b()", "a() || b()");
+    test("a() ? 0 : b()", "a() || b()");
+    test("!a() ? 1 : b()", "a() && b()");
+    test("!a() ? 0 : b()", "a() && b()");
+
+    test("a() ? b() : 1", "a() && b()");
+    test("a() ? b() : 0", "a() && b()");
+    test("!a() ? b() : 1", "a() || b()");
+    test("!a() ? b() : 0", "a() || b()");
+
+    test("(g(), !a()) ? 0 : b()", "g(), a() && b()");
+    test("(g(), !a()) ? b() : 1", "g(), a() || b()");
+
     test("typeof x == 'undefined' ? 0 : x", "");
     test("typeof x != 'undefined' ? x : 0", "");
     test("typeof x > 'u' ? 0 : x", "");

@@ -608,6 +608,8 @@ impl<'a> PeepholeOptimizations {
 
         let new_right_expr = if inversed {
             Expression::new_unary_expression(SPAN, UnaryOperator::LogicalNot, is_null_id_ref, ctx)
+        } else if ctx.in_boolean_context() {
+            is_null_id_ref
         } else {
             Expression::new_unary_expression(
                 SPAN,
@@ -1124,11 +1126,18 @@ impl<'a> PeepholeOptimizations {
             "Boolean" => match arg {
                 None => Some(Expression::new_boolean_literal(span, false, ctx)),
                 Some(arg) => {
-                    let mut arg = arg.take_in(ctx);
-                    Self::minimize_expression_in_boolean_context(&mut arg, ctx);
-                    let arg =
-                        Expression::new_unary_expression(span, UnaryOperator::LogicalNot, arg, ctx);
-                    Some(Self::minimize_not(span, arg, ctx, false))
+                    let arg = arg.take_in(ctx);
+                    if ctx.in_boolean_context() {
+                        Some(arg)
+                    } else {
+                        let arg = Expression::new_unary_expression(
+                            span,
+                            UnaryOperator::LogicalNot,
+                            arg,
+                            ctx,
+                        );
+                        Some(Self::minimize_not(span, arg, ctx, false))
+                    }
                 }
             },
             "String" => {
