@@ -542,6 +542,7 @@ impl RuleRunner for crate::rules::eslint::no_cond_assign::NoCondAssign {
 impl RuleRunner for crate::rules::eslint::no_console::NoConsole {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::ComputedMemberExpression,
+        AstType::PrivateFieldExpression,
         AstType::StaticMemberExpression,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
