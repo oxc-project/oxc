@@ -56,8 +56,8 @@ pub const PLUGINS: &[&str] = &[
     "babel-plugin-transform-react-jsx-self",
     "babel-plugin-transform-react-jsx-source",
     "babel-plugin-transform-react-jsx-development",
-    // // Proposal
-    // "babel-plugin-proposal-decorators",
+    // Proposal
+    "babel-plugin-proposal-decorators",
     // RegExp tests ported from esbuild + a few additions
     "regexp",
     // Legacy decorators, tests almost ported from TypeScript
@@ -68,7 +68,6 @@ pub const PLUGINS: &[&str] = &[
 ];
 
 pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
-    "proposal-decorators",
     "transform-classes",
     "transform-destructuring",
     "transform-modules-commonjs",
@@ -78,6 +77,10 @@ pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
 ];
 
 pub const SKIP_TESTS: &[&str] = &[
+    // Panics: class properties transform does not lower `accessor`, and `this.#a` on an
+    // unlowered `static accessor #a` unwraps a class name binding which doesn't exist.
+    // Remove once `accessor` is lowered.
+    "babel-plugin-proposal-decorators/test/fixtures/2023-11-accessors--to-es2015/undecorated-static-private",
     // Shouldn't report in transformer
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-cts",
     "babel-plugin-transform-typescript/test/fixtures/node-extensions/type-assertion-in-mts",
