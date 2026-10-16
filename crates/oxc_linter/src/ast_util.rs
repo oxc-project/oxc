@@ -21,16 +21,15 @@ use crate::{
     utils::{get_function_nearest_jsdoc_node, is_regexp_callee},
 };
 
-/// Get the declaration kind for a variable declarator from its parent declaration.
+/// Get a variable declarator's declaration kind, or `None` if its parent is not a variable declaration.
 pub fn variable_declaration_kind(
     declarator: &VariableDeclarator<'_>,
-    ctx: &LintContext<'_>,
-) -> VariableDeclarationKind {
-    let AstKind::VariableDeclaration(declaration) = ctx.nodes().parent_kind(declarator.node_id())
-    else {
-        unreachable!();
-    };
-    declaration.kind
+    nodes: &AstNodes<'_>,
+) -> Option<VariableDeclarationKind> {
+    nodes
+        .parent_kind(declarator.node_id())
+        .as_variable_declaration()
+        .map(|declaration| declaration.kind)
 }
 
 /// Test if an AST node is a boolean value that never changes. Specifically we

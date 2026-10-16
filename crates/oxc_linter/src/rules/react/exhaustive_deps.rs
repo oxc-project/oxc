@@ -1137,7 +1137,8 @@ fn is_stable_value<'a, 'b>(
             }
 
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
-            if variable_declaration_kind(declaration, ctx) == VariableDeclarationKind::Const
+            if variable_declaration_kind(declaration, ctx.nodes())
+                .is_some_and(VariableDeclarationKind::is_const)
                 && (matches!(
                     init.get_inner_expression(),
                     Expression::BooleanLiteral(_)

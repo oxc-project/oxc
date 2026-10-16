@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{AssignmentTarget, Expression, VariableDeclarationKind},
+    ast::{AssignmentTarget, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -527,7 +527,7 @@ impl NoMagicNumbers {
         match parent_kind {
             AstKind::VariableDeclarator(declarator) => {
                 if self.enforce_const
-                    && variable_declaration_kind(declarator, ctx) != VariableDeclarationKind::Const
+                    && !variable_declaration_kind(declarator, ctx.nodes())?.is_const()
                 {
                     return Some(NoMagicNumberReportReason::MustUseConst);
                 }

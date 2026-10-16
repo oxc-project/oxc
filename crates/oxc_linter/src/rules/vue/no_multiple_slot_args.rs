@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentTarget, Expression, IdentifierReference, MemberExpression,
-        VariableDeclarationKind,
-    },
+    ast::{AssignmentTarget, Expression, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -169,7 +166,7 @@ fn get_identifier_resolved_reference<'a>(
     };
 
     // `const` variable can not be overridden
-    if variable_declaration_kind(declarator, ctx) == VariableDeclarationKind::Const {
+    if variable_declaration_kind(declarator, ctx.nodes())?.is_const() {
         return declarator.init.as_ref();
     }
 

@@ -163,7 +163,8 @@ impl Rule for PreferTopLevelAwait {
 
         match declaration.kind() {
             AstKind::VariableDeclarator(var_decl)
-                if variable_declaration_kind(var_decl, ctx) == VariableDeclarationKind::Const =>
+                if variable_declaration_kind(var_decl, ctx.nodes())
+                    .is_some_and(VariableDeclarationKind::is_const) =>
             {
                 let Some(init) = &var_decl.init else { return };
 
