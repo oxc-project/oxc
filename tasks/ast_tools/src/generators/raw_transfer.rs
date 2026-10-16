@@ -170,10 +170,6 @@ fn generate_deserializers(
         }}
 
         /* IF LINTER */
-        // Prototype of all AST nodes. Provides `loc` getter.
-        // Nodes are created with `Object.create(NodeProto)` followed by assigning their properties,
-        // instead of object literals containing `__proto__: NodeProto`, which V8 creates on a slow path.
-        // See `LocFieldAdder` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
         const NodeProto = Object.create(Object.prototype, {{
             loc: {{
                 // Note: Not configurable
@@ -1827,24 +1823,24 @@ fn get_constants(schema: &Schema) -> Constants {
 /// Visitor to make all objects with `range` field in all deserialize functions have `NodeProto` as prototype,
 /// to give access to `loc`.
 ///
-/// Each object literal is replaced with `Object.create(NodeProto)` followed by assigning its properties,
-/// in a sequence expression, using a temp var:
+/// Each object literal is replaced with a sequence expression which creates the object with
+/// `Object.create(NodeProto)` and assigns its properties, using a temp var:
 ///
 /// ```js
-/// // Before
+/// // Object literal
 /// { type: 'X', foo, ...(RANGE && { range: [start, end] }) }
-/// // After
+/// // Replaced with
 /// (node$0 = Object.create(NodeProto), node$0.type = 'X', node$0.foo = foo,
 ///   RANGE && (node$0.range = [start, end]), node$0)
 /// ```
 ///
-/// V8 creates object literals containing `__proto__` (`{ __proto__: NodeProto, ... }`) on a slow path,
-/// whereas this is fast. The sequence expression creates the object and then evaluates property values
-/// in the same order as the object literal, and the object is the same: same prototype, same own properties
+/// V8 creates objects this way much faster than with object literals containing `__proto__`.
+/// The sequence expression creates the object and then evaluates property values in the same order
+/// as the object literal does, and produces an identical object: same prototype, same own properties
 /// in same order with same attributes.
 ///
 /// Getters are defined with `Object.defineProperty`, using the descriptor of a getter in an object literal,
-/// so the getter function and the property's attributes are the same as before.
+/// so the getter function and the property's attributes are identical to the object literal's.
 ///
 /// Temp vars are declared at the start of each function. Each level of nested object literals uses
 /// a separate temp var (`node$0`, `node$1`, ...).

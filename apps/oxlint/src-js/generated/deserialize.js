@@ -19,10 +19,6 @@ const { fromCharCode } = String,
   stringDecodeArrays = Array(65).fill(null);
 for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 
-// Prototype of all AST nodes. Provides `loc` getter.
-// Nodes are created with `Object.create(NodeProto)` followed by assigning their properties,
-// instead of object literals containing `__proto__: NodeProto`, which V8 creates on a slow path.
-// See `LocFieldAdder` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
 const NodeProto = Object.create(Object.prototype, {
   loc: {
     // Note: Not configurable
