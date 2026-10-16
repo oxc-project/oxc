@@ -86,6 +86,7 @@ declare_oxc_lint!(
     NoCallbackInPromise,
     promise,
     correctness,
+    recommended,
     config = NoCallbackInPromiseConfig,
     version = "0.10.0",
     short_description = "Disallows calling a callback function (`cb()`) inside a `Promise.prototype.then()` or `Promise.prototype.catch()`.",
