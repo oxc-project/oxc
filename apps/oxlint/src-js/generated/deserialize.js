@@ -71,32 +71,22 @@ function deserializeProgram(pos) {
       (node$0.type = "Program"),
       (node$0.body = null),
       (node$0.sourceType = deserializeModuleKind(pos + 137)),
-      Object.defineProperty(
-        node$0,
-        "comments",
-        Object.getOwnPropertyDescriptor(
-          {
-            get comments() {
-              comments === null && initComments();
-              return comments;
-            },
-          },
-          "comments",
-        ),
-      ),
-      Object.defineProperty(
-        node$0,
-        "tokens",
-        Object.getOwnPropertyDescriptor(
-          {
-            get tokens() {
-              tokens === null && initTokens();
-              return tokens;
-            },
-          },
-          "tokens",
-        ),
-      ),
+      Object.defineProperty(node$0, "comments", {
+        get() {
+          comments === null && initComments();
+          return comments;
+        },
+        enumerable: true,
+        configurable: true,
+      }),
+      Object.defineProperty(node$0, "tokens", {
+        get() {
+          tokens === null && initTokens();
+          return tokens;
+        },
+        enumerable: true,
+        configurable: true,
+      }),
       (node$0.start = 0),
       (node$0.end = end),
       (node$0.range = [0, end]),

@@ -1839,8 +1839,8 @@ fn get_constants(schema: &Schema) -> Constants {
 /// as the object literal does, and produces an identical object: same prototype, same own properties
 /// in same order with same attributes.
 ///
-/// Getters are defined with `Object.defineProperty`, using the descriptor of a getter in an object literal,
-/// so the getter function and the property's attributes are identical to the object literal's.
+/// Getters are defined with `Object.defineProperty`, with the same attributes as a getter in an object literal
+/// (enumerable, configurable).
 ///
 /// Temp vars are declared at the start of each function. Each level of nested object literals uses
 /// a separate temp var (`node$0`, `node$1`, ...).
@@ -1942,7 +1942,7 @@ impl<'a> LocFieldAdder<'a> {
     ///
     /// * `foo: value` -> `node$0.foo = value`
     /// * `get foo() {}` ->
-    ///   `Object.defineProperty(node$0, 'foo', Object.getOwnPropertyDescriptor({ get foo() {} }, 'foo'))`
+    ///   `Object.defineProperty(node$0, 'foo', { get() {}, enumerable: true, configurable: true })`
     fn define(
         &self,
         prop: oxc_allocator::Box<'a, ObjectProperty<'a>>,
@@ -1976,40 +1976,56 @@ impl<'a> LocFieldAdder<'a> {
                 )
             }
             PropertyKind::Get => {
-                let object_method = |method| {
-                    Expression::new_static_member_expression(
+                // Same attributes as a getter in an object literal
+                let descriptor_prop = |name, value, method| {
+                    ObjectPropertyKind::new_object_property(
                         SPAN,
-                        Expression::new_identifier(SPAN, "Object", &self.ast),
-                        IdentifierName::new(SPAN, method, &self.ast),
+                        PropertyKind::Init,
+                        PropertyKey::new_static_identifier(SPAN, name, &self.ast),
+                        value,
+                        method,
+                        false,
                         false,
                         &self.ast,
                     )
                 };
-                let key_str = || {
-                    Argument::from(Expression::new_string_literal(SPAN, key_name, None, &self.ast))
-                };
-                let getter_obj = Expression::new_object_expression(
+                let descriptor = Expression::new_object_expression(
                     SPAN,
-                    ArenaVec::from_iter_in([ObjectPropertyKind::ObjectProperty(prop)], &self.ast),
+                    ArenaVec::from_iter_in(
+                        [
+                            descriptor_prop("get", prop.unbox().value, true),
+                            descriptor_prop(
+                                "enumerable",
+                                Expression::new_boolean_literal(SPAN, true, &self.ast),
+                                false,
+                            ),
+                            descriptor_prop(
+                                "configurable",
+                                Expression::new_boolean_literal(SPAN, true, &self.ast),
+                                false,
+                            ),
+                        ],
+                        &self.ast,
+                    ),
                     &self.ast,
                 );
-                let descriptor = Expression::new_call_expression(
+                let define_property = Expression::new_static_member_expression(
                     SPAN,
-                    object_method("getOwnPropertyDescriptor"),
-                    None,
-                    ArenaVec::from_iter_in([Argument::from(getter_obj), key_str()], &self.ast),
+                    Expression::new_identifier(SPAN, "Object", &self.ast),
+                    IdentifierName::new(SPAN, "defineProperty", &self.ast),
                     false,
                     &self.ast,
                 );
-                let temp = Argument::from(Expression::new_identifier(SPAN, temp, &self.ast));
+                let args = [
+                    Argument::from(Expression::new_identifier(SPAN, temp, &self.ast)),
+                    Argument::from(Expression::new_string_literal(SPAN, key_name, None, &self.ast)),
+                    Argument::from(descriptor),
+                ];
                 Expression::new_call_expression(
                     SPAN,
-                    object_method("defineProperty"),
+                    define_property,
                     None,
-                    ArenaVec::from_iter_in(
-                        [temp, key_str(), Argument::from(descriptor)],
-                        &self.ast,
-                    ),
+                    ArenaVec::from_iter_in(args, &self.ast),
                     false,
                     &self.ast,
                 )
