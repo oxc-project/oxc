@@ -16,7 +16,7 @@ use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
-    identifier::{is_identifier_part, is_identifier_part_ascii},
+    identifier::is_identifier_part_ascii,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -684,13 +684,13 @@ impl<'a> Codegen<'a> {
         let Some(byte) = self.last_byte() else { return };
 
         if self.need_space_before_identifier != self.code.len() {
-            let is_identifier = if byte.is_ascii() {
-                // Fast path for ASCII (very common case)
-                is_identifier_part_ascii(byte as char)
-            } else {
-                is_identifier_part(self.last_char().unwrap())
-            };
-            if !is_identifier {
+            // Non-ASCII characters can appear in various places (e.g. in strings),
+            // but in such cases an ASCII character (e.g. `"`) is always printed after them.
+            // Only case in which last byte of output can be non-ASCII when printing an identifier
+            // or keyword (when this function is called) is when what was last printed was
+            // an identifier ending with a non-ASCII character.
+            // So non-ASCII must be an identifier, and a space is required.
+            if byte.is_ascii() && !is_identifier_part_ascii(byte as char) {
                 return;
             }
         }
@@ -701,11 +701,6 @@ impl<'a> Codegen<'a> {
     #[inline]
     fn last_byte(&self) -> Option<u8> {
         self.code.last_byte()
-    }
-
-    #[inline]
-    fn last_char(&self) -> Option<char> {
-        self.code.last_char()
     }
 
     #[inline]
