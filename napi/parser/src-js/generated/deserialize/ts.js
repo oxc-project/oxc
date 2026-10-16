@@ -5366,7 +5366,7 @@ function deserializeJSStr(pos) {
               | ((buffer[pos++] & 63) << 12)
               | ((buffer[pos++] & 63) << 6)
               | (buffer[pos++] & 63);
-    // Unlike UTF-8 decoders, fromCodePoint preserves surrogate code points.
+    // Unlike UTF-8 decoders, `fromCodePoint` preserves surrogate code points
     out += String.fromCodePoint(codePoint);
   }
   return out;
