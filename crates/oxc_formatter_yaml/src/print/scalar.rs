@@ -4,12 +4,15 @@ use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
     arena_cow_str,
-    builders::{exact_line_breaks, hard_line_break, soft_line_break_or_space, text},
+    builders::{Line, exact_line_breaks, hard_line_break, indent, soft_line_break_or_space, text},
     write,
 };
 use oxc_span::Span;
 
-use crate::{options::ProseWrap, print::YamlFormatter};
+use crate::{
+    options::ProseWrap,
+    print::{YamlFormatter, format_with, starts_with_document_marker},
+};
 
 /// Which flow scalar shape is being folded (affects word-merge rules and quoting).
 #[derive(Clone, Copy, Eq, PartialEq)]
@@ -117,6 +120,18 @@ pub fn write_flow_scalar_content<'a>(
         })
         .collect();
 
+    // Outside block collections, continuation lines start at column 0:
+    // a line starting with a document marker is indented instead (see AGENTS.md "Line starts")
+    let guards_line_start = f.context().collection_depth().get() == 0;
+    let line_before = |line: Line, word: &'a str| {
+        format_with(move |f| {
+            if guards_line_start && starts_with_document_marker(word) {
+                write!(f, indent(&line));
+            } else {
+                write!(f, line);
+            }
+        })
+    };
     let mut blanks = 0usize;
     let mut wrote_any = false;
     for words in &line_groups {
@@ -127,15 +142,15 @@ pub fn write_flow_scalar_content<'a>(
         if blanks > 0 {
             // N blank groups = N separators before this group
             // (plus the one separating it from the previous non-empty group, if any).
-            write!(f, exact_line_breaks(blanks + usize::from(wrote_any)));
+            write!(f, line_before(exact_line_breaks(blanks + usize::from(wrote_any)), words[0]));
         } else if wrote_any {
-            write!(f, hard_line_break());
+            write!(f, line_before(hard_line_break(), words[0]));
         }
         blanks = 0;
         wrote_any = true;
         let mut fill = f.fill();
         for &word in words {
-            fill.entry(&soft_line_break_or_space(), &text(word));
+            fill.entry(&line_before(soft_line_break_or_space(), word), &text(word));
         }
         fill.finish();
     }
