@@ -1,0 +1,154 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | Other;
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | Other` with `Other | {foo: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:25]
+ 1 │ type ElementUnion = A | {foo: string} | B;
+   ·                         ─────────────
+   ╰────
+  help: Replace `A | {foo: string} | B` with `A | B | {foo: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | A | {bar: string} | B;
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | A | {bar: string} | B` with `A | B | {foo: string} | {bar: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | string;
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | string` with `string | {foo: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | Other | undefined;
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | Other | undefined` with `Other | {foo: string} | undefined`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | undefined | Other;
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | undefined | Other` with `Other | {foo: string} | undefined`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:33]
+ 1 │ type ElementUnion = undefined | {foo: string} | Other;
+   ·                                 ─────────────
+   ╰────
+  help: Replace `undefined | {foo: string} | Other` with `Other | {foo: string} | undefined`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:22]
+ 1 │ type ElementUnion = ({foo: string}) | Other;
+   ·                      ─────────────
+   ╰────
+  help: Replace `({foo: string}) | Other` with `Other | ({foo: string})`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | (() => string);
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | (() => string)` with `(() => string) | {foo: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | (new () => Element);
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | (new () => Element)` with `(new () => Element) | {foo: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | (A extends B ? C : D);
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | (A extends B ? C : D)` with `(A extends B ? C : D) | {foo: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | (A | B) | Other;
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | (A | B) | Other` with `(A | B) | Other | {foo: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:38]
+ 1 │ type ElementUnion = {foo: string} | ({bar: string} | Other);
+   ·                                      ─────────────
+   ╰────
+  help: Replace `{bar: string} | Other` with `Other | {bar: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ ╭─▶ type ElementUnion = {
+ 2 │ │                   /* description */
+ 3 │ │                   foo: string;
+ 4 │ ╰─▶             } | Other;
+   ╰────
+  help: Replace `{
+                        /* description */
+                        foo: string;
+                    } | Other` with `Other | {
+                        /* description */
+                        foo: string;
+                    }`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} /* comment */ | Other;
+   ·                     ─────────────
+   ╰────
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} |
+   ·                     ─────────────
+ 2 │                 // comment
+   ╰────
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:35]
+ 1 │ type ElementUnion = /* comment */ {foo: string} | Other;
+   ·                                   ─────────────
+   ╰────
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | (/* comment */ Other);
+   ·                     ─────────────
+   ╰────
+  help: Replace `{foo: string} | (/* comment */ Other)` with `(/* comment */ Other) | {foo: string}`.
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | Other /* comment */;
+   ·                     ─────────────
+   ╰────
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:21]
+ 1 │ type ElementUnion = {foo: string} | Other /* comment */
+   ·                     ─────────────
+   ╰────
+
+  ⚠ unicorn(prefer-type-literal-last): Move type literals to the end of this union.
+   ╭─[prefer_type_literal_last.tsx:1:34]
+ 1 │ /* before */ type ElementUnion = {foo: string} | Other; /* after */
+   ·                                  ─────────────
+   ╰────
+  help: Replace `{foo: string} | Other` with `Other | {foo: string}`.
