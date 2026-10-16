@@ -8,18 +8,17 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Allocator, Box as ArenaBox, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ReplaceWith, Vec as ArenaVec};
 use oxc_ast::{
     ast::{
-        Argument, AssignmentOperator, AssignmentTarget, AssignmentTargetPropertyIdentifier,
-        BindingIdentifier, BindingPattern, Expression, Function, IdentifierName,
-        IdentifierReference, LogicalExpression, LogicalOperator, ObjectExpression, ObjectProperty,
-        ObjectPropertyKind, Program, PropertyKey, PropertyKind, SimpleAssignmentTarget, Statement,
-        VariableDeclaration, VariableDeclarationKind, VariableDeclarator,
+        Argument, AssignmentOperator, AssignmentTarget, BindingIdentifier, BindingPattern,
+        Expression, Function, IdentifierName, LogicalExpression, LogicalOperator, ObjectExpression,
+        ObjectProperty, ObjectPropertyKind, Program, PropertyKey, PropertyKind, Statement,
+        VariableDeclarationKind, VariableDeclarator,
     },
     builder::AstBuilder,
 };
-use oxc_ast_visit::{Visit, VisitMut, walk, walk_mut};
+use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
 use oxc_syntax::scope::ScopeFlags;
 
@@ -172,11 +171,9 @@ fn generate_deserializers(
 
         /* IF LINTER */
         // Prototype of all AST nodes. Provides `loc` getter.
-        //
-        // Nodes are created with `Object.create(NodeProto)`, followed by assigning their properties.
-        // V8 creates object literals which contain `__proto__` (`{{ __proto__: NodeProto, ... }}`) on a slow path,
-        // so using `Object.create` makes deserialization much faster.
-        // See `NodeObjectCreator` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
+        // Nodes are created with `Object.create(NodeProto)` followed by assigning their properties,
+        // instead of object literals containing `__proto__: NodeProto`, which V8 creates on a slow path.
+        // See `LocFieldAdder` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
         const NodeProto = Object.create(Object.prototype, {{
             loc: {{
                 // Note: Not configurable
@@ -357,7 +354,7 @@ fn generate_deserializers(
         ) {
             if flags[2] {
                 // `loc` enabled
-                NodeObjectCreator::new(allocator).visit_program(program);
+                LocFieldAdder::new(allocator).visit_program(program);
             }
         }
     }
@@ -1827,353 +1824,52 @@ fn get_constants(schema: &Schema) -> Constants {
     }
 }
 
-/// Visitor to make AST node objects in all deserialize functions have `NodeProto` as their prototype,
+/// Visitor to make all objects with `range` field in all deserialize functions have `NodeProto` as prototype,
 /// to give access to `loc`.
 ///
-/// AST node objects are object literals with a `range` field (`...(RANGE && { range: [start, end] })`).
-/// They are replaced with `Object.create(NodeProto)`, followed by assigning the object's properties.
-/// Conditional fields (`...(IS_TS && { typeAnnotation: null })`) become conditional assignments
-/// (`if (IS_TS) node.typeAnnotation = null;`), which minifier then removes or unwraps.
+/// Each object literal is replaced with `Object.create(NodeProto)` followed by assigning its properties,
+/// in a sequence expression, using a temp var:
 ///
 /// ```js
 /// // Before
-/// const previousParent = parent,
-///   node = parent = {
-///     type: 'CallExpression',
-///     callee: null,
-///     // ...
-///     ...(RANGE && { range: [start, end] }),
-///     ...(PARENT && { parent }),
-///   };
-///
+/// { type: 'X', foo, ...(RANGE && { range: [start, end] }) }
 /// // After
-/// const previousParent = parent,
-///   node = Object.create(NodeProto);
-/// node.type = 'CallExpression';
-/// node.callee = null;
-/// // ...
-/// if (RANGE) node.range = [start, end];
-/// if (PARENT) node.parent = parent;
-/// parent = node;
+/// (node$0 = Object.create(NodeProto), node$0.type = 'X', node$0.foo = foo,
+///   RANGE && (node$0.range = [start, end]), node$0)
 /// ```
 ///
-/// ```js
-/// // Before
-/// return { type: 'ThisExpression', /* ... */ };
+/// V8 creates object literals containing `__proto__` (`{ __proto__: NodeProto, ... }`) on a slow path,
+/// whereas this is fast. The sequence expression creates the object and then evaluates property values
+/// in the same order as the object literal, and the object is the same: same prototype, same own properties
+/// in same order with same attributes.
 ///
-/// // After
-/// const node = Object.create(NodeProto);
-/// node.type = 'ThisExpression';
-/// // ...
-/// return node;
-/// ```
+/// Getters are defined with `Object.defineProperty`, using the descriptor of a getter in an object literal,
+/// so the getter function and the property's attributes are the same as before.
 ///
-/// V8 creates object literals containing `__proto__` (`{ __proto__: NodeProto, ... }`) via a slow path
-/// (runtime call to set the prototype), whereas `Object.create` with a constant prototype, followed by property
-/// assignments, is fast. The objects created are the same as with `__proto__`: same prototype (`NodeProto`),
-/// same own properties in same order with same attributes, and `node.constructor` is `Object`
-/// (inherited from `Object.prototype`).
-///
-/// Evaluation order is unchanged. An object literal creates the object first, and then evaluates and defines
-/// its properties in order. So creating the object and then assigning its properties in the same order
-/// is equivalent, as long as no part of the statement which was evaluated before the object literal
-/// is moved to after it. To ensure this:
-///
-/// * Variable declarations are split at the declarator containing the object literal.
-/// * Only object literals which are the last element of a chain of assignments are supported
-///   (`x = y = { ... }`), and only if the assignment targets are identifiers, or member expressions
-///   on a local variable which is not assigned while evaluating the object literal's property values.
-///
-/// Object literals which contain getters (`Program`) cannot be converted, so `__proto__: NodeProto`
-/// is added to them instead. Panics if any other AST node object literal cannot be converted.
+/// Temp vars are declared at the start of each function. Each level of nested object literals uses
+/// a separate temp var (`node$0`, `node$1`, ...).
 ///
 /// Works on AST pre-minification.
-struct NodeObjectCreator<'a> {
+struct LocFieldAdder<'a> {
     ast: AstBuilder<'a>,
     allocator: &'a Allocator,
-    /// Identifiers in each enclosing function. Last entry is for current function.
-    functions: Vec<FunctionIdents<'a>>,
+    /// Nesting depth of object literals being converted
+    depth: usize,
+    /// Number of temp vars required in current function. `None` if not in a function.
+    temp_count: Option<usize>,
 }
 
-/// Identifiers in a function.
-#[derive(Default)]
-struct FunctionIdents<'a> {
-    /// Names of all identifiers in the function (bindings and references)
-    names: FxHashSet<&'a str>,
-    /// Names of all bindings in the function
-    bindings: FxHashSet<&'a str>,
-}
-
-impl<'a> NodeObjectCreator<'a> {
+impl<'a> LocFieldAdder<'a> {
     fn new(allocator: &'a Allocator) -> Self {
-        Self { ast: AstBuilder::new(allocator), allocator, functions: vec![] }
+        Self { ast: AstBuilder::new(allocator), allocator, depth: 0, temp_count: None }
     }
 
-    /// Replace a statement containing an AST node object literal with `Object.create` and property assignments,
-    /// and push the resulting statements to `stmts`.
-    /// If statement does not contain such an object literal, push it to `stmts` unchanged.
-    fn convert_statement(&mut self, stmt: Statement<'a>, stmts: &mut ArenaVec<'a, Statement<'a>>) {
-        match stmt {
-            Statement::VariableDeclaration(decl) => self.convert_variable_declaration(decl, stmts),
-            Statement::ReturnStatement(mut ret) => {
-                if let Some(argument) = &mut ret.argument {
-                    self.convert_chain_with_new_var(argument, stmts);
-                }
-                stmts.push(Statement::ReturnStatement(ret));
-            }
-            Statement::ExpressionStatement(mut expr_stmt) => {
-                self.convert_chain_with_new_var(&mut expr_stmt.expression, stmts);
-                stmts.push(Statement::ExpressionStatement(expr_stmt));
-            }
-            stmt => stmts.push(stmt),
-        }
-    }
+    /// Create sequence expression which creates object with `NodeProto` as prototype,
+    /// and assigns properties of `obj_expr` to it, using temp var `temp`.
+    fn create_node(&self, obj_expr: ObjectExpression<'a>, temp: &'a str) -> Expression<'a> {
+        let mut exprs = ArenaVec::new_in(&self.ast);
 
-    /// `const a = 1, node = parent = { type: 'X' }, b = 2;`
-    /// ->
-    /// ```js
-    /// const a = 1, node = Object.create(NodeProto);
-    /// node.type = 'X';
-    /// parent = node;
-    /// const b = 2;
-    /// ```
-    fn convert_variable_declaration(
-        &self,
-        decl: ArenaBox<'a, VariableDeclaration<'a>>,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-    ) {
-        let is_convertible = |declarator: &VariableDeclarator<'a>| {
-            matches!(declarator.id, BindingPattern::BindingIdentifier(_))
-                && declarator.init.as_ref().is_some_and(|init| self.is_convertible_chain(init))
-        };
-
-        if !decl.declarations.iter().any(is_convertible) {
-            stmts.push(Statement::VariableDeclaration(decl));
-            return;
-        }
-
-        let VariableDeclaration { kind, declarations, .. } = decl.unbox();
-        let mut declarators = ArenaVec::new_in(&self.ast);
-        for mut declarator in declarations {
-            if !is_convertible(&declarator) {
-                declarators.push(declarator);
-                continue;
-            }
-
-            // Assign `Object.create(NodeProto)` to the variable being declared.
-            // The variable is in TDZ until it's initialized, so object literal's property values cannot read it.
-            let BindingPattern::BindingIdentifier(ident) = &declarator.id else { unreachable!() };
-            let var_name = ident.name.as_str();
-            let mut init = declarator.init.replace(self.object_create()).unwrap();
-            let obj_expr = self.take_node_literal(&mut init, var_name);
-            declarators.push(declarator);
-            let declarators = mem::replace(&mut declarators, ArenaVec::new_in(&self.ast));
-            stmts.push(Statement::new_variable_declaration(
-                SPAN,
-                kind,
-                declarators,
-                false,
-                &self.ast,
-            ));
-
-            self.push_property_assignments(var_name, obj_expr, stmts);
-
-            // If object literal was assigned to other targets too, assign the object to them.
-            // e.g. `node = parent = { ... }` -> `parent = node;`
-            if !matches!(init.without_parentheses(), Expression::Identifier(_)) {
-                stmts.push(Statement::new_expression_statement(SPAN, init, &self.ast));
-            }
-        }
-
-        if !declarators.is_empty() {
-            stmts.push(Statement::new_variable_declaration(
-                SPAN,
-                kind,
-                declarators,
-                false,
-                &self.ast,
-            ));
-        }
-    }
-
-    /// If `expr` is a chain of assignments ending in an AST node object literal,
-    /// create a new variable containing `Object.create(NodeProto)`, assign the object literal's properties to it,
-    /// and replace the object literal with the new variable.
-    ///
-    /// `return { type: 'X' };`
-    /// ->
-    /// ```js
-    /// const node = Object.create(NodeProto);
-    /// node.type = 'X';
-    /// return node;
-    /// ```
-    fn convert_chain_with_new_var(
-        &mut self,
-        expr: &mut Expression<'a>,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-    ) {
-        if !self.is_convertible_chain(expr) {
-            return;
-        }
-
-        let var_name = self.create_var_name();
-        let obj_expr = self.take_node_literal(expr, var_name);
-
-        let declarator = VariableDeclarator::new(
-            SPAN,
-            BindingPattern::new_binding_identifier(SPAN, var_name, &self.ast),
-            None,
-            Some(self.object_create()),
-            false,
-            &self.ast,
-        );
-        stmts.push(Statement::new_variable_declaration(
-            SPAN,
-            VariableDeclarationKind::Const,
-            ArenaVec::from_iter_in([declarator], &self.ast),
-            false,
-            &self.ast,
-        ));
-
-        self.push_property_assignments(var_name, obj_expr, stmts);
-    }
-
-    /// Check if `expr` is an AST node object literal, or a chain of assignments ending in one,
-    /// which can be converted.
-    fn is_convertible_chain(&self, expr: &Expression<'a>) -> bool {
-        let mut targets = vec![];
-        let mut expr = expr.without_parentheses();
-        while let Expression::AssignmentExpression(assign_expr) = expr {
-            if assign_expr.operator != AssignmentOperator::Assign {
-                return false;
-            }
-            targets.push(&assign_expr.left);
-            expr = assign_expr.right.without_parentheses();
-        }
-
-        let Expression::ObjectExpression(obj_expr) = expr else { return false };
-        if !is_node_literal(obj_expr) || !is_convertible(obj_expr) {
-            return false;
-        }
-
-        // Object literal's property values are moved to before the statement.
-        // Assigning to an identifier happens after the property values are evaluated anyway.
-        // But in `obj.prop = { ... }`, `obj` is evaluated before the object literal.
-        // So only allow `obj` to be a local variable (which function calls can't modify),
-        // which is not assigned while evaluating the object literal's property values.
-        let mut assigned = None;
-        targets.into_iter().all(|target| match target {
-            AssignmentTarget::AssignmentTargetIdentifier(_) => true,
-            AssignmentTarget::StaticMemberExpression(member_expr) => {
-                let Expression::Identifier(object) = &member_expr.object else { return false };
-                let name = object.name.as_str();
-                let assigned = assigned.get_or_insert_with(|| {
-                    let mut collector = AssignedNamesCollector::default();
-                    collector.visit_object_expression(obj_expr);
-                    collector.names
-                });
-                self.functions.last().unwrap().bindings.contains(name) && !assigned.contains(name)
-            }
-            _ => false,
-        })
-    }
-
-    /// Replace AST node object literal at end of chain of assignments with identifier `var_name`,
-    /// and return the object literal.
-    fn take_node_literal(
-        &self,
-        expr: &mut Expression<'a>,
-        var_name: &'a str,
-    ) -> ArenaBox<'a, ObjectExpression<'a>> {
-        match expr {
-            Expression::ParenthesizedExpression(paren_expr) => {
-                self.take_node_literal(&mut paren_expr.expression, var_name)
-            }
-            Expression::AssignmentExpression(assign_expr) => {
-                self.take_node_literal(&mut assign_expr.right, var_name)
-            }
-            Expression::ObjectExpression(_) => {
-                let ident = Expression::new_identifier(SPAN, var_name, &self.ast);
-                let Expression::ObjectExpression(obj_expr) = mem::replace(expr, ident) else {
-                    unreachable!()
-                };
-                obj_expr
-            }
-            _ => unreachable!(),
-        }
-    }
-
-    /// Push statements assigning all properties of object literal to `var_name`.
-    ///
-    /// * `key: value` -> `var_name.key = value;`
-    /// * `...(cond && { key: value })` -> `if (cond) var_name.key = value;`
-    fn push_property_assignments(
-        &self,
-        var_name: &'a str,
-        obj_expr: ArenaBox<'a, ObjectExpression<'a>>,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
-    ) {
-        for prop in obj_expr.unbox().properties {
-            match prop {
-                ObjectPropertyKind::ObjectProperty(prop) => {
-                    stmts.push(self.property_assignment(var_name, prop));
-                }
-                ObjectPropertyKind::SpreadProperty(spread) => {
-                    let Expression::LogicalExpression(logical_expr) =
-                        spread.unbox().argument.into_inner_expression()
-                    else {
-                        unreachable!()
-                    };
-                    let LogicalExpression { left: test, right, .. } = logical_expr.unbox();
-                    let Expression::ObjectExpression(obj_expr) = right.into_inner_expression()
-                    else {
-                        unreachable!()
-                    };
-
-                    let mut body = ArenaVec::new_in(&self.ast);
-                    for prop in obj_expr.unbox().properties {
-                        let ObjectPropertyKind::ObjectProperty(prop) = prop else { unreachable!() };
-                        body.push(self.property_assignment(var_name, prop));
-                    }
-                    let consequent = if body.len() == 1 {
-                        body.pop().unwrap()
-                    } else {
-                        Statement::new_block_statement(SPAN, body, &self.ast)
-                    };
-                    stmts
-                        .push(Statement::new_if_statement(SPAN, test, consequent, None, &self.ast));
-                }
-            }
-        }
-    }
-
-    /// Create `var_name.key = value;` statement from `key: value` property.
-    fn property_assignment(
-        &self,
-        var_name: &'a str,
-        prop: ArenaBox<'a, ObjectProperty<'a>>,
-    ) -> Statement<'a> {
-        let ObjectProperty { key, value, .. } = prop.unbox();
-        let PropertyKey::StaticIdentifier(key) = key else { unreachable!() };
-        let target = AssignmentTarget::new_static_member_expression(
-            SPAN,
-            Expression::new_identifier(SPAN, var_name, &self.ast),
-            key.unbox(),
-            false,
-            &self.ast,
-        );
-        let assign_expr = Expression::new_assignment_expression(
-            SPAN,
-            AssignmentOperator::Assign,
-            target,
-            value,
-            &self.ast,
-        );
-        Statement::new_expression_statement(SPAN, assign_expr, &self.ast)
-    }
-
-    /// Create `Object.create(NodeProto)` expression.
-    fn object_create(&self) -> Expression<'a> {
+        // `node$0 = Object.create(NodeProto)`
         let callee = Expression::new_static_member_expression(
             SPAN,
             Expression::new_identifier(SPAN, "Object", &self.ast),
@@ -2181,193 +1877,239 @@ impl<'a> NodeObjectCreator<'a> {
             false,
             &self.ast,
         );
-        let args = ArenaVec::from_iter_in(
-            [Argument::from(Expression::new_identifier(SPAN, "NodeProto", &self.ast))],
+        let proto = Argument::from(Expression::new_identifier(SPAN, "NodeProto", &self.ast));
+        let object_create = Expression::new_call_expression(
+            SPAN,
+            callee,
+            None,
+            ArenaVec::from_iter_in([proto], &self.ast),
+            false,
             &self.ast,
         );
-        Expression::new_call_expression(SPAN, callee, None, args, false, &self.ast)
-    }
+        let target = AssignmentTarget::new_assignment_target_identifier(SPAN, temp, &self.ast);
+        exprs.push(Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            target,
+            object_create,
+            &self.ast,
+        ));
 
-    /// Get a name for a new variable, which is not used anywhere else in the current function.
-    /// `node`, `node2`, `node3` etc.
-    fn create_var_name(&mut self) -> &'a str {
-        let idents = self.functions.last_mut().unwrap();
-        let mut name = Cow::Borrowed("node");
-        let mut index = 1;
-        while idents.names.contains(&*name) {
-            index += 1;
-            name = Cow::Owned(format!("node{index}"));
-        }
-        let name = self.allocator.alloc_str(&name);
-        idents.names.insert(name);
-        idents.bindings.insert(name);
-        name
-    }
-}
+        for prop in obj_expr.properties {
+            match prop {
+                ObjectPropertyKind::ObjectProperty(prop) => exprs.push(self.define(prop, temp)),
+                ObjectPropertyKind::SpreadProperty(spread) => {
+                    // `...(cond && { a, b })` -> `cond && (node$0.a = a, node$0.b = b)`
+                    let Expression::LogicalExpression(logical_expr) =
+                        spread.unbox().argument.into_inner_expression()
+                    else {
+                        panic!("Unsupported spread in object literal");
+                    };
+                    let LogicalExpression { left, operator, right, .. } = logical_expr.unbox();
+                    let Expression::ObjectExpression(obj_expr) = right.into_inner_expression()
+                    else {
+                        panic!("Unsupported spread in object literal");
+                    };
+                    assert!(
+                        operator == LogicalOperator::And,
+                        "Unsupported spread in object literal"
+                    );
 
-impl<'a> VisitMut<'a> for NodeObjectCreator<'a> {
-    fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
-        let mut idents = FunctionIdents::default();
-        IdentsCollector { idents: &mut idents }.visit_function(func, flags);
-        // `Object.create(NodeProto)` must refer to the globals
-        assert!(
-            !idents.bindings.contains("Object") && !idents.bindings.contains("NodeProto"),
-            "`Object` or `NodeProto` is shadowed in deserializer function"
-        );
-
-        self.functions.push(idents);
-        walk_mut::walk_function(self, func, flags);
-        self.functions.pop();
-    }
-
-    fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
-        // Convert object literals in this statement list, before visiting nested statements
-        if !self.functions.is_empty() {
-            let old_stmts = mem::replace(stmts, ArenaVec::new_in(&self.ast));
-            for stmt in old_stmts {
-                self.convert_statement(stmt, stmts);
+                    let mut assignments = ArenaVec::new_in(&self.ast);
+                    for prop in obj_expr.unbox().properties {
+                        let ObjectPropertyKind::ObjectProperty(prop) = prop else {
+                            panic!("Unsupported spread in object literal");
+                        };
+                        assignments.push(self.define(prop, temp));
+                    }
+                    let right = if assignments.len() == 1 {
+                        assignments.pop().unwrap()
+                    } else {
+                        Expression::new_sequence_expression(SPAN, assignments, &self.ast)
+                    };
+                    exprs.push(Expression::new_logical_expression(
+                        SPAN,
+                        left,
+                        LogicalOperator::And,
+                        right,
+                        &self.ast,
+                    ));
+                }
             }
         }
 
-        walk_mut::walk_statements(self, stmts);
+        exprs.push(Expression::new_identifier(SPAN, temp, &self.ast));
+        Expression::new_sequence_expression(SPAN, exprs, &self.ast)
     }
 
-    fn visit_object_expression(&mut self, obj_expr: &mut ObjectExpression<'a>) {
-        if is_node_literal(obj_expr) {
-            assert!(
-                !is_convertible(obj_expr),
-                "AST node object literal in unsupported position in deserializer. \
-                Add support for it to `NodeObjectCreator`."
-            );
+    /// Create expression which defines property `prop` on temp var `temp`.
+    ///
+    /// * `foo: value` -> `node$0.foo = value`
+    /// * `get foo() {}` ->
+    ///   `Object.defineProperty(node$0, 'foo', Object.getOwnPropertyDescriptor({ get foo() {} }, 'foo'))`
+    fn define(
+        &self,
+        prop: oxc_allocator::Box<'a, ObjectProperty<'a>>,
+        temp: &'a str,
+    ) -> Expression<'a> {
+        assert!(!prop.computed && !prop.method, "Unsupported property in object literal");
+        let PropertyKey::StaticIdentifier(key) = &prop.key else {
+            panic!("Unsupported property in object literal");
+        };
+        let key_name = key.name.as_str();
+        // Assigning these would hit a getter / setter on prototype chain, instead of defining a property
+        assert!(!matches!(key_name, "loc" | "__proto__"), "Unsupported property `{key_name}`");
 
-            // Object literal cannot be converted (e.g. it contains getters).
-            // Insert `__proto__: NodeProto` as first field instead.
-            let prop = ObjectPropertyKind::new_object_property(
+        match prop.kind {
+            PropertyKind::Init => {
+                let ObjectProperty { key, value, .. } = prop.unbox();
+                let PropertyKey::StaticIdentifier(key) = key else { unreachable!() };
+                let target = AssignmentTarget::new_static_member_expression(
+                    SPAN,
+                    Expression::new_identifier(SPAN, temp, &self.ast),
+                    key.unbox(),
+                    false,
+                    &self.ast,
+                );
+                Expression::new_assignment_expression(
+                    SPAN,
+                    AssignmentOperator::Assign,
+                    target,
+                    value,
+                    &self.ast,
+                )
+            }
+            PropertyKind::Get => {
+                let object_method = |method| {
+                    Expression::new_static_member_expression(
+                        SPAN,
+                        Expression::new_identifier(SPAN, "Object", &self.ast),
+                        IdentifierName::new(SPAN, method, &self.ast),
+                        false,
+                        &self.ast,
+                    )
+                };
+                let key_str = || {
+                    Argument::from(Expression::new_string_literal(SPAN, key_name, None, &self.ast))
+                };
+                let getter_obj = Expression::new_object_expression(
+                    SPAN,
+                    ArenaVec::from_iter_in([ObjectPropertyKind::ObjectProperty(prop)], &self.ast),
+                    &self.ast,
+                );
+                let descriptor = Expression::new_call_expression(
+                    SPAN,
+                    object_method("getOwnPropertyDescriptor"),
+                    None,
+                    ArenaVec::from_iter_in([Argument::from(getter_obj), key_str()], &self.ast),
+                    false,
+                    &self.ast,
+                );
+                let temp = Argument::from(Expression::new_identifier(SPAN, temp, &self.ast));
+                Expression::new_call_expression(
+                    SPAN,
+                    object_method("defineProperty"),
+                    None,
+                    ArenaVec::from_iter_in(
+                        [temp, key_str(), Argument::from(descriptor)],
+                        &self.ast,
+                    ),
+                    false,
+                    &self.ast,
+                )
+            }
+            PropertyKind::Set => panic!("Unsupported setter in object literal"),
+        }
+    }
+}
+
+impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
+    fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
+        let depth = mem::take(&mut self.depth);
+        let temp_count = self.temp_count.replace(0);
+
+        walk_mut::walk_function(self, func, flags);
+
+        // Declare temp vars at start of function (`let node$0, node$1;`)
+        let count = self.temp_count.unwrap();
+        if count > 0 {
+            let declarations = ArenaVec::from_iter_in(
+                (0..count).map(|index| {
+                    VariableDeclarator::new(
+                        SPAN,
+                        BindingPattern::new_binding_identifier(
+                            SPAN,
+                            temp_name(index, self.allocator),
+                            &self.ast,
+                        ),
+                        None,
+                        None,
+                        false,
+                        &self.ast,
+                    )
+                }),
+                &self.ast,
+            );
+            let decl = Statement::new_variable_declaration(
                 SPAN,
-                PropertyKind::Init,
-                PropertyKey::new_static_identifier(SPAN, "__proto__", &self.ast),
-                Expression::new_identifier(SPAN, "NodeProto", &self.ast),
-                false,
-                false,
+                VariableDeclarationKind::Let,
+                declarations,
                 false,
                 &self.ast,
             );
-            obj_expr.properties.insert(0, prop);
+            func.body.as_mut().unwrap().statements.insert(0, decl);
         }
 
-        walk_mut::walk_object_expression(self, obj_expr);
-    }
-}
-
-/// Visitor to collect names of all identifiers in a function.
-struct IdentsCollector<'a, 'i> {
-    idents: &'i mut FunctionIdents<'a>,
-}
-
-impl<'a> Visit<'a> for IdentsCollector<'a, '_> {
-    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
-        self.idents.names.insert(ident.name.as_str());
+        self.depth = depth;
+        self.temp_count = temp_count;
     }
 
-    fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'a>) {
-        self.idents.names.insert(ident.name.as_str());
-        self.idents.bindings.insert(ident.name.as_str());
-    }
-}
-
-/// Visitor to collect names of all identifiers which are assigned to.
-#[derive(Default)]
-struct AssignedNamesCollector<'a> {
-    names: FxHashSet<&'a str>,
-}
-
-impl<'a> Visit<'a> for AssignedNamesCollector<'a> {
-    fn visit_simple_assignment_target(&mut self, target: &SimpleAssignmentTarget<'a>) {
-        if let SimpleAssignmentTarget::AssignmentTargetIdentifier(ident) = target {
-            self.names.insert(ident.name.as_str());
-        }
-        walk::walk_simple_assignment_target(self, target);
-    }
-
-    fn visit_assignment_target_property_identifier(
-        &mut self,
-        prop: &AssignmentTargetPropertyIdentifier<'a>,
-    ) {
-        self.names.insert(prop.binding.name.as_str());
-        walk::walk_assignment_target_property_identifier(self, prop);
-    }
-}
-
-/// Check if object literal is an AST node i.e. has a `range` field (`...(RANGE && { range: [start, end] })`).
-fn is_node_literal(obj_expr: &ObjectExpression<'_>) -> bool {
-    obj_expr.properties.iter().any(|prop| {
-        if let ObjectPropertyKind::SpreadProperty(spread) = prop
-            && let Expression::LogicalExpression(logical_expr) =
-                spread.argument.without_parentheses()
-            && logical_expr.operator == LogicalOperator::And
-            && let Expression::Identifier(ident) = &logical_expr.left
-            && ident.name == "RANGE"
-        {
-            true
-        } else {
-            false
-        }
-    })
-}
-
-/// Check if AST node object literal can be converted to `Object.create(NodeProto)` + property assignments.
-///
-/// It can if all its properties are `key: value` properties, or conditional spreads of an object literal
-/// containing only `key: value` properties (`...(cond && { key: value })`).
-fn is_convertible(obj_expr: &ObjectExpression<'_>) -> bool {
-    obj_expr.properties.iter().all(|prop| match prop {
-        ObjectPropertyKind::ObjectProperty(prop) => is_plain_property(prop),
-        ObjectPropertyKind::SpreadProperty(spread) => {
-            if let Expression::LogicalExpression(logical_expr) = spread.argument.without_parentheses()
+    fn visit_expression(&mut self, expr: &mut Expression<'a>) {
+        // Check if expression is object with `range` field (`...(RANGE && { range: [start, end] })`)
+        let Expression::ObjectExpression(obj_expr) = expr else {
+            walk_mut::walk_expression(self, expr);
+            return;
+        };
+        let has_range_field = obj_expr.properties.iter().any(|prop| {
+            if let ObjectPropertyKind::SpreadProperty(spread) = prop
+                && let Expression::ParenthesizedExpression(paren_expr) = &spread.argument
+                && let Expression::LogicalExpression(logical_expr) = &paren_expr.expression
                 && logical_expr.operator == LogicalOperator::And
-                && let Expression::ObjectExpression(obj_expr) = logical_expr.right.without_parentheses()
+                && let Expression::Identifier(ident) = &logical_expr.left
+                && ident.name == "RANGE"
             {
-                obj_expr.properties.iter().all(|prop| {
-                    matches!(prop, ObjectPropertyKind::ObjectProperty(prop) if is_plain_property(prop))
-                })
+                true
             } else {
                 false
             }
+        });
+        if !has_range_field {
+            walk_mut::walk_expression(self, expr);
+            return;
         }
-    })
-}
 
-/// Check if property is a plain `key: value` property.
-///
-/// Key must not be the name of a property of `NodeProto` or `Object.prototype`.
-/// Object literals define properties, whereas assignments could hit a getter / setter
-/// on the prototype chain e.g. `loc`.
-fn is_plain_property(prop: &ObjectProperty<'_>) -> bool {
-    if prop.kind == PropertyKind::Init
-        && !prop.computed
-        && !prop.method
-        && let PropertyKey::StaticIdentifier(key) = &prop.key
-        && !PROTOTYPE_KEYS.contains(&key.name.as_str())
-    {
-        true
-    } else {
-        false
+        // Convert any nested object literals first, using the next temp var
+        let temp_count =
+            self.temp_count.as_mut().expect("Object literal with `range` field outside function");
+        let index = self.depth;
+        *temp_count = (*temp_count).max(index + 1);
+        self.depth += 1;
+        walk_mut::walk_expression(self, expr);
+        self.depth -= 1;
+
+        let temp = temp_name(index, self.allocator);
+        expr.replace_with(|expr| {
+            let Expression::ObjectExpression(obj_expr) = expr else { unreachable!() };
+            self.create_node(obj_expr.unbox(), temp)
+        });
+    }
+
+    fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
+        assert!(!ident.name.starts_with("node$"), "`{}` clashes with temp vars", ident.name);
     }
 }
 
-/// Properties of `NodeProto` and `Object.prototype`.
-const PROTOTYPE_KEYS: &[&str] = &[
-    "loc",
-    "__proto__",
-    "__defineGetter__",
-    "__defineSetter__",
-    "__lookupGetter__",
-    "__lookupSetter__",
-    "constructor",
-    "hasOwnProperty",
-    "isPrototypeOf",
-    "propertyIsEnumerable",
-    "toLocaleString",
-    "toString",
-    "valueOf",
-];
+/// Get name of temp var for object literals at nesting depth `index`.
+fn temp_name(index: usize, allocator: &Allocator) -> &str {
+    allocator.alloc_str(&format!("node${index}"))
+}
