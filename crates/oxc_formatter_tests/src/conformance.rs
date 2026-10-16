@@ -3,6 +3,8 @@
 //! Runs a language formatter over the Prettier repository's own test suite (`tests/format/<dir>`)
 //! and compares the output byte-for-byte against Prettier's committed jest snapshots.
 //! Every output is also re-formatted; files whose second pass differs are tracked in the report's `# Not idempotent` section.
+//! Every input is also formatted with CRLF / CR line endings and with a BOM;
+//! files whose variant output differs are tracked in the report's `# Input variants differ` section.
 //! Language specifics arrive through [`ConformanceConfig`] (which fixture dirs, which parser names, what to ignore)
 //! and the `format` callback (spec options → typed options → formatted output), so this module never depends on a language crate.
 //!
@@ -122,6 +124,7 @@ where
     let mut total_failed_file_count = 0;
     let mut total_skipped_files = vec![];
     let mut total_non_idempotent_files = vec![];
+    let mut total_variant_mismatch_files = vec![];
     let mut failed_reports = String::new();
     failed_reports.push_str("# Failed\n");
     failed_reports.push('\n');
@@ -141,6 +144,7 @@ where
         total_failed_file_count += results.failed.len();
         total_skipped_files.extend(results.skipped);
         total_non_idempotent_files.extend(results.non_idempotent);
+        total_variant_mismatch_files.extend(results.variant_mismatch);
 
         for (path, (failed, passed, ratio)) in results.failed {
             writeln!(
@@ -178,6 +182,12 @@ where
         for (path, parse_failed) in &total_non_idempotent_files {
             let note = if *parse_failed { " (second pass failed to parse)" } else { "" };
             writeln!(report, "- {path}{note}").unwrap();
+        }
+    }
+    if !total_variant_mismatch_files.is_empty() {
+        report.push_str("\n# Input variants differ\n\n");
+        for (path, variants) in &total_variant_mismatch_files {
+            writeln!(report, "- {path} ({})", variants.join(", ")).unwrap();
         }
     }
 
@@ -260,6 +270,8 @@ struct SnapshotResults {
     /// `(path, second_pass_parse_failed)` per file
     /// whose re-formatted output differs from the first pass for at least one options combination
     non_idempotent: Vec<(String, bool)>,
+    /// `(path, variant names)` per file whose input variant output differs for at least one options combination
+    variant_mismatch: Vec<(String, Vec<&'static str>)>,
 }
 
 /// Run the formatter and compare the output with the Prettier's snapshot.
@@ -369,6 +381,8 @@ struct CaseOutcome {
     mismatch: Option<f32>,
     /// Whether the second pass failed to parse, when re-formatting did not reproduce the output.
     non_idempotent: Option<bool>,
+    /// Input variants whose output differs from the original input's.
+    variant_mismatch: Vec<&'static str>,
 }
 
 /// Formats one input under one option set and compares it with the snapshot's expected output.
@@ -403,6 +417,33 @@ where
     let idempotent = reformatted.as_deref() == Some(actual.as_str());
     if !idempotent {
         outcome.non_idempotent = Some(reformatted.is_none());
+    }
+
+    // Input variants: line endings are normalized and a BOM is kept as is (`endOfLine` is never `auto` in the suite),
+    // so they must produce the same output.
+    // Inputs already containing `\r` or a BOM are skipped, their variants would not be equivalent.
+    let mut variants = vec![];
+    if !source_text.contains('\r') {
+        variants.push(("CRLF", source_text.cow_replace('\n', "\r\n").into_owned(), actual.clone()));
+        variants.push(("CR", source_text.cow_replace('\n', "\r").into_owned(), actual.clone()));
+    }
+    if !source_text.starts_with('\u{feff}') {
+        variants.push(("BOM", format!("\u{feff}{source_text}"), format!("\u{feff}{actual}")));
+    }
+    for (name, input, expected_output) in variants {
+        let output = format(path, &input, &call.options);
+        if output.as_deref() != Some(expected_output.as_str()) {
+            outcome.variant_mismatch.push(name);
+            if debug {
+                match &output {
+                    Some(output) => {
+                        println!("Input variant {name} differs ⚠️");
+                        print_text_diff(&TextDiff::from_lines(&expected_output, output));
+                    }
+                    None => println!("Input variant {name} failed to parse 💥"),
+                }
+            }
+        }
     }
 
     let escaped =
@@ -453,6 +494,7 @@ struct CaseTally {
     skipped: bool,
     non_idempotent: bool,
     second_pass_parse_failed: bool,
+    variant_mismatch: Vec<&'static str>,
     total_diff_ratio: f32,
 }
 
@@ -467,6 +509,11 @@ impl CaseTally {
         if let Some(second_pass_parse_failed) = outcome.non_idempotent {
             self.non_idempotent = true;
             self.second_pass_parse_failed |= second_pass_parse_failed;
+        }
+        for name in &outcome.variant_mismatch {
+            if !self.variant_mismatch.contains(name) {
+                self.variant_mismatch.push(*name);
+            }
         }
     }
 
@@ -489,7 +536,10 @@ impl CaseTally {
             results.skipped.push(report_path.clone());
         }
         if self.non_idempotent {
-            results.non_idempotent.push((report_path, self.second_pass_parse_failed));
+            results.non_idempotent.push((report_path.clone(), self.second_pass_parse_failed));
+        }
+        if !self.variant_mismatch.is_empty() {
+            results.variant_mismatch.push((report_path, self.variant_mismatch));
         }
     }
 }
