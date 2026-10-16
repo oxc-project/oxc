@@ -813,16 +813,22 @@ Before an optional call's `?.`, Prettier moves an own-line comment into the argu
 ```ts
 // input
 const a = (make<T>)!;
+(make<T>)<U>();
+x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
 
 // ours
 const a = (make<T>)!;
+(make<T>)<U>();
+x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
 
 // prettier
 const a = make<T>!;
+make<T><U>();
+x = make<T> + y;
 export default class {}<string>;
 class {}<string>;
 ```
@@ -830,6 +836,10 @@ class {}<string>;
 Prettier drops the parens around an instantiation expression before `!`,
 and the ones that keep a leading `class`/`function` from starting a declaration or statement.
 Fixed in Prettier `main` by prettier/prettier#20177, which we follow except after `export default` (DIVERGENCES.md#export-default-leftmost-parens).
+
+Prettier `main` still drops them before type arguments (`make<T><U>()` does not parse)
+and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
+(`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
 
 ## export-default-leftmost-parens
 
