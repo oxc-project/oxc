@@ -1,3 +1,6 @@
+use schemars::JsonSchema;
+use serde::Deserialize;
+
 use oxc_ast::{
     AstKind,
     ast::{BinaryExpression, Expression},
@@ -6,8 +9,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
-use schemars::JsonSchema;
-use serde::Deserialize;
 
 use crate::{
     AstNode,
@@ -186,9 +187,8 @@ impl Eqeqeq {
         }
         let operator = binary_expr.operator.as_str();
         let truncated_operator = &operator[..operator.len() - 1];
-        // There are some uncontrolled cases to auto fix.
-        // In ESLint, `null >= null` will be auto fixed to `null > null` which is also wrong.
-        // So I just report it.
+        // This is only called for `===` and `!==`, so the truncated operator is `==` or `!=`.
+        // It is reported without an autofix.
         ctx.diagnostic(eqeqeq_diagnostic(operator, truncated_operator, binary_expr.span));
     }
 }
@@ -208,7 +208,12 @@ impl Rule for Eqeqeq {
         let must_enforce_null = matches!(options.null, NullType::Always);
 
         if !matches!(binary_expr.operator, BinaryOperator::Equality | BinaryOperator::Inequality) {
-            if is_null_comparison {
+            if is_null_comparison
+                && matches!(
+                    binary_expr.operator,
+                    BinaryOperator::StrictEquality | BinaryOperator::StrictInequality
+                )
+            {
                 self.report_inverse_null_comparison(binary_expr, ctx);
             }
             return;
@@ -297,18 +302,23 @@ fn is_type_of_binary(binary_expr: &BinaryExpression) -> bool {
     is_type_of(&binary_expr.left) || is_type_of(&binary_expr.right)
 }
 
+/// The `typeof` result of a literal, or `None` if the expression is not a literal.
+/// Static template literals count as strings.
+fn get_literal_type(expr: &Expression) -> Option<&'static str> {
+    match expr {
+        Expression::BooleanLiteral(_) => Some("boolean"),
+        Expression::NullLiteral(_) | Expression::RegExpLiteral(_) => Some("object"),
+        Expression::StringLiteral(_) => Some("string"),
+        Expression::NumericLiteral(_) => Some("number"),
+        Expression::BigIntLiteral(_) => Some("bigint"),
+        Expression::TemplateLiteral(template) if template.expressions.is_empty() => Some("string"),
+        _ => None,
+    }
+}
+
 /// Checks if operands are literals of the same type
 fn are_literals_and_same_type(left: &Expression, right: &Expression) -> bool {
-    matches!(
-        (left, right),
-        (Expression::BooleanLiteral(_), Expression::BooleanLiteral(_))
-            | (Expression::NullLiteral(_), Expression::NullLiteral(_))
-            | (Expression::StringLiteral(_), Expression::StringLiteral(_))
-            | (Expression::NumericLiteral(_), Expression::NumericLiteral(_))
-            | (Expression::BigIntLiteral(_), Expression::BigIntLiteral(_))
-            | (Expression::RegExpLiteral(_), Expression::RegExpLiteral(_))
-            | (Expression::TemplateLiteral(_), Expression::TemplateLiteral(_))
-    )
+    get_literal_type(left).is_some_and(|left_type| Some(left_type) == get_literal_type(right))
 }
 
 fn is_null_check(binary_expr: &BinaryExpression) -> bool {
@@ -358,11 +368,16 @@ fn test() {
         // We previously allowed exclusion of the first value, but that
         // causes difficulties in validation, so let's not.
         ("href != null", Some(json!(["always", { "null": "ignore" }]))),
+        ("`hello` != `world`", Some(json!(["smart"]))),
+        ("`hello` == 'hello'", Some(json!(["smart"]))),
+        ("a >= null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("a + null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("null + null", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("null instanceof Foo", Some(serde_json::json!(["always", { "null": "never" }]))),
+        ("null >= 1", Some(json!(["always", { "null": "never" }]))),
     ];
 
     let fail = vec![
-        // ESLint will perform like below case
-        ("null >= 1", Some(json!(["always", { "null": "never" }]))),
         ("typeof foo == 'undefined'", None),
         ("'hello' != 'world'", None),
         ("0 == 0", None),
@@ -373,6 +388,10 @@ fn test() {
         ("bananas != 1", None),
         ("value == undefined", None),
         ("null == null", Some(json!(["always", { "null": "always" }]))),
+        ("a === null", Some(json!(["always", { "null": "never" }]))),
+        ("a !== null", Some(json!(["always", { "null": "never" }]))),
+        ("`${a}` == 'x'", Some(json!(["smart"]))),
+        ("`${a}` == `${b}`", Some(json!(["smart"]))),
     ];
 
     let fix = vec![
@@ -382,6 +401,8 @@ fn test() {
         ("1000  !=  1000", "1000 !== 1000", None),
         ("(1000 + 1) != 1000", "(1000 + 1) !== 1000", None),
         ("a == b", "a === b", None),
+        ("`hello` == 'hello'", "`hello` === 'hello'", None),
+        ("`hello` != `world`", "`hello` !== `world`", None),
     ];
 
     Tester::new(Eqeqeq::NAME, Eqeqeq::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
