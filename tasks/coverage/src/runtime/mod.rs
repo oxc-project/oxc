@@ -71,7 +71,6 @@ static SKIP_FEATURES: &[&str] = &[
     // stage 2
     "Intl.DurationFormat",
     // stage 3
-    "decorators",
     "explicit-resource-management",
     "source-phase-imports",
     "import-defer",
@@ -261,13 +260,33 @@ fn run_case(
     CoverageResult { path: file.path.clone(), should_fail: false, result }
 }
 
+/// Features which Node.js cannot run natively, so tests using them only run after transform.
+static TRANSFORM_ONLY_FEATURES: &[&str] = &["decorators"];
+
+fn is_transform_only(file: &Test262File) -> bool {
+    file.meta.features.iter().any(|feature| TRANSFORM_ONLY_FEATURES.contains(&feature.as_ref()))
+}
+
 /// Run the three code-production variants in order, stopping at the first failure.
+///
+/// Tests using a feature in [`TRANSFORM_ONLY_FEATURES`] skip the codegen variant,
+/// and minify the transformed code.
 fn run_variants(
     file: &Test262File,
     import_dir: &str,
     port: u16,
     send: &impl Fn(u16, &RunRequest) -> Result<String, String>,
 ) -> TestResult {
+    if is_transform_only(file) {
+        let code = get_code(file, true, false);
+        let result = run_test_code(file, "transform", code, import_dir, port, send);
+        if result != TestResult::Passed {
+            return result;
+        }
+        let code = get_code(file, true, true);
+        return run_test_code(file, "minify", code, import_dir, port, send);
+    }
+
     let code = get_code(file, false, false);
     let result = run_test_code(file, "codegen", code, import_dir, port, send);
     if result != TestResult::Passed {
@@ -362,6 +381,8 @@ fn get_code(file: &Test262File, transform: bool, minify: bool) -> String {
         options.jsx.refresh = None;
         options.helper_loader.mode = HelperLoaderMode::External;
         options.typescript.only_remove_type_imports = true;
+        // Test262 tests standard decorators, not TypeScript's legacy decorators.
+        options.decorator.legacy = false;
         Transformer::new(&allocator, &file.path, &options)
             .build_with_scoping(scoping, &mut program);
     }

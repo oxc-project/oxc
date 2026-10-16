@@ -178,6 +178,21 @@ impl TestCase {
 
         // Skip some Babel tests.
         if let Ok(path) = self.path.strip_prefix(packages_root()) {
+            // Standard decorator lowering uses esbuild's helper protocol, so Babel's output
+            // cannot match. Keep exec tests and expected transform errors in these suites.
+            if self.kind == TestCaseKind::Conformance
+                && options.throws.is_none()
+                && path.strip_prefix("babel-plugin-proposal-decorators/test/fixtures").is_ok_and(
+                    |path| {
+                        path.components().next().is_some_and(|component| {
+                            component.as_os_str().to_string_lossy().starts_with("2023-")
+                        })
+                    },
+                )
+            {
+                return true;
+            }
+
             // babel skip test cases that in a directory starting with a dot
             // https://github.com/babel/babel/blob/0effd92d886b7135469d23612ceba6414c721673/packages/babel-helper-fixtures/src/index.ts#L223
             if path.components().any(|c| c.as_os_str().to_str().unwrap().starts_with('.')) {
@@ -499,6 +514,48 @@ fn get_babel_error(error: &str) -> String {
 #[cfg(test)]
 mod test {
     use super::*;
+
+    #[test]
+    fn babel_standard_decorators_keep_exec_errors_and_local_outputs() {
+        let fixture_path = "babel-plugin-proposal-decorators/test/fixtures";
+        for root in [packages_root(), oxc_test_root()] {
+            for (relative_path, kind, skip_babel_output) in [
+                ("2023-11-harness/combined/input.js", TestCaseKind::Conformance, true),
+                ("2023-11-harness/combined/exec.js", TestCaseKind::Exec, false),
+                ("2023-11-harness/combined/exec.ts", TestCaseKind::Exec, false),
+                ("2023-11-harness/combined/exec.mjs", TestCaseKind::Exec, false),
+                ("2023-11-harness/exec/input.js", TestCaseKind::Exec, false),
+                ("2023-05-harness/typescript/input.ts", TestCaseKind::Conformance, true),
+                ("legacy-harness/example/input.js", TestCaseKind::Conformance, false),
+                ("metadata-harness/example/input.js", TestCaseKind::Conformance, false),
+                ("oxc/2023-11-harness/input.js", TestCaseKind::Conformance, false),
+            ] {
+                let path = root.join(fixture_path).join(relative_path);
+                let mut case = TestCase::new(&root, &path).unwrap();
+                assert_eq!(case.kind, kind, "{}", path.display());
+                assert_eq!(
+                    case.skip_test_case(),
+                    root == packages_root() && skip_babel_output,
+                    "{}",
+                    path.display()
+                );
+
+                // Expected-error fixtures remain conformance tests even in an exec-only suite.
+                case.options.throws = Some("expected transform error".to_string());
+                assert!(!case.skip_test_case(), "{}", path.display());
+            }
+        }
+
+        for root in [packages_root(), oxc_test_root()] {
+            for fixture_path in [
+                "babel-plugin-transform-typescript/test/fixtures/2023-11-harness/example/input.ts",
+                "legacy-decorators/test/fixtures/2023-11-harness/example/input.ts",
+            ] {
+                let case = TestCase::new(&root, &root.join(fixture_path)).unwrap();
+                assert!(!case.skip_test_case());
+            }
+        }
+    }
 
     #[test]
     fn records_missing_expected_transform_error() {

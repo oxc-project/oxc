@@ -1,8 +1,8 @@
 commit: e4fbf577
 
 runtime Summary:
-AST Parsed     : 18378/18378 (100.00%)
-Positive Passed: 17415/18378 (94.76%)
+AST Parsed     : 18382/18382 (100.00%)
+Positive Passed: 17419/18382 (94.76%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1023,6 +1023,9 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
 
+transform Error: tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
+SyntaxError: Unexpected identifier '$'
+
 transform Error: tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1947,12 +1950,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-transform Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-dflt-obj-ptrn-prop-id-init.js
-timeout: global
-
-transform Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-obj-ptrn-id-init-fn-name-arrow.js
-timeout: global
-
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/private-meth-obj-ptrn-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -2249,6 +2246,9 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
+
+transform Error: tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
+SyntaxError: Unexpected identifier '$'
 
 codegen Error: tasks/coverage/test262/test/language/statements/class/static-init-arguments-label.js
 SyntaxError: 'arguments' is not allowed in class field initializer or static initialization block
