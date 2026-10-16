@@ -645,6 +645,15 @@ impl<'a> AstKind<'a> {
     }
 }
 
+/// A regular function or arrow function.
+#[derive(Debug, Clone, Copy)]
+pub enum FunctionKind<'a, 'b> {
+    /// A function declaration, expression, or method.
+    Function(&'b Function<'a>),
+    /// An arrow function expression.
+    Arrow(&'b ArrowFunctionExpression<'a>),
+}
+
 /// This is a subset of [`AstKind`] that represents member expressions.
 ///
 /// Having a separate enum for this allows us to implement helpful methods that are specific to member expressions,
