@@ -2,23 +2,48 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-## array-hole-trailing-comment
+## array-hole-comments
 
 - Why: invariant
 - Pin: `tests/fixtures/js/comments/array-holes.js`
+- Conformance: `js/arrays/numbers-with-holes.js`
 
 ```js
 // input
 const a = [1, , /* c */];
+[parser, /* c */, optional] = x;
+const b = [
+  1,
+  // c
+  ,
+  2,
+];
 
 // ours
-const a = [1, ,/* c */];
+const a = [1, , /* c */];
+[parser, /* c */, optional] = x;
+const b = [
+  1,
+  // c
+  ,
+  2,
+];
 
 // prettier
 const a = [1 /* c */, ,];
+[parser /* c */, , optional] = x;
+const b = [
+  1,
+  ,
+  // c
+  2,
+];
 ```
 
-Prettier's attachment relocates the comment backward across the commas (user content) to the last real element; we keep it in place.
+A hole has no node, so Prettier's attachment relocates a comment next to it across the commas (user content, they keep the hole count) to a real element;
+we keep every comment on its source side of each hole's `,`, in array expressions and array patterns alike.
+Spacing follows the `,` like any separator: a comment before it is glued to it (`/* c */,`, as in `a /* c */,`),
+a comment after it is spaced (`, /* c */`, as in `a, /* c */ b`), also after the last hole where Prettier glues it (`, ,/* c */`).
 
 ## type-alias-trailing-comment-move
 
