@@ -108,6 +108,7 @@ declare_oxc_lint!(
     JsxKey,
     react,
     correctness,
+    recommended,
     config = JsxKey,
     version = "0.0.14",
     short_description = "Enforce `key` prop for elements in an array.",
