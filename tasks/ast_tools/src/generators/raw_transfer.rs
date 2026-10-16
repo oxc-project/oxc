@@ -3,7 +3,6 @@
 use std::{borrow::Cow, fmt::Debug, mem, str};
 
 use cow_utils::CowUtils;
-use itertools::Itertools;
 use lazy_regex::{Captures, Lazy, Regex, lazy_regex, regex::Replacer};
 use proc_macro2::TokenStream;
 use quote::quote;
@@ -14,9 +13,9 @@ use oxc_ast::{
     ast::{
         Argument, AssignmentOperator, AssignmentTarget, AssignmentTargetPropertyIdentifier,
         BindingIdentifier, BindingPattern, Expression, Function, IdentifierName,
-        IdentifierReference, LogicalOperator, ObjectExpression, ObjectProperty, ObjectPropertyKind,
-        Program, PropertyKey, PropertyKind, SimpleAssignmentTarget, Statement, VariableDeclaration,
-        VariableDeclarationKind, VariableDeclarator,
+        IdentifierReference, LogicalExpression, LogicalOperator, ObjectExpression, ObjectProperty,
+        ObjectPropertyKind, Program, PropertyKey, PropertyKind, SimpleAssignmentTarget, Statement,
+        VariableDeclaration, VariableDeclarationKind, VariableDeclarator,
     },
     builder::AstBuilder,
 };
@@ -177,7 +176,7 @@ fn generate_deserializers(
         // Nodes are created with `Object.create(NodeProto)`, followed by assigning their properties.
         // V8 creates object literals which contain `__proto__` (`{{ __proto__: NodeProto, ... }}`) on a slow path,
         // so using `Object.create` makes deserialization much faster.
-        // See `NodeObjectCreateInliner` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
+        // See `NodeObjectCreator` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
         const NodeProto = Object.create(Object.prototype, {{
             loc: {{
                 // Note: Not configurable
@@ -358,19 +357,7 @@ fn generate_deserializers(
         ) {
             if flags[2] {
                 // `loc` enabled
-                LocFieldAdder::new(allocator).visit_program(program);
-            }
-        }
-
-        fn post_process_variant<'a>(
-            &self,
-            program: &mut Program<'a>,
-            flags: [bool; 6],
-            allocator: &'a Allocator,
-        ) {
-            if flags[2] {
-                // `loc` enabled
-                NodeObjectCreateInliner::new(allocator).generate(program);
+                NodeObjectCreator::new(allocator).visit_program(program);
             }
         }
     }
@@ -1840,92 +1827,52 @@ fn get_constants(schema: &Schema) -> Constants {
     }
 }
 
-/// Visitor to add `__proto__` field to all objects with `range` field in all deserialize functions,
+/// Visitor to make AST node objects in all deserialize functions have `NodeProto` as their prototype,
 /// to give access to `loc`.
 ///
-/// After minification, [`NodeObjectCreateInliner`] replaces these object literals with `Object.create(NodeProto)`
-/// followed by property assignments.
-///
-/// Works on AST pre-minification.
-struct LocFieldAdder<'a> {
-    ast: AstBuilder<'a>,
-}
-
-impl<'a> LocFieldAdder<'a> {
-    fn new(allocator: &'a Allocator) -> Self {
-        Self { ast: AstBuilder::new(allocator) }
-    }
-}
-
-impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
-    fn visit_object_expression(&mut self, obj_expr: &mut ObjectExpression<'a>) {
-        // Check if object has `range` field (`...(RANGE && { range: [start, end] })`)
-        let has_range_field = obj_expr.properties.iter().any(|prop| {
-            if let ObjectPropertyKind::SpreadProperty(spread) = prop
-                && let Expression::ParenthesizedExpression(paren_expr) = &spread.argument
-                && let Expression::LogicalExpression(logical_expr) = &paren_expr.expression
-                && logical_expr.operator == LogicalOperator::And
-                && let Expression::Identifier(ident) = &logical_expr.left
-                && ident.name == "RANGE"
-            {
-                true
-            } else {
-                false
-            }
-        });
-
-        if has_range_field {
-            // Insert `__proto__: NodeProto` as first field
-            let prop = ObjectPropertyKind::new_object_property(
-                SPAN,
-                PropertyKind::Init,
-                PropertyKey::new_static_identifier(SPAN, "__proto__", &self.ast),
-                Expression::new_identifier(SPAN, "NodeProto", &self.ast),
-                false,
-                false,
-                false,
-                &self.ast,
-            );
-            obj_expr.properties.insert(0, prop);
-        }
-
-        walk_mut::walk_object_expression(self, obj_expr);
-    }
-}
-
-/// Visitor to replace `{ __proto__: NodeProto, ... }` object literals with `Object.create(NodeProto)`,
-/// followed by assigning the object's properties.
+/// AST node objects are object literals with a `range` field (`...(RANGE && { range: [start, end] })`).
+/// They are replaced with `Object.create(NodeProto)`, followed by assigning the object's properties.
+/// Conditional fields (`...(IS_TS && { typeAnnotation: null })`) become conditional assignments
+/// (`if (IS_TS) node.typeAnnotation = null;`), which minifier then removes or unwraps.
 ///
 /// ```js
 /// // Before
-/// let previousParent = parent,
-///   node = (parent = { __proto__: NodeProto, type: "CallExpression", callee: null, /* ... */ parent });
+/// const previousParent = parent,
+///   node = parent = {
+///     type: 'CallExpression',
+///     callee: null,
+///     // ...
+///     ...(RANGE && { range: [start, end] }),
+///     ...(PARENT && { parent }),
+///   };
 ///
 /// // After
-/// let previousParent = parent,
+/// const previousParent = parent,
 ///   node = Object.create(NodeProto);
-/// node.type = "CallExpression";
+/// node.type = 'CallExpression';
 /// node.callee = null;
 /// // ...
-/// node.parent = parent;
+/// if (RANGE) node.range = [start, end];
+/// if (PARENT) node.parent = parent;
 /// parent = node;
 /// ```
 ///
 /// ```js
 /// // Before
-/// return { __proto__: NodeProto, type: "ThisExpression", /* ... */ };
+/// return { type: 'ThisExpression', /* ... */ };
 ///
 /// // After
-/// let node = Object.create(NodeProto);
-/// node.type = "ThisExpression";
+/// const node = Object.create(NodeProto);
+/// node.type = 'ThisExpression';
 /// // ...
 /// return node;
 /// ```
 ///
-/// V8 creates object literals containing `__proto__` via a slow path (runtime call to set the prototype),
-/// whereas `Object.create` with a constant prototype, followed by property assignments, is fast.
-/// The objects created are indistinguishable: same prototype (`NodeProto`), same own properties in same order
-/// with same attributes, and `node.constructor` is still `Object` (inherited from `Object.prototype`).
+/// V8 creates object literals containing `__proto__` (`{ __proto__: NodeProto, ... }`) via a slow path
+/// (runtime call to set the prototype), whereas `Object.create` with a constant prototype, followed by property
+/// assignments, is fast. The objects created are the same as with `__proto__`: same prototype (`NodeProto`),
+/// same own properties in same order with same attributes, and `node.constructor` is `Object`
+/// (inherited from `Object.prototype`).
 ///
 /// Evaluation order is unchanged. An object literal creates the object first, and then evaluates and defines
 /// its properties in order. So creating the object and then assigning its properties in the same order
@@ -1937,11 +1884,11 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
 ///   (`x = y = { ... }`), and only if the assignment targets are identifiers, or member expressions
 ///   on a local variable which is not assigned while evaluating the object literal's property values.
 ///
-/// Object literals which are not just a list of `key: value` properties (e.g. contain getters or spreads)
-/// are left as they are. Panics if any other `{ __proto__: NodeProto, ... }` object literal is not converted.
+/// Object literals which contain getters (`Program`) cannot be converted, so `__proto__: NodeProto`
+/// is added to them instead. Panics if any other AST node object literal cannot be converted.
 ///
-/// Works on AST post-minification, so object literals are in their final form.
-struct NodeObjectCreateInliner<'a> {
+/// Works on AST pre-minification.
+struct NodeObjectCreator<'a> {
     ast: AstBuilder<'a>,
     allocator: &'a Allocator,
     /// Identifiers in each enclosing function. Last entry is for current function.
@@ -1957,55 +1904,50 @@ struct FunctionIdents<'a> {
     bindings: FxHashSet<&'a str>,
 }
 
-impl<'a> NodeObjectCreateInliner<'a> {
+impl<'a> NodeObjectCreator<'a> {
     fn new(allocator: &'a Allocator) -> Self {
         Self { ast: AstBuilder::new(allocator), allocator, functions: vec![] }
     }
 
-    fn generate(mut self, program: &mut Program<'a>) {
-        self.visit_program(program);
-        UnconvertedNodeLiteralChecker.visit_program(program);
-    }
-
-    /// Replace a statement containing a `{ __proto__: NodeProto, ... }` object literal with `Object.create`
-    /// and property assignments, and push the resulting statements to `stmts`.
+    /// Replace a statement containing an AST node object literal with `Object.create` and property assignments,
+    /// and push the resulting statements to `stmts`.
     /// If statement does not contain such an object literal, push it to `stmts` unchanged.
-    fn inline_statement(&mut self, stmt: Statement<'a>, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+    fn convert_statement(&mut self, stmt: Statement<'a>, stmts: &mut ArenaVec<'a, Statement<'a>>) {
         match stmt {
-            Statement::VariableDeclaration(decl) => self.inline_variable_declaration(decl, stmts),
+            Statement::VariableDeclaration(decl) => self.convert_variable_declaration(decl, stmts),
             Statement::ReturnStatement(mut ret) => {
                 if let Some(argument) = &mut ret.argument {
-                    self.inline_chain_with_new_var(argument, stmts);
+                    self.convert_chain_with_new_var(argument, stmts);
                 }
                 stmts.push(Statement::ReturnStatement(ret));
             }
             Statement::ExpressionStatement(mut expr_stmt) => {
-                self.inline_chain_with_new_var(&mut expr_stmt.expression, stmts);
+                self.convert_chain_with_new_var(&mut expr_stmt.expression, stmts);
                 stmts.push(Statement::ExpressionStatement(expr_stmt));
             }
             stmt => stmts.push(stmt),
         }
     }
 
-    /// `let a = 1, node = (parent = { __proto__: NodeProto, type: "X" }), b = 2;`
+    /// `const a = 1, node = parent = { type: 'X' }, b = 2;`
     /// ->
     /// ```js
-    /// let a = 1, node = Object.create(NodeProto);
-    /// node.type = "X";
+    /// const a = 1, node = Object.create(NodeProto);
+    /// node.type = 'X';
     /// parent = node;
-    /// let b = 2;
+    /// const b = 2;
     /// ```
-    fn inline_variable_declaration(
+    fn convert_variable_declaration(
         &self,
         decl: ArenaBox<'a, VariableDeclaration<'a>>,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
     ) {
-        let is_inlinable = |declarator: &VariableDeclarator<'a>| {
+        let is_convertible = |declarator: &VariableDeclarator<'a>| {
             matches!(declarator.id, BindingPattern::BindingIdentifier(_))
-                && declarator.init.as_ref().is_some_and(|init| self.is_inlinable_chain(init))
+                && declarator.init.as_ref().is_some_and(|init| self.is_convertible_chain(init))
         };
 
-        if !decl.declarations.iter().any(is_inlinable) {
+        if !decl.declarations.iter().any(is_convertible) {
             stmts.push(Statement::VariableDeclaration(decl));
             return;
         }
@@ -2013,7 +1955,7 @@ impl<'a> NodeObjectCreateInliner<'a> {
         let VariableDeclaration { kind, declarations, .. } = decl.unbox();
         let mut declarators = ArenaVec::new_in(&self.ast);
         for mut declarator in declarations {
-            if !is_inlinable(&declarator) {
+            if !is_convertible(&declarator) {
                 declarators.push(declarator);
                 continue;
             }
@@ -2037,7 +1979,7 @@ impl<'a> NodeObjectCreateInliner<'a> {
             self.push_property_assignments(var_name, obj_expr, stmts);
 
             // If object literal was assigned to other targets too, assign the object to them.
-            // e.g. `node = (parent = { ... })` -> `parent = node;`
+            // e.g. `node = parent = { ... }` -> `parent = node;`
             if !matches!(init.without_parentheses(), Expression::Identifier(_)) {
                 stmts.push(Statement::new_expression_statement(SPAN, init, &self.ast));
             }
@@ -2054,23 +1996,23 @@ impl<'a> NodeObjectCreateInliner<'a> {
         }
     }
 
-    /// If `expr` is a chain of assignments ending in a `{ __proto__: NodeProto, ... }` object literal,
+    /// If `expr` is a chain of assignments ending in an AST node object literal,
     /// create a new variable containing `Object.create(NodeProto)`, assign the object literal's properties to it,
     /// and replace the object literal with the new variable.
     ///
-    /// `let start, end; return { __proto__: NodeProto, type: "X" };`
+    /// `return { type: 'X' };`
     /// ->
     /// ```js
-    /// let start, end, node = Object.create(NodeProto);
-    /// node.type = "X";
+    /// const node = Object.create(NodeProto);
+    /// node.type = 'X';
     /// return node;
     /// ```
-    fn inline_chain_with_new_var(
+    fn convert_chain_with_new_var(
         &mut self,
         expr: &mut Expression<'a>,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
     ) {
-        if !self.is_inlinable_chain(expr) {
+        if !self.is_convertible_chain(expr) {
             return;
         }
 
@@ -2085,28 +2027,20 @@ impl<'a> NodeObjectCreateInliner<'a> {
             false,
             &self.ast,
         );
-        // If previous statement is a `let` declaration, add to it (`let start, end, node = ...;`).
-        // Otherwise, create a new `let` declaration.
-        if let Some(Statement::VariableDeclaration(decl)) = stmts.last_mut()
-            && decl.kind == VariableDeclarationKind::Let
-        {
-            decl.declarations.push(declarator);
-        } else {
-            stmts.push(Statement::new_variable_declaration(
-                SPAN,
-                VariableDeclarationKind::Let,
-                ArenaVec::from_iter_in([declarator], &self.ast),
-                false,
-                &self.ast,
-            ));
-        }
+        stmts.push(Statement::new_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Const,
+            ArenaVec::from_iter_in([declarator], &self.ast),
+            false,
+            &self.ast,
+        ));
 
         self.push_property_assignments(var_name, obj_expr, stmts);
     }
 
-    /// Check if `expr` is a `{ __proto__: NodeProto, ... }` object literal, or a chain of assignments
-    /// ending in one, which can be inlined.
-    fn is_inlinable_chain(&self, expr: &Expression<'a>) -> bool {
+    /// Check if `expr` is an AST node object literal, or a chain of assignments ending in one,
+    /// which can be converted.
+    fn is_convertible_chain(&self, expr: &Expression<'a>) -> bool {
         let mut targets = vec![];
         let mut expr = expr.without_parentheses();
         while let Expression::AssignmentExpression(assign_expr) = expr {
@@ -2118,7 +2052,7 @@ impl<'a> NodeObjectCreateInliner<'a> {
         }
 
         let Expression::ObjectExpression(obj_expr) = expr else { return false };
-        if !is_node_literal(obj_expr) || plain_keys(obj_expr).is_none() {
+        if !is_node_literal(obj_expr) || !is_convertible(obj_expr) {
             return false;
         }
 
@@ -2144,8 +2078,8 @@ impl<'a> NodeObjectCreateInliner<'a> {
         })
     }
 
-    /// Replace `{ __proto__: NodeProto, ... }` object literal at end of chain of assignments with
-    /// identifier `var_name`, and return the object literal.
+    /// Replace AST node object literal at end of chain of assignments with identifier `var_name`,
+    /// and return the object literal.
     fn take_node_literal(
         &self,
         expr: &mut Expression<'a>,
@@ -2169,33 +2103,73 @@ impl<'a> NodeObjectCreateInliner<'a> {
         }
     }
 
-    /// Push `var_name.key = value;` statements for all properties of object literal (except `__proto__`).
+    /// Push statements assigning all properties of object literal to `var_name`.
+    ///
+    /// * `key: value` -> `var_name.key = value;`
+    /// * `...(cond && { key: value })` -> `if (cond) var_name.key = value;`
     fn push_property_assignments(
         &self,
         var_name: &'a str,
         obj_expr: ArenaBox<'a, ObjectExpression<'a>>,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
     ) {
-        for prop in obj_expr.unbox().properties.into_iter().skip(1) {
-            let ObjectPropertyKind::ObjectProperty(prop) = prop else { unreachable!() };
-            let ObjectProperty { key, value, .. } = prop.unbox();
-            let PropertyKey::StaticIdentifier(key) = key else { unreachable!() };
-            let target = AssignmentTarget::new_static_member_expression(
-                SPAN,
-                Expression::new_identifier(SPAN, var_name, &self.ast),
-                key.unbox(),
-                false,
-                &self.ast,
-            );
-            let assign_expr = Expression::new_assignment_expression(
-                SPAN,
-                AssignmentOperator::Assign,
-                target,
-                value,
-                &self.ast,
-            );
-            stmts.push(Statement::new_expression_statement(SPAN, assign_expr, &self.ast));
+        for prop in obj_expr.unbox().properties {
+            match prop {
+                ObjectPropertyKind::ObjectProperty(prop) => {
+                    stmts.push(self.property_assignment(var_name, prop));
+                }
+                ObjectPropertyKind::SpreadProperty(spread) => {
+                    let Expression::LogicalExpression(logical_expr) =
+                        spread.unbox().argument.into_inner_expression()
+                    else {
+                        unreachable!()
+                    };
+                    let LogicalExpression { left: test, right, .. } = logical_expr.unbox();
+                    let Expression::ObjectExpression(obj_expr) = right.into_inner_expression()
+                    else {
+                        unreachable!()
+                    };
+
+                    let mut body = ArenaVec::new_in(&self.ast);
+                    for prop in obj_expr.unbox().properties {
+                        let ObjectPropertyKind::ObjectProperty(prop) = prop else { unreachable!() };
+                        body.push(self.property_assignment(var_name, prop));
+                    }
+                    let consequent = if body.len() == 1 {
+                        body.pop().unwrap()
+                    } else {
+                        Statement::new_block_statement(SPAN, body, &self.ast)
+                    };
+                    stmts
+                        .push(Statement::new_if_statement(SPAN, test, consequent, None, &self.ast));
+                }
+            }
         }
+    }
+
+    /// Create `var_name.key = value;` statement from `key: value` property.
+    fn property_assignment(
+        &self,
+        var_name: &'a str,
+        prop: ArenaBox<'a, ObjectProperty<'a>>,
+    ) -> Statement<'a> {
+        let ObjectProperty { key, value, .. } = prop.unbox();
+        let PropertyKey::StaticIdentifier(key) = key else { unreachable!() };
+        let target = AssignmentTarget::new_static_member_expression(
+            SPAN,
+            Expression::new_identifier(SPAN, var_name, &self.ast),
+            key.unbox(),
+            false,
+            &self.ast,
+        );
+        let assign_expr = Expression::new_assignment_expression(
+            SPAN,
+            AssignmentOperator::Assign,
+            target,
+            value,
+            &self.ast,
+        );
+        Statement::new_expression_statement(SPAN, assign_expr, &self.ast)
     }
 
     /// Create `Object.create(NodeProto)` expression.
@@ -2231,7 +2205,7 @@ impl<'a> NodeObjectCreateInliner<'a> {
     }
 }
 
-impl<'a> VisitMut<'a> for NodeObjectCreateInliner<'a> {
+impl<'a> VisitMut<'a> for NodeObjectCreator<'a> {
     fn visit_function(&mut self, func: &mut Function<'a>, flags: ScopeFlags) {
         let mut idents = FunctionIdents::default();
         IdentsCollector { idents: &mut idents }.visit_function(func, flags);
@@ -2247,17 +2221,41 @@ impl<'a> VisitMut<'a> for NodeObjectCreateInliner<'a> {
     }
 
     fn visit_statements(&mut self, stmts: &mut ArenaVec<'a, Statement<'a>>) {
+        // Convert object literals in this statement list, before visiting nested statements
+        if !self.functions.is_empty() {
+            let old_stmts = mem::replace(stmts, ArenaVec::new_in(&self.ast));
+            for stmt in old_stmts {
+                self.convert_statement(stmt, stmts);
+            }
+        }
+
         walk_mut::walk_statements(self, stmts);
+    }
 
-        // Only inline object literals in functions
-        if self.functions.is_empty() {
-            return;
+    fn visit_object_expression(&mut self, obj_expr: &mut ObjectExpression<'a>) {
+        if is_node_literal(obj_expr) {
+            assert!(
+                !is_convertible(obj_expr),
+                "AST node object literal in unsupported position in deserializer. \
+                Add support for it to `NodeObjectCreator`."
+            );
+
+            // Object literal cannot be converted (e.g. it contains getters).
+            // Insert `__proto__: NodeProto` as first field instead.
+            let prop = ObjectPropertyKind::new_object_property(
+                SPAN,
+                PropertyKind::Init,
+                PropertyKey::new_static_identifier(SPAN, "__proto__", &self.ast),
+                Expression::new_identifier(SPAN, "NodeProto", &self.ast),
+                false,
+                false,
+                false,
+                &self.ast,
+            );
+            obj_expr.properties.insert(0, prop);
         }
 
-        let old_stmts = mem::replace(stmts, ArenaVec::new_in(&self.ast));
-        for stmt in old_stmts {
-            self.inline_statement(stmt, stmts);
-        }
+        walk_mut::walk_object_expression(self, obj_expr);
     }
 }
 
@@ -2300,64 +2298,61 @@ impl<'a> Visit<'a> for AssignedNamesCollector<'a> {
     }
 }
 
-/// Visitor to check that all `{ __proto__: NodeProto, ... }` object literals which can be converted were converted.
-struct UnconvertedNodeLiteralChecker;
-
-impl<'a> Visit<'a> for UnconvertedNodeLiteralChecker {
-    fn visit_object_expression(&mut self, obj_expr: &ObjectExpression<'a>) {
-        assert!(
-            !is_node_literal(obj_expr) || plain_keys(obj_expr).is_none(),
-            "`{{ __proto__: NodeProto, ... }}` object literal in unsupported position in deserializer. \
-            Add support for it to `NodeObjectCreateInliner`."
-        );
-        walk::walk_object_expression(self, obj_expr);
-    }
+/// Check if object literal is an AST node i.e. has a `range` field (`...(RANGE && { range: [start, end] })`).
+fn is_node_literal(obj_expr: &ObjectExpression<'_>) -> bool {
+    obj_expr.properties.iter().any(|prop| {
+        if let ObjectPropertyKind::SpreadProperty(spread) = prop
+            && let Expression::LogicalExpression(logical_expr) =
+                spread.argument.without_parentheses()
+            && logical_expr.operator == LogicalOperator::And
+            && let Expression::Identifier(ident) = &logical_expr.left
+            && ident.name == "RANGE"
+        {
+            true
+        } else {
+            false
+        }
+    })
 }
 
-/// Check if object literal is `{ __proto__: NodeProto, ... }`.
-fn is_node_literal(obj_expr: &ObjectExpression<'_>) -> bool {
-    if let Some(ObjectPropertyKind::ObjectProperty(prop)) = obj_expr.properties.first()
-        && prop.kind == PropertyKind::Init
+/// Check if AST node object literal can be converted to `Object.create(NodeProto)` + property assignments.
+///
+/// It can if all its properties are `key: value` properties, or conditional spreads of an object literal
+/// containing only `key: value` properties (`...(cond && { key: value })`).
+fn is_convertible(obj_expr: &ObjectExpression<'_>) -> bool {
+    obj_expr.properties.iter().all(|prop| match prop {
+        ObjectPropertyKind::ObjectProperty(prop) => is_plain_property(prop),
+        ObjectPropertyKind::SpreadProperty(spread) => {
+            if let Expression::LogicalExpression(logical_expr) = spread.argument.without_parentheses()
+                && logical_expr.operator == LogicalOperator::And
+                && let Expression::ObjectExpression(obj_expr) = logical_expr.right.without_parentheses()
+            {
+                obj_expr.properties.iter().all(|prop| {
+                    matches!(prop, ObjectPropertyKind::ObjectProperty(prop) if is_plain_property(prop))
+                })
+            } else {
+                false
+            }
+        }
+    })
+}
+
+/// Check if property is a plain `key: value` property.
+///
+/// Key must not be the name of a property of `NodeProto` or `Object.prototype`.
+/// Object literals define properties, whereas assignments could hit a getter / setter
+/// on the prototype chain e.g. `loc`.
+fn is_plain_property(prop: &ObjectProperty<'_>) -> bool {
+    if prop.kind == PropertyKind::Init
         && !prop.computed
-        && !prop.shorthand
         && !prop.method
         && let PropertyKey::StaticIdentifier(key) = &prop.key
-        && key.name == "__proto__"
-        && let Expression::Identifier(value) = &prop.value
-        && value.name == "NodeProto"
+        && !PROTOTYPE_KEYS.contains(&key.name.as_str())
     {
         true
     } else {
         false
     }
-}
-
-/// Get keys of `{ __proto__: NodeProto, ... }` object literal, excluding `__proto__`.
-///
-/// Returns `None` if any property is not a plain `key: value` property (e.g. getter, spread),
-/// or if keys are not unique.
-///
-/// Also returns `None` if any key is the name of a property of `NodeProto` or `Object.prototype`.
-/// Object literals define properties, whereas assignments could hit a getter / setter
-/// on the prototype chain e.g. `loc`.
-fn plain_keys<'a>(obj_expr: &ObjectExpression<'a>) -> Option<Vec<&'a str>> {
-    let keys = obj_expr.properties[1..]
-        .iter()
-        .map(|prop| {
-            if let ObjectPropertyKind::ObjectProperty(prop) = prop
-                && prop.kind == PropertyKind::Init
-                && !prop.computed
-                && !prop.method
-                && let PropertyKey::StaticIdentifier(key) = &prop.key
-                && !PROTOTYPE_KEYS.contains(&key.name.as_str())
-            {
-                Some(key.name.as_str())
-            } else {
-                None
-            }
-        })
-        .collect::<Option<Vec<_>>>()?;
-    keys.iter().all_unique().then_some(keys)
 }
 
 /// Properties of `NodeProto` and `Object.prototype`.

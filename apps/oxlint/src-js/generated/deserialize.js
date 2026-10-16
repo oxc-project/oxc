@@ -24,7 +24,7 @@ for (let i = 0; i <= 64; i++) stringDecodeArrays[i] = Array(i).fill(0);
 // Nodes are created with `Object.create(NodeProto)`, followed by assigning their properties.
 // V8 creates object literals which contain `__proto__` (`{ __proto__: NodeProto, ... }`) on a slow path,
 // so using `Object.create` makes deserialization much faster.
-// See `NodeObjectCreateInliner` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
+// See `NodeObjectCreator` in `tasks/ast_tools/src/generators/raw_transfer.rs`.
 const NodeProto = Object.create(Object.prototype, {
   loc: {
     // Note: Not configurable
@@ -5094,19 +5094,18 @@ function deserializeTSExternalModuleDeclaration(pos) {
     declare = deserializeBool(pos + 72),
     previousParent = parent,
     body = deserializeOptionBoxTSModuleBlock(pos + 64),
-    node = (parent = {
-      __proto__: NodeProto,
-      type: "TSModuleDeclaration",
-      id: null,
-      ...(body !== null && { body }),
-      kind: "module",
-      declare,
-      global: false,
-      start,
-      end,
-      range: [start, end],
-      parent,
-    });
+    node = Object.create(NodeProto);
+  node.type = "TSModuleDeclaration";
+  node.id = null;
+  body !== null && (node.body = body);
+  node.kind = "module";
+  node.declare = declare;
+  node.global = false;
+  node.start = start;
+  node.end = end;
+  node.range = [start, end];
+  node.parent = parent;
+  parent = node;
   node.id = deserializeStringLiteral(pos + 16);
   body !== null && (body.parent = node);
   parent = previousParent;
@@ -5164,15 +5163,16 @@ function deserializeTSNamespaceDeclaration(pos) {
       }
       let end,
         right = innerId.left,
-        node2 = Object.create(NodeProto);
-      node2.type = "TSQualifiedName";
-      node2.left = id;
-      node2.right = right;
-      node2.start = start;
-      node2.end = end = right.end;
-      node2.range = [start, end];
-      node2.parent = innerId;
-      id.parent = right.parent = innerId.left = node2;
+        left = Object.create(NodeProto);
+      left.type = "TSQualifiedName";
+      left.left = id;
+      left.right = right;
+      left.start = start;
+      left.end = end = right.end;
+      left.range = [start, end];
+      left.parent = innerId;
+      innerId.left = left;
+      id.parent = right.parent = left;
     }
     body = body.body;
     node.body = body;
@@ -5222,17 +5222,17 @@ function deserializeTSGlobalDeclaration(pos) {
   parent = node;
   let keywordStart,
     keywordEnd,
-    node2 = Object.create(NodeProto);
-  node2.type = "Identifier";
-  node2.decorators = [];
-  node2.name = "global";
-  node2.optional = false;
-  node2.typeAnnotation = null;
-  node2.start = keywordStart = deserializeI32(pos + 16);
-  node2.end = keywordEnd = deserializeI32(pos + 20);
-  node2.range = [keywordStart, keywordEnd];
-  node2.parent = parent;
-  node.id = node2;
+    ident = Object.create(NodeProto);
+  ident.type = "Identifier";
+  ident.decorators = [];
+  ident.name = "global";
+  ident.optional = false;
+  ident.typeAnnotation = null;
+  ident.start = keywordStart = deserializeI32(pos + 16);
+  ident.end = keywordEnd = deserializeI32(pos + 20);
+  ident.range = [keywordStart, keywordEnd];
+  ident.parent = parent;
+  node.id = ident;
   node.body = deserializeTSModuleBlock(pos + 24);
   parent = previousParent;
   return node;
