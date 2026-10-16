@@ -11,6 +11,7 @@ describe("BOM handling", () => {
     ["a.yaml", "\uFEFFkey:   value", "\uFEFFkey: value\n"],
     ["a.graphql", "\uFEFF{ a }", "\uFEFF{\n  a\n}\n"],
     ["a.json", '\uFEFF{"a":1}', '\uFEFF{ "a": 1 }\n'],
+    ["a.toml", "\uFEFFa   =   1", "\uFEFFa = 1\n"],
   ];
 
   it.each(cases)("preserves a leading BOM in %s", async (filename, source, expected) => {
