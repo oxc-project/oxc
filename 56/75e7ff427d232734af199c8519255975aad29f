@@ -1,0 +1,19 @@
+Cargo.lock
+  s_290bc5ca49e512::t_b33c7c98f4f847 3376,3378
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5675e7ff427d232734af199c8519255975aad29f",
+  "prompts": {},
+  "sessions": {
+    "s_290bc5ca49e512": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a142d4-45d8-7483-83a5-1ef66ffa37c7",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
