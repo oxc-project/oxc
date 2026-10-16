@@ -7,8 +7,8 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 use oxc_allocator::Allocator;
 
 use crate::{
-    DispatchPayload, DispatchRequest, DispatchResponse, Document, FormatDispatcher, PrinterOptions,
-    UniqueGroupIdBuilder,
+    DispatchPayload, DispatchRequest, DispatchResponse, Document, FormatDispatcher, LineEnding,
+    PrinterOptions, UniqueGroupIdBuilder,
 };
 
 /// Upper bound on nested embedded dispatches;
@@ -184,6 +184,7 @@ impl<'a> FormatSession<'a> {
     /// must come back as TEXT. The caller supplies `printer_options`, typically its own
     /// print options with the embedding position's effective width, and owns any
     /// re-embedding conventions (e.g. trailing-newline handling) on the returned text.
+    /// The line ending is always `Lf`: the text goes back into the parent's IR, which only takes `\n`.
     /// A text consumer has no parent index space, so the child's Tailwind classes
     /// collect in a fresh scope and sort locally instead of joining this session's scope.
     ///
@@ -205,7 +206,7 @@ impl<'a> FormatSession<'a> {
         };
 
         let code = Document::new(doc, scoped.take_sorted_tailwind_classes())
-            .print(text_len, printer_options)
+            .print(text_len, printer_options.with_line_ending(LineEnding::Lf))
             .map_err(|err| err.to_string())?
             .into_code();
         Ok(Some(code))
