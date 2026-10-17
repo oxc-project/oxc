@@ -4,13 +4,18 @@ use oxc_diagnostics::{
     Error, Severity,
     reporter::{DiagnosticReporter, DiagnosticResult, Info},
 };
+use rustc_hash::FxHashSet;
 
-use crate::output_formatter::InternalFormatter;
+use crate::output_formatter::{InternalFormatter, default::DefaultOutputFormatter};
 
 #[derive(Debug, Default)]
 pub struct AgentOutputFormatter;
 
 impl InternalFormatter for AgentOutputFormatter {
+    fn all_rules(&self, enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
+        DefaultOutputFormatter.all_rules(enabled_rules)
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(AgentReporter)
     }
