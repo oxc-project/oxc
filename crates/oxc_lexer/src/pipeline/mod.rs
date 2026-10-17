@@ -64,7 +64,7 @@ impl Lexer {
     pub fn new() -> Lexer {
         let cpu = DynCpu::detect();
 
-        init_pair_luts();
+        init_pair_luts(cpu);
 
         Lexer {
             word: Vec::new(),
@@ -206,6 +206,7 @@ impl Lexer {
             out_kinds,
             out_spans,
             &mut self.lanes,
+            cpu,
         )
     }
 

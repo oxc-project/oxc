@@ -46,15 +46,6 @@ mod primitives_avx2 {
 #[cfg(target_arch = "x86_64")]
 pub(super) use primitives_avx2::*;
 
-#[cfg_attr(
-    all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ),
-    expect(dead_code)
-)]
 mod primitives_generic {
     use std::ptr;
 
@@ -86,13 +77,4 @@ mod primitives_generic {
     }
 }
 
-#[cfg_attr(
-    all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ),
-    expect(unused_imports)
-)]
 pub(super) use primitives_generic::*;

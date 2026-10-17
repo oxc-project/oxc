@@ -598,7 +598,6 @@ pub(super) use cpu_select;
 ///     }
 /// }
 /// ```
-#[expect(unused_macros)]
 macro_rules! cpu_versions {
     // The macro works in stages. Each stage is a set of rules, which call the macro again
     // with the next stage:
@@ -946,9 +945,7 @@ macro_rules! cpu_versions {
     };
 }
 
-#[expect(unused_imports)]
 pub(super) use cpu_versions;
 
 /// Re-exported so call sites can import it from here, along with [`cpu_versions!`].
-#[expect(unused_imports)]
 pub(super) use macro_rules_attr::apply;
