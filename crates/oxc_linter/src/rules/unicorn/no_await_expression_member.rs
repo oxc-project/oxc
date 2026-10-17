@@ -52,15 +52,21 @@ declare_oxc_lint!(
 
 impl Rule for NoAwaitExpressionMember {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::AwaitExpression(_) = node.kind() else {
+            return;
+        };
+
+        let paren_node = ctx.nodes().parent_node(node.id());
+        let AstKind::ParenthesizedExpression(paren_expr) = paren_node.kind() else {
+            return;
+        };
+
+        let node = ctx.nodes().parent_node(paren_node.id());
         let Some(member_expr) = node.kind().as_member_expression_kind() else {
             return;
         };
 
-        let Expression::ParenthesizedExpression(paren_expr) = member_expr.object() else {
-            return;
-        };
-
-        if matches!(paren_expr.expression, Expression::AwaitExpression(_)) {
+        if member_expr.object().span() == paren_expr.span {
             let node_span = member_expr.span();
             ctx.diagnostic_with_dangerous_fix(
                 no_await_expression_member_diagnostic(node_span),
@@ -139,11 +145,17 @@ fn test() {
         "const foo = typeof await promise",
         "const foo = await notPromise.method()",
         "const foo = foo[await promise]",
+        "const foo = foo[(await promise)]",
+        "const foo = foo?.[(await promise)]",
+        "const foo = ((await promise)).property",
+        "const foo = ((await promise))[0]",
         // These await expression need parenthesized, but rarely used
         "new (await promiseReturnsAClass)",
         "(await promiseReturnsAFunction)()",
         // typescript
         "async function foo () {return (await promise) as string;}",
+        "const foo = (await promise as Foo).property",
+        "const foo = ((await promise) as Foo).property",
     ];
 
     let fail = vec![
@@ -183,6 +195,12 @@ fn test() {
         ("const a = (await b())[0]", "const [a] = await b()"),
         ("const a = (await b())[1]", "const [, a] = await b()"),
         ("const a = (await b())[2]", "const a = (await b())[2]"),
+        ("const a = (await b())[(await c())]", "const a = (await b())[(await c())]"),
+        ("const a = ((await b()).a)", "const a = ((await b()).a)"),
+        (
+            "class C { #a; async f() { const a = (await b()).#a; } }",
+            "class C { #a; async f() { const a = (await b()).#a; } }",
+        ),
         ("const [a] = (await b())[1]", "const [a] = (await b())[1]"),
         ("let b, a = (await f()).a", "let b, {a} = await f()"),
         ("const a = (/** comments */await b())[1]", "const [, a] = /** comments */await b()"),
