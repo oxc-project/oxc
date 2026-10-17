@@ -1364,6 +1364,12 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "0ceec5bc11778974d1bcb055b18002eba7f4b3518b6a0081b3af5f21666da9ad"
 
 [[package]]
+name = "macro_rules_attr"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "df6b51dd2c42ad49398acaa235ff7f5d82f11a0ad1e25e8aeaee0a47b9df7e8a"
+
+[[package]]
 name = "markdown"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2261,6 +2267,7 @@ name = "oxc_lexer"
 version = "0.139.0"
 dependencies = [
  "constcat",
+ "macro_rules_attr",
  "memchr",
  "oxc_ast",
  "oxc_data_structures",

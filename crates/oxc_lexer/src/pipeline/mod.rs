@@ -22,6 +22,7 @@ mod chunk;
 mod classify;
 mod coalesce;
 mod compress;
+mod cpu;
 mod disambiguate;
 mod find;
 mod keywords;
