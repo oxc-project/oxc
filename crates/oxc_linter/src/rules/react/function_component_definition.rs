@@ -2,7 +2,7 @@ use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
-    AstKind,
+    AstKind, FunctionKind,
     ast::{AssignmentTarget, FunctionType, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -112,13 +112,18 @@ impl Rule for FunctionComponentDefinition {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let actual = match node.kind() {
-            AstKind::Function(function) => match function.r#type {
-                FunctionType::FunctionDeclaration => FunctionStyle::Declaration,
-                FunctionType::FunctionExpression => FunctionStyle::Expression,
-                _ => return,
-            },
-            AstKind::ArrowFunctionExpression(_) => FunctionStyle::Arrow,
+        let (actual, function) = match node.kind() {
+            AstKind::Function(function) => {
+                let style = match function.r#type {
+                    FunctionType::FunctionDeclaration => FunctionStyle::Declaration,
+                    FunctionType::FunctionExpression => FunctionStyle::Expression,
+                    _ => return,
+                };
+                (style, FunctionKind::Function(function))
+            }
+            AstKind::ArrowFunctionExpression(arrow) => {
+                (FunctionStyle::Arrow, FunctionKind::Arrow(arrow))
+            }
             _ => return,
         };
 
@@ -137,7 +142,7 @@ impl Rule for FunctionComponentDefinition {
         }
 
         let diagnostic = function_component_definition_diagnostic(node.span(), expected);
-        if fix::can_fix(node, ctx, expected) {
+        if fix::can_fix(node, function, ctx, expected) {
             ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
                 let (span, replacement) = fix::replacement(node, ctx, expected, named);
                 fixer.replace(span, replacement)
@@ -318,7 +323,7 @@ fn is_named<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
 mod fix {
     use oxc_ast::{
-        AstKind,
+        AstKind, FunctionKind,
         ast::{
             ArrowFunctionExpression, FormalParameters, Function, FunctionType,
             TSTypeParameterDeclaration, VariableDeclarator,
@@ -331,6 +336,7 @@ mod fix {
 
     pub(super) fn can_fix<'a>(
         node: &AstNode<'a>,
+        function: FunctionKind<'a, '_>,
         ctx: &LintContext<'a>,
         expected: FunctionStyle,
     ) -> bool {
@@ -348,8 +354,8 @@ mod fix {
             return false;
         }
 
-        match node.kind() {
-            AstKind::Function(function) => {
+        match function {
+            FunctionKind::Function(function) => {
                 if function.r#type == FunctionType::FunctionDeclaration
                     && matches!(
                         ctx.nodes().parent_kind(node.id()),
@@ -376,7 +382,7 @@ mod fix {
                     return false;
                 }
             }
-            AstKind::ArrowFunctionExpression(arrow) => {
+            FunctionKind::Arrow(arrow) => {
                 if expected == FunctionStyle::Declaration
                     && declaration.is_some_and(|declaration| declaration.type_annotation.is_some())
                 {
@@ -388,7 +394,6 @@ mod fix {
                     return false;
                 }
             }
-            _ => unreachable!(),
         }
         true
     }
