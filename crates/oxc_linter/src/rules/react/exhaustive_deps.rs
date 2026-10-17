@@ -1357,6 +1357,25 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
 
         if let Ok(source) = analyze_property_chain(&it.object, self.semantic) {
             if let Some(source) = source {
+                // `ref.current?.setValue(x)` visits `setValue`, whose object chain is
+                // `ref.current`. The call still reads the mutable field. Collect `ref`
+                // alongside `ref.current` so a declared `ref.current` is reported as a
+                // missing reactive dependency, matching eslint-plugin-react-hooks.
+                // `useRef` bindings already pass because they are not reactive.
+                if is_parent_call_expr && source.chain.last().is_some_and(|part| part == "current")
+                {
+                    let mut base_chain = source.chain.clone();
+                    base_chain.pop();
+                    let symbol_id =
+                        self.semantic.scoping().get_reference(source.reference_id).symbol_id();
+                    self.found_dependencies.insert(Dependency {
+                        name: source.name,
+                        reference_id: source.reference_id,
+                        span: source.span,
+                        chain: base_chain,
+                        symbol_id,
+                    });
+                }
                 if is_parent_call_expr {
                     self.found_dependencies.insert(source);
                 } else {
@@ -2738,6 +2757,18 @@ const Component = ({ filter }) => {
 
           return <div>test</div>;
         };",
+        // Custom-hook refs are reactive, but listing `ref` (not `ref.current`)
+        // satisfies a method call on the mutable field.
+        // https://github.com/oxc-project/oxc/issues/27269
+        r"function MyComponent({ x }) {
+          function useCustomRef() {
+            return { current: null };
+          }
+          const ref = useCustomRef();
+          useEffect(() => {
+            ref.current?.setValue(x);
+          }, [ref, x]);
+        }",
         // A binary expression always evaluates to a primitive, however
         // unstable its operands are, so the result is a stable dependency.
         // https://github.com/oxc-project/oxc/issues/25029
@@ -2794,6 +2825,18 @@ const Component = ({ filter }) => {
           useCallback(() => {
             console.log(props.foo?.bar.toString());
           }, []);
+        }",
+        // Custom-hook refs are reactive. A method call on `.current` must still
+        // report the declared `ref.current` as an invalid mutable dependency.
+        // https://github.com/oxc-project/oxc/issues/27269
+        r"function MyComponent({ x }) {
+          function useCustomRef() {
+            return { current: null };
+          }
+          const ref = useCustomRef();
+          useEffect(() => {
+            ref.current?.setValue(x);
+          }, [ref.current, x]);
         }",
         r"function MyComponent() {
           const local = someFunc();
