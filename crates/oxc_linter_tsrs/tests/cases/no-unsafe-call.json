@@ -1,0 +1,289 @@
+{
+  "source": "no_unsafe_call_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.noImplicitThis.json",
+      "valid": [
+        {
+          "code": "\nfunction foo(x: () =\u003e void) {\n  x();\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x?: { a: () =\u003e void }) {\n  x?.a();\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x: { a?: () =\u003e void }) {\n  x.a?.();\n}\n    "
+        },
+        {
+          "code": "new Map();"
+        },
+        {
+          "code": "String.raw`foo`;"
+        },
+        {
+          "code": "const x = import('./foo');"
+        },
+        {
+          "code": "\n      let foo: any = 23;\n      String(foo); // ERROR: Unsafe call of an any typed value\n    "
+        },
+        {
+          "code": "\n      function foo\u003cT extends any\u003e(x: T) {\n        x();\n      }\n    "
+        },
+        {
+          "code": "\n      // create a scope since it's illegal to declare a duplicate identifier\n      // 'Function' in the global script scope.\n      {\n        type Function = () =\u003e void;\n        const notGlobalFunctionType: Function = (() =\u003e {}) as Function;\n        notGlobalFunctionType();\n      }\n    "
+        },
+        {
+          "code": "\ninterface SurprisinglySafe extends Function {\n  (): string;\n}\ndeclare const safe: SurprisinglySafe;\nsafe();\n    "
+        },
+        {
+          "code": "\ninterface CallGoodConstructBad extends Function {\n  (): void;\n}\ndeclare const safe: CallGoodConstructBad;\nsafe();\n    "
+        },
+        {
+          "code": "\ninterface ConstructSignatureMakesSafe extends Function {\n  new (): ConstructSignatureMakesSafe;\n}\ndeclare const safe: ConstructSignatureMakesSafe;\nnew safe();\n    "
+        },
+        {
+          "code": "\ninterface SafeWithNonVoidCallSignature extends Function {\n  (): void;\n  (x: string): string;\n}\ndeclare const safe: SafeWithNonVoidCallSignature;\nsafe();\n    "
+        },
+        {
+          "code": "\n      new Function('lol');\n    "
+        },
+        {
+          "code": "\n      Function('lol');\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nfunction foo(x: any) {\n  x();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "column": 3,
+              "endColumn": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: any) {\n  x?.();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "column": 3,
+              "endColumn": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: any) {\n  x.a.b.c.d.e.f.g();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "column": 3,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: any) {\n  x.a.b.c.d.e.f.g?.();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "column": 3,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: any }) {\n  x.a();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "column": 3,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: any }) {\n  x?.a();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "column": 3,
+              "endColumn": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: any }) {\n  x.a?.();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "column": 3,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: any) {\n  new x();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeNew",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: any }) {\n  new x.a();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeNew",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: any) {\n  x`foo`;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeTemplateTag",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { tag: any }) {\n  x.tag`foo`;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeTemplateTag",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst methods = {\n  methodA() {\n    return this.methodB()\n  },\n  methodB() {\n    return true\n  },\n  methodC() {\n    return this()\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCallThis",
+              "line": 4,
+              "column": 12,
+              "endColumn": 24,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeCallThis",
+              "line": 10,
+              "column": 12,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet value: NotKnown;\nvalue();\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "column": 1,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst t: Function = () =\u003e {};\nt();\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst f: Function = () =\u003e {};\nf`oo`;\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeTemplateTag",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const maybeFunction: unknown;\nif (typeof maybeFunction === 'function') {\n  maybeFunction('call', 'with', 'any', 'args');\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Unsafe extends Function {}\ndeclare const unsafe: Unsafe;\nunsafe();\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Unsafe extends Function {}\ndeclare const unsafe: Unsafe;\nunsafe`bad`;\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeTemplateTag",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Unsafe extends Function {}\ndeclare const unsafe: Unsafe;\nnew unsafe();\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeNew",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface UnsafeToConstruct extends Function {\n  (): void;\n}\ndeclare const unsafe: UnsafeToConstruct;\nnew unsafe();\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeNew",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface StillUnsafe extends Function {\n  property: string;\n}\ndeclare const unsafe: StillUnsafe;\nunsafe();\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeCall",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

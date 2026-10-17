@@ -26,8 +26,8 @@ use crate::{
 /// State required to initialize the `tsgolint` linter.
 #[derive(Debug, Clone)]
 pub struct TsGoLintState {
-    /// The path to the `tsgolint` executable (at least our best guess at it).
-    executable_path: PathBuf,
+    /// How the type-aware backend runs.
+    backend: Backend,
     /// Current working directory, used for rendering paths in diagnostics.
     cwd: PathBuf,
     /// The configuration store for `tsgolint` (used to resolve configurations outside of `oxc_linter`)
@@ -51,12 +51,12 @@ pub struct TsGoLintState {
 
 impl TsGoLintState {
     pub fn new(cwd: &Path, config_store: ConfigStore, fix_kind: FixKind) -> Self {
-        let executable_path =
-            try_find_tsgolint_executable(cwd).unwrap_or(PathBuf::from("tsgolint"));
+        let backend =
+            try_find_backend(cwd).unwrap_or_else(|_| Backend::Process(PathBuf::from("tsgolint")));
 
         TsGoLintState {
             config_store,
-            executable_path,
+            backend,
             cwd: cwd.to_path_buf(),
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
@@ -77,11 +77,11 @@ impl TsGoLintState {
         config_store: ConfigStore,
         fix_kind: FixKind,
     ) -> Result<Self, String> {
-        let executable_path = try_find_tsgolint_executable(cwd)?;
+        let backend = try_find_backend(cwd)?;
 
         Ok(TsGoLintState {
             config_store,
-            executable_path,
+            backend,
             cwd: cwd.to_path_buf(),
             silent: false,
             fix: fix_kind.contains(FixKind::Fix),
@@ -181,11 +181,9 @@ impl TsGoLintState {
         let diff_manager_clone_to_ts_go = Arc::<DiffManager>::clone(diff_manager);
 
         let handler = std::thread::spawn(move || {
-            let mut child = self.spawn_tsgolint(&json_input)?;
+            let BackendRun { messages, finish } = self.start(json_input)?;
 
-            let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
-
-            // Process stdout stream in a separate thread to send diagnostics as they arrive
+            // Process the message stream in a separate thread to send diagnostics as they arrive
             let stdout_handler = std::thread::spawn(move || -> Result<TsGoLintOutput, String> {
                 let disable_directives_map =
                     disable_directives_map.lock().expect("disable_directives_map mutex poisoned");
@@ -194,9 +192,7 @@ impl TsGoLintState {
                     DiagnosticHandler::new(self.cwd.clone(), self.silent, should_fix, error_sender);
                 let mut timings = vec![];
 
-                let msg_iter = TsGoLintMessageStream::new(stdout);
-
-                for msg in msg_iter {
+                for msg in messages {
                     match msg {
                         Ok(TsGoLintMessage::Error(err)) => {
                             return Err(err.error);
@@ -266,23 +262,26 @@ impl TsGoLintState {
                 })
             });
 
-            // Wait for process to complete and stdout processing to finish
-            let exit_status = child.wait().expect("Failed to wait for tsgolint process");
+            // Wait for the backend to complete and message processing to finish
+            let finished = finish(false);
             let stdout_result = stdout_handler.join();
 
-            if !exit_status.success() {
-                return Err(
-                    if let Some(err) = &stdout_result.ok().and_then(std::result::Result::err) {
-                        format!("exit status: {exit_status}, error: {err}")
-                    } else {
-                        format!("exit status: {exit_status}")
-                    },
-                );
-            }
+            let exit_status = match finished {
+                Ok(status) => status,
+                Err(status) => {
+                    return Err(
+                        if let Some(err) = &stdout_result.ok().and_then(std::result::Result::err) {
+                            format!("{status}, error: {err}")
+                        } else {
+                            status
+                        },
+                    );
+                }
+            };
 
             match stdout_result {
                 Ok(Ok(messages)) => Ok(messages),
-                Ok(Err(err)) => Err(format!("exit status: {exit_status}, error: {err}")),
+                Ok(Err(err)) => Err(format!("{exit_status}, error: {err}")),
                 Err(_) => Err("Failed to join stdout processing thread".to_string()),
             }
         });
@@ -356,9 +355,38 @@ impl TsGoLintState {
         }
     }
 
+    /// Starts the backend on `payload`: a `tsgolint` process, or tsrslint on a thread of this process.
+    fn start(&self, payload: Payload) -> Result<BackendRun, String> {
+        match &self.backend {
+            Backend::Process(executable_path) => {
+                let mut child = self.spawn_tsgolint(executable_path, &payload)?;
+                let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+                Ok(BackendRun {
+                    messages: Box::new(TsGoLintMessageStream::new(stdout)),
+                    finish: Box::new(move |kill| {
+                        if kill {
+                            // Kill the child process if it's still running to avoid zombie processes
+                            let _ = child.kill();
+                        }
+                        let exit_status =
+                            child.wait().expect("Failed to wait for tsgolint process");
+                        let status = format!("exit status: {exit_status}");
+                        if exit_status.success() || kill { Ok(status) } else { Err(status) }
+                    }),
+                })
+            }
+            #[cfg(feature = "tsrs")]
+            Backend::InProcess => in_process::start(self, payload),
+        }
+    }
+
     /// Spawn the tsgolint process with the given input.
-    fn spawn_tsgolint(&self, json_input: &Payload) -> Result<std::process::Child, String> {
-        let mut cmd = std::process::Command::new(&self.executable_path);
+    fn spawn_tsgolint(
+        &self,
+        executable_path: &Path,
+        json_input: &Payload,
+    ) -> Result<std::process::Child, String> {
+        let mut cmd = std::process::Command::new(executable_path);
         cmd.arg("headless")
             .stdin(std::process::Stdio::piped())
             .stdout(std::process::Stdio::piped())
@@ -394,7 +422,7 @@ impl TsGoLintState {
             Err(e) => {
                 return Err(format!(
                     "Failed to spawn tsgolint from path `{}`, with error: {e}",
-                    self.executable_path.display()
+                    executable_path.display()
                 ));
             }
         };
@@ -452,13 +480,11 @@ impl TsGoLintState {
         let path_file_name =
             Path::new(paths[0].as_ref()).file_name().unwrap_or_default().to_os_string();
 
-        let mut child = self.spawn_tsgolint(&json_input)?;
-        let stdout = child.stdout.take().expect("Failed to open tsgolint stdout");
+        let BackendRun { messages, finish } = self.start(json_input)?;
         let diagnostics = (|| -> Result<Vec<Message>, String> {
-            let msg_iter = TsGoLintMessageStream::new(stdout);
             let mut result = vec![];
 
-            for msg in msg_iter {
+            for msg in messages {
                 match msg {
                     Ok(TsGoLintMessage::Error(err)) => {
                         return Err(err.error);
@@ -547,9 +573,8 @@ impl TsGoLintState {
             Ok(result)
         })();
 
-        // Kill the child process if it's still running to avoid zombie processes
-        let _ = child.kill();
-        let _ = child.wait();
+        // Stop the backend if it is still running
+        let _ = finish(true);
 
         diagnostics
     }
@@ -1345,6 +1370,167 @@ fn parse_single_message(
                 .map_err(TsGoLintMessageParseError::InvalidTimingPayload)?;
 
             Ok(TsGoLintMessage::Timing(timing_payload))
+        }
+    }
+}
+
+/// How the type-aware backend runs.
+#[derive(Debug, Clone)]
+enum Backend {
+    /// A `tsgolint` executable (or one speaking its headless protocol), driven over stdin/stdout.
+    Process(PathBuf),
+    /// `oxc_linter_tsrs` linked into this binary (the `tsrs` feature): the same rules on tsrs, in-process.
+    #[cfg(feature = "tsrs")]
+    InProcess,
+}
+
+/// A started backend run.
+struct BackendRun {
+    /// Its messages, in order; ends when the backend is done.
+    messages: Box<dyn Iterator<Item = Result<TsGoLintMessage, String>> + Send>,
+    /// Waits for the backend. `Ok` and `Err` both carry its status text (an `Err` is a failed run). With `true`
+    /// a still-running process is killed first.
+    finish: Box<dyn FnOnce(bool) -> Result<String, String> + Send>,
+}
+
+/// Picks the backend. `OXLINT_TSGOLINT_PATH` always selects a process (so a `tsgolint` build can be compared
+/// against the in-process rules), as does `OXLINT_TYPE_AWARE_BACKEND=tsgolint`; otherwise the `tsrs` feature
+/// runs the rules in-process, and without it the `tsgolint` executable is looked up.
+fn try_find_backend(cwd: &Path) -> Result<Backend, String> {
+    #[cfg(feature = "tsrs")]
+    if std::env::var_os("OXLINT_TSGOLINT_PATH").is_none()
+        && !std::env::var("OXLINT_TYPE_AWARE_BACKEND").is_ok_and(|v| v == "tsgolint")
+    {
+        return Ok(Backend::InProcess);
+    }
+    try_find_tsgolint_executable(cwd).map(Backend::Process)
+}
+
+#[cfg(feature = "tsrs")]
+mod in_process {
+    use std::{path::PathBuf, sync::mpsc};
+
+    use oxc_linter_tsrs::{linter, protocol as tp};
+    use oxc_span::Span;
+
+    use super::{
+        BackendRun, Fix, LabeledRange, Payload, Range, RuleMessage, Suggestion, TsGoLintDiagnostic,
+        TsGoLintError, TsGoLintInternalDiagnostic, TsGoLintMessage, TsGoLintRuleDiagnostic,
+        TsGoLintRuleTiming, TsGoLintState, TsGoLintTimingPayload,
+    };
+
+    /// Runs the rules on a tsrslint thread and streams its output through a channel, so the caller consumes it
+    /// the way it reads a `tsgolint` process's stdout, without the JSON in between.
+    pub(super) fn start(state: &TsGoLintState, payload: Payload) -> Result<BackendRun, String> {
+        let opts = linter::Options {
+            fix: state.fix,
+            fix_suggestions: state.fix_suggestions,
+            debug_timings: state.timings,
+        };
+        let (tx, rx) = mpsc::sync_channel::<Result<TsGoLintMessage, String>>(4096);
+        let sink: linter::Sink = Box::new(move |out| {
+            // A dropped receiver means the caller stopped listening; the run finishes without it.
+            let _ = tx.send(Ok(convert_output(out)));
+        });
+        let handle =
+            linter::spawn(convert_payload(payload), &state.cwd.to_string_lossy(), opts, sink)
+                .map_err(|e| format!("Failed to start the tsrs lint thread: {e}"))?;
+        Ok(BackendRun {
+            messages: Box::new(rx.into_iter()),
+            finish: Box::new(move |_kill| match handle.join() {
+                Ok(Ok(())) => Ok("tsrs: finished".to_string()),
+                Ok(Err(_)) => Err("tsrs: failed".to_string()),
+                Err(_) => Err("tsrs: the lint thread panicked".to_string()),
+            }),
+        })
+    }
+
+    fn convert_payload(payload: Payload) -> tp::Payload {
+        tp::Payload {
+            version: payload.version,
+            configs: payload
+                .configs
+                .into_iter()
+                .map(|config| tp::HeadlessConfig {
+                    file_paths: config.file_paths,
+                    rules: config
+                        .rules
+                        .into_iter()
+                        .map(|rule| tp::HeadlessRule { name: rule.name, options: rule.options })
+                        .collect(),
+                })
+                .collect(),
+            source_overrides: payload.source_overrides.map(|o| o.into_iter().collect()),
+            report_syntactic: payload.report_syntactic,
+            report_semantic: payload.report_semantic,
+        }
+    }
+
+    fn convert_output(output: tp::Output) -> TsGoLintMessage {
+        match output {
+            tp::Output::Diagnostic(d) => TsGoLintMessage::Diagnostic(convert_diagnostic(d)),
+            tp::Output::Timing(t) => TsGoLintMessage::Timing(TsGoLintTimingPayload {
+                rules: t
+                    .rules
+                    .into_iter()
+                    .map(|r| TsGoLintRuleTiming {
+                        rule_name: r.rule_name,
+                        duration: r.duration,
+                        calls: r.calls,
+                    })
+                    .collect(),
+            }),
+            tp::Output::Error(error) => TsGoLintMessage::Error(TsGoLintError { error }),
+        }
+    }
+
+    fn range(r: tp::Range) -> Range {
+        Range { pos: u32::try_from(r.pos).unwrap_or(0), end: u32::try_from(r.end).unwrap_or(0) }
+    }
+
+    fn message(m: tp::Message) -> RuleMessage {
+        RuleMessage { id: m.id, description: m.description, help: m.help }
+    }
+
+    fn fixes(fixes: Vec<tp::Fix>) -> Vec<Fix> {
+        fixes.into_iter().map(|f| Fix { text: f.text, range: range(f.range) }).collect()
+    }
+
+    /// The same mapping as `parse_single_message` does for the JSON payload.
+    fn convert_diagnostic(d: tp::Diagnostic) -> TsGoLintDiagnostic {
+        let span = d.range.map(|r| {
+            let r = range(r);
+            Span::new(r.pos, r.end)
+        });
+        if d.kind == 0 {
+            TsGoLintDiagnostic::Rule(TsGoLintRuleDiagnostic {
+                rule: d.rule.expect("Rule name must be present for rule diagnostics"),
+                span: span.unwrap_or_else(|| {
+                    debug_assert!(false, "Range must be present for rule diagnostics");
+                    Span::default()
+                }),
+                message: message(d.message),
+                fixes: fixes(d.fixes),
+                suggestions: d
+                    .suggestions
+                    .into_iter()
+                    .map(|s| Suggestion { message: message(s.message), fixes: fixes(s.fixes) })
+                    .collect(),
+                labeled_ranges: d
+                    .labeled_ranges
+                    .into_iter()
+                    .map(|l| LabeledRange { label: l.label, range: range(l.range) })
+                    .collect(),
+                file_path: PathBuf::from(
+                    d.file_path.expect("File path must be present for rule diagnostics"),
+                ),
+            })
+        } else {
+            TsGoLintDiagnostic::Internal(TsGoLintInternalDiagnostic {
+                message: message(d.message),
+                span,
+                file_path: d.file_path.map(PathBuf::from),
+            })
         }
     }
 }

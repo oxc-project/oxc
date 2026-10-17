@@ -1,0 +1,1 @@
+var varDeclarationFromFixture = 1;

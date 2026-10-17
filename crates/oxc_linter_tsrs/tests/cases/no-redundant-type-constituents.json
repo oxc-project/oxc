@@ -1,0 +1,673 @@
+{
+  "source": "no_redundant_type_constituents_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      type T = any;\n      type U = T;\n    "
+        },
+        {
+          "code": "\n      type T = never;\n      type U = T;\n    "
+        },
+        {
+          "code": "\n      type T = 1 | 2;\n      type U = T | 3;\n      type V = U;\n    "
+        },
+        {
+          "code": "type T = () =\u003e never;"
+        },
+        {
+          "code": "type T = () =\u003e never | string;"
+        },
+        {
+          "code": "\n      type B = never;\n      type T = () =\u003e B | string;\n    "
+        },
+        {
+          "code": "\n      type B = string;\n      type T = () =\u003e B | never;\n    "
+        },
+        {
+          "code": "type T = () =\u003e string | never;"
+        },
+        {
+          "code": "type T = { (): string | never };"
+        },
+        {
+          "code": "\n      function _(): string | never {\n        return '';\n      }\n    "
+        },
+        {
+          "code": "\n      const _ = (): string | never =\u003e {\n        return '';\n      };\n    "
+        },
+        {
+          "code": "\n      type B = string;\n      type T = { (): B | never };\n    "
+        },
+        {
+          "code": "type T = { new (): string | never };"
+        },
+        {
+          "code": "\n      type B = never;\n      type T = { new (): string | B };\n    "
+        },
+        {
+          "code": "\n      type B = unknown;\n      type T = B;\n    "
+        },
+        {
+          "code": "type T = bigint;"
+        },
+        {
+          "code": "\n      type B = bigint;\n      type T = B;\n    "
+        },
+        {
+          "code": "type T = 1n | 2n;"
+        },
+        {
+          "code": "\n      type B = 1n;\n      type T = B | 2n;\n    "
+        },
+        {
+          "code": "type T = boolean;"
+        },
+        {
+          "code": "\n      type B = boolean;\n      type T = B;\n    "
+        },
+        {
+          "code": "type T = false | true;"
+        },
+        {
+          "code": "\n      type B = false;\n      type T = B | true;\n    "
+        },
+        {
+          "code": "\n      type B = true;\n      type T = B | false;\n    "
+        },
+        {
+          "code": "type T = number;"
+        },
+        {
+          "code": "\n      type B = number;\n      type T = B;\n    "
+        },
+        {
+          "code": "type T = 1 | 2;"
+        },
+        {
+          "code": "\n      type B = 1;\n      type T = B | 2;\n    "
+        },
+        {
+          "code": "type T = 1 | false;"
+        },
+        {
+          "code": "\n      type B = 1;\n      type T = B | false;\n    "
+        },
+        {
+          "code": "type T = string;"
+        },
+        {
+          "code": "\n      type B = string;\n      type T = B;\n    "
+        },
+        {
+          "code": "type T = 'a' | 'b';"
+        },
+        {
+          "code": "\n      type B = 'b';\n      type T = 'a' | B;\n    "
+        },
+        {
+          "code": "\n      type B = 'a';\n      type T = B | 'b';\n    "
+        },
+        {
+          "code": "type T = bigint | null;"
+        },
+        {
+          "code": "\n      type B = bigint;\n      type T = B | null;\n    "
+        },
+        {
+          "code": "type T = boolean | null;"
+        },
+        {
+          "code": "\n      type B = boolean;\n      type T = B | null;\n    "
+        },
+        {
+          "code": "type T = number | null;"
+        },
+        {
+          "code": "\n      type B = number;\n      type T = B | null;\n    "
+        },
+        {
+          "code": "type T = string | null;"
+        },
+        {
+          "code": "\n      type B = string;\n      type T = B | null;\n    "
+        },
+        {
+          "code": "type T = bigint \u0026 null;"
+        },
+        {
+          "code": "\n      type B = bigint;\n      type T = B \u0026 null;\n    "
+        },
+        {
+          "code": "type T = boolean \u0026 null;"
+        },
+        {
+          "code": "\n      type B = boolean;\n      type T = B \u0026 null;\n    "
+        },
+        {
+          "code": "type T = number \u0026 null;"
+        },
+        {
+          "code": "\n      type B = number;\n      type T = B \u0026 null;\n    "
+        },
+        {
+          "code": "type T = string \u0026 null;"
+        },
+        {
+          "code": "\n      type B = string;\n      type T = B \u0026 null;\n    "
+        },
+        {
+          "code": "type T = `${string}` \u0026 null;"
+        },
+        {
+          "code": "\n      type B = `${string}`;\n      type T = B \u0026 null;\n    "
+        },
+        {
+          "code": "\n      type T = 'a' | 1 | 'b';\n      type U = T \u0026 string;\n    "
+        },
+        {
+          "code": "declare function fn(): never | 'foo';"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "type T = number | any;",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = number;\n        type T = B | any;\n      ",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = any | number;",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = any;\n        type T = B | number;\n      ",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = number | never;",
+          "errors": [
+            {
+              "messageId": "overridden",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = number;\n        type T = B | never;\n      ",
+          "errors": [
+            {
+              "messageId": "overridden",
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = never;\n        type T = B | number;\n      ",
+          "errors": [
+            {
+              "messageId": "overridden",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = never | number;",
+          "errors": [
+            {
+              "messageId": "overridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = number | unknown;",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = unknown | number;",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type ErrorTypes = NotKnown | 0;",
+          "errors": [
+            {
+              "messageId": "errorTypeOverrides",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = number | 0;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = number | (0 | 1);",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = (0 | 0) | number;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = 0 | 1;\n        type T = (2 | B) | number;\n      ",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = (0 | (1 | 2)) | number;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = (0 | 1) | number;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = (0 | (0 | 1)) | number;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = (2 | 'other' | 3) | number;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = '' | string;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = 'b';\n        type T = B | string;\n      ",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = `a${number}c` | string;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = `a${number}c`;\n        type T = B | string;\n      ",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = `${number}` | string;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = 0n | bigint;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = -1n | bigint;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = (-1n | 1n) | bigint;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = boolean;\n        type T = B | false;\n      ",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = false | boolean;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = true | boolean;",
+          "errors": [
+            {
+              "messageId": "literalOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = false \u0026 boolean;",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = false;\n        type T = B \u0026 boolean;\n      ",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = true;\n        type T = B \u0026 boolean;\n      ",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = true \u0026 boolean;",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = number \u0026 any;",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = any \u0026 number;",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type ErrorTypes = NotKnown \u0026 0;",
+          "errors": [
+            {
+              "messageId": "errorTypeOverrides",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = number \u0026 never;",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = never;\n        type T = B \u0026 number;\n      ",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = never \u0026 number;",
+          "errors": [
+            {
+              "messageId": "overrides",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = number \u0026 unknown;",
+          "errors": [
+            {
+              "messageId": "overridden",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = unknown \u0026 number;",
+          "errors": [
+            {
+              "messageId": "overridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = number \u0026 0;",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = '' \u0026 string;",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type B = 0n;\n        type T = B \u0026 bigint;\n      ",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = 0n \u0026 bigint;",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = -1n \u0026 bigint;",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type T = 'a' | 'b';\n        type U = T \u0026 string;\n      ",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type S = 1 | 2;\n        type T = 'a' | 'b';\n        type U = S \u0026 T \u0026 string \u0026 number;\n      ",
+          "errors": [
+            {
+              "messageId": "primitiveOverridden",
+              "column": 18,
+              "suggestions": []
+            },
+            {
+              "messageId": "primitiveOverridden",
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

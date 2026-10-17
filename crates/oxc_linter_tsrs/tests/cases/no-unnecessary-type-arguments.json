@@ -1,0 +1,636 @@
+{
+  "source": "no_unnecessary_type_arguments_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.json",
+      "valid": [
+        {
+          "code": "f();"
+        },
+        {
+          "code": "f\u003cstring\u003e();"
+        },
+        {
+          "code": "class Foo extends Bar {}"
+        },
+        {
+          "code": "class Foo extends Bar\u003cstring\u003e {}"
+        },
+        {
+          "code": "class Foo implements Bar {}"
+        },
+        {
+          "code": "class Foo implements Bar\u003cstring\u003e {}"
+        },
+        {
+          "code": "\nfunction f\u003cT = number\u003e() {}\nf();\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT = number\u003e() {}\nf\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare const f: (\u003cT = number\u003e() =\u003e void) | null;\nf?.();\n    "
+        },
+        {
+          "code": "\ndeclare const f: (\u003cT = number\u003e() =\u003e void) | null;\nf?.\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare const f: any;\nf();\n    "
+        },
+        {
+          "code": "\ndeclare const f: any;\nf\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare const f: unknown;\nf();\n    "
+        },
+        {
+          "code": "\ndeclare const f: unknown;\nf\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\nfunction g\u003cT = number, U = string\u003e() {}\ng\u003cnumber, number\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare const g: any;\ng\u003cstring, string\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare const g: unknown;\ng\u003cstring, string\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare const f: unknown;\nf\u003cstring\u003e``;\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT = number\u003e(template: TemplateStringsArray) {}\nf\u003cstring\u003e``;\n    "
+        },
+        {
+          "code": "\nclass C\u003cT = number\u003e {}\nnew C\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare const C: any;\nnew C\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare const C: unknown;\nnew C\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\nclass C\u003cT = number\u003e {}\nclass D extends C\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\ndeclare const C: any;\nclass D extends C\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\ndeclare const C: unknown;\nclass D extends C\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\ninterface I\u003cT = number\u003e {}\nclass Impl implements I\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\nclass C\u003cTC = number\u003e {}\nclass D\u003cTD = number\u003e extends C {}\n    "
+        },
+        {
+          "code": "\ndeclare const C: any;\nclass D\u003cTD = number\u003e extends C {}\n    "
+        },
+        {
+          "code": "\ndeclare const C: unknown;\nclass D\u003cTD = number\u003e extends C {}\n    "
+        },
+        {
+          "code": "let a: A\u003cnumber\u003e;"
+        },
+        {
+          "code": "\nclass Foo\u003cT\u003e {}\nconst foo = new Foo\u003cnumber\u003e();\n    "
+        },
+        {
+          "code": "type Foo\u003cT\u003e = import('foo').Foo\u003cT\u003e;"
+        },
+        {
+          "code": "\nclass Bar\u003cT = number\u003e {}\nclass Foo\u003cT = number\u003e extends Bar\u003cT\u003e {}\n    "
+        },
+        {
+          "code": "\ninterface Bar\u003cT = number\u003e {}\nclass Foo\u003cT = number\u003e implements Bar\u003cT\u003e {}\n    "
+        },
+        {
+          "code": "\nclass Bar\u003cT = number\u003e {}\nclass Foo\u003cT = number\u003e extends Bar\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\ninterface Bar\u003cT = number\u003e {}\nclass Foo\u003cT = number\u003e implements Bar\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\nimport { F } from './missing';\nfunction bar\u003cT = F\u003e() {}\nbar\u003cF\u003cnumber\u003e\u003e();\n    "
+        },
+        {
+          "code": "\ntype A\u003cT = Element\u003e = T;\ntype B = A\u003cHTMLInputElement\u003e;\n      ",
+          "tsconfig": "tsconfig.lib-dom.json"
+        },
+        {
+          "code": "\ntype A\u003cT = Map\u003cstring, string\u003e\u003e = T;\ntype B = A\u003cMap\u003cstring, number\u003e\u003e;\n    "
+        },
+        {
+          "code": "\ntype A = Map\u003cstring, string\u003e;\ntype B\u003cT = A\u003e = T;\ntype C2 = B\u003cMap\u003cstring, number\u003e\u003e;\n    "
+        },
+        {
+          "code": "\ninterface Foo\u003cT = string\u003e {}\ndeclare var Foo: {\n  new \u003cT\u003e(type: T): any;\n};\nclass Bar extends Foo\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\ninterface Foo\u003cT = string\u003e {}\nclass Foo\u003cT\u003e {}\nclass Bar extends Foo\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\nclass Foo\u003cT = string\u003e {}\ninterface Foo\u003cT\u003e {}\nclass Bar implements Foo\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\nclass Foo\u003cT\u003e {}\nnamespace Foo {\n  export class Bar {}\n}\nclass Bar extends Foo\u003cstring\u003e {}\n    "
+        },
+        {
+          "code": "\nfunction Button\u003cT\u003e() {\n  return \u003cdiv\u003e\u003c/div\u003e;\n}\nconst button = \u003cButton\u003cstring\u003e\u003e\u003c/Button\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\nfunction Button\u003cT\u003e() {\n  return \u003cdiv\u003e\u003c/div\u003e;\n}\nconst button = \u003cButton\u003cstring\u003e /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\nfunction f\u003cT = number\u003e() {}\nconst g = f\u003cnumber\u003e;\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT = number\u003e() {}\nfunction takesFn(fn: () =\u003e void) {}\ntakesFn(f\u003cnumber\u003e);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\nf(10);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\nf\u003c10\u003e(10);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\ndeclare const x: any;\nf\u003cstring\u003e(x);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\nf\u003cRecord\u003cstring, boolean\u003e\u003e({});\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\ndeclare const x: {};\nf\u003cRecord\u003cstring, boolean\u003e\u003e(x);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\ndeclare const x: Record\u003cstring, never\u003e;\nf\u003cRecord\u003cstring, boolean\u003e\u003e(x);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\ndeclare const x: any;\nf\u003c{}\u003e(x);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\ndeclare const x: {};\nf\u003cany\u003e(x);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\ninterface F {}\ndeclare const x: {};\nf\u003cF\u003e(x);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\nf\u003cnumber[]\u003e([]);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT = number\u003e(x: T) {}\nf(10);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT extends number\u003e(x: T) {}\nf(10);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT extends number | string\u003e(x: T) {}\nf(10);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT extends number | string\u003e(x: T) {}\nf\u003cnumber | string\u003e(10);\n    "
+        },
+        {
+          "code": "\nconst curried =\n  \u003cOuter,\u003e(outer: Outer) =\u003e\n  \u003cInner,\u003e(inner: Inner) =\u003e {};\ncurried(10)(10);\n    "
+        },
+        {
+          "code": "\nconst curried =\n  \u003cOuter,\u003e(outer: Outer) =\u003e\n  \u003cInner,\u003e(inner: Inner) =\u003e {};\ncurried\u003c10\u003e(10)\u003c10\u003e(10);\n    "
+        },
+        {
+          "code": "\ndeclare function f\u003cT\u003e(x: T | (() =\u003e T)): [T, (x: T) =\u003e void];\ndeclare function f\u003cT\u003e(): [T | undefined, (x: T | undefined) =\u003e void];\nf(10);\nf\u003cnumber\u003e();\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e(x: T) {}\nf\u003cboolean | null\u003e(true);\n    "
+        },
+        {
+          "code": "\nclass C\u003cT\u003e {}\nnew C\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\nclass Foo\u003cT\u003e {\n  constructor\u003cT\u003e(x: T) {}\n}\nconst foo = new Foo(10);\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT\u003e() {}\nf\u003cnumber, number\u003e();\n    "
+        },
+        {
+          "code": "\nclass Foo\u003cT\u003e {\n  public constructor(a: any, b: any, c: any, d: any) {}\n}\ninterface Bar {\n  val: any;\n}\nlet foo = new Foo\u003cBar\u003e(0, 0, 0, { val: 0 });\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT = string\u003e() {}\nf\u003cany\u003e();\n    "
+        },
+        {
+          "code": "\nfunction f\u003cT = any\u003e() {}\nf\u003cstring\u003e();\n    "
+        },
+        {
+          "code": "\ndeclare function useState\u003cT\u003e(initialState: T | (() =\u003e T)): [T, (value: T) =\u003e void];\nconst [bookmarkedIds, setBookmarkedIds] = useState\u003cSet\u003cstring\u003e\u003e(new Set());\n    "
+        },
+        {
+          "code": "\ndeclare function useRef\u003cT\u003e(initialValue: T): { current: T };\nconst activeIndexesRef = useRef\u003cSet\u003cnumber\u003e\u003e(new Set());\n    "
+        },
+        {
+          "code": "\ntype OneParam\u003cT = any\u003e = T;\ninterface TestInterface {\n  prop?: OneParam\u003cstring, number\u003e;  // TypeScript error, but shouldn't panic\n}\n    "
+        },
+        {
+          "code": "\ntype OneParam\u003cT = any, U = any, V = any\u003e = T;\ninterface TestInterface {\n  prop?: OneParam\u003cstring, number\u003e;  // TypeScript error, but shouldn't panic\n}\n    "
+        },
+        {
+          "code": "\ntype Data = Record\u003cnever, never\u003e\n\ntype LocaleData\u003cT extends Data = Data\u003e = Record\u003cstring, T\u003e\n\ninterface Data1 { a: string }\n\ntype Data2 = Partial\u003cData1\u003e\n\ntype LocaleData2 = LocaleData\u003cData2\u003e\n    "
+        },
+        {
+          "code": "\ntype Data = Record\u003cnever, never\u003e\n\ntype LocaleData\u003cT extends Data = Data\u003e = Record\u003cstring, T\u003e\n\ninterface Data1 { a: string }\n\ntype Data2 = Partial\u003cData1\u003e\n\ninterface Wrapper {\n  value: LocaleData\u003cData2\u003e\n}\n    "
+        },
+        {
+          "code": "\n\ntype SessionDataT = Record\u003cstring, any\u003e\ntype SessionData\u003cT extends SessionDataT = SessionDataT\u003e = Partial\u003cT\u003e;\ndeclare function useSession\u003cT extends SessionData = SessionData\u003e(): any;\n\n\nexport function scoped() {\n  interface SessionData {\n    userId?: string;\n  }\n\n  return useSession\u003cSessionData\u003e()\n}\n    "
+        },
+        {
+          "code": "\ninterface Foo {\n\tfoo?: string\n}\ninterface Bar extends Foo {\n\tbar?: string\n}\n\nfunction f\u003cT = Foo\u003e() {}\nf\u003cBar\u003e();\n    "
+        },
+        {
+          "code": "\ntype SessionDataT = Record\u003cstring, any\u003e;\ntype H3SessionData\u003cT extends SessionDataT = SessionDataT\u003e = T;\ninterface SessionManager\u003cT extends SessionDataT = SessionDataT\u003e {\n  readonly data: H3SessionData\u003cT\u003e;\n}\ninterface SessionConfig {\n  password: string;\n  name: string;\n  cookie: {\n    sameSite: 'strict';\n    httpOnly: true;\n    secure: true;\n  };\n}\ninterface EventHandlerRequest {}\ndeclare class H3Event\u003c_RequestT extends EventHandlerRequest = EventHandlerRequest\u003e {}\ndeclare function useSession\u003cT extends SessionDataT = SessionDataT\u003e(\n  event: H3Event,\n  config: SessionConfig,\n): Promise\u003cSessionManager\u003cT\u003e\u003e;\n\ninterface SessionData {\n  userId?: string;\n}\n\nfunction getSessionConfig(): SessionConfig {\n  return {\n    password: '',\n    name: '',\n    cookie: {\n      sameSite: 'strict',\n      httpOnly: true,\n      secure: true,\n    },\n  };\n}\n\nasync function useAppSession(event: H3Event) {\n  const config = getSessionConfig();\n\n  return useSession\u003cSessionData\u003e(event, config);\n}\n    "
+        },
+        {
+          "code": "\ntype RecordToTuple\u003cT\u003e = {\n  [K in keyof T]: [K, T[K]];\n}[keyof T][];\n\nclass RequestContext\u003c\n  Values extends Record\u003cstring, unknown\u003e | unknown = unknown,\n\u003e {\n  constructor(\n    _iterable?: Values extends Record\u003cstring, unknown\u003e\n      ? RecordToTuple\u003cPartial\u003cValues\u003e\u003e\n      : Iterable\u003creadonly [string, unknown]\u003e,\n  ) {}\n\n  set\u003cK extends Values extends Record\u003cstring, unknown\u003e ? keyof Values : string\u003e(\n    _key: K,\n    _value: Values extends Record\u003cstring, unknown\u003e\n      ? K extends keyof Values\n        ? Values[K]\n        : never\n      : unknown,\n  ): void {}\n}\n\ntype UntypedRequestContext = RequestContext;\n\nfunction acceptsUntypedContext(_context: UntypedRequestContext): void {}\n\nconst context = new RequestContext\u003cunknown\u003e([\n  ['instructions', 'Reply for the agent.'],\n  ['tools', {}],\n]);\n\nacceptsUntypedContext(context);\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nfunction f\u003cT = number\u003e() {}\nf\u003cnumber\u003e();\n      ",
+          "output": [
+            "\nfunction f\u003cT = number\u003e() {}\nf();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction g\u003cT = number, U = string\u003e() {}\ng\u003cstring, string\u003e();\n      ",
+          "output": [
+            "\nfunction g\u003cT = number, U = string\u003e() {}\ng\u003cstring\u003e();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT = number\u003e(templates: TemplateStringsArray, arg: T) {}\nf\u003cnumber\u003e`${1}`;\n      ",
+          "output": [
+            "\nfunction f\u003cT = number\u003e(templates: TemplateStringsArray, arg: T) {}\nf`${1}`;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass C\u003cT = number\u003e {}\nfunction h(c: C\u003cnumber\u003e) {}\n      ",
+          "output": [
+            "\nclass C\u003cT = number\u003e {}\nfunction h(c: C) {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass C\u003cT = number\u003e {}\nnew C\u003cnumber\u003e();\n      ",
+          "output": [
+            "\nclass C\u003cT = number\u003e {}\nnew C();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass C\u003cT = number\u003e {}\nclass D extends C\u003cnumber\u003e {}\n      ",
+          "output": [
+            "\nclass C\u003cT = number\u003e {}\nclass D extends C {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface I\u003cT = number\u003e {}\nclass Impl implements I\u003cnumber\u003e {}\n      ",
+          "output": [
+            "\ninterface I\u003cT = number\u003e {}\nclass Impl implements I {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo\u003cT = number\u003e {}\nconst foo = new Foo\u003cnumber\u003e();\n      ",
+          "output": [
+            "\nclass Foo\u003cT = number\u003e {}\nconst foo = new Foo();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Bar\u003cT = string\u003e {}\nclass Foo\u003cT = number\u003e implements Bar\u003cstring\u003e {}\n      ",
+          "output": [
+            "\ninterface Bar\u003cT = string\u003e {}\nclass Foo\u003cT = number\u003e implements Bar {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Bar\u003cT = string\u003e {}\nclass Foo\u003cT = number\u003e extends Bar\u003cstring\u003e {}\n      ",
+          "output": [
+            "\nclass Bar\u003cT = string\u003e {}\nclass Foo\u003cT = number\u003e extends Bar {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nimport { F } from './missing';\nfunction bar\u003cT = F\u003cstring\u003e\u003e() {}\nbar\u003cF\u003cstring\u003e\u003e();\n      ",
+          "skip": true,
+          "output": [
+            "\nimport { F } from './missing';\nfunction bar\u003cT = F\u003cstring\u003e\u003e() {}\nbar();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 4,
+              "column": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype DefaultE = { foo: string };\ntype T\u003cE = DefaultE\u003e = { box: E };\ntype G = T\u003cDefaultE\u003e;\ndeclare module 'bar' {\n  type DefaultE = { somethingElse: true };\n  type G = T\u003cDefaultE\u003e;\n}\n      ",
+          "output": [
+            "\ntype DefaultE = { foo: string };\ntype T\u003cE = DefaultE\u003e = { box: E };\ntype G = T;\ndeclare module 'bar' {\n  type DefaultE = { somethingElse: true };\n  type G = T\u003cDefaultE\u003e;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A\u003cT = Map\u003cstring, string\u003e\u003e = T;\ntype B = A\u003cMap\u003cstring, string\u003e\u003e;\n      ",
+          "output": [
+            "\ntype A\u003cT = Map\u003cstring, string\u003e\u003e = T;\ntype B = A;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = Map\u003cstring, string\u003e;\ntype B\u003cT = A\u003e = T;\ntype C = B\u003cA\u003e;\n      ",
+          "output": [
+            "\ntype A = Map\u003cstring, string\u003e;\ntype B\u003cT = A\u003e = T;\ntype C = B;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = Map\u003cstring, string\u003e;\ntype B\u003cT = A\u003e = T;\ntype C = B\u003cMap\u003cstring, string\u003e\u003e;\n      ",
+          "output": [
+            "\ntype A = Map\u003cstring, string\u003e;\ntype B\u003cT = A\u003e = T;\ntype C = B;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = Map\u003cstring, string\u003e;\ntype B = Map\u003cstring, string\u003e;\ntype C\u003cT = A\u003e = T;\ntype D = C\u003cB\u003e;\n      ",
+          "output": [
+            "\ntype A = Map\u003cstring, string\u003e;\ntype B = Map\u003cstring, string\u003e;\ntype C\u003cT = A\u003e = T;\ntype D = C;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = Map\u003cstring, string\u003e;\ntype B = A;\ntype C = Map\u003cstring, string\u003e;\ntype D = C;\ntype E\u003cT = B\u003e = T;\ntype F = E\u003cD\u003e;\n      ",
+          "output": [
+            "\ntype A = Map\u003cstring, string\u003e;\ntype B = A;\ntype C = Map\u003cstring, string\u003e;\ntype D = C;\ntype E\u003cT = B\u003e = T;\ntype F = E;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Foo {}\ndeclare var Foo: {\n  new \u003cT = string\u003e(type: T): any;\n};\nclass Bar extends Foo\u003cstring\u003e {}\n      ",
+          "output": [
+            "\ninterface Foo {}\ndeclare var Foo: {\n  new \u003cT = string\u003e(type: T): any;\n};\nclass Bar extends Foo {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare var Foo: {\n  new \u003cT = string\u003e(type: T): any;\n};\ninterface Foo {}\nclass Bar extends Foo\u003cstring\u003e {}\n      ",
+          "output": [
+            "\ndeclare var Foo: {\n  new \u003cT = string\u003e(type: T): any;\n};\ninterface Foo {}\nclass Bar extends Foo {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo\u003cT\u003e {}\ninterface Foo\u003cT = string\u003e {}\nclass Bar implements Foo\u003cstring\u003e {}\n      ",
+          "output": [
+            "\nclass Foo\u003cT\u003e {}\ninterface Foo\u003cT = string\u003e {}\nclass Bar implements Foo {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo\u003cT = string\u003e {}\nnamespace Foo {\n  export class Bar {}\n}\nclass Bar extends Foo\u003cstring\u003e {}\n      ",
+          "output": [
+            "\nclass Foo\u003cT = string\u003e {}\nnamespace Foo {\n  export class Bar {}\n}\nclass Bar extends Foo {}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction Button\u003cT = string\u003e() {\n  return \u003cdiv\u003e\u003c/div\u003e;\n}\nconst button = \u003cButton\u003cstring\u003e\u003e\u003c/Button\u003e;\n      ",
+          "tsx": true,
+          "output": [
+            "\nfunction Button\u003cT = string\u003e() {\n  return \u003cdiv\u003e\u003c/div\u003e;\n}\nconst button = \u003cButton\u003e\u003c/Button\u003e;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction Button\u003cT = string\u003e() {\n  return \u003cdiv\u003e\u003c/div\u003e;\n}\nconst button = \u003cButton\u003cstring\u003e /\u003e;\n      ",
+          "tsx": true,
+          "output": [
+            "\nfunction Button\u003cT = string\u003e() {\n  return \u003cdiv\u003e\u003c/div\u003e;\n}\nconst button = \u003cButton /\u003e;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT = number\u003e(x: T) {}\nf\u003cnumber\u003e(10);\n      ",
+          "output": [
+            "\nfunction f\u003cT = number\u003e(x: T) {}\nf(10);\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT = any\u003e() {}\nfoo\u003cany\u003e();\n      ",
+          "output": [
+            "\nfunction foo\u003cT = any\u003e() {}\nfoo();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo\u003cT\u003e = any \u0026 T\nfunction foo\u003cT = Foo\u003cstring\u003e\u003e() {}\nfoo\u003cFoo\u003cnumber\u003e\u003e();\n      ",
+          "output": [
+            "\ntype Foo\u003cT\u003e = any \u0026 T\nfunction foo\u003cT = Foo\u003cstring\u003e\u003e() {}\nfoo();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare type MessageEventHandler = ((ev: MessageEvent\u003cany\u003e) =\u003e any) | null;\n      ",
+          "output": [
+            "\ndeclare type MessageEventHandler = ((ev: MessageEvent) =\u003e any) | null;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Default = Record\u003cstring, any\u003e;\ntype Alias = Default;\nfunction f\u003cT = Default\u003e() {}\nf\u003cAlias\u003e();\n      ",
+          "output": [
+            "\ntype Default = Record\u003cstring, any\u003e;\ntype Alias = Default;\nfunction f\u003cT = Default\u003e() {}\nf();\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass C\u003cT, U = unknown\u003e {\n  constructor(_value: U) {}\n}\nnew C\u003cstring, unknown\u003e('value');\n      ",
+          "output": [
+            "\nclass C\u003cT, U = unknown\u003e {\n  constructor(_value: U) {}\n}\nnew C\u003cstring\u003e('value');\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessaryTypeParameter",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

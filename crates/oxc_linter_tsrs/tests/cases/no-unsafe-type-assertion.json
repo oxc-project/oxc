@@ -1,0 +1,1007 @@
+{
+  "source": "no_unsafe_type_assertion_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare const a: string;\na as string | number;\n      "
+        },
+        {
+          "code": "\ndeclare const a: string;\n\u003cstring | number\u003ea;\n      "
+        },
+        {
+          "code": "\ndeclare const a: string;\na as string | number as string | number | boolean;\n      "
+        },
+        {
+          "code": "\ndeclare const a: string;\na as string;\n      "
+        },
+        {
+          "code": "\ndeclare const a: { hello: 'world' };\na as { hello: string };\n      "
+        },
+        {
+          "code": "\n'hello' as const;\n      "
+        },
+        {
+          "code": "\nfunction foo\u003cT extends boolean\u003e(a: T) {\n  return a as T | number;\n}\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const a: string | number;\na as string;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: string | number;\na satisfies string as string;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 20,
+              "endLine": 3,
+              "endColumn": 29,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: string | number;\n\u003cstring\u003ea;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 1,
+              "endLine": 3,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: string | undefined;\na as string | boolean;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: string;\na as 'foo' as 'bar';\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 12,
+              "endLine": 3,
+              "endColumn": 20,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo\u003cT extends boolean\u003e(a: T) {\n  return a as true;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 12,
+              "endLine": 3,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: string;\na as Omit\u003cRequired\u003cReadonly\u003c{ hello: 'world'; foo: 'bar' }\u003e\u003e, 'foo'\u003e;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 69,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: readonly number[];\nconst bar = foo as number[];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 17,
+              "endLine": 3,
+              "endColumn": 28,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare const _any_: any;\n_any_ as any;\n      "
+        },
+        {
+          "code": "\ndeclare const _any_: any;\n_any_ as unknown;\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const _any_: any;\n_any_ as string;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 3,
+              "column": 7,
+              "endLine": 3,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const _unknown_: unknown;\n_unknown_ as any;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 11,
+              "endLine": 3,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const _any_: any;\n_any_ as Function;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 3,
+              "column": 7,
+              "endLine": 3,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const _any_: any;\n_any_ as never;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 3,
+              "column": 7,
+              "endLine": 3,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n'foo' as any;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 2,
+              "column": 7,
+              "endLine": 2,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst bar = foo as number;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 2,
+              "column": 17,
+              "endLine": 2,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst bar = 'foo' as errorType;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 2,
+              "column": 19,
+              "endLine": 2,
+              "endColumn": 31,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare const _never_: never;\n_never_ as never;\n      "
+        },
+        {
+          "code": "\ndeclare const _never_: never;\n_never_ as unknown;\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const _never_: never;\n_never_ as any;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 9,
+              "endLine": 3,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const _string_: string;\n_string_ as never;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 10,
+              "endLine": 3,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare const _function_: Function;\n_function_ as Function;\n      "
+        },
+        {
+          "code": "\ndeclare const _function_: Function;\n_function_ as unknown;\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const _function_: Function;\n_function_ as () =\u003e void;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 12,
+              "endLine": 3,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const _function_: Function;\n_function_ as any;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 12,
+              "endLine": 3,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const _function_: Function;\n_function_ as never;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 12,
+              "endLine": 3,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n// additional properties should be allowed\nexport const foo = { bar: 1, bazz: 1 } as {\n  bar: number;\n};\n      "
+        },
+        {
+          "code": "\ndeclare const a: { hello: string } \u0026 { world: string };\na as { hello: string };\n      "
+        },
+        {
+          "code": "\ndeclare const a: { hello: any };\na as { hello: unknown };\n      "
+        },
+        {
+          "code": "\ndeclare const a: { hello: string };\na as { hello?: string };\n      "
+        },
+        {
+          "code": "\ndeclare const a: { hello: string };\na satisfies Record\u003cstring, string\u003e as { hello?: string };\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nvar foo = {} as {\n  bar: number;\n  bas: string;\n};\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 2,
+              "column": 14,
+              "endLine": 5,
+              "endColumn": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: { hello: string };\na satisfies Record\u003cstring, string\u003e as { hello: string; world: string };\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 36,
+              "endLine": 3,
+              "endColumn": 71,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: { hello?: string };\na as { hello: string };\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare const a: string[];\na as (string | number)[];\n      "
+        },
+        {
+          "code": "\ndeclare const a: number[];\na as unknown[];\n      "
+        },
+        {
+          "code": "\ndeclare const a: { hello: 'world'; foo: 'bar' }[];\na as { hello: 'world' }[];\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const a: (string | number)[];\na as string[];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: any[];\na as number[];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: number[];\na as any[];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: unknown[];\na as number[];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: number[];\na as never[];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare const a: [string];\na as [string | number];\n      "
+        },
+        {
+          "code": "\ndeclare const a: [string, number];\na as [string, string | number];\n      "
+        },
+        {
+          "code": "\ndeclare const a: [string];\na as [unknown];\n      "
+        },
+        {
+          "code": "\ndeclare const a: [{ hello: 'world'; foo: 'bar' }];\na as [{ hello: 'world' }];\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const a: [string | number];\na as [string];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [string, number];\na as [string, string];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [string];\na as [string, number];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [string, number];\na as [string];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [any];\na as [number];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [number, any];\na as [number, number];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [number];\na as [any];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [unknown];\na as [number];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [number];\na as [never];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: [Promise\u003cstring | number\u003e];\na as [Promise\u003cstring\u003e];\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare const a: Promise\u003cstring\u003e;\na as Promise\u003cstring | number\u003e;\n      "
+        },
+        {
+          "code": "\ndeclare const a: Promise\u003cnumber\u003e;\na as Promise\u003cunknown\u003e;\n      "
+        },
+        {
+          "code": "\ndeclare const a: Promise\u003c{ hello: 'world'; foo: 'bar' }\u003e;\na as Promise\u003c{ hello: 'world' }\u003e;\n      "
+        },
+        {
+          "code": "\ndeclare const a: Promise\u003cstring\u003e;\na as Promise\u003cstring\u003e | string;\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const a: Promise\u003cstring | number\u003e;\na as Promise\u003cstring\u003e;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: Promise\u003cany\u003e;\na as Promise\u003cnumber\u003e;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: Promise\u003cnumber\u003e;\na as Promise\u003cany\u003e;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: Promise\u003cnumber[]\u003e;\na as Promise\u003cany[]\u003e;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: Promise\u003cunknown\u003e;\na as Promise\u003cnumber\u003e;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: Promise\u003cnumber\u003e;\na as Promise\u003cnever\u003e;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 3,
+              "endLine": 3,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\nclass Foo {}\ndeclare const a: Foo;\na as Foo | number;\n      "
+        },
+        {
+          "code": "\nclass Foo {}\nclass Bar {}\ndeclare const a: Foo;\na as Bar;\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  hello() {}\n}\nclass Bar {}\ndeclare const a: Foo;\na as Bar;\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  hello() {}\n}\nclass Bar extends Foo {}\ndeclare const a: Bar;\na as Foo;\n      "
+        },
+        {
+          "code": "\nclass Foo {\n  hello() {}\n}\nclass Bar extends Foo {}\ndeclare const a: Foo;\na as Bar;\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nclass Foo {\n  hello() {}\n}\nclass Bar extends Foo {\n  world() {}\n}\ndeclare const a: Foo;\na as Bar;\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 9,
+              "column": 3,
+              "endLine": 9,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ntype Obj = { foo: string };\nfunction func\u003cT extends Obj\u003e(a: T) {\n  const b = a as T;\n}\n      "
+        },
+        {
+          "code": "\nfunction parameterExtendsOtherParameter\u003cT extends string | number, V extends T\u003e(\n  x: T,\n  y: V,\n) {\n  y as T;\n}\n      "
+        },
+        {
+          "code": "\nfunction parameterExtendsUnconstrainedParameter\u003cT, V extends T\u003e(x: T, y: V) {\n  y as T;\n}\n      "
+        },
+        {
+          "code": "\nfunction unconstrainedToUnknown\u003cT\u003e(x: T) {\n  x as unknown;\n}\n      "
+        },
+        {
+          "code": "\nfunction stringToWider\u003cT extends string\u003e(x: T) {\n  x as number | string; // allowed\n}\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ntype Obj = { foo: string };\nfunction func\u003cT extends Obj\u003e() {\n  const myObj = { foo: 'hi' } as T;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertionAssignableToConstraint",
+              "line": 4,
+              "column": 31,
+              "endLine": 4,
+              "endColumn": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Obj = { foo: string };\nfunction func\u003cT extends Obj\u003e() {\n  const o: Obj = { foo: 'hi' };\n  const myObj = o as T;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertionAssignableToConstraint",
+              "line": 5,
+              "column": 19,
+              "endLine": 5,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nexport function myfunc\u003cCustomObjectT extends string\u003e(\n  input: number,\n): CustomObjectT {\n  const newCustomObject = input as CustomObjectT;\n  return newCustomObject;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 5,
+              "column": 33,
+              "endLine": 5,
+              "endColumn": 49,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction unknownConstraint\u003cT extends unknown\u003e(x: T, y: string) {\n  y as T; // banned; generic arbitrary subtype\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertionAssignableToConstraint",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction unconstrained\u003cT\u003e(x: T, y: string) {\n  y as T;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToUnconstrainedTypeAssertion",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n// constraint of any functions like constraint of `unknown`\n// (even the TS error message has this verbiage)\nfunction anyConstraint\u003cT extends any\u003e(x: T, y: string) {\n  y as T; // banned; generic arbitrary subtype\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertionAssignableToConstraint",
+              "line": 5,
+              "column": 5,
+              "endLine": 5,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction constraintWiderThanUncastType\u003cT extends string | number\u003e(\n  x: T,\n  y: string,\n) {\n  y as T; // banned; assignable to constraint\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertionAssignableToConstraint",
+              "line": 6,
+              "column": 5,
+              "endLine": 6,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction constraintEqualUncastType\u003cT extends string\u003e(x: T, y: string) {\n  y as T; // banned; assignable to constraint\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertionAssignableToConstraint",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction constraintNarrowerThanUncastType\u003cT extends string\u003e(\n  x: T,\n  y: string | number,\n) {\n  y as T; // banned; *not* assignable to constraint\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 6,
+              "column": 5,
+              "endLine": 6,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction assertFromAny\u003cT extends string | number\u003e(x: T, y: any) {\n  y as T; // banned; just an `any` complaint. Not a generic subtype.\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeOfAnyTypeAssertion",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction parameterExtendsOtherParameter\u003cT extends string | number, V extends T\u003e(\n  x: T,\n  y: V,\n) {\n  x as V; // banned; assignable to constraint\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertionAssignableToConstraint",
+              "line": 6,
+              "column": 5,
+              "endLine": 6,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction parameterExtendsUnconstrainedParameter\u003cT, V extends T\u003e(x: T, y: V) {\n  x as V; // banned; unconstrained arbitrary type\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToUnconstrainedTypeAssertion",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction twoUnconstrained\u003cT, V\u003e(x: T, y: V) {\n  y as T;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToUnconstrainedTypeAssertion",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction toNarrower\u003cT\u003e(x: T, y: string) {\n  x as string; // banned; ordinary 'string' narrower than 'T'.\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction unconstrainedToAny\u003cT\u003e(x: T) {\n  x as any;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction stringToAny\u003cT extends string\u003e(x: T) {\n  x as any;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeToAnyTypeAssertion",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction stringToNarrower\u003cT extends string\u003e(x: T) {\n  x as 'a' | 'b';\n}\n        ",
+          "errors": [
+            {
+              "messageId": "unsafeTypeAssertion",
+              "line": 3,
+              "column": 5,
+              "endLine": 3,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

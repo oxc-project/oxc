@@ -1,0 +1,723 @@
+{
+  "source": "no_implied_eval_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "foo.setImmediate(null);"
+        },
+        {
+          "code": "foo.setInterval(null);"
+        },
+        {
+          "code": "foo.execScript(null);"
+        },
+        {
+          "code": "foo.setTimeout(null);"
+        },
+        {
+          "code": "foo();"
+        },
+        {
+          "code": "(function () {})();"
+        },
+        {
+          "code": "setTimeout(() =\u003e {}, 0);"
+        },
+        {
+          "code": "window.setTimeout(() =\u003e {}, 0);"
+        },
+        {
+          "code": "window['setTimeout'](() =\u003e {}, 0);"
+        },
+        {
+          "code": "setInterval(() =\u003e {}, 0);"
+        },
+        {
+          "code": "window.setInterval(() =\u003e {}, 0);"
+        },
+        {
+          "code": "window['setInterval'](() =\u003e {}, 0);"
+        },
+        {
+          "code": "setImmediate(() =\u003e {});"
+        },
+        {
+          "code": "window.setImmediate(() =\u003e {});"
+        },
+        {
+          "code": "window['setImmediate'](() =\u003e {});"
+        },
+        {
+          "code": "execScript(() =\u003e {});"
+        },
+        {
+          "code": "window.execScript(() =\u003e {});"
+        },
+        {
+          "code": "window['execScript'](() =\u003e {});"
+        },
+        {
+          "code": "\nconst foo = () =\u003e {};\n\nsetTimeout(foo, 0);\nsetInterval(foo, 0);\nsetImmediate(foo);\nexecScript(foo);\n    "
+        },
+        {
+          "code": "\nconst foo = function () {};\n\nsetTimeout(foo, 0);\nsetInterval(foo, 0);\nsetImmediate(foo);\nexecScript(foo);\n    "
+        },
+        {
+          "code": "\nfunction foo() {}\n\nsetTimeout(foo, 0);\nsetInterval(foo, 0);\nsetImmediate(foo);\nexecScript(foo);\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  fn: () =\u003e {},\n};\n\nsetTimeout(foo.fn, 0);\nsetInterval(foo.fn, 0);\nsetImmediate(foo.fn);\nexecScript(foo.fn);\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  fn: function () {},\n};\n\nsetTimeout(foo.fn, 0);\nsetInterval(foo.fn, 0);\nsetImmediate(foo.fn);\nexecScript(foo.fn);\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  fn: function foo() {},\n};\n\nsetTimeout(foo.fn, 0);\nsetInterval(foo.fn, 0);\nsetImmediate(foo.fn);\nexecScript(foo.fn);\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  fn() {},\n};\n\nsetTimeout(foo.fn, 0);\nsetInterval(foo.fn, 0);\nsetImmediate(foo.fn);\nexecScript(foo.fn);\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  fn: () =\u003e {},\n};\nconst fn = 'fn';\n\nsetTimeout(foo[fn], 0);\nsetInterval(foo[fn], 0);\nsetImmediate(foo[fn]);\nexecScript(foo[fn]);\n    "
+        },
+        {
+          "code": "\nconst foo = {\n  fn: () =\u003e {},\n};\n\nsetTimeout(foo['fn'], 0);\nsetInterval(foo['fn'], 0);\nsetImmediate(foo['fn']);\nexecScript(foo['fn']);\n    "
+        },
+        {
+          "code": "\nconst foo: () =\u003e void = () =\u003e {};\n\nsetTimeout(foo, 0);\nsetInterval(foo, 0);\nsetImmediate(foo);\nexecScript(foo);\n    "
+        },
+        {
+          "code": "\nconst foo: () =\u003e () =\u003e void = () =\u003e {\n  return () =\u003e {};\n};\n\nsetTimeout(foo(), 0);\nsetInterval(foo(), 0);\nsetImmediate(foo());\nexecScript(foo());\n    "
+        },
+        {
+          "code": "\nconst foo: () =\u003e () =\u003e void = () =\u003e () =\u003e {};\n\nsetTimeout(foo(), 0);\nsetInterval(foo(), 0);\nsetImmediate(foo());\nexecScript(foo());\n    "
+        },
+        {
+          "code": "\nconst foo = () =\u003e () =\u003e {};\n\nsetTimeout(foo(), 0);\nsetInterval(foo(), 0);\nsetImmediate(foo());\nexecScript(foo());\n    "
+        },
+        {
+          "code": "\nconst foo = function foo() {\n  return function foo() {};\n};\n\nsetTimeout(foo(), 0);\nsetInterval(foo(), 0);\nsetImmediate(foo());\nexecScript(foo());\n    "
+        },
+        {
+          "code": "\nconst foo = function () {\n  return function () {\n    return '';\n  };\n};\n\nsetTimeout(foo(), 0);\nsetInterval(foo(), 0);\nsetImmediate(foo());\nexecScript(foo());\n    "
+        },
+        {
+          "code": "\nconst foo: () =\u003e () =\u003e void = function foo() {\n  return function foo() {};\n};\n\nsetTimeout(foo(), 0);\nsetInterval(foo(), 0);\nsetImmediate(foo());\nexecScript(foo());\n    "
+        },
+        {
+          "code": "\nfunction foo() {\n  return function foo() {\n    return () =\u003e {};\n  };\n}\n\nsetTimeout(foo()(), 0);\nsetInterval(foo()(), 0);\nsetImmediate(foo()());\nexecScript(foo()());\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  static fn = () =\u003e {};\n}\n\nsetTimeout(Foo.fn, 0);\nsetInterval(Foo.fn, 0);\nsetImmediate(Foo.fn);\nexecScript(Foo.fn);\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  fn() {}\n}\n\nconst foo = new Foo();\n\nsetTimeout(foo.fn, 0);\nsetInterval(foo.fn, 0);\nsetImmediate(foo.fn);\nexecScript(foo.fn);\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  fn() {}\n}\nconst foo = new Foo();\nconst fn = foo.fn;\n\nsetTimeout(fn.bind(null), 0);\nsetInterval(fn.bind(null), 0);\nsetImmediate(fn.bind(null));\nexecScript(fn.bind(null));\n    "
+        },
+        {
+          "code": "\nconst fn = (foo: () =\u003e void) =\u003e {\n  setTimeout(foo, 0);\n  setInterval(foo, 0);\n  setImmediate(foo);\n  execScript(foo);\n};\n    "
+        },
+        {
+          "code": "\nimport { Function } from './class';\nnew Function('foo');\n    "
+        },
+        {
+          "code": "\nconst foo = (callback: Function) =\u003e {\n  setTimeout(callback, 0);\n};\n    "
+        },
+        {
+          "code": "\nconst foo = () =\u003e {};\nconst bar = () =\u003e {};\n\nsetTimeout(Math.radom() \u003e 0.5 ? foo : bar, 0);\nsetTimeout(foo || bar, 500);\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  func1() {}\n  func2(): void {\n    setTimeout(this.func1.bind(this), 1);\n  }\n}\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  private a = {\n    b: {\n      c: function () {},\n    },\n  };\n  funcw(): void {\n    setTimeout(this.a.b.c.bind(this), 1);\n  }\n}\n    "
+        },
+        {
+          "code": "\nfunction setTimeout(input: string, value: number) {}\n\nsetTimeout('', 0);\n    "
+        },
+        {
+          "code": "\ndeclare module 'my-timers-promises' {\n  export function setTimeout(ms: number): void;\n}\n\nimport { setTimeout } from 'my-timers-promises';\n\nsetTimeout(1000);\n    "
+        },
+        {
+          "code": "\nfunction setTimeout() {}\n\n{\n  setTimeout(100);\n}\n    "
+        },
+        {
+          "code": "\nfunction setTimeout() {}\n\n{\n  setTimeout(\"alert('evil!')\");\n}\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nsetTimeout('x = 1', 0);\nsetInterval('x = 1', 0);\nsetImmediate('x = 1');\nexecScript('x = 1');\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 2,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 3,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nsetTimeout(undefined, 0);\nsetInterval(undefined, 0);\nsetImmediate(undefined);\nexecScript(undefined);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 2,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 3,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nsetTimeout(1 + '' + (() =\u003e {}), 0);\nsetInterval(1 + '' + (() =\u003e {}), 0);\nsetImmediate(1 + '' + (() =\u003e {}));\nexecScript(1 + '' + (() =\u003e {}));\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 2,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 3,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = 'x = 1';\n\nsetTimeout(foo, 0);\nsetInterval(foo, 0);\nsetImmediate(foo);\nexecScript(foo);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 7,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = function () {\n  return 'x + 1';\n};\n\nsetTimeout(foo(), 0);\nsetInterval(foo(), 0);\nsetImmediate(foo());\nexecScript(foo());\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 7,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 8,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 9,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = function () {\n  return () =\u003e 'x + 1';\n};\n\nsetTimeout(foo()(), 0);\nsetInterval(foo()(), 0);\nsetImmediate(foo()());\nexecScript(foo()());\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 7,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 8,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 9,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst fn = function () {};\n\nsetTimeout(fn + '', 0);\nsetInterval(fn + '', 0);\nsetImmediate(fn + '');\nexecScript(fn + '');\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 7,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: string = 'x + 1';\n\nsetTimeout(foo, 0);\nsetInterval(foo, 0);\nsetImmediate(foo);\nexecScript(foo);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 7,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = new String('x + 1');\n\nsetTimeout(foo, 0);\nsetInterval(foo, 0);\nsetImmediate(foo);\nexecScript(foo);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 7,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = 'x + 1';\n\nsetTimeout(foo as any, 0);\nsetInterval(foo as any, 0);\nsetImmediate(foo as any);\nexecScript(foo as any);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 7,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst fn = (foo: string | any) =\u003e {\n  setTimeout(foo, 0);\n  setInterval(foo, 0);\n  setImmediate(foo);\n  execScript(foo);\n};\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 3,
+              "column": 14,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 4,
+              "column": 15,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 16,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = 'foo';\nconst bar = () =\u003e {};\n\nsetTimeout(Math.radom() \u003e 0.5 ? foo : bar, 0);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nwindow.setTimeout(``, 0);\nwindow['setTimeout'](``, 0);\n\nwindow.setInterval(``, 0);\nwindow['setInterval'](``, 0);\n\nwindow.setImmediate(``);\nwindow['setImmediate'](``);\n\nwindow.execScript(``);\nwindow['execScript'](``);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 2,
+              "column": 19,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 3,
+              "column": 22,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 20,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 23,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 8,
+              "column": 21,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 9,
+              "column": 24,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 11,
+              "column": 19,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 12,
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nglobal.setTimeout(``, 0);\nglobal['setTimeout'](``, 0);\n\nglobal.setInterval(``, 0);\nglobal['setInterval'](``, 0);\n\nglobal.setImmediate(``);\nglobal['setImmediate'](``);\n\nglobal.execScript(``);\nglobal['execScript'](``);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 2,
+              "column": 19,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 3,
+              "column": 22,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 20,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 23,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 8,
+              "column": 21,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 9,
+              "column": 24,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 11,
+              "column": 19,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 12,
+              "column": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nglobalThis.setTimeout(``, 0);\nglobalThis['setTimeout'](``, 0);\n\nglobalThis.setInterval(``, 0);\nglobalThis['setInterval'](``, 0);\n\nglobalThis.setImmediate(``);\nglobalThis['setImmediate'](``);\n\nglobalThis.execScript(``);\nglobalThis['execScript'](``);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 2,
+              "column": 23,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 3,
+              "column": 26,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 24,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 6,
+              "column": 27,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 8,
+              "column": 25,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 9,
+              "column": 28,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 11,
+              "column": 23,
+              "suggestions": []
+            },
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 12,
+              "column": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo: string | undefined = 'hello';\nconst bar = () =\u003e {};\n\nsetTimeout(foo || bar, 500);\n      ",
+          "errors": [
+            {
+              "messageId": "noImpliedEvalError",
+              "line": 5,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const fn = Function();",
+          "errors": [
+            {
+              "messageId": "noFunctionConstructor",
+              "line": 1,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const fn = new Function('a', 'b', 'return a + b');",
+          "errors": [
+            {
+              "messageId": "noFunctionConstructor",
+              "line": 1,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const fn = window.Function();",
+          "errors": [
+            {
+              "messageId": "noFunctionConstructor",
+              "line": 1,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const fn = new window.Function();",
+          "errors": [
+            {
+              "messageId": "noFunctionConstructor",
+              "line": 1,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const fn = window['Function']();",
+          "errors": [
+            {
+              "messageId": "noFunctionConstructor",
+              "line": 1,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const fn = new window['Function']();",
+          "errors": [
+            {
+              "messageId": "noFunctionConstructor",
+              "line": 1,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

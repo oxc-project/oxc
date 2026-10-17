@@ -1,0 +1,228 @@
+{
+  "source": "non_nullable_type_assertion_style_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndeclare const original: number | string;\nconst cast = original as string;\n    "
+        },
+        {
+          "code": "\ndeclare const original: number | undefined;\nconst cast = original as string | number | undefined;\n    "
+        },
+        {
+          "code": "\ndeclare const original: number | any;\nconst cast = original as string | number | undefined;\n    "
+        },
+        {
+          "code": "\ndeclare const original: number | undefined;\nconst cast = original as any;\n    "
+        },
+        {
+          "code": "\ndeclare const original: number | null | undefined;\nconst cast = original as number | null;\n    "
+        },
+        {
+          "code": "\ntype Type = { value: string };\ndeclare const original: Type | number;\nconst cast = original as Type;\n    "
+        },
+        {
+          "code": "\ntype T = string;\ndeclare const x: T | number;\n\nconst y = x as NonNullable\u003cT\u003e;\n    "
+        },
+        {
+          "code": "\ntype T = string | null;\ndeclare const x: T | number;\n\nconst y = x as NonNullable\u003cT\u003e;\n    "
+        },
+        {
+          "code": "\nconst foo = [] as const;\n    "
+        },
+        {
+          "code": "\nconst x = 1 as 1;\n    "
+        },
+        {
+          "code": "\ndeclare function foo\u003cT = any\u003e(): T;\nconst bar = foo() as number;\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const maybe: string | undefined;\nconst bar = maybe as string;\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 3,
+              "column": 13,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ndeclare const maybe: string | undefined;\nconst bar = maybe!;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const maybe: string | null;\nconst bar = maybe as string;\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 3,
+              "column": 13,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ndeclare const maybe: string | null;\nconst bar = maybe!;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const maybe: string | null | undefined;\nconst bar = maybe as string;\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 3,
+              "column": 13,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ndeclare const maybe: string | null | undefined;\nconst bar = maybe!;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype Type = { value: string };\ndeclare const maybe: Type | undefined;\nconst bar = maybe as Type;\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 4,
+              "column": 13,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ntype Type = { value: string };\ndeclare const maybe: Type | undefined;\nconst bar = maybe!;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Interface {\n  value: string;\n}\ndeclare const maybe: Interface | undefined;\nconst bar = maybe as Interface;\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 6,
+              "column": 13,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ninterface Interface {\n  value: string;\n}\ndeclare const maybe: Interface | undefined;\nconst bar = maybe!;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype T = string | null;\ndeclare const x: T;\n\nconst y = x as NonNullable\u003cT\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 5,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ntype T = string | null;\ndeclare const x: T;\n\nconst y = x!;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype T = string | null | undefined;\ndeclare const x: T;\n\nconst y = x as NonNullable\u003cT\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 5,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ntype T = string | null | undefined;\ndeclare const x: T;\n\nconst y = x!;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function nullablePromise(): Promise\u003cstring | null\u003e;\n\nasync function fn(): Promise\u003cstring\u003e {\n  return (await nullablePromise()) as string;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 5,
+              "column": 10,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ndeclare function nullablePromise(): Promise\u003cstring | null\u003e;\n\nasync function fn(): Promise\u003cstring\u003e {\n  return (await nullablePromise())!;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: string | null;\n\nconst b = (a || undefined) as string;\n      ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 4,
+              "column": 11,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\ndeclare const a: string | null;\n\nconst b = (a || undefined)!;\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tsconfig": "tsconfig.noUncheckedIndexedAccess.json",
+      "valid": [
+        {
+          "code": "\nfunction first\u003cT\u003e(array: ArrayLike\u003cT\u003e): T | null {\n  return array.length \u003e 0 ? (array[0] as T) : null;\n}\n      "
+        },
+        {
+          "code": "\nfunction first\u003cT extends string | null\u003e(array: ArrayLike\u003cT\u003e): T | null {\n  return array.length \u003e 0 ? (array[0] as T) : null;\n}\n      "
+        },
+        {
+          "code": "\nfunction first\u003cT extends string | undefined\u003e(array: ArrayLike\u003cT\u003e): T | null {\n  return array.length \u003e 0 ? (array[0] as T) : null;\n}\n      "
+        },
+        {
+          "code": "\nfunction first\u003cT extends string | null | undefined\u003e(\n  array: ArrayLike\u003cT\u003e,\n): T | null {\n  return array.length \u003e 0 ? (array[0] as T) : null;\n}\n      "
+        },
+        {
+          "code": "\ntype A = 'a' | 'A';\ntype B = 'b' | 'B';\nfunction first\u003cT extends A | B | null\u003e(array: ArrayLike\u003cT\u003e): T | null {\n  return array.length \u003e 0 ? (array[0] as T) : null;\n}\n      "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nfunction first\u003cT extends string | number\u003e(array: ArrayLike\u003cT\u003e): T | null {\n  return array.length \u003e 0 ? (array[0] as T) : null;\n}\n        ",
+          "errors": [
+            {
+              "messageId": "preferNonNullAssertion",
+              "line": 3,
+              "column": 30,
+              "suggestions": [
+                {
+                  "messageId": "preferNonNullAssertion",
+                  "output": "\nfunction first\u003cT extends string | number\u003e(array: ArrayLike\u003cT\u003e): T | null {\n  return array.length \u003e 0 ? (array[0]!) : null;\n}\n        "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

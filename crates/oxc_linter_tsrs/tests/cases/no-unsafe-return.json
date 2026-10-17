@@ -1,0 +1,458 @@
+{
+  "source": "no_unsafe_return_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.noImplicitThis.json",
+      "valid": [
+        {
+          "code": "\nfunction foo() {\n  return;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo() {\n  return 1;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo() {\n  return '';\n}\n    "
+        },
+        {
+          "code": "\nfunction foo() {\n  return true;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo() {\n  return [];\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(): any {\n  return {} as any;\n}\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg: () =\u003e any): void;\nfoo((): any =\u003e 'foo' as any);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg: null | (() =\u003e any)): void;\nfoo((): any =\u003e 'foo' as any);\n    "
+        },
+        {
+          "code": "\nfunction foo(): any[] {\n  return [] as any[];\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(): Set\u003cany\u003e {\n  return new Set\u003cany\u003e();\n}\n    "
+        },
+        {
+          "code": "\nasync function foo(): Promise\u003cany\u003e {\n  return Promise.resolve({} as any);\n}\n    "
+        },
+        {
+          "code": "\nasync function foo(): Promise\u003cany\u003e {\n  return {} as any;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(): object {\n  return Promise.resolve({} as any);\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(): ReadonlySet\u003cnumber\u003e {\n  return new Set\u003cany\u003e();\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(): Set\u003cnumber\u003e {\n  return new Set([1]);\n}\n    "
+        },
+        {
+          "code": "\n      type Foo\u003cT = number\u003e = { prop: T };\n      function foo(): Foo {\n        return { prop: 1 } as Foo\u003cnumber\u003e;\n      }\n    "
+        },
+        {
+          "code": "\n      type Foo = { prop: any };\n      function foo(): Foo {\n        return { prop: '' } as Foo;\n      }\n    "
+        },
+        {
+          "code": "\n      function fn\u003cT extends any\u003e(x: T) {\n        return x;\n      }\n    "
+        },
+        {
+          "code": "\n      function fn\u003cT extends any\u003e(x: T): unknown {\n        return x as any;\n      }\n    "
+        },
+        {
+          "code": "\n      function fn\u003cT extends any\u003e(x: T): unknown[] {\n        return x as any[];\n      }\n    "
+        },
+        {
+          "code": "\n      function fn\u003cT extends any\u003e(x: T): Set\u003cunknown\u003e {\n        return x as Set\u003cany\u003e;\n      }\n    "
+        },
+        {
+          "code": "\n      async function fn\u003cT extends any\u003e(x: T): Promise\u003cunknown\u003e {\n        return x as any;\n      }\n    "
+        },
+        {
+          "code": "\n      function fn\u003cT extends any\u003e(x: T): Promise\u003cunknown\u003e {\n        return Promise.resolve(x as any);\n      }\n    "
+        },
+        {
+          "code": "\n      function test(): Map\u003cstring, string\u003e {\n        return new Map();\n      }\n    "
+        },
+        {
+          "code": "\n      function foo(): any {\n        return [] as any[];\n      }\n    "
+        },
+        {
+          "code": "\n      function foo(): unknown {\n        return [] as any[];\n      }\n    "
+        },
+        {
+          "code": "\n      declare const value: Promise\u003cany\u003e;\n      function foo() {\n        return value;\n      }\n    "
+        },
+        {
+          "code": "const foo: (() =\u003e void) | undefined = () =\u003e 1;"
+        },
+        {
+          "code": "\n      class Foo {\n        public foo(): this {\n          return this;\n        }\n\n        protected then(resolve: () =\u003e void): void {\n          resolve();\n        }\n      }\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nfunction foo() {\n  return 1 as any;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  return Object.create(null);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = () =\u003e {\n  return 1 as any;\n};\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo = () =\u003e Object.create(null);",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  return [] as any[];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  return [] as Array\u003cany\u003e;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  return [] as readonly any[];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  return [] as Readonly\u003cany[]\u003e;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = () =\u003e {\n  return [] as any[];\n};\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const foo = () =\u003e [] as any[];",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(): Set\u003cstring\u003e {\n  return new Set\u003cany\u003e();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturnAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(): Map\u003cstring, string\u003e {\n  return new Map\u003cstring, any\u003e();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturnAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(): Set\u003cstring[]\u003e {\n  return new Set\u003cany[]\u003e();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturnAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(): Set\u003cSet\u003cSet\u003cstring\u003e\u003e\u003e {\n  return new Set\u003cSet\u003cSet\u003cany\u003e\u003e\u003e();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturnAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Fn = () =\u003e Set\u003cstring\u003e;\nconst foo1: Fn = () =\u003e new Set\u003cany\u003e();\nconst foo2: Fn = function test() {\n  return new Set\u003cany\u003e();\n};\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturnAssignment",
+              "line": 3,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeReturnAssignment",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Fn = () =\u003e Set\u003cstring\u003e;\nfunction receiver(arg: Fn) {}\nreceiver(() =\u003e new Set\u003cany\u003e());\nreceiver(function test() {\n  return new Set\u003cany\u003e();\n});\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturnAssignment",
+              "line": 4,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeReturnAssignment",
+              "line": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  return this;\n}\n\nfunction bar() {\n  return () =\u003e this;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturnThis",
+              "line": 3,
+              "column": 3,
+              "endColumn": 9,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeReturnThis",
+              "line": 7,
+              "column": 13,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg: null | (() =\u003e any)): void;\nfoo(() =\u003e 'foo' as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 8,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet value: NotKnown;\n\nfunction example() {\n  return value;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 5,
+              "column": 3,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: any;\nasync function foo() {\n  return value;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 4,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const value: Promise\u003cany\u003e;\nasync function foo(): Promise\u003cnumber\u003e {\n  return value;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 4,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo(arg: number) {\n  return arg as Promise\u003cany\u003e;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(): Promise\u003cany\u003e {\n  return {} as any;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(): Promise\u003cobject\u003e {\n  return {} as any;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo(): Promise\u003cobject\u003e {\n  return Promise.resolve\u003cany\u003e({});\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo(): Promise\u003cobject\u003e {\n  return Promise.resolve\u003cPromise\u003cPromise\u003cany\u003e\u003e\u003e({} as Promise\u003cany\u003e);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo(): Promise\u003cobject\u003e {\n  return {} as Promise\u003cPromise\u003cPromise\u003cPromise\u003cany\u003e\u003e\u003e\u003e;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  return {} as Promise\u003cPromise\u003cPromise\u003cPromise\u003cany\u003e\u003e\u003e\u003e;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  return {} as Promise\u003cany\u003e | Promise\u003cobject\u003e;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  return {} as Promise\u003cany | object\u003e;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  return {} as Promise\u003cany\u003e \u0026 { __brand: 'any' };\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 3,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Alias\u003cT\u003e extends Promise\u003cany\u003e {\n  foo: 'bar';\n}\n\ndeclare const value: Alias\u003cnumber\u003e;\nasync function foo() {\n  return value;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeReturn",
+              "line": 8,
+              "column": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nimport type { Fn } from 'return-types';\nconst foo: Fn = () =\u003e new Set\u003cany\u003e();\n      ",
+          "files": {
+            "node_modules/return-types/index.d.ts": "export type Fn = () =\u003e Set\u003cstring\u003e;",
+            "node_modules/return-types/package.json": "{\n  \"name\": \"return-types\",\n  \"version\": \"1.0.0\",\n  \"types\": \"index.d.ts\"\n}"
+          },
+          "errors": [
+            {
+              "messageId": "unsafeReturnAssignment",
+              "line": 3,
+              "column": 20,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}
