@@ -1,0 +1,59 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/js/try-catch/with-same-name-var-no-outer.js
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "BlockStatement",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 3,
+            "node": "BlockStatement",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(CatchClause)",
+        "id": 2,
+        "node": "CatchClause",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(FunctionScopedVariable | CatchVariable)",
+        "id": 0,
+        "name": "e",
+        "node": "CatchParameter",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 1,
+            "name": "e",
+            "node_id": 18,
+            "scope_id": 3
+          },
+          {
+            "flags": "ReferenceFlags(Read)",
+            "id": 3,
+            "name": "e",
+            "node_id": 24,
+            "scope_id": 0
+          }
+        ]
+      }
+    ]
+  }
+]
