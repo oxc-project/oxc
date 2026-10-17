@@ -1260,6 +1260,36 @@ mod test {
     }
 
     #[test]
+    fn hashbang_after_leading_utf8_bom() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::from_path("a.ts").unwrap();
+        // Editors on Windows often save a leading U+FEFF. Node strips that
+        // byte order mark before parsing, so the hashbang is still a hashbang.
+        let source = "\u{feff}#!/usr/bin/env node\nconsole.log(1);\n";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+        let hashbang = ret.program.hashbang.as_ref().unwrap();
+        assert_eq!(hashbang.value.as_str(), "/usr/bin/env node");
+        assert_eq!(hashbang.span, Span::new(3, 22));
+        assert_eq!(ret.program.body.len(), 1);
+        assert_eq!(&*ret.irregular_whitespaces, &[Span::new(0, 3)]);
+
+        // A BOM that is not followed by a hashbang is still just whitespace.
+        let source = "\u{feff}console.log(1);\n";
+        let ret = Parser::new(&allocator, source, SourceType::default()).parse();
+        assert!(ret.diagnostics.is_empty(), "{:?}", ret.diagnostics);
+        assert!(ret.program.hashbang.is_none());
+        assert_eq!(&*ret.irregular_whitespaces, &[Span::new(0, 3)]);
+
+        // Only one leading BOM is stripped. A second U+FEFF is source
+        // whitespace, and `#!` after whitespace is not a hashbang.
+        let source = "\u{feff}\u{feff}#!/usr/bin/env node\n";
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.diagnostics.has_errors(), "{:?}", ret.diagnostics);
+        assert!(ret.program.hashbang.is_none());
+    }
+
+    #[test]
     fn unambiguous() {
         let allocator = Allocator::default();
         let source_type = SourceType::unambiguous();

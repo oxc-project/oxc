@@ -263,6 +263,12 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Read first token in file.
     pub fn first_token(&mut self) -> Token {
+        // Node strips one leading UTF-8 BOM before parsing, so `#!` immediately
+        // after it is still a hashbang. A later U+FEFF is ordinary whitespace
+        // and does not enable a hashbang.
+        // https://github.com/oxc-project/oxc/issues/27740
+        self.skip_leading_utf8_bom();
+
         // HashbangComment ::
         //     `#!` SingleLineCommentChars?
         if let Some([b'#', b'!']) = self.peek_2_bytes() {
@@ -274,6 +280,22 @@ impl<'a, C: Config> Lexer<'a, C> {
             let kind = self.read_next_token();
             self.finish_next(kind)
         }
+    }
+
+    /// Consume one leading U+FEFF and record it as irregular whitespace.
+    ///
+    /// The BOM stays in the source text (so `unicode-bom` can still see it);
+    /// only the lexer position moves past it. A second U+FEFF is left for the
+    /// normal whitespace scan.
+    fn skip_leading_utf8_bom(&mut self) {
+        if self.peek_char() != Some('\u{feff}') {
+            return;
+        }
+        let start = self.offset();
+        self.token.set_start(start);
+        self.consume_char();
+        self.trivia_builder.add_irregular_whitespace(start, self.offset());
+        self.token.set_start(self.offset());
     }
 
     /// Read next token in file.
