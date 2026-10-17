@@ -681,7 +681,10 @@ impl Runtime {
                             );
 
                         // Store the disable directives for this file
-                        if let Some(disable_directives) = disable_directives {
+                        if let Some(mut disable_directives) = disable_directives {
+                            if me.linter.options().fix.is_some() {
+                                disable_directives.record_source(dep.source_text);
+                            }
                             me.disable_directives_map
                                 .lock()
                                 .expect("disable_directives_map mutex poisoned")

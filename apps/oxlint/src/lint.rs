@@ -1300,6 +1300,52 @@ mod test {
     }
 
     #[test]
+    fn test_fix_unused_disable_directives() {
+        let tester = Tester::new().with_cwd("fixtures/cli/fix_argument".into());
+        let fix = &["--report-unused-disable-directives"];
+        let fix_suggestions = &["--report-unused-disable-directives", "--fix-suggestions"];
+
+        // `eslint-disable` directives may still be needed by ESLint, so only `oxlint-disable`
+        // directives are removed without `--fix-suggestions`.
+        let js = "// oxlint-disable-next-line no-debugger\nconst a = 1;\n// eslint-disable-next-line no-debugger\nconst b = 2;\n// oxlint-disable-next-line no-debugger, no-console\ndebugger;\n";
+        tester.test_fix_with_args(
+            "unused_disable_directives.js",
+            js,
+            "const a = 1;\n// eslint-disable-next-line no-debugger\nconst b = 2;\n// oxlint-disable-next-line no-debugger\ndebugger;\n",
+            fix,
+        );
+        tester.test_fix_with_args(
+            "unused_disable_directives.js",
+            js,
+            "const a = 1;\nconst b = 2;\n// oxlint-disable-next-line no-debugger\ndebugger;\n",
+            fix_suggestions,
+        );
+
+        let vue = "<script>\n// oxlint-disable-next-line no-debugger\nconst a = 1;\n// eslint-disable-next-line no-debugger\nconst b = 2;\n</script>\n";
+        tester.test_fix_with_args(
+            "unused_disable_directives.vue",
+            vue,
+            "<script>\nconst a = 1;\n// eslint-disable-next-line no-debugger\nconst b = 2;\n</script>\n",
+            fix,
+        );
+        tester.test_fix_with_args(
+            "unused_disable_directives.vue",
+            vue,
+            "<script>\nconst a = 1;\nconst b = 2;\n</script>\n",
+            fix_suggestions,
+        );
+
+        // Directive spans are stale once other fixes rewrite the file, so the directive is
+        // only removed by the next run.
+        tester.test_fix_with_args(
+            "unused_disable_directives_with_fix.js",
+            "// oxlint-disable-next-line no-debugger\nvar x = new String('Hello world');\n",
+            "// oxlint-disable-next-line no-debugger\nvar x = 'Hello world';\n",
+            fix_suggestions,
+        );
+    }
+
+    #[test]
     fn test_print_config_ban_all_rules() {
         let args = &["-A", "all", "--print-config"];
         Tester::new().with_cwd("fixtures".into()).test_and_snapshot(args);
