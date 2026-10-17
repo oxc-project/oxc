@@ -18,6 +18,7 @@ use crate::{
     backend::Backend,
     build_lsp_service,
     tool::{ClientMessage, DiagnosticResult},
+    working_directories::sub_worker_options,
 };
 
 #[derive(Default)]
@@ -26,6 +27,13 @@ pub struct FakeToolBuilder {
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
     pub build_client_message: Vec<ClientMessage>,
     delays: FakeToolDelays,
+    /// How long building a tool takes (ms), to interleave a rebuild with a configuration change.
+    build_delay: u64,
+    working_directories_disabled: bool,
+    build_roots: Option<Arc<Mutex<Vec<Uri>>>>,
+    discovered_extends: Option<(Uri, String)>,
+    diagnostic_contexts: Option<Arc<Mutex<Vec<usize>>>>,
+    build_contexts: Option<Arc<Mutex<Vec<usize>>>>,
 }
 
 #[derive(Default, Clone, Copy)]
@@ -40,7 +48,49 @@ impl FakeToolBuilder {
             cache_uris: None,
             build_client_message: Vec::new(),
             delays: FakeToolDelays::default(),
+            build_delay: 0,
+            working_directories_disabled: false,
+            build_roots: None,
+            discovered_extends: None,
+            diagnostic_contexts: None,
+            build_contexts: None,
         }
+    }
+
+    /// Record how many roots every build of the tool excluded, in build order.
+    pub fn with_build_context_tracking(self, build_contexts: Arc<Mutex<Vec<usize>>>) -> Self {
+        Self { build_contexts: Some(build_contexts), ..self }
+    }
+
+    /// Record how many roots the tool was built with as excluded, every time it runs diagnostics.
+    /// It tells a test which build of the tool linted a document.
+    pub fn with_diagnostic_context_tracking(
+        self,
+        diagnostic_contexts: Arc<Mutex<Vec<usize>>>,
+    ) -> Self {
+        Self { diagnostic_contexts: Some(diagnostic_contexts), ..self }
+    }
+
+    /// Report `extended_path` as an absolute watcher pattern, as a config discovered below
+    /// `marker_dir` and extended from outside the root, for as long as `marker_dir` is not one of
+    /// the excluded roots of the build.
+    pub fn with_discovered_extends(self, marker_dir: Uri, extended_path: String) -> Self {
+        Self { discovered_extends: Some((marker_dir, extended_path)), ..self }
+    }
+
+    /// Record the root of every tool which is built, to assert that a worker was rebuilt.
+    pub fn with_build_tracking(self, build_roots: Arc<Mutex<Vec<Uri>>>) -> Self {
+        Self { build_roots: Some(build_roots), ..self }
+    }
+
+    /// Make building a tool take `build_delay` milliseconds.
+    pub fn with_build_delay(self, build_delay: u64) -> Self {
+        Self { build_delay, ..self }
+    }
+
+    /// Ignore `workingDirectories`, like a tool in Vite+ mode.
+    pub fn with_working_directories_disabled(self) -> Self {
+        Self { working_directories_disabled: true, ..self }
     }
 
     pub fn with_cache_tracking(self, cache_uris: Arc<Mutex<Vec<Uri>>>) -> Self {
@@ -53,11 +103,61 @@ impl FakeToolBuilder {
 }
 
 impl ToolBuilder for FakeToolBuilder {
-    fn build(&self, _root_uri: &Uri, _options: serde_json::Value) -> ToolBuildResult {
+    fn build(&self, root_uri: &Uri, options: serde_json::Value) -> ToolBuildResult {
+        if self.build_delay > 0 {
+            std::thread::sleep(std::time::Duration::from_millis(self.build_delay));
+        }
+        if let Some(build_roots) = &self.build_roots {
+            build_roots.lock().unwrap().push(root_uri.clone());
+        }
         ToolBuildResult {
-            tool: Box::new(FakeTool { cache_uris: self.cache_uris.clone(), delays: self.delays }),
+            tool: Box::new(FakeTool {
+                cache_uris: self.cache_uris.clone(),
+                delays: self.delays,
+                extended_path: None,
+                excluded_roots: 0,
+                diagnostic_contexts: self.diagnostic_contexts.clone(),
+                clean_uris: clean_uris(&options),
+            }),
             client_messages: self.build_client_message.clone(),
         }
+    }
+
+    fn build_with_context(
+        &self,
+        root_uri: &Uri,
+        options: serde_json::Value,
+        context: crate::BuildContext<'_>,
+    ) -> ToolBuildResult {
+        let mut result = self.build(root_uri, options.clone());
+
+        let extended_path =
+            self.discovered_extends.as_ref().and_then(|(marker_dir, discovered)| {
+                let excluded = context
+                    .excluded_roots
+                    .iter()
+                    .any(|excluded| crate::utils::roots_are_equal(excluded, marker_dir));
+                (!excluded).then(|| discovered.clone())
+            });
+
+        if let Some(build_contexts) = &self.build_contexts {
+            build_contexts.lock().unwrap().push(context.excluded_roots.len());
+        }
+
+        result.tool = Box::new(FakeTool {
+            cache_uris: self.cache_uris.clone(),
+            delays: self.delays,
+            extended_path,
+            excluded_roots: context.excluded_roots.len(),
+            diagnostic_contexts: self.diagnostic_contexts.clone(),
+            clean_uris: clean_uris(&options),
+        });
+
+        result
+    }
+
+    fn use_working_directories(&self) -> bool {
+        !self.working_directories_disabled
     }
 
     fn server_capabilities(
@@ -80,6 +180,20 @@ impl ToolBuilder for FakeToolBuilder {
 pub struct FakeTool {
     cache_uris: Option<Arc<Mutex<Vec<Uri>>>>,
     delays: FakeToolDelays,
+    extended_path: Option<String>,
+    excluded_roots: usize,
+    diagnostic_contexts: Option<Arc<Mutex<Vec<usize>>>>,
+    /// Documents this build of the tool reports as clean, regardless of their name. A re-lint
+    /// which finds nothing still has to clear what the previous owner published.
+    clean_uris: Vec<String>,
+}
+
+/// The `cleanUris` option of the fake tool: the documents it reports as clean.
+fn clean_uris(options: &serde_json::Value) -> Vec<String> {
+    options
+        .get("cleanUris")
+        .and_then(|value| serde_json::from_value::<Vec<String>>(value.clone()).ok())
+        .unwrap_or_default()
 }
 
 pub const FAKE_COMMAND: &str = "fake.command";
@@ -111,9 +225,22 @@ impl Tool for FakeTool {
         &self,
         builder: &dyn ToolBuilder,
         root_uri: &Uri,
-        _old_options_json: &serde_json::Value,
+        old_options_json: &serde_json::Value,
         new_options_json: serde_json::Value,
     ) -> ToolRestartChanges {
+        // a real tool restarts when its options change, and reports no new watcher patterns: they
+        // are derived from the options and from the build context it was just rebuilt with.
+        // `workingDirectories` is owned by the language server, it never restarts a tool.
+        if new_options_json.is_object()
+            && sub_worker_options(&new_options_json) != sub_worker_options(old_options_json)
+        {
+            let result = builder.build(root_uri, new_options_json);
+            return ToolRestartChanges {
+                tool: Some(result.tool),
+                watch_patterns: None,
+                client_messages: result.client_messages,
+            };
+        }
         if new_options_json.as_u64() == Some(1) || new_options_json.as_u64() == Some(3) {
             let result = builder.build(root_uri, new_options_json);
             return ToolRestartChanges {
@@ -146,10 +273,13 @@ impl Tool for FakeTool {
         &self,
         options: serde_json::Value,
     ) -> Vec<tower_lsp_server::gen_lsp_types::Pattern> {
-        if !matches!(options, serde_json::Value::Null) {
-            return vec![];
-        }
-        vec!["**/fake.config".to_string()]
+        let mut patterns = if matches!(options, serde_json::Value::Null) {
+            vec!["**/fake.config".to_string()]
+        } else {
+            vec![]
+        };
+        patterns.extend(self.extended_path.clone());
+        patterns
     }
 
     fn handle_watched_file_change(
@@ -211,6 +341,13 @@ impl Tool for FakeTool {
         if let Some(cache_uris) = &self.cache_uris {
             cache_uris.lock().unwrap().push(document.uri.clone());
         }
+        if let Some(diagnostic_contexts) = &self.diagnostic_contexts {
+            diagnostic_contexts.lock().unwrap().push(self.excluded_roots);
+        }
+        if self.clean_uris.iter().any(|clean| document.uri.as_ref().ends_with(clean)) {
+            return Ok(Vec::new());
+        }
+
         if document.uri.as_ref().ends_with("diagnostics.config") {
             return Ok(vec![(
                 document.uri.clone(),
@@ -273,11 +410,32 @@ impl TestServer {
             Ok(json!(configs))
         }
 
+        async fn test_workers_handler(
+            service: &Backend,
+            _params: Value,
+        ) -> Result<Value, tower_lsp_server::jsonrpc::Error> {
+            let mut workers = vec![];
+            for worker in &*service.worker_manager.read_workspace_workers().await {
+                workers.push(json!({
+                    "root": worker.get_root_uri().as_str(),
+                    "parent": worker.get_parent_uri().map(Uri::as_str),
+                    "excluded": worker
+                        .get_working_directories()
+                        .await
+                        .iter()
+                        .map(|uri| uri.as_str().to_string())
+                        .collect::<Vec<_>>(),
+                }));
+            }
+            Ok(json!(workers))
+        }
+
         let (req_client, req_server) = tokio::io::duplex(1024);
         let (res_server, res_client) = tokio::io::duplex(1024);
 
         let (service, socket) = build_lsp_service(init)
             .custom_method("test/configuration", test_configuration_handler)
+            .custom_method("test/workers", test_workers_handler)
             .finish();
 
         tokio::spawn(Server::new(req_server, res_server, socket).serve(service));
@@ -628,6 +786,10 @@ fn code_action(id: i64, uri: &str) -> Request {
     Request::build("textDocument/codeAction").id(id).params(json!(params)).finish()
 }
 
+fn test_workers_request(id: i64) -> Request {
+    Request::build("test/workers").id(id).params(json!(null)).finish()
+}
+
 fn test_configuration_request(id: i64) -> Request {
     Request::build("test/configuration").id(id).params(json!(null)).finish()
 }
@@ -654,6 +816,1466 @@ fn create_workspace_manager_with_builder(builder: FakeToolBuilder) -> WorkerMana
 
 fn create_dynamic_workspace_manager(builder: FakeToolBuilder) -> WorkerManager {
     WorkerManager::new_dynamic(Arc::new(builder))
+}
+
+/// `workingDirectories` turns directories below a workspace folder into their own workers.
+/// These tests need a real directory tree, because the option is resolved against the file system.
+#[cfg(test)]
+mod working_directories_suite {
+    use std::{
+        fs,
+        path::Path,
+        sync::{Arc, Mutex},
+    };
+
+    use serde_json::json;
+    use tower_lsp_server::{
+        gen_lsp_types::{ServerInfo, Uri, WorkspaceFolder},
+        jsonrpc::Id,
+    };
+
+    use crate::{
+        DiagnosticMode,
+        backend::Backend,
+        tests::{
+            FakeToolBuilder, InitializeRequestOptions, PublishDiagnosticsParams, Request,
+            TestServer, acknowledge_diagnostic_refresh, acknowledge_registrations,
+            acknowledge_unregistrations, create_workspace_manager,
+            create_workspace_manager_with_builder, did_change_configuration,
+            did_change_watched_files, did_open, initialize_request_workspace_folders,
+            test_workers_request, workspace_folders_changed,
+        },
+    };
+
+    fn server_info() -> ServerInfo {
+        ServerInfo { name: "oxc".to_owned(), version: Some("1.0.0".to_owned()) }
+    }
+
+    /// A workspace folder with `packages/a` and `packages/b`.
+    fn create_workspace() -> tempfile::TempDir {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("packages/a")).unwrap();
+        fs::create_dir_all(dir.path().join("packages/b")).unwrap();
+        dir
+    }
+
+    fn uri(path: &Path) -> Uri {
+        crate::uri_utils::file_path_to_uri(path).unwrap()
+    }
+
+    fn workspace_folder(path: &Path) -> WorkspaceFolder {
+        WorkspaceFolder { uri: uri(path), name: "workspace".to_string() }
+    }
+
+    fn initialize(path: &Path, working_directories: &serde_json::Value) -> Request {
+        initialize_request_workspace_folders(InitializeRequestOptions {
+            initialization_options: Some(json!([{
+                "workspaceUri": uri(path).as_str(),
+                "options": { "workingDirectories": working_directories },
+            }])),
+            workspace_folders: Some(vec![workspace_folder(path)]),
+            ..Default::default()
+        })
+    }
+
+    async fn workers(server: &mut TestServer, id: i64) -> Vec<(String, Option<String>)> {
+        server.send_request(test_workers_request(id)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.id(), &Id::Number(id));
+        assert!(response.is_ok(), "{response:?}");
+
+        response
+            .result()
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|worker| {
+                (
+                    worker["root"].as_str().unwrap().to_string(),
+                    worker["parent"].as_str().map(ToString::to_string),
+                )
+            })
+            .collect()
+    }
+
+    /// The ids of the registrations (or unregistrations) of a client request.
+    fn ids(registrations: &serde_json::Value) -> Vec<String> {
+        registrations
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|registration| registration["id"].as_str().unwrap().to_string())
+            .collect()
+    }
+
+    /// The excluded roots of the worker rooted at `root`.
+    async fn excluded_roots(server: &mut TestServer, id: i64, root: &Uri) -> Vec<String> {
+        server.send_request(test_workers_request(id)).await;
+        let response = server.recv_response().await;
+        assert_eq!(response.id(), &Id::Number(id));
+
+        response
+            .result()
+            .unwrap()
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|worker| worker["root"].as_str() == Some(root.as_str()))
+            .map(|worker| {
+                worker["excluded"]
+                    .as_array()
+                    .unwrap()
+                    .iter()
+                    .map(|root| root.as_str().unwrap().to_string())
+                    .collect()
+            })
+            .unwrap_or_default()
+    }
+
+    #[tokio::test]
+    async fn test_sub_workers_are_created_on_initialize() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize(dir.path(), &json!(["packages/a", "packages/b"])),
+        )
+        .await;
+
+        let workers = workers(&mut server, 2).await;
+        assert_eq!(workers.len(), 3);
+        // the workspace folder worker comes first and has no parent
+        assert_eq!(workers[0], (uri(dir.path()).as_str().to_string(), None));
+        assert_eq!(
+            workers[1],
+            (
+                uri(&dir.path().join("packages/a")).as_str().to_string(),
+                Some(uri(dir.path()).as_str().to_string())
+            )
+        );
+        assert_eq!(
+            workers[2],
+            (
+                uri(&dir.path().join("packages/b")).as_str().to_string(),
+                Some(uri(dir.path()).as_str().to_string())
+            )
+        );
+
+        server.shutdown(3).await;
+    }
+
+    /// Semantics rule 9: an absent or empty option changes nothing.
+    #[tokio::test]
+    async fn test_no_sub_workers_without_the_option() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize(dir.path(), &json!([])),
+        )
+        .await;
+
+        assert_eq!(workers(&mut server, 2).await.len(), 1);
+
+        server.shutdown(3).await;
+    }
+
+    /// Semantics rule 10: a tool which does not use working directories gets no sub worker.
+    #[tokio::test]
+    async fn test_no_sub_workers_when_the_tool_does_not_use_the_option() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::default().with_working_directories_disabled(),
+                    ),
+                )
+            },
+            initialize(dir.path(), &json!(["packages/a", "packages/b"])),
+        )
+        .await;
+
+        assert_eq!(workers(&mut server, 2).await.len(), 1);
+
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_invalid_entries_are_ignored() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize(dir.path(), &json!(["../escaping", "/absolute", "packages/a"])),
+        )
+        .await;
+
+        // the rejected entries are reported to the client as warnings
+        for _ in 0..2 {
+            let message = server.recv_notification().await;
+            assert_eq!(message.method(), "window/showMessage");
+        }
+
+        let workers = workers(&mut server, 2).await;
+        assert_eq!(workers.len(), 2);
+        assert_eq!(workers[1].0, uri(&dir.path().join("packages/a")).as_str());
+
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_sub_workers_are_synced_on_configuration_change() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize(dir.path(), &json!(["packages/a", "packages/b"])),
+        )
+        .await;
+        assert_eq!(workers(&mut server, 2).await.len(), 3);
+
+        // `packages/b` is not a working directory anymore, its worker is shut down
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["packages/a"] },
+            }]))))
+            .await;
+        // the watchers of the removed worker are unregistered
+        acknowledge_unregistrations(&mut server).await;
+
+        let workers_after_removal = workers(&mut server, 3).await;
+        assert_eq!(workers_after_removal.len(), 2);
+        assert_eq!(workers_after_removal[1].0, uri(&dir.path().join("packages/a")).as_str());
+
+        // `packages/b` is a working directory again, its worker is created
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["packages/a", "packages/b"] },
+            }]))))
+            .await;
+
+        assert_eq!(workers(&mut server, 4).await.len(), 3);
+
+        server.shutdown(5).await;
+    }
+
+    #[tokio::test]
+    async fn test_sub_workers_are_removed_with_their_workspace_folder() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize(dir.path(), &json!(["packages/a", "packages/b"])),
+        )
+        .await;
+        assert_eq!(workers(&mut server, 2).await.len(), 3);
+
+        server
+            .send_request(workspace_folders_changed(vec![], vec![workspace_folder(dir.path())]))
+            .await;
+
+        assert_eq!(workers(&mut server, 3).await, []);
+
+        server.shutdown(4).await;
+    }
+
+    /// Semantics rule 1: a sub worker created for a configuration which spells the workspace
+    /// folder differently still goes away with that folder.
+    #[tokio::test]
+    async fn test_sub_workers_created_for_another_spelling_are_removed_with_their_folder() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize(dir.path(), &json!(["packages/a"])),
+        )
+        .await;
+
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                // a trailing slash is the same directory
+                "workspaceUri": format!("{}/", uri(dir.path()).as_str()),
+                "options": { "workingDirectories": ["packages/a", "packages/b"] },
+            }]))))
+            .await;
+        assert_eq!(workers(&mut server, 2).await.len(), 3);
+
+        server
+            .send_request(workspace_folders_changed(vec![], vec![workspace_folder(dir.path())]))
+            .await;
+        assert_eq!(workers(&mut server, 3).await, []);
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_a_workspace_folder_is_never_shadowed_by_a_sub_worker() {
+        let dir = create_workspace();
+        let package_a = dir.path().join("packages/a");
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": ["packages/a", "packages/b"] },
+                }])),
+                workspace_folders: Some(vec![
+                    workspace_folder(dir.path()),
+                    WorkspaceFolder { uri: uri(&package_a), name: "a".to_string() },
+                ]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let workers = workers(&mut server, 2).await;
+        // the workspace folder, the workspace folder the client opened for `packages/a` and the
+        // sub worker for `packages/b`
+        assert_eq!(workers.len(), 3, "{workers:?}");
+
+        let for_package_a =
+            workers.iter().filter(|(root, _)| root == uri(&package_a).as_str()).collect::<Vec<_>>();
+        assert_eq!(for_package_a.len(), 1, "{workers:?}");
+        // it stayed the client workspace folder worker, it was not replaced by a sub worker
+        assert_eq!(for_package_a[0].1, None);
+
+        server.shutdown(3).await;
+    }
+
+    /// Semantics rule 4: the workspace folder excludes its working directories and each working
+    /// directory excludes the ones nested below it.
+    #[tokio::test]
+    async fn test_nested_working_directories_exclude_each_other() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("packages/a/nested")).unwrap();
+        let package_a = uri(&dir.path().join("packages/a"));
+        let nested = uri(&dir.path().join("packages/a/nested"));
+
+        let manager = create_workspace_manager();
+        let folder = manager.create_worker(uri(dir.path()), DiagnosticMode::None);
+        let (sub_workers, _messages) = manager
+            .start_folder_worker(
+                &folder,
+                json!({ "workingDirectories": ["packages/a", "packages/a/nested"] }),
+                &DiagnosticMode::None,
+                &[uri(dir.path())],
+                &[],
+            )
+            .await;
+
+        // the workspace folder owns neither of them
+        assert_eq!(folder.get_working_directories().await, vec![package_a.clone(), nested.clone()]);
+
+        assert_eq!(sub_workers.len(), 2);
+        assert_eq!(sub_workers[0].get_root_uri(), &package_a);
+        // the outer working directory excludes the one nested inside it
+        assert_eq!(sub_workers[0].get_working_directories().await, vec![nested.clone()]);
+        assert_eq!(sub_workers[1].get_root_uri(), &nested);
+        assert_eq!(sub_workers[1].get_working_directories().await, Vec::<Uri>::new());
+    }
+
+    /// Same for a working directory which contains another one: dropping the inner one changes the
+    /// build context of the outer one.
+    #[tokio::test]
+    async fn test_a_surviving_sub_worker_is_rebuilt_when_its_nested_roots_change() {
+        let dir = tempfile::tempdir().unwrap();
+        fs::create_dir_all(dir.path().join("packages/a/nested")).unwrap();
+
+        let builds = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&builds);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::default().with_build_tracking(tracked),
+                    ),
+                )
+            },
+            initialize(dir.path(), &json!(["packages/a", "packages/a/nested"])),
+        )
+        .await;
+
+        assert_eq!(workers(&mut server, 2).await.len(), 3);
+        builds.lock().unwrap().clear();
+
+        // `packages/a/nested` belongs to `packages/a` again
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["packages/a"] },
+            }]))))
+            .await;
+        acknowledge_unregistrations(&mut server).await;
+
+        assert_eq!(workers(&mut server, 3).await.len(), 2);
+        let builds = builds.lock().unwrap().clone();
+        assert!(
+            builds.iter().any(|root| root == &uri(&dir.path().join("packages/a"))),
+            "the surviving sub worker was not rebuilt: {builds:?}"
+        );
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
+    async fn test_sub_worker_changes_refresh_the_diagnostics_in_pull_mode() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
+                )
+            },
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                pull_mode: true,
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": [] },
+                }])),
+                workspace_folders: Some(vec![workspace_folder(dir.path())]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let document = format!("{}/packages/a/diagnostics.config", uri(dir.path()).as_str());
+        server.send_request(did_open(&document, "some text")).await;
+        // round trip to make sure the document is known before the configuration changes
+        assert_eq!(workers(&mut server, 2).await.len(), 1);
+
+        // the document is handed over to a new sub worker, the client has to ask for its
+        // diagnostics again
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["packages/a"] },
+            }]))))
+            .await;
+        acknowledge_diagnostic_refresh(&mut server).await;
+
+        server.shutdown(3).await;
+    }
+
+    #[tokio::test]
+    async fn test_rebuild_does_not_relint_the_files_of_a_sub_worker() {
+        let dir = create_workspace();
+        let linted = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&linted);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Push).with_cache_tracking(tracked),
+                    ),
+                )
+            },
+            initialize(dir.path(), &json!(["packages/a", "packages/b"])),
+        )
+        .await;
+
+        let document = format!("{}/packages/a/diagnostics.config", uri(dir.path()).as_str());
+        server.send_request(did_open(&document, "some text")).await;
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+
+        linted.lock().unwrap().clear();
+
+        // every worker rebuilds its tool, but only the worker responsible for the document
+        // revalidates it
+        server
+            .send_request(did_change_watched_files(
+                format!("{}/tool.config", uri(dir.path()).as_str()).as_str(),
+            ))
+            .await;
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+
+        let linted = linted.lock().unwrap().clone();
+        assert_eq!(
+            linted.iter().filter(|uri| uri.as_str() == document).count(),
+            1,
+            "the document was linted more than once: {linted:?}"
+        );
+
+        server.shutdown_with_diagnostic_clear(3, vec![document.parse().unwrap()]).await;
+    }
+
+    /// Semantics rule 5: a document whose re-lint finds nothing is not a document which was
+    /// published for. The diagnostics its previous owner left behind still have to be cleared.
+    #[tokio::test]
+    async fn test_an_orphaned_document_which_is_clean_now_is_cleared() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Push,
+                    )),
+                )
+            },
+            initialize(dir.path(), &json!(["packages/a"])),
+        )
+        .await;
+
+        // one document of the sub worker, one of the workspace folder worker
+        let orphaned = format!("{}/packages/a/diagnostics.config", uri(dir.path()).as_str());
+        let kept = format!("{}/packages/b/diagnostics.config", uri(dir.path()).as_str());
+        for document in [&orphaned, &kept] {
+            server.send_request(did_open(document, "some text")).await;
+            let notification = server.recv_notification().await;
+            assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+        }
+
+        // the sub worker disappears and the workspace folder worker, which takes its document
+        // over, reports it as clean now
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": [], "cleanUris": [&orphaned] },
+            }]))))
+            .await;
+
+        // the document of the removed worker is cleared, it has no diagnostics anymore
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(notification.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri.as_str(), orphaned);
+        assert!(params.diagnostics.is_empty(), "{:?}", params.diagnostics);
+
+        // the other document is published by the restarted worker, as usual
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(notification.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri.as_str(), kept);
+        assert_eq!(params.diagnostics.len(), 1);
+
+        // the watchers of the removed sub worker
+        acknowledge_unregistrations(&mut server).await;
+
+        server.shutdown_with_diagnostic_clear(2, vec![kept.parse().unwrap()]).await;
+    }
+
+    /// Semantics rule 5: the open documents are revalidated exactly once by their new owner.
+    /// The rebuild of the affected workers is covered by
+    /// `test_the_folder_worker_is_rebuilt_when_its_working_directories_change` and the pull mode
+    /// refresh by `test_sub_worker_changes_refresh_the_diagnostics_in_pull_mode`.
+    #[tokio::test]
+    async fn test_creating_and_removing_a_sub_worker_relints_its_documents() {
+        let dir = create_workspace();
+        let linted = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&linted);
+        // how many roots the tool which linted a document was built with as excluded
+        let contexts = Arc::new(Mutex::new(vec![]));
+        let tracked_contexts = Arc::clone(&contexts);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Push)
+                            .with_cache_tracking(tracked)
+                            .with_diagnostic_context_tracking(tracked_contexts),
+                    ),
+                )
+            },
+            initialize(dir.path(), &json!([])),
+        )
+        .await;
+
+        let document = format!("{}/packages/a/diagnostics.config", uri(dir.path()).as_str());
+        server.send_request(did_open(&document, "some text")).await;
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+
+        linted.lock().unwrap().clear();
+
+        // the new sub worker takes the document over and has to lint it itself
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["packages/a"] },
+            }]))))
+            .await;
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+        assert!(
+            linted.lock().unwrap().iter().any(|uri| uri.as_str() == document),
+            "the new sub worker did not lint the document it took over"
+        );
+        assert_eq!(workers(&mut server, 2).await.len(), 2);
+
+        linted.lock().unwrap().clear();
+        contexts.lock().unwrap().clear();
+
+        // removing it hands the document back to the workspace folder worker
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": [] },
+            }]))))
+            .await;
+
+        // the new owner publishes once, the diagnostics of the removed worker are not cleared
+        // first: that would publish the same document twice and make the editor flicker
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(notification.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri.as_str(), document);
+        assert_eq!(params.diagnostics.len(), 1);
+        // the next message is the watcher unregistration of the removed worker, not a second
+        // publish for the same document
+        acknowledge_unregistrations(&mut server).await;
+
+        assert!(
+            linted.lock().unwrap().iter().any(|uri| uri.as_str() == document),
+            "the workspace folder worker did not lint the orphaned document"
+        );
+        // and it did so with the rebuilt tool: the working directory is not excluded anymore
+        let contexts = contexts.lock().unwrap().clone();
+        assert_eq!(contexts, vec![0], "the orphaned document was linted by a stale tool");
+        assert_eq!(workers(&mut server, 3).await.len(), 1);
+
+        server.shutdown_with_diagnostic_clear(4, vec![document.parse().unwrap()]).await;
+    }
+
+    /// Semantics rule 8: the validation warnings are reported when the option value changes, not
+    /// again on every later reconciliation.
+    #[tokio::test]
+    async fn test_validation_warnings_are_only_reported_when_the_option_changes() {
+        let dir = create_workspace();
+        let options = json!({ "workingDirectories": ["packages/a", "../escaping"] });
+
+        let manager = create_workspace_manager();
+        let folder = manager.create_worker(uri(dir.path()), DiagnosticMode::None);
+        let (sub_workers, messages) = manager
+            .start_folder_worker(
+                &folder,
+                options.clone(),
+                &DiagnosticMode::None,
+                &[uri(dir.path())],
+                &[],
+            )
+            .await;
+
+        // the rejected entry is reported once, when the option is first seen
+        assert_eq!(messages.len(), 1, "{messages:?}");
+        assert!(messages[0].message.contains("escapes the workspace folder"));
+
+        let mut workers = vec![folder];
+        workers.extend(sub_workers);
+        manager.add_workers(workers).await;
+
+        // a reconciliation with the very same option value
+        let sync = manager
+            .sync_sub_workers(&uri(dir.path()), &options, &DiagnosticMode::None, false, false, true)
+            .await;
+        assert!(sync.client_messages.is_empty(), "{:?}", sync.client_messages);
+
+        // an actual option change reports it again
+        let sync = manager
+            .sync_sub_workers(&uri(dir.path()), &options, &DiagnosticMode::None, false, true, true)
+            .await;
+        assert_eq!(sync.client_messages.len(), 1, "{:?}", sync.client_messages);
+    }
+
+    /// Semantics rule 8: an option for a folder which is not served reports nothing.
+    #[tokio::test]
+    async fn test_options_of_an_unknown_folder_report_nothing() {
+        let dir = create_workspace();
+        let manager = create_workspace_manager();
+
+        let sync = manager
+            .sync_sub_workers(
+                &uri(dir.path()),
+                &json!({ "workingDirectories": ["../escaping"] }),
+                &DiagnosticMode::None,
+                false,
+                true,
+                true,
+            )
+            .await;
+
+        assert!(sync.client_messages.is_empty(), "{:?}", sync.client_messages);
+    }
+
+    /// Semantics rule 5: a configuration change which lands before `initialized` started the
+    /// workspace folder leaves it to `initialized`, which resolves the option itself.
+    #[tokio::test]
+    async fn test_a_folder_which_is_not_started_is_not_reconciled() {
+        let dir = create_workspace();
+        let manager = create_workspace_manager();
+        let folder = manager.create_worker(uri(dir.path()), DiagnosticMode::None);
+        manager.add_workers(vec![folder]).await;
+
+        let sync = manager
+            .sync_sub_workers(
+                &uri(dir.path()),
+                &json!({ "workingDirectories": ["packages/a", "../escaping"] }),
+                &DiagnosticMode::None,
+                true,
+                true,
+                true,
+            )
+            .await;
+
+        assert_eq!(sync.added_roots.len(), 0);
+        assert_eq!(sync.registrations, []);
+        assert!(sync.client_messages.is_empty(), "{:?}", sync.client_messages);
+        assert_eq!(manager.read_workspace_workers().await.len(), 1);
+    }
+
+    /// Semantics rule 1: single-file workers have no working directories.
+    #[tokio::test]
+    async fn test_single_file_workers_have_no_working_directories() {
+        let dir = create_workspace();
+        let manager = create_workspace_manager();
+        manager.set_single_file_mode(true);
+        let worker = manager.create_worker(uri(dir.path()), DiagnosticMode::None);
+        worker.start_worker(json!({})).await;
+        manager.add_workers(vec![worker]).await;
+
+        let sync = manager
+            .sync_sub_workers(
+                &uri(dir.path()),
+                &json!({ "workingDirectories": ["packages/a"] }),
+                &DiagnosticMode::None,
+                false,
+                true,
+                true,
+            )
+            .await;
+
+        assert_eq!(sync.added_roots.len(), 0);
+        assert_eq!(manager.read_workspace_workers().await.len(), 1);
+    }
+
+    /// Semantics rule 1: two reconciliations running at once create one sub worker per root.
+    #[tokio::test(flavor = "multi_thread", worker_threads = 2)]
+    async fn test_concurrent_reconciliations_create_one_sub_worker_per_root() {
+        let dir = create_workspace();
+        let options = json!({ "workingDirectories": ["packages/a"] });
+
+        let manager = Arc::new(create_workspace_manager());
+        let folder = manager.create_worker(uri(dir.path()), DiagnosticMode::None);
+        folder.start_worker(options.clone()).await;
+        manager.add_workers(vec![folder]).await;
+
+        let root = uri(dir.path());
+        let reconcile = || {
+            let (manager, root, options) = (Arc::clone(&manager), root.clone(), options.clone());
+            tokio::spawn(async move {
+                manager
+                    .sync_sub_workers(&root, &options, &DiagnosticMode::None, false, false, true)
+                    .await;
+            })
+        };
+        let (first, second) = (reconcile(), reconcile());
+        first.await.unwrap();
+        second.await.unwrap();
+
+        // the workspace folder worker and one sub worker
+        assert_eq!(manager.read_workspace_workers().await.len(), 2);
+    }
+
+    /// There is exactly one worker, and one watcher registration, per root: a workspace folder
+    /// opened on a working directory replaces its sub worker.
+    #[tokio::test]
+    async fn test_a_workspace_folder_added_on_a_working_directory_replaces_its_sub_worker() {
+        let dir = create_workspace();
+        let package_a = uri(&dir.path().join("packages/a"));
+
+        let builds = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&builds);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Pull).with_build_tracking(tracked),
+                    ),
+                )
+            },
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                pull_mode: true,
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": ["packages/a", "packages/b"] },
+                }])),
+                workspace_folders: Some(vec![workspace_folder(dir.path())]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let before = workers(&mut server, 2).await;
+        assert_eq!(before.len(), 3);
+        assert!(
+            before.iter().any(|(root, parent)| root == package_a.as_str() && parent.is_some()),
+            "{before:?}"
+        );
+
+        // an open document below the working directory changes owner with it
+        let document = format!("{}/diagnostics.config", package_a.as_str());
+        server.send_request(did_open(&document, "some text")).await;
+        assert_eq!(workers(&mut server, 3).await.len(), 3);
+        builds.lock().unwrap().clear();
+
+        server
+            .send_request(workspace_folders_changed(
+                vec![WorkspaceFolder { uri: package_a.clone(), name: "a".to_string() }],
+                vec![],
+            ))
+            .await;
+
+        // the document is served by another worker now, the client has to ask again
+        acknowledge_diagnostic_refresh(&mut server).await;
+
+        // the resolved working directories did not change, so the workspace folder worker keeps
+        // its build context and must not be rebuilt
+        let builds = builds.lock().unwrap().clone();
+        assert!(!builds.contains(&uri(dir.path())), "{builds:?}");
+
+        let after = workers(&mut server, 4).await;
+        assert_eq!(after.len(), 3, "{after:?}");
+        let for_package_a =
+            after.iter().filter(|(root, _)| root == package_a.as_str()).collect::<Vec<_>>();
+        assert_eq!(for_package_a.len(), 1, "{after:?}");
+        // it is the client workspace folder worker now, the sub worker was shut down
+        assert_eq!(for_package_a[0].1, None);
+
+        server.shutdown(5).await;
+    }
+
+    /// The other direction: removing the workspace folder hands the root back to a sub worker.
+    #[tokio::test]
+    async fn test_removing_a_workspace_folder_gives_its_root_back_to_a_sub_worker() {
+        let dir = create_workspace();
+        let package_a = uri(&dir.path().join("packages/a"));
+
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Pull,
+                    )),
+                )
+            },
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                pull_mode: true,
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": ["packages/a", "packages/b"] },
+                }])),
+                workspace_folders: Some(vec![
+                    workspace_folder(dir.path()),
+                    WorkspaceFolder { uri: package_a.clone(), name: "a".to_string() },
+                ]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let before = workers(&mut server, 2).await;
+        assert_eq!(before.len(), 3, "{before:?}");
+        assert!(
+            before.iter().any(|(root, parent)| root == package_a.as_str() && parent.is_none()),
+            "{before:?}"
+        );
+
+        // an open document below the working directory changes owner with it
+        let document = format!("{}/diagnostics.config", package_a.as_str());
+        server.send_request(did_open(&document, "some text")).await;
+        assert_eq!(workers(&mut server, 3).await.len(), 3);
+
+        server
+            .send_request(workspace_folders_changed(
+                vec![],
+                vec![WorkspaceFolder { uri: package_a.clone(), name: "a".to_string() }],
+            ))
+            .await;
+
+        // the document is served by another worker now, the client has to ask again
+        acknowledge_diagnostic_refresh(&mut server).await;
+
+        let after = workers(&mut server, 4).await;
+        assert_eq!(after.len(), 3, "{after:?}");
+        let for_package_a =
+            after.iter().filter(|(root, _)| root == package_a.as_str()).collect::<Vec<_>>();
+        assert_eq!(for_package_a.len(), 1, "{after:?}");
+        // a sub worker serves it again
+        assert_eq!(for_package_a[0].1, Some(uri(dir.path()).as_str().to_string()));
+
+        server.shutdown(5).await;
+    }
+
+    /// Semantics rule 5 across a workspace folder removal: the sub worker which takes the root
+    /// back publishes for the open document, and the worker which was shut down does not clear it
+    /// first.
+    #[tokio::test]
+    async fn test_a_removed_workspace_folder_does_not_clear_what_the_sub_worker_republishes() {
+        let dir = create_workspace();
+        let package_a = uri(&dir.path().join("packages/a"));
+        let linted = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&linted);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Push).with_cache_tracking(tracked),
+                    ),
+                )
+            },
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": ["packages/a"] },
+                }])),
+                workspace_folders: Some(vec![
+                    workspace_folder(dir.path()),
+                    WorkspaceFolder { uri: package_a.clone(), name: "a".to_string() },
+                ]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        // the workspace folder worker of `packages/a` owns the document, no sub worker shadows it
+        let before = workers(&mut server, 2).await;
+        assert_eq!(before.len(), 2, "{before:?}");
+        assert!(
+            before.iter().any(|(root, parent)| root == package_a.as_str() && parent.is_none()),
+            "{before:?}"
+        );
+
+        let document = format!("{}/diagnostics.config", package_a.as_str());
+        server.send_request(did_open(&document, "some text")).await;
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+
+        linted.lock().unwrap().clear();
+
+        server
+            .send_request(workspace_folders_changed(
+                vec![],
+                vec![WorkspaceFolder { uri: package_a.clone(), name: "a".to_string() }],
+            ))
+            .await;
+
+        // the sub worker which takes the root back publishes once: the diagnostics of the removed
+        // folder worker are not cleared first, which would publish the same document twice
+        let notification = server.recv_notification().await;
+        assert_eq!(notification.method(), "textDocument/publishDiagnostics");
+        let params: PublishDiagnosticsParams =
+            serde_json::from_value(notification.params().unwrap().clone()).unwrap();
+        assert_eq!(params.uri.as_str(), document);
+        assert_eq!(params.diagnostics.len(), 1);
+        assert!(
+            linted.lock().unwrap().iter().any(|uri| uri.as_str() == document),
+            "the sub worker did not lint the document it took over"
+        );
+
+        let after = workers(&mut server, 3).await;
+        assert_eq!(after.len(), 2, "{after:?}");
+        let for_package_a =
+            after.iter().filter(|(root, _)| root == package_a.as_str()).collect::<Vec<_>>();
+        assert_eq!(for_package_a.len(), 1, "{after:?}");
+        assert_eq!(for_package_a[0].1, Some(uri(dir.path()).as_str().to_string()));
+
+        // the only remaining publish is the one the shutdown sends: there was no second one
+        server.shutdown_with_diagnostic_clear(4, vec![document.parse().unwrap()]).await;
+    }
+
+    /// A root which a workspace folder claims is still excluded by the working directory above it:
+    /// the exclusions are computed from the resolved set, not from the sub workers which exist.
+    #[tokio::test]
+    async fn test_a_claimed_nested_root_stays_excluded_across_reconciliations() {
+        let dir = create_workspace();
+        fs::create_dir_all(dir.path().join("packages/a/nested")).unwrap();
+        let package_a = uri(&dir.path().join("packages/a"));
+        let nested = uri(&dir.path().join("packages/a/nested"));
+
+        let options = json!([{
+            "workspaceUri": uri(dir.path()).as_str(),
+            "options": { "workingDirectories": ["packages/a", "packages/a/nested"] },
+        }]);
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                initialization_options: Some(options.clone()),
+                workspace_folders: Some(vec![
+                    workspace_folder(dir.path()),
+                    WorkspaceFolder { uri: nested.clone(), name: "nested".to_string() },
+                ]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        assert_eq!(
+            excluded_roots(&mut server, 2, &package_a).await,
+            vec![nested.as_str().to_string()]
+        );
+
+        // a reconciliation with the very same option keeps it excluded
+        server.send_request(did_change_configuration(Some(options))).await;
+        assert_eq!(
+            excluded_roots(&mut server, 3, &package_a).await,
+            vec![nested.as_str().to_string()]
+        );
+
+        server.shutdown(4).await;
+    }
+
+    /// Semantics rule 5: a rebuild which changes the watcher patterns of a worker re-registers
+    /// them, here because the config it extended from outside the root is not discovered anymore.
+    #[tokio::test]
+    async fn test_a_rebuild_re_registers_the_watchers_when_the_patterns_change() {
+        let dir = create_workspace();
+        let package_a = uri(&dir.path().join("packages/a"));
+        let marker = package_a.clone();
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::default()
+                            .with_discovered_extends(marker, "/outside/shared.json".to_string()),
+                    ),
+                )
+            },
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                dynamic_watchers: true,
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": [] },
+                }])),
+                workspace_folders: Some(vec![workspace_folder(dir.path())]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        // the workspace folder worker watches the extended config
+        acknowledge_registrations(&mut server).await;
+
+        // `packages/a` becomes a working directory, so its config is not discovered by the
+        // workspace folder worker anymore and the absolute watcher pattern disappears with it
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["packages/a"] },
+            }]))))
+            .await;
+
+        acknowledge_unregistrations(&mut server).await;
+
+        let register_request = server.recv_notification().await;
+        assert_eq!(register_request.method(), "client/registerCapability");
+        let params: serde_json::Value = register_request.params().unwrap().clone();
+        let registrations = params["registrations"].as_array().unwrap();
+        // only the new sub worker watches it now
+        assert_eq!(registrations.len(), 1, "{registrations:?}");
+        assert_eq!(registrations[0]["id"], format!("watcher-{}", package_a.as_str()));
+        server.send_ack(register_request.id().unwrap()).await;
+
+        server.shutdown(2).await;
+    }
+
+    #[tokio::test]
+    async fn test_sub_workers_are_created_with_a_new_workspace_folder() {
+        let first = create_workspace();
+        let second = create_workspace();
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize(first.path(), &json!([])),
+        )
+        .await;
+        assert_eq!(workers(&mut server, 2).await.len(), 1);
+
+        server
+            .send_request(workspace_folders_changed(vec![workspace_folder(second.path())], vec![]))
+            .await;
+
+        // the new folder is started with the default options, which declare no working
+        // directories, so it only adds its own worker
+        assert_eq!(workers(&mut server, 3).await.len(), 2);
+
+        server.shutdown(4).await;
+    }
+
+    /// Semantics rule 7: `mode` and `pattern` are not supported in this version. The entries are
+    /// reported to the client and create no sub worker.
+    #[tokio::test]
+    async fn test_unsupported_entries_are_reported_and_create_nothing() {
+        let dir = create_workspace();
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize(dir.path(), &json!([{ "mode": "auto" }, { "pattern": "packages/*" }])),
+        )
+        .await;
+
+        for _ in 0..2 {
+            let message = server.recv_notification().await;
+            assert_eq!(message.method(), "window/showMessage");
+            let params = message.params().unwrap().clone();
+            assert!(
+                params["message"].as_str().unwrap().contains("not supported in this version"),
+                "{params:?}"
+            );
+        }
+
+        assert_eq!(workers(&mut server, 2).await.len(), 1);
+
+        server.shutdown(3).await;
+    }
+
+    /// The build context of the workspace folder worker changes when a working directory appears
+    /// or disappears, even though its options stay the same: what used to be owned by the sub
+    /// worker (its config and its ignore files) belongs to the workspace folder again.
+    #[tokio::test]
+    async fn test_the_folder_worker_is_rebuilt_when_its_working_directories_change() {
+        let dir = create_workspace();
+
+        let builds = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&builds);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::default().with_build_tracking(tracked),
+                    ),
+                )
+            },
+            initialize(dir.path(), &json!(["packages/a"])),
+        )
+        .await;
+
+        assert_eq!(workers(&mut server, 2).await.len(), 2);
+        builds.lock().unwrap().clear();
+
+        // `packages/a` belongs to the workspace folder worker again
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": [] },
+            }]))))
+            .await;
+        // the watchers of the removed sub worker
+        acknowledge_unregistrations(&mut server).await;
+
+        assert_eq!(workers(&mut server, 3).await.len(), 1);
+        // the rebuild of the workspace folder worker happens before the notification is done
+        let builds = builds.lock().unwrap().clone();
+        assert_eq!(
+            builds,
+            vec![uri(dir.path())],
+            "the workspace folder worker was not rebuilt once"
+        );
+
+        server.shutdown(4).await;
+    }
+
+    /// Semantics rule 6: a watched file event is handed to every worker, whatever its root: a
+    /// config of a working directory is still read by the workspace folder worker, and a config of
+    /// the workspace folder by the sub workers, the same way nested client folders see it.
+    #[tokio::test]
+    async fn test_every_worker_receives_a_watched_file_event() {
+        let dir = create_workspace();
+        let root = uri(dir.path());
+        let package_a = uri(&dir.path().join("packages/a"));
+        let package_b = uri(&dir.path().join("packages/b"));
+
+        let builds = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&builds);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Pull).with_build_tracking(tracked),
+                    ),
+                )
+            },
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                pull_mode: true,
+                initialization_options: Some(json!([{
+                    "workspaceUri": root.as_str(),
+                    "options": { "workingDirectories": ["packages/a", "packages/b"] },
+                }])),
+                workspace_folders: Some(vec![workspace_folder(dir.path())]),
+                ..Default::default()
+            }),
+        )
+        .await;
+        assert_eq!(workers(&mut server, 2).await.len(), 3);
+
+        // a config inside `packages/a` and one at the workspace folder root
+        for (index, path) in ["packages/a/tool.config", "tool.config"].into_iter().enumerate() {
+            builds.lock().unwrap().clear();
+            server
+                .send_request(did_change_watched_files(uri(&dir.path().join(path)).as_str()))
+                .await;
+            // every worker rebuilt its tool, the client is asked to pull again
+            acknowledge_diagnostic_refresh(&mut server).await;
+
+            let mut built = builds.lock().unwrap().clone();
+            built.sort_by(|left, right| left.as_str().cmp(right.as_str()));
+            assert_eq!(
+                built,
+                vec![root.clone(), package_a.clone(), package_b.clone()],
+                "event {index} did not reach every worker"
+            );
+        }
+
+        server.shutdown(3).await;
+    }
+
+    /// A tool which rebuilds itself through the builder it is handed keeps the build context of
+    /// its worker: it still skips the roots owned by the other workers.
+    #[tokio::test]
+    async fn test_a_tool_rebuilding_through_the_builder_keeps_its_context() {
+        let dir = create_workspace();
+        let contexts = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&contexts);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::new(DiagnosticMode::Pull)
+                            .with_build_context_tracking(tracked),
+                    ),
+                )
+            },
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                pull_mode: true,
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": ["packages/a"] },
+                }])),
+                workspace_folders: Some(vec![workspace_folder(dir.path())]),
+                ..Default::default()
+            }),
+        )
+        .await;
+        assert_eq!(workers(&mut server, 2).await.len(), 2);
+        contexts.lock().unwrap().clear();
+
+        // the working directories do not change, the tools restart for the unrelated option
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["packages/a"], "unrelated": true },
+            }]))))
+            .await;
+        acknowledge_diagnostic_refresh(&mut server).await;
+
+        // the workspace folder worker excludes `packages/a`, the sub worker excludes nothing
+        assert_eq!(contexts.lock().unwrap().clone(), vec![1, 0]);
+
+        server.shutdown(3).await;
+    }
+
+    /// Semantics rule 5: rewriting the option without changing the roots it resolves to rebuilds
+    /// nothing, whatever the spelling of the entries.
+    #[tokio::test]
+    async fn test_rewriting_the_entries_rebuilds_nothing() {
+        let dir = create_workspace();
+        let builds = Arc::new(Mutex::new(vec![]));
+        let tracked = Arc::clone(&builds);
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::default().with_build_tracking(tracked),
+                    ),
+                )
+            },
+            initialize(dir.path(), &json!(["packages/a"])),
+        )
+        .await;
+        assert_eq!(workers(&mut server, 2).await.len(), 2);
+        builds.lock().unwrap().clear();
+
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["./packages//a/."] },
+            }]))))
+            .await;
+
+        assert_eq!(workers(&mut server, 3).await.len(), 2);
+        assert!(builds.lock().unwrap().is_empty(), "{:?}", builds.lock().unwrap());
+
+        server.shutdown(4).await;
+    }
+
+    /// Semantics rule 5: a configuration change which alters the options of the tool and the
+    /// working directories at once registers every watcher id at most once.
+    #[tokio::test]
+    async fn test_one_configuration_change_registers_each_watcher_id_once() {
+        let dir = create_workspace();
+        let package_a = uri(&dir.path().join("packages/a"));
+        let marker = package_a.clone();
+
+        let mut server = TestServer::new_initialized(
+            move |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(
+                        FakeToolBuilder::default()
+                            .with_discovered_extends(marker, "/outside/shared.json".to_string()),
+                    ),
+                )
+            },
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                dynamic_watchers: true,
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": [] },
+                }])),
+                workspace_folders: Some(vec![workspace_folder(dir.path())]),
+                ..Default::default()
+            }),
+        )
+        .await;
+        acknowledge_registrations(&mut server).await;
+
+        // the tool options change (it restarts) and `packages/a` becomes a working directory
+        server
+            .send_request(did_change_configuration(Some(json!([{
+                "workspaceUri": uri(dir.path()).as_str(),
+                "options": { "workingDirectories": ["packages/a"], "unrelated": true },
+            }]))))
+            .await;
+
+        let unregister_request = server.recv_notification().await;
+        assert_eq!(unregister_request.method(), "client/unregisterCapability");
+        let params: serde_json::Value = unregister_request.params().unwrap().clone();
+        let unregistered = ids(&params["unregisterations"]);
+        server.send_ack(unregister_request.id().unwrap()).await;
+
+        let register_request = server.recv_notification().await;
+        assert_eq!(register_request.method(), "client/registerCapability");
+        let params: serde_json::Value = register_request.params().unwrap().clone();
+        let registered = ids(&params["registrations"]);
+        server.send_ack(register_request.id().unwrap()).await;
+
+        // the workspace folder worker lost the extended config, the new sub worker watches it
+        assert_eq!(unregistered, vec![format!("watcher-{}", uri(dir.path()).as_str())]);
+        assert_eq!(registered, vec![format!("watcher-{}", package_a.as_str())]);
+
+        server.shutdown(2).await;
+    }
+
+    /// Semantics rule 7: a working directory inside a workspace folder of its own belongs to that
+    /// folder, it is reported and gets no sub worker, while the others still resolve.
+    #[tokio::test]
+    async fn test_a_working_directory_inside_a_nested_workspace_folder_is_skipped() {
+        let dir = create_workspace();
+        fs::create_dir_all(dir.path().join("packages/a/sub")).unwrap();
+        fs::create_dir_all(dir.path().join("packages/b/sub")).unwrap();
+        let package_a = uri(&dir.path().join("packages/a"));
+
+        let mut server = TestServer::new_initialized(
+            |client| Backend::new(client, server_info(), create_workspace_manager()),
+            initialize_request_workspace_folders(InitializeRequestOptions {
+                initialization_options: Some(json!([{
+                    "workspaceUri": uri(dir.path()).as_str(),
+                    "options": { "workingDirectories": ["packages/a/sub", "packages/b/sub"] },
+                }])),
+                workspace_folders: Some(vec![
+                    workspace_folder(dir.path()),
+                    WorkspaceFolder { uri: package_a.clone(), name: "a".to_string() },
+                ]),
+                ..Default::default()
+            }),
+        )
+        .await;
+
+        let message = server.recv_notification().await;
+        assert_eq!(message.method(), "window/showMessage");
+
+        let workers = workers(&mut server, 2).await;
+        // the workspace folder, the client folder for `packages/a`, and `packages/b/sub`
+        assert_eq!(workers.len(), 3, "{workers:?}");
+        assert!(
+            workers
+                .iter()
+                .any(|(root, parent)| root == uri(&dir.path().join("packages/b/sub")).as_str()
+                    && parent.is_some()),
+            "{workers:?}"
+        );
+        assert!(
+            !workers
+                .iter()
+                .any(|(root, _)| root == uri(&dir.path().join("packages/a/sub")).as_str()),
+            "{workers:?}"
+        );
+
+        server.shutdown(3).await;
+    }
+
+    /// The root of a worker is resolved for every lookup, never cached: a worker created before
+    /// its directory exists still routes the files of that directory once it does.
+    #[cfg(any(target_os = "macos", target_os = "windows"))]
+    #[tokio::test]
+    async fn test_a_worker_created_before_its_directory_exists_still_routes_after_creation() {
+        let dir = tempfile::tempdir().unwrap();
+        let root = dir.path().join("packages/a");
+
+        let manager = create_workspace_manager();
+        let worker = manager.create_worker(uri(&root), DiagnosticMode::None);
+        manager.add_workers(vec![worker]).await;
+
+        // the temporary directory is a symbolic link on macOS, and the casing differs on Windows:
+        // only a directory which exists resolves to its canonical form
+        fs::create_dir_all(&root).unwrap();
+        let file = root.join("index.ts");
+        fs::write(&file, "").unwrap();
+
+        assert!(manager.get_worker_for_uri(&uri(&file)).await.is_some());
+    }
 }
 
 #[cfg(test)]

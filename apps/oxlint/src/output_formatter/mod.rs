@@ -144,6 +144,16 @@ trait InternalFormatter {
         None
     }
 
+    /// Whether the problems found in config files which do not stop the run, e.g. an option
+    /// which is ignored, are passed to the reporter before the diagnostics of the linted files.
+    ///
+    /// They are not about a linted file: they have no source and no position. Only formats with
+    /// a shape for such an item return `true`; a format whose items all belong to a file keeps
+    /// the default, rather than emitting an entry with an empty file name.
+    fn reports_config_warnings(&self) -> bool {
+        false
+    }
+
     /// oxlint words with [`DiagnosticService`](oxc_diagnostics::DiagnosticService),
     /// which uses a own reporter to output to stdout.
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter>;
@@ -182,6 +192,11 @@ impl OutputFormatter {
     /// At the end of the Lint command we may output extra information.
     pub fn lint_command_info(&self, lint_command_info: &LintCommandInfo) -> Option<String> {
         self.internal.lint_command_info(lint_command_info)
+    }
+
+    /// See [`InternalFormatter::reports_config_warnings`].
+    pub fn reports_config_warnings(&self) -> bool {
+        self.internal.reports_config_warnings()
     }
 
     /// Returns the [`DiagnosticReporter`] which then will be used by [`DiagnosticService`](oxc_diagnostics::DiagnosticService)

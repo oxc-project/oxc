@@ -1,0 +1,27 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --type-check
+working directory: fixtures/cli/tsgolint_type_check_only_config_off
+----------
+
+  ! eslint(no-unused-vars): Variable 'n' is declared but never used. Unused variables should start with a '_'.
+   ,-[index.ts:1:7]
+ 1 | const n: number = "s";
+   :       |
+   :       `-- 'n' is declared here
+   `----
+  help: Consider removing this declaration.
+
+  x typescript(TS2322): Type 'string' is not assignable to type 'number'.
+   ,-[index.ts:1:7]
+ 1 | const n: number = "s";
+   :       ^
+   `----
+
+Found 1 warning and 1 error.
+Finished in <variable>ms on 1 file with 111 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
