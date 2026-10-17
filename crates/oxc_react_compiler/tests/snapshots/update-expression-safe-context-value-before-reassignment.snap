@@ -1,0 +1,23 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/update-expression-safe-context-value-before-reassignment.js
+---
+import { c as _c } from "react/compiler-runtime";
+function useFoo() {
+	const $ = _c(1);
+	let result;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		let count = 0;
+		let cb = _temp;
+		result = cb;
+		[0].map(() => cb);
+		cb = () => count++;
+		$[0] = result;
+	} else {
+		result = $[0];
+	}
+	return result;
+}
+function _temp() {
+	return null;
+}
