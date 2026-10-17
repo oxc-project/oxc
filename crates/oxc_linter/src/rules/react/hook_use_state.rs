@@ -31,6 +31,9 @@ fn follow_naming_convention(span: Span) -> OxcDiagnostic {
 struct HookUseStateConfig {
     /// When true the rule will ignore the name of the destructured value.
     allow_destructured_state: bool,
+    /// When true the rule will allow a `useState` call destructured into a
+    /// value only, without a setter, such as `const [value] = useState(init)`.
+    allow_missing_setter: bool,
 }
 
 #[derive(Debug, Default, Clone, Deserialize, Serialize, JsonSchema)]
@@ -113,6 +116,15 @@ impl Rule for HookUseState {
             ctx.diagnostic(require_to_destruct(var.span()));
             return;
         };
+
+        if self.0.allow_missing_setter
+            && array_pattern.elements.len() == 1
+            && array_pattern.rest.is_none()
+            && let Some(value_node) = &array_pattern.elements[0]
+            && (!value_node.is_destructuring_pattern() || self.0.allow_destructured_state)
+        {
+            return;
+        }
 
         if array_pattern.elements.len() != 2 || array_pattern.rest.is_some() {
             ctx.diagnostic(require_to_destruct(array_pattern.span()));
@@ -243,6 +255,26 @@ fn test() {
             }",
             Some(serde_json::json!([{"allowDestructuredState": true }])),
         ),
+        (
+            r"
+            import React from 'react';
+            export default function useEventBus() {
+                const [eventBus] = React.useState(() => new EventEmitter());
+                return eventBus;
+            }",
+            Some(serde_json::json!([{"allowMissingSetter": true }])),
+        ),
+        (
+            r"
+            import React from 'react';
+            export default function useReq() {
+                const [{ res, error }] = React.useState({ res: '', error: '' });
+                return { res, error };
+            }",
+            Some(
+                serde_json::json!([{"allowMissingSetter": true, "allowDestructuredState": true }]),
+            ),
+        ),
     ];
 
     let fail = vec![
@@ -299,6 +331,33 @@ fn test() {
                 return [res, {}];
             }",
             None,
+        ),
+        (
+            r"
+            import React from 'react';
+            export default function useEventBus() {
+                const [eventBus] = React.useState(() => new EventEmitter());
+                return eventBus;
+            }",
+            None,
+        ),
+        (
+            r"
+            import React from 'react';
+            export default function useReq() {
+                const [{ res, error }] = React.useState({ res: '', error: '' });
+                return { res, error };
+            }",
+            Some(serde_json::json!([{"allowMissingSetter": true }])),
+        ),
+        (
+            r"
+            import React from 'react';
+            export default function useEventBus() {
+                const [eventBus, setBus] = React.useState(() => new EventEmitter());
+                return [eventBus, setBus];
+            }",
+            Some(serde_json::json!([{"allowMissingSetter": true }])),
         ),
     ];
 
