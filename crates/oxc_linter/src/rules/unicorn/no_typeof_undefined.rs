@@ -63,15 +63,11 @@ impl Rule for NoTypeofUndefined {
             return;
         };
 
-        if !matches!(
-            bin_expr.operator,
-            BinaryOperator::StrictEquality
-                | BinaryOperator::StrictInequality
-                | BinaryOperator::Equality
-                | BinaryOperator::Inequality,
-        ) {
-            return;
-        }
+        let operator = match bin_expr.operator {
+            BinaryOperator::StrictEquality | BinaryOperator::Equality => "===",
+            BinaryOperator::StrictInequality | BinaryOperator::Inequality => "!==",
+            _ => return,
+        };
 
         let Expression::UnaryExpression(unary_expr) = &bin_expr.left else {
             return;
@@ -94,13 +90,11 @@ impl Rule for NoTypeofUndefined {
         if is_global_variable {
             ctx.diagnostic_with_suggestion(
                 no_typeof_undefined_diagnostic(bin_expr.span),
-                |fixer| {
-                    generate_fix(fixer, &unary_expr.argument, bin_expr.operator, bin_expr.span, ctx)
-                },
+                |fixer| generate_fix(fixer, &unary_expr.argument, operator, bin_expr.span, ctx),
             );
         } else {
             ctx.diagnostic_with_fix(no_typeof_undefined_diagnostic(bin_expr.span), |fixer| {
-                generate_fix(fixer, &unary_expr.argument, bin_expr.operator, bin_expr.span, ctx)
+                generate_fix(fixer, &unary_expr.argument, operator, bin_expr.span, ctx)
             });
         }
     }
@@ -121,17 +115,12 @@ fn is_global_variable<'a>(ident: &Expression<'a>, ctx: &LintContext<'a>) -> bool
 fn generate_fix<'a>(
     fixer: RuleFixer<'_, 'a>,
     argument: &Expression<'a>,
-    operator: BinaryOperator,
+    operator: &str,
     span: Span,
     ctx: &LintContext<'a>,
 ) -> RuleFix {
     let argument_text = ctx.source_range(argument.span());
-    let op = match operator {
-        BinaryOperator::StrictEquality | BinaryOperator::Equality => "===",
-        BinaryOperator::StrictInequality | BinaryOperator::Inequality => "!==",
-        _ => unreachable!(),
-    };
-    fixer.replace(span, format!("{argument_text} {op} undefined"))
+    fixer.replace(span, format!("{argument_text} {operator} undefined"))
 }
 
 #[test]
