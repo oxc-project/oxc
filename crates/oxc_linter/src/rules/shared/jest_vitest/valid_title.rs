@@ -193,12 +193,13 @@ impl ValidTitleConfig {
             return;
         };
 
-        if !matches!(
-            jest_fn_call.kind,
-            JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
-        ) {
-            return;
-        }
+        let need_report_name = match jest_fn_call.kind {
+            JestFnKind::General(JestGeneralFnKind::Test) => !config.ignore_type_of_test_name,
+            JestFnKind::General(JestGeneralFnKind::Describe) => {
+                !config.ignore_type_of_describe_name
+            }
+            _ => return,
+        };
 
         // Check if extend keyword has been used (vitest feature)
         if let Some(member) = jest_fn_call.members.first()
@@ -222,14 +223,6 @@ impl ValidTitleConfig {
         if config.allow_arguments && matches!(arg, Argument::Identifier(_)) {
             return;
         }
-
-        let need_report_name = match jest_fn_call.kind {
-            JestFnKind::General(JestGeneralFnKind::Test) => !config.ignore_type_of_test_name,
-            JestFnKind::General(JestGeneralFnKind::Describe) => {
-                !config.ignore_type_of_describe_name
-            }
-            _ => unreachable!(),
-        };
 
         match arg {
             Argument::StringLiteral(string_literal) => {
