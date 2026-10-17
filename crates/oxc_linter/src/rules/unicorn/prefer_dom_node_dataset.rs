@@ -33,6 +33,13 @@ fn remove(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferDomNodeDataset;
 
+enum AttributeMethod {
+    Set,
+    Get,
+    Remove,
+    Has,
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -81,16 +88,24 @@ impl Rule for PreferDomNodeDataset {
         };
         let Some(method_name) = method_name.as_str() else { return };
 
-        match method_name {
+        let method = match method_name {
             "setAttribute" => {
                 if call_expr.arguments.len() != 2 {
                     return;
                 }
+                AttributeMethod::Set
             }
-            "removeAttribute" | "hasAttribute" => {
+            "removeAttribute" => {
                 if call_expr.arguments.len() != 1 {
                     return;
                 }
+                AttributeMethod::Remove
+            }
+            "hasAttribute" => {
+                if call_expr.arguments.len() != 1 {
+                    return;
+                }
+                AttributeMethod::Has
             }
             "getAttribute" => {
                 if call_expr.arguments.len() != 1 {
@@ -104,9 +119,10 @@ impl Rule for PreferDomNodeDataset {
                 {
                     return;
                 }
+                AttributeMethod::Get
             }
             _ => return,
-        }
+        };
 
         let Argument::StringLiteral(string_lit) = &call_expr.arguments[0] else {
             return;
@@ -117,8 +133,8 @@ impl Rule for PreferDomNodeDataset {
             return;
         };
 
-        match method_name {
-            "setAttribute" => {
+        match method {
+            AttributeMethod::Set => {
                 ctx.diagnostic_with_fix(set(span), |fixer| {
                     if call_uses_optional_chain(call_expr) {
                         return fixer.noop();
@@ -141,7 +157,7 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "getAttribute" => {
+            AttributeMethod::Get => {
                 ctx.diagnostic_with_fix(get(span), |fixer| {
                     if call_expr.optional {
                         return fixer.noop();
@@ -160,7 +176,7 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "removeAttribute" => {
+            AttributeMethod::Remove => {
                 ctx.diagnostic_with_fix(remove(string_lit.span), |fixer| {
                     if call_expr.optional {
                         return fixer.noop();
@@ -182,7 +198,7 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "hasAttribute" => {
+            AttributeMethod::Has => {
                 ctx.diagnostic_with_fix(has(span), |fixer| {
                     if call_uses_optional_chain(call_expr) {
                         return fixer.noop();
@@ -200,7 +216,6 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            _ => unreachable!(),
         }
     }
 }
