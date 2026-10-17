@@ -23,16 +23,21 @@ pub mod uri_utils;
 pub mod utils;
 mod worker;
 mod worker_manager;
+mod working_directories;
 
 pub use crate::capabilities::{Capabilities, DiagnosticMode};
 pub use crate::language_id::LanguageId;
 pub use crate::position::offset_to_position;
 pub use crate::tool::{
-    ClientMessage, DiagnosticResult, Tool, ToolBuildResult, ToolBuilder, ToolRestartChanges,
+    BuildContext, ClientMessage, DiagnosticResult, Tool, ToolBuildResult, ToolBuilder,
+    ToolRestartChanges,
 };
 pub use crate::tool_params::CodeActionParams;
 pub use crate::worker::WorkspaceWorker;
 pub use crate::worker_manager::WorkerManager;
+pub use crate::working_directories::{WORKING_DIRECTORIES_OPTION, WorkingDirectory};
+#[doc(hidden)]
+pub use crate::working_directories::{resolve_working_directories, sub_worker_options};
 
 pub type ConcurrentHashMap<K, V> = papaya::HashMap<K, V, FxBuildHasher>;
 
