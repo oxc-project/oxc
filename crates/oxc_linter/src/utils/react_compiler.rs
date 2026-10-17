@@ -20,7 +20,7 @@ use crate::{
 /// rules are enabled only routes categories to reporters, it never changes
 /// what the compiler analyzes. That keeps the single shared run valid for any
 /// combination of enabled rules.
-fn react_compiler_plugin_options() -> PluginOptions {
+fn react_compiler_plugin_options(no_inline_config: bool) -> PluginOptions {
     PluginOptions {
         output_mode: Some(CompilerOutputMode::Lint),
         // Oxlint does not parse Flow files.
@@ -29,12 +29,18 @@ fn react_compiler_plugin_options() -> PluginOptions {
         // so `oxlint-disable`/`eslint-disable` comments for either plugin
         // prefix make the compiler skip the function and report it under
         // `react/rule-suppression`.
-        eslint_suppression_rules: Some(vec![
-            "react-hooks/exhaustive-deps".to_string(),
-            "react-hooks/rules-of-hooks".to_string(),
-            "react/exhaustive-deps".to_string(),
-            "react/rules-of-hooks".to_string(),
-        ]),
+        // When inline configuration is disabled, an empty rule list makes the
+        // compiler ignore all comment-based suppressions.
+        eslint_suppression_rules: if no_inline_config {
+            Some(Vec::new())
+        } else {
+            Some(vec![
+                "react-hooks/exhaustive-deps".to_string(),
+                "react-hooks/rules-of-hooks".to_string(),
+                "react/exhaustive-deps".to_string(),
+                "react/rules-of-hooks".to_string(),
+            ])
+        },
         environment: EnvironmentConfig {
             validate_ref_access_during_render: true,
             validate_no_set_state_in_render: true,
@@ -82,7 +88,7 @@ pub fn build_react_compiler_results(host: &ContextHost) -> ReactCompilerResults 
         program,
         semantic,
         host.allocator(),
-        react_compiler_plugin_options(),
+        react_compiler_plugin_options(host.no_inline_config()),
     );
 
     ReactCompilerResults { diagnostics: result.diagnostics }
