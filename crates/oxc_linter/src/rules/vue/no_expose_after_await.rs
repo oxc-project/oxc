@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, FunctionKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, BindingPattern, CallExpression, ChainElement,
         ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, ObjectPropertyKind,
@@ -107,9 +107,9 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let params = match &setup_prop.value {
-        Expression::FunctionExpression(func) if func.body.is_some() => &func.params,
-        Expression::ArrowFunctionExpression(arrow) => &arrow.params,
+    let (params, function) = match &setup_prop.value {
+        Expression::FunctionExpression(func) => (&func.params, FunctionKind::Function(func)),
+        Expression::ArrowFunctionExpression(arrow) => (&arrow.params, FunctionKind::Arrow(arrow)),
         _ => return,
     };
 
@@ -140,14 +140,12 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
 
     let scoping = ctx.scoping();
     let mut visitor = ExposeAfterAwaitVisitor::new(scoping, binding);
-    match &setup_prop.value {
-        Expression::FunctionExpression(func) => {
-            visitor.visit_function_body(func.body.as_deref().unwrap());
+    match function {
+        FunctionKind::Function(func) => {
+            let Some(body) = func.body.as_deref() else { return };
+            visitor.visit_function_body(body);
         }
-        Expression::ArrowFunctionExpression(arrow) => {
-            visitor.visit_arrow_function_body(&arrow.body);
-        }
-        _ => unreachable!(),
+        FunctionKind::Arrow(arrow) => visitor.visit_arrow_function_body(&arrow.body),
     }
 
     visitor.errors.iter().for_each(|(span, name)| {
