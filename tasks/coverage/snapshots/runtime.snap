@@ -1,8 +1,8 @@
 commit: 7ab7fafa
 
 runtime Summary:
-AST Parsed     : 18277/18277 (100.00%)
-Positive Passed: 17306/18277 (94.69%)
+AST Parsed     : 18281/18281 (100.00%)
+Positive Passed: 17308/18281 (94.68%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -1031,6 +1031,9 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
+
+transform Error: tasks/coverage/test262/test/language/expressions/class/elements/syntax/valid/grammar-field-accessor.js
+SyntaxError: Unexpected identifier '$'
 
 transform Error: tasks/coverage/test262/test/language/expressions/class/heritage-async-arrow-function.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
@@ -2258,6 +2261,9 @@ Test262Error: Expected SameValue(«"_"», «"#field"») to be true
 
 transform Error: tasks/coverage/test262/test/language/statements/class/elements/static-field-init-with-this.js
 Test262Error: Expected SameValue(«"undefinedtest"», «"test262test"») to be true
+
+transform Error: tasks/coverage/test262/test/language/statements/class/elements/syntax/valid/grammar-field-accessor.js
+SyntaxError: Unexpected identifier '$'
 
 minify Error: tasks/coverage/test262/test/language/statements/class/static-method-gen-non-configurable-err.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
