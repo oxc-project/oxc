@@ -1037,3 +1037,58 @@ source: crates/oxc_linter/src/tester.rs
  1 │ import 'foo'; import { allowed } from 'foo'; import {} from 'foo';
    · ─────────────
    ╰────
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import pick from "lodash/pick";
+   · ───────────────────────────────
+   ╰────
+  help: lodash/pick is restricted.
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import pick from "lodash/pick";
+   · ───────────────────────────────
+   ╰────
+  help: lodash/pick is restricted.
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import pick from "lodash/pick";
+   · ───────────────────────────────
+   ╰────
+  help: lodash/pick is restricted.
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import "lodash/pick";
+   · ─────────────────────
+   ╰────
+  help: lodash/pick is restricted.
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ export { pick } from "lodash/pick";
+   · ───────────────────────────────────
+   ╰────
+  help: lodash/pick is restricted.
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import pick = require("lodash/pick");
+   · ─────────────────────────────────────
+   ╰────
+  help: lodash/pick is restricted.
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import("lodash/pick");
+   · ─────────────────────
+   ╰────
+  help: lodash/pick is restricted.
+
+  ⚠ eslint(no-restricted-imports): 'lodash/pick' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import pick from "lodash/pick";
+   · ───────────────────────────────
+   ╰────
