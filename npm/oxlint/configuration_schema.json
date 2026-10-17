@@ -11718,6 +11718,12 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "When true the rule will ignore the name of the destructured value."
+        },
+        "allowUnused": {
+          "description": "Ignore the naming convention when either binding starts with an underscore.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Ignore the naming convention when either binding starts with an underscore."
         }
       },
       "additionalProperties": false
