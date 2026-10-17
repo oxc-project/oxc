@@ -57,6 +57,16 @@ pub struct OxlintOptions {
     /// Only supported in the root configuration file.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub report_unused_disable_directives: Option<AllowWarnDeny>,
+    /// Rule ids that are exempt from unused-disable-directive reporting.
+    ///
+    /// A disable directive that suppresses no violation is normally reported when
+    /// `reportUnusedDisableDirectives` is enabled. Rules listed here are skipped, so contributors
+    /// can add disable directives for an in-flight rule (e.g. during a large-scale migration)
+    /// without them turning into "unused directive" errors. 
+    ///
+    /// Only supported in the root configuration file.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub report_unused_disable_directives_exempt: Option<Vec<String>>,
     /// Whether oxlint should respect `eslint-disable*` and `eslint-enable*`
     /// directives in addition to its native `oxlint-*` directives.
     ///
@@ -74,6 +84,7 @@ impl OxlintOptions {
             && self.deny_warnings.is_none()
             && self.max_warnings.is_none()
             && self.report_unused_disable_directives.is_none()
+            && self.report_unused_disable_directives_exempt.is_none()
             && self.respect_eslint_disable_directives.is_none()
     }
 
@@ -87,6 +98,10 @@ impl OxlintOptions {
             report_unused_disable_directives: self
                 .report_unused_disable_directives
                 .or(other.report_unused_disable_directives),
+            report_unused_disable_directives_exempt: self
+                .report_unused_disable_directives_exempt
+                .clone()
+                .or_else(|| other.report_unused_disable_directives_exempt.clone()),
             respect_eslint_disable_directives: self
                 .respect_eslint_disable_directives
                 .or(other.respect_eslint_disable_directives),
@@ -641,6 +656,15 @@ mod test {
         )
         .unwrap();
         assert_eq!(config.options.respect_eslint_disable_directives, Some(true));
+
+        let config: Oxlintrc = serde_json::from_value(json!({
+            "options": { "reportUnusedDisableDirectivesExempt": ["no-console", "@scope/plugin/rule"] }
+        }))
+        .unwrap();
+        assert_eq!(
+            config.options.report_unused_disable_directives_exempt.as_deref(),
+            Some(["no-console".to_string(), "@scope/plugin/rule".to_string()].as_slice())
+        );
     }
 
     #[test]
