@@ -39,10 +39,12 @@ working directory: fixtures
       "tagNamePreference": {}
     },
     "vitest": {
-      "typecheck": false
+      "typecheck": false,
+      "additionalTestPatterns": []
     },
     "jest": {
-      "version": null
+      "version": null,
+      "additionalTestPatterns": []
     }
   },
   "env": {
