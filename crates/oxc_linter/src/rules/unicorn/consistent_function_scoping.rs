@@ -203,6 +203,7 @@ impl ConsistentFunctionScoping {
         let (
             function_declaration_symbol_id,
             function_name,
+            function_params,
             function_body,
             reporter_span,
             function_scope_id,
@@ -235,6 +236,7 @@ impl ConsistentFunctionScoping {
                         (
                             binding_ident.symbol_id(),
                             Some(binding_ident.name.as_str()),
+                            &function.params,
                             FunctionLikeBody::Function(function_body),
                             function.id.as_ref().map_or(
                                 Span::sized(function.span.start, 8),
@@ -246,6 +248,7 @@ impl ConsistentFunctionScoping {
                         (
                             function_id.symbol_id(),
                             Some(function_id.name.as_str()),
+                            &function.params,
                             FunctionLikeBody::Function(function_body),
                             function_id.span(),
                             func_scope_id,
@@ -262,6 +265,7 @@ impl ConsistentFunctionScoping {
                     (
                         binding_ident.symbol_id(),
                         Some(binding_ident.name.as_str()),
+                        &arrow_function.params,
                         FunctionLikeBody::Arrow(&arrow_function.body),
                         binding_ident.span(),
                         arrow_function.scope_id(),
@@ -293,13 +297,7 @@ impl ConsistentFunctionScoping {
         // Collect parameter defaults as well as body references: either can capture the parent.
         let (function_var_references, private_references, has_lexical_capture) = {
             let mut rf = ReferencesFinder::default();
-            match node.kind() {
-                AstKind::Function(function) => rf.visit_formal_parameters(&function.params),
-                AstKind::ArrowFunctionExpression(arrow) => {
-                    rf.visit_formal_parameters(&arrow.params);
-                }
-                _ => unreachable!(),
-            }
+            rf.visit_formal_parameters(function_params);
             match function_body {
                 FunctionLikeBody::Function(body) => rf.visit_function_body(body),
                 FunctionLikeBody::Arrow(body) => rf.visit_arrow_function_body(body),
