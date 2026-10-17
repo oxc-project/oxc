@@ -36,6 +36,7 @@ use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
+use cpu::{Cpu, DynCpu, cpu_select};
 use misc::{misc_post, misc_pre};
 
 pub struct Lexer {
@@ -56,10 +57,13 @@ pub struct Lexer {
     pub sig_len: usize,
     out_cap: usize,
     pub lanes: Lanes,
+    cpu: DynCpu,
 }
 
 impl Lexer {
     pub fn new() -> Lexer {
+        let cpu = DynCpu::detect();
+
         init_pair_luts();
 
         Lexer {
@@ -80,6 +84,7 @@ impl Lexer {
             sig_len: 0,
             out_cap: 0,
             lanes: Lanes::default(),
+            cpu,
         }
     }
 
@@ -150,7 +155,11 @@ impl Lexer {
             return 0;
         }
 
-        let w = self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8);
+        let w = cpu_select!(self.cpu, {
+            Avx2(cpu) => self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8, cpu),
+            Neon(cpu) => self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8, cpu),
+            Generic(cpu) => self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8, cpu),
+        });
         self.sig_len = w;
         w
     }
@@ -164,6 +173,7 @@ impl Lexer {
         jsx: bool,
         ts: bool,
         vutf8: bool,
+        cpu: impl Cpu,
     ) -> usize {
         let nb = n.div_ceil(64);
         let sp = src.as_ptr();
@@ -180,7 +190,7 @@ impl Lexer {
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind);
+        classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes);
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
