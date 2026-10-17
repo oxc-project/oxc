@@ -4,7 +4,7 @@ static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 static MAX_SAFE_INT: i64 = 9_007_199_254_740_991_i64;
 static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
-use crate::{test, test_same};
+use crate::{test, test_same, test_smallest};
 
 fn fold(source_text: &str, expected: &str) {
     let source_text = format!("NOOP({source_text})");
@@ -1032,6 +1032,26 @@ fn test_fold_add() {
     fold_same("x = y + 10 + 20");
     fold("x = 1 + null", "x = 1");
     fold("x = null + 1", "x = 1");
+}
+
+#[test]
+fn test_fold_add_sequence_ending_in_object() {
+    // `(foo, [])` is an object, so `+` concatenates instead of adding numbers.
+    test_smallest("const u = true + (foo, []); log(u)", "!0 + (foo, []), log('true')");
+    test_smallest("const u = true + (foo, [void 0]); log(u)", "!0 + (foo, [void 0]), log('true')");
+    test_smallest("const u = true + (foo, [null]); log(u)", "!0 + (foo, [null]), log('true')");
+    test_smallest("const u = true + (foo, [,]); log(u)", "!0 + (foo, [,]), log('true')");
+    test_smallest("const u = true + (foo, [1]); log(u)", "!0 + (foo, [1]), log('true1')");
+    test_smallest(
+        "const u = true + (foo, {}); log(u)",
+        "!0 + (foo, {}), log('true[object Object]')",
+    );
+    test_smallest("const u = null + (foo, [1]); log(u)", "null + (foo, [1]), log('null1')");
+    test_smallest(
+        "const u = undefined + (foo, {}); log(u)",
+        "void 0 + (foo, {}), log('undefined[object Object]')",
+    );
+    test_smallest("const u = 1 + (foo, []); log(u)", "1 + (foo, []), log('1')");
 }
 
 #[test]
