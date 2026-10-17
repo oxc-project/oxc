@@ -13,6 +13,10 @@ use crate::output_formatter::{InternalFormatter, xml_utils::xml_escape};
 pub struct CheckStyleOutputFormatter;
 
 impl InternalFormatter for CheckStyleOutputFormatter {
+    fn is_machine_readable(&self) -> bool {
+        true
+    }
+
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(CheckstyleReporter::default())
     }
