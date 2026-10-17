@@ -193,7 +193,7 @@ impl Lexer {
         classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
         let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
-        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
+        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
         misc_post(sp, n, st, word, misc, kind, nesc, cpu);
         compress(
             src,
