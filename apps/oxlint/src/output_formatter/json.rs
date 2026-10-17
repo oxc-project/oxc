@@ -153,12 +153,71 @@ fn format_json(diagnostics: &mut Vec<Error>) -> String {
 mod test {
     use std::time::Duration;
 
+    use super::format_json;
     use oxc_diagnostics::{NamedSource, OxcDiagnostic, reporter::DiagnosticResult};
+    use oxc_linter::{Fix, FixKind, Message, PossibleFixes};
     use oxc_span::Span;
 
     use crate::output_formatter::{
         InternalFormatter, LintCommandInfo, OxlintSuppressionFileAction, json::JsonOutputFormatter,
     };
+
+    #[test]
+    fn fix_metadata() {
+        let source = "édebugger;";
+        let debugger_start = u32::try_from("é".len()).unwrap();
+        let debugger_span = Span::new(debugger_start, debugger_start + 8);
+        let fixes = PossibleFixes::Multiple(vec![
+            Fix::new("é\"\\\n", Span::new(0, debugger_start)).with_kind(FixKind::Fix),
+            Fix::new("invalid", Span::new(8, 2)).with_kind(FixKind::Fix),
+            Fix::new("console.log", debugger_span)
+                .with_message("replace \"debugger\"\nnow")
+                .with_kind(FixKind::Suggestion),
+            Fix::new("", debugger_span).with_kind(FixKind::DangerousFix),
+            Fix::new("alert", debugger_span).with_kind(FixKind::DangerousSuggestion),
+        ]);
+        let diagnostic: OxcDiagnostic =
+            Message::new(OxcDiagnostic::warn("error message"), fixes).into();
+        let mut diagnostics =
+            vec![diagnostic.with_source_code(NamedSource::new("file://test.ts", source))];
+
+        let output = format_json(&mut diagnostics);
+        assert!(output.contains(r#""content": "é\"\\\n""#));
+        assert!(!output.contains(r#""content": "invalid""#));
+        assert!(output.contains(r#""message": "replace \"debugger\"\nnow""#));
+        assert_eq!(
+            serde_json::from_str::<serde_json::Value>(&output).unwrap(),
+            serde_json::json!([{
+                "message": "error message",
+                "severity": "warning",
+                "filename": "file://test.ts",
+                "fixes": [
+                    {
+                        "kind": "fix",
+                        "span": { "offset": 0, "length": 2 },
+                        "content": "é\"\\\n"
+                    },
+                    {
+                        "kind": "suggestion",
+                        "message": "replace \"debugger\"\nnow",
+                        "span": { "offset": 2, "length": 8 },
+                        "content": "console.log"
+                    },
+                    {
+                        "kind": "dangerous_fix",
+                        "span": { "offset": 2, "length": 8 },
+                        "content": ""
+                    },
+                    {
+                        "kind": "dangerous_suggestion",
+                        "span": { "offset": 2, "length": 8 },
+                        "content": "alert"
+                    }
+                ],
+                "labels": []
+            }])
+        );
+    }
 
     #[test]
     fn reporter() {
