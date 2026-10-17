@@ -144,6 +144,22 @@ impl Lexer {
         module: bool,
         vutf8: bool,
     ) -> usize {
+        self.lex_raw_impl(src, n, out_kinds, out_spans, jsx, ts, module, vutf8, self.cpu)
+    }
+
+    #[apply(cpu_versions)]
+    unsafe fn lex_raw_impl(
+        &mut self,
+        src: &[u8],
+        n: usize,
+        out_kinds: *mut u8,
+        out_spans: *mut Span,
+        jsx: bool,
+        ts: bool,
+        module: bool,
+        vutf8: bool,
+        cpu: impl Cpu,
+    ) -> usize {
         debug_assert!(src.len() >= n + PAD, "source must extend PAD zeroed bytes past n");
         self.ensure(n);
         self.lanes.clear();
@@ -155,23 +171,6 @@ impl Lexer {
             return 0;
         }
 
-        let w = self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8, self.cpu);
-        self.sig_len = w;
-        w
-    }
-
-    #[apply(cpu_versions)]
-    unsafe fn pipeline(
-        &mut self,
-        src: &[u8],
-        n: usize,
-        out_kinds: *mut u8,
-        out_spans: *mut Span,
-        jsx: bool,
-        ts: bool,
-        vutf8: bool,
-        cpu: impl Cpu,
-    ) -> usize {
         let nb = n.div_ceil(64);
         let sp = src.as_ptr();
         let word = self.word.as_mut_ptr();
@@ -192,7 +191,7 @@ impl Lexer {
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
         coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
         misc_post(sp, n, st, word, misc, kind, nesc, cpu);
-        compress(
+        let sig_len = compress(
             src,
             n,
             nb,
@@ -204,7 +203,9 @@ impl Lexer {
             out_spans,
             &mut self.lanes,
             cpu,
-        )
+        );
+        self.sig_len = sig_len;
+        sig_len
     }
 
     fn ensure(&mut self, n: usize) {
