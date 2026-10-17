@@ -1,10 +1,10 @@
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
+
+use crate::pipeline::cpu::{Cpu, cpu_select};
+
+#[cfg(target_arch = "x86_64")]
+use crate::pipeline::cpu::Avx2;
 
 /// Get bit `i`.
 ///
@@ -143,14 +143,24 @@ pub(super) unsafe fn bm_clear_range(bm: *mut u64, a: usize, b: usize) {
 ///
 /// - `bm` must be aligned for `u64`.
 /// - `bm` must be valid for reads of `nw` words.
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+#[inline(always)]
+pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
+    cpu_select!(cpu, {
+        Avx2(cpu) => bm_any_avx2(bm, nw, cpu),
+        Neon(_) => bm_any_generic(bm, nw),
+        Generic(_) => bm_any_generic(bm, nw),
+    })
+}
+
+/// [`bm_any`] for AVX2.
+///
+/// # SAFETY
+///
+/// Same as [`bm_any`].
+#[cfg(target_arch = "x86_64")]
 #[inline]
-pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
+#[target_feature(enable = "avx2,bmi2,popcnt")]
+unsafe fn bm_any_avx2(bm: *const u64, nw: usize, _cpu: Avx2) -> bool {
     let mut w = 0usize;
     while w + 4 <= nw {
         let v = _mm256_loadu_si256(bm.add(w) as *const __m256i);
@@ -168,24 +178,13 @@ pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
     false
 }
 
-/// Check if any bit is set in the first `nw` words.
-///
-/// Returns `true` if any bit is set, `false` if no bits are set.
-///
-/// The unit is words, not the bit indices all other functions in this file take.
+/// [`bm_any`] for all other CPUs.
 ///
 /// # SAFETY
 ///
-/// - `bm` must be aligned for `u64`.
-/// - `bm` must be valid for reads of `nw` words.
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
+/// Same as [`bm_any`].
 #[inline]
-pub(super) unsafe fn bm_any(bm: *const u64, nw: usize) -> bool {
+unsafe fn bm_any_generic(bm: *const u64, nw: usize) -> bool {
     let mut w = 0usize;
     while w + 4 <= nw {
         if (*bm.add(w) | *bm.add(w + 1) | *bm.add(w + 2) | *bm.add(w + 3)) != 0 {
