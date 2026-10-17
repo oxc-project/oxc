@@ -94,8 +94,11 @@ impl Rule for NoImplicitGlobals {
     fn run_once(&self, ctx: &LintContext) {
         let scoping = ctx.scoping();
         let root_scope_id = scoping.root_scope_id();
-        let check_global_declarations =
-            !ctx.source_type().is_module() && !ctx.source_type().is_commonjs();
+        // `env.commonjs` implies CommonJS scoping (ESLint enables `globalReturn`), so top-level
+        // declarations are module-scoped just like with `sourceType: "commonjs"`.
+        let check_global_declarations = !ctx.source_type().is_module()
+            && !ctx.source_type().is_commonjs()
+            && !ctx.env().contains("commonjs");
 
         if check_global_declarations {
             for symbol_id in scoping.iter_bindings_in(root_scope_id) {
@@ -458,5 +461,38 @@ fn test_configured_globals() {
 
     Tester::new(NoImplicitGlobals::NAME, NoImplicitGlobals::PLUGIN, pass, fail)
         .with_snapshot_suffix("configured-globals")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_commonjs_env() {
+    use crate::tester::Tester;
+
+    let commonjs_env = Some(serde_json::json!({ "env": { "commonjs": true } }));
+
+    let pass = vec![
+        ("var foo = 1;", None, commonjs_env.clone()),
+        ("function foo() {}", None, commonjs_env.clone()),
+        ("var Array = 1;", None, commonjs_env.clone()),
+        (
+            "const foo = 1; let bar; class Baz {}",
+            Some(serde_json::json!([{ "lexicalBindings": true }])),
+            commonjs_env.clone(),
+        ),
+        (
+            "'use strict'; const path = require('path'); function helper() { return path.sep; } module.exports = { helper };",
+            None,
+            commonjs_env.clone(),
+        ),
+    ];
+
+    let fail = vec![
+        // Assignments to undeclared variables still leak to the global scope.
+        ("foo = 1;", None, commonjs_env.clone()),
+        ("Array = 1;", None, commonjs_env),
+    ];
+
+    Tester::new(NoImplicitGlobals::NAME, NoImplicitGlobals::PLUGIN, pass, fail)
+        .with_snapshot_suffix("commonjs-env")
         .test_and_snapshot();
 }
