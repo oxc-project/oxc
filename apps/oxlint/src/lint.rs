@@ -366,6 +366,8 @@ impl CliRunner {
             return crate::mode::run_rules(&lint_config, &output_formatter, stdout);
         }
 
+        warn_ignored_external_rules(&external_plugin_store);
+
         let ignore_matcher = LintIgnoreMatcher::new(
             &root_config.ignore_patterns,
             // Without a config file there are no patterns and the root is never consulted,
@@ -737,6 +739,19 @@ fn check_for_writer_error(error: std::io::Error) -> Result<(), std::io::Error> {
         Ok(())
     } else {
         Err(error)
+    }
+}
+
+/// Builds without JS plugin support skip the rules of non-builtin plugins rather than failing,
+/// so say which ones. On stderr, to keep `-f json` output intact.
+#[expect(clippy::print_stderr)]
+fn warn_ignored_external_rules(external_plugin_store: &ExternalPluginStore) {
+    let ignored_rules = external_plugin_store.ignored_rules();
+    if !ignored_rules.is_empty() {
+        eprintln!(
+            "Warning: this build of oxlint cannot load JS plugins, so these configured rules will not run: {}. Use the npm package to run them.",
+            ignored_rules.join(", ")
+        );
     }
 }
 
