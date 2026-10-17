@@ -115,6 +115,14 @@ impl Config {
         self.base.config.plugins
     }
 
+    /// The plugins enabled at the root of this config or by any of its overrides.
+    pub fn plugins_with_overrides(&self) -> LintPlugins {
+        self.overrides
+            .iter()
+            .filter_map(|override_config| override_config.plugins)
+            .fold(self.plugins(), |plugins, override_plugins| plugins | override_plugins)
+    }
+
     pub fn rules(&self) -> &Arc<[(RuleEnum, AllowWarnDeny)]> {
         &self.base.rules
     }
