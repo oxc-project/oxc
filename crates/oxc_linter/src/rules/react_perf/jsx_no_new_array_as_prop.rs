@@ -85,7 +85,10 @@ impl JsxNoNewArrayAsProp {
                 if let Some(init_span) = decl.init.as_ref().and_then(check_expression) {
                     return Some((decl.id.span(), Some(init_span)));
                 }
-                None
+                // look for destructuring defaults, e.g. `const { x = [] } = props`
+                let (id, init) = find_initialized_binding(&decl.id, symbol_id)?;
+                let init_span = check_expression(init)?;
+                Some((id.span(), Some(init_span)))
             }
             AstKind::FormalParameter(param) => {
                 let (id, init) = find_initialized_binding(&param.pattern, symbol_id)?;
@@ -175,6 +178,12 @@ fn test() {
         (r"const Foo = () => <Item list={this.props.list} />", None),
         (r"const x = []; const Foo = () => <Item list={x} />", None),
         (r"const DEFAULT_X = []; const Foo = ({ x = DEFAULT_X }) => <Item list={x} />", None),
+        (r"const Foo = (props) => { const { x = 5 } = props; return <Item list={x} /> }", None),
+        (r"const Foo = (props) => { const { x = [], y } = props; return <Item list={y} /> }", None),
+        (
+            r"const DEFAULT_X = []; const Foo = (props) => { const { x = DEFAULT_X } = props; return <Item list={x} /> }",
+            None,
+        ),
         (r"const Foo = () => <div list={[]} />", Some(json!([{ "nativeAllowList": "all" }]))),
         (r"const Foo = () => <div list={[]} />", Some(json!([{ "nativeAllowList": ["list"] }]))),
     ];
@@ -194,6 +203,12 @@ fn test() {
         ),
         (r"const Foo = () => { let x = []; return <Item list={x} /> }", None),
         (r"const Foo = ({ x = [] }) => <Item list={x} />", None),
+        (r"const Foo = (props) => { const { x = [] } = props; return <Item list={x} /> }", None),
+        (r"const Foo = (props) => { const [x = []] = props; return <Item list={x} /> }", None),
+        (
+            r"const Foo = (props) => { const { a: { x = [] } } = props; return <Item list={x} /> }",
+            None,
+        ),
         (r"const Foo = () => <div list={[]} />", Some(json!([{ "nativeAllowList": ["style"] }]))),
         // components are never exempt, even with `"all"`
         (r"const Foo = () => <Item list={[]} />", Some(json!([{ "nativeAllowList": "all" }]))),
