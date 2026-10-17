@@ -1,4 +1,10 @@
-use std::{marker::PhantomData, path::PathBuf, sync::Arc};
+use std::{
+    borrow::Borrow,
+    hash::{Hash, Hasher},
+    marker::PhantomData,
+    path::Path,
+    sync::Arc,
+};
 
 use rustc_hash::FxHashSet;
 
@@ -13,10 +19,35 @@ type EventFn<'a> = dyn FnMut(ModuleGraphVisitorEvent, ModulePair, &ModuleRecord)
 type EnterFn<'a> = dyn FnMut(ModulePair, &ModuleRecord) + 'a;
 type LeaveFn<'a> = dyn FnMut(ModulePair, &ModuleRecord) + 'a;
 
+/// A shared module identified by its resolved path, so that records with the same
+/// path are compared as equal.
+#[derive(Debug)]
+pub struct VisitedModule(Arc<ModuleRecord>);
+
+impl PartialEq for VisitedModule {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.resolved_absolute_path == other.0.resolved_absolute_path
+    }
+}
+
+impl Eq for VisitedModule {}
+
+impl Hash for VisitedModule {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.resolved_absolute_path.hash(state);
+    }
+}
+
+impl Borrow<Path> for VisitedModule {
+    fn borrow(&self) -> &Path {
+        &self.0.resolved_absolute_path
+    }
+}
+
 /// A builder for creating visitors that walk through the module graph
 pub struct ModuleGraphVisitorBuilder<'a, T> {
     max_depth: u32,
-    traversed: FxHashSet<PathBuf>,
+    traversed: FxHashSet<VisitedModule>,
     filter: Option<Box<FilterFn<'a>>>,
     event: Option<Box<EventFn<'a>>>,
     enter: Option<Box<EnterFn<'a>>>,
@@ -59,7 +90,7 @@ impl<'a, T> ModuleGraphVisitorBuilder<'a, T> {
 
     /// Reuses a previous traversal's set, clearing its contents but retaining its capacity.
     #[must_use]
-    pub fn reuse_traversed(mut self, mut traversed: FxHashSet<PathBuf>) -> Self {
+    pub fn reuse_traversed(mut self, mut traversed: FxHashSet<VisitedModule>) -> Self {
         traversed.clear();
         self.traversed = traversed;
         self
@@ -118,7 +149,7 @@ impl<T> Default for ModuleGraphVisitorBuilder<'_, T> {
 
 pub struct ModuleGraphVisitResult<T> {
     pub result: T,
-    pub traversed: FxHashSet<PathBuf>,
+    pub traversed: FxHashSet<VisitedModule>,
     pub _max_depth: u32,
 }
 
@@ -130,7 +161,7 @@ impl<T> ModuleGraphVisitResult<T> {
 
 #[derive(Debug)]
 struct ModuleGraphVisitor {
-    traversed: FxHashSet<PathBuf>,
+    traversed: FxHashSet<VisitedModule>,
     depth: u32,
     max_depth: u32,
 }
@@ -197,10 +228,10 @@ impl ModuleGraphVisitor {
             }
 
             let path = &loaded_module_record.resolved_absolute_path;
-            if self.traversed.contains(path) {
+            if self.traversed.contains(path.as_path()) {
                 continue;
             }
-            self.traversed.insert(path.clone());
+            self.traversed.insert(VisitedModule(Arc::clone(&loaded_module_record)));
 
             self.depth += 1;
 
@@ -230,6 +261,8 @@ impl ModuleGraphVisitor {
 
 #[test]
 fn test_reuse_traversed_clears_contents_and_retains_capacity() {
+    use std::path::PathBuf;
+
     let mut root = ModuleRecord::default();
     root.resolved_absolute_path = PathBuf::from("root.js");
     let root = Arc::new(root);
@@ -242,13 +275,15 @@ fn test_reuse_traversed_clears_contents_and_retains_capacity() {
 
     let mut traversed = FxHashSet::default();
     traversed.reserve(16);
-    traversed.insert(dependency.resolved_absolute_path.clone());
+    traversed.insert(VisitedModule(Arc::clone(&dependency)));
     let capacity = traversed.capacity();
 
     for stop_early in [true, false, true, false] {
         let builder = ModuleGraphVisitorBuilder::default().reuse_traversed(traversed);
         assert!(builder.traversed.is_empty());
         assert_eq!(builder.traversed.capacity(), capacity);
+        assert_eq!(Arc::strong_count(&root), 1);
+        assert_eq!(Arc::strong_count(&dependency), 1);
 
         let result = builder.visit_fold(0, &root, |count, _, _| {
             if stop_early {
