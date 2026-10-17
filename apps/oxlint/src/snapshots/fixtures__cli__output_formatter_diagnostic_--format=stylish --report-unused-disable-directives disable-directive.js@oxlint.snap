@@ -7,9 +7,9 @@ working directory: fixtures/cli/output_formatter_diagnostic
 ----------
 
 disable-directive.js
-  9:1   warning  Unused eslint-disable directive (no problems were reported).  
-  12:1  warning  Unused oxlint-disable directive (no problems were reported).  
-  15:1  warning  Unused oxlint-disable directive (no problems were reported).  
+  9:29   warning  Unused eslint-disable directive (no problems were reported from no-debugger).  
+  12:29  warning  Unused oxlint-disable directive (no problems were reported from no-debugger).  
+  15:29  warning  Unused oxlint-disable directive (no problems were reported from eslint/no-debugger).  
 
 ✖ 3 problems (0 errors, 3 warnings)
 ----------

@@ -43,7 +43,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
           "ruleIndex": 0,
           "level": "warning",
           "message": {
-            "text": "Unused eslint-disable directive (no problems were reported)."
+            "text": "Unused eslint-disable directive (no problems were reported from no-debugger)."
           },
           "locations": [
             {
@@ -54,7 +54,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
                 },
                 "region": {
                   "startLine": 9,
-                  "startColumn": 1,
+                  "startColumn": 29,
                   "endLine": 9,
                   "endColumn": 40
                 }
@@ -67,7 +67,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
           "ruleIndex": 0,
           "level": "warning",
           "message": {
-            "text": "Unused oxlint-disable directive (no problems were reported)."
+            "text": "Unused oxlint-disable directive (no problems were reported from no-debugger)."
           },
           "locations": [
             {
@@ -78,7 +78,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
                 },
                 "region": {
                   "startLine": 12,
-                  "startColumn": 1,
+                  "startColumn": 29,
                   "endLine": 12,
                   "endColumn": 40
                 }
@@ -91,7 +91,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
           "ruleIndex": 0,
           "level": "warning",
           "message": {
-            "text": "Unused oxlint-disable directive (no problems were reported)."
+            "text": "Unused oxlint-disable directive (no problems were reported from eslint/no-debugger)."
           },
           "locations": [
             {
@@ -102,7 +102,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
                 },
                 "region": {
                   "startLine": 15,
-                  "startColumn": 1,
+                  "startColumn": 29,
                   "endLine": 15,
                   "endColumn": 47
                 }
