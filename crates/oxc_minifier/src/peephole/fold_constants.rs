@@ -78,7 +78,7 @@ impl<'a> PeepholeOptimizations {
         // (e.g. `a.b.c.prop`) skips the recursive `may_have_side_effects` walk
         // over the object's member chain.
         let Some(value) = e.evaluate_value(ctx) else { return };
-        if e.object.may_have_side_effects(ctx) {
+        if Self::is_delete_operand(ctx) || e.object.may_have_side_effects(ctx) {
             return;
         }
         let changed = ctx.value_to_expr(e.span, value);
@@ -91,11 +91,21 @@ impl<'a> PeepholeOptimizations {
         // See `fold_static_member_expr`: bail via the cheap `evaluate_value`
         // check before walking the object and key for side effects.
         let Some(value) = e.evaluate_value(ctx) else { return };
-        if e.object.may_have_side_effects(ctx) || e.expression.may_have_side_effects(ctx) {
+        if Self::is_delete_operand(ctx)
+            || e.object.may_have_side_effects(ctx)
+            || e.expression.may_have_side_effects(ctx)
+        {
             return;
         }
         let changed = ctx.value_to_expr(e.span, value);
         ctx.replace_expression(expr, changed);
+    }
+
+    /// Whether the expression being visited is the direct operand of `delete`.
+    ///
+    /// The operand is a reference, not a value: `delete [].length` must not become `delete 0`.
+    pub fn is_delete_operand(ctx: &TraverseCtx<'a>) -> bool {
+        matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
     }
 
     pub fn fold_logical_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {

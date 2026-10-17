@@ -377,11 +377,13 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        // property access should be kept to keep `this` value
+        // property access should be kept to keep `this` value,
+        // and the operand of `delete` is a reference, not a value
         if matches!(
             ctx.parent(),
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
-        ) {
+        ) || Self::is_delete_operand(ctx)
+        {
             return;
         }
 
