@@ -74,12 +74,14 @@ impl Rule for PreferRegexpTest {
             return;
         }
 
-        let (span, name) = match member_expr {
+        let (span, is_match) = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
-                if !matches!(v.property.name.as_str(), "match" | "exec") {
-                    return;
-                }
-                (v.property.span, &v.property.name)
+                let is_match = match v.property.name.as_str() {
+                    "match" => true,
+                    "exec" => false,
+                    _ => return,
+                };
+                (v.property.span, is_match)
             }
             _ => return,
         };
@@ -129,33 +131,22 @@ impl Rule for PreferRegexpTest {
             _ => return,
         }
 
-        match name.as_str() {
-            "match" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
+        if member_expr.object().is_literal()
+            && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
+        {
+            return;
+        }
 
-                if let Some(expr) = call_expr.arguments[0].as_expression()
-                    && expr.is_literal()
-                    && !matches!(expr, Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
-            }
-            "exec" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
-            }
-            _ => unreachable!("expected match or test, got: {:?}", name),
+        if is_match
+            && let Some(expr) = call_expr.arguments[0].as_expression()
+            && expr.is_literal()
+            && !matches!(expr, Expression::RegExpLiteral(_))
+        {
+            return;
         }
 
         ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
-            if name.as_str() == "exec" {
+            if !is_match {
                 return fixer.replace(span, "test");
             }
             let mut fix = fixer.new_fix_with_capacity(3);
