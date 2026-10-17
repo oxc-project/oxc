@@ -36,7 +36,7 @@ use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
-use cpu::{Cpu, DynCpu, cpu_select};
+use cpu::{Cpu, DynCpu, apply, cpu_versions};
 use misc::{misc_post, misc_pre};
 
 pub struct Lexer {
@@ -155,15 +155,12 @@ impl Lexer {
             return 0;
         }
 
-        let w = cpu_select!(self.cpu, {
-            Avx2(cpu) => self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8, cpu),
-            Neon(cpu) => self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8, cpu),
-            Generic(cpu) => self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8, cpu),
-        });
+        let w = self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8, self.cpu);
         self.sig_len = w;
         w
     }
 
+    #[apply(cpu_versions)]
     unsafe fn pipeline(
         &mut self,
         src: &[u8],
