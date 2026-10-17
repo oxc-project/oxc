@@ -663,7 +663,7 @@ unicorn/prefer-set-size                                    |  76337
 unicorn/prefer-single-call                                 |  24802
 unicorn/prefer-spread                                      |  62606
 unicorn/prefer-string-raw                                  |  62460
-unicorn/prefer-string-replace-all                          |  62606
+unicorn/prefer-string-replace-all                          | 100105
 unicorn/prefer-string-slice                                |  62606
 unicorn/prefer-string-starts-ends-with                     |  62606
 unicorn/prefer-string-trim-start-end                       |  62606
