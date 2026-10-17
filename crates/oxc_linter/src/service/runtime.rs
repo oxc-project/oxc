@@ -29,7 +29,7 @@ use oxc_str::CompactStr;
 
 use crate::{
     Fixer, Linter, Message, PossibleFixes, RuleTimingStore,
-    context::{ContextSubHost, ContextSubHostOptions},
+    context::{ContextSubHost, ContextSubHostOptions, CrossFileCache},
     disable_directives::DisableDirectives,
     loader::{JavaScriptSource, LINT_PARTIAL_LOADER_EXTENSIONS, PartialLoader},
     module_record::ModuleRecord,
@@ -613,6 +613,7 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
+        let cross_file_cache = Arc::new(CrossFileCache::default());
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,
@@ -678,6 +679,7 @@ impl Runtime {
                                 allocator_guard,
                                 me.js_allocator_pool(),
                                 rule_timing_store,
+                                Arc::clone(&cross_file_cache),
                             );
 
                         // Store the disable directives for this file
@@ -759,6 +761,7 @@ impl Runtime {
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
         let messages = Mutex::new(Vec::<Message>::new());
+        let cross_file_cache = Arc::new(CrossFileCache::default());
         rayon::scope(|scope| {
             self.resolve_modules(
                 file_system,
@@ -819,6 +822,7 @@ impl Runtime {
                                     allocator_guard,
                                     me.js_allocator_pool(),
                                     None,
+                                    Arc::clone(&cross_file_cache),
                                 );
 
                             if let Some(disable_directives) = disable_directives {

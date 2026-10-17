@@ -390,6 +390,7 @@ mod test {
                 &allocator,
                 LintOptions::default(),
                 Arc::default(),
+                Arc::default(),
             ))
             .spawn_for_test()
         };
