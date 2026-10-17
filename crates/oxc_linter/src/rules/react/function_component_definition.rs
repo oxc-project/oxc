@@ -149,7 +149,7 @@ impl Rule for FunctionComponentDefinition {
         let diagnostic = function_component_definition_diagnostic(node.span(), expected.style());
         if fix::can_fix(node, function, ctx, expected.style()) {
             ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                let (span, replacement) = fix::replacement(node, ctx, expected);
+                let (span, replacement) = fix::replacement(node, function, ctx, expected);
                 fixer.replace(span, replacement)
             });
         } else {
@@ -443,10 +443,11 @@ mod fix {
 
     pub(super) fn replacement<'a>(
         node: &AstNode<'a>,
+        function: FunctionKind<'a, '_>,
         ctx: &LintContext<'a>,
         expected: ComponentStyle,
     ) -> (Span, String) {
-        let parts = FunctionParts::new(node, ctx);
+        let parts = FunctionParts::new(node, function, ctx);
         let body = if parts.expression_body {
             format!("{{\n return {}\n}}", parts.body)
         } else {
@@ -518,11 +519,10 @@ mod fix {
     }
 
     impl<'a> FunctionParts<'a> {
-        fn new(node: &AstNode<'a>, ctx: &LintContext<'a>) -> Self {
-            match node.kind() {
-                AstKind::Function(function) => Self::from_function(function, node, ctx),
-                AstKind::ArrowFunctionExpression(arrow) => Self::from_arrow(arrow, node, ctx),
-                _ => unreachable!(),
+        fn new(node: &AstNode<'a>, function: FunctionKind<'a, '_>, ctx: &LintContext<'a>) -> Self {
+            match function {
+                FunctionKind::Function(function) => Self::from_function(function, node, ctx),
+                FunctionKind::Arrow(arrow) => Self::from_arrow(arrow, node, ctx),
             }
         }
 
