@@ -7529,6 +7529,26 @@
             }
           ]
         },
+        "strict": {
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/Strict"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
+        },
         "symbol-description": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -19222,6 +19242,17 @@
         }
       },
       "additionalProperties": false
+    },
+    "Strict": {
+      "description": "TODO",
+      "type": "string",
+      "enum": [
+        "safe",
+        "global",
+        "function",
+        "never"
+      ],
+      "markdownDescription": "TODO"
     },
     "StrictBooleanExpressionsConfig": {
       "type": "object",
