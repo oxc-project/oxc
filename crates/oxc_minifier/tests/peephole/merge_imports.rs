@@ -3,6 +3,9 @@ use crate::{test, test_same};
 #[test]
 fn preserve_source_imports() {
     test_same("import source foo from 'foo'; import source bar from 'foo'; console.log(foo, bar);");
+
+    test_same("import source foo from 'foo'; import bar from 'foo'; console.log(foo, bar);");
+    test_same("import foo from 'foo'; import source bar from 'foo'; console.log(foo, bar);");
 }
 
 #[test]
@@ -54,5 +57,20 @@ fn merge_imports() {
     test_same("import { foo } from 'foo' with { type: 'json' }; import { bar } from 'foo';");
     test_same(
         "import { foo } from 'foo' with { type: 'json' }; import { bar } from 'foo' with { type: 'css' };",
+    );
+
+    test("import 'foo'; import 'foo';", "import 'foo';");
+    test("import { foo } from 'foo'; import 'foo';", "import { foo } from 'foo';");
+    test("import 'foo'; import { foo } from 'foo';", "import { foo } from 'foo';");
+    test("import 'foo'; import foo from 'foo';", "import foo from 'foo';");
+    test("import 'foo'; import * as foo from 'foo';", "import * as foo from 'foo';");
+
+    test_same(
+        "import defer * as foo from 'foo'; import { bar } from 'foo'; console.log(foo, bar);",
+    );
+
+    test(
+        "import { foo } from 'foo' with { type: 'json' }; import { bar } from 'foo'; import { baz } from 'foo' with { type: 'json' }; import { qux } from 'foo';",
+        "import { foo, baz } from 'foo' with { type: 'json' }; import { bar, qux } from 'foo';",
     );
 }
