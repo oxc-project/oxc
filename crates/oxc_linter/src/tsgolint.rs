@@ -297,6 +297,8 @@ impl TsGoLintState {
                         rule_name: timing.rule_name,
                         duration: Duration::from_nanos(timing.duration),
                         calls: timing.calls,
+                        #[cfg(feature = "debug_allocs")]
+                        memory: crate::memory::AllocationStats::default(),
                     }));
                 }
 

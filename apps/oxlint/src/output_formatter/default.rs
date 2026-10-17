@@ -38,6 +38,11 @@ impl InternalFormatter for DefaultOutputFormatter {
             }
         }
 
+        #[cfg(feature = "debug_allocs")]
+        if let Some(rule_memory) = &lint_command_info.rule_memory {
+            output.push_str(&format_rule_memory_table(rule_memory));
+        }
+
         Some(output)
     }
 
@@ -125,6 +130,70 @@ fn format_rule_timing_table(rule_timings: &[RuleTimingRecord]) -> String {
         .unwrap();
     }
 
+    output
+}
+
+#[cfg(feature = "debug_allocs")]
+fn format_rule_memory_table(records: &[RuleTimingRecord]) -> String {
+    let mut records = records
+        .iter()
+        .filter(|record| record.source == RuleTimingSource::Native)
+        .collect::<Vec<_>>();
+    records.sort_unstable_by(|left, right| {
+        right
+            .memory
+            .allocated_bytes
+            .cmp(&left.memory.allocated_bytes)
+            .then_with(|| left.plugin_name.cmp(&right.plugin_name))
+            .then_with(|| left.rule_name.cmp(&right.rule_name))
+    });
+
+    let rule_width = records
+        .iter()
+        .map(|record| record.plugin_name.len() + 1 + record.rule_name.len())
+        .max()
+        .unwrap_or(0)
+        .max("Total".len());
+    let allocations = records.iter().map(|record| record.memory.allocations).sum::<u64>();
+    let reallocations = records.iter().map(|record| record.memory.reallocations).sum::<u64>();
+    let bytes = records.iter().map(|record| record.memory.allocated_bytes).sum::<u64>();
+    let calls = records.iter().map(|record| record.calls).sum::<u64>();
+    let allocs_width = allocations.to_string().len().max("Allocs".len());
+    let reallocs_width = reallocations.to_string().len().max("Reallocs".len());
+    let bytes_width = bytes.to_string().len().max("Bytes".len());
+    let calls_width = calls.to_string().len().max("Calls".len());
+    let mut output = String::from("\nRule memory (in native rules only):\n");
+    writeln!(
+        output,
+        "{:<rule_width$}  {:>allocs_width$}  {:>reallocs_width$}  {:>bytes_width$}  {:>calls_width$}",
+        "Rule", "Allocs", "Reallocs", "Bytes", "Calls",
+    )
+    .unwrap();
+    writeln!(
+        output,
+        "{:-<rule_width$}  {:-<allocs_width$}  {:-<reallocs_width$}  {:-<bytes_width$}  {:-<calls_width$}",
+        "", "", "", "", "",
+    )
+    .unwrap();
+
+    for record in records {
+        let name = format!("{}/{}", record.plugin_name, record.rule_name);
+        writeln!(
+            output,
+            "{name:<rule_width$}  {:>allocs_width$}  {:>reallocs_width$}  {:>bytes_width$}  {:>calls_width$}",
+            record.memory.allocations,
+            record.memory.reallocations,
+            record.memory.allocated_bytes,
+            record.calls,
+        )
+        .unwrap();
+    }
+    writeln!(
+        output,
+        "{:<rule_width$}  {allocations:>allocs_width$}  {reallocations:>reallocs_width$}  {bytes:>bytes_width$}  {calls:>calls_width$}",
+        "Total",
+    )
+    .unwrap();
     output
 }
 
@@ -261,6 +330,8 @@ mod test {
         default::{DefaultOutputFormatter, GraphicalReporter, format_js_plugin_timing_summary},
     };
     use oxc_diagnostics::reporter::{DiagnosticReporter, DiagnosticResult};
+    #[cfg(feature = "debug_allocs")]
+    use oxc_linter::memory::AllocationStats;
     use oxc_linter::{RuleTimingRecord, RuleTimingSource};
     use rustc_hash::FxHashSet;
 
@@ -282,6 +353,8 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             rule_timings: None,
+            #[cfg(feature = "debug_allocs")]
+            rule_memory: None,
         });
 
         assert!(result.is_some());
@@ -301,6 +374,8 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::None,
             rule_timings: None,
+            #[cfg(feature = "debug_allocs")]
+            rule_memory: None,
         });
 
         assert!(result.is_some());
@@ -317,6 +392,8 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::Created,
             rule_timings: None,
+            #[cfg(feature = "debug_allocs")]
+            rule_memory: None,
         });
 
         assert!(result.is_some());
@@ -336,6 +413,8 @@ mod test {
             start_time: Duration::new(1, 0),
             oxlint_suppression_file_action: OxlintSuppressionFileAction::Updated,
             rule_timings: None,
+            #[cfg(feature = "debug_allocs")]
+            rule_memory: None,
         });
 
         assert!(result.is_some());
@@ -362,6 +441,8 @@ mod test {
                         rule_name: "no-debugger".to_string(),
                         duration: Duration::from_micros(1500),
                         calls: 3,
+                        #[cfg(feature = "debug_allocs")]
+                        memory: AllocationStats::default(),
                     },
                     RuleTimingRecord {
                         source: RuleTimingSource::TypeAware,
@@ -369,10 +450,14 @@ mod test {
                         rule_name: "no-floating-promises".to_string(),
                         duration: Duration::from_micros(500),
                         calls: 0,
+                        #[cfg(feature = "debug_allocs")]
+                        memory: AllocationStats::default(),
                     },
                 ],
                 js_plugin_runtime: Duration::ZERO,
             }),
+            #[cfg(feature = "debug_allocs")]
+            rule_memory: None,
         });
 
         assert!(result.is_some());
@@ -380,6 +465,41 @@ mod test {
             result.unwrap(),
             "Finished in 5ms on 1 file with 2 rules using 1 threads.\n\nRule timings:\nRule                              Time (ms)  Relative  Calls  Source\n-------------------------------  ----------  --------  -----  ----------\neslint/no-debugger                    1.500     75.0%      3  native\ntypescript/no-floating-promises       0.500     25.0%      0  type-aware\n"
         );
+    }
+
+    #[cfg(feature = "debug_allocs")]
+    #[test]
+    fn memory_table_sorts_and_totals_native_rules() {
+        let record = |source, plugin: &str, rule: &str, bytes| RuleTimingRecord {
+            source,
+            plugin_name: plugin.to_string(),
+            rule_name: rule.to_string(),
+            duration: Duration::ZERO,
+            calls: 1,
+            memory: AllocationStats { allocations: 2, reallocations: 3, allocated_bytes: bytes },
+        };
+        let output = super::format_rule_memory_table(&[
+            record(RuleTimingSource::Native, "eslint", "z", 16),
+            record(RuleTimingSource::JsPlugin, "external", "a", 100),
+            record(RuleTimingSource::TypeAware, "typescript", "b", 200),
+            record(RuleTimingSource::Native, "eslint", "a", 16),
+            record(RuleTimingSource::Native, "jsdoc", "b", 32),
+        ]);
+        let rows = output.lines().skip(1).collect::<Vec<_>>();
+        assert_eq!(
+            rows,
+            [
+                "Rule memory (in native rules only):",
+                "Rule      Allocs  Reallocs  Bytes  Calls",
+                "--------  ------  --------  -----  -----",
+                "jsdoc/b        2         3     32      1",
+                "eslint/a       2         3     16      1",
+                "eslint/z       2         3     16      1",
+                "Total          6         9     64      3",
+            ]
+        );
+        assert!(!output.contains("external/a"));
+        assert!(!output.contains("typescript/b"));
     }
 
     #[test]
@@ -391,6 +511,8 @@ mod test {
                 rule_name: "rule".to_string(),
                 duration: Duration::from_micros(700),
                 calls: 2,
+                #[cfg(feature = "debug_allocs")]
+                memory: AllocationStats::default(),
             }],
             js_plugin_runtime: Duration::from_millis(1),
         });
