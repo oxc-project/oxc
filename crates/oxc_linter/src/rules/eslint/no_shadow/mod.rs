@@ -370,34 +370,29 @@ impl NoShadow {
         )
     }
 
+    /// Whether the symbol itself is a `declare`d variable, class, enum, or namespace/module
+    /// in a definition file.
+    ///
+    /// Only the symbol's own declaration counts, like `isDeclareInDTSFile` in typescript-eslint.
+    /// Declarations nested in a `declare namespace` / `declare module` are not exempt:
+    /// they cannot repeat the `declare` modifier, but can still shadow outer names.
     fn is_declare_in_definition_file(ctx: &LintContext, symbol_id: SymbolId) -> bool {
         if !is_definition_file(ctx.file_path()) {
             return false;
         }
 
         let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
-        for ancestor_kind in ctx.nodes().ancestor_kinds(declaration_id) {
-            match ancestor_kind {
-                AstKind::VariableDeclaration(declaration) if declaration.declare => return true,
-                AstKind::Function(function)
-                    if function.is_ts_declare_function() || function.declare =>
-                {
-                    return true;
-                }
-                AstKind::Class(class) if class.declare => return true,
-                AstKind::TSEnumDeclaration(declaration) if declaration.declare => return true,
-                AstKind::TSExternalModuleDeclaration(declaration) if declaration.declare => {
-                    return true;
-                }
-                AstKind::TSNamespaceDeclaration(declaration) if declaration.declare => return true,
-                AstKind::TSInterfaceDeclaration(declaration) if declaration.declare => return true,
-                AstKind::TSTypeAliasDeclaration(declaration) if declaration.declare => return true,
-                AstKind::Program(_) => break,
-                _ => {}
-            }
+        match ctx.nodes().kind(declaration_id) {
+            AstKind::VariableDeclarator(_) => matches!(
+                ctx.nodes().parent_kind(declaration_id),
+                AstKind::VariableDeclaration(declaration) if declaration.declare
+            ),
+            AstKind::Class(class) => class.declare,
+            AstKind::TSEnumDeclaration(declaration) => declaration.declare,
+            AstKind::TSExternalModuleDeclaration(declaration) => declaration.declare,
+            AstKind::TSNamespaceDeclaration(declaration) => declaration.declare,
+            _ => false,
         }
-
-        false
     }
 
     fn is_in_global_augmentation(ctx: &LintContext, symbol_id: SymbolId) -> bool {
