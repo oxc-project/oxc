@@ -1,0 +1,21 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: -c .oxlintrc.json
+working directory: fixtures/cli/issue_19779
+----------
+
+  x vitest(require-hook): Require setup and teardown code to be within a hook.
+   ,-[example.test.ts:1:1]
+ 1 | let count = 1;
+   : ^^^^^^^^^^^^^^
+ 2 | 
+   `----
+  help: This should be done within a hook
+
+Found 0 warnings and 1 error.
+Finished in <variable>ms on 2 files with 124 rules using 1 threads.
+----------
+CLI result: LintFoundErrors
+----------
