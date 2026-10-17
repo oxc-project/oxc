@@ -523,6 +523,16 @@ pub(super) use cpu_select;
 /// A function defined inside `compress` shadows a parameter with the same name in its body.
 /// The names start with `__`, so they don't clash with any real parameter names.
 ///
+/// Methods are supported too, with a `self`, `&self`, `&mut self`, `mut self` or `self: Type` parameter.
+/// Only methods can take `self`, so a method's entry points are methods next to it in the same `impl`,
+/// rather than functions inside it. Their names are made with `pastey`, e.g. for a method `pipeline`:
+/// `__pipeline_impl`, `__pipeline_generic`, `__pipeline_avx2` and `__pipeline_neon`.
+/// They're private, so they're only visible in the module which defines the method.
+///
+/// They aren't methods of a trait defined inside the method, because rustc gives trait methods external
+/// linkage. That stops LLVM from inlining helpers into them, and from removing the generic entry point
+/// on aarch64 with Neon, where it can never be called.
+///
 /// Code for other platforms is removed with `cfg_select!`, not `#[cfg]` attributes.
 /// That code contains copies of the function's parameters.
 /// Rust Analyzer greys out the original code of anything in a node disabled by `#[cfg]`,
@@ -604,8 +614,9 @@ macro_rules! cpu_versions {
     //
     // * Entry point: Passes the function's tokens to `@attrs`.
     // * `@attrs`: Moves the attributes into 2 lists one at a time, then parses the rest of the function.
+    // * `@receiver`: Checks for a `self` parameter, and adds it to `func`.
     // * `@params`: Turns the parameters into records one at a time, until only the `cpu` parameter is left.
-    // * `@expand`: Generates the output.
+    // * `@expand`: Generates the output. For a method, it makes the names of the entry points first.
     //
     // Each stage's state is a set of named slots. Each slot's value is a single token tree:
     // either a single token or fragment (e.g. `fn_name = foo`), or a list in `[...]` (e.g. `ret_ty = [usize]`).
@@ -630,7 +641,23 @@ macro_rules! cpu_versions {
     // * `unsafe_kw` is `[unsafe]` or `[]`, and is copied onto every function.
     // * Const generic parameters are recorded twice: `generic_params` is the declaration `<const N: Type, ..>`,
     //   which goes on every function, and `turbofish` is the arguments `::<N, ..>` for calls.
-    //   Both are `[]` if there are none.
+    //   `generic_params` is `[()]` and `turbofish` is `[]` if there are none.
+    //   `generic_params`' contents are wrapped in `(...)`, because `pastey` would treat `[<...>]` as a paste.
+    //
+    // `@receiver` uses the same trick as `@attrs`, with `params_to_match` and `params_to_capture`.
+    // A method's entry points must use the method's own `self` token. A `self` written by this macro
+    // wouldn't refer to the same `self` as the body does.
+    //
+    // `@receiver` adds `method` to `func`. It's `{}` for a function. For a method it's
+    // `{ self_mut_kw = [...] self_param = [...] self_kw = self }`:
+    //
+    // * `self_param` is the `self` parameter without a leading `mut` (e.g. `&mut self` or `self: Box<Self>`).
+    // * `self_mut_kw` is `[mut]` for `mut self` or `mut self: Type`, otherwise `[]`.
+    //   Like parameters' `mut_kw`, it only goes on `__*_impl`.
+    //
+    // Before generating a method's output, `@expand` adds the names of its entry points to `method`
+    // (`impl_fn = __pipeline_impl` etc). The names are made with `pastey`, which has to wrap the macro call
+    // which receives them. Doing it in its own step keeps `pastey::paste!` out of the main output.
     //
     // The last parameter gets a different type in each function, so it has to be matched on its own.
     // `macro_rules!` can't match "all parameters except the last one" in one go.
@@ -703,20 +730,21 @@ macro_rules! cpu_versions {
         ]
     ) => {
         crate::pipeline::cpu::cpu_versions!(
-            @params
+            @receiver
             func = {
                 outer_attrs = $outer_attrs
                 inline_attrs = $inline_attrs
                 vis = $vis
                 unsafe_kw = [unsafe]
                 fn_name = $fn_name
-                generic_params = [$(<$(const $const_name: $const_ty),*>)?]
+                // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
+                generic_params = [($(<$(const $const_name: $const_ty),*>)?)]
                 turbofish = [$(::<$($const_name),*>)?]
                 ret_ty = [$($ret_ty)?]
                 fn_body = $fn_body
             }
-            params = []
-            rest_params = [$($params)*]
+            params_to_match = [$($params)*]
+            params_to_capture = [$($params)*]
         );
     };
 
@@ -733,20 +761,21 @@ macro_rules! cpu_versions {
         ]
     ) => {
         crate::pipeline::cpu::cpu_versions!(
-            @params
+            @receiver
             func = {
                 outer_attrs = $outer_attrs
                 inline_attrs = $inline_attrs
                 vis = $vis
                 unsafe_kw = []
                 fn_name = $fn_name
-                generic_params = [$(<$(const $const_name: $const_ty),*>)?]
+                // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
+                generic_params = [($(<$(const $const_name: $const_ty),*>)?)]
                 turbofish = [$(::<$($const_name),*>)?]
                 ret_ty = [$($ret_ty)?]
                 fn_body = $fn_body
             }
-            params = []
-            rest_params = [$($params)*]
+            params_to_match = [$($params)*]
+            params_to_capture = [$($params)*]
         );
     };
 
@@ -759,6 +788,192 @@ macro_rules! cpu_versions {
         rest_to_capture = $_rest_to_capture:tt
     ) => {
         compile_error!("`cpu_versions!` must be applied to a `fn` with no generics except `const` ones");
+    };
+
+    // `self` parameter
+    (
+        @receiver
+        func = {$($func:tt)*}
+        params_to_match = [
+            self,
+            $($_rest:tt)*
+        ]
+        params_to_capture = [
+            $self_kw:ident,
+            $($rest:tt)*
+        ]
+    ) => {
+        crate::pipeline::cpu::cpu_versions!(
+            @params
+            func = {
+                $($func)*
+                method = {
+                    self_mut_kw = []
+                    self_param = [$self_kw]
+                    self_kw = $self_kw
+                }
+            }
+            params = []
+            rest_params = [$($rest)*]
+        );
+    };
+
+    // `&self` parameter
+    (
+        @receiver
+        func = {$($func:tt)*}
+        params_to_match = [
+            &self,
+            $($_rest:tt)*
+        ]
+        params_to_capture = [
+            &$self_kw:ident,
+            $($rest:tt)*
+        ]
+    ) => {
+        crate::pipeline::cpu::cpu_versions!(
+            @params
+            func = {
+                $($func)*
+                method = {
+                    self_mut_kw = []
+                    self_param = [&$self_kw]
+                    self_kw = $self_kw
+                }
+            }
+            params = []
+            rest_params = [$($rest)*]
+        );
+    };
+
+    // `&mut self` parameter
+    (
+        @receiver
+        func = {$($func:tt)*}
+        params_to_match = [
+            &mut self,
+            $($_rest:tt)*
+        ]
+        params_to_capture = [
+            &mut $self_kw:ident,
+            $($rest:tt)*
+        ]
+    ) => {
+        crate::pipeline::cpu::cpu_versions!(
+            @params
+            func = {
+                $($func)*
+                method = {
+                    self_mut_kw = []
+                    self_param = [&mut $self_kw]
+                    self_kw = $self_kw
+                }
+            }
+            params = []
+            rest_params = [$($rest)*]
+        );
+    };
+
+    // `mut self` parameter
+    (
+        @receiver
+        func = {$($func:tt)*}
+        params_to_match = [
+            mut self,
+            $($_rest:tt)*
+        ]
+        params_to_capture = [
+            mut $self_kw:ident,
+            $($rest:tt)*
+        ]
+    ) => {
+        crate::pipeline::cpu::cpu_versions!(
+            @params
+            func = {
+                $($func)*
+                method = {
+                    self_mut_kw = [mut]
+                    self_param = [$self_kw]
+                    self_kw = $self_kw
+                }
+            }
+            params = []
+            rest_params = [$($rest)*]
+        );
+    };
+
+    // `self: Type` parameter
+    (
+        @receiver
+        func = {$($func:tt)*}
+        params_to_match = [
+            self: $_self_ty:ty,
+            $($_rest:tt)*
+        ]
+        params_to_capture = [
+            $self_kw:ident: $self_ty:ty,
+            $($rest:tt)*
+        ]
+    ) => {
+        crate::pipeline::cpu::cpu_versions!(
+            @params
+            func = {
+                $($func)*
+                method = {
+                    self_mut_kw = []
+                    self_param = [$self_kw: $self_ty]
+                    self_kw = $self_kw
+                }
+            }
+            params = []
+            rest_params = [$($rest)*]
+        );
+    };
+
+    // `mut self: Type` parameter
+    (
+        @receiver
+        func = {$($func:tt)*}
+        params_to_match = [
+            mut self: $_self_ty:ty,
+            $($_rest:tt)*
+        ]
+        params_to_capture = [
+            mut $self_kw:ident: $self_ty:ty,
+            $($rest:tt)*
+        ]
+    ) => {
+        crate::pipeline::cpu::cpu_versions!(
+            @params
+            func = {
+                $($func)*
+                method = {
+                    self_mut_kw = [mut]
+                    self_param = [$self_kw: $self_ty]
+                    self_kw = $self_kw
+                }
+            }
+            params = []
+            rest_params = [$($rest)*]
+        );
+    };
+
+    // No `self` parameter
+    (
+        @receiver
+        func = {$($func:tt)*}
+        params_to_match = $_params_to_match:tt
+        params_to_capture = [$($params:tt)*]
+    ) => {
+        crate::pipeline::cpu::cpu_versions!(
+            @params
+            func = {
+                $($func)*
+                method = {}
+            }
+            params = []
+            rest_params = [$($params)*]
+        );
     };
 
     // Last parameter `cpu: impl Cpu`
@@ -839,7 +1054,7 @@ macro_rules! cpu_versions {
         );
     };
 
-    // All parameters done - generate the output
+    // All parameters done, function - generate the output
     (
         @expand
         func = {
@@ -848,10 +1063,11 @@ macro_rules! cpu_versions {
             vis = $vis:vis
             unsafe_kw = [$($unsafe_kw:tt)?]
             fn_name = $fn_name:ident
-            generic_params = [$($generic_params:tt)*]
+            generic_params = [($($generic_params:tt)*)]
             turbofish = [$($turbofish:tt)*]
             ret_ty = [$($ret_ty:ty)?]
             fn_body = $fn_body:block
+            method = {}
         }
         params = [$(
             {
@@ -928,6 +1144,168 @@ macro_rules! cpu_versions {
                     }
                 }
             }
+        }
+    };
+
+    // All parameters done, method - make the names of the entry points
+    (
+        @expand
+        func = {
+            outer_attrs = $outer_attrs:tt
+            inline_attrs = $inline_attrs:tt
+            vis = $vis:vis
+            unsafe_kw = $unsafe_kw:tt
+            fn_name = $fn_name:ident
+            generic_params = $generic_params:tt
+            turbofish = $turbofish:tt
+            ret_ty = $ret_ty:tt
+            fn_body = $fn_body:tt
+            method = {
+                self_mut_kw = $self_mut_kw:tt
+                self_param = $self_param:tt
+                self_kw = $self_kw:ident
+            }
+        }
+        params = $params:tt
+        cpu_name = $cpu_name:ident
+        cpu_trait = $cpu_trait:ident
+    ) => {
+        pastey::paste! {
+            crate::pipeline::cpu::cpu_versions!(
+                @expand
+                func = {
+                    outer_attrs = $outer_attrs
+                    inline_attrs = $inline_attrs
+                    vis = $vis
+                    unsafe_kw = $unsafe_kw
+                    fn_name = $fn_name
+                    generic_params = $generic_params
+                    turbofish = $turbofish
+                    ret_ty = $ret_ty
+                    fn_body = $fn_body
+                    method = {
+                        self_mut_kw = $self_mut_kw
+                        self_param = $self_param
+                        self_kw = $self_kw
+                        impl_fn = [<__ $fn_name _impl>]
+                        generic_fn = [<__ $fn_name _generic>]
+                        avx2_fn = [<__ $fn_name _avx2>]
+                        neon_fn = [<__ $fn_name _neon>]
+                    }
+                }
+                params = $params
+                cpu_name = $cpu_name
+                cpu_trait = $cpu_trait
+            );
+        }
+    };
+
+    // All parameters done, method with names of entry points - generate the output
+    (
+        @expand
+        func = {
+            outer_attrs = [$($outer_attrs:tt)*]
+            inline_attrs = [$($inline_attrs:tt)*]
+            vis = $vis:vis
+            unsafe_kw = [$($unsafe_kw:tt)?]
+            fn_name = $fn_name:ident
+            generic_params = [($($generic_params:tt)*)]
+            turbofish = [$($turbofish:tt)*]
+            ret_ty = [$($ret_ty:ty)?]
+            fn_body = $fn_body:block
+            method = {
+                self_mut_kw = [$($self_mut_kw:tt)?]
+                self_param = [$($self_param:tt)*]
+                self_kw = $self_kw:ident
+                impl_fn = $impl_fn:ident
+                generic_fn = $generic_fn:ident
+                avx2_fn = $avx2_fn:ident
+                neon_fn = $neon_fn:ident
+            }
+        }
+        params = [$(
+            {
+                mut_kw = [$($mut_kw:tt)?]
+                arg_name = $arg_name:ident
+                arg_ty = $arg_ty:ty
+            }
+        )*]
+        cpu_name = $cpu_name:ident
+        cpu_trait = $cpu_trait:ident
+    ) => {
+        $($outer_attrs)*
+        #[inline(always)]
+        $vis $($unsafe_kw)? fn $fn_name $($generic_params)* (
+            $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: impl $cpu_trait
+        ) $(-> $ret_ty)? {
+            cfg_select! {
+                target_arch = "x86_64" => {
+                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                        // SAFETY: `Avx2` type guarantees the CPU supports the features `__*_avx2` uses
+                        crate::pipeline::cpu::DynCpu::Avx2($cpu_name) => unsafe {
+                            Self::$avx2_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
+                        },
+                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
+                            Self::$generic_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
+                        }
+                    }
+                }
+                target_arch = "aarch64" => {
+                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                        // SAFETY: `Neon` type guarantees the CPU supports the features `__*_neon` uses
+                        crate::pipeline::cpu::DynCpu::Neon($cpu_name) => unsafe {
+                            Self::$neon_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
+                        },
+                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
+                            Self::$generic_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
+                        }
+                    }
+                }
+                _ => {
+                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
+                            Self::$generic_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
+                        }
+                    }
+                }
+            }
+        }
+
+        #[inline(always)]
+        $($unsafe_kw)? fn $impl_fn $($generic_params)* (
+            $($self_mut_kw)? $($self_param)*,
+            $($($mut_kw)? $arg_name: $arg_ty,)*
+            $cpu_name: impl $cpu_trait
+        ) $(-> $ret_ty)?
+        $fn_body
+
+        $($inline_attrs)*
+        $($unsafe_kw)? fn $generic_fn $($generic_params)* (
+            $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Generic
+        ) $(-> $ret_ty)? {
+            Self::$impl_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
+        }
+
+        cfg_select! {
+            target_arch = "x86_64" => {
+                $($inline_attrs)*
+                #[target_feature(enable = "avx2,bmi2,popcnt")]
+                $($unsafe_kw)? fn $avx2_fn $($generic_params)* (
+                    $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Avx2
+                ) $(-> $ret_ty)? {
+                    Self::$impl_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
+                }
+            }
+            target_arch = "aarch64" => {
+                $($inline_attrs)*
+                #[target_feature(enable = "neon")]
+                $($unsafe_kw)? fn $neon_fn $($generic_params)* (
+                    $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Neon
+                ) $(-> $ret_ty)? {
+                    Self::$impl_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
+                }
+            }
+            _ => {}
         }
     };
 
