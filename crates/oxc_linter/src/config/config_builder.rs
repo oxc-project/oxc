@@ -37,6 +37,9 @@ pub struct ConfigStoreBuilder {
     config: LintConfig,
     categories: OxlintCategories,
     overrides: OxlintOverrides,
+    /// CLI `-A`/`-W`/`-D` filters. Applied to the root ruleset here, then again
+    /// after file overrides so they do not depend on where a rule is configured.
+    cli_filters: Vec<LintFilter>,
 
     // Collect all `extends` file paths for the language server.
     // The server will tell the clients to watch for the extends files.
@@ -62,7 +65,15 @@ impl ConfigStoreBuilder {
         let overrides = OxlintOverrides::default();
         let extended_paths = Vec::new();
 
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            cli_filters: Vec::new(),
+            extended_paths,
+        }
     }
 
     /// Warn on all rules in all plugins and categories, including those in `nursery`.
@@ -76,7 +87,15 @@ impl ConfigStoreBuilder {
         let rules = RULES.iter().map(|rule| (rule.clone(), AllowWarnDeny::Warn)).collect();
         let external_rules = FxHashMap::default();
         let extended_paths = Vec::new();
-        Self { rules, external_rules, config, categories, overrides, extended_paths }
+        Self {
+            rules,
+            external_rules,
+            config,
+            categories,
+            overrides,
+            cli_filters: Vec::new(),
+            extended_paths,
+        }
     }
 
     /// Create a [`ConfigStoreBuilder`] from a loaded or manually built [`Oxlintrc`].
@@ -308,6 +327,7 @@ impl ConfigStoreBuilder {
             config,
             categories,
             overrides: oxlintrc.overrides,
+            cli_filters: Vec::new(),
             extended_paths,
         };
 
@@ -396,6 +416,7 @@ impl ConfigStoreBuilder {
 
     pub fn with_filters<'a, I: IntoIterator<Item = &'a LintFilter>>(mut self, filters: I) -> Self {
         for filter in filters {
+            self.cli_filters.push(filter.clone());
             self = self.with_filter(filter);
         }
         self
@@ -518,7 +539,10 @@ impl ConfigStoreBuilder {
             .collect();
         external_rules.sort_unstable_by_key(|(r, _, _)| *r);
 
-        Ok(Config::new(rules, external_rules, self.categories, self.config, resolved_overrides))
+        let mut config =
+            Config::new(rules, external_rules, self.categories, self.config, resolved_overrides);
+        config.cli_filters = self.cli_filters;
+        Ok(config)
     }
 
     fn resolve_overrides(
@@ -1826,5 +1850,41 @@ mod test {
         .unwrap()
         .build(&mut external_plugin_store)
         .unwrap()
+    }
+
+    // https://github.com/oxc-project/oxc/issues/26669
+    #[test]
+    fn test_cli_allow_wins_over_override_rules() {
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "overrides": [
+                    {
+                        "files": ["**/*.js"],
+                        "rules": { "no-debugger": "error" }
+                    }
+                ]
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::default();
+        let builder = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .with_filters([&LintFilter::new(AllowWarnDeny::Allow, "no-debugger").unwrap()]);
+        let config = builder.build(&mut external_plugin_store).unwrap();
+
+        let resolved = config.apply_overrides(Path::new("t.js"));
+        assert!(
+            resolved.rules.iter().all(|(rule, _)| rule.name() != "no-debugger"),
+            "-A no-debugger should suppress the rule even when it is configured in overrides"
+        );
     }
 }
