@@ -11,6 +11,7 @@ use super::{InternalFormatter, xml_utils::xml_escape};
 #[derive(Default)]
 pub struct JUnitOutputFormatter;
 
+// Keeps the default `reports_config_warnings`: every JUnit test suite is a linted file.
 impl InternalFormatter for JUnitOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(JUnitReporter::default())
