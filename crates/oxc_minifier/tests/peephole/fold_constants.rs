@@ -1241,20 +1241,20 @@ fn test_fold_left() {
 #[test]
 fn test_fold_array_length() {
     // Can fold
-    fold("x = [].length", "x = 0");
-    fold("x = [1,2,3].length", "x = 3");
+    fold("[].length", "0");
+    fold("[1,2,3].length", "3");
     // test("x = [a,b].length", "x = 2");
-    fold("x = 'abc'['length']", "x = 3");
+    fold("'abc'['length']", "3");
 
     // Not handled yet
-    fold("x = [,,1].length", "x = 3");
+    fold("[,,1].length", "3");
 
     // Foldable after constant spread elements are inlined
     fold("[...[1, 2, 3]].length", "3");
 
     // Cannot fold
-    fold("x = [foo(), 0].length", "x = [foo(),0].length");
-    fold_same("x = y.length");
+    fold("[foo(), 0].length", "[foo(),0].length");
+    fold_same("y.length");
 }
 
 #[test]
