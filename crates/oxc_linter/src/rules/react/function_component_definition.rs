@@ -131,20 +131,25 @@ impl Rule for FunctionComponentDefinition {
             return;
         }
 
-        let named = is_named(node, ctx);
-        let (allowed, expected) = if named {
-            (self.0.named_components.allows(actual), self.0.named_components.preferred())
+        let (allowed, expected) = if is_named(node, ctx) {
+            (
+                self.0.named_components.allows(actual),
+                ComponentStyle::Named(self.0.named_components.preferred()),
+            )
         } else {
-            (self.0.unnamed_components.allows(actual), self.0.unnamed_components.preferred())
+            (
+                self.0.unnamed_components.allows(actual),
+                ComponentStyle::Unnamed(self.0.unnamed_components.preferred()),
+            )
         };
         if allowed {
             return;
         }
 
-        let diagnostic = function_component_definition_diagnostic(node.span(), expected);
-        if fix::can_fix(node, function, ctx, expected) {
+        let diagnostic = function_component_definition_diagnostic(node.span(), expected.style());
+        if fix::can_fix(node, function, ctx, expected.style()) {
             ctx.diagnostic_with_suggestion(diagnostic, |fixer| {
-                let (span, replacement) = fix::replacement(node, ctx, expected, named);
+                let (span, replacement) = fix::replacement(node, ctx, expected);
                 fixer.replace(span, replacement)
             });
         } else {
@@ -251,6 +256,21 @@ enum FunctionStyle {
     Arrow,
 }
 
+#[derive(Clone, Copy)]
+enum ComponentStyle {
+    Named(NamedComponentStyle),
+    Unnamed(UnnamedComponentStyle),
+}
+
+impl ComponentStyle {
+    fn style(self) -> FunctionStyle {
+        match self {
+            Self::Named(style) => style.style(),
+            Self::Unnamed(style) => style.style(),
+        }
+    }
+}
+
 impl FunctionStyle {
     fn description(self) -> &'static str {
         match self {
@@ -262,12 +282,10 @@ impl FunctionStyle {
 }
 
 impl NamedComponents {
-    fn preferred(&self) -> FunctionStyle {
+    fn preferred(&self) -> NamedComponentStyle {
         match self {
-            Self::Single(style) => style.style(),
-            Self::Multiple(styles) => {
-                styles.first().map_or(FunctionStyle::Declaration, |style| style.style())
-            }
+            Self::Single(style) => *style,
+            Self::Multiple(styles) => styles.first().copied().unwrap_or_default(),
         }
     }
 
@@ -290,12 +308,10 @@ impl NamedComponentStyle {
 }
 
 impl UnnamedComponents {
-    fn preferred(&self) -> FunctionStyle {
+    fn preferred(&self) -> UnnamedComponentStyle {
         match self {
-            Self::Single(style) => style.style(),
-            Self::Multiple(styles) => {
-                styles.first().map_or(FunctionStyle::Expression, |style| style.style())
-            }
+            Self::Single(style) => *style,
+            Self::Multiple(styles) => styles.first().copied().unwrap_or_default(),
         }
     }
 
@@ -331,7 +347,10 @@ mod fix {
     };
     use oxc_span::{GetSpan, Span};
 
-    use super::{FunctionStyle, variable_declarator};
+    use super::{
+        ComponentStyle, FunctionStyle, NamedComponentStyle, UnnamedComponentStyle,
+        variable_declarator,
+    };
     use crate::{AstNode, context::LintContext};
 
     pub(super) fn can_fix<'a>(
@@ -425,8 +444,7 @@ mod fix {
     pub(super) fn replacement<'a>(
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
-        expected: FunctionStyle,
-        named: bool,
+        expected: ComponentStyle,
     ) -> (Span, String) {
         let parts = FunctionParts::new(node, ctx);
         let body = if parts.expression_body {
@@ -434,8 +452,8 @@ mod fix {
         } else {
             parts.body.clone()
         };
-        let function = match (expected, named) {
-            (FunctionStyle::Declaration, true) => format!(
+        let function = match expected {
+            ComponentStyle::Named(NamedComponentStyle::FunctionDeclaration) => format!(
                 "{}function{} {}{}{}{} {}",
                 parts.async_prefix,
                 parts.generator_marker,
@@ -445,7 +463,7 @@ mod fix {
                 parts.return_type,
                 body
             ),
-            (FunctionStyle::Expression, true) => format!(
+            ComponentStyle::Named(NamedComponentStyle::FunctionExpression) => format!(
                 "{} {}{} = {}function{}{}{}{} {}",
                 parts.variable_kind,
                 parts.name,
@@ -457,7 +475,7 @@ mod fix {
                 parts.return_type,
                 body
             ),
-            (FunctionStyle::Arrow, true) => format!(
+            ComponentStyle::Named(NamedComponentStyle::ArrowFunction) => format!(
                 "{} {}{} = {}{}{}{} => {}",
                 parts.variable_kind,
                 parts.name,
@@ -468,7 +486,7 @@ mod fix {
                 parts.return_type,
                 body
             ),
-            (FunctionStyle::Expression, false) => format!(
+            ComponentStyle::Unnamed(UnnamedComponentStyle::FunctionExpression) => format!(
                 "{}function{}{}{}{} {}",
                 parts.async_prefix,
                 parts.generator_marker,
@@ -477,11 +495,10 @@ mod fix {
                 parts.return_type,
                 body
             ),
-            (FunctionStyle::Arrow, false) => format!(
+            ComponentStyle::Unnamed(UnnamedComponentStyle::ArrowFunction) => format!(
                 "{}{}{}{} => {}",
                 parts.async_prefix, parts.type_parameters, parts.params, parts.return_type, body
             ),
-            (FunctionStyle::Declaration, false) => unreachable!(),
         };
         (parts.replace_span, function)
     }
