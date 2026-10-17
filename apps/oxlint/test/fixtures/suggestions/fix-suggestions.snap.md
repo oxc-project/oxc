@@ -3,18 +3,24 @@
 
 # stdout
 ```
-  x suggestions-plugin(suggestions): Replace "a" with "daddy"
-   ,-[files/bom_remove.js:1:4]
- 1 | ﻿a = c;
-   : ^
- 2 | d = b
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/bom_remove.js
+  | Invalid range: 0..0
+
+  x suggestions-plugin(suggestions): Remove BOM
+   ,-[files/bom_remove.js:1:1]
+ 1 | ,-> daddy = magic;
+ 2 | `-> damned = abacus
    `----
 
-  x suggestions-plugin(suggestions): Replace "a" with "daddy"
-   ,-[files/bom_remove2.js:1:4]
- 1 | ﻿a = c;
-   : ^
- 2 | d = b
+  x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
+  | File path: <fixture>/files/bom_remove2.js
+  | Invalid range: 0..0
+
+  x suggestions-plugin(suggestions): Remove BOM multiple
+   ,-[files/bom_remove2.js:1:1]
+ 1 | ,-> daddy = magic;
+ 2 | `-> damned = abacus
    `----
 
   x Plugin `suggestions-plugin/suggestions` returned invalid suggestions.
@@ -137,7 +143,7 @@
    :     ^
    `----
 
-Found 0 warnings and 26 errors.
+Found 0 warnings and 28 errors.
 Finished in Xms on 12 files with 1 rules using X threads.
 ```
 
@@ -160,13 +166,13 @@ rage = abacus+"£"
 
 # File altered: files/bom_remove.js
 ```
-a = magic;
+daddy = magic;
 damned = abacus
 ```
 
 # File altered: files/bom_remove2.js
 ```
-a = magic;
+daddy = magic;
 damned = abacus
 ```
 
