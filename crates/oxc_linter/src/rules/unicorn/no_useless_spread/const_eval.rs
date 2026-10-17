@@ -131,7 +131,7 @@ fn is_new_object(new_expr: &NewExpression) -> bool {
 }
 
 /// Every typed array constructor.
-const TYPED_ARRAY_NAMES: [&str; 12] = [
+pub(super) const TYPED_ARRAY_NAMES: [&str; 12] = [
     "Int8Array",
     "Uint8Array",
     "Uint8ClampedArray",
@@ -226,7 +226,7 @@ pub fn is_array_from(call_expr: &CallExpression) -> bool {
     )
 }
 /// `<expr>.{concat,map,filter,...}`
-fn is_functional_array_method(call_expr: &CallExpression) -> bool {
+pub(super) fn is_functional_array_method(call_expr: &CallExpression) -> bool {
     is_method_call(
         call_expr,
         None,
