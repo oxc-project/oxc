@@ -239,7 +239,11 @@ fn is_invalid_fetch_options<'a>(
                                 }
                             }
                         }
-                        _ => {}
+                        // Any other binding (an unannotated or destructured parameter, an
+                        // import, ...) has no statically known value.
+                        _ => {
+                            method_name = UNKNOWN_METHOD_NAME;
+                        }
                     }
                 }
                 _ => {
@@ -329,6 +333,13 @@ fn test() {
         (r#"new Request("/url", { method: getOptions().method, body: "some body" });"#),
         (r#"fetch("/url", { method: (options).method, body: "some body" });"#),
         (r#"new Request("/url", { method: (options).method, body: "some body" });"#),
+        // https://github.com/oxc-project/oxc/issues/27772
+        r#"type Handler = (input: { body?: string; method: string }) => Promise<Response>;
+        export const handler: Handler = ({ body, method }) => fetch("/", { body, method });"#,
+        "function foo(method, body) { return fetch(url, { method, body }); }",
+        "const foo = ({ method }) => new Request(url, { method, body: '' });",
+        "function foo([method]) { return fetch(url, { method, body: '' }); }",
+        "import { method } from './method'; fetch(url, { method, body: '' });",
     ];
 
     let fail = vec![
