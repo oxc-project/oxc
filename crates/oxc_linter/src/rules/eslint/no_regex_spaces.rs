@@ -62,7 +62,7 @@ impl Rule for NoRegexSpaces {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::RegExpLiteral(lit) => {
-                if let Some(span) = Self::find_literal_to_report(lit) {
+                if let Some(span) = Self::find_literal_to_report(lit, ctx) {
                     ctx.diagnostic_with_fix(no_regex_spaces_diagnostic(span), |fixer| {
                         Self::fix_spaces(fixer, span)
                     }); // /a  b/
@@ -95,14 +95,14 @@ impl NoRegexSpaces {
         fixer.replace(span, replacement)
     }
 
-    fn find_literal_to_report(literal: &RegExpLiteral) -> Option<Span> {
+    fn find_literal_to_report(literal: &RegExpLiteral, ctx: &LintContext) -> Option<Span> {
         let pattern_text = literal.regex.pattern.text.as_str();
         if !Self::has_double_space(pattern_text) {
             return None;
         }
 
         let pattern = literal.regex.pattern.pattern.as_deref()?;
-        find_consecutive_spaces(pattern)
+        find_consecutive_spaces(pattern, ctx.source_text())
     }
 
     fn find_expr_to_report(args: &ArenaVec<'_, Argument<'_>>, ctx: &LintContext) -> Option<Span> {
@@ -128,7 +128,7 @@ impl NoRegexSpaces {
         );
         let parsed_pattern = parser.parse().ok()?;
 
-        find_consecutive_spaces(&parsed_pattern)
+        find_consecutive_spaces(&parsed_pattern, ctx.source_text())
     }
 
     fn is_regexp_new_expression(expr: &NewExpression<'_>) -> bool {
@@ -146,20 +146,21 @@ impl NoRegexSpaces {
     }
 }
 
-fn find_consecutive_spaces(pattern: &Pattern) -> Option<Span> {
-    let mut finder = ConsecutiveSpaceFinder { last_space_span: None, depth: 0 };
+fn find_consecutive_spaces(pattern: &Pattern, source_text: &str) -> Option<Span> {
+    let mut finder = ConsecutiveSpaceFinder { last_space_span: None, depth: 0, source_text };
     finder.visit_pattern(pattern);
 
     // return none if span is only one space
     finder.last_space_span.filter(|span| span.size() > 1)
 }
 
-struct ConsecutiveSpaceFinder {
+struct ConsecutiveSpaceFinder<'s> {
     last_space_span: Option<Span>,
     depth: u32,
+    source_text: &'s str,
 }
 
-impl<'a> Visit<'a> for ConsecutiveSpaceFinder {
+impl<'a> Visit<'a> for ConsecutiveSpaceFinder<'_> {
     fn enter_node(&mut self, kind: RegExpAstKind<'a>) {
         if let RegExpAstKind::Quantifier(_) | RegExpAstKind::CharacterClass(_) = kind {
             self.depth += 1;
@@ -179,17 +180,22 @@ impl<'a> Visit<'a> for ConsecutiveSpaceFinder {
         if ch.value != u32::from(b' ') {
             return;
         }
+        // Like ESLint, count only literal spaces: ` ` or the end of `\ `.
+        let span = Span::sized(ch.span.end - 1, 1);
+        if self.source_text.as_bytes().get(span.start as usize) != Some(&b' ') {
+            return;
+        }
         if let Some(space_span) = &mut self.last_space_span {
             // If this is consecutive with the last space, extend it
-            if space_span.end == ch.span.start {
-                space_span.end = ch.span.end;
+            if space_span.end == span.start {
+                space_span.end = span.end;
             }
             // If it is not consecutive, and the last space is only one space, move it up
             else if space_span.size() == 1 {
-                self.last_space_span.replace(ch.span);
+                self.last_space_span.replace(span);
             }
         } else {
-            self.last_space_span = Some(ch.span);
+            self.last_space_span = Some(span);
         }
     }
 }
@@ -247,6 +253,8 @@ fn test() {
         r"var foo = /\u0020\u0020/;",
         r#"var foo = new RegExp("\\x20\\x20");"#,
         r#"var foo = new RegExp("\\u0020\\u0020");"#,
+        r"var foo = RegExp(' \ ');",
+        r"var foo = new RegExp('\\\x20 ');",
     ];
 
     let fail = vec![
@@ -276,6 +284,9 @@ fn test() {
         "var foo = /[[    ]    ]    /v;",
         "var foo = new RegExp('[   ]  ');",
         "var foo = new RegExp('[[    ]    ]    ', 'v');",
+        r"var foo = /a\   b/;",
+        r"var foo = /\x20\x20foo  bar/;",
+        r"var foo = RegExp('a\\   b');",
     ];
 
     let fix = vec![
@@ -309,6 +320,9 @@ fn test() {
             "var foo = new RegExp('[[    ] {4}]    ', 'v');",
             None,
         ),
+        (r"var foo = /a\   b/;", r"var foo = /a\ {3}b/;", None),
+        (r"var foo = /\x20\x20foo  bar/;", r"var foo = /\x20\x20foo {2}bar/;", None),
+        (r"var foo = RegExp('a\\   b');", r"var foo = RegExp('a\\ {3}b');", None),
     ];
 
     Tester::new(NoRegexSpaces::NAME, NoRegexSpaces::PLUGIN, pass, fail)
