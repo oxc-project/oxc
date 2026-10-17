@@ -67,6 +67,9 @@ impl<'a> Visit<'a> for DroppedSubtreeCollector<'a, '_> {
         // Keep Scoping in sync with dropped bindings. The span distinguishes
         // declarations that share a symbol, such as a catch parameter and `var`.
         if let Some(symbol_id) = ident.symbol_id.get() {
+            self.pass_changes
+                .retained_declarations
+                .retain(|declaration| *declaration != (symbol_id, ident.span));
             self.pass_changes.removed_declarations.push((symbol_id, ident.span));
         }
     }

@@ -142,6 +142,8 @@ impl<'a> Compressor<'a> {
             ctx.get_mut(),
             initial_references_len,
         );
+        #[cfg(debug_assertions)]
+        compression_pass::debug_assert_no_under_prune_declarations(program, ctx.get_mut());
         iteration
     }
 }

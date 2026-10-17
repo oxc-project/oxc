@@ -95,6 +95,7 @@ impl<'a> PeepholeOptimizations {
                 // the combined re-emit is a real AST change — re-flag so the
                 // fixed-point loop doesn't terminate one iteration early.
                 Some(stmt) => {
+                    ctx.preserve_statement_declarations(&stmt);
                     new_stmts.push(stmt);
                     if identity_drops > 1 {
                         ctx.notice_change();

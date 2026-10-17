@@ -64,6 +64,10 @@ pub struct PassChanges<'a> {
     /// Span)` so flush can remove the matching declaration from Scoping. The
     /// span distinguishes declarations that share one symbol.
     pub(crate) removed_declarations: ArenaVec<'a, (SymbolId, Span)>,
+
+    /// Declarations present in replacement AST subtrees during this pass.
+    /// A matching removed declaration must remain in Scoping.
+    pub(crate) retained_declarations: ArenaVec<'a, (SymbolId, Span)>,
 }
 
 impl<'a> PassChanges<'a> {
@@ -73,6 +77,7 @@ impl<'a> PassChanges<'a> {
             removed_references: BitSet::new_in(references_len, allocator),
             direct_eval_dropped: false,
             removed_declarations: ArenaVec::new_in(&allocator),
+            retained_declarations: ArenaVec::new_in(&allocator),
         }
     }
 }
@@ -189,12 +194,13 @@ impl<'a> MinifierState<'a> {
         std::mem::take(&mut self.pass_changes.revisit_requested)
     }
 
-    /// Whether every per-pass change has been consumed.
+    /// Returns whether all per-pass change records have been cleared after flushing.
     pub(crate) fn pass_changes_are_clean(&self) -> bool {
         !self.pass_changes.revisit_requested
             && self.pass_changes.removed_references.is_empty()
             && !self.pass_changes.direct_eval_dropped
             && self.pass_changes.removed_declarations.is_empty()
+            && self.pass_changes.retained_declarations.is_empty()
     }
 }
 

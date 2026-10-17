@@ -11,9 +11,14 @@ use oxc_ast_visit::Visit;
 use oxc_ast_visit::{VisitJs, walk_js::walk_call_expression};
 use rustc_hash::FxHashSet;
 
+use oxc_allocator::ArenaVec;
 use oxc_allocator::{BitSet, GetAllocator};
 use oxc_ast::ast::*;
 use oxc_semantic::Scoping;
+#[cfg(debug_assertions)]
+use oxc_semantic::SymbolId;
+#[cfg(debug_assertions)]
+use oxc_span::Span;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
@@ -140,6 +145,103 @@ pub fn debug_assert_no_under_prune(
     }
 }
 
+/// Debug-only guard: declarations scheduled for removal from Scoping must be
+/// absent from the live AST. Keeping a live declaration's Scoping record from
+/// being pruned is the unsafe direction that can produce incorrect output.
+#[cfg(debug_assertions)]
+fn debug_assert_no_over_prune_declarations(
+    program: &Program<'_>,
+    ctx: &TraverseCtx<'_>,
+    removed_declarations: &[(SymbolId, Span)],
+) {
+    let live_declarations = collect_live_declaration_keys(program, ctx);
+    for &(symbol_id, span) in removed_declarations {
+        assert!(
+            live_declarations.binary_search(&declaration_key(symbol_id, span)).is_err(),
+            "incremental scoping over-prune: declaration {symbol_id:?} at {span:?} is \
+             scheduled for removal from Scoping but still exists in the live AST",
+        );
+    }
+}
+
+/// Debug-only declaration consistency check, run after each pass flush and
+/// after the compressor loop. Every live AST binding with a `SymbolId` must
+/// match either the symbol's primary declaration span or one of its Scoping
+/// redeclaration spans; every Scoping redeclaration must also match a live AST
+/// binding. This catches missing Scoping records for live declarations and
+/// stale redeclaration records left behind after declarations are dropped.
+///
+/// Primary symbol entries are not checked in the Scoping-to-AST direction:
+/// Scoping can retain a primary symbol entry after its declaration is removed.
+#[cfg(debug_assertions)]
+pub fn debug_assert_no_under_prune_declarations(program: &Program<'_>, ctx: &TraverseCtx<'_>) {
+    let live_declarations = collect_live_declaration_keys(program, ctx);
+    let scoping = ctx.scoping();
+
+    for &key in &live_declarations {
+        let symbol_id = SymbolId::from_usize(key.0);
+        let has_scoping_record = scoping.symbol_span(symbol_id) == key_span(key)
+            || scoping
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .any(|redeclaration| redeclaration.span == key_span(key));
+        assert!(
+            has_scoping_record,
+            "incremental scoping under-prune: live binding {key:?} has no declaration record \
+             in Scoping",
+        );
+    }
+
+    for symbol_id in scoping.symbol_ids() {
+        for redeclaration in scoping.symbol_redeclarations(symbol_id) {
+            assert!(
+                live_declarations
+                    .binary_search(&declaration_key(symbol_id, redeclaration.span))
+                    .is_ok(),
+                "incremental scoping under-prune: Scoping still records redeclaration \
+                 {symbol_id:?} at {:?}, but its binding is absent from the live AST",
+                redeclaration.span,
+            );
+        }
+    }
+}
+
+#[cfg(debug_assertions)]
+fn collect_live_declaration_keys<'a>(
+    program: &Program<'_>,
+    ctx: &TraverseCtx<'a>,
+) -> ArenaVec<'a, DeclarationKey> {
+    struct LiveDeclarationCollector<'b, 'alloc> {
+        declarations: &'b mut ArenaVec<'alloc, DeclarationKey>,
+    }
+    impl<'ast> Visit<'ast> for LiveDeclarationCollector<'_, '_> {
+        fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'ast>) {
+            if let Some(symbol_id) = ident.symbol_id.get() {
+                self.declarations.push(declaration_key(symbol_id, ident.span));
+            }
+        }
+    }
+
+    let mut declarations = ArenaVec::new_in(ctx);
+    LiveDeclarationCollector { declarations: &mut declarations }.visit_program(program);
+    declarations.sort_unstable();
+    declarations.dedup();
+    declarations
+}
+
+#[cfg(debug_assertions)]
+type DeclarationKey = (usize, u32, u32);
+
+#[cfg(debug_assertions)]
+fn declaration_key(symbol_id: SymbolId, span: Span) -> DeclarationKey {
+    (symbol_id.index(), span.start, span.end)
+}
+
+#[cfg(debug_assertions)]
+fn key_span(key: DeclarationKey) -> Span {
+    Span::new(key.1, key.2)
+}
+
 /// Debug-only guard for the gated direct-eval refresh: every live direct
 /// `eval(...)` call must already have `ScopeFlags::DirectEval` on its
 /// reference's recorded scope and every ancestor (the exact postcondition of
@@ -255,10 +357,29 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     }
     ctx.state.pass_changes.direct_eval_dropped = false;
 
-    // (4) Removed declarations — keep symbol metadata in sync with the live AST
+    // (4) Removed declarations — keep symbol metadata in sync with the live AST.
+    // A transformation may re-emit a binding from a dropped subtree (for
+    // example, KeepVar hoisting a `var` declaration). It remains live and must
+    // not be removed from Scoping.
+    let mut declarations_to_prune = ArenaVec::new_in(ctx);
     for (symbol_id, span) in ctx.state.pass_changes.removed_declarations.drain(..) {
+        if ctx.state.pass_changes.retained_declarations.contains(&(symbol_id, span)) {
+            continue;
+        }
+        declarations_to_prune.push((symbol_id, span));
+    }
+
+    #[cfg(debug_assertions)]
+    if !declarations_to_prune.is_empty() {
+        debug_assert_no_over_prune_declarations(program, ctx, &declarations_to_prune);
+    }
+
+    for (symbol_id, span) in declarations_to_prune {
         ctx.scoping.scoping_mut().remove_symbol_declaration(symbol_id, span);
     }
+    ctx.state.pass_changes.retained_declarations.clear();
+    #[cfg(debug_assertions)]
+    debug_assert_no_under_prune_declarations(program, ctx);
     liveness_inputs_changed
 }
 
