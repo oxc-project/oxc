@@ -175,6 +175,7 @@ eslint/require-yield                                       |  14283
 eslint/sort-imports                                        |      7
 eslint/sort-keys                                           |  14125
 eslint/sort-vars                                           |  31363
+eslint/strict                                              |      7
 eslint/symbol-description                                  |  62606
 eslint/unicode-bom                                         |      7
 eslint/use-isnan                                           |  85814

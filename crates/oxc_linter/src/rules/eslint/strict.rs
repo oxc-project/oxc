@@ -182,6 +182,8 @@ impl Rule for Strict {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::Program(program) = node.kind() else { return };
+
         let strict_mode = {
             if ctx.source_type().is_module() {
                 StrictMode::Module
@@ -201,7 +203,6 @@ impl Rule for Strict {
             }
         };
 
-        let AstKind::Program(program) = node.kind() else { return };
         let mut visitor = StrictVisitor::new(strict_mode, ctx);
         visitor.visit_program(program);
     }
