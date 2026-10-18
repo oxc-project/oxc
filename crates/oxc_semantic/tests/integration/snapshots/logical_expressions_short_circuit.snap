@@ -16,44 +16,44 @@ bb2: {
 }
 
 bb3: {
-	condition
+	statement
+	statement
 }
 
 bb4: {
-
+	statement
 }
 
 bb5: {
-
+	condition
 }
 
 bb6: {
-	statement
-	statement
+	condition
 }
 
 bb7: {
-	statement
+	condition
 }
 
 bb8: {
-	condition
+	statement
 }
 
 bb9: {
-	condition
+	statement
 }
 
 bb10: {
-
+	condition
 }
 
 bb11: {
-
+	condition
 }
 
 bb12: {
-	statement
+	condition
 }
 
 bb13: {
@@ -61,7 +61,7 @@ bb13: {
 }
 
 bb14: {
-	condition
+
 }
 
 bb15: {
@@ -76,14 +76,6 @@ bb17: {
 
 }
 
-bb18: {
-	statement
-}
-
-bb19: {
-
-}
-
 digraph {
     0 [ label = "bb0" shape = box]
     1 [ label = "bb1
@@ -91,74 +83,70 @@ IfStatement" shape = box]
     2 [ label = "bb2
 Condition(LogicalExpression)" shape = box]
     3 [ label = "bb3
-Condition(true)" shape = box]
-    4 [ label = "bb4" shape = box]
-    5 [ label = "bb5" shape = box]
-    6 [ label = "bb6
 BlockStatement
 ExpressionStatement" shape = box]
-    7 [ label = "bb7
+    4 [ label = "bb4
 IfStatement" shape = box]
-    8 [ label = "bb8
-Condition(LogicalExpression)" shape = box]
-    9 [ label = "bb9
+    5 [ label = "bb5
 Condition(true)" shape = box]
-    10 [ label = "bb10" shape = box]
-    11 [ label = "bb11" shape = box]
-    12 [ label = "bb12
-ExpressionStatement" shape = box]
-    13 [ label = "bb13
-IfStatement" shape = box]
-    14 [ label = "bb14
+    6 [ label = "bb6
+Condition(false)" shape = box]
+    7 [ label = "bb7
 Condition(LogicalExpression)" shape = box]
+    8 [ label = "bb8
+ExpressionStatement" shape = box]
+    9 [ label = "bb9
+IfStatement" shape = box]
+    10 [ label = "bb10
+Condition(true)" shape = box]
+    11 [ label = "bb11
+Condition(false)" shape = box]
+    12 [ label = "bb12
+Condition(LogicalExpression)" shape = box]
+    13 [ label = "bb13
+ExpressionStatement" shape = box]
+    14 [ label = "bb14" shape = box]
     15 [ label = "bb15
 Condition(IdentifierReference(x))" shape = box]
     16 [ label = "bb16" shape = box]
     17 [ label = "bb17" shape = box]
-    18 [ label = "bb18
-ExpressionStatement" shape = box]
-    19 [ label = "bb19" shape = box]
     1 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     2 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     3 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     4 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    5 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    2 -> 3 [ label="Normal"]
-    3 -> 4 [ label="Normal"]
-    3 -> 5 [ label="Normal"]
-    4 -> 5 [ label="Normal"]
-    6 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    7 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     1 -> 2 [ label="Normal"]
-    5 -> 6 [ label="Jump", color=green]
-    6 -> 7 [ label="Normal"]
-    5 -> 7 [ label="Jump", color=green]
+    5 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    6 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    2 -> 5 [ label="Normal"]
+    5 -> 3 [ label="Jump", color=green]
+    5 -> 6 [ label="Normal"]
+    6 -> 3 [ label="Jump", color=green]
+    6 -> 4 [ label="Jump", color=green]
+    3 -> 4 [ label="Normal"]
+    7 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     8 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     9 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    4 -> 7 [ label="Normal"]
     10 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     11 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    7 -> 10 [ label="Normal"]
+    10 -> 11 [ label="Jump", color=green]
+    10 -> 9 [ label="Jump", color=green]
+    11 -> 8 [ label="Jump", color=green]
+    11 -> 9 [ label="Jump", color=green]
     8 -> 9 [ label="Normal"]
-    9 -> 10 [ label="Normal"]
-    9 -> 11 [ label="Normal"]
-    10 -> 11 [ label="Normal"]
     12 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     13 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    7 -> 8 [ label="Normal"]
-    11 -> 12 [ label="Jump", color=green]
-    12 -> 13 [ label="Normal"]
-    11 -> 13 [ label="Jump", color=green]
     14 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    9 -> 12 [ label="Normal"]
     15 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     16 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
     17 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    14 -> 15 [ label="Normal"]
+    12 -> 15 [ label="Normal"]
     15 -> 16 [ label="Normal"]
     15 -> 17 [ label="Normal"]
     16 -> 17 [ label="Normal"]
-    18 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
-    19 -> 0 [ label="Error(Implicit)", color=red, style=dashed]
+    17 -> 13 [ label="Jump", color=green]
+    17 -> 14 [ label="Jump", color=green]
     13 -> 14 [ label="Normal"]
-    17 -> 18 [ label="Jump", color=green]
-    18 -> 19 [ label="Normal"]
-    17 -> 19 [ label="Jump", color=green]
 }

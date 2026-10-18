@@ -44,11 +44,11 @@ bb8: {
 }
 
 bb9: {
-	unreachable
+	statement
 }
 
 bb10: {
-	statement
+	unreachable
 }
 
 bb11: {
@@ -62,11 +62,11 @@ bb12: {
 }
 
 bb13: {
-	unreachable
+
 }
 
 bb14: {
-
+	unreachable
 }
 
 bb15: {
@@ -103,18 +103,18 @@ BlockStatement
 ExpressionStatement
 break" shape = box]
     9 [ label = "bb9
-unreachable" shape = box]
-    10 [ label = "bb10
 IfStatement" shape = box]
+    10 [ label = "bb10
+unreachable" shape = box]
     11 [ label = "bb11
 Condition(else cond)" shape = box]
     12 [ label = "bb12
 BlockStatement
 ExpressionStatement
 continue" shape = box]
-    13 [ label = "bb13
+    13 [ label = "bb13" shape = box]
+    14 [ label = "bb14
 unreachable" shape = box]
-    14 [ label = "bb14" shape = box]
     15 [ label = "bb15
 ExpressionStatement
 ExpressionStatement" shape = box]
@@ -130,24 +130,24 @@ return" shape = box]
     6 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
     7 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
     8 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
-    9 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
-    8 -> 9 [ label="Unreachable", style="dotted"]
-    10 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
-    11 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
-    12 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
-    13 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
-    12 -> 13 [ label="Unreachable", style="dotted"]
-    14 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
-    10 -> 11 [ label="Normal"]
-    11 -> 12 [ label="Jump", color=green]
-    13 -> 14 [ label="Normal", style="dotted"]
-    11 -> 14 [ label="Jump", color=green]
-    15 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    9 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
     6 -> 7 [ label="Normal"]
     7 -> 8 [ label="Jump", color=green]
-    9 -> 15 [ label="Normal", style="dotted"]
-    7 -> 10 [ label="Jump", color=green]
-    14 -> 15 [ label="Normal"]
+    7 -> 9 [ label="Jump", color=green]
+    10 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
+    8 -> 10 [ label="Unreachable", style="dotted"]
+    11 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    12 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    13 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    9 -> 11 [ label="Normal"]
+    11 -> 12 [ label="Jump", color=green]
+    11 -> 13 [ label="Jump", color=green]
+    14 -> 2 [ label="Error(Implicit)", style=dashed, color=red]
+    12 -> 14 [ label="Unreachable", style="dotted"]
+    14 -> 13 [ label="Normal", style="dotted"]
+    15 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
+    10 -> 15 [ label="Normal", style="dotted"]
+    13 -> 15 [ label="Normal"]
     16 -> 2 [ label="Error(Implicit)", color=red, style=dashed]
     3 -> 4 [ label="Normal"]
     4 -> 5 [ label="Normal"]
