@@ -608,68 +608,76 @@ pub(super) use cpu_select;
 ///     }
 /// }
 /// ```
+///
+/// ## Implementation
+///
+/// The macro works in stages. Each stage is a separate macro, which calls the next one:
+///
+/// * `__cpu_versions_attrs!`: Sorts the attributes, then parses the rest of the function.
+/// * `__cpu_versions_receiver!`: Checks for a `self` parameter.
+/// * `__cpu_versions_params!`: Turns the parameters into records.
+/// * `__cpu_versions_expand!`: Passes everything on to the macro which generates the output:
+///   `__cpu_versions_expand_func!` for a function, or `__cpu_versions_expand_method!` for a method.
+///
+/// Each stage's input is a set of named slots. Each slot's value is a single token tree: either a single
+/// token or fragment (e.g. `fn_name = foo`), or a list in `[ ... ]` (e.g. `ret_ty = [ usize ]`).
+/// Slots which a stage passes on without looking at them are matched as `$name:tt`,
+/// or all together as `$($rest:tt)*` if they come last.
+///
+/// Slots which tell a stage's rules apart come first, and slots which it only passes on come last.
+/// So when a rule doesn't match, the compiler finds out early, without matching all the other slots first.
+///
+/// `fn_body` is matched as `tt` even where it's used. `__cpu_versions_attrs!` has already checked that
+/// it's a block, and matching it as `block` again would parse the whole body again.
+///
+/// A stage which needs more slots while it works adds them in its first rule.
+/// Its other rules call the stage again until it's done, and then call the next stage.
 macro_rules! cpu_versions {
-    // The macro works in stages. Each stage is a set of rules, which call the macro again
-    // with the next stage:
-    //
-    // * Entry point: Passes the function's tokens to `@attrs`.
-    // * `@attrs`: Moves the attributes into 2 lists one at a time, then parses the rest of the function.
-    // * `@receiver`: Checks for a `self` parameter, and adds it to `func`.
-    // * `@params`: Turns the parameters into records one at a time, until only the `cpu` parameter is left.
-    // * `@expand`: Generates the output. For a method, it makes the names of the entry points first.
-    //
-    // Each stage's state is a set of named slots. Each slot's value is a single token tree:
-    // either a single token or fragment (e.g. `fn_name = foo`), or a list in `[...]` (e.g. `ret_ty = [usize]`).
-    // Slots which a stage passes on without looking at them are matched as `$name:tt`.
-    //
-    // `@attrs` splits the attributes into 2 lists. `#[inline]` attributes go in `inline_attrs`,
-    // and go on the entry points. All other attributes go in `outer_attrs`, and go on the outer function.
-    //
-    // The function's tokens are passed in twice, as `rest_to_match` and `rest_to_capture`.
-    // `rest_to_match` is matched against patterns (e.g. `#[inline ...]`), and `rest_to_capture`
-    // is captured as `tt`s.
-    //
-    // Patterns can't capture the tokens they match literally, so this is how `#` and `[...]` are captured.
-    // Captured `tt`s keep their original spans, so a compiler error about an attribute points at
-    // the attribute where the macro is used, not at this macro.
-    // e.g. `#[inline(always)]`, which can't be combined with `#[target_feature]`.
-    //
-    // `func` bundles everything about the function except its parameters. `@params` passes it on unchanged.
-    //
-    // In `func`:
-    //
-    // * `unsafe_kw` is `[unsafe]` or `[]`, and is copied onto every function.
-    // * Const generic parameters are recorded twice: `generic_params` is the declaration `<const N: Type, ..>`,
-    //   which goes on every function, and `turbofish` is the arguments `::<N, ..>` for calls.
-    //   `generic_params` is `[()]` and `turbofish` is `[]` if there are none.
-    //   `generic_params`' contents are wrapped in `(...)`, because `pastey` would treat `[<...>]` as a paste.
-    //
-    // `@receiver` uses the same trick as `@attrs`, with `params_to_match` and `params_to_capture`.
-    // A method's entry points must use the method's own `self` token. A `self` written by this macro
-    // wouldn't refer to the same `self` as the body does.
-    //
-    // `@receiver` adds `method` to `func`. It's `{}` for a function. For a method it's
-    // `{ self_mut_kw = [...] self_param = [...] self_kw = self }`:
-    //
-    // * `self_param` is the `self` parameter without a leading `mut` (e.g. `&mut self` or `self: Box<Self>`).
-    // * `self_mut_kw` is `[mut]` for `mut self` or `mut self: Type`, otherwise `[]`.
-    //   Like parameters' `mut_kw`, it only goes on `__*_impl`.
-    //
-    // Before generating a method's output, `@expand` adds the names of its entry points to `method`
-    // (`impl_fn = __pipeline_impl` etc). The names are made with `pastey`, which has to wrap the macro call
-    // which receives them. Doing it in its own step keeps `pastey::paste!` out of the main output.
-    //
-    // The last parameter gets a different type in each function, so it has to be matched on its own.
-    // `macro_rules!` can't match "all parameters except the last one" in one go.
-    // So `@params` moves parameters from `rest_params` to `params` one at a time, until only the last one is left.
-    // Each becomes a record `{ mut_kw = [...] arg_name = ... arg_ty = ... }`.
-    // `mut_kw` is `[mut]` or `[]`, so `mut` can be put on `__impl`'s parameters only.
+    ($($item:tt)*) => {
+        crate::pipeline::cpu::__cpu_versions_attrs!(item = [ $($item)* ]);
+    };
+}
+
+pub(super) use cpu_versions;
+
+/// Moves the attributes into 2 lists one at a time, then parses the rest of the function.
+/// `#[inline]` attributes go in `inline_attrs`, which go on the entry points.
+/// All other attributes go in `outer_attrs`, which go on the outer function.
+///
+/// The function's tokens are kept twice, as `rest_to_match` and `rest_to_capture`.
+/// `rest_to_match` is matched against patterns (e.g. `#[inline ...]`), and `rest_to_capture`
+/// is captured as `tt`s.
+///
+/// Patterns can't capture the tokens they match literally, so this is how `#` and `[...]` are captured.
+/// Captured `tt`s keep their original spans, so a compiler error about an attribute points at
+/// the attribute where the macro is used, not at this macro.
+/// e.g. `#[inline(always)]`, which can't be combined with `#[target_feature]`.
+///
+/// When no attributes are left, the rest of the function goes into `func`,
+/// which bundles everything about the function except its parameters:
+///
+/// * `unsafe_kw` is `[ unsafe ]` or `[]`, and is copied onto every function.
+/// * Const generic parameters are recorded twice:
+///   * `generic_params` is the declaration `<const N: Type, ..>`, which goes on every function.
+///   * `turbofish` is the arguments `::<N, ..>` for calls.
+/// * `generic_params` is `[()]` and `turbofish` is `[]` if there are none.
+/// * `generic_params`' contents are wrapped in `(...)`, because `pastey` would treat `[<...>]` as a paste.
+///
+/// The parameters are passed on unparsed, in `params`.
+#[doc(hidden)]
+macro_rules! __cpu_versions_attrs {
+    // Entry point
+    (item = [ $($item:tt)* ]) => {
+        crate::pipeline::cpu::__cpu_versions_attrs!(
+            rest_to_match = [ $($item)* ]
+            rest_to_capture = [ $($item)* ]
+            outer_attrs = []
+            inline_attrs = []
+        );
+    };
 
     // `#[inline]` or `#[inline(...)]` attribute - goes on the entry points
     (
-        @attrs
-        outer_attrs = $outer_attrs:tt
-        inline_attrs = [$($inline_attrs:tt)*]
         rest_to_match = [
             #[inline $($_attr:tt)?]
             $($_rest:tt)*
@@ -678,24 +686,22 @@ macro_rules! cpu_versions {
             $hash:tt $attr:tt
             $($rest:tt)*
         ]
+        outer_attrs = $outer_attrs:tt
+        inline_attrs = [ $($inline_attrs:tt)* ]
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @attrs
+        crate::pipeline::cpu::__cpu_versions_attrs!(
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
             outer_attrs = $outer_attrs
             inline_attrs = [
                 $($inline_attrs)*
                 $hash $attr
             ]
-            rest_to_match = [$($rest)*]
-            rest_to_capture = [$($rest)*]
         );
     };
 
     // Any other attribute - goes on the outer function
     (
-        @attrs
-        outer_attrs = [$($outer_attrs:tt)*]
-        inline_attrs = $inline_attrs:tt
         rest_to_match = [
             # $_attr:tt
             $($_rest:tt)*
@@ -704,287 +710,244 @@ macro_rules! cpu_versions {
             $hash:tt $attr:tt
             $($rest:tt)*
         ]
+        outer_attrs = [ $($outer_attrs:tt)* ]
+        inline_attrs = $inline_attrs:tt
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @attrs
+        crate::pipeline::cpu::__cpu_versions_attrs!(
+            rest_to_match = [ $($rest)* ]
+            rest_to_capture = [ $($rest)* ]
             outer_attrs = [
                 $($outer_attrs)*
                 $hash $attr
             ]
             inline_attrs = $inline_attrs
-            rest_to_match = [$($rest)*]
-            rest_to_capture = [$($rest)*]
-        );
-    };
-
-    // No attributes left, `unsafe fn`
-    (
-        @attrs
-        outer_attrs = $outer_attrs:tt
-        inline_attrs = $inline_attrs:tt
-        rest_to_match = $_rest_to_match:tt
-        rest_to_capture = [
-            $vis:vis unsafe fn $fn_name:ident
-            $(<$(const $const_name:ident: $const_ty:ty),* $(,)?>)?
-            ($($params:tt)*) $(-> $ret_ty:ty)? $fn_body:block
-        ]
-    ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @receiver
-            func = {
-                outer_attrs = $outer_attrs
-                inline_attrs = $inline_attrs
-                vis = $vis
-                unsafe_kw = [unsafe]
-                fn_name = $fn_name
-                // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
-                generic_params = [($(<$(const $const_name: $const_ty),*>)?)]
-                turbofish = [$(::<$($const_name),*>)?]
-                ret_ty = [$($ret_ty)?]
-                fn_body = $fn_body
-            }
-            params_to_match = [$($params)*]
-            params_to_capture = [$($params)*]
         );
     };
 
     // No attributes left, safe `fn`
     (
-        @attrs
-        outer_attrs = $outer_attrs:tt
-        inline_attrs = $inline_attrs:tt
         rest_to_match = $_rest_to_match:tt
         rest_to_capture = [
             $vis:vis fn $fn_name:ident
             $(<$(const $const_name:ident: $const_ty:ty),* $(,)?>)?
             ($($params:tt)*) $(-> $ret_ty:ty)? $fn_body:block
         ]
+        outer_attrs = $outer_attrs:tt
+        inline_attrs = $inline_attrs:tt
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @receiver
+        crate::pipeline::cpu::__cpu_versions_receiver!(
+            params = [ $($params)* ]
             func = {
+                fn_name = $fn_name
                 outer_attrs = $outer_attrs
                 inline_attrs = $inline_attrs
                 vis = $vis
                 unsafe_kw = []
-                fn_name = $fn_name
                 // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
-                generic_params = [($(<$(const $const_name: $const_ty),*>)?)]
-                turbofish = [$(::<$($const_name),*>)?]
-                ret_ty = [$($ret_ty)?]
+                generic_params = [( $(<$(const $const_name: $const_ty),*>)? )]
+                turbofish = [ $(::<$($const_name),*>)? ]
+                ret_ty = [ $($ret_ty)? ]
                 fn_body = $fn_body
             }
-            params_to_match = [$($params)*]
-            params_to_capture = [$($params)*]
+        );
+    };
+
+    // No attributes left, `unsafe fn`
+    (
+        rest_to_match = $_rest_to_match:tt
+        rest_to_capture = [
+            $vis:vis unsafe fn $fn_name:ident
+            $(<$(const $const_name:ident: $const_ty:ty),* $(,)?>)?
+            ($($params:tt)*) $(-> $ret_ty:ty)? $fn_body:block
+        ]
+        outer_attrs = $outer_attrs:tt
+        inline_attrs = $inline_attrs:tt
+    ) => {
+        crate::pipeline::cpu::__cpu_versions_receiver!(
+            params = [ $($params)* ]
+            func = {
+                fn_name = $fn_name
+                outer_attrs = $outer_attrs
+                inline_attrs = $inline_attrs
+                vis = $vis
+                unsafe_kw = [ unsafe ]
+                // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
+                generic_params = [( $(<$(const $const_name: $const_ty),*>)? )]
+                turbofish = [ $(::<$($const_name),*>)? ]
+                ret_ty = [ $($ret_ty)? ]
+                fn_body = $fn_body
+            }
         );
     };
 
     // Not a function, or has generic parameters which aren't `const`
-    (
-        @attrs
-        outer_attrs = $_outer_attrs:tt
-        inline_attrs = $_inline_attrs:tt
-        rest_to_match = $_rest_to_match:tt
-        rest_to_capture = $_rest_to_capture:tt
-    ) => {
+    ($($_any:tt)*) => {
         compile_error!("`cpu_versions!` must be applied to a `fn` with no generics except `const` ones");
     };
+}
 
-    // `self` parameter
+pub(super) use __cpu_versions_attrs;
+
+/// Checks for a `self` parameter. If there is one, adds `method` to the top of `func`.
+/// It's at the top so `__cpu_versions_expand!` can check for it without matching the rest of `func`.
+///
+/// A function has no `method`.
+/// For a method it's `{ self_mut_kw = [ ... ] self_param = [ ... ] self_kw = self }`:
+///
+/// * `self_param` is the `self` parameter without a leading `mut` (e.g. `&mut self` or `self: Box<Self>`).
+/// * `self_mut_kw` is `[ mut ]` for `mut self` or `mut self: Type`, otherwise `[]`.
+///   Like parameters' `mut_kw`, it only goes on `__*_impl`.
+///
+/// A method's entry points must use the method's own `self` token. A `self` written by this macro
+/// wouldn't refer to the same `self` as the body does. So the parameters are kept twice,
+/// as `params_to_match` and `params_to_capture`, using the same trick as `__cpu_versions_attrs!`.
+#[doc(hidden)]
+macro_rules! __cpu_versions_receiver {
+    // Entry point
     (
-        @receiver
-        func = {$($func:tt)*}
-        params_to_match = [
-            self,
-            $($_rest:tt)*
-        ]
+        params = [ $($params:tt)* ]
+        func = $func:tt
+    ) => {
+        crate::pipeline::cpu::__cpu_versions_receiver!(
+            params_to_match = [ $($params)* ]
+            params_to_capture = [ $($params)* ]
+            func = $func
+        );
+    };
+
+    // `self` or `self: Type` parameter
+    (
+        params_to_match = [ self $($_rest:tt)* ]
         params_to_capture = [
-            $self_kw:ident,
+            $self_kw:ident $(: $self_ty:ty)?,
             $($rest:tt)*
         ]
+        func = { $($func:tt)* }
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
+        crate::pipeline::cpu::__cpu_versions_params!(
+            params = [ $($rest)* ]
             func = {
-                $($func)*
                 method = {
                     self_mut_kw = []
-                    self_param = [$self_kw]
+                    self_param = [ $self_kw $(: $self_ty)? ]
                     self_kw = $self_kw
                 }
+                $($func)*
             }
-            params = []
-            rest_params = [$($rest)*]
+        );
+    };
+
+    // `mut self` or `mut self: Type` parameter
+    (
+        params_to_match = [ mut self $($_rest:tt)* ]
+        params_to_capture = [
+            mut $self_kw:ident $(: $self_ty:ty)?,
+            $($rest:tt)*
+        ]
+        func = { $($func:tt)* }
+    ) => {
+        crate::pipeline::cpu::__cpu_versions_params!(
+            params = [ $($rest)* ]
+            func = {
+                method = {
+                    self_mut_kw = [ mut ]
+                    self_param = [ $self_kw $(: $self_ty)? ]
+                    self_kw = $self_kw
+                }
+                $($func)*
+            }
         );
     };
 
     // `&self` parameter
     (
-        @receiver
-        func = {$($func:tt)*}
-        params_to_match = [
-            &self,
-            $($_rest:tt)*
-        ]
+        params_to_match = [ &self $($_rest:tt)* ]
         params_to_capture = [
             &$self_kw:ident,
             $($rest:tt)*
         ]
+        func = { $($func:tt)* }
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
+        crate::pipeline::cpu::__cpu_versions_params!(
+            params = [ $($rest)* ]
             func = {
-                $($func)*
                 method = {
                     self_mut_kw = []
-                    self_param = [&$self_kw]
+                    self_param = [ &$self_kw ]
                     self_kw = $self_kw
                 }
+                $($func)*
             }
-            params = []
-            rest_params = [$($rest)*]
         );
     };
 
     // `&mut self` parameter
     (
-        @receiver
-        func = {$($func:tt)*}
-        params_to_match = [
-            &mut self,
-            $($_rest:tt)*
-        ]
+        params_to_match = [ &mut self $($_rest:tt)* ]
         params_to_capture = [
             &mut $self_kw:ident,
             $($rest:tt)*
         ]
+        func = { $($func:tt)* }
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
+        crate::pipeline::cpu::__cpu_versions_params!(
+            params = [ $($rest)* ]
             func = {
-                $($func)*
                 method = {
                     self_mut_kw = []
-                    self_param = [&mut $self_kw]
+                    self_param = [ &mut $self_kw ]
                     self_kw = $self_kw
                 }
-            }
-            params = []
-            rest_params = [$($rest)*]
-        );
-    };
-
-    // `mut self` parameter
-    (
-        @receiver
-        func = {$($func:tt)*}
-        params_to_match = [
-            mut self,
-            $($_rest:tt)*
-        ]
-        params_to_capture = [
-            mut $self_kw:ident,
-            $($rest:tt)*
-        ]
-    ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
-            func = {
                 $($func)*
-                method = {
-                    self_mut_kw = [mut]
-                    self_param = [$self_kw]
-                    self_kw = $self_kw
-                }
             }
-            params = []
-            rest_params = [$($rest)*]
-        );
-    };
-
-    // `self: Type` parameter
-    (
-        @receiver
-        func = {$($func:tt)*}
-        params_to_match = [
-            self: $_self_ty:ty,
-            $($_rest:tt)*
-        ]
-        params_to_capture = [
-            $self_kw:ident: $self_ty:ty,
-            $($rest:tt)*
-        ]
-    ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
-            func = {
-                $($func)*
-                method = {
-                    self_mut_kw = []
-                    self_param = [$self_kw: $self_ty]
-                    self_kw = $self_kw
-                }
-            }
-            params = []
-            rest_params = [$($rest)*]
-        );
-    };
-
-    // `mut self: Type` parameter
-    (
-        @receiver
-        func = {$($func:tt)*}
-        params_to_match = [
-            mut self: $_self_ty:ty,
-            $($_rest:tt)*
-        ]
-        params_to_capture = [
-            mut $self_kw:ident: $self_ty:ty,
-            $($rest:tt)*
-        ]
-    ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
-            func = {
-                $($func)*
-                method = {
-                    self_mut_kw = [mut]
-                    self_param = [$self_kw: $self_ty]
-                    self_kw = $self_kw
-                }
-            }
-            params = []
-            rest_params = [$($rest)*]
         );
     };
 
     // No `self` parameter
     (
-        @receiver
-        func = {$($func:tt)*}
         params_to_match = $_params_to_match:tt
-        params_to_capture = [$($params:tt)*]
+        params_to_capture = [ $($params:tt)* ]
+        func = $func:tt
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
-            func = {
-                $($func)*
-                method = {}
-            }
+        crate::pipeline::cpu::__cpu_versions_params!(
+            params = [ $($params)* ]
+            func = $func
+        );
+    };
+}
+
+pub(super) use __cpu_versions_receiver;
+
+/// Turns the parameters into records, and checks that the last one is `cpu: impl Cpu`.
+///
+/// The last parameter gets a different type in each function, so it has to be matched on its own.
+/// `macro_rules!` can't match "all parameters except the last one" in one go.
+/// So parameters are moved from `rest_params` to `params` one at a time, until only the last one is left.
+/// Each becomes a record `{ mut_kw = [ ... ] arg_name = ... arg_ty = ... }`.
+/// `mut_kw` is `[ mut ]` or `[]`, so `mut` can be put on `__impl`'s parameters only.
+///
+/// `func` is passed on unchanged.
+#[doc(hidden)]
+macro_rules! __cpu_versions_params {
+    // Entry point
+    (
+        params = [ $($params:tt)* ]
+        func = $func:tt
+    ) => {
+        crate::pipeline::cpu::__cpu_versions_params!(
+            rest_params = [ $($params)* ]
             params = []
-            rest_params = [$($params)*]
+            func = $func
         );
     };
 
     // Last parameter `cpu: impl Cpu`
     (
-        @params
-        func = $func:tt
+        rest_params = [ $cpu_name:ident: impl $cpu_trait:ident $(,)? ]
         params = $params:tt
-        rest_params = [$cpu_name:ident: impl $cpu_trait:ident $(,)?]
+        func = $func:tt
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @expand
+        crate::pipeline::cpu::__cpu_versions_expand!(
             func = $func
             params = $params
             cpu_name = $cpu_name
@@ -994,42 +957,38 @@ macro_rules! cpu_versions {
 
     // `mut` parameter
     (
-        @params
-        func = $func:tt
-        params = [$($params:tt)*]
         rest_params = [
             mut $arg_name:ident: $arg_ty:ty,
             $($rest_params:tt)*
         ]
+        params = [ $($params:tt)* ]
+        func = $func:tt
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
-            func = $func
+        crate::pipeline::cpu::__cpu_versions_params!(
+            rest_params = [ $($rest_params)* ]
             params = [
                 $($params)*
                 {
-                    mut_kw = [mut]
+                    mut_kw = [ mut ]
                     arg_name = $arg_name
                     arg_ty = $arg_ty
                 }
             ]
-            rest_params = [$($rest_params)*]
+            func = $func
         );
     };
 
     // Any other parameter
     (
-        @params
-        func = $func:tt
-        params = [$($params:tt)*]
         rest_params = [
             $arg_name:ident: $arg_ty:ty,
             $($rest_params:tt)*
         ]
+        params = [ $($params:tt)* ]
+        func = $func:tt
     ) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @params
-            func = $func
+        crate::pipeline::cpu::__cpu_versions_params!(
+            rest_params = [ $($rest_params)* ]
             params = [
                 $($params)*
                 {
@@ -1038,40 +997,75 @@ macro_rules! cpu_versions {
                     arg_ty = $arg_ty
                 }
             ]
-            rest_params = [$($rest_params)*]
+            func = $func
         );
     };
 
     // Last parameter isn't `cpu: impl Cpu`, or a parameter isn't `name: Type` or `mut name: Type`
-    (
-        @params
-        func = $_func:tt
-        params = $_params:tt
-        rest_params = $_rest_params:tt
-    ) => {
+    ($($_any:tt)*) => {
         compile_error!(
             "`cpu_versions!` parameters must be `[mut] name: Type`, and the last must be `cpu: impl Cpu`"
         );
     };
+}
 
-    // All parameters done, function - generate the output
+pub(super) use __cpu_versions_params;
+
+/// Unwraps `func`, and passes its slots and all the other slots on to:
+/// * `__cpu_versions_expand_func!` for a function.
+/// * `__cpu_versions_expand_method!` for a method.
+///
+/// `func` only bundles the function's slots to carry them through the stages before this one.
+#[doc(hidden)]
+macro_rules! __cpu_versions_expand {
+    // Method. Must come before the function rule, which matches any `func`.
+    //
+    // `method` moves to after the function's slots. So `__cpu_versions_expand_method!` gets the function's
+    // slots in the same order as `__cpu_versions_expand_func!`, starting with `fn_name`.
     (
-        @expand
         func = {
-            outer_attrs = [$($outer_attrs:tt)*]
-            inline_attrs = [$($inline_attrs:tt)*]
-            vis = $vis:vis
-            unsafe_kw = [$($unsafe_kw:tt)?]
-            fn_name = $fn_name:ident
-            generic_params = [($($generic_params:tt)*)]
-            turbofish = [$($turbofish:tt)*]
-            ret_ty = [$($ret_ty:ty)?]
-            fn_body = $fn_body:block
-            method = {}
+            method = $method:tt
+            $($func:tt)*
         }
+        $($rest:tt)*
+    ) => {
+        crate::pipeline::cpu::__cpu_versions_expand_method!(
+            $($func)*
+            method = $method
+            $($rest)*
+        );
+    };
+
+    // Function
+    (
+        func = { $($func:tt)* }
+        $($rest:tt)*
+    ) => {
+        crate::pipeline::cpu::__cpu_versions_expand_func!(
+            $($func)*
+            $($rest)*
+        );
+    };
+}
+
+pub(super) use __cpu_versions_expand;
+
+/// Generates the output for a function. Its entry points are functions inside it.
+#[doc(hidden)]
+macro_rules! __cpu_versions_expand_func {
+    (
+        fn_name = $fn_name:ident
+        outer_attrs = [ $($outer_attrs:tt)* ]
+        inline_attrs = [ $($inline_attrs:tt)* ]
+        vis = $vis:vis
+        unsafe_kw = [ $($unsafe_kw:tt)? ]
+        generic_params = [( $($generic_params:tt)* )]
+        turbofish = [ $($turbofish:tt)* ]
+        ret_ty = [ $($ret_ty:ty)? ]
+        fn_body = $fn_body:tt
         params = [$(
             {
-                mut_kw = [$($mut_kw:tt)?]
+                mut_kw = [ $($mut_kw:tt)? ]
                 arg_name = $arg_name:ident
                 arg_ty = $arg_ty:ty
             }
@@ -1146,86 +1140,63 @@ macro_rules! cpu_versions {
             }
         }
     };
+}
 
-    // All parameters done, method - make the names of the entry points
+pub(super) use __cpu_versions_expand_func;
+
+/// Generates the output for a method. Its entry points are private methods next to it.
+///
+/// The first rule makes the names of the entry points (`impl_fn = __pipeline_impl` etc),
+/// and puts them in `fn_names`, along with `fn_name`.
+///
+/// The names are made with `pastey`, which has to wrap the macro call which receives them.
+/// Doing it in its own step keeps `pastey::paste!` out of the main output.
+#[doc(hidden)]
+macro_rules! __cpu_versions_expand_method {
+    // Entry point - make the names of the entry points
     (
-        @expand
-        func = {
-            outer_attrs = $outer_attrs:tt
-            inline_attrs = $inline_attrs:tt
-            vis = $vis:vis
-            unsafe_kw = $unsafe_kw:tt
-            fn_name = $fn_name:ident
-            generic_params = $generic_params:tt
-            turbofish = $turbofish:tt
-            ret_ty = $ret_ty:tt
-            fn_body = $fn_body:tt
-            method = {
-                self_mut_kw = $self_mut_kw:tt
-                self_param = $self_param:tt
-                self_kw = $self_kw:ident
-            }
-        }
-        params = $params:tt
-        cpu_name = $cpu_name:ident
-        cpu_trait = $cpu_trait:ident
+        fn_name = $fn_name:ident
+        $($rest:tt)*
     ) => {
         pastey::paste! {
-            crate::pipeline::cpu::cpu_versions!(
-                @expand
-                func = {
-                    outer_attrs = $outer_attrs
-                    inline_attrs = $inline_attrs
-                    vis = $vis
-                    unsafe_kw = $unsafe_kw
+            crate::pipeline::cpu::__cpu_versions_expand_method!(
+                fn_names = {
                     fn_name = $fn_name
-                    generic_params = $generic_params
-                    turbofish = $turbofish
-                    ret_ty = $ret_ty
-                    fn_body = $fn_body
-                    method = {
-                        self_mut_kw = $self_mut_kw
-                        self_param = $self_param
-                        self_kw = $self_kw
-                        impl_fn = [<__ $fn_name _impl>]
-                        generic_fn = [<__ $fn_name _generic>]
-                        avx2_fn = [<__ $fn_name _avx2>]
-                        neon_fn = [<__ $fn_name _neon>]
-                    }
+                    impl_fn = [<__ $fn_name _impl>]
+                    generic_fn = [<__ $fn_name _generic>]
+                    avx2_fn = [<__ $fn_name _avx2>]
+                    neon_fn = [<__ $fn_name _neon>]
                 }
-                params = $params
-                cpu_name = $cpu_name
-                cpu_trait = $cpu_trait
+                $($rest)*
             );
         }
     };
 
-    // All parameters done, method with names of entry points - generate the output
+    // Names of the entry points made - generate the output
     (
-        @expand
-        func = {
-            outer_attrs = [$($outer_attrs:tt)*]
-            inline_attrs = [$($inline_attrs:tt)*]
-            vis = $vis:vis
-            unsafe_kw = [$($unsafe_kw:tt)?]
+        fn_names = {
             fn_name = $fn_name:ident
-            generic_params = [($($generic_params:tt)*)]
-            turbofish = [$($turbofish:tt)*]
-            ret_ty = [$($ret_ty:ty)?]
-            fn_body = $fn_body:block
-            method = {
-                self_mut_kw = [$($self_mut_kw:tt)?]
-                self_param = [$($self_param:tt)*]
-                self_kw = $self_kw:ident
-                impl_fn = $impl_fn:ident
-                generic_fn = $generic_fn:ident
-                avx2_fn = $avx2_fn:ident
-                neon_fn = $neon_fn:ident
-            }
+            impl_fn = $impl_fn:ident
+            generic_fn = $generic_fn:ident
+            avx2_fn = $avx2_fn:ident
+            neon_fn = $neon_fn:ident
+        }
+        outer_attrs = [ $($outer_attrs:tt)* ]
+        inline_attrs = [ $($inline_attrs:tt)* ]
+        vis = $vis:vis
+        unsafe_kw = [ $($unsafe_kw:tt)? ]
+        generic_params = [( $($generic_params:tt)* )]
+        turbofish = [ $($turbofish:tt)* ]
+        ret_ty = [ $($ret_ty:ty)? ]
+        fn_body = $fn_body:tt
+        method = {
+            self_mut_kw = [ $($self_mut_kw:tt)? ]
+            self_param = [ $($self_param:tt)* ]
+            self_kw = $self_kw:ident
         }
         params = [$(
             {
-                mut_kw = [$($mut_kw:tt)?]
+                mut_kw = [ $($mut_kw:tt)? ]
                 arg_name = $arg_name:ident
                 arg_ty = $arg_ty:ty
             }
@@ -1308,22 +1279,9 @@ macro_rules! cpu_versions {
             _ => {}
         }
     };
-
-    // Entry point.
-    // Must be the last rule. It matches anything, including this macro's calls to itself (`@attrs` etc),
-    // so any rule after it would never be used.
-    ($($item:tt)*) => {
-        crate::pipeline::cpu::cpu_versions!(
-            @attrs
-            outer_attrs = []
-            inline_attrs = []
-            rest_to_match = [$($item)*]
-            rest_to_capture = [$($item)*]
-        );
-    };
 }
 
-pub(super) use cpu_versions;
+pub(super) use __cpu_versions_expand_method;
 
 /// Re-exported so call sites can import it from here, along with [`cpu_versions!`].
 pub(super) use macro_rules_attr::apply;
