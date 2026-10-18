@@ -660,3 +660,108 @@ source: crates/oxc_linter/src/tester.rs
    ·                        ─
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:32]
+ 1 │ export function g(s, re) { let m = null; while (s && (m = re.exec(s))) { s = m[1]; } return s; }
+   ·                                ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; while (s && more && (m = re.exec(s))) { s = m[1]; } }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; while ((s && (m = re.exec(s))) && more) { s = m[1]; } }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; for (; s && (m = re.exec(s));) { s = m[1]; } }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; if (s && (m = re.exec(s))) { use(m); } }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; if (s || (m = re.exec(s))) {} else { use(m); } }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; s && (m = re.exec(s)) ? use(m) : other(); }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:33]
+ 1 │ let ID = 0; export class A { [++ID] = 1; }
+   ·                                 ──
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:36]
+ 1 │ export class A { id = (() => { let x = 0; x = 1; return x; })(); }
+   ·                                    ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:43]
+ 1 │ export class A { static id = (() => { let x = 0; x = 1; return x; })(); }
+   ·                                           ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; do { if (s && (m = re.exec(s))) use(m); } while (s); }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:33]
+ 1 │ function g(queue, paused) { let fn = undefined; while (!paused && (fn = queue.shift())) { fn(); } }
+   ·                                 ──
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; while ((s ? foo : bar) && (m = re.exec(s))) { s = m[1]; } }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function g(s, re) { let m = null; while (s && ((m = re.exec(s)), more)) { s = m[1]; } }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:64]
+ 1 │ export class A { field = (() => { let x = 0; return class B { [x++] = 0; }; })(); }
+   ·                                                                ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
