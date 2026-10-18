@@ -220,18 +220,18 @@ impl<'a> StrictVisitor<'a, '_> {
     }
 
     fn visit_function_for_directives(
-        &mut self,
+        &self,
         function_name: &str,
         params: &FormalParameters,
         body: Option<&FunctionBody>,
         span: Span,
     ) -> bool {
-        let is_in_class = self.class_scopes.len() > 0;
-        let is_parent_global = self.function_scopes.len() == 0 && self.class_scopes.len() == 0;
+        let is_in_class = !self.class_scopes.is_empty();
+        let is_parent_global = self.function_scopes.is_empty() && self.class_scopes.is_empty();
         let is_parent_strict = *self.function_scopes.last().unwrap_or(&false);
 
         let directives = body.map(|body| &body.directives);
-        let is_strict = directives.map(|directives| directives.len() > 0).unwrap_or(false);
+        let is_strict = directives.is_some_and(|directives| !directives.is_empty());
 
         match self.strict_mode {
             StrictMode::Function => {
@@ -280,7 +280,7 @@ impl<'a> StrictVisitor<'a, '_> {
             }
             strict_mode => {
                 if let Some(directives) = directives {
-                    for directive in directives.iter() {
+                    for directive in directives {
                         if !directive.is_use_strict() {
                             continue;
                         }
@@ -304,7 +304,7 @@ impl<'a> StrictVisitor<'a, '_> {
                                     |fixer| fixer.delete(directive),
                                 );
                             }
-                            _ => unreachable!(),
+                            StrictMode::Function => unreachable!(),
                         }
                     }
                 }
@@ -319,7 +319,7 @@ impl<'a> VisitJs<'a> for StrictVisitor<'a, '_> {
     fn visit_program(&mut self, it: &oxc_ast::ast::Program<'a>) {
         match self.strict_mode {
             StrictMode::Global => {
-                if it.directives.len() == 0 && it.body.len() > 0 {
+                if it.directives.is_empty() && !it.body.is_empty() {
                     self.ctx.diagnostic(use_global_form_diagnostic(it.body[0].span()));
                 }
 
@@ -337,7 +337,7 @@ impl<'a> VisitJs<'a> for StrictVisitor<'a, '_> {
                 }
             }
             strict_mode => {
-                for directive in it.directives.iter() {
+                for directive in &it.directives {
                     if !directive.is_use_strict() {
                         continue;
                     }
@@ -361,7 +361,7 @@ impl<'a> VisitJs<'a> for StrictVisitor<'a, '_> {
                                 |fixer| fixer.delete(directive),
                             );
                         }
-                        _ => unreachable!(),
+                        StrictMode::Global => unreachable!(),
                     }
                 }
             }
