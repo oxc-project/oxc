@@ -13,8 +13,8 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_ast_visit::Visit;
 #[cfg(feature = "cfg")]
 use oxc_cfg::{
-    ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind, InstructionKind,
-    IterationInstructionKind, ReturnInstructionKind,
+    BlockNodeId, ControlFlowGraphBuilder, CtxCursor, CtxFlags, EdgeType, ErrorEdgeKind,
+    InstructionKind, IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
@@ -883,6 +883,85 @@ impl<'a> SemanticBuilder<'a> {
         self.visit_decorators(decorators);
         self.current_scope_id = function_scope_id;
     }
+
+    #[cfg(feature = "cfg")]
+    fn visit_condition(
+        &mut self,
+        expression: &Expression<'a>,
+        truthy: (BlockNodeId, EdgeType),
+        falsy: (BlockNodeId, EdgeType),
+    ) {
+        if self.cfg.is_none() {
+            self.visit_expression(expression);
+            return;
+        }
+
+        let condition = control_flow!(self, |cfg| cfg.current_node_ix);
+        self.visit_condition_expression(expression, truthy, falsy, condition);
+        control_flow!(self, |cfg| {
+            cfg.append_condition_to(condition, Some(expression.node_id()));
+        });
+    }
+
+    #[cfg(feature = "cfg")]
+    fn visit_condition_expression(
+        &mut self,
+        expression: &Expression<'a>,
+        truthy: (BlockNodeId, EdgeType),
+        falsy: (BlockNodeId, EdgeType),
+        condition: BlockNodeId,
+    ) {
+        match expression {
+            Expression::ParenthesizedExpression(expr) => {
+                let kind = AstKind::ParenthesizedExpression(self.alloc(expr));
+                self.enter_node(kind);
+                self.visit_condition_expression(&expr.expression, truthy, falsy, condition);
+                self.leave_node(kind);
+            }
+            Expression::LogicalExpression(expr) if expr.operator != LogicalOperator::Coalesce => {
+                let kind = AstKind::LogicalExpression(self.alloc(expr));
+                self.enter_node(kind);
+                let right = control_flow!(self, |cfg| {
+                    let before = cfg.current_node_ix;
+                    let left = cfg.new_basic_block_normal();
+                    let right = cfg.new_basic_block_normal();
+                    cfg.add_edge(before, left, EdgeType::Normal);
+                    cfg.current_node_ix = left;
+                    right
+                });
+                if expr.operator == LogicalOperator::And {
+                    self.visit_condition_expression(
+                        &expr.left,
+                        (right, EdgeType::Jump),
+                        falsy.clone(),
+                        condition,
+                    );
+                } else {
+                    self.visit_condition_expression(
+                        &expr.left,
+                        truthy.clone(),
+                        (right, EdgeType::Normal),
+                        condition,
+                    );
+                }
+                control_flow!(self, |cfg| cfg.current_node_ix = right);
+                self.visit_condition_expression(&expr.right, truthy, falsy, condition);
+                self.leave_node(kind);
+            }
+            _ => {
+                let start = control_flow!(self, |cfg| cfg.current_node_ix);
+                self.visit_expression(expression);
+                control_flow!(self, |cfg| {
+                    let end = cfg.current_node_ix;
+                    if start != condition {
+                        cfg.append_condition_to(start, Some(expression.node_id()));
+                    }
+                    cfg.add_edge(end, truthy.0, truthy.1);
+                    cfg.add_edge(end, falsy.0, falsy.1);
+                });
+            }
+        }
+    }
 }
 
 impl<'a> Visit<'a> for SemanticBuilder<'a> {
@@ -1147,11 +1226,12 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let (before_do_while_stmt_graph_ix, start_body_graph_ix) = control_flow!(self, |cfg| {
+        let start_body_graph_ix = control_flow!(self, |cfg| {
             let before_do_while_stmt_graph_ix = cfg.current_node_ix;
             let start_body_graph_ix = cfg.new_basic_block_normal();
+            cfg.add_edge(before_do_while_stmt_graph_ix, start_body_graph_ix, EdgeType::Normal);
             cfg.ctx(None).default().allow_break().allow_continue();
-            (before_do_while_stmt_graph_ix, start_body_graph_ix)
+            start_body_graph_ix
         });
         /* cfg */
 
@@ -1159,34 +1239,46 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
-        let (after_body_graph_ix, start_of_condition_graph_ix) = control_flow!(self, |cfg| {
-            let after_body_graph_ix = cfg.current_node_ix;
-            let start_of_condition_graph_ix = cfg.new_basic_block_normal();
-            (after_body_graph_ix, start_of_condition_graph_ix)
-        });
+        let (start_of_condition_graph_ix, end_do_while_graph_ix, repeat_graph_ix) = control_flow!(
+            self,
+            |cfg| {
+                let after_body_graph_ix = cfg.current_node_ix;
+                let start_of_condition_graph_ix = cfg.new_basic_block_normal();
+                let after = cfg.new_basic_block_normal();
+                let repeat = if matches!(stmt.test.without_parentheses(), Expression::LogicalExpression(expr) if expr.operator != LogicalOperator::Coalesce)
+                {
+                    let repeat = cfg.new_basic_block_normal();
+                    cfg.add_edge(repeat, start_body_graph_ix, EdgeType::Backedge);
+                    repeat
+                } else {
+                    start_body_graph_ix
+                };
+                cfg.add_edge(after_body_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
+                cfg.current_node_ix = start_of_condition_graph_ix;
+                (start_of_condition_graph_ix, after, repeat)
+            }
+        );
         /* cfg */
 
         #[cfg(feature = "cfg")]
-        self.record_ast_nodes();
+        self.visit_condition(
+            &stmt.test,
+            (
+                repeat_graph_ix,
+                if repeat_graph_ix == start_body_graph_ix {
+                    EdgeType::Backedge
+                } else {
+                    EdgeType::Jump
+                },
+            ),
+            (end_do_while_graph_ix, EdgeType::Normal),
+        );
+        #[cfg(not(feature = "cfg"))]
         self.visit_expression(&stmt.test);
-        #[cfg(feature = "cfg")]
-        let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg */
         control_flow!(self, |cfg| {
-            cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
-            let end_of_condition_graph_ix = cfg.current_node_ix;
-
-            let end_do_while_graph_ix = cfg.new_basic_block_normal();
-
-            // before do while to start of body basic block
-            cfg.add_edge(before_do_while_stmt_graph_ix, start_body_graph_ix, EdgeType::Normal);
-            // body of do-while to start of condition
-            cfg.add_edge(after_body_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
-            // end of condition to after do while
-            cfg.add_edge(end_of_condition_graph_ix, end_do_while_graph_ix, EdgeType::Normal);
-            // end of condition to after start of body
-            cfg.add_edge(end_of_condition_graph_ix, start_body_graph_ix, EdgeType::Backedge);
+            cfg.current_node_ix = end_do_while_graph_ix;
 
             cfg.ctx(None)
                 .mark_break(end_do_while_graph_ix)
@@ -1333,47 +1425,47 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
-        let (before_conditional_graph_ix, start_of_condition_graph_ix) =
+        let (before_consequent_expr_graph_ix, start_alternate_graph_ix) =
             control_flow!(self, |cfg| {
                 let before_conditional_graph_ix = cfg.current_node_ix;
                 let start_of_condition_graph_ix = cfg.new_basic_block_normal();
-                (before_conditional_graph_ix, start_of_condition_graph_ix)
+                let consequent = cfg.new_basic_block_normal();
+                let alternate = cfg.new_basic_block_normal();
+                cfg.add_edge(
+                    before_conditional_graph_ix,
+                    start_of_condition_graph_ix,
+                    EdgeType::Normal,
+                );
+                cfg.current_node_ix = start_of_condition_graph_ix;
+                (consequent, alternate)
             });
         /* cfg */
 
-        #[cfg(feature = "cfg")]
-        self.record_ast_nodes();
         // The test of a conditional is always a pure read — strip MemberWriteTarget
         // so that `(a ? x : y).foo = 1` doesn't mark `a` as a property-write target.
         let saved_flags = self.current_reference_flags;
         self.current_reference_flags -= ReferenceFlags::MemberWriteTarget;
+        #[cfg(feature = "cfg")]
+        self.visit_condition(
+            &expr.test,
+            (before_consequent_expr_graph_ix, EdgeType::Jump),
+            (start_alternate_graph_ix, EdgeType::Normal),
+        );
+        #[cfg(not(feature = "cfg"))]
         self.visit_expression(&expr.test);
         self.current_reference_flags = saved_flags;
-        #[cfg(feature = "cfg")]
-        let test_node_id = self.retrieve_recorded_ast_node();
 
-        /* cfg */
-        #[cfg(feature = "cfg")]
-        let (after_condition_graph_ix, before_consequent_expr_graph_ix) =
-            control_flow!(self, |cfg| {
-                cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
-                let after_condition_graph_ix = cfg.current_node_ix;
-                // conditional expression basic block
-                let before_consequent_expr_graph_ix = cfg.new_basic_block_normal();
-                (after_condition_graph_ix, before_consequent_expr_graph_ix)
-            });
-        /* cfg */
+        control_flow!(self, |cfg| cfg.current_node_ix = before_consequent_expr_graph_ix);
 
         self.visit_expression(&expr.consequent);
 
         /* cfg */
         #[cfg(feature = "cfg")]
-        let (after_consequent_expr_graph_ix, start_alternate_graph_ix) =
-            control_flow!(self, |cfg| {
-                let after_consequent_expr_graph_ix = cfg.current_node_ix;
-                let start_alternate_graph_ix = cfg.new_basic_block_normal();
-                (after_consequent_expr_graph_ix, start_alternate_graph_ix)
-            });
+        let after_consequent_expr_graph_ix = control_flow!(self, |cfg| {
+            let after_consequent_expr_graph_ix = cfg.current_node_ix;
+            cfg.current_node_ix = start_alternate_graph_ix;
+            after_consequent_expr_graph_ix
+        });
         /* cfg */
 
         self.visit_expression(&expr.alternate);
@@ -1385,19 +1477,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
             let after_conditional_graph_ix = cfg.new_basic_block_normal();
 
             cfg.add_edge(
-                before_conditional_graph_ix,
-                start_of_condition_graph_ix,
-                EdgeType::Normal,
-            );
-
-            cfg.add_edge(
                 after_consequent_expr_graph_ix,
                 after_conditional_graph_ix,
                 EdgeType::Normal,
             );
-            cfg.add_edge(after_condition_graph_ix, before_consequent_expr_graph_ix, EdgeType::Jump);
 
-            cfg.add_edge(after_condition_graph_ix, start_alternate_graph_ix, EdgeType::Normal);
             cfg.add_edge(after_alternate_graph_ix, after_conditional_graph_ix, EdgeType::Normal);
         });
         /* cfg */
@@ -1415,29 +1499,37 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
         /* cfg */
         #[cfg(feature = "cfg")]
-        let (before_for_graph_ix, test_graph_ix) = control_flow!(self, |cfg| {
-            let before_for_graph_ix = cfg.current_node_ix;
-            let test_graph_ix = cfg.new_basic_block_normal();
-            (before_for_graph_ix, test_graph_ix)
-        });
+        let (test_graph_ix, update_graph_ix, before_body_graph_ix, after_for_stmt) =
+            control_flow!(self, |cfg| {
+                let before = cfg.current_node_ix;
+                let test = cfg.new_basic_block_normal();
+                let update = cfg.new_basic_block_normal();
+                let body = cfg.new_basic_block_normal();
+                let after = cfg.new_basic_block_normal();
+                cfg.add_edge(before, test, EdgeType::Normal);
+                cfg.current_node_ix = test;
+                (test, update, body, after)
+            });
         /* cfg */
 
         if let Some(test) = &stmt.test {
             #[cfg(feature = "cfg")]
-            self.record_ast_nodes();
+            self.visit_condition(
+                test,
+                (before_body_graph_ix, EdgeType::Jump),
+                (after_for_stmt, EdgeType::Normal),
+            );
+            #[cfg(not(feature = "cfg"))]
             self.visit_expression(test);
-            #[cfg(feature = "cfg")]
-            let test_node_id = self.retrieve_recorded_ast_node();
-
-            /* cfg */
-            control_flow!(self, |cfg| cfg.append_condition_to(test_graph_ix, test_node_id));
-            /* cfg */
+        } else {
+            control_flow!(self, |cfg| {
+                cfg.add_edge(test_graph_ix, before_body_graph_ix, EdgeType::Jump);
+                cfg.add_edge(test_graph_ix, after_for_stmt, EdgeType::Normal);
+            });
         }
 
         /* cfg */
-        #[cfg(feature = "cfg")]
-        let (after_test_graph_ix, update_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
+        control_flow!(self, |cfg| cfg.current_node_ix = update_graph_ix);
         /* cfg */
 
         if let Some(update) = &stmt.update {
@@ -1445,12 +1537,11 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         }
 
         /* cfg */
-        #[cfg(feature = "cfg")]
-        let (after_update_graph_ix, before_body_graph_ix) = control_flow!(self, |cfg| {
+        control_flow!(self, |cfg| {
             let after_update_graph_ix = cfg.current_node_ix;
-            let before_body_graph_ix = cfg.new_basic_block_normal();
+            cfg.add_edge(after_update_graph_ix, test_graph_ix, EdgeType::Backedge);
+            cfg.current_node_ix = before_body_graph_ix;
             cfg.ctx(None).default().allow_break().allow_continue();
-            (after_update_graph_ix, before_body_graph_ix)
         });
         /* cfg */
 
@@ -1459,12 +1550,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg */
         control_flow!(self, |cfg| {
             let after_body_graph_ix = cfg.current_node_ix;
-            let after_for_stmt = cfg.new_basic_block_normal();
-            cfg.add_edge(before_for_graph_ix, test_graph_ix, EdgeType::Normal);
-            cfg.add_edge(after_test_graph_ix, before_body_graph_ix, EdgeType::Jump);
+            cfg.current_node_ix = after_for_stmt;
             cfg.add_edge(after_body_graph_ix, update_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(after_update_graph_ix, test_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(after_test_graph_ix, after_for_stmt, EdgeType::Normal);
 
             cfg.ctx(None)
                 .mark_break(after_for_stmt)
@@ -1611,23 +1698,28 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
-        let (before_if_stmt_graph_ix, start_of_condition_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal(),));
+        let (before_consequent_stmt_graph_ix, start_alternate_stmt_graph_ix) =
+            control_flow!(self, |cfg| {
+                let before = cfg.current_node_ix;
+                let condition = cfg.new_basic_block_normal();
+                let consequent = cfg.new_basic_block_normal();
+                let alternate = cfg.new_basic_block_normal();
+                cfg.add_edge(before, condition, EdgeType::Normal);
+                cfg.current_node_ix = condition;
+                (consequent, alternate)
+            });
         /* cfg */
 
         #[cfg(feature = "cfg")]
-        self.record_ast_nodes();
+        self.visit_condition(
+            &stmt.test,
+            (before_consequent_stmt_graph_ix, EdgeType::Jump),
+            (start_alternate_stmt_graph_ix, EdgeType::Jump),
+        );
+        #[cfg(not(feature = "cfg"))]
         self.visit_expression(&stmt.test);
-        #[cfg(feature = "cfg")]
-        let test_node_id = self.retrieve_recorded_ast_node();
 
-        /* cfg */
-        #[cfg(feature = "cfg")]
-        let (after_test_graph_ix, before_consequent_stmt_graph_ix) = control_flow!(self, |cfg| {
-            cfg.append_condition_to(start_of_condition_graph_ix, test_node_id);
-            (cfg.current_node_ix, cfg.new_basic_block_normal())
-        });
-        /* cfg */
+        control_flow!(self, |cfg| cfg.current_node_ix = before_consequent_stmt_graph_ix);
 
         self.visit_statement(&stmt.consequent);
 
@@ -1639,7 +1731,8 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         #[cfg(feature = "cfg")]
         let else_graph_ix = if let Some(alternate) = &stmt.alternate {
             /* cfg */
-            let else_graph_ix = control_flow!(self, |cfg| cfg.new_basic_block_normal());
+            let else_graph_ix = start_alternate_stmt_graph_ix;
+            control_flow!(self, |cfg| cfg.current_node_ix = else_graph_ix);
             /* cfg */
 
             self.visit_statement(alternate);
@@ -1656,21 +1749,17 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - bb after if statement joins consequent and alternate */
         control_flow!(self, |cfg| {
-            let after_if_graph_ix = cfg.new_basic_block_normal();
-
-            cfg.add_edge(before_if_stmt_graph_ix, start_of_condition_graph_ix, EdgeType::Normal);
-
-            cfg.add_edge(after_test_graph_ix, before_consequent_stmt_graph_ix, EdgeType::Jump);
+            let after_if_graph_ix = if stmt.alternate.is_some() {
+                cfg.new_basic_block_normal()
+            } else {
+                cfg.current_node_ix = start_alternate_stmt_graph_ix;
+                start_alternate_stmt_graph_ix
+            };
 
             cfg.add_edge(after_consequent_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
 
-            if let Some((start_of_alternate_stmt_graph_ix, after_alternate_stmt_graph_ix)) =
-                else_graph_ix
-            {
-                cfg.add_edge(after_test_graph_ix, start_of_alternate_stmt_graph_ix, EdgeType::Jump);
+            if let Some((_, after_alternate_stmt_graph_ix)) = else_graph_ix {
                 cfg.add_edge(after_alternate_stmt_graph_ix, after_if_graph_ix, EdgeType::Normal);
-            } else {
-                cfg.add_edge(after_test_graph_ix, after_if_graph_ix, EdgeType::Jump);
             }
         });
         /* cfg */
@@ -2013,25 +2102,31 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
 
         /* cfg - condition basic block */
         #[cfg(feature = "cfg")]
-        let (before_while_stmt_graph_ix, condition_graph_ix) =
-            control_flow!(self, |cfg| (cfg.current_node_ix, cfg.new_basic_block_normal()));
+        let (condition_graph_ix, body_graph_ix, after_while_graph_ix) =
+            control_flow!(self, |cfg| {
+                let before = cfg.current_node_ix;
+                let condition = cfg.new_basic_block_normal();
+                let body = cfg.new_basic_block_normal();
+                let after = cfg.new_basic_block_normal();
+                cfg.add_edge(before, condition, EdgeType::Normal);
+                cfg.current_node_ix = condition;
+                (condition, body, after)
+            });
         /* cfg */
 
         #[cfg(feature = "cfg")]
-        self.record_ast_nodes();
+        self.visit_condition(
+            &stmt.test,
+            (body_graph_ix, EdgeType::Jump),
+            (after_while_graph_ix, EdgeType::Normal),
+        );
+        #[cfg(not(feature = "cfg"))]
         self.visit_expression(&stmt.test);
-        #[cfg(feature = "cfg")]
-        let test_node_id = self.retrieve_recorded_ast_node();
 
         /* cfg - body basic block */
-        #[cfg(feature = "cfg")]
-        let (after_test_graph_ix, body_graph_ix) = control_flow!(self, |cfg| {
-            cfg.append_condition_to(condition_graph_ix, test_node_id);
-            let after_test_graph_ix = cfg.current_node_ix;
-            let body_graph_ix = cfg.new_basic_block_normal();
-
+        control_flow!(self, |cfg| {
+            cfg.current_node_ix = body_graph_ix;
             cfg.ctx(None).default().allow_break().allow_continue();
-            (after_test_graph_ix, body_graph_ix)
         });
         /* cfg */
 
@@ -2040,12 +2135,9 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         /* cfg - after body basic block */
         control_flow!(self, |cfg| {
             let after_body_graph_ix = cfg.current_node_ix;
-            let after_while_graph_ix = cfg.new_basic_block_normal();
+            cfg.current_node_ix = after_while_graph_ix;
 
-            cfg.add_edge(before_while_stmt_graph_ix, condition_graph_ix, EdgeType::Normal);
-            cfg.add_edge(after_test_graph_ix, body_graph_ix, EdgeType::Jump);
             cfg.add_edge(after_body_graph_ix, condition_graph_ix, EdgeType::Backedge);
-            cfg.add_edge(after_test_graph_ix, after_while_graph_ix, EdgeType::Normal);
 
             cfg.ctx(None)
                 .mark_break(after_while_graph_ix)
