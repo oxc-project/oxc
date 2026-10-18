@@ -82,33 +82,98 @@ enum StrictMode {
 declare_oxc_lint!(
     /// ### What it does
     ///
-    /// FIXME: Briefly describe the rule's purpose.
+    /// This rule requires or disallows strict mode directives.
     ///
     /// ### Why is this bad?
     ///
-    /// FIXME: Explain why violating this rule is problematic.
+    /// When a directive occurs in global scope, strict mode applies to the entire script.
+    /// When a directive occurs at the beginning of a function body, strict mode applies
+    /// only to that function, including all contained functions.
+    /// In the CommonJS module system, a hidden function wraps each module and limits
+    /// the scope of a “global” strict mode directive.
+    /// In ECMAScript modules, which always have strict mode semantics, the
+    /// directives are unnecessary.
     ///
     /// ### Examples
     ///
-    /// Examples of **incorrect** code for this rule:
+    /// Examples of **incorrect** code for "global"
     /// ```js
-    /// FIXME: Add at least one example of code that violates the rule.
+    /// function foo() {
+    ///   "use strict";
+    /// }
     /// ```
     ///
-    /// Examples of **correct** code for this rule:
+    /// Examples of **incorrect** code for "function"
     /// ```js
-    /// FIXME: Add at least one example of code that is allowed with the rule.
+    /// "use strict";
+    /// function foo() {}
+    /// ```
+    ///
+    /// ```js
+    /// (function() {
+    ///     function bar() {
+    ///         "use strict";
+    ///     }
+    /// }());
+    /// ```
+    ///
+    /// ```js
+    /// // Illegal "use strict" directive in function with non-simple parameter list.
+    /// // This is a syntax error since ES2016.
+    /// function foo(a = 1) {
+    ///     "use strict";
+    /// }
+    ///
+    /// // We cannot write "use strict" directive in this function.
+    /// // So we have to wrap this function with a function with "use strict" directive.
+    /// function foo(a = 1) {}
+    /// ```
+    ///
+    /// Examples of **incorrect** code for "never"
+    /// ```js
+    /// "use strict";
+    /// function foo() {
+    ///   "use strict";
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for "global"
+    /// ```js
+    /// "use strict";
+    /// function foo() {}
+    /// ```
+    /// ```js
+    /// (function() {
+    ///     "use strict";
+    ///     function bar() {}
+    /// }());
+    /// ```
+    ///
+    /// ```js
+    /// (function() {
+    ///     "use strict";
+    ///     function foo(a = 1) {}
+    /// }());
+    /// ```
+    ///
+    /// Examples of **correct** code for "function"
+    /// ```js
+    /// function foo() {
+    ///   "use strict";
+    /// }
+    /// ```
+    ///
+    /// Examples of **correct** code for "never"
+    /// ```js
+    /// function foo() {}
     /// ```
     Strict,
     eslint,
-    nursery, // TODO: change category to `correctness`, `suspicious`, `pedantic`, `perf`, `restriction`, or `style`
-             // See <https://oxc.rs/docs/contribute/linter.html#rule-category> for details
-    fix, // TODO: describe fix capabilities. Remove or set to `none` if no fix can be done,
-         // keep at 'pending' if you think one could be added but don't know how.
-         // Options are 'fix', 'fix_dangerous', 'suggestion', and 'conditional_fix_suggestion'
+    suspicious,
+    conditional_fix_suggestion,
     config = Strict,
     version = "next",
-    short_description = "FIXME: One-sentence description of the rule.",
+    short_description = "Requires or disallows strict mode directives.",
 );
 
 impl Rule for Strict {
