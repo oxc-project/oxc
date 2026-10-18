@@ -238,6 +238,7 @@ impl Tester<'_> {
                         range,
                         context: context.clone(),
                         document_version: None,
+                        document_text: None,
                     },
                 ),
                 fix_all_action: linter
@@ -246,6 +247,7 @@ impl Tester<'_> {
                         range,
                         context: fix_all_context.clone(),
                         document_version: None,
+                        document_text: None,
                     })
                     .into_iter()
                     .next(),
