@@ -85,7 +85,12 @@ pub fn parse_jsdoc(
             // - 2 backticks: inline code (used to escape backticks inside)
             // - 3+ backticks: code fence (for nested code blocks)
             // Opening and closing sequences must have the same number of backticks.
-            '`' if !in_single_quotes && !in_double_quotes => {
+            // Apostrophes in prose do not quote JSDoc Markdown. Outside a type
+            // expression, always recognize backtick spans so a prose apostrophe
+            // cannot leave later tags inside an unterminated code span after
+            // quote state resets at a newline. Inside `{...}`, retain quote
+            // handling for literal backticks in type strings.
+            '`' if curly_brace_depth == 0 || (!in_single_quotes && !in_double_quotes) => {
                 // Count consecutive backticks
                 let mut count: u32 = 1;
                 while chars.peek() == Some(&'`') {
@@ -289,6 +294,13 @@ mod tests {
         let src = " \n * @param {string} name The name\n * @returns {boolean} True if valid";
         let kinds = tag_kinds(src);
         assert_eq!(kinds, vec!["param", "returns"]);
+    }
+
+    #[test]
+    fn apostrophe_before_multiline_inline_code_does_not_merge_later_tags() {
+        let src = " \n * @remarks\n *   A row's. `{ a,\n *   b }`.\n * @example\n *   `const a = 1;`\n * @see {Foo}";
+        let kinds = tag_kinds(src);
+        assert_eq!(kinds, vec!["remarks", "example", "see"]);
     }
 
     #[test]
