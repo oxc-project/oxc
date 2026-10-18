@@ -47,7 +47,9 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
         // `this` is emitted as `Identifier` token instead of `Keyword`
         match type_name {
             TSTypeName::ThisExpression(this_expr) => {
-                self.ctx.emit_this_identifier_at(this_expr.span.start);
+                if !this_expr.span.is_unspanned() {
+                    self.ctx.emit_this_identifier_at(this_expr.span.start);
+                }
             }
             TSTypeName::IdentifierReference(ident) => {
                 self.visit_identifier_reference(ident);
