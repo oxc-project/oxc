@@ -260,24 +260,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let start = self.cur_start();
         let has_leading_operator = self.eat(kind);
-        /* hasLeadingOperator && parseFunctionOrConstructorTypeToError(isUnionType) ||*/
-        let mut ty = parse_constituent_type(self);
-        if self.at(kind) || has_leading_operator {
-            let mut types = ArenaVec::from_value_in(ty, self);
-            while self.eat(kind) {
-                let ty =
-                    /*parseFunctionOrConstructorTypeToError(isUnionType) || */
-                    parse_constituent_type(self);
-                types.push(ty);
-            }
-            let span = self.end_span(start);
-            ty = match kind {
-                Kind::Pipe => TSType::new_ts_union_type(span, types, self),
-                Kind::Amp => TSType::new_ts_intersection_type(span, types, self),
-                _ => unreachable!(),
-            };
+        let ty = parse_constituent_type(self);
+        if !self.at(kind) && !has_leading_operator {
+            return ty;
         }
-        ty
+        let mut types = ArenaVec::from_value_in(ty, self);
+        while self.eat(kind) {
+            let ty = parse_constituent_type(self);
+            types.push(ty);
+        }
+        let span = self.end_span(start);
+        match kind {
+            Kind::Pipe => TSType::new_ts_union_type(span, types, self),
+            Kind::Amp => TSType::new_ts_intersection_type(span, types, self),
+            _ => unreachable!(),
+        }
     }
 
     fn parse_type_operator_or_higher(&mut self) -> TSType<'a> {
