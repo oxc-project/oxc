@@ -6,7 +6,7 @@ use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
+    ArrayJoin, StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex, ToJsString,
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
@@ -50,6 +50,7 @@ impl<'a> PeepholeOptimizations {
         };
         let replacement = match name {
             "concat" => Self::try_fold_concat(*span, arguments, callee, ctx),
+            "join" => Self::try_fold_array_join(*span, arguments, object, ctx),
             "pow" => Self::try_fold_pow(*span, arguments, object, ctx),
             "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
             _ => None,
@@ -360,6 +361,46 @@ impl<'a> PeepholeOptimizations {
             }
             _ => None,
         }
+    }
+
+    /// `['a','b'].join()` -> `'a,b'`
+    fn try_fold_array_join(
+        span: Span,
+        arguments: &Arguments<'a>,
+        object: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let Expression::ArrayExpression(array) = object else { return None };
+        if array.may_have_side_effects(ctx) || arguments.len() > 1 {
+            return None;
+        }
+
+        let separator = if let Some(argument) = arguments.first() {
+            let separator = argument.as_expression()?;
+            if separator.may_have_side_effects(ctx) {
+                return None;
+            }
+            if separator.value_type(ctx).is_undefined() {
+                None
+            } else {
+                Some(separator.to_js_string(ctx)?)
+            }
+        } else {
+            None
+        };
+        let separator = separator.as_deref().unwrap_or(",");
+
+        let per_element = array.elements.len().saturating_sub(1) * 3;
+        let syntax_savings = per_element + "[].join()".len();
+
+        let added_size = separator.len() * (array.elements.len().saturating_sub(2));
+
+        if syntax_savings <= added_size {
+            return None;
+        }
+
+        let joined = array.array_join(ctx, Some(separator))?;
+        Some(Expression::new_string_literal(span, Str::from_str_in(&joined, ctx), None, ctx))
     }
 
     pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {

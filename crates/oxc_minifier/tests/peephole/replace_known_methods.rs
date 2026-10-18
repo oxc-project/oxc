@@ -56,85 +56,110 @@ fn test_string_index_of() {
 }
 
 #[test]
-#[ignore = "TODO: Array.join optimization with sparse arrays not yet implemented"]
-fn test_string_join_add_sparse() {
-    test("x = [,,'a'].join(',')", "x = ',,a'");
-}
+fn test_try_fold_array_join() {
+    test_value("[].join()", "''");
+    test_value("[].join(',')", "''");
+    test_value("['a'].join('')", "'a'");
+    test_value("['a'].join(',')", "'a'");
+    test_value("['a', 'b', 'c'].join()", "'a,b,c'");
+    test_value("['a', 'b', 'c'].join('')", "'abc'");
+    test_value("['a', 'b', 'c'].join(',')", "'a,b,c'");
+    test_value("['a', 'b'].join(undefined)", "'a,b'");
+    test_value("['a', 'b'].join(null)", "'anullb'");
 
-#[test]
-#[ignore = "TODO: Array.join optimization edge cases not yet implemented"]
-fn test_no_string_join() {
-    test_same("x = [].join(',',2)");
-    test_same("x = [].join(f)");
+    // Works with numbers
+    test_value("['a=', 5].join('')", "'a=5'");
+    test_value("['a', '5'].join(7)", "'a75'");
+    test_value("[1, 2, 3].join('-')", "'1-2-3'");
+    test_value("[1,2,3].join('abcdef')", "'1abcdef2abcdef3'");
+    test_value("[1,2].join()", "'1,2'");
+    test_value("[[1, 2], [3, 4]].join()", "'1,2,3,4'");
+
+    // Works on boolean
+    test_value("['a=', false].join('')", "'a=false'");
+    test_value("['a', '5'].join(true)", "'atrue5'");
+    test_value("['a', '5'].join(false)", "'afalse5'");
+
+    // Template strings
+    test_value("[`a`, `b`, `c`].join(``)", "'abc'");
+    test_value("[`a`, `b`, `c`].join('')", "'abc'");
+
+    // Works on sparse
+    test_value("[,,'a'].join(',')", "',,a'");
+
+    // Works on nullish
+    test_value("[null].join('')", "''");
+    test_value("[null,undefined,''].join(',')", "',,'");
+    test_value("[null,undefined,0].join(',')", "',,0'");
+
+    // Only optimize if it's a size win.
+    test_value("['a'].join('a very very very long chain')", "'a'");
+    test_value(
+        "['a', '5', 'c'].join('a very very very long chain')",
+        "['a','5','c'].join('a very very very long chain')",
+    );
+
+    // Unsupported syntax or side effects
+    test_same_value("[].join(',',2)");
+    test_same_value("[].join(f)");
+    test_same_value("[foo()].join(',')");
+    test_same_value("[void foo()].join(',')");
+    test_same_value("[1].join(void foo())");
+    test_same_value("[1].join(f)");
+    test_same_value("[foo()].join('')");
+    test_same("[foo()].join('')");
+    test_same_value("[x].join();");
+    test_same_value("[x,y].join();");
+    test_same_value("[x,y,z].join();");
 }
 
 #[test]
 #[ignore = "TODO: Array.join to string concatenation optimization not yet implemented"]
 fn test_string_join_add() {
-    test("x = ['a', 'b', 'c'].join('')", "x = \"abc\"");
-    test("x = [].join(',')", "x = \"\"");
-    test("x = ['a'].join(',')", "x = \"a\"");
-    test("x = ['a', 'b', 'c'].join(',')", "x = \"a,b,c\"");
-    test("x = ['a', foo, 'b', 'c'].join(',')", "x = [\"a\",foo,\"b,c\"].join()");
-    test("x = [foo, 'a', 'b', 'c'].join(',')", "x = [foo,\"a,b,c\"].join()");
-    test("x = ['a', 'b', 'c', foo].join(',')", "x = [\"a,b,c\",foo].join()");
-
-    // Works with numbers
-    test("x = ['a=', 5].join('')", "x = \"a=5\"");
-    test("x = ['a', '5'].join(7)", "x = \"a75\"");
-
-    // Works on boolean
-    test("x = ['a=', false].join('')", "x = \"a=false\"");
-    test("x = ['a', '5'].join(true)", "x = \"atrue5\"");
-    test("x = ['a', '5'].join(false)", "x = \"afalse5\"");
-
-    // Only optimize if it's a size win.
-    test(
-        "x = ['a', '5', 'c'].join('a very very very long chain')",
-        "x = [\"a\",\"5\",\"c\"].join(\"a very very very long chain\")",
-    );
-
-    // Template strings
-    test("x = [`a`, `b`, `c`].join(``)", "x = 'abc'");
-    test("x = [`a`, `b`, `c`].join('')", "x = 'abc'");
+    test_value("['a', foo, 'b', 'c'].join(',')", "['a',foo,'b,c'].join()");
+    test_value("[foo, 'a', 'b', 'c'].join(',')", "[foo,'a,b,c'].join()");
+    test_value("['a', 'b', 'c', foo].join(',')", "['a,b,c',foo].join()");
 
     // TODO(user): Its possible to fold this better.
-    test_same("x = ['', foo].join('-')");
-    test_same("x = ['', foo, ''].join()");
+    test_same_value("['', foo].join('-')");
+    test_same_value("['', foo, ''].join()");
 
-    test(
-        "x = ['', '', foo, ''].join(',')", //
-        "x = [ ','  , foo, ''].join()",
+    test_value(
+        "['', '', foo, ''].join(',')", //
+        "[ ','  , foo, ''].join()",
     );
-    test(
-        "x = ['', '', foo, '', ''].join(',')", //
-        "x = [ ',',   foo,  ','].join()",
-    );
-
-    test(
-        "x = ['', '', foo, '', '', bar].join(',')", //
-        "x = [ ',',   foo,  ',',   bar].join()",
+    test_value(
+        "['', '', foo, '', ''].join(',')", //
+        "[ ',',   foo,  ','].join()",
     );
 
-    test(
-        "x = [1,2,3].join('abcdef')", //
-        "x = '1abcdef2abcdef3'",
+    test_value(
+        "['', '', foo, '', '', bar].join(',')", //
+        "[ ',',   foo,  ',',   bar].join()",
     );
-
-    test("x = [1,2].join()", "x = '1,2'");
-    test("x = [null,undefined,''].join(',')", "x = ',,'");
-    test("x = [null,undefined,0].join(',')", "x = ',,0'");
-    // This can be folded but we don't currently.
-    test_same("x = [[1,2],[3,4]].join()"); // would like: "x = '1,2,3,4'"
 }
 
 #[test]
-#[ignore = "TODO: Array.join single element optimization not yet implemented"]
-fn test_string_join_add_b1992789() {
-    test("x = ['a'].join('')", "x = \"a\"");
-    test_same("x = [foo()].join('')");
-    test_same("[foo()].join('')");
-    test("[null].join('')", "''");
+fn test_join_spread1() {
+    test_same_value("[...foo].join('')");
+    test_same_value("[...someMap.keys()].join('')");
+    test_same_value("[foo, ...bar].join('')");
+    test_same_value("[...foo, bar].join('')");
+    test_same_value("[...foo, 'bar'].join('')");
+    test_same_value("['1', ...'2', '3'].join('')");
+    test_value("['1', ...['2'], '3'].join('')", "'123'");
+}
+
+#[test]
+#[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
+fn test_join_spread2() {
+    test_value("[...foo].join(',')", "[...foo].join()");
+    test_value("[...someMap.keys()].join(',')", "[...someMap.keys()].join()");
+    test_value("[foo, ...bar].join(',')", "[foo, ...bar].join()");
+    test_value("[...foo, bar].join(',')", "[...foo, bar].join()");
+    test_value("[...foo, 'bar'].join(',')", "[...foo, 'bar'].join()");
+    test_value("['1', ...'2', '3'].join(',')", "['1', ...'2', '3'].join()");
+    test_value("['1', ...['2'], '3'].join(',')", "['1', ...['2'], '3'].join()");
 }
 
 #[test]
@@ -318,50 +343,6 @@ fn test_fold_string_split() {
 
     // late = true;
     // test_same("x = 'a b c d e'.split(' ')");
-}
-
-#[test]
-#[ignore = "TODO: Array.join edge case optimization not yet implemented"]
-fn test_join_bug() {
-    test("var x = [].join();", "var x = '';");
-    test_same("var x = [x].join();");
-    test_same("var x = [x,y].join();");
-    test_same("var x = [x,y,z].join();");
-
-    // test_same(
-    // lines(
-    // "shape['matrix'] = [",
-    // "    Number(headingCos2).toFixed(4),",
-    // "    Number(-headingSin2).toFixed(4),",
-    // "    Number(headingSin2 * yScale).toFixed(4),",
-    // "    Number(headingCos2 * yScale).toFixed(4),",
-    // "    0,",
-    // "    0",
-    // "  ].join()"));
-}
-
-#[test]
-#[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
-fn test_join_spread1() {
-    test_same("var x = [...foo].join('');");
-    test_same("var x = [...someMap.keys()].join('');");
-    test_same("var x = [foo, ...bar].join('');");
-    test_same("var x = [...foo, bar].join('');");
-    test_same("var x = [...foo, 'bar'].join('');");
-    test_same("var x = ['1', ...'2', '3'].join('');");
-    test_same("var x = ['1', ...['2'], '3'].join('');");
-}
-
-#[test]
-#[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
-fn test_join_spread2() {
-    test("var x = [...foo].join(',');", "var x = [...foo].join();");
-    test("var x = [...someMap.keys()].join(',');", "var x = [...someMap.keys()].join();");
-    test("var x = [foo, ...bar].join(',');", "var x = [foo, ...bar].join();");
-    test("var x = [...foo, bar].join(',');", "var x = [...foo, bar].join();");
-    test("var x = [...foo, 'bar'].join(',');", "var x = [...foo, 'bar'].join();");
-    test("var x = ['1', ...'2', '3'].join(',');", "var x = ['1', ...'2', '3'].join();");
-    test("var x = ['1', ...['2'], '3'].join(',');", "var x = ['1', ...['2'], '3'].join();");
 }
 
 #[test]
@@ -913,7 +894,7 @@ fn test_fold_concat_chaining() {
     // array
     test("x = [1,2].concat(1).concat(2,['abc']).concat('abc')", "x = [1,2,1,2,'abc','abc']");
     test("x = [].concat(['abc']).concat(1).concat([2,3])", "x = ['abc',1,2,3]");
-    test("x = [].concat(1).concat(2).join(',')", "x = [1,2].join(',')");
+    test("x = [].concat(1).concat(2).join(',')", "x = '1,2'");
 
     test("var x, y; [1].concat(x).concat(y)", "var x, y; [1].concat(x, y)");
     test("var y; [1].concat(x).concat(y)", "var y; [1].concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
