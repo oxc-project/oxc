@@ -1,6 +1,6 @@
 use rustc_hash::FxHashMap;
 
-use oxc_allocator::{Allocator, GetAllocator};
+use oxc_allocator::{Allocator, ArenaVec, GetAllocator};
 
 use crate::{FormatElement, FormatSession, GroupId, InputKind, format_element::Interned};
 
@@ -16,9 +16,10 @@ pub struct FormatState<'ast, C> {
     // For the document IR printing process
     /// The interned elements that have been printed to this point
     printed_interned_elements: FxHashMap<Interned<'ast>, usize>,
-    /// Heap staging vector shared by all [`crate::HeapVecBuffer`]s of this format run;
-    /// see [`crate::HeapVecBuffer`] for the watermark scheme keeping their views disjoint.
-    scratch: Vec<FormatElement<'ast>>,
+    /// The element stack every [`crate::Formatter`] of this format run writes into;
+    /// see [`crate::Formatter`] for how their views stay disjoint.
+    /// In the arena, so that the root formatter's elements become the document as they are.
+    elements: ArenaVec<'ast, FormatElement<'ast>>,
 }
 
 impl<C: std::fmt::Debug> std::fmt::Debug for FormatState<'_, C> {
@@ -45,12 +46,8 @@ impl<'ast, C> FormatState<'ast, C> {
 
     /// Creates a new state on an existing session, sharing its arena and `GroupId` space.
     pub fn new_with_session(context: C, session: FormatSession<'ast>) -> Self {
-        Self {
-            context,
-            session,
-            printed_interned_elements: FxHashMap::default(),
-            scratch: Vec::new(),
-        }
+        let elements = ArenaVec::new_in(&session.allocator());
+        Self { context, session, printed_interned_elements: FxHashMap::default(), elements }
     }
 
     /// The session this state formats under.
@@ -58,14 +55,16 @@ impl<'ast, C> FormatState<'ast, C> {
         &self.session
     }
 
-    /// The heap staging vector shared by all [`crate::HeapVecBuffer`]s of this format run.
-    pub(crate) fn scratch(&self) -> &[FormatElement<'ast>] {
-        &self.scratch
+    /// The element stack every [`crate::Formatter`] of this format run writes into.
+    #[inline]
+    pub(crate) fn elements(&self) -> &[FormatElement<'ast>] {
+        &self.elements
     }
 
-    /// Mutable access to the heap staging vector; see [`FormatState::scratch`].
-    pub(crate) fn scratch_mut(&mut self) -> &mut Vec<FormatElement<'ast>> {
-        &mut self.scratch
+    /// Mutable access to the element stack; see [`FormatState::elements`].
+    #[inline]
+    pub(crate) fn elements_mut(&mut self) -> &mut ArenaVec<'ast, FormatElement<'ast>> {
+        &mut self.elements
     }
 
     /// Returns the allocator used for arena-allocating format elements.

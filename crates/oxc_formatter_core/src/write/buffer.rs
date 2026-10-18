@@ -1,249 +1,35 @@
 #![expect(clippy::mutable_key_type)]
-use std::{
-    fmt::Debug,
-    marker::PhantomData,
-    ops::{Deref, DerefMut},
-};
+use std::{fmt::Debug, ops::Deref};
 
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
-    Arguments, FormatElement, FormatState,
+    FormatElement, FormatState, Formatter,
     format_element::{
         Interned, LineMode, PrintMode,
         tag::{Condition, Tag},
     },
-    write,
 };
-
-/// A trait for writing or formatting into `FormatElement`-accepting buffers or streams.
-pub trait Buffer<'ast, C> {
-    /// Writes a [crate::FormatElement] into this buffer, returning whether the write succeeded.
-    fn write_element(&mut self, element: FormatElement<'ast>);
-
-    /// Returns a slice containing all elements written into this buffer.
-    ///
-    /// Prefer using [BufferExtensions::start_recording] over accessing [Buffer::elements] directly.
-    #[doc(hidden)]
-    fn elements(&self) -> &[FormatElement<'ast>];
-
-    /// Glue for usage of the [`write!`] macro with implementors of this trait.
-    ///
-    /// This method should generally not be invoked manually, but rather through the [`write!`] macro itself.
-    fn write_fmt(mut self: &mut Self, arguments: Arguments<'_, 'ast, C>) {
-        write::<C>(&mut self, arguments);
-    }
-
-    /// Returns the formatting state relevant for this formatting session.
-    fn state(&self) -> &FormatState<'ast, C>;
-
-    /// Returns the mutable formatting state relevant for this formatting session.
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C>;
-
-    /// Replaces the elements starting at `start` with `replacement`.
-    ///
-    /// Used by streaming IR transforms (currently `SortImportsTransform`)
-    /// to splice a reordered chunk back into the buffer.
-    /// Only the vector-backed buffers (`VecBuffer`, `HeapVecBuffer`, `AccumulatorBuffer`) support this;
-    /// the wrapper buffer (`RemoveSoftLinesBuffer`) is only ever active
-    /// inside inner-expression contexts, never on the call stack while a streaming chunk is being flushed,
-    /// so they implement this as `unreachable!()`.
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]);
-}
-
-/// Implements the `[Buffer]` trait for all mutable references of objects implementing [Buffer].
-impl<'ast, C, W: Buffer<'ast, C> + ?Sized> Buffer<'ast, C> for &mut W {
-    fn write_element(&mut self, element: FormatElement<'ast>) {
-        (**self).write_element(element);
-    }
-
-    fn elements(&self) -> &[FormatElement<'ast>] {
-        (**self).elements()
-    }
-
-    fn write_fmt(&mut self, args: Arguments<'_, 'ast, C>) {
-        (**self).write_fmt(args);
-    }
-
-    fn state(&self) -> &FormatState<'ast, C> {
-        (**self).state()
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
-        (**self).state_mut()
-    }
-
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        (**self).replace_end(start, replacement);
-    }
-}
-
-/// Vector backed [`Buffer`] implementation.
-///
-/// The buffer writes all elements into the internal elements buffer.
-#[derive(Debug)]
-pub struct VecBuffer<'buf, 'ast, C> {
-    state: &'buf mut FormatState<'ast, C>,
-    elements: ArenaVec<'ast, FormatElement<'ast>>,
-}
-
-impl<'buf, 'ast, C> VecBuffer<'buf, 'ast, C> {
-    pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
-        let elements = ArenaVec::new_in(state);
-        Self { state, elements }
-    }
-
-    /// Creates a buffer with the specified capacity
-    pub fn with_capacity(capacity: usize, state: &'buf mut FormatState<'ast, C>) -> Self {
-        let elements = ArenaVec::with_capacity_in(capacity, state);
-        Self { state, elements }
-    }
-
-    /// Consumes the buffer and returns the written [`FormatElement]`s as a vector.
-    pub fn into_vec(self) -> ArenaVec<'ast, FormatElement<'ast>> {
-        self.elements
-    }
-}
-
-impl<'ast, C> Deref for VecBuffer<'_, 'ast, C> {
-    type Target = [FormatElement<'ast>];
-
-    fn deref(&self) -> &Self::Target {
-        &self.elements
-    }
-}
-
-impl<C> DerefMut for VecBuffer<'_, '_, C> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.elements
-    }
-}
-
-impl<'ast, C> Buffer<'ast, C> for VecBuffer<'_, 'ast, C> {
-    fn write_element(&mut self, element: FormatElement<'ast>) {
-        self.elements.push(element);
-    }
-
-    fn elements(&self) -> &[FormatElement<'ast>] {
-        self
-    }
-
-    fn state(&self) -> &FormatState<'ast, C> {
-        self.state
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
-        self.state
-    }
-
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
-        assert!(start <= self.elements.len(), "replace_end start out of bounds");
-        self.elements.truncate(start);
-        self.elements.extend_from_slice(replacement);
-    }
-}
-
-/// Heap-backed [`Buffer`], the staging twin of [`VecBuffer`].
-///
-/// Use it to build an element sequence whose final length isn't known up front
-/// (interned content, best-fitting variants), then move the result into the arena
-/// exactly-sized via [`HeapVecBuffer::take_into_arena_vec`] / [`HeapVecBuffer::take_into_arena_slice`].
-///
-/// Growing a vector directly in the arena strands every grown-out-of allocation for the rest of the format run
-/// (the arena is a bump allocator and never reclaims;
-/// growth can reuse the allocation only when nothing else was bumped in between, which practically never holds while formatting).
-/// Heap growth is reclaimed by the system allocator, and the arena receives only the final, exactly-sized copy.
-///
-/// The buffer is a watermarked view over the format run's single shared staging vector ([`FormatState`]'s scratch):
-/// its content is the vector's tail past the length recorded at creation,
-/// drained on completion (or on drop). Multiple buffers share the vector like a stack,
-/// sound because IR staging is strictly LIFO (an inner buffer always completes before its enclosing one resumes).
-pub struct HeapVecBuffer<'buf, 'ast, C> {
-    state: &'buf mut FormatState<'ast, C>,
-    watermark: usize,
-}
-
-impl<'buf, 'ast, C> HeapVecBuffer<'buf, 'ast, C> {
-    pub fn new(state: &'buf mut FormatState<'ast, C>) -> Self {
-        let watermark = state.scratch().len();
-        Self { state, watermark }
-    }
-
-    /// Removes and returns the buffered elements, leaving the buffer empty.
-    pub(crate) fn drain(&mut self) -> std::vec::Drain<'_, FormatElement<'ast>> {
-        let watermark = self.watermark;
-        self.state.scratch_mut().drain(watermark..)
-    }
-
-    /// Moves the buffered elements into an exactly-sized arena vector, leaving the buffer empty.
-    pub fn take_into_arena_vec(&mut self) -> ArenaVec<'ast, FormatElement<'ast>> {
-        let allocator = self.state.allocator();
-        // `Drain`'s exact size hint makes `from_iter_in` allocate exactly-sized
-        ArenaVec::from_iter_in(self.drain(), &allocator)
-    }
-
-    /// Moves the buffered elements into an exactly-sized arena slice, leaving the buffer empty.
-    pub fn take_into_arena_slice(&mut self) -> &'ast [FormatElement<'ast>] {
-        self.take_into_arena_vec().into_arena_slice()
-    }
-}
-
-impl<C> Drop for HeapVecBuffer<'_, '_, C> {
-    fn drop(&mut self) {
-        // Forget any elements not taken, restoring the shared vector for the enclosing buffer.
-        let watermark = self.watermark;
-        self.state.scratch_mut().truncate(watermark);
-    }
-}
-
-impl<'ast, C> Deref for HeapVecBuffer<'_, 'ast, C> {
-    type Target = [FormatElement<'ast>];
-
-    fn deref(&self) -> &Self::Target {
-        &self.state.scratch()[self.watermark..]
-    }
-}
-
-impl<'ast, C> Buffer<'ast, C> for HeapVecBuffer<'_, 'ast, C> {
-    fn write_element(&mut self, element: FormatElement<'ast>) {
-        self.state.scratch_mut().push(element);
-    }
-
-    fn elements(&self) -> &[FormatElement<'ast>] {
-        self
-    }
-
-    fn state(&self) -> &FormatState<'ast, C> {
-        self.state
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
-        self.state
-    }
-
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        let start = self.watermark + start;
-        let scratch = self.state.scratch_mut();
-        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
-        assert!(start <= scratch.len(), "replace_end start out of bounds");
-        scratch.truncate(start);
-        scratch.extend_from_slice(replacement);
-    }
-}
 
 /// An owned heap staging vector for accumulators that outlive a single staging scope.
 ///
-/// See [`AccumulatorBuffer`] for why interleaved or suspended accumulators can use
-/// neither the arena nor the format run's shared scratch vector.
+/// For element sequences that outlive a single exclusive borrow of the [`Formatter`]:
+/// builders that accumulate across separate `write()` calls while other content is formatted in between
+/// (multiple builders open at once, see the JSX child-list builders in `oxc_formatter`),
+/// or staging that must release the formatter between being written and being consumed
+/// (the assignment-like left hand side, whose layout is computed with the formatter in between).
+/// Those can't stage in an arena vector of their own (every growth would strand the grown-out-of allocation,
+/// where the element stack is reserved once by the root)
+/// nor on the format run's element stack (suspended or interleaved use breaks its LIFO discipline);
+/// a write goes past the element stack and moves here.
 ///
 /// Content leaves the buffer only through the named consumption paths ([`crate::Formatter::intern_elements`],
 /// [`ScratchBuffer::drain`], or [`ScratchBuffer::discard`]) all of which leave it empty,
 /// satisfying the drop-time assertion below.
 #[derive(Debug, Default)]
-pub struct ScratchBuffer<'ast>(Vec<FormatElement<'ast>>);
+pub struct ScratchBuffer<'ast>(pub(crate) Vec<FormatElement<'ast>>);
 
 impl<'ast> ScratchBuffer<'ast> {
     /// An empty scratch buffer.
@@ -251,15 +37,19 @@ impl<'ast> ScratchBuffer<'ast> {
         Self(Vec::new())
     }
 
-    /// Adapts this scratch vector into a [`Buffer`] writing into it.
+    /// Appends what `content` writes to this buffer, returning what `content` returns.
     ///
-    /// This is the only way to construct an [`AccumulatorBuffer`] and the only write path into the vector,
+    /// The only write path into the vector,
     /// so accumulated content is always guarded by the drain-before-drop assertion below.
-    pub fn writer<'buf, C>(
-        &'buf mut self,
-        state: &'buf mut FormatState<'ast, C>,
-    ) -> AccumulatorBuffer<'buf, 'ast, C> {
-        AccumulatorBuffer::new(state, &mut self.0)
+    pub fn write<'buf, C, R>(
+        &mut self,
+        f: &mut Formatter<'buf, 'ast, C>,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, C>) -> R,
+    ) -> R {
+        // Written past the elements on the stack, then moved here
+        let (start, result) = f.stage(content);
+        self.0.extend(f.state.elements_mut().drain(start..));
+        result
     }
 
     /// Removes and returns the accumulated elements, leaving the buffer empty (re-emit consumption path).
@@ -269,7 +59,7 @@ impl<'ast> ScratchBuffer<'ast> {
 
     /// Inserts an element at `index`, shifting the rest.
     /// For post-hoc adjustment of already-accumulated content
-    /// (e.g. slipping a separator into the last written entry); new content goes through [`ScratchBuffer::writer`].
+    /// (e.g. slipping a separator into the last written entry); new content goes through [`ScratchBuffer::write`].
     pub fn insert(&mut self, index: usize, element: FormatElement<'ast>) {
         self.0.insert(index, element);
     }
@@ -300,92 +90,39 @@ impl Drop for ScratchBuffer<'_> {
     }
 }
 
-/// Heap accumulator [`Buffer`] over a caller-owned element vector.
-///
-/// For element sequences that outlive a single exclusive borrow of the [`FormatState`]:
-/// builders that accumulate across separate `write()` calls while other content is formatted in between
-/// (multiple builders open at once, see the JSX child-list builders in `oxc_formatter`),
-/// or staging that must release the state between being written and being consumed
-/// (the assignment-like left hand side, whose layout is computed with the formatter in between).
-/// Those can't stage in the arena (every growth would strand the grown-out-of allocation, see [`HeapVecBuffer`])
-/// nor share the format run's scratch vector (suspended or interleaved use breaks its LIFO discipline).
-///
-/// Instead the caller owns a [`ScratchBuffer`] and writes through this adapter (constructed via [`ScratchBuffer::writer`]);
-/// the arena receives one exactly-sized copy when the finished result is interned ([`crate::Formatter::intern_elements`]),
-/// or nothing at all when the elements are re-emitted into a downstream buffer.
-pub struct AccumulatorBuffer<'buf, 'ast, C> {
-    state: &'buf mut FormatState<'ast, C>,
-    elements: &'buf mut Vec<FormatElement<'ast>>,
-}
-
-impl<'buf, 'ast, C> AccumulatorBuffer<'buf, 'ast, C> {
-    pub(crate) fn new(
-        state: &'buf mut FormatState<'ast, C>,
-        elements: &'buf mut Vec<FormatElement<'ast>>,
-    ) -> Self {
-        Self { state, elements }
-    }
-}
-
-impl<'ast, C> Buffer<'ast, C> for AccumulatorBuffer<'_, 'ast, C> {
-    fn write_element(&mut self, element: FormatElement<'ast>) {
-        self.elements.push(element);
-    }
-
-    fn elements(&self) -> &[FormatElement<'ast>] {
-        self.elements
-    }
-
-    fn state(&self) -> &FormatState<'ast, C> {
-        self.state
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
-        self.state
-    }
-
-    fn replace_end(&mut self, start: usize, replacement: &[FormatElement<'ast>]) {
-        // `truncate` silently ignores an out-of-bounds start; fail loudly instead
-        assert!(start <= self.elements.len(), "replace_end start out of bounds");
-        self.elements.truncate(start);
-        self.elements.extend_from_slice(replacement);
-    }
-}
-
-/// A Buffer that removes any soft line breaks.
+/// State of the [`crate::Formatter::remove_soft_lines`] mode.
 ///
 /// * Removes [`lines`](FormatElement::Line) with the mode [`Soft`](LineMode::Soft).
 /// * Replaces [`lines`](FormatElement::Line) with the mode [`Soft`](LineMode::SoftOrSpace) with a [`Space`](FormatElement::Space)
-pub struct RemoveSoftLinesBuffer<'buf, 'ast, C> {
-    inner: &'buf mut dyn Buffer<'ast, C>,
-
+pub struct SoftLines<'ast> {
     /// Caches the interned elements after the soft line breaks have been removed.
     ///
-    /// The `key` is the [Interned] element as it has been passed to [Self::write_element] or the child of another
+    /// The `key` is the [Interned] element as it has been passed to [Self::write] or the child of another
     /// [Interned] element. The `value` is the matching document of the key where all soft line breaks have been removed.
     ///
     /// It's fine to not snapshot the cache. The worst that can happen is that it holds on interned elements
-    /// that are now unused. But there's little harm in that and the cache is cleaned when dropping the buffer.
+    /// that are now unused. But there's little harm in that and the cache is cleaned when the mode ends.
     interned_cache: FxHashMap<Interned<'ast>, Interned<'ast>>,
 
     /// Store the conditional content stack to help determine if the current element is within expanded conditional content.
     conditional_content_stack: Vec<Condition>,
+
+    /// Drops every element: the mode was entered inside an enclosing mode's expanded conditional content,
+    /// all of which the enclosing mode drops.
+    discard: bool,
 }
 
-impl<'buf, 'ast, C> RemoveSoftLinesBuffer<'buf, 'ast, C> {
-    /// Creates a new buffer that removes the soft line breaks before writing them into `buffer`.
-    pub fn new(inner: &'buf mut dyn Buffer<'ast, C>) -> Self {
-        Self { inner, interned_cache: FxHashMap::default(), conditional_content_stack: Vec::new() }
-    }
-
-    /// Removes the soft line breaks from an interned element.
-    fn clean_interned(&mut self, interned: Interned<'ast>) -> Interned<'ast> {
-        clean_interned(
-            interned,
-            &mut self.interned_cache,
-            &mut self.conditional_content_stack,
-            self.inner.state().allocator(),
-        )
+impl<'ast> SoftLines<'ast> {
+    /// Starts the mode, nested in `enclosing` if one is active.
+    ///
+    /// The nested mode's output passes the enclosing one unchanged (it holds no soft lines, conditional content, or best fitting),
+    /// so only whether the enclosing one drops everything carries over.
+    pub fn new(enclosing: Option<&SoftLines<'ast>>) -> Self {
+        Self {
+            interned_cache: FxHashMap::default(),
+            conditional_content_stack: Vec::new(),
+            discard: enclosing.is_some_and(|s| s.discard || s.is_in_expanded_conditional_content()),
+        }
     }
 
     /// Marker for whether a `StartConditionalContent(mode: Expanded)` has been
@@ -395,6 +132,58 @@ impl<'buf, 'ast, C> RemoveSoftLinesBuffer<'buf, 'ast, C> {
             .iter()
             .last()
             .is_some_and(|condition| condition.mode == PrintMode::Expanded)
+    }
+
+    /// Writes `element` to the element stack of `state` with the soft line breaks removed.
+    // Streaming twin of `push_cleaned_element`; see the note there before changing either.
+    // Cold: kept out of `Formatter::write_element`, which is inlined into every builder.
+    #[cold]
+    #[inline(never)]
+    pub fn write<C>(&mut self, element: FormatElement<'ast>, state: &mut FormatState<'ast, C>) {
+        let allocator = state.allocator();
+        self.write_cleaned(element, state.elements_mut(), allocator);
+    }
+
+    fn write_cleaned(
+        &mut self,
+        element: FormatElement<'ast>,
+        out: &mut ArenaVec<'ast, FormatElement<'ast>>,
+        allocator: &'ast Allocator,
+    ) {
+        match element {
+            _ if self.discard => {}
+            FormatElement::Tag(Tag::StartConditionalContent(condition)) => {
+                self.conditional_content_stack.push(condition);
+            }
+            FormatElement::Tag(Tag::EndConditionalContent) => {
+                self.conditional_content_stack.pop();
+            }
+            // All content within an expanded conditional gets dropped.
+            // If there's a matching flat variant, that will still get kept.
+            _ if self.is_in_expanded_conditional_content() => {}
+
+            FormatElement::Line(LineMode::Soft) => {}
+            FormatElement::Line(LineMode::SoftOrSpace) => {
+                out.push(FormatElement::Space);
+            }
+            FormatElement::Interned(interned) => {
+                let cleaned = clean_interned(
+                    interned,
+                    &mut self.interned_cache,
+                    &mut self.conditional_content_stack,
+                    allocator,
+                );
+                out.push(FormatElement::Interned(cleaned));
+            }
+            // Since this mode aims to simulate infinite print width, we don't need to retain the best fitting.
+            // Just extract the flattest variant and then handle elements within it.
+            FormatElement::BestFitting(best_fitting) => {
+                for element in best_fitting.most_flat() {
+                    self.write_cleaned(element.clone(), out, allocator);
+                }
+            }
+            element => out.push(element),
+        }
     }
 }
 
@@ -461,9 +250,9 @@ fn clean_interned<'ast>(
     }
 }
 
-/// NOTE: Materializing twin of [`RemoveSoftLinesBuffer::write_element`]: applies the same soft-line-removal rules,
-/// but pushes into a new `Interned` body (borrowed input, clones) instead of streaming owned elements to the inner buffer.
-/// Kept separate so the streaming path avoids clones and this stays non-generic (no monomorphization per context).
+/// NOTE: Materializing twin of [`SoftLines::write`]: applies the same soft-line-removal rules,
+/// but pushes into a new `Interned` body (borrowed input, clones) instead of streaming owned elements to the element stack.
+/// Kept separate so the streaming path avoids clones.
 /// The two `match`es must stay rule-for-rule in sync.
 fn push_cleaned_element<'ast>(
     element: &FormatElement<'ast>,
@@ -512,127 +301,5 @@ fn push_cleaned_element<'ast>(
             }
         }
         element => cleaned.push(element.clone()),
-    }
-}
-
-impl<'ast, C> Buffer<'ast, C> for RemoveSoftLinesBuffer<'_, 'ast, C> {
-    // Streaming twin of `push_cleaned_element`; see the note there before changing either.
-    fn write_element(&mut self, element: FormatElement<'ast>) {
-        match element {
-            FormatElement::Tag(Tag::StartConditionalContent(condition)) => {
-                self.conditional_content_stack.push(condition);
-            }
-            FormatElement::Tag(Tag::EndConditionalContent) => {
-                self.conditional_content_stack.pop();
-            }
-            // All content within an expanded conditional gets dropped.
-            // If there's a matching flat variant, that will still get kept.
-            _ if self.is_in_expanded_conditional_content() => {}
-
-            FormatElement::Line(LineMode::Soft) => {}
-            FormatElement::Line(LineMode::SoftOrSpace) => {
-                self.inner.write_element(FormatElement::Space);
-            }
-            FormatElement::Interned(interned) => {
-                let cleaned = self.clean_interned(interned);
-                self.inner.write_element(FormatElement::Interned(cleaned));
-            }
-            // Since this buffer aims to simulate infinite print width, we don't need to retain the best fitting.
-            // Just extract the flattest variant and then handle elements within it.
-            FormatElement::BestFitting(best_fitting) => {
-                for element in best_fitting.most_flat() {
-                    self.write_element(element.clone());
-                }
-            }
-            element => self.inner.write_element(element),
-        }
-    }
-
-    fn elements(&self) -> &[FormatElement<'ast>] {
-        self.inner.elements()
-    }
-
-    fn state(&self) -> &FormatState<'ast, C> {
-        self.inner.state()
-    }
-
-    fn state_mut(&mut self) -> &mut FormatState<'ast, C> {
-        self.inner.state_mut()
-    }
-
-    fn replace_end(&mut self, _start: usize, _replacement: &[FormatElement<'ast>]) {
-        unreachable!()
-    }
-}
-
-pub trait BufferExtensions<'ast, C>: Buffer<'ast, C> + Sized {
-    /// Starts a recording that gives you access to all elements that have been written between the start
-    /// and end of the recording.
-    #[must_use]
-    fn start_recording(&mut self) -> Recording<'_, 'ast, Self, C> {
-        Recording::new(self)
-    }
-
-    /// Writes a sequence of elements into this buffer.
-    fn write_elements<I>(&mut self, elements: I)
-    where
-        I: IntoIterator<Item = FormatElement<'ast>>,
-    {
-        for element in elements {
-            self.write_element(element);
-        }
-    }
-}
-
-impl<'ast, C, T> BufferExtensions<'ast, C> for T where T: Buffer<'ast, C> {}
-
-#[derive(Debug)]
-pub struct Recording<'buf, 'ast, B, C> {
-    start: usize,
-    buffer: &'buf mut B,
-    _marker: PhantomData<&'ast C>,
-}
-
-impl<'ast, 'buf, B, C> Recording<'buf, 'ast, B, C>
-where
-    B: Buffer<'ast, C>,
-{
-    fn new(buffer: &'buf mut B) -> Self {
-        Self { start: buffer.elements().len(), buffer, _marker: PhantomData }
-    }
-
-    #[inline(always)]
-    pub fn write_fmt(&mut self, arguments: Arguments<'_, 'ast, C>) {
-        self.buffer.write_fmt(arguments);
-    }
-
-    #[inline(always)]
-    pub fn write_element(&mut self, element: FormatElement<'ast>) {
-        self.buffer.write_element(element);
-    }
-
-    pub fn stop(self) -> Recorded<'buf, 'ast> {
-        let buffer: &'buf B = self.buffer;
-        let elements = buffer.elements();
-
-        let recorded = if self.start > elements.len() {
-            // May happen if buffer was rewound.
-            &[]
-        } else {
-            &elements[self.start..]
-        };
-
-        Recorded(recorded)
-    }
-}
-
-#[derive(Debug, Copy, Clone)]
-pub struct Recorded<'buf, 'ast>(&'buf [FormatElement<'ast>]);
-
-impl<'ast> Deref for Recorded<'_, 'ast> {
-    type Target = [FormatElement<'ast>];
-
-    fn deref(&self) -> &Self::Target {
-        self.0
     }
 }

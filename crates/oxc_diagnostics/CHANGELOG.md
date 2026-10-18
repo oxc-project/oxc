@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-13
+
+### ⚡ Performance
+
+- 8c57c5e linter: Share one source per file across type-aware diagnostics (#27462) (Max Schwenk)
+
 ## [0.148.0] - 2026-08-31
 
 ### 🐛 Bug Fixes

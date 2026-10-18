@@ -139,6 +139,7 @@ declare_oxc_lint!(
     NoNoninteractiveElementInteractions,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoNoninteractiveElementInteractionsConfig,
     version = "1.65.0",
     short_description = "Prevents non-interactive HTML elements and elements with non-interactive ARIA roles from being assigned mouse or keyboard event handlers.",
@@ -256,9 +257,9 @@ fn is_content_editable(jsx_el: &JSXOpeningElement) -> bool {
 fn role_value<'b>(jsx_el: &'b JSXOpeningElement<'_>) -> Option<&'b str> {
     has_jsx_prop_ignore_case(jsx_el, "role").and_then(get_prop_value).and_then(
         |value| match value {
-            JSXAttributeValue::StringLiteral(role) => Some(role.value.as_str()),
+            JSXAttributeValue::StringLiteral(role) => role.value.as_str(),
             JSXAttributeValue::ExpressionContainer(container) => match &container.expression {
-                JSXExpression::StringLiteral(role) => Some(role.value.as_str()),
+                JSXExpression::StringLiteral(role) => role.value.as_str(),
                 _ => None,
             },
             _ => None,

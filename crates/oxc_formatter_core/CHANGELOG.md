@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
 ## [0.72.0] - 2026-10-05
 
 ### 💥 BREAKING CHANGES

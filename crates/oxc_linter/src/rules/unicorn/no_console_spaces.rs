@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoConsoleSpaces,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.0.14",
     short_description = "Disallows leading/trailing space inside `console.log()` and similar methods.",
@@ -75,7 +76,9 @@ impl Rule for NoConsoleSpaces {
             if let Some(expression_arg) = arg.as_expression() {
                 let (literal_raw, is_template_lit) = match expression_arg {
                     Expression::StringLiteral(string_lit) => {
-                        let literal_raw = string_lit.value.as_str();
+                        let Some(literal_raw) = string_lit.value.as_str() else {
+                            continue;
+                        };
 
                         (literal_raw, false)
                     }

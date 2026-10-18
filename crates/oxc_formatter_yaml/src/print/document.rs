@@ -1,9 +1,8 @@
 use oxc_formatter_core::{
-    Buffer,
     builders::{hard_line_break, space, text},
     write,
 };
-use oxc_yaml_parser::ast::{Directive, Document, Root};
+use oxc_yaml_parser::ast::{Content, Directive, Document, Node, Root};
 
 use crate::{
     comments::{
@@ -14,7 +13,7 @@ use crate::{
     print::{
         YamlFormatter,
         block::{ends_with_keep_chomped_block, item_gap_anchor, last_descendant_block_scalar},
-        to_span, write_node_or_suppressed,
+        source_starts_with_document_marker, to_span, write_node_or_suppressed,
     },
 };
 
@@ -138,6 +137,20 @@ fn write_document<'a>(document: &'a Document<'a>, f: &mut YamlFormatter<'_, 'a>)
     }
 
     if let Some(node) = &document.body.content {
+        let source = f.context().source_text();
+        if let Some(marker) = document.directives_end_marker {
+            // Content starting with `---`/`...` stays on the `---` line: on a line of its own it would become a marker
+            if source.all_bytes_match(marker.end, node.span.start, |b| matches!(b, b' ' | b'\t'))
+                && source_starts_with_document_marker(node.span.start, f)
+            {
+                needs_line = false;
+                write!(f, space());
+            }
+        } else if source.as_str()[first_key_start(node) as usize..].starts_with('\u{FEFF}') {
+            // Content starting with U+FEFF needs a `---`: outside a document it would be read as a BOM
+            write!(f, "---");
+            needs_line = true;
+        }
         if needs_line {
             write!(f, hard_line_break());
         }
@@ -155,6 +168,16 @@ fn write_document<'a>(document: &'a Document<'a>, f: &mut YamlFormatter<'_, 'a>)
             write_trailing_same_line_comment(node.span.end, &[], f);
         }
     }
+}
+
+/// Where a block mapping's first key starts: a one-line explicit key loses its `?` (`print/mapping_item.rs`),
+/// so the key text may lead the output.
+fn first_key_start(node: &Node<'_>) -> u32 {
+    let key = match &node.content {
+        Content::Mapping(mapping) => mapping.children.first().and_then(|item| item.key_content()),
+        _ => None,
+    };
+    key.map_or(node.span.start, |key| key.span.start)
 }
 
 /// Re-joins directive words with single spaces (whitespace runs between them are normalized).

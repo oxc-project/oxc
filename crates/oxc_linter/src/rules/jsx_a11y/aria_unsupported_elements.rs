@@ -38,6 +38,7 @@ declare_oxc_lint!(
     AriaUnsupportedElements,
     jsx_a11y,
     correctness,
+    recommended,
     fix,
     version = "0.1.1",
     short_description = "Enforces that reserved DOM elements do not contain ARIA roles, states, or properties.",

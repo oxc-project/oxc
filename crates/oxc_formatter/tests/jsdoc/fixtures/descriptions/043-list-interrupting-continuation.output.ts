@@ -39,7 +39,7 @@ export const d = 1;
 export const e = 1;
 
 /**
- * Case F escaped marker stays prose (the author opt-out): result = alpha - beta -
- * gamma delta epsilon and more text.
+ * Case F escaped marker stays prose (the author opt-out): result = alpha - beta
+ * \- gamma delta epsilon and more text.
  */
 export const f = 1;

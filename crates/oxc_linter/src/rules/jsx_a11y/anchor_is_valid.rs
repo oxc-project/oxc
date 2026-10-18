@@ -150,6 +150,7 @@ declare_oxc_lint!(
     AnchorIsValid,
     jsx_a11y,
     correctness,
+    recommended,
     config = AnchorIsValidConfig,
     version = "0.0.19",
     short_description = "Enforce that anchors have a valid `href` and are not used in place of buttons for attaching click logic.",
@@ -249,17 +250,19 @@ impl AnchorIsValid {
     fn check_value(value: &JSXAttributeValue) -> HrefValueKind {
         match value {
             JSXAttributeValue::Element(_) => HrefValueKind::Valid,
-            JSXAttributeValue::StringLiteral(str_lit) => {
-                Self::href_value_kind_from_string(&str_lit.value)
-            }
+            JSXAttributeValue::StringLiteral(str_lit) => str_lit
+                .value
+                .as_str()
+                .map_or(HrefValueKind::Valid, Self::href_value_kind_from_string),
             JSXAttributeValue::ExpressionContainer(exp) => match &exp.expression {
                 JSXExpression::Identifier(ident) if ident.name == "undefined" => {
                     HrefValueKind::Nullish
                 }
                 JSXExpression::NullLiteral(_) => HrefValueKind::Nullish,
-                JSXExpression::StringLiteral(str_lit) => {
-                    Self::href_value_kind_from_string(&str_lit.value)
-                }
+                JSXExpression::StringLiteral(str_lit) => str_lit
+                    .value
+                    .as_str()
+                    .map_or(HrefValueKind::Valid, Self::href_value_kind_from_string),
                 JSXExpression::TemplateLiteral(temp_lit) => {
                     if !temp_lit.expressions.is_empty() {
                         return HrefValueKind::Valid;
@@ -268,7 +271,7 @@ impl AnchorIsValid {
                     let Some(quasi) = temp_lit.single_quasi() else {
                         return HrefValueKind::Valid;
                     };
-                    Self::href_value_kind_from_string(&quasi)
+                    quasi.as_str().map_or(HrefValueKind::Valid, Self::href_value_kind_from_string)
                 }
                 _ => HrefValueKind::Valid,
             },

@@ -10,6 +10,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode,
@@ -61,6 +62,7 @@ declare_oxc_lint!(
     PreferTernary,
     unicorn,
     style,
+    recommended,
     pending,
     config = PreferTernaryOption,
     version = "1.50.0",
@@ -320,7 +322,7 @@ fn is_same_assignment_target(
 }
 
 fn member_static_property_name(member: &MemberExpression<'_>) -> Option<String> {
-    if let Some(name) = member.static_property_name() {
+    if let Some(name) = member.static_property_name().and_then(JSStr::as_str) {
         return Some(name.to_string());
     }
 

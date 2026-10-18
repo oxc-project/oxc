@@ -154,7 +154,6 @@ fn check_expression<'a>(
                 ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
-        // Check for CallExpression (Vue.extend, defineComponent)
         Expression::CallExpression(call_expr) => {
             check_call_expression(call_expr, span, ctx);
         }
@@ -163,7 +162,6 @@ fn check_expression<'a>(
 }
 
 fn check_call_expression<'a>(call_expr: &CallExpression<'a>, span: Span, ctx: &LintContext<'a>) {
-    // Check for defineComponent
     if let Some(callee_ident) = call_expr.callee.get_identifier_reference()
         && callee_ident.name == "defineComponent"
     {

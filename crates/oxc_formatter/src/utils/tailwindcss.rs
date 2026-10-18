@@ -12,7 +12,7 @@ use oxc_formatter_core::FormatElement;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, SortTailwindcssOptions,
+    SortTailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
     formatter::{TailwindContextEntry, prelude::*},
     write,

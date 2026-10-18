@@ -46,6 +46,7 @@ declare_react_compiler_lint!(
     PreserveManualMemoization,
     react,
     correctness,
+    recommended,
     version = "1.79.0",
     short_description = "Validates that existing manual memoization is preserved by the React Compiler.",
 );

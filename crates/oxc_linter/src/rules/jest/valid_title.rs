@@ -14,6 +14,7 @@ declare_oxc_lint!(
     ValidTitle,
     jest,
     correctness,
+    recommended,
     conditional_fix,
     // TODO: Replace this with an actual config struct. This is a dummy value to
     // indicate that this rule has configuration and avoid errors.

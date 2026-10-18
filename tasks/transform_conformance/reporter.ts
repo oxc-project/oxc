@@ -1,13 +1,13 @@
 // oxlint-disable no-console
 
 import { join as pathJoin } from "path";
+import type { Reporter, TestModule } from "vitest/node";
 
 const currentDir = pathJoin(import.meta.dirname, "./"),
-  rootDir = pathJoin(currentDir, "../../"),
-  vitestPath = pathJoin(rootDir, "node_modules/.pnpm/vitest@");
+  rootDir = pathJoin(currentDir, "../../");
 
-export default class CustomReporter {
-  onTestRunEnd(testModules) {
+export default class CustomReporter implements Reporter {
+  onTestRunEnd(testModules: ReadonlyArray<TestModule>): void {
     const numTotalTestSuites = testModules.length;
     const numPassedTestSuites = testModules.filter(
       (testModule) => testModule.state() === "passed",
@@ -39,10 +39,22 @@ export default class CustomReporter {
   }
 }
 
-function formatMessage(message) {
+function formatMessage(message: string): string {
   return message
     .split("\n")
-    .filter((line) => !line.includes(vitestPath) && line.trim() !== "at new Promise (<anonymous>)")
-    .map((line) => line.replace("file://", "").replace(rootDir, "./"))
+    .filter(
+      (line) =>
+        !/[\\/]node_modules[\\/]vitest[\\/]/.test(line)
+        && line.trim() !== "at new Promise (<anonymous>)",
+    )
+    .map((line) =>
+      line
+        .replace("file://", "")
+        .replace(rootDir, "./")
+        .replace(
+          /(?:[A-Za-z]:)?\.?[\\/](?:[^\s()"'`]*[\\/])?node_modules[\\/]([^\s()"'`]*)/g,
+          (_, path: string) => `./node_modules/${path.replaceAll("\\", "/")}`,
+        ),
+    )
     .join("\n");
 }

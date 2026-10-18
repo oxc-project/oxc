@@ -37,7 +37,7 @@ pub use to_oxc_formatter_yaml::to_oxc_formatter_yaml;
 #[cfg(feature = "napi")]
 pub use to_prettier::{
     build_prettier_options, inject_filepath, inject_opt_in_plugin_payloads,
-    inject_oxfmt_plugin_payload, inject_parser, inject_print_width, inject_tailwind_plugin_payload,
-    to_prettier,
+    inject_oxfmt_plugin_payload, inject_parser, inject_string_embed_options,
+    inject_tailwind_plugin_payload, to_prettier,
 };
 pub use validate::{ValidatedOptions, validate};

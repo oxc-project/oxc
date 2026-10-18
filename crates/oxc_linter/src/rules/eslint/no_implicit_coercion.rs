@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{ChainElement, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -413,15 +416,14 @@ fn is_indexof_call(expr: &Expression) -> bool {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             if let Expression::ChainExpression(chain) = callee
-                && let oxc_ast::ast::ChainElement::StaticMemberExpression(member) =
-                    &chain.expression
+                && let ChainElement::StaticMemberExpression(member) = &chain.expression
             {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             false
         }
         Expression::ChainExpression(chain) => {
-            if let oxc_ast::ast::ChainElement::CallExpression(call) = &chain.expression
+            if let ChainElement::CallExpression(call) = &chain.expression
                 && let Expression::StaticMemberExpression(member) =
                     call.callee.without_parentheses()
             {

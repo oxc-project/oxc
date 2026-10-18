@@ -108,6 +108,7 @@ declare_oxc_lint!(
     JsxKey,
     react,
     correctness,
+    recommended,
     config = JsxKey,
     version = "0.0.14",
     short_description = "Enforce `key` prop for elements in an array.",
@@ -294,7 +295,7 @@ fn is_in_array_or_iter<'a, 'b>(
 
                 if let Some(member_expr) = callee.as_member_expression()
                     && let Some((span, ident)) = member_expr.static_property_info()
-                    && TARGET_METHODS.contains(&ident)
+                    && TARGET_METHODS.iter().any(|method| *method == ident)
                 {
                     // Early exit if no arguments to check
                     if v.arguments.is_empty() {
@@ -399,13 +400,13 @@ fn get_jsx_element_key_value(jsx_elem: &JSXElement) -> Option<(String, Span)> {
             if let Some(value) = &attr.value {
                 match value {
                     JSXAttributeValue::StringLiteral(lit) => {
-                        return Some((lit.value.to_string(), attr.span));
+                        return Some((lit.value.as_str()?.to_owned(), attr.span));
                     }
                     JSXAttributeValue::ExpressionContainer(container) => {
                         // JSXExpression inherits from Expression, so we match the Expression variants directly
                         match &container.expression {
                             JSXExpression::StringLiteral(lit) => {
-                                return Some((lit.value.to_string(), attr.span));
+                                return Some((lit.value.as_str()?.to_owned(), attr.span));
                             }
                             JSXExpression::NumericLiteral(lit) => {
                                 return Some((lit.value.to_string(), attr.span));

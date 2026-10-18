@@ -123,7 +123,7 @@ fn classify_member_callee<'a>(
     ctx: &LintContext<'a>,
 ) -> Option<EvalLikeTarget> {
     let member = member_expression_through_chain(callee)?;
-    let target = EvalLikeTarget::from_name(member.static_property_name()?)?;
+    let target = EvalLikeTarget::from_name(member.static_property_name()?.as_str()?)?;
     let root = global_root_after_same_name_chain(member.object())?;
 
     is_enabled_global_reference(root, ctx).then_some(target)

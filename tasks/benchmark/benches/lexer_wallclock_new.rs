@@ -3,12 +3,12 @@
 //! Not run on CodSpeed. `oxc_lexer` is designed to exploit out-of-order execution and branch prediction,
 //! which CodSpeed's CPU simulation does not model. So these benchmarks measure wallclock time instead.
 //!
-//! `oxc_lexer` compiles to its SIMD core or its scalar fallback depending on target features,
+//! `oxc_lexer` compiles to its AVX2, Neon or generic implementation depending on target features,
 //! which apply to the whole build. So the 2 lexers are benchmarked in separate builds:
 //!
-//! 1. `lexer_wallclock_old` benchmarks `oxc_parser`'s lexer, built without the SIMD target features,
+//! 1. `lexer_wallclock_old` benchmarks `oxc_parser`'s lexer, built without the AVX2 target features,
 //!    and saves the results as criterion baseline `lexer_old`.
-//! 2. This benchmark benchmarks `oxc_lexer` (either implementation), and compares it against that baseline.
+//! 2. This benchmark benchmarks `oxc_lexer` (any implementation), and compares it against that baseline.
 //!    The "change" which criterion reports is `oxc_lexer`'s time relative to `oxc_parser`'s.
 //!
 //! When saving the baseline, criterion also compares `oxc_parser` against its previous run, if there is one.
@@ -17,8 +17,8 @@
 //! Both lexers lex the same cleaned source text, so the contest is fair.
 //! See `cleaned_test_files` for why the source text needs cleaning.
 //!
-//! Run with `just bench-lexer` (scalar fallback) or `just bench-lexer-simd` (SIMD core).
-//! CI runs `just bench-lexer-simd` when `oxc_lexer` changes, and prints the results in the job log.
+//! Run with `just bench-lexer` (built for the host) or `just bench-lexer-avx2` (AVX2 implementation).
+//! CI runs `just bench-lexer-avx2` when `oxc_lexer` changes, and prints the results in the job log.
 
 mod lexer_common;
 
@@ -31,8 +31,7 @@ use lexer_common::cleaned_test_files;
 fn bench_lexer_wallclock_new(criterion: &mut Criterion) {
     // Report which implementation of `oxc_lexer` was built.
     // CI checks this line to make sure the build it expected is the build it got.
-    let implementation = if oxc_lexer::IS_SIMD { "SIMD" } else { "scalar" };
-    println!("Lexer implementation: {implementation}");
+    println!("Lexer implementation: {}", oxc_lexer::IMPLEMENTATION);
 
     // Group name and benchmark IDs must match `lexer_wallclock_old`, so criterion can compare the two
     let mut group = criterion.benchmark_group("lexer_wallclock");

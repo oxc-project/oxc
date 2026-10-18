@@ -517,7 +517,6 @@ impl CliRunner {
 
         let cwd = options.cwd().to_path_buf();
 
-        // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)

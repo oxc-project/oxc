@@ -1,7 +1,7 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
+        ArrowFunctionExpression, BindingPattern, Expression, Function, FunctionType, PropertyKind,
         ReturnStatement,
     },
 };
@@ -355,19 +355,25 @@ impl ExplicitFunctionReturnType {
                 self.allowed_names.contains(id.name.as_str())
             }
             AstKind::MethodDefinition(def) => {
-                let Some(name) = def.key.name() else { return false };
+                let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 def.key.is_identifier()
                     && !def.computed
                     && self.allowed_names.contains(name.as_ref())
             }
             AstKind::PropertyDefinition(def) => {
-                let Some(name) = def.key.name() else { return false };
+                let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 def.key.is_identifier()
                     && !def.computed
                     && self.allowed_names.contains(name.as_ref())
             }
             AstKind::ObjectProperty(prop) => {
-                let Some(name) = prop.key.name() else { return false };
+                let Some(name) = prop.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 prop.key.is_identifier()
                     && !prop.computed
                     && self.allowed_names.contains(name.as_ref())
@@ -648,12 +654,7 @@ impl<'a> VisitJs<'a> for ReturnStatementChecker {
             return_statement.argument.as_ref().is_some_and(|argument| is_function(argument));
     }
 
-    fn visit_function(
-        &mut self,
-        _func: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }

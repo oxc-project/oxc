@@ -6,7 +6,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -112,16 +112,16 @@ impl Rule for NoNodejsModules {
             _ => return,
         };
 
-        let Some(module_name) = module_name else {
+        let Some(module_name) = module_name.and_then(JSStr::as_str) else {
             return;
         };
 
-        if self.allow.contains(module_name.as_str()) {
+        if self.allow.contains(module_name) {
             return;
         }
 
-        if module_name.starts_with("node:") || is_nodejs_builtin_module(&module_name) {
-            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), &module_name));
+        if module_name.starts_with("node:") || is_nodejs_builtin_module(module_name) {
+            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), module_name));
         }
     }
 }

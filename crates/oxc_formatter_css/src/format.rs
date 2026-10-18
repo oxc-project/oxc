@@ -3,8 +3,7 @@ use oxc_css_parser::{ParserBuilder, ParserOptions, TemplatePlaceholder, ast::Sty
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, InputKind,
-    VecBuffer,
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter, InputKind,
     builders::{empty_line, hard_line_break, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter, split_bom},
     write,
@@ -73,7 +72,7 @@ pub fn format_with_session<'a>(
     // Pre-allocate: measured on 616 real-world files (bootstrap, vscode, saleor; css/scss/less),
     // 0.5x source bytes plus a 1024-element floor for tiny-file spikes avoids reallocation for 98% of the corpus.
     let capacity = (source.len() / 2).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     write!(&mut buffer, FormatCssRoot { stylesheet: &stylesheet, has_bom, front_matter });
 
@@ -111,13 +110,17 @@ pub fn parse_for_format<'a>(
     options: CssFormatOptions,
     root: CssRoot,
 ) -> Result<ParsedCss<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = split_bom(source_text);
+    let (has_bom, stripped) = split_bom(source_text);
 
     // A document root owns front matter;
     // the session's dispatcher decides whether its body actually formats (`write_front_matter`).
-    let PreparedSource { source, parse_source, front_matter } =
-        prepare_source(allocator, source_text);
-    let (stylesheet, comments) = parse_stylesheet(allocator, parse_source, options, root)?;
+    let PreparedSource { source, parse_source, front_matter } = prepare_source(allocator, stripped);
+    let (stylesheet, comments) =
+        parse_stylesheet(allocator, parse_source, options, root).map_err(|mut err| {
+            oxc_formatter_core::restore_crlf_labels(&mut err.labels, stripped);
+            oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+            err
+        })?;
 
     Ok(ParsedCss { stylesheet, comments, source, has_bom, front_matter })
 }
@@ -158,7 +161,7 @@ pub fn format_to_ir<'a>(
 
     let context = CssFormatContext::new(options, source, comments, template_placeholders);
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet, front_matter });
 

@@ -15,9 +15,9 @@ SyntaxError: Unexpected eval or arguments in strict mode
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
-    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1288:80)
+    at VitestModuleRunner.directRequest (./node_modules/vite/dist/node/module-runner.js:1288:80)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1195:73)
+    at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js
 AssertionError: expected { value: 2, done: true } to deeply equal { value: 4, done: false }
@@ -46,9 +46,9 @@ SyntaxError: Unexpected token '['
     at new Script (node:vm:118:7)
     at createScript (node:vm:270:10)
     at Object.runInThisContext (node:vm:318:10)
-    at VitestModuleRunner.directRequest (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1288:80)
+    at VitestModuleRunner.directRequest (./node_modules/vite/dist/node/module-runner.js:1288:80)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-    at async VitestModuleRunner.cachedRequest (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/module-runner.js:1195:73)
+    at async VitestModuleRunner.cachedRequest (./node_modules/vite/dist/node/module-runner.js:1195:73)
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-nested-class-super-property-in-decorator-exec.test.js
 AssertionError: expected undefined to be 'hello' // Object.is equality
@@ -121,7 +121,7 @@ TypeError: e.has is not a function
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js
 AssertionError: expected [Function] to throw error including '@@toPrimitive must return a primitive…' but got 'Cannot convert object to primitive va…'
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
+    at Proxy.methodWrapper (./node_modules/chai/index.js:1737:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-computed-toPrimitive-exec.test.js:37:5
 
 ./fixtures/babel/babel-plugin-transform-class-properties-test-fixtures-public-delete-super-property-exec.test.js
@@ -145,7 +145,7 @@ TypeError: attempted to use private field on non-instance
 ./fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js
 RolldownError: Parse failure: Parse failed with 2 errors:
 'export statement' declaration can only be used at the top level of a module
-2: import _usingCtx2 from "/@id/__x00__@oxc-project+runtime@0.153.0/helpers/esm/usingCtx.js";
+2: import _usingCtx2 from "/@id/__x00__@oxc-project+runtime@0.154.0/helpers/esm/usingCtx.js";
 3: test("exec", () => {
 4:   export { A };
      ^
@@ -158,12 +158,12 @@ RolldownError: Parse failure: Parse failed with 2 errors:
 6:   try {
 7:     var _usingCtx = _usingCtx2();
 At file: /fixtures/babel/babel-plugin-transform-explicit-resource-management-test-fixtures-transform-top-level-hoisting-mutate-outer-class-binding-exec.test.js:4:1
-    at error (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/shared/logs-D6uA606S.mjs:166:24)
-    at normalizeParseError (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:25:9)
-    at wrap (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:5:39)
-    at parseAstAsync (./node_modules/.pnpm/rolldown@1.2.13/node_modules/rolldown/dist/parse-ast-index.mjs:54:9)
-    at async ssrTransformScript (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/chunks/node.js:16527:9)
-    at async loadAndTransform (./node_modules/.pnpm/vite@8.3.4_@types+node@25.0.2_esbuild@0.28.2_terser@5.44.1_tsx@4.23.13/node_modules/vite/dist/node/chunks/node.js:20218:64)
+    at error (./node_modules/rolldown/dist/shared/logs-D6uA606S.mjs:166:24)
+    at normalizeParseError (./node_modules/rolldown/dist/parse-ast-index.mjs:25:9)
+    at wrap (./node_modules/rolldown/dist/parse-ast-index.mjs:5:39)
+    at parseAstAsync (./node_modules/rolldown/dist/parse-ast-index.mjs:54:9)
+    at async ssrTransformScript (./node_modules/vite/dist/node/chunks/node.js:16527:9)
+    at async loadAndTransform (./node_modules/vite/dist/node/chunks/node.js:20218:64)
 
 ./fixtures/babel/babel-plugin-transform-object-rest-spread-test-fixtures-object-rest-for-x-assignment-shadowed-block-scoped-bindings-exec.test.js
 ReferenceError: Cannot access 'a' before initialization
@@ -543,7 +543,7 @@ AssertionError: expected 2 to be 5 // Object.is equality
 
 ./fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js
 AssertionError: expected [Function] to not throw an error but 'ReferenceError: x is not defined' was thrown
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
+    at Proxy.methodWrapper (./node_modules/chai/index.js:1737:25)
     at ./tasks/transform_conformance/fixtures/babel/babel-preset-env-test-fixtures-plugins-integration-issue-15170-exec.test.js:6:9
 
 ./fixtures/babel/babel-preset-env-test-fixtures-sanity-check-es2015-constants-exec.test.js

@@ -18,6 +18,7 @@ use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan as _, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -422,11 +423,7 @@ impl JsxCurlyBracePresence {
             }
             JSXAttributeValue::StringLiteral(string) => {
                 if self.props.is_always() {
-                    report_missing_curly_for_string_attribute_value(
-                        ctx,
-                        string.span,
-                        string.value.as_str(),
-                    );
+                    report_missing_curly_for_string_attribute_value(ctx, string.span, string.value);
                 }
             }
         }
@@ -457,7 +454,12 @@ impl JsxCurlyBracePresence {
             Expression::JSXElement(el) => {
                 if parent_is_attribute {
                     if self.prop_element_values.is_never() && el.closing_element.is_none() {
-                        report_unnecessary_curly_for_attribute_value(ctx, container, inner.span());
+                        ctx.diagnostic_with_fix(
+                            jsx_curly_brace_presence_unnecessary_diagnostic(inner.span()),
+                            |fixer| {
+                                fixer.replace(container.span, ctx.source_range(el.span).to_owned())
+                            },
+                        );
                     }
                 } else if self.children.is_never()
                     && !has_adjacent_jsx_expression_containers(ctx, container, node.id())
@@ -477,7 +479,12 @@ impl JsxCurlyBracePresence {
                     return;
                 }
                 if parent_is_attribute {
-                    report_unnecessary_curly_for_attribute_value(ctx, container, string.span);
+                    report_unnecessary_curly_for_string_attribute_value(
+                        ctx,
+                        container.span,
+                        string.span,
+                        string.value,
+                    );
                 } else {
                     report_unnecessary_curly(ctx, container, string.span);
                 }
@@ -485,11 +492,14 @@ impl JsxCurlyBracePresence {
             Expression::TemplateLiteral(template)
                 if allowed.is_never() && template.is_no_substitution_template() =>
             {
-                let string = template.single_quasi().unwrap();
-                if !parent_is_attribute && contains_quote_characters(string.as_str())
+                let Some(value) = template.single_quasi() else {
+                    return;
+                };
+                let Some(string) = value.as_str() else { return };
+                if !parent_is_attribute && contains_quote_characters(string)
                     || is_allowed_string_like_in_container(
                         ctx,
-                        string.as_str(),
+                        string,
                         container,
                         node.id(),
                         parent_is_attribute,
@@ -498,7 +508,12 @@ impl JsxCurlyBracePresence {
                     return;
                 }
                 if parent_is_attribute {
-                    report_unnecessary_curly_for_attribute_value(ctx, container, template.span);
+                    report_unnecessary_curly_for_string_attribute_value(
+                        ctx,
+                        container.span,
+                        template.span,
+                        value,
+                    );
                 } else {
                     report_unnecessary_curly(ctx, container, template.span);
                 }
@@ -586,13 +601,19 @@ fn report_unnecessary_curly<'a>(
         match &container.expression {
             JSXExpression::TemplateLiteral(template_lit) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(template_lit.single_quasi().unwrap().as_str());
+                let Some(value) = template_lit.single_quasi().and_then(JSStr::as_str) else {
+                    return fixer.noop();
+                };
+                fix.print_str(value);
 
                 fixer.replace(container.span, fix.into_source_text())
             }
             JSXExpression::StringLiteral(string_literal) => {
                 let mut fix = fixer.codegen();
-                fix.print_str(string_literal.value.as_str());
+                let Some(value) = string_literal.value.as_str() else {
+                    return fixer.noop();
+                };
+                fix.print_str(value);
 
                 fixer.replace(container.span, fix.into_source_text())
             }
@@ -608,30 +629,25 @@ fn report_unnecessary_curly<'a>(
     });
 }
 
-fn report_unnecessary_curly_for_attribute_value<'a>(
+fn report_unnecessary_curly_for_string_attribute_value<'a>(
     ctx: &LintContext<'a>,
-    container: &JSXExpressionContainer<'a>,
+    container_span: Span,
     inner_span: Span,
+    value: JSStr<'a>,
 ) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_unnecessary_diagnostic(inner_span), |fixer| {
-        let str = match &container.expression {
-            JSXExpression::TemplateLiteral(template_lit) => template_lit.single_quasi().unwrap(),
-            JSXExpression::StringLiteral(string_lit) => string_lit.value,
-            JSXExpression::JSXElement(el) => {
-                return fixer.replace(container.span, ctx.source_range(el.span).to_owned());
-            }
-            _ => unreachable!(),
-        };
-
         let mut fix = fixer.codegen();
 
-        if !contains_double_quote_characters(str.as_str()) {
+        let Some(str) = value.as_str() else {
+            return fixer.noop();
+        };
+        if !contains_double_quote_characters(str) {
             fix = fix.with_options(CodegenOptions::default());
         }
 
-        fix.print_string(str.as_str());
+        fix.print_string(str);
 
-        fixer.replace(container.span, fix.into_source_text())
+        fixer.replace(container_span, fix.into_source_text())
     });
 }
 
@@ -647,9 +663,12 @@ fn report_missing_curly_for_expression(ctx: &LintContext, span: Span) {
 fn report_missing_curly_for_string_attribute_value(
     ctx: &LintContext,
     span: Span,
-    string_value: &str,
+    string_value: JSStr<'_>,
 ) {
     ctx.diagnostic_with_fix(jsx_curly_brace_presence_necessary_diagnostic(span), |fixer| {
+        let Some(string_value) = string_value.as_str() else {
+            return fixer.noop();
+        };
         let mut replace = fixer.codegen().with_options(CodegenOptions::default());
 
         replace.print_string(string_value);

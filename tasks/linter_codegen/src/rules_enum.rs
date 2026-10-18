@@ -106,7 +106,7 @@ fn generate_imports() -> TokenStream {
     quote! {
         use crate::{
             context::{ContextHost, LintContext},
-            rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
+            rule::{Rule, RuleCategory, RuleFixMeta, RuleFlags, RuleMeta, RuleRunner, RuleRunFunctionsImplemented},
             timing::RuleTimingStat,
             utils::PossibleJestNode,
             AstNode
@@ -244,11 +244,11 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         })
         .collect();
 
-    let is_tsgolint_rule_arms: Vec<TokenStream> = rule_entries
+    let flags_arms: Vec<TokenStream> = rule_entries
         .iter()
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(_) => #enum_name::IS_TSGOLINT_RULE }
+            quote! { Self::#enum_name(_) => #enum_name::FLAGS }
         })
         .collect();
 
@@ -257,14 +257,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
         .map(|rule| {
             let enum_name = make_enum_ident(rule);
             quote! { Self::#enum_name(_) => #enum_name::VERSION }
-        })
-        .collect();
-
-    let has_config_arms: Vec<TokenStream> = rule_entries
-        .iter()
-        .map(|rule| {
-            let enum_name = make_enum_ident(rule);
-            quote! { Self::#enum_name(_) => #enum_name::HAS_CONFIG }
         })
         .collect();
 
@@ -291,8 +283,6 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
             quote! { Self::#enum_name(rule) => rule.run_info() }
         })
         .collect();
-
-    // Whether a rule declares a configuration type (i.e. `config = FooConfig`)
 
     quote! {
         static RULE_NAMES: [&str; #rule_count] = [#(#rule_names),*];
@@ -431,10 +421,20 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
                 }
             }
 
-            pub fn is_tsgolint_rule(&self) -> bool {
+            /// Flags describing this rule's capabilities.
+            pub fn flags(&self) -> RuleFlags {
                 match self {
-                    #(#is_tsgolint_rule_arms),*
+                    #(#flags_arms),*
                 }
+            }
+
+            pub fn is_tsgolint_rule(&self) -> bool {
+                self.flags().contains(RuleFlags::IS_TSGOLINT_RULE)
+            }
+
+            /// Whether this rule is recommended.
+            pub fn is_recommended(&self) -> bool {
+                self.flags().contains(RuleFlags::IS_RECOMMENDED)
             }
 
             /// The version of oxlint in which this rule was first available.
@@ -447,9 +447,7 @@ fn generate_rule_enum_impl(rule_entries: &[RuleEntry<'_>]) -> TokenStream {
 
             /// Whether this rule declares a configuration type.
             pub fn has_config(&self) -> bool {
-                match self {
-                    #(#has_config_arms),*
-                }
+                self.flags().contains(RuleFlags::HAS_CONFIG)
             }
 
             /// Additional information about this rule.

@@ -131,7 +131,7 @@ pub fn is_identifier_part(c: char) -> bool {
 }
 
 #[inline]
-pub fn is_identifier_part_ascii(c: char) -> bool {
+pub const fn is_identifier_part_ascii(c: char) -> bool {
     ASCII_ID_FLAGS.0[c as usize] & ID_CONTINUE != 0
 }
 

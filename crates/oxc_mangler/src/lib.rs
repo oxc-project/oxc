@@ -769,7 +769,6 @@ impl<'a> SlotRanking<'a> {
             frequencies[index].symbol_ids.push(symbol_id);
         }
 
-        // Remove slots that have no symbols to rename before sorting.
         frequencies.retain(|x| !x.symbol_ids.is_empty());
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         Self { frequencies }

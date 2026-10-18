@@ -46,7 +46,7 @@ use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, TakeIn, UnstableAdd
 use oxc_ast::ast::*;
 use oxc_ast_visit::{Visit, walk};
 use oxc_span::SPAN;
-use oxc_str::Str;
+use oxc_str::{JSStr, Str};
 use oxc_syntax::{
     operator::{BinaryOperator, LogicalOperator},
     scope::{ScopeFlags, ScopeId},
@@ -86,7 +86,7 @@ struct ClassState<'a> {
 
 /// A property key that has already been evaluated and converted to a string or symbol.
 enum InferredName<'a> {
-    Static(Str<'a>),
+    Static(JSStr<'a>),
     Computed(BoundIdentifier<'a>),
     Captured(BoundIdentifier<'a>, Str<'a>),
 }
@@ -403,8 +403,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ClassStaticBlock<'a> {
             // `.name` afterwards is too late, and would overwrite a user-defined static name.
             // A computed key also handles symbols and the special `__proto__` spelling.
             let key = PropertyKey::from(name.expression(ctx));
-            let computed =
-                !matches!(&name, InferredName::Static(name) if name.as_str() != "__proto__");
+            let computed = !matches!(&name, InferredName::Static(name) if *name != "__proto__");
             let property = ObjectPropertyKind::new_object_property(
                 SPAN,
                 PropertyKind::Init,
@@ -472,7 +471,7 @@ impl<'a> ClassStaticBlock<'a> {
             .flatten();
         if let Some(name) = name {
             self.pending_classes.entry(class.body.address()).or_default().inferred_name =
-                Some(InferredName::Static(name));
+                Some(InferredName::Static(JSStr::from(name)));
         }
     }
 
@@ -611,7 +610,7 @@ impl<'a> ClassStaticBlock<'a> {
                 .pending_classes
                 .get_mut(&class.body.address())
                 .and_then(|pending| pending.inferred_name.take())
-                .unwrap_or(InferredName::Static(Str::from("")));
+                .unwrap_or(InferredName::Static(JSStr::from("")));
             // An explicit inner binding must not change the original inferred name. Static
             // methods named `name` suppress NamedEvaluation, including computed methods.
             let mut condition = None;
@@ -788,9 +787,9 @@ impl<'a> ClassStaticBlock<'a> {
     ) -> InferredName<'a> {
         let name = match key {
             PropertyKey::PrivateIdentifier(ident) => {
-                Some(Str::from_strs_array_in(["#", ident.name.as_str()], ctx))
+                Some(JSStr::from(Str::from_strs_array_in(["#", ident.name.as_str()], ctx)))
             }
-            PropertyKey::StaticIdentifier(ident) => Some(Str::from(ident.name)),
+            PropertyKey::StaticIdentifier(ident) => Some(JSStr::from(ident.name)),
             PropertyKey::StringLiteral(lit) => Some(lit.value),
             _ => None,
         };

@@ -378,6 +378,7 @@ impl RuleRunner for crate::rules::eslint::id_length::IdLength {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::BindingIdentifier,
         AstType::IdentifierName,
+        AstType::IdentifierReference,
         AstType::PrivateIdentifier,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
@@ -541,6 +542,7 @@ impl RuleRunner for crate::rules::eslint::no_cond_assign::NoCondAssign {
 impl RuleRunner for crate::rules::eslint::no_console::NoConsole {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::ComputedMemberExpression,
+        AstType::PrivateFieldExpression,
         AstType::StaticMemberExpression,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
@@ -932,8 +934,10 @@ impl RuleRunner for crate::rules::eslint::no_object_constructor::NoObjectConstru
 }
 
 impl RuleRunner for crate::rules::eslint::no_param_reassign::NoParamReassign {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::FormalParameter]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::FormalParameter,
+        AstType::FormalParameterRest,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -1043,8 +1047,10 @@ impl RuleRunner for crate::rules::eslint::no_sequences::NoSequences {
 }
 
 impl RuleRunner for crate::rules::eslint::no_setter_return::NoSetterReturn {
-    const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::ReturnStatement]));
+    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
+        AstType::ArrowFunctionExpression,
+        AstType::ReturnStatement,
+    ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
@@ -3923,7 +3929,7 @@ impl RuleRunner for crate::rules::unicorn::prefer_string_raw::PreferStringRaw {
 
 impl RuleRunner for crate::rules::unicorn::prefer_string_replace_all::PreferStringReplaceAll {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::VariableDeclarator]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

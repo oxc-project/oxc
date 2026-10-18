@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.88.0] - 2026-10-13
+
+### 🚀 Features
+
+- 3c361a7 linter/unicorn/prefer-query-selector: Add `allowWithVariables` option (#27346) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 82ecc43 linter/sort-keys: Compare natural order like ESLint (#27579) (Dunqing)
+- 598ac03 linter/unicorn/prefer-bigint-literals: Unwrap redundant constructor call; don't auto-fix for lost precision (#25690) (Jacob Bandes-Storch)
+- 2512213 linter: Prevent conflicting type import fixes (#27409) (camc314)
+
+### ⚡ Performance
+
+- 91b588c linter/oxc/bad-array-method-on-arguments: Check arguments references once (#26930) (camc314)
+- 8c57c5e linter: Share one source per file across type-aware diagnostics (#27462) (Max Schwenk)
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+
+### 📚 Documentation
+
+- 3bb54f6 linter: Update stale comment (#27519) (overlookmotel)
+- 848a4e7 linter: Update fix metadata for tsgolint rules that already provide fixes (#27408) (Mikhail Baev)
+
 ## [1.87.0] - 2026-10-05
 
 ### 🚀 Features

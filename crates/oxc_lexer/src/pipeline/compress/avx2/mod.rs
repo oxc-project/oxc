@@ -7,11 +7,13 @@ use crate::{
     token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
 };
 
+use crate::pipeline::cpu::Avx2;
+
 use super::common::{emit_value, invalid_diags};
 
 mod pair_luts;
 use pair_luts::get_pair_luts;
-pub use pair_luts::init_pair_luts;
+pub(super) use pair_luts::init_pair_luts_avx2;
 
 #[cfg(test)]
 mod tests;
@@ -55,15 +57,17 @@ const fn bcompact() -> [[u8; 16]; 256] {
 }
 
 #[inline(never)]
-pub(super) unsafe fn compress_blocks(
+#[target_feature(enable = "avx2,bmi2,popcnt")]
+pub(super) unsafe fn compress_blocks_avx2(
     st: *const u64,
     kind: *const u8,
     b0: usize,
     b1: usize,
     starts: *mut u32,
     kinds: *mut u8,
+    _cpu: Avx2,
 ) -> usize {
-    // SAFETY: `init_pair_luts` has always been called in `Lexer::new` on AVX2 builds
+    // SAFETY: `Lexer::new` calls `init_pair_luts`, which initializes `PairLuts` if the CPU supports AVX2
     let pair_luts = unsafe { get_pair_luts() };
     let lut0z = pair_luts.lut0z.as_ptr().cast::<u8>();
     let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
@@ -112,12 +116,14 @@ pub(super) unsafe fn compress_blocks(
     m
 }
 
-pub(super) unsafe fn build_spans(
+#[target_feature(enable = "avx2,bmi2,popcnt")]
+pub(super) unsafe fn build_spans_avx2(
     stage_kind: *const u8,
     stage_pos: *const u32,
     m: usize,
     spans: *mut Span,
     sig_kinds: *mut u8,
+    _cpu: Avx2,
 ) -> usize {
     let sp = spans.cast::<u64>();
     let mut w = 0usize;
@@ -175,13 +181,15 @@ pub(super) unsafe fn build_spans(
     w
 }
 
-pub(super) unsafe fn lanes_post(
+#[target_feature(enable = "avx2,bmi2,popcnt")]
+pub(super) unsafe fn lanes_post_avx2(
     src: &[u8],
     out_kinds: *const u8,
     out_spans: *const Span,
     m: usize,
     nn: u32,
     lanes: &mut Lanes,
+    _cpu: Avx2,
 ) {
     let v_num = _mm256_set1_epi8(tk!(Number) as i8);
     let v_big = _mm256_set1_epi8(tk!(BigInt) as i8);

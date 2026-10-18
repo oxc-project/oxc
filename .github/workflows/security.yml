@@ -22,4 +22,4 @@ jobs:
     name: Security Analysis
     runs-on: ubuntu-latest
     steps:
-      - uses: oxc-project/security-action@12d013ba60a82c2a7d0ef35bbe38249dc7f7cf1a # v1.0.9
+      - uses: oxc-project/security-action@a8d382d3e5d0fccc813776e461cb0c3fb9d51a0d # v1.0.10

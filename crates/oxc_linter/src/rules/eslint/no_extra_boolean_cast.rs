@@ -85,6 +85,7 @@ declare_oxc_lint!(
     NoExtraBooleanCast,
     eslint,
     correctness,
+    recommended,
     conditional_fix_or_conditional_suggestion,
     config = NoExtraBooleanCast,
     version = "0.0.8",

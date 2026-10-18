@@ -3,7 +3,7 @@
 import { typeAssertIs } from "../asserts.ts";
 import { printPropertyKey } from "./binding_pattern.ts";
 import { CAT_CLOSE_BRACKET, CAT_OTHER } from "./categories.ts";
-import { write, writeWithMap, writeWithMapNamed } from "./write.ts";
+import { write, writeNoLast, writeWithMap, writeWithMapNamed } from "./write.ts";
 import { printExpression, printMemberExpression } from "./expression.ts";
 import { printSpaceBeforeIdentifier } from "./space.ts";
 import { CTX_NONE } from "./operators.ts";
@@ -17,6 +17,9 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *
  * Destructuring targets look like object and array literals but are a separate set of node types,
  * with their own rules - which is why they are printed here rather than by the expression printer.
+ *
+ * @param node - Assignment target
+ * @param state - Printer state
  */
 export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: State): void {
   switch (node.type) {
@@ -52,6 +55,9 @@ export function printAssignmentTarget(node: ESTree.AssignmentTarget, state: Stat
 
 /**
  * Print an object destructuring target, as in `({ a, b: c } = obj)`.
+ *
+ * @param node - Object assignment target
+ * @param state - Printer state
  */
 function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state: State): void {
   writeWithMap(state, "{", CAT_OTHER, node.start, node.end, node);
@@ -75,6 +81,9 @@ function printObjectAssignmentTarget(node: ESTree.ObjectAssignmentTarget, state:
 
 /**
  * Print one property of an object destructuring target, in shorthand where the AST says so.
+ *
+ * @param node - Assignment target property
+ * @param state - Printer state
  */
 function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, state: State): void {
   // Shorthand from the AST flag (assignment targets are not re-derived).
@@ -83,12 +92,10 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
     const { value } = node;
     if (value.type === "AssignmentPattern") {
       typeAssertIs<ESTree.IdentifierReference>(value.left);
-      printSpaceBeforeIdentifier(state);
       writeWithMapNamed(state, value.left.name, value.left.start, value.left.end, value.left);
       write(state, " = ", CAT_OTHER);
       printExpression(value.right, state, PREC_COMMA, CTX_NONE);
     } else {
-      printSpaceBeforeIdentifier(state);
       writeWithMapNamed(state, value.name, value.start, value.end, value);
     }
   } else {
@@ -110,6 +117,9 @@ function printAssignmentTargetProperty(node: ESTree.AssignmentTargetProperty, st
 
 /**
  * Print a destructuring target which may carry a default, as the `a = 1` in `({ a = 1 } = obj)`.
+ *
+ * @param node - Assignment target, possibly with a default
+ * @param state - Printer state
  */
 function printAssignmentTargetMaybeDefault(
   node: ESTree.AssignmentTargetMaybeDefault,
@@ -126,38 +136,48 @@ function printAssignmentTargetMaybeDefault(
 
 /**
  * Print an array destructuring target, holes and rest element included.
+ *
+ * @param node - Array assignment target
+ * @param state - Printer state
  */
 function printArrayAssignmentTarget(node: ESTree.ArrayAssignmentTarget, state: State): void {
-  const { elements } = node;
-  let { length } = elements;
-
-  let rest: ESTree.BindingRestElement | ESTree.AssignmentTargetRest | null = null;
-  if (length > 0) {
-    const lastElement = elements[length - 1];
-    if (lastElement != null && lastElement.type === "RestElement") {
-      rest = lastElement;
-      length--;
-    }
-  }
-
   writeWithMap(state, "[", CAT_OTHER, node.start, node.end, node);
 
-  for (let i = 0; i < length; i++) {
-    if (i !== 0) write(state, ", ", CAT_OTHER);
-    const element = elements[i];
-    if (element != null) {
-      typeAssertIs<ESTree.AssignmentTargetMaybeDefault>(element);
-      printAssignmentTargetMaybeDefault(element, state);
-    }
-    if (i === length - 1 && (element == null || rest !== null)) {
-      write(state, ",", CAT_OTHER);
-    }
-  }
+  const { elements } = node,
+    { length } = elements;
 
-  if (rest !== null) {
-    if (length > 0) write(state, " ", CAT_OTHER);
-    writeWithMap(state, "...", CAT_OTHER, rest.start, rest.end, rest);
-    printAssignmentTarget(rest.argument, state);
+  if (length !== 0) {
+    const lastElement = elements[length - 1];
+    if (lastElement !== null && lastElement.type === "RestElement") {
+      // Print elements before the `RestElement`
+      const restIndex = length - 1;
+      for (let i = 0; i < restIndex; i++) {
+        // `RestElement` can only be last, and this loop stops before it
+        const element = elements[i] as ESTree.AssignmentTargetMaybeDefault | null;
+        if (element !== null) printAssignmentTargetMaybeDefault(element, state);
+        write(state, ", ", CAT_OTHER);
+      }
+
+      // Print `RestElement`
+      writeWithMap(state, "...", CAT_OTHER, lastElement.start, lastElement.end, lastElement);
+      printAssignmentTarget(lastElement.argument, state);
+    } else {
+      // `RestElement` can only be last, and the last element is not one
+      typeAssertIs<(ESTree.AssignmentTargetMaybeDefault | null)[]>(elements);
+
+      const firstElement = elements[0];
+      if (firstElement !== null) printAssignmentTargetMaybeDefault(firstElement, state);
+
+      for (let i = 1; i < length; i++) {
+        write(state, ", ", CAT_OTHER);
+
+        const element = elements[i];
+        if (element !== null) printAssignmentTargetMaybeDefault(element, state);
+      }
+
+      // A trailing hole needs a comma after it
+      if (lastElement === null) writeNoLast(state, ",");
+    }
   }
 
   write(state, "]", CAT_CLOSE_BRACKET);

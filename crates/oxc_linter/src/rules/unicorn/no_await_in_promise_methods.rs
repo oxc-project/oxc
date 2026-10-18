@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
 
@@ -49,6 +50,7 @@ declare_oxc_lint!(
     NoAwaitInPromiseMethods,
     unicorn,
     correctness,
+    recommended,
     suggestion,
     version = "0.2.18",
     short_description = "Disallow using `await` in `Promise` method parameters.",
@@ -94,8 +96,10 @@ impl Rule for NoAwaitInPromiseMethods {
             if let Some(element_expr) = element.as_expression()
                 && let Expression::AwaitExpression(await_expr) = element_expr.without_parentheses()
             {
-                let property_name =
-                    member_expr.static_property_name().expect("callee is a static property");
+                let property_name = member_expr
+                    .static_property_name()
+                    .and_then(JSStr::as_str)
+                    .expect("callee is a static property");
                 let await_keyword_span = Span::sized(await_expr.span.start, 5);
 
                 ctx.diagnostic_with_suggestion(

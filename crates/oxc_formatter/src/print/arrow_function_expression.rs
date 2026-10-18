@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format, RemoveSoftLinesBuffer, SourceText};
+use oxc_formatter_core::{Format, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -88,7 +88,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
     #[inline]
     pub fn format(&self, f: &mut JsFormatter<'_, 'a>) {
-        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
+        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options, f);
 
         match layout {
             ArrowFunctionLayout::Chain(chain) => {
@@ -269,6 +269,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     fn for_arrow(
         arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
+        f: &JsFormatter<'_, 'a>,
     ) -> ArrowFunctionLayout<'a, 'b> {
         let mut head = None;
         let mut middle = Vec::new();
@@ -282,6 +283,8 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         loop {
             if is_non_grouped_or_grouped_last_argument
                 && let AstNodes::ArrowFunctionExpression(next) = current.body().as_ast_nodes()
+                // A type cast keeps its parens: `(a) => /** @type {T} */ ((b) => c)`
+                && !is_cast_target(next.span(), f)
             {
                 should_break = should_break || Self::should_break_chain(current);
 
@@ -750,8 +753,7 @@ fn format_signature<'a, 'b>(
                 write!(f, format_head);
             } else {
                 write!(f, [space()]);
-                let mut buffer = RemoveSoftLinesBuffer::new(f);
-                write!(buffer, format_head);
+                f.remove_soft_lines(|f| write!(f, format_head));
             }
         } else {
             write!(

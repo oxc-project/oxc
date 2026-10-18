@@ -33,6 +33,13 @@ fn remove(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferDomNodeDataset;
 
+enum AttributeMethod {
+    Set,
+    Get,
+    Remove,
+    Has,
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -56,6 +63,7 @@ declare_oxc_lint!(
     PreferDomNodeDataset,
     unicorn,
     pedantic,
+    recommended,
     conditional_fix,
     version = "0.0.18",
     short_description = "Use `.dataset` on DOM elements over `getAttribute(…)`, `.setAttribute(…)`, `.removeAttribute(…)` and `.hasAttribute(…)`.",
@@ -78,17 +86,26 @@ impl Rule for PreferDomNodeDataset {
         let Some((span, method_name)) = member_expr.static_property_info() else {
             return;
         };
+        let Some(method_name) = method_name.as_str() else { return };
 
-        match method_name {
+        let method = match method_name {
             "setAttribute" => {
                 if call_expr.arguments.len() != 2 {
                     return;
                 }
+                AttributeMethod::Set
             }
-            "removeAttribute" | "hasAttribute" => {
+            "removeAttribute" => {
                 if call_expr.arguments.len() != 1 {
                     return;
                 }
+                AttributeMethod::Remove
+            }
+            "hasAttribute" => {
+                if call_expr.arguments.len() != 1 {
+                    return;
+                }
+                AttributeMethod::Has
             }
             "getAttribute" => {
                 if call_expr.arguments.len() != 1 {
@@ -102,20 +119,22 @@ impl Rule for PreferDomNodeDataset {
                 {
                     return;
                 }
+                AttributeMethod::Get
             }
             _ => return,
-        }
+        };
 
         let Argument::StringLiteral(string_lit) = &call_expr.arguments[0] else {
             return;
         };
 
-        let Some(dataset_property_name) = strip_data_prefix(&string_lit.value) else {
+        let Some(dataset_property_name) = string_lit.value.as_str().and_then(strip_data_prefix)
+        else {
             return;
         };
 
-        match method_name {
-            "setAttribute" => {
+        match method {
+            AttributeMethod::Set => {
                 ctx.diagnostic_with_fix(set(span), |fixer| {
                     if call_uses_optional_chain(call_expr) {
                         return fixer.noop();
@@ -138,7 +157,7 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "getAttribute" => {
+            AttributeMethod::Get => {
                 ctx.diagnostic_with_fix(get(span), |fixer| {
                     if call_expr.optional {
                         return fixer.noop();
@@ -157,7 +176,7 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "removeAttribute" => {
+            AttributeMethod::Remove => {
                 ctx.diagnostic_with_fix(remove(string_lit.span), |fixer| {
                     if call_expr.optional {
                         return fixer.noop();
@@ -179,7 +198,7 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "hasAttribute" => {
+            AttributeMethod::Has => {
                 ctx.diagnostic_with_fix(has(span), |fixer| {
                     if call_uses_optional_chain(call_expr) {
                         return fixer.noop();
@@ -197,7 +216,6 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            _ => unreachable!(),
         }
     }
 }

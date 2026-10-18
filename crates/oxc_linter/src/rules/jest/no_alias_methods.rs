@@ -54,6 +54,7 @@ declare_oxc_lint!(
     NoAliasMethods,
     jest,
     style,
+    recommended,
     fix,
     version = "0.0.12",
     short_description = "Enforces Jest's canonical matcher names instead of aliases.",

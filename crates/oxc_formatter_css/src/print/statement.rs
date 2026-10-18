@@ -7,7 +7,7 @@ use oxc_css_parser::ast::{
 use oxc_span::Span;
 
 use oxc_formatter_core::{
-    Buffer, arena_cow_str,
+    arena_cow_str,
     builders::{block_indent, dedent, empty_line, hard_line_break, indent, space, text},
     write,
 };
@@ -110,12 +110,13 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             let next_start =
                 f.context().comments().peek().map_or(start, |c| c.span.start.min(start));
             let gap = classify_gap(source.bytes_range(prev_end, next_start));
-            // A `;`-less css-in-js placeholder preserves the source whitespace that
-            // follows it: Prettier keeps `${a} ${b}` on one line and `${a}\n${b}` on two
-            // (postcss swallows the run as a verbatim prelude).
+            // A `;`-less css-in-js placeholder keeps whether whitespace follows it (none / space / newline):
+            // its content is unknown, so `${a}${b}` may be one token (as Prettier does).
             // Other statements always start on a new line.
             if matches!(statements[i - 1], Statement::Placeholder(_)) && gap == Gap::None {
-                write!(f, space());
+                if prev_end < next_start {
+                    write!(f, space());
+                }
             } else {
                 write!(f, hard_line_break());
                 if gap == Gap::Blank {
@@ -170,7 +171,7 @@ pub(super) fn write_statement<'a>(stmt: &Statement<'a>, f: &mut CssFormatter<'_,
         Statement::UnknownQualifiedRule(rule) => write_unknown_qualified_rule(rule, f),
         Statement::Declaration(decl) => {
             write_declaration(decl, f);
-            if matches!(decl.name, InterpolableIdent::Placeholder(_)) {
+            if decl.name.has_placeholder() {
                 // A css-in-js `${foo}: ${bar}` declaration keeps the source `;`
                 // (Prettier preserves it: `${foo}: ${bar};` vs `${foo}: ${bar}`).
                 let end = to_span(decl.span()).end;
@@ -345,10 +346,10 @@ pub(super) fn write_declaration<'a>(decl: &Declaration<'a>, f: &mut CssFormatter
     if let Some(prefix) = decl.name_prefix {
         write!(f, text(f.allocator().alloc_str(prefix.encode_utf8(&mut [0; 4]))));
     }
-    if let InterpolableIdent::Placeholder(placeholder) = &decl.name {
-        // A css-in-js placeholder property name (`${foo}: ...`) is a typed marker
+    if decl.name.has_placeholder() {
+        // A css-in-js placeholder property name (`${foo}: ...`, `${a}-${b}: ...`) holds typed markers
         // the host replaces with `${expr}`; never lowercase it like a real property.
-        super::write_placeholder(placeholder, f);
+        selector::write_interpolable_ident(&decl.name, f);
     } else if is_custom_property
         || f.context().in_less_detached().get()
         || f.context().in_icss_rule().get()

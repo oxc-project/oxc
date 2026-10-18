@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 760b60b codegen, packages/codegen: Remove extraneous space before `RestElement` in `ArrayPattern` (#27613) (overlookmotel)
+- f50257e codegen: Avoid extra indent before empty do-while bodies (#27407) (camc314)
+- 82bfc5f codegen: Fix printing negative `BigIntLiteral` after `-` (#27378) (overlookmotel)
+
 ## [0.153.0] - 2026-10-05
 
 ### 🐛 Bug Fixes

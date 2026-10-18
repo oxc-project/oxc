@@ -183,6 +183,7 @@ declare_oxc_lint!(
     AlwaysReturn,
     promise,
     suspicious,
+    recommended,
     config = AlwaysReturnConfig,
     version = "1.13.0",
     short_description = "Require returning inside each `then()` to create readable and reusable Promise chains.",

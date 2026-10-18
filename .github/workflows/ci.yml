@@ -653,29 +653,41 @@ jobs:
           git diff --exit-code
 
   lexer:
-    # `oxc_lexer` compiles to one of two implementations, chosen at build time:
-    # 1. SIMD core on x86_64 with `avx2` + `bmi2` + `popcnt`.
-    # 2. Scalar fallback everywhere else.
+    # `oxc_lexer` compiles to one of 3 implementations, chosen at build time:
+    # 1. AVX2 on x86_64 with `avx2` + `bmi2` + `popcnt`.
+    # 2. Neon on aarch64.
+    # 3. Generic everywhere else.
     #
-    # None of these features is in the x86_64 baseline on any platform, so the SIMD core is never built
-    # unless asked for explicitly - which means no other job here lints, tests or runs it.
+    # Each leg of this job builds one of them. The AVX2 and generic legs run on x86_64, the Neon leg on aarch64.
     #
-    # Both legs regenerate the committed conformance snapshots and fail on any diff,
-    # which ensures the 2 implementations behave identically to each other.
+    # Coverage by other jobs:
+    # - None of `avx2`, `bmi2` and `popcnt` is in the x86_64 baseline on any platform, so the AVX2 implementation
+    #   is never built unless asked for explicitly - which means no other job here lints, tests or runs it.
+    # - No other job builds Neon on PRs (the aarch64 test jobs only run on `main`), and no other job lints it.
+    # - Generic is already linted by the "Lint" job and tested by the "Test Linux" job,
+    #   so this job only runs conformance for it.
     #
-    # See the LEXER section of `justfile` for the flags.
+    # All legs regenerate the committed conformance snapshots and fail on any diff,
+    # which ensures the 3 implementations behave identically to each other.
+    #
+    # See the LEXER section of `justfile` for the recipes.
     name: Lexer (${{ matrix.variant }})
-    runs-on: namespace-profile-linux-x64-default
+    runs-on: ${{ matrix.runner }}
     env:
       CARGO_BUILD_WARNINGS: deny
     strategy:
       fail-fast: false
       matrix:
         include:
-          - variant: scalar
+          - variant: generic
+            runner: namespace-profile-linux-x64-default
             suffix: ""
-          - variant: SIMD
-            suffix: "-simd"
+          - variant: AVX2
+            runner: namespace-profile-linux-x64-default
+            suffix: "-avx2"
+          - variant: Neon
+            runner: ubuntu-24.04-arm
+            suffix: ""
     steps:
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
 
@@ -684,7 +696,7 @@ jobs:
         uses: $/.github/actions/check-changes
         with:
           packages: oxc_lexer,oxc_coverage
-          paths: crates/oxc_lexer/,tasks/coverage/,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
+          paths: crates/oxc_lexer/,tasks/coverage/,.cargo/lexer-avx2.toml,justfile,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -695,36 +707,47 @@ jobs:
           node-compat-table: false
         background: true
 
+      # The x86_64 legs run on Namespace runners, which provide the cache
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        if: steps.filter.outputs.changed == 'true'
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'Neon' }}
         with:
           path: /home/runner/.rustup
           cache: rust
 
       - uses: taiki-e/install-action@f7e5d7c961414b23f5b25b2da9294395d08513ad # v2.87.26
-        if: steps.filter.outputs.changed == 'true'
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'Neon' }}
         with:
           tool: just
 
       - run: rustup component add clippy
-        # No need to run on scalar fallback - linting already covered by "Lint" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
+        # No need to run on generic - linting already covered by "Lint" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'AVX2' }}
+
+      # The Neon leg runs on a GitHub-hosted runner, where Namespace's cache isn't available.
+      # Set up the same way as the "Test Linux ARM64" job, but with its own cache.
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'Neon' }}
+        with:
+          save-cache: ${{ github.ref_name == 'main' }}
+          cache-key: lexer-aarch64
+          tools: just
+          components: clippy
 
       - name: Lint
-        # No need to run on scalar fallback - already covered by "Lint" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
-        run: just lint-lexer-simd
+        # No need to run on generic - already covered by "Lint" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'generic' }}
+        run: just lint-lexer${{ matrix.suffix }}
 
       - name: Test
-        # No need to run on scalar fallback - already covered by "Test Linux" job
-        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant == 'SIMD' }}
-        run: just test-lexer-simd
+        # No need to run on generic - already covered by "Test Linux" job
+        if: ${{ steps.filter.outputs.changed == 'true' && matrix.variant != 'generic' }}
+        run: just test-lexer${{ matrix.suffix }}
 
       - wait: lexer-fixtures
 
       - name: Conformance
-        # Run on both SIMD and scalar fallback - neither is run anywhere else.
-        # The harness prints which implementation it was built with (`oxc_lexer::IS_SIMD`).
+        # Run on all 3 implementations - none of them is run anywhere else.
+        # The harness prints which implementation it was built with (`oxc_lexer::IMPLEMENTATION`).
         # Checking it here is what guarantees this leg exercised the build it asked for.
         if: steps.filter.outputs.changed == 'true'
         run: |
@@ -735,7 +758,7 @@ jobs:
           git diff --exit-code
 
   lexer-benchmark:
-    # Benchmark `oxc_lexer`'s SIMD core against the lexer in `oxc_parser`, built without the SIMD flags
+    # Benchmark `oxc_lexer`'s AVX2 implementation against the lexer in `oxc_parser`, built without the AVX2 flags
     # (see `lexer` job above).
     #
     # Measures wallclock time, so doesn't use CodSpeed. `oxc_lexer` is designed to exploit out-of-order execution
@@ -753,7 +776,7 @@ jobs:
         id: filter
         uses: $/.github/actions/check-changes
         with:
-          paths: crates/oxc_lexer/,tasks/benchmark/benches/lexer_wallclock_old.rs,tasks/benchmark/benches/lexer_wallclock_new.rs,tasks/benchmark/benches/lexer_common.rs,.cargo/lexer-simd.toml,justfile,.github/workflows/ci.yml
+          paths: crates/oxc_lexer/,tasks/benchmark/benches/lexer_wallclock_old.rs,tasks/benchmark/benches/lexer_wallclock_new.rs,tasks/benchmark/benches/lexer_common.rs,.cargo/lexer-avx2.toml,justfile,.github/workflows/ci.yml
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
 
@@ -769,9 +792,9 @@ jobs:
           tool: just
 
       - name: Benchmark
-        # The `oxc_lexer` benchmark prints which implementation it was built with (`oxc_lexer::IS_SIMD`).
-        # Checking it here is what guarantees this job benchmarked the SIMD core.
-        # The `oxc_parser` benchmark checks for itself that it was built without the SIMD flags.
+        # The `oxc_lexer` benchmark prints which implementation it was built with (`oxc_lexer::IMPLEMENTATION`).
+        # Checking it here is what guarantees this job benchmarked the AVX2 implementation.
+        # `just bench-lexer-avx2` builds the `oxc_parser` benchmark without the AVX2 flags (not checked here).
         if: steps.filter.outputs.changed == 'true'
         env:
           # Keep criterion's saved results out of `target`, which may be cached.
@@ -779,9 +802,9 @@ jobs:
           CRITERION_HOME: ${{ runner.temp }}/criterion
         run: |
           set -o pipefail
-          just bench-lexer-simd | tee "$RUNNER_TEMP/bench.log"
-          grep -qxF "Lexer implementation: SIMD" "$RUNNER_TEMP/bench.log" ||
-            { echo "::error::Expected SIMD, but the benchmark reported otherwise"; exit 1; }
+          just bench-lexer-avx2 | tee "$RUNNER_TEMP/bench.log"
+          grep -qxF "Lexer implementation: AVX2" "$RUNNER_TEMP/bench.log" ||
+            { echo "::error::Expected AVX2, but the benchmark reported otherwise"; exit 1; }
 
   test-codegen:
     name: Test Codegen

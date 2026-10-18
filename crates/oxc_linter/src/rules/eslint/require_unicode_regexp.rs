@@ -224,7 +224,7 @@ fn extract_regex_flags<'a>(
     args: &'a ArenaVec<'a, Argument<'a>>,
     ctx: &LintContext<'a>,
 ) -> Option<RegExpFlags> {
-    if args.iter().any(oxc_ast::ast::Argument::is_spread) {
+    if args.iter().any(Argument::is_spread) {
         return None;
     }
     if args.len() <= 1 {
@@ -259,7 +259,7 @@ fn resolve_flags<'a>(
     }
 
     match expr {
-        Expression::StringLiteral(lit) => Some(parse_flags(lit.value.as_str())),
+        Expression::StringLiteral(lit) => Some(parse_flags(lit.value.as_str()?)),
         Expression::TemplateLiteral(template) => resolve_template_flags(template, ctx, next_depth),
         Expression::BooleanLiteral(lit) => {
             Some(if lit.value { RegExpFlags::U } else { RegExpFlags::empty() })
@@ -297,22 +297,22 @@ fn resolve_template_flags<'a>(
     let mut flags = RegExpFlags::empty();
 
     for (index, expression) in template.expressions.iter().enumerate() {
-        flags |= parse_flags(template.quasis.get(index)?.value.cooked?.as_str());
+        flags |= parse_flags(template.quasis.get(index)?.value.cooked?.as_str()?);
         flags |= resolve_flags(expression, ctx, true, depth)?;
     }
 
-    flags |= parse_flags(template.quasis.last()?.value.cooked?.as_str());
+    flags |= parse_flags(template.quasis.last()?.value.cooked?.as_str()?);
     Some(flags)
 }
 
 fn resolve_static_string<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> Option<&'a str> {
     match expr.get_inner_expression() {
-        Expression::StringLiteral(lit) => Some(lit.value.as_str()),
-        Expression::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
+        Expression::StringLiteral(lit) => lit.value.as_str(),
+        Expression::TemplateLiteral(template) => template.single_quasi()?.as_str(),
         Expression::Identifier(ident) => {
             match resolve_const_initializer(ident, ctx)?.get_inner_expression() {
-                Expression::StringLiteral(lit) => Some(lit.value.as_str()),
-                Expression::TemplateLiteral(template) => Some(template.single_quasi()?.as_str()),
+                Expression::StringLiteral(lit) => lit.value.as_str(),
+                Expression::TemplateLiteral(template) => template.single_quasi()?.as_str(),
                 _ => None,
             }
         }
@@ -327,7 +327,8 @@ fn resolve_const_initializer<'a>(
     let declaration = get_declaration_of_variable(ident, ctx.semantic())?;
     let AstKind::VariableDeclarator(decl) = declaration.kind() else { return None };
 
-    if !variable_declaration_kind(decl, ctx).is_const() || !decl.id.is_binding_identifier() {
+    if !variable_declaration_kind(decl, ctx.nodes())?.is_const() || !decl.id.is_binding_identifier()
+    {
         return None;
     }
 

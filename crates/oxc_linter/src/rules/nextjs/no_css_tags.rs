@@ -66,6 +66,7 @@ declare_oxc_lint!(
     NoCssTags,
     nextjs,
     correctness,
+    recommended,
     version = "0.2.0",
     short_description = "Prevent manual inclusion of stylesheets using `<link>` tags in Next.js applications.",
 );

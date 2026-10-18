@@ -57,6 +57,7 @@ declare_oxc_lint!(
     IframeHasTitle,
     jsx_a11y,
     correctness,
+    recommended,
     version = "0.0.19",
     short_description = "Enforce iframe elements have a title attribute.",
 );
@@ -78,7 +79,7 @@ impl Rule for IframeHasTitle {
         };
 
         match get_prop_value(alt_prop) {
-            Some(JSXAttributeValue::StringLiteral(str)) if !str.value.as_str().is_empty() => {
+            Some(JSXAttributeValue::StringLiteral(str)) if !str.value.is_empty() => {
                 return;
             }
             Some(JSXAttributeValue::ExpressionContainer(container)) => {

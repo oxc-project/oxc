@@ -63,6 +63,7 @@ declare_oxc_lint!(
     ValidParams,
     promise,
     correctness,
+    recommended,
     version = "0.7.1",
     short_description = "Enforce that Promise functions are called with the correct number of arguments.",
 );

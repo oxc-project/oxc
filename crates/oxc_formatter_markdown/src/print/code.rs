@@ -2,12 +2,10 @@
 //! indented blocks stay indented.
 
 use cow_utils::CowUtils;
-use rustc_hash::FxHashSet;
 
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Buffer, BufferExtensions, DispatchRequest, Document, FormatElement, FormatOptions, InputKind,
-    Interned, PrintWidth, arena_cow_str,
+    DispatchRequest, Document, FormatElement, FormatOptions, InputKind, PrintWidth, arena_cow_str,
     builders::{
         FormatOnce, exact_line_breaks, hard_line_break, mark_as_root, space_align, text, token,
     },
@@ -124,20 +122,17 @@ fn format_embedded<'a>(
         },
     )?;
 
-    let (has_newline, has_fence_char) = scan_texts(&ir, fence_char);
     // Newline inside a text (a template literal, a block comment) becomes a literal line,
     // which `mark_as_root` keeps at the fence's column
-    let ir = if has_newline {
-        let indent_width = f.options().indent_width();
-        map_text_in_ir(&ir, f.allocator(), &mut |text, out| {
-            text.contains('\n') && {
-                push_text_with_literal_lines(out, text, indent_width);
-                true
-            }
-        })
-    } else {
-        ir
-    };
+    let indent_width = f.options().indent_width();
+    let mut has_fence_char = false;
+    let ir = map_text_in_ir(ir, f.allocator(), &mut |text, out| {
+        has_fence_char |= text.as_bytes().contains(&fence_char);
+        text.contains('\n') && {
+            push_text_with_literal_lines(out, text, indent_width);
+            true
+        }
+    });
     if !has_fence_char {
         return Some((ir, 0));
     }
@@ -151,39 +146,6 @@ fn format_embedded<'a>(
     let printed = probe.print(value.len(), options).ok()?;
     let run = max_run(printed.as_code(), fence_char);
     Some((ir, run))
-}
-
-/// Whether any text of the IR holds a newline / the fence character;
-/// a shared `Interned` subtree is walked once.
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
-fn scan_texts(ir: &[FormatElement<'_>], fence_char: u8) -> (bool, bool) {
-    fn walk<'a>(
-        elements: &[FormatElement<'a>],
-        fence_char: u8,
-        seen: &mut FxHashSet<Interned<'a>>,
-        found: &mut (bool, bool),
-    ) {
-        for element in elements {
-            match element {
-                FormatElement::Text { text, .. } | FormatElement::Token { text } => {
-                    found.0 |= text.contains('\n');
-                    found.1 |= text.as_bytes().contains(&fence_char);
-                }
-                FormatElement::BestFitting(best_fitting) => {
-                    for variant in best_fitting.variants() {
-                        walk(variant, fence_char, seen, found);
-                    }
-                }
-                FormatElement::Interned(interned) if seen.insert(interned.clone()) => {
-                    walk(interned, fence_char, seen, found);
-                }
-                _ => {}
-            }
-        }
-    }
-    let mut found = (false, false);
-    walk(ir, fence_char, &mut FxHashSet::default(), &mut found);
-    found
 }
 
 /// Whether the meta addresses lines by number (`{1,3-5}`, VitePress / Docusaurus line highlighting),

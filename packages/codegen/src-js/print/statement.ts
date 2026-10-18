@@ -42,14 +42,18 @@ import {
   printTSTypeAliasDeclaration,
   printTypeAnnotation,
 } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { Literal, UnknownNode } from "./types.ts";
+import type { Literal, UnhandledNodes } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
  * Entry point for a whole file.
  * A hashbang is written ahead of everything else, since it is only legal on the first line.
+ *
+ * @param node - Program
+ * @param state - Printer state
  */
 export function printProgram(node: ESTree.Program, state: State): void {
   if (node.hashbang != null) {
@@ -67,6 +71,9 @@ export function printProgram(node: ESTree.Program, state: State): void {
  *
  * The handover is the delicate part - a string literal statement arriving right after the prologue
  * has to be kept from being read back as one more directive.
+ *
+ * @param body - Directives and statements
+ * @param state - Printer state
  */
 export function printDirectivesAndStatements(
   body: Array<ESTree.Directive | ESTree.Statement>,
@@ -121,6 +128,9 @@ export function printDirectivesAndStatements(
  * Directives print from their raw source text, so the quote has to be chosen to suit the text
  * rather than the other way round - the scan takes the first unescaped `"` or `'` and quotes with
  * the other one.
+ *
+ * @param stmt - Directive
+ * @param state - Printer state
  */
 function printDirective(stmt: ESTree.Directive, state: State): void {
   printIndent(state);
@@ -154,8 +164,11 @@ function printDirective(stmt: ESTree.Directive, state: State): void {
  *
  * Each case owns its own leading indent and its trailing newline, so a statement always leaves
  * the output at the start of a fresh line for the next one.
+ *
+ * @param node - Statement
+ * @param state - Printer state
  */
-export function printStatement(node: ESTree.Statement | UnknownNode, state: State): void {
+export function printStatement(node: ESTree.Statement, state: State): void {
   // Arms are ordered roughly in order of most common nodes.
   // V8 turns this into (essentially) as chain of `if ... else if ... else if...`,
   // so making common nodes short-circuit early is a large perf boost.
@@ -320,7 +333,17 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
       break;
     /* END_IF */
     default:
-      throw new Error(`Unknown statement type: ${node.type}`);
+      throwUnknownNode(
+        node as Exclude<
+          UnhandledNodes<typeof node, typeof node.type>,
+          // Expressions, which are never statements - in statement position they're wrapped in an `ExpressionStatement`
+          | (ESTree.Function & { type: "FunctionExpression" })
+          | (ESTree.Class & { type: "ClassExpression" })
+          // Only ever the `value` of a method with no body, never a statement
+          | (ESTree.Function & { type: "TSEmptyBodyFunctionExpression" })
+        >,
+        "statement",
+      );
   }
 }
 
@@ -329,6 +352,9 @@ export function printStatement(node: ESTree.Statement | UnknownNode, state: Stat
  * printed there knows to parenthesize itself.
  *
  * The indent is written first, so the mark is the last thing to touch `last` before the expression.
+ *
+ * @param node - Expression statement
+ * @param state - Printer state
  */
 function printExpressionStatement(node: ESTree.ExpressionStatement, state: State): void {
   const mapsIndent = state.indentLevel > 0 || state.pendingIndentAsSpace;
@@ -343,6 +369,8 @@ function printExpressionStatement(node: ESTree.ExpressionStatement, state: State
  * Shared by the standalone declaration and the `for` and `for-in` heads, which is why it writes no
  * indent and no terminator - the caller supplies both.
  *
+ * @param node - Variable declaration
+ * @param state - Printer state
  * @param ctx - Passed to every initializer, so a `for` head can hand down `CTX_FORBID_IN` and stop an
  *   `in` operator there being read as the head's own.
  */
@@ -397,6 +425,9 @@ export function printVariableDeclaration(
  *
  * Nothing is written before the opening brace or after the closing one, so callers can attach
  * ` else`, ` catch` or a newline themselves.
+ *
+ * @param block - Block statement
+ * @param state - Printer state
  */
 function printBlockStatement(block: ESTree.BlockStatement, state: State): void {
   const { body } = block;
@@ -425,6 +456,9 @@ function printBlockStatement(block: ESTree.BlockStatement, state: State): void {
  *
  * A non-block consequent which trails off into a dangling `if` is given braces, so a following
  * `else` cannot attach to the wrong one - see `wrapToAvoidAmbiguousElse`.
+ *
+ * @param node - If statement
+ * @param state - Printer state
  */
 function printIf(node: ESTree.IfStatement, state: State): void {
   printSpaceBeforeIdentifier(state);
@@ -477,6 +511,8 @@ function printIf(node: ESTree.IfStatement, state: State): void {
  *
  * Only the trailing position is followed - a loop, `with` or label body, and an `if` alternate -
  * since that is where a following `else` would land.
+ *
+ * @param stmt - Statement
  */
 function wrapToAvoidAmbiguousElse(stmt: ESTree.Statement): boolean {
   for (;;) {
@@ -502,6 +538,9 @@ function wrapToAvoidAmbiguousElse(stmt: ESTree.Statement): boolean {
 /**
  * With an argument the space after `return` is part of the same write.
  * With none, the keyword is recorded as an identifier, so anything printed after it keeps a separating space.
+ *
+ * @param node - Return statement
+ * @param state - Printer state
  */
 function printReturnStatement(node: ESTree.ReturnStatement, state: State): void {
   printIndent(state);
@@ -521,6 +560,9 @@ function printReturnStatement(node: ESTree.ReturnStatement, state: State): void 
 /**
  * The catch binding is optional, so an absent `param` prints a bare `catch` block rather than an empty pair of parens.
  * The handler and the finalizer are each written only if present.
+ *
+ * @param node - Try statement
+ * @param state - Printer state
  */
 function printTryStatement(node: ESTree.TryStatement, state: State): void {
   printIndent(state);
@@ -555,6 +597,9 @@ function printTryStatement(node: ESTree.TryStatement, state: State): void {
 /**
  * A switch with no cases prints as `{}` on the same line. Otherwise the cases sit one level in,
  * and each indents its own statements again - see `printSwitchCase`.
+ *
+ * @param node - Switch statement
+ * @param state - Printer state
  */
 function printSwitchStatement(node: ESTree.SwitchStatement, state: State): void {
   printIndent(state);
@@ -587,6 +632,9 @@ function printSwitchStatement(node: ESTree.SwitchStatement, state: State): void 
 /**
  * A case with exactly one statement hands it to `printBody`, which keeps it on the line of the `case`.
  * Any other count goes onto separate lines a level deeper, so an empty case prints as just its label.
+ *
+ * @param node - Switch case
+ * @param state - Printer state
  */
 function printSwitchCase(node: ESTree.SwitchCase, state: State): void {
   printIndent(state);
@@ -620,6 +668,9 @@ function printSwitchCase(node: ESTree.SwitchCase, state: State): void {
 /**
  * The test is fenced by its own parens, so it prints from `PREC_LOWEST` with no context flags,
  * and the body goes through `printBody` like every other loop here.
+ *
+ * @param node - While statement
+ * @param state - Printer state
  */
 function printWhileStatement(node: ESTree.WhileStatement, state: State): void {
   printIndent(state);
@@ -638,6 +689,9 @@ function printWhileStatement(node: ESTree.WhileStatement, state: State): void {
  * with the `while` returned to the outer level.
  *
  * The closing `);` is always written out rather than left to ASI.
+ *
+ * @param node - Do-while statement
+ * @param state - Printer state
  */
 function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): void {
   printIndent(state);
@@ -673,6 +727,9 @@ function printDoWhileStatement(node: ESTree.DoWhileStatement, state: State): voi
  *
  * An absent test or update still writes its `;`, which is why those cases fold the separator,
  * and for the update the closing paren too, into a single write.
+ *
+ * @param node - For statement
+ * @param state - Printer state
  */
 function printForStatement(node: ESTree.ForStatement, state: State): void {
   printIndent(state);
@@ -711,6 +768,9 @@ function printForStatement(node: ESTree.ForStatement, state: State): void {
 /**
  * The left side is either a declaration or an assignment target. A declaration prints with `CTX_FORBID_IN`,
  * so an `in` inside its initializer parenthesizes itself instead of ending the head early.
+ *
+ * @param node - For-in statement
+ * @param state - Printer state
  */
 function printForInStatement(node: ESTree.ForInStatement, state: State): void {
   printIndent(state);
@@ -739,6 +799,9 @@ function printForInStatement(node: ESTree.ForInStatement, state: State): void {
  *
  * Nothing here needs `CTX_FORBID_IN`, unlike the `for` and `for-in` heads, and the right side
  * prints at `PREC_COMMA` so a sequence takes parens.
+ *
+ * @param node - For-of statement
+ * @param state - Printer state
  */
 function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
   printIndent(state);
@@ -777,6 +840,10 @@ function printForOfStatement(node: ESTree.ForOfStatement, state: State): void {
  *
  * The restriction for `let` is on the first token of the head rather than on the target as a whole,
  * so this walks down the leftmost spine - through member objects and parens - to whatever prints first.
+ *
+ * @param left - Left side of the `for of` head
+ * @param leftType - `left.type`
+ * @param wrapAsync - `true` if a bare `async` needs wrapping, which it does unless the loop is `for await`
  */
 function forOfHeadNeedsWrapping(
   left: ESTree.AssignmentTarget | ESTree.Expression,
@@ -826,6 +893,9 @@ function forOfHeadNeedsWrapping(
  * A block is attached with a space and closed with a newline, an empty statement collapses to `;`,
  * and anything else sets `pendingIndentAsSpace`, so its indent prints as a single space and it stays
  * on the current line.
+ *
+ * @param stmt - Statement
+ * @param state - Printer state
  */
 function printBody(stmt: ESTree.Statement, state: State): void {
   const stmtType = stmt.type;

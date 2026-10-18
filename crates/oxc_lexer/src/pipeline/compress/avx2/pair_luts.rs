@@ -1,10 +1,12 @@
-//! Lookup tables which `compress_blocks` uses to turn the token-start bitmap into a list of token positions,
-//! 16 bits at a time.
+//! Lookup tables which `compress_blocks_avx2` uses to turn the token-start bitmap
+//! into a list of token positions, 16 bits at a time.
 
 use std::{
     mem::{MaybeUninit, offset_of},
     sync::OnceLock,
 };
+
+use crate::pipeline::cpu::Avx2;
 
 /// Single copy of [`PairLuts`], shared across all threads.
 ///
@@ -14,14 +16,14 @@ static PAIR_LUTS: OnceLock<Box<PairLuts>> = OnceLock::new();
 
 /// Lookup tables for converting a 16-bit mask into a list of the offsets of its set bits.
 ///
-/// `compress_blocks` splits each 16 bits of the token-start bitmap into 2 bytes,
+/// `compress_blocks_avx2` splits each 16 bits of the token-start bitmap into 2 bytes,
 /// `sub0` (low) and `sub1` (high), and looks each one up in its own table:
 ///
 /// * `lut0z[sub0]` is the offsets of `sub0`'s set bits (0-7) in ascending order, padded with zeros.
 /// * `lutpad[sub1]` is 32 bytes, made of 8 zeros, then the offsets of `sub1`'s set bits plus 8 (8-15)
 ///   in ascending order, padded with 0x80 up to byte 16, then 16 more zeros.
 ///
-/// `compress_blocks` loads 16 bytes of `lutpad[sub1]` starting at byte `8 - pc0`,
+/// `compress_blocks_avx2` loads 16 bytes of `lutpad[sub1]` starting at byte `8 - pc0`,
 /// where `pc0` is the number of bits set in `sub0`. This puts `pc0` zeros in front of `sub1`'s offsets,
 /// so OR-ing it with `lut0z[sub0]` gives the offsets of all the set bits in the 16-bit mask, in order.
 /// That is used as a `vpshufb` control to gather the kinds of those tokens, and added to
@@ -47,7 +49,14 @@ impl PairLuts {
     /// to zero both arrays, then all the data being copied twice - first from
     /// 2 stack temporaries for `lut0z` and `lutpad` arrays into another stack temporary
     /// for `PairLuts`, then a second copy of `PairLuts` from the stack to the heap.
-    fn new() -> Box<Self> {
+    ///
+    /// # SAFETY
+    ///
+    /// No safety preconditions.
+    /// Calling this function requires an `unsafe { ... }` block, because of `#[target_feature]`,
+    /// but it's always sound, because the `Avx2` parameter guarantees the CPU supports those features.
+    #[target_feature(enable = "avx2,bmi2,popcnt")]
+    fn new(_cpu: Avx2) -> Box<Self> {
         // Allocate space for `PairLuts` on the heap, uninitialized
         let mut luts = Box::<PairLuts>::new_uninit();
 
@@ -95,16 +104,19 @@ impl PairLuts {
 
 /// Initialize the global [`PairLuts`] instance.
 ///
-/// This method must be called before calling [`get_pair_luts`].
-pub fn init_pair_luts() {
-    PAIR_LUTS.get_or_init(PairLuts::new);
+/// This function must be called before calling [`get_pair_luts`].
+pub fn init_pair_luts_avx2(cpu: Avx2) {
+    PAIR_LUTS.get_or_init(|| {
+        // SAFETY: `PairLuts::new` has no safety preconditions
+        unsafe { PairLuts::new(cpu) }
+    });
 }
 
 /// Get reference to [`PairLuts`].
 ///
 /// # SAFETY
 ///
-/// [`init_pair_luts`] must have been called before calling this.
+/// [`init_pair_luts_avx2`] must have been called before calling this.
 pub(super) unsafe fn get_pair_luts() -> &'static PairLuts {
     unsafe { PAIR_LUTS.get().unwrap_unchecked() }
 }

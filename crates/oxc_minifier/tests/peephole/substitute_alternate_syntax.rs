@@ -722,6 +722,20 @@ fn test_property_key() {
         "class C { static accessor __proto__ = 0 }",
     );
 
+    // A key with a lone surrogate keeps its string form without brackets.
+    test("v = { ['\\uD800']: 2 }", "v = { '\\uD800': 2 }");
+    test("v = ({ ['__proto__\\uD800']: 0 })", "v = ({ '__proto__\\uD800': 0 })");
+    test("({ ['\\uD800']: _ } = {})", "({ '\\uD800': _ } = {})");
+    test("var { ['\\uD800']: _ } = {}", "var { '\\uD800': _ } = {}");
+    test(
+        "class C { ['\\uD800'] = 1; static ['prototype\\uD800']() {} }",
+        "class C { '\\uD800' = 1; static 'prototype\\uD800'() {} }",
+    );
+    test(
+        "class C { accessor ['constructor\\uD800'] = 1 }",
+        "class C { accessor 'constructor\\uD800' = 1 }",
+    );
+
     // Patch KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
     // <https://github.com/oxc-project/unicode-id-start/pull/3>
     test_same("x = { 'x・': 0 };");

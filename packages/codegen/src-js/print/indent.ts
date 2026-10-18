@@ -16,6 +16,8 @@ import type { State } from "../state.ts";
  * Write the indentation for the current level, or the pending single space in place of it.
  *
  * Inline statement bodies ask for a space where an indent would go, which keeps `if (x) foo()` on one line.
+ *
+ * @param state - Printer state
  */
 export function printIndent(state: State): void {
   // Flatten chunk if `state.output` has grown beyond limit.
@@ -41,6 +43,9 @@ export function printIndent(state: State): void {
  * Extend the indent cache up to `level` and return the indent for it.
  *
  * Separate from `printIndent` so the cached lookup there stays small enough to inline.
+ *
+ * @param state - Printer state
+ * @param level - Indent level
  */
 function growIndents(state: State, level: number): string {
   const { indents, indentString } = state;

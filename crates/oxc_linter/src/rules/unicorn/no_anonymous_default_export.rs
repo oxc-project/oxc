@@ -61,6 +61,7 @@ declare_oxc_lint!(
     NoAnonymousDefaultExport,
     unicorn,
     restriction,
+    recommended,
     pending,
     version = "0.3.3",
     short_description = "Disallows anonymous functions and classes as default exports.",

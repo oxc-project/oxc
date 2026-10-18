@@ -273,7 +273,6 @@ impl ArrowBodyStyle {
             }
             Mode::AsNeeded if body.directives.is_empty() && body.statements.len() == 1 => {
                 if let Statement::ReturnStatement(return_statement) = &body.statements[0] {
-                    // Skip if requireReturnForObjectLiteral and returning an object
                     if self.1.require_return_for_object_literal
                         && matches!(
                             return_statement.argument,
@@ -315,7 +314,6 @@ impl ArrowBodyStyle {
     ) -> RuleFix {
         let body = &arrow_func_expr.body;
 
-        // Get the expression from the concise body
         let Some(expr) = arrow_func_expr.get_expression() else {
             return fixer.noop();
         };
@@ -420,12 +418,10 @@ impl ArrowBodyStyle {
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        // Check if the expression contains an `in` operator
         if !Self::contains_in_operator(return_arg) {
             return false;
         }
 
-        // Check if the arrow function is inside a for-loop initializer
         Self::is_inside_for_loop_init(node, ctx)
     }
 
@@ -459,7 +455,6 @@ impl ArrowBodyStyle {
         for ancestor in ctx.nodes().ancestors(node.id()).skip(1) {
             match ancestor.kind() {
                 AstKind::ForStatement(for_stmt) => {
-                    // Check if the arrow function is in the init part
                     if let Some(init) = &for_stmt.init
                         && let AstKind::ArrowFunctionExpression(arrow) = node.kind()
                         && init.span().contains_inclusive(arrow.span)

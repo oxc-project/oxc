@@ -4,11 +4,11 @@ use oxc_ast::ast::{BinaryOperator, Expression};
 /// and `+` concatenation. Returns `None` when any part cannot be determined statically.
 pub fn static_string_value(expression: &Expression<'_>) -> Option<String> {
     match expression.get_inner_expression() {
-        Expression::StringLiteral(literal) => Some(literal.value.to_string()),
+        Expression::StringLiteral(literal) => literal.value.as_str().map(str::to_owned),
         Expression::TemplateLiteral(template) => {
             let mut value = String::new();
             for (index, quasi) in template.quasis.iter().enumerate() {
-                value.push_str(quasi.value.cooked.as_ref()?);
+                value.push_str(quasi.value.cooked?.as_str()?);
                 if let Some(expr) = template.expressions.get(index) {
                     value.push_str(&static_string_value(expr)?);
                 }

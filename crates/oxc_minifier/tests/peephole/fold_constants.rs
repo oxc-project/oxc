@@ -1241,20 +1241,20 @@ fn test_fold_left() {
 #[test]
 fn test_fold_array_length() {
     // Can fold
-    fold("x = [].length", "x = 0");
-    fold("x = [1,2,3].length", "x = 3");
+    fold("[].length", "0");
+    fold("[1,2,3].length", "3");
     // test("x = [a,b].length", "x = 2");
-    fold("x = 'abc'['length']", "x = 3");
+    fold("'abc'['length']", "3");
 
     // Not handled yet
-    fold("x = [,,1].length", "x = 3");
+    fold("[,,1].length", "3");
 
     // Foldable after constant spread elements are inlined
     fold("[...[1, 2, 3]].length", "3");
 
     // Cannot fold
-    fold("x = [foo(), 0].length", "x = [foo(),0].length");
-    fold_same("x = y.length");
+    fold("[foo(), 0].length", "[foo(),0].length");
+    fold_same("y.length");
 }
 
 #[test]
@@ -1535,6 +1535,14 @@ fn test_inline_values_in_template_literal() {
     fold_same("foo`foo${1}bar`");
 }
 
+#[test]
+fn template_concatenation_preserves_surrogates() {
+    fold(r"`${a}\uD800` + `\uDC00${b}`", r"`${a}\uD800\uDC00${b}`");
+    fold(r"`${a}\uD800` + 'x'", r"`${a}\uD800x`");
+    fold(r"'x' + `\uDC00${a}`", r"`x\uDC00${a}`");
+    fold(r"`\uD800${'x'}\uDC00${a}`", r"`\uD800x\uDC00${a}`");
+}
+
 // Regression: when `fold_object_exp` drops or folds a spread, the dropped
 // subtree must be walked through `drop_expression` so identifier references
 // inside don't leak across passes. The discriminating signal is an
@@ -1635,6 +1643,9 @@ mod bigint {
         fold("1n > 2", "!1");
         fold("1n == 1", "!0");
         fold("1n == 2", "!1");
+        // one side is not converted to a BigInt, so the result is unknown
+        fold_same("1e21 == 1000000000000000000000n");
+        fold_same("2n ** 3n == 8");
 
         // comparing with decimals is allowed
         fold("1n < 1.1", "!0");
@@ -1691,6 +1702,16 @@ mod bigint {
         fold("'1' != 1n", "!1");
         fold("'1' === 1n", "!1");
         fold("'1' !== 1n", "!0");
+
+        // `StringToBigInt`: `StrWhiteSpace` around the literal, leading zeros allowed
+        fold("'012' == 12n", "!0");
+        fold("' 1 ' == 1n", "!0");
+        fold("'\\u000b1' == 1n", "!0");
+        fold("'\\u{FEFF}1' == 1n", "!0");
+        // not a `StringIntegerLiteral` (U+0085 is not `StrWhiteSpace`, no numeric separators)
+        fold_same("'\\u00851' == 1n");
+        fold_same("'1_0' == 10n");
+        fold_same("'0x1_0' == 16n");
     }
 
     #[test]

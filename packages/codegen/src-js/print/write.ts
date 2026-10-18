@@ -626,6 +626,10 @@ function recordMapping(state: State, sourceOffset: number): void {
 
 /**
  * Is `originalName` the same token as `printedName`, taking into account leading `#` if `hashLength === 1`.
+ *
+ * @param originalName - Name in the source
+ * @param printedName - Name as printed
+ * @param hashLength - `1` if `originalName` has a leading `#` which `printedName` doesn't, otherwise `0`
  */
 function isSameToken(originalName: string, printedName: string, hashLength: 0 | 1): boolean {
   if (hashLength === 0) return originalName === printedName;

@@ -14,6 +14,7 @@ declare_oxc_lint!(
     ValidExpectInPromise,
     vitest,
     correctness,
+    recommended,
     docs = DOCUMENTATION,
     version = "1.60.0",
 );
