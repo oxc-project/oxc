@@ -188,6 +188,15 @@ fn generate_outputs(schema: &Schema) -> (/* Visit */ TokenStream, /* VisitMut */
     // Generate `Visit` trait
     let alloc_fn = quote! {
         ///@@line_break
+        /// Whether to skip this node's fields, children, and scope callbacks.
+        ///
+        /// Called after `enter_node`. `leave_node` is still called when skipping.
+        #[inline]
+        fn skip_children(&mut self, kind: AstKind<'a>) -> bool {
+            false
+        }
+
+        ///@@line_break
         #[inline]
         fn alloc<T>(&self, t: &T) -> &'a T {
             ///@ SAFETY:
@@ -377,8 +386,16 @@ impl VisitBuilder<'_> {
         // Generate `enter_node` and `leave_node` calls (if this struct has an `AstKind`)
         let struct_ident = struct_def.ident();
         let has_kind = struct_def.kind.has_kind;
-        let (enter_node, leave_node) =
+        let (mut enter_node, leave_node) =
             generate_enter_and_leave_node(&struct_ident, has_kind, false);
+        if has_kind {
+            enter_node.extend(quote! {
+                if visitor.skip_children(kind) {
+                    visitor.leave_node(kind);
+                    return;
+                }
+            });
+        }
         let (enter_node_mut, leave_node_mut) =
             generate_enter_and_leave_node(&struct_ident, has_kind, true);
 
