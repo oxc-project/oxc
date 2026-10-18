@@ -646,7 +646,7 @@ impl LanguageServer for Backend {
         // Remove the internal cache for the document.
         // When the editor requests `textDocument/codeAction`, it may use its diagnostic cache to generate actions.
         // This could cause code actions to be generated with stale diagnostics if the cache is not cleared here.
-        // This should never happen, because this server expects `textDocument/diagnostic` is requested beforehand.
+        // A fix-all request re-lints the document when no entry of its version is cached.
         // Sadly, some editors/extensions have bugs, so we need to make sure the cache is cleared on change.
         worker.remove_uri_cache(&uri).await;
 
@@ -797,13 +797,15 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let document_version = self.file_system.get_version(&uri);
+        let document = self.file_system.get_document(&uri);
+        let (document_version, document_text) = (document.version, document.text);
 
         let params = crate::CodeActionParams {
             uri,
             range: params.range,
             context: params.context,
             document_version,
+            document_text,
         };
 
         let code_actions = worker.get_code_actions_or_commands(params).await;

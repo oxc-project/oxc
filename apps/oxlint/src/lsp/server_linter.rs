@@ -6,9 +6,9 @@ use ignore::gitignore::Gitignore;
 use rustc_hash::{FxHashMap, FxHashSet};
 use tower_lsp_server::{
     gen_lsp_types::{
-        CodeActionKind, CodeActionOptions, CodeActionProvider, CodeActionResponse,
-        CodeActionTriggerKind, Diagnostic, DiagnosticOptions, DiagnosticProvider,
-        ExecuteCommandOptions, MessageType, Pattern, ServerCapabilities, Uri,
+        CodeActionContext, CodeActionKind, CodeActionOptions, CodeActionProvider,
+        CodeActionResponse, CodeActionTriggerKind, Diagnostic, DiagnosticOptions,
+        DiagnosticProvider, ExecuteCommandOptions, MessageType, Pattern, ServerCapabilities, Uri,
         WorkDoneProgressOptions, WorkspaceEdit,
     },
     jsonrpc::ErrorCode,
@@ -607,11 +607,7 @@ impl Tool for ServerLinter {
     }
 
     fn get_code_actions_or_commands(&self, params: CodeActionParams) -> Vec<CodeActionResponse> {
-        let actions = self.get_code_actions_for_uri(
-            &params.uri,
-            params.context.trigger_kind,
-            params.document_version,
-        );
+        let actions = self.get_code_actions_for_uri(&params);
 
         let Some(actions) = actions else {
             return vec![];
@@ -790,21 +786,37 @@ impl ServerLinter {
         self.cached_actions_of_version(uri, version)
     }
 
-    fn get_code_actions_for_uri(
-        &self,
-        uri: &Uri,
-        trigger_kind: Option<CodeActionTriggerKind>,
-        document_version: Option<i32>,
-    ) -> Option<Vec<LinterCodeAction>> {
-        self.cached_actions_of_version(uri, document_version).or_else(|| {
-            // only run linting and generate code actions when the code action is explicitly invoked,
-            // otherwise it will be too heavy to run linting on every file open or cursor move, which will cause performance issues and a bad user experience.
-            // It is most likely that the client already sent a request, where we run the lint process and cache the code actions.
-            // So we only need to run the lint process when the code action is explicitly invoked and the file is not open in the editor.
-            if trigger_kind == Some(CodeActionTriggerKind::Invoked) && document_version.is_none() {
-                self.lint_for_actions(uri, None, None)
-            } else {
-                None
+    /// Returns whether `context.only` asks for one of the kinds which fix the whole document.
+    fn requests_fix_all(context: &CodeActionContext) -> bool {
+        context.only.as_ref().is_some_and(|only| {
+            only.iter().any(|kind| {
+                kind == &CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC
+                    || kind == &CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC
+                    || kind == &CodeActionKind::SourceFixAll
+            })
+        })
+    }
+
+    fn get_code_actions_for_uri(&self, params: &CodeActionParams) -> Option<Vec<LinterCodeAction>> {
+        let uri = &params.uri;
+        let version = params.document_version;
+        self.cached_actions_of_version(uri, version).or_else(|| {
+            match params.document_text.as_deref() {
+                // A client may ask for the fixes of a document before it pulls the diagnostics of its current content,
+                // so a fix all request lints the content of the requested version.
+                Some(content) if Self::requests_fix_all(&params.context) => {
+                    self.lint_for_actions(uri, Some(content), version)
+                }
+                // only run linting and generate code actions when the code action is explicitly invoked,
+                // otherwise it will be too heavy to run linting on every file open or cursor move, which will cause performance issues and a bad user experience.
+                // It is most likely that the client already sent a request, where we run the lint process and cache the code actions.
+                // So we only need to run the lint process when the code action is explicitly invoked and the file is not open in the editor.
+                _ if params.context.trigger_kind == Some(CodeActionTriggerKind::Invoked)
+                    && version.is_none() =>
+                {
+                    self.lint_for_actions(uri, None, None)
+                }
+                _ => None,
             }
         })
     }
@@ -1205,7 +1217,13 @@ mod test {
         range: Range,
         context: CodeActionContext,
     ) -> CodeActionParams {
-        CodeActionParams { uri: uri.clone(), range, context, document_version: None }
+        CodeActionParams {
+            uri: uri.clone(),
+            range,
+            context,
+            document_version: None,
+            document_text: None,
+        }
     }
 
     fn code_action_params_of_version(
@@ -1214,7 +1232,13 @@ mod test {
         context: CodeActionContext,
         version: i32,
     ) -> CodeActionParams {
-        CodeActionParams { uri: uri.clone(), range, context, document_version: Some(version) }
+        CodeActionParams {
+            uri: uri.clone(),
+            range,
+            context,
+            document_version: Some(version),
+            document_text: None,
+        }
     }
 
     #[test]
@@ -1538,6 +1562,217 @@ mod test {
             text_edits[0].new_text.contains("bar"),
             "`oxc.fixAll` should fix the content of version 4, not the one of version 3"
         );
+    }
+
+    #[test]
+    fn test_fix_all_dangerous_lints_the_open_document_when_nothing_is_cached() {
+        let tester = Tester::new("fixtures/lsp/code_action", json!({ "fixKind": "dangerous_fix" }));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        // This file does not exist on disk: its content is only held in memory.
+        let uri = tester.get_file_uri("quickfix.js");
+
+        let code_actions = linter.get_code_actions_or_commands(CodeActionParams {
+            document_text: Some("if (foo == NaN) {}".into()),
+            ..code_action_params_of_version(
+                &uri,
+                range,
+                CodeActionContext {
+                    only: Some(vec![CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC]),
+                    ..Default::default()
+                },
+                2,
+            )
+        });
+
+        assert_eq!(
+            code_actions.len(),
+            1,
+            "`source.fixAllDangerous.oxc` with nothing cached: Should return the fix all action of the content of version 2"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_mixed_with_quickfix_lints_the_open_document_when_nothing_is_cached() {
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        // This file does not exist on disk: its content is only held in memory.
+        let uri = tester.get_file_uri("quickfix.js");
+
+        let code_actions = linter.get_code_actions_or_commands(CodeActionParams {
+            document_text: Some("if (foo == NaN) {}".into()),
+            ..code_action_params_of_version(
+                &uri,
+                range,
+                CodeActionContext {
+                    only: Some(vec![CodeActionKind::QuickFix, CodeActionKind::SourceFixAll]),
+                    ..Default::default()
+                },
+                2,
+            )
+        });
+
+        assert_eq!(
+            code_actions.len(),
+            4,
+            "Quickfix & FixAll Context with nothing cached: Should return 1 rule fix + 2 ignore actions, and 1 fix all action"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_lints_the_open_document_when_the_cache_is_of_an_older_version() {
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        // This file does not exist on disk: its content is only held in memory.
+        let uri = tester.get_file_uri("quickfix.js");
+
+        // `debugger;` has no fix for `source.fixAll`.
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &uri,
+                text: Some("debugger;".into()),
+                language_id: LanguageId::default(),
+                version: Some(1),
+            })
+            .unwrap();
+
+        let code_actions = linter.get_code_actions_or_commands(CodeActionParams {
+            document_text: Some("if (foo == NaN) {}".into()),
+            ..code_action_params_of_version(
+                &uri,
+                range,
+                CodeActionContext {
+                    only: Some(vec![CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC]),
+                    ..Default::default()
+                },
+                2,
+            )
+        });
+
+        assert_eq!(
+            code_actions.len(),
+            1,
+            "Actions cached for version 1: Should lint the content of version 2"
+        );
+        assert_eq!(
+            linter.code_actions.pin().get(&uri).map(|cached| cached.version),
+            Some(Some(2)),
+            "The lint of version 2 replaces the entry of version 1"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_uses_the_cache_of_the_open_document_when_the_cached_version_matches() {
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        // This file does not exist on disk: its content is only held in memory.
+        let uri = tester.get_file_uri("quickfix.js");
+
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &uri,
+                text: Some("if (foo == NaN) {}".into()),
+                language_id: LanguageId::default(),
+                version: Some(7),
+            })
+            .unwrap();
+
+        // A lint of this content would return no fix all action: only the cache can answer.
+        let code_actions = linter.get_code_actions_or_commands(CodeActionParams {
+            document_text: Some("debugger;".into()),
+            ..code_action_params_of_version(
+                &uri,
+                range,
+                CodeActionContext {
+                    only: Some(vec![CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC]),
+                    ..Default::default()
+                },
+                7,
+            )
+        });
+
+        assert_eq!(
+            code_actions.len(),
+            1,
+            "Actions cached for version 7: Should answer a request for version 7 without linting it again"
+        );
+    }
+
+    #[test]
+    fn test_fix_all_returns_nothing_for_the_open_document_when_the_lint_keeps_an_older_cache() {
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        // These files do not exist on disk: their content is only held in memory.
+        let linted_uri = tester.get_file_uri("quickfix.js");
+        // The lint of a path with an unlintable extension returns early (`is_ignored` runs before
+        // the cache insert), so it leaves the cache untouched.
+        let unlintable_uri = tester.get_file_uri("quickfix.txt");
+
+        let _ = linter
+            .run_diagnostic(TextDocument {
+                uri: &linted_uri,
+                text: Some("if (foo == NaN) {}".into()),
+                language_id: LanguageId::default(),
+                version: Some(1),
+            })
+            .unwrap();
+        let cached = linter.code_actions.pin().get(&linted_uri).unwrap().clone();
+        linter.code_actions.pin().insert(unlintable_uri.clone(), cached);
+
+        let code_actions = linter.get_code_actions_or_commands(CodeActionParams {
+            document_text: Some("if (foo == NaN) {}".into()),
+            ..code_action_params_of_version(
+                &unlintable_uri,
+                range,
+                CodeActionContext {
+                    only: Some(vec![CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC]),
+                    ..Default::default()
+                },
+                2,
+            )
+        });
+
+        assert!(
+            code_actions.is_empty(),
+            "Actions cached for version 1: Should not answer a request for version 2 when its lint does not refresh the cache"
+        );
+        assert_eq!(
+            linter.code_actions.pin().get(&unlintable_uri).map(|cached| cached.version),
+            Some(Some(1)),
+            "The lint that does not refresh the cache keeps the entry of version 1"
+        );
+    }
+
+    #[test]
+    fn test_requests_without_fix_all_kind_do_not_lint_the_open_document() {
+        let tester = Tester::new("fixtures/lsp/code_action", json!({}));
+        let linter = tester.create_linter();
+        let range = Range::new(Position::new(0, 0), Position::new(u32::MAX, u32::MAX));
+        // This file does not exist on disk: its content is only held in memory.
+        let uri = tester.get_file_uri("quickfix.js");
+
+        for context in [
+            CodeActionContext::default(),
+            CodeActionContext { only: Some(vec![]), ..Default::default() },
+        ] {
+            let code_actions = linter.get_code_actions_or_commands(CodeActionParams {
+                document_text: Some("debugger;".into()),
+                ..code_action_params_of_version(&uri, range, context, 2)
+            });
+
+            assert!(
+                code_actions.is_empty(),
+                "Without a fix all kind and nothing cached: Should not return any action"
+            );
+            assert!(
+                linter.code_actions.pin().get(&uri).is_none(),
+                "Without a fix all kind: Should not lint the open document"
+            );
+        }
     }
 
     #[test]

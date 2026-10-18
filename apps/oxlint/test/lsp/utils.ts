@@ -39,7 +39,13 @@ import { codeFrameColumns } from "@babel/code-frame";
 
 const CLI_PATH = join(import.meta.dirname, "..", "..", "dist", "cli.js");
 
-const PULL_DIAGNOSTICS_CAPABILITY = {
+// `2 ** 31 - 1` is the maximum value of the LSP `uinteger` type.
+export const FULL_DOCUMENT_RANGE = Range.create(
+  Position.create(0, 0),
+  Position.create(2 ** 31 - 1, 0),
+);
+
+export const PULL_DIAGNOSTICS_CAPABILITY = {
   textDocument: {
     diagnostic: {},
   },
@@ -527,8 +533,7 @@ async function getCodeActionSnapshot(
     const range =
       !context?.only || context?.only?.includes("quickfix")
         ? diagnostic.range
-        : // 31 ** 2 - 1 is the max allowed LSP uint value
-          Range.create(Position.create(0, 0), Position.create(31 ** 2 - 1, 0));
+        : FULL_DOCUMENT_RANGE;
 
     // oxlint-disable-next-line no-await-in-loop -- for snapshot consistency
     const actions = await client.codeAction(fileUri, range, context);
