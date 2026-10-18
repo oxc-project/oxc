@@ -409,13 +409,15 @@ impl<'a> ContextHost<'a> {
                             rule.directive_prefix.unused_disable_rule_message(&rule.rule_name),
                         );
 
-                        let fix = rule.create_fix(source_text, span).with_message(fix_message);
+                        let fix = rule
+                            .create_fix(source_text, span)
+                            .map(|fix| fix.with_message(fix_message));
 
                         self.push_diagnostic(Message::new(
                             OxcDiagnostic::error(rule_message)
                                 .with_label(rule.name_span)
                                 .with_severity(rule_severity),
-                            PossibleFixes::Single(fix),
+                            fix.into(),
                         ));
                     }
                 }

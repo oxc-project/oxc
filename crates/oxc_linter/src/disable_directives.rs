@@ -199,17 +199,23 @@ pub struct RuleCommentRule {
 }
 
 impl RuleCommentRule {
+    /// Creates a suggestion to remove this rule and an adjacent separator.
+    ///
+    /// Returns `None` if no adjacent rule can be identified. Single-rule directives
+    /// must be removed as a whole, rather than leaving a directive that disables all rules.
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    pub fn create_fix(&self, source_text: &str, comment_span: Span) -> Fix {
+    pub fn create_fix(&self, source_text: &str, comment_span: Span) -> Option<Fix> {
         let before_source =
             &source_text[comment_span.start as usize..self.name_span.start as usize];
         let before_trimmed = before_source.trim_end();
         if before_trimmed.ends_with(',') {
-            return Fix::delete(Span::new(
-                comment_span.start + before_trimmed.len() as u32 - 1,
-                self.name_span.end,
-            ))
-            .with_kind(FixKind::Suggestion);
+            return Some(
+                Fix::delete(Span::new(
+                    comment_span.start + before_trimmed.len() as u32 - 1,
+                    self.name_span.end,
+                ))
+                .with_kind(FixKind::Suggestion),
+            );
         }
 
         let after_source = &source_text[self.name_span.end as usize..comment_span.end as usize];
@@ -217,11 +223,16 @@ impl RuleCommentRule {
         let whitespace_after = after_source.len() - after_trimmed.len();
         if let Some(after_comma) = after_trimmed.strip_prefix(',') {
             let whitespace_after_comma = after_comma.len() - after_comma.trim_start().len();
-            return Fix::delete(Span::new(
-                self.name_span.start,
-                self.name_span.end + whitespace_after as u32 + 1 + whitespace_after_comma as u32,
-            ))
-            .with_kind(FixKind::Suggestion);
+            return Some(
+                Fix::delete(Span::new(
+                    self.name_span.start,
+                    self.name_span.end
+                        + whitespace_after as u32
+                        + 1
+                        + whitespace_after_comma as u32,
+                ))
+                .with_kind(FixKind::Suggestion),
+            );
         }
 
         if whitespace_after > 0
@@ -229,25 +240,27 @@ impl RuleCommentRule {
             && !after_trimmed.starts_with('-')
             && !after_trimmed.starts_with("*/")
         {
-            return Fix::delete(Span::new(
-                self.name_span.start,
-                self.name_span.end + whitespace_after as u32,
-            ))
-            .with_kind(FixKind::Suggestion);
+            return Some(
+                Fix::delete(Span::new(
+                    self.name_span.start,
+                    self.name_span.end + whitespace_after as u32,
+                ))
+                .with_kind(FixKind::Suggestion),
+            );
         }
 
         let whitespace_before = before_source.len() - before_trimmed.len();
         if whitespace_before > 0 && self.previous_token_is_rule(before_trimmed) {
-            return Fix::delete(Span::new(
-                self.name_span.start - whitespace_before as u32,
-                self.name_span.end,
-            ))
-            .with_kind(FixKind::Suggestion);
+            return Some(
+                Fix::delete(Span::new(
+                    self.name_span.start - whitespace_before as u32,
+                    self.name_span.end,
+                ))
+                .with_kind(FixKind::Suggestion),
+            );
         }
 
-        unreachable!(
-            "A `RuleCommentRule` should have another rule in the same directive, because only one rule should be RuleCommentType::All"
-        );
+        None
     }
 
     fn previous_token_is_rule(&self, text: &str) -> bool {
@@ -1829,7 +1842,7 @@ mod tests {
         assert_eq!(rules.len(), 1);
         assert_eq!(rules[0].rule_name, "no-implicit-coercion");
 
-        let fix = rules[0].create_fix(source_text, unused[0].span);
+        let fix = rules[0].create_fix(source_text, unused[0].span).unwrap();
         assert_eq!(
             apply_delete(source_text, fix.span),
             concat!("// eslint-disable-next-line no-bitwise - intentional\n", "const x = 1;\n",)
@@ -1849,7 +1862,8 @@ mod tests {
             rule_name: "max-params".to_string(),
             name_span: Span::sized(28, 10),
         }
-        .create_fix(source_text, comment_span);
+        .create_fix(source_text, comment_span)
+        .unwrap();
 
         assert_eq!(&source_text[28..38], "max-params");
         assert_eq!(max_params_fix.span, Span::sized(28, 12)); // max-params is 10 + 1 for the comma + 1 for the space
@@ -1863,7 +1877,8 @@ mod tests {
             rule_name: "no-console".to_string(),
             name_span: Span::sized(40, 10),
         }
-        .create_fix(source_text, comment_span);
+        .create_fix(source_text, comment_span)
+        .unwrap();
 
         assert_eq!(&source_text[40..50], "no-console");
         assert_eq!(no_console_fix.span, Span::sized(38, 12)); // no-console is 10 + 2 for the comma before and the space
@@ -1873,7 +1888,8 @@ mod tests {
             rule_name: "no-debugger".to_string(),
             name_span: Span::sized(52, 11),
         }
-        .create_fix(source_text, comment_span);
+        .create_fix(source_text, comment_span)
+        .unwrap();
 
         assert_eq!(&source_text[52..63], "no-debugger");
         assert_eq!(no_debugger_fix.span, Span::sized(50, 13)); // no-debugger is 11 + 2 for the comma before and the space
@@ -1890,7 +1906,8 @@ mod tests {
             rule_name: "no-bitwise".to_string(),
             name_span: Span::new(no_bitwise_start, no_bitwise_end),
         }
-        .create_fix(source_text, comment_span);
+        .create_fix(source_text, comment_span)
+        .unwrap();
 
         assert_eq!(no_bitwise_fix.span, Span::new(no_bitwise_start, no_implicit_start));
         assert_eq!(
@@ -1903,7 +1920,8 @@ mod tests {
             rule_name: "no-implicit-coercion".to_string(),
             name_span: Span::new(no_implicit_start, no_implicit_end),
         }
-        .create_fix(source_text, comment_span);
+        .create_fix(source_text, comment_span)
+        .unwrap();
 
         assert_eq!(no_implicit_fix.span, Span::new(no_bitwise_end, no_implicit_end));
         assert_eq!(
@@ -1913,22 +1931,33 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(
-        expected = "A `RuleCommentRule` should have another rule in the same directive, because only one rule should be RuleCommentType::All"
-    )]
     #[expect(clippy::cast_possible_truncation)] // for `as u32`
-    fn test_rule_comment_rule_create_fix_panic() {
-        // This test is expected to panic because it is a standalone rule.
-        // Standalone rules should be `RuleCommentType::All`.
-        let source_text = "// eslint-disable-next-line max-params";
-        let comment_span = Span::new(0, source_text.len() as u32);
-
-        RuleCommentRule {
-            directive_prefix: DirectivePrefix::Eslint,
-            rule_name: "max-params".to_string(),
-            name_span: Span::sized(28, 10),
+    fn single_rule_has_no_partial_fix() {
+        for directive_prefix in [DirectivePrefix::Eslint, DirectivePrefix::Oxlint] {
+            for directive in ["disable", "disable-line", "disable-next-line"] {
+                for (open, close) in [("//", ""), ("/*", " */")] {
+                    for reason in ["", " -- intentional"] {
+                        let source_text = format!(
+                            "{open} {}{directive} max-params{reason}{close}",
+                            directive_prefix.prefix(),
+                        );
+                        let rule = RuleCommentRule {
+                            directive_prefix,
+                            rule_name: "max-params".to_string(),
+                            name_span: Span::sized(
+                                source_text.find("max-params").unwrap() as u32,
+                                10,
+                            ),
+                        };
+                        assert!(
+                            rule.create_fix(&source_text, Span::new(0, source_text.len() as u32),)
+                                .is_none(),
+                            "{source_text}"
+                        );
+                    }
+                }
+            }
         }
-        .create_fix(source_text, comment_span);
     }
 
     #[test]
