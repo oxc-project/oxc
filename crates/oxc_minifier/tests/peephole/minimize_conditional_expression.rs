@@ -1,4 +1,6 @@
-use crate::{test, test_same, test_target};
+use crate::{
+    CompressOptions, CompressOptionsKeepNames, default_options, test, test_same, test_target,
+};
 
 #[test]
 fn test_minimize_expr_condition() {
@@ -203,4 +205,27 @@ fn test_conditional_to_unary_plus_uses_to_boolean() {
     test("x = ('0.0' ? 1 : 0) || 2", "x = 1");
     // `ToNumber([])` is `0`, but every object is truthy.
     test("x = ([] ? 1 : 0) || 2", "x = 1");
+}
+
+#[test]
+fn test_keep_names_on_merged_conditional_assignments() {
+    let options =
+        CompressOptions { keep_names: CompressOptionsKeepNames::all_true(), ..default_options() };
+    let function_output = crate::run(
+        "let f; x ? f = () => 1 : f = () => 2",
+        oxc_span::SourceType::mjs(),
+        Some(options.clone()),
+    );
+    assert_eq!(function_output, "let f;\nx ? f = () => 1 : f = () => 2;\n");
+
+    let class_output = crate::run(
+        "let f; x ? f = class {} : f = class {}",
+        oxc_span::SourceType::mjs(),
+        Some(options.clone()),
+    );
+    assert_eq!(class_output, "let f;\nx, f = class {};\n");
+
+    let number_output =
+        crate::run("let f; x ? f = 1 : f = 2", oxc_span::SourceType::mjs(), Some(options));
+    assert_eq!(number_output, "let f;\nf = x ? 1 : 2;\n");
 }
