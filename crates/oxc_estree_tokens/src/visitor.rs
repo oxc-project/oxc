@@ -98,6 +98,25 @@ impl<'a, C: Context> Visit<'a> for Visitor<C> {
         }
     }
 
+    fn visit_class(&mut self, class: &Class<'a>) {
+        if let (Some(heritage), Some(implements)) = (&class.heritage, class.implements.first())
+            && implements.span.start < heritage.expression.span().start
+        {
+            self.visit_decorators(&class.decorators);
+            if let Some(id) = &class.id {
+                self.visit_binding_identifier(id);
+            }
+            if let Some(type_parameters) = &class.type_parameters {
+                self.visit_ts_type_parameter_declaration(type_parameters);
+            }
+            self.visit_ts_class_implements_list(&class.implements);
+            self.visit_class_heritage(heritage);
+            self.visit_class_body(&class.body);
+        } else {
+            walk::walk_class(self, class);
+        }
+    }
+
     fn visit_identifier_name(&mut self, identifier: &IdentifierName<'a>) {
         if self.ctx.is_ts() && self.ctx.jsx_state().should_emit_jsx_identifier() {
             self.ctx.emit_jsx_identifier_at(identifier.span.start, &identifier.name);

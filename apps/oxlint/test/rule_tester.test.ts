@@ -3627,7 +3627,7 @@ describe("RuleTester", () => {
         `);
       });
 
-      it("tokens of AST with placeholder nodes from error recovery", () => {
+      it("tokens of AST recovered from non-fatal errors", () => {
         const tokensRule: Rule = {
           create(context) {
             return {
@@ -3659,10 +3659,19 @@ describe("RuleTester", () => {
                 },
               ],
             },
+            {
+              code: "class C implements A extends B {}",
+              errors: [
+                {
+                  message:
+                    "Keyword(class) Identifier(C) Keyword(implements) Identifier(A) Keyword(extends) Identifier(B) Punctuator({) Punctuator(})",
+                },
+              ],
+            },
           ],
         });
 
-        expect(runCases()).toEqual([null]);
+        expect(runCases()).toEqual([null, null]);
       });
     });
   });
