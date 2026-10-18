@@ -19244,15 +19244,7 @@
       "additionalProperties": false
     },
     "Strict": {
-      "description": "TODO",
-      "type": "string",
-      "enum": [
-        "safe",
-        "global",
-        "function",
-        "never"
-      ],
-      "markdownDescription": "TODO"
+      "$ref": "#/definitions/StrictOption"
     },
     "StrictBooleanExpressionsConfig": {
       "type": "object",
@@ -19307,6 +19299,15 @@
         }
       },
       "additionalProperties": false
+    },
+    "StrictOption": {
+      "type": "string",
+      "enum": [
+        "safe",
+        "global",
+        "function",
+        "never"
+      ]
     },
     "StrictVoidReturnConfig": {
       "type": "object",
