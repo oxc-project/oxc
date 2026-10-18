@@ -286,129 +286,119 @@ impl DynCpu {
 ///     DynCpu::Generic(_) => classify_generic(self),
 /// }
 /// ```
+///
+/// ## Implementation
+///
+/// Tokens of the arms are consumed one at a time, and copied into `arms`.
+/// `Avx2(...) =>` is rewritten to `DynCpu::Avx2(...) =>`, with a `#[cfg]` attribute for x86_64.
+/// `Neon(...) =>` is rewritten the same way, with a `#[cfg]` attribute for aarch64.
+/// `Generic(...) =>` is rewritten to `DynCpu::Generic(...) =>`, with no `#[cfg]` attribute.
+/// All other tokens are copied unchanged, so the arm bodies are parsed by the `match` itself.
+///
+/// State is a set of named slots, like in `cpu_versions!`:
+///
+/// * `rest` is the tokens which haven't been consumed yet.
+/// * `seen` lists the arms which have been seen so far (e.g. `[ avx2, neon ]`).
+/// * `arms` is the tokens of the rewritten arms so far.
+/// * `cpu` is the expression being matched on.
+///
+/// The slots which tell the rules apart (`rest`, then `seen`) come first, and `cpu`, which is only
+/// passed on, comes last. So when a rule doesn't match, the compiler finds out early.
+///
+/// Each arm's rule only matches if the arms before it have been seen, and it hasn't.
+/// So the arms must come in that order, once each. Anything else is a compile error.
 macro_rules! cpu_select {
-    // Tokens of the arms are consumed one at a time, and copied into `arms`.
-    // `Avx2(...) =>` is rewritten to `DynCpu::Avx2(...) =>`, with a `#[cfg]` attribute for x86_64.
-    // `Neon(...) =>` is rewritten the same way, with a `#[cfg]` attribute for aarch64.
-    // `Generic(...) =>` is rewritten to `DynCpu::Generic(...) =>`, with no `#[cfg]` attribute.
-    // All other tokens are copied unchanged, so the arm bodies are parsed by the `match` itself.
-    //
-    // State is a set of named slots, like in `cpu_versions!`:
-    //
-    // * `cpu` is the expression being matched on.
-    // * `seen` lists the arms which have been seen so far (e.g. `[avx2, neon]`).
-    // * `arms` is the tokens of the rewritten arms so far.
-    // * `rest` is the tokens which haven't been consumed yet.
-    //
-    // Each arm's rule only matches if the arms before it have been seen, and it hasn't.
-    // So the arms must come in that order, once each. Anything else is a compile error.
-
     // Entry point
     ($cpu:expr, { $($arms:tt)* }) => {
         crate::pipeline::cpu::cpu_select!(
             @munch
-            cpu = $cpu
+            rest = [ $($arms)* ]
             seen = []
             arms = []
-            rest = [$($arms)*]
+            cpu = $cpu
         )
     };
 
     // `Avx2` arm. Must be first.
     (
         @munch
-        cpu = $cpu:tt
-        seen = []
-        arms = [$($arms:tt)*]
         rest = [
             Avx2($($pat:tt)*) =>
             $($rest:tt)*
         ]
+        seen = []
+        arms = [ $($arms:tt)* ]
+        cpu = $cpu:tt
     ) => {
         crate::pipeline::cpu::cpu_select!(
             @munch
-            cpu = $cpu
-            seen = [avx2]
+            rest = [ $($rest)* ]
+            seen = [ avx2 ]
             arms = [
                 $($arms)*
                 #[cfg(target_arch = "x86_64")]
                 crate::pipeline::cpu::DynCpu::Avx2($($pat)*) =>
             ]
-            rest = [$($rest)*]
+            cpu = $cpu
         )
     };
 
     // `Neon` arm. Must follow `Avx2` arm.
     (
         @munch
-        cpu = $cpu:tt
-        seen = [avx2]
-        arms = [$($arms:tt)*]
         rest = [
             Neon($($pat:tt)*) =>
             $($rest:tt)*
         ]
+        seen = [ avx2 ]
+        arms = [ $($arms:tt)* ]
+        cpu = $cpu:tt
     ) => {
         crate::pipeline::cpu::cpu_select!(
             @munch
-            cpu = $cpu
-            seen = [avx2, neon]
+            rest = [ $($rest)* ]
+            seen = [ avx2, neon ]
             arms = [
                 $($arms)*
                 #[cfg(target_arch = "aarch64")]
                 crate::pipeline::cpu::DynCpu::Neon($($pat)*) =>
             ]
-            rest = [$($rest)*]
+            cpu = $cpu
         )
     };
 
     // `Generic` arm. Must follow `Neon` arm.
     (
         @munch
-        cpu = $cpu:tt
-        seen = [avx2, neon]
-        arms = [$($arms:tt)*]
         rest = [
             Generic($($pat:tt)*) =>
             $($rest:tt)*
         ]
+        seen = [ avx2, neon ]
+        arms = [ $($arms:tt)* ]
+        cpu = $cpu:tt
     ) => {
         crate::pipeline::cpu::cpu_select!(
             @munch
-            cpu = $cpu
-            seen = [avx2, neon, generic]
+            rest = [ $($rest)* ]
+            seen = [ avx2, neon, generic ]
             arms = [
                 $($arms)*
                 crate::pipeline::cpu::DynCpu::Generic($($pat)*) =>
             ]
-            rest = [$($rest)*]
+            cpu = $cpu
         )
     };
 
-    // Any other `Name(...) =>` arm - out of order, repeated, or not one of the 3 names
+    // Any other `=>` - an arm which is out of order, repeated, not one of the 3 names,
+    // a fallback (e.g. `_ =>`), or has a match guard
     (
         @munch
-        cpu = $_cpu:tt
-        seen = $_seen:tt
-        arms = $_arms:tt
-        rest = [
-            $_name:ident($($_pat:tt)*) =>
-            $($_rest:tt)*
-        ]
-    ) => {
-        crate::pipeline::cpu::cpu_select!(@error)
-    };
-
-    // Any other `=>` - an arm whose pattern isn't `Name(...)` (e.g. `_ =>`), or which has a match guard
-    (
-        @munch
-        cpu = $_cpu:tt
-        seen = $_seen:tt
-        arms = $_arms:tt
         rest = [
             =>
             $($_rest:tt)*
         ]
+        $($_any:tt)*
     ) => {
         crate::pipeline::cpu::cpu_select!(@error)
     };
@@ -429,51 +419,46 @@ macro_rules! cpu_select {
     // (block body, or expression followed by `,`), and would reject comma-free bodies like `unsafe { ... }`.
     //
     // A delimited group (e.g. a block body) is a single token, so its contents are never inspected.
-    // This rule must come after the arm rules and the error rules above,
+    // This rule must come after the arm rules and the error rule above,
     // because `$next:tt` also matches `Avx2` and `=>`.
     (
         @munch
-        cpu = $cpu:tt
-        seen = $seen:tt
-        arms = [$($arms:tt)*]
         rest = [
             $next:tt
             $($rest:tt)*
         ]
+        seen = $seen:tt
+        arms = [ $($arms:tt)* ]
+        cpu = $cpu:tt
     ) => {
         crate::pipeline::cpu::cpu_select!(
             @munch
-            cpu = $cpu
+            rest = [ $($rest)* ]
             seen = $seen
             arms = [
                 $($arms)*
                 $next
             ]
-            rest = [$($rest)*]
+            cpu = $cpu
         )
     };
 
     // All tokens consumed, and all 3 arms seen
     (
         @munch
-        cpu = $cpu:tt
-        seen = [avx2, neon, generic]
-        arms = [$($arms:tt)*]
         rest = []
+        seen = [ avx2, neon, generic ]
+        arms = [ $($arms:tt)* ]
+        cpu = $cpu:tt
     ) => {
         match crate::pipeline::cpu::Cpu::to_dyn($cpu) {
             $($arms)*
         }
     };
 
-    // All tokens consumed, but an arm is missing
-    (
-        @munch
-        cpu = $_cpu:tt
-        seen = $_seen:tt
-        arms = $_arms:tt
-        rest = []
-    ) => {
+    // All tokens consumed, but an arm is missing.
+    // The rules above handle every other case, so this rule matches anything.
+    (@munch $($_any:tt)*) => {
         crate::pipeline::cpu::cpu_select!(@error)
     };
 
