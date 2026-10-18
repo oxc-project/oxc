@@ -237,7 +237,7 @@ impl Tester<'_> {
                         uri: uri.clone(),
                         range,
                         context: context.clone(),
-                        is_open_document: false,
+                        document_version: None,
                     },
                 ),
                 fix_all_action: linter
@@ -245,7 +245,7 @@ impl Tester<'_> {
                         uri: uri.clone(),
                         range,
                         context: fix_all_context.clone(),
-                        is_open_document: false,
+                        document_version: None,
                     })
                     .into_iter()
                     .next(),

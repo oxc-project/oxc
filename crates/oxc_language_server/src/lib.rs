@@ -41,11 +41,13 @@ pub struct TextDocument<'a> {
     pub uri: &'a Uri,
     pub language_id: LanguageId,
     pub text: Option<Arc<str>>,
+    /// Version of `text` reported by the client, `None` when it is unknown, as for content read from disk.
+    pub version: Option<i32>,
 }
 
 impl<'a> TextDocument<'a> {
     pub fn new(uri: &'a Uri, language_id: LanguageId, text: Option<Arc<str>>) -> Self {
-        Self { uri, language_id, text }
+        Self { uri, language_id, text, version: None }
     }
 }
 
