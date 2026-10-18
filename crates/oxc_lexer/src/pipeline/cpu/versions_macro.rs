@@ -1,477 +1,3 @@
-//! Types representing CPU feature sets, used to choose between SIMD and generic implementations.
-//!
-//! - `Avx2`: x86_64 with AVX2, BMI2 and POPCNT.
-//! - `Neon`: aarch64 with Neon.
-//! - [`Generic`]: No SIMD. Exists on all platforms.
-//!
-//! [`DynCpu`] is an enum of these types. [`DynCpu::detect`] returns the best one available.
-//!
-//! Code which has SIMD implementations takes a type implementing [`Cpu`],
-//! and uses [`cpu_select!`] to pick an implementation.
-//! [`cpu_versions!`] turns a function into one with a separate entry point for each CPU feature set.
-//!
-//! * Given a specific type (e.g. `Avx2`): the choice is made at compile time.
-//! * Given a [`DynCpu`]: the choice is made at runtime.
-//!
-//! Functions which use [`cpu_select!`] typically take a generic `impl Cpu`.
-//! This compiles a separate version of the function for each [`Cpu`] type that callers use with it.
-//!
-//! [`DynCpu`] also implements [`Cpu`], so functions that receive an `impl Cpu`
-//! can do either a compile-time or runtime features check, depending on whether it's called with
-//! a concrete type (e.g. `Avx2`) or [`DynCpu`].
-//!
-//! `Avx2`, `Neon`, and [`Generic`] types are all zero-sized, so can be passed between functions
-//! without any runtime cost. They operate at the level of the type system only.
-//!
-//! # SAFETY
-//!
-//! These types are unforgeable.
-//!
-//! * Code outside this file can't create them.
-//! * Each has a private field, and `DynCpu::detect` is the only code which creates them.
-//!   It only creates an `Avx2` or a `Neon` if that feature set is available.
-//! * A [`DynCpu`] can only be built from one of these types, so it's unforgeable too.
-//! * [`Cpu`] trait is sealed, so no other type can implement it.
-//!
-//! Therefore, holding one of these types guarantees that that the CPU supports that feature set.
-//!
-//! The rest of the lexer relies on this for safety. A function which takes `Avx2` or `Neon`
-//! can use instructions that rely on support for those features without any checks.
-//!
-//! DO NOT add any other way to create these types (e.g. a `Default` impl or a public constructor).
-
-/// Trait for types representing a CPU feature set.
-///
-/// Implemented by all types representing specific CPU feature sets, and by [`DynCpu`].
-#[expect(private_bounds)]
-pub(super) trait Cpu: Sealed + Copy {
-    fn to_dyn(self) -> DynCpu;
-}
-
-/// Private trait to guarantee that only types defined in this file can implement [`Cpu`].
-trait Sealed {}
-
-/// Enum representing a CPU feature set.
-///
-/// Used for runtime feature detection.
-///
-/// Implements [`Cpu`] and also provides a [`detect`] method which initializes [`DynCpu`]
-/// via target feature detection.
-///
-/// [`detect`]: Self::detect
-#[derive(Clone, Copy, Debug)]
-pub(super) enum DynCpu {
-    /// AVX2 feature set. Only available on x86_64.
-    #[cfg(target_arch = "x86_64")]
-    Avx2(Avx2),
-    /// Neon feature set. Only available on aarch64.
-    #[cfg(target_arch = "aarch64")]
-    Neon(Neon),
-    /// Exists on all platforms, but can never be created on aarch64
-    /// when Neon is enabled at compile time. See [`Generic`].
-    Generic(Generic),
-}
-
-impl Cpu for DynCpu {
-    /// Get [`DynCpu`].
-    ///
-    /// Just returns itself.
-    #[inline(always)]
-    fn to_dyn(self) -> DynCpu {
-        self
-    }
-}
-
-impl Sealed for DynCpu {}
-
-/// Generic implementation.
-mod generic {
-    use super::*;
-
-    /// Generic CPU feature set.
-    ///
-    /// On aarch64 with Neon enabled at compile time, this type is uninhabited - `Generic` can never be created.
-    /// So [`DynCpu::Generic`] can never exist there, and the compiler removes code which handles it.
-    /// Every aarch64 target with `std` enables Neon by default, so in practice this applies to all aarch64 builds.
-    ///
-    /// The type still exists there, so code which uses it is still compiled and type-checked.
-    /// That means generic code is still linted, and is visible to rust-analyzer, when working on an ARM Mac.
-    #[derive(Clone, Copy, Debug)]
-    pub struct Generic(GenericInner);
-
-    #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
-    type GenericInner = ();
-
-    // When Neon is enabled at compile time, Neon is always available, so the generic implementation
-    // is never needed. `Infallible` has no values, which makes `Generic` impossible to create.
-    #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
-    type GenericInner = std::convert::Infallible;
-
-    impl Cpu for Generic {
-        /// Get [`DynCpu`] representing generic CPU feature set.
-        #[inline(always)]
-        fn to_dyn(self) -> DynCpu {
-            DynCpu::Generic(self)
-        }
-    }
-
-    impl Sealed for Generic {}
-
-    impl DynCpu {
-        /// Create [`DynCpu::Generic`].
-        ///
-        /// Private within this file. Used only in [`detect`] implementations.
-        /// Not available on aarch64 with Neon enabled at compile time, where a `Generic` can't be created.
-        ///
-        /// [`detect`]: Self::detect
-        #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
-        pub(super) fn generic() -> Self {
-            Generic(()).to_dyn()
-        }
-    }
-}
-
-pub(super) use generic::Generic;
-
-/// x86_64 features.
-/// AVX2 or generic.
-#[cfg(target_arch = "x86_64")]
-mod x86_64 {
-    use super::*;
-
-    /// x64_64 AVX2 CPU feature set.
-    #[derive(Clone, Copy, Debug)]
-    pub struct Avx2(());
-
-    impl Cpu for Avx2 {
-        /// Get [`DynCpu`] representing AVX2 CPU feature set.
-        #[inline(always)]
-        fn to_dyn(self) -> DynCpu {
-            DynCpu::Avx2(self)
-        }
-    }
-
-    impl Sealed for Avx2 {}
-
-    impl DynCpu {
-        /// Detect CPU feature set for x86_64 platform.
-        pub fn detect() -> Self {
-            // Currently a compile-time check. Later on will be replaced by runtime detection.
-            if cfg!(all(
-                target_feature = "avx2",
-                target_feature = "bmi2",
-                target_feature = "popcnt"
-            )) {
-                Avx2(()).to_dyn()
-            } else {
-                DynCpu::generic()
-            }
-        }
-    }
-}
-
-#[cfg(target_arch = "x86_64")]
-pub(super) use x86_64::Avx2;
-
-/// aarch64 features.
-/// Neon or generic.
-#[cfg(target_arch = "aarch64")]
-mod aarch64 {
-    use super::*;
-
-    /// aarch64 Neon CPU feature set.
-    #[derive(Clone, Copy, Debug)]
-    pub struct Neon(());
-
-    impl Cpu for Neon {
-        /// Get [`DynCpu`] representing Neon CPU feature set.
-        #[inline(always)]
-        fn to_dyn(self) -> DynCpu {
-            DynCpu::Neon(self)
-        }
-    }
-
-    impl Sealed for Neon {}
-
-    impl DynCpu {
-        /// Detect CPU feature set for aarch64 platform.
-        pub fn detect() -> Self {
-            // Neon is always enabled except on `aarch64*-unknown-none-softfloat` platforms
-            // or when it's specifically disabled by compiling with `-C target-feature=-neon`.
-            // Either way, it can be detected at compile time. No runtime feature check.
-            cfg_select! {
-                target_feature = "neon" => Neon(()).to_dyn(),
-                _ => DynCpu::generic(),
-            }
-        }
-    }
-}
-
-#[cfg(target_arch = "aarch64")]
-pub(super) use aarch64::Neon;
-
-/// Fallback implementation for other platforms.
-///
-/// Only generic feature set is available.
-#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-impl DynCpu {
-    /// Detect CPU feature set for other platform.
-    ///
-    /// Only generic feature set is available.
-    pub fn detect() -> Self {
-        DynCpu::generic()
-    }
-}
-
-/// Macro for either static or dynamic feature selection.
-///
-/// Arms use normal `match` syntax, but there must be exactly these 3 arms, in this order:
-///
-/// - `Avx2(...)`: Only compiled on x86_64.
-/// - `Neon(...)`: Only compiled on aarch64.
-/// - `Generic(...)`: Compiled everywhere.
-///   On aarch64 with Neon enabled at compile time, it's compiled and type-checked,
-///   but can never run, so the compiler removes it. See [`Generic`].
-///
-/// Each arm binds its CPU feature set type (e.g. `Avx2`), so it can be passed on.
-/// Fallback arms (e.g. `_ => ...`) and match guards are not allowed.
-///
-/// Requiring all 3 arms means every call site says what to do on every platform.
-/// It also makes the `match` exhaustive on every platform, without a fallback arm.
-///
-/// # Examples
-///
-/// ## Static selection
-///
-/// ```ignore
-/// use crate::pipeline::cpu::{Cpu, cpu_select};
-///
-/// fn classify(&mut self, cpu: impl Cpu) {
-///     // Compiles down to a single arm (no runtime branch)
-///     cpu_select!(cpu, {
-///         Avx2(cpu) => classify_avx2(self, cpu),
-///         Neon(cpu) => classify_neon(self, cpu),
-///         Generic(_) => classify_generic(self),
-///     });
-/// }
-/// ```
-///
-/// ## Dynamic selection
-///
-/// ```ignore
-/// use crate::pipeline::cpu::{DynCpu, cpu_select};
-///
-/// fn classify(cpu: DynCpu) {
-///     // Runtime match over options available on the current platform
-///     cpu_select!(cpu, {
-///         Avx2(cpu) => classify_avx2(self, cpu),
-///         Neon(cpu) => classify_neon(self, cpu),
-///         Generic(_) => classify_generic(self),
-///     });
-/// }
-/// ```
-///
-/// ## Expansion
-///
-/// Macro expands to:
-///
-/// ```ignore
-/// match Cpu::to_dyn(cpu) {
-///     #[cfg(target_arch = "x86_64")]
-///     DynCpu::Avx2(cpu) => classify_avx2(self, cpu),
-///
-///     #[cfg(target_arch = "aarch64")]
-///     DynCpu::Neon(cpu) => classify_neon(self, cpu),
-///
-///     DynCpu::Generic(_) => classify_generic(self),
-/// }
-/// ```
-///
-/// ## Implementation
-///
-/// Tokens of the arms are consumed one at a time, and copied into `arms`.
-/// `Avx2(...) =>` is rewritten to `DynCpu::Avx2(...) =>`, with a `#[cfg]` attribute for x86_64.
-/// `Neon(...) =>` is rewritten the same way, with a `#[cfg]` attribute for aarch64.
-/// `Generic(...) =>` is rewritten to `DynCpu::Generic(...) =>`, with no `#[cfg]` attribute.
-/// All other tokens are copied unchanged, so the arm bodies are parsed by the `match` itself.
-///
-/// State is a set of named slots, like in `cpu_versions!`:
-///
-/// * `rest` is the tokens which haven't been consumed yet.
-/// * `seen` lists the arms which have been seen so far (e.g. `[ avx2, neon ]`).
-/// * `arms` is the tokens of the rewritten arms so far.
-/// * `cpu` is the expression being matched on.
-///
-/// The slots which tell the rules apart (`rest`, then `seen`) come first, and `cpu`, which is only
-/// passed on, comes last. So when a rule doesn't match, the compiler finds out early.
-///
-/// Each arm's rule only matches if the arms before it have been seen, and it hasn't.
-/// So the arms must come in that order, once each. Anything else is a compile error.
-macro_rules! cpu_select {
-    // Entry point
-    ($cpu:expr, { $($arms:tt)* }) => {
-        crate::pipeline::cpu::cpu_select!(
-            @munch
-            rest = [ $($arms)* ]
-            seen = []
-            arms = []
-            cpu = $cpu
-        )
-    };
-
-    // `Avx2` arm. Must be first.
-    (
-        @munch
-        rest = [
-            Avx2($($pat:tt)*) =>
-            $($rest:tt)*
-        ]
-        seen = []
-        arms = [ $($arms:tt)* ]
-        cpu = $cpu:tt
-    ) => {
-        crate::pipeline::cpu::cpu_select!(
-            @munch
-            rest = [ $($rest)* ]
-            seen = [ avx2 ]
-            arms = [
-                $($arms)*
-                #[cfg(target_arch = "x86_64")]
-                crate::pipeline::cpu::DynCpu::Avx2($($pat)*) =>
-            ]
-            cpu = $cpu
-        )
-    };
-
-    // `Neon` arm. Must follow `Avx2` arm.
-    (
-        @munch
-        rest = [
-            Neon($($pat:tt)*) =>
-            $($rest:tt)*
-        ]
-        seen = [ avx2 ]
-        arms = [ $($arms:tt)* ]
-        cpu = $cpu:tt
-    ) => {
-        crate::pipeline::cpu::cpu_select!(
-            @munch
-            rest = [ $($rest)* ]
-            seen = [ avx2, neon ]
-            arms = [
-                $($arms)*
-                #[cfg(target_arch = "aarch64")]
-                crate::pipeline::cpu::DynCpu::Neon($($pat)*) =>
-            ]
-            cpu = $cpu
-        )
-    };
-
-    // `Generic` arm. Must follow `Neon` arm.
-    (
-        @munch
-        rest = [
-            Generic($($pat:tt)*) =>
-            $($rest:tt)*
-        ]
-        seen = [ avx2, neon ]
-        arms = [ $($arms:tt)* ]
-        cpu = $cpu:tt
-    ) => {
-        crate::pipeline::cpu::cpu_select!(
-            @munch
-            rest = [ $($rest)* ]
-            seen = [ avx2, neon, generic ]
-            arms = [
-                $($arms)*
-                crate::pipeline::cpu::DynCpu::Generic($($pat)*) =>
-            ]
-            cpu = $cpu
-        )
-    };
-
-    // Any other `=>` - an arm which is out of order, repeated, not one of the 3 names,
-    // a fallback (e.g. `_ =>`), or has a match guard
-    (
-        @munch
-        rest = [
-            =>
-            $($_rest:tt)*
-        ]
-        $($_any:tt)*
-    ) => {
-        crate::pipeline::cpu::cpu_select!(@error)
-    };
-
-    // Any other token.
-    //
-    // Copy 1 token, and go round again.
-    //
-    // The arm rules only consume `Avx2(...) =>` etc, not the arm's body.
-    // So the remaining tokens can't all be copied in one go. They start with the body,
-    // and a `Neon(...) =>` which still needs rewriting may come after it.
-    //
-    // `macro_rules!` can't match "all tokens up to the next `Neon`",
-    // because `$($x:tt)*` would also match `Neon`.
-    // The only way to find the next arm is to step through the tokens.
-    //
-    // Consuming the body in the arm rules would avoid this, but would need 2 rules for each arm
-    // (block body, or expression followed by `,`), and would reject comma-free bodies like `unsafe { ... }`.
-    //
-    // A delimited group (e.g. a block body) is a single token, so its contents are never inspected.
-    // This rule must come after the arm rules and the error rule above,
-    // because `$next:tt` also matches `Avx2` and `=>`.
-    (
-        @munch
-        rest = [
-            $next:tt
-            $($rest:tt)*
-        ]
-        seen = $seen:tt
-        arms = [ $($arms:tt)* ]
-        cpu = $cpu:tt
-    ) => {
-        crate::pipeline::cpu::cpu_select!(
-            @munch
-            rest = [ $($rest)* ]
-            seen = $seen
-            arms = [
-                $($arms)*
-                $next
-            ]
-            cpu = $cpu
-        )
-    };
-
-    // All tokens consumed, and all 3 arms seen
-    (
-        @munch
-        rest = []
-        seen = [ avx2, neon, generic ]
-        arms = [ $($arms:tt)* ]
-        cpu = $cpu:tt
-    ) => {
-        match crate::pipeline::cpu::Cpu::to_dyn($cpu) {
-            $($arms)*
-        }
-    };
-
-    // All tokens consumed, but an arm is missing.
-    // The rules above handle every other case, so this rule matches anything.
-    (@munch $($_any:tt)*) => {
-        crate::pipeline::cpu::cpu_select!(@error)
-    };
-
-    // Error for any arms which don't follow the rules
-    (@error) => {
-        compile_error!(
-            "`cpu_select!` must have arms `Avx2(...)`, `Neon(...)` and `Generic(...)`, in that order, once each"
-        )
-    };
-}
-
-pub(super) use cpu_select;
-
 /// Macro to turn a function into one with a separate entry point for each CPU feature set.
 ///
 /// Used for pipeline stages, and for functions they call which aren't always inlined.
@@ -598,11 +124,11 @@ pub(super) use cpu_select;
 ///
 /// The macro works in stages. Each stage is a separate macro, which calls the next one:
 ///
-/// * `__cpu_versions_attrs!`: Sorts the attributes, then parses the rest of the function.
-/// * `__cpu_versions_receiver!`: Checks for a `self` parameter.
-/// * `__cpu_versions_params!`: Turns the parameters into records.
-/// * `__cpu_versions_expand!`: Passes everything on to the macro which generates the output:
-///   `__cpu_versions_expand_func!` for a function, or `__cpu_versions_expand_method!` for a method.
+/// * `attrs!`: Sorts the attributes, then parses the rest of the function.
+/// * `receiver!`: Checks for a `self` parameter.
+/// * `params!`: Turns the parameters into records.
+/// * `expand!`: Passes everything on to the macro which generates the output:
+///   `expand_func!` for a function, or `expand_method!` for a method.
 ///
 /// Each stage's input is a set of named slots. Each slot's value is a single token tree: either a single
 /// token or fragment (e.g. `fn_name = foo`), or a list in `[ ... ]` (e.g. `ret_ty = [ usize ]`).
@@ -612,18 +138,20 @@ pub(super) use cpu_select;
 /// Slots which tell a stage's rules apart come first, and slots which it only passes on come last.
 /// So when a rule doesn't match, the compiler finds out early, without matching all the other slots first.
 ///
-/// `fn_body` is matched as `tt` even where it's used. `__cpu_versions_attrs!` has already checked that
-/// it's a block, and matching it as `block` again would parse the whole body again.
+/// `fn_body` is matched as `tt` even where it's used. `attrs!` has already checked that it's a block,
+/// and matching it as `block` again would parse the whole body again.
 ///
 /// A stage which needs more slots while it works adds them in its first rule.
 /// Its other rules call the stage again until it's done, and then call the next stage.
+///
+/// [`cpu_select!`]: super::cpu_select!
 macro_rules! cpu_versions {
     ($($item:tt)*) => {
-        crate::pipeline::cpu::__cpu_versions_attrs!(item = [ $($item)* ]);
+        crate::pipeline::cpu::__cpu_versions::attrs!(item = [ $($item)* ]);
     };
 }
 
-pub(super) use cpu_versions;
+pub(crate) use cpu_versions;
 
 /// Moves the attributes into 2 lists one at a time, then parses the rest of the function.
 /// `#[inline]` attributes go in `inline_attrs`, which go on the entry points.
@@ -650,10 +178,10 @@ pub(super) use cpu_versions;
 ///
 /// The parameters are passed on unparsed, in `params`.
 #[doc(hidden)]
-macro_rules! __cpu_versions_attrs {
+macro_rules! attrs {
     // Entry point
     (item = [ $($item:tt)* ]) => {
-        crate::pipeline::cpu::__cpu_versions_attrs!(
+        crate::pipeline::cpu::__cpu_versions::attrs!(
             rest_to_match = [ $($item)* ]
             rest_to_capture = [ $($item)* ]
             outer_attrs = []
@@ -674,7 +202,7 @@ macro_rules! __cpu_versions_attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = [ $($inline_attrs:tt)* ]
     ) => {
-        crate::pipeline::cpu::__cpu_versions_attrs!(
+        crate::pipeline::cpu::__cpu_versions::attrs!(
             rest_to_match = [ $($rest)* ]
             rest_to_capture = [ $($rest)* ]
             outer_attrs = $outer_attrs
@@ -698,7 +226,7 @@ macro_rules! __cpu_versions_attrs {
         outer_attrs = [ $($outer_attrs:tt)* ]
         inline_attrs = $inline_attrs:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_attrs!(
+        crate::pipeline::cpu::__cpu_versions::attrs!(
             rest_to_match = [ $($rest)* ]
             rest_to_capture = [ $($rest)* ]
             outer_attrs = [
@@ -720,7 +248,7 @@ macro_rules! __cpu_versions_attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_receiver!(
+        crate::pipeline::cpu::__cpu_versions::receiver!(
             params = [ $($params)* ]
             func = {
                 fn_name = $fn_name
@@ -748,7 +276,7 @@ macro_rules! __cpu_versions_attrs {
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_receiver!(
+        crate::pipeline::cpu::__cpu_versions::receiver!(
             params = [ $($params)* ]
             func = {
                 fn_name = $fn_name
@@ -771,10 +299,10 @@ macro_rules! __cpu_versions_attrs {
     };
 }
 
-pub(super) use __cpu_versions_attrs;
+pub(crate) use attrs;
 
 /// Checks for a `self` parameter. If there is one, adds `method` to the top of `func`.
-/// It's at the top so `__cpu_versions_expand!` can check for it without matching the rest of `func`.
+/// It's at the top so `expand!` can check for it without matching the rest of `func`.
 ///
 /// A function has no `method`.
 /// For a method it's `{ self_mut_kw = [ ... ] self_param = [ ... ] self_kw = self }`:
@@ -785,15 +313,15 @@ pub(super) use __cpu_versions_attrs;
 ///
 /// A method's entry points must use the method's own `self` token. A `self` written by this macro
 /// wouldn't refer to the same `self` as the body does. So the parameters are kept twice,
-/// as `params_to_match` and `params_to_capture`, using the same trick as `__cpu_versions_attrs!`.
+/// as `params_to_match` and `params_to_capture`, using the same trick as `attrs!`.
 #[doc(hidden)]
-macro_rules! __cpu_versions_receiver {
+macro_rules! receiver {
     // Entry point
     (
         params = [ $($params:tt)* ]
         func = $func:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_receiver!(
+        crate::pipeline::cpu::__cpu_versions::receiver!(
             params_to_match = [ $($params)* ]
             params_to_capture = [ $($params)* ]
             func = $func
@@ -809,7 +337,7 @@ macro_rules! __cpu_versions_receiver {
         ]
         func = { $($func:tt)* }
     ) => {
-        crate::pipeline::cpu::__cpu_versions_params!(
+        crate::pipeline::cpu::__cpu_versions::params!(
             params = [ $($rest)* ]
             func = {
                 method = {
@@ -831,7 +359,7 @@ macro_rules! __cpu_versions_receiver {
         ]
         func = { $($func:tt)* }
     ) => {
-        crate::pipeline::cpu::__cpu_versions_params!(
+        crate::pipeline::cpu::__cpu_versions::params!(
             params = [ $($rest)* ]
             func = {
                 method = {
@@ -853,7 +381,7 @@ macro_rules! __cpu_versions_receiver {
         ]
         func = { $($func:tt)* }
     ) => {
-        crate::pipeline::cpu::__cpu_versions_params!(
+        crate::pipeline::cpu::__cpu_versions::params!(
             params = [ $($rest)* ]
             func = {
                 method = {
@@ -875,7 +403,7 @@ macro_rules! __cpu_versions_receiver {
         ]
         func = { $($func:tt)* }
     ) => {
-        crate::pipeline::cpu::__cpu_versions_params!(
+        crate::pipeline::cpu::__cpu_versions::params!(
             params = [ $($rest)* ]
             func = {
                 method = {
@@ -894,14 +422,14 @@ macro_rules! __cpu_versions_receiver {
         params_to_capture = [ $($params:tt)* ]
         func = $func:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_params!(
+        crate::pipeline::cpu::__cpu_versions::params!(
             params = [ $($params)* ]
             func = $func
         );
     };
 }
 
-pub(super) use __cpu_versions_receiver;
+pub(crate) use receiver;
 
 /// Turns the parameters into records, and checks that the last one is `cpu: impl Cpu`.
 ///
@@ -913,13 +441,13 @@ pub(super) use __cpu_versions_receiver;
 ///
 /// `func` is passed on unchanged.
 #[doc(hidden)]
-macro_rules! __cpu_versions_params {
+macro_rules! params {
     // Entry point
     (
         params = [ $($params:tt)* ]
         func = $func:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_params!(
+        crate::pipeline::cpu::__cpu_versions::params!(
             rest_params = [ $($params)* ]
             params = []
             func = $func
@@ -932,7 +460,7 @@ macro_rules! __cpu_versions_params {
         params = $params:tt
         func = $func:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_expand!(
+        crate::pipeline::cpu::__cpu_versions::expand!(
             func = $func
             params = $params
             cpu_name = $cpu_name
@@ -949,7 +477,7 @@ macro_rules! __cpu_versions_params {
         params = [ $($params:tt)* ]
         func = $func:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_params!(
+        crate::pipeline::cpu::__cpu_versions::params!(
             rest_params = [ $($rest_params)* ]
             params = [
                 $($params)*
@@ -972,7 +500,7 @@ macro_rules! __cpu_versions_params {
         params = [ $($params:tt)* ]
         func = $func:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions_params!(
+        crate::pipeline::cpu::__cpu_versions::params!(
             rest_params = [ $($rest_params)* ]
             params = [
                 $($params)*
@@ -994,19 +522,19 @@ macro_rules! __cpu_versions_params {
     };
 }
 
-pub(super) use __cpu_versions_params;
+pub(crate) use params;
 
 /// Unwraps `func`, and passes its slots and all the other slots on to:
-/// * `__cpu_versions_expand_func!` for a function.
-/// * `__cpu_versions_expand_method!` for a method.
+/// * `expand_func!` for a function.
+/// * `expand_method!` for a method.
 ///
 /// `func` only bundles the function's slots to carry them through the stages before this one.
 #[doc(hidden)]
-macro_rules! __cpu_versions_expand {
+macro_rules! expand {
     // Method. Must come before the function rule, which matches any `func`.
     //
-    // `method` moves to after the function's slots. So `__cpu_versions_expand_method!` gets the function's
-    // slots in the same order as `__cpu_versions_expand_func!`, starting with `fn_name`.
+    // `method` moves to after the function's slots. So `expand_method!` gets the function's slots
+    // in the same order as `expand_func!`, starting with `fn_name`.
     (
         func = {
             method = $method:tt
@@ -1014,7 +542,7 @@ macro_rules! __cpu_versions_expand {
         }
         $($rest:tt)*
     ) => {
-        crate::pipeline::cpu::__cpu_versions_expand_method!(
+        crate::pipeline::cpu::__cpu_versions::expand_method!(
             $($func)*
             method = $method
             $($rest)*
@@ -1026,18 +554,18 @@ macro_rules! __cpu_versions_expand {
         func = { $($func:tt)* }
         $($rest:tt)*
     ) => {
-        crate::pipeline::cpu::__cpu_versions_expand_func!(
+        crate::pipeline::cpu::__cpu_versions::expand_func!(
             $($func)*
             $($rest)*
         );
     };
 }
 
-pub(super) use __cpu_versions_expand;
+pub(crate) use expand;
 
 /// Generates the output for a function. Its entry points are functions inside it.
 #[doc(hidden)]
-macro_rules! __cpu_versions_expand_func {
+macro_rules! expand_func {
     (
         fn_name = $fn_name:ident
         outer_attrs = [ $($outer_attrs:tt)* ]
@@ -1127,7 +655,7 @@ macro_rules! __cpu_versions_expand_func {
     };
 }
 
-pub(super) use __cpu_versions_expand_func;
+pub(crate) use expand_func;
 
 /// Generates the output for a method. Its entry points are private methods next to it.
 ///
@@ -1137,14 +665,14 @@ pub(super) use __cpu_versions_expand_func;
 /// The names are made with `pastey`, which has to wrap the macro call which receives them.
 /// Doing it in its own step keeps `pastey::paste!` out of the main output.
 #[doc(hidden)]
-macro_rules! __cpu_versions_expand_method {
+macro_rules! expand_method {
     // Entry point - make the names of the entry points
     (
         fn_name = $fn_name:ident
         $($rest:tt)*
     ) => {
         pastey::paste! {
-            crate::pipeline::cpu::__cpu_versions_expand_method!(
+            crate::pipeline::cpu::__cpu_versions::expand_method!(
                 fn_names = {
                     fn_name = $fn_name
                     impl_fn = [<__ $fn_name _impl>]
@@ -1266,7 +794,12 @@ macro_rules! __cpu_versions_expand_method {
     };
 }
 
-pub(super) use __cpu_versions_expand_method;
+pub(crate) use expand_method;
+
+#[doc(hidden)]
+pub mod __cpu_versions {
+    pub(crate) use super::{attrs, expand, expand_func, expand_method, params, receiver};
+}
 
 /// Re-exported so call sites can import it from here, along with [`cpu_versions!`].
-pub(super) use macro_rules_attr::apply;
+pub use macro_rules_attr::apply;
