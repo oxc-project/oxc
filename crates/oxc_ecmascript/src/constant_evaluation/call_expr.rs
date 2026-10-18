@@ -89,7 +89,8 @@ pub fn try_fold_known_global_methods<'a>(
         "isFinite" | "isNaN" | "isInteger" | "isSafeInteger" => {
             try_fold_number_methods(arguments, object, name, ctx)
         }
-        "sqrt" | "cbrt" => try_fold_roots(arguments, name, object, ctx),
+        "sqrt" => try_fold_sqrt(arguments, object, ctx),
+        "cbrt" => try_fold_cbrt(arguments, object, ctx),
         "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" | "clz32" => {
             try_fold_math_unary(arguments, name, object, ctx)
         }
@@ -431,9 +432,9 @@ fn try_fold_number_methods<'a>(
     result.map(ConstantValue::Boolean)
 }
 
-fn try_fold_roots<'a>(
+/// <https://tc39.es/ecma262/#sec-math.sqrt>
+fn try_fold_sqrt<'a>(
     args: &ArenaVec<'a, Argument<'a>>,
-    name: &str,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
@@ -444,20 +445,27 @@ fn try_fold_roots<'a>(
     if arg_val == f64::INFINITY || arg_val.is_nan() || arg_val == 0.0 {
         return Some(ConstantValue::Number(arg_val));
     }
-    // `Math.sqrt` returns NaN for negative numbers, but `Math.cbrt` does not:
-    // <https://tc39.es/ecma262/#sec-math.sqrt>, <https://tc39.es/ecma262/#sec-math.cbrt>
-    if arg_val < 0.0 && name == "sqrt" {
+    if arg_val < 0.0 {
         return Some(ConstantValue::Number(f64::NAN));
     }
-    if arg_val == f64::NEG_INFINITY {
-        // `Math.cbrt(-Infinity)` is `-Infinity`
+    let calculated_val = arg_val.sqrt();
+    (calculated_val.fract() == 0.0).then_some(ConstantValue::Number(calculated_val))
+}
+
+/// <https://tc39.es/ecma262/#sec-math.cbrt>
+fn try_fold_cbrt<'a>(
+    args: &ArenaVec<'a, Argument<'a>>,
+    object: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if !ctx.is_global_expr("Math", object) || !validate_arguments(args, 1) {
+        return None;
+    }
+    let arg_val = args[0].to_expression().get_side_free_number_value(ctx)?;
+    if arg_val.is_infinite() || arg_val.is_nan() || arg_val == 0.0 {
         return Some(ConstantValue::Number(arg_val));
     }
-    let calculated_val = match name {
-        "sqrt" => arg_val.sqrt(),
-        "cbrt" => arg_val.cbrt(),
-        _ => unreachable!(),
-    };
+    let calculated_val = arg_val.cbrt();
     (calculated_val.fract() == 0.0).then_some(ConstantValue::Number(calculated_val))
 }
 

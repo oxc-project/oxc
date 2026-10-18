@@ -640,7 +640,7 @@ fn test_fold_math_functions_pow() {
 
 #[test]
 fn test_fold_math_functions_sqrt() {
-    test_same_value("Math.sqrt()");
+    test_same_value("Math.sqrt()"); // NaN
     test_same_value("Math.sqrt(1, 2)");
     test_same_value("Math.sqrt(...a)");
     test_same_value("Math.sqrt(a)"); // a maybe -0
@@ -659,6 +659,11 @@ fn test_fold_math_functions_sqrt() {
 
 #[test]
 fn test_fold_math_functions_cbrt() {
+    test_same_value("Math.cbrt()"); // NaN
+    test_same_value("Math.cbrt(1, 2)");
+    test_same_value("Math.cbrt(...a)");
+    test_same_value("Math.cbrt(a)");
+    test_value("Math.cbrt(0)", "0");
     test_value("Math.cbrt(1)", "1");
     test_value("Math.cbrt(8)", "2");
     test_same_value("Math.cbrt(2)");
