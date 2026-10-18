@@ -434,7 +434,7 @@ fn check_duplicate_keys_in_array<'a>(array_expr: &ArrayExpression<'a>, ctx: &Lin
         // ArrayExpressionElement also inherits from Expression
         if let ArrayExpressionElement::JSXElement(jsx_elem) = element
             && let Some((key_value, span)) = get_jsx_element_key_value(jsx_elem)
-            && !seen_keys.insert(key_value.clone())
+            && let Some(key_value) = seen_keys.replace(key_value)
         {
             ctx.diagnostic(duplicate_key_prop(&key_value, span));
         }
@@ -447,7 +447,7 @@ fn check_duplicate_keys_in_children<'a>(jsx_elem: &JSXElement<'a>, ctx: &LintCon
     for child in &jsx_elem.children {
         if let JSXChild::Element(child_elem) = child
             && let Some((key_value, span)) = get_jsx_element_key_value(child_elem)
-            && !seen_keys.insert(key_value.clone())
+            && let Some(key_value) = seen_keys.replace(key_value)
         {
             ctx.diagnostic(duplicate_key_prop(&key_value, span));
         }
