@@ -15,6 +15,14 @@ pub struct CodegenOptions {
     /// Default is `false`.
     pub minify: bool,
 
+    /// Preserve the original spelling of number literals when their `raw` text is available.
+    ///
+    /// Intended for lint fixes, where unrelated literals should retain their source format.
+    /// The raw text must still represent the literal's value.
+    ///
+    /// Default is `false`.
+    pub preserve_numeric_literals: bool,
+
     /// Escape non-ASCII characters in string literals, untagged template literals, regular
     /// expression literals and identifier names.
     ///
@@ -67,6 +75,7 @@ impl Default for CodegenOptions {
         Self {
             single_quote: false,
             minify: false,
+            preserve_numeric_literals: false,
             ascii_only: false,
             comments: CommentOptions::default(),
             source_map_path: None,
@@ -83,6 +92,7 @@ impl CodegenOptions {
         Self {
             single_quote: false,
             minify: true,
+            preserve_numeric_literals: false,
             ascii_only: false,
             comments: CommentOptions::disabled(),
             source_map_path: None,
