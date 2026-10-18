@@ -5,8 +5,8 @@ expression: content
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": [
-    "typescript",
     "unicorn",
+    "typescript",
     "oxc"
   ],
   "categories": {
