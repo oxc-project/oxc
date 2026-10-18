@@ -277,7 +277,7 @@ pub fn create_unused_directives_report(
                         rule.name_span,
                         severity,
                         source_text,
-                        Some(rule.create_fix(source_text, span).with_message(fix_message)),
+                        rule.create_fix(source_text, span).map(|fix| fix.with_message(fix_message)),
                     ));
                 }
             }
