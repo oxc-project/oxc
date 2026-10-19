@@ -42,6 +42,13 @@ pub fn init_rayon(threads: Option<usize>) {
             1
         };
 
-        rayon::ThreadPoolBuilder::new().num_threads(thread_count).build_global().unwrap();
+        // The formatter recurses down chains (member calls, binary expressions, ...),
+        // so a long one needs more than the default 2 MiB of stack.
+        // Only the pages that are touched are committed.
+        rayon::ThreadPoolBuilder::new()
+            .num_threads(thread_count)
+            .stack_size(8 * 1024 * 1024)
+            .build_global()
+            .unwrap();
     });
 }
