@@ -1606,8 +1606,9 @@ fn string_folds_decline_lone_surrogates() {
 #[test]
 fn string_values_with_lone_surrogates_join_templates() {
     // A string holding a lone surrogate is inlined into a substitution or merged into a template.
-    // The raw text writes the surrogate as an escape.
-    fold(r#"x = `a${"\uD800"}b`"#, r"x = `a\ud800b`");
+    // The raw text writes the surrogate as an escape, and a template left without substitutions
+    // becomes a string literal.
+    fold(r#"x = `a${"\uD800"}b`"#, r#"x = "a\uD800b""#);
     fold(r#"x = `${"\uD83D"}${"\uDE00"}${a}`"#, r"x = `\ud83d\ude00${a}`");
     fold(r#"x = `p${a}` + "\uDC00""#, r"x = `p${a}\udc00`");
     fold(r#"x = "\uD83D" + `\uDE00${a}`"#, r"x = `\ud83d\uDE00${a}`");
