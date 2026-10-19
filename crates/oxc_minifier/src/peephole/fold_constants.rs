@@ -854,7 +854,7 @@ impl<'a> PeepholeOptimizations {
                 last_quasi.value.raw = Self::concat_template_literal_raw(
                     [
                         last_quasi.value.raw.as_str(),
-                        Self::escape_string_for_template_literal(right_str).as_ref(),
+                        Self::escape_string_for_template_literal(right_str, None).as_ref(),
                     ],
                     ctx,
                 );
@@ -875,7 +875,7 @@ impl<'a> PeepholeOptimizations {
                     .expect("template literal must have at least one quasi");
                 first_quasi.value.raw = Self::concat_template_literal_raw(
                     [
-                        Self::escape_string_for_template_literal(left_str).as_ref(),
+                        Self::escape_string_for_template_literal(left_str, None).as_ref(),
                         first_quasi.value.raw.as_str(),
                     ],
                     ctx,
@@ -1221,7 +1221,7 @@ impl<'a> PeepholeOptimizations {
             let idx = idx - i;
             let next_quasi = (idx + 1 < t.quasis.len()).then(|| t.quasis.remove(idx + 1));
             let quasi = &mut t.quasis[idx];
-            let escaped = Self::escape_string_for_template_literal(value);
+            let escaped = Self::escape_string_for_template_literal(value, None);
             let next_raw = next_quasi.as_ref().map_or_default(|q| q.value.raw.as_str());
             let raw = quasi.value.raw.as_str();
             quasi.value.raw = Self::concat_template_literal_raw([raw, &escaped, next_raw], ctx);

@@ -1,7 +1,5 @@
 use std::{borrow::Cow, fmt::Write, mem};
 
-use cow_utils::CowUtils;
-
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, StringBuilder, TakeIn};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_compat::ESFeature;
@@ -515,7 +513,7 @@ impl<'a> PeepholeOptimizations {
         tail: bool,
         ast: &AstBuilder<'a>,
     ) -> TemplateElement<'a> {
-        let raw = Str::from_cow_in(&Self::escape_string_for_template_literal(cooked), ast);
+        let raw = Str::from_cow_in(&Self::escape_string_for_template_literal(cooked, None), ast);
         TemplateElement::new(SPAN, TemplateElementValue { raw, cooked: Some(cooked) }, tail, ast)
     }
 
@@ -569,35 +567,56 @@ impl<'a> PeepholeOptimizations {
 
     /// Escape a string value as template literal raw text.
     /// Raw text is source, so a lone surrogate is written as a `\u` escape.
-    pub fn escape_string_for_template_literal(value: JSStr<'_>) -> Cow<'_, str> {
-        let Some(s) = value.as_str() else {
-            let mut raw = String::with_capacity(value.len());
-            for c in value.chars() {
-                match c.to_char() {
-                    Some(c @ ('\\' | '`' | '$')) => {
-                        raw.push('\\');
-                        raw.push(c);
-                    }
-                    Some('\r') => raw.push_str("\\r"),
-                    Some(c) => raw.push(c),
-                    None => {
-                        let _ = write!(raw, "\\u{:04x}", c.to_u32());
-                    }
-                }
-            }
-            return Cow::Owned(raw);
-        };
-        if s.contains(['\\', '`', '$', '\r']) {
-            Cow::Owned(
-                s.cow_replace("\\", "\\\\")
-                    .cow_replace("`", "\\`")
-                    .cow_replace("$", "\\$")
-                    .cow_replace('\r', "\\r")
-                    .into_owned(),
-            )
-        } else {
-            Cow::Borrowed(s)
+    /// When rebuilding an existing quasi, reuse its raw text unless escaping saves bytes.
+    pub fn escape_string_for_template_literal(
+        value: JSStr<'a>,
+        original: Option<&'a str>,
+    ) -> Cow<'a, str> {
+        if let Some(s) = value.as_str()
+            && !s.contains(['\\', '`', '\r', '\0'])
+            && !s.contains("${")
+        {
+            return Cow::Borrowed(s);
         }
+        let mut chars = value.chars().peekable();
+        let pieces = std::iter::from_fn(move || {
+            let c = chars.next()?;
+            let escape = match c.to_char() {
+                Some('\\') => Some("\\\\"),
+                Some('`') => Some("\\`"),
+                Some('\r') => Some("\\r"),
+                Some('$') if chars.peek().is_some_and(|&next| next == '{') => Some("\\$"),
+                Some('\0') => {
+                    let next_is_digit =
+                        matches!(chars.peek().and_then(|c| c.to_char()), Some('0'..='9'));
+                    Some(if next_is_digit { "\\x00" } else { "\\0" })
+                }
+                _ => None,
+            };
+            Some((c, escape))
+        });
+        let len = pieces
+            .clone()
+            .map(|(c, escape)| {
+                escape.map_or_else(|| c.to_char().map_or(6, char::len_utf8), str::len)
+            })
+            .sum();
+        if let Some(original) = original
+            && original.len() <= len
+        {
+            return Cow::Borrowed(original);
+        }
+        let mut raw = String::with_capacity(len);
+        for (c, escape) in pieces {
+            if let Some(escape) = escape {
+                raw.push_str(escape);
+            } else if let Some(c) = c.to_char() {
+                raw.push(c);
+            } else {
+                let _ = write!(raw, "\\u{:04x}", c.to_u32());
+            }
+        }
+        Cow::Owned(raw)
     }
 
     pub fn replace_known_property_access(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
