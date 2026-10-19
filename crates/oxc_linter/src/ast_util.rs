@@ -910,7 +910,7 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
     };
 
     if let Some(method_name) = method_name {
-        tokens.push(Cow::Owned(format!("`{method_name}`")));
+        tokens.push(Cow::Owned(format!("`{}`", method_name.display())));
     }
 
     tokens.join(" ")

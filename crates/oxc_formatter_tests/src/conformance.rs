@@ -913,12 +913,12 @@ impl Visit<'_> for SpecParser<'_> {
                         _ => None,
                     };
                     if let Some(value) = value {
-                        options.insert(name.to_string(), value);
+                        options.insert(name.display().to_string(), value);
                     }
 
                     if name != "errors" {
                         snapshot_options.push((
-                            name.to_string(),
+                            name.display().to_string(),
                             obj_prop.value.span().source_text(self.source_text).to_string(),
                         ));
                     }

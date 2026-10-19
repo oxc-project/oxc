@@ -236,7 +236,7 @@ impl RequirePropTypes {
             };
 
             if is_invalid {
-                ctx.diagnostic(require_type_diagnostic(p.span(), key));
+                ctx.diagnostic(require_type_diagnostic(p.span(), key.display()));
             }
         }
     }

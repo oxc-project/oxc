@@ -325,7 +325,11 @@ impl Rule for NoEmptyFunction {
             return;
         };
         ctx.diagnostic_with_suggestion(
-            no_empty_function_diagnostic(fb.span, kind, fn_name),
+            no_empty_function_diagnostic(
+                fb.span,
+                kind,
+                fn_name.as_ref().map(StaticPropertyName::display),
+            ),
             |fixer| {
                 fixer
                     .replace(Span::new(fb.span.start + 1, fb.span.end - 1), " /* empty */ ")

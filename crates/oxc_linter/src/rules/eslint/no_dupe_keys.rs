@@ -121,7 +121,7 @@ fn prop_key_name<'a>(key: &PropertyKey<'a>, ctx: &LintContext<'a>) -> Cow<'a, st
         PropertyKey::StringLiteral(lit) => match lit.value.as_str() {
             Some(name) => Cow::Borrowed(name),
             // Escape lone surrogates for display.
-            None => Cow::Owned(StaticPropertyName::from(lit.value).to_string()),
+            None => Cow::Owned(lit.value.display().to_string()),
         },
         PropertyKey::NumericLiteral(lit) => Cow::Borrowed(lit.raw.as_ref().unwrap().as_str()),
         _ => Cow::Borrowed(ctx.source_range(key.span())),

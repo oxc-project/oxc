@@ -216,7 +216,7 @@ fn check_object_props<'a>(
             }
         }
         if let Some(name) = &name {
-            ctx.diagnostic(require_default_prop_diagnostic(prop.span(), name));
+            ctx.diagnostic(require_default_prop_diagnostic(prop.span(), name.display()));
         } else {
             let display = format!("[{}]", prop.key.span().source_text(ctx.source_text()));
             ctx.diagnostic(require_default_prop_diagnostic(prop.span(), &display));
@@ -267,7 +267,7 @@ fn check_type_signature<'a>(
     if pc.destructure.is_some_and(|destructure| has_destructure_default(destructure, &name)) {
         return;
     }
-    ctx.diagnostic(require_default_prop_diagnostic(signature.span(), name));
+    ctx.diagnostic(require_default_prop_diagnostic(signature.span(), name.display()));
 }
 
 /// Mirrors upstream `isWithoutDefaultValue`. The value is already unwrapped of

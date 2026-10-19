@@ -229,7 +229,8 @@ impl<'a> JSStr<'a> {
     /// Return an adapter that implements [`Display`], like [`Path::display`].
     ///
     /// UTF-8 text is written as is, and each lone surrogate is written as `\uXXXX` in lowercase hex.
-    /// The output is for diagnostics, not for source code.
+    /// The output is for diagnostics, not for source code. It is not injective: `"\uD800"` and
+    /// `"\\ud800"` both print as `\ud800`, so never compare or key by it.
     ///
     /// [`Path::display`]: std::path::Path::display
     #[inline]
