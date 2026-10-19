@@ -95,7 +95,9 @@ pub struct JsxOptions {
     #[serde(default)]
     pub pragma: Option<String>,
 
-    /// Replace the component used when compiling JSX fragments. It should be a valid JSX tag name.
+    /// Replace the component used when compiling JSX fragments.
+    ///
+    /// It should be a valid JSX tag name or a quoted JavaScript string literal.
     ///
     /// Defaults to `React.Fragment`.
     #[serde(default)]
