@@ -5,8 +5,10 @@ use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    BoundNames, ToJsString, ToNumber,
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    BoundNames, ToNumber,
+    constant_evaluation::{
+        ConstantEvaluation, ConstantValue, DetermineValueType, evaluate_to_js_string,
+    },
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, is_typed_array_constructor},
 };
 use oxc_semantic::ReferenceFlags;
@@ -1389,12 +1391,15 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::TemplateLiteral(t) = expr else { return };
-        let Some(val) = t.to_js_string(ctx).filter(|_| !t.may_have_side_effects(ctx)) else {
+        let Expression::TemplateLiteral(t) = &*expr else { return };
+        if t.may_have_side_effects(ctx) {
             return;
-        };
-        let new_value =
-            Expression::new_string_literal(t.span(), Str::from_cow_in(&val, ctx), None, ctx);
+        }
+        let span = t.span();
+        // The cooked value is kept as a `JSStr`, so a template holding a lone surrogate
+        // becomes a string literal with the same code units.
+        let Some(value) = evaluate_to_js_string(expr, ctx) else { return };
+        let new_value = Expression::new_string_literal(span, value, None, ctx);
         ctx.replace_expression(expr, new_value);
     }
 
