@@ -4,6 +4,17 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### ⚡ Performance
+
+- 2ab6b63 packages/codegen: Remove redundant `printSpaceBeforeIdentifier` and `last` updates in `printParams` (#27652) (overlookmotel)
+- e533278 codegen: Reduce writes in `printDecorators` (#27651) (overlookmotel)
+
+### 📚 Documentation
+
+- 3de03c1 packages/codegen: Correct outdated comments (#27838) (overlookmotel)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🐛 Bug Fixes

@@ -4,6 +4,16 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- c7d229b transformer: [**BREAKING**] Decode JSX entities to lone surrogates (#26712) (Dunqing)
+
+### ⚡ Performance
+
+- a6456b7 codegen: Remove branch from `print_space_before_identifier` (#27842) (overlookmotel)
+
 ## [0.154.0] - 2026-10-13
 
 ### 💥 BREAKING CHANGES
