@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format,
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     formatter::{prelude::*, trivia::FormatTrailingComments},
     ir_transform::sort_imports_chunk,
     print::semicolon::{OptionalSemicolon, suppressed_statement_content_end},
@@ -48,15 +48,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatProgramBody<'a, '_> {
             );
         });
 
-        write!(
-            f,
-            [
-                program.hashbang(),
-                program.directives(),
-                FormatStatementsWithImports(program.body()),
-                format_trailing_comments
-            ]
-        );
+        // The embedded root is printed without the program's own `fmt`
+        f.with_current_node(AstNodes::Program(*program), |f| {
+            write!(
+                f,
+                [
+                    program.hashbang(),
+                    program.directives(),
+                    FormatStatementsWithImports(&program.body()),
+                    format_trailing_comments
+                ]
+            );
+        });
     }
 }
 
@@ -92,7 +95,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
                 }
             }
 
-            join.entry(statement_span(stmt.as_ref()), stmt);
+            join.entry(statement_span(stmt.as_ref()), &stmt);
         }
     }
 }
@@ -111,18 +114,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
 // Also, when there *are* lots of `ImportDeclaration`s, they tend to all be grouped together.
 // This function consumes the whole run, so is unlikely to be called more than once, even in files with lots of imports.
 #[cold]
-fn format_import_decls_with_sort<'a, 'iter>(
-    stmt: &AstNode<'a, Statement<'a>>,
-    stmts_iter: &mut impl Iterator<Item = &'iter AstNode<'a, Statement<'a>>>,
+fn format_import_decls_with_sort<'a>(
+    stmt: AstNode<'a, Statement<'a>>,
+    stmts_iter: &mut impl Iterator<Item = AstNode<'a, Statement<'a>>>,
     join: &mut JoinNodesBuilder<'_, '_, 'a, Line>,
-) -> Option<&'iter AstNode<'a, Statement<'a>>> {
+) -> Option<AstNode<'a, Statement<'a>>> {
     // Output inter-statement separator separately, so `chunk_start` points
     // to start of IR for the `ImportDeclaration` itself
     join.separator_no_entry(stmt.span());
     let chunk_start = join.fmt().elements().len();
 
     // Output first `ImportDeclaration`
-    join.entry_no_separator(stmt);
+    join.entry_no_separator(&stmt);
 
     // The first import was already written above, so start the count at 1.
     // A suppressed `ImportDeclaration` ends the run:
@@ -135,7 +138,7 @@ fn format_import_decls_with_sort<'a, 'iter>(
                 next_stmt = Some(stmt);
                 break;
             }
-            join.entry(decl.span, stmt);
+            join.entry(decl.span, &stmt);
             count += 1;
         } else {
             next_stmt = Some(stmt);
@@ -153,7 +156,7 @@ fn format_import_decls_with_sort<'a, 'iter>(
 
 /// An `ImportDeclaration` is suppressed if it has a leading or trailing suppression comment,
 /// which causes it to be emitted verbatim and act as a partition boundary, excluding it from the sortable run.
-fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
+fn is_import_suppressed(stmt: AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
     f.comments()
         .is_node_suppressed(stmt.span(), || suppressed_statement_content_end(stmt.as_ref(), f))
 }

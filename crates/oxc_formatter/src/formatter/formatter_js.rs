@@ -8,7 +8,7 @@
 use oxc_formatter_core::{Format, FormatElements, Formatter, GroupId, SourceText};
 use oxc_span::{GetSpan, Span};
 
-use crate::source_text::SourceTextExt as _;
+use crate::{ast_nodes::AstNodes, source_text::SourceTextExt as _};
 
 use crate::formatter::{
     Comments, JsFormatContext,
@@ -36,6 +36,25 @@ pub trait JsFormatterExt<'buf, 'ast> {
         &mut self,
         content: &(impl Format<'ast, JsFormatContext<'ast>> + GetSpan),
     ) -> bool;
+    fn with_node<R>(
+        &mut self,
+        node: AstNodes<'ast>,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, JsFormatContext<'ast>>) -> R,
+    ) -> R;
+    fn with_current_node<R>(
+        &mut self,
+        node: AstNodes<'ast>,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, JsFormatContext<'ast>>) -> R,
+    ) -> R;
+    fn with_nodes<R>(
+        &mut self,
+        nodes: impl IntoIterator<Item = AstNodes<'ast>>,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, JsFormatContext<'ast>>) -> R,
+    ) -> R;
+    fn outside_current_node<R>(
+        &mut self,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, JsFormatContext<'ast>>) -> R,
+    ) -> R;
 }
 
 impl<'buf, 'ast> JsFormatterExt<'buf, 'ast> for Formatter<'buf, 'ast, JsFormatContext<'ast>> {
@@ -85,6 +104,69 @@ impl<'buf, 'ast> JsFormatterExt<'buf, 'ast> for Formatter<'buf, 'ast, JsFormatCo
         let will_break = self.intern(content).is_some_and(|e| e.will_break());
         self.context_mut().comments_mut().restore(snapshot);
         will_break
+    }
+
+    /// Runs `content` with `node` on the ancestor stack, which must be a child of the current node.
+    #[inline]
+    fn with_node<R>(
+        &mut self,
+        node: AstNodes<'ast>,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, JsFormatContext<'ast>>) -> R,
+    ) -> R {
+        self.context_mut().ancestors_mut().push(node);
+        let result = content(self);
+        self.context_mut().ancestors_mut().pop();
+        result
+    }
+
+    /// [`Self::with_node`], or just `content` when `node` is the current node already:
+    /// for a printer of `node` called both from its `fmt` and from its parent's.
+    #[inline]
+    fn with_current_node<R>(
+        &mut self,
+        node: AstNodes<'ast>,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, JsFormatContext<'ast>>) -> R,
+    ) -> R {
+        let is_current = self.context().ancestors().current().is(&node);
+        if !is_current {
+            self.context_mut().ancestors_mut().push(node);
+        }
+        let result = content(self);
+        if !is_current {
+            self.context_mut().ancestors_mut().pop();
+        }
+        result
+    }
+
+    /// Runs `content` with `nodes` on the ancestor stack, each a child of the one before (the first of the current node).
+    /// For printing a descendant of the current node outside of its ancestors' `fmt`.
+    fn with_nodes<R>(
+        &mut self,
+        nodes: impl IntoIterator<Item = AstNodes<'ast>>,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, JsFormatContext<'ast>>) -> R,
+    ) -> R {
+        let mut count = 0;
+        for node in nodes {
+            self.context_mut().ancestors_mut().push(node);
+            count += 1;
+        }
+        let result = content(self);
+        for _ in 0..count {
+            self.context_mut().ancestors_mut().pop();
+        }
+        result
+    }
+
+    /// Runs `content` with the current node off the ancestor stack,
+    /// for printing a child of its parent in its `fmt` (a sibling field formatted inside it).
+    fn outside_current_node<R>(
+        &mut self,
+        content: impl FnOnce(&mut Formatter<'_, 'ast, JsFormatContext<'ast>>) -> R,
+    ) -> R {
+        let current = self.context_mut().ancestors_mut().pop();
+        let result = content(self);
+        self.context_mut().ancestors_mut().push_unchecked(current);
+        result
     }
 }
 

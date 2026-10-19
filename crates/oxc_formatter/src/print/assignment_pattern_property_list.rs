@@ -9,12 +9,12 @@ use crate::{
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
-enum AssignmentTargetPropertyListNode<'a, 'b> {
-    Property(&'b AstNode<'a, AssignmentTargetProperty<'a>>),
-    Rest(&'b AstNode<'a, AssignmentTargetRest<'a>>),
+enum AssignmentTargetPropertyListNode<'a> {
+    Property(AstNode<'a, AssignmentTargetProperty<'a>>),
+    Rest(AstNode<'a, AssignmentTargetRest<'a>>),
 }
 
-impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
+impl GetSpan for AssignmentTargetPropertyListNode<'_> {
     fn span(&self) -> Span {
         match self {
             AssignmentTargetPropertyListNode::Property(property) => property.span(),
@@ -23,7 +23,7 @@ impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentTargetPropertyListNode<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentTargetPropertyListNode<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             AssignmentTargetPropertyListNode::Property(property) => property.fmt(f),
@@ -32,13 +32,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentTargetPropertyListNode<'a
     }
 }
 
-struct AssignmentTargetPropertyListIter<'a, 'b> {
+struct AssignmentTargetPropertyListIter<'a> {
     properties: AstNodeIterator<'a, AssignmentTargetProperty<'a>>,
-    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+    rest: Option<AstNode<'a, AssignmentTargetRest<'a>>>,
 }
 
-impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
-    type Item = AssignmentTargetPropertyListNode<'a, 'b>;
+impl<'a> Iterator for AssignmentTargetPropertyListIter<'a> {
+    type Item = AssignmentTargetPropertyListNode<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         if let Some(property) = self.properties.next() {
@@ -49,21 +49,21 @@ impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
     }
 }
 
-pub struct AssignmentTargetPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+pub struct AssignmentTargetPropertyList<'a> {
+    properties: AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+    rest: Option<AstNode<'a, AssignmentTargetRest<'a>>>,
 }
 
-impl<'a, 'b> AssignmentTargetPropertyList<'a, 'b> {
+impl<'a> AssignmentTargetPropertyList<'a> {
     pub fn new(
-        properties: &'b AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-        rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+        properties: AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+        rest: Option<AstNode<'a, AssignmentTargetRest<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentTargetPropertyList<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentTargetPropertyList<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let has_trailing_rest = self.rest.is_some();
         let trailing_separator = if has_trailing_rest {

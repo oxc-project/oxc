@@ -13,7 +13,6 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     best_fitting,
     formatter::{Comments, JsFormatter, prelude::*},
-    parentheses::NeedsParentheses,
     utils::{
         is_long_curried_call,
         member_chain::{
@@ -28,15 +27,15 @@ use crate::{
 use super::typecast::is_cast_target;
 
 #[derive(Debug)]
-pub struct MemberChain<'a, 'b> {
-    root: &'b AstNode<'a, CallExpression<'a>>,
-    head: MemberChainGroup<'a, 'b>,
-    tail: TailChainGroups<'a, 'b>,
+pub struct MemberChain<'a> {
+    root: AstNode<'a, CallExpression<'a>>,
+    head: MemberChainGroup<'a>,
+    tail: TailChainGroups<'a>,
 }
 
-impl<'a, 'b> MemberChain<'a, 'b> {
+impl<'a> MemberChain<'a> {
     pub(crate) fn from_call_expression(
-        call_expression: &'b AstNode<'a, CallExpression<'a>>,
+        call_expression: AstNode<'a, CallExpression<'a>>,
         f: &JsFormatter<'_, 'a>,
     ) -> Self {
         let mut chain_members = chain_members_iter(call_expression, f).collect::<ChainMembers>();
@@ -55,7 +54,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
         // Here we check if the first element of Groups::groups can be moved inside the head.
         // If so, then we extract it and concatenate it together with the head.
-        member_chain.maybe_merge_with_first_group(call_expression.parent(), f);
+        member_chain.maybe_merge_with_first_group(&call_expression.parent(f), f);
 
         member_chain
     }
@@ -95,7 +94,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                     has_computed_property ||
                     is_factory(&identifier.name) ||
                     // If an identifier has a name that is shorter than the tab width, then we join it with the "head"
-                    (matches!(parent.without_chain_expression(), AstNodes::ExpressionStatement(_))
+                    (matches!(parent.without_chain_expression(f), AstNodes::ExpressionStatement(_))
                         && has_short_name(&identifier.name, f.options().indent_width.value()))
                 }
                 Expression::ThisExpression(_) => true,
@@ -136,10 +135,10 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
             if call_expressions.peek().is_some() {
                 has_function_like_argument =
-                    has_function_like_argument || has_arrow_or_function_expression_arg(call);
+                    has_function_like_argument || has_arrow_or_function_expression_arg(*call);
             }
 
-            has_complex_args = has_complex_args || !has_simple_arguments(call);
+            has_complex_args = has_complex_args || !has_simple_arguments(*call);
 
             if calls_count > 2 && has_complex_args {
                 return true;
@@ -168,12 +167,12 @@ impl<'a, 'b> MemberChain<'a, 'b> {
         }
     }
 
-    fn last_group(&self) -> &MemberChainGroup<'a, 'b> {
+    fn last_group(&self) -> &MemberChainGroup<'a> {
         self.tail.last().unwrap_or(&self.head)
     }
 
     /// Returns an iterator over all members in the member chain
-    fn members(&self) -> impl Iterator<Item = &ChainMember<'a, 'b>> {
+    fn members(&self) -> impl Iterator<Item = &ChainMember<'a>> {
         self.head.members().iter().chain(self.tail.members())
     }
 
@@ -199,7 +198,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let has_comment = self.has_comment(f);
         let format_one_line = format_with(|f| {
@@ -215,7 +214,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
         if self.tail.is_empty()
             || (self.tail.len() == 1 && !has_comment && !has_new_line_or_comment_between)
         {
-            return if is_long_curried_call(self.root) {
+            return if is_long_curried_call(self.root, f) {
                 write!(f, [format_one_line]);
             } else {
                 write!(f, [group(&format_one_line)]);
@@ -251,7 +250,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for MemberChain<'a, '_> {
 }
 
 /// Returns the index where the head group ends and the tail groups begin.
-fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> usize {
+fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_>]) -> usize {
     // This where we apply the first two points explained in the description of the main public function.
     // We want to keep iterating over the items until we have call expressions
     // - `something()()()()`
@@ -298,10 +297,10 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
 }
 
 /// computes groups coming after the first group
-fn compute_remaining_groups<'a, 'b>(
-    members: impl IntoIterator<Item = ChainMember<'a, 'b>>,
+fn compute_remaining_groups<'a>(
+    members: impl IntoIterator<Item = ChainMember<'a>>,
     f: &JsFormatter<'_, 'a>,
-) -> TailChainGroups<'a, 'b> {
+) -> TailChainGroups<'a> {
     let mut has_seen_call_expression = false;
     let mut groups_builder = MemberChainGroupsBuilder::default();
 
@@ -353,20 +352,20 @@ fn compute_remaining_groups<'a, 'b>(
     groups_builder.finish()
 }
 
-fn is_computed_array_member_access(member: &ChainMember<'_, '_>) -> bool {
+fn is_computed_array_member_access(member: &ChainMember<'_>) -> bool {
     matches!(member, ChainMember::ComputedMember(expression)
         if matches!(&expression.expression, Expression::NumericLiteral(_))
     )
 }
 
-fn has_arrow_or_function_expression_arg(call: &AstNode<'_, CallExpression<'_>>) -> bool {
+fn has_arrow_or_function_expression_arg(call: AstNode<'_, CallExpression<'_>>) -> bool {
     call.as_ref().arguments.iter().any(|argument| {
         matches!(&argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_))
     })
 }
 
-fn has_simple_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> bool {
-    call.arguments().iter().all(|argument| SimpleArgument::new(argument).is_simple())
+fn has_simple_arguments<'a>(call: AstNode<'a, CallExpression<'a>>) -> bool {
+    call.arguments().iter().all(|argument| SimpleArgument::new(&argument).is_simple())
 }
 
 /// In order to detect those cases, we use an heuristic: if the first
@@ -388,7 +387,7 @@ fn is_factory(token: &str) -> bool {
 /// This function is the inverse of the prettier function
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
 pub fn is_member_call_chain<'a>(
-    expression: &AstNode<'a, CallExpression<'a>>,
+    expression: AstNode<'a, CallExpression<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
@@ -398,18 +397,19 @@ fn has_short_name(name: &str, tab_width: u8) -> bool {
     name.len() <= tab_width as usize
 }
 
-fn chain_members_iter<'a, 'b>(
-    root: &'b AstNode<'a, CallExpression<'a>>,
+fn chain_members_iter<'a>(
+    root: AstNode<'a, CallExpression<'a>>,
     f: &JsFormatter<'_, 'a>,
-) -> impl Iterator<Item = ChainMember<'a, 'b>> {
+) -> impl Iterator<Item = ChainMember<'a>> {
     let mut is_root = true;
-    let mut next: Option<&'b AstNode<'a, Expression<'a>>> = None;
+    // The next member's expression, with its parent: the chain is not on the ancestor stack
+    let mut next: Option<(AstNode<'a, Expression<'a>>, AstNodes<'a>)> = None;
 
     iter::from_fn(move || {
         let handle_call_expression =
             |position: CallExpressionPosition,
-             expr: &'b AstNode<'a, CallExpression<'a>>,
-             next: &mut Option<&'b AstNode<'a, Expression<'a>>>| {
+             expr: AstNode<'a, CallExpression<'a>>,
+             next: &mut Option<(AstNode<'a, Expression<'a>>, AstNodes<'a>)>| {
                 let callee = expr.callee();
 
                 let is_chain = matches!(
@@ -420,7 +420,7 @@ fn chain_members_iter<'a, 'b>(
                 );
 
                 if is_chain {
-                    *next = Some(callee);
+                    *next = Some((callee, AstNodes::CallExpression(expr)));
                 }
 
                 ChainMember::CallExpression { expression: expr, position }
@@ -431,7 +431,7 @@ fn chain_members_iter<'a, 'b>(
             return Some(handle_call_expression(CallExpressionPosition::End, root, &mut next));
         }
 
-        let expression = next.take()?;
+        let (expression, parent) = next.take()?;
 
         if is_cast_target(expression.span(), f) {
             return ChainMember::Node(expression).into();
@@ -445,7 +445,7 @@ fn chain_members_iter<'a, 'b>(
         // and a `ChainElement` can never be another `ChainExpression`, so no re-check is needed here.
         let mut node = expression.as_ast_nodes();
         while let AstNodes::ChainExpression(chain) = node {
-            if chain.needs_parentheses(f) {
+            if chain.needs_parentheses_in(&parent, f) {
                 break;
             }
             node = chain.expression().as_ast_nodes();
@@ -468,15 +468,15 @@ fn chain_members_iter<'a, 'b>(
                 handle_call_expression(position, expr, &mut next)
             }
             AstNodes::StaticMemberExpression(expr) => {
-                next = Some(expr.object());
+                next = Some((expr.object(), node));
                 ChainMember::StaticMember(expr)
             }
             AstNodes::ComputedMemberExpression(expr) => {
-                next = Some(expr.object());
+                next = Some((expr.object(), node));
                 ChainMember::ComputedMember(expr)
             }
             AstNodes::TSNonNullExpression(expr) => {
-                next = Some(expr.expression());
+                next = Some((expr.expression(), node));
                 ChainMember::TSNonNullExpression(expr)
             }
             _ => ChainMember::Node(expression),

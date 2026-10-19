@@ -19,12 +19,12 @@ use super::{FormatJsxChildList, JsxChildListLayout};
 
 /// Union type for JSX elements and fragments that have children
 #[derive(Debug, Clone)]
-pub enum AnyJsxTagWithChildren<'a, 'b> {
-    Element(&'b AstNode<'a, JSXElement<'a>>),
-    Fragment(&'b AstNode<'a, JSXFragment<'a>>),
+pub enum AnyJsxTagWithChildren<'a> {
+    Element(AstNode<'a, JSXElement<'a>>),
+    Fragment(AstNode<'a, JSXFragment<'a>>),
 }
 
-impl<'a> AnyJsxTagWithChildren<'a, '_> {
+impl<'a> AnyJsxTagWithChildren<'a> {
     fn span(&self) -> Span {
         match self {
             Self::Element(element) => element.span(),
@@ -40,11 +40,11 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
     }
 
     fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent()
+        let trailing_comments = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent(f)
             && arrow.is_expression()
         {
             f.context().comments().comments_before(arrow.span.end)
-        } else if let AstNodes::ConditionalExpression(conditional) = self.parent() {
+        } else if let AstNodes::ConditionalExpression(conditional) = self.parent(f) {
             if self.span() == conditional.alternate.span() {
                 // Since `preserveParens` is disabled, `conditional.alternate.span` only covers
                 // `<Success />`, not the surrounding parentheses or comments within them:
@@ -63,7 +63,7 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
                 f.context().comments().end_of_line_comments_after(self.span().end)
             }
         } else if matches!(
-            self.parent(),
+            self.parent(f),
             AstNodes::TemplateLiteral(_) | AstNodes::TSTemplateLiteralType(_)
         ) {
             // For a JSX element inside `${...}`,
@@ -84,8 +84,8 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
 
     /// Checks if a JSX Element should be wrapped in parentheses. Returns a [WrapState] which
     /// indicates when the element should be wrapped in parentheses.
-    pub fn get_wrap_state(&self) -> WrapState {
-        let parent = self.parent();
+    pub fn get_wrap_state(&self, f: &JsFormatter<'_, 'a>) -> WrapState {
+        let parent = self.parent(f);
         // Call site has ensures that only non-nested JSX elements are passed.
         debug_assert!(!matches!(parent, AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)));
 
@@ -122,7 +122,7 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_suppressed = f.comments().is_span_suppressed(self.span());
 
@@ -186,11 +186,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
         });
 
         // It's a nested JSX element or fragment, no need for parenthesis or wrapping.
-        if matches!(self.parent(), AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
+        if matches!(self.parent(f), AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
             return write!(f, [format_tag]);
         }
 
-        let wrap = self.get_wrap_state();
+        let wrap = self.get_wrap_state(f);
         match wrap {
             WrapState::NoWrap => {
                 write!(
@@ -203,7 +203,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
                 );
             }
             WrapState::WrapOnBreak => {
-                let should_expand = should_expand(self.parent());
+                let should_expand = should_expand(&self.parent(f), f);
                 let needs_parentheses = self.needs_parentheses(f);
 
                 let format_inner = format_with(|f| {
@@ -246,21 +246,23 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
 /// // As JSX attribute:
 /// <Tooltip title={[].map(name => (<Foo>{name}</Foo>))} />;
 /// ```
-pub fn should_expand(parent: &AstNodes<'_>) -> bool {
+pub fn should_expand<'a>(parent: &AstNodes<'a>, f: &JsFormatter<'_, 'a>) -> bool {
     let maybe_jsx_expression_container = match parent {
-        AstNodes::ArrowFunctionExpression(arrow) if arrow.is_expression() => match arrow.parent() {
-            AstNodes::CallExpression(call) => call.parent(),
-            _ => return false,
-        },
+        AstNodes::ArrowFunctionExpression(arrow) if arrow.is_expression() => {
+            match arrow.parent(f) {
+                AstNodes::CallExpression(call) => call.parent(f),
+                _ => return false,
+            }
+        }
         _ => return false,
     };
     matches!(
-        maybe_jsx_expression_container.without_chain_expression(),
+        maybe_jsx_expression_container.without_chain_expression(f),
         AstNodes::JSXExpressionContainer(_)
     )
 }
 
-impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
+impl<'a> AnyJsxTagWithChildren<'a> {
     fn fmt_opening(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
             Self::Element(element) => {
@@ -286,17 +288,17 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn children(&self) -> &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
+    fn children(&self) -> AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
         match self {
             Self::Element(element) => element.children(),
             Self::Fragment(fragment) => fragment.children(),
         }
     }
 
-    fn parent(&self) -> &'b AstNodes<'a> {
+    fn parent(&self, f: &JsFormatter<'_, 'a>) -> AstNodes<'a> {
         match self {
-            Self::Element(element) => element.parent(),
-            Self::Fragment(fragment) => fragment.parent(),
+            Self::Element(element) => element.parent(f),
+            Self::Fragment(fragment) => fragment.parent(f),
         }
     }
 
@@ -307,7 +309,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn layout(&self) -> ElementLayout<'a, 'b> {
+    fn layout(&self) -> ElementLayout<'a> {
         let children = self.children();
 
         match children.len() {
@@ -340,7 +342,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
 }
 
 #[derive(Debug, Clone)]
-pub enum ElementLayout<'a, 'b> {
+pub enum ElementLayout<'a> {
     /// Empty Tag with no children or contains no meaningful text.
     NoChildren,
 
@@ -360,7 +362,7 @@ pub enum ElementLayout<'a, 'b> {
     ///   } that will eventually break across multiple lines ${(40 / 3) * 45}`}
     /// </div>;
     /// ```
-    Template(&'b AstNode<'a, JSXExpressionContainer<'a>>),
+    Template(AstNode<'a, JSXExpressionContainer<'a>>),
 
     /// Default layout used for all elements that have children and [ElementLayout::Template] does not apply.
     ///

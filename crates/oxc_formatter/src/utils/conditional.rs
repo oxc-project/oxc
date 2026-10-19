@@ -30,10 +30,10 @@ impl<'a> ConditionalLike<'a, '_> {
     }
 
     #[inline]
-    fn parent(&self) -> &AstNodes<'a> {
+    fn parent(&self, f: &JsFormatter<'_, 'a>) -> AstNodes<'a> {
         match self {
-            ConditionalLike::ConditionalExpression(expr) => expr.parent(),
-            ConditionalLike::TSConditionalType(ty) => ty.parent(),
+            ConditionalLike::ConditionalExpression(expr) => expr.parent(f),
+            ConditionalLike::TSConditionalType(ty) => ty.parent(f),
         }
     }
 
@@ -168,7 +168,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
     fn layout(&self, f: &JsFormatter<'_, 'a>) -> ConditionalLayout {
         let self_span = self.span();
 
-        match self.parent() {
+        match self.parent(f) {
             AstNodes::ConditionalExpression(parent) => {
                 let parent_expr = parent.as_ref();
                 if parent_expr.test.span() == self_span {
@@ -245,7 +245,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
     ///         : c
     /// ).member
     /// ```
-    fn should_extra_indent(&self, layout: ConditionalLayout) -> bool {
+    fn should_extra_indent(&self, layout: ConditionalLayout, f: &JsFormatter<'_, 'a>) -> bool {
         if !layout.is_root() {
             return false;
         }
@@ -256,7 +256,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
         };
 
         let mut expression_span = expr.span;
-        let mut parent = expr.parent();
+        let mut parent = expr.parent(f);
 
         // This tries to find the start of a member chain by iterating over all ancestors of the conditional.
         // The iteration "breaks" as soon as a non-member-chain node is found.
@@ -265,7 +265,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::ChainExpression(chain) => {
                     if chain.expression.span() == expression_span {
                         expression_span = chain.span();
-                        parent = chain.parent();
+                        parent = chain.parent(f);
                     } else {
                         break;
                     }
@@ -273,7 +273,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::StaticMemberExpression(member) => {
                     if member.object.span() == expression_span {
                         expression_span = member.span();
-                        parent = member.parent();
+                        parent = member.parent(f);
                     } else {
                         break;
                     }
@@ -281,7 +281,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::ComputedMemberExpression(member) => {
                     if member.object.span() == expression_span {
                         expression_span = member.span();
-                        parent = member.parent();
+                        parent = member.parent(f);
                     } else {
                         break;
                     }
@@ -289,7 +289,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::CallExpression(call) => {
                     if call.callee.span() == expression_span {
                         expression_span = call.span();
-                        parent = call.parent();
+                        parent = call.parent(f);
                     } else {
                         break;
                     }
@@ -297,27 +297,27 @@ impl<'a> FormatConditionalLike<'a, '_> {
                 AstNodes::TSNonNullExpression(assertion) => {
                     if assertion.expression.span() == expression_span {
                         expression_span = assertion.span();
-                        parent = assertion.parent();
+                        parent = assertion.parent(f);
                     } else {
                         break;
                     }
                 }
                 AstNodes::NewExpression(new_expr) => {
-                    parent = new_expr.parent();
+                    parent = new_expr.parent(f);
                     if new_expr.callee.span() == expression_span {
                         expression_span = new_expr.span();
                     }
                     break;
                 }
                 AstNodes::TSAsExpression(as_expr) => {
-                    parent = as_expr.parent();
+                    parent = as_expr.parent(f);
                     if as_expr.expression.span() == expression_span {
                         expression_span = as_expr.span();
                     }
                     break;
                 }
                 AstNodes::TSSatisfiesExpression(satisfies) => {
-                    parent = satisfies.parent();
+                    parent = satisfies.parent(f);
                     if satisfies.expression.span() == expression_span {
                         expression_span = satisfies.span();
                     }
@@ -353,10 +353,14 @@ impl<'a> FormatConditionalLike<'a, '_> {
 
     /// Returns `true` if this is the root conditional expression and the parent is a [`StaticMemberExpression`].
     #[inline]
-    fn is_parent_static_member_expression(&self, layout: ConditionalLayout) -> bool {
+    fn is_parent_static_member_expression(
+        &self,
+        layout: ConditionalLayout,
+        f: &JsFormatter<'_, 'a>,
+    ) -> bool {
         layout.is_root()
             && self.is_conditional_expression()
-            && matches!(self.parent(), AstNodes::StaticMemberExpression(_))
+            && matches!(self.parent(f), AstNodes::StaticMemberExpression(_))
     }
 
     /// Formats the test part of the conditional
@@ -364,7 +368,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
         let format_inner = format_with(|f| {
             let (start, end) = match self.conditional {
                 ConditionalLike::ConditionalExpression(conditional) => {
-                    write!(f, FormatNodeWithoutTrailingComments(conditional.test()));
+                    write!(f, FormatNodeWithoutTrailingComments(&conditional.test()));
                     (conditional.test.span().end, conditional.consequent.span().start)
                 }
                 ConditionalLike::TSConditionalType(conditional) => {
@@ -375,7 +379,7 @@ impl<'a> FormatConditionalLike<'a, '_> {
                             space(),
                             "extends",
                             space(),
-                            FormatNodeWithoutTrailingComments(conditional.extends_type())
+                            FormatNodeWithoutTrailingComments(&conditional.extends_type())
                         ]
                     );
                     (conditional.extends_type.span().end, conditional.true_type.span().start)
@@ -405,11 +409,11 @@ impl<'a> FormatConditionalLike<'a, '_> {
             let format_consequent_with_trailing_comments = format_with(|f| {
                 let (start, end) = match self.conditional {
                     ConditionalLike::ConditionalExpression(conditional) => {
-                        write!(f, FormatNodeWithoutTrailingComments(conditional.consequent()));
+                        write!(f, FormatNodeWithoutTrailingComments(&conditional.consequent()));
                         (conditional.consequent.span().end, conditional.alternate.span().start)
                     }
                     ConditionalLike::TSConditionalType(conditional) => {
-                        write!(f, FormatNodeWithoutTrailingComments(conditional.true_type()));
+                        write!(f, FormatNodeWithoutTrailingComments(&conditional.true_type()));
                         (conditional.true_type.span().end, conditional.false_type.span().start)
                     }
                 };
@@ -452,10 +456,10 @@ impl<'a> FormatConditionalLike<'a, '_> {
 
         let format_alternative = format_with(|f| match self.conditional {
             ConditionalLike::ConditionalExpression(conditional) => {
-                write!(f, [FormatNodeWithoutTrailingComments(conditional.alternate())]);
+                write!(f, [FormatNodeWithoutTrailingComments(&conditional.alternate())]);
             }
             ConditionalLike::TSConditionalType(conditional) => {
-                write!(f, [FormatNodeWithoutTrailingComments(conditional.false_type())]);
+                write!(f, [FormatNodeWithoutTrailingComments(&conditional.false_type())]);
             }
         });
         let format_alternative = format_with(|f| {
@@ -508,7 +512,7 @@ impl<'a, 'b> Deref for FormatConditionalLike<'a, 'b> {
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatConditionalLike<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let layout = self.layout(f);
-        let should_extra_indent = self.should_extra_indent(layout);
+        let should_extra_indent = self.should_extra_indent(layout, f);
         let is_jsx_chain = self.options.jsx_chain || layout.is_jsx_chain();
 
         let format_inner = format_with(|f| {
@@ -524,11 +528,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatConditionalLike<'a, '_> {
                             space(),
                             "?",
                             space(),
-                            format_jsx_chain_consequent(conditional.consequent()),
+                            format_jsx_chain_consequent(&conditional.consequent()),
                             space(),
                             ":",
                             space(),
-                            format_jsx_chain_alternate(conditional.alternate())
+                            format_jsx_chain_alternate(&conditional.alternate())
                         ]
                     );
                 } else {
@@ -571,7 +575,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatConditionalLike<'a, '_> {
             // ```
             if !should_extra_indent
                 && !is_jsx_chain
-                && self.is_parent_static_member_expression(layout)
+                && self.is_parent_static_member_expression(layout, f)
             {
                 write!(f, [soft_line_break()]);
             }
@@ -644,11 +648,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsxChainExpression<'a, '_> {
 
         let format_expression = format_with(|f| {
             if let AstNodes::ConditionalExpression(conditional) = self.expression.as_ast_nodes() {
-                FormatConditionalLike {
-                    conditional: &ConditionalLike::ConditionalExpression(conditional),
-                    options: FormatConditionalLikeOptions { jsx_chain: true },
-                }
-                .fmt(f);
+                // Its own `fmt` does not run
+                f.with_node(AstNodes::ConditionalExpression(conditional), |f| {
+                    FormatConditionalLike {
+                        conditional: &ConditionalLike::ConditionalExpression(&conditional),
+                        options: FormatConditionalLikeOptions { jsx_chain: true },
+                    }
+                    .fmt(f);
+                });
             } else {
                 self.expression.fmt(f);
             }

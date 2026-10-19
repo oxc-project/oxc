@@ -187,6 +187,7 @@ pub fn cast_target_end(span: Span, f: &JsFormatter<'_, '_>) -> Option<u32> {
 /// (so `NeedsParentheses` rules skip their own parentheses), and wraps it in parentheses,
 /// like `/** @type {string} */ (value)` or `/** @type {number} */ ((expression))`.
 /// Step 2 of the module's printing protocol: the node's `fmt` is re-entered inside the parens and declines the second offer.
+/// Called from the generated `fmt` of `node`, the current node.
 ///
 /// Returns `true` if the node was formatted as a cast target, `false` otherwise;
 /// callers apply their own formatting on `false`.
@@ -210,7 +211,8 @@ pub fn format_type_cast_comment_node<'a>(
     f.context_mut().comments_mut().mark_as_type_cast_node(node);
 
     let format_node = format_with(|f| {
-        node.fmt(f);
+        // `node` is the current node: its `fmt` pushes it again
+        f.outside_current_node(|f| node.fmt(f));
         // Own-line comments left before the cast `)` have no following node inside the parens to lead;
         // deferred, they would lead the next sibling (a call's arguments) outside the parens.
         // Same-line ones are already printed by the node's trailing pass.

@@ -26,7 +26,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIntersectionType<'a>> {
 // One member per line with leading `&`, object members treated like any other member (NO hug special case).
 // Until that lands, this follows Prettier's current output.
 fn format_intersection_types<'a>(
-    node: &AstNode<'a, ArenaVec<'a, TSType<'a>>>,
+    node: AstNode<'a, ArenaVec<'a, TSType<'a>>>,
     f: &mut JsFormatter<'_, 'a>,
 ) {
     let operator_leads_break = f.options().operator_position.is_start();

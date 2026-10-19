@@ -20,7 +20,7 @@ use super::FormatWrite;
 impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, self.object());
-        FormatComputedMemberExpressionWithoutObject(self).fmt(f);
+        FormatComputedMemberExpressionWithoutObject(*self).fmt(f);
     }
 }
 
@@ -34,7 +34,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
             f.elements()[start..].has_label(LabelId::of(JsLabels::MemberChain))
         };
 
-        match layout(self, is_member_chain, object_is_cast_target, f) {
+        match layout(*self, is_member_chain, object_is_cast_target, f) {
             StaticMemberLayout::NoBreak => {
                 let format_no_break =
                     format_with(|f| write!(f, [operator_token(self.optional()), self.property()]));
@@ -87,7 +87,7 @@ fn operator_token(optional: bool) -> &'static str {
 /// `object_is_cast_target`:
 /// a cast-target object is neither a call nor an identifier to the rules below (see `is_cast_target`).
 fn layout<'a>(
-    node: &AstNode<'a, StaticMemberExpression<'a>>,
+    node: AstNode<'a, StaticMemberExpression<'a>>,
     is_member_chain: bool,
     object_is_cast_target: bool,
     f: &JsFormatter<'_, 'a>,
@@ -99,9 +99,9 @@ fn layout<'a>(
     // `a.b.c!` and `a.b?.c`
     // `TSNonNullExpression` is a wrapper node for `!`, and `ChainExpression` is a wrapper node for `?.`,
     // so we need to skip them to find the real parent node.
-    let mut parent = node.parent();
+    let mut parent = node.parent(f);
     while matches!(parent, AstNodes::TSNonNullExpression(_) | AstNodes::ChainExpression(_)) {
-        parent = parent.parent();
+        parent = parent.parent(f);
     }
     let object = &node.object;
 
@@ -133,7 +133,7 @@ fn layout<'a>(
             | AstNodes::ChainExpression(_)
             | AstNodes::TSNonNullExpression(_)
     ) {
-        first_non_static_member_ancestor = first_non_static_member_ancestor.parent();
+        first_non_static_member_ancestor = first_non_static_member_ancestor.parent(f);
     }
 
     match first_non_static_member_ancestor {

@@ -618,7 +618,7 @@ impl<'a> Comments<'a> {
         &self,
         span: Span,
         enclosing_span: impl Fn() -> Span,
-        following_span_start: u32,
+        following_span_start: impl Fn() -> u32,
         can_be_cast_target: bool,
     ) -> bool {
         let quiet = self.unprinted_comments().first().is_none_or(|next| {
@@ -631,7 +631,7 @@ impl<'a> Comments<'a> {
             !quiet
                 || (self.comments_before(span.start).is_empty()
                     && self
-                        .get_trailing_comments(enclosing_span(), span, following_span_start)
+                        .get_trailing_comments(enclosing_span(), span, following_span_start())
                         .is_empty()
                     && !self.is_span_suppressed(span)),
             "a quiet node at {span:?} has comments to format"

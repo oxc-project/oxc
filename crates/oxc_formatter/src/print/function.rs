@@ -6,8 +6,12 @@ use super::{
     FormatWrite, arrow_function_expression::FunctionCacheMode, block_statement::is_empty_block,
 };
 use crate::{
-    ast_nodes::AstNode, format_args, formatter::prelude::*, print::semicolon::OptionalSemicolon,
-    utils::statement_body::write_head_body_separator, write,
+    ast_nodes::{AstNode, AstNodes},
+    format_args,
+    formatter::prelude::*,
+    print::semicolon::OptionalSemicolon,
+    utils::statement_body::write_head_body_separator,
+    write,
 };
 
 impl<'a> FormatWrite<'a> for AstNode<'a, Function<'a>> {
@@ -110,7 +114,8 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunction<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        self.format(f);
+        // A grouped call argument is formatted from the call
+        f.with_current_node(AstNodes::Function(*self.function), |f| self.format(f));
     }
 }
 
@@ -120,7 +125,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
 
         let statements = self.statements();
         let directives = self.directives();
-        if is_empty_block(statements) && directives.is_empty() {
+        if is_empty_block(&statements) && directives.is_empty() {
             write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);
         } else {
             write!(f, ["{", block_indent(&format_args!(directives, statements)), "}"]);

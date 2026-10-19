@@ -92,9 +92,9 @@ impl Generator for FormatterFormatGenerator {
 
             ///@@line_break
             use crate::{
-                formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
+                formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_current_trailing_comments, format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
-                ast_nodes::AstNode,
+                ast_nodes::{AstNode, AstNodes},
                 utils::{suppressed::{FormatSuppressedNode, write_suppressed_expression}, typecast::{TypeCast, classify_type_cast, format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
                 print::{FormatWrite, semicolon::write_suppressed_statement},
             };
@@ -131,11 +131,21 @@ fn generate_struct_implementation(
             self.format_leading_comments(f);
         }
     });
-    let trailing_comments = (!do_not_print_comment).then(|| {
-        quote! {
-            self.format_trailing_comments(f);
-        }
-    });
+    // A node with a kind is the current node in its `fmt`, so its parent and following node are found directly
+    let format_trailing_comments = if struct_def.kind.has_kind {
+        quote! { format_current_trailing_comments(self.span(), f); }
+    } else {
+        quote! { self.format_trailing_comments(f); }
+    };
+    let (enclosing_span, following_span_start) = if struct_def.kind.has_kind {
+        (
+            quote! { || f.context().ancestors().parent_of_current().span() },
+            quote! { || f.context().ancestors().following_span_start_of_current() },
+        )
+    } else {
+        (quote! { || self.parent(f).span() }, quote! { || self.following_span_start(f) })
+    };
+    let trailing_comments = (!do_not_print_comment).then(|| format_trailing_comments.clone());
 
     let bare_open_paren = quote! {
         let needs_parentheses = self.needs_parentheses(f);
@@ -213,7 +223,7 @@ fn generate_struct_implementation(
                             self.needs_parentheses(f),
                             f,
                         );
-                        self.format_trailing_comments(f);
+                        #format_trailing_comments
                         return;
                     }
                 }
@@ -234,11 +244,8 @@ fn generate_struct_implementation(
                         FormatSuppressedNode(self.span()).fmt(f);
                     }
                 };
-                let suppressed_trailing_comments = do_not_print_comment.then(|| {
-                    quote! {
-                        self.format_trailing_comments(f);
-                    }
-                });
+                let suppressed_trailing_comments =
+                    do_not_print_comment.then(|| format_trailing_comments.clone());
                 quote! {
                     if is_suppressed {
                         #suppressed_write_call
@@ -281,7 +288,7 @@ fn generate_struct_implementation(
                 }
             });
             quote! {
-                if f.comments().is_quiet(self.span(), || self.parent.span(), self.following_span_start, #needs_parentheses) {
+                if f.comments().is_quiet(self.span(), #enclosing_span, #following_span_start, #needs_parentheses) {
                     #no_type_cast
                     #open_paren
                     self.write(f);
@@ -312,6 +319,19 @@ fn generate_struct_implementation(
         }
     };
 
+    // A node with a kind is on the ancestor stack while it is formatted,
+    // pushed once when its `fmt` is re-entered (a type cast target, a node printed without its trailing comments)
+    let fmt_implementation = if struct_def.kind.has_kind {
+        let struct_ident = struct_def.ident();
+        quote! {
+            f.with_node(AstNodes::#struct_ident(*self), |f| {
+                #fmt_implementation
+            });
+        }
+    } else {
+        fmt_implementation
+    };
+
     quote! {
         ///@@line_break
         impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
@@ -334,13 +354,8 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
         Some(quote! {
             #enum_ident::#variant_name(inner) => {
-                allocator.alloc(AstNode::<#node_type> {
-                    inner,
-                    parent,
-                    allocator,
-                    following_span_start: self.following_span_start,
-                }).fmt(f);
-            },
+                AstNode::<#node_type>::new(inner).fmt(f);
+            }
         })
     });
 
@@ -352,14 +367,8 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         let to_fn_ident = format_ident!("to_{inherits_snake_name}");
         let match_arm = quote! {
             it @ #match_ident!(#enum_ident) => {
-                let inner = it.#to_fn_ident();
-                allocator.alloc(AstNode::<'a, #inherits_ident> {
-                    inner,
-                    parent,
-                    allocator,
-                    following_span_start: self.following_span_start,
-                }).fmt(f);
-            },
+                AstNode::<'a, #inherits_ident>::new(it.#to_fn_ident()).fmt(f);
+            }
         };
 
         match_arm
@@ -372,8 +381,8 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
             // A suppressed statement (leading or trailing comment) prints its content verbatim
             // and hands its terminator back to the formatter, decided once per statement here.
             quote! {
-                if write_suppressed_statement(self, f) {
-                    format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+                if write_suppressed_statement(*self, f) {
+                    format_trailing_comments(self.parent(f).span(), self.inner.span(), self.following_span_start(f))
                         .fmt(f);
                     return;
                 }
@@ -388,8 +397,6 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
             #[inline]
             fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
                 #inline_trailing_suppression
-                let allocator = self.allocator;
-                let parent = self.parent;
                 match self.inner {
                     #(#variant_match_arms)*
                     #(#inherits_match_arms)*

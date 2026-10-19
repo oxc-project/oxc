@@ -88,7 +88,14 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
     #[inline]
     pub fn format(&self, f: &mut JsFormatter<'_, 'a>) {
-        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options, f);
+        // A grouped call argument is formatted from the call
+        f.with_current_node(AstNodes::ArrowFunctionExpression(*self.arrow), |f| {
+            self.format_arrow(f);
+        });
+    }
+
+    fn format_arrow(&self, f: &mut JsFormatter<'_, 'a>) {
+        let layout = ArrowFunctionLayout::for_arrow(*self.arrow, self.options, f);
 
         match layout {
             ArrowFunctionLayout::Chain(chain) => {
@@ -198,7 +205,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                     let should_add_soft_line = is_last_call_arg
                         // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
-                        || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
+                        || (matches!(self.arrow.parent(f), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
                     if should_add_parens {
@@ -241,9 +248,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsArrowFunctionExpression<'a,
     }
 }
 
-enum ArrowFunctionLayout<'a, 'b> {
+enum ArrowFunctionLayout<'a> {
     /// Arrow function with a non-arrow function body
-    Single(&'b AstNode<'a, ArrowFunctionExpression<'a>>),
+    Single(AstNode<'a, ArrowFunctionExpression<'a>>),
 
     /// A chain of at least two arrow functions.
     ///
@@ -260,17 +267,17 @@ enum ArrowFunctionLayout<'a, 'b> {
     ///   (e) =>
     ///     f;
     /// ```
-    Chain(ArrowChain<'a, 'b>),
+    Chain(ArrowChain<'a>),
 }
 
-impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
+impl<'a> ArrowFunctionLayout<'a> {
     /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
     /// of the different layouts.
     fn for_arrow(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+        arrow: AstNode<'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
         f: &JsFormatter<'_, 'a>,
-    ) -> ArrowFunctionLayout<'a, 'b> {
+    ) -> ArrowFunctionLayout<'a> {
         let mut head = None;
         let mut middle = Vec::new();
         let mut current = arrow;
@@ -286,9 +293,9 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                 // A type cast keeps its parens: `(a) => /** @type {T} */ ((b) => c)`
                 && !is_cast_target(next.span(), f)
             {
-                should_break = should_break || Self::should_break_chain(current);
+                should_break = should_break || Self::should_break_chain(&current);
 
-                should_break = should_break || Self::should_break_chain(next);
+                should_break = should_break || Self::should_break_chain(&next);
 
                 if head.is_none() {
                     head = Some(current);
@@ -382,16 +389,16 @@ pub fn is_multiline_template_starting_on_same_line(
         && !source_text.has_line_terminator_before(start)
 }
 
-struct ArrowChain<'a, 'b> {
+struct ArrowChain<'a> {
     /// The top most arrow function in the chain
-    head: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    head: AstNode<'a, ArrowFunctionExpression<'a>>,
 
     /// The arrow functions in the chain that are neither the first nor the last.
     /// Empty for chains consisting only of two arrow functions.
-    middle: Vec<&'b AstNode<'a, ArrowFunctionExpression<'a>>>,
+    middle: Vec<AstNode<'a, ArrowFunctionExpression<'a>>>,
 
     /// The last arrow function in the chain
-    tail: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    tail: AstNode<'a, ArrowFunctionExpression<'a>>,
 
     options: FormatJsArrowFunctionExpressionOptions,
 
@@ -399,15 +406,21 @@ struct ArrowChain<'a, 'b> {
     expand_signatures: bool,
 }
 
-impl<'a, 'b> ArrowChain<'a, 'b> {
+impl<'a> ArrowChain<'a> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = AstNode<'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
         once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
+
+    /// The chain is printed in the frame of the head, the current node:
+    /// the arrows after it, down to the one at `index`, are pushed to print that one's children.
+    fn ancestors_to(&self, index: usize) -> impl Iterator<Item = AstNodes<'a>> {
+        self.arrows().skip(1).take(index).map(AstNodes::ArrowFunctionExpression)
+    }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let ArrowChain { tail, expand_signatures, .. } = *self;
 
@@ -424,7 +437,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         //        () => () =>
         //          a
         //      )();
-        let is_callee = self.head.is_call_like_callee();
+        let is_callee = self.head.is_call_like_callee(f);
 
         // With arrays, objects, sequence expressions, and block function bodies,
         // the opening brace gives a convenient boundary to insert a line break,
@@ -499,7 +512,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         let format_arrow_signatures = format_with(|f| {
             let join_signatures = format_with(|f| {
                 let mut is_first_in_chain = true;
-                for arrow in self.arrows() {
+                for (index, arrow) in self.arrows().enumerate() {
                     // The first comment in the chain gets formatted by the
                     // parent (the FormatJsArrowFunctionExpression), but the
                     // rest of the arrows in the chain need to format their
@@ -510,45 +523,47 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                     let is_first = is_first_in_chain;
 
                     let formatted_signature = format_with(|f| {
-                        let format_leading_comments = format_with(|f| {
-                            if should_format_comments {
-                                // A grouped layout implies that the arrow chain is trying to be rendered
-                                // in a condensed, single-line format (at least the signatures, not
-                                // necessarily the body). In that case, we _need_ to prevent the leading
-                                // comments from inserting line breaks. But if it's _not_ a grouped layout,
-                                // then we want to _force_ the line break so that the leading comments
-                                // don't inadvertently end up on the previous line after the fat arrow.
-                                if is_grouped_call_arg_layout {
-                                    write!(f, [space(), format_leading_comments(arrow.span())]);
-                                } else {
-                                    write!(
-                                        f,
-                                        [
-                                            soft_line_break_or_space(),
-                                            format_leading_comments(arrow.span())
-                                        ]
-                                    );
+                        f.with_nodes(self.ancestors_to(index), |f| {
+                            let format_leading_comments = format_with(|f| {
+                                if should_format_comments {
+                                    // A grouped layout implies that the arrow chain is trying to be rendered
+                                    // in a condensed, single-line format (at least the signatures, not
+                                    // necessarily the body). In that case, we _need_ to prevent the leading
+                                    // comments from inserting line breaks. But if it's _not_ a grouped layout,
+                                    // then we want to _force_ the line break so that the leading comments
+                                    // don't inadvertently end up on the previous line after the fat arrow.
+                                    if is_grouped_call_arg_layout {
+                                        write!(f, [space(), format_leading_comments(arrow.span())]);
+                                    } else {
+                                        write!(
+                                            f,
+                                            [
+                                                soft_line_break_or_space(),
+                                                format_leading_comments(arrow.span())
+                                            ]
+                                        );
+                                    }
                                 }
-                            }
-                        });
+                            });
 
-                        let start = arrow.span().start;
-                        write!(
-                            f,
-                            [
-                                FormatContentWithCacheMode::new(
-                                    Span::new(start, start),
-                                    format_leading_comments,
-                                    self.options.cache_mode,
-                                ),
-                                format_signature(
-                                    arrow,
-                                    is_grouped_call_arg_layout,
-                                    is_first,
-                                    self.options.cache_mode
-                                )
-                            ]
-                        );
+                            let start = arrow.span().start;
+                            write!(
+                                f,
+                                [
+                                    FormatContentWithCacheMode::new(
+                                        Span::new(start, start),
+                                        format_leading_comments,
+                                        self.options.cache_mode,
+                                    ),
+                                    format_signature(
+                                        arrow,
+                                        is_grouped_call_arg_layout,
+                                        is_first,
+                                        self.options.cache_mode
+                                    )
+                                ]
+                            );
+                        });
                     });
 
                     // Arrow chains indent a second level for every item other than the first:
@@ -569,7 +584,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
 
                     // The arrow of the tail is formatted outside of the group to ensure it never
                     // breaks from the body
-                    if !std::ptr::eq(arrow, tail) {
+                    if !std::ptr::eq(arrow.as_ref(), tail.as_ref()) {
                         write!(f, [space(), "=>"]);
                     }
                 }
@@ -579,50 +594,53 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         });
 
         let format_tail_body_inner = format_with(|f| {
-            let format_tail_body = FormatContentWithCacheMode::new(
-                tail_body.span(),
-                tail_body,
-                self.options.cache_mode,
-            );
+            f.with_nodes(self.ancestors_to(self.middle.len() + 1), |f| {
+                let format_tail_body = FormatContentWithCacheMode::new(
+                    tail_body.span(),
+                    tail_body,
+                    self.options.cache_mode,
+                );
 
-            // Ensure that the parens of sequence expressions end up on their own line if the
-            // body breaks
-            if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
-                if let Some(format_sequence) =
-                    format_sequence_with_leading_comment(sequence, &format_tail_body, f)
-                {
-                    write!(f, format_sequence);
+                // Ensure that the parens of sequence expressions end up on their own line if the
+                // body breaks
+                if let Some(Expression::SequenceExpression(sequence)) = tail.get_expression() {
+                    if let Some(format_sequence) =
+                        format_sequence_with_leading_comment(sequence, &format_tail_body, f)
+                    {
+                        write!(f, format_sequence);
+                    } else {
+                        write!(f, [token("("), format_tail_body, token(")")]);
+                    }
                 } else {
-                    write!(f, [token("("), format_tail_body, token(")")]);
+                    let should_add_parens =
+                        tail_body.as_expression().is_some_and(should_add_parens);
+                    if should_add_parens {
+                        // Known divergence from Prettier: with a signature that exactly fills the line,
+                        // Prettier breaks it because the hug layout's literal space is counted
+                        // when measuring fits (see the single-arrow branch above), while this soft-line
+                        // wrapping (`soft_line_indent_or_space` in `format_tail_body`) stops the measurement.
+                        // Porting the literal-space structure here is NOT enough: Prettier gates the hug
+                        // on `!shouldBreakChain` (`expand_signatures` here) and otherwise breaks without
+                        // parens; a naive port regresses `js/arrows/currying-4.js`.
+                        write!(
+                            f,
+                            [
+                                if_group_fits_on_line(&token("(")),
+                                format_tail_body,
+                                if_group_fits_on_line(&token(")"))
+                            ]
+                        );
+                    } else {
+                        write!(f, [format_tail_body]);
+                    }
                 }
-            } else {
-                let should_add_parens = tail_body.as_expression().is_some_and(should_add_parens);
-                if should_add_parens {
-                    // Known divergence from Prettier: with a signature that exactly fills the line,
-                    // Prettier breaks it because the hug layout's literal space is counted
-                    // when measuring fits (see the single-arrow branch above), while this soft-line
-                    // wrapping (`soft_line_indent_or_space` in `format_tail_body`) stops the measurement.
-                    // Porting the literal-space structure here is NOT enough: Prettier gates the hug
-                    // on `!shouldBreakChain` (`expand_signatures` here) and otherwise breaks without
-                    // parens; a naive port regresses `js/arrows/currying-4.js`.
-                    write!(
-                        f,
-                        [
-                            if_group_fits_on_line(&token("(")),
-                            format_tail_body,
-                            if_group_fits_on_line(&token(")"))
-                        ]
-                    );
-                } else {
-                    write!(f, [format_tail_body]);
-                }
-            }
+            });
         });
 
         let format_tail_body = format_with(|f| {
             // if it's inside a JSXExpression (e.g. an attribute) we should align the expression's closing } with the line with the opening {.
             let should_add_soft_line =
-                matches!(self.head.parent(), AstNodes::JSXExpressionContainer(_));
+                matches!(self.head.parent(f), AstNodes::JSXExpressionContainer(_));
 
             if body_on_separate_line {
                 write!(
@@ -696,7 +714,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
 /// An own-line comment cannot appear before the `=>` (no line terminator is allowed there),
 /// so any hit in this range belongs to the body.
 fn has_own_line_comment_before_body<'a>(
-    arrow: &AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: AstNode<'a, ArrowFunctionExpression<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     let signature_end =
@@ -704,11 +722,11 @@ fn has_own_line_comment_before_body<'a>(
     f.comments().has_own_line_comment_in_range(signature_end, arrow.body().span().start)
 }
 
-fn should_add_parens(expression: &AstNode<'_, Expression<'_>>) -> bool {
+fn should_add_parens(expression: AstNode<'_, Expression<'_>>) -> bool {
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
-    if matches!(&**expression, Expression::ConditionalExpression(_)) {
+    if matches!(expression.as_ref(), Expression::ConditionalExpression(_)) {
         !matches!(
             ExpressionLeftSide::leftmost(expression).as_ref(),
             Expression::ObjectExpression(_)
@@ -729,19 +747,19 @@ fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
 ///
 /// Formats the parameters and return type annotation without any soft line breaks if `is_grouped_call_argument` is `true`
 /// so that the parameters and return type are kept on the same line.
-fn format_signature<'a, 'b>(
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+fn format_signature<'a>(
+    arrow: AstNode<'a, ArrowFunctionExpression<'a>>,
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
-) -> impl Format<'a, JsFormatContext<'a>> + 'b {
+) -> impl Format<'a, JsFormatContext<'a>> {
     format_with(move |f| {
         let content = format_with(|f| {
             group(&format_args!(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                arrow.return_type().map(FormatNodeWithoutTrailingComments),
+                arrow.return_type().as_ref().map(FormatNodeWithoutTrailingComments),
             ))
             .fmt(f);
         });

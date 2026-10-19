@@ -14,7 +14,7 @@ use crate::{
 };
 
 pub fn format_property_key<'a>(
-    key: &AstNode<'a, PropertyKey<'a>>,
+    key: AstNode<'a, PropertyKey<'a>>,
     computed: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -31,11 +31,11 @@ pub fn format_property_key<'a>(
             return;
         }
 
-        let preserve_quotes = match key.parent() {
+        let preserve_quotes = match key.parent(f) {
             // For TypeScript class property declarations, quotes should always be preserved.
             // https://github.com/prettier/prettier/issues/4516
             AstNodes::PropertyDefinition(_) => f.context().source_type().is_typescript(),
-            AstNodes::TSMethodSignature(method) => is_quoted_new_method_signature(method),
+            AstNodes::TSMethodSignature(method) => is_quoted_new_method_signature(&method),
             _ => false,
         };
         let kind = if preserve_quotes {
@@ -44,15 +44,19 @@ pub fn format_property_key<'a>(
             StringLiteralParentKind::Member
         };
 
-        FormatLiteralStringToken::new(f.source_text().text_for(string), /* jsx */ false, kind)
-            .fmt(f);
+        FormatLiteralStringToken::new(
+            f.source_text().text_for(&string),
+            /* jsx */ false,
+            kind,
+        )
+        .fmt(f);
     } else {
         write!(f, key);
     }
 }
 
 pub fn write_member_name<'a>(
-    key: &AstNode<'a, PropertyKey<'a>>,
+    key: AstNode<'a, PropertyKey<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> usize {
     if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
@@ -64,7 +68,7 @@ pub fn write_member_name<'a>(
 
             // Compute the normalized width based on the same cleaned string token
             FormatLiteralStringToken::new(
-                f.source_text().text_for(string),
+                f.source_text().text_for(&string),
                 false,
                 StringLiteralParentKind::Member,
             )
@@ -72,7 +76,7 @@ pub fn write_member_name<'a>(
             .width()
         } else {
             let format = FormatLiteralStringToken::new(
-                f.source_text().text_for(string),
+                f.source_text().text_for(&string),
                 false,
                 StringLiteralParentKind::Member,
             )

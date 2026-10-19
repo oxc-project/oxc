@@ -24,23 +24,23 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
+        ReturnAndThrowStatement::ReturnStatement(*self).fmt(f);
     }
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
+        ReturnAndThrowStatement::ThrowStatement(*self).fmt(f);
     }
 }
 
 /// Unified enum for statements that have an optional argument (return/throw)
-pub enum ReturnAndThrowStatement<'a, 'b> {
-    ReturnStatement(&'b AstNode<'a, ReturnStatement<'a>>),
-    ThrowStatement(&'b AstNode<'a, ThrowStatement<'a>>),
+pub enum ReturnAndThrowStatement<'a> {
+    ReturnStatement(AstNode<'a, ReturnStatement<'a>>),
+    ThrowStatement(AstNode<'a, ThrowStatement<'a>>),
 }
 
-impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
+impl<'a> ReturnAndThrowStatement<'a> {
     /// Get the keyword token for this statement
     fn keyword(&self) -> &'static str {
         match self {
@@ -50,7 +50,7 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
     }
 
     /// Get the argument expression if present
-    fn argument(&self) -> Option<&'b AstNode<'a, Expression<'a>>> {
+    fn argument(&self) -> Option<AstNode<'a, Expression<'a>>> {
         match self {
             Self::ReturnStatement(node) => node.argument(),
             Self::ThrowStatement(node) => Some(node.argument()),
@@ -65,7 +65,7 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, self.keyword());
 
@@ -132,9 +132,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
     }
 }
 
-pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, Expression<'a>>);
+pub struct FormatAdjacentArgument<'a>(pub AstNode<'a, Expression<'a>>);
 
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let argument = self.0;
 
@@ -177,7 +177,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
 ///
 /// Traversing the left nodes is necessary in case the first node is parenthesized because
 /// parentheses will be removed (and be re-added by the return statement, but only if the argument breaks)
-fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &JsFormatter<'_, '_>) -> bool {
+fn has_argument_leading_comments<'a>(
+    argument: AstNode<'a, Expression<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> bool {
     let comments = f.context().comments();
 
     // Comments inside type cast parens (e.g., `/** @type {X} */ (/* here */ expr)`) are handled
@@ -205,7 +208,7 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &JsFormatter
         };
 
         // Yield expressions only need to check the leading comments on the left side.
-        if matches!(argument.parent(), AstNodes::YieldExpression(_)) {
+        if matches!(argument.parent(f), AstNodes::YieldExpression(_)) {
             continue;
         }
 

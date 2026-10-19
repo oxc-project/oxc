@@ -46,16 +46,16 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CallExpression<'a>> {
             callee.as_ref(),
             Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
         ) && !is_verbatim_multiline_template_sole_arg(arguments.as_slice(), Some(self), f)
-            && !is_simple_module_import(self.arguments(), f.comments())
-            && !is_test_call_expression(self, f.comments())
+            && !is_simple_module_import(self.arguments(), f)
+            && !is_test_call_expression(*self, f)
         {
-            MemberChain::from_call_expression(self, f).fmt(f);
+            MemberChain::from_call_expression(*self, f).fmt(f);
         } else {
             let format_inner = format_with(|f| {
                 write!(
                     f,
                     [
-                        FormatBeforeOpener(callee, callee_opener(self)),
+                        FormatBeforeOpener(&callee, callee_opener(self)),
                         self.optional.then_some("?."),
                         type_arguments
                     ]
@@ -103,7 +103,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, NewExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["new", space()]);
         if let Some(type_arguments) = self.type_arguments() {
-            write!(f, [FormatBeforeOpener(self.callee(), b'<'), type_arguments]);
+            write!(f, [FormatBeforeOpener(&self.callee(), b'<'), type_arguments]);
         } else {
             write!(f, [self.callee()]);
         }
@@ -119,6 +119,6 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportExpression<'a>> {
         }
 
         // Use the same logic as CallExpression arguments formatting
-        write!(f, self.to_arguments());
+        write!(f, self.to_arguments(f.allocator()));
     }
 }

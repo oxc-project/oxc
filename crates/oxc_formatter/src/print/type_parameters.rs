@@ -70,7 +70,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameter<'a>> {
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSTypeParameter<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // A lone type parameter on an arrow function may need a mandatory trailing comma;
-        let trailing_separator = if should_force_trailing_comma_for_arrow_function(self, f) {
+        let trailing_separator = if should_force_trailing_comma_for_arrow_function(*self, f) {
             TrailingSeparator::Mandatory
         } else {
             FormatTrailingCommas::ES5.trailing_separator(f.options())
@@ -94,15 +94,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSTypePara
 /// and keeps the comma in every non-`.ts` host, including plain-TS embedded scripts (e.g. ts-in-vue).
 /// This is a deliberate divergence: removal is keyed on the grammar the source is consumed as,
 /// not on the host file's path, so plain-TS sources behave identically wherever they live.
-fn should_force_trailing_comma_for_arrow_function(
-    params: &AstNode<'_, ArenaVec<'_, TSTypeParameter<'_>>>,
-    f: &JsFormatter<'_, '_>,
+fn should_force_trailing_comma_for_arrow_function<'a>(
+    params: AstNode<'a, ArenaVec<'a, TSTypeParameter<'a>>>,
+    f: &JsFormatter<'_, 'a>,
 ) -> bool {
     if params.len() != 1 {
         return false;
     }
 
-    if !matches!(params.grand_parent(), AstNodes::ArrowFunctionExpression(_)) {
+    if !matches!(params.grand_parent(f), AstNodes::ArrowFunctionExpression(_)) {
         return false;
     }
 
@@ -140,6 +140,15 @@ impl<'a, 'b> FormatTSTypeParameters<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSTypeParameters<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        // Also printed by a class or an interface, without the declaration's own `fmt`
+        f.with_current_node(AstNodes::TSTypeParameterDeclaration(*self.decl), |f| {
+            self.fmt_declaration(f);
+        });
+    }
+}
+
+impl<'a> FormatTSTypeParameters<'a, '_> {
+    fn fmt_declaration(&self, f: &mut JsFormatter<'_, 'a>) {
         let params = self.decl.params();
         if params.is_empty() && self.options.is_type_or_interface_decl {
             write!(f, "<>");
@@ -147,7 +156,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTSTypeParameters<'a, '_> {
             write!(
                 f,
                 [group(&format_args!("<", format_with(|f| {
-                    if matches!(self.decl.grand_parent(), AstNodes::CallExpression(call) if is_test_call_expression(call, f.comments()))
+                    if matches!(self.decl.grand_parent(f), AstNodes::CallExpression(call) if is_test_call_expression(call, f))
                     {
                         f.join_nodes_with_space().entries_with_trailing_separator(params, ",", TrailingSeparator::Omit);
                     } else {
@@ -178,7 +187,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
         }
 
         // Check if this is in the context of an arrow function variable
-        let is_arrow_function_vars = is_arrow_function_variable_type_argument(self);
+        let is_arrow_function_vars = is_arrow_function_variable_type_argument(*self, f);
 
         // Check if the first (and only) argument can be hugged.
         // `f<T // c` + `>()`: a comment before the `>` needs the broken layout to stay in place.
@@ -226,7 +235,8 @@ fn should_hug_single_type(ty: &TSType, f: &JsFormatter<'_, '_>) -> bool {
 /// const foo: SomeThing<{ [P in "x" | "y"]: number }> = () => {};
 /// ```
 fn is_arrow_function_variable_type_argument<'a>(
-    node: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    node: AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    f: &JsFormatter<'_, 'a>,
 ) -> bool {
     let Some(first) = node.params().first() else { unreachable!() };
 
@@ -237,10 +247,10 @@ fn is_arrow_function_variable_type_argument<'a>(
 
     // `node.parent` is `TSTypeReference`
     matches!(
-        &node.grand_parent(),
+        &node.grand_parent(f),
         AstNodes::TSTypeAnnotation(type_annotation)
             if matches!(
-                &type_annotation.parent(),
+                &type_annotation.parent(f),
                 AstNodes::VariableDeclarator(var_decl)
                     if matches!(&var_decl.init, Some(Expression::ArrowFunctionExpression(_)))
             )

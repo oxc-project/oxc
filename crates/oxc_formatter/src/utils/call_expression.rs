@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
-    formatter::Comments,
+    formatter::{Comments, JsFormatter, JsFormatterExt as _},
 };
 
 /// This is a specialized function that checks if the current [call expression]
@@ -30,8 +30,11 @@ use crate::{
 /// [arguments]: CallExpression::arguments
 /// [arrow function expression]: ArrowFunctionExpression
 /// [function expression]: Function
-pub fn is_test_call_expression(call: &AstNode<CallExpression<'_>>, comments: &Comments) -> bool {
-    is_test_call_shape(call, comments) && !has_comment_around_arguments(call, comments)
+pub fn is_test_call_expression<'a>(
+    call: AstNode<'a, CallExpression<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> bool {
+    is_test_call_shape(call, f) && !has_comment_around_arguments(&call, f.comments())
 }
 
 /// The compact test call layout joins arguments with spaces, which breaks comment order.
@@ -42,7 +45,7 @@ fn has_comment_around_arguments(call: &CallExpression, comments: &Comments) -> b
     starts.zip(ends).any(|(start, end)| comments.has_any_comment_in_range(start, end))
 }
 
-fn is_test_call_shape(call: &AstNode<CallExpression<'_>>, comments: &Comments) -> bool {
+fn is_test_call_shape<'a>(call: AstNode<'a, CallExpression<'a>>, f: &JsFormatter<'_, 'a>) -> bool {
     if call.optional {
         return false;
     }
@@ -54,9 +57,9 @@ fn is_test_call_shape(call: &AstNode<CallExpression<'_>>, comments: &Comments) -
 
     match (args.next(), args.next(), args.next()) {
         (Some(argument), None, None) if arguments.len() == 1 => {
-            if is_angular_test_wrapper(call) && {
-                if let AstNodes::CallExpression(call) = call.parent() {
-                    is_test_call_expression(call, comments)
+            if is_angular_test_wrapper(&call) && {
+                if let AstNodes::CallExpression(call) = call.parent(f) {
+                    is_test_call_expression(call, f)
                 } else {
                     false
                 }

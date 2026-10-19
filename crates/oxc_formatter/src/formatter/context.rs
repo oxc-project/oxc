@@ -3,7 +3,9 @@ use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{options::JsFormatOptions, utils::assignment_like::AssignmentLikeLayout};
+use crate::{
+    ast_nodes::Ancestors, options::JsFormatOptions, utils::assignment_like::AssignmentLikeLayout,
+};
 
 use super::Comments;
 
@@ -82,6 +84,8 @@ pub struct JsFormatContext<'ast> {
     source_text: SourceText<'ast>,
     source_type: SourceType,
     comments: Comments<'ast>,
+    /// The nodes being formatted, see [`Ancestors`].
+    ancestors: Ancestors<'ast>,
 
     cached_elements: FxHashMap<Span, FormatElement<'ast>>,
     /// One-shot handoff of the assignment layout to the arrow expression on the RHS of an assignment-like,
@@ -143,6 +147,7 @@ impl<'ast> JsFormatContext<'ast> {
             source_text,
             source_type,
             comments: Comments::new(source_text, comments),
+            ancestors: Ancestors::default(),
             cached_elements: FxHashMap::default(),
             arrow_assignment_layout: None,
             quote_needed_stack: Vec::new(),
@@ -159,6 +164,18 @@ impl<'ast> JsFormatContext<'ast> {
     /// Returns a reference to the program's comments.
     pub fn comments_mut(&mut self) -> &mut Comments<'ast> {
         &mut self.comments
+    }
+
+    /// Returns the ancestor stack.
+    #[inline]
+    pub fn ancestors(&self) -> &Ancestors<'ast> {
+        &self.ancestors
+    }
+
+    /// Returns the ancestor stack.
+    #[inline]
+    pub fn ancestors_mut(&mut self) -> &mut Ancestors<'ast> {
+        &mut self.ancestors
     }
 
     /// Returns the source text wrapper

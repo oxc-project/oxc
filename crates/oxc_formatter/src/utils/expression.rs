@@ -3,37 +3,38 @@ use std::iter;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::ast_nodes::{AstNode, AstNodes};
+use crate::{
+    ast_nodes::{AstNode, AstNodes},
+    formatter::JsFormatter,
+};
 
 #[derive(Debug, Clone, Copy)]
-pub enum ExpressionLeftSide<'a, 'b> {
-    Expression(&'b AstNode<'a, Expression<'a>>),
-    AssignmentTarget(&'b AstNode<'a, AssignmentTarget<'a>>),
-    SimpleAssignmentTarget(&'b AstNode<'a, SimpleAssignmentTarget<'a>>),
+pub enum ExpressionLeftSide<'a> {
+    Expression(AstNode<'a, Expression<'a>>),
+    AssignmentTarget(AstNode<'a, AssignmentTarget<'a>>),
+    SimpleAssignmentTarget(AstNode<'a, SimpleAssignmentTarget<'a>>),
 }
 
-impl<'a, 'b> From<&'b AstNode<'a, Expression<'a>>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b AstNode<'a, Expression<'a>>) -> Self {
+impl<'a> From<AstNode<'a, Expression<'a>>> for ExpressionLeftSide<'a> {
+    fn from(value: AstNode<'a, Expression<'a>>) -> Self {
         Self::Expression(value)
     }
 }
 
-impl<'a, 'b> From<&'b AstNode<'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b AstNode<'a, AssignmentTarget<'a>>) -> Self {
+impl<'a> From<AstNode<'a, AssignmentTarget<'a>>> for ExpressionLeftSide<'a> {
+    fn from(value: AstNode<'a, AssignmentTarget<'a>>) -> Self {
         Self::AssignmentTarget(value)
     }
 }
 
-impl<'a, 'b> From<&'b AstNode<'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'a, 'b> {
-    fn from(value: &'b AstNode<'a, SimpleAssignmentTarget<'a>>) -> Self {
+impl<'a> From<AstNode<'a, SimpleAssignmentTarget<'a>>> for ExpressionLeftSide<'a> {
+    fn from(value: AstNode<'a, SimpleAssignmentTarget<'a>>) -> Self {
         Self::SimpleAssignmentTarget(value)
     }
 }
 
-impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
-    pub fn leftmost(
-        expression: &'b AstNode<'a, Expression<'a>>,
-    ) -> &'b AstNode<'a, Expression<'a>> {
+impl<'a> ExpressionLeftSide<'a> {
+    pub fn leftmost(expression: AstNode<'a, Expression<'a>>) -> AstNode<'a, Expression<'a>> {
         let current: Self = expression.into();
 
         current.iter_expression().last().unwrap()
@@ -42,19 +43,19 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
     /// See [Self::left_of].
     pub fn left(&self) -> Option<Self> {
         match self {
-            Self::Expression(expression) => Self::left_of(expression.as_ast_nodes()),
+            Self::Expression(expression) => Self::left_of(&expression.as_ast_nodes()),
             Self::AssignmentTarget(target) => {
-                Self::get_left_side_of_assignment(target.as_ast_nodes())
+                Self::get_left_side_of_assignment(&target.as_ast_nodes())
             }
             Self::SimpleAssignmentTarget(target) => {
-                Self::get_left_side_of_assignment(target.as_ast_nodes())
+                Self::get_left_side_of_assignment(&target.as_ast_nodes())
             }
         }
     }
 
     /// Returns the child that starts `node` (e.g. `a` of `a.b`, `a + b`, `a ? b : c`),
     /// or [None] if `node` starts with its own token.
-    fn left_of(node: &'b AstNodes<'a>) -> Option<Self> {
+    fn left_of(node: &AstNodes<'a>) -> Option<Self> {
         let left = match node {
             AstNodes::SequenceExpression(expr) => expr.expressions().first().map(Into::into),
             AstNodes::StaticMemberExpression(expr) => Some(expr.object().into()),
@@ -77,7 +78,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
             }
             AstNodes::BinaryExpression(binary) => Some(binary.left().into()),
             AstNodes::LogicalExpression(logical) => Some(logical.left().into()),
-            AstNodes::ChainExpression(chain) => Self::left_of(chain.expression().as_ast_nodes()),
+            AstNodes::ChainExpression(chain) => Self::left_of(&chain.expression().as_ast_nodes()),
             _ => None,
         };
         // Keep the two tables in sync
@@ -86,7 +87,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
     }
 
     /// Same as [Self::left_of], but reads the span from the field directly,
-    /// so no [AstNode] is allocated.
+    /// so no [AstNode] is created.
     pub fn left_span_of(node: &AstNodes<'_>) -> Option<Span> {
         match node {
             AstNodes::SequenceExpression(expr) => expr.expressions.first().map(GetSpan::span),
@@ -113,11 +114,52 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
         }
     }
 
-    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'a, 'b>> {
+    pub fn iter(&self) -> impl Iterator<Item = ExpressionLeftSide<'a>> {
         iter::successors(Some(*self), Self::left)
     }
 
-    pub fn iter_expression(&self) -> impl Iterator<Item = &'b AstNode<'a, Expression<'a>>> {
+    /// Whether `predicate` holds for a side of [`Self::iter`],
+    /// asked with the side's ancestors below `self` (a child of the current node) on the ancestor stack.
+    pub fn any_with_ancestors(
+        self,
+        f: &mut JsFormatter<'_, 'a>,
+        mut predicate: impl FnMut(Self, &mut JsFormatter<'_, 'a>) -> bool,
+    ) -> bool {
+        let mut pushed = 0;
+        let mut side = self;
+        let found = loop {
+            if predicate(side, f) {
+                break true;
+            }
+            let Some(left) = side.left() else { break false };
+            for node in side.ancestors_of_left() {
+                f.context_mut().ancestors_mut().push(node);
+                pushed += 1;
+            }
+            side = left;
+        };
+        for _ in 0..pushed {
+            f.context_mut().ancestors_mut().pop();
+        }
+        found
+    }
+
+    /// The node of this side, and for a `ChainExpression`, its element too ([`Self::left_of`] skips it):
+    /// the ancestors of [`Self::left`] below `self`'s parent.
+    fn ancestors_of_left(&self) -> impl Iterator<Item = AstNodes<'a>> {
+        let node = match self {
+            Self::Expression(expression) => expression.as_ast_nodes(),
+            Self::AssignmentTarget(target) => target.as_ast_nodes(),
+            Self::SimpleAssignmentTarget(target) => target.as_ast_nodes(),
+        };
+        let element = match node {
+            AstNodes::ChainExpression(chain) => Some(chain.expression().as_ast_nodes()),
+            _ => None,
+        };
+        iter::once(node).chain(element)
+    }
+
+    pub fn iter_expression(&self) -> impl Iterator<Item = AstNode<'a, Expression<'a>>> {
         self.iter().filter_map(|left| match left {
             ExpressionLeftSide::Expression(expression) => Some(expression),
             _ => None,
@@ -132,7 +174,7 @@ impl<'a, 'b> ExpressionLeftSide<'a, 'b> {
         }
     }
 
-    fn get_left_side_of_assignment(node: &'b AstNodes<'a>) -> Option<ExpressionLeftSide<'a, 'b>> {
+    fn get_left_side_of_assignment(node: &AstNodes<'a>) -> Option<ExpressionLeftSide<'a>> {
         match node {
             AstNodes::TSAsExpression(expr) => Some(expr.expression().into()),
             AstNodes::TSSatisfiesExpression(expr) => Some(expr.expression().into()),

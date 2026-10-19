@@ -38,7 +38,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
                         write_array_node(
                             self.span(),
                             self.rest.as_ref().map(|rest| rest.span.start),
-                            self.elements().iter().map(AstNode::as_ref),
+                            self.elements().iter().map(AstNode::as_option),
                             f,
                         );
                     }

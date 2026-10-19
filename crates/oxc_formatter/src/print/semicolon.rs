@@ -271,7 +271,7 @@ where
 /// own-line ones are left for the next node's leading pass;
 /// the caller (the generated `Statement` fmt) prints the trailing comments.
 pub fn write_suppressed_statement<'a>(
-    stmt: &AstNode<'a, Statement<'a>>,
+    stmt: AstNode<'a, Statement<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let span = statement_span(stmt.as_ref());
@@ -282,7 +282,9 @@ pub fn write_suppressed_statement<'a>(
     match stmt.as_ast_nodes() {
         // The `semi: false` ASI guard goes before a leading type cast comment, verbatim or not:
         // Prettier's `printIgnored` puts it after and breaks the cast (DIVERGENCES.md#suppressed-cast-comment-asi-guard)
-        AstNodes::ExpressionStatement(stmt) => write_leading_comments_with_asi_guard(stmt, true, f),
+        AstNodes::ExpressionStatement(stmt) => {
+            write_leading_comments_with_asi_guard(stmt, true, f);
+        }
         _ => format_leading_comments(span).fmt(f),
     }
     if write_suppressed_content(span, suppressed_statement_content_end(stmt.as_ref(), f), f) {

@@ -25,11 +25,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
 
         write!(f, "try");
         write_head_body_separator(block.span.start, f);
-        write_block_before_keyword(block, handler.is_some() || finalizer.is_some(), f);
+        write_block_before_keyword(&block, handler.is_some() || finalizer.is_some(), f);
 
         if let Some(handler) = handler {
             write!(f, space());
-            write_block_before_keyword(handler, finalizer.is_some(), f);
+            write_block_before_keyword(&handler, finalizer.is_some(), f);
         }
         if let Some(finalizer) = finalizer {
             // Lexical scan for the keyword's first byte: the gap holds only trivia and `finally`.

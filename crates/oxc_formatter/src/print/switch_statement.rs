@@ -74,7 +74,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
                 // For non-block consequents the generic pass's `line_suffix` flush lands
                 // before their line break, keeping the comment on the clause line,
                 // so the bound is only needed before a block's `{`.
-                write_node_with_terminator(test, ":", f);
+                write_node_with_terminator(&test, ":", f);
             } else {
                 write!(f, [test, ":"]);
             }
@@ -123,7 +123,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         let consequent = self.consequent();
         if is_single_block_statement {
             // `unwrap` is safe: the empty consequent returned above.
-            write!(f, FormatStatementBody::new(consequent.first().unwrap()));
+            write!(f, FormatStatementBody::new(&consequent.first().unwrap()));
             return;
         }
 

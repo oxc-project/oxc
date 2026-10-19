@@ -2,7 +2,7 @@ use oxc_ast::ast::*;
 use oxc_formatter_core::Format;
 
 use crate::{
-    ast_nodes::AstNode,
+    ast_nodes::{AstNode, AstNodes},
     format_args,
     formatter::{JsFormatter, prelude::*, trivia::format_dangling_comments},
     options::TrailingSeparator,
@@ -42,19 +42,22 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunctionParams<'a, '_> {
         let list = ParameterList::with_layout(self.node, None, ParameterLayout::Default)
             .with_omit_trailing_separator();
 
-        if self.with_parens {
-            write!(
-                f,
-                [
-                    "(",
-                    indent(&format_args!(soft_line_break(), group(&list))),
-                    soft_line_break(),
-                    ")"
-                ]
-            );
-        } else {
-            write!(f, list);
-        }
+        // The node's own `fmt` does not run, the parameters are its children
+        f.with_node(AstNodes::FormalParameters(*self.node), |f| {
+            if self.with_parens {
+                write!(
+                    f,
+                    [
+                        "(",
+                        indent(&format_args!(soft_line_break(), group(&list))),
+                        soft_line_break(),
+                        ")"
+                    ]
+                );
+            } else {
+                write!(f, list);
+            }
+        });
     }
 }
 
@@ -80,15 +83,18 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTypeParameters<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let params = self.decl.params();
 
-        soft_block_indent(&format_with(|f| {
-            f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
-                params,
-                ",",
-                TrailingSeparator::Omit,
-            );
-        }))
-        .fmt(f);
+        // The node's own `fmt` does not run, the parameters are its children
+        f.with_node(AstNodes::TSTypeParameterDeclaration(*self.decl), |f| {
+            soft_block_indent(&format_with(|f| {
+                f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
+                    params,
+                    ",",
+                    TrailingSeparator::Omit,
+                );
+            }))
+            .fmt(f);
 
-        format_dangling_comments(self.decl.span).with_soft_block_indent().fmt(f);
+            format_dangling_comments(self.decl.span).with_soft_block_indent().fmt(f);
+        });
     }
 }

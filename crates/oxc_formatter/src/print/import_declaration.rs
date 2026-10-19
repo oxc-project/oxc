@@ -37,8 +37,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ImportPhase {
 /// then the semicolon, moving a same-line trailing comment behind it.
 pub fn format_source_with_clause_and_semicolon<'a>(
     prefix: &impl Format<'a, JsFormatContext<'a>>,
-    source: &AstNode<'a, StringLiteral>,
-    with_clause: Option<&AstNode<'a, WithClause>>,
+    source: AstNode<'a, StringLiteral>,
+    with_clause: Option<AstNode<'a, WithClause>>,
     span_end: u32,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -54,7 +54,7 @@ pub fn format_source_with_clause_and_semicolon<'a>(
             write!(f, [with_clause]);
         }
     });
-    let content_end = module_source_end(source, with_clause.map(AsRef::as_ref));
+    let content_end = module_source_end(&source, with_clause.map(AstNode::as_ref));
     write!(f, FormatContentWithSemicolon::new(&content, content_end, span_end));
 }
 
@@ -128,7 +128,7 @@ impl<'a> Format<'a, JsFormatContext<'a>>
                 specifiers_iter.peek().map(AsRef::as_ref),
                 Some(ImportDeclarationSpecifier::ImportSpecifier(_))
             )
-            && f.comments().comments_before_character(self.parent().span().start, b'}').is_empty()
+            && f.comments().comments_before_character(self.parent(f).span().start, b'}').is_empty()
         {
             write!(
                 f,
@@ -238,7 +238,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ImportAttr
 
             if self.len() > 1
                 || self.first().is_some_and(|attribute| attribute.key.as_js_str() != "type")
-                || f.comments().has_comment_before(self.parent().span().end)
+                || f.comments().has_comment_before(self.parent(f).span().end)
             {
                 write!(
                     f,
@@ -292,7 +292,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ImportAttribute<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if let AstNodes::StringLiteral(string) = self.key().as_ast_nodes() {
             let format = FormatLiteralStringToken::new(
-                f.source_text().text_for(string),
+                f.source_text().text_for(&string),
                 false,
                 StringLiteralParentKind::ImportAttribute,
             )
@@ -341,7 +341,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSExternalModuleReference<'a>> {
         write!(f, ["require("]);
 
         if f.comments().has_comment_in_span(self.span) {
-            write!(f, [block_indent(self.expression())]);
+            write!(f, [block_indent(&self.expression())]);
         } else {
             write!(f, [self.expression()]);
         }

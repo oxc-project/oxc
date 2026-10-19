@@ -249,13 +249,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
                     // and this reduces to the `else` arm.
                     let body_span = self.body.span();
                     let is_consequent_of_if_statement_parent = matches!(
-                        self.body.parent(),
+                        self.body.parent(f),
                         AstNodes::IfStatement(if_stmt)
                         if if_stmt.consequent.span() == body_span && if_stmt.alternate.is_some()
                     );
                     if is_consequent_of_if_statement_parent {
                         // A suppressed consequent still hands its terminator to the formatter
-                        if !write_suppressed_statement(self.body, f) {
+                        if !write_suppressed_statement(*self.body, f) {
                             write!(f, FormatNodeWithoutTrailingComments(self.body));
                         }
                         let comments =

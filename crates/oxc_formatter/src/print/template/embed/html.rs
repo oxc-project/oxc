@@ -30,7 +30,7 @@ const COUNTER: &str = "0";
 ///
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: AstNode<'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
     is_angular: bool,
 ) -> bool {
@@ -149,7 +149,7 @@ pub(super) fn format_html_doc<'a>(
     for expr in expressions {
         let te = TemplateExpression::Expression(expr);
         let element = f
-            .intern(&FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default()))
+            .intern(&FormatTemplateExpression::new(te, FormatTemplateExpressionOptions::default()))
             .expect("a template expression always emits non-empty IR");
         formatted_expressions.push(element);
     }

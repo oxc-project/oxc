@@ -135,7 +135,7 @@ pub fn is_whitespace_sensitive_element(name: &JSXElementName<'_>) -> bool {
 }
 
 #[derive(Debug, Clone)]
-pub enum JsxChild<'a, 'b> {
+pub enum JsxChild<'a> {
     /// A Single word in a JSX text. For example, the words for `a b\nc` are `[a, b, c]`
     Word(JsxWord<'a>),
 
@@ -182,10 +182,10 @@ pub enum JsxChild<'a, 'b> {
     EmptyLine,
 
     /// Any other content that isn't a text. Should be formatted as is.
-    NonText(&'b AstNode<'a, JSXChild<'a>>),
+    NonText(AstNode<'a, JSXChild<'a>>),
 }
 
-impl PartialEq for JsxChild<'_, '_> {
+impl PartialEq for JsxChild<'_> {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Self::Word(l0), Self::Word(r0)) => l0 == r0,
@@ -195,7 +195,7 @@ impl PartialEq for JsxChild<'_, '_> {
     }
 }
 
-impl Eq for JsxChild<'_, '_> {}
+impl Eq for JsxChild<'_> {}
 
 /// A word in a Jsx Text. A word is string sequence that isn't separated by any JSX whitespace.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -278,10 +278,10 @@ impl<'a> Iterator for JsxSplitChunksIterator<'a> {
 
 impl FusedIterator for JsxSplitChunksIterator<'_> {}
 
-pub fn jsx_split_children<'a, 'b>(
-    children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
+pub fn jsx_split_children<'a>(
+    children: AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
     comments: &Comments<'a>,
-) -> Vec<JsxChild<'a, 'b>> {
+) -> Vec<JsxChild<'a>> {
     let mut builder = JsxSplitChildrenBuilder::new();
 
     for child in children {
@@ -366,16 +366,16 @@ pub fn jsx_split_children<'a, 'b>(
 ///
 /// [Prettier applies]: https://github.com/prettier/prettier/blob/b0d9387b95cdd4e9d50f5999d3be53b0b5d03a97/src/language-js/print/jsx.js#L144-L180
 #[derive(Debug)]
-struct JsxSplitChildrenBuilder<'a, 'b> {
-    buffer: Vec<JsxChild<'a, 'b>>,
+struct JsxSplitChildrenBuilder<'a> {
+    buffer: Vec<JsxChild<'a>>,
 }
 
-impl<'a, 'b> JsxSplitChildrenBuilder<'a, 'b> {
+impl<'a> JsxSplitChildrenBuilder<'a> {
     fn new() -> Self {
         Self { buffer: vec![] }
     }
 
-    fn entry(&mut self, child: JsxChild<'a, 'b>) {
+    fn entry(&mut self, child: JsxChild<'a>) {
         match self.buffer.last_mut() {
             Some(last @ (JsxChild::EmptyLine | JsxChild::Newline | JsxChild::Whitespace)) => {
                 if matches!(child, JsxChild::Whitespace) {
@@ -388,7 +388,7 @@ impl<'a, 'b> JsxSplitChildrenBuilder<'a, 'b> {
         }
     }
 
-    fn finish(self) -> Vec<JsxChild<'a, 'b>> {
+    fn finish(self) -> Vec<JsxChild<'a>> {
         self.buffer
     }
 }

@@ -1,6 +1,7 @@
 use oxc_ast::ast::*;
 use oxc_formatter_core::{Format, ScratchBuffer};
 use oxc_span::GetSpan;
+use smallvec::SmallVec;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
@@ -315,7 +316,7 @@ impl<'a> AssignmentLike<'a, '_> {
                         [declaration.id(), FormatNodeWithoutTrailingComments(type_parameters)]
                     );
                 } else {
-                    write!(f, [FormatNodeWithoutTrailingComments(declaration.id())]);
+                    write!(f, [FormatNodeWithoutTrailingComments(&declaration.id())]);
                 }
                 let start = type_alias_left_end(declaration);
 
@@ -365,15 +366,15 @@ impl<'a> AssignmentLike<'a, '_> {
     fn write_right(&self, f: &mut JsFormatter<'_, 'a>, layout: AssignmentLikeLayout) {
         match self {
             Self::VariableDeclarator(declarator) => {
-                write!(f, [with_assignment_layout(declarator.init().unwrap(), Some(layout))]);
+                write!(f, [with_assignment_layout(&declarator.init().unwrap(), Some(layout))]);
             }
             Self::AssignmentExpression(assignment) => {
                 let right = assignment.right();
-                write!(f, [with_assignment_layout(right, Some(layout))]);
+                write!(f, [with_assignment_layout(&right, Some(layout))]);
             }
             Self::ObjectProperty(property) => {
                 let value = property.value();
-                write!(f, [with_assignment_layout(value, Some(layout))]);
+                write!(f, [with_assignment_layout(&value, Some(layout))]);
             }
             Self::BindingProperty(property) => {
                 write!(f, property.value());
@@ -382,10 +383,10 @@ impl<'a> AssignmentLike<'a, '_> {
                 write!(f, property.binding());
             }
             Self::PropertyDefinition(property) => {
-                write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
+                write!(f, [with_assignment_layout(&property.value().unwrap(), Some(layout))]);
             }
             Self::AccessorProperty(property) => {
-                write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
+                write!(f, [with_assignment_layout(&property.value().unwrap(), Some(layout))]);
             }
             Self::TSTypeAliasDeclaration(declaration) => {
                 write!(f, [declaration.type_annotation()]);
@@ -479,7 +480,7 @@ impl<'a> AssignmentLike<'a, '_> {
     fn right_expression_shape(&self, f: &JsFormatter<'_, 'a>) -> Option<&Expression<'a>> {
         self.get_right_expression()
             .filter(|expr| !is_cast_target(expr.span(), f))
-            .map(AsRef::as_ref)
+            .map(AstNode::as_ref)
     }
 
     /// A leading multi-line `*`-aligned block comment on the right-hand side
@@ -509,7 +510,7 @@ impl<'a> AssignmentLike<'a, '_> {
         Some(span.start)
     }
 
-    fn get_right_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    fn get_right_expression(&self) -> Option<AstNode<'a, Expression<'a>>> {
         match self {
             AssignmentLike::VariableDeclarator(variable_decorator) => variable_decorator.init(),
             AssignmentLike::AssignmentExpression(assignment) => Some(assignment.right()),
@@ -617,7 +618,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 && !is_cast_target(assignment.span, f)
             {
                 // Then we check if the parent is assignment expression or variable declarator
-                let parent = assignment.parent();
+                let parent = assignment.parent(f);
                 // Determine if the chain is eligible based on the following checks:
                 // 1. For variable declarators: only continue if this isn't the final assignment in the chain
                 (matches!(parent, AstNodes::VariableDeclarator(_)) && !right_is_tail) ||
@@ -625,7 +626,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 // in an expression statement or concise arrow body.
                 matches!(parent, AstNodes::AssignmentExpression(parent_assignment)
                     if !right_is_tail || !matches!(
-                        parent_assignment.parent(),
+                        parent_assignment.parent(f),
                         AstNodes::ArrowFunctionExpression(_) | AstNodes::ExpressionStatement(_)
                     )
                 )
@@ -683,7 +684,7 @@ impl<'a> AssignmentLike<'a, '_> {
     /// for nodes that belong to TypeScript too.
     fn should_break_after_operator(
         &self,
-        right_expression: Option<&AstNode<'a, Expression<'a>>>,
+        right_expression: Option<AstNode<'a, Expression<'a>>>,
         is_left_short: bool,
         alias_union_prints_itself: bool,
         f: &mut JsFormatter<'_, 'a>,
@@ -804,7 +805,7 @@ impl<'a> AssignmentLike<'a, '_> {
 ///
 /// Based on <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L196-L264>
 fn should_break_after_operator<'a>(
-    right: &AstNode<'a, Expression<'a>>,
+    right: AstNode<'a, Expression<'a>>,
     is_left_short: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
@@ -857,10 +858,14 @@ fn should_break_after_operator<'a>(
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
         // Based on https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L235-L263
         _ if is_left_short => false,
-        _ => get_innermost_expression(right, f).is_some_and(|inner| {
-            matches!(inner.as_ref(), Expression::StringLiteral(_))
-                || is_poorly_breakable_member_or_call_chain(inner, f)
-        }),
+        _ => {
+            // The walk below `right` (a child of the current node), see `is_poorly_breakable_member_or_call_chain`
+            let mut path = SmallVec::new();
+            get_innermost_expression(right, &mut path, f).is_some_and(|inner| {
+                matches!(inner.as_ref(), Expression::StringLiteral(_))
+                    || is_poorly_breakable_member_or_call_chain(inner, &mut path, f)
+            })
+        }
     }
 }
 
@@ -870,12 +875,16 @@ fn should_break_after_operator<'a>(
 ///
 /// `None` when the walk reaches a cast target (`!/** @type {T} */ ("s")`): a cast target has no shape.
 /// The caller has already checked the entry node.
-fn get_innermost_expression<'a, 'b>(
-    mut current: &'b AstNode<'a, Expression<'a>>,
+///
+/// `path` collects the nodes walked through, the ancestors of the result below the walk's start.
+fn get_innermost_expression<'a>(
+    mut current: AstNode<'a, Expression<'a>>,
+    path: &mut SmallVec<[AstNodes<'a>; 8]>,
     f: &JsFormatter<'_, 'a>,
-) -> Option<&'b AstNode<'a, Expression<'a>>> {
+) -> Option<AstNode<'a, Expression<'a>>> {
     loop {
-        let argument = match current.as_ast_nodes() {
+        let node = current.as_ast_nodes();
+        let argument = match node {
             AstNodes::UnaryExpression(unary) => unary.argument(),
             AstNodes::TSNonNullExpression(non_null) => non_null.expression(),
             AstNodes::AwaitExpression(expr) => expr.argument(),
@@ -888,6 +897,7 @@ fn get_innermost_expression<'a, 'b>(
         if is_cast_target(argument.span(), f) {
             return None;
         }
+        path.push(node);
         current = argument;
     }
 
@@ -1073,8 +1083,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for WithAssignmentLayout<'a, '_> {
 /// A chain that has no calls at all or all of whose calls have no arguments
 /// or have only one which [is_short_argument], except for member call chains
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
+///
+/// `path` holds the ancestors of `expression` below the current node, which are not on the ancestor stack:
+/// the walk extends it, and pushes it to inspect a call of the chain.
 fn is_poorly_breakable_member_or_call_chain<'a>(
-    expression: &AstNode<'a, Expression<'a>>,
+    expression: AstNode<'a, Expression<'a>>,
+    path: &mut SmallVec<[AstNodes<'a>; 8]>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
@@ -1088,7 +1102,8 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
     // Simple head is `JsIdentifierExpression` or `JsThisExpression`
     let mut is_chain_head_simple = false;
 
-    // Keeping track of all call expressions in the chain to check them later
+    // Keeping track of all call expressions in the chain to check them later,
+    // with the length of `path` that ends with the call
     let mut call_expressions = vec![];
 
     let mut expression = expression.as_ast_nodes();
@@ -1098,12 +1113,13 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         if is_cast_target(expression.span(), f) {
             break;
         }
+        path.push(expression);
         expression = match expression {
             AstNodes::TSNonNullExpression(assertion) => assertion.expression().as_ast_nodes(),
             AstNodes::CallExpression(call_expression) => {
                 is_chain = true;
                 let callee = &call_expression.callee();
-                call_expressions.push(call_expression);
+                call_expressions.push((call_expression, path.len()));
                 callee.as_ast_nodes()
             }
             AstNodes::StaticMemberExpression(node) => {
@@ -1140,40 +1156,52 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         return true;
     }
 
-    if f.comments().has_comment_in_span(call_expressions[0].span) {
+    if f.comments().has_comment_in_span(call_expressions[0].0.span) {
         return false;
     }
 
-    for call_expression in &call_expressions {
-        let args = &call_expression.arguments;
-
-        let is_breakable_call = match args.len() {
-            0 => false,
-            1 => match args.iter().next() {
-                // An embedded template is formatted, so its source length says nothing
-                Some(first_argument) => first_argument.as_expression().is_none_or(|e| {
-                    embed_hug(e, Some(call_expression), f).is_some()
-                        || !is_short_argument(e, threshold, f)
-                }),
-                None => false,
-            },
-            _ => true,
-        };
-
-        if is_breakable_call {
-            return false;
-        }
-
-        let is_breakable_type_arguments = call_expression
-            .type_arguments()
-            .is_some_and(|type_arguments| is_complex_type_arguments(type_arguments, f));
-
-        if is_breakable_type_arguments {
+    for &(call_expression, path_len) in &call_expressions {
+        let ancestors = path[..path_len].iter().copied();
+        if !f.with_nodes(ancestors, |f| is_poorly_breakable_call(call_expression, threshold, f)) {
             return false;
         }
     }
 
-    !is_member_call_chain(call_expressions[0], f)
+    let (call_expression, path_len) = call_expressions[0];
+    let ancestors = path[..path_len].iter().copied();
+    !f.with_nodes(ancestors, |f| is_member_call_chain(call_expression, f))
+}
+
+/// Whether a call of a chain is poorly breakable, with the call as the current node.
+fn is_poorly_breakable_call<'a>(
+    call_expression: AstNode<'a, CallExpression<'a>>,
+    threshold: u16,
+    f: &mut JsFormatter<'_, 'a>,
+) -> bool {
+    let args = &call_expression.arguments;
+
+    let is_breakable_call = match args.len() {
+        0 => false,
+        1 => match args.iter().next() {
+            // An embedded template is formatted, so its source length says nothing
+            Some(first_argument) => first_argument.as_expression().is_none_or(|e| {
+                embed_hug(e, Some(&call_expression), f).is_some()
+                    || !is_short_argument(e, threshold, f)
+            }),
+            None => false,
+        },
+        _ => true,
+    };
+
+    if is_breakable_call {
+        return false;
+    }
+
+    let is_breakable_type_arguments = call_expression
+        .type_arguments()
+        .is_some_and(|type_arguments| is_complex_type_arguments(type_arguments, f));
+
+    !is_breakable_type_arguments
 }
 
 /// This function checks if [`Argument`] is short
@@ -1224,7 +1252,7 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
 ///
 /// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
 fn is_complex_type_arguments<'a>(
-    type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    type_arguments: AstNode<'a, TSTypeParameterInstantiation<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let params = &type_arguments.params;
@@ -1242,7 +1270,7 @@ fn is_complex_type_arguments<'a>(
     }
 
     // Prettier: `willBreak(print(typeArgsKeyName))`
-    f.speculate_will_break(type_arguments)
+    f.speculate_will_break(&type_arguments)
 }
 
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/fde0b49d7866e203ca748c306808a87b7c15548f/src/language-js/print/assignment.js#L278>

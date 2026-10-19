@@ -42,12 +42,12 @@ impl<'a> ObjectPatternLike<'a, '_> {
 
     /// A parameter pattern never groups: `FormalParameter` groups the pattern with its type annotation (as Prettier's `printObject` does),
     /// so a source-broken type literal must break the pattern too (`{ log, logger }: {\n ... }`); a group here would cut that.
-    fn is_inline(&self, _f: &JsFormatter<'_, 'a>) -> bool {
+    fn is_inline(&self, f: &JsFormatter<'_, 'a>) -> bool {
         match self {
-            Self::ObjectPattern(node) => match node.parent() {
+            Self::ObjectPattern(node) => match node.parent(f) {
                 AstNodes::FormalParameter(_) => true,
                 AstNodes::AssignmentPattern(_) => {
-                    matches!(node.grand_parent(), AstNodes::FormalParameter(_))
+                    matches!(node.grand_parent(f), AstNodes::FormalParameter(_))
                 }
                 _ => false,
             },
@@ -56,11 +56,11 @@ impl<'a> ObjectPatternLike<'a, '_> {
     }
 
     /// Based on <https://github.com/prettier/prettier/blob/2d6877fcd1b78f2624e22d0ddb17a895ab12ac07/src/language-js/print/object.js#L77-L103>
-    fn should_break_properties(&self) -> bool {
+    fn should_break_properties(&self, f: &JsFormatter<'_, 'a>) -> bool {
         match self {
             Self::ObjectPattern(node) => {
                 let parent_is_parameter_or_assignment_pattern = matches!(
-                    node.parent(),
+                    node.parent(f),
                     AstNodes::CatchParameter(_)
                         | AstNodes::FormalParameter(_)
                         | AstNodes::AssignmentPattern(_)
@@ -92,11 +92,11 @@ impl<'a> ObjectPatternLike<'a, '_> {
         }
     }
 
-    fn is_in_assignment_like(&self) -> bool {
+    fn is_in_assignment_like(&self, f: &JsFormatter<'_, 'a>) -> bool {
         match self {
-            Self::ObjectPattern(node) => matches!(node.parent(), AstNodes::VariableDeclarator(_)),
+            Self::ObjectPattern(node) => matches!(node.parent(f), AstNodes::VariableDeclarator(_)),
             Self::ObjectAssignmentTarget(node) => matches!(
-                node.parent(),
+                node.parent(f),
                 AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_)
             ),
         }
@@ -111,11 +111,11 @@ impl<'a> ObjectPatternLike<'a, '_> {
             return ObjectPatternLayout::Inline;
         }
 
-        let break_properties = self.should_break_properties();
+        let break_properties = self.should_break_properties(f);
 
         if break_properties {
             ObjectPatternLayout::Group { expand: true }
-        } else if self.is_in_assignment_like() {
+        } else if self.is_in_assignment_like(f) {
             ObjectPatternLayout::Inline
         } else {
             ObjectPatternLayout::Group { expand: false }

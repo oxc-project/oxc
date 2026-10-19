@@ -237,6 +237,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatHoistedLeadingComments {
     }
 }
 
+/// Formats the trailing comments of the current node (see [`Ancestors`](crate::ast_nodes::Ancestors)) at `span`.
+#[inline]
+pub fn format_current_trailing_comments(span: Span, f: &mut JsFormatter<'_, '_>) {
+    // The common case, skips the lookup of the enclosing and following nodes
+    if f.context().comments().unprinted_comments().is_empty() {
+        return;
+    }
+    let ancestors = f.context().ancestors();
+    debug_assert_eq!(ancestors.current().span(), span, "not the current node");
+    let enclosing_span = ancestors.parent_of_current().span();
+    let following_span_start = ancestors.following_span_start_of_current();
+    format_trailing_comments(enclosing_span, span, following_span_start).fmt(f);
+}
+
 /// Formats the trailing comments of `node`.
 #[inline]
 pub const fn format_trailing_comments<'a>(

@@ -20,7 +20,10 @@ use oxc_ast::ast::{
 };
 use oxc_span::{GetSpan, Span};
 
-use crate::ast_nodes::{AstNode, AstNodes};
+use crate::{
+    ast_nodes::{AstNode, AstNodes},
+    formatter::JsFormatter,
+};
 
 /// Statements the formatter drops from statement lists: they produce no output,
 /// so following-span computation and emptiness checks must treat them as absent.
@@ -83,8 +86,11 @@ pub fn is_keyword_property_key(key: &PropertyKey<'_>) -> bool {
 /// ```javascript
 /// `connect(a, b, c)(d)`
 /// ```
-pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
-    if let AstNodes::CallExpression(parent_call) = call.parent()
+pub fn is_long_curried_call<'a>(
+    call: AstNode<'a, CallExpression<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> bool {
+    if let AstNodes::CallExpression(parent_call) = call.parent(f)
         && parent_call.is_callee_span(call.span)
     {
         return call.arguments().len() > parent_call.arguments().len()

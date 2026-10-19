@@ -12,7 +12,7 @@ use oxc_formatter_core::{Format, FormatElement, IndentWidth};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_nodes::{AstNode, AstNodeIterator},
+    ast_nodes::{AstNode, AstNodeIterator, AstNodes},
     format_args,
     formatter::{
         TailwindContextEntry,
@@ -32,10 +32,10 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TemplateLiteral<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        if embed::try_format_template_literal(self, f) {
+        if embed::try_format_template_literal(*self, f) {
             return;
         }
-        let template = TemplateLike::TemplateLiteral(self);
+        let template = TemplateLike::TemplateLiteral(*self);
         write!(f, template);
     }
 }
@@ -54,9 +54,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
         // printing ``foo /* c */`x`;``.
         // Unlike the no-newline form which attaches to the quasi, so formatting is not idempotent.
         if let Some(type_arguments) = self.type_arguments() {
-            write!(f, [self.tag(), FormatNodeWithoutTrailingComments(type_arguments)]);
+            write!(f, [self.tag(), FormatNodeWithoutTrailingComments(&type_arguments)]);
         } else {
-            write!(f, [FormatNodeWithoutTrailingComments(self.tag())]);
+            write!(f, [FormatNodeWithoutTrailingComments(&self.tag())]);
         }
 
         let quasi = self.quasi();
@@ -98,15 +98,18 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TaggedTemplateExpression<'a>> {
             f.context_mut().push_tailwind_context(ctx);
         }
 
-        if embed::try_format_embedded_template(self, f) {
-        } else if is_test_each_pattern(&self.tag) && EachTemplateTable::is_table_like(quasi) {
-            let template = &EachTemplateTable::from_template(quasi, f);
-            // Use table formatting
-            write!(f, template);
-        } else {
-            let template = TemplateLike::TemplateLiteral(quasi);
-            write!(f, template);
-        }
+        // The quasi's own `fmt` does not run
+        f.with_node(AstNodes::TemplateLiteral(quasi), |f| {
+            if embed::try_format_embedded_template(*self, f) {
+            } else if is_test_each_pattern(&self.tag) && EachTemplateTable::is_table_like(&quasi) {
+                let template = &EachTemplateTable::from_template(quasi, f);
+                // Use table formatting
+                write!(f, template);
+            } else {
+                let template = TemplateLike::TemplateLiteral(quasi);
+                write!(f, template);
+            }
+        });
 
         if tailwind_ctx_to_push.is_some() {
             f.context_mut().pop_tailwind_context();
@@ -126,7 +129,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
         });
 
         if let Some(ctx) = tailwind_ctx {
-            write_tailwind_template_element(self, ctx, f);
+            write_tailwind_template_element(*self, ctx, f);
         } else {
             write!(f, text(self.value.raw.as_str()));
         }
@@ -135,7 +138,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TemplateElement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, TSTemplateLiteralType<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let template = TemplateLike::TSTemplateLiteralType(self);
+        let template = TemplateLike::TSTemplateLiteralType(*self);
         write!(f, template);
     }
 }
@@ -206,14 +209,14 @@ impl TemplateElementIndention {
 }
 
 /// Unified enum for handling both JS template literals and TS template literal types
-pub enum TemplateLike<'a, 'b> {
-    TemplateLiteral(&'b AstNode<'a, TemplateLiteral<'a>>),
-    TSTemplateLiteralType(&'b AstNode<'a, TSTemplateLiteralType<'a>>),
+pub enum TemplateLike<'a> {
+    TemplateLiteral(AstNode<'a, TemplateLiteral<'a>>),
+    TSTemplateLiteralType(AstNode<'a, TSTemplateLiteralType<'a>>),
 }
 
-impl<'a> TemplateLike<'a, '_> {
+impl<'a> TemplateLike<'a> {
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
         match self {
             Self::TemplateLiteral(t) => t.quasis(),
             Self::TSTemplateLiteralType(t) => t.quasis(),
@@ -228,7 +231,7 @@ enum TemplateExpressionIterator<'a> {
 }
 
 impl<'a> Iterator for TemplateExpressionIterator<'a> {
-    type Item = TemplateExpression<'a, 'a>;
+    type Item = TemplateExpression<'a>;
 
     fn next(&mut self) -> Option<Self::Item> {
         match self {
@@ -238,7 +241,7 @@ impl<'a> Iterator for TemplateExpressionIterator<'a> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for TemplateLike<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for TemplateLike<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "`");
 
@@ -268,7 +271,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for TemplateLike<'a, '_> {
                 f.context_mut().push_tailwind_context(ctx.with_quasi_position(is_first, is_last));
             }
 
-            write!(f, *quasi);
+            write!(f, quasi);
 
             // Pop quasi position context
             if tailwind_ctx.is_some() {
@@ -306,7 +309,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for TemplateLike<'a, '_> {
                     );
                 }
 
-                FormatTemplateExpression::new(&expr, options).fmt(f);
+                FormatTemplateExpression::new(expr, options).fmt(f);
 
                 // Pop the template expression context
                 if tailwind_ctx.is_some() {
@@ -328,21 +331,22 @@ pub struct FormatTemplateExpressionOptions {
     pub(crate) after_new_line: bool,
 }
 
-pub enum TemplateExpression<'a, 'b> {
-    Expression(&'b AstNode<'a, Expression<'a>>),
-    TSType(&'b AstNode<'a, TSType<'a>>),
+#[derive(Clone, Copy)]
+pub enum TemplateExpression<'a> {
+    Expression(AstNode<'a, Expression<'a>>),
+    TSType(AstNode<'a, TSType<'a>>),
 }
 
-impl TemplateExpression<'_, '_> {
-    pub fn as_expression(&self) -> Option<&AstNode<'_, Expression<'_>>> {
+impl<'a> TemplateExpression<'a> {
+    pub fn as_expression(&self) -> Option<AstNode<'a, Expression<'a>>> {
         match self {
-            Self::Expression(e) => Some(e),
+            Self::Expression(e) => Some(*e),
             Self::TSType(_) => None,
         }
     }
 }
 
-impl GetSpan for TemplateExpression<'_, '_> {
+impl GetSpan for TemplateExpression<'_> {
     fn span(&self) -> Span {
         match self {
             Self::Expression(e) => e.span(),
@@ -351,21 +355,21 @@ impl GetSpan for TemplateExpression<'_, '_> {
     }
 }
 
-pub struct FormatTemplateExpression<'a, 'b> {
-    expression: &'b TemplateExpression<'a, 'b>,
+pub struct FormatTemplateExpression<'a> {
+    expression: TemplateExpression<'a>,
     options: FormatTemplateExpressionOptions,
 }
 
-impl<'a, 'b> FormatTemplateExpression<'a, 'b> {
+impl<'a> FormatTemplateExpression<'a> {
     pub fn new(
-        expression: &'b TemplateExpression<'a, 'b>,
+        expression: TemplateExpression<'a>,
         options: FormatTemplateExpressionOptions,
     ) -> Self {
         Self { expression, options }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let options = self.options;
 
@@ -399,7 +403,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
                     // The template owns the trailing comments;
                     // the generic trailing comments printing is not `}`-aware and could claim a later `${...}`'s comments,
                     // or defer own-line ones to a leading pass that never runs inside a template, leaking them outside.
-                    FormatNodeWithoutTrailingComments(e).fmt(f);
+                    FormatNodeWithoutTrailingComments(&e).fmt(f);
                 }
                 // Print the skipped (non-JSX) or unclaimed (JSX) comments before the closing `}`.
                 // Scan from the expression's END, its own source may contain `}`.
@@ -475,7 +479,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
     }
 }
 
-impl<'a> TemplateExpression<'a, '_> {
+impl<'a> TemplateExpression<'a> {
     fn has_new_line_in_range(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let span = self.span();
         f.source_text().has_line_terminator_before(span.start)
@@ -677,7 +681,7 @@ impl<'a> EachTemplateTable<'a> {
     }
 
     pub(crate) fn from_template(
-        quasi: &AstNode<'a, TemplateLiteral<'a>>,
+        quasi: AstNode<'a, TemplateLiteral<'a>>,
         f: &mut JsFormatter<'_, 'a>,
     ) -> Self {
         let mut builder = EachTemplateTableBuilder::new();
@@ -709,7 +713,7 @@ impl<'a> EachTemplateTable<'a> {
                     write!(
                         f,
                         [FormatTemplateExpression::new(
-                            &TemplateExpression::Expression(expr),
+                            TemplateExpression::Expression(expr),
                             options
                         )]
                     );

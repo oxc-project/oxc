@@ -30,7 +30,7 @@ use super::FormatWrite;
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXElement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        AnyJsxTagWithChildren::Element(self).fmt(f);
+        AnyJsxTagWithChildren::Element(*self).fmt(f);
     }
 }
 
@@ -64,7 +64,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXClosingElement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'a, JSXFragment<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        AnyJsxTagWithChildren::Fragment(self).fmt(f);
+        AnyJsxTagWithChildren::Fragment(*self).fmt(f);
     }
 }
 
@@ -149,7 +149,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
         };
 
         // Expression child
-        if matches!(self.parent(), AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
+        if matches!(self.parent(f), AstNodes::JSXElement(_) | AstNodes::JSXFragment(_)) {
             if let JSXExpression::EmptyExpression(_) = self.expression {
                 let comments = f.context().comments().comments_before(self.span.end);
                 let has_line_comment = comments.iter().any(Comment::is_line);

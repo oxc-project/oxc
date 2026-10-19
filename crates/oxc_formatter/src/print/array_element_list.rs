@@ -11,24 +11,24 @@ use crate::{
     write,
 };
 
-pub struct ArrayElementList<'a, 'b> {
-    elements: &'b AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+pub struct ArrayElementList<'a> {
+    elements: AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
     group_id: Option<GroupId>,
 }
 
-impl<'a, 'b> ArrayElementList<'a, 'b> {
+impl<'a> ArrayElementList<'a> {
     pub fn new(
-        elements: &'b AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
+        elements: AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>>,
         group_id: GroupId,
     ) -> Self {
         Self { elements, group_id: Some(group_id) }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
+impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let array_span = self.elements.parent().span();
-        let layout = if can_concisely_print_array_list(array_span, self.elements, f) {
+        let array_span = self.elements.parent(f).span();
+        let layout = if can_concisely_print_array_list(array_span, &self.elements, f) {
             ArrayLayout::Fill
         } else {
             ArrayLayout::OnePerLine

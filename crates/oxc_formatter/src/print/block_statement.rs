@@ -23,7 +23,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
         if is_empty_block(&self.body) {
             if f.context().comments().has_comment_before(self.span.end) {
                 write!(f, block_indent(&format_dangling_comments(self.span)));
-            } else if is_non_collapsible(self.parent()) {
+            } else if is_non_collapsible(&self.parent(f), f) {
                 write!(f, hard_line_break());
             }
         } else {
@@ -42,7 +42,7 @@ pub fn is_empty_block(block: &[Statement<'_>]) -> bool {
 /// * empty block that is the 'bons' or 'alt' of an if statement: two lines `{\n}`
 /// * non empty block: put each stmt on its own line: `{\nstmt1;\nstmt2;\n}`
 /// * non empty block with comments (trailing comments on {, or leading comments on })
-fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
+fn is_non_collapsible<'a>(parent: &AstNodes<'a>, f: &JsFormatter<'_, 'a>) -> bool {
     match parent {
         AstNodes::FunctionBody(_)
         | AstNodes::ForStatement(_)
@@ -53,7 +53,7 @@ fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
         | AstNodes::TSGlobalDeclaration(_) => false,
         AstNodes::CatchClause(catch) => {
             // prettier collapse the catch block when it don't have `finalizer`, insert a new line when it has `finalizer`
-            matches!(catch.parent(), AstNodes::TryStatement(try_stmt) if try_stmt.finalizer().is_some())
+            matches!(catch.parent(f), AstNodes::TryStatement(try_stmt) if try_stmt.finalizer().is_some())
         }
         _ => true,
     }

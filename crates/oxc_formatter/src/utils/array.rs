@@ -1,7 +1,7 @@
 use oxc_span::{GetSpan, SPAN, Span};
 
 use crate::{
-    ast_nodes::AstNode,
+    ast_nodes::{AsAstNodes, AstNode},
     format_args,
     formatter::{prelude::*, trivia::format_trailing_comments},
     options::FormatTrailingCommas,
@@ -22,11 +22,11 @@ use crate::{
 pub fn write_array_node<'a, T>(
     array_span: Span,
     rest_start: Option<u32>,
-    array: impl IntoIterator<Item = Option<&'a AstNode<'a, T>>>,
+    array: impl IntoIterator<Item = Option<AstNode<'a, T>>>,
     f: &mut JsFormatter<'_, 'a>,
 ) where
     T: 'a,
-    AstNode<'a, T>: Format<'a, JsFormatContext<'a>> + GetSpan,
+    AstNode<'a, T>: Format<'a, JsFormatContext<'a>> + GetSpan + AsAstNodes<'a>,
 {
     // The elements: from the `[` up to the `]` (exclusive) or the rest element
     let range = Span::new(array_span.start, rest_start.unwrap_or(array_span.end - 1));
@@ -79,11 +79,11 @@ pub fn write_array_node<'a, T>(
                     if let Some(comma) = hole_comma {
                         // The iterator skips holes, so bound the trailing pass at the next hole's `,`
                         let trailing =
-                            format_trailing_comments(element.parent().span(), span, comma);
+                            format_trailing_comments(element.parent(f).span(), span, comma);
                         write!(
                             f,
                             group(&format_args!(
-                                FormatNodeWithoutTrailingComments(element),
+                                FormatNodeWithoutTrailingComments(&element),
                                 trailing
                             ))
                         );

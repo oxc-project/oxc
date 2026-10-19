@@ -44,13 +44,14 @@ fn format_export_keyword_with_class_decorators<'a>(
         && !class.decorators.is_empty()
         && !class.is_expression()
     {
+        // The class prints the rest, its decorators are its children
+        let decorators = format_with(|f| {
+            f.with_node(AstNodes::Class(*class), |f| class.decorators().fmt(f));
+        });
         // `@decorator export class Cls {}`
         // decorators are placed before the export keyword
         if decorators_before_export_start(&class.decorators, span).is_some() {
-            write!(
-                f,
-                [class.decorators(), hard_line_break(), format_leading_comments, keyword, space()]
-            );
+            write!(f, [decorators, hard_line_break(), format_leading_comments, keyword, space()]);
         } else {
             // `export @decorator class Cls {}`
             // decorators are placed after the export keyword
@@ -60,7 +61,7 @@ fn format_export_keyword_with_class_decorators<'a>(
                     format_leading_comments,
                     keyword,
                     hard_line_break(),
-                    class.decorators(),
+                    decorators,
                     hard_line_break()
                 ]
             );
@@ -78,7 +79,7 @@ fn format_export_keyword_with_class_decorators<'a>(
 fn format_export_specifiers_block<'a>(
     span: Span,
     export_kind: ImportOrExportKind,
-    specifiers: &AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    specifiers: AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
     f: &mut JsFormatter<'_, 'a>,
 ) {
     let needs_space = f.options().bracket_spacing.value();
@@ -113,7 +114,11 @@ fn format_export_specifiers_block<'a>(
     } else {
         write!(
             f,
-            [export_kind, "{", group(&soft_block_indent_with_maybe_space(specifiers, needs_space))]
+            [
+                export_kind,
+                "{",
+                group(&soft_block_indent_with_maybe_space(&specifiers, needs_space))
+            ]
         );
     }
     write!(f, "}");
@@ -125,7 +130,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
         format_export_keyword_with_class_decorators(
             self.span,
             "export default",
-            declaration.as_ast_nodes(),
+            &declaration.as_ast_nodes(),
             f,
         );
 
@@ -137,7 +142,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
                 self.span.end,
                 false,
             );
-            write!(f, FormatContentWithSemicolon::new(declaration, content_end, self.span.end));
+            write!(f, FormatContentWithSemicolon::new(&declaration, content_end, self.span.end));
         } else {
             write!(f, declaration);
         }
@@ -171,7 +176,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDeclaration<'a>> {
         format_export_keyword_with_class_decorators(
             self.span,
             "export",
-            declaration.as_ast_nodes(),
+            &declaration.as_ast_nodes(),
             f,
         );
         write!(f, declaration);

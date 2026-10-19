@@ -35,19 +35,19 @@ impl<'a> ObjectLike<'a, '_> {
         // const fn = ({ foo }: { foo: string }) => { ... };
         matches!(self, Self::TSTypeLiteral(node) if {
             // Check if parent is TSTypeAnnotation
-            matches!(node.parent(), AstNodes::TSTypeAnnotation(type_ann) if {
-                match &type_ann.parent() {
+            matches!(node.parent(f), AstNodes::TSTypeAnnotation(type_ann) if {
+                match &type_ann.parent(f) {
                     AstNodes::FormalParameter(param) if param.initializer.is_none() => {
-                        let AstNodes::FormalParameters(parameters) = &param.parent() else {
+                        let AstNodes::FormalParameters(parameters) = &param.parent(f) else {
                             unreachable!()
                         };
-                        let this_param = get_this_param(parameters.parent());
-                        should_hug_function_parameters(parameters, this_param, false, f)
+                        let this_param = get_this_param(&parameters.parent(f));
+                        should_hug_function_parameters(*parameters, this_param, false, f)
 
                     }
                     AstNodes::TSThisParameter(param) => {
-                        matches!(param.parent(), AstNodes::Function(func) if {
-                            should_hug_function_parameters(func.params(), Some(param), false, f)
+                        matches!(param.parent(f), AstNodes::Function(func) if {
+                            should_hug_function_parameters(func.params(), Some(*param), false, f)
                         })
                     },
                     _ => false,

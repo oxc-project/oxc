@@ -21,8 +21,11 @@ use super::FormatWrite;
 /// terminated by the head itself (the head-vs-body test is by span: a declaration can also be the body).
 /// Everywhere else the declaration terminates itself, including `export const ...`,
 /// whose `ExportDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
-fn is_for_head_declaration(decl: &AstNode<'_, VariableDeclaration<'_>>) -> bool {
-    match decl.parent() {
+fn is_for_head_declaration<'a>(
+    decl: AstNode<'a, VariableDeclaration<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> bool {
+    match decl.parent(f) {
         AstNodes::ForStatement(stmt) => {
             stmt.init.as_ref().is_some_and(|init| init.span() == decl.span())
         }
@@ -34,7 +37,7 @@ fn is_for_head_declaration(decl: &AstNode<'_, VariableDeclaration<'_>>) -> bool 
 
 impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let semicolon = !is_for_head_declaration(self);
+        let semicolon = !is_for_head_declaration(*self, f);
 
         if self.declare() {
             write!(f, ["declare", space()]);
@@ -58,7 +61,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
                     });
                 write!(
                     f,
-                    FormatContentWithSemicolon::new(declarations, content_end, self.span().end)
+                    FormatContentWithSemicolon::new(&declarations, content_end, self.span().end)
                 );
             } else {
                 write!(f, declarations);
@@ -73,7 +76,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, VariableDe
         let length = self.len();
 
         let is_parent_for_loop = matches!(
-            self.grand_parent(),
+            self.grand_parent(f),
             AstNodes::ForStatement(_) | AstNodes::ForInStatement(_) | AstNodes::ForOfStatement(_)
         );
 
@@ -96,7 +99,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, VariableDe
         if length == 1 && !f.comments().has_comment_before(first_declarator.span().start) {
             return if first_declarator.init.is_none()
                 && f.comments()
-                    .has_comment_in_range(first_declarator.span.end, self.parent().span().end)
+                    .has_comment_in_range(first_declarator.span.end, self.parent(f).span().end)
             {
                 write!(f, indent(&first_declarator));
             } else {

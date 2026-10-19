@@ -31,11 +31,11 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 /// - The context is not disabled (e.g., not inside a nested non-Tailwind call)
 /// - The string contains whitespace (indicating multiple classes to sort)
 pub fn tailwind_context_for_string_literal<'a>(
-    string: &AstNode<'a, StringLiteral<'a>>,
+    string: AstNode<'a, StringLiteral<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> Option<TailwindContextEntry> {
     f.context().tailwind_context().copied().filter(|ctx| {
-        let text = f.source_text().text_for(string);
+        let text = f.source_text().text_for(&string);
 
         if ctx.disabled {
             return false;
@@ -165,14 +165,11 @@ impl CollapseWhitespace {
 /// `flex p-4 ` + b     // trailing space preserved (for `+ b`)
 ///          ^
 /// ```
-pub fn can_collapse_whitespace<'a, 'b>(
+pub fn can_collapse_whitespace<'a>(
     span: Span,
-    ancestors: impl Iterator<Item = &'b AstNodes<'a>>,
+    ancestors: impl Iterator<Item = AstNodes<'a>>,
     f: &JsFormatter<'_, 'a>,
-) -> CollapseWhitespace
-where
-    'a: 'b,
-{
+) -> CollapseWhitespace {
     let mut collapse = CollapseWhitespace::new();
 
     // 1. Check template expression context (O(1) via context stack)
@@ -233,7 +230,7 @@ where
 /// - Preserves boundary spaces when required by concat/template context
 /// - With `preserve_whitespace`, outputs content unchanged
 pub fn write_tailwind_string_literal<'a>(
-    string_literal: &AstNode<'a, StringLiteral<'a>>,
+    string_literal: AstNode<'a, StringLiteral<'a>>,
     ctx: TailwindContextEntry,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -246,7 +243,7 @@ pub fn write_tailwind_string_literal<'a>(
         f.source_text().text_for(&string_literal),
         // `className="string"`
         //            ^^^^^^^^
-        matches!(string_literal.parent(), AstNodes::JSXAttribute(_)),
+        matches!(string_literal.parent(f), AstNodes::JSXAttribute(_)),
         StringLiteralParentKind::Expression,
     )
     .clean_text(f);
@@ -281,7 +278,7 @@ pub fn write_tailwind_string_literal<'a>(
         return;
     }
 
-    let collapse = can_collapse_whitespace(string_literal.span, string_literal.ancestors(), f);
+    let collapse = can_collapse_whitespace(string_literal.span, string_literal.ancestors(f), f);
     let has_leading_ws = content.starts_with(|c: char| c.is_ascii_whitespace());
     let has_trailing_ws = content.ends_with(|c: char| c.is_ascii_whitespace());
 
@@ -321,11 +318,11 @@ pub fn write_tailwind_string_literal<'a>(
 ///
 /// Based on [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L511-L566).
 pub fn write_tailwind_template_element<'a>(
-    element: &AstNode<'a, TemplateElement<'a>>,
+    element: AstNode<'a, TemplateElement<'a>>,
     ctx: TailwindContextEntry,
     f: &mut JsFormatter<'_, 'a>,
 ) {
-    let content = f.source_text().text_for(element);
+    let content = f.source_text().text_for(&element);
 
     // Get quasi position from context (set when the quasi was written in template.rs)
     let is_first = ctx.is_first_quasi;
@@ -380,7 +377,7 @@ pub fn write_tailwind_template_element<'a>(
 
 /// Determines whitespace collapse rules for a template element based on binary expression context.
 fn can_collapse_whitespace_template<'a>(
-    element: &AstNode<'a, TemplateElement<'a>>,
+    element: AstNode<'a, TemplateElement<'a>>,
     is_first: bool,
     is_last: bool,
     f: &JsFormatter<'_, 'a>,
@@ -390,7 +387,7 @@ fn can_collapse_whitespace_template<'a>(
         return CollapseWhitespace::new();
     }
 
-    can_collapse_whitespace(element.span, element.ancestors().skip(1), f)
+    can_collapse_whitespace(element.span, element.ancestors(f).skip(1), f)
 }
 
 // ============================================================================
