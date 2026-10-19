@@ -28,7 +28,7 @@ use oxc_ast::Comment;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Buffer, Format, format_args,
+    Format, format_args,
     formatter::{
         JsFormatter,
         comments::gap_segments,
@@ -85,11 +85,7 @@ pub fn classify_type_cast<'a>(span: Span, f: &JsFormatter<'_, 'a>) -> TypeCast<'
     // The cast comment may already be printed:
     // by the re-entry from `format_type_cast_comment_node`,
     // or as the leading comment of an ancestor starting at the same position.
-    if !comments.is_handled_type_cast_comment()
-        && let Some(last_printed_comment) = comments.printed_comments().last()
-        && last_printed_comment.span.end <= span.start
-        && comments.is_type_cast_comment_followed_by_paren(last_printed_comment)
-    {
+    if let Some(last_printed_comment) = comments.printed_type_cast_comment_before(span.start) {
         match classify_cast_comment_gap(last_printed_comment.span.end, span.start, f) {
             CastCommentGap::ParensAndTrivia if comments.is_followed_by_closing_paren(span.end) => {
                 return TypeCast::Target { pending: &[], cast_comment: last_printed_comment };
@@ -132,10 +128,7 @@ pub fn is_cast_target(span: Span, f: &JsFormatter<'_, '_>) -> bool {
     // A target is preceded by its `(` or by the `/` closing a comment:
     // one byte peek rejects most nodes before the `)` peek (true for every last argument and parenthesized test)
     // and the comment lookup.
-    if !matches!(
-        source.bytes_to(span.start).find(|byte| !byte.is_ascii_whitespace()),
-        Some(b'(' | b'/')
-    ) {
+    if !matches!(source.previous_non_whitespace_byte(span.start), Some(b'(' | b'/')) {
         return false;
     }
     let comments = f.context().comments();

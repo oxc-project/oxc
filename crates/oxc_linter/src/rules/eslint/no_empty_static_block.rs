@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoEmptyStaticBlock,
     eslint,
     correctness,
+    recommended,
     suggestion,
     version = "0.0.19",
     short_description = "Disallow empty static blocks.",

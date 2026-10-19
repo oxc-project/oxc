@@ -206,6 +206,7 @@ declare_oxc_lint!(
     NumericSeparatorsStyle,
     unicorn,
     style,
+    recommended,
     fix,
     config = NumericSeparatorsStyleConfig,
     version = "0.0.19",

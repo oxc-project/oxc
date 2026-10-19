@@ -2,23 +2,48 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-## array-hole-trailing-comment
+## array-hole-comments
 
 - Why: invariant
 - Pin: `tests/fixtures/js/comments/array-holes.js`
+- Conformance: `js/arrays/numbers-with-holes.js`
 
 ```js
 // input
 const a = [1, , /* c */];
+[parser, /* c */, optional] = x;
+const b = [
+  1,
+  // c
+  ,
+  2,
+];
 
 // ours
-const a = [1, ,/* c */];
+const a = [1, , /* c */];
+[parser, /* c */, optional] = x;
+const b = [
+  1,
+  // c
+  ,
+  2,
+];
 
 // prettier
 const a = [1 /* c */, ,];
+[parser /* c */, , optional] = x;
+const b = [
+  1,
+  ,
+  // c
+  2,
+];
 ```
 
-Prettier's attachment relocates the comment backward across the commas (user content) to the last real element; we keep it in place.
+A hole has no node, so Prettier's attachment relocates a comment next to it across the commas (user content, they keep the hole count) to a real element;
+we keep every comment on its source side of each hole's `,`, in array expressions and array patterns alike.
+Spacing follows the `,` like any separator: a comment before it is glued to it (`/* c */,`, as in `a /* c */,`),
+a comment after it is spaced (`, /* c */`, as in `a, /* c */ b`), also after the last hole where Prettier glues it (`, ,/* c */`).
 
 ## type-alias-trailing-comment-move
 
@@ -788,16 +813,22 @@ Before an optional call's `?.`, Prettier moves an own-line comment into the argu
 ```ts
 // input
 const a = (make<T>)!;
+(make<T>)<U>();
+x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
 
 // ours
 const a = (make<T>)!;
+(make<T>)<U>();
+x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
 
 // prettier
 const a = make<T>!;
+make<T><U>();
+x = make<T> + y;
 export default class {}<string>;
 class {}<string>;
 ```
@@ -805,6 +836,10 @@ class {}<string>;
 Prettier drops the parens around an instantiation expression before `!`,
 and the ones that keep a leading `class`/`function` from starting a declaration or statement.
 Fixed in Prettier `main` by prettier/prettier#20177, which we follow except after `export default` (DIVERGENCES.md#export-default-leftmost-parens).
+
+Prettier `main` still drops them before type arguments (`make<T><U>()` does not parse)
+and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
+(`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
 
 ## export-default-leftmost-parens
 
@@ -865,3 +900,34 @@ const get = (key: K) => (({ a: 1, b: 2 }) as const)[key];
 When an ancestor gets its own parens, a leading `{`/`function`/`class`/`let[` inside it needs none.
 Prettier already does this after `export default` (`` export default (function () {} + foo)`` ``) and for a sequence arrow body (`() => ({}, 1)`),
 but not at statement start or for other arrow bodies, e.g. the object lookup idiom above.
+
+## inline-logical-chain-indent
+
+- Why: uniform-rule (same construct, same output: a single-link inline chain `a ?? [...]`; prettier/prettier#5183, prettier/prettier#19792)
+- Pin: `tests/fixtures/js/logicals/inline-logical-chain-indent.js`
+
+```js
+// input
+const x = $abilities ?? ["foo", "bar", "bar"] ?? ["foo", "bar", "bar", "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey"];
+
+// ours
+const x = $abilities ?? ["foo", "bar", "bar"] ?? [
+  "foo",
+  "bar",
+  "bar",
+  "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey",
+];
+
+// prettier
+const x = $abilities ?? ["foo", "bar", "bar"] ?? [
+    "foo",
+    "bar",
+    "bar",
+    "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey",
+  ];
+```
+
+When every right side of a logical chain is an inlined object/array/JSX literal, the chain never breaks at an operator.
+Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
+A chain with a non-inlined right side breaks at the operators and keeps the indent.
+Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.

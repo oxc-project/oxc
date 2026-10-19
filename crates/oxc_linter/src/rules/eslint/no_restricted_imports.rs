@@ -794,7 +794,10 @@ impl RestrictedPath {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let Some(name) = literal.value.as_str() else {
+            return ImportNameResult::Allowed;
+        };
+        let name = CompactStr::from(name);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -898,7 +901,10 @@ impl RestrictedPattern {
             return ImportNameResult::Allowed;
         }
 
-        let name = literal.value.into_compact_str();
+        let Some(name) = literal.value.as_str() else {
+            return ImportNameResult::Allowed;
+        };
+        let name = CompactStr::from(name);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
@@ -1288,7 +1294,9 @@ impl NoRestrictedImports {
         is_type: bool,
         is_dynamic_import: bool,
     ) {
-        let source = source_literal.value.as_str();
+        let Some(source) = source_literal.value.as_str() else {
+            return;
+        };
 
         for path in &self.paths {
             if source != path.name.as_str() {
@@ -2025,6 +2033,13 @@ fn test() {
         ),
         // dynamic `import()` with a string-literal source
         ("import('os');", Some(serde_json::json!(["fs"]))),
+        // A source with a lone surrogate matches no configured name or pattern.
+        (r"import('a\uD800');", Some(serde_json::json!(["a\u{FFFD}"]))),
+        (r"import('a\uD800');", Some(serde_json::json!([{ "patterns": [{ "regex": "^a.$" }] }]))),
+        (
+            r"import('a\uD800/b');",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["a*/b"] }] }])),
+        ),
         ("import('foo/bar');", Some(serde_json::json!([{ "patterns": ["foo/baz"] }]))),
         // non-literal dynamic import sources are ignored
         ("import(foo);", Some(serde_json::json!(["foo"]))),

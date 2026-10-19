@@ -2,13 +2,13 @@ commit: 4f4ef5d4
 
 node: v26.5.0
 
-Passed: 34 of 36 (94.44%)
+Passed: 40 of 42 (95.24%)
 
 Failures:
 
 ./fixtures/oxc/babel-plugin-transform-class-properties-test-fixtures-private-field-resolve-to-method-in-computed-key-exec.test.js
 AssertionError: expected [Function] to throw error including 'Receiver must be an instance of class…' but got 'Private element is not present on thi…'
-    at Proxy.methodWrapper (./node_modules/.pnpm/chai@6.2.2/node_modules/chai/index.js:1700:25)
+    at Proxy.methodWrapper (./node_modules/chai/index.js:1737:25)
     at ./tasks/transform_conformance/fixtures/oxc/babel-plugin-transform-class-properties-test-fixtures-private-field-resolve-to-method-in-computed-key-exec.test.js:96:33
 
 ./fixtures/oxc/babel-plugin-transform-class-properties-test-fixtures-static-super-tagged-template-exec.test.js

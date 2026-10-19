@@ -47,6 +47,7 @@ declare_oxc_lint!(
     PreferReflectApply,
     unicorn,
     style,
+    recommended,
     suggestion,
     version = "0.0.19",
     short_description = "Disallows the use of `Function.prototype.apply()` and suggests using `Reflect.apply()` instead.",

@@ -884,7 +884,10 @@ pub use crate::rules::vue::valid_next_tick::ValidNextTick as VueValidNextTick;
 use crate::{
     AstNode,
     context::{ContextHost, LintContext},
-    rule::{Rule, RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
+    rule::{
+        Rule, RuleCategory, RuleFixMeta, RuleFlags, RuleMeta, RuleRunFunctionsImplemented,
+        RuleRunner,
+    },
     timing::RuleTimingStat,
     utils::PossibleJestNode,
 };
@@ -16009,1270 +16012,1024 @@ impl RuleEnum {
             Self::VueValidNextTick(rule) => rule.should_run(ctx),
         }
     }
-    pub fn is_tsgolint_rule(&self) -> bool {
+    #[doc = r" Flags describing this rule's capabilities."]
+    pub fn flags(&self) -> RuleFlags {
         match self {
             Self::ImportConsistentTypeSpecifierStyle(_) => {
-                ImportConsistentTypeSpecifierStyle::IS_TSGOLINT_RULE
+                ImportConsistentTypeSpecifierStyle::FLAGS
             }
-            Self::ImportDefault(_) => ImportDefault::IS_TSGOLINT_RULE,
-            Self::ImportExport(_) => ImportExport::IS_TSGOLINT_RULE,
-            Self::ImportExportsLast(_) => ImportExportsLast::IS_TSGOLINT_RULE,
-            Self::ImportExtensions(_) => ImportExtensions::IS_TSGOLINT_RULE,
-            Self::ImportFirst(_) => ImportFirst::IS_TSGOLINT_RULE,
-            Self::ImportGroupExports(_) => ImportGroupExports::IS_TSGOLINT_RULE,
-            Self::ImportMaxDependencies(_) => ImportMaxDependencies::IS_TSGOLINT_RULE,
-            Self::ImportNamed(_) => ImportNamed::IS_TSGOLINT_RULE,
-            Self::ImportNamespace(_) => ImportNamespace::IS_TSGOLINT_RULE,
-            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::IS_TSGOLINT_RULE,
-            Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::IS_TSGOLINT_RULE,
-            Self::ImportNoAmd(_) => ImportNoAmd::IS_TSGOLINT_RULE,
-            Self::ImportNoAnonymousDefaultExport(_) => {
-                ImportNoAnonymousDefaultExport::IS_TSGOLINT_RULE
-            }
-            Self::ImportNoCommonjs(_) => ImportNoCommonjs::IS_TSGOLINT_RULE,
-            Self::ImportNoCycle(_) => ImportNoCycle::IS_TSGOLINT_RULE,
-            Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::IS_TSGOLINT_RULE,
-            Self::ImportNoDuplicates(_) => ImportNoDuplicates::IS_TSGOLINT_RULE,
-            Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::IS_TSGOLINT_RULE,
-            Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::IS_TSGOLINT_RULE,
-            Self::ImportNoMutableExports(_) => ImportNoMutableExports::IS_TSGOLINT_RULE,
-            Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::IS_TSGOLINT_RULE,
-            Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::IS_TSGOLINT_RULE,
-            Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::IS_TSGOLINT_RULE,
-            Self::ImportNoNamedExport(_) => ImportNoNamedExport::IS_TSGOLINT_RULE,
-            Self::ImportNoNamespace(_) => ImportNoNamespace::IS_TSGOLINT_RULE,
-            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::IS_TSGOLINT_RULE,
-            Self::ImportNoRelativeParentImports(_) => {
-                ImportNoRelativeParentImports::IS_TSGOLINT_RULE
-            }
-            Self::ImportNoSelfImport(_) => ImportNoSelfImport::IS_TSGOLINT_RULE,
-            Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::IS_TSGOLINT_RULE,
-            Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::IS_TSGOLINT_RULE,
-            Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::IS_TSGOLINT_RULE,
-            Self::ImportUnambiguous(_) => ImportUnambiguous::IS_TSGOLINT_RULE,
-            Self::EslintAccessorPairs(_) => EslintAccessorPairs::IS_TSGOLINT_RULE,
-            Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::IS_TSGOLINT_RULE,
-            Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::IS_TSGOLINT_RULE,
-            Self::EslintBlockScopedVar(_) => EslintBlockScopedVar::IS_TSGOLINT_RULE,
-            Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::IS_TSGOLINT_RULE,
-            Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::IS_TSGOLINT_RULE,
-            Self::EslintComplexity(_) => EslintComplexity::IS_TSGOLINT_RULE,
-            Self::EslintConstructorSuper(_) => EslintConstructorSuper::IS_TSGOLINT_RULE,
-            Self::EslintCurly(_) => EslintCurly::IS_TSGOLINT_RULE,
-            Self::EslintDefaultCase(_) => EslintDefaultCase::IS_TSGOLINT_RULE,
-            Self::EslintDefaultCaseLast(_) => EslintDefaultCaseLast::IS_TSGOLINT_RULE,
-            Self::EslintDefaultParamLast(_) => EslintDefaultParamLast::IS_TSGOLINT_RULE,
-            Self::EslintEqeqeq(_) => EslintEqeqeq::IS_TSGOLINT_RULE,
-            Self::EslintForDirection(_) => EslintForDirection::IS_TSGOLINT_RULE,
-            Self::EslintFuncNameMatching(_) => EslintFuncNameMatching::IS_TSGOLINT_RULE,
-            Self::EslintFuncNames(_) => EslintFuncNames::IS_TSGOLINT_RULE,
-            Self::EslintFuncStyle(_) => EslintFuncStyle::IS_TSGOLINT_RULE,
-            Self::EslintGetterReturn(_) => EslintGetterReturn::IS_TSGOLINT_RULE,
-            Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::IS_TSGOLINT_RULE,
-            Self::EslintGuardForIn(_) => EslintGuardForIn::IS_TSGOLINT_RULE,
-            Self::EslintIdDenylist(_) => EslintIdDenylist::IS_TSGOLINT_RULE,
-            Self::EslintIdLength(_) => EslintIdLength::IS_TSGOLINT_RULE,
-            Self::EslintIdMatch(_) => EslintIdMatch::IS_TSGOLINT_RULE,
-            Self::EslintInitDeclarations(_) => EslintInitDeclarations::IS_TSGOLINT_RULE,
-            Self::EslintLogicalAssignmentOperators(_) => {
-                EslintLogicalAssignmentOperators::IS_TSGOLINT_RULE
-            }
-            Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::IS_TSGOLINT_RULE,
-            Self::EslintMaxDepth(_) => EslintMaxDepth::IS_TSGOLINT_RULE,
-            Self::EslintMaxLines(_) => EslintMaxLines::IS_TSGOLINT_RULE,
-            Self::EslintMaxLinesPerFunction(_) => EslintMaxLinesPerFunction::IS_TSGOLINT_RULE,
-            Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::IS_TSGOLINT_RULE,
-            Self::EslintMaxParams(_) => EslintMaxParams::IS_TSGOLINT_RULE,
-            Self::EslintMaxStatements(_) => EslintMaxStatements::IS_TSGOLINT_RULE,
-            Self::EslintNewCap(_) => EslintNewCap::IS_TSGOLINT_RULE,
-            Self::EslintNoAlert(_) => EslintNoAlert::IS_TSGOLINT_RULE,
-            Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::IS_TSGOLINT_RULE,
-            Self::EslintNoAsyncPromiseExecutor(_) => EslintNoAsyncPromiseExecutor::IS_TSGOLINT_RULE,
-            Self::EslintNoAwaitInLoop(_) => EslintNoAwaitInLoop::IS_TSGOLINT_RULE,
-            Self::EslintNoBitwise(_) => EslintNoBitwise::IS_TSGOLINT_RULE,
-            Self::EslintNoCaller(_) => EslintNoCaller::IS_TSGOLINT_RULE,
-            Self::EslintNoCaseDeclarations(_) => EslintNoCaseDeclarations::IS_TSGOLINT_RULE,
-            Self::EslintNoClassAssign(_) => EslintNoClassAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::IS_TSGOLINT_RULE,
-            Self::EslintNoCondAssign(_) => EslintNoCondAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoConsole(_) => EslintNoConsole::IS_TSGOLINT_RULE,
-            Self::EslintNoConstAssign(_) => EslintNoConstAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoConstantBinaryExpression(_) => {
-                EslintNoConstantBinaryExpression::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoConstantCondition(_) => EslintNoConstantCondition::IS_TSGOLINT_RULE,
-            Self::EslintNoConstructorReturn(_) => EslintNoConstructorReturn::IS_TSGOLINT_RULE,
-            Self::EslintNoContinue(_) => EslintNoContinue::IS_TSGOLINT_RULE,
-            Self::EslintNoControlRegex(_) => EslintNoControlRegex::IS_TSGOLINT_RULE,
-            Self::EslintNoDebugger(_) => EslintNoDebugger::IS_TSGOLINT_RULE,
-            Self::EslintNoDeleteVar(_) => EslintNoDeleteVar::IS_TSGOLINT_RULE,
-            Self::EslintNoDivRegex(_) => EslintNoDivRegex::IS_TSGOLINT_RULE,
-            Self::EslintNoDupeClassMembers(_) => EslintNoDupeClassMembers::IS_TSGOLINT_RULE,
-            Self::EslintNoDupeElseIf(_) => EslintNoDupeElseIf::IS_TSGOLINT_RULE,
-            Self::EslintNoDupeKeys(_) => EslintNoDupeKeys::IS_TSGOLINT_RULE,
-            Self::EslintNoDuplicateCase(_) => EslintNoDuplicateCase::IS_TSGOLINT_RULE,
-            Self::EslintNoDuplicateImports(_) => EslintNoDuplicateImports::IS_TSGOLINT_RULE,
-            Self::EslintNoElseReturn(_) => EslintNoElseReturn::IS_TSGOLINT_RULE,
-            Self::EslintNoEmpty(_) => EslintNoEmpty::IS_TSGOLINT_RULE,
-            Self::EslintNoEmptyCharacterClass(_) => EslintNoEmptyCharacterClass::IS_TSGOLINT_RULE,
-            Self::EslintNoEmptyFunction(_) => EslintNoEmptyFunction::IS_TSGOLINT_RULE,
-            Self::EslintNoEmptyPattern(_) => EslintNoEmptyPattern::IS_TSGOLINT_RULE,
-            Self::EslintNoEmptyStaticBlock(_) => EslintNoEmptyStaticBlock::IS_TSGOLINT_RULE,
-            Self::EslintNoEqNull(_) => EslintNoEqNull::IS_TSGOLINT_RULE,
-            Self::EslintNoEval(_) => EslintNoEval::IS_TSGOLINT_RULE,
-            Self::EslintNoExAssign(_) => EslintNoExAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoExtendNative(_) => EslintNoExtendNative::IS_TSGOLINT_RULE,
-            Self::EslintNoExtraBind(_) => EslintNoExtraBind::IS_TSGOLINT_RULE,
-            Self::EslintNoExtraBooleanCast(_) => EslintNoExtraBooleanCast::IS_TSGOLINT_RULE,
-            Self::EslintNoExtraLabel(_) => EslintNoExtraLabel::IS_TSGOLINT_RULE,
-            Self::EslintNoFallthrough(_) => EslintNoFallthrough::IS_TSGOLINT_RULE,
-            Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::IS_TSGOLINT_RULE,
-            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::IS_TSGOLINT_RULE,
-            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::IS_TSGOLINT_RULE,
-            Self::EslintNoImportAssign(_) => EslintNoImportAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoInlineComments(_) => EslintNoInlineComments::IS_TSGOLINT_RULE,
-            Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::IS_TSGOLINT_RULE,
-            Self::EslintNoInvalidRegexp(_) => EslintNoInvalidRegexp::IS_TSGOLINT_RULE,
-            Self::EslintNoIrregularWhitespace(_) => EslintNoIrregularWhitespace::IS_TSGOLINT_RULE,
-            Self::EslintNoIterator(_) => EslintNoIterator::IS_TSGOLINT_RULE,
-            Self::EslintNoLabelVar(_) => EslintNoLabelVar::IS_TSGOLINT_RULE,
-            Self::EslintNoLabels(_) => EslintNoLabels::IS_TSGOLINT_RULE,
-            Self::EslintNoLoneBlocks(_) => EslintNoLoneBlocks::IS_TSGOLINT_RULE,
-            Self::EslintNoLonelyIf(_) => EslintNoLonelyIf::IS_TSGOLINT_RULE,
-            Self::EslintNoLoopFunc(_) => EslintNoLoopFunc::IS_TSGOLINT_RULE,
-            Self::EslintNoLossOfPrecision(_) => EslintNoLossOfPrecision::IS_TSGOLINT_RULE,
-            Self::EslintNoMagicNumbers(_) => EslintNoMagicNumbers::IS_TSGOLINT_RULE,
-            Self::EslintNoMisleadingCharacterClass(_) => {
-                EslintNoMisleadingCharacterClass::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoMultiAssign(_) => EslintNoMultiAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoMultiStr(_) => EslintNoMultiStr::IS_TSGOLINT_RULE,
-            Self::EslintNoNegatedCondition(_) => EslintNoNegatedCondition::IS_TSGOLINT_RULE,
-            Self::EslintNoNestedTernary(_) => EslintNoNestedTernary::IS_TSGOLINT_RULE,
-            Self::EslintNoNew(_) => EslintNoNew::IS_TSGOLINT_RULE,
-            Self::EslintNoNewFunc(_) => EslintNoNewFunc::IS_TSGOLINT_RULE,
-            Self::EslintNoNewNativeNonconstructor(_) => {
-                EslintNoNewNativeNonconstructor::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoNewWrappers(_) => EslintNoNewWrappers::IS_TSGOLINT_RULE,
-            Self::EslintNoNonoctalDecimalEscape(_) => {
-                EslintNoNonoctalDecimalEscape::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoObjCalls(_) => EslintNoObjCalls::IS_TSGOLINT_RULE,
-            Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::IS_TSGOLINT_RULE,
-            Self::EslintNoParamReassign(_) => EslintNoParamReassign::IS_TSGOLINT_RULE,
-            Self::EslintNoPlusplus(_) => EslintNoPlusplus::IS_TSGOLINT_RULE,
-            Self::EslintNoPromiseExecutorReturn(_) => {
-                EslintNoPromiseExecutorReturn::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoProto(_) => EslintNoProto::IS_TSGOLINT_RULE,
-            Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::IS_TSGOLINT_RULE,
-            Self::EslintNoRedeclare(_) => EslintNoRedeclare::IS_TSGOLINT_RULE,
-            Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::IS_TSGOLINT_RULE,
-            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::IS_TSGOLINT_RULE,
-            Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::IS_TSGOLINT_RULE,
-            Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::IS_TSGOLINT_RULE,
-            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::IS_TSGOLINT_RULE,
-            Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::IS_TSGOLINT_RULE,
-            Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::IS_TSGOLINT_RULE,
-            Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::IS_TSGOLINT_RULE,
-            Self::EslintNoSequences(_) => EslintNoSequences::IS_TSGOLINT_RULE,
-            Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::IS_TSGOLINT_RULE,
-            Self::EslintNoShadow(_) => EslintNoShadow::IS_TSGOLINT_RULE,
-            Self::EslintNoShadowRestrictedNames(_) => {
-                EslintNoShadowRestrictedNames::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::IS_TSGOLINT_RULE,
-            Self::EslintNoTemplateCurlyInString(_) => {
-                EslintNoTemplateCurlyInString::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoTernary(_) => EslintNoTernary::IS_TSGOLINT_RULE,
-            Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::IS_TSGOLINT_RULE,
-            Self::EslintNoThrowLiteral(_) => EslintNoThrowLiteral::IS_TSGOLINT_RULE,
-            Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::IS_TSGOLINT_RULE,
-            Self::EslintNoUndef(_) => EslintNoUndef::IS_TSGOLINT_RULE,
-            Self::EslintNoUndefined(_) => EslintNoUndefined::IS_TSGOLINT_RULE,
-            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::IS_TSGOLINT_RULE,
-            Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::IS_TSGOLINT_RULE,
-            Self::EslintNoUnmodifiedLoopCondition(_) => {
-                EslintNoUnmodifiedLoopCondition::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::IS_TSGOLINT_RULE,
-            Self::EslintNoUnreachable(_) => EslintNoUnreachable::IS_TSGOLINT_RULE,
-            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::IS_TSGOLINT_RULE,
-            Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::IS_TSGOLINT_RULE,
-            Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::IS_TSGOLINT_RULE,
-            Self::EslintNoUnsafeOptionalChaining(_) => {
-                EslintNoUnsafeOptionalChaining::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoUnusedExpressions(_) => EslintNoUnusedExpressions::IS_TSGOLINT_RULE,
-            Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::IS_TSGOLINT_RULE,
-            Self::EslintNoUnusedPrivateClassMembers(_) => {
-                EslintNoUnusedPrivateClassMembers::IS_TSGOLINT_RULE
-            }
-            Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::IS_TSGOLINT_RULE,
-            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessCall(_) => EslintNoUselessCall::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessRename(_) => EslintNoUselessRename::IS_TSGOLINT_RULE,
-            Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::IS_TSGOLINT_RULE,
-            Self::EslintNoVar(_) => EslintNoVar::IS_TSGOLINT_RULE,
-            Self::EslintNoVoid(_) => EslintNoVoid::IS_TSGOLINT_RULE,
-            Self::EslintNoWarningComments(_) => EslintNoWarningComments::IS_TSGOLINT_RULE,
-            Self::EslintNoWith(_) => EslintNoWith::IS_TSGOLINT_RULE,
-            Self::EslintObjectShorthand(_) => EslintObjectShorthand::IS_TSGOLINT_RULE,
-            Self::EslintOneVar(_) => EslintOneVar::IS_TSGOLINT_RULE,
-            Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::IS_TSGOLINT_RULE,
-            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::IS_TSGOLINT_RULE,
-            Self::EslintPreferConst(_) => EslintPreferConst::IS_TSGOLINT_RULE,
-            Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::IS_TSGOLINT_RULE,
+            Self::ImportDefault(_) => ImportDefault::FLAGS,
+            Self::ImportExport(_) => ImportExport::FLAGS,
+            Self::ImportExportsLast(_) => ImportExportsLast::FLAGS,
+            Self::ImportExtensions(_) => ImportExtensions::FLAGS,
+            Self::ImportFirst(_) => ImportFirst::FLAGS,
+            Self::ImportGroupExports(_) => ImportGroupExports::FLAGS,
+            Self::ImportMaxDependencies(_) => ImportMaxDependencies::FLAGS,
+            Self::ImportNamed(_) => ImportNamed::FLAGS,
+            Self::ImportNamespace(_) => ImportNamespace::FLAGS,
+            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::FLAGS,
+            Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::FLAGS,
+            Self::ImportNoAmd(_) => ImportNoAmd::FLAGS,
+            Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::FLAGS,
+            Self::ImportNoCommonjs(_) => ImportNoCommonjs::FLAGS,
+            Self::ImportNoCycle(_) => ImportNoCycle::FLAGS,
+            Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::FLAGS,
+            Self::ImportNoDuplicates(_) => ImportNoDuplicates::FLAGS,
+            Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::FLAGS,
+            Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::FLAGS,
+            Self::ImportNoMutableExports(_) => ImportNoMutableExports::FLAGS,
+            Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::FLAGS,
+            Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::FLAGS,
+            Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::FLAGS,
+            Self::ImportNoNamedExport(_) => ImportNoNamedExport::FLAGS,
+            Self::ImportNoNamespace(_) => ImportNoNamespace::FLAGS,
+            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::FLAGS,
+            Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::FLAGS,
+            Self::ImportNoSelfImport(_) => ImportNoSelfImport::FLAGS,
+            Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::FLAGS,
+            Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::FLAGS,
+            Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::FLAGS,
+            Self::ImportUnambiguous(_) => ImportUnambiguous::FLAGS,
+            Self::EslintAccessorPairs(_) => EslintAccessorPairs::FLAGS,
+            Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::FLAGS,
+            Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::FLAGS,
+            Self::EslintBlockScopedVar(_) => EslintBlockScopedVar::FLAGS,
+            Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::FLAGS,
+            Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::FLAGS,
+            Self::EslintComplexity(_) => EslintComplexity::FLAGS,
+            Self::EslintConstructorSuper(_) => EslintConstructorSuper::FLAGS,
+            Self::EslintCurly(_) => EslintCurly::FLAGS,
+            Self::EslintDefaultCase(_) => EslintDefaultCase::FLAGS,
+            Self::EslintDefaultCaseLast(_) => EslintDefaultCaseLast::FLAGS,
+            Self::EslintDefaultParamLast(_) => EslintDefaultParamLast::FLAGS,
+            Self::EslintEqeqeq(_) => EslintEqeqeq::FLAGS,
+            Self::EslintForDirection(_) => EslintForDirection::FLAGS,
+            Self::EslintFuncNameMatching(_) => EslintFuncNameMatching::FLAGS,
+            Self::EslintFuncNames(_) => EslintFuncNames::FLAGS,
+            Self::EslintFuncStyle(_) => EslintFuncStyle::FLAGS,
+            Self::EslintGetterReturn(_) => EslintGetterReturn::FLAGS,
+            Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::FLAGS,
+            Self::EslintGuardForIn(_) => EslintGuardForIn::FLAGS,
+            Self::EslintIdDenylist(_) => EslintIdDenylist::FLAGS,
+            Self::EslintIdLength(_) => EslintIdLength::FLAGS,
+            Self::EslintIdMatch(_) => EslintIdMatch::FLAGS,
+            Self::EslintInitDeclarations(_) => EslintInitDeclarations::FLAGS,
+            Self::EslintLogicalAssignmentOperators(_) => EslintLogicalAssignmentOperators::FLAGS,
+            Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::FLAGS,
+            Self::EslintMaxDepth(_) => EslintMaxDepth::FLAGS,
+            Self::EslintMaxLines(_) => EslintMaxLines::FLAGS,
+            Self::EslintMaxLinesPerFunction(_) => EslintMaxLinesPerFunction::FLAGS,
+            Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::FLAGS,
+            Self::EslintMaxParams(_) => EslintMaxParams::FLAGS,
+            Self::EslintMaxStatements(_) => EslintMaxStatements::FLAGS,
+            Self::EslintNewCap(_) => EslintNewCap::FLAGS,
+            Self::EslintNoAlert(_) => EslintNoAlert::FLAGS,
+            Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::FLAGS,
+            Self::EslintNoAsyncPromiseExecutor(_) => EslintNoAsyncPromiseExecutor::FLAGS,
+            Self::EslintNoAwaitInLoop(_) => EslintNoAwaitInLoop::FLAGS,
+            Self::EslintNoBitwise(_) => EslintNoBitwise::FLAGS,
+            Self::EslintNoCaller(_) => EslintNoCaller::FLAGS,
+            Self::EslintNoCaseDeclarations(_) => EslintNoCaseDeclarations::FLAGS,
+            Self::EslintNoClassAssign(_) => EslintNoClassAssign::FLAGS,
+            Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::FLAGS,
+            Self::EslintNoCondAssign(_) => EslintNoCondAssign::FLAGS,
+            Self::EslintNoConsole(_) => EslintNoConsole::FLAGS,
+            Self::EslintNoConstAssign(_) => EslintNoConstAssign::FLAGS,
+            Self::EslintNoConstantBinaryExpression(_) => EslintNoConstantBinaryExpression::FLAGS,
+            Self::EslintNoConstantCondition(_) => EslintNoConstantCondition::FLAGS,
+            Self::EslintNoConstructorReturn(_) => EslintNoConstructorReturn::FLAGS,
+            Self::EslintNoContinue(_) => EslintNoContinue::FLAGS,
+            Self::EslintNoControlRegex(_) => EslintNoControlRegex::FLAGS,
+            Self::EslintNoDebugger(_) => EslintNoDebugger::FLAGS,
+            Self::EslintNoDeleteVar(_) => EslintNoDeleteVar::FLAGS,
+            Self::EslintNoDivRegex(_) => EslintNoDivRegex::FLAGS,
+            Self::EslintNoDupeClassMembers(_) => EslintNoDupeClassMembers::FLAGS,
+            Self::EslintNoDupeElseIf(_) => EslintNoDupeElseIf::FLAGS,
+            Self::EslintNoDupeKeys(_) => EslintNoDupeKeys::FLAGS,
+            Self::EslintNoDuplicateCase(_) => EslintNoDuplicateCase::FLAGS,
+            Self::EslintNoDuplicateImports(_) => EslintNoDuplicateImports::FLAGS,
+            Self::EslintNoElseReturn(_) => EslintNoElseReturn::FLAGS,
+            Self::EslintNoEmpty(_) => EslintNoEmpty::FLAGS,
+            Self::EslintNoEmptyCharacterClass(_) => EslintNoEmptyCharacterClass::FLAGS,
+            Self::EslintNoEmptyFunction(_) => EslintNoEmptyFunction::FLAGS,
+            Self::EslintNoEmptyPattern(_) => EslintNoEmptyPattern::FLAGS,
+            Self::EslintNoEmptyStaticBlock(_) => EslintNoEmptyStaticBlock::FLAGS,
+            Self::EslintNoEqNull(_) => EslintNoEqNull::FLAGS,
+            Self::EslintNoEval(_) => EslintNoEval::FLAGS,
+            Self::EslintNoExAssign(_) => EslintNoExAssign::FLAGS,
+            Self::EslintNoExtendNative(_) => EslintNoExtendNative::FLAGS,
+            Self::EslintNoExtraBind(_) => EslintNoExtraBind::FLAGS,
+            Self::EslintNoExtraBooleanCast(_) => EslintNoExtraBooleanCast::FLAGS,
+            Self::EslintNoExtraLabel(_) => EslintNoExtraLabel::FLAGS,
+            Self::EslintNoFallthrough(_) => EslintNoFallthrough::FLAGS,
+            Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::FLAGS,
+            Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::FLAGS,
+            Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::FLAGS,
+            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::FLAGS,
+            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::FLAGS,
+            Self::EslintNoImportAssign(_) => EslintNoImportAssign::FLAGS,
+            Self::EslintNoInlineComments(_) => EslintNoInlineComments::FLAGS,
+            Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::FLAGS,
+            Self::EslintNoInvalidRegexp(_) => EslintNoInvalidRegexp::FLAGS,
+            Self::EslintNoIrregularWhitespace(_) => EslintNoIrregularWhitespace::FLAGS,
+            Self::EslintNoIterator(_) => EslintNoIterator::FLAGS,
+            Self::EslintNoLabelVar(_) => EslintNoLabelVar::FLAGS,
+            Self::EslintNoLabels(_) => EslintNoLabels::FLAGS,
+            Self::EslintNoLoneBlocks(_) => EslintNoLoneBlocks::FLAGS,
+            Self::EslintNoLonelyIf(_) => EslintNoLonelyIf::FLAGS,
+            Self::EslintNoLoopFunc(_) => EslintNoLoopFunc::FLAGS,
+            Self::EslintNoLossOfPrecision(_) => EslintNoLossOfPrecision::FLAGS,
+            Self::EslintNoMagicNumbers(_) => EslintNoMagicNumbers::FLAGS,
+            Self::EslintNoMisleadingCharacterClass(_) => EslintNoMisleadingCharacterClass::FLAGS,
+            Self::EslintNoMultiAssign(_) => EslintNoMultiAssign::FLAGS,
+            Self::EslintNoMultiStr(_) => EslintNoMultiStr::FLAGS,
+            Self::EslintNoNegatedCondition(_) => EslintNoNegatedCondition::FLAGS,
+            Self::EslintNoNestedTernary(_) => EslintNoNestedTernary::FLAGS,
+            Self::EslintNoNew(_) => EslintNoNew::FLAGS,
+            Self::EslintNoNewFunc(_) => EslintNoNewFunc::FLAGS,
+            Self::EslintNoNewNativeNonconstructor(_) => EslintNoNewNativeNonconstructor::FLAGS,
+            Self::EslintNoNewWrappers(_) => EslintNoNewWrappers::FLAGS,
+            Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::FLAGS,
+            Self::EslintNoObjCalls(_) => EslintNoObjCalls::FLAGS,
+            Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::FLAGS,
+            Self::EslintNoParamReassign(_) => EslintNoParamReassign::FLAGS,
+            Self::EslintNoPlusplus(_) => EslintNoPlusplus::FLAGS,
+            Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::FLAGS,
+            Self::EslintNoProto(_) => EslintNoProto::FLAGS,
+            Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::FLAGS,
+            Self::EslintNoRedeclare(_) => EslintNoRedeclare::FLAGS,
+            Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::FLAGS,
+            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::FLAGS,
+            Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::FLAGS,
+            Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::FLAGS,
+            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::FLAGS,
+            Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::FLAGS,
+            Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::FLAGS,
+            Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::FLAGS,
+            Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::FLAGS,
+            Self::EslintNoSequences(_) => EslintNoSequences::FLAGS,
+            Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::FLAGS,
+            Self::EslintNoShadow(_) => EslintNoShadow::FLAGS,
+            Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::FLAGS,
+            Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::FLAGS,
+            Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::FLAGS,
+            Self::EslintNoTernary(_) => EslintNoTernary::FLAGS,
+            Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::FLAGS,
+            Self::EslintNoThrowLiteral(_) => EslintNoThrowLiteral::FLAGS,
+            Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::FLAGS,
+            Self::EslintNoUndef(_) => EslintNoUndef::FLAGS,
+            Self::EslintNoUndefined(_) => EslintNoUndefined::FLAGS,
+            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::FLAGS,
+            Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::FLAGS,
+            Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::FLAGS,
+            Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::FLAGS,
+            Self::EslintNoUnreachable(_) => EslintNoUnreachable::FLAGS,
+            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::FLAGS,
+            Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::FLAGS,
+            Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::FLAGS,
+            Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::FLAGS,
+            Self::EslintNoUnusedExpressions(_) => EslintNoUnusedExpressions::FLAGS,
+            Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::FLAGS,
+            Self::EslintNoUnusedPrivateClassMembers(_) => EslintNoUnusedPrivateClassMembers::FLAGS,
+            Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::FLAGS,
+            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::FLAGS,
+            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::FLAGS,
+            Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::FLAGS,
+            Self::EslintNoUselessCall(_) => EslintNoUselessCall::FLAGS,
+            Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::FLAGS,
+            Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::FLAGS,
+            Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::FLAGS,
+            Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::FLAGS,
+            Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::FLAGS,
+            Self::EslintNoUselessRename(_) => EslintNoUselessRename::FLAGS,
+            Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::FLAGS,
+            Self::EslintNoVar(_) => EslintNoVar::FLAGS,
+            Self::EslintNoVoid(_) => EslintNoVoid::FLAGS,
+            Self::EslintNoWarningComments(_) => EslintNoWarningComments::FLAGS,
+            Self::EslintNoWith(_) => EslintNoWith::FLAGS,
+            Self::EslintObjectShorthand(_) => EslintObjectShorthand::FLAGS,
+            Self::EslintOneVar(_) => EslintOneVar::FLAGS,
+            Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::FLAGS,
+            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::FLAGS,
+            Self::EslintPreferConst(_) => EslintPreferConst::FLAGS,
+            Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::FLAGS,
             Self::EslintPreferExponentiationOperator(_) => {
-                EslintPreferExponentiationOperator::IS_TSGOLINT_RULE
+                EslintPreferExponentiationOperator::FLAGS
             }
-            Self::EslintPreferNamedCaptureGroup(_) => {
-                EslintPreferNamedCaptureGroup::IS_TSGOLINT_RULE
-            }
-            Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::IS_TSGOLINT_RULE,
-            Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::IS_TSGOLINT_RULE,
-            Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::IS_TSGOLINT_RULE,
-            Self::EslintPreferPromiseRejectErrors(_) => {
-                EslintPreferPromiseRejectErrors::IS_TSGOLINT_RULE
-            }
-            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::IS_TSGOLINT_RULE,
-            Self::EslintPreferRestParams(_) => EslintPreferRestParams::IS_TSGOLINT_RULE,
-            Self::EslintPreferSpread(_) => EslintPreferSpread::IS_TSGOLINT_RULE,
-            Self::EslintPreferTemplate(_) => EslintPreferTemplate::IS_TSGOLINT_RULE,
-            Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::IS_TSGOLINT_RULE,
-            Self::EslintRadix(_) => EslintRadix::IS_TSGOLINT_RULE,
-            Self::EslintRequireAwait(_) => EslintRequireAwait::IS_TSGOLINT_RULE,
-            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::IS_TSGOLINT_RULE,
-            Self::EslintRequireYield(_) => EslintRequireYield::IS_TSGOLINT_RULE,
-            Self::EslintSortImports(_) => EslintSortImports::IS_TSGOLINT_RULE,
-            Self::EslintSortKeys(_) => EslintSortKeys::IS_TSGOLINT_RULE,
-            Self::EslintSortVars(_) => EslintSortVars::IS_TSGOLINT_RULE,
-            Self::EslintSymbolDescription(_) => EslintSymbolDescription::IS_TSGOLINT_RULE,
-            Self::EslintUnicodeBom(_) => EslintUnicodeBom::IS_TSGOLINT_RULE,
-            Self::EslintUseIsnan(_) => EslintUseIsnan::IS_TSGOLINT_RULE,
-            Self::EslintValidTypeof(_) => EslintValidTypeof::IS_TSGOLINT_RULE,
-            Self::EslintVarsOnTop(_) => EslintVarsOnTop::IS_TSGOLINT_RULE,
-            Self::EslintYoda(_) => EslintYoda::IS_TSGOLINT_RULE,
+            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::FLAGS,
+            Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::FLAGS,
+            Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::FLAGS,
+            Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::FLAGS,
+            Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::FLAGS,
+            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::FLAGS,
+            Self::EslintPreferRestParams(_) => EslintPreferRestParams::FLAGS,
+            Self::EslintPreferSpread(_) => EslintPreferSpread::FLAGS,
+            Self::EslintPreferTemplate(_) => EslintPreferTemplate::FLAGS,
+            Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::FLAGS,
+            Self::EslintRadix(_) => EslintRadix::FLAGS,
+            Self::EslintRequireAwait(_) => EslintRequireAwait::FLAGS,
+            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::FLAGS,
+            Self::EslintRequireYield(_) => EslintRequireYield::FLAGS,
+            Self::EslintSortImports(_) => EslintSortImports::FLAGS,
+            Self::EslintSortKeys(_) => EslintSortKeys::FLAGS,
+            Self::EslintSortVars(_) => EslintSortVars::FLAGS,
+            Self::EslintSymbolDescription(_) => EslintSymbolDescription::FLAGS,
+            Self::EslintUnicodeBom(_) => EslintUnicodeBom::FLAGS,
+            Self::EslintUseIsnan(_) => EslintUseIsnan::FLAGS,
+            Self::EslintValidTypeof(_) => EslintValidTypeof::FLAGS,
+            Self::EslintVarsOnTop(_) => EslintVarsOnTop::FLAGS,
+            Self::EslintYoda(_) => EslintYoda::FLAGS,
             Self::TypescriptAdjacentOverloadSignatures(_) => {
-                TypescriptAdjacentOverloadSignatures::IS_TSGOLINT_RULE
+                TypescriptAdjacentOverloadSignatures::FLAGS
             }
-            Self::TypescriptArrayType(_) => TypescriptArrayType::IS_TSGOLINT_RULE,
-            Self::TypescriptAwaitThenable(_) => TypescriptAwaitThenable::IS_TSGOLINT_RULE,
-            Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::IS_TSGOLINT_RULE,
-            Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::IS_TSGOLINT_RULE,
-            Self::TypescriptBanTypes(_) => TypescriptBanTypes::IS_TSGOLINT_RULE,
+            Self::TypescriptArrayType(_) => TypescriptArrayType::FLAGS,
+            Self::TypescriptAwaitThenable(_) => TypescriptAwaitThenable::FLAGS,
+            Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::FLAGS,
+            Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::FLAGS,
+            Self::TypescriptBanTypes(_) => TypescriptBanTypes::FLAGS,
             Self::TypescriptClassLiteralPropertyStyle(_) => {
-                TypescriptClassLiteralPropertyStyle::IS_TSGOLINT_RULE
+                TypescriptClassLiteralPropertyStyle::FLAGS
             }
             Self::TypescriptConsistentGenericConstructors(_) => {
-                TypescriptConsistentGenericConstructors::IS_TSGOLINT_RULE
+                TypescriptConsistentGenericConstructors::FLAGS
             }
             Self::TypescriptConsistentIndexedObjectStyle(_) => {
-                TypescriptConsistentIndexedObjectStyle::IS_TSGOLINT_RULE
+                TypescriptConsistentIndexedObjectStyle::FLAGS
             }
-            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::IS_TSGOLINT_RULE,
+            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::FLAGS,
             Self::TypescriptConsistentTypeAssertions(_) => {
-                TypescriptConsistentTypeAssertions::IS_TSGOLINT_RULE
+                TypescriptConsistentTypeAssertions::FLAGS
             }
             Self::TypescriptConsistentTypeDefinitions(_) => {
-                TypescriptConsistentTypeDefinitions::IS_TSGOLINT_RULE
+                TypescriptConsistentTypeDefinitions::FLAGS
             }
-            Self::TypescriptConsistentTypeExports(_) => {
-                TypescriptConsistentTypeExports::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptConsistentTypeImports(_) => {
-                TypescriptConsistentTypeImports::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptDotNotation(_) => TypescriptDotNotation::IS_TSGOLINT_RULE,
+            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::FLAGS,
+            Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::FLAGS,
+            Self::TypescriptDotNotation(_) => TypescriptDotNotation::FLAGS,
             Self::TypescriptExplicitFunctionReturnType(_) => {
-                TypescriptExplicitFunctionReturnType::IS_TSGOLINT_RULE
+                TypescriptExplicitFunctionReturnType::FLAGS
             }
             Self::TypescriptExplicitMemberAccessibility(_) => {
-                TypescriptExplicitMemberAccessibility::IS_TSGOLINT_RULE
+                TypescriptExplicitMemberAccessibility::FLAGS
             }
             Self::TypescriptExplicitModuleBoundaryTypes(_) => {
-                TypescriptExplicitModuleBoundaryTypes::IS_TSGOLINT_RULE
+                TypescriptExplicitModuleBoundaryTypes::FLAGS
             }
-            Self::TypescriptMethodSignatureStyle(_) => {
-                TypescriptMethodSignatureStyle::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::IS_TSGOLINT_RULE,
-            Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::IS_TSGOLINT_RULE,
+            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::FLAGS,
+            Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::FLAGS,
+            Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::FLAGS,
             Self::TypescriptNoConfusingNonNullAssertion(_) => {
-                TypescriptNoConfusingNonNullAssertion::IS_TSGOLINT_RULE
+                TypescriptNoConfusingNonNullAssertion::FLAGS
             }
             Self::TypescriptNoConfusingVoidExpression(_) => {
-                TypescriptNoConfusingVoidExpression::IS_TSGOLINT_RULE
+                TypescriptNoConfusingVoidExpression::FLAGS
             }
-            Self::TypescriptNoDeprecated(_) => TypescriptNoDeprecated::IS_TSGOLINT_RULE,
-            Self::TypescriptNoDuplicateEnumValues(_) => {
-                TypescriptNoDuplicateEnumValues::IS_TSGOLINT_RULE
-            }
+            Self::TypescriptNoDeprecated(_) => TypescriptNoDeprecated::FLAGS,
+            Self::TypescriptNoDuplicateEnumValues(_) => TypescriptNoDuplicateEnumValues::FLAGS,
             Self::TypescriptNoDuplicateTypeConstituents(_) => {
-                TypescriptNoDuplicateTypeConstituents::IS_TSGOLINT_RULE
+                TypescriptNoDuplicateTypeConstituents::FLAGS
             }
-            Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::IS_TSGOLINT_RULE,
-            Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::IS_TSGOLINT_RULE,
-            Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::IS_TSGOLINT_RULE,
-            Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::IS_TSGOLINT_RULE,
-            Self::TypescriptNoExtraNonNullAssertion(_) => {
-                TypescriptNoExtraNonNullAssertion::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::IS_TSGOLINT_RULE,
-            Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::IS_TSGOLINT_RULE,
-            Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::IS_TSGOLINT_RULE,
+            Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::FLAGS,
+            Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::FLAGS,
+            Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::FLAGS,
+            Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::FLAGS,
+            Self::TypescriptNoExtraNonNullAssertion(_) => TypescriptNoExtraNonNullAssertion::FLAGS,
+            Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::FLAGS,
+            Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::FLAGS,
+            Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::FLAGS,
             Self::TypescriptNoGeneratedEmptyObjectType(_) => {
-                TypescriptNoGeneratedEmptyObjectType::IS_TSGOLINT_RULE
+                TypescriptNoGeneratedEmptyObjectType::FLAGS
             }
-            Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::IS_TSGOLINT_RULE,
-            Self::TypescriptNoImportTypeSideEffects(_) => {
-                TypescriptNoImportTypeSideEffects::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::IS_TSGOLINT_RULE,
-            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::IS_TSGOLINT_RULE,
+            Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::FLAGS,
+            Self::TypescriptNoImportTypeSideEffects(_) => TypescriptNoImportTypeSideEffects::FLAGS,
+            Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::FLAGS,
+            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::FLAGS,
             Self::TypescriptNoMeaninglessVoidOperator(_) => {
-                TypescriptNoMeaninglessVoidOperator::IS_TSGOLINT_RULE
+                TypescriptNoMeaninglessVoidOperator::FLAGS
             }
-            Self::TypescriptNoMisusedNew(_) => TypescriptNoMisusedNew::IS_TSGOLINT_RULE,
-            Self::TypescriptNoMisusedPromises(_) => TypescriptNoMisusedPromises::IS_TSGOLINT_RULE,
-            Self::TypescriptNoMisusedSpread(_) => TypescriptNoMisusedSpread::IS_TSGOLINT_RULE,
-            Self::TypescriptNoMixedEnums(_) => TypescriptNoMixedEnums::IS_TSGOLINT_RULE,
-            Self::TypescriptNoNamespace(_) => TypescriptNoNamespace::IS_TSGOLINT_RULE,
+            Self::TypescriptNoMisusedNew(_) => TypescriptNoMisusedNew::FLAGS,
+            Self::TypescriptNoMisusedPromises(_) => TypescriptNoMisusedPromises::FLAGS,
+            Self::TypescriptNoMisusedSpread(_) => TypescriptNoMisusedSpread::FLAGS,
+            Self::TypescriptNoMixedEnums(_) => TypescriptNoMixedEnums::FLAGS,
+            Self::TypescriptNoNamespace(_) => TypescriptNoNamespace::FLAGS,
             Self::TypescriptNoNonNullAssertedNullishCoalescing(_) => {
-                TypescriptNoNonNullAssertedNullishCoalescing::IS_TSGOLINT_RULE
+                TypescriptNoNonNullAssertedNullishCoalescing::FLAGS
             }
             Self::TypescriptNoNonNullAssertedOptionalChain(_) => {
-                TypescriptNoNonNullAssertedOptionalChain::IS_TSGOLINT_RULE
+                TypescriptNoNonNullAssertedOptionalChain::FLAGS
             }
-            Self::TypescriptNoNonNullAssertion(_) => TypescriptNoNonNullAssertion::IS_TSGOLINT_RULE,
+            Self::TypescriptNoNonNullAssertion(_) => TypescriptNoNonNullAssertion::FLAGS,
             Self::TypescriptNoRedundantTypeConstituents(_) => {
-                TypescriptNoRedundantTypeConstituents::IS_TSGOLINT_RULE
+                TypescriptNoRedundantTypeConstituents::FLAGS
             }
-            Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::IS_TSGOLINT_RULE,
-            Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::IS_TSGOLINT_RULE,
-            Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::IS_TSGOLINT_RULE,
+            Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::FLAGS,
+            Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::FLAGS,
+            Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::FLAGS,
             Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
-                TypescriptNoUnnecessaryBooleanLiteralCompare::IS_TSGOLINT_RULE
+                TypescriptNoUnnecessaryBooleanLiteralCompare::FLAGS
             }
-            Self::TypescriptNoUnnecessaryCondition(_) => {
-                TypescriptNoUnnecessaryCondition::IS_TSGOLINT_RULE
-            }
+            Self::TypescriptNoUnnecessaryCondition(_) => TypescriptNoUnnecessaryCondition::FLAGS,
             Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
-                TypescriptNoUnnecessaryParameterPropertyAssignment::IS_TSGOLINT_RULE
+                TypescriptNoUnnecessaryParameterPropertyAssignment::FLAGS
             }
-            Self::TypescriptNoUnnecessaryQualifier(_) => {
-                TypescriptNoUnnecessaryQualifier::IS_TSGOLINT_RULE
-            }
+            Self::TypescriptNoUnnecessaryQualifier(_) => TypescriptNoUnnecessaryQualifier::FLAGS,
             Self::TypescriptNoUnnecessaryTemplateExpression(_) => {
-                TypescriptNoUnnecessaryTemplateExpression::IS_TSGOLINT_RULE
+                TypescriptNoUnnecessaryTemplateExpression::FLAGS
             }
             Self::TypescriptNoUnnecessaryTypeArguments(_) => {
-                TypescriptNoUnnecessaryTypeArguments::IS_TSGOLINT_RULE
+                TypescriptNoUnnecessaryTypeArguments::FLAGS
             }
             Self::TypescriptNoUnnecessaryTypeAssertion(_) => {
-                TypescriptNoUnnecessaryTypeAssertion::IS_TSGOLINT_RULE
+                TypescriptNoUnnecessaryTypeAssertion::FLAGS
             }
             Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
-                TypescriptNoUnnecessaryTypeConstraint::IS_TSGOLINT_RULE
+                TypescriptNoUnnecessaryTypeConstraint::FLAGS
             }
             Self::TypescriptNoUnnecessaryTypeConversion(_) => {
-                TypescriptNoUnnecessaryTypeConversion::IS_TSGOLINT_RULE
+                TypescriptNoUnnecessaryTypeConversion::FLAGS
             }
             Self::TypescriptNoUnnecessaryTypeParameters(_) => {
-                TypescriptNoUnnecessaryTypeParameters::IS_TSGOLINT_RULE
+                TypescriptNoUnnecessaryTypeParameters::FLAGS
             }
-            Self::TypescriptNoUnsafeArgument(_) => TypescriptNoUnsafeArgument::IS_TSGOLINT_RULE,
-            Self::TypescriptNoUnsafeAssignment(_) => TypescriptNoUnsafeAssignment::IS_TSGOLINT_RULE,
-            Self::TypescriptNoUnsafeCall(_) => TypescriptNoUnsafeCall::IS_TSGOLINT_RULE,
+            Self::TypescriptNoUnsafeArgument(_) => TypescriptNoUnsafeArgument::FLAGS,
+            Self::TypescriptNoUnsafeAssignment(_) => TypescriptNoUnsafeAssignment::FLAGS,
+            Self::TypescriptNoUnsafeCall(_) => TypescriptNoUnsafeCall::FLAGS,
             Self::TypescriptNoUnsafeDeclarationMerging(_) => {
-                TypescriptNoUnsafeDeclarationMerging::IS_TSGOLINT_RULE
+                TypescriptNoUnsafeDeclarationMerging::FLAGS
             }
-            Self::TypescriptNoUnsafeEnumComparison(_) => {
-                TypescriptNoUnsafeEnumComparison::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptNoUnsafeFunctionType(_) => {
-                TypescriptNoUnsafeFunctionType::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptNoUnsafeMemberAccess(_) => {
-                TypescriptNoUnsafeMemberAccess::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::IS_TSGOLINT_RULE,
-            Self::TypescriptNoUnsafeTypeAssertion(_) => {
-                TypescriptNoUnsafeTypeAssertion::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::IS_TSGOLINT_RULE,
+            Self::TypescriptNoUnsafeEnumComparison(_) => TypescriptNoUnsafeEnumComparison::FLAGS,
+            Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::FLAGS,
+            Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::FLAGS,
+            Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::FLAGS,
+            Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::FLAGS,
+            Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::FLAGS,
             Self::TypescriptNoUselessDefaultAssignment(_) => {
-                TypescriptNoUselessDefaultAssignment::IS_TSGOLINT_RULE
+                TypescriptNoUselessDefaultAssignment::FLAGS
             }
-            Self::TypescriptNoUselessEmptyExport(_) => {
-                TypescriptNoUselessEmptyExport::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::IS_TSGOLINT_RULE,
-            Self::TypescriptNoWrapperObjectTypes(_) => {
-                TypescriptNoWrapperObjectTypes::IS_TSGOLINT_RULE
-            }
+            Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::FLAGS,
+            Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::FLAGS,
+            Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::FLAGS,
             Self::TypescriptNonNullableTypeAssertionStyle(_) => {
-                TypescriptNonNullableTypeAssertionStyle::IS_TSGOLINT_RULE
+                TypescriptNonNullableTypeAssertionStyle::FLAGS
             }
-            Self::TypescriptOnlyThrowError(_) => TypescriptOnlyThrowError::IS_TSGOLINT_RULE,
-            Self::TypescriptParameterProperties(_) => {
-                TypescriptParameterProperties::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::IS_TSGOLINT_RULE,
-            Self::TypescriptPreferEnumInitializers(_) => {
-                TypescriptPreferEnumInitializers::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptPreferFind(_) => TypescriptPreferFind::IS_TSGOLINT_RULE,
-            Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::IS_TSGOLINT_RULE,
-            Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::IS_TSGOLINT_RULE,
-            Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::IS_TSGOLINT_RULE,
-            Self::TypescriptPreferLiteralEnumMember(_) => {
-                TypescriptPreferLiteralEnumMember::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptPreferNamespaceKeyword(_) => {
-                TypescriptPreferNamespaceKeyword::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptPreferNullishCoalescing(_) => {
-                TypescriptPreferNullishCoalescing::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptPreferOptionalChain(_) => {
-                TypescriptPreferOptionalChain::IS_TSGOLINT_RULE
-            }
+            Self::TypescriptOnlyThrowError(_) => TypescriptOnlyThrowError::FLAGS,
+            Self::TypescriptParameterProperties(_) => TypescriptParameterProperties::FLAGS,
+            Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::FLAGS,
+            Self::TypescriptPreferEnumInitializers(_) => TypescriptPreferEnumInitializers::FLAGS,
+            Self::TypescriptPreferFind(_) => TypescriptPreferFind::FLAGS,
+            Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::FLAGS,
+            Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::FLAGS,
+            Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::FLAGS,
+            Self::TypescriptPreferLiteralEnumMember(_) => TypescriptPreferLiteralEnumMember::FLAGS,
+            Self::TypescriptPreferNamespaceKeyword(_) => TypescriptPreferNamespaceKeyword::FLAGS,
+            Self::TypescriptPreferNullishCoalescing(_) => TypescriptPreferNullishCoalescing::FLAGS,
+            Self::TypescriptPreferOptionalChain(_) => TypescriptPreferOptionalChain::FLAGS,
             Self::TypescriptPreferPromiseRejectErrors(_) => {
-                TypescriptPreferPromiseRejectErrors::IS_TSGOLINT_RULE
+                TypescriptPreferPromiseRejectErrors::FLAGS
             }
-            Self::TypescriptPreferReadonly(_) => TypescriptPreferReadonly::IS_TSGOLINT_RULE,
+            Self::TypescriptPreferReadonly(_) => TypescriptPreferReadonly::FLAGS,
             Self::TypescriptPreferReadonlyParameterTypes(_) => {
-                TypescriptPreferReadonlyParameterTypes::IS_TSGOLINT_RULE
+                TypescriptPreferReadonlyParameterTypes::FLAGS
             }
             Self::TypescriptPreferReduceTypeParameter(_) => {
-                TypescriptPreferReduceTypeParameter::IS_TSGOLINT_RULE
+                TypescriptPreferReduceTypeParameter::FLAGS
             }
-            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::IS_TSGOLINT_RULE,
-            Self::TypescriptPreferReturnThisType(_) => {
-                TypescriptPreferReturnThisType::IS_TSGOLINT_RULE
-            }
+            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::FLAGS,
+            Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::FLAGS,
             Self::TypescriptPreferStringStartsEndsWith(_) => {
-                TypescriptPreferStringStartsEndsWith::IS_TSGOLINT_RULE
+                TypescriptPreferStringStartsEndsWith::FLAGS
             }
-            Self::TypescriptPreferTsExpectError(_) => {
-                TypescriptPreferTsExpectError::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptPromiseFunctionAsync(_) => {
-                TypescriptPromiseFunctionAsync::IS_TSGOLINT_RULE
-            }
+            Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::FLAGS,
+            Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::FLAGS,
             Self::TypescriptRelatedGetterSetterPairs(_) => {
-                TypescriptRelatedGetterSetterPairs::IS_TSGOLINT_RULE
+                TypescriptRelatedGetterSetterPairs::FLAGS
             }
-            Self::TypescriptRequireArraySortCompare(_) => {
-                TypescriptRequireArraySortCompare::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptRequireAwait(_) => TypescriptRequireAwait::IS_TSGOLINT_RULE,
-            Self::TypescriptRestrictPlusOperands(_) => {
-                TypescriptRestrictPlusOperands::IS_TSGOLINT_RULE
-            }
+            Self::TypescriptRequireArraySortCompare(_) => TypescriptRequireArraySortCompare::FLAGS,
+            Self::TypescriptRequireAwait(_) => TypescriptRequireAwait::FLAGS,
+            Self::TypescriptRestrictPlusOperands(_) => TypescriptRestrictPlusOperands::FLAGS,
             Self::TypescriptRestrictTemplateExpressions(_) => {
-                TypescriptRestrictTemplateExpressions::IS_TSGOLINT_RULE
+                TypescriptRestrictTemplateExpressions::FLAGS
             }
-            Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::IS_TSGOLINT_RULE,
+            Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::FLAGS,
             Self::TypescriptStrictBooleanExpressions(_) => {
-                TypescriptStrictBooleanExpressions::IS_TSGOLINT_RULE
+                TypescriptStrictBooleanExpressions::FLAGS
             }
-            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::IS_TSGOLINT_RULE,
+            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::FLAGS,
             Self::TypescriptSwitchExhaustivenessCheck(_) => {
-                TypescriptSwitchExhaustivenessCheck::IS_TSGOLINT_RULE
+                TypescriptSwitchExhaustivenessCheck::FLAGS
             }
-            Self::TypescriptTripleSlashReference(_) => {
-                TypescriptTripleSlashReference::IS_TSGOLINT_RULE
-            }
-            Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::IS_TSGOLINT_RULE,
-            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::IS_TSGOLINT_RULE,
+            Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::FLAGS,
+            Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::FLAGS,
+            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::FLAGS,
             Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
-                TypescriptUseUnknownInCatchCallbackVariable::IS_TSGOLINT_RULE
+                TypescriptUseUnknownInCatchCallbackVariable::FLAGS
             }
-            Self::JestConsistentTestIt(_) => JestConsistentTestIt::IS_TSGOLINT_RULE,
-            Self::JestExpectExpect(_) => JestExpectExpect::IS_TSGOLINT_RULE,
-            Self::JestMaxExpects(_) => JestMaxExpects::IS_TSGOLINT_RULE,
-            Self::JestMaxNestedDescribe(_) => JestMaxNestedDescribe::IS_TSGOLINT_RULE,
-            Self::JestNoAliasMethods(_) => JestNoAliasMethods::IS_TSGOLINT_RULE,
-            Self::JestNoCommentedOutTests(_) => JestNoCommentedOutTests::IS_TSGOLINT_RULE,
-            Self::JestNoConditionalExpect(_) => JestNoConditionalExpect::IS_TSGOLINT_RULE,
-            Self::JestNoConditionalInTest(_) => JestNoConditionalInTest::IS_TSGOLINT_RULE,
-            Self::JestNoConfusingSetTimeout(_) => JestNoConfusingSetTimeout::IS_TSGOLINT_RULE,
-            Self::JestNoDeprecatedFunctions(_) => JestNoDeprecatedFunctions::IS_TSGOLINT_RULE,
-            Self::JestNoDisabledTests(_) => JestNoDisabledTests::IS_TSGOLINT_RULE,
-            Self::JestNoDoneCallback(_) => JestNoDoneCallback::IS_TSGOLINT_RULE,
-            Self::JestNoDuplicateHooks(_) => JestNoDuplicateHooks::IS_TSGOLINT_RULE,
-            Self::JestNoExport(_) => JestNoExport::IS_TSGOLINT_RULE,
-            Self::JestNoFocusedTests(_) => JestNoFocusedTests::IS_TSGOLINT_RULE,
-            Self::JestNoHooks(_) => JestNoHooks::IS_TSGOLINT_RULE,
-            Self::JestNoIdenticalTitle(_) => JestNoIdenticalTitle::IS_TSGOLINT_RULE,
-            Self::JestNoInterpolationInSnapshots(_) => {
-                JestNoInterpolationInSnapshots::IS_TSGOLINT_RULE
-            }
-            Self::JestNoJasmineGlobals(_) => JestNoJasmineGlobals::IS_TSGOLINT_RULE,
-            Self::JestNoLargeSnapshots(_) => JestNoLargeSnapshots::IS_TSGOLINT_RULE,
-            Self::JestNoMocksImport(_) => JestNoMocksImport::IS_TSGOLINT_RULE,
-            Self::JestNoRestrictedJestMethods(_) => JestNoRestrictedJestMethods::IS_TSGOLINT_RULE,
-            Self::JestNoRestrictedMatchers(_) => JestNoRestrictedMatchers::IS_TSGOLINT_RULE,
-            Self::JestNoStandaloneExpect(_) => JestNoStandaloneExpect::IS_TSGOLINT_RULE,
-            Self::JestNoTestPrefixes(_) => JestNoTestPrefixes::IS_TSGOLINT_RULE,
-            Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::IS_TSGOLINT_RULE,
-            Self::JestNoUnneededAsyncExpectFunction(_) => {
-                JestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
-            }
-            Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::IS_TSGOLINT_RULE,
-            Self::JestPaddingAroundAfterAllBlocks(_) => {
-                JestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
-            }
-            Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::IS_TSGOLINT_RULE,
-            Self::JestPreferCalledWith(_) => JestPreferCalledWith::IS_TSGOLINT_RULE,
-            Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::IS_TSGOLINT_RULE,
-            Self::JestPreferEach(_) => JestPreferEach::IS_TSGOLINT_RULE,
-            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::IS_TSGOLINT_RULE,
-            Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::IS_TSGOLINT_RULE,
-            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::IS_TSGOLINT_RULE,
-            Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::IS_TSGOLINT_RULE,
-            Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::IS_TSGOLINT_RULE,
-            Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::IS_TSGOLINT_RULE,
-            Self::JestPreferImportingJestGlobals(_) => {
-                JestPreferImportingJestGlobals::IS_TSGOLINT_RULE
-            }
-            Self::JestPreferJestMocked(_) => JestPreferJestMocked::IS_TSGOLINT_RULE,
-            Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::IS_TSGOLINT_RULE,
-            Self::JestPreferMockPromiseShorthand(_) => {
-                JestPreferMockPromiseShorthand::IS_TSGOLINT_RULE
-            }
-            Self::JestPreferMockReturnShorthand(_) => {
-                JestPreferMockReturnShorthand::IS_TSGOLINT_RULE
-            }
-            Self::JestPreferSnapshotHint(_) => JestPreferSnapshotHint::IS_TSGOLINT_RULE,
-            Self::JestPreferSpyOn(_) => JestPreferSpyOn::IS_TSGOLINT_RULE,
-            Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::IS_TSGOLINT_RULE,
-            Self::JestPreferToBe(_) => JestPreferToBe::IS_TSGOLINT_RULE,
-            Self::JestPreferToContain(_) => JestPreferToContain::IS_TSGOLINT_RULE,
-            Self::JestPreferToHaveBeenCalled(_) => JestPreferToHaveBeenCalled::IS_TSGOLINT_RULE,
-            Self::JestPreferToHaveBeenCalledTimes(_) => {
-                JestPreferToHaveBeenCalledTimes::IS_TSGOLINT_RULE
-            }
-            Self::JestPreferToHaveLength(_) => JestPreferToHaveLength::IS_TSGOLINT_RULE,
-            Self::JestPreferTodo(_) => JestPreferTodo::IS_TSGOLINT_RULE,
-            Self::JestRequireHook(_) => JestRequireHook::IS_TSGOLINT_RULE,
-            Self::JestRequireToThrowMessage(_) => JestRequireToThrowMessage::IS_TSGOLINT_RULE,
-            Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::IS_TSGOLINT_RULE,
-            Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::IS_TSGOLINT_RULE,
-            Self::JestValidExpect(_) => JestValidExpect::IS_TSGOLINT_RULE,
-            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::IS_TSGOLINT_RULE,
-            Self::JestValidTitle(_) => JestValidTitle::IS_TSGOLINT_RULE,
-            Self::ReactButtonHasType(_) => ReactButtonHasType::IS_TSGOLINT_RULE,
-            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::IS_TSGOLINT_RULE,
+            Self::JestConsistentTestIt(_) => JestConsistentTestIt::FLAGS,
+            Self::JestExpectExpect(_) => JestExpectExpect::FLAGS,
+            Self::JestMaxExpects(_) => JestMaxExpects::FLAGS,
+            Self::JestMaxNestedDescribe(_) => JestMaxNestedDescribe::FLAGS,
+            Self::JestNoAliasMethods(_) => JestNoAliasMethods::FLAGS,
+            Self::JestNoCommentedOutTests(_) => JestNoCommentedOutTests::FLAGS,
+            Self::JestNoConditionalExpect(_) => JestNoConditionalExpect::FLAGS,
+            Self::JestNoConditionalInTest(_) => JestNoConditionalInTest::FLAGS,
+            Self::JestNoConfusingSetTimeout(_) => JestNoConfusingSetTimeout::FLAGS,
+            Self::JestNoDeprecatedFunctions(_) => JestNoDeprecatedFunctions::FLAGS,
+            Self::JestNoDisabledTests(_) => JestNoDisabledTests::FLAGS,
+            Self::JestNoDoneCallback(_) => JestNoDoneCallback::FLAGS,
+            Self::JestNoDuplicateHooks(_) => JestNoDuplicateHooks::FLAGS,
+            Self::JestNoExport(_) => JestNoExport::FLAGS,
+            Self::JestNoFocusedTests(_) => JestNoFocusedTests::FLAGS,
+            Self::JestNoHooks(_) => JestNoHooks::FLAGS,
+            Self::JestNoIdenticalTitle(_) => JestNoIdenticalTitle::FLAGS,
+            Self::JestNoInterpolationInSnapshots(_) => JestNoInterpolationInSnapshots::FLAGS,
+            Self::JestNoJasmineGlobals(_) => JestNoJasmineGlobals::FLAGS,
+            Self::JestNoLargeSnapshots(_) => JestNoLargeSnapshots::FLAGS,
+            Self::JestNoMocksImport(_) => JestNoMocksImport::FLAGS,
+            Self::JestNoRestrictedJestMethods(_) => JestNoRestrictedJestMethods::FLAGS,
+            Self::JestNoRestrictedMatchers(_) => JestNoRestrictedMatchers::FLAGS,
+            Self::JestNoStandaloneExpect(_) => JestNoStandaloneExpect::FLAGS,
+            Self::JestNoTestPrefixes(_) => JestNoTestPrefixes::FLAGS,
+            Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::FLAGS,
+            Self::JestNoUnneededAsyncExpectFunction(_) => JestNoUnneededAsyncExpectFunction::FLAGS,
+            Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::FLAGS,
+            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::FLAGS,
+            Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::FLAGS,
+            Self::JestPreferCalledWith(_) => JestPreferCalledWith::FLAGS,
+            Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::FLAGS,
+            Self::JestPreferEach(_) => JestPreferEach::FLAGS,
+            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::FLAGS,
+            Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::FLAGS,
+            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::FLAGS,
+            Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::FLAGS,
+            Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::FLAGS,
+            Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::FLAGS,
+            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::FLAGS,
+            Self::JestPreferJestMocked(_) => JestPreferJestMocked::FLAGS,
+            Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::FLAGS,
+            Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::FLAGS,
+            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::FLAGS,
+            Self::JestPreferSnapshotHint(_) => JestPreferSnapshotHint::FLAGS,
+            Self::JestPreferSpyOn(_) => JestPreferSpyOn::FLAGS,
+            Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::FLAGS,
+            Self::JestPreferToBe(_) => JestPreferToBe::FLAGS,
+            Self::JestPreferToContain(_) => JestPreferToContain::FLAGS,
+            Self::JestPreferToHaveBeenCalled(_) => JestPreferToHaveBeenCalled::FLAGS,
+            Self::JestPreferToHaveBeenCalledTimes(_) => JestPreferToHaveBeenCalledTimes::FLAGS,
+            Self::JestPreferToHaveLength(_) => JestPreferToHaveLength::FLAGS,
+            Self::JestPreferTodo(_) => JestPreferTodo::FLAGS,
+            Self::JestRequireHook(_) => JestRequireHook::FLAGS,
+            Self::JestRequireToThrowMessage(_) => JestRequireToThrowMessage::FLAGS,
+            Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::FLAGS,
+            Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::FLAGS,
+            Self::JestValidExpect(_) => JestValidExpect::FLAGS,
+            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::FLAGS,
+            Self::JestValidTitle(_) => JestValidTitle::FLAGS,
+            Self::ReactButtonHasType(_) => ReactButtonHasType::FLAGS,
+            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::FLAGS,
             Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
-                ReactCheckedRequiresOnchangeOrReadonly::IS_TSGOLINT_RULE
+                ReactCheckedRequiresOnchangeOrReadonly::FLAGS
             }
-            Self::ReactDisplayName(_) => ReactDisplayName::IS_TSGOLINT_RULE,
-            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::IS_TSGOLINT_RULE,
-            Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::IS_TSGOLINT_RULE,
-            Self::ReactExhaustiveEffectDependencies(_) => {
-                ReactExhaustiveEffectDependencies::IS_TSGOLINT_RULE
-            }
-            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::IS_TSGOLINT_RULE,
-            Self::ReactForbidDomProps(_) => ReactForbidDomProps::IS_TSGOLINT_RULE,
-            Self::ReactForbidElements(_) => ReactForbidElements::IS_TSGOLINT_RULE,
-            Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::IS_TSGOLINT_RULE,
-            Self::ReactFunctionComponentDefinition(_) => {
-                ReactFunctionComponentDefinition::IS_TSGOLINT_RULE
-            }
-            Self::ReactGlobals(_) => ReactGlobals::IS_TSGOLINT_RULE,
-            Self::ReactHookUseState(_) => ReactHookUseState::IS_TSGOLINT_RULE,
-            Self::ReactHooks(_) => ReactHooks::IS_TSGOLINT_RULE,
-            Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::IS_TSGOLINT_RULE,
-            Self::ReactImmutability(_) => ReactImmutability::IS_TSGOLINT_RULE,
-            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::IS_TSGOLINT_RULE,
-            Self::ReactInvariant(_) => ReactInvariant::IS_TSGOLINT_RULE,
-            Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::IS_TSGOLINT_RULE,
-            Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::IS_TSGOLINT_RULE,
-            Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::IS_TSGOLINT_RULE,
-            Self::ReactJsxFragments(_) => ReactJsxFragments::IS_TSGOLINT_RULE,
-            Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::IS_TSGOLINT_RULE,
-            Self::ReactJsxKey(_) => ReactJsxKey::IS_TSGOLINT_RULE,
-            Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::IS_TSGOLINT_RULE,
-            Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::IS_TSGOLINT_RULE,
+            Self::ReactDisplayName(_) => ReactDisplayName::FLAGS,
+            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::FLAGS,
+            Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::FLAGS,
+            Self::ReactExhaustiveEffectDependencies(_) => ReactExhaustiveEffectDependencies::FLAGS,
+            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::FLAGS,
+            Self::ReactForbidDomProps(_) => ReactForbidDomProps::FLAGS,
+            Self::ReactForbidElements(_) => ReactForbidElements::FLAGS,
+            Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::FLAGS,
+            Self::ReactFunctionComponentDefinition(_) => ReactFunctionComponentDefinition::FLAGS,
+            Self::ReactGlobals(_) => ReactGlobals::FLAGS,
+            Self::ReactHookUseState(_) => ReactHookUseState::FLAGS,
+            Self::ReactHooks(_) => ReactHooks::FLAGS,
+            Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::FLAGS,
+            Self::ReactImmutability(_) => ReactImmutability::FLAGS,
+            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::FLAGS,
+            Self::ReactInvariant(_) => ReactInvariant::FLAGS,
+            Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::FLAGS,
+            Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::FLAGS,
+            Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::FLAGS,
+            Self::ReactJsxFragments(_) => ReactJsxFragments::FLAGS,
+            Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::FLAGS,
+            Self::ReactJsxKey(_) => ReactJsxKey::FLAGS,
+            Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::FLAGS,
+            Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::FLAGS,
             Self::ReactJsxNoConstructedContextValues(_) => {
-                ReactJsxNoConstructedContextValues::IS_TSGOLINT_RULE
+                ReactJsxNoConstructedContextValues::FLAGS
             }
-            Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::IS_TSGOLINT_RULE,
-            Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::IS_TSGOLINT_RULE,
-            Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::IS_TSGOLINT_RULE,
-            Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::IS_TSGOLINT_RULE,
-            Self::ReactJsxNoUndef(_) => ReactJsxNoUndef::IS_TSGOLINT_RULE,
-            Self::ReactJsxNoUselessFragment(_) => ReactJsxNoUselessFragment::IS_TSGOLINT_RULE,
-            Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::IS_TSGOLINT_RULE,
-            Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::IS_TSGOLINT_RULE,
-            Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::IS_TSGOLINT_RULE,
-            Self::ReactMemoDependencies(_) => ReactMemoDependencies::IS_TSGOLINT_RULE,
-            Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::IS_TSGOLINT_RULE,
-            Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::IS_TSGOLINT_RULE,
-            Self::ReactNoCloneElement(_) => ReactNoCloneElement::IS_TSGOLINT_RULE,
-            Self::ReactNoDanger(_) => ReactNoDanger::IS_TSGOLINT_RULE,
-            Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::IS_TSGOLINT_RULE,
-            Self::ReactNoDerivingStateInEffects(_) => {
-                ReactNoDerivingStateInEffects::IS_TSGOLINT_RULE
-            }
-            Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::IS_TSGOLINT_RULE,
-            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::IS_TSGOLINT_RULE,
-            Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::IS_TSGOLINT_RULE,
-            Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::IS_TSGOLINT_RULE,
-            Self::ReactNoIsMounted(_) => ReactNoIsMounted::IS_TSGOLINT_RULE,
-            Self::ReactNoMultiComp(_) => ReactNoMultiComp::IS_TSGOLINT_RULE,
-            Self::ReactNoNamespace(_) => ReactNoNamespace::IS_TSGOLINT_RULE,
-            Self::ReactNoObjectTypeAsDefaultProp(_) => {
-                ReactNoObjectTypeAsDefaultProp::IS_TSGOLINT_RULE
-            }
-            Self::ReactNoReactChildren(_) => ReactNoReactChildren::IS_TSGOLINT_RULE,
+            Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::FLAGS,
+            Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::FLAGS,
+            Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::FLAGS,
+            Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::FLAGS,
+            Self::ReactJsxNoUndef(_) => ReactJsxNoUndef::FLAGS,
+            Self::ReactJsxNoUselessFragment(_) => ReactJsxNoUselessFragment::FLAGS,
+            Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::FLAGS,
+            Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::FLAGS,
+            Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::FLAGS,
+            Self::ReactMemoDependencies(_) => ReactMemoDependencies::FLAGS,
+            Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::FLAGS,
+            Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::FLAGS,
+            Self::ReactNoCloneElement(_) => ReactNoCloneElement::FLAGS,
+            Self::ReactNoDanger(_) => ReactNoDanger::FLAGS,
+            Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::FLAGS,
+            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::FLAGS,
+            Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::FLAGS,
+            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::FLAGS,
+            Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::FLAGS,
+            Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::FLAGS,
+            Self::ReactNoIsMounted(_) => ReactNoIsMounted::FLAGS,
+            Self::ReactNoMultiComp(_) => ReactNoMultiComp::FLAGS,
+            Self::ReactNoNamespace(_) => ReactNoNamespace::FLAGS,
+            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::FLAGS,
+            Self::ReactNoReactChildren(_) => ReactNoReactChildren::FLAGS,
             Self::ReactNoRedundantShouldComponentUpdate(_) => {
-                ReactNoRedundantShouldComponentUpdate::IS_TSGOLINT_RULE
+                ReactNoRedundantShouldComponentUpdate::FLAGS
             }
-            Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::IS_TSGOLINT_RULE,
-            Self::ReactNoSetState(_) => ReactNoSetState::IS_TSGOLINT_RULE,
-            Self::ReactNoStringRefs(_) => ReactNoStringRefs::IS_TSGOLINT_RULE,
-            Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::IS_TSGOLINT_RULE,
-            Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::IS_TSGOLINT_RULE,
-            Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::IS_TSGOLINT_RULE,
-            Self::ReactNoUnsafe(_) => ReactNoUnsafe::IS_TSGOLINT_RULE,
-            Self::ReactNoUnstableNestedComponents(_) => {
-                ReactNoUnstableNestedComponents::IS_TSGOLINT_RULE
-            }
-            Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::IS_TSGOLINT_RULE,
-            Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::IS_TSGOLINT_RULE,
-            Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::IS_TSGOLINT_RULE,
-            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::IS_TSGOLINT_RULE,
-            Self::ReactPreserveManualMemoization(_) => {
-                ReactPreserveManualMemoization::IS_TSGOLINT_RULE
-            }
-            Self::ReactPurity(_) => ReactPurity::IS_TSGOLINT_RULE,
-            Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::IS_TSGOLINT_RULE,
-            Self::ReactRefs(_) => ReactRefs::IS_TSGOLINT_RULE,
-            Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::IS_TSGOLINT_RULE,
-            Self::ReactRuleSuppression(_) => ReactRuleSuppression::IS_TSGOLINT_RULE,
-            Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::IS_TSGOLINT_RULE,
-            Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::IS_TSGOLINT_RULE,
-            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::IS_TSGOLINT_RULE,
-            Self::ReactSetStateInRender(_) => ReactSetStateInRender::IS_TSGOLINT_RULE,
-            Self::ReactStateInConstructor(_) => ReactStateInConstructor::IS_TSGOLINT_RULE,
-            Self::ReactStaticComponents(_) => ReactStaticComponents::IS_TSGOLINT_RULE,
-            Self::ReactStylePropObject(_) => ReactStylePropObject::IS_TSGOLINT_RULE,
-            Self::ReactSyntax(_) => ReactSyntax::IS_TSGOLINT_RULE,
-            Self::ReactTodo(_) => ReactTodo::IS_TSGOLINT_RULE,
-            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::IS_TSGOLINT_RULE,
-            Self::ReactUseMemo(_) => ReactUseMemo::IS_TSGOLINT_RULE,
-            Self::ReactVoidDomElementsNoChildren(_) => {
-                ReactVoidDomElementsNoChildren::IS_TSGOLINT_RULE
-            }
-            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::IS_TSGOLINT_RULE,
-            Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::IS_TSGOLINT_RULE,
-            Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::IS_TSGOLINT_RULE,
-            Self::ReactPerfJsxNoNewFunctionAsProp(_) => {
-                ReactPerfJsxNoNewFunctionAsProp::IS_TSGOLINT_RULE
-            }
-            Self::ReactPerfJsxNoNewObjectAsProp(_) => {
-                ReactPerfJsxNoNewObjectAsProp::IS_TSGOLINT_RULE
-            }
-            Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::IS_TSGOLINT_RULE,
-            Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::IS_TSGOLINT_RULE,
-            Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::IS_TSGOLINT_RULE,
-            Self::UnicornConsistentEmptyArraySpread(_) => {
-                UnicornConsistentEmptyArraySpread::IS_TSGOLINT_RULE
-            }
+            Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::FLAGS,
+            Self::ReactNoSetState(_) => ReactNoSetState::FLAGS,
+            Self::ReactNoStringRefs(_) => ReactNoStringRefs::FLAGS,
+            Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::FLAGS,
+            Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::FLAGS,
+            Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::FLAGS,
+            Self::ReactNoUnsafe(_) => ReactNoUnsafe::FLAGS,
+            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::FLAGS,
+            Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::FLAGS,
+            Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::FLAGS,
+            Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::FLAGS,
+            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::FLAGS,
+            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::FLAGS,
+            Self::ReactPurity(_) => ReactPurity::FLAGS,
+            Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::FLAGS,
+            Self::ReactRefs(_) => ReactRefs::FLAGS,
+            Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::FLAGS,
+            Self::ReactRuleSuppression(_) => ReactRuleSuppression::FLAGS,
+            Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::FLAGS,
+            Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::FLAGS,
+            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::FLAGS,
+            Self::ReactSetStateInRender(_) => ReactSetStateInRender::FLAGS,
+            Self::ReactStateInConstructor(_) => ReactStateInConstructor::FLAGS,
+            Self::ReactStaticComponents(_) => ReactStaticComponents::FLAGS,
+            Self::ReactStylePropObject(_) => ReactStylePropObject::FLAGS,
+            Self::ReactSyntax(_) => ReactSyntax::FLAGS,
+            Self::ReactTodo(_) => ReactTodo::FLAGS,
+            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::FLAGS,
+            Self::ReactUseMemo(_) => ReactUseMemo::FLAGS,
+            Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::FLAGS,
+            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::FLAGS,
+            Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::FLAGS,
+            Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::FLAGS,
+            Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::FLAGS,
+            Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::FLAGS,
+            Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::FLAGS,
+            Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::FLAGS,
+            Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::FLAGS,
+            Self::UnicornConsistentEmptyArraySpread(_) => UnicornConsistentEmptyArraySpread::FLAGS,
             Self::UnicornConsistentExistenceIndexCheck(_) => {
-                UnicornConsistentExistenceIndexCheck::IS_TSGOLINT_RULE
+                UnicornConsistentExistenceIndexCheck::FLAGS
             }
-            Self::UnicornConsistentFunctionScoping(_) => {
-                UnicornConsistentFunctionScoping::IS_TSGOLINT_RULE
-            }
+            Self::UnicornConsistentFunctionScoping(_) => UnicornConsistentFunctionScoping::FLAGS,
             Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::IS_TSGOLINT_RULE
+                UnicornConsistentTemplateLiteralEscape::FLAGS
             }
-            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::IS_TSGOLINT_RULE,
-            Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::IS_TSGOLINT_RULE,
-            Self::UnicornErrorMessage(_) => UnicornErrorMessage::IS_TSGOLINT_RULE,
-            Self::UnicornEscapeCase(_) => UnicornEscapeCase::IS_TSGOLINT_RULE,
-            Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::IS_TSGOLINT_RULE,
-            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::IS_TSGOLINT_RULE,
-            Self::UnicornFilenameCase(_) => UnicornFilenameCase::IS_TSGOLINT_RULE,
-            Self::UnicornImportStyle(_) => UnicornImportStyle::IS_TSGOLINT_RULE,
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::IS_TSGOLINT_RULE,
-            Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::IS_TSGOLINT_RULE,
-            Self::UnicornNoAbusiveEslintDisable(_) => {
-                UnicornNoAbusiveEslintDisable::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::IS_TSGOLINT_RULE,
-            Self::UnicornNoAnonymousDefaultExport(_) => {
-                UnicornNoAnonymousDefaultExport::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoArrayCallbackReference(_) => {
-                UnicornNoArrayCallbackReference::IS_TSGOLINT_RULE
-            }
+            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::FLAGS,
+            Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::FLAGS,
+            Self::UnicornErrorMessage(_) => UnicornErrorMessage::FLAGS,
+            Self::UnicornEscapeCase(_) => UnicornEscapeCase::FLAGS,
+            Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::FLAGS,
+            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::FLAGS,
+            Self::UnicornFilenameCase(_) => UnicornFilenameCase::FLAGS,
+            Self::UnicornImportStyle(_) => UnicornImportStyle::FLAGS,
+            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::FLAGS,
+            Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::FLAGS,
+            Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::FLAGS,
+            Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::FLAGS,
+            Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::FLAGS,
+            Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::FLAGS,
             Self::UnicornNoArrayFillWithReferenceType(_) => {
-                UnicornNoArrayFillWithReferenceType::IS_TSGOLINT_RULE
+                UnicornNoArrayFillWithReferenceType::FLAGS
             }
-            Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::IS_TSGOLINT_RULE,
-            Self::UnicornNoArrayMethodThisArgument(_) => {
-                UnicornNoArrayMethodThisArgument::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::IS_TSGOLINT_RULE,
-            Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::IS_TSGOLINT_RULE,
-            Self::UnicornNoArraySort(_) => UnicornNoArraySort::IS_TSGOLINT_RULE,
-            Self::UnicornNoAwaitExpressionMember(_) => {
-                UnicornNoAwaitExpressionMember::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoAwaitInPromiseMethods(_) => {
-                UnicornNoAwaitInPromiseMethods::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::IS_TSGOLINT_RULE,
-            Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::IS_TSGOLINT_RULE,
-            Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::IS_TSGOLINT_RULE,
-            Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::IS_TSGOLINT_RULE,
-            Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::IS_TSGOLINT_RULE,
-            Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::IS_TSGOLINT_RULE,
-            Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::IS_TSGOLINT_RULE,
-            Self::UnicornNoInstanceofBuiltins(_) => UnicornNoInstanceofBuiltins::IS_TSGOLINT_RULE,
-            Self::UnicornNoInvalidFetchOptions(_) => UnicornNoInvalidFetchOptions::IS_TSGOLINT_RULE,
+            Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::FLAGS,
+            Self::UnicornNoArrayMethodThisArgument(_) => UnicornNoArrayMethodThisArgument::FLAGS,
+            Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::FLAGS,
+            Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::FLAGS,
+            Self::UnicornNoArraySort(_) => UnicornNoArraySort::FLAGS,
+            Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::FLAGS,
+            Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::FLAGS,
+            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::FLAGS,
+            Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::FLAGS,
+            Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::FLAGS,
+            Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::FLAGS,
+            Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::FLAGS,
+            Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::FLAGS,
+            Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::FLAGS,
+            Self::UnicornNoInstanceofBuiltins(_) => UnicornNoInstanceofBuiltins::FLAGS,
+            Self::UnicornNoInvalidFetchOptions(_) => UnicornNoInvalidFetchOptions::FLAGS,
             Self::UnicornNoInvalidRemoveEventListener(_) => {
-                UnicornNoInvalidRemoveEventListener::IS_TSGOLINT_RULE
+                UnicornNoInvalidRemoveEventListener::FLAGS
             }
-            Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::IS_TSGOLINT_RULE,
-            Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::IS_TSGOLINT_RULE,
-            Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::IS_TSGOLINT_RULE,
-            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::IS_TSGOLINT_RULE,
-            Self::UnicornNoNegationInEqualityCheck(_) => {
-                UnicornNoNegationInEqualityCheck::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::IS_TSGOLINT_RULE,
-            Self::UnicornNoNewArray(_) => UnicornNoNewArray::IS_TSGOLINT_RULE,
-            Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::IS_TSGOLINT_RULE,
-            Self::UnicornNoNull(_) => UnicornNoNull::IS_TSGOLINT_RULE,
-            Self::UnicornNoObjectAsDefaultParameter(_) => {
-                UnicornNoObjectAsDefaultParameter::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::IS_TSGOLINT_RULE,
+            Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::FLAGS,
+            Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::FLAGS,
+            Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::FLAGS,
+            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::FLAGS,
+            Self::UnicornNoNegationInEqualityCheck(_) => UnicornNoNegationInEqualityCheck::FLAGS,
+            Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::FLAGS,
+            Self::UnicornNoNewArray(_) => UnicornNoNewArray::FLAGS,
+            Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::FLAGS,
+            Self::UnicornNoNull(_) => UnicornNoNull::FLAGS,
+            Self::UnicornNoObjectAsDefaultParameter(_) => UnicornNoObjectAsDefaultParameter::FLAGS,
+            Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::FLAGS,
             Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
-                UnicornNoSinglePromiseInPromiseMethods::IS_TSGOLINT_RULE
+                UnicornNoSinglePromiseInPromiseMethods::FLAGS
             }
-            Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::IS_TSGOLINT_RULE,
-            Self::UnicornNoThenable(_) => UnicornNoThenable::IS_TSGOLINT_RULE,
-            Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::IS_TSGOLINT_RULE,
-            Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::IS_TSGOLINT_RULE,
+            Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::FLAGS,
+            Self::UnicornNoThenable(_) => UnicornNoThenable::FLAGS,
+            Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::FLAGS,
+            Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::FLAGS,
             Self::UnicornNoUnnecessaryArrayFlatDepth(_) => {
-                UnicornNoUnnecessaryArrayFlatDepth::IS_TSGOLINT_RULE
+                UnicornNoUnnecessaryArrayFlatDepth::FLAGS
             }
             Self::UnicornNoUnnecessaryArraySpliceCount(_) => {
-                UnicornNoUnnecessaryArraySpliceCount::IS_TSGOLINT_RULE
+                UnicornNoUnnecessaryArraySpliceCount::FLAGS
             }
-            Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::IS_TSGOLINT_RULE,
-            Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::IS_TSGOLINT_RULE,
+            Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::FLAGS,
+            Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::FLAGS,
             Self::UnicornNoUnreadableArrayDestructuring(_) => {
-                UnicornNoUnreadableArrayDestructuring::IS_TSGOLINT_RULE
+                UnicornNoUnreadableArrayDestructuring::FLAGS
             }
-            Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::IS_TSGOLINT_RULE,
+            Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::FLAGS,
             Self::UnicornNoUselessCollectionArgument(_) => {
-                UnicornNoUselessCollectionArgument::IS_TSGOLINT_RULE
+                UnicornNoUselessCollectionArgument::FLAGS
             }
             Self::UnicornNoUselessErrorCaptureStackTrace(_) => {
-                UnicornNoUselessErrorCaptureStackTrace::IS_TSGOLINT_RULE
+                UnicornNoUselessErrorCaptureStackTrace::FLAGS
             }
-            Self::UnicornNoUselessFallbackInSpread(_) => {
-                UnicornNoUselessFallbackInSpread::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoUselessIteratorToArray(_) => {
-                UnicornNoUselessIteratorToArray::IS_TSGOLINT_RULE
-            }
-            Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::IS_TSGOLINT_RULE,
+            Self::UnicornNoUselessFallbackInSpread(_) => UnicornNoUselessFallbackInSpread::FLAGS,
+            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::FLAGS,
+            Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::FLAGS,
             Self::UnicornNoUselessPromiseResolveReject(_) => {
-                UnicornNoUselessPromiseResolveReject::IS_TSGOLINT_RULE
+                UnicornNoUselessPromiseResolveReject::FLAGS
             }
-            Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::IS_TSGOLINT_RULE,
-            Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::IS_TSGOLINT_RULE,
-            Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::IS_TSGOLINT_RULE,
-            Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::IS_TSGOLINT_RULE,
-            Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::IS_TSGOLINT_RULE,
-            Self::UnicornNumericSeparatorsStyle(_) => {
-                UnicornNumericSeparatorsStyle::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferAddEventListener(_) => {
-                UnicornPreferAddEventListener::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::IS_TSGOLINT_RULE,
-            Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::IS_TSGOLINT_RULE,
-            Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::IS_TSGOLINT_RULE,
-            Self::UnicornPreferArrayIndexOf(_) => UnicornPreferArrayIndexOf::IS_TSGOLINT_RULE,
-            Self::UnicornPreferArraySome(_) => UnicornPreferArraySome::IS_TSGOLINT_RULE,
-            Self::UnicornPreferAt(_) => UnicornPreferAt::IS_TSGOLINT_RULE,
-            Self::UnicornPreferBigintLiterals(_) => UnicornPreferBigintLiterals::IS_TSGOLINT_RULE,
-            Self::UnicornPreferBlobReadingMethods(_) => {
-                UnicornPreferBlobReadingMethods::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferClassFields(_) => UnicornPreferClassFields::IS_TSGOLINT_RULE,
-            Self::UnicornPreferClasslistToggle(_) => UnicornPreferClasslistToggle::IS_TSGOLINT_RULE,
-            Self::UnicornPreferCodePoint(_) => UnicornPreferCodePoint::IS_TSGOLINT_RULE,
-            Self::UnicornPreferDateNow(_) => UnicornPreferDateNow::IS_TSGOLINT_RULE,
-            Self::UnicornPreferDefaultParameters(_) => {
-                UnicornPreferDefaultParameters::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferDomNodeAppend(_) => UnicornPreferDomNodeAppend::IS_TSGOLINT_RULE,
-            Self::UnicornPreferDomNodeDataset(_) => UnicornPreferDomNodeDataset::IS_TSGOLINT_RULE,
-            Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::IS_TSGOLINT_RULE,
-            Self::UnicornPreferDomNodeTextContent(_) => {
-                UnicornPreferDomNodeTextContent::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::IS_TSGOLINT_RULE,
-            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::IS_TSGOLINT_RULE,
-            Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::IS_TSGOLINT_RULE,
-            Self::UnicornPreferImportMetaProperties(_) => {
-                UnicornPreferImportMetaProperties::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::IS_TSGOLINT_RULE,
-            Self::UnicornPreferKeyboardEventKey(_) => {
-                UnicornPreferKeyboardEventKey::IS_TSGOLINT_RULE
-            }
+            Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::FLAGS,
+            Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::FLAGS,
+            Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::FLAGS,
+            Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::FLAGS,
+            Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::FLAGS,
+            Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::FLAGS,
+            Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::FLAGS,
+            Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::FLAGS,
+            Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::FLAGS,
+            Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::FLAGS,
+            Self::UnicornPreferArrayIndexOf(_) => UnicornPreferArrayIndexOf::FLAGS,
+            Self::UnicornPreferArraySome(_) => UnicornPreferArraySome::FLAGS,
+            Self::UnicornPreferAt(_) => UnicornPreferAt::FLAGS,
+            Self::UnicornPreferBigintLiterals(_) => UnicornPreferBigintLiterals::FLAGS,
+            Self::UnicornPreferBlobReadingMethods(_) => UnicornPreferBlobReadingMethods::FLAGS,
+            Self::UnicornPreferClassFields(_) => UnicornPreferClassFields::FLAGS,
+            Self::UnicornPreferClasslistToggle(_) => UnicornPreferClasslistToggle::FLAGS,
+            Self::UnicornPreferCodePoint(_) => UnicornPreferCodePoint::FLAGS,
+            Self::UnicornPreferDateNow(_) => UnicornPreferDateNow::FLAGS,
+            Self::UnicornPreferDefaultParameters(_) => UnicornPreferDefaultParameters::FLAGS,
+            Self::UnicornPreferDomNodeAppend(_) => UnicornPreferDomNodeAppend::FLAGS,
+            Self::UnicornPreferDomNodeDataset(_) => UnicornPreferDomNodeDataset::FLAGS,
+            Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::FLAGS,
+            Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::FLAGS,
+            Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::FLAGS,
+            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::FLAGS,
+            Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::FLAGS,
+            Self::UnicornPreferImportMetaProperties(_) => UnicornPreferImportMetaProperties::FLAGS,
+            Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::FLAGS,
+            Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::FLAGS,
             Self::UnicornPreferLogicalOperatorOverTernary(_) => {
-                UnicornPreferLogicalOperatorOverTernary::IS_TSGOLINT_RULE
+                UnicornPreferLogicalOperatorOverTernary::FLAGS
             }
-            Self::UnicornPreferMathMinMax(_) => UnicornPreferMathMinMax::IS_TSGOLINT_RULE,
-            Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::IS_TSGOLINT_RULE,
-            Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::IS_TSGOLINT_RULE,
-            Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::IS_TSGOLINT_RULE,
-            Self::UnicornPreferModule(_) => UnicornPreferModule::IS_TSGOLINT_RULE,
+            Self::UnicornPreferMathMinMax(_) => UnicornPreferMathMinMax::FLAGS,
+            Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::FLAGS,
+            Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::FLAGS,
+            Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::FLAGS,
+            Self::UnicornPreferModule(_) => UnicornPreferModule::FLAGS,
             Self::UnicornPreferNativeCoercionFunctions(_) => {
-                UnicornPreferNativeCoercionFunctions::IS_TSGOLINT_RULE
+                UnicornPreferNativeCoercionFunctions::FLAGS
             }
-            Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::IS_TSGOLINT_RULE,
-            Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::IS_TSGOLINT_RULE,
-            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::IS_TSGOLINT_RULE,
-            Self::UnicornPreferNumberProperties(_) => {
-                UnicornPreferNumberProperties::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferObjectFromEntries(_) => {
-                UnicornPreferObjectFromEntries::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferOptionalCatchBinding(_) => {
-                UnicornPreferOptionalCatchBinding::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferPrototypeMethods(_) => {
-                UnicornPreferPrototypeMethods::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferQuerySelector(_) => UnicornPreferQuerySelector::IS_TSGOLINT_RULE,
-            Self::UnicornPreferReflectApply(_) => UnicornPreferReflectApply::IS_TSGOLINT_RULE,
-            Self::UnicornPreferRegexpTest(_) => UnicornPreferRegexpTest::IS_TSGOLINT_RULE,
-            Self::UnicornPreferResponseStaticJson(_) => {
-                UnicornPreferResponseStaticJson::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::IS_TSGOLINT_RULE,
-            Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::IS_TSGOLINT_RULE,
-            Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::IS_TSGOLINT_RULE,
-            Self::UnicornPreferSpread(_) => UnicornPreferSpread::IS_TSGOLINT_RULE,
-            Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::IS_TSGOLINT_RULE,
-            Self::UnicornPreferStringReplaceAll(_) => {
-                UnicornPreferStringReplaceAll::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::IS_TSGOLINT_RULE,
-            Self::UnicornPreferStringStartsEndsWith(_) => {
-                UnicornPreferStringStartsEndsWith::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferStringTrimStartEnd(_) => {
-                UnicornPreferStringTrimStartEnd::IS_TSGOLINT_RULE
-            }
-            Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::IS_TSGOLINT_RULE,
-            Self::UnicornPreferTernary(_) => UnicornPreferTernary::IS_TSGOLINT_RULE,
-            Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::IS_TSGOLINT_RULE,
-            Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::IS_TSGOLINT_RULE,
-            Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::IS_TSGOLINT_RULE,
-            Self::UnicornRequireArrayJoinSeparator(_) => {
-                UnicornRequireArrayJoinSeparator::IS_TSGOLINT_RULE
-            }
-            Self::UnicornRequireModuleAttributes(_) => {
-                UnicornRequireModuleAttributes::IS_TSGOLINT_RULE
-            }
-            Self::UnicornRequireModuleSpecifiers(_) => {
-                UnicornRequireModuleSpecifiers::IS_TSGOLINT_RULE
-            }
+            Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::FLAGS,
+            Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::FLAGS,
+            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::FLAGS,
+            Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::FLAGS,
+            Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::FLAGS,
+            Self::UnicornPreferOptionalCatchBinding(_) => UnicornPreferOptionalCatchBinding::FLAGS,
+            Self::UnicornPreferPrototypeMethods(_) => UnicornPreferPrototypeMethods::FLAGS,
+            Self::UnicornPreferQuerySelector(_) => UnicornPreferQuerySelector::FLAGS,
+            Self::UnicornPreferReflectApply(_) => UnicornPreferReflectApply::FLAGS,
+            Self::UnicornPreferRegexpTest(_) => UnicornPreferRegexpTest::FLAGS,
+            Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::FLAGS,
+            Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::FLAGS,
+            Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::FLAGS,
+            Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::FLAGS,
+            Self::UnicornPreferSpread(_) => UnicornPreferSpread::FLAGS,
+            Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::FLAGS,
+            Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::FLAGS,
+            Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::FLAGS,
+            Self::UnicornPreferStringStartsEndsWith(_) => UnicornPreferStringStartsEndsWith::FLAGS,
+            Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::FLAGS,
+            Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::FLAGS,
+            Self::UnicornPreferTernary(_) => UnicornPreferTernary::FLAGS,
+            Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::FLAGS,
+            Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::FLAGS,
+            Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::FLAGS,
+            Self::UnicornRequireArrayJoinSeparator(_) => UnicornRequireArrayJoinSeparator::FLAGS,
+            Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::FLAGS,
+            Self::UnicornRequireModuleSpecifiers(_) => UnicornRequireModuleSpecifiers::FLAGS,
             Self::UnicornRequireNumberToFixedDigitsArgument(_) => {
-                UnicornRequireNumberToFixedDigitsArgument::IS_TSGOLINT_RULE
+                UnicornRequireNumberToFixedDigitsArgument::FLAGS
             }
             Self::UnicornRequirePostMessageTargetOrigin(_) => {
-                UnicornRequirePostMessageTargetOrigin::IS_TSGOLINT_RULE
+                UnicornRequirePostMessageTargetOrigin::FLAGS
             }
-            Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::IS_TSGOLINT_RULE,
-            Self::UnicornSwitchCaseBreakPosition(_) => {
-                UnicornSwitchCaseBreakPosition::IS_TSGOLINT_RULE
-            }
-            Self::UnicornTextEncodingIdentifierCase(_) => {
-                UnicornTextEncodingIdentifierCase::IS_TSGOLINT_RULE
-            }
-            Self::UnicornThrowNewError(_) => UnicornThrowNewError::IS_TSGOLINT_RULE,
-            Self::JsxA11YAltText(_) => JsxA11YAltText::IS_TSGOLINT_RULE,
-            Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::IS_TSGOLINT_RULE,
-            Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::IS_TSGOLINT_RULE,
-            Self::JsxA11YAnchorIsValid(_) => JsxA11YAnchorIsValid::IS_TSGOLINT_RULE,
+            Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::FLAGS,
+            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::FLAGS,
+            Self::UnicornTextEncodingIdentifierCase(_) => UnicornTextEncodingIdentifierCase::FLAGS,
+            Self::UnicornThrowNewError(_) => UnicornThrowNewError::FLAGS,
+            Self::JsxA11YAltText(_) => JsxA11YAltText::FLAGS,
+            Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::FLAGS,
+            Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::FLAGS,
+            Self::JsxA11YAnchorIsValid(_) => JsxA11YAnchorIsValid::FLAGS,
             Self::JsxA11YAriaActivedescendantHasTabindex(_) => {
-                JsxA11YAriaActivedescendantHasTabindex::IS_TSGOLINT_RULE
+                JsxA11YAriaActivedescendantHasTabindex::FLAGS
             }
-            Self::JsxA11YAriaProps(_) => JsxA11YAriaProps::IS_TSGOLINT_RULE,
-            Self::JsxA11YAriaProptypes(_) => JsxA11YAriaProptypes::IS_TSGOLINT_RULE,
-            Self::JsxA11YAriaRole(_) => JsxA11YAriaRole::IS_TSGOLINT_RULE,
-            Self::JsxA11YAriaUnsupportedElements(_) => {
-                JsxA11YAriaUnsupportedElements::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::IS_TSGOLINT_RULE,
-            Self::JsxA11YClickEventsHaveKeyEvents(_) => {
-                JsxA11YClickEventsHaveKeyEvents::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YControlHasAssociatedLabel(_) => {
-                JsxA11YControlHasAssociatedLabel::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::IS_TSGOLINT_RULE,
-            Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::IS_TSGOLINT_RULE,
-            Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::IS_TSGOLINT_RULE,
-            Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::IS_TSGOLINT_RULE,
-            Self::JsxA11YInteractiveSupportsFocus(_) => {
-                JsxA11YInteractiveSupportsFocus::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YLabelHasAssociatedControl(_) => {
-                JsxA11YLabelHasAssociatedControl::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YLang(_) => JsxA11YLang::IS_TSGOLINT_RULE,
-            Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::IS_TSGOLINT_RULE,
-            Self::JsxA11YMouseEventsHaveKeyEvents(_) => {
-                JsxA11YMouseEventsHaveKeyEvents::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YNoAccessKey(_) => JsxA11YNoAccessKey::IS_TSGOLINT_RULE,
-            Self::JsxA11YNoAriaHiddenOnFocusable(_) => {
-                JsxA11YNoAriaHiddenOnFocusable::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::IS_TSGOLINT_RULE,
-            Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::IS_TSGOLINT_RULE,
+            Self::JsxA11YAriaProps(_) => JsxA11YAriaProps::FLAGS,
+            Self::JsxA11YAriaProptypes(_) => JsxA11YAriaProptypes::FLAGS,
+            Self::JsxA11YAriaRole(_) => JsxA11YAriaRole::FLAGS,
+            Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::FLAGS,
+            Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::FLAGS,
+            Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::FLAGS,
+            Self::JsxA11YControlHasAssociatedLabel(_) => JsxA11YControlHasAssociatedLabel::FLAGS,
+            Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::FLAGS,
+            Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::FLAGS,
+            Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::FLAGS,
+            Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::FLAGS,
+            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::FLAGS,
+            Self::JsxA11YLabelHasAssociatedControl(_) => JsxA11YLabelHasAssociatedControl::FLAGS,
+            Self::JsxA11YLang(_) => JsxA11YLang::FLAGS,
+            Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::FLAGS,
+            Self::JsxA11YMouseEventsHaveKeyEvents(_) => JsxA11YMouseEventsHaveKeyEvents::FLAGS,
+            Self::JsxA11YNoAccessKey(_) => JsxA11YNoAccessKey::FLAGS,
+            Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::FLAGS,
+            Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::FLAGS,
+            Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::FLAGS,
             Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
-                JsxA11YNoInteractiveElementToNoninteractiveRole::IS_TSGOLINT_RULE
+                JsxA11YNoInteractiveElementToNoninteractiveRole::FLAGS
             }
             Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
-                JsxA11YNoNoninteractiveElementInteractions::IS_TSGOLINT_RULE
+                JsxA11YNoNoninteractiveElementInteractions::FLAGS
             }
             Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
-                JsxA11YNoNoninteractiveElementToInteractiveRole::IS_TSGOLINT_RULE
+                JsxA11YNoNoninteractiveElementToInteractiveRole::FLAGS
             }
-            Self::JsxA11YNoNoninteractiveTabindex(_) => {
-                JsxA11YNoNoninteractiveTabindex::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::IS_TSGOLINT_RULE,
+            Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::FLAGS,
+            Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::FLAGS,
             Self::JsxA11YNoStaticElementInteractions(_) => {
-                JsxA11YNoStaticElementInteractions::IS_TSGOLINT_RULE
+                JsxA11YNoStaticElementInteractions::FLAGS
             }
-            Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::IS_TSGOLINT_RULE,
-            Self::JsxA11YRoleHasRequiredAriaProps(_) => {
-                JsxA11YRoleHasRequiredAriaProps::IS_TSGOLINT_RULE
-            }
-            Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::IS_TSGOLINT_RULE,
-            Self::JsxA11YScope(_) => JsxA11YScope::IS_TSGOLINT_RULE,
-            Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::IS_TSGOLINT_RULE,
-            Self::OxcApproxConstant(_) => OxcApproxConstant::IS_TSGOLINT_RULE,
-            Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::IS_TSGOLINT_RULE,
-            Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::IS_TSGOLINT_RULE,
-            Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::IS_TSGOLINT_RULE,
-            Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::IS_TSGOLINT_RULE,
-            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::IS_TSGOLINT_RULE,
-            Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::IS_TSGOLINT_RULE,
-            Self::OxcBadObjectLiteralComparison(_) => {
-                OxcBadObjectLiteralComparison::IS_TSGOLINT_RULE
-            }
-            Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::IS_TSGOLINT_RULE,
-            Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::IS_TSGOLINT_RULE,
-            Self::OxcConstComparisons(_) => OxcConstComparisons::IS_TSGOLINT_RULE,
-            Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::IS_TSGOLINT_RULE,
-            Self::OxcErasingOp(_) => OxcErasingOp::IS_TSGOLINT_RULE,
-            Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::IS_TSGOLINT_RULE,
-            Self::OxcMissingThrow(_) => OxcMissingThrow::IS_TSGOLINT_RULE,
-            Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::IS_TSGOLINT_RULE,
-            Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::IS_TSGOLINT_RULE,
-            Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::IS_TSGOLINT_RULE,
-            Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::IS_TSGOLINT_RULE,
-            Self::OxcNoConstEnum(_) => OxcNoConstEnum::IS_TSGOLINT_RULE,
-            Self::OxcNoMapSpread(_) => OxcNoMapSpread::IS_TSGOLINT_RULE,
-            Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::IS_TSGOLINT_RULE,
-            Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::IS_TSGOLINT_RULE,
-            Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::IS_TSGOLINT_RULE,
-            Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::IS_TSGOLINT_RULE,
-            Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::IS_TSGOLINT_RULE,
-            Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::IS_TSGOLINT_RULE,
-            Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::IS_TSGOLINT_RULE,
-            Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::IS_TSGOLINT_RULE,
-            Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::IS_TSGOLINT_RULE,
-            Self::NextjsNextScriptForGa(_) => NextjsNextScriptForGa::IS_TSGOLINT_RULE,
-            Self::NextjsNoAssignModuleVariable(_) => NextjsNoAssignModuleVariable::IS_TSGOLINT_RULE,
-            Self::NextjsNoAsyncClientComponent(_) => NextjsNoAsyncClientComponent::IS_TSGOLINT_RULE,
+            Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::FLAGS,
+            Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::FLAGS,
+            Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::FLAGS,
+            Self::JsxA11YScope(_) => JsxA11YScope::FLAGS,
+            Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::FLAGS,
+            Self::OxcApproxConstant(_) => OxcApproxConstant::FLAGS,
+            Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::FLAGS,
+            Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::FLAGS,
+            Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::FLAGS,
+            Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::FLAGS,
+            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::FLAGS,
+            Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::FLAGS,
+            Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::FLAGS,
+            Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::FLAGS,
+            Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::FLAGS,
+            Self::OxcConstComparisons(_) => OxcConstComparisons::FLAGS,
+            Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::FLAGS,
+            Self::OxcErasingOp(_) => OxcErasingOp::FLAGS,
+            Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::FLAGS,
+            Self::OxcMissingThrow(_) => OxcMissingThrow::FLAGS,
+            Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::FLAGS,
+            Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::FLAGS,
+            Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::FLAGS,
+            Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::FLAGS,
+            Self::OxcNoConstEnum(_) => OxcNoConstEnum::FLAGS,
+            Self::OxcNoMapSpread(_) => OxcNoMapSpread::FLAGS,
+            Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::FLAGS,
+            Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::FLAGS,
+            Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::FLAGS,
+            Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::FLAGS,
+            Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::FLAGS,
+            Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::FLAGS,
+            Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::FLAGS,
+            Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::FLAGS,
+            Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::FLAGS,
+            Self::NextjsNextScriptForGa(_) => NextjsNextScriptForGa::FLAGS,
+            Self::NextjsNoAssignModuleVariable(_) => NextjsNoAssignModuleVariable::FLAGS,
+            Self::NextjsNoAsyncClientComponent(_) => NextjsNoAsyncClientComponent::FLAGS,
             Self::NextjsNoBeforeInteractiveScriptOutsideDocument(_) => {
-                NextjsNoBeforeInteractiveScriptOutsideDocument::IS_TSGOLINT_RULE
+                NextjsNoBeforeInteractiveScriptOutsideDocument::FLAGS
             }
-            Self::NextjsNoCssTags(_) => NextjsNoCssTags::IS_TSGOLINT_RULE,
-            Self::NextjsNoDocumentImportInPage(_) => NextjsNoDocumentImportInPage::IS_TSGOLINT_RULE,
-            Self::NextjsNoDuplicateHead(_) => NextjsNoDuplicateHead::IS_TSGOLINT_RULE,
-            Self::NextjsNoHeadElement(_) => NextjsNoHeadElement::IS_TSGOLINT_RULE,
-            Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::IS_TSGOLINT_RULE,
-            Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::IS_TSGOLINT_RULE,
-            Self::NextjsNoImgElement(_) => NextjsNoImgElement::IS_TSGOLINT_RULE,
-            Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::IS_TSGOLINT_RULE,
-            Self::NextjsNoScriptComponentInHead(_) => {
-                NextjsNoScriptComponentInHead::IS_TSGOLINT_RULE
-            }
-            Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::IS_TSGOLINT_RULE,
-            Self::NextjsNoSyncScripts(_) => NextjsNoSyncScripts::IS_TSGOLINT_RULE,
-            Self::NextjsNoTitleInDocumentHead(_) => NextjsNoTitleInDocumentHead::IS_TSGOLINT_RULE,
-            Self::NextjsNoTypos(_) => NextjsNoTypos::IS_TSGOLINT_RULE,
-            Self::NextjsNoUnwantedPolyfillio(_) => NextjsNoUnwantedPolyfillio::IS_TSGOLINT_RULE,
-            Self::JsdocCheckAccess(_) => JsdocCheckAccess::IS_TSGOLINT_RULE,
-            Self::JsdocCheckPropertyNames(_) => JsdocCheckPropertyNames::IS_TSGOLINT_RULE,
-            Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::IS_TSGOLINT_RULE,
-            Self::JsdocEmptyTags(_) => JsdocEmptyTags::IS_TSGOLINT_RULE,
-            Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::IS_TSGOLINT_RULE,
-            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::IS_TSGOLINT_RULE,
-            Self::JsdocNoDefaults(_) => JsdocNoDefaults::IS_TSGOLINT_RULE,
-            Self::JsdocRequireParam(_) => JsdocRequireParam::IS_TSGOLINT_RULE,
-            Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::IS_TSGOLINT_RULE,
-            Self::JsdocRequireParamName(_) => JsdocRequireParamName::IS_TSGOLINT_RULE,
-            Self::JsdocRequireParamType(_) => JsdocRequireParamType::IS_TSGOLINT_RULE,
-            Self::JsdocRequireProperty(_) => JsdocRequireProperty::IS_TSGOLINT_RULE,
-            Self::JsdocRequirePropertyDescription(_) => {
-                JsdocRequirePropertyDescription::IS_TSGOLINT_RULE
-            }
-            Self::JsdocRequirePropertyName(_) => JsdocRequirePropertyName::IS_TSGOLINT_RULE,
-            Self::JsdocRequirePropertyType(_) => JsdocRequirePropertyType::IS_TSGOLINT_RULE,
-            Self::JsdocRequireReturns(_) => JsdocRequireReturns::IS_TSGOLINT_RULE,
-            Self::JsdocRequireReturnsDescription(_) => {
-                JsdocRequireReturnsDescription::IS_TSGOLINT_RULE
-            }
-            Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::IS_TSGOLINT_RULE,
-            Self::JsdocRequireThrowsDescription(_) => {
-                JsdocRequireThrowsDescription::IS_TSGOLINT_RULE
-            }
-            Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::IS_TSGOLINT_RULE,
-            Self::JsdocRequireYields(_) => JsdocRequireYields::IS_TSGOLINT_RULE,
-            Self::JsdocRequireYieldsDescription(_) => {
-                JsdocRequireYieldsDescription::IS_TSGOLINT_RULE
-            }
-            Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::IS_TSGOLINT_RULE,
-            Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::IS_TSGOLINT_RULE,
-            Self::PromiseAvoidNew(_) => PromiseAvoidNew::IS_TSGOLINT_RULE,
-            Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::IS_TSGOLINT_RULE,
-            Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::IS_TSGOLINT_RULE,
-            Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::IS_TSGOLINT_RULE,
-            Self::PromiseNoNesting(_) => PromiseNoNesting::IS_TSGOLINT_RULE,
-            Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::IS_TSGOLINT_RULE,
-            Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::IS_TSGOLINT_RULE,
-            Self::PromiseNoReturnInFinally(_) => PromiseNoReturnInFinally::IS_TSGOLINT_RULE,
-            Self::PromiseNoReturnWrap(_) => PromiseNoReturnWrap::IS_TSGOLINT_RULE,
-            Self::PromiseParamNames(_) => PromiseParamNames::IS_TSGOLINT_RULE,
-            Self::PromisePreferAwaitToCallbacks(_) => {
-                PromisePreferAwaitToCallbacks::IS_TSGOLINT_RULE
-            }
-            Self::PromisePreferAwaitToThen(_) => PromisePreferAwaitToThen::IS_TSGOLINT_RULE,
-            Self::PromisePreferCatch(_) => PromisePreferCatch::IS_TSGOLINT_RULE,
-            Self::PromiseSpecOnly(_) => PromiseSpecOnly::IS_TSGOLINT_RULE,
-            Self::PromiseValidParams(_) => PromiseValidParams::IS_TSGOLINT_RULE,
-            Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::IS_TSGOLINT_RULE,
-            Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::IS_TSGOLINT_RULE,
-            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::IS_TSGOLINT_RULE,
-            Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::IS_TSGOLINT_RULE,
-            Self::VitestExpectExpect(_) => VitestExpectExpect::IS_TSGOLINT_RULE,
-            Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::IS_TSGOLINT_RULE,
-            Self::VitestMaxExpects(_) => VitestMaxExpects::IS_TSGOLINT_RULE,
-            Self::VitestMaxNestedDescribe(_) => VitestMaxNestedDescribe::IS_TSGOLINT_RULE,
-            Self::VitestNoAliasMethods(_) => VitestNoAliasMethods::IS_TSGOLINT_RULE,
-            Self::VitestNoCommentedOutTests(_) => VitestNoCommentedOutTests::IS_TSGOLINT_RULE,
-            Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::IS_TSGOLINT_RULE,
-            Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::IS_TSGOLINT_RULE,
-            Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::IS_TSGOLINT_RULE,
-            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::IS_TSGOLINT_RULE,
-            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::IS_TSGOLINT_RULE,
-            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::IS_TSGOLINT_RULE,
-            Self::VitestNoHooks(_) => VitestNoHooks::IS_TSGOLINT_RULE,
-            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::IS_TSGOLINT_RULE,
-            Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::IS_TSGOLINT_RULE,
-            Self::VitestNoImportingVitestGlobals(_) => {
-                VitestNoImportingVitestGlobals::IS_TSGOLINT_RULE
-            }
-            Self::VitestNoInterpolationInSnapshots(_) => {
-                VitestNoInterpolationInSnapshots::IS_TSGOLINT_RULE
-            }
-            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::IS_TSGOLINT_RULE,
-            Self::VitestNoMocksImport(_) => VitestNoMocksImport::IS_TSGOLINT_RULE,
-            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::IS_TSGOLINT_RULE,
-            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::IS_TSGOLINT_RULE,
-            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::IS_TSGOLINT_RULE,
-            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::IS_TSGOLINT_RULE,
-            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::IS_TSGOLINT_RULE,
+            Self::NextjsNoCssTags(_) => NextjsNoCssTags::FLAGS,
+            Self::NextjsNoDocumentImportInPage(_) => NextjsNoDocumentImportInPage::FLAGS,
+            Self::NextjsNoDuplicateHead(_) => NextjsNoDuplicateHead::FLAGS,
+            Self::NextjsNoHeadElement(_) => NextjsNoHeadElement::FLAGS,
+            Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::FLAGS,
+            Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::FLAGS,
+            Self::NextjsNoImgElement(_) => NextjsNoImgElement::FLAGS,
+            Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::FLAGS,
+            Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::FLAGS,
+            Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::FLAGS,
+            Self::NextjsNoSyncScripts(_) => NextjsNoSyncScripts::FLAGS,
+            Self::NextjsNoTitleInDocumentHead(_) => NextjsNoTitleInDocumentHead::FLAGS,
+            Self::NextjsNoTypos(_) => NextjsNoTypos::FLAGS,
+            Self::NextjsNoUnwantedPolyfillio(_) => NextjsNoUnwantedPolyfillio::FLAGS,
+            Self::JsdocCheckAccess(_) => JsdocCheckAccess::FLAGS,
+            Self::JsdocCheckPropertyNames(_) => JsdocCheckPropertyNames::FLAGS,
+            Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::FLAGS,
+            Self::JsdocEmptyTags(_) => JsdocEmptyTags::FLAGS,
+            Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::FLAGS,
+            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::FLAGS,
+            Self::JsdocNoDefaults(_) => JsdocNoDefaults::FLAGS,
+            Self::JsdocRequireParam(_) => JsdocRequireParam::FLAGS,
+            Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::FLAGS,
+            Self::JsdocRequireParamName(_) => JsdocRequireParamName::FLAGS,
+            Self::JsdocRequireParamType(_) => JsdocRequireParamType::FLAGS,
+            Self::JsdocRequireProperty(_) => JsdocRequireProperty::FLAGS,
+            Self::JsdocRequirePropertyDescription(_) => JsdocRequirePropertyDescription::FLAGS,
+            Self::JsdocRequirePropertyName(_) => JsdocRequirePropertyName::FLAGS,
+            Self::JsdocRequirePropertyType(_) => JsdocRequirePropertyType::FLAGS,
+            Self::JsdocRequireReturns(_) => JsdocRequireReturns::FLAGS,
+            Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::FLAGS,
+            Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::FLAGS,
+            Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::FLAGS,
+            Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::FLAGS,
+            Self::JsdocRequireYields(_) => JsdocRequireYields::FLAGS,
+            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::FLAGS,
+            Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::FLAGS,
+            Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::FLAGS,
+            Self::PromiseAvoidNew(_) => PromiseAvoidNew::FLAGS,
+            Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::FLAGS,
+            Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::FLAGS,
+            Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::FLAGS,
+            Self::PromiseNoNesting(_) => PromiseNoNesting::FLAGS,
+            Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::FLAGS,
+            Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::FLAGS,
+            Self::PromiseNoReturnInFinally(_) => PromiseNoReturnInFinally::FLAGS,
+            Self::PromiseNoReturnWrap(_) => PromiseNoReturnWrap::FLAGS,
+            Self::PromiseParamNames(_) => PromiseParamNames::FLAGS,
+            Self::PromisePreferAwaitToCallbacks(_) => PromisePreferAwaitToCallbacks::FLAGS,
+            Self::PromisePreferAwaitToThen(_) => PromisePreferAwaitToThen::FLAGS,
+            Self::PromisePreferCatch(_) => PromisePreferCatch::FLAGS,
+            Self::PromiseSpecOnly(_) => PromiseSpecOnly::FLAGS,
+            Self::PromiseValidParams(_) => PromiseValidParams::FLAGS,
+            Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::FLAGS,
+            Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::FLAGS,
+            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::FLAGS,
+            Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::FLAGS,
+            Self::VitestExpectExpect(_) => VitestExpectExpect::FLAGS,
+            Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::FLAGS,
+            Self::VitestMaxExpects(_) => VitestMaxExpects::FLAGS,
+            Self::VitestMaxNestedDescribe(_) => VitestMaxNestedDescribe::FLAGS,
+            Self::VitestNoAliasMethods(_) => VitestNoAliasMethods::FLAGS,
+            Self::VitestNoCommentedOutTests(_) => VitestNoCommentedOutTests::FLAGS,
+            Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::FLAGS,
+            Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::FLAGS,
+            Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::FLAGS,
+            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::FLAGS,
+            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::FLAGS,
+            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::FLAGS,
+            Self::VitestNoHooks(_) => VitestNoHooks::FLAGS,
+            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::FLAGS,
+            Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::FLAGS,
+            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::FLAGS,
+            Self::VitestNoInterpolationInSnapshots(_) => VitestNoInterpolationInSnapshots::FLAGS,
+            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::FLAGS,
+            Self::VitestNoMocksImport(_) => VitestNoMocksImport::FLAGS,
+            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::FLAGS,
+            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::FLAGS,
+            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::FLAGS,
+            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::FLAGS,
+            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::FLAGS,
             Self::VitestNoUnneededAsyncExpectFunction(_) => {
-                VitestNoUnneededAsyncExpectFunction::IS_TSGOLINT_RULE
+                VitestNoUnneededAsyncExpectFunction::FLAGS
             }
-            Self::VitestPaddingAroundAfterAllBlocks(_) => {
-                VitestPaddingAroundAfterAllBlocks::IS_TSGOLINT_RULE
-            }
-            Self::VitestPaddingAroundTestBlocks(_) => {
-                VitestPaddingAroundTestBlocks::IS_TSGOLINT_RULE
-            }
-            Self::VitestPreferCalledExactlyOnceWith(_) => {
-                VitestPreferCalledExactlyOnceWith::IS_TSGOLINT_RULE
-            }
-            Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::IS_TSGOLINT_RULE,
-            Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::IS_TSGOLINT_RULE,
-            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::IS_TSGOLINT_RULE,
-            Self::VitestPreferComparisonMatcher(_) => {
-                VitestPreferComparisonMatcher::IS_TSGOLINT_RULE
-            }
-            Self::VitestPreferDescribeFunctionTitle(_) => {
-                VitestPreferDescribeFunctionTitle::IS_TSGOLINT_RULE
-            }
-            Self::VitestPreferEach(_) => VitestPreferEach::IS_TSGOLINT_RULE,
-            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::IS_TSGOLINT_RULE,
-            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::IS_TSGOLINT_RULE,
-            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::IS_TSGOLINT_RULE,
-            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::IS_TSGOLINT_RULE,
-            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::IS_TSGOLINT_RULE,
-            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::IS_TSGOLINT_RULE,
-            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::IS_TSGOLINT_RULE,
+            Self::VitestPaddingAroundAfterAllBlocks(_) => VitestPaddingAroundAfterAllBlocks::FLAGS,
+            Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::FLAGS,
+            Self::VitestPreferCalledExactlyOnceWith(_) => VitestPreferCalledExactlyOnceWith::FLAGS,
+            Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::FLAGS,
+            Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::FLAGS,
+            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::FLAGS,
+            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::FLAGS,
+            Self::VitestPreferDescribeFunctionTitle(_) => VitestPreferDescribeFunctionTitle::FLAGS,
+            Self::VitestPreferEach(_) => VitestPreferEach::FLAGS,
+            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::FLAGS,
+            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::FLAGS,
+            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::FLAGS,
+            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::FLAGS,
+            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::FLAGS,
+            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::FLAGS,
+            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::FLAGS,
             Self::VitestPreferImportingVitestGlobals(_) => {
-                VitestPreferImportingVitestGlobals::IS_TSGOLINT_RULE
+                VitestPreferImportingVitestGlobals::FLAGS
             }
-            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::IS_TSGOLINT_RULE,
-            Self::VitestPreferMockPromiseShorthand(_) => {
-                VitestPreferMockPromiseShorthand::IS_TSGOLINT_RULE
-            }
-            Self::VitestPreferMockReturnShorthand(_) => {
-                VitestPreferMockReturnShorthand::IS_TSGOLINT_RULE
-            }
-            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::IS_TSGOLINT_RULE,
-            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::IS_TSGOLINT_RULE,
-            Self::VitestPreferStrictBooleanMatchers(_) => {
-                VitestPreferStrictBooleanMatchers::IS_TSGOLINT_RULE
-            }
-            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::IS_TSGOLINT_RULE,
-            Self::VitestPreferToBe(_) => VitestPreferToBe::IS_TSGOLINT_RULE,
-            Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::IS_TSGOLINT_RULE,
-            Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::IS_TSGOLINT_RULE,
-            Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::IS_TSGOLINT_RULE,
-            Self::VitestPreferToContain(_) => VitestPreferToContain::IS_TSGOLINT_RULE,
-            Self::VitestPreferToHaveBeenCalledTimes(_) => {
-                VitestPreferToHaveBeenCalledTimes::IS_TSGOLINT_RULE
-            }
-            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::IS_TSGOLINT_RULE,
-            Self::VitestPreferTodo(_) => VitestPreferTodo::IS_TSGOLINT_RULE,
-            Self::VitestRequireAwaitedExpectPoll(_) => {
-                VitestRequireAwaitedExpectPoll::IS_TSGOLINT_RULE
-            }
-            Self::VitestRequireHook(_) => VitestRequireHook::IS_TSGOLINT_RULE,
+            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::FLAGS,
+            Self::VitestPreferMockPromiseShorthand(_) => VitestPreferMockPromiseShorthand::FLAGS,
+            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::FLAGS,
+            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::FLAGS,
+            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::FLAGS,
+            Self::VitestPreferStrictBooleanMatchers(_) => VitestPreferStrictBooleanMatchers::FLAGS,
+            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::FLAGS,
+            Self::VitestPreferToBe(_) => VitestPreferToBe::FLAGS,
+            Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::FLAGS,
+            Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::FLAGS,
+            Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::FLAGS,
+            Self::VitestPreferToContain(_) => VitestPreferToContain::FLAGS,
+            Self::VitestPreferToHaveBeenCalledTimes(_) => VitestPreferToHaveBeenCalledTimes::FLAGS,
+            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::FLAGS,
+            Self::VitestPreferTodo(_) => VitestPreferTodo::FLAGS,
+            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::FLAGS,
+            Self::VitestRequireHook(_) => VitestRequireHook::FLAGS,
             Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
-                VitestRequireLocalTestContextForConcurrentSnapshots::IS_TSGOLINT_RULE
+                VitestRequireLocalTestContextForConcurrentSnapshots::FLAGS
             }
-            Self::VitestRequireMockTypeParameters(_) => {
-                VitestRequireMockTypeParameters::IS_TSGOLINT_RULE
-            }
-            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::IS_TSGOLINT_RULE,
-            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::IS_TSGOLINT_RULE,
-            Self::VitestRequireTopLevelDescribe(_) => {
-                VitestRequireTopLevelDescribe::IS_TSGOLINT_RULE
-            }
-            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::IS_TSGOLINT_RULE,
-            Self::VitestValidExpect(_) => VitestValidExpect::IS_TSGOLINT_RULE,
-            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::IS_TSGOLINT_RULE,
-            Self::VitestValidTitle(_) => VitestValidTitle::IS_TSGOLINT_RULE,
-            Self::VitestWarnTodo(_) => VitestWarnTodo::IS_TSGOLINT_RULE,
-            Self::NodeCallbackReturn(_) => NodeCallbackReturn::IS_TSGOLINT_RULE,
-            Self::NodeExportsStyle(_) => NodeExportsStyle::IS_TSGOLINT_RULE,
-            Self::NodeGlobalRequire(_) => NodeGlobalRequire::IS_TSGOLINT_RULE,
-            Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::IS_TSGOLINT_RULE,
-            Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::IS_TSGOLINT_RULE,
-            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::IS_TSGOLINT_RULE,
-            Self::NodeNoNewRequire(_) => NodeNoNewRequire::IS_TSGOLINT_RULE,
-            Self::NodeNoPathConcat(_) => NodeNoPathConcat::IS_TSGOLINT_RULE,
-            Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::IS_TSGOLINT_RULE,
-            Self::NodeNoSync(_) => NodeNoSync::IS_TSGOLINT_RULE,
-            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::IS_TSGOLINT_RULE,
-            Self::VueComponentDefinitionNameCasing(_) => {
-                VueComponentDefinitionNameCasing::IS_TSGOLINT_RULE
-            }
-            Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::IS_TSGOLINT_RULE,
-            Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::IS_TSGOLINT_RULE,
-            Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::IS_TSGOLINT_RULE,
-            Self::VueMaxProps(_) => VueMaxProps::IS_TSGOLINT_RULE,
-            Self::VueNextTickStyle(_) => VueNextTickStyle::IS_TSGOLINT_RULE,
-            Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::IS_TSGOLINT_RULE,
-            Self::VueNoAsyncInComputedProperties(_) => {
-                VueNoAsyncInComputedProperties::IS_TSGOLINT_RULE
-            }
-            Self::VueNoComputedPropertiesInData(_) => {
-                VueNoComputedPropertiesInData::IS_TSGOLINT_RULE
-            }
+            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::FLAGS,
+            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::FLAGS,
+            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::FLAGS,
+            Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::FLAGS,
+            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::FLAGS,
+            Self::VitestValidExpect(_) => VitestValidExpect::FLAGS,
+            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::FLAGS,
+            Self::VitestValidTitle(_) => VitestValidTitle::FLAGS,
+            Self::VitestWarnTodo(_) => VitestWarnTodo::FLAGS,
+            Self::NodeCallbackReturn(_) => NodeCallbackReturn::FLAGS,
+            Self::NodeExportsStyle(_) => NodeExportsStyle::FLAGS,
+            Self::NodeGlobalRequire(_) => NodeGlobalRequire::FLAGS,
+            Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::FLAGS,
+            Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::FLAGS,
+            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::FLAGS,
+            Self::NodeNoNewRequire(_) => NodeNoNewRequire::FLAGS,
+            Self::NodeNoPathConcat(_) => NodeNoPathConcat::FLAGS,
+            Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::FLAGS,
+            Self::NodeNoSync(_) => NodeNoSync::FLAGS,
+            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::FLAGS,
+            Self::VueComponentDefinitionNameCasing(_) => VueComponentDefinitionNameCasing::FLAGS,
+            Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::FLAGS,
+            Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::FLAGS,
+            Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::FLAGS,
+            Self::VueMaxProps(_) => VueMaxProps::FLAGS,
+            Self::VueNextTickStyle(_) => VueNextTickStyle::FLAGS,
+            Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::FLAGS,
+            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::FLAGS,
+            Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::FLAGS,
             Self::VueNoDeprecatedDataObjectDeclaration(_) => {
-                VueNoDeprecatedDataObjectDeclaration::IS_TSGOLINT_RULE
+                VueNoDeprecatedDataObjectDeclaration::FLAGS
             }
-            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::IS_TSGOLINT_RULE,
-            Self::VueNoDeprecatedDestroyedLifecycle(_) => {
-                VueNoDeprecatedDestroyedLifecycle::IS_TSGOLINT_RULE
-            }
-            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::IS_TSGOLINT_RULE,
-            Self::VueNoDeprecatedModelDefinition(_) => {
-                VueNoDeprecatedModelDefinition::IS_TSGOLINT_RULE
-            }
-            Self::VueNoDeprecatedPropsDefaultThis(_) => {
-                VueNoDeprecatedPropsDefaultThis::IS_TSGOLINT_RULE
-            }
-            Self::VueNoDeprecatedVueConfigKeycodes(_) => {
-                VueNoDeprecatedVueConfigKeycodes::IS_TSGOLINT_RULE
-            }
-            Self::VueNoDupeKeys(_) => VueNoDupeKeys::IS_TSGOLINT_RULE,
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::IS_TSGOLINT_RULE,
-            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::IS_TSGOLINT_RULE,
-            Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::IS_TSGOLINT_RULE,
-            Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::IS_TSGOLINT_RULE,
-            Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::IS_TSGOLINT_RULE,
-            Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::IS_TSGOLINT_RULE,
-            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::IS_TSGOLINT_RULE,
-            Self::VueNoReservedKeys(_) => VueNoReservedKeys::IS_TSGOLINT_RULE,
-            Self::VueNoReservedProps(_) => VueNoReservedProps::IS_TSGOLINT_RULE,
-            Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::IS_TSGOLINT_RULE,
+            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::FLAGS,
+            Self::VueNoDeprecatedDestroyedLifecycle(_) => VueNoDeprecatedDestroyedLifecycle::FLAGS,
+            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::FLAGS,
+            Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::FLAGS,
+            Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::FLAGS,
+            Self::VueNoDeprecatedVueConfigKeycodes(_) => VueNoDeprecatedVueConfigKeycodes::FLAGS,
+            Self::VueNoDupeKeys(_) => VueNoDupeKeys::FLAGS,
+            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::FLAGS,
+            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::FLAGS,
+            Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::FLAGS,
+            Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::FLAGS,
+            Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::FLAGS,
+            Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::FLAGS,
+            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::FLAGS,
+            Self::VueNoReservedKeys(_) => VueNoReservedKeys::FLAGS,
+            Self::VueNoReservedProps(_) => VueNoReservedProps::FLAGS,
+            Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::FLAGS,
             Self::VueNoSideEffectsInComputedProperties(_) => {
-                VueNoSideEffectsInComputedProperties::IS_TSGOLINT_RULE
+                VueNoSideEffectsInComputedProperties::FLAGS
             }
-            Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::IS_TSGOLINT_RULE,
-            Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::IS_TSGOLINT_RULE,
-            Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::IS_TSGOLINT_RULE,
-            Self::VuePropNameCasing(_) => VuePropNameCasing::IS_TSGOLINT_RULE,
-            Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::IS_TSGOLINT_RULE,
-            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::IS_TSGOLINT_RULE,
-            Self::VueRequireDirectExport(_) => VueRequireDirectExport::IS_TSGOLINT_RULE,
-            Self::VueRequirePropTypeConstructor(_) => {
-                VueRequirePropTypeConstructor::IS_TSGOLINT_RULE
-            }
-            Self::VueRequirePropTypes(_) => VueRequirePropTypes::IS_TSGOLINT_RULE,
-            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::IS_TSGOLINT_RULE,
-            Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::IS_TSGOLINT_RULE,
-            Self::VueRequireTypedRef(_) => VueRequireTypedRef::IS_TSGOLINT_RULE,
-            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::IS_TSGOLINT_RULE,
-            Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::IS_TSGOLINT_RULE,
-            Self::VueValidDefineEmits(_) => VueValidDefineEmits::IS_TSGOLINT_RULE,
-            Self::VueValidDefineOptions(_) => VueValidDefineOptions::IS_TSGOLINT_RULE,
-            Self::VueValidDefineProps(_) => VueValidDefineProps::IS_TSGOLINT_RULE,
-            Self::VueValidNextTick(_) => VueValidNextTick::IS_TSGOLINT_RULE,
+            Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::FLAGS,
+            Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::FLAGS,
+            Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::FLAGS,
+            Self::VuePropNameCasing(_) => VuePropNameCasing::FLAGS,
+            Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::FLAGS,
+            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::FLAGS,
+            Self::VueRequireDirectExport(_) => VueRequireDirectExport::FLAGS,
+            Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::FLAGS,
+            Self::VueRequirePropTypes(_) => VueRequirePropTypes::FLAGS,
+            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::FLAGS,
+            Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::FLAGS,
+            Self::VueRequireTypedRef(_) => VueRequireTypedRef::FLAGS,
+            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::FLAGS,
+            Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::FLAGS,
+            Self::VueValidDefineEmits(_) => VueValidDefineEmits::FLAGS,
+            Self::VueValidDefineOptions(_) => VueValidDefineOptions::FLAGS,
+            Self::VueValidDefineProps(_) => VueValidDefineProps::FLAGS,
+            Self::VueValidNextTick(_) => VueValidNextTick::FLAGS,
         }
+    }
+    pub fn is_tsgolint_rule(&self) -> bool {
+        self.flags().contains(RuleFlags::IS_TSGOLINT_RULE)
+    }
+    #[doc = r" Whether this rule is recommended."]
+    pub fn is_recommended(&self) -> bool {
+        self.flags().contains(RuleFlags::IS_RECOMMENDED)
     }
     #[doc = r" The version of oxlint in which this rule was first available."]
     #[cfg(feature = "ruledocs")]
@@ -18329,1095 +18086,7 @@ impl RuleEnum {
     }
     #[doc = r" Whether this rule declares a configuration type."]
     pub fn has_config(&self) -> bool {
-        match self {
-            Self::ImportConsistentTypeSpecifierStyle(_) => {
-                ImportConsistentTypeSpecifierStyle::HAS_CONFIG
-            }
-            Self::ImportDefault(_) => ImportDefault::HAS_CONFIG,
-            Self::ImportExport(_) => ImportExport::HAS_CONFIG,
-            Self::ImportExportsLast(_) => ImportExportsLast::HAS_CONFIG,
-            Self::ImportExtensions(_) => ImportExtensions::HAS_CONFIG,
-            Self::ImportFirst(_) => ImportFirst::HAS_CONFIG,
-            Self::ImportGroupExports(_) => ImportGroupExports::HAS_CONFIG,
-            Self::ImportMaxDependencies(_) => ImportMaxDependencies::HAS_CONFIG,
-            Self::ImportNamed(_) => ImportNamed::HAS_CONFIG,
-            Self::ImportNamespace(_) => ImportNamespace::HAS_CONFIG,
-            Self::ImportNewlineAfterImport(_) => ImportNewlineAfterImport::HAS_CONFIG,
-            Self::ImportNoAbsolutePath(_) => ImportNoAbsolutePath::HAS_CONFIG,
-            Self::ImportNoAmd(_) => ImportNoAmd::HAS_CONFIG,
-            Self::ImportNoAnonymousDefaultExport(_) => ImportNoAnonymousDefaultExport::HAS_CONFIG,
-            Self::ImportNoCommonjs(_) => ImportNoCommonjs::HAS_CONFIG,
-            Self::ImportNoCycle(_) => ImportNoCycle::HAS_CONFIG,
-            Self::ImportNoDefaultExport(_) => ImportNoDefaultExport::HAS_CONFIG,
-            Self::ImportNoDuplicates(_) => ImportNoDuplicates::HAS_CONFIG,
-            Self::ImportNoDynamicRequire(_) => ImportNoDynamicRequire::HAS_CONFIG,
-            Self::ImportNoEmptyNamedBlocks(_) => ImportNoEmptyNamedBlocks::HAS_CONFIG,
-            Self::ImportNoMutableExports(_) => ImportNoMutableExports::HAS_CONFIG,
-            Self::ImportNoNamedAsDefault(_) => ImportNoNamedAsDefault::HAS_CONFIG,
-            Self::ImportNoNamedAsDefaultMember(_) => ImportNoNamedAsDefaultMember::HAS_CONFIG,
-            Self::ImportNoNamedDefault(_) => ImportNoNamedDefault::HAS_CONFIG,
-            Self::ImportNoNamedExport(_) => ImportNoNamedExport::HAS_CONFIG,
-            Self::ImportNoNamespace(_) => ImportNoNamespace::HAS_CONFIG,
-            Self::ImportNoNodejsModules(_) => ImportNoNodejsModules::HAS_CONFIG,
-            Self::ImportNoRelativeParentImports(_) => ImportNoRelativeParentImports::HAS_CONFIG,
-            Self::ImportNoSelfImport(_) => ImportNoSelfImport::HAS_CONFIG,
-            Self::ImportNoUnassignedImport(_) => ImportNoUnassignedImport::HAS_CONFIG,
-            Self::ImportNoWebpackLoaderSyntax(_) => ImportNoWebpackLoaderSyntax::HAS_CONFIG,
-            Self::ImportPreferDefaultExport(_) => ImportPreferDefaultExport::HAS_CONFIG,
-            Self::ImportUnambiguous(_) => ImportUnambiguous::HAS_CONFIG,
-            Self::EslintAccessorPairs(_) => EslintAccessorPairs::HAS_CONFIG,
-            Self::EslintArrayCallbackReturn(_) => EslintArrayCallbackReturn::HAS_CONFIG,
-            Self::EslintArrowBodyStyle(_) => EslintArrowBodyStyle::HAS_CONFIG,
-            Self::EslintBlockScopedVar(_) => EslintBlockScopedVar::HAS_CONFIG,
-            Self::EslintCapitalizedComments(_) => EslintCapitalizedComments::HAS_CONFIG,
-            Self::EslintClassMethodsUseThis(_) => EslintClassMethodsUseThis::HAS_CONFIG,
-            Self::EslintComplexity(_) => EslintComplexity::HAS_CONFIG,
-            Self::EslintConstructorSuper(_) => EslintConstructorSuper::HAS_CONFIG,
-            Self::EslintCurly(_) => EslintCurly::HAS_CONFIG,
-            Self::EslintDefaultCase(_) => EslintDefaultCase::HAS_CONFIG,
-            Self::EslintDefaultCaseLast(_) => EslintDefaultCaseLast::HAS_CONFIG,
-            Self::EslintDefaultParamLast(_) => EslintDefaultParamLast::HAS_CONFIG,
-            Self::EslintEqeqeq(_) => EslintEqeqeq::HAS_CONFIG,
-            Self::EslintForDirection(_) => EslintForDirection::HAS_CONFIG,
-            Self::EslintFuncNameMatching(_) => EslintFuncNameMatching::HAS_CONFIG,
-            Self::EslintFuncNames(_) => EslintFuncNames::HAS_CONFIG,
-            Self::EslintFuncStyle(_) => EslintFuncStyle::HAS_CONFIG,
-            Self::EslintGetterReturn(_) => EslintGetterReturn::HAS_CONFIG,
-            Self::EslintGroupedAccessorPairs(_) => EslintGroupedAccessorPairs::HAS_CONFIG,
-            Self::EslintGuardForIn(_) => EslintGuardForIn::HAS_CONFIG,
-            Self::EslintIdDenylist(_) => EslintIdDenylist::HAS_CONFIG,
-            Self::EslintIdLength(_) => EslintIdLength::HAS_CONFIG,
-            Self::EslintIdMatch(_) => EslintIdMatch::HAS_CONFIG,
-            Self::EslintInitDeclarations(_) => EslintInitDeclarations::HAS_CONFIG,
-            Self::EslintLogicalAssignmentOperators(_) => {
-                EslintLogicalAssignmentOperators::HAS_CONFIG
-            }
-            Self::EslintMaxClassesPerFile(_) => EslintMaxClassesPerFile::HAS_CONFIG,
-            Self::EslintMaxDepth(_) => EslintMaxDepth::HAS_CONFIG,
-            Self::EslintMaxLines(_) => EslintMaxLines::HAS_CONFIG,
-            Self::EslintMaxLinesPerFunction(_) => EslintMaxLinesPerFunction::HAS_CONFIG,
-            Self::EslintMaxNestedCallbacks(_) => EslintMaxNestedCallbacks::HAS_CONFIG,
-            Self::EslintMaxParams(_) => EslintMaxParams::HAS_CONFIG,
-            Self::EslintMaxStatements(_) => EslintMaxStatements::HAS_CONFIG,
-            Self::EslintNewCap(_) => EslintNewCap::HAS_CONFIG,
-            Self::EslintNoAlert(_) => EslintNoAlert::HAS_CONFIG,
-            Self::EslintNoArrayConstructor(_) => EslintNoArrayConstructor::HAS_CONFIG,
-            Self::EslintNoAsyncPromiseExecutor(_) => EslintNoAsyncPromiseExecutor::HAS_CONFIG,
-            Self::EslintNoAwaitInLoop(_) => EslintNoAwaitInLoop::HAS_CONFIG,
-            Self::EslintNoBitwise(_) => EslintNoBitwise::HAS_CONFIG,
-            Self::EslintNoCaller(_) => EslintNoCaller::HAS_CONFIG,
-            Self::EslintNoCaseDeclarations(_) => EslintNoCaseDeclarations::HAS_CONFIG,
-            Self::EslintNoClassAssign(_) => EslintNoClassAssign::HAS_CONFIG,
-            Self::EslintNoCompareNegZero(_) => EslintNoCompareNegZero::HAS_CONFIG,
-            Self::EslintNoCondAssign(_) => EslintNoCondAssign::HAS_CONFIG,
-            Self::EslintNoConsole(_) => EslintNoConsole::HAS_CONFIG,
-            Self::EslintNoConstAssign(_) => EslintNoConstAssign::HAS_CONFIG,
-            Self::EslintNoConstantBinaryExpression(_) => {
-                EslintNoConstantBinaryExpression::HAS_CONFIG
-            }
-            Self::EslintNoConstantCondition(_) => EslintNoConstantCondition::HAS_CONFIG,
-            Self::EslintNoConstructorReturn(_) => EslintNoConstructorReturn::HAS_CONFIG,
-            Self::EslintNoContinue(_) => EslintNoContinue::HAS_CONFIG,
-            Self::EslintNoControlRegex(_) => EslintNoControlRegex::HAS_CONFIG,
-            Self::EslintNoDebugger(_) => EslintNoDebugger::HAS_CONFIG,
-            Self::EslintNoDeleteVar(_) => EslintNoDeleteVar::HAS_CONFIG,
-            Self::EslintNoDivRegex(_) => EslintNoDivRegex::HAS_CONFIG,
-            Self::EslintNoDupeClassMembers(_) => EslintNoDupeClassMembers::HAS_CONFIG,
-            Self::EslintNoDupeElseIf(_) => EslintNoDupeElseIf::HAS_CONFIG,
-            Self::EslintNoDupeKeys(_) => EslintNoDupeKeys::HAS_CONFIG,
-            Self::EslintNoDuplicateCase(_) => EslintNoDuplicateCase::HAS_CONFIG,
-            Self::EslintNoDuplicateImports(_) => EslintNoDuplicateImports::HAS_CONFIG,
-            Self::EslintNoElseReturn(_) => EslintNoElseReturn::HAS_CONFIG,
-            Self::EslintNoEmpty(_) => EslintNoEmpty::HAS_CONFIG,
-            Self::EslintNoEmptyCharacterClass(_) => EslintNoEmptyCharacterClass::HAS_CONFIG,
-            Self::EslintNoEmptyFunction(_) => EslintNoEmptyFunction::HAS_CONFIG,
-            Self::EslintNoEmptyPattern(_) => EslintNoEmptyPattern::HAS_CONFIG,
-            Self::EslintNoEmptyStaticBlock(_) => EslintNoEmptyStaticBlock::HAS_CONFIG,
-            Self::EslintNoEqNull(_) => EslintNoEqNull::HAS_CONFIG,
-            Self::EslintNoEval(_) => EslintNoEval::HAS_CONFIG,
-            Self::EslintNoExAssign(_) => EslintNoExAssign::HAS_CONFIG,
-            Self::EslintNoExtendNative(_) => EslintNoExtendNative::HAS_CONFIG,
-            Self::EslintNoExtraBind(_) => EslintNoExtraBind::HAS_CONFIG,
-            Self::EslintNoExtraBooleanCast(_) => EslintNoExtraBooleanCast::HAS_CONFIG,
-            Self::EslintNoExtraLabel(_) => EslintNoExtraLabel::HAS_CONFIG,
-            Self::EslintNoFallthrough(_) => EslintNoFallthrough::HAS_CONFIG,
-            Self::EslintNoFuncAssign(_) => EslintNoFuncAssign::HAS_CONFIG,
-            Self::EslintNoGlobalAssign(_) => EslintNoGlobalAssign::HAS_CONFIG,
-            Self::EslintNoImplicitCoercion(_) => EslintNoImplicitCoercion::HAS_CONFIG,
-            Self::EslintNoImplicitGlobals(_) => EslintNoImplicitGlobals::HAS_CONFIG,
-            Self::EslintNoImpliedEval(_) => EslintNoImpliedEval::HAS_CONFIG,
-            Self::EslintNoImportAssign(_) => EslintNoImportAssign::HAS_CONFIG,
-            Self::EslintNoInlineComments(_) => EslintNoInlineComments::HAS_CONFIG,
-            Self::EslintNoInnerDeclarations(_) => EslintNoInnerDeclarations::HAS_CONFIG,
-            Self::EslintNoInvalidRegexp(_) => EslintNoInvalidRegexp::HAS_CONFIG,
-            Self::EslintNoIrregularWhitespace(_) => EslintNoIrregularWhitespace::HAS_CONFIG,
-            Self::EslintNoIterator(_) => EslintNoIterator::HAS_CONFIG,
-            Self::EslintNoLabelVar(_) => EslintNoLabelVar::HAS_CONFIG,
-            Self::EslintNoLabels(_) => EslintNoLabels::HAS_CONFIG,
-            Self::EslintNoLoneBlocks(_) => EslintNoLoneBlocks::HAS_CONFIG,
-            Self::EslintNoLonelyIf(_) => EslintNoLonelyIf::HAS_CONFIG,
-            Self::EslintNoLoopFunc(_) => EslintNoLoopFunc::HAS_CONFIG,
-            Self::EslintNoLossOfPrecision(_) => EslintNoLossOfPrecision::HAS_CONFIG,
-            Self::EslintNoMagicNumbers(_) => EslintNoMagicNumbers::HAS_CONFIG,
-            Self::EslintNoMisleadingCharacterClass(_) => {
-                EslintNoMisleadingCharacterClass::HAS_CONFIG
-            }
-            Self::EslintNoMultiAssign(_) => EslintNoMultiAssign::HAS_CONFIG,
-            Self::EslintNoMultiStr(_) => EslintNoMultiStr::HAS_CONFIG,
-            Self::EslintNoNegatedCondition(_) => EslintNoNegatedCondition::HAS_CONFIG,
-            Self::EslintNoNestedTernary(_) => EslintNoNestedTernary::HAS_CONFIG,
-            Self::EslintNoNew(_) => EslintNoNew::HAS_CONFIG,
-            Self::EslintNoNewFunc(_) => EslintNoNewFunc::HAS_CONFIG,
-            Self::EslintNoNewNativeNonconstructor(_) => EslintNoNewNativeNonconstructor::HAS_CONFIG,
-            Self::EslintNoNewWrappers(_) => EslintNoNewWrappers::HAS_CONFIG,
-            Self::EslintNoNonoctalDecimalEscape(_) => EslintNoNonoctalDecimalEscape::HAS_CONFIG,
-            Self::EslintNoObjCalls(_) => EslintNoObjCalls::HAS_CONFIG,
-            Self::EslintNoObjectConstructor(_) => EslintNoObjectConstructor::HAS_CONFIG,
-            Self::EslintNoParamReassign(_) => EslintNoParamReassign::HAS_CONFIG,
-            Self::EslintNoPlusplus(_) => EslintNoPlusplus::HAS_CONFIG,
-            Self::EslintNoPromiseExecutorReturn(_) => EslintNoPromiseExecutorReturn::HAS_CONFIG,
-            Self::EslintNoProto(_) => EslintNoProto::HAS_CONFIG,
-            Self::EslintNoPrototypeBuiltins(_) => EslintNoPrototypeBuiltins::HAS_CONFIG,
-            Self::EslintNoRedeclare(_) => EslintNoRedeclare::HAS_CONFIG,
-            Self::EslintNoRegexSpaces(_) => EslintNoRegexSpaces::HAS_CONFIG,
-            Self::EslintNoRestrictedExports(_) => EslintNoRestrictedExports::HAS_CONFIG,
-            Self::EslintNoRestrictedGlobals(_) => EslintNoRestrictedGlobals::HAS_CONFIG,
-            Self::EslintNoRestrictedImports(_) => EslintNoRestrictedImports::HAS_CONFIG,
-            Self::EslintNoRestrictedProperties(_) => EslintNoRestrictedProperties::HAS_CONFIG,
-            Self::EslintNoReturnAssign(_) => EslintNoReturnAssign::HAS_CONFIG,
-            Self::EslintNoScriptUrl(_) => EslintNoScriptUrl::HAS_CONFIG,
-            Self::EslintNoSelfAssign(_) => EslintNoSelfAssign::HAS_CONFIG,
-            Self::EslintNoSelfCompare(_) => EslintNoSelfCompare::HAS_CONFIG,
-            Self::EslintNoSequences(_) => EslintNoSequences::HAS_CONFIG,
-            Self::EslintNoSetterReturn(_) => EslintNoSetterReturn::HAS_CONFIG,
-            Self::EslintNoShadow(_) => EslintNoShadow::HAS_CONFIG,
-            Self::EslintNoShadowRestrictedNames(_) => EslintNoShadowRestrictedNames::HAS_CONFIG,
-            Self::EslintNoSparseArrays(_) => EslintNoSparseArrays::HAS_CONFIG,
-            Self::EslintNoTemplateCurlyInString(_) => EslintNoTemplateCurlyInString::HAS_CONFIG,
-            Self::EslintNoTernary(_) => EslintNoTernary::HAS_CONFIG,
-            Self::EslintNoThisBeforeSuper(_) => EslintNoThisBeforeSuper::HAS_CONFIG,
-            Self::EslintNoThrowLiteral(_) => EslintNoThrowLiteral::HAS_CONFIG,
-            Self::EslintNoUnassignedVars(_) => EslintNoUnassignedVars::HAS_CONFIG,
-            Self::EslintNoUndef(_) => EslintNoUndef::HAS_CONFIG,
-            Self::EslintNoUndefined(_) => EslintNoUndefined::HAS_CONFIG,
-            Self::EslintNoUnderscoreDangle(_) => EslintNoUnderscoreDangle::HAS_CONFIG,
-            Self::EslintNoUnexpectedMultiline(_) => EslintNoUnexpectedMultiline::HAS_CONFIG,
-            Self::EslintNoUnmodifiedLoopCondition(_) => EslintNoUnmodifiedLoopCondition::HAS_CONFIG,
-            Self::EslintNoUnneededTernary(_) => EslintNoUnneededTernary::HAS_CONFIG,
-            Self::EslintNoUnreachable(_) => EslintNoUnreachable::HAS_CONFIG,
-            Self::EslintNoUnreachableLoop(_) => EslintNoUnreachableLoop::HAS_CONFIG,
-            Self::EslintNoUnsafeFinally(_) => EslintNoUnsafeFinally::HAS_CONFIG,
-            Self::EslintNoUnsafeNegation(_) => EslintNoUnsafeNegation::HAS_CONFIG,
-            Self::EslintNoUnsafeOptionalChaining(_) => EslintNoUnsafeOptionalChaining::HAS_CONFIG,
-            Self::EslintNoUnusedExpressions(_) => EslintNoUnusedExpressions::HAS_CONFIG,
-            Self::EslintNoUnusedLabels(_) => EslintNoUnusedLabels::HAS_CONFIG,
-            Self::EslintNoUnusedPrivateClassMembers(_) => {
-                EslintNoUnusedPrivateClassMembers::HAS_CONFIG
-            }
-            Self::EslintNoUnusedVars(_) => EslintNoUnusedVars::HAS_CONFIG,
-            Self::EslintNoUseBeforeDefine(_) => EslintNoUseBeforeDefine::HAS_CONFIG,
-            Self::EslintNoUselessAssignment(_) => EslintNoUselessAssignment::HAS_CONFIG,
-            Self::EslintNoUselessBackreference(_) => EslintNoUselessBackreference::HAS_CONFIG,
-            Self::EslintNoUselessCall(_) => EslintNoUselessCall::HAS_CONFIG,
-            Self::EslintNoUselessCatch(_) => EslintNoUselessCatch::HAS_CONFIG,
-            Self::EslintNoUselessComputedKey(_) => EslintNoUselessComputedKey::HAS_CONFIG,
-            Self::EslintNoUselessConcat(_) => EslintNoUselessConcat::HAS_CONFIG,
-            Self::EslintNoUselessConstructor(_) => EslintNoUselessConstructor::HAS_CONFIG,
-            Self::EslintNoUselessEscape(_) => EslintNoUselessEscape::HAS_CONFIG,
-            Self::EslintNoUselessRename(_) => EslintNoUselessRename::HAS_CONFIG,
-            Self::EslintNoUselessReturn(_) => EslintNoUselessReturn::HAS_CONFIG,
-            Self::EslintNoVar(_) => EslintNoVar::HAS_CONFIG,
-            Self::EslintNoVoid(_) => EslintNoVoid::HAS_CONFIG,
-            Self::EslintNoWarningComments(_) => EslintNoWarningComments::HAS_CONFIG,
-            Self::EslintNoWith(_) => EslintNoWith::HAS_CONFIG,
-            Self::EslintObjectShorthand(_) => EslintObjectShorthand::HAS_CONFIG,
-            Self::EslintOneVar(_) => EslintOneVar::HAS_CONFIG,
-            Self::EslintOperatorAssignment(_) => EslintOperatorAssignment::HAS_CONFIG,
-            Self::EslintPreferArrowCallback(_) => EslintPreferArrowCallback::HAS_CONFIG,
-            Self::EslintPreferConst(_) => EslintPreferConst::HAS_CONFIG,
-            Self::EslintPreferDestructuring(_) => EslintPreferDestructuring::HAS_CONFIG,
-            Self::EslintPreferExponentiationOperator(_) => {
-                EslintPreferExponentiationOperator::HAS_CONFIG
-            }
-            Self::EslintPreferNamedCaptureGroup(_) => EslintPreferNamedCaptureGroup::HAS_CONFIG,
-            Self::EslintPreferNumericLiterals(_) => EslintPreferNumericLiterals::HAS_CONFIG,
-            Self::EslintPreferObjectHasOwn(_) => EslintPreferObjectHasOwn::HAS_CONFIG,
-            Self::EslintPreferObjectSpread(_) => EslintPreferObjectSpread::HAS_CONFIG,
-            Self::EslintPreferPromiseRejectErrors(_) => EslintPreferPromiseRejectErrors::HAS_CONFIG,
-            Self::EslintPreferRegexLiterals(_) => EslintPreferRegexLiterals::HAS_CONFIG,
-            Self::EslintPreferRestParams(_) => EslintPreferRestParams::HAS_CONFIG,
-            Self::EslintPreferSpread(_) => EslintPreferSpread::HAS_CONFIG,
-            Self::EslintPreferTemplate(_) => EslintPreferTemplate::HAS_CONFIG,
-            Self::EslintPreserveCaughtError(_) => EslintPreserveCaughtError::HAS_CONFIG,
-            Self::EslintRadix(_) => EslintRadix::HAS_CONFIG,
-            Self::EslintRequireAwait(_) => EslintRequireAwait::HAS_CONFIG,
-            Self::EslintRequireUnicodeRegexp(_) => EslintRequireUnicodeRegexp::HAS_CONFIG,
-            Self::EslintRequireYield(_) => EslintRequireYield::HAS_CONFIG,
-            Self::EslintSortImports(_) => EslintSortImports::HAS_CONFIG,
-            Self::EslintSortKeys(_) => EslintSortKeys::HAS_CONFIG,
-            Self::EslintSortVars(_) => EslintSortVars::HAS_CONFIG,
-            Self::EslintSymbolDescription(_) => EslintSymbolDescription::HAS_CONFIG,
-            Self::EslintUnicodeBom(_) => EslintUnicodeBom::HAS_CONFIG,
-            Self::EslintUseIsnan(_) => EslintUseIsnan::HAS_CONFIG,
-            Self::EslintValidTypeof(_) => EslintValidTypeof::HAS_CONFIG,
-            Self::EslintVarsOnTop(_) => EslintVarsOnTop::HAS_CONFIG,
-            Self::EslintYoda(_) => EslintYoda::HAS_CONFIG,
-            Self::TypescriptAdjacentOverloadSignatures(_) => {
-                TypescriptAdjacentOverloadSignatures::HAS_CONFIG
-            }
-            Self::TypescriptArrayType(_) => TypescriptArrayType::HAS_CONFIG,
-            Self::TypescriptAwaitThenable(_) => TypescriptAwaitThenable::HAS_CONFIG,
-            Self::TypescriptBanTsComment(_) => TypescriptBanTsComment::HAS_CONFIG,
-            Self::TypescriptBanTslintComment(_) => TypescriptBanTslintComment::HAS_CONFIG,
-            Self::TypescriptBanTypes(_) => TypescriptBanTypes::HAS_CONFIG,
-            Self::TypescriptClassLiteralPropertyStyle(_) => {
-                TypescriptClassLiteralPropertyStyle::HAS_CONFIG
-            }
-            Self::TypescriptConsistentGenericConstructors(_) => {
-                TypescriptConsistentGenericConstructors::HAS_CONFIG
-            }
-            Self::TypescriptConsistentIndexedObjectStyle(_) => {
-                TypescriptConsistentIndexedObjectStyle::HAS_CONFIG
-            }
-            Self::TypescriptConsistentReturn(_) => TypescriptConsistentReturn::HAS_CONFIG,
-            Self::TypescriptConsistentTypeAssertions(_) => {
-                TypescriptConsistentTypeAssertions::HAS_CONFIG
-            }
-            Self::TypescriptConsistentTypeDefinitions(_) => {
-                TypescriptConsistentTypeDefinitions::HAS_CONFIG
-            }
-            Self::TypescriptConsistentTypeExports(_) => TypescriptConsistentTypeExports::HAS_CONFIG,
-            Self::TypescriptConsistentTypeImports(_) => TypescriptConsistentTypeImports::HAS_CONFIG,
-            Self::TypescriptDotNotation(_) => TypescriptDotNotation::HAS_CONFIG,
-            Self::TypescriptExplicitFunctionReturnType(_) => {
-                TypescriptExplicitFunctionReturnType::HAS_CONFIG
-            }
-            Self::TypescriptExplicitMemberAccessibility(_) => {
-                TypescriptExplicitMemberAccessibility::HAS_CONFIG
-            }
-            Self::TypescriptExplicitModuleBoundaryTypes(_) => {
-                TypescriptExplicitModuleBoundaryTypes::HAS_CONFIG
-            }
-            Self::TypescriptMethodSignatureStyle(_) => TypescriptMethodSignatureStyle::HAS_CONFIG,
-            Self::TypescriptNoArrayDelete(_) => TypescriptNoArrayDelete::HAS_CONFIG,
-            Self::TypescriptNoBaseToString(_) => TypescriptNoBaseToString::HAS_CONFIG,
-            Self::TypescriptNoConfusingNonNullAssertion(_) => {
-                TypescriptNoConfusingNonNullAssertion::HAS_CONFIG
-            }
-            Self::TypescriptNoConfusingVoidExpression(_) => {
-                TypescriptNoConfusingVoidExpression::HAS_CONFIG
-            }
-            Self::TypescriptNoDeprecated(_) => TypescriptNoDeprecated::HAS_CONFIG,
-            Self::TypescriptNoDuplicateEnumValues(_) => TypescriptNoDuplicateEnumValues::HAS_CONFIG,
-            Self::TypescriptNoDuplicateTypeConstituents(_) => {
-                TypescriptNoDuplicateTypeConstituents::HAS_CONFIG
-            }
-            Self::TypescriptNoDynamicDelete(_) => TypescriptNoDynamicDelete::HAS_CONFIG,
-            Self::TypescriptNoEmptyInterface(_) => TypescriptNoEmptyInterface::HAS_CONFIG,
-            Self::TypescriptNoEmptyObjectType(_) => TypescriptNoEmptyObjectType::HAS_CONFIG,
-            Self::TypescriptNoExplicitAny(_) => TypescriptNoExplicitAny::HAS_CONFIG,
-            Self::TypescriptNoExtraNonNullAssertion(_) => {
-                TypescriptNoExtraNonNullAssertion::HAS_CONFIG
-            }
-            Self::TypescriptNoExtraneousClass(_) => TypescriptNoExtraneousClass::HAS_CONFIG,
-            Self::TypescriptNoFloatingPromises(_) => TypescriptNoFloatingPromises::HAS_CONFIG,
-            Self::TypescriptNoForInArray(_) => TypescriptNoForInArray::HAS_CONFIG,
-            Self::TypescriptNoGeneratedEmptyObjectType(_) => {
-                TypescriptNoGeneratedEmptyObjectType::HAS_CONFIG
-            }
-            Self::TypescriptNoImpliedEval(_) => TypescriptNoImpliedEval::HAS_CONFIG,
-            Self::TypescriptNoImportTypeSideEffects(_) => {
-                TypescriptNoImportTypeSideEffects::HAS_CONFIG
-            }
-            Self::TypescriptNoInferrableTypes(_) => TypescriptNoInferrableTypes::HAS_CONFIG,
-            Self::TypescriptNoInvalidVoidType(_) => TypescriptNoInvalidVoidType::HAS_CONFIG,
-            Self::TypescriptNoMeaninglessVoidOperator(_) => {
-                TypescriptNoMeaninglessVoidOperator::HAS_CONFIG
-            }
-            Self::TypescriptNoMisusedNew(_) => TypescriptNoMisusedNew::HAS_CONFIG,
-            Self::TypescriptNoMisusedPromises(_) => TypescriptNoMisusedPromises::HAS_CONFIG,
-            Self::TypescriptNoMisusedSpread(_) => TypescriptNoMisusedSpread::HAS_CONFIG,
-            Self::TypescriptNoMixedEnums(_) => TypescriptNoMixedEnums::HAS_CONFIG,
-            Self::TypescriptNoNamespace(_) => TypescriptNoNamespace::HAS_CONFIG,
-            Self::TypescriptNoNonNullAssertedNullishCoalescing(_) => {
-                TypescriptNoNonNullAssertedNullishCoalescing::HAS_CONFIG
-            }
-            Self::TypescriptNoNonNullAssertedOptionalChain(_) => {
-                TypescriptNoNonNullAssertedOptionalChain::HAS_CONFIG
-            }
-            Self::TypescriptNoNonNullAssertion(_) => TypescriptNoNonNullAssertion::HAS_CONFIG,
-            Self::TypescriptNoRedundantTypeConstituents(_) => {
-                TypescriptNoRedundantTypeConstituents::HAS_CONFIG
-            }
-            Self::TypescriptNoRequireImports(_) => TypescriptNoRequireImports::HAS_CONFIG,
-            Self::TypescriptNoRestrictedTypes(_) => TypescriptNoRestrictedTypes::HAS_CONFIG,
-            Self::TypescriptNoThisAlias(_) => TypescriptNoThisAlias::HAS_CONFIG,
-            Self::TypescriptNoUnnecessaryBooleanLiteralCompare(_) => {
-                TypescriptNoUnnecessaryBooleanLiteralCompare::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryCondition(_) => {
-                TypescriptNoUnnecessaryCondition::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryParameterPropertyAssignment(_) => {
-                TypescriptNoUnnecessaryParameterPropertyAssignment::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryQualifier(_) => {
-                TypescriptNoUnnecessaryQualifier::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryTemplateExpression(_) => {
-                TypescriptNoUnnecessaryTemplateExpression::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryTypeArguments(_) => {
-                TypescriptNoUnnecessaryTypeArguments::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryTypeAssertion(_) => {
-                TypescriptNoUnnecessaryTypeAssertion::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryTypeConstraint(_) => {
-                TypescriptNoUnnecessaryTypeConstraint::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryTypeConversion(_) => {
-                TypescriptNoUnnecessaryTypeConversion::HAS_CONFIG
-            }
-            Self::TypescriptNoUnnecessaryTypeParameters(_) => {
-                TypescriptNoUnnecessaryTypeParameters::HAS_CONFIG
-            }
-            Self::TypescriptNoUnsafeArgument(_) => TypescriptNoUnsafeArgument::HAS_CONFIG,
-            Self::TypescriptNoUnsafeAssignment(_) => TypescriptNoUnsafeAssignment::HAS_CONFIG,
-            Self::TypescriptNoUnsafeCall(_) => TypescriptNoUnsafeCall::HAS_CONFIG,
-            Self::TypescriptNoUnsafeDeclarationMerging(_) => {
-                TypescriptNoUnsafeDeclarationMerging::HAS_CONFIG
-            }
-            Self::TypescriptNoUnsafeEnumComparison(_) => {
-                TypescriptNoUnsafeEnumComparison::HAS_CONFIG
-            }
-            Self::TypescriptNoUnsafeFunctionType(_) => TypescriptNoUnsafeFunctionType::HAS_CONFIG,
-            Self::TypescriptNoUnsafeMemberAccess(_) => TypescriptNoUnsafeMemberAccess::HAS_CONFIG,
-            Self::TypescriptNoUnsafeReturn(_) => TypescriptNoUnsafeReturn::HAS_CONFIG,
-            Self::TypescriptNoUnsafeTypeAssertion(_) => TypescriptNoUnsafeTypeAssertion::HAS_CONFIG,
-            Self::TypescriptNoUnsafeUnaryMinus(_) => TypescriptNoUnsafeUnaryMinus::HAS_CONFIG,
-            Self::TypescriptNoUselessDefaultAssignment(_) => {
-                TypescriptNoUselessDefaultAssignment::HAS_CONFIG
-            }
-            Self::TypescriptNoUselessEmptyExport(_) => TypescriptNoUselessEmptyExport::HAS_CONFIG,
-            Self::TypescriptNoVarRequires(_) => TypescriptNoVarRequires::HAS_CONFIG,
-            Self::TypescriptNoWrapperObjectTypes(_) => TypescriptNoWrapperObjectTypes::HAS_CONFIG,
-            Self::TypescriptNonNullableTypeAssertionStyle(_) => {
-                TypescriptNonNullableTypeAssertionStyle::HAS_CONFIG
-            }
-            Self::TypescriptOnlyThrowError(_) => TypescriptOnlyThrowError::HAS_CONFIG,
-            Self::TypescriptParameterProperties(_) => TypescriptParameterProperties::HAS_CONFIG,
-            Self::TypescriptPreferAsConst(_) => TypescriptPreferAsConst::HAS_CONFIG,
-            Self::TypescriptPreferEnumInitializers(_) => {
-                TypescriptPreferEnumInitializers::HAS_CONFIG
-            }
-            Self::TypescriptPreferFind(_) => TypescriptPreferFind::HAS_CONFIG,
-            Self::TypescriptPreferForOf(_) => TypescriptPreferForOf::HAS_CONFIG,
-            Self::TypescriptPreferFunctionType(_) => TypescriptPreferFunctionType::HAS_CONFIG,
-            Self::TypescriptPreferIncludes(_) => TypescriptPreferIncludes::HAS_CONFIG,
-            Self::TypescriptPreferLiteralEnumMember(_) => {
-                TypescriptPreferLiteralEnumMember::HAS_CONFIG
-            }
-            Self::TypescriptPreferNamespaceKeyword(_) => {
-                TypescriptPreferNamespaceKeyword::HAS_CONFIG
-            }
-            Self::TypescriptPreferNullishCoalescing(_) => {
-                TypescriptPreferNullishCoalescing::HAS_CONFIG
-            }
-            Self::TypescriptPreferOptionalChain(_) => TypescriptPreferOptionalChain::HAS_CONFIG,
-            Self::TypescriptPreferPromiseRejectErrors(_) => {
-                TypescriptPreferPromiseRejectErrors::HAS_CONFIG
-            }
-            Self::TypescriptPreferReadonly(_) => TypescriptPreferReadonly::HAS_CONFIG,
-            Self::TypescriptPreferReadonlyParameterTypes(_) => {
-                TypescriptPreferReadonlyParameterTypes::HAS_CONFIG
-            }
-            Self::TypescriptPreferReduceTypeParameter(_) => {
-                TypescriptPreferReduceTypeParameter::HAS_CONFIG
-            }
-            Self::TypescriptPreferRegexpExec(_) => TypescriptPreferRegexpExec::HAS_CONFIG,
-            Self::TypescriptPreferReturnThisType(_) => TypescriptPreferReturnThisType::HAS_CONFIG,
-            Self::TypescriptPreferStringStartsEndsWith(_) => {
-                TypescriptPreferStringStartsEndsWith::HAS_CONFIG
-            }
-            Self::TypescriptPreferTsExpectError(_) => TypescriptPreferTsExpectError::HAS_CONFIG,
-            Self::TypescriptPromiseFunctionAsync(_) => TypescriptPromiseFunctionAsync::HAS_CONFIG,
-            Self::TypescriptRelatedGetterSetterPairs(_) => {
-                TypescriptRelatedGetterSetterPairs::HAS_CONFIG
-            }
-            Self::TypescriptRequireArraySortCompare(_) => {
-                TypescriptRequireArraySortCompare::HAS_CONFIG
-            }
-            Self::TypescriptRequireAwait(_) => TypescriptRequireAwait::HAS_CONFIG,
-            Self::TypescriptRestrictPlusOperands(_) => TypescriptRestrictPlusOperands::HAS_CONFIG,
-            Self::TypescriptRestrictTemplateExpressions(_) => {
-                TypescriptRestrictTemplateExpressions::HAS_CONFIG
-            }
-            Self::TypescriptReturnAwait(_) => TypescriptReturnAwait::HAS_CONFIG,
-            Self::TypescriptStrictBooleanExpressions(_) => {
-                TypescriptStrictBooleanExpressions::HAS_CONFIG
-            }
-            Self::TypescriptStrictVoidReturn(_) => TypescriptStrictVoidReturn::HAS_CONFIG,
-            Self::TypescriptSwitchExhaustivenessCheck(_) => {
-                TypescriptSwitchExhaustivenessCheck::HAS_CONFIG
-            }
-            Self::TypescriptTripleSlashReference(_) => TypescriptTripleSlashReference::HAS_CONFIG,
-            Self::TypescriptUnboundMethod(_) => TypescriptUnboundMethod::HAS_CONFIG,
-            Self::TypescriptUnifiedSignatures(_) => TypescriptUnifiedSignatures::HAS_CONFIG,
-            Self::TypescriptUseUnknownInCatchCallbackVariable(_) => {
-                TypescriptUseUnknownInCatchCallbackVariable::HAS_CONFIG
-            }
-            Self::JestConsistentTestIt(_) => JestConsistentTestIt::HAS_CONFIG,
-            Self::JestExpectExpect(_) => JestExpectExpect::HAS_CONFIG,
-            Self::JestMaxExpects(_) => JestMaxExpects::HAS_CONFIG,
-            Self::JestMaxNestedDescribe(_) => JestMaxNestedDescribe::HAS_CONFIG,
-            Self::JestNoAliasMethods(_) => JestNoAliasMethods::HAS_CONFIG,
-            Self::JestNoCommentedOutTests(_) => JestNoCommentedOutTests::HAS_CONFIG,
-            Self::JestNoConditionalExpect(_) => JestNoConditionalExpect::HAS_CONFIG,
-            Self::JestNoConditionalInTest(_) => JestNoConditionalInTest::HAS_CONFIG,
-            Self::JestNoConfusingSetTimeout(_) => JestNoConfusingSetTimeout::HAS_CONFIG,
-            Self::JestNoDeprecatedFunctions(_) => JestNoDeprecatedFunctions::HAS_CONFIG,
-            Self::JestNoDisabledTests(_) => JestNoDisabledTests::HAS_CONFIG,
-            Self::JestNoDoneCallback(_) => JestNoDoneCallback::HAS_CONFIG,
-            Self::JestNoDuplicateHooks(_) => JestNoDuplicateHooks::HAS_CONFIG,
-            Self::JestNoExport(_) => JestNoExport::HAS_CONFIG,
-            Self::JestNoFocusedTests(_) => JestNoFocusedTests::HAS_CONFIG,
-            Self::JestNoHooks(_) => JestNoHooks::HAS_CONFIG,
-            Self::JestNoIdenticalTitle(_) => JestNoIdenticalTitle::HAS_CONFIG,
-            Self::JestNoInterpolationInSnapshots(_) => JestNoInterpolationInSnapshots::HAS_CONFIG,
-            Self::JestNoJasmineGlobals(_) => JestNoJasmineGlobals::HAS_CONFIG,
-            Self::JestNoLargeSnapshots(_) => JestNoLargeSnapshots::HAS_CONFIG,
-            Self::JestNoMocksImport(_) => JestNoMocksImport::HAS_CONFIG,
-            Self::JestNoRestrictedJestMethods(_) => JestNoRestrictedJestMethods::HAS_CONFIG,
-            Self::JestNoRestrictedMatchers(_) => JestNoRestrictedMatchers::HAS_CONFIG,
-            Self::JestNoStandaloneExpect(_) => JestNoStandaloneExpect::HAS_CONFIG,
-            Self::JestNoTestPrefixes(_) => JestNoTestPrefixes::HAS_CONFIG,
-            Self::JestNoTestReturnStatement(_) => JestNoTestReturnStatement::HAS_CONFIG,
-            Self::JestNoUnneededAsyncExpectFunction(_) => {
-                JestNoUnneededAsyncExpectFunction::HAS_CONFIG
-            }
-            Self::JestNoUntypedMockFactory(_) => JestNoUntypedMockFactory::HAS_CONFIG,
-            Self::JestPaddingAroundAfterAllBlocks(_) => JestPaddingAroundAfterAllBlocks::HAS_CONFIG,
-            Self::JestPaddingAroundTestBlocks(_) => JestPaddingAroundTestBlocks::HAS_CONFIG,
-            Self::JestPreferCalledWith(_) => JestPreferCalledWith::HAS_CONFIG,
-            Self::JestPreferComparisonMatcher(_) => JestPreferComparisonMatcher::HAS_CONFIG,
-            Self::JestPreferEach(_) => JestPreferEach::HAS_CONFIG,
-            Self::JestPreferEndingWithAnExpect(_) => JestPreferEndingWithAnExpect::HAS_CONFIG,
-            Self::JestPreferEqualityMatcher(_) => JestPreferEqualityMatcher::HAS_CONFIG,
-            Self::JestPreferExpectAssertions(_) => JestPreferExpectAssertions::HAS_CONFIG,
-            Self::JestPreferExpectResolves(_) => JestPreferExpectResolves::HAS_CONFIG,
-            Self::JestPreferHooksInOrder(_) => JestPreferHooksInOrder::HAS_CONFIG,
-            Self::JestPreferHooksOnTop(_) => JestPreferHooksOnTop::HAS_CONFIG,
-            Self::JestPreferImportingJestGlobals(_) => JestPreferImportingJestGlobals::HAS_CONFIG,
-            Self::JestPreferJestMocked(_) => JestPreferJestMocked::HAS_CONFIG,
-            Self::JestPreferLowercaseTitle(_) => JestPreferLowercaseTitle::HAS_CONFIG,
-            Self::JestPreferMockPromiseShorthand(_) => JestPreferMockPromiseShorthand::HAS_CONFIG,
-            Self::JestPreferMockReturnShorthand(_) => JestPreferMockReturnShorthand::HAS_CONFIG,
-            Self::JestPreferSnapshotHint(_) => JestPreferSnapshotHint::HAS_CONFIG,
-            Self::JestPreferSpyOn(_) => JestPreferSpyOn::HAS_CONFIG,
-            Self::JestPreferStrictEqual(_) => JestPreferStrictEqual::HAS_CONFIG,
-            Self::JestPreferToBe(_) => JestPreferToBe::HAS_CONFIG,
-            Self::JestPreferToContain(_) => JestPreferToContain::HAS_CONFIG,
-            Self::JestPreferToHaveBeenCalled(_) => JestPreferToHaveBeenCalled::HAS_CONFIG,
-            Self::JestPreferToHaveBeenCalledTimes(_) => JestPreferToHaveBeenCalledTimes::HAS_CONFIG,
-            Self::JestPreferToHaveLength(_) => JestPreferToHaveLength::HAS_CONFIG,
-            Self::JestPreferTodo(_) => JestPreferTodo::HAS_CONFIG,
-            Self::JestRequireHook(_) => JestRequireHook::HAS_CONFIG,
-            Self::JestRequireToThrowMessage(_) => JestRequireToThrowMessage::HAS_CONFIG,
-            Self::JestRequireTopLevelDescribe(_) => JestRequireTopLevelDescribe::HAS_CONFIG,
-            Self::JestValidDescribeCallback(_) => JestValidDescribeCallback::HAS_CONFIG,
-            Self::JestValidExpect(_) => JestValidExpect::HAS_CONFIG,
-            Self::JestValidExpectInPromise(_) => JestValidExpectInPromise::HAS_CONFIG,
-            Self::JestValidTitle(_) => JestValidTitle::HAS_CONFIG,
-            Self::ReactButtonHasType(_) => ReactButtonHasType::HAS_CONFIG,
-            Self::ReactCapitalizedCalls(_) => ReactCapitalizedCalls::HAS_CONFIG,
-            Self::ReactCheckedRequiresOnchangeOrReadonly(_) => {
-                ReactCheckedRequiresOnchangeOrReadonly::HAS_CONFIG
-            }
-            Self::ReactDisplayName(_) => ReactDisplayName::HAS_CONFIG,
-            Self::ReactErrorBoundaries(_) => ReactErrorBoundaries::HAS_CONFIG,
-            Self::ReactExhaustiveDeps(_) => ReactExhaustiveDeps::HAS_CONFIG,
-            Self::ReactExhaustiveEffectDependencies(_) => {
-                ReactExhaustiveEffectDependencies::HAS_CONFIG
-            }
-            Self::ReactForbidComponentProps(_) => ReactForbidComponentProps::HAS_CONFIG,
-            Self::ReactForbidDomProps(_) => ReactForbidDomProps::HAS_CONFIG,
-            Self::ReactForbidElements(_) => ReactForbidElements::HAS_CONFIG,
-            Self::ReactForwardRefUsesRef(_) => ReactForwardRefUsesRef::HAS_CONFIG,
-            Self::ReactFunctionComponentDefinition(_) => {
-                ReactFunctionComponentDefinition::HAS_CONFIG
-            }
-            Self::ReactGlobals(_) => ReactGlobals::HAS_CONFIG,
-            Self::ReactHookUseState(_) => ReactHookUseState::HAS_CONFIG,
-            Self::ReactHooks(_) => ReactHooks::HAS_CONFIG,
-            Self::ReactIframeMissingSandbox(_) => ReactIframeMissingSandbox::HAS_CONFIG,
-            Self::ReactImmutability(_) => ReactImmutability::HAS_CONFIG,
-            Self::ReactIncompatibleLibrary(_) => ReactIncompatibleLibrary::HAS_CONFIG,
-            Self::ReactInvariant(_) => ReactInvariant::HAS_CONFIG,
-            Self::ReactJsxBooleanValue(_) => ReactJsxBooleanValue::HAS_CONFIG,
-            Self::ReactJsxCurlyBracePresence(_) => ReactJsxCurlyBracePresence::HAS_CONFIG,
-            Self::ReactJsxFilenameExtension(_) => ReactJsxFilenameExtension::HAS_CONFIG,
-            Self::ReactJsxFragments(_) => ReactJsxFragments::HAS_CONFIG,
-            Self::ReactJsxHandlerNames(_) => ReactJsxHandlerNames::HAS_CONFIG,
-            Self::ReactJsxKey(_) => ReactJsxKey::HAS_CONFIG,
-            Self::ReactJsxMaxDepth(_) => ReactJsxMaxDepth::HAS_CONFIG,
-            Self::ReactJsxNoCommentTextnodes(_) => ReactJsxNoCommentTextnodes::HAS_CONFIG,
-            Self::ReactJsxNoConstructedContextValues(_) => {
-                ReactJsxNoConstructedContextValues::HAS_CONFIG
-            }
-            Self::ReactJsxNoDuplicateProps(_) => ReactJsxNoDuplicateProps::HAS_CONFIG,
-            Self::ReactJsxNoLiterals(_) => ReactJsxNoLiterals::HAS_CONFIG,
-            Self::ReactJsxNoScriptUrl(_) => ReactJsxNoScriptUrl::HAS_CONFIG,
-            Self::ReactJsxNoTargetBlank(_) => ReactJsxNoTargetBlank::HAS_CONFIG,
-            Self::ReactJsxNoUndef(_) => ReactJsxNoUndef::HAS_CONFIG,
-            Self::ReactJsxNoUselessFragment(_) => ReactJsxNoUselessFragment::HAS_CONFIG,
-            Self::ReactJsxPascalCase(_) => ReactJsxPascalCase::HAS_CONFIG,
-            Self::ReactJsxPropsNoSpreadMulti(_) => ReactJsxPropsNoSpreadMulti::HAS_CONFIG,
-            Self::ReactJsxPropsNoSpreading(_) => ReactJsxPropsNoSpreading::HAS_CONFIG,
-            Self::ReactMemoDependencies(_) => ReactMemoDependencies::HAS_CONFIG,
-            Self::ReactNoArrayIndexKey(_) => ReactNoArrayIndexKey::HAS_CONFIG,
-            Self::ReactNoChildrenProp(_) => ReactNoChildrenProp::HAS_CONFIG,
-            Self::ReactNoCloneElement(_) => ReactNoCloneElement::HAS_CONFIG,
-            Self::ReactNoDanger(_) => ReactNoDanger::HAS_CONFIG,
-            Self::ReactNoDangerWithChildren(_) => ReactNoDangerWithChildren::HAS_CONFIG,
-            Self::ReactNoDerivingStateInEffects(_) => ReactNoDerivingStateInEffects::HAS_CONFIG,
-            Self::ReactNoDidMountSetState(_) => ReactNoDidMountSetState::HAS_CONFIG,
-            Self::ReactNoDidUpdateSetState(_) => ReactNoDidUpdateSetState::HAS_CONFIG,
-            Self::ReactNoDirectMutationState(_) => ReactNoDirectMutationState::HAS_CONFIG,
-            Self::ReactNoFindDomNode(_) => ReactNoFindDomNode::HAS_CONFIG,
-            Self::ReactNoIsMounted(_) => ReactNoIsMounted::HAS_CONFIG,
-            Self::ReactNoMultiComp(_) => ReactNoMultiComp::HAS_CONFIG,
-            Self::ReactNoNamespace(_) => ReactNoNamespace::HAS_CONFIG,
-            Self::ReactNoObjectTypeAsDefaultProp(_) => ReactNoObjectTypeAsDefaultProp::HAS_CONFIG,
-            Self::ReactNoReactChildren(_) => ReactNoReactChildren::HAS_CONFIG,
-            Self::ReactNoRedundantShouldComponentUpdate(_) => {
-                ReactNoRedundantShouldComponentUpdate::HAS_CONFIG
-            }
-            Self::ReactNoRenderReturnValue(_) => ReactNoRenderReturnValue::HAS_CONFIG,
-            Self::ReactNoSetState(_) => ReactNoSetState::HAS_CONFIG,
-            Self::ReactNoStringRefs(_) => ReactNoStringRefs::HAS_CONFIG,
-            Self::ReactNoThisInSfc(_) => ReactNoThisInSfc::HAS_CONFIG,
-            Self::ReactNoUnescapedEntities(_) => ReactNoUnescapedEntities::HAS_CONFIG,
-            Self::ReactNoUnknownProperty(_) => ReactNoUnknownProperty::HAS_CONFIG,
-            Self::ReactNoUnsafe(_) => ReactNoUnsafe::HAS_CONFIG,
-            Self::ReactNoUnstableNestedComponents(_) => ReactNoUnstableNestedComponents::HAS_CONFIG,
-            Self::ReactNoWillUpdateSetState(_) => ReactNoWillUpdateSetState::HAS_CONFIG,
-            Self::ReactOnlyExportComponents(_) => ReactOnlyExportComponents::HAS_CONFIG,
-            Self::ReactPreferEs6Class(_) => ReactPreferEs6Class::HAS_CONFIG,
-            Self::ReactPreferFunctionComponent(_) => ReactPreferFunctionComponent::HAS_CONFIG,
-            Self::ReactPreserveManualMemoization(_) => ReactPreserveManualMemoization::HAS_CONFIG,
-            Self::ReactPurity(_) => ReactPurity::HAS_CONFIG,
-            Self::ReactReactInJsxScope(_) => ReactReactInJsxScope::HAS_CONFIG,
-            Self::ReactRefs(_) => ReactRefs::HAS_CONFIG,
-            Self::ReactRequireRenderReturn(_) => ReactRequireRenderReturn::HAS_CONFIG,
-            Self::ReactRuleSuppression(_) => ReactRuleSuppression::HAS_CONFIG,
-            Self::ReactRulesOfHooks(_) => ReactRulesOfHooks::HAS_CONFIG,
-            Self::ReactSelfClosingComp(_) => ReactSelfClosingComp::HAS_CONFIG,
-            Self::ReactSetStateInEffect(_) => ReactSetStateInEffect::HAS_CONFIG,
-            Self::ReactSetStateInRender(_) => ReactSetStateInRender::HAS_CONFIG,
-            Self::ReactStateInConstructor(_) => ReactStateInConstructor::HAS_CONFIG,
-            Self::ReactStaticComponents(_) => ReactStaticComponents::HAS_CONFIG,
-            Self::ReactStylePropObject(_) => ReactStylePropObject::HAS_CONFIG,
-            Self::ReactSyntax(_) => ReactSyntax::HAS_CONFIG,
-            Self::ReactTodo(_) => ReactTodo::HAS_CONFIG,
-            Self::ReactUnsupportedSyntax(_) => ReactUnsupportedSyntax::HAS_CONFIG,
-            Self::ReactUseMemo(_) => ReactUseMemo::HAS_CONFIG,
-            Self::ReactVoidDomElementsNoChildren(_) => ReactVoidDomElementsNoChildren::HAS_CONFIG,
-            Self::ReactVoidUseMemo(_) => ReactVoidUseMemo::HAS_CONFIG,
-            Self::ReactPerfJsxNoJsxAsProp(_) => ReactPerfJsxNoJsxAsProp::HAS_CONFIG,
-            Self::ReactPerfJsxNoNewArrayAsProp(_) => ReactPerfJsxNoNewArrayAsProp::HAS_CONFIG,
-            Self::ReactPerfJsxNoNewFunctionAsProp(_) => ReactPerfJsxNoNewFunctionAsProp::HAS_CONFIG,
-            Self::ReactPerfJsxNoNewObjectAsProp(_) => ReactPerfJsxNoNewObjectAsProp::HAS_CONFIG,
-            Self::UnicornCatchErrorName(_) => UnicornCatchErrorName::HAS_CONFIG,
-            Self::UnicornConsistentAssert(_) => UnicornConsistentAssert::HAS_CONFIG,
-            Self::UnicornConsistentDateClone(_) => UnicornConsistentDateClone::HAS_CONFIG,
-            Self::UnicornConsistentEmptyArraySpread(_) => {
-                UnicornConsistentEmptyArraySpread::HAS_CONFIG
-            }
-            Self::UnicornConsistentExistenceIndexCheck(_) => {
-                UnicornConsistentExistenceIndexCheck::HAS_CONFIG
-            }
-            Self::UnicornConsistentFunctionScoping(_) => {
-                UnicornConsistentFunctionScoping::HAS_CONFIG
-            }
-            Self::UnicornConsistentTemplateLiteralEscape(_) => {
-                UnicornConsistentTemplateLiteralEscape::HAS_CONFIG
-            }
-            Self::UnicornCustomErrorDefinition(_) => UnicornCustomErrorDefinition::HAS_CONFIG,
-            Self::UnicornEmptyBraceSpaces(_) => UnicornEmptyBraceSpaces::HAS_CONFIG,
-            Self::UnicornErrorMessage(_) => UnicornErrorMessage::HAS_CONFIG,
-            Self::UnicornEscapeCase(_) => UnicornEscapeCase::HAS_CONFIG,
-            Self::UnicornExplicitLengthCheck(_) => UnicornExplicitLengthCheck::HAS_CONFIG,
-            Self::UnicornExplicitTimerDelay(_) => UnicornExplicitTimerDelay::HAS_CONFIG,
-            Self::UnicornFilenameCase(_) => UnicornFilenameCase::HAS_CONFIG,
-            Self::UnicornImportStyle(_) => UnicornImportStyle::HAS_CONFIG,
-            Self::UnicornMaxNestedCalls(_) => UnicornMaxNestedCalls::HAS_CONFIG,
-            Self::UnicornNewForBuiltins(_) => UnicornNewForBuiltins::HAS_CONFIG,
-            Self::UnicornNoAbusiveEslintDisable(_) => UnicornNoAbusiveEslintDisable::HAS_CONFIG,
-            Self::UnicornNoAccessorRecursion(_) => UnicornNoAccessorRecursion::HAS_CONFIG,
-            Self::UnicornNoAnonymousDefaultExport(_) => UnicornNoAnonymousDefaultExport::HAS_CONFIG,
-            Self::UnicornNoArrayCallbackReference(_) => UnicornNoArrayCallbackReference::HAS_CONFIG,
-            Self::UnicornNoArrayFillWithReferenceType(_) => {
-                UnicornNoArrayFillWithReferenceType::HAS_CONFIG
-            }
-            Self::UnicornNoArrayForEach(_) => UnicornNoArrayForEach::HAS_CONFIG,
-            Self::UnicornNoArrayMethodThisArgument(_) => {
-                UnicornNoArrayMethodThisArgument::HAS_CONFIG
-            }
-            Self::UnicornNoArrayReduce(_) => UnicornNoArrayReduce::HAS_CONFIG,
-            Self::UnicornNoArrayReverse(_) => UnicornNoArrayReverse::HAS_CONFIG,
-            Self::UnicornNoArraySort(_) => UnicornNoArraySort::HAS_CONFIG,
-            Self::UnicornNoAwaitExpressionMember(_) => UnicornNoAwaitExpressionMember::HAS_CONFIG,
-            Self::UnicornNoAwaitInPromiseMethods(_) => UnicornNoAwaitInPromiseMethods::HAS_CONFIG,
-            Self::UnicornNoConfusingArrayWith(_) => UnicornNoConfusingArrayWith::HAS_CONFIG,
-            Self::UnicornNoConsoleSpaces(_) => UnicornNoConsoleSpaces::HAS_CONFIG,
-            Self::UnicornNoDocumentCookie(_) => UnicornNoDocumentCookie::HAS_CONFIG,
-            Self::UnicornNoEmptyFile(_) => UnicornNoEmptyFile::HAS_CONFIG,
-            Self::UnicornNoHexEscape(_) => UnicornNoHexEscape::HAS_CONFIG,
-            Self::UnicornNoImmediateMutation(_) => UnicornNoImmediateMutation::HAS_CONFIG,
-            Self::UnicornNoInstanceofArray(_) => UnicornNoInstanceofArray::HAS_CONFIG,
-            Self::UnicornNoInstanceofBuiltins(_) => UnicornNoInstanceofBuiltins::HAS_CONFIG,
-            Self::UnicornNoInvalidFetchOptions(_) => UnicornNoInvalidFetchOptions::HAS_CONFIG,
-            Self::UnicornNoInvalidRemoveEventListener(_) => {
-                UnicornNoInvalidRemoveEventListener::HAS_CONFIG
-            }
-            Self::UnicornNoLengthAsSliceEnd(_) => UnicornNoLengthAsSliceEnd::HAS_CONFIG,
-            Self::UnicornNoLonelyIf(_) => UnicornNoLonelyIf::HAS_CONFIG,
-            Self::UnicornNoMagicArrayFlatDepth(_) => UnicornNoMagicArrayFlatDepth::HAS_CONFIG,
-            Self::UnicornNoNegatedCondition(_) => UnicornNoNegatedCondition::HAS_CONFIG,
-            Self::UnicornNoNegationInEqualityCheck(_) => {
-                UnicornNoNegationInEqualityCheck::HAS_CONFIG
-            }
-            Self::UnicornNoNestedTernary(_) => UnicornNoNestedTernary::HAS_CONFIG,
-            Self::UnicornNoNewArray(_) => UnicornNoNewArray::HAS_CONFIG,
-            Self::UnicornNoNewBuffer(_) => UnicornNoNewBuffer::HAS_CONFIG,
-            Self::UnicornNoNull(_) => UnicornNoNull::HAS_CONFIG,
-            Self::UnicornNoObjectAsDefaultParameter(_) => {
-                UnicornNoObjectAsDefaultParameter::HAS_CONFIG
-            }
-            Self::UnicornNoProcessExit(_) => UnicornNoProcessExit::HAS_CONFIG,
-            Self::UnicornNoSinglePromiseInPromiseMethods(_) => {
-                UnicornNoSinglePromiseInPromiseMethods::HAS_CONFIG
-            }
-            Self::UnicornNoStaticOnlyClass(_) => UnicornNoStaticOnlyClass::HAS_CONFIG,
-            Self::UnicornNoThenable(_) => UnicornNoThenable::HAS_CONFIG,
-            Self::UnicornNoThisAssignment(_) => UnicornNoThisAssignment::HAS_CONFIG,
-            Self::UnicornNoTypeofUndefined(_) => UnicornNoTypeofUndefined::HAS_CONFIG,
-            Self::UnicornNoUnnecessaryArrayFlatDepth(_) => {
-                UnicornNoUnnecessaryArrayFlatDepth::HAS_CONFIG
-            }
-            Self::UnicornNoUnnecessaryArraySpliceCount(_) => {
-                UnicornNoUnnecessaryArraySpliceCount::HAS_CONFIG
-            }
-            Self::UnicornNoUnnecessaryAwait(_) => UnicornNoUnnecessaryAwait::HAS_CONFIG,
-            Self::UnicornNoUnnecessarySliceEnd(_) => UnicornNoUnnecessarySliceEnd::HAS_CONFIG,
-            Self::UnicornNoUnreadableArrayDestructuring(_) => {
-                UnicornNoUnreadableArrayDestructuring::HAS_CONFIG
-            }
-            Self::UnicornNoUnreadableIife(_) => UnicornNoUnreadableIife::HAS_CONFIG,
-            Self::UnicornNoUselessCollectionArgument(_) => {
-                UnicornNoUselessCollectionArgument::HAS_CONFIG
-            }
-            Self::UnicornNoUselessErrorCaptureStackTrace(_) => {
-                UnicornNoUselessErrorCaptureStackTrace::HAS_CONFIG
-            }
-            Self::UnicornNoUselessFallbackInSpread(_) => {
-                UnicornNoUselessFallbackInSpread::HAS_CONFIG
-            }
-            Self::UnicornNoUselessIteratorToArray(_) => UnicornNoUselessIteratorToArray::HAS_CONFIG,
-            Self::UnicornNoUselessLengthCheck(_) => UnicornNoUselessLengthCheck::HAS_CONFIG,
-            Self::UnicornNoUselessPromiseResolveReject(_) => {
-                UnicornNoUselessPromiseResolveReject::HAS_CONFIG
-            }
-            Self::UnicornNoUselessSpread(_) => UnicornNoUselessSpread::HAS_CONFIG,
-            Self::UnicornNoUselessSwitchCase(_) => UnicornNoUselessSwitchCase::HAS_CONFIG,
-            Self::UnicornNoUselessUndefined(_) => UnicornNoUselessUndefined::HAS_CONFIG,
-            Self::UnicornNoZeroFractions(_) => UnicornNoZeroFractions::HAS_CONFIG,
-            Self::UnicornNumberLiteralCase(_) => UnicornNumberLiteralCase::HAS_CONFIG,
-            Self::UnicornNumericSeparatorsStyle(_) => UnicornNumericSeparatorsStyle::HAS_CONFIG,
-            Self::UnicornPreferAddEventListener(_) => UnicornPreferAddEventListener::HAS_CONFIG,
-            Self::UnicornPreferArrayFind(_) => UnicornPreferArrayFind::HAS_CONFIG,
-            Self::UnicornPreferArrayFlat(_) => UnicornPreferArrayFlat::HAS_CONFIG,
-            Self::UnicornPreferArrayFlatMap(_) => UnicornPreferArrayFlatMap::HAS_CONFIG,
-            Self::UnicornPreferArrayIndexOf(_) => UnicornPreferArrayIndexOf::HAS_CONFIG,
-            Self::UnicornPreferArraySome(_) => UnicornPreferArraySome::HAS_CONFIG,
-            Self::UnicornPreferAt(_) => UnicornPreferAt::HAS_CONFIG,
-            Self::UnicornPreferBigintLiterals(_) => UnicornPreferBigintLiterals::HAS_CONFIG,
-            Self::UnicornPreferBlobReadingMethods(_) => UnicornPreferBlobReadingMethods::HAS_CONFIG,
-            Self::UnicornPreferClassFields(_) => UnicornPreferClassFields::HAS_CONFIG,
-            Self::UnicornPreferClasslistToggle(_) => UnicornPreferClasslistToggle::HAS_CONFIG,
-            Self::UnicornPreferCodePoint(_) => UnicornPreferCodePoint::HAS_CONFIG,
-            Self::UnicornPreferDateNow(_) => UnicornPreferDateNow::HAS_CONFIG,
-            Self::UnicornPreferDefaultParameters(_) => UnicornPreferDefaultParameters::HAS_CONFIG,
-            Self::UnicornPreferDomNodeAppend(_) => UnicornPreferDomNodeAppend::HAS_CONFIG,
-            Self::UnicornPreferDomNodeDataset(_) => UnicornPreferDomNodeDataset::HAS_CONFIG,
-            Self::UnicornPreferDomNodeRemove(_) => UnicornPreferDomNodeRemove::HAS_CONFIG,
-            Self::UnicornPreferDomNodeTextContent(_) => UnicornPreferDomNodeTextContent::HAS_CONFIG,
-            Self::UnicornPreferEventTarget(_) => UnicornPreferEventTarget::HAS_CONFIG,
-            Self::UnicornPreferExportFrom(_) => UnicornPreferExportFrom::HAS_CONFIG,
-            Self::UnicornPreferGlobalThis(_) => UnicornPreferGlobalThis::HAS_CONFIG,
-            Self::UnicornPreferImportMetaProperties(_) => {
-                UnicornPreferImportMetaProperties::HAS_CONFIG
-            }
-            Self::UnicornPreferIncludes(_) => UnicornPreferIncludes::HAS_CONFIG,
-            Self::UnicornPreferKeyboardEventKey(_) => UnicornPreferKeyboardEventKey::HAS_CONFIG,
-            Self::UnicornPreferLogicalOperatorOverTernary(_) => {
-                UnicornPreferLogicalOperatorOverTernary::HAS_CONFIG
-            }
-            Self::UnicornPreferMathMinMax(_) => UnicornPreferMathMinMax::HAS_CONFIG,
-            Self::UnicornPreferMathTrunc(_) => UnicornPreferMathTrunc::HAS_CONFIG,
-            Self::UnicornPreferModernDomApis(_) => UnicornPreferModernDomApis::HAS_CONFIG,
-            Self::UnicornPreferModernMathApis(_) => UnicornPreferModernMathApis::HAS_CONFIG,
-            Self::UnicornPreferModule(_) => UnicornPreferModule::HAS_CONFIG,
-            Self::UnicornPreferNativeCoercionFunctions(_) => {
-                UnicornPreferNativeCoercionFunctions::HAS_CONFIG
-            }
-            Self::UnicornPreferNegativeIndex(_) => UnicornPreferNegativeIndex::HAS_CONFIG,
-            Self::UnicornPreferNodeProtocol(_) => UnicornPreferNodeProtocol::HAS_CONFIG,
-            Self::UnicornPreferNumberCoercion(_) => UnicornPreferNumberCoercion::HAS_CONFIG,
-            Self::UnicornPreferNumberProperties(_) => UnicornPreferNumberProperties::HAS_CONFIG,
-            Self::UnicornPreferObjectFromEntries(_) => UnicornPreferObjectFromEntries::HAS_CONFIG,
-            Self::UnicornPreferOptionalCatchBinding(_) => {
-                UnicornPreferOptionalCatchBinding::HAS_CONFIG
-            }
-            Self::UnicornPreferPrototypeMethods(_) => UnicornPreferPrototypeMethods::HAS_CONFIG,
-            Self::UnicornPreferQuerySelector(_) => UnicornPreferQuerySelector::HAS_CONFIG,
-            Self::UnicornPreferReflectApply(_) => UnicornPreferReflectApply::HAS_CONFIG,
-            Self::UnicornPreferRegexpTest(_) => UnicornPreferRegexpTest::HAS_CONFIG,
-            Self::UnicornPreferResponseStaticJson(_) => UnicornPreferResponseStaticJson::HAS_CONFIG,
-            Self::UnicornPreferSetHas(_) => UnicornPreferSetHas::HAS_CONFIG,
-            Self::UnicornPreferSetSize(_) => UnicornPreferSetSize::HAS_CONFIG,
-            Self::UnicornPreferSingleCall(_) => UnicornPreferSingleCall::HAS_CONFIG,
-            Self::UnicornPreferSpread(_) => UnicornPreferSpread::HAS_CONFIG,
-            Self::UnicornPreferStringRaw(_) => UnicornPreferStringRaw::HAS_CONFIG,
-            Self::UnicornPreferStringReplaceAll(_) => UnicornPreferStringReplaceAll::HAS_CONFIG,
-            Self::UnicornPreferStringSlice(_) => UnicornPreferStringSlice::HAS_CONFIG,
-            Self::UnicornPreferStringStartsEndsWith(_) => {
-                UnicornPreferStringStartsEndsWith::HAS_CONFIG
-            }
-            Self::UnicornPreferStringTrimStartEnd(_) => UnicornPreferStringTrimStartEnd::HAS_CONFIG,
-            Self::UnicornPreferStructuredClone(_) => UnicornPreferStructuredClone::HAS_CONFIG,
-            Self::UnicornPreferTernary(_) => UnicornPreferTernary::HAS_CONFIG,
-            Self::UnicornPreferTopLevelAwait(_) => UnicornPreferTopLevelAwait::HAS_CONFIG,
-            Self::UnicornPreferTypeError(_) => UnicornPreferTypeError::HAS_CONFIG,
-            Self::UnicornRelativeUrlStyle(_) => UnicornRelativeUrlStyle::HAS_CONFIG,
-            Self::UnicornRequireArrayJoinSeparator(_) => {
-                UnicornRequireArrayJoinSeparator::HAS_CONFIG
-            }
-            Self::UnicornRequireModuleAttributes(_) => UnicornRequireModuleAttributes::HAS_CONFIG,
-            Self::UnicornRequireModuleSpecifiers(_) => UnicornRequireModuleSpecifiers::HAS_CONFIG,
-            Self::UnicornRequireNumberToFixedDigitsArgument(_) => {
-                UnicornRequireNumberToFixedDigitsArgument::HAS_CONFIG
-            }
-            Self::UnicornRequirePostMessageTargetOrigin(_) => {
-                UnicornRequirePostMessageTargetOrigin::HAS_CONFIG
-            }
-            Self::UnicornSwitchCaseBraces(_) => UnicornSwitchCaseBraces::HAS_CONFIG,
-            Self::UnicornSwitchCaseBreakPosition(_) => UnicornSwitchCaseBreakPosition::HAS_CONFIG,
-            Self::UnicornTextEncodingIdentifierCase(_) => {
-                UnicornTextEncodingIdentifierCase::HAS_CONFIG
-            }
-            Self::UnicornThrowNewError(_) => UnicornThrowNewError::HAS_CONFIG,
-            Self::JsxA11YAltText(_) => JsxA11YAltText::HAS_CONFIG,
-            Self::JsxA11YAnchorAmbiguousText(_) => JsxA11YAnchorAmbiguousText::HAS_CONFIG,
-            Self::JsxA11YAnchorHasContent(_) => JsxA11YAnchorHasContent::HAS_CONFIG,
-            Self::JsxA11YAnchorIsValid(_) => JsxA11YAnchorIsValid::HAS_CONFIG,
-            Self::JsxA11YAriaActivedescendantHasTabindex(_) => {
-                JsxA11YAriaActivedescendantHasTabindex::HAS_CONFIG
-            }
-            Self::JsxA11YAriaProps(_) => JsxA11YAriaProps::HAS_CONFIG,
-            Self::JsxA11YAriaProptypes(_) => JsxA11YAriaProptypes::HAS_CONFIG,
-            Self::JsxA11YAriaRole(_) => JsxA11YAriaRole::HAS_CONFIG,
-            Self::JsxA11YAriaUnsupportedElements(_) => JsxA11YAriaUnsupportedElements::HAS_CONFIG,
-            Self::JsxA11YAutocompleteValid(_) => JsxA11YAutocompleteValid::HAS_CONFIG,
-            Self::JsxA11YClickEventsHaveKeyEvents(_) => JsxA11YClickEventsHaveKeyEvents::HAS_CONFIG,
-            Self::JsxA11YControlHasAssociatedLabel(_) => {
-                JsxA11YControlHasAssociatedLabel::HAS_CONFIG
-            }
-            Self::JsxA11YHeadingHasContent(_) => JsxA11YHeadingHasContent::HAS_CONFIG,
-            Self::JsxA11YHtmlHasLang(_) => JsxA11YHtmlHasLang::HAS_CONFIG,
-            Self::JsxA11YIframeHasTitle(_) => JsxA11YIframeHasTitle::HAS_CONFIG,
-            Self::JsxA11YImgRedundantAlt(_) => JsxA11YImgRedundantAlt::HAS_CONFIG,
-            Self::JsxA11YInteractiveSupportsFocus(_) => JsxA11YInteractiveSupportsFocus::HAS_CONFIG,
-            Self::JsxA11YLabelHasAssociatedControl(_) => {
-                JsxA11YLabelHasAssociatedControl::HAS_CONFIG
-            }
-            Self::JsxA11YLang(_) => JsxA11YLang::HAS_CONFIG,
-            Self::JsxA11YMediaHasCaption(_) => JsxA11YMediaHasCaption::HAS_CONFIG,
-            Self::JsxA11YMouseEventsHaveKeyEvents(_) => JsxA11YMouseEventsHaveKeyEvents::HAS_CONFIG,
-            Self::JsxA11YNoAccessKey(_) => JsxA11YNoAccessKey::HAS_CONFIG,
-            Self::JsxA11YNoAriaHiddenOnFocusable(_) => JsxA11YNoAriaHiddenOnFocusable::HAS_CONFIG,
-            Self::JsxA11YNoAutofocus(_) => JsxA11YNoAutofocus::HAS_CONFIG,
-            Self::JsxA11YNoDistractingElements(_) => JsxA11YNoDistractingElements::HAS_CONFIG,
-            Self::JsxA11YNoInteractiveElementToNoninteractiveRole(_) => {
-                JsxA11YNoInteractiveElementToNoninteractiveRole::HAS_CONFIG
-            }
-            Self::JsxA11YNoNoninteractiveElementInteractions(_) => {
-                JsxA11YNoNoninteractiveElementInteractions::HAS_CONFIG
-            }
-            Self::JsxA11YNoNoninteractiveElementToInteractiveRole(_) => {
-                JsxA11YNoNoninteractiveElementToInteractiveRole::HAS_CONFIG
-            }
-            Self::JsxA11YNoNoninteractiveTabindex(_) => JsxA11YNoNoninteractiveTabindex::HAS_CONFIG,
-            Self::JsxA11YNoRedundantRoles(_) => JsxA11YNoRedundantRoles::HAS_CONFIG,
-            Self::JsxA11YNoStaticElementInteractions(_) => {
-                JsxA11YNoStaticElementInteractions::HAS_CONFIG
-            }
-            Self::JsxA11YPreferTagOverRole(_) => JsxA11YPreferTagOverRole::HAS_CONFIG,
-            Self::JsxA11YRoleHasRequiredAriaProps(_) => JsxA11YRoleHasRequiredAriaProps::HAS_CONFIG,
-            Self::JsxA11YRoleSupportsAriaProps(_) => JsxA11YRoleSupportsAriaProps::HAS_CONFIG,
-            Self::JsxA11YScope(_) => JsxA11YScope::HAS_CONFIG,
-            Self::JsxA11YTabindexNoPositive(_) => JsxA11YTabindexNoPositive::HAS_CONFIG,
-            Self::OxcApproxConstant(_) => OxcApproxConstant::HAS_CONFIG,
-            Self::OxcBadArrayMethodOnArguments(_) => OxcBadArrayMethodOnArguments::HAS_CONFIG,
-            Self::OxcBadBitwiseOperator(_) => OxcBadBitwiseOperator::HAS_CONFIG,
-            Self::OxcBadCharAtComparison(_) => OxcBadCharAtComparison::HAS_CONFIG,
-            Self::OxcBadComparisonSequence(_) => OxcBadComparisonSequence::HAS_CONFIG,
-            Self::OxcBadMatchAllArg(_) => OxcBadMatchAllArg::HAS_CONFIG,
-            Self::OxcBadMinMaxFunc(_) => OxcBadMinMaxFunc::HAS_CONFIG,
-            Self::OxcBadObjectLiteralComparison(_) => OxcBadObjectLiteralComparison::HAS_CONFIG,
-            Self::OxcBadReplaceAllArg(_) => OxcBadReplaceAllArg::HAS_CONFIG,
-            Self::OxcBranchesSharingCode(_) => OxcBranchesSharingCode::HAS_CONFIG,
-            Self::OxcConstComparisons(_) => OxcConstComparisons::HAS_CONFIG,
-            Self::OxcDoubleComparisons(_) => OxcDoubleComparisons::HAS_CONFIG,
-            Self::OxcErasingOp(_) => OxcErasingOp::HAS_CONFIG,
-            Self::OxcMisrefactoredAssignOp(_) => OxcMisrefactoredAssignOp::HAS_CONFIG,
-            Self::OxcMissingThrow(_) => OxcMissingThrow::HAS_CONFIG,
-            Self::OxcNoAccumulatingSpread(_) => OxcNoAccumulatingSpread::HAS_CONFIG,
-            Self::OxcNoAsyncAwait(_) => OxcNoAsyncAwait::HAS_CONFIG,
-            Self::OxcNoAsyncEndpointHandlers(_) => OxcNoAsyncEndpointHandlers::HAS_CONFIG,
-            Self::OxcNoBarrelFile(_) => OxcNoBarrelFile::HAS_CONFIG,
-            Self::OxcNoConstEnum(_) => OxcNoConstEnum::HAS_CONFIG,
-            Self::OxcNoMapSpread(_) => OxcNoMapSpread::HAS_CONFIG,
-            Self::OxcNoOptionalChaining(_) => OxcNoOptionalChaining::HAS_CONFIG,
-            Self::OxcNoRestSpreadProperties(_) => OxcNoRestSpreadProperties::HAS_CONFIG,
-            Self::OxcNoThisInExportedFunction(_) => OxcNoThisInExportedFunction::HAS_CONFIG,
-            Self::OxcNumberArgOutOfRange(_) => OxcNumberArgOutOfRange::HAS_CONFIG,
-            Self::OxcOnlyUsedInRecursion(_) => OxcOnlyUsedInRecursion::HAS_CONFIG,
-            Self::OxcUninvokedArrayCallback(_) => OxcUninvokedArrayCallback::HAS_CONFIG,
-            Self::NextjsGoogleFontDisplay(_) => NextjsGoogleFontDisplay::HAS_CONFIG,
-            Self::NextjsGoogleFontPreconnect(_) => NextjsGoogleFontPreconnect::HAS_CONFIG,
-            Self::NextjsInlineScriptId(_) => NextjsInlineScriptId::HAS_CONFIG,
-            Self::NextjsNextScriptForGa(_) => NextjsNextScriptForGa::HAS_CONFIG,
-            Self::NextjsNoAssignModuleVariable(_) => NextjsNoAssignModuleVariable::HAS_CONFIG,
-            Self::NextjsNoAsyncClientComponent(_) => NextjsNoAsyncClientComponent::HAS_CONFIG,
-            Self::NextjsNoBeforeInteractiveScriptOutsideDocument(_) => {
-                NextjsNoBeforeInteractiveScriptOutsideDocument::HAS_CONFIG
-            }
-            Self::NextjsNoCssTags(_) => NextjsNoCssTags::HAS_CONFIG,
-            Self::NextjsNoDocumentImportInPage(_) => NextjsNoDocumentImportInPage::HAS_CONFIG,
-            Self::NextjsNoDuplicateHead(_) => NextjsNoDuplicateHead::HAS_CONFIG,
-            Self::NextjsNoHeadElement(_) => NextjsNoHeadElement::HAS_CONFIG,
-            Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::HAS_CONFIG,
-            Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::HAS_CONFIG,
-            Self::NextjsNoImgElement(_) => NextjsNoImgElement::HAS_CONFIG,
-            Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::HAS_CONFIG,
-            Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::HAS_CONFIG,
-            Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::HAS_CONFIG,
-            Self::NextjsNoSyncScripts(_) => NextjsNoSyncScripts::HAS_CONFIG,
-            Self::NextjsNoTitleInDocumentHead(_) => NextjsNoTitleInDocumentHead::HAS_CONFIG,
-            Self::NextjsNoTypos(_) => NextjsNoTypos::HAS_CONFIG,
-            Self::NextjsNoUnwantedPolyfillio(_) => NextjsNoUnwantedPolyfillio::HAS_CONFIG,
-            Self::JsdocCheckAccess(_) => JsdocCheckAccess::HAS_CONFIG,
-            Self::JsdocCheckPropertyNames(_) => JsdocCheckPropertyNames::HAS_CONFIG,
-            Self::JsdocCheckTagNames(_) => JsdocCheckTagNames::HAS_CONFIG,
-            Self::JsdocEmptyTags(_) => JsdocEmptyTags::HAS_CONFIG,
-            Self::JsdocImplementsOnClasses(_) => JsdocImplementsOnClasses::HAS_CONFIG,
-            Self::JsdocNoBlankBlocks(_) => JsdocNoBlankBlocks::HAS_CONFIG,
-            Self::JsdocNoDefaults(_) => JsdocNoDefaults::HAS_CONFIG,
-            Self::JsdocRequireParam(_) => JsdocRequireParam::HAS_CONFIG,
-            Self::JsdocRequireParamDescription(_) => JsdocRequireParamDescription::HAS_CONFIG,
-            Self::JsdocRequireParamName(_) => JsdocRequireParamName::HAS_CONFIG,
-            Self::JsdocRequireParamType(_) => JsdocRequireParamType::HAS_CONFIG,
-            Self::JsdocRequireProperty(_) => JsdocRequireProperty::HAS_CONFIG,
-            Self::JsdocRequirePropertyDescription(_) => JsdocRequirePropertyDescription::HAS_CONFIG,
-            Self::JsdocRequirePropertyName(_) => JsdocRequirePropertyName::HAS_CONFIG,
-            Self::JsdocRequirePropertyType(_) => JsdocRequirePropertyType::HAS_CONFIG,
-            Self::JsdocRequireReturns(_) => JsdocRequireReturns::HAS_CONFIG,
-            Self::JsdocRequireReturnsDescription(_) => JsdocRequireReturnsDescription::HAS_CONFIG,
-            Self::JsdocRequireReturnsType(_) => JsdocRequireReturnsType::HAS_CONFIG,
-            Self::JsdocRequireThrowsDescription(_) => JsdocRequireThrowsDescription::HAS_CONFIG,
-            Self::JsdocRequireThrowsType(_) => JsdocRequireThrowsType::HAS_CONFIG,
-            Self::JsdocRequireYields(_) => JsdocRequireYields::HAS_CONFIG,
-            Self::JsdocRequireYieldsDescription(_) => JsdocRequireYieldsDescription::HAS_CONFIG,
-            Self::JsdocRequireYieldsType(_) => JsdocRequireYieldsType::HAS_CONFIG,
-            Self::PromiseAlwaysReturn(_) => PromiseAlwaysReturn::HAS_CONFIG,
-            Self::PromiseAvoidNew(_) => PromiseAvoidNew::HAS_CONFIG,
-            Self::PromiseCatchOrReturn(_) => PromiseCatchOrReturn::HAS_CONFIG,
-            Self::PromiseNoCallbackInPromise(_) => PromiseNoCallbackInPromise::HAS_CONFIG,
-            Self::PromiseNoMultipleResolved(_) => PromiseNoMultipleResolved::HAS_CONFIG,
-            Self::PromiseNoNesting(_) => PromiseNoNesting::HAS_CONFIG,
-            Self::PromiseNoNewStatics(_) => PromiseNoNewStatics::HAS_CONFIG,
-            Self::PromiseNoPromiseInCallback(_) => PromiseNoPromiseInCallback::HAS_CONFIG,
-            Self::PromiseNoReturnInFinally(_) => PromiseNoReturnInFinally::HAS_CONFIG,
-            Self::PromiseNoReturnWrap(_) => PromiseNoReturnWrap::HAS_CONFIG,
-            Self::PromiseParamNames(_) => PromiseParamNames::HAS_CONFIG,
-            Self::PromisePreferAwaitToCallbacks(_) => PromisePreferAwaitToCallbacks::HAS_CONFIG,
-            Self::PromisePreferAwaitToThen(_) => PromisePreferAwaitToThen::HAS_CONFIG,
-            Self::PromisePreferCatch(_) => PromisePreferCatch::HAS_CONFIG,
-            Self::PromiseSpecOnly(_) => PromiseSpecOnly::HAS_CONFIG,
-            Self::PromiseValidParams(_) => PromiseValidParams::HAS_CONFIG,
-            Self::VitestConsistentEachFor(_) => VitestConsistentEachFor::HAS_CONFIG,
-            Self::VitestConsistentTestFilename(_) => VitestConsistentTestFilename::HAS_CONFIG,
-            Self::VitestConsistentTestIt(_) => VitestConsistentTestIt::HAS_CONFIG,
-            Self::VitestConsistentVitestVi(_) => VitestConsistentVitestVi::HAS_CONFIG,
-            Self::VitestExpectExpect(_) => VitestExpectExpect::HAS_CONFIG,
-            Self::VitestHoistedApisOnTop(_) => VitestHoistedApisOnTop::HAS_CONFIG,
-            Self::VitestMaxExpects(_) => VitestMaxExpects::HAS_CONFIG,
-            Self::VitestMaxNestedDescribe(_) => VitestMaxNestedDescribe::HAS_CONFIG,
-            Self::VitestNoAliasMethods(_) => VitestNoAliasMethods::HAS_CONFIG,
-            Self::VitestNoCommentedOutTests(_) => VitestNoCommentedOutTests::HAS_CONFIG,
-            Self::VitestNoConditionalExpect(_) => VitestNoConditionalExpect::HAS_CONFIG,
-            Self::VitestNoConditionalInTest(_) => VitestNoConditionalInTest::HAS_CONFIG,
-            Self::VitestNoConditionalTests(_) => VitestNoConditionalTests::HAS_CONFIG,
-            Self::VitestNoDisabledTests(_) => VitestNoDisabledTests::HAS_CONFIG,
-            Self::VitestNoDuplicateHooks(_) => VitestNoDuplicateHooks::HAS_CONFIG,
-            Self::VitestNoFocusedTests(_) => VitestNoFocusedTests::HAS_CONFIG,
-            Self::VitestNoHooks(_) => VitestNoHooks::HAS_CONFIG,
-            Self::VitestNoIdenticalTitle(_) => VitestNoIdenticalTitle::HAS_CONFIG,
-            Self::VitestNoImportNodeTest(_) => VitestNoImportNodeTest::HAS_CONFIG,
-            Self::VitestNoImportingVitestGlobals(_) => VitestNoImportingVitestGlobals::HAS_CONFIG,
-            Self::VitestNoInterpolationInSnapshots(_) => {
-                VitestNoInterpolationInSnapshots::HAS_CONFIG
-            }
-            Self::VitestNoLargeSnapshots(_) => VitestNoLargeSnapshots::HAS_CONFIG,
-            Self::VitestNoMocksImport(_) => VitestNoMocksImport::HAS_CONFIG,
-            Self::VitestNoRestrictedMatchers(_) => VitestNoRestrictedMatchers::HAS_CONFIG,
-            Self::VitestNoRestrictedViMethods(_) => VitestNoRestrictedViMethods::HAS_CONFIG,
-            Self::VitestNoStandaloneExpect(_) => VitestNoStandaloneExpect::HAS_CONFIG,
-            Self::VitestNoTestPrefixes(_) => VitestNoTestPrefixes::HAS_CONFIG,
-            Self::VitestNoTestReturnStatement(_) => VitestNoTestReturnStatement::HAS_CONFIG,
-            Self::VitestNoUnneededAsyncExpectFunction(_) => {
-                VitestNoUnneededAsyncExpectFunction::HAS_CONFIG
-            }
-            Self::VitestPaddingAroundAfterAllBlocks(_) => {
-                VitestPaddingAroundAfterAllBlocks::HAS_CONFIG
-            }
-            Self::VitestPaddingAroundTestBlocks(_) => VitestPaddingAroundTestBlocks::HAS_CONFIG,
-            Self::VitestPreferCalledExactlyOnceWith(_) => {
-                VitestPreferCalledExactlyOnceWith::HAS_CONFIG
-            }
-            Self::VitestPreferCalledOnce(_) => VitestPreferCalledOnce::HAS_CONFIG,
-            Self::VitestPreferCalledTimes(_) => VitestPreferCalledTimes::HAS_CONFIG,
-            Self::VitestPreferCalledWith(_) => VitestPreferCalledWith::HAS_CONFIG,
-            Self::VitestPreferComparisonMatcher(_) => VitestPreferComparisonMatcher::HAS_CONFIG,
-            Self::VitestPreferDescribeFunctionTitle(_) => {
-                VitestPreferDescribeFunctionTitle::HAS_CONFIG
-            }
-            Self::VitestPreferEach(_) => VitestPreferEach::HAS_CONFIG,
-            Self::VitestPreferEqualityMatcher(_) => VitestPreferEqualityMatcher::HAS_CONFIG,
-            Self::VitestPreferExpectAssertions(_) => VitestPreferExpectAssertions::HAS_CONFIG,
-            Self::VitestPreferExpectResolves(_) => VitestPreferExpectResolves::HAS_CONFIG,
-            Self::VitestPreferExpectTypeOf(_) => VitestPreferExpectTypeOf::HAS_CONFIG,
-            Self::VitestPreferHooksInOrder(_) => VitestPreferHooksInOrder::HAS_CONFIG,
-            Self::VitestPreferHooksOnTop(_) => VitestPreferHooksOnTop::HAS_CONFIG,
-            Self::VitestPreferImportInMock(_) => VitestPreferImportInMock::HAS_CONFIG,
-            Self::VitestPreferImportingVitestGlobals(_) => {
-                VitestPreferImportingVitestGlobals::HAS_CONFIG
-            }
-            Self::VitestPreferLowercaseTitle(_) => VitestPreferLowercaseTitle::HAS_CONFIG,
-            Self::VitestPreferMockPromiseShorthand(_) => {
-                VitestPreferMockPromiseShorthand::HAS_CONFIG
-            }
-            Self::VitestPreferMockReturnShorthand(_) => VitestPreferMockReturnShorthand::HAS_CONFIG,
-            Self::VitestPreferSnapshotHint(_) => VitestPreferSnapshotHint::HAS_CONFIG,
-            Self::VitestPreferSpyOn(_) => VitestPreferSpyOn::HAS_CONFIG,
-            Self::VitestPreferStrictBooleanMatchers(_) => {
-                VitestPreferStrictBooleanMatchers::HAS_CONFIG
-            }
-            Self::VitestPreferStrictEqual(_) => VitestPreferStrictEqual::HAS_CONFIG,
-            Self::VitestPreferToBe(_) => VitestPreferToBe::HAS_CONFIG,
-            Self::VitestPreferToBeFalsy(_) => VitestPreferToBeFalsy::HAS_CONFIG,
-            Self::VitestPreferToBeObject(_) => VitestPreferToBeObject::HAS_CONFIG,
-            Self::VitestPreferToBeTruthy(_) => VitestPreferToBeTruthy::HAS_CONFIG,
-            Self::VitestPreferToContain(_) => VitestPreferToContain::HAS_CONFIG,
-            Self::VitestPreferToHaveBeenCalledTimes(_) => {
-                VitestPreferToHaveBeenCalledTimes::HAS_CONFIG
-            }
-            Self::VitestPreferToHaveLength(_) => VitestPreferToHaveLength::HAS_CONFIG,
-            Self::VitestPreferTodo(_) => VitestPreferTodo::HAS_CONFIG,
-            Self::VitestRequireAwaitedExpectPoll(_) => VitestRequireAwaitedExpectPoll::HAS_CONFIG,
-            Self::VitestRequireHook(_) => VitestRequireHook::HAS_CONFIG,
-            Self::VitestRequireLocalTestContextForConcurrentSnapshots(_) => {
-                VitestRequireLocalTestContextForConcurrentSnapshots::HAS_CONFIG
-            }
-            Self::VitestRequireMockTypeParameters(_) => VitestRequireMockTypeParameters::HAS_CONFIG,
-            Self::VitestRequireTestTimeout(_) => VitestRequireTestTimeout::HAS_CONFIG,
-            Self::VitestRequireToThrowMessage(_) => VitestRequireToThrowMessage::HAS_CONFIG,
-            Self::VitestRequireTopLevelDescribe(_) => VitestRequireTopLevelDescribe::HAS_CONFIG,
-            Self::VitestValidDescribeCallback(_) => VitestValidDescribeCallback::HAS_CONFIG,
-            Self::VitestValidExpect(_) => VitestValidExpect::HAS_CONFIG,
-            Self::VitestValidExpectInPromise(_) => VitestValidExpectInPromise::HAS_CONFIG,
-            Self::VitestValidTitle(_) => VitestValidTitle::HAS_CONFIG,
-            Self::VitestWarnTodo(_) => VitestWarnTodo::HAS_CONFIG,
-            Self::NodeCallbackReturn(_) => NodeCallbackReturn::HAS_CONFIG,
-            Self::NodeExportsStyle(_) => NodeExportsStyle::HAS_CONFIG,
-            Self::NodeGlobalRequire(_) => NodeGlobalRequire::HAS_CONFIG,
-            Self::NodeHandleCallbackErr(_) => NodeHandleCallbackErr::HAS_CONFIG,
-            Self::NodeNoExportsAssign(_) => NodeNoExportsAssign::HAS_CONFIG,
-            Self::NodeNoMixedRequires(_) => NodeNoMixedRequires::HAS_CONFIG,
-            Self::NodeNoNewRequire(_) => NodeNoNewRequire::HAS_CONFIG,
-            Self::NodeNoPathConcat(_) => NodeNoPathConcat::HAS_CONFIG,
-            Self::NodeNoProcessEnv(_) => NodeNoProcessEnv::HAS_CONFIG,
-            Self::NodeNoSync(_) => NodeNoSync::HAS_CONFIG,
-            Self::NodeNoTopLevelAwait(_) => NodeNoTopLevelAwait::HAS_CONFIG,
-            Self::VueComponentDefinitionNameCasing(_) => {
-                VueComponentDefinitionNameCasing::HAS_CONFIG
-            }
-            Self::VueDefineEmitsDeclaration(_) => VueDefineEmitsDeclaration::HAS_CONFIG,
-            Self::VueDefinePropsDeclaration(_) => VueDefinePropsDeclaration::HAS_CONFIG,
-            Self::VueDefinePropsDestructuring(_) => VueDefinePropsDestructuring::HAS_CONFIG,
-            Self::VueMaxProps(_) => VueMaxProps::HAS_CONFIG,
-            Self::VueNextTickStyle(_) => VueNextTickStyle::HAS_CONFIG,
-            Self::VueNoArrowFunctionsInWatch(_) => VueNoArrowFunctionsInWatch::HAS_CONFIG,
-            Self::VueNoAsyncInComputedProperties(_) => VueNoAsyncInComputedProperties::HAS_CONFIG,
-            Self::VueNoComputedPropertiesInData(_) => VueNoComputedPropertiesInData::HAS_CONFIG,
-            Self::VueNoDeprecatedDataObjectDeclaration(_) => {
-                VueNoDeprecatedDataObjectDeclaration::HAS_CONFIG
-            }
-            Self::VueNoDeprecatedDeleteSet(_) => VueNoDeprecatedDeleteSet::HAS_CONFIG,
-            Self::VueNoDeprecatedDestroyedLifecycle(_) => {
-                VueNoDeprecatedDestroyedLifecycle::HAS_CONFIG
-            }
-            Self::VueNoDeprecatedEventsApi(_) => VueNoDeprecatedEventsApi::HAS_CONFIG,
-            Self::VueNoDeprecatedModelDefinition(_) => VueNoDeprecatedModelDefinition::HAS_CONFIG,
-            Self::VueNoDeprecatedPropsDefaultThis(_) => VueNoDeprecatedPropsDefaultThis::HAS_CONFIG,
-            Self::VueNoDeprecatedVueConfigKeycodes(_) => {
-                VueNoDeprecatedVueConfigKeycodes::HAS_CONFIG
-            }
-            Self::VueNoDupeKeys(_) => VueNoDupeKeys::HAS_CONFIG,
-            Self::VueNoExportInScriptSetup(_) => VueNoExportInScriptSetup::HAS_CONFIG,
-            Self::VueNoExposeAfterAwait(_) => VueNoExposeAfterAwait::HAS_CONFIG,
-            Self::VueNoImportCompilerMacros(_) => VueNoImportCompilerMacros::HAS_CONFIG,
-            Self::VueNoLifecycleAfterAwait(_) => VueNoLifecycleAfterAwait::HAS_CONFIG,
-            Self::VueNoMultipleSlotArgs(_) => VueNoMultipleSlotArgs::HAS_CONFIG,
-            Self::VueNoRequiredPropWithDefault(_) => VueNoRequiredPropWithDefault::HAS_CONFIG,
-            Self::VueNoReservedComponentNames(_) => VueNoReservedComponentNames::HAS_CONFIG,
-            Self::VueNoReservedKeys(_) => VueNoReservedKeys::HAS_CONFIG,
-            Self::VueNoReservedProps(_) => VueNoReservedProps::HAS_CONFIG,
-            Self::VueNoSharedComponentData(_) => VueNoSharedComponentData::HAS_CONFIG,
-            Self::VueNoSideEffectsInComputedProperties(_) => {
-                VueNoSideEffectsInComputedProperties::HAS_CONFIG
-            }
-            Self::VueNoThisInBeforeRouteEnter(_) => VueNoThisInBeforeRouteEnter::HAS_CONFIG,
-            Self::VueNoWatchAfterAwait(_) => VueNoWatchAfterAwait::HAS_CONFIG,
-            Self::VuePreferImportFromVue(_) => VuePreferImportFromVue::HAS_CONFIG,
-            Self::VuePropNameCasing(_) => VuePropNameCasing::HAS_CONFIG,
-            Self::VueRequireDefaultExport(_) => VueRequireDefaultExport::HAS_CONFIG,
-            Self::VueRequireDefaultProp(_) => VueRequireDefaultProp::HAS_CONFIG,
-            Self::VueRequireDirectExport(_) => VueRequireDirectExport::HAS_CONFIG,
-            Self::VueRequirePropTypeConstructor(_) => VueRequirePropTypeConstructor::HAS_CONFIG,
-            Self::VueRequirePropTypes(_) => VueRequirePropTypes::HAS_CONFIG,
-            Self::VueRequireRenderReturn(_) => VueRequireRenderReturn::HAS_CONFIG,
-            Self::VueRequireSlotsAsFunctions(_) => VueRequireSlotsAsFunctions::HAS_CONFIG,
-            Self::VueRequireTypedRef(_) => VueRequireTypedRef::HAS_CONFIG,
-            Self::VueReturnInComputedProperty(_) => VueReturnInComputedProperty::HAS_CONFIG,
-            Self::VueReturnInEmitsValidator(_) => VueReturnInEmitsValidator::HAS_CONFIG,
-            Self::VueValidDefineEmits(_) => VueValidDefineEmits::HAS_CONFIG,
-            Self::VueValidDefineOptions(_) => VueValidDefineOptions::HAS_CONFIG,
-            Self::VueValidDefineProps(_) => VueValidDefineProps::HAS_CONFIG,
-            Self::VueValidNextTick(_) => VueValidNextTick::HAS_CONFIG,
-        }
+        self.flags().contains(RuleFlags::HAS_CONFIG)
     }
     #[doc = r" Additional information about this rule."]
     #[cfg(feature = "ruledocs")]

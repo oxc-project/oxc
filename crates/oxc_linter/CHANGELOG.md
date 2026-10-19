@@ -4,6 +4,73 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.89.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+- a0a987c ast: [**BREAKING**] Preserve lone surrogates in static member names (#26677) (Dunqing)
+
+### 🚀 Features
+
+- 770ada4 linter: Mark vue 3 rules as recommended (#27717) (Cam McHenry)
+- ba38c1d linter: Mark react/react-hooks rules as recommended (#27701) (Cam McHenry)
+- d85a3ba linter: Mark promise rules as recommended (#27693) (Cam McHenry)
+- e71c88a linter: Mark node rule as recommended (#27692) (Cam McHenry)
+- 7213f61 linter: Mark nextjs rules as recommended (#27691) (Cam McHenry)
+- d7c6b26 linter: Mark jsx-a11y rules as recommended (#27690) (Cam McHenry)
+- 199dfdc linter: Mark jsdoc rules as recommended (#27689) (Cam McHenry)
+- 780bff3 linter: Mark jest/vitest rules as recommended (#27672) (Cam McHenry)
+- 6ae6859 linter: Mark import rules as recommended (#27671) (Cam McHenry)
+- b7a1df3 linter: Mark unicorn rules as recommended (#27670) (Cam McHenry)
+- c44a355 linter: Mark typescript rules as recommended from upstream (#27634) (Cam McHenry)
+- 6b49dba linter: Mark eslint rules as recommended from upstream (#27632) (Cam McHenry)
+
+### 🐛 Bug Fixes
+
+- 7c47246 linter: Check module specifiers and string values that contain lone surrogates (#26717) (Dunqing)
+- 782ab6e linter: Search string values without UTF-8 conversion (#26716) (Dunqing)
+- 326904f linter/unicorn/no-useless-undefined: Allow `undefined` in `React.useRef` (#25027) (Chris Dokurno)
+- f9cf165 linter/unicorn/prefer-spread: Ignore super method calls (#27868) (camc314)
+- 00484e1 linter/eslint/prefer-const: Report destructuring assignments inside blocks (#27856) (camc314)
+- 9c35461 linter/eslint/sort-vars: Report every out-of-order declaration (#27767) (camc314)
+- 01e1c5e linter/unicorn/prefer-string-replace-all: Resolve regex variables (#27769) (camc314)
+- 7f474d5 linter/eslint/no-loop-func: Detect writes after the loop (#27754) (camc314)
+- 4b7fea6 linter/eslint/block-scoped-var: Ignore declarations without writes (#27760) (camc314)
+- 2947917 linter/eslint/no-lonely-if: Check final else blocks in else-if chains (#27759) (camc314)
+- fc039b5 linter/eslint/sort-imports: Check imports after other statements (#27749) (camc314)
+- 1acba97 linter/unicorn/prefer-at: Report slice index reads once (#27762) (camc314)
+- 6190e26 linter/eslint/prefer-arrow-callback: Ignore functions used as conditional tests (#27533) (Anzal Husain Abidi)
+- b3cdaaf linter/eslint/sort-keys: Check computed identifier names (#27748) (camc314)
+- 170e608 linter/unicorn/prefer-native-coercion-functions: Check object methods and function properties (#27750) (camc314)
+- 9261df7 linter/unicorn/prefer-string-raw: Check object property values (#27758) (camc314)
+- ddea86b linter/eslint/prefer-template: Report separate nested concatenations (#27764) (camc314)
+- 2c67197 linter/eslint/no-unused-vars: Count conditional calls in sequences as uses (#27755) (camc314)
+- 7f22fa0 linter/unicorn/prefer-regexp-test: Check logical operands in boolean contexts (#27761) (camc314)
+- 3c44398 linter/eslint/class-methods-use-this: Count this in parameter defaults (#27756) (camc314)
+- d85923f linter/eslint/no-param-reassign: Report rest parameter writes (#27765) (camc314)
+- 8ea47bb linter/unicorn/prefer-type-error: Handle parenthesized type checks (#27766) (camc314)
+- e96856c linter/unicorn/catch-error-name: Check unused underscore-prefixed names (#27751) (camc314)
+- d8ca399 linter/unicorn/no-array-callback-reference: Ignore callback factory calls (#27763) (camc314)
+- 1267ab8 linter/eslint/max-params: Count rest parameters (#27757) (camc314)
+- 9ff25c3 linter/eslint/no-useless-assignment: Report dead stores to function parameters (#27735) (camc314)
+- ee5e730 linter/eslint/no-setter-return: Check setters in property descriptors (#27731) (camc314)
+- edbb5ed linter/eslint/id-length: Check destructuring assignment targets (#27724) (Yunus Ozen)
+- 0e40acb linter/eslint/no-magic-numbers: Restrict unary exemptions to numeric signs (#27723) (Yunus Ozen)
+- ae7e44b linter/eslint/no-div-regex: Report quantified leading equals (#27722) (Yunus Ozen)
+- eb461f8 linter/unicorn/consistent-function-scoping: Count self-referencing variables as captures (#27726) (camc314)
+- 5c8e731 linter/unicorn/catch-error-name: Avoid fix symbol name collisions (#27702) (camc314)
+- 9a424c2 oxlint,oxfmt: Correct Node.js TypeScript support range (#27699) (camc314)
+- 5dc0152 linter/eslint/no-var: Avoid fixes for redeclared bindings (#27697) (camc314)
+
+### ⚡ Performance
+
+- 4944cba linter/react/jsx-key: Avoid redundant key clones (#27915) (camc314)
+
+### 📚 Documentation
+
+- 0aa41ac linter: Fix invalid code example in rule docs (#27645) (leaysgur)
+
 ## [1.88.0] - 2026-10-13
 
 ### 🚀 Features

@@ -1,9 +1,8 @@
 use oxc_ast::ast::{ArrayExpression, ArrayExpressionElement, Expression};
 use oxc_formatter_core::{
-    Buffer, Format, FormatContext,
+    Format, FormatContext,
     builders::{
         empty_line, group, if_group_breaks, soft_block_indent, soft_line_break_or_space, space,
-        text,
     },
     write,
 };
@@ -12,7 +11,7 @@ use oxc_span::GetSpan;
 use crate::{
     comments::{
         FormatTrailingInsideComments, has_line_terminator_after_skipping_comments,
-        write_empty_container_comments,
+        write_empty_container_comments, write_hole_comments,
     },
     context::JsonFormatContext,
     options::ArrayExpand,
@@ -32,21 +31,6 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
         if self.array.elements.is_empty() {
             let dangling = f.context().comments().take_before(self.array.span.end);
             write_empty_container_comments(dangling, f);
-            write!(f, "]");
-            return;
-        }
-
-        // Sparse-only arrays like `[,]`, `[, , ,]`
-        // would produce empty fill/group entries (Elision emits nothing).
-        // Group builders assert on empty content, so emit the source slice verbatim
-        // which already captures the user's holes.
-        if self.array.elements.iter().all(|el| matches!(el, ArrayExpressionElement::Elision(_))) {
-            let inner_start = self.array.span.start + 1;
-            let inner_end = self.array.span.end - 1;
-            let source = f.context().source_text();
-            if inner_end > inner_start && (inner_end as usize) <= source.len() {
-                write!(f, text(source.slice_range(inner_start, inner_end)));
-            }
             write!(f, "]");
             return;
         }
@@ -276,12 +260,13 @@ fn should_force_expand(elements: &[ArrayExpressionElement<'_>]) -> bool {
 }
 
 /// Writes one array element.
-/// Elision (`[1, , 2]` holes) emits nothing,
+/// Elision (`[1, , 2]` holes) emits only the comments in its slot,
 /// the surrounding separator alone represents the hole.
 /// `SpreadElement` isn't valid JSON;
 /// we record a diagnostic and emit its source slice verbatim.
 fn write_array_element<'a>(element: &ArrayExpressionElement<'a>, f: &mut JsonFormatter<'_, 'a>) {
-    if matches!(element, ArrayExpressionElement::Elision(_)) {
+    if let ArrayExpressionElement::Elision(elision) = element {
+        write_hole_comments(elision.span.start, f);
         return;
     }
     if let Some(expr) = element.as_expression() {

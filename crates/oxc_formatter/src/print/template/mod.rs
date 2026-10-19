@@ -8,7 +8,7 @@ use std::cmp;
 
 use oxc_allocator::{ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Format, FormatElement, IndentWidth, RemoveSoftLinesBuffer, VecBuffer};
+use oxc_formatter_core::{Format, FormatElement, IndentWidth};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -428,9 +428,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTemplateExpression<'a, '_> {
         let format_inner = format_with(|f: &mut JsFormatter<'_, 'a>| match layout {
             TemplateElementLayout::SingleLine => {
                 // Remove soft line breaks for single-line layout
-                let mut buffer = RemoveSoftLinesBuffer::new(f);
                 if let Some(element) = &interned_expression {
-                    buffer.write_element(element.clone());
+                    f.remove_soft_lines(|f| f.write_element(element.clone()));
                 }
             }
             TemplateElementLayout::Fit => {
@@ -698,29 +697,28 @@ impl<'a> EachTemplateTable<'a> {
         builder.entry(EachTemplateElement::LineBreak);
 
         for expr in quasi.expressions() {
-            let mut vec_buffer = VecBuffer::new(f.state_mut());
-
-            // The softline buffer replaces all softline breaks with a space or removes it entirely
-            // to "mimic" an infinite print width
-            let mut buffer = RemoveSoftLinesBuffer::new(&mut vec_buffer);
-
             let options = FormatTemplateExpressionOptions {
                 after_new_line: false,
                 indention: TemplateElementIndention::default(),
             };
 
-            let mut recording = buffer.start_recording();
-            write!(
-                recording,
-                [FormatTemplateExpression::new(&TemplateExpression::Expression(expr), options)]
-            );
-
-            recording.stop();
+            // Removing the soft line breaks (replaced with a space or removed entirely)
+            // "mimics" an infinite print width
+            let elements = f.format_to_vec(|f| {
+                f.remove_soft_lines(|f| {
+                    write!(
+                        f,
+                        [FormatTemplateExpression::new(
+                            &TemplateExpression::Expression(expr),
+                            options
+                        )]
+                    );
+                });
+            });
 
             // TODO: The printed text IS the output, not just a width measurement,
             // so a `TailwindClass` inside `expr` (e.g. JSX `className` under `sortTailwindcss`) prints UNSORTED.
-            let root =
-                Document::new(vec_buffer.into_vec(), f.session().unsorted_tailwind_classes());
+            let root = Document::new(elements, f.session().unsorted_tailwind_classes());
 
             let print_options = f.options().as_print_options();
             // TODO: if `unwrap()` panics here, it's a internal error

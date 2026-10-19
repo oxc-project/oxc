@@ -4,13 +4,13 @@ use smallvec::SmallVec;
 
 use oxc_allocator::{ArenaVec, GetAddress};
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{BindingIdentifier, *},
 };
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
 use oxc_semantic::{AstNode, AstNodes, IsGlobalReference, NodeId, ReferenceId, Semantic, SymbolId};
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 use oxc_syntax::{
     identifier::is_irregular_whitespace,
     operator::{AssignmentOperator, BinaryOperator, LogicalOperator, UnaryOperator},
@@ -21,16 +21,15 @@ use crate::{
     utils::{get_function_nearest_jsdoc_node, is_regexp_callee},
 };
 
-/// Get the declaration kind for a variable declarator from its parent declaration.
+/// Get a variable declarator's declaration kind, or `None` if its parent is not a variable declaration.
 pub fn variable_declaration_kind(
     declarator: &VariableDeclarator<'_>,
-    ctx: &LintContext<'_>,
-) -> VariableDeclarationKind {
-    let AstKind::VariableDeclaration(declaration) = ctx.nodes().parent_kind(declarator.node_id())
-    else {
-        unreachable!();
-    };
-    declaration.kind
+    nodes: &AstNodes<'_>,
+) -> Option<VariableDeclarationKind> {
+    nodes
+        .parent_kind(declarator.node_id())
+        .as_variable_declaration()
+        .map(|declaration| declaration.kind)
 }
 
 /// Test if an AST node is a boolean value that never changes. Specifically we
@@ -320,7 +319,7 @@ pub fn extract_regex_flags<'a>(args: &'a ArenaVec<'a, Argument<'a>>) -> Option<R
     };
     let mut flags = RegExpFlags::empty();
     for ch in flag_arg.chars() {
-        let flag = RegExpFlags::try_from(ch).ok()?;
+        let flag = RegExpFlags::try_from(ch.to_char()?).ok()?;
         flags |= flag;
     }
     Some(flags)
@@ -413,7 +412,7 @@ pub fn is_method_call<'a>(
         let Some(static_property_name) = member_expr.static_property_name() else {
             return false;
         };
-        if !methods.contains(&static_property_name) {
+        if !methods.iter().any(|method| *method == static_property_name) {
             return false;
         }
     }
@@ -449,11 +448,13 @@ pub fn is_new_expression<'a>(
     true
 }
 
+/// Returns the method span and UTF-8 name for rules matching known method names.
 pub fn call_expr_method_callee_info<'a>(
     call_expr: &'a CallExpression<'a>,
 ) -> Option<(Span, &'a str)> {
     let member_expr = call_expr.callee.get_inner_expression().as_member_expression()?;
-    member_expr.static_property_info()
+    let (span, name) = member_expr.static_property_info()?;
+    Some((span, name.as_str()?))
 }
 
 pub fn get_new_expr_ident_name<'a>(new_expr: &'a NewExpression<'a>) -> Option<&'a str> {
@@ -645,7 +646,7 @@ fn is_array_from_family_method(callee: &Expression) -> bool {
 
     let object = member_expr.object();
 
-    match member_expr.static_property_name() {
+    match member_expr.static_property_name().and_then(JSStr::as_str) {
         Some("from") => matches!(
             object.get_inner_expression(),
             Expression::Identifier(ident) if ident.name.ends_with("Array")
@@ -790,6 +791,7 @@ pub fn is_default_this_binding<'a>(
                 if call_expr.callee.get_member_expr().is_some_and(|mem_expr| {
                     mem_expr
                         .static_property_name()
+                        .and_then(JSStr::as_str)
                         .is_some_and(|name| METHOD_WHICH_HAS_THIS_ARG.binary_search(&name).is_ok())
                 }) {
                     return call_expr.arguments.len() != 2
@@ -805,36 +807,23 @@ pub fn is_default_this_binding<'a>(
     }
 }
 
-pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<Cow<'a, str>> {
+pub fn get_static_property_name<'a>(parent_node: &AstNode<'a>) -> Option<StaticPropertyName<'a>> {
     let (key, computed) = match parent_node.kind() {
         AstKind::PropertyDefinition(definition) => (&definition.key, definition.computed),
-        AstKind::MethodDefinition(method_definition) => {
-            (&method_definition.key, method_definition.computed)
-        }
+        AstKind::MethodDefinition(definition) => (&definition.key, definition.computed),
         AstKind::ObjectProperty(property) => (&property.key, property.computed),
         _ => return None,
     };
-
     if key.is_identifier() && !computed {
         return key.name();
     }
-
-    if matches!(key, PropertyKey::NullLiteral(_)) {
-        return Some("null".into());
-    }
-
     match key {
-        PropertyKey::RegExpLiteral(regex) => Some(Cow::Owned(regex.regex.to_string())),
-        PropertyKey::BigIntLiteral(bigint) => Some(Cow::Borrowed(bigint.value.as_str())),
+        PropertyKey::NullLiteral(_) => Some(StaticPropertyName::from("null")),
+        // A regex key names its canonical runtime string: `[/a/ig]` names `/a/gi`.
+        PropertyKey::RegExpLiteral(_) => key.static_name(),
+        PropertyKey::BigIntLiteral(bigint) => Some(StaticPropertyName::from(bigint.value.as_str())),
         PropertyKey::TemplateLiteral(template) => {
-            if template.expressions.is_empty()
-                && template.quasis.len() == 1
-                && let Some(cooked) = &template.quasis[0].value.cooked
-            {
-                return Some(Cow::Borrowed(cooked.as_str()));
-            }
-
-            None
+            template.single_quasi().map(StaticPropertyName::from)
         }
         _ => None,
     }
@@ -907,25 +896,21 @@ pub fn get_function_name_with_kind<'a>(node: &AstNode<'a>, parent_node: &AstNode
                 definition.key.name()
             } else if let Some(static_name) = get_static_property_name(parent_node) {
                 Some(static_name)
-            } else if let Some(name) = name {
-                Some(Cow::Borrowed(name.as_str()))
             } else {
-                None
+                name.map(StaticPropertyName::from)
             }
         }
         _ => {
             if let Some(static_name) = get_static_property_name(parent_node) {
                 Some(static_name)
-            } else if let Some(name) = name {
-                Some(Cow::Borrowed(name.as_str()))
             } else {
-                None
+                name.map(StaticPropertyName::from)
             }
         }
     };
 
     if let Some(method_name) = method_name {
-        tokens.push(Cow::Owned(format!("`{method_name}`")));
+        tokens.push(Cow::Owned(format!("`{}`", method_name.display())));
     }
 
     tokens.join(" ")

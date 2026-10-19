@@ -4,6 +4,29 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 🚀 Features
+
+- 7bb2697 minifier: Minimize array join expression (#27905) (Armano)
+- 6b5057b minifier: Add de morgan optimization for void expressions (#27375) (Armano)
+
+### 🐛 Bug Fixes
+
+- ce6a088 minifier: Fold string indices by UTF-16 code unit (#27096) (Dunqing)
+- bd37e78 ecmascript: Look through sequence expressions in `to_primitive` (#27837) (baltasarblanco)
+- d92789d minifier: Drop debugger statements in unbraced bodies (#27867) (camc314)
+- 863b359 ecmascript: Correct parseFloat decimal prefix scanning (#27695) (camc314)
+- a2534c6 minifier: Preserve lexical initializers in dead for loops (#27676) (camc314)
+- 3543672 ecmascript: Do not fold Number.isInteger / isSafeInteger of tiny non-integers to true (#27622) (Baltasar Blanco)
+- 6987a61 ecmascript: BigInt loose equality folding (unknown operands and `StringToBigInt`) (#27656) (Baltasar Blanco)
+- 40e5644 minifier: Preserve indirect access when folding into call targets (#27082) (waltu)
+- 022306f ecmascript: Do not fold `Math.cbrt` of a negative number to `NaN` (#27621) (Baltasar Blanco)
+
+### ⚡ Performance
+
+- 88b5c35 minifier: Reduce code branches when evaluating roots (#27906) (Armano)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🚀 Features

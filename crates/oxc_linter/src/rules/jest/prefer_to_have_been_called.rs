@@ -91,7 +91,6 @@ impl PreferToHaveBeenCalled {
             return;
         }
 
-        // check if first argument is 0
         let Some(arg) = parsed_expect_call.args.first() else { return };
         let Some(arg_expr) = arg.as_expression() else {
             return;
@@ -101,7 +100,6 @@ impl PreferToHaveBeenCalled {
         }
 
         ctx.diagnostic_with_fix(prefer_to_have_been_called_diagnostic(call_expr.span), |fixer| {
-            // check if there is a `not` modifier
             let not_modifier =
                 parsed_expect_call.modifiers().find(|modifier| modifier.is_name_equal("not"));
 

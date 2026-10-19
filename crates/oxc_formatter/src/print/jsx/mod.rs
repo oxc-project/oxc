@@ -154,31 +154,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, JSXExpressionContainer<'a>> {
                 let comments = f.context().comments().comments_before(self.span.end);
                 let has_line_comment = comments.iter().any(Comment::is_line);
 
-                write!(f, ["{"]);
-
-                if has_line_comment {
-                    write!(
-                        f,
-                        [
-                            FormatDanglingComments::Comments {
-                                comments,
-                                indent: DanglingIndentMode::Block
-                            },
-                            format_dangling_comments(self.span).with_block_indent(),
-                            hard_line_break()
-                        ]
-                    );
-                } else {
-                    write!(
-                        f,
-                        [FormatDanglingComments::Comments {
-                            comments,
-                            indent: DanglingIndentMode::None
-                        },]
-                    );
-                }
-
-                write!(f, ["}"]);
+                let format_comments = format_with(|f| {
+                    let indent = if has_line_comment {
+                        DanglingIndentMode::Block
+                    } else {
+                        DanglingIndentMode::None
+                    };
+                    write!(f, [FormatDanglingComments::Comments { comments, indent }]);
+                    if has_line_comment {
+                        write!(
+                            f,
+                            [
+                                format_dangling_comments(self.span).with_block_indent(),
+                                hard_line_break()
+                            ]
+                        );
+                    }
+                });
+                write!(f, [group(&format_args!("{", format_comments, "}"))]);
             } else {
                 let is_conditional_or_binary = matches!(
                     self.expression,

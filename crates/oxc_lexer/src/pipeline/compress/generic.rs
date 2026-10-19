@@ -9,12 +9,7 @@ use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::{emit_value, invalid_diags};
 
-/// Dummy no-op `init_pair_luts` function.
-/// Generic build does not use `PairLuts`, so it's not necessary to construct it.
-#[inline(always)]
-pub fn init_pair_luts() {}
-
-pub(super) unsafe fn compress_blocks(
+pub(super) unsafe fn compress_blocks_generic(
     st: *const u64,
     kind: *const u8,
     b0: usize,
@@ -41,7 +36,7 @@ pub(super) unsafe fn compress_blocks(
 }
 
 /// Contents of this function is in common with AVX2 implementation.
-pub(super) unsafe fn build_spans(
+pub(super) unsafe fn build_spans_generic(
     stage_kind: *const u8,
     stage_pos: *const u32,
     m: usize,
@@ -63,7 +58,7 @@ pub(super) unsafe fn build_spans(
     w
 }
 
-pub(super) unsafe fn lanes_post(
+pub(super) unsafe fn lanes_post_generic(
     src: &[u8],
     out_kinds: *const u8,
     out_spans: *const Span,

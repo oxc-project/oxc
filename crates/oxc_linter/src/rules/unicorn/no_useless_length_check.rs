@@ -61,6 +61,7 @@ declare_oxc_lint!(
     NoUselessLengthCheck,
     unicorn,
     correctness,
+    recommended,
     pending,
     version = "0.0.19",
     short_description = "Disallow useless array length check.",

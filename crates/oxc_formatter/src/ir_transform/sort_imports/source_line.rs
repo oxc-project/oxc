@@ -58,16 +58,31 @@ impl<'a> SourceLine<'a> {
         // (`with { type: "json" }` must not count as named specifiers).
         let mut seen_from_keyword = false;
 
+        // Comments are not part of the head: a comment `Text` is neither a binding nor the source.
+        let mut inside_comment = false;
+
         let import_label = LabelId::of(JsLabels::ImportDeclaration);
+        let comment_label = LabelId::of(JsLabels::Comment);
         for idx in range.clone() {
             let element = &elements[idx];
 
-            // Special marker for `ImportDeclaration`
-            if let FormatElement::Tag(Tag::StartLabelled(id)) = element {
-                if *id == import_label {
-                    has_import = true;
+            match element {
+                // Special marker for `ImportDeclaration`
+                FormatElement::Tag(Tag::StartLabelled(id)) => {
+                    if *id == import_label {
+                        has_import = true;
+                    } else if *id == comment_label {
+                        inside_comment = true;
+                    }
+                    continue;
                 }
-                continue;
+                // A comment does not nest, so its `EndLabelled` comes before the import's
+                FormatElement::Tag(Tag::EndLabelled) if inside_comment => {
+                    inside_comment = false;
+                    continue;
+                }
+                _ if inside_comment => continue,
+                _ => {}
             }
             if !has_import {
                 continue;

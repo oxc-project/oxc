@@ -2,6 +2,7 @@ use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     context::LintContext,
@@ -85,6 +86,7 @@ declare_oxc_lint!(
     RequireLocalTestContextForConcurrentSnapshots,
     vitest,
     correctness,
+    recommended,
     version = "0.8.0",
     short_description = "The rule is intended to ensure that concurrent snapshot tests are executed within a properly configured local test context.",
 );
@@ -109,7 +111,10 @@ impl RequireLocalTestContextForConcurrentSnapshots {
 
             let Some(member_expr) = call_expr.callee.as_member_expression() else { return };
 
-            let Some(property_name) = member_expr.static_property_name() else { return };
+            let Some(property_name) = member_expr.static_property_name().and_then(JSStr::as_str)
+            else {
+                return;
+            };
 
             if !is_snapshot_method(property_name) {
                 return;

@@ -8,7 +8,7 @@ use crate::{
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -93,7 +93,7 @@ impl NoRestrictedTestMethodsConfig {
         let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
-        let Some(property_name) = mem_expr.static_property_name() else {
+        let Some(property_name) = mem_expr.static_property_name().and_then(JSStr::as_str) else {
             return;
         };
         let Some((span, _)) = mem_expr.static_property_info() else {

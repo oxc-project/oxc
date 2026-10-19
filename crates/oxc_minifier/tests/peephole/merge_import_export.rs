@@ -50,6 +50,8 @@ fn merge_import_and_export() {
         "import * as foo from 'somewhere'; export { foo as bar };",
         "export * as bar from 'somewhere';",
     );
+    test_same("import { foo } from 'foo'; export { foo as bar } from 'somewhere';");
+    test_same("import { foo } from 'foo'; export { 'foo' as bar } from 'somewhere';");
     test_same("import * as foo from 'somewhere'; export { foo, foo as bar };");
     test(
         "import * as foo from 'somewhere'; export { foo as \"bar\" };",
@@ -66,6 +68,7 @@ fn merge_import_and_export() {
         "export * as foo from 'somewhere';",
         "es2020",
     );
+
     // preserve import order
     test(
         "import { foo } from 'foo'; import { bar } from 'bar'; export { bar }; export { foo };",
@@ -85,4 +88,15 @@ fn merge_import_and_export() {
     test_same("import foo, { bar } from 'somewhere'; export { bar };");
     test_same("import * as foo from 'somewhere'; console.log(foo); export { foo };");
     test_same("import { foo } from 'somewhere'; export { foo }; eval('foo');");
+
+    // preserve import export phases
+    test_same("import source foo from 'foo'; export { foo };");
+    test_same("import defer * as foo from 'foo'; export { foo };");
+
+    // imports with unexported bindings
+    test_same("import { foo, bar } from 'foo'; export { foo, foo as baz };");
+
+    // local bindings
+    test_same("import { foo } from 'foo'; let bar = getBar(); export { foo, bar };");
+    test_same("import { foo } from 'foo'; let bar = getBar(); export { bar, foo };");
 }

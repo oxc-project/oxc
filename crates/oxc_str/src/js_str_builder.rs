@@ -78,7 +78,11 @@ impl<'a> JSStrBuilder<'a> {
     /// Append a Unicode scalar value.
     #[inline]
     pub fn push(&mut self, value: char) {
-        self.push_str(value.encode_utf8(&mut [0; char::MAX_LEN_UTF8]));
+        if value.is_ascii() && self.pending_lead_surrogate.is_none() {
+            self.bytes.push(value as u8);
+        } else {
+            self.push_str(value.encode_utf8(&mut [0; char::MAX_LEN_UTF8]));
+        }
     }
 
     /// Append one JavaScript code point, pairing surrogates at the boundary.

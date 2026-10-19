@@ -20,7 +20,7 @@ eslint/func-style                                          |  16812
 eslint/getter-return                                       |  10895
 eslint/grouped-accessor-pairs                              |  15349
 eslint/guard-for-in                                        |    105
-eslint/id-length                                           | 178568
+eslint/id-length                                           | 388133
 eslint/init-declarations                                   |  31363
 eslint/logical-assignment-operators                        |  38314
 eslint/max-classes-per-file                                |      3
@@ -41,7 +41,7 @@ eslint/no-case-declarations                                |   2320
 eslint/no-class-assign                                     |    300
 eslint/no-compare-neg-zero                                 |  20604
 eslint/no-cond-assign                                      |  31699
-eslint/no-console                                          |  94090
+eslint/no-console                                          |  95297
 eslint/no-const-assign                                     |  37499
 eslint/no-constant-binary-expression                       |  32723
 eslint/no-constant-condition                               |  18694
@@ -100,7 +100,7 @@ eslint/no-new-wrappers                                     |   1421
 eslint/no-nonoctal-decimal-escape                          |  62460
 eslint/no-obj-calls                                        |  64027
 eslint/no-object-constructor                               |  64027
-eslint/no-param-reassign                                   |  24806
+eslint/no-param-reassign                                   |  24902
 eslint/no-plusplus                                         |    769
 eslint/no-promise-executor-return                          |   1421
 eslint/no-proto                                            |  95297
@@ -113,7 +113,7 @@ eslint/no-script-url                                       |  63073
 eslint/no-self-assign                                      |  13005
 eslint/no-self-compare                                     |  20604
 eslint/no-sequences                                        |    356
-eslint/no-setter-return                                    |  14199
+eslint/no-setter-return                                    |  16728
 eslint/no-shadow                                           |      7
 eslint/no-shadow-restricted-names                          |      7
 eslint/no-sparse-arrays                                    |   4115
@@ -663,7 +663,7 @@ unicorn/prefer-set-size                                    |  76337
 unicorn/prefer-single-call                                 |  24802
 unicorn/prefer-spread                                      |  62606
 unicorn/prefer-string-raw                                  |  62460
-unicorn/prefer-string-replace-all                          |  62606
+unicorn/prefer-string-replace-all                          | 100105
 unicorn/prefer-string-slice                                |  62606
 unicorn/prefer-string-starts-ends-with                     |  62606
 unicorn/prefer-string-trim-start-end                       |  62606

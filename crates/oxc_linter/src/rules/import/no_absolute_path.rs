@@ -1,5 +1,7 @@
 use std::path::Path;
 
+use oxc_str::JSStr;
+
 use schemars::JsonSchema;
 use serde_json::Value;
 
@@ -118,7 +120,7 @@ impl Rule for NoAbsolutePath {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ImportDeclaration(import_decl)
-                if self.esmodule && check_path_is_absolute(import_decl.source.value.as_str()) =>
+                if self.esmodule && check_path_is_absolute(import_decl.source.value) =>
             {
                 ctx.diagnostic(no_absolute_path_diagnostic(import_decl.source.span));
             }
@@ -134,14 +136,14 @@ impl Rule for NoAbsolutePath {
                             if count == 1
                                 && func_name == "require"
                                 && self.commonjs
-                                && check_path_is_absolute(str_literal.value.as_str()) =>
+                                && check_path_is_absolute(str_literal.value) =>
                         {
                             ctx.diagnostic(no_absolute_path_diagnostic(str_literal.span));
                         }
                         Argument::ArrayExpression(arr_expr) if count == 2 && self.amd => {
                             for el in &arr_expr.elements {
                                 if let Some(el_expr) = el.as_expression()
-                                    && matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value.as_str()))
+                                    && matches!(el_expr, Expression::StringLiteral(literal) if check_path_is_absolute(literal.value))
                                 {
                                     ctx.diagnostic(no_absolute_path_diagnostic(el_expr.span()));
                                 }
@@ -156,8 +158,14 @@ impl Rule for NoAbsolutePath {
     }
 }
 
-fn check_path_is_absolute(path_str: &str) -> bool {
-    Path::new(path_str).is_absolute()
+fn check_path_is_absolute(path: JSStr) -> bool {
+    match path.as_str() {
+        Some(path) => Path::new(path).is_absolute(),
+        // `std::path` requires UTF-8.
+        // A path with a lone surrogate is absolute when it starts with `/`,
+        // which is what Node's `path.isAbsolute` checks.
+        None => path.starts_with('/'),
+    }
 }
 
 #[test]
@@ -167,6 +175,10 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r"import _ from './\uD800'", None),
+        (r"import _ from '\uDC00/x'", None),
         (r"import _ from 'lodash'", None),
         (r"import _ from '/lodash'", Some(json!([{ "esmodule": false }]))),
         (r"import _ from './lodash'", None),
@@ -212,6 +224,11 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r"import _ from '/\uD800'", None),
+        (r"var f = require('/\uDC00/x')", Some(json!([{ "commonjs": true }]))),
+        (r"require(['/\uD83D\uDE00'], function(){})", Some(json!([{ "amd": true }]))),
         (r"import _ from '/lodash'", None),
         (r"import _ from '/lodash'", Some(json!([{ "esmodule": true }]))),
         (r"import f from '/foo/path'", None),

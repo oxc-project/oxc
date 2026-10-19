@@ -4,6 +4,22 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 529b057 formatter_core: Keep front matter verbatim when body starts with indented delimiter (#27946) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- d2bea21 formatter: Glue comments to an opener in empty for-head slots and array holes (#27737) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+- 1c393c0 formatter_core: Skip scanning texts with nothing to rewrite (#27561) (leaysgur)
+- 1d3ef10 formatter_core: Keep the embedded IR when nothing in it is rewritten (#27673) (leaysgur)
+
 ## [0.73.0] - 2026-10-13
 
 ### 🐛 Bug Fixes

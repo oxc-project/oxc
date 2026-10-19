@@ -117,7 +117,6 @@ fn test_with_options_source_type(
     );
     iterations
 }
-
 #[test]
 fn dce_if_statement() {
     test("if (true) { foo }", "foo");
@@ -225,6 +224,20 @@ fn dce_conditional_expression() {
 
     test("const foo = true ? A : B", "A");
     test("const foo = false ? A : B", "B");
+}
+
+#[test]
+fn dce_fold_computed_member_expr() {
+    test("use([]['length']);", "use(0);");
+    test("use([1, 2, 3]['length']);", "use(3);");
+    test("use([,,1]['length']);", "use(3);");
+    test("use('abc'['length']);", "use(3);");
+    test("use('\\u{1F600}'['length']);", "use(2);");
+
+    test_same("use(object[key]);");
+    test_same("use(object['length']);");
+    test_same("use([...items]['length']);");
+    test_same("use([foo()]['length']);");
 }
 
 #[test]

@@ -30,7 +30,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
         if self.elements.is_empty() && self.rest.is_none() {
             write!(f, [format_dangling_comments(self.span()).with_soft_block_indent()]);
         } else {
-            let element_count = self.elements.len() + usize::from(self.rest.is_some());
             let should_expand = ArrayLike::ArrayPattern(self.0).should_wrap(f);
 
             write!(
@@ -39,7 +38,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
                     let has_element = !self.elements.is_empty();
                     if has_element {
                         write_array_node(
-                            element_count,
+                            self.span(),
+                            self.rest.as_ref().map(|rest| rest.span.start),
                             self.elements().iter().map(AstNode::as_ref),
                             f,
                         );

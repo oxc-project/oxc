@@ -215,10 +215,23 @@ pub const LINE_TERMINATORS: [char; 3] = ['\r', LINE_SEPARATOR, PARAGRAPH_SEPARAT
 /// Replace the line terminators matching the provided list with "\n"
 /// since its the only line break type supported by the printer
 pub fn normalize_newlines<const N: usize>(text: &str, terminators: [char; N]) -> Cow<'_, str> {
+    // Most texts have none: rule them out by the terminators' first UTF-8 bytes, all at once
+    const { assert!(N >= 1 && N <= 3) };
+    let first_bytes = terminators.map(|c| c.encode_utf8(&mut [0; 4]).as_bytes()[0]);
+    let first = if N == 1 {
+        memchr::memchr(first_bytes[0], text.as_bytes())
+    } else {
+        let byte = |i: usize| first_bytes[i.min(N - 1)];
+        memchr::memchr3(byte(0), byte(1), byte(2), text.as_bytes())
+    };
+    // A first UTF-8 byte starts a char, so the search can resume there
+    let Some(first) = first else { return Cow::Borrowed(text) };
+
     let mut result = String::new();
     let mut last_end = 0;
 
-    for (start, part) in text.match_indices(terminators) {
+    for (start, part) in text[first..].match_indices(terminators) {
+        let start = first + start;
         result.push_str(&text[last_end..start]);
         result.push('\n');
 
@@ -431,7 +444,8 @@ pub struct TextWidth(u32);
 /// Every byte in `0x20..=0x7E` is a single-width ASCII character,
 /// so display width equals byte length and the text is guaranteed single-line.
 fn is_all_printable_ascii(s: &str) -> bool {
-    s.as_bytes().iter().all(|&b| matches!(b, 0x20..=0x7e))
+    // Without an early exit, so that it vectorizes
+    s.bytes().fold(true, |all, b| all & matches!(b, 0x20..=0x7e))
 }
 
 impl TextWidth {

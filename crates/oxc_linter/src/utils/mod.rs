@@ -122,7 +122,7 @@ pub fn pad_fix_with_token_boundary(source_text: &str, span: Span, replacement: &
 
 pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> bool {
     if let Some(member) = expr.get_member_expr()
-        && member.static_property_name() == Some("raw")
+        && member.static_property_name().is_some_and(|name| name == "raw")
         && let Expression::Identifier(ident) = member.object().get_inner_expression()
     {
         ident.is_global_reference_name(static_ident!("String"), scoping)
@@ -132,12 +132,8 @@ pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> 
 }
 
 /// Checks if `haystack` starts with `prefix`, ignoring ASCII case.
-pub fn starts_with_ignore_case(haystack: &str, prefix: &str) -> bool {
-    let len = prefix.len();
-    if haystack.len() < len {
-        return false;
-    }
-    haystack.as_bytes()[..len].eq_ignore_ascii_case(prefix.as_bytes())
+pub fn starts_with_ignore_case(haystack: &[u8], prefix: &str) -> bool {
+    haystack.get(..prefix.len()).is_some_and(|start| start.eq_ignore_ascii_case(prefix.as_bytes()))
 }
 
 /// Reads the content of a path and returns it.

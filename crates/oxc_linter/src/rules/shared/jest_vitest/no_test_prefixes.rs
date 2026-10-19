@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{CallExpression, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
 
@@ -87,7 +90,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
 }
 
 fn parse_no_test_prefixes_call<'a>(
-    call_expr: &'a oxc_ast::ast::CallExpression<'a>,
+    call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
     ctx: &LintContext<'a>,
 ) -> Option<ParsedNoTestPrefixesCall> {

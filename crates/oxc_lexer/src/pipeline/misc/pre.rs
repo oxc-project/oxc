@@ -3,10 +3,12 @@ use crate::{error::DiagCode, lanes::Lanes, token::tk};
 use crate::pipeline::{
     bitmap::{bm_any, bm_clear_range, bm_get, bm_next0, bm_set},
     bytes::is_id_start,
+    cpu::{Cpu, apply, cpu_versions},
     find::unicode_ws_len,
     scan::scan_ident_esc,
 };
 
+#[apply(cpu_versions)]
 #[inline(never)]
 pub unsafe fn misc_pre(
     src: *const u8,
@@ -18,8 +20,9 @@ pub unsafe fn misc_pre(
     kind: *mut u8,
     vutf8: bool,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
-    if !bm_any(misc, nb) {
+    if !bm_any(misc, nb, cpu) {
         return 0;
     }
 
@@ -33,6 +36,9 @@ pub unsafe fn misc_pre(
 /// `VUTF8` (`LexOptions::validate_utf8`) adds UTF-8 well-formedness
 /// validation to the non-ASCII walk. Monomorphized so the default `false`
 /// copy pays nothing for it.
+///
+/// `#[inline(always)]` so it gets compiled as part of each of [`misc_pre`]'s entry points.
+#[inline(always)]
 unsafe fn misc_pre_impl<const VUTF8: bool>(
     src: *const u8,
     n: usize,

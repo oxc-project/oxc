@@ -51,6 +51,7 @@ declare_react_compiler_lint!(
     ErrorBoundaries,
     react,
     correctness,
+    recommended,
     version = "1.79.0",
     short_description = "Validates using error boundaries instead of try/catch for child errors.",
 );

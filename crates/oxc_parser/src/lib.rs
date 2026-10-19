@@ -1139,6 +1139,33 @@ mod test {
     }
 
     #[test]
+    fn surrogate_halves_join_across_escape_forms() {
+        let allocator = Allocator::default();
+        let source_type = SourceType::default();
+        // Each spelling escapes U+1F600 as its two surrogate halves.
+        let escapes = [
+            r"\uD83D\uDE00",
+            r"\u{D83D}\u{DE00}",
+            r"\uD83D\u{DE00}",
+            r"\u{D83D}\uDE00",
+            // A LineContinuation contributes no code units, so the halves are adjacent.
+            "\\uD83D\\\n\\uDE00",
+        ];
+        for escape in escapes {
+            let source = format!("'{escape}'");
+            let expr = Parser::new(&allocator, &source, source_type).parse_expression().unwrap();
+            let Expression::StringLiteral(literal) = expr else { panic!("{source}") };
+            assert_eq!(literal.value.as_str(), Some("😀"), "{source}");
+
+            let source = format!("`{escape}`");
+            let expr = Parser::new(&allocator, &source, source_type).parse_expression().unwrap();
+            let Expression::TemplateLiteral(template) = expr else { panic!("{source}") };
+            let cooked = template.quasis[0].value.cooked.and_then(oxc_str::JSStr::as_str);
+            assert_eq!(cooked, Some("😀"), "{source}");
+        }
+    }
+
+    #[test]
     fn directives() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();

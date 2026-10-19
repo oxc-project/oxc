@@ -98,6 +98,7 @@ declare_oxc_lint!(
     AriaRole,
     jsx_a11y,
     correctness,
+    recommended,
     config = AriaRoleConfig,
     version = "0.1.1",
     short_description = "Enforce that elements with ARIA roles use a valid, non-abstract ARIA role.",
@@ -130,7 +131,10 @@ impl Rule for AriaRole {
                     }
                 }
                 Some(JSXAttributeValue::StringLiteral(str)) => {
-                    let value = str.value.as_str();
+                    let Some(value) = str.value.as_str() else {
+                        ctx.diagnostic(aria_role_diagnostic(str.span, ctx.source_range(str.span)));
+                        return;
+                    };
                     if value.trim().is_empty() {
                         ctx.diagnostic(aria_role_diagnostic(str.span, ""));
                     } else if let Some(error_prop) = value.split_whitespace().find(|word| {

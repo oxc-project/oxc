@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression},
+    ast::{CallExpression, Class, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -59,6 +59,7 @@ declare_oxc_lint!(
     NoUselessErrorCaptureStackTrace,
     unicorn,
     restriction,
+    recommended,
     suggestion,
     version = "1.20.0",
     short_description = "Disallows unnecessary `Error.captureStackTrace(…)` in error constructors.",
@@ -152,7 +153,7 @@ fn get_error_subclass_if_in_constructor<'a>(
     ClassInfo::None
 }
 
-fn is_error_class(class: &oxc_ast::ast::Class, ctx: &LintContext) -> bool {
+fn is_error_class(class: &Class, ctx: &LintContext) -> bool {
     // Check if the class extends a built-in Error type
     let Some(super_class) = class.heritage_expression() else {
         return false;

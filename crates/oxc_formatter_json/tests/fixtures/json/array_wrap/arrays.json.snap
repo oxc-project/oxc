@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+assertion_line: 54
 ---
 ==================== Input ====================
 {
@@ -29,7 +30,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170,
     180
   ],
-  "commented": [1 /* c */, 2, 3, 4],
+  "commented": [1, /* c */ 2, 3, 4],
   "nested": [[1, 2], [3]]
 }
 
@@ -45,7 +46,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     { "a": 3, "b": 4 }
   ],
   "numbers": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180],
-  "commented": [1 /* c */, 2, 3, 4],
+  "commented": [1, /* c */ 2, 3, 4],
   "nested": [[1, 2], [3]]
 }
 
@@ -83,7 +84,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     170,
     180
   ],
-  "commented": [1 /* c */, 2, 3, 4],
+  "commented": [1, /* c */ 2, 3, 4],
   "nested": [[1, 2], [3]]
 }
 
@@ -102,7 +103,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     { "a": 3, "b": 4 }
   ],
   "numbers": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180],
-  "commented": [1 /* c */, 2, 3, 4],
+  "commented": [1, /* c */ 2, 3, 4],
   "nested": [[1, 2], [3]]
 }
 
@@ -118,7 +119,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170,
     180
   ],
-  "commented": [1 /* c */, 2, 3, 4],
+  "commented": [1, /* c */ 2, 3, 4],
   "nested": [[1, 2], [3]]
 }
 
@@ -131,7 +132,7 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
   "authoredMultiline": ["a", "b"],
   "records": [{ "a": 1, "b": 2 }, { "a": 3, "b": 4 }],
   "numbers": [10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180],
-  "commented": [1 /* c */, 2, 3, 4],
+  "commented": [1, /* c */ 2, 3, 4],
   "nested": [[1, 2], [3]]
 }
 
@@ -174,8 +175,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     180
   ],
   "commented": [
-    1 /* c */,
-    2,
+    1,
+    /* c */ 2,
     3,
     4
   ],
@@ -221,8 +222,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     180
   ],
   "commented": [
-    1 /* c */,
-    2,
+    1,
+    /* c */ 2,
     3,
     4
   ],
@@ -256,8 +257,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     180
   ],
   "commented": [
-    1 /* c */,
-    2,
+    1,
+    /* c */ 2,
     3,
     4
   ],
@@ -291,8 +292,8 @@ source: crates/oxc_formatter_json/tests/fixtures/mod.rs
     180
   ],
   "commented": [
-    1 /* c */,
-    2,
+    1,
+    /* c */ 2,
     3,
     4
   ],

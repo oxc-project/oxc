@@ -74,12 +74,12 @@ fn is_assert_module_import(import_decl: &ImportDeclaration) -> bool {
 
 fn is_assert_module(import_decl: &ImportDeclaration) -> bool {
     let module_name = import_decl.source.value.as_str();
-    ["assert", "node:assert"].contains(&module_name)
+    module_name.is_some_and(|name| ["assert", "node:assert"].contains(&name))
 }
 
 fn is_strict_assert_module(import_decl: &ImportDeclaration) -> bool {
     let module_name = import_decl.source.value.as_str();
-    ["assert/strict", "node:assert/strict"].contains(&module_name)
+    module_name.is_some_and(|name| ["assert/strict", "node:assert/strict"].contains(&name))
 }
 
 fn find_assert_imports(import_decl: &ImportDeclaration<'_>) -> Vec<SymbolId> {
