@@ -18,6 +18,7 @@ use crate::{
     },
     parentheses::NeedsParentheses,
     print::{
+        block_statement::is_empty_block,
         function::{
             function_content_end, function_signature_end, should_group_function_parameters,
         },
@@ -174,7 +175,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["static", space(), "{"]);
 
-        if self.body.is_empty() {
+        if is_empty_block(&self.body) {
             write!(f, [format_dangling_comments(self.span).with_block_indent()]);
         } else {
             write!(f, [block_indent(&self.body())]);
