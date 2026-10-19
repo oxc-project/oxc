@@ -356,7 +356,7 @@ fn try_fold_string_from_char_code<'a>(
             let v = arg.as_expression()?.get_side_free_number_value(ctx)?;
             Some(v.to_int_32() as u16)
         })
-        .collect::<Option<Vec<u16>>>()?;
+        .collect::<Option<SmallVec<[u16; 8]>>>()?;
     // Like the runtime string, a lead surrogate followed by a trail surrogate forms the
     // supplementary character, and any other surrogate stays a lone unit.
     // The capacity is in bytes, and a code unit encodes to at most three.
