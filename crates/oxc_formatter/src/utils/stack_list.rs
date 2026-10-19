@@ -6,7 +6,7 @@ use std::iter;
 ///
 /// An [`AstNode`](crate::ast_nodes::AstNode) refers to its parent on the stack,
 /// so a walk that needs every node of a chain at once (e.g. a member chain)
-/// keeps each one in its own frame and links them, instead of collecting them in a loop.
+/// keeps each one in its own frame and links them to the frame of the caller.
 pub struct StackList<'s, T> {
     pub item: T,
     pub outer: Option<&'s StackList<'s, T>>,

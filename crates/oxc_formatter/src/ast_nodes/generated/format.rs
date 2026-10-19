@@ -367,6 +367,277 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Expression<'a>> {
     }
 }
 
+impl<'a> NeedsParentheses<'a> for AstNode<'_, 'a, Expression<'a>> {
+    fn needs_parentheses(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        match self.inner {
+            Expression::BooleanLiteral(inner) => AstNode::<BooleanLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::NullLiteral(inner) => AstNode::<NullLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::NumericLiteral(inner) => AstNode::<NumericLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::BigIntLiteral(inner) => AstNode::<BigIntLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::RegExpLiteral(inner) => AstNode::<RegExpLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::StringLiteral(inner) => AstNode::<StringLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TemplateLiteral(inner) => AstNode::<TemplateLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::Identifier(inner) => AstNode::<IdentifierReference> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::Super(inner) => AstNode::<Super> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ArrayExpression(inner) => AstNode::<ArrayExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ArrowFunctionExpression(inner) => AstNode::<ArrowFunctionExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::AssignmentExpression(inner) => AstNode::<AssignmentExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::AwaitExpression(inner) => AstNode::<AwaitExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::BinaryExpression(inner) => AstNode::<BinaryExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::CallExpression(inner) => AstNode::<CallExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ChainExpression(inner) => AstNode::<ChainExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ClassExpression(inner) => AstNode::<Class> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ConditionalExpression(inner) => AstNode::<ConditionalExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::FunctionExpression(inner) => AstNode::<Function> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ImportExpression(inner) => AstNode::<ImportExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::LogicalExpression(inner) => AstNode::<LogicalExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::NewExpression(inner) => AstNode::<NewExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ObjectExpression(inner) => AstNode::<ObjectExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ParenthesizedExpression(inner) => AstNode::<ParenthesizedExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::SequenceExpression(inner) => AstNode::<SequenceExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TaggedTemplateExpression(inner) => AstNode::<TaggedTemplateExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ThisExpression(inner) => AstNode::<ThisExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::UnaryExpression(inner) => AstNode::<UnaryExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::UpdateExpression(inner) => AstNode::<UpdateExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::YieldExpression(inner) => AstNode::<YieldExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::PrivateInExpression(inner) => AstNode::<PrivateInExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ImportMeta(inner) => AstNode::<ImportMeta> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::NewTarget(inner) => AstNode::<NewTarget> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::JSXElement(inner) => AstNode::<JSXElement> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::JSXFragment(inner) => AstNode::<JSXFragment> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSAsExpression(inner) => AstNode::<TSAsExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSSatisfiesExpression(inner) => AstNode::<TSSatisfiesExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSTypeAssertion(inner) => AstNode::<TSTypeAssertion> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSNonNullExpression(inner) => AstNode::<TSNonNullExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSInstantiationExpression(inner) => AstNode::<TSInstantiationExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::V8IntrinsicExpression(inner) => AstNode::<V8IntrinsicExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ComputedMemberExpression(inner) => AstNode::<ComputedMemberExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::StaticMemberExpression(inner) => AstNode::<StaticMemberExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::PrivateFieldExpression(inner) => AstNode::<PrivateFieldExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+        }
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, IdentifierName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.comments().is_quiet(

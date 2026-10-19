@@ -285,7 +285,7 @@ pub fn jsx_split_children<'a, 'b>(
     let mut builder = JsxSplitChildrenBuilder::new();
 
     for child in children {
-        match child.inner {
+        match child.inner() {
             JSXChild::Text(text) => {
                 // Split the text into words
                 // Keep track if there's any leading/trailing empty line, new line or whitespace

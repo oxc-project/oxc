@@ -431,6 +431,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
 /// Formats the operator and the right hand side of `binary_like_expression`.
 ///
 /// Out of line, so that the frames of the recursions over a chain (that may be long) stay small.
+/// Holds only what the recursion needs, the rest of the work of each level is out of line too.
 #[inline(never)]
 fn format_right_side<'a>(
     binary_like_expression: BinaryLikeExpression<'a, '_>,
@@ -439,6 +440,7 @@ fn format_right_side<'a>(
     f: &mut JsFormatter<'_, 'a>,
 ) {
     let right = binary_like_expression.right();
+    let right_kind = right.as_kind();
 
     // `(longVariable === "long-string") && ((1 <= longVariable) && (longVariable <= 100000000));`
     //  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -466,28 +468,59 @@ fn format_right_side<'a>(
     // Based on Prettier's rebalancing logic for LogicalExpressions:
     // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/parse/postprocess/index.js#L64-L69>
     if let Some(operator) = logical_operator
-        && let AstNodeKind::LogicalExpression(right_logical) = right.as_kind()
+        && let AstNodeKind::LogicalExpression(right_logical) = right_kind
         && operator == right_logical.operator()
         // A type cast keeps its parens: `a && /** @type {T} */ (b && c)`
         && !is_cast_target(right_logical.span(), f)
     {
-        format_operator_and_break(operator.into(), right_logical.left().span(), f);
-
-        // If the left side of the right logical expression is still a logical expression with the same operator,
-        // we need to recursively format it inline.
-        // This way, we can ensure that all parts are in the same group.
-        // We format directly instead of allocating a Vec via `with_left_and_right_sides`.
         let right_binary = BinaryLikeExpression::LogicalExpression(right_logical);
-        if let Some(left) = right_binary.flattened_left(f) {
-            // Format the nested logical expression inline without Vec allocation
-            format_flattened_logical_expression(left, inside_parenthesis, f);
-        } else {
-            right_binary.left().fmt(f);
-        }
-
+        format_operator_and_left_side_of(&right_binary, operator, inside_parenthesis, f);
         return format_right_side(right_binary, logical_operator, inside_parenthesis, f);
     }
 
+    format_operator_and_right_side(
+        binary_like_expression,
+        &right,
+        &right_kind,
+        logical_operator,
+        inside_parenthesis,
+        f,
+    );
+}
+
+/// Formats the operator before the right logical expression `right_binary` and its left side,
+/// for [format_right_side].
+#[inline(never)]
+fn format_operator_and_left_side_of<'a>(
+    right_binary: &BinaryLikeExpression<'a, '_>,
+    operator: LogicalOperator,
+    inside_parenthesis: bool,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    format_operator_and_break(operator.into(), right_binary.left().span(), f);
+
+    // If the left side of the right logical expression is still a logical expression with the same operator,
+    // we need to recursively format it inline.
+    // This way, we can ensure that all parts are in the same group.
+    // We format directly instead of allocating a Vec via `with_left_and_right_sides`.
+    if let Some(left) = right_binary.flattened_left(f) {
+        // Format the nested logical expression inline without Vec allocation
+        format_flattened_logical_expression(left, inside_parenthesis, f);
+    } else {
+        right_binary.left().fmt(f);
+    }
+}
+
+/// Formats the operator and `right`, the right side of `binary_like_expression`, for [format_right_side].
+#[inline(never)]
+fn format_operator_and_right_side<'a>(
+    binary_like_expression: BinaryLikeExpression<'a, '_>,
+    right: &AstNode<'_, 'a, Expression<'a>>,
+    right_kind: &AstNodeKind<'_, 'a>,
+    logical_operator: Option<LogicalOperator>,
+    inside_parenthesis: bool,
+    f: &mut JsFormatter<'_, 'a>,
+) {
     let operator_and_right_expression = format_with(|f| {
         if binary_like_expression.should_inline_logical_expression() {
             write!(f, [space(), binary_like_expression.operator(), space()]);
@@ -505,7 +538,6 @@ fn format_right_side<'a>(
     let left = binary_like_expression.left();
     let left_kind = left.as_kind();
     let left_ast_nodes = left_kind.as_ast_nodes();
-    let right_kind = right.as_kind();
 
     // Doesn't match prettier that only distinguishes between logical and binary
     let should_group =
@@ -618,9 +650,8 @@ fn with_left_and_right_sides<'a>(
         format: impl FnOnce(&[BinaryLeftOrRightSide<'a, '_>], &mut JsFormatter<'_, 'a>),
     ) {
         // Stores the left and right parts of the binary expression in sequence (rather than nested as they
-        // appear in the tree).
-        // `with_capacity(2)` because we expect at least 2 items (left and right).
-        let mut items = Vec::with_capacity(2);
+        // appear in the tree): the left side of the innermost one, then the right side of each one.
+        let mut items = Vec::with_capacity(1 + binaries.iter().count());
         items.push(BinaryLeftOrRightSide::Left { parent: &binaries.item });
         items.extend(
             binaries

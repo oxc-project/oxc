@@ -119,7 +119,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ImportExpression<'a>> {
         }
 
         // Use the same logic as CallExpression arguments formatting
-        let arguments = self.to_arguments(f.allocator());
+        let arguments = self.arguments(f.allocator());
         write!(f, arguments);
     }
 }

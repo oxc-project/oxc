@@ -289,14 +289,8 @@ impl<'a> ArrowFunctionLayout<'a, '_> {
             f: &mut JsFormatter<'_, 'a>,
             format: impl FnOnce(ArrowFunctionLayout<'a, '_>, &mut JsFormatter<'_, 'a>),
         ) {
-            let is_non_grouped_or_grouped_last_argument = matches!(
-                options.call_argument_layout,
-                None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-            );
-
             let current = arrows.item;
-            if is_non_grouped_or_grouped_last_argument
-                && let AstNodeKind::ArrowFunctionExpression(next) = current.body().as_kind()
+            if let AstNodeKind::ArrowFunctionExpression(next) = current.body().as_kind()
                 // A type cast keeps its parens: `(a) => /** @type {T} */ ((b) => c)`
                 && !is_cast_target(next.span(), f)
             {
@@ -319,17 +313,13 @@ impl<'a> ArrowFunctionLayout<'a, '_> {
             f: &mut JsFormatter<'_, 'a>,
             format: impl FnOnce(ArrowFunctionLayout<'a, '_>, &mut JsFormatter<'_, 'a>),
         ) {
-            let layout = if let Some(outer) = arrows.outer {
-                // The outermost arrow function is the head
-                let mut head = outer;
-                let mut middle = Vec::new();
-                while let Some(next) = head.outer {
-                    middle.push(head.item);
-                    head = next;
-                }
+            let layout = if arrows.outer.is_some() {
+                // From the parent of the tail up to the head, the outermost arrow function
+                let mut outers = arrows.iter().skip(1).copied();
+                let mut middle: Vec<_> = outers.by_ref().take(arrows.iter().count() - 2).collect();
                 middle.reverse();
                 ArrowFunctionLayout::Chain(ArrowChain {
-                    head: head.item,
+                    head: outers.next().unwrap(),
                     middle,
                     tail: arrows.item,
                     expand_signatures: should_break,
@@ -341,7 +331,15 @@ impl<'a> ArrowFunctionLayout<'a, '_> {
             format(layout, f);
         }
 
-        with_layout_inner(&StackList::new(arrow, None), false, options, f, format);
+        let is_non_grouped_or_grouped_last_argument = matches!(
+            options.call_argument_layout,
+            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
+        );
+        if is_non_grouped_or_grouped_last_argument {
+            with_layout_inner(&StackList::new(arrow, None), false, options, f, format);
+        } else {
+            format(ArrowFunctionLayout::Single(arrow), f);
+        }
     }
 
     /// Returns a `true` result if the arrow function contains any elements which

@@ -11,7 +11,7 @@ use super::AstNodes;
 /// `'me` is the lifetime of the parent node it refers to, `'a` is the lifetime of the AST.
 /// An accessor for a child borrows `self`, so the parent must outlive the child.
 pub struct AstNode<'me, 'a, T> {
-    pub(crate) inner: &'a T,
+    pub(super) inner: &'a T,
     pub(super) parent: AstNodes<'me, 'a>,
     /// The start position of the following sibling node, or 0 if none.
     pub(super) following_span_start: u32,
@@ -73,6 +73,12 @@ impl<T: GetSpan> GetSpan for &AstNode<'_, '_, T> {
 }
 
 impl<'me, 'a, T> AstNode<'me, 'a, T> {
+    /// Returns the AST node, for the lifetime of the AST rather than the borrow of `self` (unlike [`Deref`] and [`AsRef`]).
+    #[inline]
+    pub fn inner(&self) -> &'a T {
+        self.inner
+    }
+
     /// Returns an iterator over all ancestor nodes in the AST, starting from self.
     ///
     /// The iteration includes the current node and proceeds upward through the tree,
@@ -161,12 +167,8 @@ impl<'me, 'a> AstNode<'me, 'a, ArrowFunctionBody<'a>> {
 
 impl<'a> AstNode<'_, 'a, ImportExpression<'a>> {
     /// Converts the arguments of the ImportExpression into an `AstNode` representing a `Vec` of `Argument`.
-    #[expect(
-        clippy::wrong_self_convention,
-        reason = "the arguments refer to `self` as their parent, so it can't be taken by value"
-    )]
     #[inline]
-    pub fn to_arguments(
+    pub fn arguments(
         &self,
         allocator: &'a Allocator,
     ) -> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {

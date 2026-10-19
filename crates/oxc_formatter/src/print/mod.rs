@@ -491,9 +491,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, AwaitExpression<'a>> {
 
         // Group unless the enclosing `await`'s argument starts with this expression,
         // to avoid printing `await (await` on one line.
-        let should_group = enclosing_await.is_none_or(|expr| {
-            ExpressionLeftSide::leftmost(&expr.argument()).span() != self.span()
-        });
+        let should_group = enclosing_await
+            .is_none_or(|expr| ExpressionLeftSide::leftmost(&expr.argument).span() != self.span());
         if should_group {
             write!(f, [group(&indented)]);
         } else {

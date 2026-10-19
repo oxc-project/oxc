@@ -380,6 +380,10 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         _ => quote! {},
     };
 
+    // Every variant of `Expression` implements `NeedsParentheses`, see `get_needs_parentheses_type_ids`
+    let needs_parentheses_impl =
+        (enum_def.name() == "Expression").then(|| generate_needs_parentheses(enum_def, schema));
+
     quote! {
         ///@@line_break
         impl<'a> Format<'a, JsFormatContext<'a>> for #node_type {
@@ -390,6 +394,37 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
                 match self.inner {
                     #(#variant_match_arms)*
                     #(#inherits_match_arms)*
+                }
+            }
+        }
+
+        #needs_parentheses_impl
+    }
+}
+
+/// Dispatches `needs_parentheses` to the variant in a single match.
+fn generate_needs_parentheses(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    let enum_ident = enum_def.ident();
+    let enum_ty = enum_def.ty(schema);
+
+    let match_arms = enum_def.all_variants(schema).map(|variant| {
+        let variant_name = variant.ident();
+        let node_type = variant.field_type(schema).unwrap().innermost_type(schema).ident();
+        quote! {
+            #enum_ident::#variant_name(inner) => AstNode::<#node_type> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }.needs_parentheses(f),
+        }
+    });
+
+    quote! {
+        ///@@line_break
+        impl<'a> NeedsParentheses<'a> for AstNode<'_, 'a, #enum_ty> {
+            fn needs_parentheses(&self, f: &JsFormatter<'_, 'a>) -> bool {
+                match self.inner {
+                    #(#match_arms)*
                 }
             }
         }

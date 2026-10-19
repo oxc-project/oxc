@@ -30,15 +30,63 @@ impl<'a, 'b> From<AstNode<'b, 'a, SimpleAssignmentTarget<'a>>> for ExpressionLef
 
 impl<'a> ExpressionLeftSide<'a, '_> {
     /// Returns the leftmost expression that starts `expression` (`expression` itself if none).
-    pub fn leftmost(expression: &AstNode<'_, 'a, Expression<'a>>) -> &'a Expression<'a> {
-        let mut leftmost = expression.inner;
-        ExpressionLeftSide::Expression(*expression).any(&mut |left| {
-            if let ExpressionLeftSide::Expression(expression) = left {
-                leftmost = expression.inner;
-            }
-            false
-        });
+    ///
+    /// Same walk as [Self::any] over the AST, without creating [AstNode]s.
+    pub fn leftmost<'b>(expression: &'b Expression<'a>) -> &'b Expression<'a> {
+        let mut leftmost = expression;
+        while let Some(left) = Self::left_expression_of(leftmost) {
+            leftmost = left;
+        }
         leftmost
+    }
+
+    /// The next expression on the left of `expression` that [Self::any] visits,
+    /// through an assignment target (`a` of `a.b = c`), see [Self::left_of] and [Self::get_left_side_of_assignment].
+    fn left_expression_of<'b>(expression: &'b Expression<'a>) -> Option<&'b Expression<'a>> {
+        let expression = match expression {
+            Expression::ChainExpression(chain) => match &chain.expression {
+                ChainElement::CallExpression(call) => &call.callee,
+                ChainElement::TSNonNullExpression(expr) => &expr.expression,
+                element => element.as_member_expression()?.object(),
+            },
+            Expression::SequenceExpression(expr) => expr.expressions.first()?,
+            Expression::StaticMemberExpression(expr) => &expr.object,
+            Expression::ComputedMemberExpression(expr) => &expr.object,
+            Expression::PrivateFieldExpression(expr) => &expr.object,
+            Expression::TaggedTemplateExpression(expr) => &expr.tag,
+            Expression::CallExpression(expr) => &expr.callee,
+            Expression::ConditionalExpression(expr) => &expr.test,
+            Expression::TSAsExpression(expr) => &expr.expression,
+            Expression::TSSatisfiesExpression(expr) => &expr.expression,
+            Expression::TSNonNullExpression(expr) => &expr.expression,
+            Expression::TSInstantiationExpression(expr) => &expr.expression,
+            Expression::AssignmentExpression(expr) => {
+                Self::left_expression_of_assignment(expr.left.as_simple_assignment_target()?)?
+            }
+            Expression::UpdateExpression(expr) => {
+                if expr.prefix {
+                    return None;
+                }
+                Self::left_expression_of_assignment(&expr.argument)?
+            }
+            Expression::BinaryExpression(binary) => &binary.left,
+            Expression::LogicalExpression(logical) => &logical.left,
+            _ => return None,
+        };
+        Some(expression)
+    }
+
+    /// Same as [Self::get_left_side_of_assignment], over the AST.
+    fn left_expression_of_assignment<'b>(
+        target: &'b SimpleAssignmentTarget<'a>,
+    ) -> Option<&'b Expression<'a>> {
+        match target {
+            SimpleAssignmentTarget::TSAsExpression(expr) => Some(&expr.expression),
+            SimpleAssignmentTarget::TSSatisfiesExpression(expr) => Some(&expr.expression),
+            SimpleAssignmentTarget::TSNonNullExpression(expr) => Some(&expr.expression),
+            SimpleAssignmentTarget::TSTypeAssertion(expr) => Some(&expr.expression),
+            target => target.as_member_expression().map(MemberExpression::object),
+        }
     }
 
     /// Returns `true` if `predicate` holds for `self` or any of the left sides that start it, see [Self::left_of].

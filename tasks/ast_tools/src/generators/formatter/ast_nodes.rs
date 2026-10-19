@@ -107,7 +107,7 @@ impl Generator for FormatterAstNodesGenerator {
         });
 
         let output = quote! {
-            #![expect(clippy::match_same_arms)]
+            #![expect(clippy::match_same_arms, clippy::elidable_lifetime_names)]
             ///@@line_break
             use oxc_allocator::ArenaVec;
             use oxc_ast::ast::*;
@@ -243,8 +243,6 @@ fn generate_struct_impls(
     let struct_name = struct_def.ident();
 
     let fields = &struct_def.fields;
-    // Whether a method returns a child that outlives the borrow of `self`
-    let mut uses_me = false;
     let methods = fields.iter().enumerate().filter_map(|(index, field)| {
         if field.name == "span" {
             return None;
@@ -417,7 +415,6 @@ fn generate_struct_impls(
         let return_type_final = if is_not_ast_node {
             quote! { #reference_prefix #field_inner_ty }
         } else {
-            uses_me |= !has_kind;
             quote! { AstNode<#child_lifetime, 'a, #field_inner_ty> }
         };
 
@@ -437,15 +434,9 @@ fn generate_struct_impls(
     });
 
     let methods = methods.collect::<Vec<_>>();
-    let impl_generics = if uses_me {
-        quote! { impl<'me, 'a> AstNode<'me, 'a, #type_ty> }
-    } else {
-        quote! { impl<'a> AstNode<'_, 'a, #type_ty> }
-    };
-
     quote! {
         ///@@line_break
-        #impl_generics {
+        impl<'me, 'a> AstNode<'me, 'a, #type_ty> {
             #(#methods)*
 
             ///@@line_break

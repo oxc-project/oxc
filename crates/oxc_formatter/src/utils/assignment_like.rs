@@ -480,7 +480,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
     fn right_expression_shape(&self, f: &JsFormatter<'_, 'a>) -> Option<&Expression<'a>> {
         self.get_right_expression()
             .filter(|expr| !is_cast_target(expr.span(), f))
-            .map(|expr| expr.inner)
+            .map(|expr| expr.inner())
     }
 
     /// A leading multi-line `*`-aligned block comment on the right-hand side
@@ -858,39 +858,37 @@ fn should_break_after_operator<'a>(
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
         // Based on https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L235-L263
         _ if is_left_short => false,
-        _ => with_innermost_expression(right, f, |inner, f| {
-            matches!(inner.as_ref(), Expression::StringLiteral(_))
-                || is_poorly_breakable_member_or_call_chain(inner, f)
-        }),
+        _ => is_innermost_string_or_poorly_breakable_chain(right, f),
     }
 }
 
-/// Traverses nested unary-like expressions to find the innermost one, and returns `predicate` for it.
+/// Traverses nested unary-like expressions to find the innermost one,
+/// and returns `true` if it is a string literal or a poorly breakable member or call chain.
 ///
 /// Example: `void !!(await test())` checks the `await test()` expression.
 ///
 /// `false` when the walk reaches a cast target (`!/** @type {T} */ ("s")`): a cast target has no shape.
 /// The caller has already checked the entry node.
-fn with_innermost_expression<'a>(
+fn is_innermost_string_or_poorly_breakable_chain<'a>(
     current: &AstNode<'_, 'a, Expression<'a>>,
     f: &mut JsFormatter<'_, 'a>,
-    predicate: impl FnOnce(&AstNode<'_, 'a, Expression<'a>>, &mut JsFormatter<'_, 'a>) -> bool,
 ) -> bool {
     let kind = current.as_kind();
     let argument = match &kind {
-        AstNodeKind::UnaryExpression(unary) => unary.argument(),
-        AstNodeKind::TSNonNullExpression(non_null) => non_null.expression(),
-        AstNodeKind::AwaitExpression(expr) => expr.argument(),
-        AstNodeKind::YieldExpression(expr) => match expr.argument() {
-            Some(argument) => argument,
-            None => return predicate(current, f),
-        },
-        _ => return predicate(current, f),
+        AstNodeKind::UnaryExpression(unary) => Some(unary.argument()),
+        AstNodeKind::TSNonNullExpression(non_null) => Some(non_null.expression()),
+        AstNodeKind::AwaitExpression(expr) => Some(expr.argument()),
+        AstNodeKind::YieldExpression(expr) => expr.argument(),
+        _ => None,
+    };
+    let Some(argument) = argument else {
+        return matches!(current.as_ref(), Expression::StringLiteral(_))
+            || is_poorly_breakable_member_or_call_chain(current, f);
     };
     if is_cast_target(argument.span(), f) {
         return false;
     }
-    with_innermost_expression(&argument, f, predicate)
+    is_innermost_string_or_poorly_breakable_chain(&argument, f)
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {

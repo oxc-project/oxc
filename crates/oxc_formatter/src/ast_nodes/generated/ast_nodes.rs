@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter/ast_nodes.rs`.
 
-#![expect(clippy::match_same_arms)]
+#![expect(clippy::match_same_arms, clippy::elidable_lifetime_names)]
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
@@ -1430,7 +1430,7 @@ impl<'me, 'a> AstNodes<'me, 'a> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, Program<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Program<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1715,7 +1715,7 @@ impl<'me, 'a> AstNode<'me, 'a, Expression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, IdentifierName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, IdentifierName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1736,7 +1736,7 @@ impl<'a> AstNode<'_, 'a, IdentifierName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, IdentifierReference<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, IdentifierReference<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1757,7 +1757,7 @@ impl<'a> AstNode<'_, 'a, IdentifierReference<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, BindingIdentifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, BindingIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1778,7 +1778,7 @@ impl<'a> AstNode<'_, 'a, BindingIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, LabelIdentifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, LabelIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1799,7 +1799,7 @@ impl<'a> AstNode<'_, 'a, LabelIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ThisExpression> {
+impl<'me, 'a> AstNode<'me, 'a, ThisExpression> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1815,7 +1815,7 @@ impl<'a> AstNode<'_, 'a, ThisExpression> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ArrayExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ArrayExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1863,7 +1863,7 @@ impl<'me, 'a> AstNode<'me, 'a, ArrayExpressionElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, Elision> {
+impl<'me, 'a> AstNode<'me, 'a, Elision> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1879,7 +1879,7 @@ impl<'a> AstNode<'_, 'a, Elision> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ObjectExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ObjectExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1926,7 +1926,7 @@ impl<'me, 'a> AstNode<'me, 'a, ObjectPropertyKind<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ObjectProperty<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ObjectProperty<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2006,7 +2006,7 @@ impl<'me, 'a> AstNode<'me, 'a, PropertyKey<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TemplateLiteral<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TemplateLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2048,7 +2048,7 @@ impl<'a> AstNode<'_, 'a, TemplateLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TaggedTemplateExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2100,7 +2100,7 @@ impl<'a> AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TemplateElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TemplateElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2158,7 +2158,7 @@ impl<'me, 'a> AstNode<'me, 'a, MemberExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ComputedMemberExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ComputedMemberExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2199,7 +2199,7 @@ impl<'a> AstNode<'_, 'a, ComputedMemberExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, StaticMemberExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, StaticMemberExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2240,7 +2240,7 @@ impl<'a> AstNode<'_, 'a, StaticMemberExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, PrivateFieldExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, PrivateFieldExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2281,7 +2281,7 @@ impl<'a> AstNode<'_, 'a, PrivateFieldExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, CallExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, CallExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2350,7 +2350,7 @@ impl<'a> AstNode<'_, 'a, CallExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, NewExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, NewExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2414,7 +2414,7 @@ impl<'a> AstNode<'_, 'a, NewExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ImportMeta> {
+impl<'me, 'a> AstNode<'me, 'a, ImportMeta> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2430,7 +2430,7 @@ impl<'a> AstNode<'_, 'a, ImportMeta> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, NewTarget> {
+impl<'me, 'a> AstNode<'me, 'a, NewTarget> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2446,7 +2446,7 @@ impl<'a> AstNode<'_, 'a, NewTarget> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, SpreadElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, SpreadElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2491,7 +2491,7 @@ impl<'me, 'a> AstNode<'me, 'a, Argument<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, UpdateExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, UpdateExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2527,7 +2527,7 @@ impl<'a> AstNode<'_, 'a, UpdateExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, UnaryExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, UnaryExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2558,7 +2558,7 @@ impl<'a> AstNode<'_, 'a, UnaryExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, BinaryExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, BinaryExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2599,7 +2599,7 @@ impl<'a> AstNode<'_, 'a, BinaryExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, PrivateInExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, PrivateInExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2635,7 +2635,7 @@ impl<'a> AstNode<'_, 'a, PrivateInExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, LogicalExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, LogicalExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2676,7 +2676,7 @@ impl<'a> AstNode<'_, 'a, LogicalExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ConditionalExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ConditionalExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2722,7 +2722,7 @@ impl<'a> AstNode<'_, 'a, ConditionalExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, AssignmentExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2852,7 +2852,7 @@ impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetPattern<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ArrayAssignmentTarget<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ArrayAssignmentTarget<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2890,7 +2890,7 @@ impl<'a> AstNode<'_, 'a, ArrayAssignmentTarget<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ObjectAssignmentTarget<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ObjectAssignmentTarget<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2926,7 +2926,7 @@ impl<'a> AstNode<'_, 'a, ObjectAssignmentTarget<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, AssignmentTargetRest<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetRest<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2973,7 +2973,7 @@ impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetMaybeDefault<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, AssignmentTargetWithDefault<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetWithDefault<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3034,7 +3034,7 @@ impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetProperty<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, AssignmentTargetPropertyIdentifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetPropertyIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3076,7 +3076,7 @@ impl<'a> AstNode<'_, 'a, AssignmentTargetPropertyIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, AssignmentTargetPropertyProperty<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetPropertyProperty<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3117,7 +3117,7 @@ impl<'a> AstNode<'_, 'a, AssignmentTargetPropertyProperty<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, SequenceExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, SequenceExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3143,7 +3143,7 @@ impl<'a> AstNode<'_, 'a, SequenceExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, Super> {
+impl<'me, 'a> AstNode<'me, 'a, Super> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3159,7 +3159,7 @@ impl<'a> AstNode<'_, 'a, Super> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, AwaitExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AwaitExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3185,7 +3185,7 @@ impl<'a> AstNode<'_, 'a, AwaitExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ChainExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ChainExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3235,7 +3235,7 @@ impl<'me, 'a> AstNode<'me, 'a, ChainElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ParenthesizedExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ParenthesizedExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3369,7 +3369,7 @@ impl<'me, 'a> AstNode<'me, 'a, Statement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, Directive<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Directive<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3400,7 +3400,7 @@ impl<'a> AstNode<'_, 'a, Directive<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, Hashbang<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Hashbang<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3421,7 +3421,7 @@ impl<'a> AstNode<'_, 'a, Hashbang<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, BlockStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, BlockStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3514,7 +3514,7 @@ impl<'me, 'a> AstNode<'me, 'a, Declaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, VariableDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, VariableDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3550,7 +3550,7 @@ impl<'a> AstNode<'_, 'a, VariableDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, VariableDeclarator<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, VariableDeclarator<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3614,7 +3614,7 @@ impl<'a> AstNode<'_, 'a, VariableDeclarator<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, EmptyStatement> {
+impl<'me, 'a> AstNode<'me, 'a, EmptyStatement> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3630,7 +3630,7 @@ impl<'a> AstNode<'_, 'a, EmptyStatement> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ExpressionStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ExpressionStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3656,7 +3656,7 @@ impl<'a> AstNode<'_, 'a, ExpressionStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, IfStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, IfStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3702,7 +3702,7 @@ impl<'a> AstNode<'_, 'a, IfStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, DoWhileStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, DoWhileStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3738,7 +3738,7 @@ impl<'a> AstNode<'_, 'a, DoWhileStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, WhileStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, WhileStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3774,7 +3774,7 @@ impl<'a> AstNode<'_, 'a, WhileStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ForStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ForStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3862,7 +3862,7 @@ impl<'me, 'a> AstNode<'me, 'a, ForStatementInit<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ForInStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ForInStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3927,7 +3927,7 @@ impl<'me, 'a> AstNode<'me, 'a, ForStatementLeft<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ForOfStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ForOfStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3978,7 +3978,7 @@ impl<'a> AstNode<'_, 'a, ForOfStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ContinueStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ContinueStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4004,7 +4004,7 @@ impl<'a> AstNode<'_, 'a, ContinueStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, BreakStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, BreakStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4030,7 +4030,7 @@ impl<'a> AstNode<'_, 'a, BreakStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ReturnStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ReturnStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4056,7 +4056,7 @@ impl<'a> AstNode<'_, 'a, ReturnStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, WithStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, WithStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4092,7 +4092,7 @@ impl<'a> AstNode<'_, 'a, WithStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, SwitchStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, SwitchStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4128,7 +4128,7 @@ impl<'a> AstNode<'_, 'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, SwitchCase<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, SwitchCase<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4170,7 +4170,7 @@ impl<'a> AstNode<'_, 'a, SwitchCase<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, LabeledStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, LabeledStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4206,7 +4206,7 @@ impl<'a> AstNode<'_, 'a, LabeledStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ThrowStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ThrowStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4232,7 +4232,7 @@ impl<'a> AstNode<'_, 'a, ThrowStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TryStatement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TryStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4284,7 +4284,7 @@ impl<'a> AstNode<'_, 'a, TryStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, CatchClause<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, CatchClause<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4320,7 +4320,7 @@ impl<'a> AstNode<'_, 'a, CatchClause<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, CatchParameter<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, CatchParameter<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4362,7 +4362,7 @@ impl<'a> AstNode<'_, 'a, CatchParameter<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, DebuggerStatement> {
+impl<'me, 'a> AstNode<'me, 'a, DebuggerStatement> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4409,7 +4409,7 @@ impl<'me, 'a> AstNode<'me, 'a, BindingPattern<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, AssignmentPattern<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentPattern<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4445,7 +4445,7 @@ impl<'a> AstNode<'_, 'a, AssignmentPattern<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ObjectPattern<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ObjectPattern<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4481,7 +4481,7 @@ impl<'a> AstNode<'_, 'a, ObjectPattern<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, BindingProperty<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, BindingProperty<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4527,7 +4527,7 @@ impl<'a> AstNode<'_, 'a, BindingProperty<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ArrayPattern<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ArrayPattern<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4563,7 +4563,7 @@ impl<'a> AstNode<'_, 'a, ArrayPattern<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, BindingRestElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, BindingRestElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4589,7 +4589,7 @@ impl<'a> AstNode<'_, 'a, BindingRestElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, Function<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Function<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4721,7 +4721,7 @@ impl<'a> AstNode<'_, 'a, Function<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, FormalParameters<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, FormalParameters<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4762,7 +4762,7 @@ impl<'a> AstNode<'_, 'a, FormalParameters<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, FormalParameter<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, FormalParameter<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4851,7 +4851,7 @@ impl<'a> AstNode<'_, 'a, FormalParameter<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, FormalParameterRest<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, FormalParameterRest<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4903,7 +4903,7 @@ impl<'a> AstNode<'_, 'a, FormalParameterRest<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, FunctionBody<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, FunctionBody<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4964,7 +4964,7 @@ impl<'me, 'a> AstNode<'me, 'a, ArrowFunctionBody<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ArrowFunctionExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5041,7 +5041,7 @@ impl<'a> AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, YieldExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, YieldExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5072,7 +5072,7 @@ impl<'a> AstNode<'_, 'a, YieldExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, Class<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Class<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5226,7 +5226,7 @@ impl<'me, 'a> AstNode<'me, 'a, ClassHeritage<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ClassBody<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ClassBody<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5284,7 +5284,7 @@ impl<'me, 'a> AstNode<'me, 'a, ClassElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, MethodDefinition<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, MethodDefinition<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5365,7 +5365,7 @@ impl<'a> AstNode<'_, 'a, MethodDefinition<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, PropertyDefinition<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, PropertyDefinition<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5479,7 +5479,7 @@ impl<'a> AstNode<'_, 'a, PropertyDefinition<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, PrivateIdentifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, PrivateIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5500,7 +5500,7 @@ impl<'a> AstNode<'_, 'a, PrivateIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, StaticBlock<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, StaticBlock<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5587,7 +5587,7 @@ impl<'me, 'a> AstNode<'me, 'a, ModuleDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, AccessorProperty<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AccessorProperty<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5686,7 +5686,7 @@ impl<'a> AstNode<'_, 'a, AccessorProperty<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ImportExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ImportExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5733,7 +5733,7 @@ impl<'a> AstNode<'_, 'a, ImportExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ImportDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ImportDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5823,7 +5823,7 @@ impl<'me, 'a> AstNode<'me, 'a, ImportDeclarationSpecifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ImportSpecifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ImportSpecifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5864,7 +5864,7 @@ impl<'a> AstNode<'_, 'a, ImportSpecifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ImportDefaultSpecifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ImportDefaultSpecifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5890,7 +5890,7 @@ impl<'a> AstNode<'_, 'a, ImportDefaultSpecifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ImportNamespaceSpecifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ImportNamespaceSpecifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5916,7 +5916,7 @@ impl<'a> AstNode<'_, 'a, ImportNamespaceSpecifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, WithClause<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, WithClause<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5947,7 +5947,7 @@ impl<'a> AstNode<'_, 'a, WithClause<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ImportAttribute<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ImportAttribute<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6000,7 +6000,7 @@ impl<'me, 'a> AstNode<'me, 'a, ImportAttributeKey<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ExportDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ExportDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6026,7 +6026,7 @@ impl<'a> AstNode<'_, 'a, ExportDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ExportNamedDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ExportNamedDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6057,7 +6057,7 @@ impl<'a> AstNode<'_, 'a, ExportNamedDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ExportFromDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ExportFromDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6108,7 +6108,7 @@ impl<'a> AstNode<'_, 'a, ExportFromDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ExportDefaultDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ExportDefaultDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6134,7 +6134,7 @@ impl<'a> AstNode<'_, 'a, ExportDefaultDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ExportAllDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ExportAllDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6185,7 +6185,7 @@ impl<'a> AstNode<'_, 'a, ExportAllDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, ExportSpecifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ExportSpecifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6273,7 +6273,7 @@ impl<'me, 'a> AstNode<'me, 'a, ModuleExportName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, V8IntrinsicExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, V8IntrinsicExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6315,7 +6315,7 @@ impl<'a> AstNode<'_, 'a, V8IntrinsicExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, BooleanLiteral> {
+impl<'me, 'a> AstNode<'me, 'a, BooleanLiteral> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6336,7 +6336,7 @@ impl<'a> AstNode<'_, 'a, BooleanLiteral> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, NullLiteral> {
+impl<'me, 'a> AstNode<'me, 'a, NullLiteral> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6352,7 +6352,7 @@ impl<'a> AstNode<'_, 'a, NullLiteral> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, NumericLiteral<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, NumericLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6383,7 +6383,7 @@ impl<'a> AstNode<'_, 'a, NumericLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, StringLiteral<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, StringLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6409,7 +6409,7 @@ impl<'a> AstNode<'_, 'a, StringLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, BigIntLiteral<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, BigIntLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6440,7 +6440,7 @@ impl<'a> AstNode<'_, 'a, BigIntLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, RegExpLiteral<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, RegExpLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6466,7 +6466,7 @@ impl<'a> AstNode<'_, 'a, RegExpLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6525,7 +6525,7 @@ impl<'a> AstNode<'_, 'a, JSXElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXOpeningElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXOpeningElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6584,7 +6584,7 @@ impl<'a> AstNode<'_, 'a, JSXOpeningElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXClosingElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXClosingElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6610,7 +6610,7 @@ impl<'a> AstNode<'_, 'a, JSXClosingElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXFragment<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXFragment<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6662,7 +6662,7 @@ impl<'a> AstNode<'_, 'a, JSXFragment<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXOpeningFragment> {
+impl<'me, 'a> AstNode<'me, 'a, JSXOpeningFragment> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6678,7 +6678,7 @@ impl<'a> AstNode<'_, 'a, JSXOpeningFragment> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXClosingFragment> {
+impl<'me, 'a> AstNode<'me, 'a, JSXClosingFragment> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6730,7 +6730,7 @@ impl<'me, 'a> AstNode<'me, 'a, JSXElementName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXNamespacedName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXNamespacedName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6766,7 +6766,7 @@ impl<'a> AstNode<'_, 'a, JSXNamespacedName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXMemberExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXMemberExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6832,7 +6832,7 @@ impl<'me, 'a> AstNode<'me, 'a, JSXMemberExpressionObject<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXExpressionContainer<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXExpressionContainer<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6877,7 +6877,7 @@ impl<'me, 'a> AstNode<'me, 'a, JSXExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXEmptyExpression> {
+impl<'me, 'a> AstNode<'me, 'a, JSXEmptyExpression> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6914,7 +6914,7 @@ impl<'me, 'a> AstNode<'me, 'a, JSXAttributeItem<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXAttribute<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXAttribute<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6956,7 +6956,7 @@ impl<'a> AstNode<'_, 'a, JSXAttribute<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXSpreadAttribute<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXSpreadAttribute<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7034,7 +7034,7 @@ impl<'me, 'a> AstNode<'me, 'a, JSXAttributeValue<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXIdentifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7087,7 +7087,7 @@ impl<'me, 'a> AstNode<'me, 'a, JSXChild<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXSpreadChild<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXSpreadChild<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7113,7 +7113,7 @@ impl<'a> AstNode<'_, 'a, JSXSpreadChild<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSXText<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXText<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7139,7 +7139,7 @@ impl<'a> AstNode<'_, 'a, JSXText<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSThisParameter<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSThisParameter<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7170,7 +7170,7 @@ impl<'a> AstNode<'_, 'a, TSThisParameter<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSEnumDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSEnumDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7216,7 +7216,7 @@ impl<'a> AstNode<'_, 'a, TSEnumDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSEnumBody<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSEnumBody<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7242,7 +7242,7 @@ impl<'a> AstNode<'_, 'a, TSEnumBody<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSEnumMember<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSEnumMember<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7315,7 +7315,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSEnumMemberName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeAnnotation<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeAnnotation<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7341,7 +7341,7 @@ impl<'a> AstNode<'_, 'a, TSTypeAnnotation<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSLiteralType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSLiteralType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7602,7 +7602,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSConditionalType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSConditionalType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7658,7 +7658,7 @@ impl<'a> AstNode<'_, 'a, TSConditionalType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSUnionType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSUnionType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7684,7 +7684,7 @@ impl<'a> AstNode<'_, 'a, TSUnionType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSIntersectionType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSIntersectionType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7710,7 +7710,7 @@ impl<'a> AstNode<'_, 'a, TSIntersectionType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSParenthesizedType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSParenthesizedType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7736,7 +7736,7 @@ impl<'a> AstNode<'_, 'a, TSParenthesizedType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeOperator<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeOperator<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7767,7 +7767,7 @@ impl<'a> AstNode<'_, 'a, TSTypeOperator<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSArrayType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSArrayType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7793,7 +7793,7 @@ impl<'a> AstNode<'_, 'a, TSArrayType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSIndexedAccessType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSIndexedAccessType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7829,7 +7829,7 @@ impl<'a> AstNode<'_, 'a, TSIndexedAccessType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTupleType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTupleType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7855,7 +7855,7 @@ impl<'a> AstNode<'_, 'a, TSTupleType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSNamedTupleMember<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSNamedTupleMember<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7896,7 +7896,7 @@ impl<'a> AstNode<'_, 'a, TSNamedTupleMember<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSOptionalType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSOptionalType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7922,7 +7922,7 @@ impl<'a> AstNode<'_, 'a, TSOptionalType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSRestType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSRestType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7970,7 +7970,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSTupleElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSAnyKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSAnyKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7986,7 +7986,7 @@ impl<'a> AstNode<'_, 'a, TSAnyKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSStringKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSStringKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8002,7 +8002,7 @@ impl<'a> AstNode<'_, 'a, TSStringKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSBooleanKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSBooleanKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8018,7 +8018,7 @@ impl<'a> AstNode<'_, 'a, TSBooleanKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSNumberKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSNumberKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8034,7 +8034,7 @@ impl<'a> AstNode<'_, 'a, TSNumberKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSNeverKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSNeverKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8050,7 +8050,7 @@ impl<'a> AstNode<'_, 'a, TSNeverKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSIntrinsicKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSIntrinsicKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8066,7 +8066,7 @@ impl<'a> AstNode<'_, 'a, TSIntrinsicKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSUnknownKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSUnknownKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8082,7 +8082,7 @@ impl<'a> AstNode<'_, 'a, TSUnknownKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSNullKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSNullKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8098,7 +8098,7 @@ impl<'a> AstNode<'_, 'a, TSNullKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSUndefinedKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSUndefinedKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8114,7 +8114,7 @@ impl<'a> AstNode<'_, 'a, TSUndefinedKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSVoidKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSVoidKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8130,7 +8130,7 @@ impl<'a> AstNode<'_, 'a, TSVoidKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSSymbolKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSSymbolKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8146,7 +8146,7 @@ impl<'a> AstNode<'_, 'a, TSSymbolKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSThisType> {
+impl<'me, 'a> AstNode<'me, 'a, TSThisType> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8162,7 +8162,7 @@ impl<'a> AstNode<'_, 'a, TSThisType> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSObjectKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSObjectKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8178,7 +8178,7 @@ impl<'a> AstNode<'_, 'a, TSObjectKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSBigIntKeyword> {
+impl<'me, 'a> AstNode<'me, 'a, TSBigIntKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8194,7 +8194,7 @@ impl<'a> AstNode<'_, 'a, TSBigIntKeyword> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeReference<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeReference<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8262,7 +8262,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSTypeName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSQualifiedName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSQualifiedName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8298,7 +8298,7 @@ impl<'a> AstNode<'_, 'a, TSQualifiedName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeParameterInstantiation<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeParameterInstantiation<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8324,7 +8324,7 @@ impl<'a> AstNode<'_, 'a, TSTypeParameterInstantiation<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeParameter<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeParameter<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8398,7 +8398,7 @@ impl<'a> AstNode<'_, 'a, TSTypeParameter<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeParameterDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeParameterDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8424,7 +8424,7 @@ impl<'a> AstNode<'_, 'a, TSTypeParameterDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeAliasDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeAliasDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8481,7 +8481,7 @@ impl<'a> AstNode<'_, 'a, TSTypeAliasDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSClassImplements<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSClassImplements<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8523,7 +8523,7 @@ impl<'a> AstNode<'_, 'a, TSClassImplements<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSInterfaceDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSInterfaceDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8597,7 +8597,7 @@ impl<'a> AstNode<'_, 'a, TSInterfaceDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSInterfaceBody<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSInterfaceBody<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8623,7 +8623,7 @@ impl<'a> AstNode<'_, 'a, TSInterfaceBody<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSPropertySignature<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSPropertySignature<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8720,7 +8720,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSSignature<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSIndexSignature<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSIndexSignature<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8766,7 +8766,7 @@ impl<'a> AstNode<'_, 'a, TSIndexSignature<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSCallSignatureDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSCallSignatureDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8834,7 +8834,7 @@ impl<'a> AstNode<'_, 'a, TSCallSignatureDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSMethodSignature<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSMethodSignature<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8934,7 +8934,7 @@ impl<'a> AstNode<'_, 'a, TSMethodSignature<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSConstructSignatureDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSConstructSignatureDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8986,7 +8986,7 @@ impl<'a> AstNode<'_, 'a, TSConstructSignatureDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSIndexSignatureName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSIndexSignatureName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9017,7 +9017,7 @@ impl<'a> AstNode<'_, 'a, TSIndexSignatureName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSInterfaceHeritage<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSInterfaceHeritage<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9059,7 +9059,7 @@ impl<'a> AstNode<'_, 'a, TSInterfaceHeritage<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypePredicate<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypePredicate<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9125,7 +9125,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSTypePredicateName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSExternalModuleDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSExternalModuleDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9166,7 +9166,7 @@ impl<'a> AstNode<'_, 'a, TSExternalModuleDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSNamespaceDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSNamespaceDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9235,7 +9235,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSNamespaceDeclarationBody<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSGlobalDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSGlobalDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9271,7 +9271,7 @@ impl<'a> AstNode<'_, 'a, TSGlobalDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSModuleBlock<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSModuleBlock<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9313,7 +9313,7 @@ impl<'a> AstNode<'_, 'a, TSModuleBlock<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeLiteral<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9339,7 +9339,7 @@ impl<'a> AstNode<'_, 'a, TSTypeLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSInferType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSInferType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9365,7 +9365,7 @@ impl<'a> AstNode<'_, 'a, TSInferType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeQuery<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeQuery<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9426,7 +9426,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSTypeQueryExprName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSImportType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSImportType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9526,7 +9526,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSImportTypeQualifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSImportTypeQualifiedName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSImportTypeQualifiedName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9562,7 +9562,7 @@ impl<'a> AstNode<'_, 'a, TSImportTypeQualifiedName<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSFunctionType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSFunctionType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9624,7 +9624,7 @@ impl<'a> AstNode<'_, 'a, TSFunctionType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSConstructorType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSConstructorType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9675,7 +9675,7 @@ impl<'a> AstNode<'_, 'a, TSConstructorType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSMappedType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSMappedType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9754,7 +9754,7 @@ impl<'a> AstNode<'_, 'a, TSMappedType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTemplateLiteralType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTemplateLiteralType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9796,7 +9796,7 @@ impl<'a> AstNode<'_, 'a, TSTemplateLiteralType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSAsExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSAsExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9832,7 +9832,7 @@ impl<'a> AstNode<'_, 'a, TSAsExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSSatisfiesExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSSatisfiesExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9868,7 +9868,7 @@ impl<'a> AstNode<'_, 'a, TSSatisfiesExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSTypeAssertion<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeAssertion<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9904,7 +9904,7 @@ impl<'a> AstNode<'_, 'a, TSTypeAssertion<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSImportEqualsDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSImportEqualsDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9975,7 +9975,7 @@ impl<'me, 'a> AstNode<'me, 'a, TSModuleReference<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSExternalModuleReference<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSExternalModuleReference<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10001,7 +10001,7 @@ impl<'a> AstNode<'_, 'a, TSExternalModuleReference<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSNonNullExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSNonNullExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10027,7 +10027,7 @@ impl<'a> AstNode<'_, 'a, TSNonNullExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, Decorator<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Decorator<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10053,7 +10053,7 @@ impl<'a> AstNode<'_, 'a, Decorator<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSExportAssignment<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSExportAssignment<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10079,7 +10079,7 @@ impl<'a> AstNode<'_, 'a, TSExportAssignment<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSNamespaceExportDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSNamespaceExportDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10105,7 +10105,7 @@ impl<'a> AstNode<'_, 'a, TSNamespaceExportDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, TSInstantiationExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSInstantiationExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10141,7 +10141,7 @@ impl<'a> AstNode<'_, 'a, TSInstantiationExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSDocNullableType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSDocNullableType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10172,7 +10172,7 @@ impl<'a> AstNode<'_, 'a, JSDocNullableType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSDocNonNullableType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSDocNonNullableType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10203,7 +10203,7 @@ impl<'a> AstNode<'_, 'a, JSDocNonNullableType<'a>> {
     }
 }
 
-impl<'a> AstNode<'_, 'a, JSDocUnknownType> {
+impl<'me, 'a> AstNode<'me, 'a, JSDocUnknownType> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()

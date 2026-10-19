@@ -76,18 +76,7 @@ macro_rules! impl_ast_node_vec {
             }
 
             pub fn first(&self) -> Option<AstNode<'me, 'a, $type>> {
-                let following = if $has_following_span_in_the_last_item {
-                    self.following_span_start
-                } else {
-                    0
-                };
-                let get_span: fn(&$type) -> Option<u32> = $get_span;
-                let mut inner_iter = self.inner.iter();
-                inner_iter.next().map(|inner| AstNode {
-                    inner,
-                    parent: self.parent,
-                    following_span_start: inner_iter.find_map(get_span).unwrap_or(following),
-                })
+                self.iter().next()
             }
 
             pub fn last(&self) -> Option<AstNode<'me, 'a, $type>> {

@@ -227,14 +227,15 @@ impl<'a, 'b> FormatStatementBody<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementBody<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if let AstNodeKind::EmptyStatement(empty) = &self.body.as_kind() {
+        let kind = self.body.as_kind();
+        if let AstNodeKind::EmptyStatement(empty) = &kind {
             // The `;` IS the body (content), so the head-body separator applies before it too;
             // without comments no separator is written (`while (x);`).
             if f.context().comments().has_comment_before(empty.span.start) {
                 write_head_body_separator(empty.span.start, f);
             }
             write!(f, empty);
-        } else if let AstNodeKind::BlockStatement(block) = &self.body.as_kind() {
+        } else if let AstNodeKind::BlockStatement(block) = &kind {
             write_head_body_separator(block.span().start, f);
             write!(f, [block]);
         } else if self.force_space {

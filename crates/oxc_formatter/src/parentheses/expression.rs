@@ -12,12 +12,6 @@ use crate::{
 
 use super::NeedsParentheses;
 
-impl NeedsParentheses<'_> for AstNode<'_, '_, Expression<'_>> {
-    fn needs_parentheses(&self, f: &JsFormatter<'_, '_>) -> bool {
-        self.as_kind().as_ast_nodes().needs_parentheses(f)
-    }
-}
-
 /// Covers expression nodes, including the ones reachable as an ancestor (e.g. a member expression as an assignment target).
 impl NeedsParentheses<'_> for AstNodes<'_, '_> {
     fn needs_parentheses(&self, f: &JsFormatter<'_, '_>) -> bool {
