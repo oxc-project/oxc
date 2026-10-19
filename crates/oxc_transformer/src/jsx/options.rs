@@ -61,6 +61,12 @@ pub struct JsxOptions {
     /// Defaults to `false`.
     pub development: bool,
 
+    /// Add source location and `this` metadata to development JSX output.
+    ///
+    /// Only used when `development` is `true`. Defaults to `true`.
+    #[serde(default = "default_as_true", alias = "sourceSelf")]
+    pub development_source_self: bool,
+
     /// Toggles whether or not to throw an error if a XML namespaced tag name is used.
     ///
     /// Though the JSX spec allows this, it is disabled by default since React's JSX does not currently have support for it.
@@ -126,8 +132,8 @@ impl JsxOptions {
     pub fn conform(&mut self) {
         if self.development {
             self.jsx_plugin = true;
-            self.jsx_self_plugin = true;
-            self.jsx_source_plugin = true;
+            self.jsx_self_plugin = self.development_source_self;
+            self.jsx_source_plugin = self.development_source_self;
         }
     }
 
@@ -140,6 +146,7 @@ impl JsxOptions {
             jsx_source_plugin: false,
             runtime: JsxRuntime::default(),
             development: false,
+            development_source_self: true,
             throw_if_namespace: default_as_true(),
             pure: default_as_true(),
             import_source: None,
@@ -160,6 +167,7 @@ impl JsxOptions {
             jsx_source_plugin: false,
             runtime: JsxRuntime::default(),
             development: false,
+            development_source_self: true,
             throw_if_namespace: false,
             pure: false,
             import_source: None,

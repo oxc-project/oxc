@@ -260,6 +260,14 @@ export interface JsxOptions {
    */
   development?: boolean
   /**
+   * Add source location and `this` metadata to development JSX output.
+   *
+   * Only used when `development` is `true`.
+   *
+   * @default true
+   */
+  developmentSourceSelf?: boolean
+  /**
    * Toggles whether or not to throw an error if an XML namespaced tag name
    * is used.
    *

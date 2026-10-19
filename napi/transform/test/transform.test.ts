@@ -173,6 +173,23 @@ console.log(bar)
 describe("jsx", () => {
   const code = `const foo: Foo = <div/>`;
 
+  it.each([false, true, undefined])("honors developmentSourceSelf: %s", (developmentSourceSelf) => {
+    const ret = transformSync("test.tsx", code, {
+      sourceType: "module",
+      jsx: { development: true, developmentSourceSelf },
+    });
+    expect(ret.errors).toEqual([]);
+    expect(ret.code).toContain('from "react/jsx-dev-runtime"');
+    expect(ret.code.includes("_jsxFileName")).toBe(developmentSourceSelf !== false);
+    expect(ret.code.includes("this")).toBe(developmentSourceSelf !== false);
+    if (developmentSourceSelf === false) {
+      expect(ret.code).toBe(
+        'import { jsxDEV as _jsxDEV } from "react/jsx-dev-runtime";\n'
+          + 'const foo = /* @__PURE__ */ _jsxDEV("div", {}, void 0, false);\n',
+      );
+    }
+  });
+
   it("enables jsx transform by default", () => {
     const ret = transformSync("test.tsx", code, { sourceType: "module" });
     expect(ret.code).toMatchInlineSnapshot(`

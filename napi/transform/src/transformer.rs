@@ -583,6 +583,13 @@ pub struct JsxOptions {
     /// @default false
     pub development: Option<bool>,
 
+    /// Add source location and `this` metadata to development JSX output.
+    ///
+    /// Only used when `development` is `true`.
+    ///
+    /// @default true
+    pub development_source_self: Option<bool>,
+
     /// Toggles whether or not to throw an error if an XML namespaced tag name
     /// is used.
     ///
@@ -636,6 +643,9 @@ impl From<JsxOptions> for oxc::transformer::JsxOptions {
                 /* "automatic" */ _ => JsxRuntime::Automatic,
             },
             development: options.development.unwrap_or(ops.development),
+            development_source_self: options
+                .development_source_self
+                .unwrap_or(ops.development_source_self),
             throw_if_namespace: options.throw_if_namespace.unwrap_or(ops.throw_if_namespace),
             pure: options.pure.unwrap_or(ops.pure),
             import_source: options.import_source,

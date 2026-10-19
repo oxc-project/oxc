@@ -1,6 +1,6 @@
 commit: 4f4ef5d4
 
-Passed: 741/1166
+Passed: 748/1166
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1450,15 +1450,9 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-preset-react (4/10)
-* preset-options/development/input.js
-react: unknown field `developmentSourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
+# babel-preset-react (6/10)
 * preset-options/development-no-source-self/input.js
 x Output mismatch
-
-* preset-options/development-runtime-automatic/input.js
-react: unknown field `developmentSourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
 * preset-options/pure/input.js
 x Output mismatch
@@ -1541,7 +1535,7 @@ x Expected transform error, but transformation succeeded: importSource cannot be
 x Expected transform error, but transformation succeeded: importSource cannot be set when runtime is classic.
 
 * react-automatic/does-not-add-source-self-automatic/input.mjs
-transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+transform-react-jsx: unknown field `autoImport`, expected one of `runtime`, `development`, `developmentSourceSelf`, `sourceSelf`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
 
 * react-automatic/should-disallow-spread-children/input.js
 x Expected transform error, but transformation succeeded: Spread children are not supported in React.
@@ -1608,32 +1602,17 @@ x Expected transform error, but transformation succeeded: transform-react-jsx: S
 
 
 
-# babel-plugin-transform-react-jsx-development (0/9)
+# babel-plugin-transform-react-jsx-development (5/9)
 * cross-platform/auto-import-dev/input.js
-transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
-* cross-platform/classic-runtime/input.js
-transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+x Output mismatch
 
 * cross-platform/fragments/input.js
-transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
-* cross-platform/handle-fragments-with-key/input.js
-transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
-* cross-platform/handle-nonstatic-children/input.js
-transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
-* cross-platform/handle-static-children/input.js
-transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+x Output mismatch
 
 * cross-platform/no-source-self/input.js
 x Output mismatch
 
-* cross-platform/within-derived-classes-constructor/input.js
-transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
-
 * cross-platform/within-ts-module-block/input.ts
-transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+x Output mismatch
 
 
