@@ -1036,7 +1036,6 @@ fn test_fold_add() {
 
 #[test]
 fn test_fold_add_sequence_ending_in_object() {
-    // `(foo, [])` is an object, so `+` concatenates instead of adding numbers.
     test_smallest("const u = true + (foo, []); log(u)", "!0 + (foo, []), log('true')");
     test_smallest("const u = true + (foo, [void 0]); log(u)", "!0 + (foo, [void 0]), log('true')");
     test_smallest("const u = true + (foo, [null]); log(u)", "!0 + (foo, [null]), log('true')");
