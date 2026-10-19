@@ -1555,8 +1555,22 @@ fn test_inline_values_in_template_literal() {
 }
 
 #[test]
+fn test_unescape_dynamic_template_literals() {
+    fold(r"`${window.foo}\u{1F680}`", "`${window.foo}🚀`");
+    fold(r"`\u0061${x}\x62${y}\u{1F680}`", "`a${x}b${y}🚀`");
+    fold(r"`${x}\uD83D\uDE80`", "`${x}🚀`");
+    fold(r"`${x}\u0024\u007By\u007D\u0060\u005C`", r"`${x}\${y}\`\\`");
+    fold(r"`${x}\u0000`", "`${x}\0`");
+    fold(r"`${x}\0${y}`", "`${x}\0${y}`");
+    fold_same(r"`${x}\uD800`");
+    fold_same(r"`${x}\uDC00`");
+    fold_same(r"String.raw`${x}\u{1F680}`");
+    fold_same(r"tag`\u0061${x}\u{1F680}`");
+}
+
+#[test]
 fn template_concatenation_preserves_surrogates() {
-    fold(r"`${a}\uD800` + `\uDC00${b}`", r"`${a}\uD800\uDC00${b}`");
+    fold(r"`${a}\uD800` + `\uDC00${b}`", "`${a}\u{10000}${b}`");
     fold(r"`${a}\uD800` + 'x'", r"`${a}\uD800x`");
     fold(r"'x' + `\uDC00${a}`", r"`x\uDC00${a}`");
     fold(r"`\uD800${'x'}\uDC00${a}`", r"`\uD800x\uDC00${a}`");

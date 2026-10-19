@@ -12,7 +12,7 @@ use oxc_ecmascript::{
 use oxc_semantic::ReferenceFlags;
 use oxc_span::GetSpan;
 use oxc_span::SPAN;
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
@@ -1391,6 +1391,22 @@ impl<'a> PeepholeOptimizations {
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::TemplateLiteral(t) = expr else { return };
         let Some(val) = t.to_js_string(ctx).filter(|_| !t.may_have_side_effects(ctx)) else {
+            for quasi in &mut t.quasis {
+                if !quasi.value.raw.contains('\\') {
+                    continue;
+                }
+                // Tagged templates do not reach this pass. For untagged templates, only the
+                // cooked value is observable, but interpolation, backticks, and backslashes
+                // still need escaping. Keep raw text containing lone surrogates unchanged.
+                let Some(cooked) = quasi.value.cooked.and_then(JSStr::as_str) else {
+                    continue;
+                };
+                let raw = Self::escape_string_for_template_literal(cooked);
+                if raw.len() < quasi.value.raw.len() {
+                    quasi.value.raw = Str::from_cow_in(&raw, ctx);
+                    ctx.notice_change();
+                }
+            }
             return;
         };
         let new_value =
