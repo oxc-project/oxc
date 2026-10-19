@@ -245,4 +245,17 @@ impl<'a> PeepholeOptimizations {
         expr.operator = inverse;
         ctx.notice_change();
     }
+
+    pub fn is_unary_not(test: &Expression<'a>) -> bool {
+        match test {
+            // `(_, !a)`, `(_, a)`
+            Expression::SequenceExpression(seq) => {
+                Self::last_expression_in_sequence(seq).is_some_and(Self::is_unary_not)
+            }
+            // `!a`
+            Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => true,
+            // `a`
+            _ => false,
+        }
+    }
 }
