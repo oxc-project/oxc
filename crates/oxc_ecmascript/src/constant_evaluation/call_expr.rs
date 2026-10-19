@@ -365,9 +365,7 @@ fn try_fold_string_from_char_code<'a>(
     // supplementary character, and any other surrogate stays a lone unit.
     // The capacity is in bytes, and a code unit encodes to at most three.
     let mut result = JSStrBuilder::with_capacity_in(args.len() * 3, ctx);
-    for unit in code_units().flatten() {
-        result.push_code_unit(unit);
-    }
+    result.extend(code_units().flatten());
     Some(ConstantValue::String(result.into_js_str()))
 }
 
