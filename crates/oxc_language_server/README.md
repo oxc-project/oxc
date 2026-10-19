@@ -56,6 +56,16 @@ These options can be passed with [initialize](#initialize), [workspace/didChange
 
 ### `RulesCustomization` struct:
 
+Rule keys support `*` to match any sequence of characters. For example,
+`"perfectionist/*": { "severity": "hint" }` customizes every Perfectionist rule.
+`eslint/*` matches only core ESLint rules, while `*` matches all rules.
+Plugin aliases such as `@typescript-eslint/*` are supported.
+
+Severity and autofix are resolved independently. Exact rule names take precedence,
+followed by patterns with the most literal characters. For equally specific patterns,
+the lexicographically last key takes precedence. A property omitted from a more specific
+entry can still inherit its value from a matching pattern.
+
 ```ts
 interface RulesCustomization {
   // overriding the rule severity, when "off", the rule will not output diagnostics.
