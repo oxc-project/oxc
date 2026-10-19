@@ -465,6 +465,12 @@ fn is_special_name(name: &str) -> bool {
     matches!(name, "arguments")
 }
 
+/// Parameters of Node's CommonJS module wrapper. A top-level binding with one of these
+/// names in a CommonJS file is the same binding as the parameter.
+fn is_commonjs_wrapper_name(name: &str) -> bool {
+    matches!(name, "exports" | "require" | "module" | "__filename" | "__dirname")
+}
+
 #[derive(Debug)]
 struct SlotFrequency<'a> {
     pub slot: Slot,
@@ -498,6 +504,9 @@ struct Constraints<'a> {
     /// Names preserved by the `keep_names` option (function / class names).
     keep_name_names: ArenaIdentHashSet<'a>,
     keep_name_symbols: Option<BitSet<'a>>,
+    /// Whether the program is CommonJS. Its top-level `var exports` / `var require` etc.
+    /// redeclare the module wrapper's parameters, so they must keep their names.
+    is_commonjs: bool,
 }
 
 /// Phase 2 output — each symbol's slot, plus the names a direct `eval` can see.
@@ -548,6 +557,7 @@ impl<'a> Constraints<'a> {
             exported_symbols,
             keep_name_names,
             keep_name_symbols,
+            is_commonjs: program.source_type.is_commonjs(),
         }
     }
 
@@ -576,6 +586,9 @@ impl<'a> Constraints<'a> {
                 || self.exported_symbols.as_ref().is_some_and(|e| e.has_bit(symbol_id.index())))
             || scoping.scope_flags(scope_id).contains_direct_eval()
             || self.is_kept_name(scoping.symbol_ident(symbol_id))
+            || (self.is_commonjs
+                && scope_id == scoping.root_scope_id()
+                && is_commonjs_wrapper_name(scoping.symbol_ident(symbol_id).as_str()))
             || self.keep_name_symbols.as_ref().is_some_and(|keep| keep.has_bit(symbol_id.index())))
     }
 }
