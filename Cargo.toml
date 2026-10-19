@@ -246,7 +246,7 @@ oxc-graphql-parser = "0.0.9" # GraphQL parser (direct AST; apollo-parser 0.8.6 f
 oxc-markdown-parser = "0.0.3" # CommonMark + GFM parser (span-faithful, style-preserving typed AST)
 oxc-toml = "0.15.1" # TOML parser and formatter
 oxc-yaml-parser = "0.0.7" # YAML 1.2 parser (comment-preserving typed AST, node naming from `yaml-unist-parser`)
-papaya = { version = "0.2.4", default-features = false } # Concurrent hash map
+papaya = { version = "0.2.5", default-features = false } # Concurrent hash map
 pastey = "0.2.3" # Identifier concatenation in declarative macros
 percent-encoding = "2.3.2" # URL encoding
 petgraph = { version = "0.8.3", default-features = false } # Graph data structures
