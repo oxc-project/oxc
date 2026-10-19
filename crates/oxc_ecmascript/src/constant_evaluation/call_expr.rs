@@ -219,7 +219,7 @@ fn try_fold_string_substring_or_slice<'a>(
     // The lone half is representable, so the result is exact.
     let capacity = (end - start).saturating_mul(3).min(value.len());
     let mut result = JSStrBuilder::with_capacity_in(capacity, ctx);
-    result.extend(value.encode_utf16().skip(start).take(end - start));
+    result.push_code_units(value.encode_utf16().skip(start).take(end - start));
     Some(ConstantValue::String(result.into_js_str()))
 }
 
@@ -363,7 +363,7 @@ fn try_fold_string_from_char_code<'a>(
     // supplementary character, and any other surrogate stays a lone unit.
     // The capacity is in bytes, and a code unit encodes to at most three.
     let mut result = JSStrBuilder::with_capacity_in(args.len() * 3, ctx);
-    result.extend(code_units().flatten());
+    result.push_code_units(code_units().flatten());
     Some(ConstantValue::String(result.into_js_str()))
 }
 

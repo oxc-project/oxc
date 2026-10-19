@@ -126,10 +126,19 @@ impl<'a> JSStrBuilder<'a> {
     ///
     /// This accepts code-unit buffers from UTF-16 APIs without replacing lone surrogates.
     /// A pair may span consecutive calls, including empty buffers.
-    /// [`Extend<u16>`] does the same for an iterator of code units.
     #[inline]
     pub fn push_utf16(&mut self, units: &[u16]) {
-        self.extend(units.iter().copied());
+        self.push_code_units(units.iter().copied());
+    }
+
+    /// Append potentially ill-formed UTF-16 code units from an iterator, like [`push_utf16`].
+    ///
+    /// [`push_utf16`]: Self::push_utf16
+    #[inline]
+    pub fn push_code_units(&mut self, units: impl IntoIterator<Item = u16>) {
+        for unit in units {
+            self.push_code_unit(unit);
+        }
     }
 
     /// Append a JavaScript string, repairing a surrogate pair at the boundary.
@@ -238,17 +247,5 @@ impl<'a> JSStrBuilder<'a> {
             + (u32::from(trail) - TRAIL_SURROGATE_MIN);
         let c = char::from_u32(value).unwrap();
         self.bytes.extend_from_slice_copy(c.encode_utf8(&mut [0; char::MAX_LEN_UTF8]).as_bytes());
-    }
-}
-
-impl Extend<u16> for JSStrBuilder<'_> {
-    /// Append potentially ill-formed UTF-16 code units, like [`push_utf16`].
-    ///
-    /// [`push_utf16`]: Self::push_utf16
-    #[inline]
-    fn extend<I: IntoIterator<Item = u16>>(&mut self, units: I) {
-        for unit in units {
-            self.push_code_unit(unit);
-        }
     }
 }
