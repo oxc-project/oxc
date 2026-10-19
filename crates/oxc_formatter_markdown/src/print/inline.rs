@@ -148,7 +148,7 @@ fn collect_opaque_spans<'a>(children: &'a [Inline<'a>], out: &mut Vec<(Span, boo
             Inline::Emphasis(e) => collect_opaque_spans(&e.children, out),
             Inline::Strong(s) => collect_opaque_spans(&s.children, out),
             Inline::Strikethrough(s) => collect_opaque_spans(&s.children, out),
-            // Link text is inline content; a reference label or a title is not
+            // Link text is inline content; destinations, reference labels, and titles are not.
             Inline::Link(l) => {
                 collect_opaque_spans(&l.children, out);
                 collect_link_kind_spans(&l.kind, out);
@@ -163,12 +163,17 @@ fn collect_opaque_spans<'a>(children: &'a [Inline<'a>], out: &mut Vec<(Span, boo
 }
 
 fn collect_link_kind_spans(kind: &LinkKind<'_>, out: &mut Vec<(Span, bool)>) {
-    let pieces = match kind {
-        LinkKind::Reference { label, .. } => label,
-        LinkKind::Inline { title: Some(title), .. } => title,
-        LinkKind::Inline { title: None, .. } => return,
-    };
-    out.extend(pieces.iter().map(|piece| (piece.span, false)));
+    match kind {
+        LinkKind::Reference { label, .. } => {
+            out.extend(label.iter().map(|piece| (piece.span, false)));
+        }
+        LinkKind::Inline { destination, title } => {
+            out.push((destination.span, false));
+            if let Some(title) = title {
+                out.extend(title.iter().map(|piece| (piece.span, false)));
+            }
+        }
+    }
 }
 
 /// The emphasis marker as printed: `_` unless a word touches it (`1*2*3` is emphasis, `1_2_3` is not),

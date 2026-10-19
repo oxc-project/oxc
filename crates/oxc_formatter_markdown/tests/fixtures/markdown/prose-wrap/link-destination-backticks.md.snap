@@ -1,0 +1,178 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+See [a](<x.md#`b` c>) then `d`.
+
+See [a](x.md#`b`) then `d` and `e`.
+
+See ![a](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#`b` c> "`title`") then `d`.
+
+See [a](<x.md#`b` c> "`title`") then *`d`* and **`e`**.
+
+See [`label`](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#b c>) then `d`.
+
+Plain `b` text then `d`.
+
+See [a](x.md) then `d`, after a stray ` tick.
+
+| Link | Code |
+| ---- | ---- |
+| [a](<x.md#`b` c>) then `d` | `e` |
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+See [a](<x.md#`b` c>) then `d`.
+
+See [a](x.md#`b`) then `d` and `e`.
+
+See ![a](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#`b` c> "`title`") then `d`.
+
+See [a](<x.md#`b` c> "`title`") then _`d`_ and **`e`**.
+
+See [`label`](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#b c>) then `d`.
+
+Plain `b` text then `d`.
+
+See [a](x.md) then `d`, after a stray ` tick.
+
+| Link                       | Code |
+| -------------------------- | ---- |
+| [a](<x.md#`b` c>) then `d` | `e`  |
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+See [a](<x.md#`b` c>) then `d`.
+
+See [a](x.md#`b`) then `d` and `e`.
+
+See ![a](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#`b` c> "`title`") then `d`.
+
+See [a](<x.md#`b` c> "`title`") then _`d`_ and **`e`**.
+
+See [`label`](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#b c>) then `d`.
+
+Plain `b` text then `d`.
+
+See [a](x.md) then `d`, after a stray ` tick.
+
+| Link                       | Code |
+| -------------------------- | ---- |
+| [a](<x.md#`b` c>) then `d` | `e`  |
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+See [a](<x.md#`b` c>) then `d`.
+
+See [a](x.md#`b`) then `d` and `e`.
+
+See ![a](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#`b` c> "`title`") then `d`.
+
+See [a](<x.md#`b` c> "`title`") then _`d`_ and **`e`**.
+
+See [`label`](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#b c>) then `d`.
+
+Plain `b` text then `d`.
+
+See [a](x.md) then `d`, after a stray ` tick.
+
+| Link                       | Code |
+| -------------------------- | ---- |
+| [a](<x.md#`b` c>) then `d` | `e`  |
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+See [a](<x.md#`b` c>) then `d`.
+
+See [a](x.md#`b`) then `d` and `e`.
+
+See ![a](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#`b` c> "`title`") then `d`.
+
+See [a](<x.md#`b` c> "`title`") then _`d`_ and **`e`**.
+
+See [`label`](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#b c>) then `d`.
+
+Plain `b` text then `d`.
+
+See [a](x.md) then `d`, after a stray ` tick.
+
+| Link                       | Code |
+| -------------------------- | ---- |
+| [a](<x.md#`b` c>) then `d` | `e`  |
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+See [a](<x.md#`b` c>) then `d`.
+
+See [a](x.md#`b`) then `d` and `e`.
+
+See ![a](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#`b` c> "`title`") then `d`.
+
+See [a](<x.md#`b` c> "`title`") then _`d`_ and **`e`**.
+
+See [`label`](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#b c>) then `d`.
+
+Plain `b` text then `d`.
+
+See [a](x.md) then `d`, after a stray ` tick.
+
+| Link                       | Code |
+| -------------------------- | ---- |
+| [a](<x.md#`b` c>) then `d` | `e`  |
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+See [a](<x.md#`b` c>) then `d`.
+
+See [a](x.md#`b`) then `d` and `e`.
+
+See ![a](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#`b` c> "`title`") then `d`.
+
+See [a](<x.md#`b` c> "`title`") then _`d`_ and **`e`**.
+
+See [`label`](<x.md#`b` c>) then `d`.
+
+See [a](<x.md#b c>) then `d`.
+
+Plain `b` text then `d`.
+
+See [a](x.md) then `d`, after a stray ` tick.
+
+| Link                       | Code |
+| -------------------------- | ---- |
+| [a](<x.md#`b` c>) then `d` | `e`  |
+
+===================== End =====================
