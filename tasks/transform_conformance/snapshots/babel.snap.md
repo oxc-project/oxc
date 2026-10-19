@@ -1,6 +1,6 @@
 commit: 4f4ef5d4
 
-Passed: 741/1166
+Passed: 742/1319
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -1635,5 +1635,521 @@ transform-react-jsx-development: unknown field `sourceSelf`, expected one of `ru
 
 * cross-platform/within-ts-module-block/input.ts
 transform-react-jsx-development: unknown field `sourceSelf`, expected one of `runtime`, `development`, `throwIfNamespace`, `pure`, `importSource`, `pragma`, `pragmaFrag`, `useBuiltIns`, `useSpread`, `refresh`
+
+
+# babel-plugin-proposal-decorators (1/153)
+* 2023-11-accessors/context-name/input.js
+x Output mismatch
+
+* 2023-11-accessors/private/input.js
+x Output mismatch
+
+* 2023-11-accessors/public/input.js
+x Output mismatch
+
+* 2023-11-accessors/static-private/input.js
+x Output mismatch
+
+* 2023-11-accessors/static-public/input.js
+x Output mismatch
+
+* 2023-11-accessors/undecorated-private/input.js
+x Output mismatch
+
+* 2023-11-accessors/undecorated-public/input.js
+x Output mismatch
+
+* 2023-11-accessors/undecorated-static-private/input.mjs
+x Output mismatch
+
+* 2023-11-accessors/undecorated-static-public/input.mjs
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/context-name/input.js
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/private/input.js
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/public/input.js
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/static-private/input.js
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/static-public/input.js
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/undecorated-private/input.js
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/undecorated-public/input.js
+x Output mismatch
+
+* 2023-11-accessors--to-es2015/undecorated-static-public/input.js
+x Output mismatch
+
+* 2023-11-assumption-constantSuper/super-in-nested-constructor-expression/input.js
+x Output mismatch
+
+* 2023-11-assumption-constantSuper/super-in-private-accessor/input.js
+x Output mismatch
+
+* 2023-11-assumption-constantSuper/super-in-private-method/input.js
+x Output mismatch
+
+* 2023-11-classes/decorator-access-modified-fields/input.js
+x Output mismatch
+
+* 2023-11-classes/decorator-access-modified-methods/input.js
+x Output mismatch
+
+* 2023-11-classes/expressions/input.js
+x Output mismatch
+
+* 2023-11-classes/expressions-static-blocks/input.js
+x Output mismatch
+
+* 2023-11-classes/inheritance/input.js
+x Output mismatch
+
+* 2023-11-classes/initializers/input.js
+x Output mismatch
+
+* 2023-11-classes/replacement/input.js
+x Output mismatch
+
+* 2023-11-classes/replacement-static-decorator-initializer-this/input.js
+x Output mismatch
+
+* 2023-11-classes/replacement-static-installed-on-correct-class/input.js
+x Output mismatch
+
+* 2023-11-classes/replacement-static-method-private-instance-element-super/input.js
+x Output mismatch
+
+* 2023-11-classes/replacement-static-method-private-instance-element-super-assumption-ignoreFunctionLength/input.js
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* 2023-11-classes/replacement-static-private-instance-element-access/input.js
+x Output mismatch
+
+* 2023-11-classes/replacement-static-private-instance-element-destructuring/input.js
+
+  x Private identifier '#x' is not allowed in property names
+    ,-[tasks/coverage/babel/packages/babel-plugin-proposal-decorators/test/fixtures/2023-11-classes/replacement-static-private-instance-element-destructuring/input.js:12:15]
+ 11 |     staticThis = this;
+ 12 |     getX = ({ #x: x }) => x;
+    :               ^^
+ 13 |     getA = ({ #a: a }) => a;
+    `----
+
+
+  x Private identifier '#a' is not allowed in property names
+    ,-[tasks/coverage/babel/packages/babel-plugin-proposal-decorators/test/fixtures/2023-11-classes/replacement-static-private-instance-element-destructuring/input.js:13:15]
+ 12 |     getX = ({ #x: x }) => x;
+ 13 |     getA = ({ #a: a }) => a;
+    :               ^^
+ 14 |     callM = ({ #m: m }) => m();
+    `----
+
+
+  x Private identifier '#m' is not allowed in property names
+    ,-[tasks/coverage/babel/packages/babel-plugin-proposal-decorators/test/fixtures/2023-11-classes/replacement-static-private-instance-element-destructuring/input.js:14:16]
+ 13 |     getA = ({ #a: a }) => a;
+ 14 |     callM = ({ #m: m }) => m();
+    :                ^^
+ 15 |   }
+    `----
+
+
+* 2023-11-classes/replacement-static-property-super/input.js
+x Output mismatch
+
+* 2023-11-classes/replacement-static-this/input.js
+x Output mismatch
+
+* 2023-11-classes/replacement-with-expr/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/decorator-access-modified-fields/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/decorator-access-modified-methods/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/expressions/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/expressions-static-blocks/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/inheritance/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/initializers/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/replacement/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/replacement-static-decorator-initializer-this/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/replacement-static-installed-on-correct-class/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/replacement-static-method-private-instance-element-super/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/replacement-static-method-private-instance-element-super-assumption-ignoreFunctionLength/input.js
+
+  x Compiler assumption `ignoreFunctionLength` is not implemented for object-
+  | rest-spread.
+
+
+* 2023-11-classes--to-es2015/replacement-static-private-instance-element-access/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/replacement-static-private-instance-element-destructuring/input.js
+
+  x Private identifier '#x' is not allowed in property names
+    ,-[tasks/coverage/babel/packages/babel-plugin-proposal-decorators/test/fixtures/2023-11-classes--to-es2015/replacement-static-private-instance-element-destructuring/input.js:12:15]
+ 11 |     staticThis = this;
+ 12 |     getX = ({ #x: x }) => x;
+    :               ^^
+ 13 |     getA = ({ #a: a }) => a;
+    `----
+
+
+  x Private identifier '#a' is not allowed in property names
+    ,-[tasks/coverage/babel/packages/babel-plugin-proposal-decorators/test/fixtures/2023-11-classes--to-es2015/replacement-static-private-instance-element-destructuring/input.js:13:15]
+ 12 |     getX = ({ #x: x }) => x;
+ 13 |     getA = ({ #a: a }) => a;
+    :               ^^
+ 14 |     callM = ({ #m: m }) => m();
+    `----
+
+
+  x Private identifier '#m' is not allowed in property names
+    ,-[tasks/coverage/babel/packages/babel-plugin-proposal-decorators/test/fixtures/2023-11-classes--to-es2015/replacement-static-private-instance-element-destructuring/input.js:14:16]
+ 13 |     getA = ({ #a: a }) => a;
+ 14 |     callM = ({ #m: m }) => m();
+    :                ^^
+ 15 |   }
+    `----
+
+
+* 2023-11-classes--to-es2015/replacement-static-property-super/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/replacement-static-this/input.js
+x Output mismatch
+
+* 2023-11-classes--to-es2015/replacement-with-expr/input.js
+x Output mismatch
+
+* 2023-11-duplicated-keys/computed-keys-same-ast/input.js
+x Output mismatch
+
+* 2023-11-duplicated-keys/computed-keys-same-value/input.js
+x Output mismatch
+
+* 2023-11-duplicated-keys/method-and-field/input.js
+x Output mismatch
+
+* 2023-11-duplicated-keys/methods-with-same-key/input.js
+x Output mismatch
+
+* 2023-11-duplicated-keys--to-es2015/computed-keys-same-ast/input.js
+x Output mismatch
+
+* 2023-11-duplicated-keys--to-es2015/computed-keys-same-value/input.js
+x Output mismatch
+
+* 2023-11-duplicated-keys--to-es2015/method-and-field/input.js
+x Output mismatch
+
+* 2023-11-duplicated-keys--to-es2015/methods-with-same-key/input.js
+x Output mismatch
+
+* 2023-11-exported/default-anonymous/input.mjs
+x Output mismatch
+
+* 2023-11-exported/default-named/input.mjs
+x Output mismatch
+
+* 2023-11-exported/member-decorator/input.mjs
+x Output mismatch
+
+* 2023-11-exported/named/input.mjs
+x Output mismatch
+
+* 2023-11-fields/context-name/input.js
+x Output mismatch
+
+* 2023-11-fields/private/input.js
+x Output mismatch
+
+* 2023-11-fields/public/input.js
+x Output mismatch
+
+* 2023-11-fields/static-private/input.js
+x Output mismatch
+
+* 2023-11-fields/static-public/input.js
+x Output mismatch
+
+* 2023-11-fields--to-es2015/context-name/input.js
+x Output mismatch
+
+* 2023-11-fields--to-es2015/private/input.js
+x Output mismatch
+
+* 2023-11-fields--to-es2015/public/input.js
+x Output mismatch
+
+* 2023-11-fields--to-es2015/static-private/input.js
+x Output mismatch
+
+* 2023-11-fields--to-es2015/static-public/input.js
+x Output mismatch
+
+* 2023-11-getters/context-name/input.js
+x Output mismatch
+
+* 2023-11-getters/private/input.js
+x Output mismatch
+
+* 2023-11-getters/public/input.js
+x Output mismatch
+
+* 2023-11-getters/static-private/input.js
+x Output mismatch
+
+* 2023-11-getters/static-public/input.js
+x Output mismatch
+
+* 2023-11-getters--to-es2015/context-name/input.js
+x Output mismatch
+
+* 2023-11-getters--to-es2015/private/input.js
+x Output mismatch
+
+* 2023-11-getters--to-es2015/public/input.js
+x Output mismatch
+
+* 2023-11-getters--to-es2015/static-private/input.js
+x Output mismatch
+
+* 2023-11-getters--to-es2015/static-public/input.js
+x Output mismatch
+
+* 2023-11-getters-and-setters/private/input.js
+x Output mismatch
+
+* 2023-11-getters-and-setters/public/input.js
+x Output mismatch
+
+* 2023-11-getters-and-setters/static-private/input.js
+x Output mismatch
+
+* 2023-11-getters-and-setters/static-public/input.js
+x Output mismatch
+
+* 2023-11-getters-and-setters--to-es2015/private/input.js
+x Output mismatch
+
+* 2023-11-getters-and-setters--to-es2015/public/input.js
+x Output mismatch
+
+* 2023-11-getters-and-setters--to-es2015/static-private/input.js
+x Output mismatch
+
+* 2023-11-getters-and-setters--to-es2015/static-public/input.js
+x Output mismatch
+
+* 2023-11-methods/context-name/input.js
+x Output mismatch
+
+* 2023-11-methods/private/input.js
+x Output mismatch
+
+* 2023-11-methods/private-async-and-generator/input.js
+x Output mismatch
+
+* 2023-11-methods/public/input.js
+x Output mismatch
+
+* 2023-11-methods/static-private/input.js
+x Output mismatch
+
+* 2023-11-methods/static-public/input.js
+x Output mismatch
+
+* 2023-11-methods--to-es2015/context-name/input.js
+x Output mismatch
+
+* 2023-11-methods--to-es2015/private/input.js
+x Output mismatch
+
+* 2023-11-methods--to-es2015/private-async-and-generator/input.js
+x Output mismatch
+
+* 2023-11-methods--to-es2015/public/input.js
+x Output mismatch
+
+* 2023-11-methods--to-es2015/static-private/input.js
+x Output mismatch
+
+* 2023-11-methods--to-es2015/static-public/input.js
+x Output mismatch
+
+* 2023-11-misc/all-decorators/input.js
+x Output mismatch
+
+* 2023-11-misc/initField-existing-derived-constructor/input.js
+x Output mismatch
+
+* 2023-11-misc/initProto-existing-derived-constructor/input.js
+x Output mismatch
+
+* 2023-11-misc/initProto-existing-derived-constructor-multiple-super/input.js
+x Output mismatch
+
+* 2023-11-misc/outer-class-binding-mutated/input.js
+x Output mismatch
+
+* 2023-11-misc/private-keys-in-enclosing-class/input.js
+x Output mismatch
+
+* 2023-11-misc/private-name-in-class-decorator/input.js
+x Output mismatch
+
+* 2023-11-misc/setting-private-method/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-in-body/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-array-pattern/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-for-of/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-object-pattern/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-rest/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-private-method-via-update/input.js
+x Expected transform error, but transformation succeeded: Decorated private methods are read-only, but "#x" is updated via this expression.
+
+* 2023-11-misc/setting-shadowed-private-method-valid/input.js
+x Output mismatch
+
+* 2023-11-misc/super-in-decorator/input.js
+x Output mismatch
+
+* 2023-11-misc/super-in-nested-constructor-expression/input.js
+x Output mismatch
+
+* 2023-11-misc/super-in-private-accessor/input.js
+x Output mismatch
+
+* 2023-11-misc/super-in-private-method/input.js
+x Output mismatch
+
+* 2023-11-misc/symbol-key/input.js
+x Output mismatch
+
+* 2023-11-misc/this/input.js
+x Output mismatch
+
+* 2023-11-misc/typescript-abstract-declare-fields/input.ts
+x Output mismatch
+
+* 2023-11-misc/valid-expression-formats/input.js
+x Output mismatch
+
+* 2023-11-misc--to-es2015/initField-existing-derived-constructor/input.js
+x Output mismatch
+
+* 2023-11-misc--to-es2015/initProto-existing-derived-constructor/input.js
+x Output mismatch
+
+* 2023-11-misc--to-es2015/outer-class-binding-mutated/input.js
+x Output mismatch
+
+* 2023-11-misc--to-es2015/private-name-in-class-decorator/input.js
+x Output mismatch
+
+* 2023-11-misc--to-es2015/super-in-decorator/input.js
+x Output mismatch
+
+* 2023-11-misc--to-es2015/this/input.js
+x Output mismatch
+
+* 2023-11-misc--to-es2015/valid-expression-formats/input.js
+x Output mismatch
+
+* 2023-11-ordering/class-decorators-without-element-decorators/input.js
+x Output mismatch
+
+* 2023-11-ordering/decorators-evaluation-with-this-caching/input.js
+x Output mismatch
+
+* 2023-11-ordering/field-initializers-after-methods-private/input.js
+x Output mismatch
+
+* 2023-11-ordering--to-es2015/class-decorators-without-element-decorators/input.js
+x Output mismatch
+
+* 2023-11-ordering--to-es2015/decorators-evaluation-with-this-caching/input.js
+x Output mismatch
+
+* 2023-11-setters/context-name/input.js
+x Output mismatch
+
+* 2023-11-setters/private/input.js
+x Output mismatch
+
+* 2023-11-setters/public/input.js
+x Output mismatch
+
+* 2023-11-setters/static-private/input.js
+x Output mismatch
+
+* 2023-11-setters/static-public/input.js
+x Output mismatch
+
+* 2023-11-setters--to-es2015/context-name/input.js
+x Output mismatch
+
+* 2023-11-setters--to-es2015/private/input.js
+x Output mismatch
+
+* 2023-11-setters--to-es2015/public/input.js
+x Output mismatch
+
+* 2023-11-setters--to-es2015/static-private/input.js
+x Output mismatch
+
+* 2023-11-setters--to-es2015/static-public/input.js
+x Output mismatch
+
+* 2023-11-typescript/abstruct-class/input.ts
+x Output mismatch
+
+* 2023-11-typescript/computed-key-ts-as-expression/input.ts
+x Output mismatch
+
+* legacy-regression/7030/input.js
+x Output mismatch
 
 
