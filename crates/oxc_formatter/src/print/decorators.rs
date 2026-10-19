@@ -12,7 +12,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.is_empty() {
             return;
@@ -67,7 +67,7 @@ fn is_identifier_or_static_member_only(callee: &Expression) -> bool {
     false
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Decorator<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["@"]);
 
@@ -98,7 +98,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Decorator<'a>> {
 /// Check if decorators should expand (have newlines between them)
 #[inline]
 fn should_expand_decorators<'a>(
-    decorators: &AstNode<'a, ArenaVec<'a, Decorator<'a>>>,
+    decorators: &AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     decorators

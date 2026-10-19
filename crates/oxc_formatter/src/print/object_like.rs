@@ -17,8 +17,8 @@ use crate::{
 
 #[derive(Clone, Copy)]
 pub enum ObjectLike<'a, 'b> {
-    ObjectExpression(&'b AstNode<'a, ObjectExpression<'a>>),
-    TSTypeLiteral(&'b AstNode<'a, TSTypeLiteral<'a>>),
+    ObjectExpression(&'b AstNode<'b, 'a, ObjectExpression<'a>>),
+    TSTypeLiteral(&'b AstNode<'b, 'a, TSTypeLiteral<'a>>),
 }
 
 impl<'a> ObjectLike<'a, '_> {
@@ -47,7 +47,7 @@ impl<'a> ObjectLike<'a, '_> {
                     }
                     AstNodes::TSThisParameter(param) => {
                         matches!(param.parent(), AstNodes::Function(func) if {
-                            should_hug_function_parameters(func.params(), Some(param), false, f)
+                            should_hug_function_parameters(&func.params(), Some(**param), false, f)
                         })
                     },
                     _ => false,

@@ -7,6 +7,7 @@ pub mod format_node_without_trailing_comments;
 pub mod jsx;
 pub mod member_chain;
 pub mod object;
+pub mod stack_list;
 pub mod statement_body;
 pub mod string;
 pub mod suppressed;
@@ -83,7 +84,7 @@ pub fn is_keyword_property_key(key: &PropertyKey<'_>) -> bool {
 /// ```javascript
 /// `connect(a, b, c)(d)`
 /// ```
-pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
+pub fn is_long_curried_call(call: &AstNode<'_, '_, CallExpression<'_>>) -> bool {
     if let AstNodes::CallExpression(parent_call) = call.parent()
         && parent_call.is_callee_span(call.span)
     {

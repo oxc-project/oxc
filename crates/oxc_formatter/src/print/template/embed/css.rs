@@ -34,8 +34,8 @@ fn write_text_piece<'a>(text: &'a str, indent_width: IndentWidth, f: &mut JsForm
 
 /// Print `${expr}` like a plain template expression, minus source-indentation preservation.
 /// Default options (zero indention) are exactly that (same as graphql.rs).
-fn write_expression<'a>(expr: &AstNode<'a, Expression<'a>>, f: &mut JsFormatter<'_, 'a>) {
-    let te = TemplateExpression::Expression(expr);
+fn write_expression<'a>(expr: &AstNode<'_, 'a, Expression<'a>>, f: &mut JsFormatter<'_, 'a>) {
+    let te = TemplateExpression::Expression(*expr);
     FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default()).fmt(f);
 }
 
@@ -44,7 +44,7 @@ fn write_expression<'a>(expr: &AstNode<'a, Expression<'a>>, f: &mut JsFormatter<
 /// Joins quasis with special placeholder markers, formats as SCSS,
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
 pub(super) fn format_css_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
@@ -129,7 +129,7 @@ pub(super) fn format_css_doc<'a>(
             match element {
                 FormatElement::EmbedPlaceholder(index) => {
                     if let Some(&expr) = expressions.get(index as usize) {
-                        write_expression(expr, f);
+                        write_expression(&expr, f);
                     }
                 }
                 // Same scan as html.rs: `split_on_placeholders` yields alternating
@@ -144,7 +144,7 @@ pub(super) fn format_css_doc<'a>(
                         } else if let Ok(idx) = part.parse::<usize>()
                             && let Some(&expr) = expressions.get(idx)
                         {
-                            write_expression(expr, f);
+                            write_expression(&expr, f);
                         }
                     }
                 }

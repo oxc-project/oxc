@@ -130,7 +130,7 @@ pub fn format_to_ir<'a>(
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
     let program = parse(allocator, allocator.alloc_str(source_text), source_type)?;
-    let node = AstNode::new(program, AstNodes::Dummy(), allocator);
+    let node = AstNode::new(program, AstNodes::Dummy());
     let mut context =
         JsFormatContext::new(program.source_text, program.source_type, &program.comments, options);
 
@@ -195,7 +195,7 @@ pub fn format_fragment<'a>(
             // Parens are forced only in the binding-LHS context with multiple params or a rest element.
             let with_parens = matches!(context, FragmentContext::FunctionParamsAsBindingLhs)
                 && (1 < params.items.len() || params.rest.is_some());
-            let node = AstNode::new(params, AstNodes::Dummy(), allocator);
+            let node = AstNode::new(params, AstNodes::Dummy());
             let content = FormatFunctionParams::new(&node, with_parens);
             format_node(
                 &session,
@@ -215,7 +215,7 @@ pub fn format_fragment<'a>(
             let Some(type_params) = decl.type_parameters.as_deref() else {
                 return Err(OxcDiagnostic::error("Expected type parameters in wrapped fragment"));
             };
-            let node = AstNode::new(type_params, AstNodes::Dummy(), allocator);
+            let node = AstNode::new(type_params, AstNodes::Dummy());
             let content = FormatTypeParameters::new(&node);
             format_node(
                 &session,
@@ -266,7 +266,7 @@ fn format_program_with_session<'a>(
     program: &'a Program<'a>,
     options: JsFormatOptions,
 ) -> Formatted<'a, JsFormatContext<'a>> {
-    let node = AstNode::new(program, AstNodes::Dummy(), session.allocator());
+    let node = AstNode::new(program, AstNodes::Dummy());
     format_node(
         session,
         options,

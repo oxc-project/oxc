@@ -3,7 +3,7 @@ use oxc_formatter_core::{Format, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     format_args,
     formatter::{JsFormatContext, JsFormatter, prelude::*, trivia::FormatTrailingComments},
     options::FormatTrailingCommas,
@@ -12,6 +12,7 @@ use crate::{
         assignment_like::AssignmentLikeLayout,
         expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
+        stack_list::StackList,
         suppressed::write_suppressed_expression,
         typecast::{format_leading_comments_and_open_paren, is_cast_target},
     },
@@ -23,7 +24,7 @@ use super::{
     sequence_expression::sequence_leading_comments_start,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let options = FormatJsArrowFunctionExpressionOptions {
             // Handed over by `WithAssignmentLayout` when this arrow is the RHS of an assignment-like;
@@ -37,7 +38,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
 
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
     options: FormatJsArrowFunctionExpressionOptions,
 }
 
@@ -80,7 +81,7 @@ pub enum FunctionCacheMode {
 
 impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     pub fn new_with_options(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+        arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> Self {
         Self { arrow, options }
@@ -88,8 +89,12 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
     #[inline]
     pub fn format(&self, f: &mut JsFormatter<'_, 'a>) {
-        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options, f);
+        ArrowFunctionLayout::with_layout(self.arrow, self.options, f, |layout, f| {
+            self.format_layout(layout, f);
+        });
+    }
 
+    fn format_layout(&self, layout: ArrowFunctionLayout<'a, '_>, f: &mut JsFormatter<'_, 'a>) {
         match layout {
             ArrowFunctionLayout::Chain(chain) => {
                 write!(f, chain);
@@ -189,7 +194,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         write!(f, [space(), format_body]);
                     }
                 } else {
-                    let should_add_parens = body.as_expression().is_some_and(should_add_parens);
+                    let should_add_parens =
+                        body.as_expression().is_some_and(|body| should_add_parens(&body));
 
                     let is_last_call_arg = matches!(
                         self.options.call_argument_layout,
@@ -243,7 +249,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsArrowFunctionExpression<'a,
 
 enum ArrowFunctionLayout<'a, 'b> {
     /// Arrow function with a non-arrow function body
-    Single(&'b AstNode<'a, ArrowFunctionExpression<'a>>),
+    Single(&'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>),
 
     /// A chain of at least two arrow functions.
     ///
@@ -263,53 +269,79 @@ enum ArrowFunctionLayout<'a, 'b> {
     Chain(ArrowChain<'a, 'b>),
 }
 
-impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
-    /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
-    /// of the different layouts.
-    fn for_arrow(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+impl<'a> ArrowFunctionLayout<'a, '_> {
+    /// Determines the layout for the passed arrow function and calls `format` with it.
+    /// See [ArrowFunctionLayout] for a description of the different layouts.
+    ///
+    /// The arrow functions of a chain are visited recursively and `format` is called from the tail,
+    /// so that every arrow function can still refer to its parents.
+    fn with_layout(
+        arrow: &AstNode<'_, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
-        f: &JsFormatter<'_, 'a>,
-    ) -> ArrowFunctionLayout<'a, 'b> {
-        let mut head = None;
-        let mut middle = Vec::new();
-        let mut current = arrow;
-        let mut should_break = false;
-        let is_non_grouped_or_grouped_last_argument = matches!(
-            options.call_argument_layout,
-            None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
-        );
+        f: &mut JsFormatter<'_, 'a>,
+        format: impl FnOnce(ArrowFunctionLayout<'a, '_>, &mut JsFormatter<'_, 'a>),
+    ) {
+        /// `arrows`: the arrow functions from the current one up to the head
+        fn with_layout_inner<'a>(
+            arrows: &StackList<'_, &AstNode<'_, 'a, ArrowFunctionExpression<'a>>>,
+            should_break: bool,
+            options: FormatJsArrowFunctionExpressionOptions,
+            f: &mut JsFormatter<'_, 'a>,
+            format: impl FnOnce(ArrowFunctionLayout<'a, '_>, &mut JsFormatter<'_, 'a>),
+        ) {
+            let is_non_grouped_or_grouped_last_argument = matches!(
+                options.call_argument_layout,
+                None | Some(GroupedCallArgumentLayout::GroupedLastArgument)
+            );
 
-        loop {
+            let current = arrows.item;
             if is_non_grouped_or_grouped_last_argument
-                && let AstNodes::ArrowFunctionExpression(next) = current.body().as_ast_nodes()
+                && let AstNodeKind::ArrowFunctionExpression(next) = current.body().as_kind()
                 // A type cast keeps its parens: `(a) => /** @type {T} */ ((b) => c)`
                 && !is_cast_target(next.span(), f)
             {
-                should_break = should_break || Self::should_break_chain(current);
-
-                should_break = should_break || Self::should_break_chain(next);
-
-                if head.is_none() {
-                    head = Some(current);
-                } else {
-                    middle.push(current);
-                }
-
-                current = next;
-                continue;
+                let should_break = should_break
+                    || ArrowFunctionLayout::should_break_chain(current)
+                    || ArrowFunctionLayout::should_break_chain(&next);
+                let arrows = StackList::new(&next, Some(arrows));
+                return with_layout_inner(&arrows, should_break, options, f, format);
             }
-            break match head {
-                None => ArrowFunctionLayout::Single(current),
-                Some(head) => ArrowFunctionLayout::Chain(ArrowChain {
-                    head,
+
+            format_layout_of(arrows, should_break, options, f, format);
+        }
+
+        /// Out of line, so that the frames of the walk stay small (one per arrow function of a chain that may be long).
+        #[inline(never)]
+        fn format_layout_of<'a>(
+            arrows: &StackList<'_, &AstNode<'_, 'a, ArrowFunctionExpression<'a>>>,
+            should_break: bool,
+            options: FormatJsArrowFunctionExpressionOptions,
+            f: &mut JsFormatter<'_, 'a>,
+            format: impl FnOnce(ArrowFunctionLayout<'a, '_>, &mut JsFormatter<'_, 'a>),
+        ) {
+            let layout = if let Some(outer) = arrows.outer {
+                // The outermost arrow function is the head
+                let mut head = outer;
+                let mut middle = Vec::new();
+                while let Some(next) = head.outer {
+                    middle.push(head.item);
+                    head = next;
+                }
+                middle.reverse();
+                ArrowFunctionLayout::Chain(ArrowChain {
+                    head: head.item,
                     middle,
-                    tail: current,
+                    tail: arrows.item,
                     expand_signatures: should_break,
                     options,
-                }),
+                })
+            } else {
+                ArrowFunctionLayout::Single(arrows.item)
             };
+            format(layout, f);
         }
+
+        with_layout_inner(&StackList::new(arrow, None), false, options, f, format);
     }
 
     /// Returns a `true` result if the arrow function contains any elements which
@@ -384,14 +416,14 @@ pub fn is_multiline_template_starting_on_same_line(
 
 struct ArrowChain<'a, 'b> {
     /// The top most arrow function in the chain
-    head: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    head: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
 
     /// The arrow functions in the chain that are neither the first nor the last.
     /// Empty for chains consisting only of two arrow functions.
-    middle: Vec<&'b AstNode<'a, ArrowFunctionExpression<'a>>>,
+    middle: Vec<&'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>>,
 
     /// The last arrow function in the chain
-    tail: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    tail: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
 
     options: FormatJsArrowFunctionExpressionOptions,
 
@@ -401,7 +433,7 @@ struct ArrowChain<'a, 'b> {
 
 impl<'a, 'b> ArrowChain<'a, 'b> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
         once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
@@ -596,7 +628,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                     write!(f, [token("("), format_tail_body, token(")")]);
                 }
             } else {
-                let should_add_parens = tail_body.as_expression().is_some_and(should_add_parens);
+                let should_add_parens =
+                    tail_body.as_expression().is_some_and(|body| should_add_parens(&body));
                 if should_add_parens {
                     // Known divergence from Prettier: with a signature that exactly fills the line,
                     // Prettier breaks it because the hug layout's literal space is counted
@@ -696,7 +729,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
 /// An own-line comment cannot appear before the `=>` (no line terminator is allowed there),
 /// so any hit in this range belongs to the body.
 fn has_own_line_comment_before_body<'a>(
-    arrow: &AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &AstNode<'_, 'a, ArrowFunctionExpression<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     let signature_end =
@@ -704,13 +737,13 @@ fn has_own_line_comment_before_body<'a>(
     f.comments().has_own_line_comment_in_range(signature_end, arrow.body().span().start)
 }
 
-fn should_add_parens(expression: &AstNode<'_, Expression<'_>>) -> bool {
+fn should_add_parens(expression: &AstNode<'_, '_, Expression<'_>>) -> bool {
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
     if matches!(&**expression, Expression::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(expression).as_ref(),
+            ExpressionLeftSide::leftmost(expression),
             Expression::ObjectExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ClassExpression(_)
@@ -730,7 +763,7 @@ fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
 /// Formats the parameters and return type annotation without any soft line breaks if `is_grouped_call_argument` is `true`
 /// so that the parameters and return type are kept on the same line.
 fn format_signature<'a, 'b>(
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
@@ -741,7 +774,7 @@ fn format_signature<'a, 'b>(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                arrow.return_type().map(FormatNodeWithoutTrailingComments),
+                arrow.return_type().as_ref().map(FormatNodeWithoutTrailingComments),
             ))
             .fmt(f);
         });

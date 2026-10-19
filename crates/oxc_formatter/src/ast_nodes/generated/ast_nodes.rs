@@ -1,7 +1,7 @@
 // Auto-generated code, DO NOT EDIT DIRECTLY!
 // To edit this generated file you have to edit `tasks/ast_tools/src/generators/formatter/ast_nodes.rs`.
 
-use std::mem::transmute;
+#![expect(clippy::match_same_arms)]
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
@@ -16,211 +16,814 @@ use crate::formatter::{
     trivia::{format_leading_comments, format_trailing_comments},
 };
 
-#[inline]
-pub(super) fn transmute_self<'a, T>(s: &AstNode<'a, T>) -> &'a AstNode<'a, T> {
-    #[expect(clippy::undocumented_unsafe_blocks)]
-    unsafe {
-        transmute(s)
+/// A reference to the parent node of an [`AstNode`].
+#[derive(Clone, Copy)]
+pub enum AstNodes<'me, 'a> {
+    Dummy(),
+    Program(&'me AstNode<'me, 'a, Program<'a>>),
+    IdentifierName(&'me AstNode<'me, 'a, IdentifierName<'a>>),
+    IdentifierReference(&'me AstNode<'me, 'a, IdentifierReference<'a>>),
+    BindingIdentifier(&'me AstNode<'me, 'a, BindingIdentifier<'a>>),
+    LabelIdentifier(&'me AstNode<'me, 'a, LabelIdentifier<'a>>),
+    ThisExpression(&'me AstNode<'me, 'a, ThisExpression>),
+    ArrayExpression(&'me AstNode<'me, 'a, ArrayExpression<'a>>),
+    Elision(&'me AstNode<'me, 'a, Elision>),
+    ObjectExpression(&'me AstNode<'me, 'a, ObjectExpression<'a>>),
+    ObjectProperty(&'me AstNode<'me, 'a, ObjectProperty<'a>>),
+    TemplateLiteral(&'me AstNode<'me, 'a, TemplateLiteral<'a>>),
+    TaggedTemplateExpression(&'me AstNode<'me, 'a, TaggedTemplateExpression<'a>>),
+    TemplateElement(&'me AstNode<'me, 'a, TemplateElement<'a>>),
+    ComputedMemberExpression(&'me AstNode<'me, 'a, ComputedMemberExpression<'a>>),
+    StaticMemberExpression(&'me AstNode<'me, 'a, StaticMemberExpression<'a>>),
+    PrivateFieldExpression(&'me AstNode<'me, 'a, PrivateFieldExpression<'a>>),
+    CallExpression(&'me AstNode<'me, 'a, CallExpression<'a>>),
+    NewExpression(&'me AstNode<'me, 'a, NewExpression<'a>>),
+    ImportMeta(&'me AstNode<'me, 'a, ImportMeta>),
+    NewTarget(&'me AstNode<'me, 'a, NewTarget>),
+    SpreadElement(&'me AstNode<'me, 'a, SpreadElement<'a>>),
+    UpdateExpression(&'me AstNode<'me, 'a, UpdateExpression<'a>>),
+    UnaryExpression(&'me AstNode<'me, 'a, UnaryExpression<'a>>),
+    BinaryExpression(&'me AstNode<'me, 'a, BinaryExpression<'a>>),
+    PrivateInExpression(&'me AstNode<'me, 'a, PrivateInExpression<'a>>),
+    LogicalExpression(&'me AstNode<'me, 'a, LogicalExpression<'a>>),
+    ConditionalExpression(&'me AstNode<'me, 'a, ConditionalExpression<'a>>),
+    AssignmentExpression(&'me AstNode<'me, 'a, AssignmentExpression<'a>>),
+    ArrayAssignmentTarget(&'me AstNode<'me, 'a, ArrayAssignmentTarget<'a>>),
+    ObjectAssignmentTarget(&'me AstNode<'me, 'a, ObjectAssignmentTarget<'a>>),
+    AssignmentTargetRest(&'me AstNode<'me, 'a, AssignmentTargetRest<'a>>),
+    AssignmentTargetWithDefault(&'me AstNode<'me, 'a, AssignmentTargetWithDefault<'a>>),
+    AssignmentTargetPropertyIdentifier(
+        &'me AstNode<'me, 'a, AssignmentTargetPropertyIdentifier<'a>>,
+    ),
+    AssignmentTargetPropertyProperty(&'me AstNode<'me, 'a, AssignmentTargetPropertyProperty<'a>>),
+    SequenceExpression(&'me AstNode<'me, 'a, SequenceExpression<'a>>),
+    Super(&'me AstNode<'me, 'a, Super>),
+    AwaitExpression(&'me AstNode<'me, 'a, AwaitExpression<'a>>),
+    ChainExpression(&'me AstNode<'me, 'a, ChainExpression<'a>>),
+    ParenthesizedExpression(&'me AstNode<'me, 'a, ParenthesizedExpression<'a>>),
+    Directive(&'me AstNode<'me, 'a, Directive<'a>>),
+    Hashbang(&'me AstNode<'me, 'a, Hashbang<'a>>),
+    BlockStatement(&'me AstNode<'me, 'a, BlockStatement<'a>>),
+    VariableDeclaration(&'me AstNode<'me, 'a, VariableDeclaration<'a>>),
+    VariableDeclarator(&'me AstNode<'me, 'a, VariableDeclarator<'a>>),
+    EmptyStatement(&'me AstNode<'me, 'a, EmptyStatement>),
+    ExpressionStatement(&'me AstNode<'me, 'a, ExpressionStatement<'a>>),
+    IfStatement(&'me AstNode<'me, 'a, IfStatement<'a>>),
+    DoWhileStatement(&'me AstNode<'me, 'a, DoWhileStatement<'a>>),
+    WhileStatement(&'me AstNode<'me, 'a, WhileStatement<'a>>),
+    ForStatement(&'me AstNode<'me, 'a, ForStatement<'a>>),
+    ForInStatement(&'me AstNode<'me, 'a, ForInStatement<'a>>),
+    ForOfStatement(&'me AstNode<'me, 'a, ForOfStatement<'a>>),
+    ContinueStatement(&'me AstNode<'me, 'a, ContinueStatement<'a>>),
+    BreakStatement(&'me AstNode<'me, 'a, BreakStatement<'a>>),
+    ReturnStatement(&'me AstNode<'me, 'a, ReturnStatement<'a>>),
+    WithStatement(&'me AstNode<'me, 'a, WithStatement<'a>>),
+    SwitchStatement(&'me AstNode<'me, 'a, SwitchStatement<'a>>),
+    SwitchCase(&'me AstNode<'me, 'a, SwitchCase<'a>>),
+    LabeledStatement(&'me AstNode<'me, 'a, LabeledStatement<'a>>),
+    ThrowStatement(&'me AstNode<'me, 'a, ThrowStatement<'a>>),
+    TryStatement(&'me AstNode<'me, 'a, TryStatement<'a>>),
+    CatchClause(&'me AstNode<'me, 'a, CatchClause<'a>>),
+    CatchParameter(&'me AstNode<'me, 'a, CatchParameter<'a>>),
+    DebuggerStatement(&'me AstNode<'me, 'a, DebuggerStatement>),
+    AssignmentPattern(&'me AstNode<'me, 'a, AssignmentPattern<'a>>),
+    ObjectPattern(&'me AstNode<'me, 'a, ObjectPattern<'a>>),
+    BindingProperty(&'me AstNode<'me, 'a, BindingProperty<'a>>),
+    ArrayPattern(&'me AstNode<'me, 'a, ArrayPattern<'a>>),
+    BindingRestElement(&'me AstNode<'me, 'a, BindingRestElement<'a>>),
+    Function(&'me AstNode<'me, 'a, Function<'a>>),
+    FormalParameters(&'me AstNode<'me, 'a, FormalParameters<'a>>),
+    FormalParameter(&'me AstNode<'me, 'a, FormalParameter<'a>>),
+    FormalParameterRest(&'me AstNode<'me, 'a, FormalParameterRest<'a>>),
+    FunctionBody(&'me AstNode<'me, 'a, FunctionBody<'a>>),
+    ArrowFunctionExpression(&'me AstNode<'me, 'a, ArrowFunctionExpression<'a>>),
+    YieldExpression(&'me AstNode<'me, 'a, YieldExpression<'a>>),
+    Class(&'me AstNode<'me, 'a, Class<'a>>),
+    ClassBody(&'me AstNode<'me, 'a, ClassBody<'a>>),
+    MethodDefinition(&'me AstNode<'me, 'a, MethodDefinition<'a>>),
+    PropertyDefinition(&'me AstNode<'me, 'a, PropertyDefinition<'a>>),
+    PrivateIdentifier(&'me AstNode<'me, 'a, PrivateIdentifier<'a>>),
+    StaticBlock(&'me AstNode<'me, 'a, StaticBlock<'a>>),
+    AccessorProperty(&'me AstNode<'me, 'a, AccessorProperty<'a>>),
+    ImportExpression(&'me AstNode<'me, 'a, ImportExpression<'a>>),
+    ImportDeclaration(&'me AstNode<'me, 'a, ImportDeclaration<'a>>),
+    ImportSpecifier(&'me AstNode<'me, 'a, ImportSpecifier<'a>>),
+    ImportDefaultSpecifier(&'me AstNode<'me, 'a, ImportDefaultSpecifier<'a>>),
+    ImportNamespaceSpecifier(&'me AstNode<'me, 'a, ImportNamespaceSpecifier<'a>>),
+    WithClause(&'me AstNode<'me, 'a, WithClause<'a>>),
+    ImportAttribute(&'me AstNode<'me, 'a, ImportAttribute<'a>>),
+    ExportDeclaration(&'me AstNode<'me, 'a, ExportDeclaration<'a>>),
+    ExportNamedDeclaration(&'me AstNode<'me, 'a, ExportNamedDeclaration<'a>>),
+    ExportFromDeclaration(&'me AstNode<'me, 'a, ExportFromDeclaration<'a>>),
+    ExportDefaultDeclaration(&'me AstNode<'me, 'a, ExportDefaultDeclaration<'a>>),
+    ExportAllDeclaration(&'me AstNode<'me, 'a, ExportAllDeclaration<'a>>),
+    ExportSpecifier(&'me AstNode<'me, 'a, ExportSpecifier<'a>>),
+    V8IntrinsicExpression(&'me AstNode<'me, 'a, V8IntrinsicExpression<'a>>),
+    BooleanLiteral(&'me AstNode<'me, 'a, BooleanLiteral>),
+    NullLiteral(&'me AstNode<'me, 'a, NullLiteral>),
+    NumericLiteral(&'me AstNode<'me, 'a, NumericLiteral<'a>>),
+    StringLiteral(&'me AstNode<'me, 'a, StringLiteral<'a>>),
+    BigIntLiteral(&'me AstNode<'me, 'a, BigIntLiteral<'a>>),
+    RegExpLiteral(&'me AstNode<'me, 'a, RegExpLiteral<'a>>),
+    JSXElement(&'me AstNode<'me, 'a, JSXElement<'a>>),
+    JSXOpeningElement(&'me AstNode<'me, 'a, JSXOpeningElement<'a>>),
+    JSXClosingElement(&'me AstNode<'me, 'a, JSXClosingElement<'a>>),
+    JSXFragment(&'me AstNode<'me, 'a, JSXFragment<'a>>),
+    JSXOpeningFragment(&'me AstNode<'me, 'a, JSXOpeningFragment>),
+    JSXClosingFragment(&'me AstNode<'me, 'a, JSXClosingFragment>),
+    JSXNamespacedName(&'me AstNode<'me, 'a, JSXNamespacedName<'a>>),
+    JSXMemberExpression(&'me AstNode<'me, 'a, JSXMemberExpression<'a>>),
+    JSXExpressionContainer(&'me AstNode<'me, 'a, JSXExpressionContainer<'a>>),
+    JSXEmptyExpression(&'me AstNode<'me, 'a, JSXEmptyExpression>),
+    JSXAttribute(&'me AstNode<'me, 'a, JSXAttribute<'a>>),
+    JSXSpreadAttribute(&'me AstNode<'me, 'a, JSXSpreadAttribute<'a>>),
+    JSXIdentifier(&'me AstNode<'me, 'a, JSXIdentifier<'a>>),
+    JSXSpreadChild(&'me AstNode<'me, 'a, JSXSpreadChild<'a>>),
+    JSXText(&'me AstNode<'me, 'a, JSXText<'a>>),
+    TSThisParameter(&'me AstNode<'me, 'a, TSThisParameter<'a>>),
+    TSEnumDeclaration(&'me AstNode<'me, 'a, TSEnumDeclaration<'a>>),
+    TSEnumBody(&'me AstNode<'me, 'a, TSEnumBody<'a>>),
+    TSEnumMember(&'me AstNode<'me, 'a, TSEnumMember<'a>>),
+    TSTypeAnnotation(&'me AstNode<'me, 'a, TSTypeAnnotation<'a>>),
+    TSLiteralType(&'me AstNode<'me, 'a, TSLiteralType<'a>>),
+    TSConditionalType(&'me AstNode<'me, 'a, TSConditionalType<'a>>),
+    TSUnionType(&'me AstNode<'me, 'a, TSUnionType<'a>>),
+    TSIntersectionType(&'me AstNode<'me, 'a, TSIntersectionType<'a>>),
+    TSParenthesizedType(&'me AstNode<'me, 'a, TSParenthesizedType<'a>>),
+    TSTypeOperator(&'me AstNode<'me, 'a, TSTypeOperator<'a>>),
+    TSArrayType(&'me AstNode<'me, 'a, TSArrayType<'a>>),
+    TSIndexedAccessType(&'me AstNode<'me, 'a, TSIndexedAccessType<'a>>),
+    TSTupleType(&'me AstNode<'me, 'a, TSTupleType<'a>>),
+    TSNamedTupleMember(&'me AstNode<'me, 'a, TSNamedTupleMember<'a>>),
+    TSOptionalType(&'me AstNode<'me, 'a, TSOptionalType<'a>>),
+    TSRestType(&'me AstNode<'me, 'a, TSRestType<'a>>),
+    TSAnyKeyword(&'me AstNode<'me, 'a, TSAnyKeyword>),
+    TSStringKeyword(&'me AstNode<'me, 'a, TSStringKeyword>),
+    TSBooleanKeyword(&'me AstNode<'me, 'a, TSBooleanKeyword>),
+    TSNumberKeyword(&'me AstNode<'me, 'a, TSNumberKeyword>),
+    TSNeverKeyword(&'me AstNode<'me, 'a, TSNeverKeyword>),
+    TSIntrinsicKeyword(&'me AstNode<'me, 'a, TSIntrinsicKeyword>),
+    TSUnknownKeyword(&'me AstNode<'me, 'a, TSUnknownKeyword>),
+    TSNullKeyword(&'me AstNode<'me, 'a, TSNullKeyword>),
+    TSUndefinedKeyword(&'me AstNode<'me, 'a, TSUndefinedKeyword>),
+    TSVoidKeyword(&'me AstNode<'me, 'a, TSVoidKeyword>),
+    TSSymbolKeyword(&'me AstNode<'me, 'a, TSSymbolKeyword>),
+    TSThisType(&'me AstNode<'me, 'a, TSThisType>),
+    TSObjectKeyword(&'me AstNode<'me, 'a, TSObjectKeyword>),
+    TSBigIntKeyword(&'me AstNode<'me, 'a, TSBigIntKeyword>),
+    TSTypeReference(&'me AstNode<'me, 'a, TSTypeReference<'a>>),
+    TSQualifiedName(&'me AstNode<'me, 'a, TSQualifiedName<'a>>),
+    TSTypeParameterInstantiation(&'me AstNode<'me, 'a, TSTypeParameterInstantiation<'a>>),
+    TSTypeParameter(&'me AstNode<'me, 'a, TSTypeParameter<'a>>),
+    TSTypeParameterDeclaration(&'me AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>),
+    TSTypeAliasDeclaration(&'me AstNode<'me, 'a, TSTypeAliasDeclaration<'a>>),
+    TSClassImplements(&'me AstNode<'me, 'a, TSClassImplements<'a>>),
+    TSInterfaceDeclaration(&'me AstNode<'me, 'a, TSInterfaceDeclaration<'a>>),
+    TSInterfaceBody(&'me AstNode<'me, 'a, TSInterfaceBody<'a>>),
+    TSPropertySignature(&'me AstNode<'me, 'a, TSPropertySignature<'a>>),
+    TSIndexSignature(&'me AstNode<'me, 'a, TSIndexSignature<'a>>),
+    TSCallSignatureDeclaration(&'me AstNode<'me, 'a, TSCallSignatureDeclaration<'a>>),
+    TSMethodSignature(&'me AstNode<'me, 'a, TSMethodSignature<'a>>),
+    TSConstructSignatureDeclaration(&'me AstNode<'me, 'a, TSConstructSignatureDeclaration<'a>>),
+    TSIndexSignatureName(&'me AstNode<'me, 'a, TSIndexSignatureName<'a>>),
+    TSInterfaceHeritage(&'me AstNode<'me, 'a, TSInterfaceHeritage<'a>>),
+    TSTypePredicate(&'me AstNode<'me, 'a, TSTypePredicate<'a>>),
+    TSExternalModuleDeclaration(&'me AstNode<'me, 'a, TSExternalModuleDeclaration<'a>>),
+    TSNamespaceDeclaration(&'me AstNode<'me, 'a, TSNamespaceDeclaration<'a>>),
+    TSGlobalDeclaration(&'me AstNode<'me, 'a, TSGlobalDeclaration<'a>>),
+    TSModuleBlock(&'me AstNode<'me, 'a, TSModuleBlock<'a>>),
+    TSTypeLiteral(&'me AstNode<'me, 'a, TSTypeLiteral<'a>>),
+    TSInferType(&'me AstNode<'me, 'a, TSInferType<'a>>),
+    TSTypeQuery(&'me AstNode<'me, 'a, TSTypeQuery<'a>>),
+    TSImportType(&'me AstNode<'me, 'a, TSImportType<'a>>),
+    TSImportTypeQualifiedName(&'me AstNode<'me, 'a, TSImportTypeQualifiedName<'a>>),
+    TSFunctionType(&'me AstNode<'me, 'a, TSFunctionType<'a>>),
+    TSConstructorType(&'me AstNode<'me, 'a, TSConstructorType<'a>>),
+    TSMappedType(&'me AstNode<'me, 'a, TSMappedType<'a>>),
+    TSTemplateLiteralType(&'me AstNode<'me, 'a, TSTemplateLiteralType<'a>>),
+    TSAsExpression(&'me AstNode<'me, 'a, TSAsExpression<'a>>),
+    TSSatisfiesExpression(&'me AstNode<'me, 'a, TSSatisfiesExpression<'a>>),
+    TSTypeAssertion(&'me AstNode<'me, 'a, TSTypeAssertion<'a>>),
+    TSImportEqualsDeclaration(&'me AstNode<'me, 'a, TSImportEqualsDeclaration<'a>>),
+    TSExternalModuleReference(&'me AstNode<'me, 'a, TSExternalModuleReference<'a>>),
+    TSNonNullExpression(&'me AstNode<'me, 'a, TSNonNullExpression<'a>>),
+    Decorator(&'me AstNode<'me, 'a, Decorator<'a>>),
+    TSExportAssignment(&'me AstNode<'me, 'a, TSExportAssignment<'a>>),
+    TSNamespaceExportDeclaration(&'me AstNode<'me, 'a, TSNamespaceExportDeclaration<'a>>),
+    TSInstantiationExpression(&'me AstNode<'me, 'a, TSInstantiationExpression<'a>>),
+    JSDocNullableType(&'me AstNode<'me, 'a, JSDocNullableType<'a>>),
+    JSDocNonNullableType(&'me AstNode<'me, 'a, JSDocNonNullableType<'a>>),
+    JSDocUnknownType(&'me AstNode<'me, 'a, JSDocUnknownType>),
+}
+
+/// An [`AstNode`] of an enum (e.g. `Expression`) resolved to its variant, see `as_kind`.
+///
+/// Unlike [`AstNodes`], it owns the node, so it can be created on the stack;
+/// a child of the variant then refers to it as its parent.
+#[derive(Clone, Copy)]
+pub enum AstNodeKind<'me, 'a> {
+    Program(AstNode<'me, 'a, Program<'a>>),
+    IdentifierName(AstNode<'me, 'a, IdentifierName<'a>>),
+    IdentifierReference(AstNode<'me, 'a, IdentifierReference<'a>>),
+    BindingIdentifier(AstNode<'me, 'a, BindingIdentifier<'a>>),
+    LabelIdentifier(AstNode<'me, 'a, LabelIdentifier<'a>>),
+    ThisExpression(AstNode<'me, 'a, ThisExpression>),
+    ArrayExpression(AstNode<'me, 'a, ArrayExpression<'a>>),
+    Elision(AstNode<'me, 'a, Elision>),
+    ObjectExpression(AstNode<'me, 'a, ObjectExpression<'a>>),
+    ObjectProperty(AstNode<'me, 'a, ObjectProperty<'a>>),
+    TemplateLiteral(AstNode<'me, 'a, TemplateLiteral<'a>>),
+    TaggedTemplateExpression(AstNode<'me, 'a, TaggedTemplateExpression<'a>>),
+    TemplateElement(AstNode<'me, 'a, TemplateElement<'a>>),
+    ComputedMemberExpression(AstNode<'me, 'a, ComputedMemberExpression<'a>>),
+    StaticMemberExpression(AstNode<'me, 'a, StaticMemberExpression<'a>>),
+    PrivateFieldExpression(AstNode<'me, 'a, PrivateFieldExpression<'a>>),
+    CallExpression(AstNode<'me, 'a, CallExpression<'a>>),
+    NewExpression(AstNode<'me, 'a, NewExpression<'a>>),
+    ImportMeta(AstNode<'me, 'a, ImportMeta>),
+    NewTarget(AstNode<'me, 'a, NewTarget>),
+    SpreadElement(AstNode<'me, 'a, SpreadElement<'a>>),
+    UpdateExpression(AstNode<'me, 'a, UpdateExpression<'a>>),
+    UnaryExpression(AstNode<'me, 'a, UnaryExpression<'a>>),
+    BinaryExpression(AstNode<'me, 'a, BinaryExpression<'a>>),
+    PrivateInExpression(AstNode<'me, 'a, PrivateInExpression<'a>>),
+    LogicalExpression(AstNode<'me, 'a, LogicalExpression<'a>>),
+    ConditionalExpression(AstNode<'me, 'a, ConditionalExpression<'a>>),
+    AssignmentExpression(AstNode<'me, 'a, AssignmentExpression<'a>>),
+    ArrayAssignmentTarget(AstNode<'me, 'a, ArrayAssignmentTarget<'a>>),
+    ObjectAssignmentTarget(AstNode<'me, 'a, ObjectAssignmentTarget<'a>>),
+    AssignmentTargetRest(AstNode<'me, 'a, AssignmentTargetRest<'a>>),
+    AssignmentTargetWithDefault(AstNode<'me, 'a, AssignmentTargetWithDefault<'a>>),
+    AssignmentTargetPropertyIdentifier(AstNode<'me, 'a, AssignmentTargetPropertyIdentifier<'a>>),
+    AssignmentTargetPropertyProperty(AstNode<'me, 'a, AssignmentTargetPropertyProperty<'a>>),
+    SequenceExpression(AstNode<'me, 'a, SequenceExpression<'a>>),
+    Super(AstNode<'me, 'a, Super>),
+    AwaitExpression(AstNode<'me, 'a, AwaitExpression<'a>>),
+    ChainExpression(AstNode<'me, 'a, ChainExpression<'a>>),
+    ParenthesizedExpression(AstNode<'me, 'a, ParenthesizedExpression<'a>>),
+    Directive(AstNode<'me, 'a, Directive<'a>>),
+    Hashbang(AstNode<'me, 'a, Hashbang<'a>>),
+    BlockStatement(AstNode<'me, 'a, BlockStatement<'a>>),
+    VariableDeclaration(AstNode<'me, 'a, VariableDeclaration<'a>>),
+    VariableDeclarator(AstNode<'me, 'a, VariableDeclarator<'a>>),
+    EmptyStatement(AstNode<'me, 'a, EmptyStatement>),
+    ExpressionStatement(AstNode<'me, 'a, ExpressionStatement<'a>>),
+    IfStatement(AstNode<'me, 'a, IfStatement<'a>>),
+    DoWhileStatement(AstNode<'me, 'a, DoWhileStatement<'a>>),
+    WhileStatement(AstNode<'me, 'a, WhileStatement<'a>>),
+    ForStatement(AstNode<'me, 'a, ForStatement<'a>>),
+    ForInStatement(AstNode<'me, 'a, ForInStatement<'a>>),
+    ForOfStatement(AstNode<'me, 'a, ForOfStatement<'a>>),
+    ContinueStatement(AstNode<'me, 'a, ContinueStatement<'a>>),
+    BreakStatement(AstNode<'me, 'a, BreakStatement<'a>>),
+    ReturnStatement(AstNode<'me, 'a, ReturnStatement<'a>>),
+    WithStatement(AstNode<'me, 'a, WithStatement<'a>>),
+    SwitchStatement(AstNode<'me, 'a, SwitchStatement<'a>>),
+    SwitchCase(AstNode<'me, 'a, SwitchCase<'a>>),
+    LabeledStatement(AstNode<'me, 'a, LabeledStatement<'a>>),
+    ThrowStatement(AstNode<'me, 'a, ThrowStatement<'a>>),
+    TryStatement(AstNode<'me, 'a, TryStatement<'a>>),
+    CatchClause(AstNode<'me, 'a, CatchClause<'a>>),
+    CatchParameter(AstNode<'me, 'a, CatchParameter<'a>>),
+    DebuggerStatement(AstNode<'me, 'a, DebuggerStatement>),
+    AssignmentPattern(AstNode<'me, 'a, AssignmentPattern<'a>>),
+    ObjectPattern(AstNode<'me, 'a, ObjectPattern<'a>>),
+    BindingProperty(AstNode<'me, 'a, BindingProperty<'a>>),
+    ArrayPattern(AstNode<'me, 'a, ArrayPattern<'a>>),
+    BindingRestElement(AstNode<'me, 'a, BindingRestElement<'a>>),
+    Function(AstNode<'me, 'a, Function<'a>>),
+    FormalParameters(AstNode<'me, 'a, FormalParameters<'a>>),
+    FormalParameter(AstNode<'me, 'a, FormalParameter<'a>>),
+    FormalParameterRest(AstNode<'me, 'a, FormalParameterRest<'a>>),
+    FunctionBody(AstNode<'me, 'a, FunctionBody<'a>>),
+    ArrowFunctionExpression(AstNode<'me, 'a, ArrowFunctionExpression<'a>>),
+    YieldExpression(AstNode<'me, 'a, YieldExpression<'a>>),
+    Class(AstNode<'me, 'a, Class<'a>>),
+    ClassBody(AstNode<'me, 'a, ClassBody<'a>>),
+    MethodDefinition(AstNode<'me, 'a, MethodDefinition<'a>>),
+    PropertyDefinition(AstNode<'me, 'a, PropertyDefinition<'a>>),
+    PrivateIdentifier(AstNode<'me, 'a, PrivateIdentifier<'a>>),
+    StaticBlock(AstNode<'me, 'a, StaticBlock<'a>>),
+    AccessorProperty(AstNode<'me, 'a, AccessorProperty<'a>>),
+    ImportExpression(AstNode<'me, 'a, ImportExpression<'a>>),
+    ImportDeclaration(AstNode<'me, 'a, ImportDeclaration<'a>>),
+    ImportSpecifier(AstNode<'me, 'a, ImportSpecifier<'a>>),
+    ImportDefaultSpecifier(AstNode<'me, 'a, ImportDefaultSpecifier<'a>>),
+    ImportNamespaceSpecifier(AstNode<'me, 'a, ImportNamespaceSpecifier<'a>>),
+    WithClause(AstNode<'me, 'a, WithClause<'a>>),
+    ImportAttribute(AstNode<'me, 'a, ImportAttribute<'a>>),
+    ExportDeclaration(AstNode<'me, 'a, ExportDeclaration<'a>>),
+    ExportNamedDeclaration(AstNode<'me, 'a, ExportNamedDeclaration<'a>>),
+    ExportFromDeclaration(AstNode<'me, 'a, ExportFromDeclaration<'a>>),
+    ExportDefaultDeclaration(AstNode<'me, 'a, ExportDefaultDeclaration<'a>>),
+    ExportAllDeclaration(AstNode<'me, 'a, ExportAllDeclaration<'a>>),
+    ExportSpecifier(AstNode<'me, 'a, ExportSpecifier<'a>>),
+    V8IntrinsicExpression(AstNode<'me, 'a, V8IntrinsicExpression<'a>>),
+    BooleanLiteral(AstNode<'me, 'a, BooleanLiteral>),
+    NullLiteral(AstNode<'me, 'a, NullLiteral>),
+    NumericLiteral(AstNode<'me, 'a, NumericLiteral<'a>>),
+    StringLiteral(AstNode<'me, 'a, StringLiteral<'a>>),
+    BigIntLiteral(AstNode<'me, 'a, BigIntLiteral<'a>>),
+    RegExpLiteral(AstNode<'me, 'a, RegExpLiteral<'a>>),
+    JSXElement(AstNode<'me, 'a, JSXElement<'a>>),
+    JSXOpeningElement(AstNode<'me, 'a, JSXOpeningElement<'a>>),
+    JSXClosingElement(AstNode<'me, 'a, JSXClosingElement<'a>>),
+    JSXFragment(AstNode<'me, 'a, JSXFragment<'a>>),
+    JSXOpeningFragment(AstNode<'me, 'a, JSXOpeningFragment>),
+    JSXClosingFragment(AstNode<'me, 'a, JSXClosingFragment>),
+    JSXNamespacedName(AstNode<'me, 'a, JSXNamespacedName<'a>>),
+    JSXMemberExpression(AstNode<'me, 'a, JSXMemberExpression<'a>>),
+    JSXExpressionContainer(AstNode<'me, 'a, JSXExpressionContainer<'a>>),
+    JSXEmptyExpression(AstNode<'me, 'a, JSXEmptyExpression>),
+    JSXAttribute(AstNode<'me, 'a, JSXAttribute<'a>>),
+    JSXSpreadAttribute(AstNode<'me, 'a, JSXSpreadAttribute<'a>>),
+    JSXIdentifier(AstNode<'me, 'a, JSXIdentifier<'a>>),
+    JSXSpreadChild(AstNode<'me, 'a, JSXSpreadChild<'a>>),
+    JSXText(AstNode<'me, 'a, JSXText<'a>>),
+    TSThisParameter(AstNode<'me, 'a, TSThisParameter<'a>>),
+    TSEnumDeclaration(AstNode<'me, 'a, TSEnumDeclaration<'a>>),
+    TSEnumBody(AstNode<'me, 'a, TSEnumBody<'a>>),
+    TSEnumMember(AstNode<'me, 'a, TSEnumMember<'a>>),
+    TSTypeAnnotation(AstNode<'me, 'a, TSTypeAnnotation<'a>>),
+    TSLiteralType(AstNode<'me, 'a, TSLiteralType<'a>>),
+    TSConditionalType(AstNode<'me, 'a, TSConditionalType<'a>>),
+    TSUnionType(AstNode<'me, 'a, TSUnionType<'a>>),
+    TSIntersectionType(AstNode<'me, 'a, TSIntersectionType<'a>>),
+    TSParenthesizedType(AstNode<'me, 'a, TSParenthesizedType<'a>>),
+    TSTypeOperator(AstNode<'me, 'a, TSTypeOperator<'a>>),
+    TSArrayType(AstNode<'me, 'a, TSArrayType<'a>>),
+    TSIndexedAccessType(AstNode<'me, 'a, TSIndexedAccessType<'a>>),
+    TSTupleType(AstNode<'me, 'a, TSTupleType<'a>>),
+    TSNamedTupleMember(AstNode<'me, 'a, TSNamedTupleMember<'a>>),
+    TSOptionalType(AstNode<'me, 'a, TSOptionalType<'a>>),
+    TSRestType(AstNode<'me, 'a, TSRestType<'a>>),
+    TSAnyKeyword(AstNode<'me, 'a, TSAnyKeyword>),
+    TSStringKeyword(AstNode<'me, 'a, TSStringKeyword>),
+    TSBooleanKeyword(AstNode<'me, 'a, TSBooleanKeyword>),
+    TSNumberKeyword(AstNode<'me, 'a, TSNumberKeyword>),
+    TSNeverKeyword(AstNode<'me, 'a, TSNeverKeyword>),
+    TSIntrinsicKeyword(AstNode<'me, 'a, TSIntrinsicKeyword>),
+    TSUnknownKeyword(AstNode<'me, 'a, TSUnknownKeyword>),
+    TSNullKeyword(AstNode<'me, 'a, TSNullKeyword>),
+    TSUndefinedKeyword(AstNode<'me, 'a, TSUndefinedKeyword>),
+    TSVoidKeyword(AstNode<'me, 'a, TSVoidKeyword>),
+    TSSymbolKeyword(AstNode<'me, 'a, TSSymbolKeyword>),
+    TSThisType(AstNode<'me, 'a, TSThisType>),
+    TSObjectKeyword(AstNode<'me, 'a, TSObjectKeyword>),
+    TSBigIntKeyword(AstNode<'me, 'a, TSBigIntKeyword>),
+    TSTypeReference(AstNode<'me, 'a, TSTypeReference<'a>>),
+    TSQualifiedName(AstNode<'me, 'a, TSQualifiedName<'a>>),
+    TSTypeParameterInstantiation(AstNode<'me, 'a, TSTypeParameterInstantiation<'a>>),
+    TSTypeParameter(AstNode<'me, 'a, TSTypeParameter<'a>>),
+    TSTypeParameterDeclaration(AstNode<'me, 'a, TSTypeParameterDeclaration<'a>>),
+    TSTypeAliasDeclaration(AstNode<'me, 'a, TSTypeAliasDeclaration<'a>>),
+    TSClassImplements(AstNode<'me, 'a, TSClassImplements<'a>>),
+    TSInterfaceDeclaration(AstNode<'me, 'a, TSInterfaceDeclaration<'a>>),
+    TSInterfaceBody(AstNode<'me, 'a, TSInterfaceBody<'a>>),
+    TSPropertySignature(AstNode<'me, 'a, TSPropertySignature<'a>>),
+    TSIndexSignature(AstNode<'me, 'a, TSIndexSignature<'a>>),
+    TSCallSignatureDeclaration(AstNode<'me, 'a, TSCallSignatureDeclaration<'a>>),
+    TSMethodSignature(AstNode<'me, 'a, TSMethodSignature<'a>>),
+    TSConstructSignatureDeclaration(AstNode<'me, 'a, TSConstructSignatureDeclaration<'a>>),
+    TSIndexSignatureName(AstNode<'me, 'a, TSIndexSignatureName<'a>>),
+    TSInterfaceHeritage(AstNode<'me, 'a, TSInterfaceHeritage<'a>>),
+    TSTypePredicate(AstNode<'me, 'a, TSTypePredicate<'a>>),
+    TSExternalModuleDeclaration(AstNode<'me, 'a, TSExternalModuleDeclaration<'a>>),
+    TSNamespaceDeclaration(AstNode<'me, 'a, TSNamespaceDeclaration<'a>>),
+    TSGlobalDeclaration(AstNode<'me, 'a, TSGlobalDeclaration<'a>>),
+    TSModuleBlock(AstNode<'me, 'a, TSModuleBlock<'a>>),
+    TSTypeLiteral(AstNode<'me, 'a, TSTypeLiteral<'a>>),
+    TSInferType(AstNode<'me, 'a, TSInferType<'a>>),
+    TSTypeQuery(AstNode<'me, 'a, TSTypeQuery<'a>>),
+    TSImportType(AstNode<'me, 'a, TSImportType<'a>>),
+    TSImportTypeQualifiedName(AstNode<'me, 'a, TSImportTypeQualifiedName<'a>>),
+    TSFunctionType(AstNode<'me, 'a, TSFunctionType<'a>>),
+    TSConstructorType(AstNode<'me, 'a, TSConstructorType<'a>>),
+    TSMappedType(AstNode<'me, 'a, TSMappedType<'a>>),
+    TSTemplateLiteralType(AstNode<'me, 'a, TSTemplateLiteralType<'a>>),
+    TSAsExpression(AstNode<'me, 'a, TSAsExpression<'a>>),
+    TSSatisfiesExpression(AstNode<'me, 'a, TSSatisfiesExpression<'a>>),
+    TSTypeAssertion(AstNode<'me, 'a, TSTypeAssertion<'a>>),
+    TSImportEqualsDeclaration(AstNode<'me, 'a, TSImportEqualsDeclaration<'a>>),
+    TSExternalModuleReference(AstNode<'me, 'a, TSExternalModuleReference<'a>>),
+    TSNonNullExpression(AstNode<'me, 'a, TSNonNullExpression<'a>>),
+    Decorator(AstNode<'me, 'a, Decorator<'a>>),
+    TSExportAssignment(AstNode<'me, 'a, TSExportAssignment<'a>>),
+    TSNamespaceExportDeclaration(AstNode<'me, 'a, TSNamespaceExportDeclaration<'a>>),
+    TSInstantiationExpression(AstNode<'me, 'a, TSInstantiationExpression<'a>>),
+    JSDocNullableType(AstNode<'me, 'a, JSDocNullableType<'a>>),
+    JSDocNonNullableType(AstNode<'me, 'a, JSDocNonNullableType<'a>>),
+    JSDocUnknownType(AstNode<'me, 'a, JSDocUnknownType>),
+}
+
+impl<'a> AstNodeKind<'_, 'a> {
+    /// Returns the node as a parent reference.
+    #[inline]
+    pub fn as_ast_nodes(&self) -> AstNodes<'_, 'a> {
+        match self {
+            Self::Program(n) => AstNodes::Program(n),
+            Self::IdentifierName(n) => AstNodes::IdentifierName(n),
+            Self::IdentifierReference(n) => AstNodes::IdentifierReference(n),
+            Self::BindingIdentifier(n) => AstNodes::BindingIdentifier(n),
+            Self::LabelIdentifier(n) => AstNodes::LabelIdentifier(n),
+            Self::ThisExpression(n) => AstNodes::ThisExpression(n),
+            Self::ArrayExpression(n) => AstNodes::ArrayExpression(n),
+            Self::Elision(n) => AstNodes::Elision(n),
+            Self::ObjectExpression(n) => AstNodes::ObjectExpression(n),
+            Self::ObjectProperty(n) => AstNodes::ObjectProperty(n),
+            Self::TemplateLiteral(n) => AstNodes::TemplateLiteral(n),
+            Self::TaggedTemplateExpression(n) => AstNodes::TaggedTemplateExpression(n),
+            Self::TemplateElement(n) => AstNodes::TemplateElement(n),
+            Self::ComputedMemberExpression(n) => AstNodes::ComputedMemberExpression(n),
+            Self::StaticMemberExpression(n) => AstNodes::StaticMemberExpression(n),
+            Self::PrivateFieldExpression(n) => AstNodes::PrivateFieldExpression(n),
+            Self::CallExpression(n) => AstNodes::CallExpression(n),
+            Self::NewExpression(n) => AstNodes::NewExpression(n),
+            Self::ImportMeta(n) => AstNodes::ImportMeta(n),
+            Self::NewTarget(n) => AstNodes::NewTarget(n),
+            Self::SpreadElement(n) => AstNodes::SpreadElement(n),
+            Self::UpdateExpression(n) => AstNodes::UpdateExpression(n),
+            Self::UnaryExpression(n) => AstNodes::UnaryExpression(n),
+            Self::BinaryExpression(n) => AstNodes::BinaryExpression(n),
+            Self::PrivateInExpression(n) => AstNodes::PrivateInExpression(n),
+            Self::LogicalExpression(n) => AstNodes::LogicalExpression(n),
+            Self::ConditionalExpression(n) => AstNodes::ConditionalExpression(n),
+            Self::AssignmentExpression(n) => AstNodes::AssignmentExpression(n),
+            Self::ArrayAssignmentTarget(n) => AstNodes::ArrayAssignmentTarget(n),
+            Self::ObjectAssignmentTarget(n) => AstNodes::ObjectAssignmentTarget(n),
+            Self::AssignmentTargetRest(n) => AstNodes::AssignmentTargetRest(n),
+            Self::AssignmentTargetWithDefault(n) => AstNodes::AssignmentTargetWithDefault(n),
+            Self::AssignmentTargetPropertyIdentifier(n) => {
+                AstNodes::AssignmentTargetPropertyIdentifier(n)
+            }
+            Self::AssignmentTargetPropertyProperty(n) => {
+                AstNodes::AssignmentTargetPropertyProperty(n)
+            }
+            Self::SequenceExpression(n) => AstNodes::SequenceExpression(n),
+            Self::Super(n) => AstNodes::Super(n),
+            Self::AwaitExpression(n) => AstNodes::AwaitExpression(n),
+            Self::ChainExpression(n) => AstNodes::ChainExpression(n),
+            Self::ParenthesizedExpression(n) => AstNodes::ParenthesizedExpression(n),
+            Self::Directive(n) => AstNodes::Directive(n),
+            Self::Hashbang(n) => AstNodes::Hashbang(n),
+            Self::BlockStatement(n) => AstNodes::BlockStatement(n),
+            Self::VariableDeclaration(n) => AstNodes::VariableDeclaration(n),
+            Self::VariableDeclarator(n) => AstNodes::VariableDeclarator(n),
+            Self::EmptyStatement(n) => AstNodes::EmptyStatement(n),
+            Self::ExpressionStatement(n) => AstNodes::ExpressionStatement(n),
+            Self::IfStatement(n) => AstNodes::IfStatement(n),
+            Self::DoWhileStatement(n) => AstNodes::DoWhileStatement(n),
+            Self::WhileStatement(n) => AstNodes::WhileStatement(n),
+            Self::ForStatement(n) => AstNodes::ForStatement(n),
+            Self::ForInStatement(n) => AstNodes::ForInStatement(n),
+            Self::ForOfStatement(n) => AstNodes::ForOfStatement(n),
+            Self::ContinueStatement(n) => AstNodes::ContinueStatement(n),
+            Self::BreakStatement(n) => AstNodes::BreakStatement(n),
+            Self::ReturnStatement(n) => AstNodes::ReturnStatement(n),
+            Self::WithStatement(n) => AstNodes::WithStatement(n),
+            Self::SwitchStatement(n) => AstNodes::SwitchStatement(n),
+            Self::SwitchCase(n) => AstNodes::SwitchCase(n),
+            Self::LabeledStatement(n) => AstNodes::LabeledStatement(n),
+            Self::ThrowStatement(n) => AstNodes::ThrowStatement(n),
+            Self::TryStatement(n) => AstNodes::TryStatement(n),
+            Self::CatchClause(n) => AstNodes::CatchClause(n),
+            Self::CatchParameter(n) => AstNodes::CatchParameter(n),
+            Self::DebuggerStatement(n) => AstNodes::DebuggerStatement(n),
+            Self::AssignmentPattern(n) => AstNodes::AssignmentPattern(n),
+            Self::ObjectPattern(n) => AstNodes::ObjectPattern(n),
+            Self::BindingProperty(n) => AstNodes::BindingProperty(n),
+            Self::ArrayPattern(n) => AstNodes::ArrayPattern(n),
+            Self::BindingRestElement(n) => AstNodes::BindingRestElement(n),
+            Self::Function(n) => AstNodes::Function(n),
+            Self::FormalParameters(n) => AstNodes::FormalParameters(n),
+            Self::FormalParameter(n) => AstNodes::FormalParameter(n),
+            Self::FormalParameterRest(n) => AstNodes::FormalParameterRest(n),
+            Self::FunctionBody(n) => AstNodes::FunctionBody(n),
+            Self::ArrowFunctionExpression(n) => AstNodes::ArrowFunctionExpression(n),
+            Self::YieldExpression(n) => AstNodes::YieldExpression(n),
+            Self::Class(n) => AstNodes::Class(n),
+            Self::ClassBody(n) => AstNodes::ClassBody(n),
+            Self::MethodDefinition(n) => AstNodes::MethodDefinition(n),
+            Self::PropertyDefinition(n) => AstNodes::PropertyDefinition(n),
+            Self::PrivateIdentifier(n) => AstNodes::PrivateIdentifier(n),
+            Self::StaticBlock(n) => AstNodes::StaticBlock(n),
+            Self::AccessorProperty(n) => AstNodes::AccessorProperty(n),
+            Self::ImportExpression(n) => AstNodes::ImportExpression(n),
+            Self::ImportDeclaration(n) => AstNodes::ImportDeclaration(n),
+            Self::ImportSpecifier(n) => AstNodes::ImportSpecifier(n),
+            Self::ImportDefaultSpecifier(n) => AstNodes::ImportDefaultSpecifier(n),
+            Self::ImportNamespaceSpecifier(n) => AstNodes::ImportNamespaceSpecifier(n),
+            Self::WithClause(n) => AstNodes::WithClause(n),
+            Self::ImportAttribute(n) => AstNodes::ImportAttribute(n),
+            Self::ExportDeclaration(n) => AstNodes::ExportDeclaration(n),
+            Self::ExportNamedDeclaration(n) => AstNodes::ExportNamedDeclaration(n),
+            Self::ExportFromDeclaration(n) => AstNodes::ExportFromDeclaration(n),
+            Self::ExportDefaultDeclaration(n) => AstNodes::ExportDefaultDeclaration(n),
+            Self::ExportAllDeclaration(n) => AstNodes::ExportAllDeclaration(n),
+            Self::ExportSpecifier(n) => AstNodes::ExportSpecifier(n),
+            Self::V8IntrinsicExpression(n) => AstNodes::V8IntrinsicExpression(n),
+            Self::BooleanLiteral(n) => AstNodes::BooleanLiteral(n),
+            Self::NullLiteral(n) => AstNodes::NullLiteral(n),
+            Self::NumericLiteral(n) => AstNodes::NumericLiteral(n),
+            Self::StringLiteral(n) => AstNodes::StringLiteral(n),
+            Self::BigIntLiteral(n) => AstNodes::BigIntLiteral(n),
+            Self::RegExpLiteral(n) => AstNodes::RegExpLiteral(n),
+            Self::JSXElement(n) => AstNodes::JSXElement(n),
+            Self::JSXOpeningElement(n) => AstNodes::JSXOpeningElement(n),
+            Self::JSXClosingElement(n) => AstNodes::JSXClosingElement(n),
+            Self::JSXFragment(n) => AstNodes::JSXFragment(n),
+            Self::JSXOpeningFragment(n) => AstNodes::JSXOpeningFragment(n),
+            Self::JSXClosingFragment(n) => AstNodes::JSXClosingFragment(n),
+            Self::JSXNamespacedName(n) => AstNodes::JSXNamespacedName(n),
+            Self::JSXMemberExpression(n) => AstNodes::JSXMemberExpression(n),
+            Self::JSXExpressionContainer(n) => AstNodes::JSXExpressionContainer(n),
+            Self::JSXEmptyExpression(n) => AstNodes::JSXEmptyExpression(n),
+            Self::JSXAttribute(n) => AstNodes::JSXAttribute(n),
+            Self::JSXSpreadAttribute(n) => AstNodes::JSXSpreadAttribute(n),
+            Self::JSXIdentifier(n) => AstNodes::JSXIdentifier(n),
+            Self::JSXSpreadChild(n) => AstNodes::JSXSpreadChild(n),
+            Self::JSXText(n) => AstNodes::JSXText(n),
+            Self::TSThisParameter(n) => AstNodes::TSThisParameter(n),
+            Self::TSEnumDeclaration(n) => AstNodes::TSEnumDeclaration(n),
+            Self::TSEnumBody(n) => AstNodes::TSEnumBody(n),
+            Self::TSEnumMember(n) => AstNodes::TSEnumMember(n),
+            Self::TSTypeAnnotation(n) => AstNodes::TSTypeAnnotation(n),
+            Self::TSLiteralType(n) => AstNodes::TSLiteralType(n),
+            Self::TSConditionalType(n) => AstNodes::TSConditionalType(n),
+            Self::TSUnionType(n) => AstNodes::TSUnionType(n),
+            Self::TSIntersectionType(n) => AstNodes::TSIntersectionType(n),
+            Self::TSParenthesizedType(n) => AstNodes::TSParenthesizedType(n),
+            Self::TSTypeOperator(n) => AstNodes::TSTypeOperator(n),
+            Self::TSArrayType(n) => AstNodes::TSArrayType(n),
+            Self::TSIndexedAccessType(n) => AstNodes::TSIndexedAccessType(n),
+            Self::TSTupleType(n) => AstNodes::TSTupleType(n),
+            Self::TSNamedTupleMember(n) => AstNodes::TSNamedTupleMember(n),
+            Self::TSOptionalType(n) => AstNodes::TSOptionalType(n),
+            Self::TSRestType(n) => AstNodes::TSRestType(n),
+            Self::TSAnyKeyword(n) => AstNodes::TSAnyKeyword(n),
+            Self::TSStringKeyword(n) => AstNodes::TSStringKeyword(n),
+            Self::TSBooleanKeyword(n) => AstNodes::TSBooleanKeyword(n),
+            Self::TSNumberKeyword(n) => AstNodes::TSNumberKeyword(n),
+            Self::TSNeverKeyword(n) => AstNodes::TSNeverKeyword(n),
+            Self::TSIntrinsicKeyword(n) => AstNodes::TSIntrinsicKeyword(n),
+            Self::TSUnknownKeyword(n) => AstNodes::TSUnknownKeyword(n),
+            Self::TSNullKeyword(n) => AstNodes::TSNullKeyword(n),
+            Self::TSUndefinedKeyword(n) => AstNodes::TSUndefinedKeyword(n),
+            Self::TSVoidKeyword(n) => AstNodes::TSVoidKeyword(n),
+            Self::TSSymbolKeyword(n) => AstNodes::TSSymbolKeyword(n),
+            Self::TSThisType(n) => AstNodes::TSThisType(n),
+            Self::TSObjectKeyword(n) => AstNodes::TSObjectKeyword(n),
+            Self::TSBigIntKeyword(n) => AstNodes::TSBigIntKeyword(n),
+            Self::TSTypeReference(n) => AstNodes::TSTypeReference(n),
+            Self::TSQualifiedName(n) => AstNodes::TSQualifiedName(n),
+            Self::TSTypeParameterInstantiation(n) => AstNodes::TSTypeParameterInstantiation(n),
+            Self::TSTypeParameter(n) => AstNodes::TSTypeParameter(n),
+            Self::TSTypeParameterDeclaration(n) => AstNodes::TSTypeParameterDeclaration(n),
+            Self::TSTypeAliasDeclaration(n) => AstNodes::TSTypeAliasDeclaration(n),
+            Self::TSClassImplements(n) => AstNodes::TSClassImplements(n),
+            Self::TSInterfaceDeclaration(n) => AstNodes::TSInterfaceDeclaration(n),
+            Self::TSInterfaceBody(n) => AstNodes::TSInterfaceBody(n),
+            Self::TSPropertySignature(n) => AstNodes::TSPropertySignature(n),
+            Self::TSIndexSignature(n) => AstNodes::TSIndexSignature(n),
+            Self::TSCallSignatureDeclaration(n) => AstNodes::TSCallSignatureDeclaration(n),
+            Self::TSMethodSignature(n) => AstNodes::TSMethodSignature(n),
+            Self::TSConstructSignatureDeclaration(n) => {
+                AstNodes::TSConstructSignatureDeclaration(n)
+            }
+            Self::TSIndexSignatureName(n) => AstNodes::TSIndexSignatureName(n),
+            Self::TSInterfaceHeritage(n) => AstNodes::TSInterfaceHeritage(n),
+            Self::TSTypePredicate(n) => AstNodes::TSTypePredicate(n),
+            Self::TSExternalModuleDeclaration(n) => AstNodes::TSExternalModuleDeclaration(n),
+            Self::TSNamespaceDeclaration(n) => AstNodes::TSNamespaceDeclaration(n),
+            Self::TSGlobalDeclaration(n) => AstNodes::TSGlobalDeclaration(n),
+            Self::TSModuleBlock(n) => AstNodes::TSModuleBlock(n),
+            Self::TSTypeLiteral(n) => AstNodes::TSTypeLiteral(n),
+            Self::TSInferType(n) => AstNodes::TSInferType(n),
+            Self::TSTypeQuery(n) => AstNodes::TSTypeQuery(n),
+            Self::TSImportType(n) => AstNodes::TSImportType(n),
+            Self::TSImportTypeQualifiedName(n) => AstNodes::TSImportTypeQualifiedName(n),
+            Self::TSFunctionType(n) => AstNodes::TSFunctionType(n),
+            Self::TSConstructorType(n) => AstNodes::TSConstructorType(n),
+            Self::TSMappedType(n) => AstNodes::TSMappedType(n),
+            Self::TSTemplateLiteralType(n) => AstNodes::TSTemplateLiteralType(n),
+            Self::TSAsExpression(n) => AstNodes::TSAsExpression(n),
+            Self::TSSatisfiesExpression(n) => AstNodes::TSSatisfiesExpression(n),
+            Self::TSTypeAssertion(n) => AstNodes::TSTypeAssertion(n),
+            Self::TSImportEqualsDeclaration(n) => AstNodes::TSImportEqualsDeclaration(n),
+            Self::TSExternalModuleReference(n) => AstNodes::TSExternalModuleReference(n),
+            Self::TSNonNullExpression(n) => AstNodes::TSNonNullExpression(n),
+            Self::Decorator(n) => AstNodes::Decorator(n),
+            Self::TSExportAssignment(n) => AstNodes::TSExportAssignment(n),
+            Self::TSNamespaceExportDeclaration(n) => AstNodes::TSNamespaceExportDeclaration(n),
+            Self::TSInstantiationExpression(n) => AstNodes::TSInstantiationExpression(n),
+            Self::JSDocNullableType(n) => AstNodes::JSDocNullableType(n),
+            Self::JSDocNonNullableType(n) => AstNodes::JSDocNonNullableType(n),
+            Self::JSDocUnknownType(n) => AstNodes::JSDocUnknownType(n),
+        }
     }
 }
 
-#[derive(Clone, Copy)]
-pub enum AstNodes<'a> {
-    Dummy(),
-    Program(&'a AstNode<'a, Program<'a>>),
-    IdentifierName(&'a AstNode<'a, IdentifierName<'a>>),
-    IdentifierReference(&'a AstNode<'a, IdentifierReference<'a>>),
-    BindingIdentifier(&'a AstNode<'a, BindingIdentifier<'a>>),
-    LabelIdentifier(&'a AstNode<'a, LabelIdentifier<'a>>),
-    ThisExpression(&'a AstNode<'a, ThisExpression>),
-    ArrayExpression(&'a AstNode<'a, ArrayExpression<'a>>),
-    Elision(&'a AstNode<'a, Elision>),
-    ObjectExpression(&'a AstNode<'a, ObjectExpression<'a>>),
-    ObjectProperty(&'a AstNode<'a, ObjectProperty<'a>>),
-    TemplateLiteral(&'a AstNode<'a, TemplateLiteral<'a>>),
-    TaggedTemplateExpression(&'a AstNode<'a, TaggedTemplateExpression<'a>>),
-    TemplateElement(&'a AstNode<'a, TemplateElement<'a>>),
-    ComputedMemberExpression(&'a AstNode<'a, ComputedMemberExpression<'a>>),
-    StaticMemberExpression(&'a AstNode<'a, StaticMemberExpression<'a>>),
-    PrivateFieldExpression(&'a AstNode<'a, PrivateFieldExpression<'a>>),
-    CallExpression(&'a AstNode<'a, CallExpression<'a>>),
-    NewExpression(&'a AstNode<'a, NewExpression<'a>>),
-    ImportMeta(&'a AstNode<'a, ImportMeta>),
-    NewTarget(&'a AstNode<'a, NewTarget>),
-    SpreadElement(&'a AstNode<'a, SpreadElement<'a>>),
-    UpdateExpression(&'a AstNode<'a, UpdateExpression<'a>>),
-    UnaryExpression(&'a AstNode<'a, UnaryExpression<'a>>),
-    BinaryExpression(&'a AstNode<'a, BinaryExpression<'a>>),
-    PrivateInExpression(&'a AstNode<'a, PrivateInExpression<'a>>),
-    LogicalExpression(&'a AstNode<'a, LogicalExpression<'a>>),
-    ConditionalExpression(&'a AstNode<'a, ConditionalExpression<'a>>),
-    AssignmentExpression(&'a AstNode<'a, AssignmentExpression<'a>>),
-    ArrayAssignmentTarget(&'a AstNode<'a, ArrayAssignmentTarget<'a>>),
-    ObjectAssignmentTarget(&'a AstNode<'a, ObjectAssignmentTarget<'a>>),
-    AssignmentTargetRest(&'a AstNode<'a, AssignmentTargetRest<'a>>),
-    AssignmentTargetWithDefault(&'a AstNode<'a, AssignmentTargetWithDefault<'a>>),
-    AssignmentTargetPropertyIdentifier(&'a AstNode<'a, AssignmentTargetPropertyIdentifier<'a>>),
-    AssignmentTargetPropertyProperty(&'a AstNode<'a, AssignmentTargetPropertyProperty<'a>>),
-    SequenceExpression(&'a AstNode<'a, SequenceExpression<'a>>),
-    Super(&'a AstNode<'a, Super>),
-    AwaitExpression(&'a AstNode<'a, AwaitExpression<'a>>),
-    ChainExpression(&'a AstNode<'a, ChainExpression<'a>>),
-    ParenthesizedExpression(&'a AstNode<'a, ParenthesizedExpression<'a>>),
-    Directive(&'a AstNode<'a, Directive<'a>>),
-    Hashbang(&'a AstNode<'a, Hashbang<'a>>),
-    BlockStatement(&'a AstNode<'a, BlockStatement<'a>>),
-    VariableDeclaration(&'a AstNode<'a, VariableDeclaration<'a>>),
-    VariableDeclarator(&'a AstNode<'a, VariableDeclarator<'a>>),
-    EmptyStatement(&'a AstNode<'a, EmptyStatement>),
-    ExpressionStatement(&'a AstNode<'a, ExpressionStatement<'a>>),
-    IfStatement(&'a AstNode<'a, IfStatement<'a>>),
-    DoWhileStatement(&'a AstNode<'a, DoWhileStatement<'a>>),
-    WhileStatement(&'a AstNode<'a, WhileStatement<'a>>),
-    ForStatement(&'a AstNode<'a, ForStatement<'a>>),
-    ForInStatement(&'a AstNode<'a, ForInStatement<'a>>),
-    ForOfStatement(&'a AstNode<'a, ForOfStatement<'a>>),
-    ContinueStatement(&'a AstNode<'a, ContinueStatement<'a>>),
-    BreakStatement(&'a AstNode<'a, BreakStatement<'a>>),
-    ReturnStatement(&'a AstNode<'a, ReturnStatement<'a>>),
-    WithStatement(&'a AstNode<'a, WithStatement<'a>>),
-    SwitchStatement(&'a AstNode<'a, SwitchStatement<'a>>),
-    SwitchCase(&'a AstNode<'a, SwitchCase<'a>>),
-    LabeledStatement(&'a AstNode<'a, LabeledStatement<'a>>),
-    ThrowStatement(&'a AstNode<'a, ThrowStatement<'a>>),
-    TryStatement(&'a AstNode<'a, TryStatement<'a>>),
-    CatchClause(&'a AstNode<'a, CatchClause<'a>>),
-    CatchParameter(&'a AstNode<'a, CatchParameter<'a>>),
-    DebuggerStatement(&'a AstNode<'a, DebuggerStatement>),
-    AssignmentPattern(&'a AstNode<'a, AssignmentPattern<'a>>),
-    ObjectPattern(&'a AstNode<'a, ObjectPattern<'a>>),
-    BindingProperty(&'a AstNode<'a, BindingProperty<'a>>),
-    ArrayPattern(&'a AstNode<'a, ArrayPattern<'a>>),
-    BindingRestElement(&'a AstNode<'a, BindingRestElement<'a>>),
-    Function(&'a AstNode<'a, Function<'a>>),
-    FormalParameters(&'a AstNode<'a, FormalParameters<'a>>),
-    FormalParameter(&'a AstNode<'a, FormalParameter<'a>>),
-    FormalParameterRest(&'a AstNode<'a, FormalParameterRest<'a>>),
-    FunctionBody(&'a AstNode<'a, FunctionBody<'a>>),
-    ArrowFunctionExpression(&'a AstNode<'a, ArrowFunctionExpression<'a>>),
-    YieldExpression(&'a AstNode<'a, YieldExpression<'a>>),
-    Class(&'a AstNode<'a, Class<'a>>),
-    ClassBody(&'a AstNode<'a, ClassBody<'a>>),
-    MethodDefinition(&'a AstNode<'a, MethodDefinition<'a>>),
-    PropertyDefinition(&'a AstNode<'a, PropertyDefinition<'a>>),
-    PrivateIdentifier(&'a AstNode<'a, PrivateIdentifier<'a>>),
-    StaticBlock(&'a AstNode<'a, StaticBlock<'a>>),
-    AccessorProperty(&'a AstNode<'a, AccessorProperty<'a>>),
-    ImportExpression(&'a AstNode<'a, ImportExpression<'a>>),
-    ImportDeclaration(&'a AstNode<'a, ImportDeclaration<'a>>),
-    ImportSpecifier(&'a AstNode<'a, ImportSpecifier<'a>>),
-    ImportDefaultSpecifier(&'a AstNode<'a, ImportDefaultSpecifier<'a>>),
-    ImportNamespaceSpecifier(&'a AstNode<'a, ImportNamespaceSpecifier<'a>>),
-    WithClause(&'a AstNode<'a, WithClause<'a>>),
-    ImportAttribute(&'a AstNode<'a, ImportAttribute<'a>>),
-    ExportDeclaration(&'a AstNode<'a, ExportDeclaration<'a>>),
-    ExportNamedDeclaration(&'a AstNode<'a, ExportNamedDeclaration<'a>>),
-    ExportFromDeclaration(&'a AstNode<'a, ExportFromDeclaration<'a>>),
-    ExportDefaultDeclaration(&'a AstNode<'a, ExportDefaultDeclaration<'a>>),
-    ExportAllDeclaration(&'a AstNode<'a, ExportAllDeclaration<'a>>),
-    ExportSpecifier(&'a AstNode<'a, ExportSpecifier<'a>>),
-    V8IntrinsicExpression(&'a AstNode<'a, V8IntrinsicExpression<'a>>),
-    BooleanLiteral(&'a AstNode<'a, BooleanLiteral>),
-    NullLiteral(&'a AstNode<'a, NullLiteral>),
-    NumericLiteral(&'a AstNode<'a, NumericLiteral<'a>>),
-    StringLiteral(&'a AstNode<'a, StringLiteral<'a>>),
-    BigIntLiteral(&'a AstNode<'a, BigIntLiteral<'a>>),
-    RegExpLiteral(&'a AstNode<'a, RegExpLiteral<'a>>),
-    JSXElement(&'a AstNode<'a, JSXElement<'a>>),
-    JSXOpeningElement(&'a AstNode<'a, JSXOpeningElement<'a>>),
-    JSXClosingElement(&'a AstNode<'a, JSXClosingElement<'a>>),
-    JSXFragment(&'a AstNode<'a, JSXFragment<'a>>),
-    JSXOpeningFragment(&'a AstNode<'a, JSXOpeningFragment>),
-    JSXClosingFragment(&'a AstNode<'a, JSXClosingFragment>),
-    JSXNamespacedName(&'a AstNode<'a, JSXNamespacedName<'a>>),
-    JSXMemberExpression(&'a AstNode<'a, JSXMemberExpression<'a>>),
-    JSXExpressionContainer(&'a AstNode<'a, JSXExpressionContainer<'a>>),
-    JSXEmptyExpression(&'a AstNode<'a, JSXEmptyExpression>),
-    JSXAttribute(&'a AstNode<'a, JSXAttribute<'a>>),
-    JSXSpreadAttribute(&'a AstNode<'a, JSXSpreadAttribute<'a>>),
-    JSXIdentifier(&'a AstNode<'a, JSXIdentifier<'a>>),
-    JSXSpreadChild(&'a AstNode<'a, JSXSpreadChild<'a>>),
-    JSXText(&'a AstNode<'a, JSXText<'a>>),
-    TSThisParameter(&'a AstNode<'a, TSThisParameter<'a>>),
-    TSEnumDeclaration(&'a AstNode<'a, TSEnumDeclaration<'a>>),
-    TSEnumBody(&'a AstNode<'a, TSEnumBody<'a>>),
-    TSEnumMember(&'a AstNode<'a, TSEnumMember<'a>>),
-    TSTypeAnnotation(&'a AstNode<'a, TSTypeAnnotation<'a>>),
-    TSLiteralType(&'a AstNode<'a, TSLiteralType<'a>>),
-    TSConditionalType(&'a AstNode<'a, TSConditionalType<'a>>),
-    TSUnionType(&'a AstNode<'a, TSUnionType<'a>>),
-    TSIntersectionType(&'a AstNode<'a, TSIntersectionType<'a>>),
-    TSParenthesizedType(&'a AstNode<'a, TSParenthesizedType<'a>>),
-    TSTypeOperator(&'a AstNode<'a, TSTypeOperator<'a>>),
-    TSArrayType(&'a AstNode<'a, TSArrayType<'a>>),
-    TSIndexedAccessType(&'a AstNode<'a, TSIndexedAccessType<'a>>),
-    TSTupleType(&'a AstNode<'a, TSTupleType<'a>>),
-    TSNamedTupleMember(&'a AstNode<'a, TSNamedTupleMember<'a>>),
-    TSOptionalType(&'a AstNode<'a, TSOptionalType<'a>>),
-    TSRestType(&'a AstNode<'a, TSRestType<'a>>),
-    TSAnyKeyword(&'a AstNode<'a, TSAnyKeyword>),
-    TSStringKeyword(&'a AstNode<'a, TSStringKeyword>),
-    TSBooleanKeyword(&'a AstNode<'a, TSBooleanKeyword>),
-    TSNumberKeyword(&'a AstNode<'a, TSNumberKeyword>),
-    TSNeverKeyword(&'a AstNode<'a, TSNeverKeyword>),
-    TSIntrinsicKeyword(&'a AstNode<'a, TSIntrinsicKeyword>),
-    TSUnknownKeyword(&'a AstNode<'a, TSUnknownKeyword>),
-    TSNullKeyword(&'a AstNode<'a, TSNullKeyword>),
-    TSUndefinedKeyword(&'a AstNode<'a, TSUndefinedKeyword>),
-    TSVoidKeyword(&'a AstNode<'a, TSVoidKeyword>),
-    TSSymbolKeyword(&'a AstNode<'a, TSSymbolKeyword>),
-    TSThisType(&'a AstNode<'a, TSThisType>),
-    TSObjectKeyword(&'a AstNode<'a, TSObjectKeyword>),
-    TSBigIntKeyword(&'a AstNode<'a, TSBigIntKeyword>),
-    TSTypeReference(&'a AstNode<'a, TSTypeReference<'a>>),
-    TSQualifiedName(&'a AstNode<'a, TSQualifiedName<'a>>),
-    TSTypeParameterInstantiation(&'a AstNode<'a, TSTypeParameterInstantiation<'a>>),
-    TSTypeParameter(&'a AstNode<'a, TSTypeParameter<'a>>),
-    TSTypeParameterDeclaration(&'a AstNode<'a, TSTypeParameterDeclaration<'a>>),
-    TSTypeAliasDeclaration(&'a AstNode<'a, TSTypeAliasDeclaration<'a>>),
-    TSClassImplements(&'a AstNode<'a, TSClassImplements<'a>>),
-    TSInterfaceDeclaration(&'a AstNode<'a, TSInterfaceDeclaration<'a>>),
-    TSInterfaceBody(&'a AstNode<'a, TSInterfaceBody<'a>>),
-    TSPropertySignature(&'a AstNode<'a, TSPropertySignature<'a>>),
-    TSIndexSignature(&'a AstNode<'a, TSIndexSignature<'a>>),
-    TSCallSignatureDeclaration(&'a AstNode<'a, TSCallSignatureDeclaration<'a>>),
-    TSMethodSignature(&'a AstNode<'a, TSMethodSignature<'a>>),
-    TSConstructSignatureDeclaration(&'a AstNode<'a, TSConstructSignatureDeclaration<'a>>),
-    TSIndexSignatureName(&'a AstNode<'a, TSIndexSignatureName<'a>>),
-    TSInterfaceHeritage(&'a AstNode<'a, TSInterfaceHeritage<'a>>),
-    TSTypePredicate(&'a AstNode<'a, TSTypePredicate<'a>>),
-    TSExternalModuleDeclaration(&'a AstNode<'a, TSExternalModuleDeclaration<'a>>),
-    TSNamespaceDeclaration(&'a AstNode<'a, TSNamespaceDeclaration<'a>>),
-    TSGlobalDeclaration(&'a AstNode<'a, TSGlobalDeclaration<'a>>),
-    TSModuleBlock(&'a AstNode<'a, TSModuleBlock<'a>>),
-    TSTypeLiteral(&'a AstNode<'a, TSTypeLiteral<'a>>),
-    TSInferType(&'a AstNode<'a, TSInferType<'a>>),
-    TSTypeQuery(&'a AstNode<'a, TSTypeQuery<'a>>),
-    TSImportType(&'a AstNode<'a, TSImportType<'a>>),
-    TSImportTypeQualifiedName(&'a AstNode<'a, TSImportTypeQualifiedName<'a>>),
-    TSFunctionType(&'a AstNode<'a, TSFunctionType<'a>>),
-    TSConstructorType(&'a AstNode<'a, TSConstructorType<'a>>),
-    TSMappedType(&'a AstNode<'a, TSMappedType<'a>>),
-    TSTemplateLiteralType(&'a AstNode<'a, TSTemplateLiteralType<'a>>),
-    TSAsExpression(&'a AstNode<'a, TSAsExpression<'a>>),
-    TSSatisfiesExpression(&'a AstNode<'a, TSSatisfiesExpression<'a>>),
-    TSTypeAssertion(&'a AstNode<'a, TSTypeAssertion<'a>>),
-    TSImportEqualsDeclaration(&'a AstNode<'a, TSImportEqualsDeclaration<'a>>),
-    TSExternalModuleReference(&'a AstNode<'a, TSExternalModuleReference<'a>>),
-    TSNonNullExpression(&'a AstNode<'a, TSNonNullExpression<'a>>),
-    Decorator(&'a AstNode<'a, Decorator<'a>>),
-    TSExportAssignment(&'a AstNode<'a, TSExportAssignment<'a>>),
-    TSNamespaceExportDeclaration(&'a AstNode<'a, TSNamespaceExportDeclaration<'a>>),
-    TSInstantiationExpression(&'a AstNode<'a, TSInstantiationExpression<'a>>),
-    JSDocNullableType(&'a AstNode<'a, JSDocNullableType<'a>>),
-    JSDocNonNullableType(&'a AstNode<'a, JSDocNonNullableType<'a>>),
-    JSDocUnknownType(&'a AstNode<'a, JSDocUnknownType>),
+impl GetSpan for AstNodeKind<'_, '_> {
+    #[inline]
+    fn span(&self) -> Span {
+        match self {
+            Self::Program(n) => n.span(),
+            Self::IdentifierName(n) => n.span(),
+            Self::IdentifierReference(n) => n.span(),
+            Self::BindingIdentifier(n) => n.span(),
+            Self::LabelIdentifier(n) => n.span(),
+            Self::ThisExpression(n) => n.span(),
+            Self::ArrayExpression(n) => n.span(),
+            Self::Elision(n) => n.span(),
+            Self::ObjectExpression(n) => n.span(),
+            Self::ObjectProperty(n) => n.span(),
+            Self::TemplateLiteral(n) => n.span(),
+            Self::TaggedTemplateExpression(n) => n.span(),
+            Self::TemplateElement(n) => n.span(),
+            Self::ComputedMemberExpression(n) => n.span(),
+            Self::StaticMemberExpression(n) => n.span(),
+            Self::PrivateFieldExpression(n) => n.span(),
+            Self::CallExpression(n) => n.span(),
+            Self::NewExpression(n) => n.span(),
+            Self::ImportMeta(n) => n.span(),
+            Self::NewTarget(n) => n.span(),
+            Self::SpreadElement(n) => n.span(),
+            Self::UpdateExpression(n) => n.span(),
+            Self::UnaryExpression(n) => n.span(),
+            Self::BinaryExpression(n) => n.span(),
+            Self::PrivateInExpression(n) => n.span(),
+            Self::LogicalExpression(n) => n.span(),
+            Self::ConditionalExpression(n) => n.span(),
+            Self::AssignmentExpression(n) => n.span(),
+            Self::ArrayAssignmentTarget(n) => n.span(),
+            Self::ObjectAssignmentTarget(n) => n.span(),
+            Self::AssignmentTargetRest(n) => n.span(),
+            Self::AssignmentTargetWithDefault(n) => n.span(),
+            Self::AssignmentTargetPropertyIdentifier(n) => n.span(),
+            Self::AssignmentTargetPropertyProperty(n) => n.span(),
+            Self::SequenceExpression(n) => n.span(),
+            Self::Super(n) => n.span(),
+            Self::AwaitExpression(n) => n.span(),
+            Self::ChainExpression(n) => n.span(),
+            Self::ParenthesizedExpression(n) => n.span(),
+            Self::Directive(n) => n.span(),
+            Self::Hashbang(n) => n.span(),
+            Self::BlockStatement(n) => n.span(),
+            Self::VariableDeclaration(n) => n.span(),
+            Self::VariableDeclarator(n) => n.span(),
+            Self::EmptyStatement(n) => n.span(),
+            Self::ExpressionStatement(n) => n.span(),
+            Self::IfStatement(n) => n.span(),
+            Self::DoWhileStatement(n) => n.span(),
+            Self::WhileStatement(n) => n.span(),
+            Self::ForStatement(n) => n.span(),
+            Self::ForInStatement(n) => n.span(),
+            Self::ForOfStatement(n) => n.span(),
+            Self::ContinueStatement(n) => n.span(),
+            Self::BreakStatement(n) => n.span(),
+            Self::ReturnStatement(n) => n.span(),
+            Self::WithStatement(n) => n.span(),
+            Self::SwitchStatement(n) => n.span(),
+            Self::SwitchCase(n) => n.span(),
+            Self::LabeledStatement(n) => n.span(),
+            Self::ThrowStatement(n) => n.span(),
+            Self::TryStatement(n) => n.span(),
+            Self::CatchClause(n) => n.span(),
+            Self::CatchParameter(n) => n.span(),
+            Self::DebuggerStatement(n) => n.span(),
+            Self::AssignmentPattern(n) => n.span(),
+            Self::ObjectPattern(n) => n.span(),
+            Self::BindingProperty(n) => n.span(),
+            Self::ArrayPattern(n) => n.span(),
+            Self::BindingRestElement(n) => n.span(),
+            Self::Function(n) => n.span(),
+            Self::FormalParameters(n) => n.span(),
+            Self::FormalParameter(n) => n.span(),
+            Self::FormalParameterRest(n) => n.span(),
+            Self::FunctionBody(n) => n.span(),
+            Self::ArrowFunctionExpression(n) => n.span(),
+            Self::YieldExpression(n) => n.span(),
+            Self::Class(n) => n.span(),
+            Self::ClassBody(n) => n.span(),
+            Self::MethodDefinition(n) => n.span(),
+            Self::PropertyDefinition(n) => n.span(),
+            Self::PrivateIdentifier(n) => n.span(),
+            Self::StaticBlock(n) => n.span(),
+            Self::AccessorProperty(n) => n.span(),
+            Self::ImportExpression(n) => n.span(),
+            Self::ImportDeclaration(n) => n.span(),
+            Self::ImportSpecifier(n) => n.span(),
+            Self::ImportDefaultSpecifier(n) => n.span(),
+            Self::ImportNamespaceSpecifier(n) => n.span(),
+            Self::WithClause(n) => n.span(),
+            Self::ImportAttribute(n) => n.span(),
+            Self::ExportDeclaration(n) => n.span(),
+            Self::ExportNamedDeclaration(n) => n.span(),
+            Self::ExportFromDeclaration(n) => n.span(),
+            Self::ExportDefaultDeclaration(n) => n.span(),
+            Self::ExportAllDeclaration(n) => n.span(),
+            Self::ExportSpecifier(n) => n.span(),
+            Self::V8IntrinsicExpression(n) => n.span(),
+            Self::BooleanLiteral(n) => n.span(),
+            Self::NullLiteral(n) => n.span(),
+            Self::NumericLiteral(n) => n.span(),
+            Self::StringLiteral(n) => n.span(),
+            Self::BigIntLiteral(n) => n.span(),
+            Self::RegExpLiteral(n) => n.span(),
+            Self::JSXElement(n) => n.span(),
+            Self::JSXOpeningElement(n) => n.span(),
+            Self::JSXClosingElement(n) => n.span(),
+            Self::JSXFragment(n) => n.span(),
+            Self::JSXOpeningFragment(n) => n.span(),
+            Self::JSXClosingFragment(n) => n.span(),
+            Self::JSXNamespacedName(n) => n.span(),
+            Self::JSXMemberExpression(n) => n.span(),
+            Self::JSXExpressionContainer(n) => n.span(),
+            Self::JSXEmptyExpression(n) => n.span(),
+            Self::JSXAttribute(n) => n.span(),
+            Self::JSXSpreadAttribute(n) => n.span(),
+            Self::JSXIdentifier(n) => n.span(),
+            Self::JSXSpreadChild(n) => n.span(),
+            Self::JSXText(n) => n.span(),
+            Self::TSThisParameter(n) => n.span(),
+            Self::TSEnumDeclaration(n) => n.span(),
+            Self::TSEnumBody(n) => n.span(),
+            Self::TSEnumMember(n) => n.span(),
+            Self::TSTypeAnnotation(n) => n.span(),
+            Self::TSLiteralType(n) => n.span(),
+            Self::TSConditionalType(n) => n.span(),
+            Self::TSUnionType(n) => n.span(),
+            Self::TSIntersectionType(n) => n.span(),
+            Self::TSParenthesizedType(n) => n.span(),
+            Self::TSTypeOperator(n) => n.span(),
+            Self::TSArrayType(n) => n.span(),
+            Self::TSIndexedAccessType(n) => n.span(),
+            Self::TSTupleType(n) => n.span(),
+            Self::TSNamedTupleMember(n) => n.span(),
+            Self::TSOptionalType(n) => n.span(),
+            Self::TSRestType(n) => n.span(),
+            Self::TSAnyKeyword(n) => n.span(),
+            Self::TSStringKeyword(n) => n.span(),
+            Self::TSBooleanKeyword(n) => n.span(),
+            Self::TSNumberKeyword(n) => n.span(),
+            Self::TSNeverKeyword(n) => n.span(),
+            Self::TSIntrinsicKeyword(n) => n.span(),
+            Self::TSUnknownKeyword(n) => n.span(),
+            Self::TSNullKeyword(n) => n.span(),
+            Self::TSUndefinedKeyword(n) => n.span(),
+            Self::TSVoidKeyword(n) => n.span(),
+            Self::TSSymbolKeyword(n) => n.span(),
+            Self::TSThisType(n) => n.span(),
+            Self::TSObjectKeyword(n) => n.span(),
+            Self::TSBigIntKeyword(n) => n.span(),
+            Self::TSTypeReference(n) => n.span(),
+            Self::TSQualifiedName(n) => n.span(),
+            Self::TSTypeParameterInstantiation(n) => n.span(),
+            Self::TSTypeParameter(n) => n.span(),
+            Self::TSTypeParameterDeclaration(n) => n.span(),
+            Self::TSTypeAliasDeclaration(n) => n.span(),
+            Self::TSClassImplements(n) => n.span(),
+            Self::TSInterfaceDeclaration(n) => n.span(),
+            Self::TSInterfaceBody(n) => n.span(),
+            Self::TSPropertySignature(n) => n.span(),
+            Self::TSIndexSignature(n) => n.span(),
+            Self::TSCallSignatureDeclaration(n) => n.span(),
+            Self::TSMethodSignature(n) => n.span(),
+            Self::TSConstructSignatureDeclaration(n) => n.span(),
+            Self::TSIndexSignatureName(n) => n.span(),
+            Self::TSInterfaceHeritage(n) => n.span(),
+            Self::TSTypePredicate(n) => n.span(),
+            Self::TSExternalModuleDeclaration(n) => n.span(),
+            Self::TSNamespaceDeclaration(n) => n.span(),
+            Self::TSGlobalDeclaration(n) => n.span(),
+            Self::TSModuleBlock(n) => n.span(),
+            Self::TSTypeLiteral(n) => n.span(),
+            Self::TSInferType(n) => n.span(),
+            Self::TSTypeQuery(n) => n.span(),
+            Self::TSImportType(n) => n.span(),
+            Self::TSImportTypeQualifiedName(n) => n.span(),
+            Self::TSFunctionType(n) => n.span(),
+            Self::TSConstructorType(n) => n.span(),
+            Self::TSMappedType(n) => n.span(),
+            Self::TSTemplateLiteralType(n) => n.span(),
+            Self::TSAsExpression(n) => n.span(),
+            Self::TSSatisfiesExpression(n) => n.span(),
+            Self::TSTypeAssertion(n) => n.span(),
+            Self::TSImportEqualsDeclaration(n) => n.span(),
+            Self::TSExternalModuleReference(n) => n.span(),
+            Self::TSNonNullExpression(n) => n.span(),
+            Self::Decorator(n) => n.span(),
+            Self::TSExportAssignment(n) => n.span(),
+            Self::TSNamespaceExportDeclaration(n) => n.span(),
+            Self::TSInstantiationExpression(n) => n.span(),
+            Self::JSDocNullableType(n) => n.span(),
+            Self::JSDocNonNullableType(n) => n.span(),
+            Self::JSDocUnknownType(n) => n.span(),
+        }
+    }
 }
-impl AstNodes<'_> {
+
+impl<'me, 'a> AstNodes<'me, 'a> {
     /// Returns the span of this AST node.
     ///
     /// # Panics
@@ -430,7 +1033,7 @@ impl AstNodes<'_> {
     ///
     /// Panics when called on a `Dummy` node, which should never appear in a real AST.
     #[inline]
-    pub fn parent(&self) -> &Self {
+    pub fn parent(&self) -> &AstNodes<'me, 'a> {
         match self {
             Self::Dummy() => panic!("Should never be called on a dummy node"),
             Self::Program(n) => n.parent(),
@@ -827,7 +1430,7 @@ impl AstNodes<'_> {
     }
 }
 
-impl<'a> AstNode<'a, Program<'a>> {
+impl<'a> AstNode<'_, 'a, Program<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -849,7 +1452,7 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 
     #[inline]
-    pub fn hashbang(&self) -> Option<&AstNode<'a, Hashbang<'a>>> {
+    pub fn hashbang(&self) -> Option<AstNode<'_, 'a, Hashbang<'a>>> {
         let following_span_start = self
             .inner
             .directives
@@ -858,18 +1461,15 @@ impl<'a> AstNode<'a, Program<'a>> {
             .or_else(|| self.inner.body.first().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.hashbang.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::Program(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.hashbang.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::Program(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> AstNode<'_, 'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .body
@@ -877,23 +1477,17 @@ impl<'a> AstNode<'a, Program<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.directives,
-            allocator: self.allocator,
-            parent: AstNodes::Program(transmute_self(self)),
+            parent: AstNodes::Program(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
+    pub fn body(&self) -> AstNode<'_, 'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::Program(transmute_self(self)),
-            following_span_start,
-        })
+        AstNode { inner: &self.inner.body, parent: AstNodes::Program(self), following_span_start }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -906,342 +1500,222 @@ impl<'a> AstNode<'a, Program<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Expression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Expression<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            Expression::BooleanLiteral(s) => {
-                AstNodes::BooleanLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::NullLiteral(s) => AstNodes::NullLiteral(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            Expression::BooleanLiteral(s) => AstNodeKind::BooleanLiteral(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::NumericLiteral(s) => {
-                AstNodes::NumericLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::BigIntLiteral(s) => {
-                AstNodes::BigIntLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::RegExpLiteral(s) => {
-                AstNodes::RegExpLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::StringLiteral(s) => {
-                AstNodes::StringLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::TemplateLiteral(s) => {
-                AstNodes::TemplateLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::Identifier(s) => {
-                AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::Super(s) => AstNodes::Super(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            Expression::NullLiteral(s) => AstNodeKind::NullLiteral(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::ArrayExpression(s) => {
-                AstNodes::ArrayExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                following_span_start,
+            }),
+            Expression::NumericLiteral(s) => AstNodeKind::NumericLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::BigIntLiteral(s) => AstNodeKind::BigIntLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::RegExpLiteral(s) => AstNodeKind::RegExpLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::StringLiteral(s) => AstNodeKind::StringLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::TemplateLiteral(s) => AstNodeKind::TemplateLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::Identifier(s) => AstNodeKind::IdentifierReference(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::Super(s) => {
+                AstNodeKind::Super(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
+            Expression::ArrayExpression(s) => AstNodeKind::ArrayExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             Expression::ArrowFunctionExpression(s) => {
-                AstNodes::ArrowFunctionExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::ArrowFunctionExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            Expression::AssignmentExpression(s) => {
-                AstNodes::AssignmentExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::AwaitExpression(s) => {
-                AstNodes::AwaitExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::BinaryExpression(s) => {
-                AstNodes::BinaryExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::CallExpression(s) => {
-                AstNodes::CallExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::ChainExpression(s) => {
-                AstNodes::ChainExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::ClassExpression(s) => AstNodes::Class(self.allocator.alloc(AstNode {
+            Expression::AssignmentExpression(s) => AstNodeKind::AssignmentExpression(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::ConditionalExpression(s) => {
-                AstNodes::ConditionalExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                following_span_start,
+            }),
+            Expression::AwaitExpression(s) => AstNodeKind::AwaitExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::BinaryExpression(s) => AstNodeKind::BinaryExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::CallExpression(s) => AstNodeKind::CallExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::ChainExpression(s) => AstNodeKind::ChainExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::ClassExpression(s) => {
+                AstNodeKind::Class(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
+            Expression::ConditionalExpression(s) => AstNodeKind::ConditionalExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             Expression::FunctionExpression(s) => {
-                AstNodes::Function(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::Function(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
-            Expression::ImportExpression(s) => {
-                AstNodes::ImportExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::LogicalExpression(s) => {
-                AstNodes::LogicalExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::NewExpression(s) => {
-                AstNodes::NewExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::ObjectExpression(s) => {
-                AstNodes::ObjectExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            Expression::ImportExpression(s) => AstNodeKind::ImportExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::LogicalExpression(s) => AstNodeKind::LogicalExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::NewExpression(s) => AstNodeKind::NewExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::ObjectExpression(s) => AstNodeKind::ObjectExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             Expression::ParenthesizedExpression(s) => {
-                AstNodes::ParenthesizedExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::ParenthesizedExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            Expression::SequenceExpression(s) => {
-                AstNodes::SequenceExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            Expression::SequenceExpression(s) => AstNodeKind::SequenceExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             Expression::TaggedTemplateExpression(s) => {
-                AstNodes::TaggedTemplateExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::TaggedTemplateExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            Expression::ThisExpression(s) => {
-                AstNodes::ThisExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::UnaryExpression(s) => {
-                AstNodes::UnaryExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::UpdateExpression(s) => {
-                AstNodes::UpdateExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::YieldExpression(s) => {
-                AstNodes::YieldExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::PrivateInExpression(s) => {
-                AstNodes::PrivateInExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Expression::ImportMeta(s) => AstNodes::ImportMeta(self.allocator.alloc(AstNode {
+            Expression::ThisExpression(s) => AstNodeKind::ThisExpression(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::NewTarget(s) => AstNodes::NewTarget(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            Expression::UnaryExpression(s) => AstNodeKind::UnaryExpression(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::JSXElement(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            Expression::UpdateExpression(s) => AstNodeKind::UpdateExpression(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::JSXFragment(s) => AstNodes::JSXFragment(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            Expression::YieldExpression(s) => AstNodeKind::YieldExpression(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Expression::TSAsExpression(s) => {
-                AstNodes::TSAsExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                following_span_start,
+            }),
+            Expression::PrivateInExpression(s) => AstNodeKind::PrivateInExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::ImportMeta(s) => {
+                AstNodeKind::ImportMeta(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
-            Expression::TSSatisfiesExpression(s) => {
-                AstNodes::TSSatisfiesExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+            Expression::NewTarget(s) => {
+                AstNodeKind::NewTarget(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
-            Expression::TSTypeAssertion(s) => {
-                AstNodes::TSTypeAssertion(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+            Expression::JSXElement(s) => {
+                AstNodeKind::JSXElement(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
-            Expression::TSNonNullExpression(s) => {
-                AstNodes::TSNonNullExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            Expression::JSXFragment(s) => AstNodeKind::JSXFragment(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::TSAsExpression(s) => AstNodeKind::TSAsExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::TSSatisfiesExpression(s) => AstNodeKind::TSSatisfiesExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::TSTypeAssertion(s) => AstNodeKind::TSTypeAssertion(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Expression::TSNonNullExpression(s) => AstNodeKind::TSNonNullExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             Expression::TSInstantiationExpression(s) => {
-                AstNodes::TSInstantiationExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::TSInstantiationExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            Expression::V8IntrinsicExpression(s) => {
-                AstNodes::V8IntrinsicExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            Expression::V8IntrinsicExpression(s) => AstNodeKind::V8IntrinsicExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_member_expression!(Expression) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_member_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_member_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, IdentifierName<'a>> {
+impl<'a> AstNode<'_, 'a, IdentifierName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1262,7 +1736,7 @@ impl<'a> AstNode<'a, IdentifierName<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, IdentifierReference<'a>> {
+impl<'a> AstNode<'_, 'a, IdentifierReference<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1283,7 +1757,7 @@ impl<'a> AstNode<'a, IdentifierReference<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, BindingIdentifier<'a>> {
+impl<'a> AstNode<'_, 'a, BindingIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1304,7 +1778,7 @@ impl<'a> AstNode<'a, BindingIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, LabelIdentifier<'a>> {
+impl<'a> AstNode<'_, 'a, LabelIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1325,7 +1799,7 @@ impl<'a> AstNode<'a, LabelIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ThisExpression> {
+impl<'a> AstNode<'_, 'a, ThisExpression> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1341,21 +1815,20 @@ impl<'a> AstNode<'a, ThisExpression> {
     }
 }
 
-impl<'a> AstNode<'a, ArrayExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ArrayExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, ArrayExpressionElement<'a>>> {
+    pub fn elements(&self) -> AstNode<'_, 'a, ArenaVec<'a, ArrayExpressionElement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.elements,
-            allocator: self.allocator,
-            parent: AstNodes::ArrayExpression(transmute_self(self)),
+            parent: AstNodes::ArrayExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -1368,44 +1841,29 @@ impl<'a> AstNode<'a, ArrayExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ArrayExpressionElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ArrayExpressionElement<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            ArrayExpressionElement::SpreadElement(s) => {
-                AstNodes::SpreadElement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            ArrayExpressionElement::SpreadElement(s) => AstNodeKind::SpreadElement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             ArrayExpressionElement::Elision(s) => {
-                AstNodes::Elision(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::Elision(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
             it @ match_expression!(ArrayExpressionElement) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, Elision> {
+impl<'a> AstNode<'_, 'a, Elision> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1421,21 +1879,20 @@ impl<'a> AstNode<'a, Elision> {
     }
 }
 
-impl<'a> AstNode<'a, ObjectExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ObjectExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, ObjectPropertyKind<'a>>> {
+    pub fn properties(&self) -> AstNode<'_, 'a, ArenaVec<'a, ObjectPropertyKind<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.properties,
-            allocator: self.allocator,
-            parent: AstNodes::ObjectExpression(transmute_self(self)),
+            parent: AstNodes::ObjectExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -1448,33 +1905,28 @@ impl<'a> AstNode<'a, ObjectExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ObjectPropertyKind<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ObjectPropertyKind<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            ObjectPropertyKind::ObjectProperty(s) => {
-                AstNodes::ObjectProperty(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            ObjectPropertyKind::SpreadProperty(s) => {
-                AstNodes::SpreadElement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            ObjectPropertyKind::ObjectProperty(s) => AstNodeKind::ObjectProperty(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            ObjectPropertyKind::SpreadProperty(s) => AstNodeKind::SpreadElement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, ObjectProperty<'a>> {
+impl<'a> AstNode<'_, 'a, ObjectProperty<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1486,25 +1938,23 @@ impl<'a> AstNode<'a, ObjectProperty<'a>> {
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+    pub fn key(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
         let following_span_start = self.inner.value.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::ObjectProperty(transmute_self(self)),
+            parent: AstNodes::ObjectProperty(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn value(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn value(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.value,
-            allocator: self.allocator,
-            parent: AstNodes::ObjectProperty(transmute_self(self)),
+            parent: AstNodes::ObjectProperty(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -1532,51 +1982,38 @@ impl<'a> AstNode<'a, ObjectProperty<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, PropertyKey<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, PropertyKey<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            PropertyKey::StaticIdentifier(s) => {
-                AstNodes::IdentifierName(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            PropertyKey::PrivateIdentifier(s) => {
-                AstNodes::PrivateIdentifier(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            PropertyKey::StaticIdentifier(s) => AstNodeKind::IdentifierName(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            PropertyKey::PrivateIdentifier(s) => AstNodeKind::PrivateIdentifier(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_expression!(PropertyKey) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, TemplateLiteral<'a>> {
+impl<'a> AstNode<'_, 'a, TemplateLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> AstNode<'_, 'a, ArenaVec<'a, TemplateElement<'a>>> {
         let following_span_start = self
             .inner
             .expressions
@@ -1584,23 +2021,21 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.quasis,
-            allocator: self.allocator,
-            parent: AstNodes::TemplateLiteral(transmute_self(self)),
+            parent: AstNodes::TemplateLiteral(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn expressions(&self) -> &AstNode<'a, ArenaVec<'a, Expression<'a>>> {
+    pub fn expressions(&self) -> AstNode<'_, 'a, ArenaVec<'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expressions,
-            allocator: self.allocator,
-            parent: AstNodes::TemplateLiteral(transmute_self(self)),
+            parent: AstNodes::TemplateLiteral(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -1613,14 +2048,14 @@ impl<'a> AstNode<'a, TemplateLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
+impl<'a> AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn tag(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn tag(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -1628,36 +2063,31 @@ impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.quasi.span().start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.tag,
-            allocator: self.allocator,
-            parent: AstNodes::TaggedTemplateExpression(transmute_self(self)),
+            parent: AstNodes::TaggedTemplateExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self.inner.quasi.span().start;
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TaggedTemplateExpression(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TaggedTemplateExpression(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn quasi(&self) -> &AstNode<'a, TemplateLiteral<'a>> {
+    pub fn quasi(&self) -> AstNode<'_, 'a, TemplateLiteral<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.quasi,
-            allocator: self.allocator,
-            parent: AstNodes::TaggedTemplateExpression(transmute_self(self)),
+            parent: AstNodes::TaggedTemplateExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -1670,7 +2100,7 @@ impl<'a> AstNode<'a, TaggedTemplateExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TemplateElement<'a>> {
+impl<'a> AstNode<'_, 'a, TemplateElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -1696,66 +2126,62 @@ impl<'a> AstNode<'a, TemplateElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, MemberExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, MemberExpression<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             MemberExpression::ComputedMemberExpression(s) => {
-                AstNodes::ComputedMemberExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::ComputedMemberExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             MemberExpression::StaticMemberExpression(s) => {
-                AstNodes::StaticMemberExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::StaticMemberExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             MemberExpression::PrivateFieldExpression(s) => {
-                AstNodes::PrivateFieldExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::PrivateFieldExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ComputedMemberExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ComputedMemberExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn object(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn object(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.expression.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.object,
-            allocator: self.allocator,
-            parent: AstNodes::ComputedMemberExpression(transmute_self(self)),
+            parent: AstNodes::ComputedMemberExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::ComputedMemberExpression(transmute_self(self)),
+            parent: AstNodes::ComputedMemberExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -1773,32 +2199,30 @@ impl<'a> AstNode<'a, ComputedMemberExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
+impl<'a> AstNode<'_, 'a, StaticMemberExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn object(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn object(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.property.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.object,
-            allocator: self.allocator,
-            parent: AstNodes::StaticMemberExpression(transmute_self(self)),
+            parent: AstNodes::StaticMemberExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn property(&self) -> &AstNode<'a, IdentifierName<'a>> {
+    pub fn property(&self) -> AstNode<'_, 'a, IdentifierName<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.property,
-            allocator: self.allocator,
-            parent: AstNodes::StaticMemberExpression(transmute_self(self)),
+            parent: AstNodes::StaticMemberExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -1816,32 +2240,30 @@ impl<'a> AstNode<'a, StaticMemberExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
+impl<'a> AstNode<'_, 'a, PrivateFieldExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn object(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn object(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.field.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.object,
-            allocator: self.allocator,
-            parent: AstNodes::PrivateFieldExpression(transmute_self(self)),
+            parent: AstNodes::PrivateFieldExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn field(&self) -> &AstNode<'a, PrivateIdentifier<'a>> {
+    pub fn field(&self) -> AstNode<'_, 'a, PrivateIdentifier<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.field,
-            allocator: self.allocator,
-            parent: AstNodes::PrivateFieldExpression(transmute_self(self)),
+            parent: AstNodes::PrivateFieldExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -1859,14 +2281,14 @@ impl<'a> AstNode<'a, PrivateFieldExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, CallExpression<'a>> {
+impl<'a> AstNode<'_, 'a, CallExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn callee(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn callee(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -1875,16 +2297,15 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
             .or_else(|| self.inner.arguments.first().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.callee,
-            allocator: self.allocator,
-            parent: AstNodes::CallExpression(transmute_self(self)),
+            parent: AstNodes::CallExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self
             .inner
             .arguments
@@ -1892,25 +2313,21 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::CallExpression(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::CallExpression(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.arguments,
-            allocator: self.allocator,
-            parent: AstNodes::CallExpression(transmute_self(self)),
+            parent: AstNodes::CallExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -1933,14 +2350,14 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, NewExpression<'a>> {
+impl<'a> AstNode<'_, 'a, NewExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn callee(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn callee(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -1949,16 +2366,15 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
             .or_else(|| self.inner.arguments.first().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.callee,
-            allocator: self.allocator,
-            parent: AstNodes::NewExpression(transmute_self(self)),
+            parent: AstNodes::NewExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self
             .inner
             .arguments
@@ -1966,25 +2382,21 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::NewExpression(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::NewExpression(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.arguments,
-            allocator: self.allocator,
-            parent: AstNodes::NewExpression(transmute_self(self)),
+            parent: AstNodes::NewExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -2002,7 +2414,7 @@ impl<'a> AstNode<'a, NewExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportMeta> {
+impl<'a> AstNode<'_, 'a, ImportMeta> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2018,7 +2430,7 @@ impl<'a> AstNode<'a, ImportMeta> {
     }
 }
 
-impl<'a> AstNode<'a, NewTarget> {
+impl<'a> AstNode<'_, 'a, NewTarget> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2034,21 +2446,20 @@ impl<'a> AstNode<'a, NewTarget> {
     }
 }
 
-impl<'a> AstNode<'a, SpreadElement<'a>> {
+impl<'a> AstNode<'_, 'a, SpreadElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn argument(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.argument,
-            allocator: self.allocator,
-            parent: AstNodes::SpreadElement(transmute_self(self)),
+            parent: AstNodes::SpreadElement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2061,34 +2472,26 @@ impl<'a> AstNode<'a, SpreadElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Argument<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Argument<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            Argument::SpreadElement(s) => AstNodes::SpreadElement(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            Argument::SpreadElement(s) => AstNodeKind::SpreadElement(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
+                following_span_start,
+            }),
             it @ match_expression!(Argument) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, UpdateExpression<'a>> {
+impl<'a> AstNode<'_, 'a, UpdateExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2105,14 +2508,13 @@ impl<'a> AstNode<'a, UpdateExpression<'a>> {
     }
 
     #[inline]
-    pub fn argument(&self) -> &AstNode<'a, SimpleAssignmentTarget<'a>> {
+    pub fn argument(&self) -> AstNode<'_, 'a, SimpleAssignmentTarget<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.argument,
-            allocator: self.allocator,
-            parent: AstNodes::UpdateExpression(transmute_self(self)),
+            parent: AstNodes::UpdateExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2125,7 +2527,7 @@ impl<'a> AstNode<'a, UpdateExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, UnaryExpression<'a>> {
+impl<'a> AstNode<'_, 'a, UnaryExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2137,14 +2539,13 @@ impl<'a> AstNode<'a, UnaryExpression<'a>> {
     }
 
     #[inline]
-    pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn argument(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.argument,
-            allocator: self.allocator,
-            parent: AstNodes::UnaryExpression(transmute_self(self)),
+            parent: AstNodes::UnaryExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2157,21 +2558,20 @@ impl<'a> AstNode<'a, UnaryExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, BinaryExpression<'a>> {
+impl<'a> AstNode<'_, 'a, BinaryExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn left(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::BinaryExpression(transmute_self(self)),
+            parent: AstNodes::BinaryExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -2180,14 +2580,13 @@ impl<'a> AstNode<'a, BinaryExpression<'a>> {
     }
 
     #[inline]
-    pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn right(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::BinaryExpression(transmute_self(self)),
+            parent: AstNodes::BinaryExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2200,32 +2599,30 @@ impl<'a> AstNode<'a, BinaryExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, PrivateInExpression<'a>> {
+impl<'a> AstNode<'_, 'a, PrivateInExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn left(&self) -> &AstNode<'a, PrivateIdentifier<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, PrivateIdentifier<'a>> {
         let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::PrivateInExpression(transmute_self(self)),
+            parent: AstNodes::PrivateInExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn right(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::PrivateInExpression(transmute_self(self)),
+            parent: AstNodes::PrivateInExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2238,21 +2635,20 @@ impl<'a> AstNode<'a, PrivateInExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, LogicalExpression<'a>> {
+impl<'a> AstNode<'_, 'a, LogicalExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn left(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::LogicalExpression(transmute_self(self)),
+            parent: AstNodes::LogicalExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -2261,14 +2657,13 @@ impl<'a> AstNode<'a, LogicalExpression<'a>> {
     }
 
     #[inline]
-    pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn right(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::LogicalExpression(transmute_self(self)),
+            parent: AstNodes::LogicalExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2281,43 +2676,40 @@ impl<'a> AstNode<'a, LogicalExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ConditionalExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ConditionalExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn test(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.consequent.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.test,
-            allocator: self.allocator,
-            parent: AstNodes::ConditionalExpression(transmute_self(self)),
+            parent: AstNodes::ConditionalExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn consequent(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn consequent(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.alternate.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.consequent,
-            allocator: self.allocator,
-            parent: AstNodes::ConditionalExpression(transmute_self(self)),
+            parent: AstNodes::ConditionalExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn alternate(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn alternate(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.alternate,
-            allocator: self.allocator,
-            parent: AstNodes::ConditionalExpression(transmute_self(self)),
+            parent: AstNodes::ConditionalExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2330,7 +2722,7 @@ impl<'a> AstNode<'a, ConditionalExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, AssignmentExpression<'a>> {
+impl<'a> AstNode<'_, 'a, AssignmentExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2342,25 +2734,23 @@ impl<'a> AstNode<'a, AssignmentExpression<'a>> {
     }
 
     #[inline]
-    pub fn left(&self) -> &AstNode<'a, AssignmentTarget<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, AssignmentTarget<'a>> {
         let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentExpression(transmute_self(self)),
+            parent: AstNodes::AssignmentExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn right(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentExpression(transmute_self(self)),
+            parent: AstNodes::AssignmentExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2373,153 +2763,121 @@ impl<'a> AstNode<'a, AssignmentExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, AssignmentTarget<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentTarget<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        #[expect(clippy::needless_return)]
+        let following_span_start = self.following_span_start;
         match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_simple_assignment_target(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_simple_assignment_target(), parent, following_span_start }
+                    .as_kind()
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_assignment_target_pattern(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_assignment_target_pattern(), parent, following_span_start }
+                    .as_kind()
             }
         }
     }
 }
 
-impl<'a> AstNode<'a, SimpleAssignmentTarget<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, SimpleAssignmentTarget<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(s) => {
-                AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
+                AstNodeKind::IdentifierReference(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            SimpleAssignmentTarget::TSAsExpression(s) => {
-                AstNodes::TSAsExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            SimpleAssignmentTarget::TSAsExpression(s) => AstNodeKind::TSAsExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             SimpleAssignmentTarget::TSSatisfiesExpression(s) => {
-                AstNodes::TSSatisfiesExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::TSSatisfiesExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             SimpleAssignmentTarget::TSNonNullExpression(s) => {
-                AstNodes::TSNonNullExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::TSNonNullExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            SimpleAssignmentTarget::TSTypeAssertion(s) => {
-                AstNodes::TSTypeAssertion(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            SimpleAssignmentTarget::TSTypeAssertion(s) => AstNodeKind::TSTypeAssertion(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_member_expression!(SimpleAssignmentTarget) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_member_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_member_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, AssignmentTargetPattern<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetPattern<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(s) => {
-                AstNodes::ArrayAssignmentTarget(self.allocator.alloc(AstNode {
+                AstNodeKind::ArrayAssignmentTarget(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             AssignmentTargetPattern::ObjectAssignmentTarget(s) => {
-                AstNodes::ObjectAssignmentTarget(self.allocator.alloc(AstNode {
+                AstNodeKind::ObjectAssignmentTarget(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
+impl<'a> AstNode<'_, 'a, ArrayAssignmentTarget<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
+    pub fn elements(
+        &self,
+    ) -> AstNode<'_, 'a, ArenaVec<'a, Option<AssignmentTargetMaybeDefault<'a>>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.elements,
-            allocator: self.allocator,
-            parent: AstNodes::ArrayAssignmentTarget(transmute_self(self)),
+            parent: AstNodes::ArrayAssignmentTarget(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn rest(&self) -> Option<&AstNode<'a, AssignmentTargetRest<'a>>> {
+    pub fn rest(&self) -> Option<AstNode<'_, 'a, AssignmentTargetRest<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ArrayAssignmentTarget(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.rest.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ArrayAssignmentTarget(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2532,34 +2890,30 @@ impl<'a> AstNode<'a, ArrayAssignmentTarget<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
+impl<'a> AstNode<'_, 'a, ObjectAssignmentTarget<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>> {
+    pub fn properties(&self) -> AstNode<'_, 'a, ArenaVec<'a, AssignmentTargetProperty<'a>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.properties,
-            allocator: self.allocator,
-            parent: AstNodes::ObjectAssignmentTarget(transmute_self(self)),
+            parent: AstNodes::ObjectAssignmentTarget(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn rest(&self) -> Option<&AstNode<'a, AssignmentTargetRest<'a>>> {
+    pub fn rest(&self) -> Option<AstNode<'_, 'a, AssignmentTargetRest<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ObjectAssignmentTarget(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.rest.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ObjectAssignmentTarget(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2572,21 +2926,20 @@ impl<'a> AstNode<'a, ObjectAssignmentTarget<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
+impl<'a> AstNode<'_, 'a, AssignmentTargetRest<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn target(&self) -> &AstNode<'a, AssignmentTarget<'a>> {
+    pub fn target(&self) -> AstNode<'_, 'a, AssignmentTarget<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.target,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentTargetRest(transmute_self(self)),
+            parent: AstNodes::AssignmentTargetRest(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2599,61 +2952,51 @@ impl<'a> AstNode<'a, AssignmentTargetRest<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetMaybeDefault<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(s) => {
-                AstNodes::AssignmentTargetWithDefault(self.allocator.alloc(AstNode {
+                AstNodeKind::AssignmentTargetWithDefault(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             it @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_assignment_target(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_assignment_target(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, AssignmentTargetWithDefault<'a>> {
+impl<'a> AstNode<'_, 'a, AssignmentTargetWithDefault<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn binding(&self) -> &AstNode<'a, AssignmentTarget<'a>> {
+    pub fn binding(&self) -> AstNode<'_, 'a, AssignmentTarget<'a>> {
         let following_span_start = self.inner.init.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.binding,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentTargetWithDefault(transmute_self(self)),
+            parent: AstNodes::AssignmentTargetWithDefault(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn init(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn init(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.init,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentTargetWithDefault(transmute_self(self)),
+            parent: AstNodes::AssignmentTargetWithDefault(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2666,40 +3009,39 @@ impl<'a> AstNode<'a, AssignmentTargetWithDefault<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, AssignmentTargetProperty<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, AssignmentTargetProperty<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(s) => {
-                AstNodes::AssignmentTargetPropertyIdentifier(self.allocator.alloc(AstNode {
+                AstNodeKind::AssignmentTargetPropertyIdentifier(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(s) => {
-                AstNodes::AssignmentTargetPropertyProperty(self.allocator.alloc(AstNode {
+                AstNodeKind::AssignmentTargetPropertyProperty(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
+impl<'a> AstNode<'_, 'a, AssignmentTargetPropertyIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn binding(&self) -> &AstNode<'a, IdentifierReference<'a>> {
+    pub fn binding(&self) -> AstNode<'_, 'a, IdentifierReference<'a>> {
         let following_span_start = self
             .inner
             .init
@@ -2707,25 +3049,21 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.binding,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentTargetPropertyIdentifier(transmute_self(self)),
+            parent: AstNodes::AssignmentTargetPropertyIdentifier(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn init(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn init(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.init.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::AssignmentTargetPropertyIdentifier(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.init.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::AssignmentTargetPropertyIdentifier(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2738,32 +3076,30 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
+impl<'a> AstNode<'_, 'a, AssignmentTargetPropertyProperty<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn name(&self) -> &AstNode<'a, PropertyKey<'a>> {
+    pub fn name(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
         let following_span_start = self.inner.binding.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.name,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentTargetPropertyProperty(transmute_self(self)),
+            parent: AstNodes::AssignmentTargetPropertyProperty(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn binding(&self) -> &AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
+    pub fn binding(&self) -> AstNode<'_, 'a, AssignmentTargetMaybeDefault<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.binding,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentTargetPropertyProperty(transmute_self(self)),
+            parent: AstNodes::AssignmentTargetPropertyProperty(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -2781,21 +3117,20 @@ impl<'a> AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, SequenceExpression<'a>> {
+impl<'a> AstNode<'_, 'a, SequenceExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expressions(&self) -> &AstNode<'a, ArenaVec<'a, Expression<'a>>> {
+    pub fn expressions(&self) -> AstNode<'_, 'a, ArenaVec<'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expressions,
-            allocator: self.allocator,
-            parent: AstNodes::SequenceExpression(transmute_self(self)),
+            parent: AstNodes::SequenceExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2808,7 +3143,7 @@ impl<'a> AstNode<'a, SequenceExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Super> {
+impl<'a> AstNode<'_, 'a, Super> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -2824,21 +3159,20 @@ impl<'a> AstNode<'a, Super> {
     }
 }
 
-impl<'a> AstNode<'a, AwaitExpression<'a>> {
+impl<'a> AstNode<'_, 'a, AwaitExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn argument(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.argument,
-            allocator: self.allocator,
-            parent: AstNodes::AwaitExpression(transmute_self(self)),
+            parent: AstNodes::AwaitExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2851,21 +3185,20 @@ impl<'a> AstNode<'a, AwaitExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ChainExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ChainExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, ChainElement<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, ChainElement<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::ChainExpression(transmute_self(self)),
+            parent: AstNodes::ChainExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2878,58 +3211,44 @@ impl<'a> AstNode<'a, ChainExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ChainElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ChainElement<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            ChainElement::CallExpression(s) => {
-                AstNodes::CallExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            ChainElement::TSNonNullExpression(s) => {
-                AstNodes::TSNonNullExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            ChainElement::CallExpression(s) => AstNodeKind::CallExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            ChainElement::TSNonNullExpression(s) => AstNodeKind::TSNonNullExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_member_expression!(ChainElement) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_member_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_member_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ParenthesizedExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ParenthesizedExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::ParenthesizedExpression(transmute_self(self)),
+            parent: AstNodes::ParenthesizedExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -2942,189 +3261,128 @@ impl<'a> AstNode<'a, ParenthesizedExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Statement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Statement<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            Statement::BlockStatement(s) => {
-                AstNodes::BlockStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::BreakStatement(s) => {
-                AstNodes::BreakStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::ContinueStatement(s) => {
-                AstNodes::ContinueStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::DebuggerStatement(s) => {
-                AstNodes::DebuggerStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::DoWhileStatement(s) => {
-                AstNodes::DoWhileStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::EmptyStatement(s) => {
-                AstNodes::EmptyStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::ExpressionStatement(s) => {
-                AstNodes::ExpressionStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::ForInStatement(s) => {
-                AstNodes::ForInStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::ForOfStatement(s) => {
-                AstNodes::ForOfStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::ForStatement(s) => AstNodes::ForStatement(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            Statement::BlockStatement(s) => AstNodeKind::BlockStatement(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Statement::IfStatement(s) => AstNodes::IfStatement(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            Statement::BreakStatement(s) => AstNodeKind::BreakStatement(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Statement::LabeledStatement(s) => {
-                AstNodes::LabeledStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::ReturnStatement(s) => {
-                AstNodes::ReturnStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::SwitchStatement(s) => {
-                AstNodes::SwitchStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::ThrowStatement(s) => {
-                AstNodes::ThrowStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::TryStatement(s) => AstNodes::TryStatement(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            Statement::ContinueStatement(s) => AstNodeKind::ContinueStatement(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            Statement::WhileStatement(s) => {
-                AstNodes::WhileStatement(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Statement::WithStatement(s) => AstNodes::WithStatement(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            Statement::DebuggerStatement(s) => AstNodeKind::DebuggerStatement(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
+                following_span_start,
+            }),
+            Statement::DoWhileStatement(s) => AstNodeKind::DoWhileStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::EmptyStatement(s) => AstNodeKind::EmptyStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::ExpressionStatement(s) => AstNodeKind::ExpressionStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::ForInStatement(s) => AstNodeKind::ForInStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::ForOfStatement(s) => AstNodeKind::ForOfStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::ForStatement(s) => AstNodeKind::ForStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::IfStatement(s) => AstNodeKind::IfStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::LabeledStatement(s) => AstNodeKind::LabeledStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::ReturnStatement(s) => AstNodeKind::ReturnStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::SwitchStatement(s) => AstNodeKind::SwitchStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::ThrowStatement(s) => AstNodeKind::ThrowStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::TryStatement(s) => AstNodeKind::TryStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::WhileStatement(s) => AstNodeKind::WhileStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            Statement::WithStatement(s) => AstNodeKind::WithStatement(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_declaration!(Statement) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_declaration(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_declaration(), parent, following_span_start }.as_kind()
             }
             it @ match_module_declaration!(Statement) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_module_declaration(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_module_declaration(), parent, following_span_start }
+                    .as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, Directive<'a>> {
+impl<'a> AstNode<'_, 'a, Directive<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, StringLiteral<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::Directive(transmute_self(self)),
+            parent: AstNodes::Directive(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -3142,7 +3400,7 @@ impl<'a> AstNode<'a, Directive<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Hashbang<'a>> {
+impl<'a> AstNode<'_, 'a, Hashbang<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3163,21 +3421,20 @@ impl<'a> AstNode<'a, Hashbang<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, BlockStatement<'a>> {
+impl<'a> AstNode<'_, 'a, BlockStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
+    pub fn body(&self) -> AstNode<'_, 'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::BlockStatement(transmute_self(self)),
+            parent: AstNodes::BlockStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3190,95 +3447,74 @@ impl<'a> AstNode<'a, BlockStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Declaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, Declaration<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            Declaration::VariableDeclaration(s) => {
-                AstNodes::VariableDeclaration(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Declaration::FunctionDeclaration(s) => {
-                AstNodes::Function(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            Declaration::ClassDeclaration(s) => AstNodes::Class(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            Declaration::VariableDeclaration(s) => AstNodeKind::VariableDeclaration(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
+                following_span_start,
+            }),
+            Declaration::FunctionDeclaration(s) => {
+                AstNodeKind::Function(AstNode { inner: s.as_ref(), parent, following_span_start })
+            }
+            Declaration::ClassDeclaration(s) => {
+                AstNodeKind::Class(AstNode { inner: s.as_ref(), parent, following_span_start })
+            }
             Declaration::TSTypeAliasDeclaration(s) => {
-                AstNodes::TSTypeAliasDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSTypeAliasDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             Declaration::TSInterfaceDeclaration(s) => {
-                AstNodes::TSInterfaceDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSInterfaceDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            Declaration::TSEnumDeclaration(s) => {
-                AstNodes::TSEnumDeclaration(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            Declaration::TSEnumDeclaration(s) => AstNodeKind::TSEnumDeclaration(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             Declaration::TSExternalModuleDeclaration(s) => {
-                AstNodes::TSExternalModuleDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSExternalModuleDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             Declaration::TSNamespaceDeclaration(s) => {
-                AstNodes::TSNamespaceDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSNamespaceDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            Declaration::TSGlobalDeclaration(s) => {
-                AstNodes::TSGlobalDeclaration(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            Declaration::TSGlobalDeclaration(s) => AstNodeKind::TSGlobalDeclaration(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             Declaration::TSImportEqualsDeclaration(s) => {
-                AstNodes::TSImportEqualsDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSImportEqualsDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, VariableDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, VariableDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3290,14 +3526,13 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn declarations(&self) -> &AstNode<'a, ArenaVec<'a, VariableDeclarator<'a>>> {
+    pub fn declarations(&self) -> AstNode<'_, 'a, ArenaVec<'a, VariableDeclarator<'a>>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.declarations,
-            allocator: self.allocator,
-            parent: AstNodes::VariableDeclaration(transmute_self(self)),
+            parent: AstNodes::VariableDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -3315,14 +3550,14 @@ impl<'a> AstNode<'a, VariableDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, VariableDeclarator<'a>> {
+impl<'a> AstNode<'_, 'a, VariableDeclarator<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, BindingPattern<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, BindingPattern<'a>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -3331,16 +3566,15 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
             .or_else(|| self.inner.init.as_ref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::VariableDeclarator(transmute_self(self)),
+            parent: AstNodes::VariableDeclarator(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self
             .inner
             .init
@@ -3348,27 +3582,21 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::VariableDeclarator(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::VariableDeclarator(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn init(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn init(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.init.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::VariableDeclarator(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.init.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::VariableDeclarator(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -3386,7 +3614,7 @@ impl<'a> AstNode<'a, VariableDeclarator<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, EmptyStatement> {
+impl<'a> AstNode<'_, 'a, EmptyStatement> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3402,21 +3630,20 @@ impl<'a> AstNode<'a, EmptyStatement> {
     }
 }
 
-impl<'a> AstNode<'a, ExpressionStatement<'a>> {
+impl<'a> AstNode<'_, 'a, ExpressionStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::ExpressionStatement(transmute_self(self)),
+            parent: AstNodes::ExpressionStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3429,45 +3656,40 @@ impl<'a> AstNode<'a, ExpressionStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, IfStatement<'a>> {
+impl<'a> AstNode<'_, 'a, IfStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn test(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.consequent.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.test,
-            allocator: self.allocator,
-            parent: AstNodes::IfStatement(transmute_self(self)),
+            parent: AstNodes::IfStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn consequent(&self) -> &AstNode<'a, Statement<'a>> {
+    pub fn consequent(&self) -> AstNode<'_, 'a, Statement<'a>> {
         let following_span_start = self.inner.alternate.as_ref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.consequent,
-            allocator: self.allocator,
-            parent: AstNodes::IfStatement(transmute_self(self)),
+            parent: AstNodes::IfStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn alternate(&self) -> Option<&AstNode<'a, Statement<'a>>> {
+    pub fn alternate(&self) -> Option<AstNode<'_, 'a, Statement<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.alternate.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::IfStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.alternate.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::IfStatement(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3480,32 +3702,30 @@ impl<'a> AstNode<'a, IfStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, DoWhileStatement<'a>> {
+impl<'a> AstNode<'_, 'a, DoWhileStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, Statement<'a>> {
         let following_span_start = self.inner.test.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::DoWhileStatement(transmute_self(self)),
+            parent: AstNodes::DoWhileStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn test(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.test,
-            allocator: self.allocator,
-            parent: AstNodes::DoWhileStatement(transmute_self(self)),
+            parent: AstNodes::DoWhileStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3518,32 +3738,30 @@ impl<'a> AstNode<'a, DoWhileStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, WhileStatement<'a>> {
+impl<'a> AstNode<'_, 'a, WhileStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn test(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn test(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.test,
-            allocator: self.allocator,
-            parent: AstNodes::WhileStatement(transmute_self(self)),
+            parent: AstNodes::WhileStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, Statement<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::WhileStatement(transmute_self(self)),
+            parent: AstNodes::WhileStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3556,14 +3774,14 @@ impl<'a> AstNode<'a, WhileStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ForStatement<'a>> {
+impl<'a> AstNode<'_, 'a, ForStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn init(&self) -> Option<&AstNode<'a, ForStatementInit<'a>>> {
+    pub fn init(&self) -> Option<AstNode<'_, 'a, ForStatementInit<'a>>> {
         let following_span_start = self
             .inner
             .test
@@ -3572,18 +3790,15 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
             .or_else(|| self.inner.update.as_ref().map(|n| n.span().start))
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.init.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ForStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.init.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::ForStatement(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn test(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn test(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self
             .inner
             .update
@@ -3591,38 +3806,31 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.test.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ForStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
-    }
-
-    #[inline]
-    pub fn update(&self) -> Option<&AstNode<'a, Expression<'a>>> {
-        let following_span_start = self.inner.body.span().start;
-        self.allocator
-            .alloc(self.inner.update.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ForStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
-    }
-
-    #[inline]
-    pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
-        let following_span_start = 0;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::ForStatement(transmute_self(self)),
+        self.inner.test.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::ForStatement(self),
             following_span_start,
         })
+    }
+
+    #[inline]
+    pub fn update(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
+        let following_span_start = self.inner.body.span().start;
+        self.inner.update.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::ForStatement(self),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn body(&self) -> AstNode<'_, 'a, Statement<'a>> {
+        let following_span_start = 0;
+        AstNode {
+            inner: &self.inner.body,
+            parent: AstNodes::ForStatement(self),
+            following_span_start,
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3635,72 +3843,59 @@ impl<'a> AstNode<'a, ForStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ForStatementInit<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ForStatementInit<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            ForStatementInit::VariableDeclaration(s) => {
-                AstNodes::VariableDeclaration(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            ForStatementInit::VariableDeclaration(s) => AstNodeKind::VariableDeclaration(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_expression!(ForStatementInit) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ForInStatement<'a>> {
+impl<'a> AstNode<'_, 'a, ForInStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn left(&self) -> &AstNode<'a, ForStatementLeft<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, ForStatementLeft<'a>> {
         let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::ForInStatement(transmute_self(self)),
+            parent: AstNodes::ForInStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn right(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::ForInStatement(transmute_self(self)),
+            parent: AstNodes::ForInStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, Statement<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::ForInStatement(transmute_self(self)),
+            parent: AstNodes::ForInStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3713,36 +3908,26 @@ impl<'a> AstNode<'a, ForInStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ForStatementLeft<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ForStatementLeft<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            ForStatementLeft::VariableDeclaration(s) => {
-                AstNodes::VariableDeclaration(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            ForStatementLeft::VariableDeclaration(s) => AstNodeKind::VariableDeclaration(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_assignment_target!(ForStatementLeft) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_assignment_target(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_assignment_target(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ForOfStatement<'a>> {
+impl<'a> AstNode<'_, 'a, ForOfStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -3754,34 +3939,57 @@ impl<'a> AstNode<'a, ForOfStatement<'a>> {
     }
 
     #[inline]
-    pub fn left(&self) -> &AstNode<'a, ForStatementLeft<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, ForStatementLeft<'a>> {
         let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::ForOfStatement(transmute_self(self)),
+            parent: AstNodes::ForOfStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn right(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::ForOfStatement(transmute_self(self)),
+            parent: AstNodes::ForOfStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, Statement<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::ForOfStatement(transmute_self(self)),
+            parent: AstNodes::ForOfStatement(self),
+            following_span_start,
+        }
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, ContinueStatement<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn label(&self) -> Option<AstNode<'_, 'a, LabelIdentifier<'a>>> {
+        let following_span_start = 0;
+        self.inner.label.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::ContinueStatement(self),
             following_span_start,
         })
     }
@@ -3796,23 +4004,20 @@ impl<'a> AstNode<'a, ForOfStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ContinueStatement<'a>> {
+impl<'a> AstNode<'_, 'a, BreakStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn label(&self) -> Option<&AstNode<'a, LabelIdentifier<'a>>> {
+    pub fn label(&self) -> Option<AstNode<'_, 'a, LabelIdentifier<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.label.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ContinueStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.label.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::BreakStatement(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3825,23 +4030,20 @@ impl<'a> AstNode<'a, ContinueStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, BreakStatement<'a>> {
+impl<'a> AstNode<'_, 'a, ReturnStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn label(&self) -> Option<&AstNode<'a, LabelIdentifier<'a>>> {
+    pub fn argument(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.label.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::BreakStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.argument.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::ReturnStatement(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3854,61 +4056,30 @@ impl<'a> AstNode<'a, BreakStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ReturnStatement<'a>> {
+impl<'a> AstNode<'_, 'a, WithStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn argument(&self) -> Option<&AstNode<'a, Expression<'a>>> {
-        let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ReturnStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
-    }
-
-    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_leading_comments(self.span()).fmt(f);
-    }
-
-    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-            .fmt(f);
-    }
-}
-
-impl<'a> AstNode<'a, WithStatement<'a>> {
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn object(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn object(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.object,
-            allocator: self.allocator,
-            parent: AstNodes::WithStatement(transmute_self(self)),
+            parent: AstNodes::WithStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, Statement<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::WithStatement(transmute_self(self)),
+            parent: AstNodes::WithStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3921,32 +4092,30 @@ impl<'a> AstNode<'a, WithStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, SwitchStatement<'a>> {
+impl<'a> AstNode<'_, 'a, SwitchStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn discriminant(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn discriminant(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.cases.first().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.discriminant,
-            allocator: self.allocator,
-            parent: AstNodes::SwitchStatement(transmute_self(self)),
+            parent: AstNodes::SwitchStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn cases(&self) -> &AstNode<'a, ArenaVec<'a, SwitchCase<'a>>> {
+    pub fn cases(&self) -> AstNode<'_, 'a, ArenaVec<'a, SwitchCase<'a>>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.cases,
-            allocator: self.allocator,
-            parent: AstNodes::SwitchStatement(transmute_self(self)),
+            parent: AstNodes::SwitchStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -3959,14 +4128,14 @@ impl<'a> AstNode<'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, SwitchCase<'a>> {
+impl<'a> AstNode<'_, 'a, SwitchCase<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn test(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn test(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self
             .inner
             .consequent
@@ -3974,25 +4143,21 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.test.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::SwitchCase(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.test.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::SwitchCase(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn consequent(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
+    pub fn consequent(&self) -> AstNode<'_, 'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.consequent,
-            allocator: self.allocator,
-            parent: AstNodes::SwitchCase(transmute_self(self)),
+            parent: AstNodes::SwitchCase(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4005,32 +4170,30 @@ impl<'a> AstNode<'a, SwitchCase<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, LabeledStatement<'a>> {
+impl<'a> AstNode<'_, 'a, LabeledStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn label(&self) -> &AstNode<'a, LabelIdentifier<'a>> {
+    pub fn label(&self) -> AstNode<'_, 'a, LabelIdentifier<'a>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.label,
-            allocator: self.allocator,
-            parent: AstNodes::LabeledStatement(transmute_self(self)),
+            parent: AstNodes::LabeledStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, Statement<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, Statement<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::LabeledStatement(transmute_self(self)),
+            parent: AstNodes::LabeledStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4043,21 +4206,20 @@ impl<'a> AstNode<'a, LabeledStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ThrowStatement<'a>> {
+impl<'a> AstNode<'_, 'a, ThrowStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn argument(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.argument,
-            allocator: self.allocator,
-            parent: AstNodes::ThrowStatement(transmute_self(self)),
+            parent: AstNodes::ThrowStatement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4070,14 +4232,14 @@ impl<'a> AstNode<'a, ThrowStatement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TryStatement<'a>> {
+impl<'a> AstNode<'_, 'a, TryStatement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn block(&self) -> &AstNode<'a, BlockStatement<'a>> {
+    pub fn block(&self) -> AstNode<'_, 'a, BlockStatement<'a>> {
         let following_span_start = self
             .inner
             .handler
@@ -4085,76 +4247,29 @@ impl<'a> AstNode<'a, TryStatement<'a>> {
             .map(|n| n.span().start)
             .or_else(|| self.inner.finalizer.as_deref().map(|n| n.span().start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.block.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TryStatement(transmute_self(self)),
+            parent: AstNodes::TryStatement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn handler(&self) -> Option<&AstNode<'a, CatchClause<'a>>> {
+    pub fn handler(&self) -> Option<AstNode<'_, 'a, CatchClause<'a>>> {
         let following_span_start = self.inner.finalizer.as_deref().map_or(0, |n| n.span().start);
-        self.allocator
-            .alloc(self.inner.handler.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TryStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.handler.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TryStatement(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn finalizer(&self) -> Option<&AstNode<'a, BlockStatement<'a>>> {
+    pub fn finalizer(&self) -> Option<AstNode<'_, 'a, BlockStatement<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.finalizer.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TryStatement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
-    }
-
-    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_leading_comments(self.span()).fmt(f);
-    }
-
-    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-            .fmt(f);
-    }
-}
-
-impl<'a> AstNode<'a, CatchClause<'a>> {
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn param(&self) -> Option<&AstNode<'a, CatchParameter<'a>>> {
-        let following_span_start = self.inner.body.span().start;
-        self.allocator
-            .alloc(self.inner.param.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::CatchClause(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
-    }
-
-    #[inline]
-    pub fn body(&self) -> &AstNode<'a, BlockStatement<'a>> {
-        let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
-            inner: self.inner.body.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::CatchClause(transmute_self(self)),
+        self.inner.finalizer.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TryStatement(self),
             following_span_start,
         })
     }
@@ -4169,14 +4284,50 @@ impl<'a> AstNode<'a, CatchClause<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, CatchParameter<'a>> {
+impl<'a> AstNode<'_, 'a, CatchClause<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn pattern(&self) -> &AstNode<'a, BindingPattern<'a>> {
+    pub fn param(&self) -> Option<AstNode<'_, 'a, CatchParameter<'a>>> {
+        let following_span_start = self.inner.body.span().start;
+        self.inner.param.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::CatchClause(self),
+            following_span_start,
+        })
+    }
+
+    #[inline]
+    pub fn body(&self) -> AstNode<'_, 'a, BlockStatement<'a>> {
+        let following_span_start = self.following_span_start;
+        AstNode {
+            inner: self.inner.body.as_ref(),
+            parent: AstNodes::CatchClause(self),
+            following_span_start,
+        }
+    }
+
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, CatchParameter<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn pattern(&self) -> AstNode<'_, 'a, BindingPattern<'a>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -4184,25 +4335,21 @@ impl<'a> AstNode<'a, CatchParameter<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.pattern,
-            allocator: self.allocator,
-            parent: AstNodes::CatchParameter(transmute_self(self)),
+            parent: AstNodes::CatchParameter(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::CatchParameter(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::CatchParameter(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4215,7 +4362,7 @@ impl<'a> AstNode<'a, CatchParameter<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, DebuggerStatement> {
+impl<'a> AstNode<'_, 'a, DebuggerStatement> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4231,114 +4378,61 @@ impl<'a> AstNode<'a, DebuggerStatement> {
     }
 }
 
-impl<'a> AstNode<'a, BindingPattern<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, BindingPattern<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            BindingPattern::BindingIdentifier(s) => {
-                AstNodes::BindingIdentifier(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            BindingPattern::ObjectPattern(s) => {
-                AstNodes::ObjectPattern(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            BindingPattern::ArrayPattern(s) => {
-                AstNodes::ArrayPattern(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            BindingPattern::AssignmentPattern(s) => {
-                AstNodes::AssignmentPattern(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
-    }
-}
-
-impl<'a> AstNode<'a, AssignmentPattern<'a>> {
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn left(&self) -> &AstNode<'a, BindingPattern<'a>> {
-        let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentPattern(transmute_self(self)),
-            following_span_start,
-        })
-    }
-
-    #[inline]
-    pub fn right(&self) -> &AstNode<'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::AssignmentPattern(transmute_self(self)),
-            following_span_start,
-        })
-    }
-
-    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_leading_comments(self.span()).fmt(f);
-    }
-
-    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-            .fmt(f);
-    }
-}
-
-impl<'a> AstNode<'a, ObjectPattern<'a>> {
-    #[inline]
-    pub fn node_id(&self) -> NodeId {
-        self.inner.node_id()
-    }
-
-    #[inline]
-    pub fn properties(&self) -> &AstNode<'a, ArenaVec<'a, BindingProperty<'a>>> {
-        let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.properties,
-            allocator: self.allocator,
-            parent: AstNodes::ObjectPattern(transmute_self(self)),
-            following_span_start,
-        })
-    }
-
-    #[inline]
-    pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
-        let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ObjectPattern(transmute_self(self)),
+        match self.inner {
+            BindingPattern::BindingIdentifier(s) => AstNodeKind::BindingIdentifier(AstNode {
+                inner: s.as_ref(),
+                parent,
                 following_span_start,
-            }))
-            .as_ref()
+            }),
+            BindingPattern::ObjectPattern(s) => AstNodeKind::ObjectPattern(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            BindingPattern::ArrayPattern(s) => AstNodeKind::ArrayPattern(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            BindingPattern::AssignmentPattern(s) => AstNodeKind::AssignmentPattern(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
+    }
+}
+
+impl<'a> AstNode<'_, 'a, AssignmentPattern<'a>> {
+    #[inline]
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn left(&self) -> AstNode<'_, 'a, BindingPattern<'a>> {
+        let following_span_start = self.inner.right.span().start;
+        AstNode {
+            inner: &self.inner.left,
+            parent: AstNodes::AssignmentPattern(self),
+            following_span_start,
+        }
+    }
+
+    #[inline]
+    pub fn right(&self) -> AstNode<'_, 'a, Expression<'a>> {
+        let following_span_start = self.following_span_start;
+        AstNode {
+            inner: &self.inner.right,
+            parent: AstNodes::AssignmentPattern(self),
+            following_span_start,
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4351,32 +4445,66 @@ impl<'a> AstNode<'a, ObjectPattern<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, BindingProperty<'a>> {
+impl<'a> AstNode<'_, 'a, ObjectPattern<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
-        let following_span_start = self.inner.value.span().start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::BindingProperty(transmute_self(self)),
+    pub fn properties(&self) -> AstNode<'_, 'a, ArenaVec<'a, BindingProperty<'a>>> {
+        let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
+        AstNode {
+            inner: &self.inner.properties,
+            parent: AstNodes::ObjectPattern(self),
+            following_span_start,
+        }
+    }
+
+    #[inline]
+    pub fn rest(&self) -> Option<AstNode<'_, 'a, BindingRestElement<'a>>> {
+        let following_span_start = 0;
+        self.inner.rest.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ObjectPattern(self),
             following_span_start,
         })
     }
 
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'a> AstNode<'_, 'a, BindingProperty<'a>> {
     #[inline]
-    pub fn value(&self) -> &AstNode<'a, BindingPattern<'a>> {
-        let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.value,
-            allocator: self.allocator,
-            parent: AstNodes::BindingProperty(transmute_self(self)),
+    pub fn node_id(&self) -> NodeId {
+        self.inner.node_id()
+    }
+
+    #[inline]
+    pub fn key(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
+        let following_span_start = self.inner.value.span().start;
+        AstNode {
+            inner: &self.inner.key,
+            parent: AstNodes::BindingProperty(self),
             following_span_start,
-        })
+        }
+    }
+
+    #[inline]
+    pub fn value(&self) -> AstNode<'_, 'a, BindingPattern<'a>> {
+        let following_span_start = self.following_span_start;
+        AstNode {
+            inner: &self.inner.value,
+            parent: AstNodes::BindingProperty(self),
+            following_span_start,
+        }
     }
 
     #[inline]
@@ -4399,34 +4527,30 @@ impl<'a> AstNode<'a, BindingProperty<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ArrayPattern<'a>> {
+impl<'a> AstNode<'_, 'a, ArrayPattern<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn elements(&self) -> &AstNode<'a, ArenaVec<'a, Option<BindingPattern<'a>>>> {
+    pub fn elements(&self) -> AstNode<'_, 'a, ArenaVec<'a, Option<BindingPattern<'a>>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.elements,
-            allocator: self.allocator,
-            parent: AstNodes::ArrayPattern(transmute_self(self)),
+            parent: AstNodes::ArrayPattern(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn rest(&self) -> Option<&AstNode<'a, BindingRestElement<'a>>> {
+    pub fn rest(&self) -> Option<AstNode<'_, 'a, BindingRestElement<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ArrayPattern(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.rest.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ArrayPattern(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4439,21 +4563,20 @@ impl<'a> AstNode<'a, ArrayPattern<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, BindingRestElement<'a>> {
+impl<'a> AstNode<'_, 'a, BindingRestElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn argument(&self) -> &AstNode<'a, BindingPattern<'a>> {
+    pub fn argument(&self) -> AstNode<'_, 'a, BindingPattern<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.argument,
-            allocator: self.allocator,
-            parent: AstNodes::BindingRestElement(transmute_self(self)),
+            parent: AstNodes::BindingRestElement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4466,7 +4589,7 @@ impl<'a> AstNode<'a, BindingRestElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Function<'a>> {
+impl<'a> AstNode<'_, 'a, Function<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4478,7 +4601,7 @@ impl<'a> AstNode<'a, Function<'a>> {
     }
 
     #[inline]
-    pub fn id(&self) -> Option<&AstNode<'a, BindingIdentifier<'a>>> {
+    pub fn id(&self) -> Option<AstNode<'_, 'a, BindingIdentifier<'a>>> {
         let following_span_start = self
             .inner
             .type_parameters
@@ -4487,14 +4610,11 @@ impl<'a> AstNode<'a, Function<'a>> {
             .or_else(|| self.inner.this_param.as_deref().map(|n| n.span().start))
             .or_else(|| Some(self.inner.params.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.id.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::Function(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.id.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::Function(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -4513,7 +4633,7 @@ impl<'a> AstNode<'a, Function<'a>> {
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self
             .inner
             .this_param
@@ -4521,31 +4641,25 @@ impl<'a> AstNode<'a, Function<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.params.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::Function(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::Function(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
+    pub fn this_param(&self) -> Option<AstNode<'_, 'a, TSThisParameter<'a>>> {
         let following_span_start = self.inner.params.span().start;
-        self.allocator
-            .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::Function(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.this_param.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::Function(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+    pub fn params(&self) -> AstNode<'_, 'a, FormalParameters<'a>> {
         let following_span_start = self
             .inner
             .return_type
@@ -4554,16 +4668,15 @@ impl<'a> AstNode<'a, Function<'a>> {
             .or_else(|| self.inner.body.as_deref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.params.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::Function(transmute_self(self)),
+            parent: AstNodes::Function(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn return_type(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self
             .inner
             .body
@@ -4571,27 +4684,21 @@ impl<'a> AstNode<'a, Function<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::Function(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.return_type.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::Function(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn body(&self) -> Option<&AstNode<'a, FunctionBody<'a>>> {
+    pub fn body(&self) -> Option<AstNode<'_, 'a, FunctionBody<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.body.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::Function(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.body.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::Function(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -4614,7 +4721,7 @@ impl<'a> AstNode<'a, Function<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, FormalParameters<'a>> {
+impl<'a> AstNode<'_, 'a, FormalParameters<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4626,27 +4733,23 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
     }
 
     #[inline]
-    pub fn items(&self) -> &AstNode<'a, ArenaVec<'a, FormalParameter<'a>>> {
+    pub fn items(&self) -> AstNode<'_, 'a, ArenaVec<'a, FormalParameter<'a>>> {
         let following_span_start = self.inner.rest.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.items,
-            allocator: self.allocator,
-            parent: AstNodes::FormalParameters(transmute_self(self)),
+            parent: AstNodes::FormalParameters(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn rest(&self) -> Option<&AstNode<'a, FormalParameterRest<'a>>> {
+    pub fn rest(&self) -> Option<AstNode<'_, 'a, FormalParameterRest<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.rest.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::FormalParameters(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.rest.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::FormalParameters(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4659,25 +4762,24 @@ impl<'a> AstNode<'a, FormalParameters<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, FormalParameter<'a>> {
+impl<'a> AstNode<'_, 'a, FormalParameter<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.pattern.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.decorators,
-            allocator: self.allocator,
-            parent: AstNodes::FormalParameter(transmute_self(self)),
+            parent: AstNodes::FormalParameter(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn pattern(&self) -> &AstNode<'a, BindingPattern<'a>> {
+    pub fn pattern(&self) -> AstNode<'_, 'a, BindingPattern<'a>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -4686,16 +4788,15 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
             .or_else(|| self.inner.initializer.as_deref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.pattern,
-            allocator: self.allocator,
-            parent: AstNodes::FormalParameter(transmute_self(self)),
+            parent: AstNodes::FormalParameter(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self
             .inner
             .initializer
@@ -4703,27 +4804,21 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::FormalParameter(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::FormalParameter(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn initializer(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn initializer(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.initializer.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::FormalParameter(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.initializer.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::FormalParameter(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -4756,25 +4851,24 @@ impl<'a> AstNode<'a, FormalParameter<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, FormalParameterRest<'a>> {
+impl<'a> AstNode<'_, 'a, FormalParameterRest<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.rest.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.decorators,
-            allocator: self.allocator,
-            parent: AstNodes::FormalParameterRest(transmute_self(self)),
+            parent: AstNodes::FormalParameterRest(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn rest(&self) -> &AstNode<'a, BindingRestElement<'a>> {
+    pub fn rest(&self) -> AstNode<'_, 'a, BindingRestElement<'a>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -4782,25 +4876,21 @@ impl<'a> AstNode<'a, FormalParameterRest<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.rest,
-            allocator: self.allocator,
-            parent: AstNodes::FormalParameterRest(transmute_self(self)),
+            parent: AstNodes::FormalParameterRest(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::FormalParameterRest(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::FormalParameterRest(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4813,14 +4903,14 @@ impl<'a> AstNode<'a, FormalParameterRest<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, FunctionBody<'a>> {
+impl<'a> AstNode<'_, 'a, FunctionBody<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> AstNode<'_, 'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .statements
@@ -4828,23 +4918,21 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.directives,
-            allocator: self.allocator,
-            parent: AstNodes::FunctionBody(transmute_self(self)),
+            parent: AstNodes::FunctionBody(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn statements(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
+    pub fn statements(&self) -> AstNode<'_, 'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.statements,
-            allocator: self.allocator,
-            parent: AstNodes::FunctionBody(transmute_self(self)),
+            parent: AstNodes::FunctionBody(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -4857,36 +4945,26 @@ impl<'a> AstNode<'a, FunctionBody<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ArrowFunctionBody<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ArrowFunctionBody<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            ArrowFunctionBody::FunctionBody(s) => {
-                AstNodes::FunctionBody(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            ArrowFunctionBody::FunctionBody(s) => AstNodeKind::FunctionBody(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_expression!(ArrowFunctionBody) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4898,20 +4976,17 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self.inner.params.span().start;
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ArrowFunctionExpression(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ArrowFunctionExpression(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+    pub fn params(&self) -> AstNode<'_, 'a, FormalParameters<'a>> {
         let following_span_start = self
             .inner
             .return_type
@@ -4919,36 +4994,31 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.params.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::ArrowFunctionExpression(transmute_self(self)),
+            parent: AstNodes::ArrowFunctionExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn return_type(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ArrowFunctionExpression(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.return_type.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ArrowFunctionExpression(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, ArrowFunctionBody<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, ArrowFunctionBody<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::ArrowFunctionExpression(transmute_self(self)),
+            parent: AstNodes::ArrowFunctionExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -4971,7 +5041,7 @@ impl<'a> AstNode<'a, ArrowFunctionExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, YieldExpression<'a>> {
+impl<'a> AstNode<'_, 'a, YieldExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -4983,16 +5053,13 @@ impl<'a> AstNode<'a, YieldExpression<'a>> {
     }
 
     #[inline]
-    pub fn argument(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn argument(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.argument.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::YieldExpression(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.argument.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::YieldExpression(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -5005,7 +5072,7 @@ impl<'a> AstNode<'a, YieldExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Class<'a>> {
+impl<'a> AstNode<'_, 'a, Class<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5017,7 +5084,7 @@ impl<'a> AstNode<'a, Class<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self
             .inner
             .id
@@ -5028,16 +5095,15 @@ impl<'a> AstNode<'a, Class<'a>> {
             .or_else(|| self.inner.implements.first().map(|n| n.span().start))
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.decorators,
-            allocator: self.allocator,
-            parent: AstNodes::Class(transmute_self(self)),
+            parent: AstNodes::Class(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn id(&self) -> Option<&AstNode<'a, BindingIdentifier<'a>>> {
+    pub fn id(&self) -> Option<AstNode<'_, 'a, BindingIdentifier<'a>>> {
         let following_span_start = self
             .inner
             .type_parameters
@@ -5047,18 +5113,15 @@ impl<'a> AstNode<'a, Class<'a>> {
             .or_else(|| self.inner.implements.first().map(|n| n.span().start))
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.id.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::Class(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.id.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::Class(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self
             .inner
             .heritage
@@ -5067,18 +5130,15 @@ impl<'a> AstNode<'a, Class<'a>> {
             .or_else(|| self.inner.implements.first().map(|n| n.span().start))
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::Class(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::Class(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn heritage(&self) -> Option<&AstNode<'a, ClassHeritage<'a>>> {
+    pub fn heritage(&self) -> Option<AstNode<'_, 'a, ClassHeritage<'a>>> {
         let following_span_start = self
             .inner
             .implements
@@ -5086,36 +5146,31 @@ impl<'a> AstNode<'a, Class<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.heritage.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::Class(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.heritage.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::Class(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn implements(&self) -> &AstNode<'a, ArenaVec<'a, TSClassImplements<'a>>> {
+    pub fn implements(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSClassImplements<'a>>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.implements,
-            allocator: self.allocator,
-            parent: AstNodes::Class(transmute_self(self)),
+            parent: AstNodes::Class(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, ClassBody<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, ClassBody<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.body.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::Class(transmute_self(self)),
+            parent: AstNodes::Class(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -5138,9 +5193,9 @@ impl<'a> AstNode<'a, Class<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ClassHeritage<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ClassHeritage<'a>> {
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'me, 'a, Expression<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -5148,25 +5203,17 @@ impl<'a> AstNode<'a, ClassHeritage<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: self.parent,
-            following_span_start,
-        })
+        AstNode { inner: &self.inner.expression, parent: self.parent, following_span_start }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'me, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: self.parent,
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: self.parent,
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -5179,21 +5226,16 @@ impl<'a> AstNode<'a, ClassHeritage<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ClassBody<'a>> {
+impl<'a> AstNode<'_, 'a, ClassBody<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, ClassElement<'a>>> {
+    pub fn body(&self) -> AstNode<'_, 'a, ArenaVec<'a, ClassElement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::ClassBody(transmute_self(self)),
-            following_span_start,
-        })
+        AstNode { inner: &self.inner.body, parent: AstNodes::ClassBody(self), following_span_start }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -5206,55 +5248,43 @@ impl<'a> AstNode<'a, ClassBody<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ClassElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ClassElement<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            ClassElement::StaticBlock(s) => AstNodes::StaticBlock(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            ClassElement::StaticBlock(s) => AstNodeKind::StaticBlock(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            ClassElement::MethodDefinition(s) => {
-                AstNodes::MethodDefinition(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            ClassElement::PropertyDefinition(s) => {
-                AstNodes::PropertyDefinition(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            ClassElement::AccessorProperty(s) => {
-                AstNodes::AccessorProperty(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            ClassElement::TSIndexSignature(s) => {
-                AstNodes::TSIndexSignature(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+                following_span_start,
+            }),
+            ClassElement::MethodDefinition(s) => AstNodeKind::MethodDefinition(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            ClassElement::PropertyDefinition(s) => AstNodeKind::PropertyDefinition(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            ClassElement::AccessorProperty(s) => AstNodeKind::AccessorProperty(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            ClassElement::TSIndexSignature(s) => AstNodeKind::TSIndexSignature(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, MethodDefinition<'a>> {
+impl<'a> AstNode<'_, 'a, MethodDefinition<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5266,36 +5296,33 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.decorators,
-            allocator: self.allocator,
-            parent: AstNodes::MethodDefinition(transmute_self(self)),
+            parent: AstNodes::MethodDefinition(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+    pub fn key(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
         let following_span_start = self.inner.value.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::MethodDefinition(transmute_self(self)),
+            parent: AstNodes::MethodDefinition(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn value(&self) -> &AstNode<'a, Function<'a>> {
+    pub fn value(&self) -> AstNode<'_, 'a, Function<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.value.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::MethodDefinition(transmute_self(self)),
+            parent: AstNodes::MethodDefinition(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -5338,7 +5365,7 @@ impl<'a> AstNode<'a, MethodDefinition<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, PropertyDefinition<'a>> {
+impl<'a> AstNode<'_, 'a, PropertyDefinition<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5350,18 +5377,17 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.decorators,
-            allocator: self.allocator,
-            parent: AstNodes::PropertyDefinition(transmute_self(self)),
+            parent: AstNodes::PropertyDefinition(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+    pub fn key(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -5370,16 +5396,15 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
             .or_else(|| self.inner.value.as_ref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::PropertyDefinition(transmute_self(self)),
+            parent: AstNodes::PropertyDefinition(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self
             .inner
             .value
@@ -5387,27 +5412,21 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::PropertyDefinition(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::PropertyDefinition(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn value(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn value(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.value.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::PropertyDefinition(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.value.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::PropertyDefinition(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -5460,7 +5479,7 @@ impl<'a> AstNode<'a, PropertyDefinition<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
+impl<'a> AstNode<'_, 'a, PrivateIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5481,21 +5500,20 @@ impl<'a> AstNode<'a, PrivateIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, StaticBlock<'a>> {
+impl<'a> AstNode<'_, 'a, StaticBlock<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
+    pub fn body(&self) -> AstNode<'_, 'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::StaticBlock(transmute_self(self)),
+            parent: AstNodes::StaticBlock(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -5508,81 +5526,68 @@ impl<'a> AstNode<'a, StaticBlock<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ModuleDeclaration<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ModuleDeclaration<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            ModuleDeclaration::ImportDeclaration(s) => {
-                AstNodes::ImportDeclaration(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            ModuleDeclaration::ImportDeclaration(s) => AstNodeKind::ImportDeclaration(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             ModuleDeclaration::ExportAllDeclaration(s) => {
-                AstNodes::ExportAllDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::ExportAllDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             ModuleDeclaration::ExportDefaultDeclaration(s) => {
-                AstNodes::ExportDefaultDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::ExportDefaultDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            ModuleDeclaration::ExportDeclaration(s) => {
-                AstNodes::ExportDeclaration(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            ModuleDeclaration::ExportDeclaration(s) => AstNodeKind::ExportDeclaration(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             ModuleDeclaration::ExportNamedDeclaration(s) => {
-                AstNodes::ExportNamedDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::ExportNamedDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             ModuleDeclaration::ExportFromDeclaration(s) => {
-                AstNodes::ExportFromDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::ExportFromDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            ModuleDeclaration::TSExportAssignment(s) => {
-                AstNodes::TSExportAssignment(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+            ModuleDeclaration::TSExportAssignment(s) => AstNodeKind::TSExportAssignment(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             ModuleDeclaration::TSNamespaceExportDeclaration(s) => {
-                AstNodes::TSNamespaceExportDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSNamespaceExportDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, AccessorProperty<'a>> {
+impl<'a> AstNode<'_, 'a, AccessorProperty<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5594,18 +5599,17 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
     }
 
     #[inline]
-    pub fn decorators(&self) -> &AstNode<'a, ArenaVec<'a, Decorator<'a>>> {
+    pub fn decorators(&self) -> AstNode<'_, 'a, ArenaVec<'a, Decorator<'a>>> {
         let following_span_start = self.inner.key.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.decorators,
-            allocator: self.allocator,
-            parent: AstNodes::AccessorProperty(transmute_self(self)),
+            parent: AstNodes::AccessorProperty(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+    pub fn key(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -5614,16 +5618,15 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
             .or_else(|| self.inner.value.as_ref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::AccessorProperty(transmute_self(self)),
+            parent: AstNodes::AccessorProperty(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self
             .inner
             .value
@@ -5631,27 +5634,21 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::AccessorProperty(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::AccessorProperty(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn value(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn value(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.value.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::AccessorProperty(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.value.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::AccessorProperty(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -5689,14 +5686,14 @@ impl<'a> AstNode<'a, AccessorProperty<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ImportExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn source(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn source(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self
             .inner
             .options
@@ -5704,25 +5701,21 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.source,
-            allocator: self.allocator,
-            parent: AstNodes::ImportExpression(transmute_self(self)),
+            parent: AstNodes::ImportExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn options(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn options(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.options.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ImportExpression(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.options.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::ImportExpression(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -5740,34 +5733,32 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, ImportDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn specifiers(&self) -> Option<&AstNode<'a, ArenaVec<'a, ImportDeclarationSpecifier<'a>>>> {
+    pub fn specifiers(
+        &self,
+    ) -> Option<AstNode<'_, 'a, ArenaVec<'a, ImportDeclarationSpecifier<'a>>>> {
         let following_span_start = self.inner.source.span().start;
-        self.allocator
-            .alloc(self.inner.specifiers.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ImportDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.specifiers.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::ImportDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
+    pub fn source(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
         let following_span_start = self.inner.with_clause.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.source,
-            allocator: self.allocator,
-            parent: AstNodes::ImportDeclaration(transmute_self(self)),
+            parent: AstNodes::ImportDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -5776,16 +5767,13 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn with_clause(&self) -> Option<&AstNode<'a, WithClause<'a>>> {
+    pub fn with_clause(&self) -> Option<AstNode<'_, 'a, WithClause<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ImportDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.with_clause.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ImportDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -5803,66 +5791,62 @@ impl<'a> AstNode<'a, ImportDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportDeclarationSpecifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ImportDeclarationSpecifier<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             ImportDeclarationSpecifier::ImportSpecifier(s) => {
-                AstNodes::ImportSpecifier(self.allocator.alloc(AstNode {
+                AstNodeKind::ImportSpecifier(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             ImportDeclarationSpecifier::ImportDefaultSpecifier(s) => {
-                AstNodes::ImportDefaultSpecifier(self.allocator.alloc(AstNode {
+                AstNodeKind::ImportDefaultSpecifier(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(s) => {
-                AstNodes::ImportNamespaceSpecifier(self.allocator.alloc(AstNode {
+                AstNodeKind::ImportNamespaceSpecifier(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ImportSpecifier<'a>> {
+impl<'a> AstNode<'_, 'a, ImportSpecifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn imported(&self) -> &AstNode<'a, ModuleExportName<'a>> {
+    pub fn imported(&self) -> AstNode<'_, 'a, ModuleExportName<'a>> {
         let following_span_start = self.inner.local.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.imported,
-            allocator: self.allocator,
-            parent: AstNodes::ImportSpecifier(transmute_self(self)),
+            parent: AstNodes::ImportSpecifier(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn local(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn local(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.local,
-            allocator: self.allocator,
-            parent: AstNodes::ImportSpecifier(transmute_self(self)),
+            parent: AstNodes::ImportSpecifier(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -5880,21 +5864,20 @@ impl<'a> AstNode<'a, ImportSpecifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportDefaultSpecifier<'a>> {
+impl<'a> AstNode<'_, 'a, ImportDefaultSpecifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn local(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn local(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.local,
-            allocator: self.allocator,
-            parent: AstNodes::ImportDefaultSpecifier(transmute_self(self)),
+            parent: AstNodes::ImportDefaultSpecifier(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -5907,21 +5890,20 @@ impl<'a> AstNode<'a, ImportDefaultSpecifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportNamespaceSpecifier<'a>> {
+impl<'a> AstNode<'_, 'a, ImportNamespaceSpecifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn local(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn local(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.local,
-            allocator: self.allocator,
-            parent: AstNodes::ImportNamespaceSpecifier(transmute_self(self)),
+            parent: AstNodes::ImportNamespaceSpecifier(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -5934,7 +5916,7 @@ impl<'a> AstNode<'a, ImportNamespaceSpecifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, WithClause<'a>> {
+impl<'a> AstNode<'_, 'a, WithClause<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -5946,14 +5928,13 @@ impl<'a> AstNode<'a, WithClause<'a>> {
     }
 
     #[inline]
-    pub fn with_entries(&self) -> &AstNode<'a, ArenaVec<'a, ImportAttribute<'a>>> {
+    pub fn with_entries(&self) -> AstNode<'_, 'a, ArenaVec<'a, ImportAttribute<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.with_entries,
-            allocator: self.allocator,
-            parent: AstNodes::WithClause(transmute_self(self)),
+            parent: AstNodes::WithClause(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -5966,32 +5947,30 @@ impl<'a> AstNode<'a, WithClause<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportAttribute<'a>> {
+impl<'a> AstNode<'_, 'a, ImportAttribute<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, ImportAttributeKey<'a>> {
+    pub fn key(&self) -> AstNode<'_, 'a, ImportAttributeKey<'a>> {
         let following_span_start = self.inner.value.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::ImportAttribute(transmute_self(self)),
+            parent: AstNodes::ImportAttribute(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn value(&self) -> &AstNode<'a, StringLiteral<'a>> {
+    pub fn value(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.value,
-            allocator: self.allocator,
-            parent: AstNodes::ImportAttribute(transmute_self(self)),
+            parent: AstNodes::ImportAttribute(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6004,47 +5983,37 @@ impl<'a> AstNode<'a, ImportAttribute<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ImportAttributeKey<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ImportAttributeKey<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             ImportAttributeKey::Identifier(s) => {
-                AstNodes::IdentifierName(self.allocator.alloc(AstNode {
-                    inner: s,
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::IdentifierName(AstNode { inner: s, parent, following_span_start })
             }
             ImportAttributeKey::StringLiteral(s) => {
-                AstNodes::StringLiteral(self.allocator.alloc(AstNode {
-                    inner: s,
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::StringLiteral(AstNode { inner: s, parent, following_span_start })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ExportDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, ExportDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn declaration(&self) -> &AstNode<'a, Declaration<'a>> {
+    pub fn declaration(&self) -> AstNode<'_, 'a, Declaration<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.declaration,
-            allocator: self.allocator,
-            parent: AstNodes::ExportDeclaration(transmute_self(self)),
+            parent: AstNodes::ExportDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6057,21 +6026,20 @@ impl<'a> AstNode<'a, ExportDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, ExportNamedDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn specifiers(&self) -> &AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>> {
+    pub fn specifiers(&self) -> AstNode<'_, 'a, ArenaVec<'a, ExportSpecifier<'a>>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.specifiers,
-            allocator: self.allocator,
-            parent: AstNodes::ExportNamedDeclaration(transmute_self(self)),
+            parent: AstNodes::ExportNamedDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -6089,32 +6057,30 @@ impl<'a> AstNode<'a, ExportNamedDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ExportFromDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, ExportFromDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn specifiers(&self) -> &AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>> {
+    pub fn specifiers(&self) -> AstNode<'_, 'a, ArenaVec<'a, ExportSpecifier<'a>>> {
         let following_span_start = self.inner.source.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.specifiers,
-            allocator: self.allocator,
-            parent: AstNodes::ExportFromDeclaration(transmute_self(self)),
+            parent: AstNodes::ExportFromDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
+    pub fn source(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
         let following_span_start = self.inner.with_clause.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.source,
-            allocator: self.allocator,
-            parent: AstNodes::ExportFromDeclaration(transmute_self(self)),
+            parent: AstNodes::ExportFromDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -6123,16 +6089,13 @@ impl<'a> AstNode<'a, ExportFromDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn with_clause(&self) -> Option<&AstNode<'a, WithClause<'a>>> {
+    pub fn with_clause(&self) -> Option<AstNode<'_, 'a, WithClause<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ExportFromDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.with_clause.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ExportFromDeclaration(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6145,21 +6108,20 @@ impl<'a> AstNode<'a, ExportFromDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, ExportDefaultDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn declaration(&self) -> &AstNode<'a, ExportDefaultDeclarationKind<'a>> {
+    pub fn declaration(&self) -> AstNode<'_, 'a, ExportDefaultDeclarationKind<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.declaration,
-            allocator: self.allocator,
-            parent: AstNodes::ExportDefaultDeclaration(transmute_self(self)),
+            parent: AstNodes::ExportDefaultDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6172,47 +6134,40 @@ impl<'a> AstNode<'a, ExportDefaultDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, ExportAllDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn exported(&self) -> Option<&AstNode<'a, ModuleExportName<'a>>> {
+    pub fn exported(&self) -> Option<AstNode<'_, 'a, ModuleExportName<'a>>> {
         let following_span_start = self.inner.source.span().start;
-        self.allocator
-            .alloc(self.inner.exported.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::ExportAllDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
-    }
-
-    #[inline]
-    pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
-        let following_span_start = self.inner.with_clause.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
-            inner: &self.inner.source,
-            allocator: self.allocator,
-            parent: AstNodes::ExportAllDeclaration(transmute_self(self)),
+        self.inner.exported.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::ExportAllDeclaration(self),
             following_span_start,
         })
     }
 
     #[inline]
-    pub fn with_clause(&self) -> Option<&AstNode<'a, WithClause<'a>>> {
+    pub fn source(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
+        let following_span_start = self.inner.with_clause.as_deref().map_or(0, |n| n.span().start);
+        AstNode {
+            inner: &self.inner.source,
+            parent: AstNodes::ExportAllDeclaration(self),
+            following_span_start,
+        }
+    }
+
+    #[inline]
+    pub fn with_clause(&self) -> Option<AstNode<'_, 'a, WithClause<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.with_clause.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::ExportAllDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.with_clause.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::ExportAllDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -6230,32 +6185,30 @@ impl<'a> AstNode<'a, ExportAllDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ExportSpecifier<'a>> {
+impl<'a> AstNode<'_, 'a, ExportSpecifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn local(&self) -> &AstNode<'a, ModuleExportName<'a>> {
+    pub fn local(&self) -> AstNode<'_, 'a, ModuleExportName<'a>> {
         let following_span_start = self.inner.exported.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.local,
-            allocator: self.allocator,
-            parent: AstNodes::ExportSpecifier(transmute_self(self)),
+            parent: AstNodes::ExportSpecifier(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn exported(&self) -> &AstNode<'a, ModuleExportName<'a>> {
+    pub fn exported(&self) -> AstNode<'_, 'a, ModuleExportName<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.exported,
-            allocator: self.allocator,
-            parent: AstNodes::ExportSpecifier(transmute_self(self)),
+            parent: AstNodes::ExportSpecifier(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -6273,93 +6226,61 @@ impl<'a> AstNode<'a, ExportSpecifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, ExportDefaultDeclarationKind<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ExportDefaultDeclarationKind<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             ExportDefaultDeclarationKind::FunctionDeclaration(s) => {
-                AstNodes::Function(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::Function(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
             ExportDefaultDeclarationKind::ClassDeclaration(s) => {
-                AstNodes::Class(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::Class(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(s) => {
-                AstNodes::TSInterfaceDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSInterfaceDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             it @ match_expression!(ExportDefaultDeclarationKind) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, ModuleExportName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, ModuleExportName<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             ModuleExportName::IdentifierName(s) => {
-                AstNodes::IdentifierName(self.allocator.alloc(AstNode {
-                    inner: s,
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::IdentifierName(AstNode { inner: s, parent, following_span_start })
             }
             ModuleExportName::IdentifierReference(s) => {
-                AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
-                    inner: s,
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::IdentifierReference(AstNode { inner: s, parent, following_span_start })
             }
             ModuleExportName::StringLiteral(s) => {
-                AstNodes::StringLiteral(self.allocator.alloc(AstNode {
-                    inner: s,
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                AstNodeKind::StringLiteral(AstNode { inner: s, parent, following_span_start })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
+impl<'a> AstNode<'_, 'a, V8IntrinsicExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn name(&self) -> &AstNode<'a, IdentifierName<'a>> {
+    pub fn name(&self) -> AstNode<'_, 'a, IdentifierName<'a>> {
         let following_span_start = self
             .inner
             .arguments
@@ -6367,23 +6288,21 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.name,
-            allocator: self.allocator,
-            parent: AstNodes::V8IntrinsicExpression(transmute_self(self)),
+            parent: AstNodes::V8IntrinsicExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+    pub fn arguments(&self) -> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.arguments,
-            allocator: self.allocator,
-            parent: AstNodes::V8IntrinsicExpression(transmute_self(self)),
+            parent: AstNodes::V8IntrinsicExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6396,7 +6315,7 @@ impl<'a> AstNode<'a, V8IntrinsicExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, BooleanLiteral> {
+impl<'a> AstNode<'_, 'a, BooleanLiteral> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6417,7 +6336,7 @@ impl<'a> AstNode<'a, BooleanLiteral> {
     }
 }
 
-impl<'a> AstNode<'a, NullLiteral> {
+impl<'a> AstNode<'_, 'a, NullLiteral> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6433,7 +6352,7 @@ impl<'a> AstNode<'a, NullLiteral> {
     }
 }
 
-impl<'a> AstNode<'a, NumericLiteral<'a>> {
+impl<'a> AstNode<'_, 'a, NumericLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6464,7 +6383,7 @@ impl<'a> AstNode<'a, NumericLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, StringLiteral<'a>> {
+impl<'a> AstNode<'_, 'a, StringLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6490,7 +6409,7 @@ impl<'a> AstNode<'a, StringLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, BigIntLiteral<'a>> {
+impl<'a> AstNode<'_, 'a, BigIntLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6521,7 +6440,7 @@ impl<'a> AstNode<'a, BigIntLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, RegExpLiteral<'a>> {
+impl<'a> AstNode<'_, 'a, RegExpLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6547,14 +6466,14 @@ impl<'a> AstNode<'a, RegExpLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXElement<'a>> {
+impl<'a> AstNode<'_, 'a, JSXElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn opening_element(&self) -> &AstNode<'a, JSXOpeningElement<'a>> {
+    pub fn opening_element(&self) -> AstNode<'_, 'a, JSXOpeningElement<'a>> {
         let following_span_start = self
             .inner
             .children
@@ -6563,16 +6482,15 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
             .or_else(|| self.inner.closing_element.as_deref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.opening_element.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::JSXElement(transmute_self(self)),
+            parent: AstNodes::JSXElement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn children(&self) -> &AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
+    pub fn children(&self) -> AstNode<'_, 'a, ArenaVec<'a, JSXChild<'a>>> {
         let following_span_start = self
             .inner
             .closing_element
@@ -6580,25 +6498,21 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.children,
-            allocator: self.allocator,
-            parent: AstNodes::JSXElement(transmute_self(self)),
+            parent: AstNodes::JSXElement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn closing_element(&self) -> Option<&AstNode<'a, JSXClosingElement<'a>>> {
+    pub fn closing_element(&self) -> Option<AstNode<'_, 'a, JSXClosingElement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.closing_element.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::JSXElement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.closing_element.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::JSXElement(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6611,14 +6525,14 @@ impl<'a> AstNode<'a, JSXElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
+impl<'a> AstNode<'_, 'a, JSXOpeningElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn name(&self) -> &AstNode<'a, JSXElementName<'a>> {
+    pub fn name(&self) -> AstNode<'_, 'a, JSXElementName<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -6627,16 +6541,15 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
             .or_else(|| self.inner.attributes.first().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.name,
-            allocator: self.allocator,
-            parent: AstNodes::JSXOpeningElement(transmute_self(self)),
+            parent: AstNodes::JSXOpeningElement(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self
             .inner
             .attributes
@@ -6644,25 +6557,21 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::JSXOpeningElement(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::JSXOpeningElement(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn attributes(&self) -> &AstNode<'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
+    pub fn attributes(&self) -> AstNode<'_, 'a, ArenaVec<'a, JSXAttributeItem<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.attributes,
-            allocator: self.allocator,
-            parent: AstNodes::JSXOpeningElement(transmute_self(self)),
+            parent: AstNodes::JSXOpeningElement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6675,21 +6584,20 @@ impl<'a> AstNode<'a, JSXOpeningElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXClosingElement<'a>> {
+impl<'a> AstNode<'_, 'a, JSXClosingElement<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn name(&self) -> &AstNode<'a, JSXElementName<'a>> {
+    pub fn name(&self) -> AstNode<'_, 'a, JSXElementName<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.name,
-            allocator: self.allocator,
-            parent: AstNodes::JSXClosingElement(transmute_self(self)),
+            parent: AstNodes::JSXClosingElement(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6702,14 +6610,14 @@ impl<'a> AstNode<'a, JSXClosingElement<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXFragment<'a>> {
+impl<'a> AstNode<'_, 'a, JSXFragment<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn opening_fragment(&self) -> &AstNode<'a, JSXOpeningFragment> {
+    pub fn opening_fragment(&self) -> AstNode<'_, 'a, JSXOpeningFragment> {
         let following_span_start = self
             .inner
             .children
@@ -6717,34 +6625,31 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.closing_fragment.span().start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.opening_fragment,
-            allocator: self.allocator,
-            parent: AstNodes::JSXFragment(transmute_self(self)),
+            parent: AstNodes::JSXFragment(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn children(&self) -> &AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
+    pub fn children(&self) -> AstNode<'_, 'a, ArenaVec<'a, JSXChild<'a>>> {
         let following_span_start = self.inner.closing_fragment.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.children,
-            allocator: self.allocator,
-            parent: AstNodes::JSXFragment(transmute_self(self)),
+            parent: AstNodes::JSXFragment(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn closing_fragment(&self) -> &AstNode<'a, JSXClosingFragment> {
+    pub fn closing_fragment(&self) -> AstNode<'_, 'a, JSXClosingFragment> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.closing_fragment,
-            allocator: self.allocator,
-            parent: AstNodes::JSXFragment(transmute_self(self)),
+            parent: AstNodes::JSXFragment(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6757,7 +6662,7 @@ impl<'a> AstNode<'a, JSXFragment<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXOpeningFragment> {
+impl<'a> AstNode<'_, 'a, JSXOpeningFragment> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6773,7 +6678,7 @@ impl<'a> AstNode<'a, JSXOpeningFragment> {
     }
 }
 
-impl<'a> AstNode<'a, JSXClosingFragment> {
+impl<'a> AstNode<'_, 'a, JSXClosingFragment> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -6789,82 +6694,66 @@ impl<'a> AstNode<'a, JSXClosingFragment> {
     }
 }
 
-impl<'a> AstNode<'a, JSXElementName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXElementName<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            JSXElementName::Identifier(s) => {
-                AstNodes::JSXIdentifier(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            JSXElementName::IdentifierReference(s) => {
-                AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            JSXElementName::NamespacedName(s) => {
-                AstNodes::JSXNamespacedName(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            JSXElementName::MemberExpression(s) => {
-                AstNodes::JSXMemberExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            JSXElementName::ThisExpression(s) => {
-                AstNodes::ThisExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            JSXElementName::Identifier(s) => AstNodeKind::JSXIdentifier(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            JSXElementName::IdentifierReference(s) => AstNodeKind::IdentifierReference(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            JSXElementName::NamespacedName(s) => AstNodeKind::JSXNamespacedName(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            JSXElementName::MemberExpression(s) => AstNodeKind::JSXMemberExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            JSXElementName::ThisExpression(s) => AstNodeKind::ThisExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, JSXNamespacedName<'a>> {
+impl<'a> AstNode<'_, 'a, JSXNamespacedName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn namespace(&self) -> &AstNode<'a, JSXIdentifier<'a>> {
+    pub fn namespace(&self) -> AstNode<'_, 'a, JSXIdentifier<'a>> {
         let following_span_start = self.inner.name.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.namespace,
-            allocator: self.allocator,
-            parent: AstNodes::JSXNamespacedName(transmute_self(self)),
+            parent: AstNodes::JSXNamespacedName(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn name(&self) -> &AstNode<'a, JSXIdentifier<'a>> {
+    pub fn name(&self) -> AstNode<'_, 'a, JSXIdentifier<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.name,
-            allocator: self.allocator,
-            parent: AstNodes::JSXNamespacedName(transmute_self(self)),
+            parent: AstNodes::JSXNamespacedName(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6877,32 +6766,30 @@ impl<'a> AstNode<'a, JSXNamespacedName<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXMemberExpression<'a>> {
+impl<'a> AstNode<'_, 'a, JSXMemberExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn object(&self) -> &AstNode<'a, JSXMemberExpressionObject<'a>> {
+    pub fn object(&self) -> AstNode<'_, 'a, JSXMemberExpressionObject<'a>> {
         let following_span_start = self.inner.property.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.object,
-            allocator: self.allocator,
-            parent: AstNodes::JSXMemberExpression(transmute_self(self)),
+            parent: AstNodes::JSXMemberExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn property(&self) -> &AstNode<'a, JSXIdentifier<'a>> {
+    pub fn property(&self) -> AstNode<'_, 'a, JSXIdentifier<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.property,
-            allocator: self.allocator,
-            parent: AstNodes::JSXMemberExpression(transmute_self(self)),
+            parent: AstNodes::JSXMemberExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6915,55 +6802,50 @@ impl<'a> AstNode<'a, JSXMemberExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXMemberExpressionObject<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXMemberExpressionObject<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             JSXMemberExpressionObject::IdentifierReference(s) => {
-                AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
+                AstNodeKind::IdentifierReference(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             JSXMemberExpressionObject::MemberExpression(s) => {
-                AstNodes::JSXMemberExpression(self.allocator.alloc(AstNode {
+                AstNodeKind::JSXMemberExpression(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            JSXMemberExpressionObject::ThisExpression(s) => {
-                AstNodes::ThisExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+            JSXMemberExpressionObject::ThisExpression(s) => AstNodeKind::ThisExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, JSXExpressionContainer<'a>> {
+impl<'a> AstNode<'_, 'a, JSXExpressionContainer<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, JSXExpression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, JSXExpression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::JSXExpressionContainer(transmute_self(self)),
+            parent: AstNodes::JSXExpressionContainer(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -6976,36 +6858,26 @@ impl<'a> AstNode<'a, JSXExpressionContainer<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXExpression<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXExpression<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            JSXExpression::EmptyExpression(s) => {
-                AstNodes::JSXEmptyExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            JSXExpression::EmptyExpression(s) => AstNodeKind::JSXEmptyExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_expression!(JSXExpression) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_expression(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_expression(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, JSXEmptyExpression> {
+impl<'a> AstNode<'_, 'a, JSXEmptyExpression> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7021,40 +6893,35 @@ impl<'a> AstNode<'a, JSXEmptyExpression> {
     }
 }
 
-impl<'a> AstNode<'a, JSXAttributeItem<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXAttributeItem<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            JSXAttributeItem::Attribute(s) => {
-                AstNodes::JSXAttribute(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            JSXAttributeItem::SpreadAttribute(s) => {
-                AstNodes::JSXSpreadAttribute(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            JSXAttributeItem::Attribute(s) => AstNodeKind::JSXAttribute(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            JSXAttributeItem::SpreadAttribute(s) => AstNodeKind::JSXSpreadAttribute(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, JSXAttribute<'a>> {
+impl<'a> AstNode<'_, 'a, JSXAttribute<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn name(&self) -> &AstNode<'a, JSXAttributeName<'a>> {
+    pub fn name(&self) -> AstNode<'_, 'a, JSXAttributeName<'a>> {
         let following_span_start = self
             .inner
             .value
@@ -7062,25 +6929,21 @@ impl<'a> AstNode<'a, JSXAttribute<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.name,
-            allocator: self.allocator,
-            parent: AstNodes::JSXAttribute(transmute_self(self)),
+            parent: AstNodes::JSXAttribute(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn value(&self) -> Option<&AstNode<'a, JSXAttributeValue<'a>>> {
+    pub fn value(&self) -> Option<AstNode<'_, 'a, JSXAttributeValue<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.value.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::JSXAttribute(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.value.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::JSXAttribute(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7093,21 +6956,20 @@ impl<'a> AstNode<'a, JSXAttribute<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXSpreadAttribute<'a>> {
+impl<'a> AstNode<'_, 'a, JSXSpreadAttribute<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn argument(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn argument(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.argument,
-            allocator: self.allocator,
-            parent: AstNodes::JSXSpreadAttribute(transmute_self(self)),
+            parent: AstNodes::JSXSpreadAttribute(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7120,73 +6982,59 @@ impl<'a> AstNode<'a, JSXSpreadAttribute<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXAttributeName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXAttributeName<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            JSXAttributeName::Identifier(s) => {
-                AstNodes::JSXIdentifier(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            JSXAttributeName::NamespacedName(s) => {
-                AstNodes::JSXNamespacedName(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
-    }
-}
-
-impl<'a> AstNode<'a, JSXAttributeValue<'a>> {
-    #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.parent;
-        let node = match self.inner {
-            JSXAttributeValue::StringLiteral(s) => {
-                AstNodes::StringLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            JSXAttributeValue::ExpressionContainer(s) => {
-                AstNodes::JSXExpressionContainer(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            JSXAttributeValue::Element(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            JSXAttributeName::Identifier(s) => AstNodeKind::JSXIdentifier(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            JSXAttributeValue::Fragment(s) => {
-                AstNodes::JSXFragment(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+                following_span_start,
+            }),
+            JSXAttributeName::NamespacedName(s) => AstNodeKind::JSXNamespacedName(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, JSXIdentifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXAttributeValue<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
+    #[inline]
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
+        let parent = self.parent;
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            JSXAttributeValue::StringLiteral(s) => AstNodeKind::StringLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            JSXAttributeValue::ExpressionContainer(s) => {
+                AstNodeKind::JSXExpressionContainer(AstNode {
+                    inner: s.as_ref(),
+                    parent,
+                    following_span_start,
+                })
+            }
+            JSXAttributeValue::Element(s) => {
+                AstNodeKind::JSXElement(AstNode { inner: s.as_ref(), parent, following_span_start })
+            }
+            JSXAttributeValue::Fragment(s) => AstNodeKind::JSXFragment(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
+    }
+}
+
+impl<'a> AstNode<'_, 'a, JSXIdentifier<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7207,63 +7055,52 @@ impl<'a> AstNode<'a, JSXIdentifier<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXChild<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, JSXChild<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            JSXChild::Text(s) => AstNodes::JSXText(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            JSXChild::Element(s) => AstNodes::JSXElement(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            JSXChild::Fragment(s) => AstNodes::JSXFragment(self.allocator.alloc(AstNode {
-                inner: s.as_ref(),
-                parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            JSXChild::ExpressionContainer(s) => {
-                AstNodes::JSXExpressionContainer(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            JSXChild::Text(s) => {
+                AstNodeKind::JSXText(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
-            JSXChild::Spread(s) => AstNodes::JSXSpreadChild(self.allocator.alloc(AstNode {
+            JSXChild::Element(s) => {
+                AstNodeKind::JSXElement(AstNode { inner: s.as_ref(), parent, following_span_start })
+            }
+            JSXChild::Fragment(s) => AstNodeKind::JSXFragment(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-        };
-        self.allocator.alloc(node)
+                following_span_start,
+            }),
+            JSXChild::ExpressionContainer(s) => AstNodeKind::JSXExpressionContainer(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            JSXChild::Spread(s) => AstNodeKind::JSXSpreadChild(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, JSXSpreadChild<'a>> {
+impl<'a> AstNode<'_, 'a, JSXSpreadChild<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::JSXSpreadChild(transmute_self(self)),
+            parent: AstNodes::JSXSpreadChild(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7276,7 +7113,7 @@ impl<'a> AstNode<'a, JSXSpreadChild<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSXText<'a>> {
+impl<'a> AstNode<'_, 'a, JSXText<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7302,7 +7139,7 @@ impl<'a> AstNode<'a, JSXText<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSThisParameter<'a>> {
+impl<'a> AstNode<'_, 'a, TSThisParameter<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -7314,16 +7151,13 @@ impl<'a> AstNode<'a, TSThisParameter<'a>> {
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSThisParameter(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSThisParameter(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7336,32 +7170,30 @@ impl<'a> AstNode<'a, TSThisParameter<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSEnumDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::TSEnumDeclaration(transmute_self(self)),
+            parent: AstNodes::TSEnumDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, TSEnumBody<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, TSEnumBody<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::TSEnumDeclaration(transmute_self(self)),
+            parent: AstNodes::TSEnumDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -7384,21 +7216,20 @@ impl<'a> AstNode<'a, TSEnumDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSEnumBody<'a>> {
+impl<'a> AstNode<'_, 'a, TSEnumBody<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn members(&self) -> &AstNode<'a, ArenaVec<'a, TSEnumMember<'a>>> {
+    pub fn members(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSEnumMember<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.members,
-            allocator: self.allocator,
-            parent: AstNodes::TSEnumBody(transmute_self(self)),
+            parent: AstNodes::TSEnumBody(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7411,14 +7242,14 @@ impl<'a> AstNode<'a, TSEnumBody<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSEnumMember<'a>> {
+impl<'a> AstNode<'_, 'a, TSEnumMember<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, TSEnumMemberName<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, TSEnumMemberName<'a>> {
         let following_span_start = self
             .inner
             .initializer
@@ -7426,92 +7257,78 @@ impl<'a> AstNode<'a, TSEnumMember<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::TSEnumMember(transmute_self(self)),
+            parent: AstNodes::TSEnumMember(self),
+            following_span_start,
+        }
+    }
+
+    #[inline]
+    pub fn initializer(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
+        let following_span_start = self.following_span_start;
+        self.inner.initializer.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::TSEnumMember(self),
             following_span_start,
         })
     }
 
+    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_leading_comments(self.span()).fmt(f);
+    }
+
+    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
+        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
+            .fmt(f);
+    }
+}
+
+impl<'me, 'a> AstNode<'me, 'a, TSEnumMemberName<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn initializer(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
+        let parent = self.parent;
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.initializer.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::TSEnumMember(transmute_self(self)),
+        match self.inner {
+            TSEnumMemberName::Identifier(s) => AstNodeKind::IdentifierName(AstNode {
+                inner: s.as_ref(),
+                parent,
                 following_span_start,
-            }))
-            .as_ref()
-    }
-
-    pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_leading_comments(self.span()).fmt(f);
-    }
-
-    pub fn format_trailing_comments(&self, f: &mut JsFormatter<'_, 'a>) {
-        format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-            .fmt(f);
-    }
-}
-
-impl<'a> AstNode<'a, TSEnumMemberName<'a>> {
-    #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
-        let parent = self.parent;
-        let node = match self.inner {
-            TSEnumMemberName::Identifier(s) => {
-                AstNodes::IdentifierName(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSEnumMemberName::String(s) => AstNodes::StringLiteral(self.allocator.alloc(AstNode {
+            }),
+            TSEnumMemberName::String(s) => AstNodeKind::StringLiteral(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSEnumMemberName::ComputedString(s) => {
-                AstNodes::StringLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSEnumMemberName::ComputedTemplateString(s) => {
-                AstNodes::TemplateLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+                following_span_start,
+            }),
+            TSEnumMemberName::ComputedString(s) => AstNodeKind::StringLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSEnumMemberName::ComputedTemplateString(s) => AstNodeKind::TemplateLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSTypeAnnotation<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeAnnotation<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeAnnotation(transmute_self(self)),
+            parent: AstNodes::TSTypeAnnotation(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7524,21 +7341,20 @@ impl<'a> AstNode<'a, TSTypeAnnotation<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSLiteralType<'a>> {
+impl<'a> AstNode<'_, 'a, TSLiteralType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn literal(&self) -> &AstNode<'a, TSLiteral<'a>> {
+    pub fn literal(&self) -> AstNode<'_, 'a, TSLiteral<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.literal,
-            allocator: self.allocator,
-            parent: AstNodes::TSLiteralType(transmute_self(self)),
+            parent: AstNodes::TSLiteralType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7551,384 +7367,285 @@ impl<'a> AstNode<'a, TSLiteralType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSLiteral<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSLiteral<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            TSLiteral::BooleanLiteral(s) => {
-                AstNodes::BooleanLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSLiteral::NumericLiteral(s) => {
-                AstNodes::NumericLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSLiteral::BigIntLiteral(s) => AstNodes::BigIntLiteral(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            TSLiteral::BooleanLiteral(s) => AstNodeKind::BooleanLiteral(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSLiteral::StringLiteral(s) => AstNodes::StringLiteral(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSLiteral::NumericLiteral(s) => AstNodeKind::NumericLiteral(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSLiteral::TemplateLiteral(s) => {
-                AstNodes::TemplateLiteral(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSLiteral::UnaryExpression(s) => {
-                AstNodes::UnaryExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+                following_span_start,
+            }),
+            TSLiteral::BigIntLiteral(s) => AstNodeKind::BigIntLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSLiteral::StringLiteral(s) => AstNodeKind::StringLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSLiteral::TemplateLiteral(s) => AstNodeKind::TemplateLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSLiteral::UnaryExpression(s) => AstNodeKind::UnaryExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSType<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSType<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            TSType::TSAnyKeyword(s) => AstNodes::TSAnyKeyword(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            TSType::TSAnyKeyword(s) => AstNodeKind::TSAnyKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSBigIntKeyword(s) => {
-                AstNodes::TSBigIntKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSBooleanKeyword(s) => {
-                AstNodes::TSBooleanKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSIntrinsicKeyword(s) => {
-                AstNodes::TSIntrinsicKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSNeverKeyword(s) => AstNodes::TSNeverKeyword(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSBigIntKeyword(s) => AstNodeKind::TSBigIntKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSNullKeyword(s) => AstNodes::TSNullKeyword(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSBooleanKeyword(s) => AstNodeKind::TSBooleanKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSNumberKeyword(s) => {
-                AstNodes::TSNumberKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSObjectKeyword(s) => {
-                AstNodes::TSObjectKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSStringKeyword(s) => {
-                AstNodes::TSStringKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSSymbolKeyword(s) => {
-                AstNodes::TSSymbolKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSUndefinedKeyword(s) => {
-                AstNodes::TSUndefinedKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSUnknownKeyword(s) => {
-                AstNodes::TSUnknownKeyword(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSVoidKeyword(s) => AstNodes::TSVoidKeyword(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSIntrinsicKeyword(s) => AstNodeKind::TSIntrinsicKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSArrayType(s) => AstNodes::TSArrayType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSNeverKeyword(s) => AstNodeKind::TSNeverKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSConditionalType(s) => {
-                AstNodes::TSConditionalType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSConstructorType(s) => {
-                AstNodes::TSConstructorType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSFunctionType(s) => AstNodes::TSFunctionType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSNullKeyword(s) => AstNodeKind::TSNullKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSImportType(s) => AstNodes::TSImportType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSNumberKeyword(s) => AstNodeKind::TSNumberKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSIndexedAccessType(s) => {
-                AstNodes::TSIndexedAccessType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSInferType(s) => AstNodes::TSInferType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSObjectKeyword(s) => AstNodeKind::TSObjectKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSIntersectionType(s) => {
-                AstNodes::TSIntersectionType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSLiteralType(s) => AstNodes::TSLiteralType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSStringKeyword(s) => AstNodeKind::TSStringKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSMappedType(s) => AstNodes::TSMappedType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSSymbolKeyword(s) => AstNodeKind::TSSymbolKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSNamedTupleMember(s) => {
-                AstNodes::TSNamedTupleMember(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSTemplateLiteralType(s) => {
-                AstNodes::TSTemplateLiteralType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSThisType(s) => AstNodes::TSThisType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSUndefinedKeyword(s) => AstNodeKind::TSUndefinedKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSTupleType(s) => AstNodes::TSTupleType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSUnknownKeyword(s) => AstNodeKind::TSUnknownKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSTypeLiteral(s) => AstNodes::TSTypeLiteral(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSVoidKeyword(s) => AstNodeKind::TSVoidKeyword(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSTypeOperatorType(s) => {
-                AstNodes::TSTypeOperator(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSTypePredicate(s) => {
-                AstNodes::TSTypePredicate(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSTypeQuery(s) => AstNodes::TSTypeQuery(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSArrayType(s) => AstNodeKind::TSArrayType(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSTypeReference(s) => {
-                AstNodes::TSTypeReference(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::TSUnionType(s) => AstNodes::TSUnionType(self.allocator.alloc(AstNode {
+                following_span_start,
+            }),
+            TSType::TSConditionalType(s) => AstNodeKind::TSConditionalType(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            TSType::TSParenthesizedType(s) => {
-                AstNodes::TSParenthesizedType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                following_span_start,
+            }),
+            TSType::TSConstructorType(s) => AstNodeKind::TSConstructorType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSFunctionType(s) => AstNodeKind::TSFunctionType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSImportType(s) => AstNodeKind::TSImportType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSIndexedAccessType(s) => AstNodeKind::TSIndexedAccessType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSInferType(s) => AstNodeKind::TSInferType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSIntersectionType(s) => AstNodeKind::TSIntersectionType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSLiteralType(s) => AstNodeKind::TSLiteralType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSMappedType(s) => AstNodeKind::TSMappedType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSNamedTupleMember(s) => AstNodeKind::TSNamedTupleMember(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSTemplateLiteralType(s) => AstNodeKind::TSTemplateLiteralType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSThisType(s) => {
+                AstNodeKind::TSThisType(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
-            TSType::JSDocNullableType(s) => {
-                AstNodes::JSDocNullableType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::JSDocNonNullableType(s) => {
-                AstNodes::JSDocNonNullableType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSType::JSDocUnknownType(s) => {
-                AstNodes::JSDocUnknownType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+            TSType::TSTupleType(s) => AstNodeKind::TSTupleType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSTypeLiteral(s) => AstNodeKind::TSTypeLiteral(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSTypeOperatorType(s) => AstNodeKind::TSTypeOperator(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSTypePredicate(s) => AstNodeKind::TSTypePredicate(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSTypeQuery(s) => AstNodeKind::TSTypeQuery(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSTypeReference(s) => AstNodeKind::TSTypeReference(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSUnionType(s) => AstNodeKind::TSUnionType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::TSParenthesizedType(s) => AstNodeKind::TSParenthesizedType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::JSDocNullableType(s) => AstNodeKind::JSDocNullableType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::JSDocNonNullableType(s) => AstNodeKind::JSDocNonNullableType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSType::JSDocUnknownType(s) => AstNodeKind::JSDocUnknownType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSConditionalType<'a>> {
+impl<'a> AstNode<'_, 'a, TSConditionalType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn check_type(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn check_type(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.inner.extends_type.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.check_type,
-            allocator: self.allocator,
-            parent: AstNodes::TSConditionalType(transmute_self(self)),
+            parent: AstNodes::TSConditionalType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn extends_type(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn extends_type(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.inner.true_type.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.extends_type,
-            allocator: self.allocator,
-            parent: AstNodes::TSConditionalType(transmute_self(self)),
+            parent: AstNodes::TSConditionalType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn true_type(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn true_type(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.inner.false_type.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.true_type,
-            allocator: self.allocator,
-            parent: AstNodes::TSConditionalType(transmute_self(self)),
+            parent: AstNodes::TSConditionalType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn false_type(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn false_type(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.false_type,
-            allocator: self.allocator,
-            parent: AstNodes::TSConditionalType(transmute_self(self)),
+            parent: AstNodes::TSConditionalType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7941,21 +7658,20 @@ impl<'a> AstNode<'a, TSConditionalType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSUnionType<'a>> {
+impl<'a> AstNode<'_, 'a, TSUnionType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
+    pub fn types(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.types,
-            allocator: self.allocator,
-            parent: AstNodes::TSUnionType(transmute_self(self)),
+            parent: AstNodes::TSUnionType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7968,21 +7684,20 @@ impl<'a> AstNode<'a, TSUnionType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSIntersectionType<'a>> {
+impl<'a> AstNode<'_, 'a, TSIntersectionType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
+    pub fn types(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.types,
-            allocator: self.allocator,
-            parent: AstNodes::TSIntersectionType(transmute_self(self)),
+            parent: AstNodes::TSIntersectionType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -7995,21 +7710,20 @@ impl<'a> AstNode<'a, TSIntersectionType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSParenthesizedType<'a>> {
+impl<'a> AstNode<'_, 'a, TSParenthesizedType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSParenthesizedType(transmute_self(self)),
+            parent: AstNodes::TSParenthesizedType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8022,7 +7736,7 @@ impl<'a> AstNode<'a, TSParenthesizedType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeOperator<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeOperator<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8034,14 +7748,13 @@ impl<'a> AstNode<'a, TSTypeOperator<'a>> {
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeOperator(transmute_self(self)),
+            parent: AstNodes::TSTypeOperator(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8054,21 +7767,20 @@ impl<'a> AstNode<'a, TSTypeOperator<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSArrayType<'a>> {
+impl<'a> AstNode<'_, 'a, TSArrayType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn element_type(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn element_type(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.element_type,
-            allocator: self.allocator,
-            parent: AstNodes::TSArrayType(transmute_self(self)),
+            parent: AstNodes::TSArrayType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8081,32 +7793,30 @@ impl<'a> AstNode<'a, TSArrayType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSIndexedAccessType<'a>> {
+impl<'a> AstNode<'_, 'a, TSIndexedAccessType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn object_type(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn object_type(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.inner.index_type.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.object_type,
-            allocator: self.allocator,
-            parent: AstNodes::TSIndexedAccessType(transmute_self(self)),
+            parent: AstNodes::TSIndexedAccessType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn index_type(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn index_type(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.index_type,
-            allocator: self.allocator,
-            parent: AstNodes::TSIndexedAccessType(transmute_self(self)),
+            parent: AstNodes::TSIndexedAccessType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8119,21 +7829,20 @@ impl<'a> AstNode<'a, TSIndexedAccessType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTupleType<'a>> {
+impl<'a> AstNode<'_, 'a, TSTupleType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn element_types(&self) -> &AstNode<'a, ArenaVec<'a, TSTupleElement<'a>>> {
+    pub fn element_types(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSTupleElement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.element_types,
-            allocator: self.allocator,
-            parent: AstNodes::TSTupleType(transmute_self(self)),
+            parent: AstNodes::TSTupleType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8146,32 +7855,30 @@ impl<'a> AstNode<'a, TSTupleType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSNamedTupleMember<'a>> {
+impl<'a> AstNode<'_, 'a, TSNamedTupleMember<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn label(&self) -> &AstNode<'a, IdentifierName<'a>> {
+    pub fn label(&self) -> AstNode<'_, 'a, IdentifierName<'a>> {
         let following_span_start = self.inner.element_type.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.label,
-            allocator: self.allocator,
-            parent: AstNodes::TSNamedTupleMember(transmute_self(self)),
+            parent: AstNodes::TSNamedTupleMember(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn element_type(&self) -> &AstNode<'a, TSTupleElement<'a>> {
+    pub fn element_type(&self) -> AstNode<'_, 'a, TSTupleElement<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.element_type,
-            allocator: self.allocator,
-            parent: AstNodes::TSNamedTupleMember(transmute_self(self)),
+            parent: AstNodes::TSNamedTupleMember(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -8189,21 +7896,20 @@ impl<'a> AstNode<'a, TSNamedTupleMember<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSOptionalType<'a>> {
+impl<'a> AstNode<'_, 'a, TSOptionalType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSOptionalType(transmute_self(self)),
+            parent: AstNodes::TSOptionalType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8216,21 +7922,20 @@ impl<'a> AstNode<'a, TSOptionalType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSRestType<'a>> {
+impl<'a> AstNode<'_, 'a, TSRestType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSRestType(transmute_self(self)),
+            parent: AstNodes::TSRestType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8243,42 +7948,29 @@ impl<'a> AstNode<'a, TSRestType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTupleElement<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTupleElement<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            TSTupleElement::TSOptionalType(s) => {
-                AstNodes::TSOptionalType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSTupleElement::TSRestType(s) => AstNodes::TSRestType(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            TSTupleElement::TSOptionalType(s) => AstNodeKind::TSOptionalType(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-            it @ match_ts_type!(TSTupleElement) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_ts_type(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                following_span_start,
+            }),
+            TSTupleElement::TSRestType(s) => {
+                AstNodeKind::TSRestType(AstNode { inner: s.as_ref(), parent, following_span_start })
             }
-        };
-        self.allocator.alloc(node)
+            it @ match_ts_type!(TSTupleElement) => {
+                AstNode { inner: it.to_ts_type(), parent, following_span_start }.as_kind()
+            }
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSAnyKeyword> {
+impl<'a> AstNode<'_, 'a, TSAnyKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8294,7 +7986,7 @@ impl<'a> AstNode<'a, TSAnyKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSStringKeyword> {
+impl<'a> AstNode<'_, 'a, TSStringKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8310,7 +8002,7 @@ impl<'a> AstNode<'a, TSStringKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSBooleanKeyword> {
+impl<'a> AstNode<'_, 'a, TSBooleanKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8326,7 +8018,7 @@ impl<'a> AstNode<'a, TSBooleanKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSNumberKeyword> {
+impl<'a> AstNode<'_, 'a, TSNumberKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8342,7 +8034,7 @@ impl<'a> AstNode<'a, TSNumberKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSNeverKeyword> {
+impl<'a> AstNode<'_, 'a, TSNeverKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8358,7 +8050,7 @@ impl<'a> AstNode<'a, TSNeverKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSIntrinsicKeyword> {
+impl<'a> AstNode<'_, 'a, TSIntrinsicKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8374,7 +8066,7 @@ impl<'a> AstNode<'a, TSIntrinsicKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSUnknownKeyword> {
+impl<'a> AstNode<'_, 'a, TSUnknownKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8390,7 +8082,7 @@ impl<'a> AstNode<'a, TSUnknownKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSNullKeyword> {
+impl<'a> AstNode<'_, 'a, TSNullKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8406,7 +8098,7 @@ impl<'a> AstNode<'a, TSNullKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSUndefinedKeyword> {
+impl<'a> AstNode<'_, 'a, TSUndefinedKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8422,7 +8114,7 @@ impl<'a> AstNode<'a, TSUndefinedKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSVoidKeyword> {
+impl<'a> AstNode<'_, 'a, TSVoidKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8438,7 +8130,7 @@ impl<'a> AstNode<'a, TSVoidKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSSymbolKeyword> {
+impl<'a> AstNode<'_, 'a, TSSymbolKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8454,7 +8146,7 @@ impl<'a> AstNode<'a, TSSymbolKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSThisType> {
+impl<'a> AstNode<'_, 'a, TSThisType> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8470,7 +8162,7 @@ impl<'a> AstNode<'a, TSThisType> {
     }
 }
 
-impl<'a> AstNode<'a, TSObjectKeyword> {
+impl<'a> AstNode<'_, 'a, TSObjectKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8486,7 +8178,7 @@ impl<'a> AstNode<'a, TSObjectKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSBigIntKeyword> {
+impl<'a> AstNode<'_, 'a, TSBigIntKeyword> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8502,14 +8194,14 @@ impl<'a> AstNode<'a, TSBigIntKeyword> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeReference<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeReference<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_name(&self) -> &AstNode<'a, TSTypeName<'a>> {
+    pub fn type_name(&self) -> AstNode<'_, 'a, TSTypeName<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -8517,25 +8209,21 @@ impl<'a> AstNode<'a, TSTypeReference<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_name,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeReference(transmute_self(self)),
+            parent: AstNodes::TSTypeReference(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSTypeReference(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSTypeReference(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8548,66 +8236,56 @@ impl<'a> AstNode<'a, TSTypeReference<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeName<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            TSTypeName::IdentifierReference(s) => {
-                AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSTypeName::QualifiedName(s) => {
-                AstNodes::TSQualifiedName(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSTypeName::ThisExpression(s) => {
-                AstNodes::ThisExpression(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            TSTypeName::IdentifierReference(s) => AstNodeKind::IdentifierReference(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSTypeName::QualifiedName(s) => AstNodeKind::TSQualifiedName(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSTypeName::ThisExpression(s) => AstNodeKind::ThisExpression(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSQualifiedName<'a>> {
+impl<'a> AstNode<'_, 'a, TSQualifiedName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn left(&self) -> &AstNode<'a, TSTypeName<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, TSTypeName<'a>> {
         let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::TSQualifiedName(transmute_self(self)),
+            parent: AstNodes::TSQualifiedName(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn right(&self) -> &AstNode<'a, IdentifierName<'a>> {
+    pub fn right(&self) -> AstNode<'_, 'a, IdentifierName<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::TSQualifiedName(transmute_self(self)),
+            parent: AstNodes::TSQualifiedName(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8620,21 +8298,20 @@ impl<'a> AstNode<'a, TSQualifiedName<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeParameterInstantiation<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
+    pub fn params(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.params,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeParameterInstantiation(transmute_self(self)),
+            parent: AstNodes::TSTypeParameterInstantiation(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8647,14 +8324,14 @@ impl<'a> AstNode<'a, TSTypeParameterInstantiation<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeParameter<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeParameter<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn name(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn name(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self
             .inner
             .constraint
@@ -8663,16 +8340,15 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
             .or_else(|| self.inner.default.as_ref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.name,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeParameter(transmute_self(self)),
+            parent: AstNodes::TSTypeParameter(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn constraint(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+    pub fn constraint(&self) -> Option<AstNode<'_, 'a, TSType<'a>>> {
         let following_span_start = self
             .inner
             .default
@@ -8680,27 +8356,21 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.constraint.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::TSTypeParameter(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.constraint.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::TSTypeParameter(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn default(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+    pub fn default(&self) -> Option<AstNode<'_, 'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.default.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::TSTypeParameter(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.default.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::TSTypeParameter(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -8728,21 +8398,20 @@ impl<'a> AstNode<'a, TSTypeParameter<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeParameterDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, ArenaVec<'a, TSTypeParameter<'a>>> {
+    pub fn params(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSTypeParameter<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.params,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeParameterDeclaration(transmute_self(self)),
+            parent: AstNodes::TSTypeParameterDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8755,14 +8424,14 @@ impl<'a> AstNode<'a, TSTypeParameterDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeAliasDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self
             .inner
             .type_parameters
@@ -8770,36 +8439,31 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.type_annotation.span().start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeAliasDeclaration(transmute_self(self)),
+            parent: AstNodes::TSTypeAliasDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self.inner.type_annotation.span().start;
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSTypeAliasDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSTypeAliasDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeAliasDeclaration(transmute_self(self)),
+            parent: AstNodes::TSTypeAliasDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -8817,14 +8481,14 @@ impl<'a> AstNode<'a, TSTypeAliasDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSClassImplements<'a>> {
+impl<'a> AstNode<'_, 'a, TSClassImplements<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, TSTypeName<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, TSTypeName<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -8832,25 +8496,21 @@ impl<'a> AstNode<'a, TSClassImplements<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::TSClassImplements(transmute_self(self)),
+            parent: AstNodes::TSClassImplements(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSClassImplements(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSClassImplements(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8863,14 +8523,14 @@ impl<'a> AstNode<'a, TSClassImplements<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSInterfaceDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self
             .inner
             .type_parameters
@@ -8879,16 +8539,15 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
             .or_else(|| self.inner.extends.first().map(|n| n.span().start))
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::TSInterfaceDeclaration(transmute_self(self)),
+            parent: AstNodes::TSInterfaceDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self
             .inner
             .extends
@@ -8896,36 +8555,31 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.body.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSInterfaceDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSInterfaceDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn extends(&self) -> &AstNode<'a, ArenaVec<'a, TSInterfaceHeritage<'a>>> {
+    pub fn extends(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSInterfaceHeritage<'a>>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.extends,
-            allocator: self.allocator,
-            parent: AstNodes::TSInterfaceDeclaration(transmute_self(self)),
+            parent: AstNodes::TSInterfaceDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, TSInterfaceBody<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, TSInterfaceBody<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.body.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSInterfaceDeclaration(transmute_self(self)),
+            parent: AstNodes::TSInterfaceDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -8943,21 +8597,20 @@ impl<'a> AstNode<'a, TSInterfaceDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
+impl<'a> AstNode<'_, 'a, TSInterfaceBody<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, TSSignature<'a>>> {
+    pub fn body(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSSignature<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::TSInterfaceBody(transmute_self(self)),
+            parent: AstNodes::TSInterfaceBody(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -8970,7 +8623,7 @@ impl<'a> AstNode<'a, TSInterfaceBody<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSPropertySignature<'a>> {
+impl<'a> AstNode<'_, 'a, TSPropertySignature<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -8992,7 +8645,7 @@ impl<'a> AstNode<'a, TSPropertySignature<'a>> {
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+    pub fn key(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -9000,25 +8653,21 @@ impl<'a> AstNode<'a, TSPropertySignature<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::TSPropertySignature(transmute_self(self)),
+            parent: AstNodes::TSPropertySignature(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSPropertySignature(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSPropertySignature(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9031,82 +8680,70 @@ impl<'a> AstNode<'a, TSPropertySignature<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSSignature<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSSignature<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            TSSignature::TSIndexSignature(s) => {
-                AstNodes::TSIndexSignature(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSSignature::TSPropertySignature(s) => {
-                AstNodes::TSPropertySignature(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            TSSignature::TSIndexSignature(s) => AstNodeKind::TSIndexSignature(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+            TSSignature::TSPropertySignature(s) => AstNodeKind::TSPropertySignature(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             TSSignature::TSCallSignatureDeclaration(s) => {
-                AstNodes::TSCallSignatureDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSCallSignatureDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             TSSignature::TSConstructSignatureDeclaration(s) => {
-                AstNodes::TSConstructSignatureDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSConstructSignatureDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            TSSignature::TSMethodSignature(s) => {
-                AstNodes::TSMethodSignature(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+            TSSignature::TSMethodSignature(s) => AstNodeKind::TSMethodSignature(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSIndexSignature<'a>> {
+impl<'a> AstNode<'_, 'a, TSIndexSignature<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn parameter(&self) -> &AstNode<'a, TSIndexSignatureName<'a>> {
+    pub fn parameter(&self) -> AstNode<'_, 'a, TSIndexSignatureName<'a>> {
         let following_span_start = self.inner.type_annotation.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.parameter,
-            allocator: self.allocator,
-            parent: AstNodes::TSIndexSignature(transmute_self(self)),
+            parent: AstNodes::TSIndexSignature(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSTypeAnnotation<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSTypeAnnotation<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.type_annotation.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSIndexSignature(transmute_self(self)),
+            parent: AstNodes::TSIndexSignature(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -9129,14 +8766,14 @@ impl<'a> AstNode<'a, TSIndexSignature<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSCallSignatureDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self
             .inner
             .this_param
@@ -9144,31 +8781,25 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.params.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSCallSignatureDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSCallSignatureDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
+    pub fn this_param(&self) -> Option<AstNode<'_, 'a, TSThisParameter<'a>>> {
         let following_span_start = self.inner.params.span().start;
-        self.allocator
-            .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSCallSignatureDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.this_param.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSCallSignatureDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+    pub fn params(&self) -> AstNode<'_, 'a, FormalParameters<'a>> {
         let following_span_start = self
             .inner
             .return_type
@@ -9176,25 +8807,21 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.params.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSCallSignatureDeclaration(transmute_self(self)),
+            parent: AstNodes::TSCallSignatureDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn return_type(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSCallSignatureDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.return_type.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSCallSignatureDeclaration(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9207,14 +8834,14 @@ impl<'a> AstNode<'a, TSCallSignatureDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSMethodSignature<'a>> {
+impl<'a> AstNode<'_, 'a, TSMethodSignature<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, PropertyKey<'a>> {
+    pub fn key(&self) -> AstNode<'_, 'a, PropertyKey<'a>> {
         let following_span_start = self
             .inner
             .type_parameters
@@ -9223,12 +8850,11 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
             .or_else(|| self.inner.this_param.as_deref().map(|n| n.span().start))
             .or_else(|| Some(self.inner.params.span().start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::TSMethodSignature(transmute_self(self)),
+            parent: AstNodes::TSMethodSignature(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -9247,7 +8873,7 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self
             .inner
             .this_param
@@ -9255,31 +8881,25 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.params.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSMethodSignature(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSMethodSignature(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
+    pub fn this_param(&self) -> Option<AstNode<'_, 'a, TSThisParameter<'a>>> {
         let following_span_start = self.inner.params.span().start;
-        self.allocator
-            .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSMethodSignature(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.this_param.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSMethodSignature(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+    pub fn params(&self) -> AstNode<'_, 'a, FormalParameters<'a>> {
         let following_span_start = self
             .inner
             .return_type
@@ -9287,25 +8907,21 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.params.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSMethodSignature(transmute_self(self)),
+            parent: AstNodes::TSMethodSignature(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn return_type(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSMethodSignature(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.return_type.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSMethodSignature(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9318,27 +8934,24 @@ impl<'a> AstNode<'a, TSMethodSignature<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSConstructSignatureDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self.inner.params.span().start;
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSConstructSignatureDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSConstructSignatureDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+    pub fn params(&self) -> AstNode<'_, 'a, FormalParameters<'a>> {
         let following_span_start = self
             .inner
             .return_type
@@ -9346,25 +8959,21 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.params.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSConstructSignatureDeclaration(transmute_self(self)),
+            parent: AstNodes::TSConstructSignatureDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn return_type(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn return_type(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.return_type.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSConstructSignatureDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.return_type.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSConstructSignatureDeclaration(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9377,7 +8986,7 @@ impl<'a> AstNode<'a, TSConstructSignatureDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
+impl<'a> AstNode<'_, 'a, TSIndexSignatureName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9389,14 +8998,13 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSTypeAnnotation<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSTypeAnnotation<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.type_annotation.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSIndexSignatureName(transmute_self(self)),
+            parent: AstNodes::TSIndexSignatureName(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9409,14 +9017,14 @@ impl<'a> AstNode<'a, TSIndexSignatureName<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
+impl<'a> AstNode<'_, 'a, TSInterfaceHeritage<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_name(&self) -> &AstNode<'a, TSTypeName<'a>> {
+    pub fn type_name(&self) -> AstNode<'_, 'a, TSTypeName<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -9424,25 +9032,21 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_name,
-            allocator: self.allocator,
-            parent: AstNodes::TSInterfaceHeritage(transmute_self(self)),
+            parent: AstNodes::TSInterfaceHeritage(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSInterfaceHeritage(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSInterfaceHeritage(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9455,14 +9059,14 @@ impl<'a> AstNode<'a, TSInterfaceHeritage<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypePredicate<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypePredicate<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn parameter_name(&self) -> &AstNode<'a, TSTypePredicateName<'a>> {
+    pub fn parameter_name(&self) -> AstNode<'_, 'a, TSTypePredicateName<'a>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -9470,12 +9074,11 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.parameter_name,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypePredicate(transmute_self(self)),
+            parent: AstNodes::TSTypePredicate(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -9484,16 +9087,13 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSTypeAnnotation<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSTypePredicate(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSTypePredicate(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9506,58 +9106,49 @@ impl<'a> AstNode<'a, TSTypePredicate<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypePredicateName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypePredicateName<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            TSTypePredicateName::Identifier(s) => {
-                AstNodes::IdentifierName(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-            TSTypePredicateName::This(s) => AstNodes::TSThisType(self.allocator.alloc(AstNode {
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            TSTypePredicateName::Identifier(s) => AstNodeKind::IdentifierName(AstNode {
                 inner: s.as_ref(),
                 parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            })),
-        };
-        self.allocator.alloc(node)
+                following_span_start,
+            }),
+            TSTypePredicateName::This(s) => {
+                AstNodeKind::TSThisType(AstNode { inner: s.as_ref(), parent, following_span_start })
+            }
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSExternalModuleDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSExternalModuleDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, StringLiteral<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
         let following_span_start = self.inner.body.as_deref().map_or(0, |n| n.span().start);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::TSExternalModuleDeclaration(transmute_self(self)),
+            parent: AstNodes::TSExternalModuleDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> Option<&AstNode<'a, TSModuleBlock<'a>>> {
+    pub fn body(&self) -> Option<AstNode<'_, 'a, TSModuleBlock<'a>>> {
         let following_span_start = 0;
-        self.allocator
-            .alloc(self.inner.body.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSExternalModuleDeclaration(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.body.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSExternalModuleDeclaration(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -9575,32 +9166,30 @@ impl<'a> AstNode<'a, TSExternalModuleDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSNamespaceDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSNamespaceDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self.inner.body.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::TSNamespaceDeclaration(transmute_self(self)),
+            parent: AstNodes::TSNamespaceDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, TSNamespaceDeclarationBody<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, TSNamespaceDeclarationBody<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::TSNamespaceDeclaration(transmute_self(self)),
+            parent: AstNodes::TSNamespaceDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -9623,33 +9212,30 @@ impl<'a> AstNode<'a, TSNamespaceDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSNamespaceDeclarationBody<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSNamespaceDeclarationBody<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             TSNamespaceDeclarationBody::TSNamespaceDeclaration(s) => {
-                AstNodes::TSNamespaceDeclaration(self.allocator.alloc(AstNode {
+                AstNodeKind::TSNamespaceDeclaration(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            TSNamespaceDeclarationBody::TSModuleBlock(s) => {
-                AstNodes::TSModuleBlock(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+            TSNamespaceDeclarationBody::TSModuleBlock(s) => AstNodeKind::TSModuleBlock(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSGlobalDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSGlobalDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -9661,14 +9247,13 @@ impl<'a> AstNode<'a, TSGlobalDeclaration<'a>> {
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, TSModuleBlock<'a>> {
+    pub fn body(&self) -> AstNode<'_, 'a, TSModuleBlock<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::TSGlobalDeclaration(transmute_self(self)),
+            parent: AstNodes::TSGlobalDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -9686,14 +9271,14 @@ impl<'a> AstNode<'a, TSGlobalDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSModuleBlock<'a>> {
+impl<'a> AstNode<'_, 'a, TSModuleBlock<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn directives(&self) -> &AstNode<'a, ArenaVec<'a, Directive<'a>>> {
+    pub fn directives(&self) -> AstNode<'_, 'a, ArenaVec<'a, Directive<'a>>> {
         let following_span_start = self
             .inner
             .body
@@ -9701,23 +9286,21 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.directives,
-            allocator: self.allocator,
-            parent: AstNodes::TSModuleBlock(transmute_self(self)),
+            parent: AstNodes::TSModuleBlock(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn body(&self) -> &AstNode<'a, ArenaVec<'a, Statement<'a>>> {
+    pub fn body(&self) -> AstNode<'_, 'a, ArenaVec<'a, Statement<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.body,
-            allocator: self.allocator,
-            parent: AstNodes::TSModuleBlock(transmute_self(self)),
+            parent: AstNodes::TSModuleBlock(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9730,21 +9313,20 @@ impl<'a> AstNode<'a, TSModuleBlock<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeLiteral<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn members(&self) -> &AstNode<'a, ArenaVec<'a, TSSignature<'a>>> {
+    pub fn members(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSSignature<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.members,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeLiteral(transmute_self(self)),
+            parent: AstNodes::TSTypeLiteral(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9757,21 +9339,20 @@ impl<'a> AstNode<'a, TSTypeLiteral<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSInferType<'a>> {
+impl<'a> AstNode<'_, 'a, TSInferType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_parameter(&self) -> &AstNode<'a, TSTypeParameter<'a>> {
+    pub fn type_parameter(&self) -> AstNode<'_, 'a, TSTypeParameter<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.type_parameter.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSInferType(transmute_self(self)),
+            parent: AstNodes::TSInferType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9784,14 +9365,14 @@ impl<'a> AstNode<'a, TSInferType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeQuery<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeQuery<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expr_name(&self) -> &AstNode<'a, TSTypeQueryExprName<'a>> {
+    pub fn expr_name(&self) -> AstNode<'_, 'a, TSTypeQueryExprName<'a>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -9799,25 +9380,21 @@ impl<'a> AstNode<'a, TSTypeQuery<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expr_name,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeQuery(transmute_self(self)),
+            parent: AstNodes::TSTypeQuery(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSTypeQuery(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSTypeQuery(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9830,43 +9407,33 @@ impl<'a> AstNode<'a, TSTypeQuery<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeQueryExprName<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSTypeQueryExprName<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            TSTypeQueryExprName::TSImportType(s) => {
-                AstNodes::TSImportType(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            TSTypeQueryExprName::TSImportType(s) => AstNodeKind::TSImportType(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             it @ match_ts_type_name!(TSTypeQueryExprName) => {
-                return self
-                    .allocator
-                    .alloc(AstNode {
-                        inner: it.to_ts_type_name(),
-                        parent,
-                        allocator: self.allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .as_ast_nodes();
+                AstNode { inner: it.to_ts_type_name(), parent, following_span_start }.as_kind()
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSImportType<'a>> {
+impl<'a> AstNode<'_, 'a, TSImportType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn source(&self) -> &AstNode<'a, StringLiteral<'a>> {
+    pub fn source(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
         let following_span_start = self
             .inner
             .options
@@ -9876,16 +9443,15 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
             .or_else(|| self.inner.type_arguments.as_deref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.source,
-            allocator: self.allocator,
-            parent: AstNodes::TSImportType(transmute_self(self)),
+            parent: AstNodes::TSImportType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn options(&self) -> Option<&AstNode<'a, ObjectExpression<'a>>> {
+    pub fn options(&self) -> Option<AstNode<'_, 'a, ObjectExpression<'a>>> {
         let following_span_start = self
             .inner
             .qualifier
@@ -9894,18 +9460,15 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
             .or_else(|| self.inner.type_arguments.as_deref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.options.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSImportType(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.options.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSImportType(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn qualifier(&self) -> Option<&AstNode<'a, TSImportTypeQualifier<'a>>> {
+    pub fn qualifier(&self) -> Option<AstNode<'_, 'a, TSImportTypeQualifier<'a>>> {
         let following_span_start = self
             .inner
             .type_arguments
@@ -9913,27 +9476,21 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.qualifier.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::TSImportType(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.qualifier.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::TSImportType(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> Option<&AstNode<'a, TSTypeParameterInstantiation<'a>>> {
+    pub fn type_arguments(&self) -> Option<AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_arguments.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSImportType(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_arguments.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSImportType(self),
+            following_span_start,
+        })
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -9946,58 +9503,53 @@ impl<'a> AstNode<'a, TSImportType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSImportTypeQualifier<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSImportTypeQualifier<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
-            TSImportTypeQualifier::Identifier(s) => {
-                AstNodes::IdentifierName(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
+        let following_span_start = self.following_span_start;
+        match self.inner {
+            TSImportTypeQualifier::Identifier(s) => AstNodeKind::IdentifierName(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
             TSImportTypeQualifier::QualifiedName(s) => {
-                AstNodes::TSImportTypeQualifiedName(self.allocator.alloc(AstNode {
+                AstNodeKind::TSImportTypeQualifiedName(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-        };
-        self.allocator.alloc(node)
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSImportTypeQualifiedName<'a>> {
+impl<'a> AstNode<'_, 'a, TSImportTypeQualifiedName<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn left(&self) -> &AstNode<'a, TSImportTypeQualifier<'a>> {
+    pub fn left(&self) -> AstNode<'_, 'a, TSImportTypeQualifier<'a>> {
         let following_span_start = self.inner.right.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.left,
-            allocator: self.allocator,
-            parent: AstNodes::TSImportTypeQualifiedName(transmute_self(self)),
+            parent: AstNodes::TSImportTypeQualifiedName(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn right(&self) -> &AstNode<'a, IdentifierName<'a>> {
+    pub fn right(&self) -> AstNode<'_, 'a, IdentifierName<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.right,
-            allocator: self.allocator,
-            parent: AstNodes::TSImportTypeQualifiedName(transmute_self(self)),
+            parent: AstNodes::TSImportTypeQualifiedName(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10010,14 +9562,14 @@ impl<'a> AstNode<'a, TSImportTypeQualifiedName<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSFunctionType<'a>> {
+impl<'a> AstNode<'_, 'a, TSFunctionType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self
             .inner
             .this_param
@@ -10025,49 +9577,41 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
             .map(|n| n.span().start)
             .or_else(|| Some(self.inner.params.span().start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSFunctionType(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSFunctionType(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn this_param(&self) -> Option<&AstNode<'a, TSThisParameter<'a>>> {
+    pub fn this_param(&self) -> Option<AstNode<'_, 'a, TSThisParameter<'a>>> {
         let following_span_start = self.inner.params.span().start;
-        self.allocator
-            .alloc(self.inner.this_param.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSFunctionType(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.this_param.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSFunctionType(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+    pub fn params(&self) -> AstNode<'_, 'a, FormalParameters<'a>> {
         let following_span_start = self.inner.return_type.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.params.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSFunctionType(transmute_self(self)),
+            parent: AstNodes::TSFunctionType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn return_type(&self) -> &AstNode<'a, TSTypeAnnotation<'a>> {
+    pub fn return_type(&self) -> AstNode<'_, 'a, TSTypeAnnotation<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.return_type.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSFunctionType(transmute_self(self)),
+            parent: AstNodes::TSFunctionType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10080,7 +9624,7 @@ impl<'a> AstNode<'a, TSFunctionType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSConstructorType<'a>> {
+impl<'a> AstNode<'_, 'a, TSConstructorType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
@@ -10092,38 +9636,33 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
     }
 
     #[inline]
-    pub fn type_parameters(&self) -> Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>> {
+    pub fn type_parameters(&self) -> Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>> {
         let following_span_start = self.inner.params.span().start;
-        self.allocator
-            .alloc(self.inner.type_parameters.as_ref().map(|inner| AstNode {
-                inner: inner.as_ref(),
-                allocator: self.allocator,
-                parent: AstNodes::TSConstructorType(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_parameters.as_ref().map(|inner| AstNode {
+            inner: inner.as_ref(),
+            parent: AstNodes::TSConstructorType(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn params(&self) -> &AstNode<'a, FormalParameters<'a>> {
+    pub fn params(&self) -> AstNode<'_, 'a, FormalParameters<'a>> {
         let following_span_start = self.inner.return_type.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.params.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSConstructorType(transmute_self(self)),
+            parent: AstNodes::TSConstructorType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn return_type(&self) -> &AstNode<'a, TSTypeAnnotation<'a>> {
+    pub fn return_type(&self) -> AstNode<'_, 'a, TSTypeAnnotation<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.return_type.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSConstructorType(transmute_self(self)),
+            parent: AstNodes::TSConstructorType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10136,25 +9675,24 @@ impl<'a> AstNode<'a, TSConstructorType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSMappedType<'a>> {
+impl<'a> AstNode<'_, 'a, TSMappedType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn key(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn key(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self.inner.constraint.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.key,
-            allocator: self.allocator,
-            parent: AstNodes::TSMappedType(transmute_self(self)),
+            parent: AstNodes::TSMappedType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn constraint(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn constraint(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self
             .inner
             .name_type
@@ -10163,16 +9701,15 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
             .or_else(|| self.inner.type_annotation.as_ref().map(|n| n.span().start))
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.constraint,
-            allocator: self.allocator,
-            parent: AstNodes::TSMappedType(transmute_self(self)),
+            parent: AstNodes::TSMappedType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn name_type(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+    pub fn name_type(&self) -> Option<AstNode<'_, 'a, TSType<'a>>> {
         let following_span_start = self
             .inner
             .type_annotation
@@ -10180,27 +9717,21 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator
-            .alloc(self.inner.name_type.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::TSMappedType(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.name_type.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::TSMappedType(self),
+            following_span_start,
+        })
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> Option<&AstNode<'a, TSType<'a>>> {
+    pub fn type_annotation(&self) -> Option<AstNode<'_, 'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator
-            .alloc(self.inner.type_annotation.as_ref().map(|inner| AstNode {
-                inner,
-                allocator: self.allocator,
-                parent: AstNodes::TSMappedType(transmute_self(self)),
-                following_span_start,
-            }))
-            .as_ref()
+        self.inner.type_annotation.as_ref().map(|inner| AstNode {
+            inner,
+            parent: AstNodes::TSMappedType(self),
+            following_span_start,
+        })
     }
 
     #[inline]
@@ -10223,14 +9754,14 @@ impl<'a> AstNode<'a, TSMappedType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
+impl<'a> AstNode<'_, 'a, TSTemplateLiteralType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn quasis(&self) -> &AstNode<'a, ArenaVec<'a, TemplateElement<'a>>> {
+    pub fn quasis(&self) -> AstNode<'_, 'a, ArenaVec<'a, TemplateElement<'a>>> {
         let following_span_start = self
             .inner
             .types
@@ -10238,23 +9769,21 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
             .map(|n| n.span().start)
             .or(Some(self.following_span_start))
             .unwrap_or(0);
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.quasis,
-            allocator: self.allocator,
-            parent: AstNodes::TSTemplateLiteralType(transmute_self(self)),
+            parent: AstNodes::TSTemplateLiteralType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn types(&self) -> &AstNode<'a, ArenaVec<'a, TSType<'a>>> {
+    pub fn types(&self) -> AstNode<'_, 'a, ArenaVec<'a, TSType<'a>>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.types,
-            allocator: self.allocator,
-            parent: AstNodes::TSTemplateLiteralType(transmute_self(self)),
+            parent: AstNodes::TSTemplateLiteralType(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10267,32 +9796,30 @@ impl<'a> AstNode<'a, TSTemplateLiteralType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSAsExpression<'a>> {
+impl<'a> AstNode<'_, 'a, TSAsExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.type_annotation.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::TSAsExpression(transmute_self(self)),
+            parent: AstNodes::TSAsExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSAsExpression(transmute_self(self)),
+            parent: AstNodes::TSAsExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10305,32 +9832,30 @@ impl<'a> AstNode<'a, TSAsExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSSatisfiesExpression<'a>> {
+impl<'a> AstNode<'_, 'a, TSSatisfiesExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.type_annotation.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::TSSatisfiesExpression(transmute_self(self)),
+            parent: AstNodes::TSSatisfiesExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSSatisfiesExpression(transmute_self(self)),
+            parent: AstNodes::TSSatisfiesExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10343,32 +9868,30 @@ impl<'a> AstNode<'a, TSSatisfiesExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSTypeAssertion<'a>> {
+impl<'a> AstNode<'_, 'a, TSTypeAssertion<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.inner.expression.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeAssertion(transmute_self(self)),
+            parent: AstNodes::TSTypeAssertion(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::TSTypeAssertion(transmute_self(self)),
+            parent: AstNodes::TSTypeAssertion(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10381,32 +9904,30 @@ impl<'a> AstNode<'a, TSTypeAssertion<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSImportEqualsDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, BindingIdentifier<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, BindingIdentifier<'a>> {
         let following_span_start = self.inner.module_reference.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::TSImportEqualsDeclaration(transmute_self(self)),
+            parent: AstNodes::TSImportEqualsDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn module_reference(&self) -> &AstNode<'a, TSModuleReference<'a>> {
+    pub fn module_reference(&self) -> AstNode<'_, 'a, TSModuleReference<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.module_reference,
-            allocator: self.allocator,
-            parent: AstNodes::TSImportEqualsDeclaration(transmute_self(self)),
+            parent: AstNodes::TSImportEqualsDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -10424,55 +9945,50 @@ impl<'a> AstNode<'a, TSImportEqualsDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSModuleReference<'a>> {
+impl<'me, 'a> AstNode<'me, 'a, TSModuleReference<'a>> {
+    /// Resolves this node to its variant, which has the same parent.
     #[inline]
-    pub fn as_ast_nodes(&self) -> &AstNodes<'a> {
+    pub fn as_kind(&self) -> AstNodeKind<'me, 'a> {
         let parent = self.parent;
-        let node = match self.inner {
+        let following_span_start = self.following_span_start;
+        match self.inner {
             TSModuleReference::ExternalModuleReference(s) => {
-                AstNodes::TSExternalModuleReference(self.allocator.alloc(AstNode {
+                AstNodeKind::TSExternalModuleReference(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
             TSModuleReference::IdentifierReference(s) => {
-                AstNodes::IdentifierReference(self.allocator.alloc(AstNode {
+                AstNodeKind::IdentifierReference(AstNode {
                     inner: s.as_ref(),
                     parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
+                    following_span_start,
+                })
             }
-            TSModuleReference::QualifiedName(s) => {
-                AstNodes::TSQualifiedName(self.allocator.alloc(AstNode {
-                    inner: s.as_ref(),
-                    parent,
-                    allocator: self.allocator,
-                    following_span_start: self.following_span_start,
-                }))
-            }
-        };
-        self.allocator.alloc(node)
+            TSModuleReference::QualifiedName(s) => AstNodeKind::TSQualifiedName(AstNode {
+                inner: s.as_ref(),
+                parent,
+                following_span_start,
+            }),
+        }
     }
 }
 
-impl<'a> AstNode<'a, TSExternalModuleReference<'a>> {
+impl<'a> AstNode<'_, 'a, TSExternalModuleReference<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, StringLiteral<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, StringLiteral<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::TSExternalModuleReference(transmute_self(self)),
+            parent: AstNodes::TSExternalModuleReference(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10485,21 +10001,20 @@ impl<'a> AstNode<'a, TSExternalModuleReference<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSNonNullExpression<'a>> {
+impl<'a> AstNode<'_, 'a, TSNonNullExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::TSNonNullExpression(transmute_self(self)),
+            parent: AstNodes::TSNonNullExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10512,21 +10027,20 @@ impl<'a> AstNode<'a, TSNonNullExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, Decorator<'a>> {
+impl<'a> AstNode<'_, 'a, Decorator<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::Decorator(transmute_self(self)),
+            parent: AstNodes::Decorator(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10539,21 +10053,20 @@ impl<'a> AstNode<'a, Decorator<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSExportAssignment<'a>> {
+impl<'a> AstNode<'_, 'a, TSExportAssignment<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::TSExportAssignment(transmute_self(self)),
+            parent: AstNodes::TSExportAssignment(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10566,21 +10079,20 @@ impl<'a> AstNode<'a, TSExportAssignment<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
+impl<'a> AstNode<'_, 'a, TSNamespaceExportDeclaration<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn id(&self) -> &AstNode<'a, IdentifierName<'a>> {
+    pub fn id(&self) -> AstNode<'_, 'a, IdentifierName<'a>> {
         let following_span_start = 0;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.id,
-            allocator: self.allocator,
-            parent: AstNodes::TSNamespaceExportDeclaration(transmute_self(self)),
+            parent: AstNodes::TSNamespaceExportDeclaration(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10593,32 +10105,30 @@ impl<'a> AstNode<'a, TSNamespaceExportDeclaration<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, TSInstantiationExpression<'a>> {
+impl<'a> AstNode<'_, 'a, TSInstantiationExpression<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn expression(&self) -> &AstNode<'a, Expression<'a>> {
+    pub fn expression(&self) -> AstNode<'_, 'a, Expression<'a>> {
         let following_span_start = self.inner.type_arguments.span().start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.expression,
-            allocator: self.allocator,
-            parent: AstNodes::TSInstantiationExpression(transmute_self(self)),
+            parent: AstNodes::TSInstantiationExpression(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
-    pub fn type_arguments(&self) -> &AstNode<'a, TSTypeParameterInstantiation<'a>> {
+    pub fn type_arguments(&self) -> AstNode<'_, 'a, TSTypeParameterInstantiation<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: self.inner.type_arguments.as_ref(),
-            allocator: self.allocator,
-            parent: AstNodes::TSInstantiationExpression(transmute_self(self)),
+            parent: AstNodes::TSInstantiationExpression(self),
             following_span_start,
-        })
+        }
     }
 
     pub fn format_leading_comments(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -10631,21 +10141,20 @@ impl<'a> AstNode<'a, TSInstantiationExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSDocNullableType<'a>> {
+impl<'a> AstNode<'_, 'a, JSDocNullableType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::JSDocNullableType(transmute_self(self)),
+            parent: AstNodes::JSDocNullableType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -10663,21 +10172,20 @@ impl<'a> AstNode<'a, JSDocNullableType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSDocNonNullableType<'a>> {
+impl<'a> AstNode<'_, 'a, JSDocNonNullableType<'a>> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()
     }
 
     #[inline]
-    pub fn type_annotation(&self) -> &AstNode<'a, TSType<'a>> {
+    pub fn type_annotation(&self) -> AstNode<'_, 'a, TSType<'a>> {
         let following_span_start = self.following_span_start;
-        self.allocator.alloc(AstNode {
+        AstNode {
             inner: &self.inner.type_annotation,
-            allocator: self.allocator,
-            parent: AstNodes::JSDocNonNullableType(transmute_self(self)),
+            parent: AstNodes::JSDocNonNullableType(self),
             following_span_start,
-        })
+        }
     }
 
     #[inline]
@@ -10695,7 +10203,7 @@ impl<'a> AstNode<'a, JSDocNonNullableType<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, JSDocUnknownType> {
+impl<'a> AstNode<'_, 'a, JSDocUnknownType> {
     #[inline]
     pub fn node_id(&self) -> NodeId {
         self.inner.node_id()

@@ -10,7 +10,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     JsLabels,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     best_fitting,
     formatter::{Comments, JsFormatter, prelude::*},
     parentheses::NeedsParentheses,
@@ -21,6 +21,7 @@ use crate::{
             groups::{ChainMembers, MemberChainGroup, MemberChainGroupsBuilder, TailChainGroups},
             simple_argument::SimpleArgument,
         },
+        stack_list::StackList,
     },
     write,
 };
@@ -29,18 +30,32 @@ use super::typecast::is_cast_target;
 
 #[derive(Debug)]
 pub struct MemberChain<'a, 'b> {
-    root: &'b AstNode<'a, CallExpression<'a>>,
+    root: &'b AstNode<'b, 'a, CallExpression<'a>>,
     head: MemberChainGroup<'a, 'b>,
     tail: TailChainGroups<'a, 'b>,
 }
 
 impl<'a, 'b> MemberChain<'a, 'b> {
-    pub(crate) fn from_call_expression(
-        call_expression: &'b AstNode<'a, CallExpression<'a>>,
-        f: &JsFormatter<'_, 'a>,
-    ) -> Self {
-        let mut chain_members = chain_members_iter(call_expression, f).collect::<ChainMembers>();
-        chain_members.reverse();
+    /// Calls `format` with the member chain of `call_expression`.
+    ///
+    /// The members are visited recursively from the root call, see [with_chain_members].
+    pub(crate) fn with_call_expression<R>(
+        call_expression: &AstNode<'_, 'a, CallExpression<'a>>,
+        f: &mut JsFormatter<'_, 'a>,
+        format: impl FnOnce(&MemberChain<'a, '_>, &mut JsFormatter<'_, 'a>) -> R,
+    ) -> R {
+        with_chain_members(call_expression, f, |chain_members, f| {
+            let member_chain = MemberChain::from_members(chain_members, f);
+            format(&member_chain, f)
+        })
+    }
+
+    fn from_members(mut chain_members: ChainMembers<'a, 'b>, f: &JsFormatter<'_, 'a>) -> Self {
+        // The root call expression is the last member
+        let Some(&ChainMember::CallExpression { expression: root, .. }) = chain_members.last()
+        else {
+            unreachable!("A member chain always ends with the root call expression")
+        };
 
         // as explained before, the first group is particular, so we calculate it
         let remaining_members_start_index = get_split_index_of_head_and_tail_groups(&chain_members);
@@ -51,18 +66,18 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             compute_remaining_groups(chain_members.drain(remaining_members_start_index..), f);
         let head_group = MemberChainGroup::from(chain_members);
 
-        let mut member_chain = Self { head: head_group, tail: tail_groups, root: call_expression };
+        let mut member_chain = Self { head: head_group, tail: tail_groups, root };
 
         // Here we check if the first element of Groups::groups can be moved inside the head.
         // If so, then we extract it and concatenate it together with the head.
-        member_chain.maybe_merge_with_first_group(call_expression.parent(), f);
+        member_chain.maybe_merge_with_first_group(root.parent(), f);
 
         member_chain
     }
 
     /// Here we check if the first group can be merged to the head. If so, then
     /// we move out the first group out of the groups
-    fn maybe_merge_with_first_group(&mut self, parent: &AstNodes<'a>, f: &JsFormatter<'_, 'a>) {
+    fn maybe_merge_with_first_group(&mut self, parent: &AstNodes<'_, 'a>, f: &JsFormatter<'_, 'a>) {
         if self.should_merge_tail_with_head(parent, f) {
             let group = self.tail.pop_first().unwrap();
             self.head.extend_members(group.into_members());
@@ -70,7 +85,11 @@ impl<'a, 'b> MemberChain<'a, 'b> {
     }
 
     /// This function checks if the current grouping should be merged with the first group.
-    fn should_merge_tail_with_head(&self, parent: &AstNodes<'a>, f: &JsFormatter<'_, 'a>) -> bool {
+    fn should_merge_tail_with_head(
+        &self,
+        parent: &AstNodes<'_, 'a>,
+        f: &JsFormatter<'_, 'a>,
+    ) -> bool {
         let Some(first_group) = self.tail.first() else {
             return false;
         };
@@ -88,7 +107,7 @@ impl<'a, 'b> MemberChain<'a, 'b> {
             first_group.members().first().is_some_and(ChainMember::is_computed_expression);
 
         if self.head.members().len() == 1
-            && let ChainMember::Node(node) = self.head.members()[0]
+            && let ChainMember::Node(node) = &self.head.members()[0]
         {
             match node.as_ref() {
                 Expression::Identifier(identifier) => {
@@ -359,14 +378,14 @@ fn is_computed_array_member_access(member: &ChainMember<'_, '_>) -> bool {
     )
 }
 
-fn has_arrow_or_function_expression_arg(call: &AstNode<'_, CallExpression<'_>>) -> bool {
+fn has_arrow_or_function_expression_arg(call: &AstNode<'_, '_, CallExpression<'_>>) -> bool {
     call.as_ref().arguments.iter().any(|argument| {
         matches!(&argument, Argument::ArrowFunctionExpression(_) | Argument::FunctionExpression(_))
     })
 }
 
-fn has_simple_arguments<'a>(call: &AstNode<'a, CallExpression<'a>>) -> bool {
-    call.arguments().iter().all(|argument| SimpleArgument::new(argument).is_simple())
+fn has_simple_arguments<'a>(call: &AstNode<'_, 'a, CallExpression<'a>>) -> bool {
+    call.arguments().iter().all(|argument| SimpleArgument::new(&argument).is_simple())
 }
 
 /// In order to detect those cases, we use an heuristic: if the first
@@ -388,100 +407,156 @@ fn is_factory(token: &str) -> bool {
 /// This function is the inverse of the prettier function
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/member-chain.js#L342>
 pub fn is_member_call_chain<'a>(
-    expression: &AstNode<'a, CallExpression<'a>>,
-    f: &JsFormatter<'_, 'a>,
+    expression: &AstNode<'_, 'a, CallExpression<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
-    MemberChain::from_call_expression(expression, f).tail.is_member_call_chain()
+    MemberChain::with_call_expression(expression, f, |member_chain, _| {
+        member_chain.tail.is_member_call_chain()
+    })
 }
 
 fn has_short_name(name: &str, tab_width: u8) -> bool {
     name.len() <= tab_width as usize
 }
 
-fn chain_members_iter<'a, 'b>(
-    root: &'b AstNode<'a, CallExpression<'a>>,
-    f: &JsFormatter<'_, 'a>,
-) -> impl Iterator<Item = ChainMember<'a, 'b>> {
-    let mut is_root = true;
-    let mut next: Option<&'b AstNode<'a, Expression<'a>>> = None;
-
-    iter::from_fn(move || {
-        let handle_call_expression =
-            |position: CallExpressionPosition,
-             expr: &'b AstNode<'a, CallExpression<'a>>,
-             next: &mut Option<&'b AstNode<'a, Expression<'a>>>| {
-                let callee = expr.callee();
-
-                let is_chain = matches!(
-                    callee.as_ref(),
-                    Expression::StaticMemberExpression(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::CallExpression(_)
-                );
-
-                if is_chain {
-                    *next = Some(callee);
-                }
-
-                ChainMember::CallExpression { expression: expr, position }
-            };
-
-        if is_root {
-            is_root = false;
-            return Some(handle_call_expression(CallExpressionPosition::End, root, &mut next));
+/// Calls `format` with the members of the chain from `root`, the innermost member first.
+///
+/// The members are visited recursively and `format` is called from the innermost one,
+/// so that every member can still refer to its parents.
+fn with_chain_members<'a, R>(
+    root: &AstNode<'_, 'a, CallExpression<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+    format: impl FnOnce(ChainMembers<'a, '_>, &mut JsFormatter<'_, 'a>) -> R,
+) -> R {
+    /// `steps`: the steps from the current one up to the root
+    fn with_chain_steps<'a, R>(
+        steps: &StackList<'_, ChainStep<'a, '_>>,
+        f: &mut JsFormatter<'_, 'a>,
+        format: impl FnOnce(ChainMembers<'a, '_>, &mut JsFormatter<'_, 'a>) -> R,
+    ) -> R {
+        match next_chain_step(&steps.item, f) {
+            Some(step) => with_chain_steps(&StackList::new(step, Some(steps)), f, format),
+            None => format_chain_members(steps, f, format),
         }
+    }
 
-        let expression = next.take()?;
+    let root =
+        ChainStep::CallExpression { expression: *root, position: CallExpressionPosition::End };
+    with_chain_steps(&StackList::new(root, None), f, format)
+}
 
-        if is_cast_target(expression.span(), f) {
-            return ChainMember::Node(expression).into();
-        }
+/// A step of the walk down a member chain, holding the node of a [ChainMember].
+#[derive(Clone, Copy)]
+enum ChainStep<'a, 'b> {
+    StaticMember(AstNode<'b, 'a, StaticMemberExpression<'a>>),
+    CallExpression {
+        expression: AstNode<'b, 'a, CallExpression<'a>>,
+        position: CallExpressionPosition,
+    },
+    ComputedMember(AstNode<'b, 'a, ComputedMemberExpression<'a>>),
+    TSNonNullExpression(AstNode<'b, 'a, TSNonNullExpression<'a>>),
+    Node(AstNode<'b, 'a, Expression<'a>>),
+    /// A nested `ChainExpression` whose parentheses do not survive
+    /// (e.g. the head of `(a?.b!)?.c`) is transparent:
+    /// flatten through it so the whole chain is laid out as one, matching Prettier's `printMemberChain`.
+    ChainExpression(AstNode<'b, 'a, ChainExpression<'a>>),
+}
 
-        // A nested `ChainExpression` whose parentheses do not survive
-        // (e.g. the head of `(a?.b!)?.c`) is transparent:
-        // flatten through it so the whole chain is laid out as one, matching Prettier's `printMemberChain`.
-        // The type-cast case is already handled above:
-        // on the first iteration `chain` is `expression` itself,
-        // and a `ChainElement` can never be another `ChainExpression`, so no re-check is needed here.
-        let mut node = expression.as_ast_nodes();
-        while let AstNodes::ChainExpression(chain) = node {
-            if chain.needs_parentheses(f) {
-                break;
-            }
-            node = chain.expression().as_ast_nodes();
-        }
-
-        let member = match node {
-            AstNodes::CallExpression(expr) => {
-                let callee = expr.callee();
-                let is_chain = matches!(
-                    callee.as_ref(),
-                    Expression::StaticMemberExpression(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::CallExpression(_)
-                );
-                let position = if is_chain {
+impl<'a> ChainStep<'a, '_> {
+    /// Creates the step for a call or member expression.
+    fn from_kind<'b>(kind: AstNodeKind<'b, 'a>) -> Option<ChainStep<'a, 'b>> {
+        let step = match kind {
+            AstNodeKind::CallExpression(expression) => {
+                let position = if is_chain_callee(&expression.callee) {
                     CallExpressionPosition::Middle
                 } else {
                     CallExpressionPosition::Start
                 };
-                handle_call_expression(position, expr, &mut next)
+                ChainStep::CallExpression { expression, position }
             }
-            AstNodes::StaticMemberExpression(expr) => {
-                next = Some(expr.object());
-                ChainMember::StaticMember(expr)
+            AstNodeKind::StaticMemberExpression(expression) => ChainStep::StaticMember(expression),
+            AstNodeKind::ComputedMemberExpression(expression) => {
+                ChainStep::ComputedMember(expression)
             }
-            AstNodes::ComputedMemberExpression(expr) => {
-                next = Some(expr.object());
-                ChainMember::ComputedMember(expr)
+            AstNodeKind::TSNonNullExpression(expression) => {
+                ChainStep::TSNonNullExpression(expression)
             }
-            AstNodes::TSNonNullExpression(expr) => {
-                next = Some(expr.expression());
-                ChainMember::TSNonNullExpression(expr)
-            }
-            _ => ChainMember::Node(expression),
+            _ => return None,
         };
+        Some(step)
+    }
 
+    fn member(&self) -> Option<ChainMember<'a, '_>> {
+        let member = match self {
+            Self::StaticMember(expression) => ChainMember::StaticMember(expression),
+            Self::CallExpression { expression, position } => {
+                ChainMember::CallExpression { expression, position: *position }
+            }
+            Self::ComputedMember(expression) => ChainMember::ComputedMember(expression),
+            Self::TSNonNullExpression(expression) => ChainMember::TSNonNullExpression(expression),
+            Self::Node(expression) => ChainMember::Node(expression),
+            Self::ChainExpression(_) => return None,
+        };
         Some(member)
-    })
+    }
+
+    /// Returns the object or callee that continues the chain.
+    fn next_expression(&self) -> Option<AstNode<'_, 'a, Expression<'a>>> {
+        match self {
+            Self::CallExpression { expression, .. } => {
+                is_chain_callee(&expression.callee).then(|| expression.callee())
+            }
+            Self::StaticMember(expression) => Some(expression.object()),
+            Self::ComputedMember(expression) => Some(expression.object()),
+            Self::TSNonNullExpression(expression) => Some(expression.expression()),
+            Self::Node(_) | Self::ChainExpression(_) => None,
+        }
+    }
+}
+
+/// Out of line, so that the frames of the walk stay small (one per member of a chain that may be long).
+#[inline(never)]
+fn next_chain_step<'a, 'b>(
+    step: &'b ChainStep<'a, '_>,
+    f: &JsFormatter<'_, 'a>,
+) -> Option<ChainStep<'a, 'b>> {
+    // A `ChainElement` can never be another `ChainExpression`, and every element but `a?.#b` is a member
+    if let ChainStep::ChainExpression(chain) = step {
+        return ChainStep::from_kind(chain.expression().as_kind());
+    }
+
+    let expression = step.next_expression()?;
+    if is_cast_target(expression.span(), f) {
+        return Some(ChainStep::Node(expression));
+    }
+
+    let kind = expression.as_kind();
+    if let AstNodeKind::ChainExpression(chain) = kind
+        && !matches!(chain.expression, ChainElement::PrivateFieldExpression(_))
+        && !chain.needs_parentheses(f)
+    {
+        return Some(ChainStep::ChainExpression(chain));
+    }
+    Some(ChainStep::from_kind(kind).unwrap_or(ChainStep::Node(expression)))
+}
+
+/// Calls `format` with the members of `steps`, the innermost member first.
+///
+/// Out of line, so that the frames of the walk stay small.
+#[inline(never)]
+fn format_chain_members<'a, R>(
+    steps: &StackList<'_, ChainStep<'a, '_>>,
+    f: &mut JsFormatter<'_, 'a>,
+    format: impl FnOnce(ChainMembers<'a, '_>, &mut JsFormatter<'_, 'a>) -> R,
+) -> R {
+    format(steps.iter().filter_map(ChainStep::member).collect(), f)
+}
+
+fn is_chain_callee(callee: &Expression<'_>) -> bool {
+    matches!(
+        callee,
+        Expression::StaticMemberExpression(_)
+            | Expression::ComputedMemberExpression(_)
+            | Expression::CallExpression(_)
+    )
 }
