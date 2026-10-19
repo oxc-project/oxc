@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
-use oxc_syntax::number::NumberBase;
+use oxc_syntax::number::{BigintBase, NumberBase};
 
 use crate::{
     AstNode,
@@ -154,30 +154,30 @@ impl Rule for PreferBigintLiterals {
     }
 }
 
-fn matches_js_integer_literal(s: &str) -> Option<NumberBase> {
+fn matches_js_integer_literal(s: &str) -> Option<BigintBase> {
     let s = s.trim();
     let mut chars = s.chars();
 
     match chars.next() {
         Some('0') => match chars.next() {
             Some('b' | 'B') => {
-                chars.all(|char| matches!(char, '0' | '1')).then_some(NumberBase::Binary)
+                chars.all(|char| matches!(char, '0' | '1')).then_some(BigintBase::Binary)
             }
 
             Some('o' | 'O') => {
-                chars.all(|char| matches!(char, '0'..='7')).then_some(NumberBase::Octal)
+                chars.all(|char| matches!(char, '0'..='7')).then_some(BigintBase::Octal)
             }
 
             Some('x' | 'X') => {
-                chars.all(|char| char.is_ascii_hexdigit()).then_some(NumberBase::Hex)
+                chars.all(|char| char.is_ascii_hexdigit()).then_some(BigintBase::Hex)
             }
             Some('0'..='9') => {
-                chars.all(|char| char.is_ascii_digit()).then_some(NumberBase::Decimal)
+                chars.all(|char| char.is_ascii_digit()).then_some(BigintBase::Decimal)
             }
-            None => Some(NumberBase::Decimal),
+            None => Some(BigintBase::Decimal),
             _ => None,
         },
-        Some('1'..='9') => chars.all(|char| char.is_ascii_digit()).then_some(NumberBase::Decimal),
+        Some('1'..='9') => chars.all(|char| char.is_ascii_digit()).then_some(BigintBase::Decimal),
         _ => None,
     }
 }
@@ -188,11 +188,8 @@ fn bigint_literal_from_string(raw: &str) -> Option<String> {
     let base = matches_js_integer_literal(trimmed)?;
 
     match base {
-        NumberBase::Binary | NumberBase::Octal | NumberBase::Hex => Some(format!("{trimmed}n")),
-        NumberBase::Decimal => Some(format!("{}n", trim_leading_zeros(trimmed))),
-        NumberBase::Float => {
-            unreachable!();
-        }
+        BigintBase::Binary | BigintBase::Octal | BigintBase::Hex => Some(format!("{trimmed}n")),
+        BigintBase::Decimal => Some(format!("{}n", trim_leading_zeros(trimmed))),
     }
 }
 

@@ -417,11 +417,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         F: FnMut(&mut Self) -> T,
     {
         loop {
-            let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if self.at(close) || self.has_fatal_error() {
                 break;
             }
             let element = parse_element(self);
@@ -502,22 +498,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: FnMut(&mut Self) -> T,
     {
-        // Cache cur_kind() to avoid redundant calls in compound checks
-        let kind = self.cur_kind();
-        if kind == close
-            || matches!(kind, Kind::Eof | Kind::Undetermined)
-            || self.fatal_error.is_some()
-        {
+        if self.at(close) || self.has_fatal_error() {
             return None;
         }
         let element = parse_element(self);
         list.push(element);
         loop {
             let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if kind == close || self.has_fatal_error() {
                 return None;
             }
             if kind != separator {
@@ -589,10 +577,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut first = true;
         loop {
             let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if kind == close || self.has_fatal_error() {
                 break;
             }
 

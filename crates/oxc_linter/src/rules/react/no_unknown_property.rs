@@ -93,6 +93,7 @@ declare_oxc_lint!(
     NoUnknownProperty,
     react,
     restriction,
+    recommended,
     suggestion,
     config = NoUnknownPropertyConfig,
     version = "0.2.0",

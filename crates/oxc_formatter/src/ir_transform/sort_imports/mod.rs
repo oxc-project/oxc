@@ -104,8 +104,15 @@ fn transform<'a>(
     let mut inside_multiline_import = false;
     // Trailing comments emitted via `line_suffix(...)` live inside `StartLineSuffix..End`,
     // and any `Line(_)` inside is for output positioning, not a real line boundary.
-    // e.g. ```import "a"; <StartLineSuffix> Line(Empty) Text("// trailing") <EndLineSuffix>```
+    // e.g. ```import "a"; <StartLineSuffix> Space Text("// trailing") <EndLineSuffix>```
     let mut inside_line_suffix = false;
+    // Comments after the last statement are the last import's own-line trailing comments,
+    // emitted as `line_suffix(...)`s whose first one starts with a line break:
+    // ```import "a"; <StartLineSuffix> Line(Empty) Text("// tail") <EndLineSuffix>```
+    // They follow no particular import, so everything from there to the chunk end is its tail,
+    // kept verbatim after the sorted imports.
+    // (Inside a multiline import, the same shape is a specifier's trailing comment.)
+    let mut tail_start = None;
     let comment_label = LabelId::of(JsLabels::Comment);
     let import_label = LabelId::of(JsLabels::ImportDeclaration);
     for (idx, el) in prev_elements.iter().enumerate() {
@@ -117,6 +124,16 @@ fn transform<'a>(
                     } else if *id == import_label {
                         inside_multiline_import = true;
                     }
+                }
+                Tag::StartLineSuffix
+                    if !inside_multiline_import
+                        && matches!(
+                            prev_elements.get(idx + 1),
+                            Some(FormatElement::Line(LineMode::Empty | LineMode::Hard))
+                        ) =>
+                {
+                    tail_start = Some(idx);
+                    break;
                 }
                 Tag::StartLineSuffix => inside_line_suffix = true,
                 Tag::EndLineSuffix => inside_line_suffix = false,
@@ -160,14 +177,15 @@ fn transform<'a>(
     }
     // The chunk doesn't end with a `Line(Hard)`,
     // so the in-loop flush above won't catch the last line.
-    if current_line_start < prev_elements.len() {
+    let lines_end = tail_start.unwrap_or(prev_elements.len());
+    if current_line_start < lines_end {
         debug_assert!(
             !inside_comment && !inside_multiline_import && !inside_line_suffix,
             "Unbalanced labelled tags at end of chunk"
         );
         lines.push(SourceLine::from_element_range(
             prev_elements,
-            current_line_start..prev_elements.len(),
+            current_line_start..lines_end,
             LineMode::Hard,
         ));
     }
@@ -363,6 +381,9 @@ fn transform<'a>(
     // but the input chunk had none. Pop it to match the input shape.
     debug_assert!(matches!(next_elements.last(), Some(FormatElement::Line(_))));
     next_elements.pop();
+    if let Some(tail_start) = tail_start {
+        next_elements.extend(prev_elements[tail_start..].iter().cloned());
+    }
 
     next_elements
 }

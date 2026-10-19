@@ -44,6 +44,7 @@ declare_react_compiler_lint!(
     Purity,
     react,
     correctness,
+    recommended,
     version = "1.79.0",
     short_description = "Validates that components and hooks do not call known-impure functions.",
 );

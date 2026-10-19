@@ -112,7 +112,7 @@ A type/fn that fits none of them belongs in a consumer crate.
 
 Admission: the printing phase consumes it. "Shared by all languages" is NOT a reason on its own.
 
-- (2) `source/`: Source-side access mechanics (`SourceText`, `SpanCursor`)
+- (2) `source/`: Source-side access mechanics (`SourceText`, `SpanCursor`, `rebase_labels`, `restore_crlf_labels`)
 
 Admission: the structure makes no output decision by itself; language differences arrive as data (offsets, the item type), never as parameters encoding grammar or policy.
 

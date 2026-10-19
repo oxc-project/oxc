@@ -4,7 +4,7 @@ static NEG_MAX_SAFE_FLOAT: f64 = -9_007_199_254_740_991_f64;
 static MAX_SAFE_INT: i64 = 9_007_199_254_740_991_i64;
 static NEG_MAX_SAFE_INT: i64 = -9_007_199_254_740_991_i64;
 
-use crate::{test, test_same};
+use crate::{test, test_same, test_smallest};
 
 fn fold(source_text: &str, expected: &str) {
     let source_text = format!("NOOP({source_text})");
@@ -1035,6 +1035,25 @@ fn test_fold_add() {
 }
 
 #[test]
+fn test_fold_add_sequence_ending_in_object() {
+    test_smallest("const u = true + (foo, []); log(u)", "!0 + (foo, []), log('true')");
+    test_smallest("const u = true + (foo, [void 0]); log(u)", "!0 + (foo, [void 0]), log('true')");
+    test_smallest("const u = true + (foo, [null]); log(u)", "!0 + (foo, [null]), log('true')");
+    test_smallest("const u = true + (foo, [,]); log(u)", "!0 + (foo, [,]), log('true')");
+    test_smallest("const u = true + (foo, [1]); log(u)", "!0 + (foo, [1]), log('true1')");
+    test_smallest(
+        "const u = true + (foo, {}); log(u)",
+        "!0 + (foo, {}), log('true[object Object]')",
+    );
+    test_smallest("const u = null + (foo, [1]); log(u)", "null + (foo, [1]), log('null1')");
+    test_smallest(
+        "const u = undefined + (foo, {}); log(u)",
+        "void 0 + (foo, {}), log('undefined[object Object]')",
+    );
+    test_smallest("const u = 1 + (foo, []); log(u)", "1 + (foo, []), log('1')");
+}
+
+#[test]
 fn test_fold_numeric_expression_only_if_shorter() {
     // https://github.com/oxc-project/oxc/issues/24863
     fold_same("0.1 + 0.05");
@@ -1241,20 +1260,20 @@ fn test_fold_left() {
 #[test]
 fn test_fold_array_length() {
     // Can fold
-    fold("x = [].length", "x = 0");
-    fold("x = [1,2,3].length", "x = 3");
+    fold("[].length", "0");
+    fold("[1,2,3].length", "3");
     // test("x = [a,b].length", "x = 2");
-    fold("x = 'abc'['length']", "x = 3");
+    fold("'abc'['length']", "3");
 
     // Not handled yet
-    fold("x = [,,1].length", "x = 3");
+    fold("[,,1].length", "3");
 
     // Foldable after constant spread elements are inlined
     fold("[...[1, 2, 3]].length", "3");
 
     // Cannot fold
-    fold("x = [foo(), 0].length", "x = [foo(),0].length");
-    fold_same("x = y.length");
+    fold("[foo(), 0].length", "[foo(),0].length");
+    fold_same("y.length");
 }
 
 #[test]

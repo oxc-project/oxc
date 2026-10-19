@@ -6,11 +6,12 @@ use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
+    ArrayJoin, ToBigInt, ToIntegerIndex, ToJsString,
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
+use oxc_str::JSStrBuilder;
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -50,6 +51,7 @@ impl<'a> PeepholeOptimizations {
         };
         let replacement = match name {
             "concat" => Self::try_fold_concat(*span, arguments, callee, ctx),
+            "join" => Self::try_fold_array_join(*span, arguments, object, ctx),
             "pow" => Self::try_fold_pow(*span, arguments, object, ctx),
             "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
             _ => None,
@@ -362,6 +364,46 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// `['a','b'].join()` -> `'a,b'`
+    fn try_fold_array_join(
+        span: Span,
+        arguments: &Arguments<'a>,
+        object: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let Expression::ArrayExpression(array) = object else { return None };
+        if array.may_have_side_effects(ctx) || arguments.len() > 1 {
+            return None;
+        }
+
+        let separator = if let Some(argument) = arguments.first() {
+            let separator = argument.as_expression()?;
+            if separator.may_have_side_effects(ctx) {
+                return None;
+            }
+            if separator.value_type(ctx).is_undefined() {
+                None
+            } else {
+                Some(separator.to_js_string(ctx)?)
+            }
+        } else {
+            None
+        };
+        let separator = separator.as_deref().unwrap_or(",");
+
+        let per_element = array.elements.len().saturating_sub(1) * 3;
+        let syntax_savings = per_element + "[].join()".len();
+
+        let added_size = separator.len() * (array.elements.len().saturating_sub(2));
+
+        if syntax_savings <= added_size {
+            return None;
+        }
+
+        let joined = array.array_join(ctx, Some(separator))?;
+        Some(Expression::new_string_literal(span, Str::from_str_in(&joined, ctx), None, ctx))
+    }
+
     pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
         if s.contains(['\\', '`', '$', '\r']) {
             Cow::Owned(
@@ -560,16 +602,18 @@ impl<'a> PeepholeOptimizations {
 
         match object {
             Expression::StringLiteral(s) => {
-                if let StringCharAtResult::Value(c) =
-                    s.value.as_str()?.char_at(Some(property.into()))
-                {
-                    s.span = span;
-                    s.value = Str::from_str_in(&c.to_string(), ctx).into();
-                    s.raw = None;
-                    Some(object.take_in(ctx))
-                } else {
-                    None
-                }
+                let index = property as usize;
+                // std's UTF-8 decoder is faster for ordinary strings.
+                let unit = match s.value.as_str() {
+                    Some(value) => value.encode_utf16().nth(index),
+                    None => s.value.encode_utf16().nth(index),
+                }?;
+                let mut builder = JSStrBuilder::new_in(ctx);
+                builder.push_code_unit(unit);
+                s.span = span;
+                s.value = builder.into_js_str();
+                s.raw = None;
+                Some(object.take_in(ctx))
             }
             Expression::ArrayExpression(array_expr) => {
                 let length_until_spread =

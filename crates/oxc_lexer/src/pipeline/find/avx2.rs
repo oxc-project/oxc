@@ -143,7 +143,9 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
         let m = unsafe {
             vor!(veq(v, b'('), veq(v, b')'), veq(v, b'['), veq(v, b']'), veq(v, b'{'), veq(v, b'}'))
         };
-        out |= u64::from(mm(m)) << (half * 32);
+        // SAFETY: This module is only compiled on platforms that support AVX2
+        let mask = unsafe { mm(m) };
+        out |= u64::from(mask) << (half * 32);
     }
     out
 }

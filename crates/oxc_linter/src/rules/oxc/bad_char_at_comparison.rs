@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{BinaryExpression, Expression, TSType, VariableDeclarator},
+    ast::{BinaryExpression, Expression, TSType, VariableDeclarationKind, VariableDeclarator},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -160,7 +160,8 @@ fn is_definitely_string_declarator(declarator: &VariableDeclarator, ctx: &LintCo
         return true;
     }
 
-    if !variable_declaration_kind(declarator, ctx).is_const()
+    if !variable_declaration_kind(declarator, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
         || !declarator.id.is_binding_identifier()
     {
         return false;

@@ -81,7 +81,7 @@ js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`. See `
 
 Comments (and parentheses) are where a local fix has side effects; keep the rules below in view.
 The invariants and the invariants-vs-compat-tables split live in FORMATTER_POLICY.md "Comment placement invariants"; this section is their JS/TSX translation.
-Prettier's attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (DIVERGENCES.md#array-hole-trailing-comment, DIVERGENCES.md#type-alias-trailing-comment-move).
+Prettier's attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (DIVERGENCES.md#array-hole-comments, DIVERGENCES.md#type-alias-trailing-comment-move).
 
 ### Vocabulary
 

@@ -1,6 +1,8 @@
 use oxc_allocator::ArenaVec;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter_core::{EmbeddedIr, FormatSession, push_text_with_literal_lines};
+use oxc_formatter_core::{
+    EmbeddedIr, FormatSession, push_text_with_literal_lines, spec::split_bom,
+};
 use oxc_span::Span;
 
 use crate::options::TomlFormatOptions;
@@ -10,8 +12,13 @@ use crate::options::TomlFormatOptions;
 /// # Errors
 /// Returns an [`OxcDiagnostic`] when the parse produces any error.
 pub fn format(source_text: &str, options: TomlFormatOptions) -> Result<String, OxcDiagnostic> {
-    let parse = parse_for_format(source_text)?;
-    Ok(oxc_toml::format(&parse, options.to_oxc_toml()))
+    let (has_bom, stripped) = split_bom(source_text);
+    let parse = parse_for_format(stripped).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })?;
+    let formatted = oxc_toml::format(&parse, options.to_oxc_toml());
+    Ok(if has_bom { format!("\u{feff}{formatted}") } else { formatted })
 }
 
 /// Format `source_text` into IR for embedding into another formatter's document

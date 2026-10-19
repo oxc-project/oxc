@@ -98,11 +98,10 @@ impl Rule for PreferStringRaw {
                 return;
             }
             AstKind::ObjectProperty(prop) => {
-                let PropertyKey::StringLiteral(key) = &prop.key else {
-                    return;
-                };
-
-                if !prop.computed && string_literal.span == key.span {
+                if let PropertyKey::StringLiteral(key) = &prop.key
+                    && !prop.computed
+                    && string_literal.span == key.span
+                {
                     return;
                 }
             }
@@ -264,6 +263,7 @@ fn test() {
         r#"interface EventSchemas { "foo\\bar": Record<string, any>; }"#,
         r#"interface Methods { "foo\\bar"(): void; }"#,
         r#"let x: "a\\b";"#,
+        r"const o = { newline: 'a\\b\nc', trail: 'a\\', interpolation: 'a\\b${foo}', tick: 'a\\b`' };",
     ];
 
     let fail = vec![
@@ -280,6 +280,12 @@ fn test() {
         r"for (const f of'a\\b') {}",
         // Non-ASCII characters without trailing backslash - should be fixed
         r"const a = 'c:\\someöäü\\path';",
+        r#"export const o = { b: "a\\b" };"#,
+        r#"export const s = "a\\b";"#,
+        r#"export const p = { "k": "a\\b" };"#,
+        r#"const o = { 0: "a\\b", [key]: "a\\b", [0]: "a\\b", 1n: "a\\b", ["k"]: "a\\b" };"#,
+        r#"const o = { "a\\b": "c\\d", ["a\\b"]: "c\\d" };"#,
+        r"const o = { blank: ' \\t' };",
     ];
 
     let fix = vec![
@@ -302,6 +308,18 @@ fn test() {
         (r"const a = () => void'a\\b';", r"const a = () => void String.raw`a\b`;"),
         // Non-ASCII characters
         (r"const a = 'c:\\someöäü\\path';", r"const a = String.raw`c:\someöäü\path`;"),
+        (r#"export const o = { b: "a\\b" };"#, r"export const o = { b: String.raw`a\b` };"),
+        (r#"export const s = "a\\b";"#, r"export const s = String.raw`a\b`;"),
+        (r#"export const p = { "k": "a\\b" };"#, r#"export const p = { "k": String.raw`a\b` };"#),
+        (
+            r#"const o = { 0: "a\\b", [key]: "a\\b", [0]: "a\\b", 1n: "a\\b", ["k"]: "a\\b" };"#,
+            r#"const o = { 0: String.raw`a\b`, [key]: String.raw`a\b`, [0]: String.raw`a\b`, 1n: String.raw`a\b`, ["k"]: String.raw`a\b` };"#,
+        ),
+        (
+            r#"const o = { "a\\b": "c\\d", ["a\\b"]: "c\\d" };"#,
+            r#"const o = { "a\\b": String.raw`c\d`, [String.raw`a\b`]: String.raw`c\d` };"#,
+        ),
+        (r"const o = { blank: ' \\t' };", r"const o = { blank: String.raw` \t` };"),
     ];
 
     Tester::new(PreferStringRaw::NAME, PreferStringRaw::PLUGIN, pass, fail)

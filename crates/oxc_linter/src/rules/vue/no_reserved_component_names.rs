@@ -84,6 +84,7 @@ declare_oxc_lint!(
     NoReservedComponentNames,
     vue,
     correctness,
+    recommended,
     config = NoReservedComponentNames,
     version = "1.68.0",
     short_description = "Disallow Vue component names that collide with HTML / SVG element names (and optionally Vue built-in component names).",

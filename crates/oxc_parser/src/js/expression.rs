@@ -630,7 +630,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => unreachable!(),
         };
 
-        // Get `raw`
         let raw_span = self.cur_token().span();
         let mut raw = Str::from(
             &self.source_text[raw_span.start as usize + 1..(raw_span.end - end_offset) as usize],

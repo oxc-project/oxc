@@ -608,6 +608,7 @@ impl<'a> Comments<'a> {
     ///   - none leads it, none is in it
     ///   - its trailing pass only claims comments that end in the parent ([`Self::get_trailing_comments`])
     /// - nothing suppresses it ([`Self::is_span_suppressed`])
+    ///   - no unprinted comment ends before it, so only the operator's mark is left of [`Self::is_suppressed`]
     /// - if it `can_be_cast_target`, no printed type cast comment makes it one ([`Self::printed_type_cast_comment_before`])
     ///
     /// Every comment the node's `write` prints is after these, so its trailing pass would still find none.
@@ -624,7 +625,7 @@ impl<'a> Comments<'a> {
             next.span.end > span.end
                 && next.span.end > enclosing_span().end
                 && !self.has_trailing_suppression_comment(span.end)
-        }) && !self.is_suppressed(span.start)
+        }) && self.operator_suppressed_start != Some(span.start)
             && !(can_be_cast_target && self.printed_type_cast_comment_before(span.start).is_some());
         debug_assert!(
             !quiet

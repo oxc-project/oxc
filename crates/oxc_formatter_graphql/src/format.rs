@@ -66,8 +66,11 @@ pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<ParsedGraphql<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let (document, source, comments) = parse_document(allocator, source_text)?;
+    let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    let (document, source, comments) = parse_document(allocator, stripped).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })?;
     Ok(ParsedGraphql { document, comments, source, has_bom })
 }
 

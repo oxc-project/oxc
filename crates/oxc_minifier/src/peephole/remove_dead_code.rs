@@ -272,7 +272,6 @@ impl<'a> PeepholeOptimizations {
                 _ => {}
             },
             Some(true) => {
-                // Remove the test expression.
                 if let Some(old) = for_stmt.test.take() {
                     ctx.drop_expression(&old);
                 }
@@ -334,7 +333,6 @@ impl<'a> PeepholeOptimizations {
         // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
         let case_count = switch_stmt.cases.len();
         if case_count == 1 {
-            // Remove sole case if empty and has no side-effect test
             if Self::is_switch_case_removable(&switch_stmt.cases[0], true) {
                 ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
             }

@@ -68,6 +68,10 @@ fn check_unicorn_prefer_spread<'a>(
         return;
     };
 
+    if member_expr.object().without_parentheses().is_super() {
+        return;
+    }
+
     let Some(static_property_name) = member_expr.static_property_name().and_then(JSStr::as_str)
     else {
         return;
@@ -426,6 +430,13 @@ fn test() {
 str.split("")"#,
         r#""string"
 str.split("")"#,
+        "class A extends B { method() { return super.slice(); } }",
+        "class A extends B { method() { return super.slice(0); } }",
+        r#"class A extends B { method() { return super["slice"](); } }"#,
+        "class A extends B { method() { return super.toSpliced(); } }",
+        "class A extends B { method() { return (super.toSpliced)(); } }",
+        r#"class A extends B { method() { return super["toSpliced"](); } }"#,
+        "class A extends B { method() { return super.concat(); } }",
     ];
 
     let fail = vec![
@@ -668,6 +679,10 @@ str.split("")"#,
         ("(foo, Array.from(set))", "(foo, [...set])"),
         ("[Array.from(set)]", "[[...set]]"),
         ("async () => await Array.from(set)", "async () => await [...set]"),
+        (
+            "class A extends B { method() { return super.items.slice(); } }",
+            "class A extends B { method() { return [...super.items]; } }",
+        ),
     ];
 
     Tester::new(PreferSpread::NAME, PreferSpread::PLUGIN, pass, fail)

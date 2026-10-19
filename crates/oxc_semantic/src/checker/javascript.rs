@@ -140,7 +140,7 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                             && ctx.source_type.is_typescript()
                         {
                             ctx.error(diagnostics::static_and_instance_private_identifier(
-                                &element.name,
+                                element.name.display(),
                                 prev_element.span,
                                 element.span,
                             ));

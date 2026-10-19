@@ -270,6 +270,25 @@ A property name with a placeholder formats the same wherever the placeholder sit
 Prettier formats the template only when a placeholder leads the name (postcss reads it as an at-rule);
 otherwise it fails and the whole template stays verbatim.
 
+## placeholder-important-space
+
+- Why: uniform-rule (same construct, same output: `red !important`)
+- Pin: `tests/fixtures/embedded/scss/value-placeholders.scss`
+
+```scss
+/* input (css-in-js: ${m} is a template placeholder) */
+color: ${m}!important;
+
+/* ours */
+color: ${m} !important;
+
+/* prettier */
+color: ${m}!important;
+```
+
+A `!important` after a placeholder is spaced as after any other value, valid whatever the placeholder expands to;
+Prettier keeps it glued because it reads the placeholder text and the flag as one word.
+
 ## selector-interpolation-spaces
 
 - Why: uniform-rule (same construct, same output: `#{ }` in value position)

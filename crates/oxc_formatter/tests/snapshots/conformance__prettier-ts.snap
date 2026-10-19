@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-ts compatibility: 618/660 (93.64%), 16 files skipped
+ts compatibility: 754/819 (92.06%), 16 files skipped
 
 # Failed
 
@@ -28,7 +28,7 @@ ts compatibility: 618/660 (93.64%), 16 files skipped
 | typescript/interface/comments-generic.ts | 💥💥 | 91.80% |
 | typescript/interface2/comments-declare.ts | 💥 | 60.00% |
 | typescript/interface2/comments.ts | 💥 | 65.79% |
-| typescript/intersection/intersection-parens.ts | 💥💥✨ | 65.96% |
+| typescript/intersection/intersection-parens.ts | 💥💥✨ | 99.29% |
 | typescript/intersection/consistent-with-flow/intersection-parens.ts | 💥 | 97.67% |
 | typescript/intersection/consistent-with-flow/single-member.ts | 💥 | 88.24% |
 | typescript/property-signature/consistent-with-flow/comments.ts | 💥 | 80.00% |

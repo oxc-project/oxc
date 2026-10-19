@@ -244,7 +244,10 @@ fn binding_context(ctx: &LintContext, id: NodeId) -> BindingContext {
                 };
             }
             AstKind::VariableDeclarator(declarator) => {
-                return if variable_declaration_kind(declarator, ctx).is_using() {
+                let Some(kind) = variable_declaration_kind(declarator, ctx.nodes()) else {
+                    return BindingContext::NotInteresting;
+                };
+                return if kind.is_using() {
                     BindingContext::Using
                 } else {
                     destructure_context.unwrap_or(BindingContext::Plain)

@@ -1,7 +1,7 @@
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, FunctionKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, ChainElement, ExportDefaultDeclarationKind,
         Expression, ExpressionStatement, Function, ObjectExpression,
@@ -68,6 +68,7 @@ declare_oxc_lint!(
     NoWatchAfterAwait,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Disallow asynchronously-registered `watch`.",
 );
@@ -110,14 +111,11 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         return;
     };
 
-    let has_body = match &setup_prop.value {
-        Expression::FunctionExpression(func) => func.body.is_some(),
-        Expression::ArrowFunctionExpression(_) => true,
-        _ => false,
+    let function = match &setup_prop.value {
+        Expression::FunctionExpression(func) => FunctionKind::Function(func),
+        Expression::ArrowFunctionExpression(arrow) => FunctionKind::Arrow(arrow),
+        _ => return,
     };
-    if !has_body {
-        return;
-    }
 
     let module_record = ctx.module_record();
     let scoping = ctx.scoping();
@@ -141,14 +139,12 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
     }
 
     let mut visitor = WatchAfterAwaitVisitor::new(scoping, symbol_to_import_entry);
-    match &setup_prop.value {
-        Expression::FunctionExpression(func) => {
-            visitor.visit_function_body(func.body.as_deref().unwrap());
+    match function {
+        FunctionKind::Function(func) => {
+            let Some(body) = func.body.as_deref() else { return };
+            visitor.visit_function_body(body);
         }
-        Expression::ArrowFunctionExpression(arrow) => {
-            visitor.visit_arrow_function_body(&arrow.body);
-        }
-        _ => unreachable!(),
+        FunctionKind::Arrow(arrow) => visitor.visit_arrow_function_body(&arrow.body),
     }
 
     visitor.errors.iter().for_each(|(span, name)| {

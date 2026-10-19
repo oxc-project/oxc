@@ -71,6 +71,11 @@ impl<'a> SourceText<'a> {
         self.next_byte_skipping(position, |byte| byte.is_ascii_whitespace())
     }
 
+    /// Last non-whitespace byte before position
+    pub fn previous_non_whitespace_byte(&self, position: u32) -> Option<u8> {
+        self.bytes_to(position).find(|byte| !byte.is_ascii_whitespace())
+    }
+
     /// First byte at or after position that `skip` rejects
     #[inline]
     pub fn next_byte_skipping(&self, position: u32, skip: impl Fn(u8) -> bool) -> Option<u8> {

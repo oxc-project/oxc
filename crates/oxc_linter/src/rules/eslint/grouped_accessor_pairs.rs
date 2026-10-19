@@ -434,9 +434,9 @@ fn get_diagnostic_access_name(
     } else {
         // e.g. "class foo { get #a {} set #a(val) {} }" we should get #a
         let (real_key, private_prefix) = if is_private {
-            (format!("#{base_key}"), "private ")
+            (format!("#{}", base_key.display()), "private ")
         } else {
-            (format!("'{base_key}'"), "")
+            (format!("'{}'", base_key.display()), "")
         };
         format!("{static_prefix}{private_prefix}{access_word} {real_key}")
     }

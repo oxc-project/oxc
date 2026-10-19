@@ -921,12 +921,47 @@ impl NeedsParentheses<'_> for AstNode<'_, TSInstantiationExpression<'_>> {
             AstNodes::StaticMemberExpression(expr) => &expr.object,
             AstNodes::ComputedMemberExpression(expr) => &expr.object,
             AstNodes::PrivateFieldExpression(expr) => &expr.object,
-            // `(f<T>)!`, since `f<T>!` does not parse
-            AstNodes::TSNonNullExpression(_) => return true,
-            _ => return false,
+            // `(f<T>)!`, `(f<T>)<U>` and `(f<T>)<U>()`, since `f<T>!`, `f<T><U>` and `f<T><U>()` do not parse
+            AstNodes::TSNonNullExpression(_) | AstNodes::TSInstantiationExpression(_) => {
+                return true;
+            }
+            AstNodes::CallExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
+            AstNodes::NewExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
+            AstNodes::TaggedTemplateExpression(expr) if expr.type_arguments.is_some() => &expr.tag,
+            _ => return is_followed_by_comparison_or_sign(self),
         };
 
         self.span == object.span()
+    }
+}
+
+/// Whether the instantiation expression ends the left operand of `+`, `-`, `<` or `>`-led operators:
+/// TypeScript reads `f<T> + x` as `f < T > +x` and rejects `f<T> < x`,
+/// also when `f<T>` only ends the operand (`(a + f<T>) - x`, `(typeof f<T>) + x`).
+fn is_followed_by_comparison_or_sign(node: &AstNode<'_, TSInstantiationExpression<'_>>) -> bool {
+    let mut span = node.span;
+    let mut parent = node.parent();
+    loop {
+        match parent {
+            AstNodes::BinaryExpression(expr) if expr.right.span() == span => {
+                (span, parent) = (expr.span, expr.parent());
+            }
+            AstNodes::UnaryExpression(expr) => (span, parent) = (expr.span, expr.parent()),
+            AstNodes::BinaryExpression(expr) => {
+                return expr.left.span() == span
+                    && matches!(
+                        expr.operator,
+                        BinaryOperator::Addition
+                            | BinaryOperator::Subtraction
+                            | BinaryOperator::LessThan
+                            | BinaryOperator::GreaterThan
+                            | BinaryOperator::GreaterEqualThan
+                            | BinaryOperator::ShiftRight
+                            | BinaryOperator::ShiftRightZeroFill
+                    );
+            }
+            _ => return false,
+        }
     }
 }
 
