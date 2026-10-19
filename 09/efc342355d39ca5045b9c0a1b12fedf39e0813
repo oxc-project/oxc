@@ -1,0 +1,19 @@
+apps/oxfmt/src-js/cli/migration/migrate-prettier.ts
+  s_5d3b42a1f38d20::t_2b4de2d2bdc5a8 148
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "09efc342355d39ca5045b9c0a1b12fedf39e0813",
+  "prompts": {},
+  "sessions": {
+    "s_5d3b42a1f38d20": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a15317-e34f-7ab0-9931-52f916a6f0f7",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
