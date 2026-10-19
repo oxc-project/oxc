@@ -66,6 +66,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeAssertion(tsgolint),
     typescript,
     suspicious,
+    recommended,
     fix,
     config = NoUnnecessaryTypeAssertionConfig,
     version = "1.12.0",

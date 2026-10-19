@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 529b057 formatter_core: Keep front matter verbatim when body starts with indented delimiter (#27946) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 2c1cc20 formatter: Keep comment only Vue bindings as-is (#27820) (leaysgur)
+- 5605362 oxfmt: Validate editorconfig as like oxfmtrc (#27778) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- 3a980c9 formatter_toml: Handle BOM like other languages (#27775) (leaysgur)
+- 97c9fc4 oxfmt: Handle BOM in config JSON (#27774) (leaysgur)
+- 28eb4a7 oxfmt: Print trailing newline for `--list-different` (#27773) (leaysgur)
+
+### 📚 Documentation
+
+- 1325225 oxfmt: Update useless comment prefix (#27956) (leaysgur)
+- 8a3a6c8 oxfmt: Update stale notes on the JSDoc string-out channel and fixture origins (#27824) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 1ef2888 oxfmt: [**BREAKING**] Improve `--migrate prettier` (#27444) (leaysgur)
+- c2e6d5f formatter_toml: [**BREAKING**] Add `oxc_formatter_toml` crate wrapping `oxc-toml` (#27365) (leaysgur)
+
+### 🚀 Features
+
+- ce4e8dc oxfmt: Support `overrides[].parser` -> `associations[].language` migration (#27475) (leaysgur)
+- a495e82 oxfmt: Support `associations` config to specify language over filepath (#27437) (leaysgur)
+- 77f8156 oxfmt/lsp: Show root config errors to LSP client (#26014) (Sysix)
+- c1adce3 oxfmt/lsp: Support astro language (#27388) (leaysgur)
+- 4f024a1 oxfmt: Support astro plugin in `--migrate prettier` (#27387) (leaysgur)
+- 5db28fa oxfmt: Support Astro via `prettier-plugin-astro@1.x` (#27386) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 76ec31b formatter_css: Support css-in-js placeholders in property names and conditions (#27640) (leaysgur)
+- 99bb268 formatter_css: Keep css-in-js placeholder as media type (#27639) (leaysgur)
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- b6eb914 oxfmt: Normalize symlink targets in CLI snapshots (#27498) (camc314)
+- 5dae56f oxfmt/lsp: Return error on config resolving error (#26003) (Sysix)
+- 2349a31 oxfmt: Follow symlinked configs in discovery (#27389) (leaysgur)
+- db360de oxfmt: Load svelte plugin for svelte-in-mdx-in-md (#27369) (leaysgur)
+- 6e573f9 oxlint,oxfmt: Set stderr blocking (#27363) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+### 📚 Documentation
+
+- 408d87f oxfmt: Simplify oxfmtrc docs (#27432) (leaysgur)
+- 902e188 oxfmt: Update how `embeddedLanguageFormatting` option works (#27362) (leaysgur)
+
 ## [0.72.0] - 2026-10-05
 
 ### 💥 BREAKING CHANGES

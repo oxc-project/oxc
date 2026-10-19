@@ -41,6 +41,7 @@ declare_oxc_lint!(
     NoInstanceofArray,
     unicorn,
     pedantic,
+    recommended,
     fix,
     version = "0.0.8",
     short_description = "Require `Array.isArray()` instead of `instanceof Array`.",

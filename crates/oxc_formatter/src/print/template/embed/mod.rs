@@ -157,12 +157,12 @@ pub fn embed_hug(
     let has_leading_ws = template
         .quasis
         .first()
-        .and_then(|q| q.value.cooked.as_ref())
+        .and_then(|q| q.value.cooked?.as_str())
         .is_some_and(|s| s.starts_with(|c: char| c.is_ascii_whitespace()));
     let has_trailing_ws = template
         .quasis
         .last()
-        .and_then(|q| q.value.cooked.as_ref())
+        .and_then(|q| q.value.cooked?.as_str())
         .is_some_and(|s| s.ends_with(|c: char| c.is_ascii_whitespace()));
     Some(has_leading_ws && has_trailing_ws)
 }
@@ -371,8 +371,13 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
 /// Re-escape template-literal characters (`` ` ``, `${`, `\`) in every `Text` element of an embedded IR.
 /// The IR is re-inserted into a JS template literal built from `.cooked` values,
 /// so these characters need escaping.
+///
+/// NOTE: This round-trip is lossy for any other JS escape in `.raw`, same as Prettier.
+/// e.g. `\uD83D\uDE00` is printed as `😀`, `\u200B` as an invisible character.
+/// The cooked value stays the same, but `.raw` and the author's intent do not.
+/// Embedding only quasis whose `.raw` equals the re-escaped `.cooked` would keep them as-is.
 fn escape_template_chars_in_ir<'a>(
-    ir: &[FormatElement<'a>],
+    ir: ArenaVec<'a, FormatElement<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> ArenaVec<'a, FormatElement<'a>> {
     escape_text_in_ir(ir, f, escape_template_chars)
@@ -381,14 +386,14 @@ fn escape_template_chars_in_ir<'a>(
 /// Re-escape backticks in `Text` elements of an embedded IR using Prettier's "raw" escape rule.
 /// Used by markdown-in-JS, which uses `.raw` quasi values.
 fn escape_backticks_raw_in_ir<'a>(
-    ir: &[FormatElement<'a>],
+    ir: ArenaVec<'a, FormatElement<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> ArenaVec<'a, FormatElement<'a>> {
     escape_text_in_ir(ir, f, escape_backticks_raw)
 }
 
 fn escape_text_in_ir<'a>(
-    ir: &[FormatElement<'a>],
+    ir: ArenaVec<'a, FormatElement<'a>>,
     f: &JsFormatter<'_, 'a>,
     escape: fn(&'a str, &'a Allocator) -> Option<&'a str>,
 ) -> ArenaVec<'a, FormatElement<'a>> {

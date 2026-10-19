@@ -1437,10 +1437,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 self.state.has_line_suffix = true;
             }
 
-            FormatElement::Tag(EndLineSuffix) => {
-                return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
-            }
-
             FormatElement::Tag(tag @ StartFill) => {
                 self.fill_depth += 1;
                 self.stack.push(tag.kind(), args);
@@ -1488,7 +1484,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
                 self.stack.pop(tag.kind())?;
             }
-            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndPrefix)) => {
+            // `EndLineSuffix` is reached only when measuring inside flushed line suffix content
+            // (`flush_line_suffixes` pushes the frame and its end tag), so leave it like the printer does
+            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndPrefix | EndLineSuffix)) => {
                 self.stack.pop(tag.kind())?;
                 self.indent_stack.pop();
             }
@@ -1659,8 +1657,8 @@ mod tests {
     use oxc_allocator::Allocator;
 
     use crate::{
-        Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
-        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer, best_fitting,
+        Document, Format, FormatState, IndentStyle, LineEnding, Printed, Printer, PrinterOptions,
+        SimpleFormatContext, best_fitting,
         builders::{
             align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
             hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
@@ -1701,8 +1699,8 @@ mod tests {
     {
         let context = SimpleFormatContext::default();
         let mut state = FormatState::new(context, allocator);
-        let mut buffer = VecBuffer::new(&mut state);
-        write(&mut buffer, Arguments::new(&[Argument::new(root)]));
+        let mut buffer = crate::Formatter::new(&mut state);
+        root.fmt(&mut buffer);
 
         let elements = buffer.into_vec();
         Document::new(elements, Vec::default()).print(0, options).expect("Document to be valid")
@@ -2190,6 +2188,26 @@ a",
     }
 
     #[test]
+    fn group_inside_line_suffix() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(
+                token("a"),
+                line_suffix(&group(&format_args!(
+                    token(" b"),
+                    soft_line_break_or_space(),
+                    token("c")
+                ))),
+                hard_line_break(),
+                token("d")
+            ),
+        );
+
+        assert_eq!("a b c\nd", result.as_code());
+    }
+
+    #[test]
     fn dedent_to_root_returns_to_marked_root() {
         let allocator = Allocator::default();
         let result = format_simple(
@@ -2486,8 +2504,7 @@ two lines`,
         let allocator = Allocator::default();
         let context = SimpleFormatContext::default();
         let mut state = FormatState::new(context, &allocator);
-        let mut buffer = VecBuffer::new(&mut state);
-        let mut formatter = crate::Formatter::new(&mut buffer);
+        let mut formatter = crate::Formatter::new(&mut state);
 
         formatter
             .fill()
@@ -2513,7 +2530,7 @@ two lines`,
             )
             .finish();
 
-        let document = Document::new(buffer.into_vec(), Vec::default());
+        let document = Document::new(formatter.into_vec(), Vec::default());
 
         let printed = Printer::new(
             PrinterOptions::default()

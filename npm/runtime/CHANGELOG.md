@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- aec14bc transformer: Avoid synthetic private fields for static blocks (#27300) (Kuroda Kayn)
+
 ## [0.149.0] - 2026-09-07
 
 ### 🐛 Bug Fixes

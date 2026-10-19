@@ -36,10 +36,10 @@ declare_oxc_lint!(
     /// Examples of **incorrect** code for this rule:
     /// ```js
     /// export let count = 2
-    /// export var count = 3
+    /// export var total = 3
     ///
-    /// let count = 4
-    /// export { count }
+    /// let value = 4
+    /// export { value }
     /// ```
     ///
     /// Examples of **correct** code for this rule:

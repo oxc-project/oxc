@@ -4,6 +4,21 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- f8e9a50 semantic: Stop arguments resolution at ordinary functions (#26929) (camc314)
+- 72bf06f crates/oxc_semantic: Decline to evaluate unary ops on strings in enum initializers (#27447) (Brooooooklyn)
+- 558a890 semantic: Mark delete of optional members as MemberWriteTarget (#27430) (Bartok)
+- 7e6a050 semantic: Visit `TSMethodSignature` computed method keys in enclosing scope (#27357) (camc314)
+
 ## [0.153.0] - 2026-10-05
 
 ### 🐛 Bug Fixes

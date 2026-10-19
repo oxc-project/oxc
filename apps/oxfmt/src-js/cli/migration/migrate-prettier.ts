@@ -145,7 +145,7 @@ const warnings: string[] = [];
 // https://github.com/prettier/prettier/blob/main/src/config/prettier-config/config-searcher.js
 const CONFIG_FILES = [
   "package.json",
-  // ponytail: `package.yaml` is not searched, since checking its `prettier` field requires YAML parser
+  // `package.yaml` is not searched, since checking its `prettier` field requires YAML parser
   ".prettierrc",
   ".prettierrc.json",
   ".prettierrc.yml",

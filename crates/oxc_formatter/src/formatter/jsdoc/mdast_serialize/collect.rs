@@ -1,47 +1,94 @@
-use markdown::mdast::Node;
+use markdown::{mdast::Node, unist::Position};
+
+// The collected text must parse back to the same nodes and stay inside the JSDoc block (no `*/`).
 
 /// Collect inline content from a node into a single text string.
 /// This handles emphasis, strong, code, links, etc.
+/// `source` is the text the node positions point into.
 /// Note: the returned text may contain placeholder tokens which must be
 /// restored before being used in output.
-pub(super) fn collect_inline_text(node: &Node) -> String {
+pub(super) fn collect_inline_text(node: &Node, source: &str) -> String {
     let mut result = String::new();
-    collect_inline_recursive(node, &mut result);
+    collect_inline_recursive(node, source, &mut result);
     result
 }
 
 /// Collect inline text from a slice of child nodes directly, avoiding
 /// the need to clone a parent node just to iterate its children.
-pub(super) fn collect_inline_text_from_children(children: &[Node]) -> String {
+pub(super) fn collect_inline_text_from_children(children: &[Node], source: &str) -> String {
     let mut result = String::new();
     for child in children {
-        collect_inline_recursive(child, &mut result);
+        collect_inline_recursive(child, source, &mut result);
     }
     result
 }
 
-pub(super) fn collect_inline_recursive(node: &Node, out: &mut String) {
-    collect_inline_impl(node, out, false);
+pub(super) fn collect_inline_recursive(node: &Node, source: &str, out: &mut String) {
+    collect_inline_impl(node, source, out, false);
 }
 
-fn collect_inline_impl(node: &Node, out: &mut String, inside_link: bool) {
+/// Write the text as it appears in `source`.
+/// The parsed value drops escapes (`\*`) and decodes character references (`&amp;`):
+/// written back, they would become syntax or change meaning.
+/// Continuation lines drop their leading whitespace and blockquote markers, as the parser does.
+fn push_raw_text(text: &markdown::mdast::Text, source: &str, out: &mut String) {
+    let Some(position) = &text.position else {
+        out.push_str(&text.value);
+        return;
+    };
+    // markdown-rs starts a text that opens with an escape after its `\` (`\*a` is at `*a`).
+    // A `\` right before a text belongs to no other node (they all close with another character),
+    // so it is that escape.
+    let mut start = position.start.offset;
+    if source[..start].ends_with('\\') {
+        start -= 1;
+    }
+    let mut lines = source[start..position.end.offset].split('\n');
+    out.push_str(lines.next().unwrap());
+    for line in lines {
+        out.push('\n');
+        out.push_str(line.trim_start_matches([' ', '\t', '>']));
+    }
+}
+
+/// The emphasis marker for the emphasis at `position`:
+/// `_` (upstream's style) unless inside a word, where only `*` delimits (`a*b*c`).
+pub(super) fn emphasis_marker(position: Option<&Position>, source: &str) -> &'static str {
+    let Some(position) = position else { return "_" };
+    let before = source[..position.start.offset].chars().next_back();
+    let after = source[position.end.offset..].chars().next();
+    if before.is_some_and(char::is_alphanumeric) || after.is_some_and(char::is_alphanumeric) {
+        "*"
+    } else {
+        "_"
+    }
+}
+
+/// The strong marker for the strong at `position`:
+/// `**` (upstream's style) unless followed by `/`, which would close the comment
+/// (a strong before `/` can only be written `__`).
+pub(super) fn strong_marker(position: Option<&Position>, source: &str) -> &'static str {
+    if position.is_some_and(|p| source[p.end.offset..].starts_with('/')) { "__" } else { "**" }
+}
+
+fn collect_inline_impl(node: &Node, source: &str, out: &mut String, inside_link: bool) {
     match node {
-        Node::Text(text) => {
-            out.push_str(&text.value);
-        }
+        Node::Text(text) => push_raw_text(text, source, out),
         Node::Emphasis(emp) => {
-            out.push('_');
+            let marker = emphasis_marker(emp.position.as_ref(), source);
+            out.push_str(marker);
             for child in &emp.children {
-                collect_inline_impl(child, out, inside_link);
+                collect_inline_impl(child, source, out, inside_link);
             }
-            out.push('_');
+            out.push_str(marker);
         }
         Node::Strong(strong) => {
-            out.push_str("**");
+            let marker = strong_marker(strong.position.as_ref(), source);
+            out.push_str(marker);
             for child in &strong.children {
-                collect_inline_impl(child, out, inside_link);
+                collect_inline_impl(child, source, out, inside_link);
             }
-            out.push_str("**");
+            out.push_str(marker);
         }
         Node::InlineCode(code) => {
             let value = &code.value;
@@ -69,14 +116,14 @@ fn collect_inline_impl(node: &Node, out: &mut String, inside_link: bool) {
             // Nested link (e.g. GFM autolink inside explicit link text) —
             // just emit the text content to avoid double-encoding.
             for child in &link.children {
-                collect_inline_impl(child, out, true);
+                collect_inline_impl(child, source, out, true);
             }
         }
         Node::Link(link) => {
             let link_text = {
                 let mut t = String::new();
                 for child in &link.children {
-                    collect_inline_impl(child, &mut t, true);
+                    collect_inline_impl(child, source, &mut t, true);
                 }
                 t
             };
@@ -94,7 +141,7 @@ fn collect_inline_impl(node: &Node, out: &mut String, inside_link: bool) {
         Node::LinkReference(link_ref) => {
             out.push('[');
             for child in &link_ref.children {
-                collect_inline_impl(child, out, inside_link);
+                collect_inline_impl(child, source, out, inside_link);
             }
             out.push(']');
             let label = link_ref.label.as_deref().unwrap_or(&link_ref.identifier);
@@ -145,7 +192,7 @@ fn collect_inline_impl(node: &Node, out: &mut String, inside_link: bool) {
         Node::Delete(del) => {
             out.push_str("~~");
             for child in &del.children {
-                collect_inline_impl(child, out, inside_link);
+                collect_inline_impl(child, source, out, inside_link);
             }
             out.push_str("~~");
         }
@@ -160,17 +207,17 @@ fn collect_inline_impl(node: &Node, out: &mut String, inside_link: bool) {
         // For parent nodes, recurse into children
         Node::Paragraph(para) => {
             for child in &para.children {
-                collect_inline_impl(child, out, inside_link);
+                collect_inline_impl(child, source, out, inside_link);
             }
         }
         Node::Heading(h) => {
             for child in &h.children {
-                collect_inline_impl(child, out, inside_link);
+                collect_inline_impl(child, source, out, inside_link);
             }
         }
         Node::TableCell(cell) => {
             for child in &cell.children {
-                collect_inline_impl(child, out, inside_link);
+                collect_inline_impl(child, source, out, inside_link);
             }
         }
         _ => {

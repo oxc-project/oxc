@@ -3,10 +3,10 @@ use lazy_regex::Regex;
 use schemars::JsonSchema;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, Expression, Function, ObjectExpression, ObjectProperty,
-        ObjectPropertyKind, PropertyKind,
+        ArrowFunctionExpression, Expression, Function, IdentifierReference, NewTarget,
+        ObjectExpression, ObjectProperty, ObjectPropertyKind, PropertyKind, Super, ThisExpression,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -354,14 +354,18 @@ fn check_longform_methods<'a>(
 ) {
     if rule.ignore_constructors
         && property.key.is_identifier()
-        && property.key.name().is_some_and(is_constructor)
+        && property
+            .key
+            .name()
+            .and_then(StaticPropertyName::into_cow_str)
+            .is_some_and(|name| is_constructor(&name))
     {
         return;
     }
 
-    if let (Some(pattern), Some(static_name)) =
-        (rule.methods_ignore_pattern.as_ref(), property.key.static_name())
-        && pattern.is_match(static_name.as_ref())
+    if let Some(pattern) = rule.methods_ignore_pattern.as_ref()
+        && let Some(static_name) = property.key.static_name()
+        && static_name.as_str().is_some_and(|name| pattern.is_match(name))
     {
         return;
     }
@@ -385,7 +389,7 @@ fn check_longform_methods<'a>(
 }
 
 fn check_shorthand_properties<'a>(ctx: &LintContext<'a>, property: &ObjectProperty<'a>) {
-    if let Some(property_name) = property.key.name() {
+    if let Some(property_name) = property.key.name().and_then(StaticPropertyName::into_cow_str) {
         ctx.diagnostic_with_fix(expected_property_longform(property.span), |fixer| {
             fixer.replace(property.span, format!("{property_name}: {property_name}"))
         });
@@ -414,7 +418,7 @@ fn check_longform_properties<'a>(
         return;
     }
 
-    if let Some(property_name) = property.key.name()
+    if let Some(property_name) = property.key.name().and_then(StaticPropertyName::into_cow_str)
         && property_name == value_identifier.name
     {
         ctx.diagnostic_with_fix(expected_property_shorthand(property.span), |fixer| {
@@ -503,12 +507,7 @@ impl<'a, 'c> ArrowFunctionLexicalIdentifierVisitor<'a, 'c> {
 }
 
 impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
-    fn visit_function(
-        &mut self,
-        _it: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _it: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, it: &ArrowFunctionExpression<'a>) {
         if self.has_lexical_identifier {
@@ -518,19 +517,19 @@ impl<'a> Visit<'a> for ArrowFunctionLexicalIdentifierVisitor<'a, '_> {
         walk::walk_arrow_function_expression(self, it);
     }
 
-    fn visit_this_expression(&mut self, _it: &oxc_ast::ast::ThisExpression) {
+    fn visit_this_expression(&mut self, _it: &ThisExpression) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_super(&mut self, _it: &oxc_ast::ast::Super) {
+    fn visit_super(&mut self, _it: &Super) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_new_target(&mut self, _it: &oxc_ast::ast::NewTarget) {
+    fn visit_new_target(&mut self, _it: &NewTarget) {
         self.has_lexical_identifier = true;
     }
 
-    fn visit_identifier_reference(&mut self, it: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
         if self.ctx.scoping().root_unresolved_references().get("arguments").is_some_and(
             |references| references.iter().any(|&reference_id| reference_id == it.reference_id()),
         ) {
@@ -591,7 +590,9 @@ fn is_redundant_property(property: &ObjectProperty) -> bool {
     match &property.value {
         Expression::FunctionExpression(func) => func.id.is_none(),
         Expression::Identifier(value_identifier) => {
-            if let Some(property_name) = property.key.name() {
+            if let Some(property_name) =
+                property.key.name().and_then(StaticPropertyName::into_cow_str)
+            {
                 property_name == value_identifier.name
             } else {
                 false

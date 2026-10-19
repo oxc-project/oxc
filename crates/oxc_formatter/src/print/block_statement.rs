@@ -1,6 +1,5 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::Buffer;
 
 use super::FormatWrite;
 use crate::{

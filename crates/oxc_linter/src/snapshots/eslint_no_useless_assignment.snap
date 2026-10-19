@@ -532,3 +532,131 @@ source: crates/oxc_linter/src/tester.rs
  2 │                     export let exported = (local = 1);
    ╰────
   help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:2:50]
+ 1 │ export function reassignedParam(p) { p = 5; p = 6; return p; }
+ 2 │          export function reassignedLocal() { let x = 1; x = 2; return x; }
+   ·                                                  ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:38]
+ 1 │ export function reassignedParam(p) { p = 5; p = 6; return p; }
+   ·                                      ─
+ 2 │          export function reassignedLocal() { let x = 1; x = 2; return x; }
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ const f = function(p) { p = 1; p = 2; return p; };
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:18]
+ 1 │ const f = p => { p = 1; p = 2; return p; };
+   ·                  ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:22]
+ 1 │ const obj = { f(p) { p = 1; p = 2; return p; } };
+   ·                      ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:18]
+ 1 │ class C { f(p) { p = 1; p = 2; return p; } }
+   ·                  ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:21]
+ 1 │ function f(p = 0) { p = 1; p = 2; return p; }
+   ·                     ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:19]
+ 1 │ function f({p}) { p = 1; p = 2; return p; }
+   ·                   ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:19]
+ 1 │ function f([p]) { p = 1; p = 2; return p; }
+   ·                   ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:33]
+ 1 │ function f({nested: [p = 0]}) { p = 1; p = 2; return p; }
+   ·                                 ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:20]
+ 1 │ function f(...p) { p = []; p = [1]; return p; }
+   ·                    ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:22]
+ 1 │ function f(...[p]) { p = 1; p = 2; return p; }
+   ·                      ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function f({a, ...p}) { p = {}; p = {a}; return p; }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:37]
+ 1 │ export const p = 0; function f(p) { p = 1; p = 2; return p; }
+   ·                                     ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:17]
+ 1 │ function f(p) { p++; p = 2; return p; }
+   ·                 ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:25]
+ 1 │ function f(p) { use(p); p = 1; }
+   ·                         ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:24]
+ 1 │ function f(p, q = p) { p = 1; return q; }
+   ·                        ─
+   ╰────
+  help: Consider removing or reusing the assigned value.
+
+  ⚠ eslint(no-useless-assignment): This assigned value is not used in subsequent statements.
+   ╭─[no_useless_assignment.tsx:1:24]
+ 1 │ function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }
+   ·                        ─
+   ╰────
+  help: Consider removing or reusing the assigned value.

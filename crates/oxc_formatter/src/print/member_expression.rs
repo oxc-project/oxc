@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -29,9 +29,9 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
         // Before the recording: printing the object consumes its cast comment
         let object_is_cast_target = is_cast_target(self.object.span(), f);
         let is_member_chain = {
-            let mut recording = f.start_recording();
-            write!(recording, [self.object()]);
-            recording.stop().has_label(LabelId::of(JsLabels::MemberChain))
+            let start = f.elements().len();
+            write!(f, [self.object()]);
+            f.elements()[start..].has_label(LabelId::of(JsLabels::MemberChain))
         };
 
         match layout(self, is_member_chain, object_is_cast_target, f) {

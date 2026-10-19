@@ -3,7 +3,7 @@ use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
-    Buffer, Format,
+    Format,
     ast_nodes::{AstNode, AstNodes},
     formatter::{JsFormatter, JsFormatterExt as _},
     utils::{

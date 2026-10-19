@@ -160,7 +160,7 @@ fn is_length_member_for<'a>(
         return false;
     }
 
-    if member.static_property_name() != Some("length") {
+    if member.static_property_name().is_none_or(|name| name != "length") {
         return false;
     }
 

@@ -14,6 +14,7 @@ declare_oxc_lint!(
     NoUnneededAsyncExpectFunction,
     vitest,
     style,
+    recommended,
     fix,
     docs = DOCUMENTATION,
     version = "1.39.0",

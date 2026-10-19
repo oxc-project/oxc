@@ -1,5 +1,5 @@
-# Extra rustflags for building `oxc_lexer`'s SIMD core. Passed via `cargo --config` by the
-# `just test-lexer-simd` / `just conformance-lexer-simd` recipes - see the justfile.
+# Extra rustflags for building `oxc_lexer`'s AVX2 implementation. Passed via `cargo --config` by the
+# `just *-lexer-avx2` recipes - see the justfile.
 #
 # `avx2`, `bmi2` and `popcnt` are not in the x86_64 baseline on any platform, so they have to be asked for explicitly,
 # even on an x86_64 host. Cargo joins `rustflags` arrays across config sources, so the per-target flags

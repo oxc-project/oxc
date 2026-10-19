@@ -14,6 +14,7 @@ declare_oxc_lint!(
     NoFocusedTests,
     jest,
     correctness,
+    recommended,
     suggestion,
     docs = DOCUMENTATION,
     version = "0.0.8",
@@ -48,6 +49,9 @@ fn test() {
         ("test.each()()", None),
         ("test.each`table`()", None),
         ("test.concurrent()", None),
+        (r#"describe["\uD800"].only("a", () => {})"#, None),
+        (r#"describe[`\uDC00`].only("a", () => {})"#, None),
+        (r#"test.concurrent["a\uD800b"].only("a", () => {})"#, None),
     ];
 
     let fail = vec![

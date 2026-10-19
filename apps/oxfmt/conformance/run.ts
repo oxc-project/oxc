@@ -44,7 +44,12 @@ const categories: Category[] = [
   {
     name: "js-in-vue",
     sources: [
-      { dir: join(EXTERNALS_DIR, "prettier"), ext: ".vue" },
+      {
+        dir: join(EXTERNALS_DIR, "prettier"),
+        ext: ".vue",
+        // Parser error messages and range formatting are not formatter concerns
+        excludes: ["/_errors_/", "vue/range/"],
+      },
       { dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".vue" },
       { dir: join(FIXTURES_DIR, "edge-cases", "js-in-vue") },
     ],
@@ -381,7 +386,8 @@ async function runCategory(category: Category, fixtures: Fixture[]): Promise<Cat
         options,
       );
 
-      if (oxfmtResult === prettierResult) {
+      // Both failing to parse is not a pass, the fixture exercised nothing
+      if (oxfmtResult === prettierResult && oxfmtResult !== "ERROR") {
         passed++;
       } else {
         failures.push({

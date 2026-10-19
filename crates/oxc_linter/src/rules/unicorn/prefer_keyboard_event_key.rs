@@ -4,8 +4,9 @@ use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, BindingProperty, CallExpression, Expression, Function,
-        MemberExpression, PropertyKey,
+        Argument, ArrowFunctionExpression, BinaryOperator, BindingPattern, BindingProperty,
+        CallExpression, Expression, Function, MemberExpression, PropertyKey,
+        StaticMemberExpression,
     },
 };
 use oxc_codegen::CodegenOptions;
@@ -69,6 +70,7 @@ declare_oxc_lint!(
     PreferKeyboardEventKey,
     unicorn,
     style,
+    recommended,
     fix,
     version = "1.33.0",
     short_description = "Prefer `KeyboardEvent#key` over `KeyboardEvent#keyCode`.",
@@ -91,7 +93,7 @@ impl Rule for PreferKeyboardEventKey {
 impl PreferKeyboardEventKey {
     /// Check direct property access like `event.keyCode`
     fn check_static_member_expression<'a>(
-        member_expr: &oxc_ast::ast::StaticMemberExpression<'a>,
+        member_expr: &StaticMemberExpression<'a>,
         node: &AstNode<'a>,
         ctx: &LintContext<'a>,
     ) {
@@ -384,10 +386,7 @@ impl PreferKeyboardEventKey {
         };
 
         // Check if it's an equality comparison
-        if !matches!(
-            binary.operator,
-            oxc_ast::ast::BinaryOperator::Equality | oxc_ast::ast::BinaryOperator::StrictEquality
-        ) {
+        if !matches!(binary.operator, BinaryOperator::Equality | BinaryOperator::StrictEquality) {
             ctx.diagnostic(prefer_keyboard_event_key_diagnostic(property_span, property_name));
             return;
         }
@@ -432,7 +431,7 @@ impl PreferKeyboardEventKey {
 
 /// Enum to represent either an arrow function or regular function callback
 enum CallbackFunction<'a> {
-    Arrow(&'a oxc_ast::ast::ArrowFunctionExpression<'a>),
+    Arrow(&'a ArrowFunctionExpression<'a>),
     Regular(&'a Function<'a>),
 }
 

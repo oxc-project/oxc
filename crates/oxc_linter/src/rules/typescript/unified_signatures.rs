@@ -4,9 +4,9 @@ use oxc_ast::{
     ast::{
         Class, ClassElement, ClassType, Declaration, ExportDefaultDeclarationKind, FormalParameter,
         FormalParameterRest, Function, FunctionType, MethodDefinition, MethodDefinitionKind,
-        PropertyKey, Statement, TSCallSignatureDeclaration, TSConstructSignatureDeclaration,
-        TSMethodSignature, TSMethodSignatureKind, TSSignature, TSThisParameter, TSType,
-        TSTypeAnnotation, TSTypeParameter, TSTypeParameterDeclaration,
+        ModuleDeclaration, PropertyKey, Statement, TSCallSignatureDeclaration,
+        TSConstructSignatureDeclaration, TSMethodSignature, TSMethodSignatureKind, TSSignature,
+        TSThisParameter, TSType, TSTypeAnnotation, TSTypeParameter, TSTypeParameterDeclaration,
     },
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -376,7 +376,7 @@ fn get_statement_overload<'a>(
 
     let module_declaration = statement.as_module_declaration()?;
     match module_declaration {
-        oxc_ast::ast::ModuleDeclaration::ExportDeclaration(export_decl) => {
+        ModuleDeclaration::ExportDeclaration(export_decl) => {
             let Declaration::FunctionDeclaration(function) = &export_decl.declaration else {
                 return None;
             };
@@ -393,7 +393,7 @@ fn get_statement_overload<'a>(
                 },
             ))
         }
-        oxc_ast::ast::ModuleDeclaration::ExportDefaultDeclaration(export_default) => {
+        ModuleDeclaration::ExportDefaultDeclaration(export_default) => {
             let ExportDefaultDeclarationKind::FunctionDeclaration(function) =
                 &export_default.declaration
             else {

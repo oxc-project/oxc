@@ -39,9 +39,9 @@ pub use detect_code_removal::detect_code_removal;
 // `crate::write!` / `crate::format_args!` / `crate::best_fitting!`
 // call-sites in `oxc_formatter` continue to work without changes.
 pub(crate) use oxc_formatter_core::{best_fitting, format_args, write};
-// Internal-only re-exports so crate-local `use crate::{Buffer, Format};` continues to work
+// Internal-only re-exports so crate-local `use crate::Format;` continues to work
 // without leaking these IR primitives in the public API.
-pub(crate) use oxc_formatter_core::{Buffer, Format};
+pub(crate) use oxc_formatter_core::Format;
 
 use self::formatter::prelude::tag::Label;
 use crate::print::{FormatFunctionParams, FormatTypeParameters};
@@ -227,6 +227,14 @@ pub fn format_fragment<'a>(
             )
         }
     };
+
+    // Losing a comment is worse than leaving the fragment as-is (e.g. `v-slot="/* c */"` has no params to attach to).
+    // Prettier also fails and keeps the source then.
+    // NOTE: Keeping the source (whitespace included) is just the cheapest way to match Prettier.
+    // Printing the comments instead is fine once the Vue formatter moves to Rust.
+    if !formatted.context().comments().unprinted_comments().is_empty() {
+        return Err(OxcDiagnostic::error("Some comments in the fragment were not printed"));
+    }
 
     Ok(formatted)
 }

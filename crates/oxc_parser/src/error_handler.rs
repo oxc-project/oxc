@@ -30,7 +30,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return;
         }
 
-        // Check if this looks like a merge conflict marker
         if let Some(start_span) = self.is_merge_conflict_marker() {
             let (middle_span, end_span) = self.find_merge_conflict_markers();
             let error = diagnostics::merge_conflict_marker(start_span, middle_span, end_span);
@@ -139,7 +138,6 @@ impl<C: Config> ParserImpl<'_, C> {
             return None;
         }
 
-        // Get the remaining source text from the current position
         let remaining = &self.source_text[span.start as usize..];
 
         // Check for each conflict marker pattern (all are exactly 7 ASCII characters)
@@ -193,7 +191,6 @@ impl<C: Config> ParserImpl<'_, C> {
                 return (middle_span, None);
             }
 
-            // Check if we've hit a conflict marker
             if let Some(marker_span) = self.is_merge_conflict_marker() {
                 let span = self.cur_token().span();
                 let remaining = &self.source_text[span.start as usize..];

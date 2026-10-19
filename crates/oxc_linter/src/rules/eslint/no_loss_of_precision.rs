@@ -81,6 +81,7 @@ declare_oxc_lint!(
     NoLossOfPrecision,
     eslint,
     correctness,
+    recommended,
     version = "0.0.7",
     short_description = "Disallow precision loss in numeric literals.",
 );

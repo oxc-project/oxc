@@ -58,6 +58,7 @@ declare_oxc_lint!(
     PreferNamespaceKeyword,
     typescript,
     correctness,
+    recommended,
     fix,
     version = "0.7.0",
     short_description = "Require using `namespace` keyword over `module` keyword to declare custom TypeScript modules.",

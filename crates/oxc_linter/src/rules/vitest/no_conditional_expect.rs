@@ -14,6 +14,7 @@ declare_oxc_lint!(
     NoConditionalExpect,
     vitest,
     correctness,
+    recommended,
     docs = DOCUMENTATION,
     version = "0.0.12",
 );

@@ -72,6 +72,7 @@ declare_oxc_lint!(
     MediaHasCaption,
     jsx_a11y,
     correctness,
+    recommended,
     config = MediaHasCaptionConfig,
     version = "0.1.1",
     short_description = "Checks if `<audio>` and `<video>` elements have a `<track>` element for captions.",
@@ -164,7 +165,10 @@ impl Rule for MediaHasCaption {
                             return false;
                         };
                         if let Some(JSXAttributeValue::StringLiteral(s)) = &attr.value {
-                            return iden.name == "kind" && s.value.eq_ignore_ascii_case("captions");
+                            return iden.name == "kind"
+                                && s.value
+                                    .as_str()
+                                    .is_some_and(|value| value.eq_ignore_ascii_case("captions"));
                         }
                         false
                     })

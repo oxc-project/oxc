@@ -4,8 +4,8 @@ use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
 use oxc_span::SPAN;
 
 use crate::tester::{
-    test, test_minify, test_minify_same, test_options, test_same, test_same_ignore_parse_errors,
-    test_unambiguous, test_with_parse_options,
+    test, test_ascii, test_minify, test_minify_same, test_options, test_same,
+    test_same_ignore_parse_errors, test_unambiguous, test_with_parse_options,
 };
 
 #[test]
@@ -18,6 +18,13 @@ fn cases() {
 #[test]
 fn decl() {
     test_same("const [foo, ...bar] = qux;\n");
+    test_same("const [...bar] = qux;\n");
+    test_same("const [, ...bar] = qux;\n");
+    test_same("const [, , , ...bar] = qux;\n");
+    test_same("function foo([bar, ...qux]) {}\n");
+    test_same("function foo([...bar]) {}\n");
+    test_same("function foo([, ...bar]) {}\n");
+    test_same("function foo([, , , ...bar]) {}\n");
     test_same("const { foo, ...bar } = qux;\n");
     test_minify("const [foo] = bar", "const[foo]=bar;");
     test_minify("const {foo} = bar", "const{foo}=bar;");
@@ -475,6 +482,10 @@ fn r#yield() {
 
 #[test]
 fn arrow() {
+    test_same("([bar, ...qux]) => {};\n");
+    test_same("([...bar]) => {};\n");
+    test_same("([, ...bar]) => {};\n");
+    test_same("([, , , ...bar]) => {};\n");
     test_minify("x => a, b", "x=>a,b;");
     test_minify("x => (a, b)", "x=>(a,b);");
     test_minify("x => (a => b)", "x=>(a=>b);");
@@ -1162,7 +1173,7 @@ fn template_literal_escape_when_building_ast() {
     let cooked = "hello`world${foo}\\bar";
     let value = TemplateElementValue {
         raw: Str::from_str_in(cooked, &ast),
-        cooked: Some(Str::from_str_in(cooked, &ast)),
+        cooked: Some(Str::from_str_in(cooked, &ast).into()),
     };
     let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
     let template_literal = TemplateLiteral::new(SPAN, [element], [], &ast);
@@ -1264,5 +1275,185 @@ fn template_literal_dollar_escapes() {
             r"String.raw`é\$`;",
             CodegenOptions { minify: true, ascii_only, ..CodegenOptions::default() },
         );
+    }
+}
+
+#[test]
+fn surrogate_lead_byte_characters() {
+    // U+D000..U+D7FF share the 0xED lead byte with lone surrogates.
+    test("x = '퀀힣';", "x = \"퀀힣\";\n");
+    test("x = '퀀\\uD800힣';", "x = \"퀀\\ud800힣\";\n");
+    test_ascii("x = '퀀힣';", "x = \"\\uD000\\uD7A3\";\n");
+    test_ascii("x = '퀀\\uD800힣';", "x = \"\\uD000\\ud800\\uD7A3\";\n");
+    test_minify("x = '퀀\\uD800힣';", "x=`퀀\\ud800힣`;");
+}
+
+#[test]
+fn module_export_name_with_lone_surrogate() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::JSStrBuilder;
+
+    // The parser rejects such a name, but a built AST can contain one.
+    let allocator = Allocator::new();
+    let mut parsed = Parser::new(&allocator, "export { x as 'a' };", SourceType::mjs()).parse();
+    let Statement::ExportNamedDeclaration(decl) = &mut parsed.program.body[0] else {
+        panic!("expected export declaration");
+    };
+    let ModuleExportName::StringLiteral(literal) = &mut decl.specifiers[0].exported else {
+        panic!("expected string export name");
+    };
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_code_unit(0xD800);
+    literal.value = builder.into_js_str();
+    literal.raw = None;
+    assert_eq!(decl.specifiers[0].exported.to_string(), r#""\ud800""#);
+
+    let output = Codegen::new().build(&parsed.program).code;
+    assert_eq!(output, "export { x as \"\\ud800\" };\n");
+}
+
+#[test]
+fn js_str_round_trip() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::JSStrBuilder;
+
+    let allocator = Allocator::new();
+    let source_type = SourceType::mjs();
+    let cases: &[&[u16]] = &[
+        &[0xD800],
+        &[0xDC00],
+        &[0xD800, 0xDC00],
+        &[0x61, 0xD800, 0x62, 0xDC00, 0x63],
+        &[0xFFFD, 0x64, 0x38, 0x30, 0x30],
+        &[0xD800, 0xFFFD, 0xD83D, 0xDE0E, 0x6F22],
+        &[0xA0, 0xD800, 0xA0],
+        &[0x22, 0x27, 0x5C, 0xD800, 0, 0x31, 0x0A, 0x2028, 0x2029],
+        &[0xD000, 0xD7FF],
+        &[0xD7FF, 0xD800, 0xD000],
+    ];
+    for &units in cases {
+        for (minify, ascii_only) in [(false, false), (false, true), (true, false), (true, true)] {
+            let mut parsed = Parser::new(&allocator, "consume('');", source_type).parse();
+            assert!(parsed.diagnostics.is_empty());
+            let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
+                panic!("expected expression statement");
+            };
+            let Expression::CallExpression(call) = &mut statement.expression else {
+                panic!("expected call expression");
+            };
+            let Argument::StringLiteral(literal) = &mut call.arguments[0] else {
+                panic!("expected string literal");
+            };
+            let mut builder = JSStrBuilder::new_in(&&allocator);
+            builder.push_utf16(units);
+            literal.value = builder.into_js_str();
+            literal.raw = None;
+
+            let output = Codegen::new()
+                .with_options(CodegenOptions { minify, ascii_only, ..CodegenOptions::default() })
+                .build(&parsed.program)
+                .code;
+            let reparsed = Parser::new(&allocator, &output, source_type).parse();
+            assert!(reparsed.diagnostics.is_empty(), "{output}");
+            assert!(!ascii_only || output.is_ascii(), "{output}");
+            let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
+                panic!("expected expression statement: {output}");
+            };
+            let Expression::CallExpression(call) = &statement.expression else {
+                panic!("expected call expression: {output}");
+            };
+            let value = match &call.arguments[0] {
+                Argument::StringLiteral(literal) => literal.value,
+                Argument::TemplateLiteral(literal) => literal.single_quasi().unwrap(),
+                _ => panic!("expected string value: {output}"),
+            };
+            assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+    }
+}
+
+#[test]
+fn jsx_attribute_with_lone_surrogate_value() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::{JSStr, JSStrBuilder};
+    use oxc_syntax::xml_entities::decode_entities;
+
+    // Generated attributes must preserve their JavaScript value after JSX entity decoding,
+    // including literal entity text next to a lone surrogate.
+    let allocator = Allocator::new();
+    let source_type = SourceType::jsx();
+    let mut parsed = Parser::new(
+        &allocator,
+        "<div a=\"x\" b=\"y\" c=\"z\" d=\"w\" e=\"x\" f=\"y\" />;",
+        source_type,
+    )
+    .parse();
+    assert!(parsed.diagnostics.is_empty());
+    let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
+        panic!("expected expression statement");
+    };
+    let Expression::JSXElement(element) = &mut statement.expression else {
+        panic!("expected JSX element");
+    };
+    let values: [&[u16]; 6] = [
+        &[0x61, 0xD800, 0x62],
+        &[0x61, 0xD83D, 0xDE00, 0x22],
+        &[0xD800, 0x22, 0x27],
+        &[0x22, 0x27],
+        &[0xD800, 0x26, 0x61, 0x6D, 0x70, 0x3B], // Lone lead surrogate + literal &amp;
+        &[0xDC00, 0x26, 0x23, 0x78, 0x34, 0x31, 0x3B], // Lone trail surrogate + literal &#x41;
+    ];
+    for (attribute, units) in element.opening_element.attributes.iter_mut().zip(values) {
+        let JSXAttributeItem::Attribute(attribute) = attribute else {
+            panic!("expected attribute");
+        };
+        let Some(JSXAttributeValue::StringLiteral(literal)) = &mut attribute.value else {
+            panic!("expected string attribute value");
+        };
+        let mut builder = JSStrBuilder::new_in(&&allocator);
+        builder.push_utf16(units);
+        literal.value = builder.into_js_str();
+        literal.raw = None;
+    }
+
+    for minify in [false, true] {
+        let options = CodegenOptions { minify, ..CodegenOptions::default() };
+        let output = Codegen::new().with_options(options.clone()).build(&parsed.program).code;
+        let reparsed = Parser::new(&allocator, &output, source_type).parse();
+        assert!(reparsed.diagnostics.is_empty(), "{output}");
+        let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
+            panic!("expected expression statement: {output}");
+        };
+        let Expression::JSXElement(element) = &statement.expression else {
+            panic!("expected JSX element: {output}");
+        };
+        assert_eq!(element.opening_element.attributes.len(), values.len());
+        for (attribute, units) in element.opening_element.attributes.iter().zip(values) {
+            let JSXAttributeItem::Attribute(attribute) = attribute else {
+                panic!("expected attribute: {output}");
+            };
+            let value = match attribute.value.as_ref().unwrap() {
+                JSXAttributeValue::StringLiteral(literal) => {
+                    let raw = literal.value.as_str().unwrap();
+                    let mut decoded = None;
+                    decode_entities(raw, &mut decoded, raw.len(), &allocator);
+                    decoded.map_or_else(|| JSStr::from(raw), JSStrBuilder::into_js_str)
+                }
+                JSXAttributeValue::ExpressionContainer(container) => {
+                    let JSXExpression::StringLiteral(literal) = &container.expression else {
+                        panic!("expected string expression: {output}");
+                    };
+                    literal.value
+                }
+                _ => panic!("expected string attribute value: {output}"),
+            };
+            assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+        if !minify {
+            assert_eq!(Codegen::new().with_options(options).build(&reparsed.program).code, output);
+        }
     }
 }

@@ -68,7 +68,7 @@ pub fn try_fold_known_global_methods<'a>(
         }
         Expression::ComputedMemberExpression(member) if !member.optional => {
             match &member.expression {
-                Expression::StringLiteral(s) => (s.value.as_str(), &member.object),
+                Expression::StringLiteral(s) => (s.value.as_str()?, &member.object),
                 _ => return None,
             }
         }
@@ -89,7 +89,8 @@ pub fn try_fold_known_global_methods<'a>(
         "isFinite" | "isNaN" | "isInteger" | "isSafeInteger" => {
             try_fold_number_methods(arguments, object, name, ctx)
         }
-        "sqrt" | "cbrt" => try_fold_roots(arguments, name, object, ctx),
+        "sqrt" => try_fold_sqrt(arguments, object, ctx),
+        "cbrt" => try_fold_cbrt(arguments, object, ctx),
         "abs" | "ceil" | "floor" | "round" | "fround" | "trunc" | "sign" | "clz32" => {
             try_fold_math_unary(arguments, name, object, ctx)
         }
@@ -109,7 +110,7 @@ fn try_fold_string_casing<'a>(
     }
 
     let value = match object {
-        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()),
+        Expression::StringLiteral(s) => Cow::Borrowed(s.value.as_str()?),
         Expression::Identifier(ident) => ident
             .reference_id
             .get()
@@ -155,9 +156,9 @@ fn try_fold_string_index_of<'a>(
     };
 
     let result = match name {
-        "indexOf" => s.value.as_str().index_of(search_value.as_deref(), search_start_index),
+        "indexOf" => s.value.as_str()?.index_of(search_value.as_deref(), search_start_index),
         "lastIndexOf" => {
-            s.value.as_str().last_index_of(search_value.as_deref(), search_start_index)
+            s.value.as_str()?.last_index_of(search_value.as_deref(), search_start_index)
         }
         _ => unreachable!(),
     };
@@ -198,7 +199,7 @@ fn try_fold_string_substring_or_slice<'a>(
         return None;
     }
 
-    Some(ConstantValue::String(Cow::Owned(s.value.as_str().substring(start_idx, end_idx))))
+    Some(ConstantValue::String(Cow::Owned(s.value.as_str()?.substring(start_idx, end_idx))))
 }
 
 fn try_fold_string_char_at<'a>(
@@ -218,7 +219,7 @@ fn try_fold_string_char_at<'a>(
         None => None,
     };
 
-    let result = match s.value.as_str().char_at(char_at_index) {
+    let result = match s.value.as_str()?.char_at(char_at_index) {
         StringCharAtResult::Value(c) => c.to_string(),
         StringCharAtResult::InvalidChar(_) => return None,
         StringCharAtResult::OutOfRange => String::new(),
@@ -247,7 +248,7 @@ fn try_fold_string_char_code_at<'a>(
         None => None,
     };
 
-    let value = s.value.as_str().char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
+    let value = s.value.as_str()?.char_code_at(char_at_index).map_or(f64::NAN, |n| n as f64);
     Some(ConstantValue::Number(value))
 }
 
@@ -261,7 +262,7 @@ fn try_fold_starts_with<'a>(
     }
     let Argument::StringLiteral(arg) = args.first().unwrap() else { return None };
     let Expression::StringLiteral(s) = object else { return None };
-    Some(ConstantValue::Boolean(s.value.starts_with(arg.value.as_str())))
+    Some(ConstantValue::Boolean(s.value.as_str()?.starts_with(arg.value.as_str()?)))
 }
 
 fn try_fold_string_replace<'a>(
@@ -296,8 +297,8 @@ fn try_fold_string_replace<'a>(
         return None;
     }
     let result = match name {
-        "replace" => s.value.as_str().cow_replacen(search_value.as_ref(), &replace_value, 1),
-        "replaceAll" => s.value.as_str().cow_replace(search_value.as_ref(), &replace_value),
+        "replace" => s.value.as_str()?.cow_replacen(search_value.as_ref(), &replace_value, 1),
+        "replaceAll" => s.value.as_str()?.cow_replace(search_value.as_ref(), &replace_value),
         _ => unreachable!(),
     };
     Some(ConstantValue::String(result))
@@ -415,23 +416,25 @@ fn try_fold_number_methods<'a>(
         return None;
     }
     let extracted = extracted_expr.get_side_free_number_value(ctx)?;
+    // An "integral Number" is a finite Number whose mathematical value is an integer:
+    // <https://tc39.es/ecma262/#integral-number>
+    let is_integral = extracted.is_finite() && extracted.trunc() == extracted;
     let result = match name {
         "isFinite" => Some(extracted.is_finite()),
-        "isInteger" => Some(extracted.fract().abs() < f64::EPSILON),
+        "isInteger" => Some(is_integral),
         "isNaN" => Some(extracted.is_nan()),
         "isSafeInteger" => {
-            let integer = extracted.fract().abs() < f64::EPSILON;
             let safe = extracted.abs() <= 2f64.powi(53) - 1.0;
-            Some(safe && integer)
+            Some(safe && is_integral)
         }
         _ => None,
     };
     result.map(ConstantValue::Boolean)
 }
 
-fn try_fold_roots<'a>(
+/// <https://tc39.es/ecma262/#sec-math.sqrt>
+fn try_fold_sqrt<'a>(
     args: &ArenaVec<'a, Argument<'a>>,
-    name: &str,
     object: &Expression<'a>,
     ctx: &impl ConstantEvaluationCtx<'a>,
 ) -> Option<ConstantValue<'a>> {
@@ -445,11 +448,24 @@ fn try_fold_roots<'a>(
     if arg_val < 0.0 {
         return Some(ConstantValue::Number(f64::NAN));
     }
-    let calculated_val = match name {
-        "sqrt" => arg_val.sqrt(),
-        "cbrt" => arg_val.cbrt(),
-        _ => unreachable!(),
-    };
+    let calculated_val = arg_val.sqrt();
+    (calculated_val.fract() == 0.0).then_some(ConstantValue::Number(calculated_val))
+}
+
+/// <https://tc39.es/ecma262/#sec-math.cbrt>
+fn try_fold_cbrt<'a>(
+    args: &ArenaVec<'a, Argument<'a>>,
+    object: &Expression<'a>,
+    ctx: &impl ConstantEvaluationCtx<'a>,
+) -> Option<ConstantValue<'a>> {
+    if !ctx.is_global_expr("Math", object) || !validate_arguments(args, 1) {
+        return None;
+    }
+    let arg_val = args[0].to_expression().get_side_free_number_value(ctx)?;
+    if arg_val.is_infinite() || arg_val.is_nan() || arg_val == 0.0 {
+        return Some(ConstantValue::Number(arg_val));
+    }
+    let calculated_val = arg_val.cbrt();
     (calculated_val.fract() == 0.0).then_some(ConstantValue::Number(calculated_val))
 }
 
@@ -694,7 +710,7 @@ fn try_fold_global_parse_float<'a>(
         return Some(ConstantValue::Number(f64::NAN));
     };
 
-    let parsed = trimmed_prefix.cow_replace('_', "").parse::<f64>().unwrap_or_else(|_| {
+    let parsed = trimmed_prefix.parse::<f64>().unwrap_or_else(|_| {
         unreachable!(
             "StrDecimalLiteral should be parse-able with Rust FromStr for f64: {trimmed_prefix}"
         )
@@ -711,24 +727,11 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
     fn match_decimal_digits(s: &str) -> Option<usize> {
         let bytes = s.as_bytes();
         if bytes.first().is_none_or(|b| !b.is_ascii_digit()) {
-            // must have at least one digit
             return None;
         }
-        let mut iter = bytes.iter().enumerate().skip(1);
-        while let Some((i, &b)) = iter.next() {
-            match b {
-                b'0'..=b'9' => {}
-                b'_' => {
-                    let Some((i, &b)) = iter.next() else {
-                        // must have at least one digit after _
-                        return Some(i); // without _
-                    };
-                    if !b.is_ascii_digit() {
-                        // must have at least one digit after _
-                        return Some(i); // without _
-                    }
-                }
-                _ => return Some(i),
+        for (i, b) in bytes.iter().enumerate().skip(1) {
+            if !b.is_ascii_digit() {
+                return Some(i);
             }
         }
         Some(s.len())
@@ -776,23 +779,15 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
     last_index += end_of_decimal_digits;
     s = &s[end_of_decimal_digits..];
 
-    // DecimalDigits . DecimalDigits ExponentPart
     if s.starts_with('.') {
         last_index += 1;
         s = &s[1..];
-        let Some(end_of_decimal_digits) = match_decimal_digits(s) else {
-            return Some(&input[..last_index - 1]); // without .
-        };
-        last_index += end_of_decimal_digits;
-        s = &s[end_of_decimal_digits..];
-        let Some(end_of_exponent_part) = match_exponent_part(s) else {
-            return Some(&input[..last_index]);
-        };
-        last_index += end_of_exponent_part;
-        return Some(&input[..last_index]);
+        if let Some(end_of_decimal_digits) = match_decimal_digits(s) {
+            last_index += end_of_decimal_digits;
+            s = &s[end_of_decimal_digits..];
+        }
     }
 
-    // DecimalDigits ExponentPart
     let Some(end_of_exponent_part) = match_exponent_part(s) else {
         return Some(&input[..last_index]);
     };
@@ -884,9 +879,17 @@ fn test_find_str_decimal_literal_prefix() {
     assert_eq!(find_str_decimal_literal_prefix("0a"), Some("0"));
     assert_eq!(find_str_decimal_literal_prefix("+0a"), Some("+0"));
     assert_eq!(find_str_decimal_literal_prefix("-0a"), Some("-0"));
-    assert_eq!(find_str_decimal_literal_prefix("0."), Some("0"));
-    assert_eq!(find_str_decimal_literal_prefix("0.e"), Some("0"));
-    assert_eq!(find_str_decimal_literal_prefix("0.e1"), Some("0"));
+    assert_eq!(find_str_decimal_literal_prefix("0."), Some("0."));
+    assert_eq!(find_str_decimal_literal_prefix("0.e"), Some("0."));
+    assert_eq!(find_str_decimal_literal_prefix("0.e1"), Some("0.e1"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e+2"), Some("1.e+2"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e-2"), Some("1.e-2"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e+"), Some("1."));
+    assert_eq!(find_str_decimal_literal_prefix("1.e-"), Some("1."));
+    assert_eq!(find_str_decimal_literal_prefix("1.e2_3"), Some("1.e2"));
+    assert_eq!(find_str_decimal_literal_prefix("1.e_2"), Some("1."));
+    assert_eq!(find_str_decimal_literal_prefix("1.e2é"), Some("1.e2"));
+    assert_eq!(find_str_decimal_literal_prefix(".e2"), None);
     assert_eq!(find_str_decimal_literal_prefix("0.1"), Some("0.1"));
     assert_eq!(find_str_decimal_literal_prefix("0.1."), Some("0.1"));
     assert_eq!(find_str_decimal_literal_prefix("0.1e"), Some("0.1"));
@@ -896,6 +899,14 @@ fn test_find_str_decimal_literal_prefix() {
     assert_eq!(find_str_decimal_literal_prefix(".1e"), Some(".1"));
     assert_eq!(find_str_decimal_literal_prefix(".1e1"), Some(".1e1"));
     assert_eq!(find_str_decimal_literal_prefix("1_"), Some("1"));
-    assert_eq!(find_str_decimal_literal_prefix("1_1"), Some("1_1"));
-    assert_eq!(find_str_decimal_literal_prefix("1_1_"), Some("1_1"));
+    assert_eq!(find_str_decimal_literal_prefix("1_1"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1_1_"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1_é"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1.2_3"), Some("1.2"));
+    assert_eq!(find_str_decimal_literal_prefix(".1_2"), Some(".1"));
+    assert_eq!(find_str_decimal_literal_prefix("1e_2"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1e+_2"), Some("1"));
+    assert_eq!(find_str_decimal_literal_prefix("1e2_3"), Some("1e2"));
+    assert_eq!(find_str_decimal_literal_prefix("_1"), None);
+    assert_eq!(find_str_decimal_literal_prefix("._1"), None);
 }

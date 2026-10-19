@@ -72,6 +72,7 @@ declare_oxc_lint!(
     NoExplicitAny,
     typescript,
     restriction,
+    recommended,
     conditional_fix,
     config = NoExplicitAny,
     version = "0.0.13",

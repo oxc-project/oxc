@@ -5,7 +5,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_parser::{ParseOptions, Parser};
-use oxc_span::SourceType;
+use oxc_span::{GetSpan, SourceType};
 
 use crate::options::JsonVariant;
 
@@ -63,7 +63,7 @@ pub fn parse_json<'a>(
         Parser::new(allocator, wrapped_source, SourceType::default()).with_options(options).parse();
 
     // If the wrapped parse fails,
-    // we retry without the wrap and accept the result only when it contains no statements.
+    // we retry without the wrap and accept the result only when it contains no code.
     // i.e. `source` is comments / whitespace only.
     // This lets comment-only JSON files round-trip without changing the normal path's cost.
     if !ret.diagnostics.is_empty() || ret.fatal_error {
@@ -97,10 +97,14 @@ pub fn parse_json<'a>(
     let body: &'a [Statement<'a>] =
         std::mem::replace(&mut program.body, ArenaVec::new_in(&allocator)).into_arena_slice();
 
-    // The wrap source guarantees exactly one top-level `ExpressionStatement`
-    let stmt = body.first().ok_or_else(|| OxcDiagnostic::error("Empty JSON source"))?;
-    let Statement::ExpressionStatement(expr_stmt) = stmt else {
-        return Err(OxcDiagnostic::error("Expected a single expression at the top level"));
+    // The wrap can still yield several statements: `{"a":1});({"b":2}` closes it early
+    let [Statement::ExpressionStatement(expr_stmt)] = body else {
+        let mut err = OxcDiagnostic::error("Expected a single expression at the top level");
+        if let Some(extra) = body.get(1) {
+            err = err.with_label(extra.span());
+        }
+        let source_len = u32::try_from(source.len()).unwrap_or(u32::MAX);
+        return Err(remap_error_to_user_source(err, source_len));
     };
 
     Ok(ParsedExpression {
@@ -134,8 +138,8 @@ fn remap_error_to_user_source(mut err: OxcDiagnostic, source_len: u32) -> OxcDia
 }
 
 /// Fallback path for the wrapped-parse failure:
-/// try parsing `source` as-is and accept it only when there are no statements.
-/// (i.e. comments / whitespace only)
+/// try parsing `source` as-is and accept it only when there is no code.
+/// (comments / whitespace only; a directive or hashbang counts as code)
 fn try_parse_comments_only<'a>(
     allocator: &'a Allocator,
     source: &str,
@@ -147,11 +151,15 @@ fn try_parse_comments_only<'a>(
 
     let ret =
         Parser::new(allocator, bare_source, SourceType::default()).with_options(options).parse();
-    if !ret.diagnostics.is_empty() || ret.fatal_error || !ret.program.body.is_empty() {
+    let mut program = ret.program;
+    if !ret.diagnostics.is_empty()
+        || ret.fatal_error
+        || !program.is_empty()
+        || program.hashbang.is_some()
+    {
         return None;
     }
 
-    let mut program = ret.program;
     let comments =
         std::mem::replace(&mut program.comments, ArenaVec::new_in(&allocator)).into_arena_slice();
 
@@ -226,6 +234,11 @@ mod tests {
             (r#"{"a":1}//c"#, Jsonc, true),
             (r#"{"a":1}//c"#, Json5, true),
             (r#"{"a":1}//c"#, JsonStringify, false),
+            // code that the fallback or the wrap would drop
+            (r#""hello";"#, Jsonc, false),
+            ("#!/usr/bin/env node", Jsonc, false),
+            (r#"/* c */"s";"#, Jsonc, false),
+            (r#"{"a":1});({"b":2}"#, Json, false),
         ];
 
         for (src, variant, should_succeed) in cases {
@@ -238,7 +251,7 @@ mod tests {
     #[test]
     fn parse_error_spans_stay_within_source() {
         // Unterminated / truncated inputs whose error naturally lands at end-of-input.
-        let cases = ["{", "{\n", "[1,", "{\n  \"test\":\n}\n"];
+        let cases = ["{", "{\n", "[1,", "{\n  \"test\":\n}\n", r#"{"a":1});({"b":2}"#];
 
         for src in cases {
             let allocator = Allocator::default();

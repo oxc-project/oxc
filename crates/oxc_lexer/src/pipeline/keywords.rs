@@ -58,107 +58,147 @@ pub(super) const fn is_kw_init_ts(c: u8) -> bool {
 const KW_COUNT_JS: usize = 46;
 const KW_COUNT_TS: usize = 81;
 
+/// A keyword and its corresponding [`TokenKind`].
+#[derive(Clone, Copy)]
+struct KeywordDef {
+    word: &'static str,
+    kind: TokenKind,
+}
+
+impl KeywordDef {
+    /// Create new [`KeywordDef`].
+    const fn new(word: &'static str, kind: TokenKind) -> Self {
+        Self { word, kind }
+    }
+
+    /// Get this keyword's text, zero-padded to 16 bytes, as 2 x `u64`s.
+    const fn padded(&self) -> [u64; 2] {
+        let mut text = [0; 2];
+
+        let bytes = self.word.as_bytes();
+        let mut i = 0;
+        while i < bytes.len() {
+            text[i / 8] |= (bytes[i] as u64) << ((i % 8) * 8);
+            i += 1;
+        }
+
+        text
+    }
+
+    /// Get a keyword's JS slot (`is_ts == false`) or TS slot (`is_ts == true`), same as [`kw_match`] does.
+    const fn slot(&self, is_ts: bool) -> usize {
+        let word = self.word.as_bytes();
+        let index = disps_index(word[0] as u16 | ((word[1] as u16) << 8));
+        let len = word.len();
+        if is_ts {
+            keyword_hash_ts(DISPS_TS.0[index], len, word[len - 1])
+        } else {
+            keyword_hash_js(DISPS_JS.0[index], len)
+        }
+    }
+}
+
 /// Keyword spellings and the token kind each rewrites to (the JS set).
 /// `get`/`set` map to `Ident` (contextual, never keywords at lex time).
 /// The keyword tables skip them.
 ///
 /// Does not exist at runtime - only used at build time and in tests.
-static KEYWORDS_JS: [(&str, TokenKind); KW_COUNT_JS] = [
-    ("await", TokenKind::KwAwait),
-    ("break", TokenKind::KwBreak),
-    ("case", TokenKind::KwCase),
-    ("catch", TokenKind::KwCatch),
-    ("class", TokenKind::KwClass),
-    ("const", TokenKind::KwConst),
-    ("continue", TokenKind::KwContinue),
-    ("debugger", TokenKind::KwDebugger),
-    ("default", TokenKind::KwDefault),
-    ("delete", TokenKind::KwDelete),
-    ("do", TokenKind::KwDo),
-    ("else", TokenKind::KwElse),
-    ("enum", TokenKind::KwEnum),
-    ("export", TokenKind::KwExport),
-    ("extends", TokenKind::KwExtends),
-    ("finally", TokenKind::KwFinally),
-    ("for", TokenKind::KwFor),
-    ("function", TokenKind::KwFunction),
-    ("if", TokenKind::KwIf),
-    ("import", TokenKind::KwImport),
-    ("in", TokenKind::KwIn),
-    ("instanceof", TokenKind::KwInstanceof),
-    ("new", TokenKind::KwNew),
-    ("of", TokenKind::KwOf),
-    ("return", TokenKind::KwReturn),
-    ("super", TokenKind::KwSuper),
-    ("switch", TokenKind::KwSwitch),
-    ("this", TokenKind::KwThis),
-    ("throw", TokenKind::KwThrow),
-    ("try", TokenKind::KwTry),
-    ("typeof", TokenKind::KwTypeof),
-    ("var", TokenKind::KwVar),
-    ("void", TokenKind::KwVoid),
-    ("while", TokenKind::KwWhile),
-    ("with", TokenKind::KwWith),
-    ("yield", TokenKind::KwYield),
-    ("let", TokenKind::KwLet),
-    ("static", TokenKind::KwStatic),
-    ("async", TokenKind::KwAsync),
-    ("get", TokenKind::Ident),
-    ("set", TokenKind::Ident),
-    ("as", TokenKind::KwAs),
-    ("from", TokenKind::KwFrom),
-    ("true", TokenKind::KwTrue),
-    ("false", TokenKind::KwFalse),
-    ("null", TokenKind::KwNull),
+static KEYWORDS_JS: [KeywordDef; KW_COUNT_JS] = [
+    KeywordDef::new("await", TokenKind::KwAwait),
+    KeywordDef::new("break", TokenKind::KwBreak),
+    KeywordDef::new("case", TokenKind::KwCase),
+    KeywordDef::new("catch", TokenKind::KwCatch),
+    KeywordDef::new("class", TokenKind::KwClass),
+    KeywordDef::new("const", TokenKind::KwConst),
+    KeywordDef::new("continue", TokenKind::KwContinue),
+    KeywordDef::new("debugger", TokenKind::KwDebugger),
+    KeywordDef::new("default", TokenKind::KwDefault),
+    KeywordDef::new("delete", TokenKind::KwDelete),
+    KeywordDef::new("do", TokenKind::KwDo),
+    KeywordDef::new("else", TokenKind::KwElse),
+    KeywordDef::new("enum", TokenKind::KwEnum),
+    KeywordDef::new("export", TokenKind::KwExport),
+    KeywordDef::new("extends", TokenKind::KwExtends),
+    KeywordDef::new("finally", TokenKind::KwFinally),
+    KeywordDef::new("for", TokenKind::KwFor),
+    KeywordDef::new("function", TokenKind::KwFunction),
+    KeywordDef::new("if", TokenKind::KwIf),
+    KeywordDef::new("import", TokenKind::KwImport),
+    KeywordDef::new("in", TokenKind::KwIn),
+    KeywordDef::new("instanceof", TokenKind::KwInstanceof),
+    KeywordDef::new("new", TokenKind::KwNew),
+    KeywordDef::new("of", TokenKind::KwOf),
+    KeywordDef::new("return", TokenKind::KwReturn),
+    KeywordDef::new("super", TokenKind::KwSuper),
+    KeywordDef::new("switch", TokenKind::KwSwitch),
+    KeywordDef::new("this", TokenKind::KwThis),
+    KeywordDef::new("throw", TokenKind::KwThrow),
+    KeywordDef::new("try", TokenKind::KwTry),
+    KeywordDef::new("typeof", TokenKind::KwTypeof),
+    KeywordDef::new("var", TokenKind::KwVar),
+    KeywordDef::new("void", TokenKind::KwVoid),
+    KeywordDef::new("while", TokenKind::KwWhile),
+    KeywordDef::new("with", TokenKind::KwWith),
+    KeywordDef::new("yield", TokenKind::KwYield),
+    KeywordDef::new("let", TokenKind::KwLet),
+    KeywordDef::new("static", TokenKind::KwStatic),
+    KeywordDef::new("async", TokenKind::KwAsync),
+    KeywordDef::new("get", TokenKind::Ident),
+    KeywordDef::new("set", TokenKind::Ident),
+    KeywordDef::new("as", TokenKind::KwAs),
+    KeywordDef::new("from", TokenKind::KwFrom),
+    KeywordDef::new("true", TokenKind::KwTrue),
+    KeywordDef::new("false", TokenKind::KwFalse),
+    KeywordDef::new("null", TokenKind::KwNull),
 ];
 
 /// TS-mode additions: TypeScript's contextual keywords plus the strict-mode
 /// reserved words. JS mode lexes every one of these spellings as IDENT.
 ///
 /// Does not exist at runtime - only used at build time and in tests.
-const KEYWORDS_TS_EXTRA: [(&str, TokenKind); KW_COUNT_TS - KW_COUNT_JS] = [
-    ("abstract", TokenKind::KwAbstract),
-    ("accessor", TokenKind::KwAccessor),
-    ("any", TokenKind::KwAny),
-    ("asserts", TokenKind::KwAsserts),
-    ("bigint", TokenKind::KwBigInt),
-    ("boolean", TokenKind::KwBoolean),
-    ("declare", TokenKind::KwDeclare),
-    ("global", TokenKind::KwGlobal),
-    ("implements", TokenKind::KwImplements),
-    ("infer", TokenKind::KwInfer),
-    ("interface", TokenKind::KwInterface),
-    ("intrinsic", TokenKind::KwIntrinsic),
-    ("is", TokenKind::KwIs),
-    ("keyof", TokenKind::KwKeyof),
-    ("module", TokenKind::KwModule),
-    ("namespace", TokenKind::KwNamespace),
-    ("never", TokenKind::KwNever),
-    ("number", TokenKind::KwNumber),
-    ("object", TokenKind::KwObject),
-    ("out", TokenKind::KwOut),
-    ("override", TokenKind::KwOverride),
-    ("package", TokenKind::KwPackage),
-    ("private", TokenKind::KwPrivate),
-    ("protected", TokenKind::KwProtected),
-    ("public", TokenKind::KwPublic),
-    ("readonly", TokenKind::KwReadonly),
-    ("require", TokenKind::KwRequire),
-    ("satisfies", TokenKind::KwSatisfies),
-    ("string", TokenKind::KwString),
-    ("symbol", TokenKind::KwSymbol),
-    ("type", TokenKind::KwType),
-    ("undefined", TokenKind::KwUndefined),
-    ("unique", TokenKind::KwUnique),
-    ("unknown", TokenKind::KwUnknown),
-    ("using", TokenKind::KwUsing),
+const KEYWORDS_TS_EXTRA: [KeywordDef; KW_COUNT_TS - KW_COUNT_JS] = [
+    KeywordDef::new("abstract", TokenKind::KwAbstract),
+    KeywordDef::new("accessor", TokenKind::KwAccessor),
+    KeywordDef::new("any", TokenKind::KwAny),
+    KeywordDef::new("asserts", TokenKind::KwAsserts),
+    KeywordDef::new("bigint", TokenKind::KwBigInt),
+    KeywordDef::new("boolean", TokenKind::KwBoolean),
+    KeywordDef::new("declare", TokenKind::KwDeclare),
+    KeywordDef::new("global", TokenKind::KwGlobal),
+    KeywordDef::new("implements", TokenKind::KwImplements),
+    KeywordDef::new("infer", TokenKind::KwInfer),
+    KeywordDef::new("interface", TokenKind::KwInterface),
+    KeywordDef::new("intrinsic", TokenKind::KwIntrinsic),
+    KeywordDef::new("is", TokenKind::KwIs),
+    KeywordDef::new("keyof", TokenKind::KwKeyof),
+    KeywordDef::new("module", TokenKind::KwModule),
+    KeywordDef::new("namespace", TokenKind::KwNamespace),
+    KeywordDef::new("never", TokenKind::KwNever),
+    KeywordDef::new("number", TokenKind::KwNumber),
+    KeywordDef::new("object", TokenKind::KwObject),
+    KeywordDef::new("out", TokenKind::KwOut),
+    KeywordDef::new("override", TokenKind::KwOverride),
+    KeywordDef::new("package", TokenKind::KwPackage),
+    KeywordDef::new("private", TokenKind::KwPrivate),
+    KeywordDef::new("protected", TokenKind::KwProtected),
+    KeywordDef::new("public", TokenKind::KwPublic),
+    KeywordDef::new("readonly", TokenKind::KwReadonly),
+    KeywordDef::new("require", TokenKind::KwRequire),
+    KeywordDef::new("satisfies", TokenKind::KwSatisfies),
+    KeywordDef::new("string", TokenKind::KwString),
+    KeywordDef::new("symbol", TokenKind::KwSymbol),
+    KeywordDef::new("type", TokenKind::KwType),
+    KeywordDef::new("undefined", TokenKind::KwUndefined),
+    KeywordDef::new("unique", TokenKind::KwUnique),
+    KeywordDef::new("unknown", TokenKind::KwUnknown),
+    KeywordDef::new("using", TokenKind::KwUsing),
 ];
 
 /// The TS-mode keyword set: [`KEYWORDS_JS`] followed by [`KEYWORDS_TS_EXTRA`].
 ///
 /// Does not exist at runtime - only used at build time and in tests.
-static KEYWORDS_TS: [(&str, TokenKind); KW_COUNT_TS] =
-    *concat_slices!([(&str, TokenKind)]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
+static KEYWORDS_TS: [KeywordDef; KW_COUNT_TS] =
+    *concat_slices!([KeywordDef]: &KEYWORDS_JS, &KEYWORDS_TS_EXTRA);
 
 const REGEX_KW_MASK: u64 = {
     // `of` is deliberately absent: it precedes a regex only in a for-of
@@ -196,9 +236,9 @@ const REGEX_KW_MASK: u64 = {
         let mut found: i32 = -1;
         let mut kw_index = 0;
         while kw_index < KEYWORDS_JS.len() {
-            let kw = KEYWORDS_JS[kw_index];
-            if const_str_eq(kw.0, r) {
-                found = (kw.1 as u8 - KW_KIND_BASE) as i32;
+            let kw = &KEYWORDS_JS[kw_index];
+            if const_str_eq(kw.word, r) {
+                found = (kw.kind as u8 - KW_KIND_BASE) as i32;
                 break;
             }
             kw_index += 1;
@@ -289,21 +329,14 @@ static KW_TEXT: Aligned128<[[u64; 2]; SLOT_COUNT]> = {
     let mut text = [[0; 2]; SLOT_COUNT];
 
     let mut i = 0;
-    while i < KEYWORDS_JS.len() {
-        let (keyword, kind) = KEYWORDS_JS[i];
-        if !matches!(kind, TokenKind::Ident) {
-            let keyword = keyword.as_bytes();
-            text[keyword_slot::<false>(keyword)] = keyword_text(keyword);
-        }
-        i += 1;
-    }
-
-    let mut i = 0;
     while i < KEYWORDS_TS.len() {
-        let (keyword, kind) = KEYWORDS_TS[i];
-        if !matches!(kind, TokenKind::Ident) {
-            let keyword = keyword.as_bytes();
-            text[keyword_slot::<true>(keyword)] = keyword_text(keyword);
+        let kw = &KEYWORDS_TS[i];
+        if !matches!(kw.kind, TokenKind::Ident) {
+            let padded = kw.padded();
+            if i < KEYWORDS_JS.len() {
+                text[kw.slot(false)] = padded;
+            }
+            text[kw.slot(true)] = padded;
         }
         i += 1;
     }
@@ -313,56 +346,30 @@ static KW_TEXT: Aligned128<[[u64; 2]; SLOT_COUNT]> = {
 
 /// [`TokenKind`] of each JS keyword, indexed by JS slot. Other slots are `Ident`.
 static KW_KINDS_JS: Aligned64<[TokenKind; JS_SLOT_COUNT]> =
-    Aligned64(kinds_table::<JS_SLOT_COUNT, false>(&KEYWORDS_JS));
+    Aligned64(kinds_table::<JS_SLOT_COUNT>(&KEYWORDS_JS, false));
 
 /// [`TokenKind`] of each JS or TS keyword, indexed by TS slot. Other slots are `Ident`.
 static KW_KINDS_TS: Aligned128<[TokenKind; SLOT_COUNT]> =
-    Aligned128(kinds_table::<SLOT_COUNT, true>(&KEYWORDS_TS));
+    Aligned128(kinds_table::<SLOT_COUNT>(&KEYWORDS_TS, true));
 
-/// Build a table mapping JS slots (`IS_TS == false`) or TS slots (`IS_TS == true`) to [`TokenKind`]s
+/// Build a table mapping JS slots (`is_ts == false`) or TS slots (`is_ts == true`) to [`TokenKind`]s
 /// for the keywords in `keywords`.
 ///
 /// Keywords whose kind is `Ident` are skipped, so they don't overwrite the kind of another keyword
 /// with the same slot.
-const fn kinds_table<const N: usize, const IS_TS: bool>(
-    keywords: &[(&str, TokenKind)],
-) -> [TokenKind; N] {
+const fn kinds_table<const N: usize>(keywords: &[KeywordDef], is_ts: bool) -> [TokenKind; N] {
     let mut kinds = [TokenKind::Ident; N];
 
     let mut i = 0;
     while i < keywords.len() {
-        let (keyword, kind) = keywords[i];
-        if !matches!(kind, TokenKind::Ident) {
-            kinds[keyword_slot::<IS_TS>(keyword.as_bytes())] = kind;
+        let kw = &keywords[i];
+        if !matches!(kw.kind, TokenKind::Ident) {
+            kinds[kw.slot(is_ts)] = kw.kind;
         }
         i += 1;
     }
 
     kinds
-}
-
-/// Get a keyword's JS slot (`IS_TS == false`) or TS slot (`IS_TS == true`), same as [`kw_match`] does.
-const fn keyword_slot<const IS_TS: bool>(keyword: &[u8]) -> usize {
-    let index = disps_index(keyword[0] as u16 | ((keyword[1] as u16) << 8));
-    let len = keyword.len();
-    if IS_TS {
-        keyword_hash_ts(DISPS_TS.0[index], len, keyword[len - 1])
-    } else {
-        keyword_hash_js(DISPS_JS.0[index], len)
-    }
-}
-
-/// Get a keyword's text, zero-padded to 16 bytes, as 2 x `u64`s.
-const fn keyword_text(keyword: &[u8]) -> [u64; 2] {
-    let mut text = [0; 2];
-
-    let mut i = 0;
-    while i < keyword.len() {
-        text[i / 8] |= (keyword[i] as u64) << ((i % 8) * 8);
-        i += 1;
-    }
-
-    text
 }
 
 /// Get index into [`DISPS_JS`] or [`DISPS_TS`] for a word, from its first 2 bytes as a little-endian `u16`.
@@ -566,19 +573,17 @@ mod tests {
         [b" ", b"\0\0\0\0", b"abcdefghijklmnop", b"\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF"];
 
     /// Keywords from `list`, excluding placeholders whose kind is `Ident`.
-    fn keywords(
-        list: &'static [(&'static str, TokenKind)],
-    ) -> impl Iterator<Item = (&'static str, TokenKind)> {
-        list.iter().copied().filter(|&(_, kind)| kind != TokenKind::Ident)
+    fn keywords(list: &'static [KeywordDef]) -> impl Iterator<Item = &'static KeywordDef> {
+        list.iter().filter(|kw| kw.kind != TokenKind::Ident)
     }
 
     /// Run [`kw_match`] on `word`, followed by `after` (which is not part of the word).
     fn kw_match_str(word: &[u8], after: &[u8], is_ts: bool) -> TokenKind {
+        assert!((1..=16).contains(&word.len()));
+
         let mut buf = [0u8; 48];
         buf[..word.len()].copy_from_slice(word);
         buf[word.len()..word.len() + after.len()].copy_from_slice(after);
-
-        assert!((1usize..=16).contains(&word.len()));
 
         // SAFETY: `buf` is 48 bytes. `word.len()` is between 1-16 bytes.
         unsafe {
@@ -593,22 +598,27 @@ mod tests {
     #[test]
     fn test_is_kw_init() {
         let mut in_set = [false; 256];
-        for kw in KEYWORDS_JS.iter() {
-            in_set[kw.0.as_bytes()[0] as usize] = true;
+        for kw in &KEYWORDS_JS {
+            in_set[kw.word.as_bytes()[0] as usize] = true;
         }
-        for c in 0..256usize {
-            assert!(is_kw_init(c as u8) == in_set[c], "KWINIT_LO/HI wrong at byte {c:#04x}");
+
+        for b in 0..=255 {
+            assert!(is_kw_init(b) == in_set[b as usize], "KWINIT_LO/HI wrong at byte {b:#04x}");
         }
     }
 
     #[test]
     fn test_is_kw_init_ts() {
         let mut in_set_ts = [false; 256];
-        for kw in KEYWORDS_TS.iter() {
-            in_set_ts[kw.0.as_bytes()[0] as usize] = true;
+        for kw in &KEYWORDS_TS {
+            in_set_ts[kw.word.as_bytes()[0] as usize] = true;
         }
-        for c in 0..256usize {
-            assert!(is_kw_init_ts(c as u8) == in_set_ts[c], "KWINIT_TS_LO wrong at byte {c:#04x}");
+
+        for b in 0..=255 {
+            assert!(
+                is_kw_init_ts(b) == in_set_ts[b as usize],
+                "KWINIT_TS_LO wrong at byte {b:#04x}"
+            );
         }
     }
 
@@ -616,64 +626,62 @@ mod tests {
     fn test_keyword_lengths() {
         // `coalesce`'s candidate filter drops most words longer than 10 bytes,
         // and the word length `kw_verify_batch` passes to `kw_match` is capped at 16
-        for (keyword, _) in keywords(&KEYWORDS_TS) {
-            assert!((2..=10).contains(&keyword.len()), "keyword `{keyword}` length out of range");
+        for kw in keywords(&KEYWORDS_TS) {
+            let word = kw.word;
+            assert!((2..=10).contains(&word.len()), "keyword `{word}` length out of range");
         }
     }
 
     #[test]
     fn test_js_hash_is_perfect() {
         let mut used: [Option<&str>; JS_SLOT_COUNT] = [None; JS_SLOT_COUNT];
-        for (keyword, _) in keywords(&KEYWORDS_JS) {
-            let slot = keyword_slot::<false>(keyword.as_bytes());
+        for kw in keywords(&KEYWORDS_JS) {
+            let word = kw.word;
+            let slot = kw.slot(false);
             if let Some(other) = used[slot] {
-                panic!(
-                    "JS hash is not perfect: `{keyword}` and `{other}` both hash to slot {slot}"
-                );
+                panic!("JS hash is not perfect: `{word}` and `{other}` both hash to slot {slot}");
             }
-            used[slot] = Some(keyword);
+            used[slot] = Some(word);
         }
     }
 
     #[test]
     fn test_ts_hash_is_perfect() {
         let mut used: [Option<&str>; SLOT_COUNT] = [None; SLOT_COUNT];
-        for (keyword, _) in keywords(&KEYWORDS_TS) {
-            let slot = keyword_slot::<true>(keyword.as_bytes());
+        for kw in keywords(&KEYWORDS_TS) {
+            let word = kw.word;
+            let slot = kw.slot(true);
             if let Some(other) = used[slot] {
-                panic!(
-                    "TS hash is not perfect: `{keyword}` and `{other}` both hash to slot {slot}"
-                );
+                panic!("TS hash is not perfect: `{word}` and `{other}` both hash to slot {slot}");
             }
-            used[slot] = Some(keyword);
+            used[slot] = Some(word);
         }
     }
 
     /// A JS keyword's JS slot must not be the TS slot of a different keyword, as they share `KW_TEXT`
     #[test]
     fn test_kw_text_no_conflicts() {
-        for (js_keyword, _) in keywords(&KEYWORDS_JS) {
-            let slot = keyword_slot::<false>(js_keyword.as_bytes());
-            for (keyword, _) in keywords(&KEYWORDS_TS) {
-                if keyword != js_keyword {
-                    assert!(
-                        keyword_slot::<true>(keyword.as_bytes()) != slot,
-                        "JS slot of `{js_keyword}` is TS slot of `{keyword}` (slot {slot})"
-                    );
-                }
+        for js_kw in keywords(&KEYWORDS_JS) {
+            let slot = js_kw.slot(false);
+            for ts_kw in keywords(&KEYWORDS_TS) {
+                assert!(
+                    ts_kw.word == js_kw.word || ts_kw.slot(true) != slot,
+                    "JS slot of `{}` is TS slot of `{}` (slot {slot})",
+                    js_kw.word,
+                    ts_kw.word
+                );
             }
         }
     }
 
     #[test]
     fn test_kw_match_keywords() {
-        for (keyword, kind) in keywords(&KEYWORDS_TS) {
-            let is_js_keyword = keywords(&KEYWORDS_JS).any(|(word, _)| word == keyword);
+        for &KeywordDef { word, kind } in keywords(&KEYWORDS_TS) {
+            let is_js_keyword = keywords(&KEYWORDS_JS).any(|kw| kw.word == word);
             let js_kind = if is_js_keyword { kind } else { TokenKind::Ident };
             for after in AFTERS {
-                let word = keyword.as_bytes();
-                assert_eq!(kw_match_str(word, after, true), kind, "TS `{keyword}`");
-                assert_eq!(kw_match_str(word, after, false), js_kind, "JS `{keyword}`");
+                assert_eq!(kw_match_str(word.as_bytes(), after, true), kind, "TS `{word}`");
+                assert_eq!(kw_match_str(word.as_bytes(), after, false), js_kind, "JS `{word}`");
             }
         }
     }
@@ -708,8 +716,8 @@ mod tests {
 
         let mut words: Vec<Vec<u8>> = words.iter().map(|bytes| bytes.to_vec()).collect();
 
-        for (keyword, _) in keywords(&KEYWORDS_TS) {
-            let word = keyword.as_bytes();
+        for kw in keywords(&KEYWORDS_TS) {
+            let word = kw.word.as_bytes();
             // Prefix
             words.push(word[..word.len() - 1].to_vec());
             // Extended
@@ -745,27 +753,27 @@ mod tests {
     #[test]
     fn test_kw_match_same_as_linear_search() {
         let linear_search = |word: &[u8], is_ts: bool| -> TokenKind {
-            let list: &'static [(&'static str, TokenKind)] =
-                if is_ts { &KEYWORDS_TS } else { &KEYWORDS_JS };
+            let list: &'static [KeywordDef] = if is_ts { &KEYWORDS_TS } else { &KEYWORDS_JS };
             keywords(list)
-                .find(|(keyword, _)| keyword.as_bytes() == word)
-                .map_or(TokenKind::Ident, |(_, kind)| kind)
+                .find(|kw| kw.word.as_bytes() == word)
+                .map_or(TokenKind::Ident, |kw| kw.kind)
         };
 
         let mut words: Vec<Vec<u8>> = vec![];
-        for a in b'a'..=b'z' {
-            words.push(vec![a]);
-            for b in b'a'..=b'z' {
-                words.push(vec![a, b]);
-                for c in b'a'..=b'z' {
-                    words.push(vec![a, b, c]);
+        for b1 in b'a'..=b'z' {
+            words.push(vec![b1]);
+            for b2 in b'a'..=b'z' {
+                words.push(vec![b1, b2]);
+                for b3 in b'a'..=b'z' {
+                    words.push(vec![b1, b2, b3]);
                 }
             }
         }
+
         let replacements =
             (b'a'..=b'z').chain([b'A', b'Z', b'0', b'9', b'_', b'$', 0x80, 0xC3, 0xFF]);
-        for (keyword, _) in KEYWORDS_TS {
-            let word = keyword.as_bytes();
+        for kw in &KEYWORDS_TS {
+            let word = kw.word.as_bytes();
             for i in 0..word.len() {
                 for replacement in replacements.clone() {
                     let mut changed = word.to_vec();

@@ -2,23 +2,48 @@
 
 Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md` "Known divergences".
 
-## array-hole-trailing-comment
+## array-hole-comments
 
 - Why: invariant
 - Pin: `tests/fixtures/js/comments/array-holes.js`
+- Conformance: `js/arrays/numbers-with-holes.js`
 
 ```js
 // input
 const a = [1, , /* c */];
+[parser, /* c */, optional] = x;
+const b = [
+  1,
+  // c
+  ,
+  2,
+];
 
 // ours
-const a = [1, ,/* c */];
+const a = [1, , /* c */];
+[parser, /* c */, optional] = x;
+const b = [
+  1,
+  // c
+  ,
+  2,
+];
 
 // prettier
 const a = [1 /* c */, ,];
+[parser /* c */, , optional] = x;
+const b = [
+  1,
+  ,
+  // c
+  2,
+];
 ```
 
-Prettier's attachment relocates the comment backward across the commas (user content) to the last real element; we keep it in place.
+A hole has no node, so Prettier's attachment relocates a comment next to it across the commas (user content, they keep the hole count) to a real element;
+we keep every comment on its source side of each hole's `,`, in array expressions and array patterns alike.
+Spacing follows the `,` like any separator: a comment before it is glued to it (`/* c */,`, as in `a /* c */,`),
+a comment after it is spaced (`, /* c */`, as in `a, /* c */ b`), also after the last hole where Prettier glues it (`, ,/* c */`).
 
 ## type-alias-trailing-comment-move
 
@@ -779,3 +804,130 @@ Prettier keeps an end-of-line comment there (`foo // c` + `(a)`, the same as our
 Its function declarations keep the same-line block comment outside (`function foo /* c */(a) {}`).
 Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
 Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
+
+## instantiation-expression-parens
+
+- Why: semantics (Prettier's output no longer parses; prettier/prettier#20177)
+- Pin: `tests/fixtures/ts/parenthesis/instantiation-expression-parens.ts`
+
+```ts
+// input
+const a = (make<T>)!;
+(make<T>)<U>();
+x = (make<T>) + y;
+export default (class {})<string>;
+(class {})<string>;
+
+// ours
+const a = (make<T>)!;
+(make<T>)<U>();
+x = (make<T>) + y;
+export default (class {})<string>;
+(class {})<string>;
+
+// prettier
+const a = make<T>!;
+make<T><U>();
+x = make<T> + y;
+export default class {}<string>;
+class {}<string>;
+```
+
+Prettier drops the parens around an instantiation expression before `!`,
+and the ones that keep a leading `class`/`function` from starting a declaration or statement.
+Fixed in Prettier `main` by prettier/prettier#20177, which we follow except after `export default` (DIVERGENCES.md#export-default-leftmost-parens).
+
+Prettier `main` still drops them before type arguments (`make<T><U>()` does not parse)
+and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
+(`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
+
+## export-default-leftmost-parens
+
+- Why: uniform-rule (same construct, same output: expression statement)
+- Pin: `tests/fixtures/ts/parenthesis/export-default-leftmost-parens.ts`
+- Conformance: `js/export-default/class_instance.js`, `js/export-default/function_tostring.js`, `typescript/as/export_default_as.ts`, `typescript/export-default/function_as.ts`, `typescript/satisfies-operators/export-default-as.ts`
+
+```ts
+// input
+export default (class {}).getInstance();
+export default (function () {}) as A;
+
+// ours
+export default (class {}).getInstance();
+export default (function () {}) as A;
+
+// prettier
+export default (class {}.getInstance());
+export default (function () {} as A);
+```
+
+A leading `class`/`function` after `export default` would start a declaration, as at the start of a statement.
+We apply the statement rule there, as Prettier does for statements (`(class {}).getInstance();`):
+the parens go around the `class`/`function` itself,
+or nowhere when an ancestor already prints its own (DIVERGENCES.md#start-token-no-double-parens).
+Prettier wraps the whole expression after `export default` instead.
+Prettier's wrapping came from a syntax fix (prettier/prettier#6133), whose changelog shows the statement-start shape `export default (function log() {}).toString();`.
+
+## start-token-no-double-parens
+
+- Why: uniform-rule (same construct, same output: `export default` and sequence arrow body)
+- Pin: `tests/fixtures/ts/parenthesis/start-token-no-double-parens.ts`
+- Conformance: `js/identifier/parentheses/let.js`
+
+```ts
+// input
+(function () {} as A)!;
+({} + foo)``;
+({}).a, b;
+((let)[0] + 1) * 2;
+const get = (key: K) => ({ a: 1, b: 2 } as const)[key];
+
+// ours
+(function () {} as A)!;
+({} + foo)``;
+({}.a, b);
+(let[0] + 1) * 2;
+const get = (key: K) => ({ a: 1, b: 2 } as const)[key];
+
+// prettier
+((function () {}) as A)!;
+(({}) + foo)``;
+(({}).a, b);
+((let)[0] + 1) * 2;
+const get = (key: K) => (({ a: 1, b: 2 }) as const)[key];
+```
+
+When an ancestor gets its own parens, a leading `{`/`function`/`class`/`let[` inside it needs none.
+Prettier already does this after `export default` (`` export default (function () {} + foo)`` ``) and for a sequence arrow body (`() => ({}, 1)`),
+but not at statement start or for other arrow bodies, e.g. the object lookup idiom above.
+
+## inline-logical-chain-indent
+
+- Why: uniform-rule (same construct, same output: a single-link inline chain `a ?? [...]`; prettier/prettier#5183, prettier/prettier#19792)
+- Pin: `tests/fixtures/js/logicals/inline-logical-chain-indent.js`
+
+```js
+// input
+const x = $abilities ?? ["foo", "bar", "bar"] ?? ["foo", "bar", "bar", "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey"];
+
+// ours
+const x = $abilities ?? ["foo", "bar", "bar"] ?? [
+  "foo",
+  "bar",
+  "bar",
+  "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey",
+];
+
+// prettier
+const x = $abilities ?? ["foo", "bar", "bar"] ?? [
+    "foo",
+    "bar",
+    "bar",
+    "veryVeryVeryVeryVeryVeryVeryVeryVeryLongKey",
+  ];
+```
+
+When every right side of a logical chain is an inlined object/array/JSX literal, the chain never breaks at an operator.
+Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
+A chain with a non-inlined right side breaks at the operators and keeps the indent.
+Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.

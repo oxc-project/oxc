@@ -8,6 +8,7 @@ use oxc_ecmascript::{
 };
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
+use oxc_str::JSStr;
 use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
@@ -55,7 +56,7 @@ impl<'a> PeepholeOptimizations {
                 } else {
                     ctx.replace_expression_with(expr, Self::unwrap_unary);
                     ctx.replace_expression_with(expr, |e, ctx| {
-                        Self::join_sequence(e, new_expr, ctx)
+                        Self::join_sequence(e.span(), e, new_expr, ctx)
                     });
                 }
             }
@@ -124,11 +125,7 @@ impl<'a> PeepholeOptimizations {
             }
             ChainFold::Collapse { base, base_has_side_effects } => {
                 let new_expr = if base_has_side_effects {
-                    Expression::new_sequence_expression(
-                        span,
-                        [base, Expression::new_void_0(span, ctx)],
-                        ctx,
-                    )
+                    Self::join_sequence(span, base, Expression::new_void_0(span, ctx), ctx)
                 } else {
                     // `base` was `take_in`'d out of the old chain into our
                     // local variable, so `replace_expression`'s walk over the
@@ -251,7 +248,7 @@ impl<'a> PeepholeOptimizations {
         let mut e = e.unbox();
         if !Self::remove_unused_expression(&mut e.left, ctx) {
             // `(a(), V) OP 1` => `(a(), V, 1)`
-            Self::join_sequence(e.left, e.right, ctx)
+            Self::join_sequence(e.span, e.left, e.right, ctx)
         } else if Self::should_keep_indirect_access(&e.right, ctx) {
             // `(V OP o.f)` => `(0, o.f)`
             ctx.drop_expression(&e.left);
@@ -641,7 +638,7 @@ impl<'a> PeepholeOptimizations {
                 let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                     (left_last_quasi.value.cooked, right_first_quasi.value.cooked)
                 {
-                    Some(Str::from_strs_array_in([cooked1.as_str(), cooked2.as_str()], ctx))
+                    Some(JSStr::from_js_strs_array_in([cooked1, cooked2], ctx))
                 } else {
                     None
                 };
@@ -667,7 +664,7 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 );
                 let new_cooked = last_quasi.value.cooked.map(|cooked| {
-                    Str::from_strs_array_in([cooked.as_str(), right_str.as_ref()], ctx)
+                    JSStr::from_js_strs_array_in([cooked, JSStr::from(right_str.as_ref())], ctx)
                 });
                 last_quasi.value.cooked = new_cooked;
                 return Some(left_expr.take_in(ctx));
@@ -688,7 +685,7 @@ impl<'a> PeepholeOptimizations {
                     ctx,
                 );
                 let new_cooked = first_quasi.value.cooked.map(|cooked| {
-                    Str::from_strs_array_in([left_str.as_ref(), cooked.as_str()], ctx)
+                    JSStr::from_js_strs_array_in([JSStr::from(left_str.as_ref()), cooked], ctx)
                 });
                 first_quasi.value.cooked = new_cooked;
                 return Some(right_expr.take_in(ctx));
@@ -851,7 +848,9 @@ impl<'a> PeepholeOptimizations {
             );
 
             let may_be_equal = match &e.right {
-                Expression::StringLiteral(string_lit) => is_typeof_string(&string_lit.value),
+                Expression::StringLiteral(string_lit) => {
+                    string_lit.value.as_str().is_some_and(is_typeof_string)
+                }
                 right => {
                     let ty = right.value_type(ctx);
                     matches!(ty, ValueType::Undetermined | ValueType::String)
@@ -1035,7 +1034,7 @@ impl<'a> PeepholeOptimizations {
                 .or_else(|| next_raw.as_bytes().first())
                 .is_some_and(u8::is_ascii_digit);
             let cooked_ends_with_null =
-                quasi.value.cooked.is_some_and(|cooked| cooked.as_str().ends_with('\0'));
+                quasi.value.cooked.is_some_and(|cooked| cooked.as_bytes().last() == Some(&0));
             quasi.value.raw = if starts_with_digit
                 && cooked_ends_with_null
                 && let Some(prefix) = raw.strip_suffix("\\0")
@@ -1047,8 +1046,10 @@ impl<'a> PeepholeOptimizations {
             let new_cooked = if let (Some(cooked1), Some(cooked2)) =
                 (quasi.value.cooked, next_quasi.as_ref().map(|q| q.value.cooked))
             {
-                let cooked2_str = cooked2.map(|c| c.as_str()).unwrap_or_default();
-                Some(Str::from_strs_array_in([cooked1.as_str(), &str, cooked2_str], ctx))
+                Some(JSStr::from_js_strs_array_in(
+                    [cooked1, JSStr::from(str.as_ref()), cooked2.unwrap_or(JSStr::empty())],
+                    ctx,
+                ))
             } else {
                 None
             };

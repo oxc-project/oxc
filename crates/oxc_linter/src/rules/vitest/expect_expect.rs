@@ -14,6 +14,7 @@ declare_oxc_lint!(
     ExpectExpect,
     vitest,
     correctness,
+    recommended,
     config = ExpectExpectConfig,
     docs = DOCUMENTATION,
     version = "0.0.12",

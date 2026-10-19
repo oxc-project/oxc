@@ -88,6 +88,7 @@ declare_oxc_lint!(
     TripleSlashReference,
     typescript,
     correctness,
+    recommended,
     config = TripleSlashReferenceConfig,
     version = "0.2.0",
     short_description = "Disallow certain triple slash directives in favor of ES module import declarations.",
@@ -127,23 +128,20 @@ impl Rule for TripleSlashReference {
                 match stmt {
                     Statement::TSImportEqualsDeclaration(decl) => match &decl.module_reference {
                         TSModuleReference::ExternalModuleReference(mod_ref) => {
-                            if let Some(v) = refs_for_import.get(mod_ref.expression.value.as_str())
+                            if let Some(value) = mod_ref.expression.value.as_str()
+                                && let Some(v) = refs_for_import.get(value)
                             {
-                                ctx.diagnostic(triple_slash_reference_diagnostic(
-                                    &mod_ref.expression.value,
-                                    *v,
-                                ));
+                                ctx.diagnostic(triple_slash_reference_diagnostic(value, *v));
                             }
                         }
                         TSModuleReference::IdentifierReference(_)
                         | TSModuleReference::QualifiedName(_) => {}
                     },
                     Statement::ImportDeclaration(decl) => {
-                        if let Some(v) = refs_for_import.get(decl.source.value.as_str()) {
-                            ctx.diagnostic(triple_slash_reference_diagnostic(
-                                &decl.source.value,
-                                *v,
-                            ));
+                        if let Some(value) = decl.source.value.as_str()
+                            && let Some(v) = refs_for_import.get(value)
+                        {
+                            ctx.diagnostic(triple_slash_reference_diagnostic(value, *v));
                         }
                     }
                     _ => {}

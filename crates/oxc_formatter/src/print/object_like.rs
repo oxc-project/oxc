@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::source_text::SourceTextExt as _;

@@ -3,7 +3,7 @@ use std::arch::x86_64::*;
 use crate::pipeline::chunk::{load256, mm, veq};
 
 #[inline]
-pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
+pub unsafe fn find1_avx2(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
     while i + 32 <= n {
         let m = mm(veq(load256(src, i), a));
         if m != 0 {
@@ -21,7 +21,7 @@ pub unsafe fn find1(src: *const u8, n: usize, mut i: usize, a: u8) -> usize {
 }
 
 #[inline]
-pub unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usize {
+pub unsafe fn find2_avx2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usize {
     while i + 32 <= n {
         let v = load256(src, i);
         let m = mm(_mm256_or_si256(veq(v, a), veq(v, b)));
@@ -41,7 +41,7 @@ pub unsafe fn find2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8) -> usi
 }
 
 #[inline]
-pub unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
+pub unsafe fn find3_avx2(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8) -> usize {
     while i + 32 <= n {
         let v = load256(src, i);
         let m = mm(_mm256_or_si256(_mm256_or_si256(veq(v, a), veq(v, b)), veq(v, c)));
@@ -61,7 +61,15 @@ pub unsafe fn find3(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8)
 }
 
 #[inline]
-pub unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8, d: u8) -> usize {
+pub unsafe fn find4_avx2(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    a: u8,
+    b: u8,
+    c: u8,
+    d: u8,
+) -> usize {
     while i + 32 <= n {
         let v = load256(src, i);
         let m = mm(_mm256_or_si256(
@@ -83,7 +91,7 @@ pub unsafe fn find4(src: *const u8, n: usize, mut i: usize, a: u8, b: u8, c: u8,
     n
 }
 
-macro_rules! define_find_function {
+macro_rules! define_find_function_avx2 {
     ($(#[$attr:meta])* $name:ident: $($needle:expr),+ $(,)?) => {
         $(#[$attr])*
         #[inline]
@@ -110,7 +118,7 @@ macro_rules! define_find_function {
         }
     };
 }
-pub(super) use define_find_function;
+pub(super) use define_find_function_avx2;
 
 /// OR-fold of `vpcmpeqb` results, associated as a tree.
 macro_rules! vor {
@@ -124,7 +132,7 @@ pub(super) use vor;
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
 #[inline]
-pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
+pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
     let block = &src[base..base + 64];
     let mut out = 0u64;
     for half in 0..2 {
@@ -135,7 +143,9 @@ pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
         let m = unsafe {
             vor!(veq(v, b'('), veq(v, b')'), veq(v, b'['), veq(v, b']'), veq(v, b'{'), veq(v, b'}'))
         };
-        out |= u64::from(mm(m)) << (half * 32);
+        // SAFETY: This module is only compiled on platforms that support AVX2
+        let mask = unsafe { mm(m) };
+        out |= u64::from(mask) << (half * 32);
     }
     out
 }

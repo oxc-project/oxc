@@ -6,7 +6,7 @@
 
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_formatter_core::{
-    Buffer, TextWidth,
+    TextWidth,
     builders::{group, hard_line_break, if_group_breaks, if_group_fits_on_line},
     format_args, write,
 };

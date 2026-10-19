@@ -10,7 +10,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct NoConditionalExpect;
 
-declare_oxc_lint!(NoConditionalExpect, jest, correctness, docs = DOCUMENTATION, version = "0.0.12",);
+declare_oxc_lint!(
+    NoConditionalExpect,
+    jest,
+    correctness,
+    recommended,
+    docs = DOCUMENTATION,
+    version = "0.0.12",
+);
 
 impl Rule for NoConditionalExpect {
     fn run_on_jest_node<'a, 'c>(

@@ -392,25 +392,25 @@ fn declaration_scope(node: &AstNode<'_>, ctx: &LintContext<'_>) -> ScopeId {
     node.scope_id()
 }
 
-fn is_statement_list_parent(kind: AstKind<'_>) -> bool {
-    matches!(
-        kind,
-        AstKind::Program(_)
-            | AstKind::BlockStatement(_)
-            | AstKind::FunctionBody(_)
-            | AstKind::StaticBlock(_)
-            | AstKind::SwitchCase(_)
-            | AstKind::TSModuleBlock(_)
-    )
+fn statement_list(kind: AstKind<'_>) -> Option<&[Statement<'_>]> {
+    match kind {
+        AstKind::Program(program) => Some(&program.body),
+        AstKind::BlockStatement(block) => Some(&block.body),
+        AstKind::FunctionBody(body) => Some(&body.statements),
+        AstKind::StaticBlock(block) => Some(&block.body),
+        AstKind::SwitchCase(case) => Some(&case.consequent),
+        AstKind::TSModuleBlock(block) => Some(&block.body),
+        _ => None,
+    }
 }
 
 fn statement_node_id(node: &AstNode<'_>, ctx: &LintContext<'_>) -> Option<NodeId> {
     let parent = ctx.nodes().parent_node(node.id());
-    if is_statement_list_parent(parent.kind()) {
+    if statement_list(parent.kind()).is_some() {
         Some(node.id())
     } else if matches!(parent.kind(), AstKind::ExportDeclaration(_)) {
         let grandparent = ctx.nodes().parent_node(parent.id());
-        is_statement_list_parent(grandparent.kind()).then_some(parent.id())
+        statement_list(grandparent.kind()).is_some().then_some(parent.id())
     } else {
         None
     }
@@ -422,27 +422,15 @@ fn previous_declaration<'a, 'c>(
 ) -> Option<&'c VariableDeclaration<'a>> {
     let nodes = ctx.nodes();
     let parent = nodes.parent_node(node.id());
-    let (statement_span, statement_parent) = if is_statement_list_parent(parent.kind()) {
-        (node.span(), parent)
+    let (statement_span, statements) = if let Some(statements) = statement_list(parent.kind()) {
+        (node.span(), statements)
     } else if matches!(parent.kind(), AstKind::ExportDeclaration(_)) {
         let grandparent = nodes.parent_node(parent.id());
-        if !is_statement_list_parent(grandparent.kind()) {
-            return None;
-        }
-        (parent.span(), grandparent)
+        (parent.span(), statement_list(grandparent.kind())?)
     } else {
         return None;
     };
 
-    let statements: &[Statement<'a>] = match statement_parent.kind() {
-        AstKind::Program(program) => &program.body,
-        AstKind::BlockStatement(block) => &block.body,
-        AstKind::FunctionBody(body) => &body.statements,
-        AstKind::StaticBlock(block) => &block.body,
-        AstKind::SwitchCase(case) => &case.consequent,
-        AstKind::TSModuleBlock(block) => &block.body,
-        _ => unreachable!(),
-    };
     let index = statements
         .binary_search_by_key(&statement_span.start, |statement| statement.span().start)
         .ok()?;

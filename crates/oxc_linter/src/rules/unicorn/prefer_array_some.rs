@@ -64,6 +64,7 @@ declare_oxc_lint!(
     PreferArraySome,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "0.0.18",
     short_description = "Prefer using `Array#some()` over various alternatives.",
@@ -231,7 +232,7 @@ impl Rule for PreferArraySome {
                     return;
                 };
 
-                if !matches!(static_property_name, "length") {
+                if static_property_name != "length" {
                     return;
                 }
 

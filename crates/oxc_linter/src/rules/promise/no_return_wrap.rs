@@ -117,7 +117,7 @@ declare_oxc_lint!(
     /// myPromise().then(() => 4)
     /// myPromise().then(function() { return 4 })
     ///
-    /// myPromise().then(() => throw "err")
+    /// myPromise().then(() => { throw "err" })
     /// myPromise().then(function() { throw "err" })
     /// ```
     ///
@@ -134,6 +134,7 @@ declare_oxc_lint!(
     NoReturnWrap,
     promise,
     style,
+    recommended,
     pending,
     config = NoReturnWrap,
     version = "0.15.14",

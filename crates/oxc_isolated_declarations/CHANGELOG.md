@@ -4,6 +4,20 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+- a0a987c ast: [**BREAKING**] Preserve lone surrogates in static member names (#26677) (Dunqing)
+
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+
 ## [0.153.0] - 2026-10-05
 
 ### 🐛 Bug Fixes

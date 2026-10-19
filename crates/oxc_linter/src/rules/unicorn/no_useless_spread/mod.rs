@@ -143,6 +143,7 @@ declare_oxc_lint!(
     NoUselessSpread,
     unicorn,
     correctness,
+    recommended,
     fix_dangerous,
     version = "0.0.19",
     short_description = "Disallow unnecessary spread.",
@@ -523,7 +524,8 @@ fn get_method_name(call_expr: &CallExpression) -> Option<String> {
         "unknown"
     };
 
-    Some(format!("{}.{}", object_name, callee.static_property_name().unwrap()))
+    let method_name = callee.static_property_name()?.as_str()?;
+    Some(format!("{object_name}.{method_name}"))
 }
 
 #[test]

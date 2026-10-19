@@ -3,7 +3,7 @@
 
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_formatter_core::{
-    Buffer, Format,
+    Format,
     builders::{
         dedent_to_root, hard_line_break, literal_line_break, mark_as_root,
         soft_line_break_or_space, text,

@@ -8,7 +8,6 @@ use oxc_css_parser::ast::{
     SassUseNamespaceKind, SassVariableDeclaration, SimpleBlock,
 };
 use oxc_formatter_core::{
-    Buffer,
     builders::{
         dedent, empty_line, group, hard_line_break, if_group_breaks, indent, soft_line_break,
         soft_line_break_or_space, space, text,
