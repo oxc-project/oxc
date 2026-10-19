@@ -63,10 +63,12 @@ fn is_multiline_string_literal_attribute(attribute: &JSXAttributeItem<'_>) -> bo
     let JSXAttributeItem::Attribute(attr) = attribute else {
         return false;
     };
-    attr.value.as_ref().is_some_and(|value| matches!(
-        value,
-        JSXAttributeValue::StringLiteral(s) if s.value.as_str().is_some_and(|v| v.contains(['\n', '\r']))
-    ))
+    attr.value.as_ref().is_some_and(|value| {
+        matches!(
+            value,
+            JSXAttributeValue::StringLiteral(s) if s.value.contains(|c: char| matches!(c, '\n' | '\r'))
+        )
+    })
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatOpeningElement<'a, '_> {
@@ -161,9 +163,8 @@ pub enum OpeningElementLayout {
 
 /// Returns `true` if this is an attribute with a string literal initializer that does not contain any new line characters.
 fn is_single_line_string_literal_attribute(attribute: &JSXAttributeItem) -> bool {
-    as_string_literal_attribute_value(attribute).is_some_and(|string| {
-        !string.value.as_str().is_some_and(|value| value.contains(['\n', '\r']))
-    })
+    as_string_literal_attribute_value(attribute)
+        .is_some_and(|string| !string.value.contains(|c: char| matches!(c, '\n' | '\r')))
 }
 
 /// Returns `Some` if the initializer value of this attribute is a string literal.
