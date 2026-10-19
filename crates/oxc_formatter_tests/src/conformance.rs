@@ -594,7 +594,9 @@ fn find_output_from_snapshots(
         let after_options = search_from + pos + options_pattern.len();
         let input_pos = after_filename[after_options..].find(INPUT_SEPARATOR)?;
         let between = &after_filename[after_options..after_options + input_pos];
-        if !between.contains('\n') {
+        // The one line is the indented visualization (`   printWidth: 80 (default) |`),
+        // never another option (`printWidth: Infinity`, which has no visualization line).
+        if !between.contains('\n') && between.starts_with(' ') {
             break &after_filename[after_options + input_pos..];
         }
         search_from = after_options;
@@ -883,9 +885,11 @@ impl Visit<'_> for SpecParser<'_> {
             return;
         }
 
-        // Collect the literal options;
-        // non-literal values (e.g. the `errors` object) never influence formatting and are left out.
+        // Collect the literal options.
+        // A non-literal value (`printWidth: Infinity`) is one the option set cannot hold, so the call is dropped,
+        // as `collect_snippets` drops such sections; only the `errors` object, which never influences formatting, is left out.
         let mut options = OptionSet::new();
+        let mut unsupported = false;
         if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
             obj_expr.properties.iter().for_each(|item| {
                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
@@ -912,8 +916,11 @@ impl Visit<'_> for SpecParser<'_> {
                             .map(|value| serde_json::Value::String(value.to_owned())),
                         _ => None,
                     };
-                    if let Some(value) = value {
-                        options.insert(name.display().to_string(), value);
+                    match value {
+                        Some(value) => {
+                            options.insert(name.display().to_string(), value);
+                        }
+                        None => unsupported |= name != "errors",
                     }
 
                     if name != "errors" {
@@ -924,6 +931,10 @@ impl Visit<'_> for SpecParser<'_> {
                     }
                 }
             });
+        }
+
+        if unsupported {
+            return;
         }
 
         debug_assert!(!parsers.is_empty(), "`parsers` should not be empty");
