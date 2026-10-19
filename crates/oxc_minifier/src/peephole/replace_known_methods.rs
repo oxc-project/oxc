@@ -6,11 +6,12 @@ use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    ArrayJoin, StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex, ToJsString,
+    ArrayJoin, ToBigInt, ToIntegerIndex, ToJsString,
     constant_evaluation::{ConstantEvaluation, DetermineValueType},
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
+use oxc_str::JSStrBuilder;
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -601,16 +602,18 @@ impl<'a> PeepholeOptimizations {
 
         match object {
             Expression::StringLiteral(s) => {
-                if let StringCharAtResult::Value(c) =
-                    s.value.as_str()?.char_at(Some(property.into()))
-                {
-                    s.span = span;
-                    s.value = Str::from_str_in(&c.to_string(), ctx).into();
-                    s.raw = None;
-                    Some(object.take_in(ctx))
-                } else {
-                    None
-                }
+                let index = property as usize;
+                // std's UTF-8 decoder is faster for ordinary strings.
+                let unit = match s.value.as_str() {
+                    Some(value) => value.encode_utf16().nth(index),
+                    None => s.value.encode_utf16().nth(index),
+                }?;
+                let mut builder = JSStrBuilder::new_in(ctx);
+                builder.push_code_unit(unit);
+                s.span = span;
+                s.value = builder.into_js_str();
+                s.raw = None;
+                Some(object.take_in(ctx))
             }
             Expression::ArrayExpression(array_expr) => {
                 let length_until_spread =
