@@ -219,9 +219,7 @@ fn try_fold_string_substring_or_slice<'a>(
     // The lone half is representable, so the result is exact.
     let capacity = (end - start).saturating_mul(3).min(value.len());
     let mut result = JSStrBuilder::with_capacity_in(capacity, ctx);
-    for unit in value.encode_utf16().skip(start).take(end - start) {
-        result.push_code_unit(unit);
-    }
+    result.extend(value.encode_utf16().skip(start).take(end - start));
     Some(ConstantValue::String(result.into_js_str()))
 }
 
