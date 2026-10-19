@@ -83,6 +83,24 @@ pub use trivia::{
     CommentsRange, comments_range, get_comment_at, has_comments_between, is_inside_comment,
 };
 
+// The AST and `AstBuilder` are covariant in `'a`: values for a longer lifetime can be used where a
+// shorter one is expected. Downstream code relies on this to evaluate an AST with a context whose
+// own data lives shorter than the arena. A type that is invariant in `'a`, such as one containing
+// `Cell<&'a T>`, makes `Program` invariant too and fails this check.
+const _: () = {
+    fn _program_is_covariant<'long: 'short, 'short>(
+        program: ast::Program<'long>,
+    ) -> ast::Program<'short> {
+        program
+    }
+
+    fn _ast_builder_is_covariant<'long: 'short, 'short>(
+        builder: builder::AstBuilder<'long>,
+    ) -> builder::AstBuilder<'short> {
+        builder
+    }
+};
+
 // After experimenting with two types of boxed enum variants:
 //   1.
 //   ```
