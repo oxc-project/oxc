@@ -1,0 +1,25 @@
+crates/oxc_formatter/tests/jsdoc/fixtures/descriptions/046-quote-before-multiline-code-span.options.json
+  s_560d030dd84ff3::t_104d4cbc8fd7e2 1-8
+crates/oxc_formatter/tests/jsdoc/fixtures/descriptions/046-quote-before-multiline-code-span.output.ts
+  s_560d030dd84ff3::t_df624d7c9f69eb 1-25
+crates/oxc_formatter/tests/jsdoc/fixtures/descriptions/046-quote-before-multiline-code-span.ts
+  s_560d030dd84ff3::t_76620ad497a952 1-26
+crates/oxc_jsdoc/src/parser/parse.rs
+  s_560d030dd84ff3::t_c44c63d07673b1 47,89-94,171-173,287-335
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "231e693b63df94bb6f4f062de5c13b4da7baf2b0",
+  "prompts": {},
+  "sessions": {
+    "s_560d030dd84ff3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a152cf-cb6f-79b1-b7d9-8ed13982a562",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
