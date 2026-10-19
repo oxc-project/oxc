@@ -46,6 +46,7 @@ A line the printer starts at column 0 must not read back as stream-level syntax 
 Column 0 is reached at these sites, each guarded without changing the value:
 
 - The document's first text (`print/document.rs`): content after `---` stays on its line; a document without `---` whose first text is U+FEFF gets one
+  - A plain scalar starting with a marker on a line of its own stays verbatim from its line start (indentation and continuation lines included)
 - A root mapping key (`print/mapping_item.rs`): a key starting with a marker keeps its `?`
 - A flow scalar's continuation line outside block collections (`print/scalar.rs`): a line starting with a marker is indented
   - This also covers entries of a root flow collection, already indented, where the extra indent is harmless

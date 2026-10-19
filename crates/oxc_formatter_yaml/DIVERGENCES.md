@@ -297,7 +297,7 @@ The KEY does count: a long key overflowing on `key: |` alone breaks the pair exa
 ## document-marker-content
 
 - Why: semantics
-- Pin: `tests/fixtures/yaml/document-marker-content/document.yaml`, `tests/fixtures/yaml/document-marker-content/key.yaml`, `tests/fixtures/yaml/document-marker-content/scalar.yaml`
+- Pin: `tests/fixtures/yaml/document-marker-content/document.yaml`, `tests/fixtures/yaml/document-marker-content/indented.yaml`, `tests/fixtures/yaml/document-marker-content/key.yaml`, `tests/fixtures/yaml/document-marker-content/scalar.yaml`
 
 ```yaml
 # input
@@ -306,6 +306,8 @@ The KEY does count: a long key overflowing on `key: |` alone breaks the pair exa
 : m
 # (proseWrap: always, printWidth: 10)
 aaaa bbbb --- cccc
+...
+ ---
 
 # ours: no line starts with the marker at column 0
 --- ---
@@ -313,6 +315,8 @@ aaaa bbbb --- cccc
 : m
 aaaa bbbb
   --- cccc
+...
+ ---
 
 # prettier: the content becomes a marker
 ---
@@ -320,9 +324,12 @@ aaaa bbbb
 --- x: m
 aaaa bbbb
 --- cccc
+...
+---
 ```
 
 Text starting with `---` or `...` never starts a line at column 0, where it is read as a document marker (`"---"` becomes an empty document, the rest fails to parse).
+A root plain scalar on a line of its own stays verbatim from its line start: a lenient parser (js-yaml) reads an indented marker as one, so re-indenting it would change the value there.
 The guarded sites are listed in AGENTS.md "Line starts".
 
 ## bom-content
