@@ -219,9 +219,7 @@ fn try_fold_string_substring_or_slice<'a>(
     // The lone half is representable, so the result is exact.
     let capacity = (end - start).saturating_mul(3).min(value.len());
     let mut result = JSStrBuilder::with_capacity_in(capacity, ctx);
-    for unit in value.encode_utf16().skip(start).take(end - start) {
-        result.push_code_unit(unit);
-    }
+    result.push_code_units(value.encode_utf16().skip(start).take(end - start));
     Some(ConstantValue::String(result.into_js_str()))
 }
 
@@ -349,19 +347,23 @@ fn try_fold_string_from_char_code<'a>(
         return None;
     }
     // Each argument contributes its ToUint16 code unit.
-    // Read them all before allocating in the arena, which never frees.
-    let units = args
-        .iter()
-        .map(|arg| {
+    let code_units = || {
+        args.iter().map(|arg| {
             let v = arg.as_expression()?.get_side_free_number_value(ctx)?;
             Some(v.to_int_32() as u16)
         })
-        .collect::<Option<Vec<u16>>>()?;
+    };
+    // Evaluate every argument before allocating in the arena, which never frees.
+    // Evaluating twice is cheaper than buffering the units: the arguments are
+    // usually numeric literals, and a non-constant argument returns here.
+    if code_units().any(|unit| unit.is_none()) {
+        return None;
+    }
     // Like the runtime string, a lead surrogate followed by a trail surrogate forms the
     // supplementary character, and any other surrogate stays a lone unit.
     // The capacity is in bytes, and a code unit encodes to at most three.
-    let mut result = JSStrBuilder::with_capacity_in(units.len() * 3, ctx);
-    result.push_utf16(&units);
+    let mut result = JSStrBuilder::with_capacity_in(args.len() * 3, ctx);
+    result.push_code_units(code_units().flatten());
     Some(ConstantValue::String(result.into_js_str()))
 }
 
