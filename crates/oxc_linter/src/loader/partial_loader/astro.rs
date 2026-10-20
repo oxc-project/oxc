@@ -10,7 +10,6 @@ use super::{
 };
 
 const ASTRO_SPLIT: &str = "---";
-pub(super) const EXTENSION: &str = "astro";
 
 pub struct AstroPartialLoader<'a> {
     source_text: &'a str,

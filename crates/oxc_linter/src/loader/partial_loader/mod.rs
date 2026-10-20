@@ -1,5 +1,5 @@
 use memchr::{memmem::Finder, memmem::FinderRev};
-use oxc_span::VALID_EXTENSIONS;
+use oxc_span::{SourceType, VALID_EXTENSIONS};
 
 use crate::loader::JavaScriptSource;
 
@@ -17,8 +17,7 @@ const COMMENT_END: &str = "-->";
 
 /// File extensions that can contain JS/TS code in certain parts, such as in `<script>` tags, and can
 /// be loaded using the [`PartialLoader`].
-pub const LINT_PARTIAL_LOADER_EXTENSIONS: &[&str] =
-    &[vue::EXTENSION, astro::EXTENSION, svelte::EXTENSION];
+pub const LINT_PARTIAL_LOADER_EXTENSIONS: &[&str] = &["vue", "astro", "svelte"];
 
 /// All valid JavaScript/TypeScript extensions, plus additional framework files that
 /// contain JavaScript/TypeScript code in them (e.g., Vue, Astro, Svelte, etc.).
@@ -27,62 +26,31 @@ pub const LINTABLE_EXTENSIONS: &[&str] =
 
 pub struct PartialLoader;
 
-#[derive(Clone, Copy)]
-enum PartialLoaderKind {
-    Vue,
-    Astro,
-    Svelte,
-}
-
-const PARTIAL_LOADERS: &[PartialLoaderKind] =
-    &[PartialLoaderKind::Vue, PartialLoaderKind::Astro, PartialLoaderKind::Svelte];
-
-impl PartialLoaderKind {
-    fn for_extension(ext: &str) -> Option<Self> {
-        PARTIAL_LOADERS.iter().copied().find(|loader| loader.extension() == ext)
-    }
-
-    fn extension(self) -> &'static str {
-        match self {
-            Self::Vue => vue::EXTENSION,
-            Self::Astro => astro::EXTENSION,
-            Self::Svelte => svelte::EXTENSION,
-        }
-    }
-
-    fn parse(self, source_text: &str) -> Vec<JavaScriptSource<'_>> {
-        match self {
-            Self::Vue => VuePartialLoader::new(source_text).parse(),
-            Self::Astro => AstroPartialLoader::new(source_text).parse(),
-            Self::Svelte => SveltePartialLoader::new(source_text).parse(),
-        }
-    }
-
-    fn parse_for_external_linter(self, source_text: &str) -> Vec<JavaScriptSource<'_>> {
-        match self {
-            Self::Vue => VuePartialLoader::new(source_text).parse_for_external_linter(),
-            Self::Astro | Self::Svelte => self.parse(source_text),
-        }
-    }
-}
-
 impl PartialLoader {
     /// Extract js section of special files.
     /// Returns `None` if the special file does not have a js section.
     pub fn parse<'a>(ext: &str, source_text: &'a str) -> Option<Vec<JavaScriptSource<'a>>> {
-        PartialLoaderKind::for_extension(ext).map(|loader| loader.parse(source_text))
+        match ext {
+            "vue" => Some(VuePartialLoader::new(source_text).parse()),
+            "astro" => Some(AstroPartialLoader::new(source_text).parse()),
+            "svelte" => Some(SveltePartialLoader::new(source_text).parse()),
+            _ => None,
+        }
     }
 
     /// Extract js sections for external linters.
     ///
-    /// Some frameworks need to preserve a synthetic section even when there is no `<script>`
-    /// so JS plugins can still report against the original file.
+    /// A file without any js section still gets an empty one, so JS plugins can report
+    /// against the original file.
     pub fn parse_for_external_linter<'a>(
         ext: &str,
         source_text: &'a str,
     ) -> Option<Vec<JavaScriptSource<'a>>> {
-        PartialLoaderKind::for_extension(ext)
-            .map(|loader| loader.parse_for_external_linter(source_text))
+        let mut sources = Self::parse(ext, source_text)?;
+        if sources.is_empty() {
+            sources.push(JavaScriptSource::partial("", SourceType::mjs(), 0));
+        }
+        Some(sources)
     }
 }
 
@@ -212,6 +180,23 @@ fn find_attribute<'a>(content: &'a str, target: &str) -> Option<AttributeValue<'
 
         if name.eq_ignore_ascii_case(target) {
             return Some(value);
+        }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use super::PartialLoader;
+
+    #[test]
+    fn test_no_script_for_external_linter() {
+        for (ext, source_text) in
+            [("vue", "<template></template>"), ("svelte", "<div></div>"), ("astro", "<div></div>")]
+        {
+            let sources = PartialLoader::parse_for_external_linter(ext, source_text).unwrap();
+            assert_eq!(sources.len(), 1, "{ext}");
+            assert_eq!(sources[0].source_text, "", "{ext}");
+            assert_eq!(sources[0].start, 0, "{ext}");
         }
     }
 }
