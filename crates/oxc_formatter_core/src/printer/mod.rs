@@ -1147,7 +1147,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
 
         let fits_state = FitsState {
             pending_indent: printer.state.pending_indent,
+            // Already printed, so it counts like Prettier's `pos` even if it came from a `line`
             pending_space: printer.state.pending_space,
+            pending_line_space: false,
             line_width: printer.state.line_width,
             has_line_suffix: printer.state.line_suffixes.has_pending(),
             sorted_tailwind_classes: printer.state.sorted_tailwind_classes,
@@ -1177,17 +1179,28 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     {
         while let Some(element) = self.queue.pop() {
             match self.fits_element(element)? {
-                Fits::Yes => return Ok(true),
+                Fits::Yes => return Ok(!self.overflows()),
                 Fits::No => return Ok(false),
                 Fits::Maybe => {
+                    // A fill entry ends but the line goes on: the measurement of the next entry
+                    // counts a pending `Space` once text follows, like Prettier measuring
+                    // `[content, separator, next content]` together
                     if predicate.is_end(element)? {
-                        break;
+                        return Ok(self.state.line_width <= usize::from(self.options().print_width));
                     }
                 }
             }
         }
 
-        Ok(true)
+        Ok(!self.overflows())
+    }
+
+    /// Like Prettier's `fits` loop head (`remainingWidth >= 0`), checked at every `Fits::Yes` exit:
+    /// a line that already overflows never fits, even if no text was measured.
+    /// A pending `Space` counts, a pending `line` space does not.
+    fn overflows(&self) -> bool {
+        self.state.line_width + usize::from(self.state.pending_space)
+            > usize::from(self.options().print_width)
     }
 
     /// Tests if the content of a `Fill` item fits in [PrintMode::Flat].
@@ -1254,7 +1267,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 if args.mode().is_flat() {
                     match line_mode {
                         LineMode::SoftOrSpace => {
-                            self.state.pending_space = true;
+                            self.state.pending_line_space = true;
                         }
                         LineMode::Soft => {}
                         LineMode::Hard
@@ -1311,17 +1324,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     // is what the mode's initialized to by default
                     // This means, the printer is outside of the current element at this point and any
                     // line break should be printed as regular line break -> Fits
-                    //
-                    // Before returning, resolve any pending space so the width check is accurate.
-                    // Without this, a deferred `Space` before a group boundary can be lost when
-                    // the fits measurer exits early via an expanded-mode line break, causing the
-                    // measured width to be off by one.
-                    if self.state.pending_space {
-                        self.state.line_width += 1;
-                        if self.state.line_width > usize::from(self.options().print_width) {
-                            return Ok(Fits::No);
-                        }
-                    }
                     return Ok(Fits::Yes);
                 }
             }
@@ -1522,7 +1524,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         self.state.line_width +=
             indent.width(&self.printer.state.prefix_nodes, self.options().indent_width());
 
-        if self.state.pending_space {
+        if std::mem::take(&mut self.state.pending_space)
+            | std::mem::take(&mut self.state.pending_line_space)
+        {
             self.state.line_width += 1;
         }
 
@@ -1549,8 +1553,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         if self.state.line_width > usize::from(self.options().print_width) {
             return Fits::No;
         }
-
-        self.state.pending_space = false;
 
         Fits::Maybe
     }
@@ -1638,7 +1640,10 @@ impl From<bool> for Fits {
 #[derive(Debug)]
 struct FitsState<'print> {
     pending_indent: Indention,
+    /// A `Space`: like Prettier's `" "`, it counts even if no text follows it.
     pending_space: bool,
+    /// A flat `soft_line_break_or_space`: like Prettier's `line`, it counts only once text follows it.
+    pending_line_space: bool,
     has_line_suffix: bool,
     line_width: usize,
     sorted_tailwind_classes: &'print [String],
