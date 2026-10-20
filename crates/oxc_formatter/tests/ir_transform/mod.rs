@@ -73,6 +73,7 @@ struct TestCustomGroupDefinition {
 struct TestSortImportsConfig {
     partition_by_newline: Option<bool>,
     partition_by_comment: Option<bool>,
+    partition_by_side_effect: Option<bool>,
     sort_side_effects: Option<bool>,
     order: Option<String>,
     ignore_case: Option<bool>,
@@ -144,6 +145,9 @@ fn parse_test_config(json: &str) -> JsFormatOptions {
         }
         if let Some(v) = sort_config.partition_by_comment {
             sort_imports.partition_by_comment = v;
+        }
+        if let Some(v) = sort_config.partition_by_side_effect {
+            sort_imports.partition_by_side_effect = v;
         }
         if let Some(v) = sort_config.sort_side_effects {
             sort_imports.sort_side_effects = v;

@@ -617,6 +617,9 @@ impl Oxc {
             format_options.sort_imports = Some(SortImportsOptions {
                 partition_by_newline: sort_imports_config.partition_by_newline.unwrap_or(false),
                 partition_by_comment: sort_imports_config.partition_by_comment.unwrap_or(false),
+                partition_by_side_effect: sort_imports_config
+                    .partition_by_side_effect
+                    .unwrap_or(false),
                 sort_side_effects: sort_imports_config.sort_side_effects.unwrap_or(false),
                 order,
                 ignore_case: sort_imports_config.ignore_case.unwrap_or(true),
