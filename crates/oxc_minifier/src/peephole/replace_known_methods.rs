@@ -202,7 +202,6 @@ impl<'a> PeepholeOptimizations {
                 .flat_map(|args| args.iter())
                 .filter(|arg| !matches!(arg, Argument::StringLiteral(_)))
                 .count();
-            let string_count = argument_count - expression_count;
             // If flattening is unsafe, the alternative is the whole original chain.
             let call_count = if Self::string_concat_can_interleave(
                 collected_arguments.iter().rev().flat_map(|args| args.iter()),
@@ -212,9 +211,7 @@ impl<'a> PeepholeOptimizations {
             } else {
                 collected_arguments.len()
             };
-            if ".concat()".len() * call_count + argument_count + "''".len() * string_count
-                >= "${}".len() * expression_count
-            {
+            if Self::string_concat_prefers_template(argument_count, expression_count, call_count) {
                 let replacement = Self::fold_string_concat(
                     original_span,
                     base.value,
@@ -327,12 +324,7 @@ impl<'a> PeepholeOptimizations {
 
                 let expression_count =
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
-                let string_count = args.len() - expression_count;
-
-                // whether it is shorter to use `String::concat`
-                if ".concat()".len() + args.len() + "''".len() * string_count
-                    < "${}".len() * expression_count
-                {
+                if !Self::string_concat_prefers_template(args.len(), expression_count, 1) {
                     return None;
                 }
 
@@ -346,6 +338,19 @@ impl<'a> PeepholeOptimizations {
             }
             _ => None,
         }
+    }
+
+    fn string_concat_prefers_template(
+        argument_count: usize,
+        expression_count: usize,
+        call_count: usize,
+    ) -> bool {
+        // Estimate the added syntax, excluding the base string and argument contents.
+        let string_count = argument_count - expression_count;
+        let concat_overhead =
+            call_count * ".concat()".len() + argument_count + string_count * "''".len();
+        let template_overhead = expression_count * "${}".len();
+        template_overhead <= concat_overhead
     }
 
     /// Build a template after checking that each original call can interleave its arguments.
@@ -388,6 +393,8 @@ impl<'a> PeepholeOptimizations {
     where
         'a: 'b,
     {
+        // Coercion methods are assumed pure, so an earlier coercion cannot change
+        // a binding read by a later argument.
         let mut may_coerce_object = false;
         for argument in arguments {
             let Some(argument) = argument.as_expression() else { return false };
