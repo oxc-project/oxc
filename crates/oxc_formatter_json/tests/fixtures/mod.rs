@@ -27,7 +27,7 @@ impl FixtureFormatter for JsonHarness {
 
     fn format(source: &str, _path: &Path, options: &Self::Options) -> String {
         let allocator = Allocator::default();
-        format(&allocator, source, *options)
+        format(&allocator, source, options.clone())
             .expect("format should succeed")
             .print()
             .expect("print should succeed")
@@ -36,7 +36,7 @@ impl FixtureFormatter for JsonHarness {
 
     fn fingerprint(source: &str, _path: &Path, options: &Self::Options) -> Fingerprint {
         let allocator = Allocator::default();
-        let parsed = parse_for_format(&allocator, source, *options).expect("source should parse");
+        let parsed = parse_for_format(&allocator, source, options).expect("source should parse");
         Fingerprint { comments: parsed.comments.len() }
     }
 }
@@ -69,7 +69,7 @@ fn invalid_json_is_err() {
         // Unary other than `+` / `-` before a number, `Infinity` or `NaN`
         for source in ["!true", "typeof Infinity", "-true", "-undefined", "-(-1)", "+ +1"] {
             let allocator = Allocator::default();
-            assert!(format(&allocator, source, options).is_err(), "{variant:?}: {source:?}");
+            assert!(format(&allocator, source, options.clone()).is_err(), "{variant:?}: {source:?}");
         }
     }
 }

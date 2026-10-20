@@ -1,0 +1,4 @@
+[
+  { "arrayWrap": { "linePattern": "3", "wrapThreshold": 3 } },
+  { "arrayWrap": { "linePattern": "2 1" } }
+]
