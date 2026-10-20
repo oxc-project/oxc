@@ -83,13 +83,17 @@ impl Rule for NoUselessConcat {
     }
 }
 
+/// Right-most operand on the left of a `+` chain.
+///
+/// Parentheses are not nodes in ESTree, so ESLint sees through them. Unwrap
+/// them before walking so `('a') + ('b')` is the same concatenation as `'a' + 'b'`.
 fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
-    let mut left = &expr.left;
+    let mut left = expr.left.without_parentheses();
     loop {
         if let Expression::BinaryExpression(binary_expr) = left
             && binary_expr.operator == BinaryOperator::Addition
         {
-            left = &binary_expr.right;
+            left = binary_expr.right.without_parentheses();
             continue;
         }
         break;
@@ -97,13 +101,16 @@ fn get_left<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
     left
 }
 
+/// Left-most operand on the right of a `+` chain.
+///
+/// See [`get_left`] for why parentheses are unwrapped.
 fn get_right<'a>(expr: &'a BinaryExpression<'a>) -> &'a Expression<'a> {
-    let mut right = &expr.right;
+    let mut right = expr.right.without_parentheses();
     loop {
         if let Expression::BinaryExpression(binary_expr) = right
             && binary_expr.operator == BinaryOperator::Addition
         {
-            right = &binary_expr.left;
+            right = binary_expr.left.without_parentheses();
             continue;
         }
         break;
@@ -136,6 +143,8 @@ fn test() {
         ",
         "'a' + foo + 'b'",
         "'a' + foo + 'b' + bar + 'b'",
+        // A line break still allows the concatenation when an operand is parenthesized.
+        "'a' +\n('b')",
         "'a' - 'b'",
         "'a + b'",
         "// 'a' + 'b'",
@@ -156,6 +165,16 @@ fn test() {
         "foo + 'a' + 'b'",
         "'a' + 'b' + 'c'",
         "(foo + 'a') + ('b' + 'c')",
+        // https://github.com/oxc-project/oxc/issues/27982
+        "var a = 'a' + ('b');\nvar b = ('a') + 'b';\nvar c = (foo + 'a') + ('b' + 'c');",
+        "'a' + ('b')",
+        "('a') + 'b'",
+        "('a') + ('b')",
+        "((('a'))) + 'b'",
+        "(foo + 'a') + 'b'",
+        "'a' + ('b' + 'c')",
+        "foo + ('a' + 'b')",
+        "'a' + ('b' + foo)",
         "`a` + 'b'",
         "`a` + `b`",
         "foo + `a` + `b`",
