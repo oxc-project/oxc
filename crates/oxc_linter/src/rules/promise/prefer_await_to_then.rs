@@ -166,6 +166,7 @@ fn test() {
         ("function x () { return Promise.resolve(42) }", None),
         ("function x () { return Promise.reject(error) }", None),
         ("function x () { return Promise.withResolvers() }", None),
+        ("async function foo() { return await thing().then(x => x) }", None),
     ];
 
     let fail = vec![
@@ -179,6 +180,10 @@ fn test() {
         ("async function foo() { return thing().then(x => x) }", None),
         ("function foo() { return hey.catch(x => x) }", None),
         ("function foo() { return hey.finally(() => {}) }", None),
+        (
+            "async function foo() { return await thing().then(x => x) }",
+            Some(serde_json::json!([{ "strict": true }])),
+        ),
         ("something().then(async () => await somethingElse())", None),
         (
             "async function foo() { await thing().then() }",
