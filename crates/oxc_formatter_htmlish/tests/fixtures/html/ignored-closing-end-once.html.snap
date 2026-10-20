@@ -1,0 +1,31 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<time><!-- prettier-ignore -->
+<mark>
+<input />
+</mark></time>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<time
+  ><!-- prettier-ignore -->
+  <mark>
+<input />
+</mark
+></time>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<time
+  ><!-- prettier-ignore -->
+  <mark>
+<input />
+</mark
+></time>
+
+===================== End =====================

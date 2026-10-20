@@ -1,0 +1,18 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div [class.[&>svg]:w-4]="x" [a]="b">y</div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div [class.[&>svg]:w-4]="x" [a]="b">y</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div [class.[&>svg]:w-4]="x" [a]="b">y</div>
+
+===================== End =====================

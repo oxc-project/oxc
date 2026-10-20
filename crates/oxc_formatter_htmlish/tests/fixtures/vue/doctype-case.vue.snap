@@ -1,0 +1,29 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!DOCTYPE html>
+<html><body><p>{{ a }}</p></body></html>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<!doctype html>
+<html>
+  <body>
+    <p>{{ a }}</p>
+  </body>
+</html>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<!doctype html>
+<html>
+  <body>
+    <p>{{ a }}</p>
+  </body>
+</html>
+
+===================== End =====================

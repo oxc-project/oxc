@@ -1,0 +1,34 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<p>a@if (x) {b}c</p>
+<span>@if (test) {text}</span>
+<p><b>a</b>@for (i of items; track i) {<i>{{ i }}</i>}<b>z</b></p>
+<span>a@if (x) {}b</span>
+<span>a@case (1)@case (2) {b}c</span>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<p>a@if (x) {b}c</p>
+<span>@if (test) {text}</span>
+<p>
+  <b>a</b>@for (i of items; track i) {<i>{{ i }}</i>}<b>z</b>
+</p>
+<span>a@if (x) {}b</span>
+<span>a@case (1)@case (2) {b}c</span>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<p>a@if (x) {b}c</p>
+<span>@if (test) {text}</span>
+<p>
+  <b>a</b>@for (i of items; track i) {<i>{{ i }}</i>}<b>z</b>
+</p>
+<span>a@if (x) {}b</span>
+<span>a@case (1)@case (2) {b}c</span>
+
+===================== End =====================

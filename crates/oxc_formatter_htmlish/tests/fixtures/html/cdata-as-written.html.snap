@@ -1,0 +1,25 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<p>text <![CDATA[aaaa bbbb cccc dddd eeee ffff gggg hhhh iiii jjjj kkkk llll mmmm nnnn oooo pppp]]> more</p>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<p>
+  text
+  <![CDATA[aaaa bbbb cccc dddd eeee ffff gggg hhhh iiii jjjj kkkk llll mmmm nnnn oooo pppp]]>
+  more
+</p>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<p>
+  text <![CDATA[aaaa bbbb cccc dddd eeee ffff gggg hhhh iiii jjjj kkkk llll mmmm nnnn oooo pppp]]>
+  more
+</p>
+
+===================== End =====================

@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div><html:style>.a{color:red}</html:style></div>
+<div>x<html:script>let a  = 1</html:script>y</div>
+<div>x<html:p>p</html:p>y</div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div><html:style>.a{color:red}</html:style></div>
+<div>x<html:script>let a = 1</html:script>y</div>
+<div>x<html:p>p</html:p>y</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div><html:style>.a{color:red}</html:style></div>
+<div>x<html:script>let a = 1</html:script>y</div>
+<div>x<html:p>p</html:p>y</div>
+
+===================== End =====================

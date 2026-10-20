@@ -1,0 +1,46 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<main><b>a</b><dialog></dialog><b>b</b></main>
+<p>Open the <dialog open>settings</dialog> panel</p>
+<body>
+<div>before</div>
+<dialog id="d"><form method="dialog"><p>Are you sure?</p><button>OK</button></form></dialog>
+<div>after</div>
+</body>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<main><b>a</b><dialog></dialog><b>b</b></main>
+<p>Open the <dialog open>settings</dialog> panel</p>
+<body>
+  <div>before</div>
+  <dialog id="d">
+    <form method="dialog">
+      <p>Are you sure?</p>
+      <button>OK</button>
+    </form>
+  </dialog>
+  <div>after</div>
+</body>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<main><b>a</b><dialog></dialog><b>b</b></main>
+<p>Open the <dialog open>settings</dialog> panel</p>
+<body>
+  <div>before</div>
+  <dialog id="d">
+    <form method="dialog">
+      <p>Are you sure?</p>
+      <button>OK</button>
+    </form>
+  </dialog>
+  <div>after</div>
+</body>
+
+===================== End =====================

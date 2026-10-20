@@ -1,0 +1,73 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div><ul><li><pre />
+<b>x</b></ul></div>
+<ul><li><pre />
+<b>x</b></ul>
+<div><pre />
+x  y</div>
+<div><pre />
+<b>x</b></div>
+<span><listing />
+  <i>y</i>
+</span>
+<div><xmp />
+<b>x</b></div>
+<pre><b>x</b> unclosed
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div>
+  <ul>
+    <li>
+      <pre />
+<b>x</b></ul>
+</div>
+<ul>
+  <li>
+    <pre />
+<b>x</b></ul>
+<div><pre />x  y</div>
+<div>
+  <pre />
+<b>x</b></div>
+<span>
+  <listing />
+  <i>y</i>
+</span>
+<div>
+  <xmp />
+<b>x</b></div>
+<pre><b>x</b> unclosed
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div>
+  <ul>
+    <li>
+      <pre />
+<b>x</b></ul>
+</div>
+<ul>
+  <li>
+    <pre />
+<b>x</b></ul>
+<div><pre />x  y</div>
+<div>
+  <pre />
+<b>x</b></div>
+<span>
+  <listing />
+  <i>y</i>
+</span>
+<div>
+  <xmp />
+<b>x</b></div>
+<pre><b>x</b> unclosed
+
+===================== End =====================
