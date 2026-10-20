@@ -1,5 +1,5 @@
 use oxc_allocator::ArenaVec;
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Statement};
 use oxc_cfg::{
     BlockNodeId, ControlFlowGraph, EdgeType, InstructionKind, ReturnInstructionKind,
     graph::{Direction, visit::EdgeRef},
@@ -293,10 +293,7 @@ impl NoUselessReturn {
 
     /// Check if a span is contained in the last statement of a statement list
     #[inline]
-    fn is_span_in_last_statement(
-        statements: &ArenaVec<'_, oxc_ast::ast::Statement<'_>>,
-        span: Span,
-    ) -> bool {
+    fn is_span_in_last_statement(statements: &ArenaVec<'_, Statement<'_>>, span: Span) -> bool {
         statements.last().is_some_and(|last| last.span().contains_inclusive(span))
     }
 

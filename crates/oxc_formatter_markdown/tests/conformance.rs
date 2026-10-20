@@ -26,8 +26,6 @@ const CONFIG: ConformanceConfig = ConformanceConfig {
     ignore: &[
         // Cursor tracking is an editor feature, not formatting.
         "markdown/cursor/",
-        // Exercises Prettier's plugin loader.
-        "markdown/broken-plugins/",
         // Embedded languages need the dispatcher; covered by oxfmt's E2E conformance.
         "markdown/multiparser-css/",
         "markdown/multiparser-js/",

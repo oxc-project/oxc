@@ -48,6 +48,7 @@ declare_oxc_lint!(
     PreferTypeError,
     unicorn,
     pedantic,
+    recommended,
     fix,
     version = "0.0.16",
     short_description = "Enforce throwing a `TypeError` instead of a generic `Error` after a type-checking if statement.",
@@ -91,6 +92,7 @@ impl Rule for PreferTypeError {
 }
 
 fn is_type_checking_expr(expr: &Expression) -> bool {
+    let expr = expr.without_parentheses();
     match expr {
         match_member_expression!(Expression) => {
             is_type_checking_member_expr(expr.to_member_expression())
@@ -124,7 +126,7 @@ fn is_typechecking_call_expr(call_expr: &CallExpression) -> bool {
         return false;
     }
 
-    match &call_expr.callee {
+    match call_expr.callee.without_parentheses() {
         Expression::Identifier(ident) => {
             TYPE_CHECKING_GLOBAL_IDENTIFIERS.contains(&ident.name.as_str())
         }
@@ -403,6 +405,12 @@ fn test() {
                     throw new Error('Unknown');
             }
         ",
+        r#"if (!(x === "string")) { throw new Error("bad"); }"#,
+        r#"if (!(typeof x === "string") || x === null) { throw new Error("bad"); }"#,
+        r#"if (!(Array.isArray())) { throw new Error("bad"); }"#,
+        r#"if ((x.ready)) { throw new Error("bad"); }"#,
+        r"if ((Array.isArray)()) { throw new Error(); }",
+        r"if ((isArray)(value)) { throw new Error(); }",
     ];
 
     let fail = vec![
@@ -471,6 +479,25 @@ fn test() {
                 throw (new Error());
             }
         ",
+        r#"
+            export function f(x, Y) {
+                if (!(x instanceof Y)) {
+                    throw new Error("bad");
+                }
+            }
+        "#,
+        r#"
+            export function f(x) {
+                if (!(typeof x === "string")) {
+                    throw new Error("bad");
+                }
+            }
+        "#,
+        r#"if (((x instanceof Y))) { throw new Error("bad"); }"#,
+        r#"if ((typeof x) !== "string") { throw new Error("bad"); }"#,
+        r#"if (!(Array.isArray(x)) || ((typeof x !== "string"))) { throw new Error("bad"); }"#,
+        r"if ((Array.isArray)(value)) { throw new Error(); }",
+        r"if (!((isFinite))(value)) { throw new Error(); }",
     ];
 
     let fix = vec![
@@ -521,6 +548,22 @@ fn test() {
         (
             r"if (_.isElement(foo)) { throw (new Error()); }",
             r"if (_.isElement(foo)) { throw (new TypeError()); }",
+        ),
+        (
+            r#"if (!(x instanceof Y)) { throw new Error("bad"); }"#,
+            r#"if (!(x instanceof Y)) { throw new TypeError("bad"); }"#,
+        ),
+        (
+            r#"if (!(typeof x === "string")) { throw new Error("bad"); }"#,
+            r#"if (!(typeof x === "string")) { throw new TypeError("bad"); }"#,
+        ),
+        (
+            r"if ((Array.isArray)(value)) { throw new Error(); }",
+            r"if ((Array.isArray)(value)) { throw new TypeError(); }",
+        ),
+        (
+            r"if (!((isFinite))(value)) { throw new Error(); }",
+            r"if (!((isFinite))(value)) { throw new TypeError(); }",
         ),
     ];
 

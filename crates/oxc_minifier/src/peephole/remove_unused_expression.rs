@@ -240,6 +240,9 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        if !ctx.is_tree_shake_only() {
+            Self::de_morgan_for_void_expr(logical_expr, ctx);
+        }
         false
     }
 

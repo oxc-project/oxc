@@ -1,0 +1,85 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// DIVERGENCES.md#array-hole-comments
+{
+  "block": [, /* keep */ ,],
+  "afterValue": [1, /* keep */, 2],
+  "afterHole": [1, , /* keep */ ],
+  "eachHole": [/* a */ , /* b */ ,],
+  "ownLine": [,
+    // keep
+  ,],
+  "endOfLine": [, // keep
+  ,],
+  "ownLineAfterValue": [1,
+    // keep
+  ,],
+  "ownLineBlock": [1,
+    /* keep */
+  , 2]
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// DIVERGENCES.md#array-hole-comments
+{
+  "block": [, /* keep */,],
+  "afterValue": [1, /* keep */, 2],
+  "afterHole": [1, , /* keep */],
+  "eachHole": [/* a */, /* b */,],
+  "ownLine": [
+    ,
+    // keep
+    ,
+  ],
+  "endOfLine": [
+    , // keep
+    ,
+  ],
+  "ownLineAfterValue": [
+    1,
+    // keep
+    ,
+  ],
+  "ownLineBlock": [
+    1,
+    /* keep */,
+    2
+  ]
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// DIVERGENCES.md#array-hole-comments
+{
+  "block": [, /* keep */,],
+  "afterValue": [1, /* keep */, 2],
+  "afterHole": [1, , /* keep */],
+  "eachHole": [/* a */, /* b */,],
+  "ownLine": [
+    ,
+    // keep
+    ,
+  ],
+  "endOfLine": [
+    , // keep
+    ,
+  ],
+  "ownLineAfterValue": [
+    1,
+    // keep
+    ,
+  ],
+  "ownLineBlock": [
+    1,
+    /* keep */,
+    2
+  ]
+}
+
+===================== End =====================

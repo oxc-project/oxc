@@ -95,6 +95,7 @@ declare_oxc_lint!(
     ExplicitTimerDelay,
     unicorn,
     style,
+    recommended,
     fix,
     config = ExplicitTimerDelayMode,
     version = "1.73.0",

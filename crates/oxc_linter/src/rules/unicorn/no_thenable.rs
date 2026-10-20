@@ -74,6 +74,7 @@ declare_oxc_lint!(
     NoThenable,
     unicorn,
     correctness,
+    recommended,
     version = "0.0.13",
     short_description = "Disallow defining a `then` property.",
 );

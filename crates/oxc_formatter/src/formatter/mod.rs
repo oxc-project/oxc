@@ -35,8 +35,7 @@ pub use self::{
 };
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Arguments, Buffer as _, Document, FormatElement, FormatSession, FormatState, Formatted,
-    VecBuffer,
+    Arguments, Document, FormatElement, FormatSession, FormatState, Formatted, Formatter,
 };
 
 /// The `format` function takes an [`Arguments`] struct and returns the resulting formatting IR.
@@ -71,7 +70,7 @@ pub fn build_ir<'ast>(
     let capacity = (context.source_text().len() * 2) / 5;
 
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
     buffer.write_fmt(arguments);
 

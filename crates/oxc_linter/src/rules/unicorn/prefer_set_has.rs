@@ -1,7 +1,7 @@
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, MemberExpression, VariableDeclarationKind},
+    ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -70,6 +70,7 @@ declare_oxc_lint!(
     PreferSetHas,
     unicorn,
     perf,
+    recommended,
     dangerous_fix,
     version = "0.13.2",
     short_description = "Prefer `Set#has()` over `Array#includes()` when checking for existence or non-existence.",
@@ -139,7 +140,10 @@ impl Rule for PreferSetHas {
             return;
         };
 
-        if variable_declaration_kind(declarator, ctx) == VariableDeclarationKind::Var {
+        let Some(kind) = variable_declaration_kind(declarator, ctx.nodes()) else {
+            return;
+        };
+        if kind.is_var() {
             return;
         }
 

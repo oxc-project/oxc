@@ -1046,7 +1046,7 @@ pub(super) static WTF8_DESERIALIZER_BODY: &str = "
             codePoint = ((first & 7) << 18) | ((buffer[pos++] & 0x3F) << 12)
                 | ((buffer[pos++] & 0x3F) << 6) | (buffer[pos++] & 0x3F);
         }
-        // Unlike UTF-8 decoders, fromCodePoint preserves surrogate code points.
+        // Unlike UTF-8 decoders, `fromCodePoint` preserves surrogate code points
         out += String.fromCodePoint(codePoint);
     }
     return out;

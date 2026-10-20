@@ -2,8 +2,8 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, FunctionBody, MemberExpression,
-        SimpleAssignmentTarget, Statement,
+        Argument, AwaitExpression, CallExpression, Expression, FunctionBody, IdentifierReference,
+        MemberExpression, SimpleAssignmentTarget, Statement,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -260,7 +260,7 @@ struct IdentifierFinder<'b> {
 }
 
 impl<'a> VisitJs<'a> for IdentifierFinder<'_> {
-    fn visit_identifier_reference(&mut self, ident: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         if ident.name == self.name {
             self.found = true;
         }
@@ -415,7 +415,7 @@ impl<'a> VisitJs<'a> for PromiseExpectScanner {
         walk_js::walk_call_expression(self, call_expr);
     }
 
-    fn visit_await_expression(&mut self, await_expr: &oxc_ast::ast::AwaitExpression<'a>) {
+    fn visit_await_expression(&mut self, await_expr: &AwaitExpression<'a>) {
         self.resolve_ident(&await_expr.argument);
         let was_in_await = self.in_await;
         self.in_await = true;

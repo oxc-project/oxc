@@ -4,7 +4,6 @@
 
 use oxc_allocator::StringBuilder;
 use oxc_formatter_core::{
-    Buffer,
     builders::{group, indent, soft_line_break_or_space, text, token},
     write,
 };

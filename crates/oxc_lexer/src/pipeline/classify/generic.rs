@@ -67,6 +67,7 @@ const fn cls_table(ts: bool) -> [u16; 256] {
     t
 }
 
+#[inline(never)]
 pub(super) unsafe fn classify_generic(
     ts: bool,
     src: *const u8,

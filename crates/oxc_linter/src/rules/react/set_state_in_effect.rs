@@ -48,6 +48,7 @@ declare_react_compiler_lint!(
     SetStateInEffect,
     react,
     correctness,
+    recommended,
     version = "1.79.0",
     short_description = "Disallow calling `setState` synchronously inside an effect.",
 );

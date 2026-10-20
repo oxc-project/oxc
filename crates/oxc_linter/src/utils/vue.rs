@@ -470,7 +470,7 @@ pub fn get_computed_getter_context(
                 {
                     let vue_options = nodes.parent_node(great.id());
                     if is_vue_component_options_object(vue_options, ctx) {
-                        let key = prop.key.static_name().map(|s| s.to_string());
+                        let key = prop.key.static_name().map(|s| s.display().to_string());
                         return Some(ComputedContext::OptionsApi(key));
                     }
                 }
@@ -488,7 +488,7 @@ pub fn get_computed_getter_context(
                     {
                         let vue_options = nodes.parent_node(computed_prop_node.id());
                         if is_vue_component_options_object(vue_options, ctx) {
-                            let key = key_prop.key.static_name().map(|s| s.to_string());
+                            let key = key_prop.key.static_name().map(|s| s.display().to_string());
                             return Some(ComputedContext::OptionsApi(key));
                         }
                     }

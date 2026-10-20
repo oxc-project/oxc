@@ -1017,3 +1017,31 @@ source: crates/oxc_linter/src/tester.rs
    ·                                        ─
    ╰────
   help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ⚠ eslint(no-magic-numbers): No magic number: 0
+   ╭─[no_magic_numbers.tsx:1:18]
+ 1 │ exports.a = void 0;
+   ·                  ─
+   ╰────
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ⚠ eslint(no-magic-numbers): No magic number: 5
+   ╭─[no_magic_numbers.tsx:1:14]
+ 1 │ exports.b = ~5;
+   ·              ─
+   ╰────
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ⚠ eslint(no-magic-numbers): No magic number: 3
+   ╭─[no_magic_numbers.tsx:1:14]
+ 1 │ exports.c = !3;
+   ·              ─
+   ╰────
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.
+
+  ⚠ eslint(no-magic-numbers): No magic number: 4
+   ╭─[no_magic_numbers.tsx:1:16]
+ 1 │ var x = typeof 4;
+   ·                ─
+   ╰────
+  help: Use a named constant instead of a magic number to make the code more readable and maintainable.

@@ -1,8 +1,8 @@
 use oxc_ast::{
-    AstKind, MemberExpressionKind,
+    AstKind, MemberExpressionKind, StaticPropertyName,
     ast::{
         BindingPattern, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKey,
-        PropertyKind, UpdateExpression,
+        PropertyKind, SimpleAssignmentTarget, UpdateExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -72,6 +72,7 @@ declare_oxc_lint!(
     NoAccessorRecursion,
     unicorn,
     suspicious,
+    recommended,
     version = "0.16.5",
     short_description = "Disallow recursive access to `this` within getters and setters.",
 );
@@ -243,15 +244,15 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
             AstKind::AssignmentExpression(assign_expr) => {
                 if let Some(simple_target) = assign_expr.left.as_simple_assignment_target() {
                     let is_target = match simple_target {
-                        oxc_ast::ast::SimpleAssignmentTarget::ComputedMemberExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
-                        oxc_ast::ast::SimpleAssignmentTarget::StaticMemberExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
-                        oxc_ast::ast::SimpleAssignmentTarget::PrivateFieldExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
+                        SimpleAssignmentTarget::ComputedMemberExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
+                        SimpleAssignmentTarget::StaticMemberExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
+                        SimpleAssignmentTarget::PrivateFieldExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
                         _ => false,
                     };
                     if is_target {
@@ -304,9 +305,7 @@ fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
     if matches!(parent.kind(), AstKind::Function(_)) { Some(parent) } else { None }
 }
 
-fn get_property_or_method_def_name<'a>(
-    parent: &'a AstNode<'a>,
-) -> Option<oxc_ast::StaticPropertyName<'a>> {
+fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<StaticPropertyName<'a>> {
     match parent.kind() {
         AstKind::ObjectProperty(ObjectProperty { key, .. })
         | AstKind::MethodDefinition(MethodDefinition { key, .. }) => key.name(),

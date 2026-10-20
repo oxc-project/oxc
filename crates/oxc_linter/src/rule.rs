@@ -672,10 +672,12 @@ impl From<RuleFixMeta> for FixKind {
 
 #[cfg(test)]
 mod test {
+
     use crate::{
         RuleMeta, RuleRunner,
         rule::{DefaultRuleConfig, TupleRuleConfig},
     };
+    use oxc_ast::AstType;
 
     use super::RuleCategory;
     use rustc_hash::FxHashMap;
@@ -772,6 +774,10 @@ mod test {
         assert_rule_runs_on_node_types(
             &unicorn::consistent_assert::ConsistentAssert,
             &[ImportDeclaration],
+        );
+        assert_rule_runs_on_node_types(
+            &unicorn::prefer_string_replace_all::PreferStringReplaceAll,
+            &[CallExpression, VariableDeclarator],
         );
         assert_rule_runs_on_node_types(
             &promise::always_return::AlwaysReturn::default(),
@@ -958,10 +964,7 @@ mod test {
         assert_eq!(de.into_inner(), *expected);
     }
 
-    fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(
-        rule: &R,
-        node_types: &[oxc_ast::AstType],
-    ) {
+    fn assert_rule_runs_on_node_types<R: RuleMeta + RuleRunner>(rule: &R, node_types: &[AstType]) {
         let types = rule.types_info();
         assert!(types.is_some(), "{}: NODE_TYPES is None", R::NAME);
         let types = types.unwrap();

@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, FormatElement, ScratchBuffer};
+use oxc_formatter_core::{FormatElement, ScratchBuffer};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -563,7 +563,7 @@ enum MultilineLayout {
 struct MultilineBuilder<'a> {
     layout: MultilineLayout,
     /// Heap accumulator; the flat and multiline builders write alternately,
-    /// so each owns its own (see [`ScratchBuffer::writer`]).
+    /// so each owns its own (see [`ScratchBuffer::write`]).
     result: ScratchBuffer<'a>,
 }
 
@@ -607,8 +607,7 @@ impl<'a> MultilineBuilder<'a> {
         separator: Option<&dyn Format<'a, JsFormatContext<'a>>>,
         f: &mut JsFormatter<'_, 'a>,
     ) {
-        let mut buffer = self.result.writer(f.state_mut());
-        match self.layout {
+        self.result.write(f, |buffer| match self.layout {
             MultilineLayout::Fill => {
                 // Make sure that the separator and content only ever write a single element
                 buffer.write_element(FormatElement::Tag(Tag::StartEntry));
@@ -624,7 +623,7 @@ impl<'a> MultilineBuilder<'a> {
             MultilineLayout::NoFill => {
                 write!(buffer, [content, separator]);
             }
-        }
+        });
     }
 
     /// Writes a separator into the last entry if it is an entry.
@@ -720,8 +719,7 @@ impl<'a> FlatBuilder<'a> {
             return;
         }
 
-        let mut buffer = self.result.writer(f.state_mut());
-        write!(buffer, [content]);
+        self.result.write(f, |buffer| write!(buffer, [content]));
     }
 
     fn disable(&mut self) {

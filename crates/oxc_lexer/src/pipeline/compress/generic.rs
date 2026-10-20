@@ -9,11 +9,6 @@ use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::{emit_value, invalid_diags};
 
-/// Dummy no-op `init_pair_luts` function.
-/// Generic build does not use `PairLuts`, so it's not necessary to construct it.
-#[inline(always)]
-pub fn init_pair_luts_generic() {}
-
 pub(super) unsafe fn compress_blocks_generic(
     st: *const u64,
     kind: *const u8,

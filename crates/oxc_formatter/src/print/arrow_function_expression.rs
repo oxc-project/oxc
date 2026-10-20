@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format, RemoveSoftLinesBuffer, SourceText};
+use oxc_formatter_core::{Format, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -88,7 +88,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
     #[inline]
     pub fn format(&self, f: &mut JsFormatter<'_, 'a>) {
-        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
+        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options, f);
 
         match layout {
             ArrowFunctionLayout::Chain(chain) => {
@@ -169,6 +169,8 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         }),
                     };
                     // A cast-wrapped body has no kind (see `is_cast_target`)
+                    // Prettier also keeps a parens-adding conditional on the same line (its hug layout);
+                    // we don't, see DIVERGENCES.md#arrow-exact-fill-signature
                     body_kind_hugs && !is_cast_target(expression.span(), f)
                 });
 
@@ -201,34 +203,18 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
-                    if should_add_parens {
-                        // The leading space must be a literal space rather than a soft line:
-                        // it is counted when measuring whether the signature fits,
-                        // so a signature that fills the line exactly gets broken,
-                        // matching Prettier's `printArrowFunctionBody`.
-                        write!(
-                            f,
-                            [
-                                space(),
-                                group(&format_args!(
-                                    if_group_fits_on_line(&token("(")),
-                                    indent(&format_args!(soft_line_break(), format_body)),
-                                    if_group_fits_on_line(&token(")")),
-                                    is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                                    should_add_soft_line.then_some(soft_line_break())
-                                ))
-                            ]
-                        );
-                    } else {
-                        write!(
-                            f,
-                            group(&format_args!(
-                                soft_line_indent_or_space(&format_body),
-                                is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                                should_add_soft_line.then_some(soft_line_break())
-                            ))
-                        );
-                    }
+                    write!(
+                        f,
+                        group(&format_args!(
+                            soft_line_indent_or_space(&format_args!(
+                                should_add_parens.then_some(if_group_fits_on_line(&token("("))),
+                                format_body,
+                                should_add_parens.then_some(if_group_fits_on_line(&token(")")))
+                            )),
+                            is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                            should_add_soft_line.then_some(soft_line_break())
+                        ))
+                    );
                 }
             }
         }
@@ -269,6 +255,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     fn for_arrow(
         arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
+        f: &JsFormatter<'_, 'a>,
     ) -> ArrowFunctionLayout<'a, 'b> {
         let mut head = None;
         let mut middle = Vec::new();
@@ -282,6 +269,8 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         loop {
             if is_non_grouped_or_grouped_last_argument
                 && let AstNodes::ArrowFunctionExpression(next) = current.body().as_ast_nodes()
+                // A type cast keeps its parens: `(a) => /** @type {T} */ ((b) => c)`
+                && !is_cast_target(next.span(), f)
             {
                 should_break = should_break || Self::should_break_chain(current);
 
@@ -439,6 +428,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
         // A cast-wrapped body has no kind (see `is_cast_target`).
+        // Prettier also keeps a parens-adding conditional on the same line (its hug layout) unless the chain breaks;
+        // we don't, see DIVERGENCES.md#arrow-exact-fill-signature.
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
             matches!(
                 expression,
@@ -594,25 +585,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                 }
             } else {
                 let should_add_parens = tail_body.as_expression().is_some_and(should_add_parens);
-                if should_add_parens {
-                    // Known divergence from Prettier: with a signature that exactly fills the line,
-                    // Prettier breaks it because the hug layout's literal space is counted
-                    // when measuring fits (see the single-arrow branch above), while this soft-line
-                    // wrapping (`soft_line_indent_or_space` in `format_tail_body`) stops the measurement.
-                    // Porting the literal-space structure here is NOT enough: Prettier gates the hug
-                    // on `!shouldBreakChain` (`expand_signatures` here) and otherwise breaks without
-                    // parens; a naive port regresses `js/arrows/currying-4.js`.
-                    write!(
-                        f,
-                        [
-                            if_group_fits_on_line(&token("(")),
-                            format_tail_body,
-                            if_group_fits_on_line(&token(")"))
-                        ]
-                    );
-                } else {
-                    write!(f, [format_tail_body]);
-                }
+                write!(
+                    f,
+                    [
+                        should_add_parens.then_some(if_group_fits_on_line(&token("("))),
+                        format_tail_body,
+                        should_add_parens.then_some(if_group_fits_on_line(&token(")")))
+                    ]
+                );
             }
         });
 
@@ -750,8 +730,7 @@ fn format_signature<'a, 'b>(
                 write!(f, format_head);
             } else {
                 write!(f, [space()]);
-                let mut buffer = RemoveSoftLinesBuffer::new(f);
-                write!(buffer, format_head);
+                f.remove_soft_lines(|f| write!(f, format_head));
             }
         } else {
             write!(

@@ -1,7 +1,7 @@
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
+        ArrowFunctionExpression, BindingPattern, Expression, Function, FunctionType, PropertyKind,
         ReturnStatement,
     },
 };
@@ -654,12 +654,7 @@ impl<'a> VisitJs<'a> for ReturnStatementChecker {
             return_statement.argument.as_ref().is_some_and(|argument| is_function(argument));
     }
 
-    fn visit_function(
-        &mut self,
-        _func: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }

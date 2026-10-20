@@ -1,5 +1,4 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::Buffer;
 use oxc_span::GetSpan;
 
 use crate::{ast_nodes::AstNode, formatter::prelude::*, write};

@@ -60,6 +60,7 @@ declare_oxc_lint!(
     RequireSlotsAsFunctions,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Enforce properties of `$slots` to be used as functions.",
 );

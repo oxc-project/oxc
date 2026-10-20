@@ -134,6 +134,7 @@ declare_oxc_lint!(
     NoReturnWrap,
     promise,
     style,
+    recommended,
     pending,
     config = NoReturnWrap,
     version = "0.15.14",

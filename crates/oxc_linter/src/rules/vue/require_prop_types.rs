@@ -61,6 +61,7 @@ declare_oxc_lint!(
     RequirePropTypes,
     vue,
     style,
+    recommended,
     version = "1.69.0",
     short_description = "This rule enforces that a props statement contains a type definition.",
 );
@@ -235,7 +236,7 @@ impl RequirePropTypes {
             };
 
             if is_invalid {
-                ctx.diagnostic(require_type_diagnostic(p.span(), key));
+                ctx.diagnostic(require_type_diagnostic(p.span(), key.display()));
             }
         }
     }

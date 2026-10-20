@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 529b057 formatter_core: Keep front matter verbatim when body starts with indented delimiter (#27946) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 2c1cc20 formatter: Keep comment only Vue bindings as-is (#27820) (leaysgur)
+- 5605362 oxfmt: Validate editorconfig as like oxfmtrc (#27778) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- 3a980c9 formatter_toml: Handle BOM like other languages (#27775) (leaysgur)
+- 97c9fc4 oxfmt: Handle BOM in config JSON (#27774) (leaysgur)
+- 28eb4a7 oxfmt: Print trailing newline for `--list-different` (#27773) (leaysgur)
+
+### 📚 Documentation
+
+- 1325225 oxfmt: Update useless comment prefix (#27956) (leaysgur)
+- 8a3a6c8 oxfmt: Update stale notes on the JSDoc string-out channel and fixture origins (#27824) (leaysgur)
+
 ## [0.73.0] - 2026-10-13
 
 ### 💥 BREAKING CHANGES

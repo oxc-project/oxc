@@ -1,18 +1,13 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format, GroupId};
+use oxc_formatter_core::{Format, GroupId};
 use oxc_span::GetSpan;
 
 use crate::{
     FormatTrailingCommas,
     ast_nodes::AstNode,
-    formatter::{
-        JsFormatContext, JsFormatter,
-        prelude::*,
-        separated::FormatSeparatedIter,
-        trivia::{DanglingIndentMode, FormatDanglingComments},
-    },
-    utils::array::write_array_node,
+    formatter::{JsFormatContext, JsFormatter, prelude::*, separated::FormatSeparatedIter},
+    utils::array::{write_array_node, write_unclaimed_comments},
     write,
 };
 
@@ -32,12 +27,12 @@ impl<'a, 'b> ArrayElementList<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let layout =
-            if can_concisely_print_array_list(self.elements.parent().span(), self.elements, f) {
-                ArrayLayout::Fill
-            } else {
-                ArrayLayout::OnePerLine
-            };
+        let array_span = self.elements.parent().span();
+        let layout = if can_concisely_print_array_list(array_span, self.elements, f) {
+            ArrayLayout::Fill
+        } else {
+            ArrayLayout::OnePerLine
+        };
 
         match layout {
             ArrayLayout::Fill => {
@@ -68,26 +63,15 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrayElementList<'a, '_> {
                 }
 
                 filler.finish();
+                write_unclaimed_comments(array_span.end - 1, f);
             }
             ArrayLayout::OnePerLine => write_array_node(
-                self.elements.len(),
+                array_span,
+                None,
                 self.elements.iter().map(|e| if e.is_elision() { None } else { Some(e) }),
                 f,
             ),
         }
-
-        // Comments that no element consumed as a trailing comment
-        // (e.g. after a trailing hole: `[,, /* comment */]`)
-        // would otherwise escape the brackets; print them right before the `]` like Prettier
-        let dangling_comments =
-            f.context().comments().comments_before(self.elements.parent().span().end);
-        write!(
-            f,
-            FormatDanglingComments::Comments {
-                comments: dangling_comments,
-                indent: DanglingIndentMode::None
-            }
-        );
     }
 }
 

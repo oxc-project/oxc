@@ -37,34 +37,27 @@ macro_rules! format_args {
     }
 }
 
-/// Writes formatted data into a buffer.
+/// Writes formatted data into a [`crate::Formatter`].
 ///
-/// This macro accepts a 'buffer' and a list of format arguments. Each argument will be formatted
-/// and the result will be passed to the buffer. The writer may be any value with a `write_fmt` method;
-/// generally this comes from an implementation of the [crate::Buffer] trait.
+/// This macro accepts a formatter and a list of format arguments. Each argument will be formatted
+/// and the result will be written to the formatter.
 ///
 /// # Examples
 ///
 /// ```text
-/// use biome_formatter::prelude::*;
-/// use biome_formatter::{Buffer, FormatState, SimpleFormatContext, VecBuffer, write};
-///
-/// # fn main()  {
-/// let mut state = FormatState::new(SimpleFormatContext::default());
-/// let mut buffer = VecBuffer::new(&mut state);
-/// write!(&mut buffer, [token("Hello"), space()])?;
-/// write!(&mut buffer, [token("World")])?;
+/// let mut state = FormatState::new(context, &allocator);
+/// let mut f = Formatter::new(&mut state);
+/// write!(f, [token("Hello"), space()]);
+/// write!(f, [token("World")]);
 ///
 /// assert_eq!(
-///     buffer.into_vec(),
-///     vec![
+///     f.into_vec().as_slice(),
+///     [
 ///         FormatElement::Token { text: "Hello" },
 ///         FormatElement::Space,
 ///         FormatElement::Token { text: "World" },
 ///     ]
-///  );
-/// #  Ok(())
-/// # }
+/// );
 /// ```
 #[macro_export]
 macro_rules! write {

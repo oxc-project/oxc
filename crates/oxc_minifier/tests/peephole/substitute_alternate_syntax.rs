@@ -331,9 +331,11 @@ fn test_string_array_splitting() {
 #[test]
 fn test_template_string_to_string() {
     test("x = `abcde`", "x = 'abcde'");
-    // Lone surrogates are stored escaped in the cooked value; converting to a
-    // string literal would materialize the escape encoding as literal text.
-    test_same("x = `\\ud800y`");
+    // A lone surrogate in the cooked value is kept as the same code unit.
+    test("x = `\\ud800y`", "x = '\\ud800y'");
+    test("x = `${'\\ud800'}`", "x = '\\ud800'");
+    test("x = `${'\\ud800'}`.length", "x = 1");
+    test("x = `\\ud83d${'\\ude00'}`", "x = '\u{1F600}'");
     test("x = `ab cd ef`", "x = 'ab cd ef'");
     test_same("x = `hello ${name}`");
     test_same("tag `hello ${name}`");

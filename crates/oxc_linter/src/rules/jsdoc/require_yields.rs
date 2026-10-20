@@ -100,6 +100,7 @@ declare_oxc_lint!(
     RequireYields,
     jsdoc,
     correctness,
+    recommended,
     config = RequireYieldsConfig,
     version = "0.3.2",
     short_description = "Requires that yields are documented with `@yields`.",

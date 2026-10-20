@@ -440,7 +440,8 @@ impl<'t> Mangler<'t> {
                 FxHashMap::with_capacity_and_hasher(private_member_count, FxBuildHasher);
             for element in class_elements.iter().filter(|element| element.is_private) {
                 let next_index = mappings.len();
-                let Entry::Vacant(entry) = mappings.entry(element.name.to_string()) else {
+                let Entry::Vacant(entry) = mappings.entry(element.name.display().to_string())
+                else {
                     continue;
                 };
 
@@ -769,7 +770,6 @@ impl<'a> SlotRanking<'a> {
             frequencies[index].symbol_ids.push(symbol_id);
         }
 
-        // Remove slots that have no symbols to rename before sorting.
         frequencies.retain(|x| !x.symbol_ids.is_empty());
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         Self { frequencies }

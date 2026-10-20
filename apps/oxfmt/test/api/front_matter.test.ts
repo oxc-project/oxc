@@ -63,6 +63,16 @@ describe("CSS front matter", () => {
     expect(result.code).toBe("---\nkey: [unclosed\n---\n\nb {\n}\n");
   });
 
+  it("keeps the block verbatim when its body starts with an indented delimiter", async () => {
+    // DIVERGENCES.md#front-matter-indented-delimiter
+    for (const block of ["---\n ---\na:  b\n---", "---\n  ---\n---", "---\n ...\na:  b\n..."]) {
+      // oxlint-disable-next-line no-await-in-loop
+      const result = await format("a.css", `${block}\nb {}\n`);
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toBe(`${block}\n\nb {\n}\n`);
+    }
+  });
+
   it("keeps the block verbatim under embeddedLanguageFormatting: off", async () => {
     const result = await format("a.css", "---\ntitle:   Home\n---\nb {}\n", {
       embeddedLanguageFormatting: "off",

@@ -310,9 +310,10 @@ fn try_merge_cjs_require<'a>(
                 let value_name = value_ident.name.as_str();
 
                 if key_name == value_name {
-                    functions_to_import.insert(key_name.to_string());
+                    functions_to_import.insert(key_name.display().to_string());
                 } else {
-                    functions_to_import.insert(format!("{key_name}{alias_sep}{value_name}"));
+                    functions_to_import
+                        .insert(format!("{}{alias_sep}{value_name}", key_name.display()));
                 }
             }
         }

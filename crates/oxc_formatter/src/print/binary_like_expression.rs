@@ -7,6 +7,7 @@ use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::JsFormatter,
     print::unary_argument_takes_comment_parens,
+    utils::typecast::is_cast_target,
 };
 
 use crate::{format_args, formatter::prelude::*, write};
@@ -109,16 +110,19 @@ impl<'a, 'b> BinaryLikeExpression<'a, 'b> {
         }
     }
 
-    /// Determines if a binary like expression should be flattened or not. As a rule of thumb, an expression
-    /// can be flattened if its left hand side has the same operator-precedence
-    fn can_flatten(&self) -> bool {
-        let left_operator = match self.left().as_ref() {
+    /// Determines if a binary like expression should be flattened or not.
+    /// As a rule of thumb, an expression can be flattened if:
+    /// its left hand side has the same operator-precedence,
+    /// and is not a type cast target that keeps its parens (`/** @type {T} */ (a && b) && c`)
+    fn can_flatten(&self, f: &JsFormatter<'_, '_>) -> bool {
+        let left = self.left();
+        let left_operator = match left.as_ref() {
             Expression::BinaryExpression(expr) => BinaryLikeOperator::from(expr.operator),
             Expression::LogicalExpression(expr) => BinaryLikeOperator::from(expr.operator),
             _ => return false,
         };
 
-        should_flatten(self.operator(), left_operator)
+        should_flatten(self.operator(), left_operator) && !is_cast_target(left.span(), f)
     }
 
     fn should_inline_logical_expression(&self) -> bool {
@@ -243,7 +247,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
         let should_indent_if_inlines = should_indent_if_parent_inlines(self.parent());
 
         // is_inside_condition is always false here (we returned early if true)
-        let parts = split_into_left_and_right_sides(*self, false);
+        let parts = split_into_left_and_right_sides(*self, false, f);
         // Every operator of the flattened chain inlines its right side (`a ?? [..] ?? [..]`),
         // so the chain never breaks at an operator and an indent would only shift the last literal.
         // See DIVERGENCES.md#inline-logical-chain-indent
@@ -355,7 +359,7 @@ fn format_flattened_logical_expression<'a>(
     ) {
         let left = binary.left();
 
-        if binary.can_flatten() {
+        if binary.can_flatten(f) {
             // Recursively format nested binary expressions
             format_recursive(BinaryLikeExpression::try_from(left).unwrap(), inside_condition, f);
         } else {
@@ -422,6 +426,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
                         binary_like_expression.right().as_ast_nodes()
                         && let Some(operator) = logical_operator
                         && operator == right_logical.operator()
+                        // A type cast keeps its parens: `a && /** @type {T} */ (b && c)`
+                        && !is_cast_target(right_logical.span(), f)
                     {
                         format_operator_and_break(operator.into(), right_logical.left().span(), f);
 
@@ -429,23 +435,20 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
                         // we need to recursively format it inline.
                         // This way, we can ensure that all parts are in the same group.
                         // We format directly instead of allocating a Vec via `split_into_left_and_right_sides`.
-                        let left_child = right_logical.left();
-                        if let AstNodes::LogicalExpression(left_logical_child) =
-                            left_child.as_ast_nodes()
-                            && operator == left_logical_child.operator()
-                        {
+                        let right_binary = BinaryLikeExpression::LogicalExpression(right_logical);
+                        if right_binary.can_flatten(f) {
                             // Format the nested logical expression inline without Vec allocation
                             format_flattened_logical_expression(
-                                BinaryLikeExpression::LogicalExpression(left_logical_child),
+                                // SAFETY: `can_flatten()` checked it is a binary like expression
+                                BinaryLikeExpression::try_from(right_logical.left()).unwrap(),
                                 *inside_parenthesis,
                                 f,
                             );
                         } else {
-                            left_child.fmt(f);
+                            right_logical.left().fmt(f);
                         }
 
-                        binary_like_expression =
-                            BinaryLikeExpression::LogicalExpression(right_logical);
+                        binary_like_expression = right_binary;
                     } else {
                         break;
                     }
@@ -556,15 +559,17 @@ impl GetSpan for BinaryLeftOrRightSide<'_, '_> {
 fn split_into_left_and_right_sides<'a, 'b>(
     binary: BinaryLikeExpression<'a, 'b>,
     inside_condition: bool,
+    f: &JsFormatter<'_, 'a>,
 ) -> Vec<BinaryLeftOrRightSide<'a, 'b>> {
     fn split_into_left_and_right_sides_inner<'a, 'b>(
         binary: BinaryLikeExpression<'a, 'b>,
         inside_condition: bool,
         items: &mut Vec<BinaryLeftOrRightSide<'a, 'b>>,
+        f: &JsFormatter<'_, 'a>,
     ) {
         let left = binary.left();
 
-        if binary.can_flatten() {
+        if binary.can_flatten(f) {
             // We can flatten the left hand side, so we need to check if we have a nested binary expression
             // that we can flatten.
             split_into_left_and_right_sides_inner(
@@ -572,6 +577,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
                 BinaryLikeExpression::try_from(left).unwrap(),
                 inside_condition,
                 items,
+                f,
             );
         } else {
             items.push(BinaryLeftOrRightSide::Left { parent: binary });
@@ -585,7 +591,7 @@ fn split_into_left_and_right_sides<'a, 'b>(
     // `with_capacity(2)` because we expect at least 2 items (left and right).
     let mut items = Vec::with_capacity(2);
 
-    split_into_left_and_right_sides_inner(binary, inside_condition, &mut items);
+    split_into_left_and_right_sides_inner(binary, inside_condition, &mut items, f);
 
     items
 }

@@ -1,4 +1,5 @@
-<!-- A code span fence never equals a literal backtick run before it.
+<!-- A code span fence never equals a literal backtick run before it
+     (one in a link target or a footnote reference is none, one in a reference's text is).
      Emphasis markers normalize only when the printed text pairs as the source did;
      otherwise they stay as written -->
 
@@ -13,6 +14,18 @@ No stray run here, so ``code`` shrinks and __strong__ and *emphasis* normalize.
 **a ***b*** c** keeps its asterisks: with `_` the inner emphasis reads differently.
 
 *a**b* keeps its inner run escaped, and _a\_\_b_ its normalized marker.
+
+Link targets keep `code`: [a](<x.md#`b` c>), [a](x`y "t`"), ![a](<x`y z>).
+
+A footnote reference [^a`b] keeps `code`.
+
+A shortcut reference [a`b] keeps ``code``.
+
+A collapsed reference [a`b][] keeps ``code``.
+
+[a`b]: /u
+
+[^a`b]: note
 
 A backslash \ before a line break stays on its line, never a hard break \
 when the next word arrives.

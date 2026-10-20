@@ -552,24 +552,21 @@ pub fn transparent_reference_parent<'a, 'b>(
     ctx: &'b LintContext<'a>,
 ) -> (&'b AstNode<'a>, Span) {
     let mut subject_span = node.span();
-    for ancestor in ctx.nodes().ancestors(node.id()) {
-        if matches!(
-            ancestor.kind(),
-            AstKind::ParenthesizedExpression(_)
-                | AstKind::TSAsExpression(_)
-                | AstKind::TSSatisfiesExpression(_)
-                | AstKind::TSTypeAssertion(_)
-                | AstKind::TSNonNullExpression(_)
-                | AstKind::TSInstantiationExpression(_)
-        ) {
-            subject_span = ancestor.span();
-            continue;
-        }
-        return (ancestor, subject_span);
+    let nodes = ctx.nodes();
+    let mut parent = nodes.parent_node(node.id());
+    while matches!(
+        parent.kind(),
+        AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSInstantiationExpression(_)
+    ) {
+        subject_span = parent.span();
+        parent = nodes.parent_node(parent.id());
     }
-    // The Program node is always present at the top of the AST, so the loop
-    // returns before exhausting the ancestor iterator in practice.
-    unreachable!("ancestors iterator must yield the Program node")
+    (parent, subject_span)
 }
 
 // Collapse OXC's formal-parameter wrappers to the parent shape used by ESLint.

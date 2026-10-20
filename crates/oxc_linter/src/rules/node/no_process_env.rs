@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
@@ -66,7 +66,7 @@ declare_oxc_lint!(
     short_description = "Disallows use of `process.env`.",
 );
 
-fn is_process_global_object(object_expr: &oxc_ast::ast::Expression, ctx: &LintContext) -> bool {
+fn is_process_global_object(object_expr: &Expression, ctx: &LintContext) -> bool {
     let Some(obj_id) = object_expr.get_identifier_reference() else {
         return false;
     };

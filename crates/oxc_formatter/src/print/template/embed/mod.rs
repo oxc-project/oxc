@@ -371,6 +371,11 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
 /// Re-escape template-literal characters (`` ` ``, `${`, `\`) in every `Text` element of an embedded IR.
 /// The IR is re-inserted into a JS template literal built from `.cooked` values,
 /// so these characters need escaping.
+///
+/// NOTE: This round-trip is lossy for any other JS escape in `.raw`, same as Prettier.
+/// e.g. `\uD83D\uDE00` is printed as `😀`, `\u200B` as an invisible character.
+/// The cooked value stays the same, but `.raw` and the author's intent do not.
+/// Embedding only quasis whose `.raw` equals the re-escaped `.cooked` would keep them as-is.
 fn escape_template_chars_in_ir<'a>(
     ir: ArenaVec<'a, FormatElement<'a>>,
     f: &JsFormatter<'_, 'a>,

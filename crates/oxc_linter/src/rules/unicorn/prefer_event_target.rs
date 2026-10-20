@@ -50,6 +50,7 @@ declare_oxc_lint!(
     PreferEventTarget,
     unicorn,
     pedantic,
+    recommended,
     version = "0.0.18",
     short_description = "Prefer `EventTarget` over `EventEmitter`.",
 );

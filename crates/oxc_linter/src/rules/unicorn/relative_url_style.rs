@@ -70,6 +70,7 @@ declare_oxc_lint!(
     RelativeUrlStyle,
     unicorn,
     style,
+    recommended,
     fix_suggestion,
     config = RelativeUrlStyleConfig,
     version = "1.44.0",
@@ -93,7 +94,7 @@ impl Rule for RelativeUrlStyle {
             return;
         }
 
-        if new_expr.arguments.last().is_some_and(oxc_ast::ast::Argument::is_spread) {
+        if new_expr.arguments.last().is_some_and(Argument::is_spread) {
             return;
         }
 
@@ -228,6 +229,11 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // A URL or base with a lone surrogate is not checked.
+        (r#"new URL("./a\uD800", "https://x.com/")"#, None),
+        (r#"new URL("a\uD800", "https://x.com/")"#, Some(serde_json::json!(["always"]))),
+        (r#"new URL("./foo", "https://x.com/\uD800/")"#, None),
+        (r#"new URL("foo", "https://x.com/\uD800/")"#, Some(serde_json::json!(["always"]))),
         // Default "never" option
         (r#"URL("./foo", base)"#, None),
         (r#"new URL(...["./foo"], base)"#, None),

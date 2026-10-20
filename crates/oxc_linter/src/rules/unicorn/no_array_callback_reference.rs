@@ -129,16 +129,6 @@ fn should_wrap_callback(expr: &Expression) -> bool {
             should_wrap_callback(&cond_expr.consequent)
                 || should_wrap_callback(&cond_expr.alternate)
         }
-        Expression::CallExpression(call_expr) => {
-            if let Some(member_expr) = call_expr.callee.get_member_expr()
-                && let Some(prop_name) = member_expr.static_property_name()
-                && prop_name == "bind"
-            {
-                return false;
-            }
-
-            true
-        }
         Expression::SequenceExpression(seq_expr) => {
             seq_expr.expressions.last().is_none_or(|e| should_wrap_callback(e))
         }
@@ -154,7 +144,6 @@ fn should_wrap_callback(expr: &Expression) -> bool {
         | Expression::UpdateExpression(_)
         | Expression::NewExpression(_) => true,
 
-        // These can't be callbacks, don't need to wrap
         _ => false,
     }
 }
@@ -308,6 +297,14 @@ fn test() {
         "foo.map(_ ? String : _ ? Number : Boolean)",
         r#"import { Effect as E } from "effect"; const foo = "boo"; E.some(foo)"#,
         r#"import { Option as O } from "effect"; const foo = "boo"; O.some(foo)"#,
+        "export function f(arr, make, x) {
+            arr.forEach(make(x));
+            return arr.map(make(x));
+        }",
+        "foo.forEach(someFunction({foo: 'bar'}))",
+        "foo.map(factory.make(x))",
+        "foo.reduce(make(x), initialValue)",
+        "foo.map(condition ? make(x) : make(y))",
     ];
 
     let fail = vec![

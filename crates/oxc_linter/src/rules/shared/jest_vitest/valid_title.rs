@@ -10,7 +10,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{CompactStr, JSStr};
+use oxc_str::{CompactStr, JSChar, JSStr};
 
 use crate::{
     context::LintContext,
@@ -193,12 +193,13 @@ impl ValidTitleConfig {
             return;
         };
 
-        if !matches!(
-            jest_fn_call.kind,
-            JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
-        ) {
-            return;
-        }
+        let need_report_name = match jest_fn_call.kind {
+            JestFnKind::General(JestGeneralFnKind::Test) => !config.ignore_type_of_test_name,
+            JestFnKind::General(JestGeneralFnKind::Describe) => {
+                !config.ignore_type_of_describe_name
+            }
+            _ => return,
+        };
 
         // Check if extend keyword has been used (vitest feature)
         if let Some(member) = jest_fn_call.members.first()
@@ -223,20 +224,15 @@ impl ValidTitleConfig {
             return;
         }
 
-        let need_report_name = match jest_fn_call.kind {
-            JestFnKind::General(JestGeneralFnKind::Test) => !config.ignore_type_of_test_name,
-            JestFnKind::General(JestGeneralFnKind::Describe) => {
-                !config.ignore_type_of_describe_name
-            }
-            _ => unreachable!(),
-        };
-
         match arg {
             Argument::StringLiteral(string_literal) => {
-                let Some(value) = string_literal.value.as_str() else {
-                    return;
-                };
-                validate_title(value, string_literal.span, config, &jest_fn_call.name, ctx);
+                validate_title(
+                    string_literal.value,
+                    string_literal.span,
+                    config,
+                    &jest_fn_call.name,
+                    ctx,
+                );
             }
             // Handle String.raw`foo`
             Argument::TaggedTemplateExpression(tagged_template) => {
@@ -249,7 +245,7 @@ impl ValidTitleConfig {
 
                 if tagged_template.quasi.is_no_substitution_template() {
                     validate_title(
-                        tagged_template.quasi.quasis[0].value.raw.as_str(),
+                        tagged_template.quasi.quasis[0].value.raw.into(),
                         tagged_template.quasi.span,
                         config,
                         &jest_fn_call.name,
@@ -258,7 +254,7 @@ impl ValidTitleConfig {
                 }
             }
             Argument::TemplateLiteral(template_literal) => {
-                if let Some(quasi) = template_literal.single_quasi().and_then(JSStr::as_str) {
+                if let Some(quasi) = template_literal.single_quasi() {
                     validate_title(quasi, template_literal.span, config, &jest_fn_call.name, ctx);
                 }
             }
@@ -393,13 +389,30 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
     }
 }
 
-fn can_trim_raw_title(cooked: &str, raw: &str) -> bool {
-    cooked.len() - cooked.trim_start().len() == raw.len() - raw.trim_start().len()
-        && cooked.len() - cooked.trim_end().len() == raw.len() - raw.trim_end().len()
+fn can_trim_raw_title(cooked: impl Iterator<Item = JSChar>, raw: &str) -> bool {
+    whitespace_lens(cooked) == whitespace_lens(raw.chars().map(JSChar::from))
+}
+
+/// Return the byte lengths of the leading and trailing whitespace.
+/// A lone surrogate is not whitespace.
+fn whitespace_lens(chars: impl Iterator<Item = JSChar>) -> (usize, usize) {
+    let (mut leading, mut trailing, mut seen_other) = (0, 0, false);
+    for c in chars {
+        if c.to_char().is_some_and(char::is_whitespace) {
+            trailing += c.len_bytes();
+            if !seen_other {
+                leading += c.len_bytes();
+            }
+        } else {
+            seen_other = true;
+            trailing = 0;
+        }
+    }
+    (leading, trailing)
 }
 
 fn validate_title(
-    title: &str,
+    title: JSStr<'_>,
     span: Span,
     config: &ValidTitleConfig,
     name: &str,
@@ -410,18 +423,21 @@ fn validate_title(
         return;
     }
 
+    // A title with a lone surrogate matches no disallowed word.
     if let Some(disallowed_words_reg) = &config.disallowed_words_reg
-        && let Some(matched) = disallowed_words_reg.find(title)
+        && let Some(utf8_title) = title.as_str()
+        && let Some(matched) = disallowed_words_reg.find(utf8_title)
     {
         ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
         return;
     }
 
-    let trimmed_title = title.trim();
-    if !config.ignore_spaces && trimmed_title != title {
+    if !config.ignore_spaces
+        && (title.starts_with(char::is_whitespace) || title.ends_with(char::is_whitespace))
+    {
         let inner_span = span.shrink(1);
         let raw_text = ctx.source_range(inner_span);
-        if can_trim_raw_title(title, raw_text) {
+        if can_trim_raw_title(title.chars(), raw_text) {
             ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
                 fixer.replace(inner_span, raw_text.trim().to_string())
             });
@@ -432,18 +448,19 @@ fn validate_title(
     }
 
     let un_prefixed_name = name.trim_start_matches(['f', 'x']);
-    let Some(first_word) = title.split(' ').next() else {
-        return;
-    };
+    // The first word is the text before the first space, or the whole title.
+    let first_word_len = title.find(' ').unwrap_or(title.len());
 
-    if first_word == un_prefixed_name {
+    if first_word_len == un_prefixed_name.len() && title.starts_with(un_prefixed_name) {
         let inner_span = span.shrink(1);
         let raw_text = ctx.source_range(inner_span);
         if let Some(unprefixed_raw) =
-            raw_text.strip_prefix(first_word).and_then(|rest| rest.strip_prefix(' '))
-            && let Some(unprefixed_cooked) =
-                title.strip_prefix(first_word).and_then(|rest| rest.strip_prefix(' '))
-            && can_trim_raw_title(unprefixed_cooked, unprefixed_raw)
+            raw_text.strip_prefix(un_prefixed_name).and_then(|rest| rest.strip_prefix(' '))
+            && first_word_len < title.len()
+            && can_trim_raw_title(
+                title.chars().skip(un_prefixed_name.chars().count() + 1),
+                unprefixed_raw,
+            )
         {
             ctx.diagnostic_with_fix(duplicate_prefix_diagnostic(span), |fixer| {
                 fixer.replace(inner_span, unprefixed_raw.trim().to_string())
@@ -459,8 +476,11 @@ fn validate_title(
         return;
     };
 
+    // A title with a lone surrogate matches no configured pattern.
+    let title = title.as_str();
+
     if let Some((regex, message)) = config.must_match_patterns.get(&jest_fn_name)
-        && !regex.is_match(title)
+        && !title.is_some_and(|title| regex.is_match(title))
     {
         let raw_pattern = regex.as_str();
         let message = match message.as_ref() {
@@ -471,7 +491,7 @@ fn validate_title(
     }
 
     if let Some((regex, message)) = config.must_not_match_patterns.get(&jest_fn_name)
-        && regex.is_match(title)
+        && title.is_some_and(|title| regex.is_match(title))
     {
         let raw_pattern = regex.as_str();
         let message = match message.as_ref() {

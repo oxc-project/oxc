@@ -14,6 +14,7 @@ declare_oxc_lint!(
     NoFocusedTests,
     jest,
     correctness,
+    recommended,
     suggestion,
     docs = DOCUMENTATION,
     version = "0.0.8",

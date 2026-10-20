@@ -1,6 +1,6 @@
 ## js-in-vue
 
-### Option 1: 423/426 (99.30%)
+### Option 1: 421/424 (99.29%)
 
 ```json
 {"printWidth":80}
@@ -13,7 +13,7 @@
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 
-### Option 2: 424/426 (99.53%)
+### Option 2: 422/424 (99.53%)
 
 ```json
 {"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true}
@@ -254,12 +254,14 @@
 
 ## markdown
 
-### Option 1: 273/282 (96.81%)
+### Option 1: 273/283 (96.47%)
 
 ```json
 {"printWidth":80}
 ```
 
+- [edge-cases/xxx-in-md/front-matter-indented-delimiter.md](diffs/markdown/edge-cases__xxx-in-md__front-matter-indented-delimiter.md.md)
+  - apps/oxfmt/DIVERGENCES.md#front-matter-indented-delimiter
 - [edge-cases/xxx-in-md/line-ranged-code-block.md](diffs/markdown/edge-cases__xxx-in-md__line-ranged-code-block.md.md)
   - apps/oxfmt/DIVERGENCES.md#line-ranged-code-block
 - [edge-cases/xxx-in-md/lwc-code-block.md](diffs/markdown/edge-cases__xxx-in-md__lwc-code-block.md.md)
@@ -279,12 +281,14 @@
 - [externals/prettier/markdown/thematicBreak/simple.md](diffs/markdown/externals__prettier__markdown__thematicBreak__simple.md.md)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
 
-### Option 2: 269/282 (95.39%)
+### Option 2: 269/283 (95.05%)
 
 ```json
 {"printWidth":100,"proseWrap":"always"}
 ```
 
+- [edge-cases/xxx-in-md/front-matter-indented-delimiter.md](diffs/markdown/edge-cases__xxx-in-md__front-matter-indented-delimiter.md.md)
+  - apps/oxfmt/DIVERGENCES.md#front-matter-indented-delimiter
 - [edge-cases/xxx-in-md/line-ranged-code-block.md](diffs/markdown/edge-cases__xxx-in-md__line-ranged-code-block.md.md)
   - apps/oxfmt/DIVERGENCES.md#line-ranged-code-block
 - [edge-cases/xxx-in-md/lwc-code-block.md](diffs/markdown/edge-cases__xxx-in-md__lwc-code-block.md.md)

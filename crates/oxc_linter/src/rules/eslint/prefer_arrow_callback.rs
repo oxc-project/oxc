@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Function, FunctionType, IdentifierReference, NewTarget, Super, ThisExpression,
+        Argument, Class, Function, FunctionType, IdentifierReference, NewTarget, StaticBlock,
+        Super, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -175,6 +176,9 @@ fn get_callback_info<'a>(
                 just_passed_bind = false;
             }
             AstKind::ConditionalExpression(c) => {
+                if c.test.span() == current_span {
+                    return info;
+                }
                 current_span = c.span;
                 just_passed_bind = false;
             }
@@ -387,9 +391,9 @@ impl<'a> Visit<'a> for ScopeScanner {
         }
     }
 
-    fn visit_class(&mut self, _it: &oxc_ast::ast::Class<'a>) {}
+    fn visit_class(&mut self, _it: &Class<'a>) {}
 
-    fn visit_static_block(&mut self, _it: &oxc_ast::ast::StaticBlock<'a>) {}
+    fn visit_static_block(&mut self, _it: &StaticBlock<'a>) {}
 }
 
 #[test]
@@ -423,6 +427,14 @@ fn test() {
         ),
         ("test('clean', function (this: any) { this.foo = 'Cleaned!';});", None),
         ("obj.test('clean', function (foo) { this.foo = 'Cleaned!'; });", None),
+        ("foo(function() {} ? a : b);", None),
+        ("foo((function() {}) ? a : b);", None),
+        ("foo(function() { this; }.bind(this) ? a : b);", None),
+        ("foo(function() { this; }?.bind(this) ? a : b);", None),
+        ("foo(bar ? function() {} ? a : b : c);", None),
+        ("foo(function() {} || a ? b : c);", None),
+        ("new Foo(function() {} ? a : b);", None),
+        ("foo(async function() {} ? a : b);", None),
     ];
 
     let fail = vec![

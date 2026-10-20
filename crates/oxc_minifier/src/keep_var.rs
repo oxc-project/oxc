@@ -8,7 +8,6 @@ use oxc_syntax::symbol::SymbolId;
 
 pub struct KeepVar<'a> {
     vars: Vec<(Ident<'a>, Span, Option<SymbolId>)>,
-    all_hoisted: bool,
 }
 
 impl<'a> VisitJs<'a> for KeepVar<'a> {
@@ -47,16 +46,13 @@ impl<'a> VisitJs<'a> for KeepVar<'a> {
             it.bound_names(&mut |ident| {
                 self.vars.push((ident.name, ident.span, ident.symbol_id.get()));
             });
-            if it.has_init() {
-                self.all_hoisted = false;
-            }
         }
     }
 }
 
 impl<'a> KeepVar<'a> {
     pub fn new() -> Self {
-        Self { vars: std::vec![], all_hoisted: true }
+        Self { vars: std::vec![] }
     }
 
     pub fn get_variable_declaration(

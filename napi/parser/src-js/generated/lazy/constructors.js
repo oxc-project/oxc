@@ -13219,7 +13219,7 @@ function constructJSStr(pos, ast) {
         | ((buffer[pos++] & 0x3f) << 6)
         | (buffer[pos++] & 0x3f);
     }
-    // Unlike UTF-8 decoders, fromCodePoint preserves surrogate code points.
+    // Unlike UTF-8 decoders, `fromCodePoint` preserves surrogate code points
     out += String.fromCodePoint(codePoint);
   }
   return out;

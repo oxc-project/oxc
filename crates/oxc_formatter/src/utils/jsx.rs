@@ -9,6 +9,7 @@ use oxc_ast::ast::*;
 
 use crate::QuoteStyle;
 use crate::formatter::Comments;
+use crate::source_text::line_breaks;
 use crate::{ast_nodes::AstNode, format_args, formatter::prelude::*, write};
 
 pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
@@ -20,7 +21,7 @@ pub static JSX_WHITESPACE_CHARS: [u8; 4] = [b' ', b'\n', b'\t', b'\r'];
 /// ```text
 /// use oxc_formatter::utils::jsx::is_meaningful_jsx_text;
 ///
-/// assert_eq!(is_meaningful_jsx_text("     \t\r   "), true);
+/// assert_eq!(is_meaningful_jsx_text("     \t\r   "), false);
 /// assert_eq!(is_meaningful_jsx_text("     \n\r   "), false);
 /// assert_eq!(is_meaningful_jsx_text("  Alien   "), true);
 /// assert_eq!(is_meaningful_jsx_text("\n  Alien   "), true);
@@ -33,7 +34,7 @@ pub fn is_meaningful_jsx_text(text: &str) -> bool {
         // If there is a non-whitespace character
         if !JSX_WHITESPACE_CHARS.contains(&byte) {
             return true;
-        } else if byte == b'\n' {
+        } else if matches!(byte, b'\n' | b'\r') {
             has_newline = true;
         }
     }
@@ -296,12 +297,11 @@ pub fn jsx_split_children<'a, 'b>(
                 if let Some(JsxTextChunk::Whitespace(_whitespace)) = chunks.peek() {
                     match chunks.next() {
                         Some(JsxTextChunk::Whitespace(whitespace)) => {
-                            if whitespace.contains('\n') {
+                            if whitespace.contains(['\n', '\r']) {
                                 if chunks.peek().is_none() {
                                     // A text only consisting of whitespace that also contains a new line isn't considered meaningful text.
                                     // It can be entirely removed from the content without changing the semantics.
-                                    let newlines =
-                                        whitespace.bytes().filter(|b| *b == b'\n').count();
+                                    let newlines = line_breaks(whitespace).count();
 
                                     // Keep up to one blank line between tags/expressions and text.
                                     // ```javascript
@@ -331,7 +331,7 @@ pub fn jsx_split_children<'a, 'b>(
                         JsxTextChunk::Whitespace(whitespace) => {
                             // Only handle trailing whitespace. Words must always be joined by new lines
                             if chunks.peek().is_none() {
-                                if whitespace.contains('\n') {
+                                if whitespace.contains(['\n', '\r']) {
                                     builder.entry(JsxChild::Newline);
                                 } else {
                                     builder.entry(JsxChild::Whitespace);

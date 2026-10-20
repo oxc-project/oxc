@@ -5,8 +5,8 @@ use smallvec::SmallVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
-        VariableDeclarationKind,
+        AssignmentExpression, AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
+        VariableDeclarationKind, VariableDeclarator,
     },
 };
 use oxc_cfg::{
@@ -159,22 +159,30 @@ impl Rule for NoUselessAssignment {
 
         for symbol_id in ctx.scoping().symbol_ids() {
             let decl_node = ctx.symbol_declaration(symbol_id);
-            let AstKind::VariableDeclarator(var_decl) = decl_node.kind() else { continue };
-            if let AstKind::VariableDeclaration(var_declaration) =
-                ctx.nodes().parent_node(decl_node.id()).kind()
-                && var_declaration.kind == VariableDeclarationKind::Const
-            {
-                continue;
-            }
-            if matches!(
-                &var_decl.init,
-                Some(Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
-            ) {
-                continue;
-            }
+            let var_decl = match decl_node.kind() {
+                AstKind::VariableDeclarator(var_decl) => Some(var_decl),
+                AstKind::FormalParameter(_) | AstKind::FormalParameterRest(_) => None,
+                _ => continue,
+            };
+            if let Some(var_decl) = var_decl {
+                if let AstKind::VariableDeclaration(var_declaration) =
+                    ctx.nodes().parent_node(decl_node.id()).kind()
+                    && var_declaration.kind == VariableDeclarationKind::Const
+                {
+                    continue;
+                }
+                if matches!(
+                    &var_decl.init,
+                    Some(
+                        Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_)
+                    )
+                ) {
+                    continue;
+                }
 
-            if Self::is_exported(ctx, symbol_id, decl_node) {
-                continue;
+                if Self::is_exported(ctx, symbol_id, decl_node) {
+                    continue;
+                }
             }
 
             #[expect(clippy::cast_possible_truncation)]
@@ -187,7 +195,7 @@ impl Rule for NoUselessAssignment {
             });
 
             // Collect ops for this symbol (formerly Pass 2)
-            if var_decl.init.is_some() {
+            if var_decl.is_some_and(|var_decl| var_decl.init.is_some()) {
                 Self::push_op(
                     ctx,
                     graph,
@@ -533,7 +541,7 @@ impl NoUselessAssignment {
         cfg_ops: &mut CfgOps,
         reference: &Reference,
         compact_idx: u32,
-        var_decl: &oxc_ast::ast::VariableDeclarator,
+        var_decl: Option<&VariableDeclarator>,
         decl_node: &oxc_semantic::AstNode,
         tracked_symbol: &mut TrackedSymbol,
         previous_value_read: bool,
@@ -555,6 +563,17 @@ impl NoUselessAssignment {
         }
 
         if reference.is_write() {
+            // Parameter initialization lacks conditional CFG edges and ordered destructuring writes.
+            if var_decl.is_none()
+                && ctx
+                    .nodes()
+                    .parent_node(decl_node.id())
+                    .span()
+                    .contains_inclusive(ctx.nodes().get_node(op_node).span())
+            {
+                return;
+            }
+
             if previous_value_read && !reference.is_read() {
                 // Model RHS self-reads before the deferred assignment write.
                 // This keeps the previous value live without making nested
@@ -562,10 +581,12 @@ impl NoUselessAssignment {
                 Self::push_op(ctx, graph, cfg_ops, op_node, Operation::Read, compact_idx);
             }
 
-            if matches!(
-                &var_decl.id,
-                BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
-            ) && decl_node
+            if var_decl.is_some_and(|var_decl| {
+                matches!(
+                    &var_decl.id,
+                    BindingPattern::ObjectPattern(_) | BindingPattern::ArrayPattern(_)
+                )
+            }) && decl_node
                 .span()
                 .contains_inclusive(ctx.nodes().get_node(reference.node_id()).span())
             {
@@ -636,10 +657,10 @@ impl NoUselessAssignment {
         None
     }
 
-    fn get_enclosing_destructuring_assignment(
-        ctx: &LintContext,
+    fn get_enclosing_destructuring_assignment<'a>(
+        ctx: &LintContext<'a>,
         reference: &Reference,
-    ) -> Option<NodeId> {
+    ) -> Option<&'a AssignmentExpression<'a>> {
         let node = ctx.nodes().get_node(reference.node_id());
         if !matches!(node.kind(), AstKind::IdentifierReference(_)) {
             return None;
@@ -653,7 +674,7 @@ impl NoUselessAssignment {
                 AstAssignmentTarget::ArrayAssignmentTarget(_)
                     | AstAssignmentTarget::ObjectAssignmentTarget(_)
             ) {
-                enclosing = Some(ancestor.id());
+                enclosing = Some(assignment);
             }
         }
         enclosing
@@ -665,17 +686,11 @@ impl NoUselessAssignment {
     ) -> SmallVec<[NodeId; 1]> {
         let mut usages = SmallVec::<[DestructuringAssignmentUsage; 1]>::new();
         for reference in ctx.symbol_references(symbol_id).filter(|reference| reference.is_write()) {
-            if let Some(assignment_node_id) =
-                Self::get_enclosing_destructuring_assignment(ctx, reference)
-                && usages.last().is_none_or(|usage| usage.node_id != assignment_node_id)
+            if let Some(assignment) = Self::get_enclosing_destructuring_assignment(ctx, reference)
+                && usages.last().is_none_or(|usage| usage.node_id != assignment.node_id())
             {
-                let AstKind::AssignmentExpression(assignment) =
-                    ctx.nodes().get_node(assignment_node_id).kind()
-                else {
-                    unreachable!("destructuring assignment should be an assignment expression");
-                };
                 usages.push(DestructuringAssignmentUsage {
-                    node_id: assignment_node_id,
+                    node_id: assignment.node_id(),
                     span: assignment.span,
                     left_span: assignment.left.span(),
                     right_span: assignment.right.span(),
@@ -1520,6 +1535,18 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
                         published = (local = 1);
                         continue;
                     }",
+        "function f(p) { p = 1; return p; }",
+        "function f(p) { p = 1; }",
+        "function f(p = 0) { p = 1; return p; }",
+        "function f({p = 0}) { p = 1; return p; }",
+        "function f([p = 0]) { p = 1; return p; }",
+        "function f(...p) { p = []; return p; }",
+        "function f(p) { p = 1; p = 2; return () => p; }",
+        "function f(p) { p = p + 1; return p; }",
+        "function f(p) { p = 1; if (condition) { use(p); } p = 2; return p; }",
+        "function f(p, q = (p = 1), r = (p = 2)) { return p; }",
+        "function f(p, { [p = 1]: q } = (p = 2, {})) { return p; }",
+        "function f(p, { a = (p = 1) } = (p = 2, {})) { return p; }",
     ];
 
     let fail = vec![
@@ -1864,6 +1891,24 @@ function useResource(unsafe: (resource: { readonly release: () => void }) => voi
         "let local = 0;
                     export let exported = (local = 1);
                     use(local);",
+        "export function reassignedParam(p) { p = 5; p = 6; return p; }
+         export function reassignedLocal() { let x = 1; x = 2; return x; }",
+        "const f = function(p) { p = 1; p = 2; return p; };",
+        "const f = p => { p = 1; p = 2; return p; };",
+        "const obj = { f(p) { p = 1; p = 2; return p; } };",
+        "class C { f(p) { p = 1; p = 2; return p; } }",
+        "function f(p = 0) { p = 1; p = 2; return p; }",
+        "function f({p}) { p = 1; p = 2; return p; }",
+        "function f([p]) { p = 1; p = 2; return p; }",
+        "function f({nested: [p = 0]}) { p = 1; p = 2; return p; }",
+        "function f(...p) { p = []; p = [1]; return p; }",
+        "function f(...[p]) { p = 1; p = 2; return p; }",
+        "function f({a, ...p}) { p = {}; p = {a}; return p; }",
+        "export const p = 0; function f(p) { p = 1; p = 2; return p; }",
+        "function f(p) { p++; p = 2; return p; }",
+        "function f(p) { use(p); p = 1; }",
+        "function f(p, q = p) { p = 1; return q; }",
+        "function f(cb = p => { p = 1; p = 2; return p; }) { return cb; }",
     ];
 
     Tester::new(NoUselessAssignment::NAME, NoUselessAssignment::PLUGIN, pass, fail)

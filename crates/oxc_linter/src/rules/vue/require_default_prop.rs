@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         ArrayExpressionElement, BindingPattern, CallExpression, Expression, ObjectExpression,
         ObjectPattern, ObjectPropertyKind, PropertyKey, TSSignature, TSType,
@@ -74,6 +74,7 @@ declare_oxc_lint!(
     RequireDefaultProp,
     vue,
     style,
+    recommended,
     version = "1.70.0",
     short_description = "Requires a default value to be set for props that are not marked as `required`.",
 );
@@ -215,7 +216,7 @@ fn check_object_props<'a>(
             }
         }
         if let Some(name) = &name {
-            ctx.diagnostic(require_default_prop_diagnostic(prop.span(), name));
+            ctx.diagnostic(require_default_prop_diagnostic(prop.span(), name.display()));
         } else {
             let display = format!("[{}]", prop.key.span().source_text(ctx.source_text()));
             ctx.diagnostic(require_default_prop_diagnostic(prop.span(), &display));
@@ -223,17 +224,14 @@ fn check_object_props<'a>(
     }
 }
 
-fn has_destructure_default(
-    pattern: &ObjectPattern,
-    name: &oxc_ast::StaticPropertyName<'_>,
-) -> bool {
+fn has_destructure_default(pattern: &ObjectPattern, name: &StaticPropertyName<'_>) -> bool {
     pattern.properties.iter().any(|prop| {
         matches!(prop.value, BindingPattern::AssignmentPattern(_))
             && prop.key.static_name().is_some_and(|key| key == *name)
     })
 }
 
-fn object_has_key(obj: &ObjectExpression, name: &oxc_ast::StaticPropertyName<'_>) -> bool {
+fn object_has_key(obj: &ObjectExpression, name: &StaticPropertyName<'_>) -> bool {
     obj.properties.iter().any(|prop| {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
             if prop.key.static_name().is_some_and(|key| key == *name))
@@ -269,7 +267,7 @@ fn check_type_signature<'a>(
     if pc.destructure.is_some_and(|destructure| has_destructure_default(destructure, &name)) {
         return;
     }
-    ctx.diagnostic(require_default_prop_diagnostic(signature.span(), name));
+    ctx.diagnostic(require_default_prop_diagnostic(signature.span(), name.display()));
 }
 
 /// Mirrors upstream `isWithoutDefaultValue`. The value is already unwrapped of

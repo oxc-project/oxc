@@ -4,6 +4,27 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ import(no-absolute-path): Do not import modules using an absolute path
    ╭─[index.js:1:15]
+ 1 │ import _ from '/\uD800'
+   ·               ─────────
+   ╰────
+  help: Replace the absolute path with a relative path or a module alias.
+
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:17]
+ 1 │ var f = require('/\uDC00/x')
+   ·                 ───────────
+   ╰────
+  help: Replace the absolute path with a relative path or a module alias.
+
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:10]
+ 1 │ require(['/\uD83D\uDE00'], function(){})
+   ·          ───────────────
+   ╰────
+  help: Replace the absolute path with a relative path or a module alias.
+
+  ⚠ import(no-absolute-path): Do not import modules using an absolute path
+   ╭─[index.js:1:15]
  1 │ import _ from '/lodash'
    ·               ─────────
    ╰────
