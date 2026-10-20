@@ -1001,21 +1001,16 @@ impl ServerLinter {
 
 #[cfg(test)]
 mod tests_builder {
-    use std::fs;
-
     use tower_lsp_server::gen_lsp_types::{CodeActionKind, CodeActionProvider, ServerCapabilities};
 
     use oxc_language_server::{Capabilities, DiagnosticMode, ToolBuilder};
 
-    use crate::{
-        DEFAULT_SUPPRESSIONS_FILE_NAME,
-        lsp::{
-            code_actions::{
-                CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
-            },
-            commands::FIX_ALL_COMMAND_ID,
-            server_linter::{ServerLinterBuilder, WorkspaceSuppressions},
+    use crate::lsp::{
+        code_actions::{
+            CODE_ACTION_KIND_SOURCE_FIX_ALL_DANGEROUS_OXC, CODE_ACTION_KIND_SOURCE_FIX_ALL_OXC,
         },
+        commands::FIX_ALL_COMMAND_ID,
+        server_linter::ServerLinterBuilder,
     };
 
     #[test]
