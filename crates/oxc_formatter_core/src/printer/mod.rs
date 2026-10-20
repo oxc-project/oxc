@@ -1195,7 +1195,8 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         Ok(!self.overflows())
     }
 
-    /// Like Prettier's `fits` loop head (`remainingWidth >= 0`), checked at every `Fits::Yes` exit:
+    /// Like Prettier's `fits` loop head (`remainingWidth >= 0`),
+    /// checked at every `Fits::Yes` exit except a fill entry boundary (see `fits`):
     /// a line that already overflows never fits, even if no text was measured.
     /// A pending `Space` counts, a pending `line` space does not.
     fn overflows(&self) -> bool {
@@ -1535,22 +1536,16 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 self.state.line_width += text.len();
             }
             Text::Text { text: _, width } => {
-                if width.is_multiline() {
-                    return if self.must_be_flat
-                        || self.state.line_width + width.value() as usize
-                            > usize::from(self.options().print_width)
-                    {
-                        Fits::No
-                    } else {
-                        Fits::Yes
-                    };
-                }
-
                 self.state.line_width += width.value() as usize;
+
+                // The width is checked at the `Fits::Yes` exit, see `overflows`
+                if width.is_multiline() {
+                    return Fits::from(!self.must_be_flat);
+                }
             }
         }
 
-        if self.state.line_width > usize::from(self.options().print_width) {
+        if self.overflows() {
             return Fits::No;
         }
 
