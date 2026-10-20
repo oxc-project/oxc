@@ -547,30 +547,36 @@ Prettier 3.9 changed this to first retry the whole union FLAT on the indented ne
 Community pushback on the 3.9 style (users migrated to Oxfmt over it) put following on hold:
 ours deliberately matches Prettier 3.8's output for this construct.
 
-## arrow-chain-exact-fill-signature
+## arrow-exact-fill-signature
 
-- Why: cost
-- Pin: `tests/fixtures/js/arrow-function/chain-exact-fill-signature.js`
+- Why: uniform-rule (same construct, same output: arrow with a non-conditional body)
+- Pin: `tests/fixtures/js/arrow-function/exact-fill-signature.js`
 
 ```js
 /* input (printWidth 80) */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (x) => cond ? longlonglong : shortshort;
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) => cond ? longlonglong : shortshort;
 
 /* ours */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (x) =>
+  cond ? longlonglong : shortshort;
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) =>
   cond ? longlonglong : shortshort;
 
 /* prettier */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (
+  x,
+) => (cond ? longlonglong : shortshort);
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength =
   (x) => (y) => (cond ? longlonglong : shortshort);
 ```
 
-An arrow chain with a parens-adding conditional body keeps a signature line that EXACTLY fills the print width (the signature alone is measured; both idempotent).
-Prettier counts the hug layout's literal trailing space, so the exact fill overflows:
-it breaks the assignment and retries the chain flat on the indented next line.
-One char over and the outputs converge;
-a naive port of the literal-space structure regresses `js/arrows/currying-4.js` (Prettier gates the hug on the chain's expand state),
-so matching costs more than this exact-width edge is worth.
+An arrow (single or chain) whose signature line EXACTLY fills the print width keeps it and puts the body on the next line, whatever the body.
+Prettier breaks the signature only for a parens-adding conditional body:
+its hug layout puts a literal space after `=>`, outside the group that may break the body onto the next line,
+so the space is counted although it is trimmed whenever the body breaks.
+As the last call argument, Prettier breaks all the arguments instead of hugging the arrow.
+One char over and the outputs converge.
 
 ## suppressed-for-head-declaration
 
