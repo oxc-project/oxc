@@ -28,7 +28,7 @@ doctest = false
 
 [dependencies]
 oxc_allocator = { workspace = true, features = ["pool"] }
-oxc_config = { workspace = true }
+oxc_config = { workspace = true, features = ["bpaf"] }
 oxc_diagnostics = { workspace = true }
 oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }

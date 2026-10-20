@@ -1,0 +1,68 @@
+[
+  {
+    "args": ["--check"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  {
+    "args": ["--check", "--no-ignore"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  {
+    "args": ["--check", "--no-ignore=vcs"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  {
+    "args": ["--check", "--no-ignore=cli"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  {
+    "args": ["--check", "--no-ignore=config"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  {
+    "args": ["--check", "--no-ignore=vcs", "dist/index.js"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  { "args": ["--stdin-filepath", "config-ignored.js"], "stdin": "config-ignored.js" },
+  { "args": ["--stdin-filepath", "cli-ignored.js", "--no-ignore"], "stdin": "cli-ignored.js" },
+  {
+    "args": ["--stdin-filepath", "config-ignored.js", "--no-ignore=config"],
+    "stdin": "config-ignored.js"
+  },
+  {
+    "args": ["--check", "--no-ignore", "--ignore-path", "does-not-exist"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  {
+    "args": ["--check", "--no-ignore", "!src.js"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  {
+    "args": ["--check", "config-ignored.js"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  },
+  {
+    "args": ["--check", "--no-ignore=config", "config-ignored.js"],
+    "gitignore": {
+      ".gitignore": "dist/\n"
+    }
+  }
+]

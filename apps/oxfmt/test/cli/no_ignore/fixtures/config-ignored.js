@@ -1,0 +1,1 @@
+const configIgnored = 'config'
