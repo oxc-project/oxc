@@ -377,6 +377,10 @@ impl<'a> Normalize {
         if !ctx.is_global_reference(ident) {
             return None;
         }
+        // `delete Number.NaN` is false (or throws in strict mode), but `delete NaN` is true.
+        if Self::is_unary_delete_ancestor(ctx.ancestors()) {
+            return None;
+        }
         Some(Expression::new_nan(ident.span, ctx))
     }
 

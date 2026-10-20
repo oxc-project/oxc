@@ -1225,6 +1225,16 @@ fn test_fold_integer_index_access() {
     test_same_value("'abc'[-1n]");
     test_same_value("'abc'[9007199254740992n]");
 
+    // `delete` of a non-configurable property is false, or a TypeError in strict mode
+    test_same("v = delete 'a'[0]");
+    test_same("v = delete '😀'[0]");
+    test_same("v = delete 'abc'.length");
+    test("v = delete 'abc'['length']", "v = delete 'abc'.length");
+    test_same("v = delete [1, 2].length");
+    test_same("v = delete Number.MAX_SAFE_INTEGER");
+    test_same("v = delete Number.NaN");
+    test("v = delete Number['NaN']", "v = delete Number.NaN");
+
     // property access should be kept to keep `this` value
     test_same(
         "

@@ -544,7 +544,8 @@ impl<'a> PeepholeOptimizations {
         if matches!(
             ctx.parent(),
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
-        ) {
+        ) || Self::is_delete_argument(ctx)
+        {
             return;
         }
 

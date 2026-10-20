@@ -71,8 +71,18 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
+    /// Whether the current node is the operand of `delete`. `delete "a".length` deletes a
+    /// non-configurable property, so it is false (or throws in strict mode), while deleting the
+    /// folded value would be true.
+    pub(super) fn is_delete_argument(ctx: &TraverseCtx<'a>) -> bool {
+        matches!(ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+    }
+
     pub fn fold_static_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::StaticMemberExpression(e) = expr else { return };
+        if Self::is_delete_argument(ctx) {
+            return;
+        }
         // TODO: tryFoldObjectPropAccess(n, left, name)
         // `evaluate_value` only folds a narrow set of member accesses (currently
         // `.length` on constant strings/arrays) and bails cheaply otherwise.
@@ -89,6 +99,9 @@ impl<'a> PeepholeOptimizations {
 
     pub fn fold_computed_member_expr(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::ComputedMemberExpression(e) = expr else { return };
+        if Self::is_delete_argument(ctx) {
+            return;
+        }
         // TODO: tryFoldObjectPropAccess(n, left, name)
         // See `fold_static_member_expr`: bail via the cheap `evaluate_value`
         // check before walking the object and key for side effects.
@@ -311,7 +324,7 @@ impl<'a> PeepholeOptimizations {
         if e.operator == BinaryOperator::Division
             && matches!(&e.right, Expression::NumericLiteral(r) if r.value == 0.0 && r.value.is_sign_positive())
             && matches!(&e.left, Expression::NumericLiteral(l) if l.value.abs() == 1.0)
-            && !matches!(&ctx.parent(), Ancestor::UnaryExpressionArgument(unary) if unary.operator().is_delete())
+            && !Self::is_delete_argument(ctx)
         {
             return;
         }
