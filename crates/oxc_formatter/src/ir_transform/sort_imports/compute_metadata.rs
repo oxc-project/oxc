@@ -6,7 +6,7 @@ use phf::phf_set;
 use crate::ir_transform::sort_imports::{
     group_config::{ImportModifier, ImportSelector},
     group_matcher::{GroupMatcher, ImportMetadata},
-    options::SortImportsOptions,
+    options::{SortImportsOptions, SortType},
     source_line::ImportLineMetadata,
 };
 
@@ -29,8 +29,11 @@ pub fn compute_import_metadata<'a>(
     });
 
     // Pre-compute normalized source for case-insensitive comparison
-    let normalized_source =
-        if options.ignore_case { source.cow_to_lowercase() } else { Cow::Borrowed(source) };
+    let normalized_source = if options.ignore_case && options.sort_type == SortType::Natural {
+        source.cow_to_lowercase()
+    } else {
+        Cow::Borrowed(source)
+    };
 
     // Determine if this import should be ignored (not moved between groups)
     // - If `sort_side_effects: true`, never ignore

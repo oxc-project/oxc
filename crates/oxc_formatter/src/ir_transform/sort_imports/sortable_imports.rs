@@ -2,7 +2,11 @@ use std::borrow::Cow;
 
 use rustc_hash::{FxHashMap, FxHashSet};
 
-use crate::ir_transform::sort_imports::{options::SortImportsOptions, source_line::SourceLine};
+use crate::ir_transform::sort_imports::{
+    biome_order,
+    options::{SortImportsOptions, SortType},
+    source_line::SourceLine,
+};
 
 #[derive(Debug)]
 pub struct SortableImport<'a> {
@@ -13,6 +17,8 @@ pub struct SortableImport<'a> {
     pub group_idx: usize,
     pub normalized_source: Cow<'a, str>,
     pub is_side_effect: bool,
+    /// Orders imports of the same source for [`SortType::Biome`].
+    pub statement_kind: u8,
     pub is_ignored: bool,
 }
 
@@ -158,8 +164,14 @@ fn sort_indices_by_source(
     // `Ordering::reverse()` keeps `Equal` as `Equal`,
     // so the stable `sort_by` preserves the original order of equal imports.
     indices.sort_by(|&a, &b| {
-        let ordering =
-            natord::compare(&imports[a].normalized_source, &imports[b].normalized_source);
+        let (a, b) = (&imports[a], &imports[b]);
+        let ordering = match options.sort_type {
+            SortType::Natural => natord::compare(&a.normalized_source, &b.normalized_source),
+            SortType::Biome => {
+                biome_order::compare_sources(&a.normalized_source, &b.normalized_source)
+                    .then_with(|| a.statement_kind.cmp(&b.statement_kind))
+            }
+        };
         if options.order.is_desc() { ordering.reverse() } else { ordering }
     });
 }
