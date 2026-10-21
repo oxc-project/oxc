@@ -155,7 +155,7 @@ impl Rule for ClassLiteralPropertyStyle {
 fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Get
+            && method.kind.is_get()
             && !method.r#override
             && let Some(body) = &method.value.body
             && let Some(Statement::ReturnStatement(return_statement)) = body.statements.first()
