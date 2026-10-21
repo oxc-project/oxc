@@ -8,7 +8,10 @@ use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
-use crate::{AstNode, config::GlobalValue, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::get_declaration_of_variable, config::GlobalValue, context::LintContext,
+    rule::Rule,
+};
 
 fn implied_eval_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Implied eval. Consider passing a function instead of a string.")
@@ -204,8 +207,7 @@ fn initialized_symbol_init<'a>(
     ident: &IdentifierReference<'a>,
     ctx: &LintContext<'a>,
 ) -> Option<&'a Expression<'a>> {
-    let symbol_id = ctx.scoping().get_reference(ident.reference_id()).symbol_id()?;
-    let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+    let declaration = get_declaration_of_variable(ident, ctx.semantic())?;
     let AstKind::VariableDeclarator(declarator) = declaration.kind() else {
         return None;
     };
