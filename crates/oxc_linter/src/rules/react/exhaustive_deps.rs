@@ -1101,13 +1101,7 @@ fn is_stable_value<'a, 'b>(
     }
 
     match node.kind() {
-        AstKind::VariableDeclaration(declaration) => {
-            if declaration.kind == VariableDeclarationKind::Const {
-                return true;
-            }
-
-            false
-        }
+        AstKind::VariableDeclaration(declaration) => declaration.kind.is_const(),
         AstKind::VariableDeclarator(declaration) => {
             // if the variable does not have an initializer, then it's not a stable value
             let Some(init) = &declaration.init else {

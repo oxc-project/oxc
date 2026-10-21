@@ -10,7 +10,7 @@ use oxc_ast::{
     ast::{
         BindingPattern, ExportFromDeclaration, ExportSpecifier, ImportAttributeKey,
         ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Statement,
-        VariableDeclarationKind, VariableDeclarator, WithClause, WithClauseKeyword,
+        VariableDeclarator, WithClause, WithClauseKeyword,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -312,7 +312,7 @@ impl PreferExportFrom {
                 !matches!(
                     declaration_node.kind(),
                     AstKind::VariableDeclaration(variable_declaration)
-                        if variable_declaration.kind == VariableDeclarationKind::Const
+                        if variable_declaration.kind.is_const()
                             && matches!(
                                 ctx.nodes().parent_node(declaration_node.id()).kind(),
                                 AstKind::ExportDeclaration(_)
@@ -455,7 +455,7 @@ impl PreferExportFrom {
         let next_parent_node = ctx.nodes().parent_node(var_decl.node_id());
 
         if let AstKind::VariableDeclaration(var_declaration) = next_parent_node.kind()
-            && var_declaration.kind == VariableDeclarationKind::Const
+            && var_declaration.kind.is_const()
             && let AstKind::ExportDeclaration(export_named_decl) =
                 ctx.nodes().parent_node(next_parent_node.id()).kind()
         {
