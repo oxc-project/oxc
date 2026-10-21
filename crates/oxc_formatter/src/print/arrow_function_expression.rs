@@ -3,7 +3,7 @@ use oxc_formatter_core::{Format, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     format_args,
     formatter::{JsFormatContext, JsFormatter, prelude::*, trivia::FormatTrailingComments},
     options::FormatTrailingCommas,
@@ -23,7 +23,7 @@ use super::{
     sequence_expression::sequence_leading_comments_start,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let options = FormatJsArrowFunctionExpressionOptions {
             // Handed over by `WithAssignmentLayout` when this arrow is the RHS of an assignment-like;
@@ -37,7 +37,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
 
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
     options: FormatJsArrowFunctionExpressionOptions,
 }
 
@@ -80,7 +80,7 @@ pub enum FunctionCacheMode {
 
 impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     pub fn new_with_options(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+        arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> Self {
         Self { arrow, options }
@@ -229,7 +229,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsArrowFunctionExpression<'a,
 
 enum ArrowFunctionLayout<'a, 'b> {
     /// Arrow function with a non-arrow function body
-    Single(&'b AstNode<'a, ArrowFunctionExpression<'a>>),
+    Single(&'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>),
 
     /// A chain of at least two arrow functions.
     ///
@@ -253,7 +253,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
     /// of the different layouts.
     fn for_arrow(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+        arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
         f: &JsFormatter<'_, 'a>,
     ) -> ArrowFunctionLayout<'a, 'b> {
@@ -268,13 +268,13 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 
         loop {
             if is_non_grouped_or_grouped_last_argument
-                && let AstNodes::ArrowFunctionExpression(next) = current.body().as_ast_nodes()
+                && let AstNodeKind::ArrowFunctionExpression(next) = current.body().as_kind()
                 // A type cast keeps its parens: `(a) => /** @type {T} */ ((b) => c)`
                 && !is_cast_target(next.span(), f)
             {
                 should_break = should_break || Self::should_break_chain(current);
 
-                should_break = should_break || Self::should_break_chain(next);
+                should_break = should_break || Self::should_break_chain(&next);
 
                 if head.is_none() {
                     head = Some(current);
@@ -282,7 +282,8 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                     middle.push(current);
                 }
 
-                current = next;
+                // In the arena, as it is the parent of the next arrow function
+                current = next.in_arena(f.allocator());
                 continue;
             }
             break match head {
@@ -370,14 +371,14 @@ pub fn is_multiline_template_starting_on_same_line(
 
 struct ArrowChain<'a, 'b> {
     /// The top most arrow function in the chain
-    head: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    head: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
 
     /// The arrow functions in the chain that are neither the first nor the last.
     /// Empty for chains consisting only of two arrow functions.
-    middle: Vec<&'b AstNode<'a, ArrowFunctionExpression<'a>>>,
+    middle: Vec<&'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>>,
 
     /// The last arrow function in the chain
-    tail: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    tail: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
 
     options: FormatJsArrowFunctionExpressionOptions,
 
@@ -387,7 +388,7 @@ struct ArrowChain<'a, 'b> {
 
 impl<'a, 'b> ArrowChain<'a, 'b> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
         once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
@@ -673,7 +674,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
 /// An own-line comment cannot appear before the `=>` (no line terminator is allowed there),
 /// so any hit in this range belongs to the body.
 fn has_own_line_comment_before_body<'a>(
-    arrow: &AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &AstNode<'_, 'a, ArrowFunctionExpression<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     let signature_end =
@@ -681,13 +682,13 @@ fn has_own_line_comment_before_body<'a>(
     f.comments().has_own_line_comment_in_range(signature_end, arrow.body().span().start)
 }
 
-fn should_add_parens(expression: &AstNode<'_, Expression<'_>>) -> bool {
+fn should_add_parens(expression: AstNode<'_, '_, Expression<'_>>) -> bool {
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
-    if matches!(&**expression, Expression::ConditionalExpression(_)) {
+    if matches!(&*expression, Expression::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(expression).as_ref(),
+            ExpressionLeftSide::leftmost(&expression),
             Expression::ObjectExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ClassExpression(_)
@@ -707,7 +708,7 @@ fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
 /// Formats the parameters and return type annotation without any soft line breaks if `is_grouped_call_argument` is `true`
 /// so that the parameters and return type are kept on the same line.
 fn format_signature<'a, 'b>(
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
@@ -718,7 +719,7 @@ fn format_signature<'a, 'b>(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                arrow.return_type().map(FormatNodeWithoutTrailingComments),
+                arrow.return_type().as_ref().map(FormatNodeWithoutTrailingComments),
             ))
             .fmt(f);
         });

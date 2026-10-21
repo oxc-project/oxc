@@ -5,7 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format, FormatTrailingCommas, TrailingSeparator,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     format_args,
     formatter::{
         Comments, JoinBuilderJsExt as _, JsFormatContext, JsFormatter, JsFormatterExt as _,
@@ -35,7 +35,7 @@ use crate::{
     write,
 };
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let l_paren_token = "(";
         let r_paren_token = ")";
@@ -216,7 +216,7 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
 }
 
 fn format_all_elements_broken_out<'a>(
-    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+    node: &AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>>,
     elements: impl Iterator<Item = (Option<FormatElement<'a>>, usize)>,
     expand: bool,
     f: &mut JsFormatter<'_, 'a>,
@@ -252,7 +252,7 @@ fn format_all_elements_broken_out<'a>(
 }
 
 fn format_all_args_broken_out<'a>(
-    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+    node: &AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -610,7 +610,7 @@ fn can_group_arrow_function_expression_argument(
 }
 
 fn write_grouped_arguments<'a>(
-    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+    node: &AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -636,8 +636,8 @@ fn write_grouped_arguments<'a>(
 
             let interned = f.intern(&format_once(|f| {
                 if is_grouped_argument {
-                    match argument.as_ast_nodes() {
-                        AstNodes::Function(function)
+                    match &argument.as_kind() {
+                        AstNodeKind::Function(function)
                             if !group_layout.is_grouped_first()
                                 && (!only_one_argument
                                     || function_has_only_simple_parameters(function)) =>
@@ -645,7 +645,7 @@ fn write_grouped_arguments<'a>(
                             has_cached = true;
                             return write!(f, [FormatFunction::new_cached(function), comma]);
                         }
-                        AstNodes::ArrowFunctionExpression(arrow) => {
+                        AstNodeKind::ArrowFunctionExpression(arrow) => {
                             has_cached = true;
                             return write!(
                                 f,
@@ -705,9 +705,9 @@ fn write_grouped_arguments<'a>(
             }
         };
 
-        let function_params = match argument.as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(arrow) => Some(&arrow.params),
-            AstNodes::Function(function) => Some(&function.params),
+        let function_params = match argument.as_ref() {
+            Argument::ArrowFunctionExpression(arrow) => Some(&arrow.params),
+            Argument::FunctionExpression(function) => Some(&function.params),
             _ => None,
         };
 
@@ -729,7 +729,7 @@ fn write_grouped_arguments<'a>(
             // For decorated function patterns like `decorator("name")((props: {...}) => {...})`,
             // the arrow function should be kept hugged even if its signature breaks.
             // <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L241-L292>
-            let is_decorated = is_decorated_function(argument);
+            let is_decorated = is_decorated_function(&argument);
 
             // Remove soft lines from the cached parameters and check if they would break.
             // If they break even without soft lines, we need to use the expanded layout.
@@ -755,11 +755,11 @@ fn write_grouped_arguments<'a>(
 
         *grouped_element = if group_layout.is_grouped_first() {
             f.intern(&format_with(|f| {
-                FormatGroupedFirstArgument { argument }.fmt(f);
+                FormatGroupedFirstArgument { argument: &argument }.fmt(f);
                 write!(f, (last_index != 0).then_some(","));
             }))
         } else {
-            f.intern(&FormatGroupedLastArgument { argument, is_only: only_one_argument })
+            f.intern(&FormatGroupedLastArgument { argument: &argument, is_only: only_one_argument })
         }
     }
 
@@ -843,15 +843,15 @@ fn write_grouped_arguments<'a>(
 
 /// Helper for formatting the first grouped argument (see [should_group_first_argument]).
 struct FormatGroupedFirstArgument<'a, 'b> {
-    argument: &'b AstNode<'a, Argument<'a>>,
+    argument: &'b AstNode<'b, 'a, Argument<'a>>,
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedFirstArgument<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        match self.argument.as_ast_nodes() {
+        match &self.argument.as_kind() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => {
+            AstNodeKind::ArrowFunctionExpression(arrow) => {
                 FormatJsArrowFunctionExpression::new_with_options(
                     arrow,
                     FormatJsArrowFunctionExpressionOptions {
@@ -872,7 +872,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedFirstArgument<'a, '_> 
 /// Helper for formatting the last grouped argument (see [should_group_last_argument]).
 struct FormatGroupedLastArgument<'a, 'b> {
     /// The argument to format
-    argument: &'b AstNode<'a, Argument<'a>>,
+    argument: &'b AstNode<'b, 'a, Argument<'a>>,
     /// Is this the only argument in the arguments list
     is_only: bool,
 }
@@ -882,13 +882,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
-        match self.argument.as_ast_nodes() {
-            AstNodes::Function(function)
+        match &self.argument.as_kind() {
+            AstNodeKind::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(function) =>
             {
                 FormatFunction::new_cached(function).fmt(f);
             }
-            AstNodes::ArrowFunctionExpression(arrow) => {
+            AstNodeKind::ArrowFunctionExpression(arrow) => {
                 FormatJsArrowFunctionExpression::new_with_options(
                     arrow,
                     FormatJsArrowFunctionExpressionOptions {
@@ -910,7 +910,7 @@ fn function_has_only_simple_parameters(function: &Function<'_>) -> bool {
 
 /// Tests if this a simple module import like `import("module-name")` or `require("module-name")`.
 pub fn is_simple_module_import(
-    arguments: &AstNode<'_, ArenaVec<'_, Argument<'_>>>,
+    arguments: &AstNode<'_, '_, ArenaVec<'_, Argument<'_>>>,
     comments: &Comments,
 ) -> bool {
     if arguments.len() != 1 {
@@ -959,7 +959,7 @@ pub fn is_simple_module_import(
 /// Tests if amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
 fn is_commonjs_or_amd_call(
     arguments: &[Argument<'_>],
-    call: &AstNode<'_, CallExpression<'_>>,
+    call: &AstNode<'_, '_, CallExpression<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     let Expression::Identifier(ident) = &call.callee else {
@@ -1041,7 +1041,7 @@ pub fn is_verbatim_multiline_template_sole_arg(
 /// useMemo(() => {}, [])
 /// ```
 fn is_react_hook_with_deps_array(
-    arguments: &AstNode<'_, ArenaVec<'_, Argument<'_>>>,
+    arguments: &AstNode<'_, '_, ArenaVec<'_, Argument<'_>>>,
     comments: &Comments,
 ) -> bool {
     if arguments.len() > 3 || arguments.len() < 2 {
@@ -1095,9 +1095,9 @@ fn is_react_hook_with_deps_array(
 /// ```
 ///
 /// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L240-L291>
-fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
+fn is_decorated_function(argument: &AstNode<'_, '_, Argument<'_>>) -> bool {
     // Check if the argument is an arrow function with a block body
-    let AstNodes::ArrowFunctionExpression(arrow) = argument.as_ast_nodes() else {
+    let AstNodeKind::ArrowFunctionExpression(arrow) = argument.as_kind() else {
         return false;
     };
 

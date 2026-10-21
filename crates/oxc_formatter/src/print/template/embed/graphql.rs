@@ -21,7 +21,7 @@ use crate::{
 /// - tagged template (gql`...`)
 /// - and function call (`graphql(schema, `...`)`)
 pub(super) fn format_graphql_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
@@ -139,7 +139,7 @@ pub(super) fn format_graphql_doc<'a>(
                     if has_prev_part {
                         write!(f, [hard_line_break()]);
                     }
-                    let te = TemplateExpression::Expression(expr);
+                    let te = TemplateExpression::Expression(*expr);
                     FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default())
                         .fmt(f);
                     has_prev_part = true;
