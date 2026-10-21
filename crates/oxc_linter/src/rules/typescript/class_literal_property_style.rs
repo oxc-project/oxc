@@ -198,7 +198,7 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     let mut excluded_properties: FxHashSet<StaticPropertyName<'a>> = FxHashSet::default();
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Constructor
+            && method.kind.is_constructor()
             && let Some(body) = &method.value.body
         {
             let mut collector =

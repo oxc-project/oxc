@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, ClassElement, Expression, MemberExpression,
-        MethodDefinitionKind, PropertyDefinitionType, Statement,
+        PropertyDefinitionType, Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -98,7 +98,7 @@ impl Rule for PreferClassFields {
         // Find constructor
         let Some(constructor) = class.body.body.iter().find_map(|element| {
             if let ClassElement::MethodDefinition(method) = element
-                && method.kind == MethodDefinitionKind::Constructor
+                && method.kind.is_constructor()
                 && !method.r#static
                 && !method.computed
             {
