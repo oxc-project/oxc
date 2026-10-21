@@ -102,7 +102,7 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
         let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
             return None;
         };
-        obj_prop.key.static_name().is_some_and(|name| name == "setup").then_some(obj_prop)
+        obj_prop.key.is_specific_static_name("setup").then_some(obj_prop)
     }) else {
         return;
     };
