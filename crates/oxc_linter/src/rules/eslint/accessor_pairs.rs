@@ -179,7 +179,7 @@ impl AccessorPairs {
             };
 
             let kind = prop.kind;
-            if kind != PropertyKind::Get && kind != PropertyKind::Set {
+            if !kind.is_accessor() {
                 continue;
             }
 
