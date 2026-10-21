@@ -449,7 +449,7 @@ impl ExplicitFunctionReturnType {
         if let AstKind::ArrowFunctionExpression(arrow_func_expr) = node.kind()
             && let Some(func_body_expr) = arrow_func_expr.get_expression()
         {
-            return is_function(func_body_expr);
+            return func_body_expr.get_inner_expression().is_function();
         }
         all_return_statements_are_functions(node)
     }
@@ -575,13 +575,6 @@ fn is_typed_jsx(node: &AstNode) -> bool {
     matches!(node.kind(), AstKind::JSXExpressionContainer(_) | AstKind::JSXSpreadAttribute(_))
 }
 
-fn is_function(expr: &Expression) -> bool {
-    matches!(
-        expr.get_inner_expression(),
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_)
-    )
-}
-
 fn ancestor_has_return_type<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
     let Some(parent) = outermost_paren_parent(node, ctx) else { return false };
 
@@ -650,8 +643,10 @@ struct ReturnStatementChecker {
 impl<'a> VisitJs<'a> for ReturnStatementChecker {
     fn visit_return_statement(&mut self, return_statement: &ReturnStatement<'a>) {
         self.has_return = true;
-        self.all_returns_are_functions &=
-            return_statement.argument.as_ref().is_some_and(|argument| is_function(argument));
+        self.all_returns_are_functions &= return_statement
+            .argument
+            .as_ref()
+            .is_some_and(|argument| argument.get_inner_expression().is_function());
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
