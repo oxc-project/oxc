@@ -293,6 +293,9 @@ fn test_object_expression() {
     test("({...{}})", true);
     test("({...{a:1}})", true);
     test("({...{a:a}})", false);
+    test_include_functions("({get a() {}})", true);
+    test_include_functions("({...{get a() {}}})", false); // spreading calls the getter
+    test_include_functions("({...{set a(v) {}}})", true);
 }
 
 #[test]

@@ -174,6 +174,28 @@ var o = {};
 o.x = 1; // dropped — would have logged
 ```
 
+The same assumption lets full-minify mode merge a plain `=` write into the
+object literal right before it, even when the binding is used:
+`var o = {}; o.x = 1;` becomes `var o = { x: 1 };`. The literal defines `x`
+instead of assigning it, so a setter or a read-only `x` on `Object.prototype`
+would no longer run or throw. Only literal values are merged (no calls, no spread
+getters, no reads of `o`), and the merge is skipped when the key is `__proto__`
+or the literal has a getter, a setter or a `__proto__` entry. A write to a key
+that the literal already has is an ordinary write to an own data property and
+needs no assumption.
+
+```javascript
+// The minifier assumes this never happens:
+Object.defineProperty(Object.prototype, "x", {
+  set() {
+    console.log("side effect!");
+  },
+});
+var o = {};
+o.x = 1; // merged into `var o = { x: 1 }`, no longer logs
+use(o);
+```
+
 ### `Function.prototype.toString` is not relied on
 
 Code does not depend on [`Function.prototype.toString()`](https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-function.prototype.tostring) returning specific source text. Minification renames variables and parameters, simplifies expressions (`true` → `!0`), restructures statements (fusing with the comma operator, converting `while` to `for`), removes whitespace, and may eliminate function bodies entirely (e.g. IIFE inlining). All of these change the string returned by `.toString()`.

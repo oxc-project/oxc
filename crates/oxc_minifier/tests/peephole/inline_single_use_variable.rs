@@ -320,6 +320,24 @@ fn test_inline_past_readonly_variable() {
 }
 
 #[test]
+fn test_keep_object_spread_with_getter_in_place() {
+    // Spreading an object calls its getters, so `o` can't move past `log(r)`.
+    test(
+        "let r = 0; const o = { ...{ get a() { r = 1 } } }; log(r); log(o)",
+        "let r = 0; const o = { ...{ get a() { r = 1 } } }; log(r), log(o)",
+    );
+    test(
+        "let r = 0; const x = { get a() { r = 1 } }; const o = { ...x }; log(r); log(o)",
+        "let r = 0; const o = { ...{ get a() { r = 1 } } }; log(r), log(o)",
+    );
+    // Spreading does not call setters.
+    test(
+        "let r = 0; const o = { ...{ set a(v) { r = 1 } } }; log(r); log(o)",
+        "let r = 0; log(r), log({ ...{ set a(v) { r = 1 } } })",
+    );
+}
+
+#[test]
 fn test_inline_into_tag_keeps_this() {
     test("function f(a) { let c = a?.b; return c`` }", "function f(a) { return (0, a?.b)`` }");
     test("function f(a) { let c = a[b]; return c`` }", "function f(a) { return (0, a[b])`` }");
