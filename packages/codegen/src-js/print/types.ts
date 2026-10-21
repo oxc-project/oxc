@@ -1,11 +1,9 @@
 // Node types.
 //
 // AST nodes are typed with Oxc's own ESTree type definitions.
-// The printer is more permissive than they are in 2 respects, which the types below cover:
+// The printer is more permissive than they are in 2 respects:
 //
-// 1. Its dispatch functions throw on node types they don't know.
-//    `UnknownNode` keeps those branches reachable - without it the type-checker narrows the node to `never`
-//    and rejects the `node.type` read in the error message.
+// 1. Its dispatch functions throw on node types they don't know - see `throwUnknownNode`.
 //
 // 2. It also accepts ASTs from other ESTree producers (Acorn, TS-ESLint), which differ from Oxc's AST
 //    in a handful of places. The `*Node` aliases widen the properties where they do, and the branches
@@ -13,10 +11,42 @@
 
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
-/** A node whose type the printer doesn't handle. */
-export interface UnknownNode {
-  type: "<unknown node>";
+/**
+ * Throw an error for a node whose type a dispatch function doesn't handle.
+ *
+ * Call it from the `default` arm of a dispatch `switch`. `node` is typed `never`, so the call only type-checks
+ * if the `switch` has a `case` for every type in the node's union - a type missing from it is a compile error.
+ *
+ * At runtime it still throws, for a node of a type the printer's types don't cover, as can happen with ASTs
+ * from other producers, or ones built by hand.
+ *
+ * @param node - Node, which the `switch` has narrowed to `never`
+ * @param kind - What sort of node it should have been, for the error message
+ */
+export function throwUnknownNode(node: never, kind: string): never {
+  throw new Error(`Unknown ${kind}: ${(node as { type: string }).type}`);
 }
+
+/**
+ * The node types a `switch (node.type)` has not handled, with one variant per remaining `type`.
+ *
+ * Use it in the `default` arm, as `UnhandledNodes<typeof node, typeof node.type>`.
+ *
+ * Some AST types cover several node types with one `type` field which is a union -
+ * e.g. `ESTree.Function`'s `type` is `"FunctionDeclaration" | "FunctionExpression" | ...`.
+ * A `case` for one of those can't remove the whole type from `typeof node`, but it does remove that one
+ * from `typeof node.type`. So this splits each type into one variant per `type` value not yet handled,
+ * e.g. `ESTree.Function & { type: "FunctionDeclaration" }`. The `default` arm can then `Exclude` exactly
+ * the variants which can't reach it, and any variant it doesn't exclude is a compile error.
+ */
+export type UnhandledNodes<Node, RemainingType> = Node extends { type: infer Type }
+  ? RemainingType extends Type
+    ? Node & { type: RemainingType }
+    : never
+  : never;
+
+/** An `Expression` which is a literal. */
+export type Literal = Extract<ESTree.Expression, { type: "Literal" }>;
 
 /**
  * Properties which only some literals carry. `printLiteral` reads them on any literal to tell
@@ -41,20 +71,6 @@ export type PropertyDefinitionNode = ESTree.PropertyDefinition & { abstract?: bo
  * An `accessor` field, marked abstract the same way as `PropertyDefinitionNode`.
  */
 export type AccessorPropertyNode = ESTree.AccessorProperty & { abstract?: boolean };
-
-/**
- * A class body whose members may include a node type the printer does not know.
- */
-export type ClassBodyNode = Omit<ESTree.ClassBody, "body"> & {
-  body: Array<ESTree.ClassElement | UnknownNode>;
-};
-
-/**
- * An `export` whose declaration may be a node type the printer does not know.
- */
-export type ExportNamedDeclarationNode = Omit<ESTree.ExportNamedDeclaration, "declaration"> & {
-  declaration: ESTree.Declaration | UnknownNode | null;
-};
 
 /**
  * A node carrying the offsets needed for source mappings.

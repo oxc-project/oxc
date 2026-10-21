@@ -7,3 +7,5 @@ transform: `PLACEHOLDER-10`(30px);
 transform: `PLACEHOLDER-11` (30px);
 transform: `PLACEHOLDER-12`(`PLACEHOLDER-13`px);
 some-extra-long-property-name: `PLACEHOLDER-14`(`PLACEHOLDER-15`px);
+// DIVERGES: the flag is spaced like after any value (Prettier keeps it glued); see DIVERGENCES.md#placeholder-important-space
+color: `PLACEHOLDER-16`!important;

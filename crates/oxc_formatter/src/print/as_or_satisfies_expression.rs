@@ -9,12 +9,12 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSAsExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
-            self.expression(),
-            self.type_annotation(),
+            &self.expression(),
+            &self.type_annotation(),
             is_callee_or_object,
             "as",
             f,
@@ -22,12 +22,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSSatisfiesExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
-            self.expression(),
-            self.type_annotation(),
+            &self.expression(),
+            &self.type_annotation(),
             is_callee_or_object,
             "satisfies",
             f,
@@ -36,8 +36,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
 }
 
 fn format_as_or_satisfies_expression<'a>(
-    expression: &AstNode<'a, Expression>,
-    type_annotation: &AstNode<'a, TSType>,
+    expression: &AstNode<'_, 'a, Expression>,
+    type_annotation: &AstNode<'_, 'a, TSType>,
     is_callee_or_object: bool,
     operation: &'static str,
     f: &mut JsFormatter<'_, 'a>,
@@ -100,8 +100,8 @@ fn format_as_or_satisfies_expression<'a>(
         let promoted = |c: &Comment| {
             c.followed_by_newline() && (c.preceded_by_newline() || c.is_multiline_block())
         };
-        let type_on_own_line = comments[..pre_glued_count].iter().any(|c| c.is_line())
-            || after_operator_comments[..glued_count].iter().any(|c| c.is_line())
+        let type_on_own_line = comments[..pre_glued_count].iter().any(Comment::is_line)
+            || after_operator_comments[..glued_count].iter().any(Comment::is_line)
             || (!is_union
                 && (pre_moved.iter().any(promoted)
                     || after_operator_comments[glued_count..].iter().any(promoted)));
@@ -131,7 +131,7 @@ fn format_as_or_satisfies_expression<'a>(
     }
 }
 
-fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
+fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_, '_>) -> bool {
     match parent {
         // Static member
         AstNodes::StaticMemberExpression(_) => true,

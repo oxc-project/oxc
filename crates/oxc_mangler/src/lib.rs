@@ -315,8 +315,10 @@ impl<'t> Mangler<'t> {
         self
     }
 
-    /// Mangles the program. The resulting SymbolTable contains the mangled symbols - `program` is not modified.
-    /// Pass the symbol table to oxc_codegen to generate the mangled code.
+    /// Mangles the program, returning scoping information with the mangled symbol names.
+    ///
+    /// Semantic analysis renumbers the node IDs in `program`, but does not rewrite its symbol names.
+    /// Pass the returned scoping and class private mappings to `oxc_codegen` to generate the mangled code.
     #[must_use]
     pub fn build(self, program: &Program<'_>) -> ManglerReturn {
         let mut builder = SemanticBuilder::new().with_build_nodes(true).with_class_table(true);
@@ -438,7 +440,8 @@ impl<'t> Mangler<'t> {
                 FxHashMap::with_capacity_and_hasher(private_member_count, FxBuildHasher);
             for element in class_elements.iter().filter(|element| element.is_private) {
                 let next_index = mappings.len();
-                let Entry::Vacant(entry) = mappings.entry(element.name.to_string()) else {
+                let Entry::Vacant(entry) = mappings.entry(element.name.display().to_string())
+                else {
                     continue;
                 };
 
@@ -767,7 +770,6 @@ impl<'a> SlotRanking<'a> {
             frequencies[index].symbol_ids.push(symbol_id);
         }
 
-        // Remove slots that have no symbols to rename before sorting.
         frequencies.retain(|x| !x.symbol_ids.is_empty());
         frequencies.sort_unstable_by_key(|x| std::cmp::Reverse(x.frequency));
         Self { frequencies }

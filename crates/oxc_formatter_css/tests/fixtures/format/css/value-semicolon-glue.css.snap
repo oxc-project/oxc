@@ -1,0 +1,30 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* DIVERGENCES.md#value-semicolon-glue */
+a {
+  b: if(media(width < 700px): 1 ; else: 2);
+  c: foo(x ; y);
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* DIVERGENCES.md#value-semicolon-glue */
+a {
+  b: if(media(width < 700px): 1; else: 2);
+  c: foo(x; y);
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* DIVERGENCES.md#value-semicolon-glue */
+a {
+  b: if(media(width < 700px): 1; else: 2);
+  c: foo(x; y);
+}
+
+===================== End =====================

@@ -49,6 +49,7 @@ declare_react_compiler_lint!(
     Refs,
     react,
     correctness,
+    recommended,
     version = "1.79.0",
     short_description = "Validates correct usage of refs: not reading or writing `ref.current` during render.",
 );

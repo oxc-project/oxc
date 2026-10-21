@@ -279,9 +279,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
                 let value = format_str!(self.allocator(), "{bigint}");
                 Expression::new_big_int_literal(span, value, None, BigintBase::Decimal, self)
             }
-            ConstantValue::String(s) => {
-                Expression::new_string_literal(span, Str::from_cow_in(&s, self), None, self)
-            }
+            ConstantValue::String(s) => Expression::new_string_literal(span, s, None, self),
             ConstantValue::Boolean(b) => Expression::new_boolean_literal(span, b, self),
             ConstantValue::Undefined => Expression::new_void_0(span, self),
             ConstantValue::Null => Expression::new_null_literal(span, self),
@@ -313,7 +311,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         kind: FreshValueKind,
         falsy_init: bool,
         implicit_undefined_source: bool,
-    ) {
+    ) -> &mut SymbolValue<'a> {
         let mut references = ReferenceCounts::default();
         for reference in self.scoping().get_resolved_references(symbol_id) {
             references.record(reference.flags());
@@ -365,12 +363,13 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
 
         let symbol_value = SymbolValue {
             initialized_constant,
+            allow_constant_inlining: true,
             implicit_undefined,
             references,
             kind: if has_multiple_value_declarations { FreshValueKind::None } else { kind },
             boolean_falsy,
         };
-        self.state.symbols.init_value(symbol_id, symbol_value);
+        self.state.symbols.init_value(symbol_id, symbol_value)
     }
 
     /// If two expressions are equal.
@@ -429,7 +428,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         if !expr.is_anonymous_function_definition() {
             return false;
         }
-        let is_class = matches!(expr.without_parentheses(), Expression::ClassExpression(_));
+        let is_class = matches!(expr, Expression::ClassExpression(_));
         (options.class && is_class) || (options.function && !is_class)
     }
 

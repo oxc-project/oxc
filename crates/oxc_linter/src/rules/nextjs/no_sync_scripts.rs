@@ -56,6 +56,7 @@ declare_oxc_lint!(
     NoSyncScripts,
     nextjs,
     correctness,
+    recommended,
     version = "0.2.0",
     short_description = "Prevent the use of synchronous `<script>` tags in Next.js applications.",
 );

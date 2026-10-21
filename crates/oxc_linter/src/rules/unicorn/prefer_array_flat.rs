@@ -62,6 +62,7 @@ declare_oxc_lint!(
     PreferArrayFlat,
     unicorn,
     pedantic,
+    recommended,
     conditional_dangerous_fix,
     version = "0.0.20",
     short_description = "Prefers `Array#flat()` over legacy techniques to flatten arrays.",
@@ -159,7 +160,7 @@ fn const_variable_initializer_kind(
     let AstKind::VariableDeclarator(declarator) = node.kind() else {
         return None;
     };
-    if !variable_declaration_kind(declarator, ctx).is_const() {
+    if !variable_declaration_kind(declarator, ctx.nodes())?.is_const() {
         return None;
     }
     let init = declarator.init.as_ref()?.get_inner_expression();

@@ -1,16 +1,15 @@
 use oxc_span::Span;
 
-use crate::{lanes::Lanes, token::is_trivia_byte, token::tk};
-
-use crate::pipeline::{
-    chunk::{eqm, load64},
-    tables::Tables,
+use crate::{
+    lanes::Lanes,
+    token::{is_trivia_byte, matches_tk, tk},
 };
+
+use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::{emit_value, invalid_diags};
 
-pub(super) unsafe fn compress_blocks(
-    _t: &Tables,
+pub(super) unsafe fn compress_blocks_generic(
     st: *const u64,
     kind: *const u8,
     b0: usize,
@@ -37,7 +36,7 @@ pub(super) unsafe fn compress_blocks(
 }
 
 /// Contents of this function is in common with AVX2 implementation.
-pub(super) unsafe fn build_spans(
+pub(super) unsafe fn build_spans_generic(
     stage_kind: *const u8,
     stage_pos: *const u32,
     m: usize,
@@ -59,7 +58,7 @@ pub(super) unsafe fn build_spans(
     w
 }
 
-pub(super) unsafe fn lanes_post(
+pub(super) unsafe fn lanes_post_generic(
     src: &[u8],
     out_kinds: *const u8,
     out_spans: *const Span,
@@ -85,11 +84,7 @@ pub(super) unsafe fn lanes_post(
     let mut inv_dirty = inv != 0;
     while i < m {
         let k = *out_kinds.add(i);
-        if k == tk!(Number)
-            || k == tk!(BigInt)
-            || k == tk!(IdentEscaped)
-            || k == tk!(PrivateIdentEscaped)
-        {
+        if matches_tk!(k, Number | BigInt | IdentEscaped | PrivateIdentEscaped) {
             emit_value(src, out_kinds, out_spans, i, lanes);
         }
         inv_dirty |= k == tk!(Invalid);

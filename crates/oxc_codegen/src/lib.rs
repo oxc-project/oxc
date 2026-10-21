@@ -16,7 +16,7 @@ use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
-    identifier::{is_identifier_part, is_identifier_part_ascii},
+    identifier::is_identifier_part_ascii,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -46,6 +46,39 @@ pub use options::{CodegenOptions, CommentOptions, LegalComment};
 
 // Re-export `IndentChar` from `oxc_data_structures`
 pub use oxc_data_structures::code_buffer::IndentChar;
+
+#[repr(C, align(128))]
+struct Align128<T>(pub(crate) T);
+
+/// Lookup table for whether a byte which is last byte of output when printing an identifier
+/// is one that needs a space printed after it.
+///
+/// Used by [`print_space_before_identifier`].
+///
+/// Non-ASCII characters can appear in various places (e.g. in strings),
+/// but in such cases an ASCII character (e.g. `"`) is always printed after them.
+/// Only case in which last byte of output can be non-ASCII when printing an identifier
+/// or keyword (when [`print_space_before_identifier`] is called) is when what was
+/// last printed was an identifier ending with a non-ASCII character.
+/// So non-ASCII must be an identifier, and a space is required.
+///
+/// Non-ASCII characters in identifiers are extremely rare in real-world code,
+/// so only the first 128 bytes of this table will ever be read.
+/// Aligned on 128, so occupies 2 x 128-byte cache lines on Apple Silicon,
+/// and 2 pairs of 64-byte cache lines on x86.
+///
+/// [`print_space_before_identifier`]: Codegen::print_space_before_identifier
+static IDENT_BYTES: Align128<[bool; 256]> = {
+    let mut slots = [true; 256];
+
+    let mut i = 0u8;
+    while i < 128 {
+        slots[i as usize] = is_identifier_part_ascii(i as char);
+        i += 1;
+    }
+
+    Align128(slots)
+};
 
 /// Output from [`Codegen::build`]
 #[non_exhaustive]
@@ -450,11 +483,39 @@ impl<'a> Codegen<'a> {
         unsafe { self.code.print_bytes_unchecked(&bytes) };
     }
 
-    /// Print a template literal quasi's raw text. Only untagged templates are escaped under
+    /// Print a template literal quasi's raw text, removing redundant dollar escapes when minifying
+    /// untagged templates. Only untagged templates are escaped under
     /// [CodegenOptions::ascii_only]: a tag function (e.g. `String.raw`) can observe the raw
     /// text, which escaping would change.
     #[inline]
     pub(crate) fn print_template_quasi_raw(&mut self, raw: &str, tagged: bool) {
+        let mut start = 0;
+        if self.options.minify && !tagged {
+            let bytes = raw.as_bytes();
+            for (index, _) in raw.match_indices("\\$") {
+                // Keep escapes which prevent interpolation.
+                if bytes.get(index + 2) == Some(&b'{') {
+                    continue;
+                }
+
+                // Keep backslashes which are themselves escaped.
+                let preceding_backslashes =
+                    bytes[..index].iter().rev().take_while(|&&b| b == b'\\').count();
+                if preceding_backslashes % 2 != 0 {
+                    continue;
+                }
+
+                // The preserved chunk ends with an even backslash run, and the next starts
+                // with `$`, so printing them separately preserves escape handling.
+                self.print_template_quasi_raw_chunk(&raw[start..index], tagged);
+                start = index + 1;
+            }
+        }
+        self.print_template_quasi_raw_chunk(&raw[start..], tagged);
+    }
+
+    #[inline]
+    fn print_template_quasi_raw_chunk(&mut self, raw: &str, tagged: bool) {
         if !self.options.ascii_only || tagged || raw.is_ascii() {
             self.print_str_escaping_script_close_tag(raw);
         } else {
@@ -601,7 +662,7 @@ impl<'a> Codegen<'a> {
 
     /// Print a string as a JavaScript string literal.
     pub fn print_string(&mut self, s: &str) {
-        self.print_string_impl(s, false, false);
+        self.print_string_impl(s.into(), false);
     }
 }
 
@@ -655,29 +716,16 @@ impl<'a> Codegen<'a> {
     fn print_space_before_identifier(&mut self) {
         let Some(byte) = self.last_byte() else { return };
 
-        if self.need_space_before_identifier != self.code.len() {
-            let is_identifier = if byte.is_ascii() {
-                // Fast path for ASCII (very common case)
-                is_identifier_part_ascii(byte as char)
-            } else {
-                is_identifier_part(self.last_char().unwrap())
-            };
-            if !is_identifier {
-                return;
-            }
+        let force_print_space = self.need_space_before_identifier == self.code.len();
+        let last_byte_is_ident = IDENT_BYTES.0[byte as usize];
+        if force_print_space || last_byte_is_ident {
+            self.print_hard_space();
         }
-
-        self.print_hard_space();
     }
 
     #[inline]
     fn last_byte(&self) -> Option<u8> {
         self.code.last_byte()
-    }
-
-    #[inline]
-    fn last_char(&self) -> Option<char> {
-        self.code.last_char()
     }
 
     #[inline]

@@ -20,7 +20,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      "@oxc-parser/binding-wasm32-wasi": path.resolve("npm-dir/wasm32-wasi"),
+      "@oxc-parser/binding-wasm32-wasip1": path.resolve("npm-dir/wasm32-wasip1"),
     },
   },
   server: {

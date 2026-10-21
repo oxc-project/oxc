@@ -242,6 +242,38 @@ fn test_comment_at_top_of_file() {
 }
 
 #[test]
+fn test_html_closing_annotation_after_code() {
+    use oxc_allocator::Allocator;
+    use oxc_codegen::{Codegen, CodegenOptions};
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+
+    let allocator = Allocator::default();
+    let source_type = SourceType::script();
+    for (source, pretty_delimiter, minified_delimiter) in [
+        ("foo();\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "//"),
+        ("if (true)\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("label:\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "//", "//"),
+        ("--> @__NO_SIDE_EFFECTS__\nfunction f() {}", "-->", "-->"),
+        ("{\n--> @__NO_SIDE_EFFECTS__\nfunction f() {}\n}", "-->", "//"),
+    ] {
+        let ret = Parser::new(&allocator, source, source_type).parse();
+        assert!(ret.diagnostics.is_empty(), "Invalid source: {source}");
+
+        for minify in [false, true] {
+            let options = CodegenOptions { minify, ..CodegenOptions::default() };
+            let code = Codegen::new().with_options(options.clone()).build(&ret.program).code;
+            let reparsed = Parser::new(&allocator, &code, source_type).parse();
+            assert!(reparsed.diagnostics.is_empty(), "Invalid output: {code}");
+            let expected_comment = if minify { minified_delimiter } else { pretty_delimiter };
+            assert!(code.contains(&format!("{expected_comment} @__NO_SIDE_EFFECTS__\n")));
+            let second = Codegen::new().with_options(options).build(&reparsed.program).code;
+            assert_eq!(code, second);
+        }
+    }
+}
+
+#[test]
 fn unit() {
     test_same("<div>{/* Hello */}</div>;\n");
     // A comment-only JSX expression container must not leak a leading space onto

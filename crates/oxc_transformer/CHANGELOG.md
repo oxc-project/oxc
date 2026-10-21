@@ -4,6 +4,49 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- c7d229b transformer: [**BREAKING**] Decode JSX entities to lone surrogates (#26712) (Dunqing)
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+- a0a987c ast: [**BREAKING**] Preserve lone surrogates in static member names (#26677) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 7c47246 linter: Check module specifiers and string values that contain lone surrogates (#26717) (Dunqing)
+
+### ⚡ Performance
+
+- faa75d8 transformer: Remove redundant scratch vectors (#27922) (camc314)
+
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- f8e9a50 semantic: Stop arguments resolution at ordinary functions (#26929) (camc314)
+- aec14bc transformer: Avoid synthetic private fields for static blocks (#27300) (Kuroda Kayn)
+
+### ⚡ Performance
+
+- 14a92ba transformer: Skip expression exit pipeline for unaffected nodes (#27492) (camc314)
+- cd9a62f transformer: Skip static block dispatch for ordinary statements (#27491) (camc314)
+- 135dd04 transformer: Skip ES2022 exits for non-class expressions (#27489) (camc314)
+
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- 72d62a1 transformer/explicit-resource-management: Transform classic for loop using declarations (#27148) (camc314)
+- 24b7015 transformer/explicit-resource-management: Lower using in catch and finally (#27142) (camc314)
+
+## [0.151.0] - 2026-09-21
+
+### 🐛 Bug Fixes
+
+- 32305e2 transformer: Skip enum reverse mappings for syntactic string initializers (#26724) (Dunqing)
+- 9220158 transformer: Skip recovered using loop patterns (#26722) (camc314)
+
 ## [0.150.0] - 2026-09-14
 
 ### 🐛 Bug Fixes

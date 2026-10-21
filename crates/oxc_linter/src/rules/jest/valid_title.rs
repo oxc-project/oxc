@@ -14,6 +14,7 @@ declare_oxc_lint!(
     ValidTitle,
     jest,
     correctness,
+    recommended,
     conditional_fix,
     // TODO: Replace this with an actual config struct. This is a dummy value to
     // indicate that this rule has configuration and avoid errors.
@@ -39,11 +40,20 @@ impl Rule for ValidTitle {
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::tester::{ExpectFixTestCase, Tester};
 
     let pass = vec![
         ("describe('the correct way to properly handle all the things', () => {});", None),
         ("test('that all is as it should be', () => {});", None),
+        (r"test('\uD800', () => {});", None),
+        (r"test('foo \uD800 bar', () => {});", None),
+        (r"test('\uD800test foo', () => {});", None),
+        // A title with a lone surrogate matches no disallowed word or configured pattern.
+        (
+            r"test('\uD800 correct', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["correct"] }])),
+        ),
+        (r"test('\uD800 foo', () => {});", Some(serde_json::json!([{ "mustNotMatch": "^\\W" }]))),
         (
             "it('correctly sets the value', () => {});",
             Some(serde_json::json!([
@@ -228,9 +238,20 @@ fn test() {
             Some(serde_json::json!([{ "disallowedWords": ["foo+bar"] }])),
         ),
         ("test('foo', () => {});", Some(serde_json::json!([{ "disallowedWords": ["foo|bar"] }]))),
+        // `String.raw` evaluates the raw quasi, not its cooked value.
+        (
+            "it(String.raw`\\x69t duplicates`, () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it(String.raw`\\x73hould run`, () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
     ];
 
     let fail = vec![
+        // A title with a lone surrogate matches no configured pattern.
+        (r"test('\uD800 foo', () => {});", Some(serde_json::json!([{ "mustMatch": "^\\W" }]))),
         ("const String = { raw: () => 'foo' }; it(String.raw`foo`, () => {})", None),
         (
             "test('the correct way to properly handle all things', () => {});",
@@ -267,6 +288,62 @@ fn test() {
         (
             "test('foo[bar', () => {});",
             Some(serde_json::json!([{ "disallowedWords": ["foo[bar"] }])),
+        ),
+        // https://github.com/oxc-project/oxc/issues/27137
+        (
+            "it('should do the thing', () => {});",
+            Some(
+                serde_json::json!([{ "disallowedWords": ["should"], "mustMatch": { "it": "^Then " } }]),
+            ),
+        ),
+        (
+            "it('does the thing', () => {});",
+            Some(
+                serde_json::json!([{ "disallowedWords": ["should"], "mustMatch": { "it": "^Then " } }]),
+            ),
+        ),
+        (
+            "it('never matches', () => {});",
+            Some(
+                serde_json::json!([{ "disallowedWords": ["should"], "mustNotMatch": { "it": "^never" } }]),
+            ),
+        ),
+        (
+            "it(' leading space', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        // Escaped whitespace is visible in the evaluated title but cannot be trimmed from source.
+        (
+            "it('\\u0020works', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('works\\u0020', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it(`\\u0020works`, () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('it duplicates the prefix', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('it\\u0020duplicates', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('it\\u0020duplicates more', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it('it \\u0020duplicates', () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+        ),
+        (
+            "it(`it\\u0020duplicates`, () => {});",
+            Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
         ),
         // TODO: The regex `(?:#(?!unit|e2e))\w+` in those test cases is not valid in Rust
         // (
@@ -585,6 +662,10 @@ fn test() {
         ("it(abc, function () {})", None),
         // Vitest-specific fail test with allowArguments: false
         ("test(bar, () => {});", Some(serde_json::json!([{ "allowArguments": false }]))),
+        (r"test(' \uD800 ', () => {});", None),
+        (r"describe(`\uDC00 `, () => {});", None),
+        (r"test('test \uD800', () => {});", None),
+        (r"it('it \uD800 foo', () => {});", None),
     ];
 
     let fix = vec![
@@ -717,7 +798,54 @@ fn test() {
             "test('test that it doesn\\'t break', () => {});",
             "test('that it doesn\\'t break', () => {});",
         ),
+        // Lone surrogates elsewhere in the title do not hide the space or prefix.
+        (r"test(' \uD800 ', () => {});", r"test('\uD800', () => {});"),
+        (r"test('test \uD800', () => {});", r"test('\uD800', () => {});"),
     ];
+
+    let fix = fix
+        .into_iter()
+        .map(Into::into)
+        .chain([
+            (
+                "it(String.raw`it duplicates`, () => {});",
+                "it(String.raw`duplicates`, () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            (
+                "it(String.raw` leading space`, () => {});",
+                "it(String.raw`leading space`, () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            // Escaped prefix separators must not remove the wrong part of the title.
+            (
+                "it('it\\u0020duplicates', () => {});",
+                "it('it\\u0020duplicates', () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            (
+                "it('it\\u0020duplicates more', () => {});",
+                "it('it\\u0020duplicates more', () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            (
+                "it('it \\u0020duplicates', () => {});",
+                "it('it \\u0020duplicates', () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+            (
+                "it(`it\\u0020duplicates`, () => {});",
+                "it(`it\\u0020duplicates`, () => {});",
+                Some(serde_json::json!([{ "disallowedWords": ["should"] }])),
+            )
+                .into(),
+        ])
+        .collect::<Vec<ExpectFixTestCase>>();
 
     Tester::new(ValidTitle::NAME, ValidTitle::PLUGIN, pass, fail)
         .with_jest_plugin(true)

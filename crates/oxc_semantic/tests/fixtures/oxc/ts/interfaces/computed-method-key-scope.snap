@@ -1,0 +1,163 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/interfaces/computed-method-key-scope.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 2,
+            "node": "TSMethodSignature",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 2,
+                "name": "x",
+                "node": "FormalParameter(x)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 1,
+        "node": "TSInterfaceDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 4,
+            "node": "TSMethodSignature",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(TypeParameter)",
+                "id": 4,
+                "name": "x",
+                "node": "TSTypeParameter(x)",
+                "references": [
+                  {
+                    "flags": "ReferenceFlags(Type)",
+                    "id": 2,
+                    "name": "x",
+                    "node_id": 32,
+                    "scope_id": 4
+                  }
+                ]
+              },
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 5,
+                "name": "value",
+                "node": "FormalParameter(value)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 3,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 6,
+            "node": "TSMethodSignature",
+            "symbols": []
+          },
+          {
+            "children": [],
+            "flags": "ScopeFlags(0x0)",
+            "id": 7,
+            "node": "TSMethodSignature",
+            "symbols": [
+              {
+                "flags": "SymbolFlags(FunctionScopedVariable)",
+                "id": 7,
+                "name": "x",
+                "node": "FormalParameter(x)",
+                "references": []
+              }
+            ]
+          }
+        ],
+        "flags": "ScopeFlags(0x0)",
+        "id": 5,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      }
+    ],
+    "flags": "ScopeFlags(Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable | Ambient)",
+        "id": 0,
+        "name": "x",
+        "node": "VariableDeclarator(x)",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "x",
+            "node_id": 11,
+            "scope_id": 1
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 1,
+            "name": "x",
+            "node_id": 23,
+            "scope_id": 3
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 3,
+            "name": "x",
+            "node_id": 39,
+            "scope_id": 5
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 4,
+            "name": "x",
+            "node_id": 44,
+            "scope_id": 5
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Interface)",
+        "id": 1,
+        "name": "I",
+        "node": "TSInterfaceDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 3,
+        "name": "Method",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 6,
+        "name": "Accessors",
+        "node": "TSTypeAliasDeclaration",
+        "references": []
+      }
+    ]
+  }
+]

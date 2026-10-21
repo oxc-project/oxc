@@ -79,6 +79,7 @@ declare_oxc_lint!(
     PreferSingleCall,
     unicorn,
     pedantic,
+    recommended,
     pending,
     fix,
     config = PreferSingleCallConfig,

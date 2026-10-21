@@ -59,9 +59,11 @@ The asynchronous `transform` runs on a worker-pool thread. It is useful when
 processing files concurrently, but can be slower for a single small file.
 
 `TransformResult` contains `code`, an optional source `map`, `errors`, and a
-`fatal` flag. Recoverable React Compiler bail-outs are omitted in every output
-mode, matching Babel's default `logger: null`. Fatal diagnostics appear in
-`errors` without producing code.
+`fatal` flag. Fatal diagnostics appear in `errors` without producing code.
+Recoverable React Compiler diagnostics are omitted by default;
+set `reactCompiler.reportDiagnostics` to include them in
+`errors` while code is still produced, and use `fatal` to determine whether the
+output is usable.
 
 ## Options
 
@@ -105,6 +107,7 @@ omitted.
 | ------------------------ | ------------------------------------- | ------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `compilationMode`        | `string`                              | `"infer"`                 | Select which functions to compile: `"infer"`, `"syntax"`, `"annotation"`, or `"all"`.                                                                                                        |
 | `panicThreshold`         | `string`                              | `"none"`                  | Select which diagnostics abort the transform: `"none"`, `"critical_errors"`, or `"all_errors"`.                                                                                              |
+| `reportDiagnostics`      | `boolean`                             | `false`                   | Include recoverable React Compiler diagnostics (skipped functions, rule suppressions, lint findings) in `result.errors` while still emitting code. Fatal diagnostics are always reported.    |
 | `target`                 | `string` or `ReactCompilerMetaTarget` | `"19"`                    | Target React `"17"`, `"18"`, `"19"`, or a Meta-internal runtime.                                                                                                                             |
 | `gating`                 | `ReactCompilerGating`                 | Unset                     | Emit compiled and original functions behind an imported feature flag.                                                                                                                        |
 | `dynamicGating`          | `ReactCompilerDynamicGating`          | Unset                     | Resolve flags in `"use memo if(...)"` directives from an imported module. A directive takes precedence over `gating`.                                                                        |
@@ -125,7 +128,9 @@ ESLint and Oxlint comments: `eslint-disable`, `eslint-disable-next-line`,
 `outputMode: "ssr"` takes precedence over `noEmit`. Otherwise, `noEmit: true`
 forces lint output, including when `outputMode: "client"` is set. Lint output
 suppresses only React Compiler rewrites; the downstream Oxc transform still
-removes TypeScript syntax and applies the configured JSX transform.
+removes TypeScript syntax and applies the configured JSX transform. Lint
+findings are recoverable diagnostics, so pair lint output with
+`reportDiagnostics: true` to receive them in `errors`.
 
 The object-valued target and gating options have these shapes:
 

@@ -6,7 +6,10 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use napi::{Either, Task, bindgen_prelude::AsyncTask};
+use napi::{
+    Either, Task,
+    bindgen_prelude::{AsyncTask, Utf16String},
+};
 use napi_derive::napi;
 use rustc_hash::FxHashMap;
 
@@ -18,6 +21,7 @@ use oxc::{
     parser::Parser,
     semantic::{SemanticBuilder, SemanticBuilderReturn},
     span::SourceType,
+    str::JSStr,
     transformer::{
         EnvOptions, HelperLoaderMode, HelperLoaderOptions, JsxRuntime, RewriteExtensionsMode,
     },
@@ -1033,10 +1037,12 @@ pub struct ModuleRunnerTransformResult {
     pub map: Option<SourceMap>,
 
     // Import sources collected during transformation.
-    pub deps: Vec<String>,
+    #[napi(ts_type = "string[]")]
+    pub deps: Vec<Either<String, Utf16String>>,
 
     // Dynamic import sources collected during transformation.
-    pub dynamic_deps: Vec<String>,
+    #[napi(ts_type = "string[]")]
+    pub dynamic_deps: Vec<Either<String, Utf16String>>,
 
     /// Parse and transformation errors.
     ///
@@ -1097,11 +1103,17 @@ fn module_runner_transform_impl(
         })
         .build(&program);
 
+    let to_napi_string = |value: JSStr<'_>| {
+        value.as_str().map_or_else(
+            || Either::B(value.encode_utf16().collect::<Vec<_>>().into()),
+            |value| Either::A(value.to_owned()),
+        )
+    };
     ModuleRunnerTransformResult {
         code,
         map: map.map(Into::into),
-        deps: deps.into_iter().collect::<Vec<String>>(),
-        dynamic_deps: dynamic_deps.into_iter().collect::<Vec<String>>(),
+        deps: deps.into_iter().map(to_napi_string).collect(),
+        dynamic_deps: dynamic_deps.into_iter().map(to_napi_string).collect(),
         errors: OxcError::from_diagnostics(filename, source_text, parser_ret.diagnostics),
     }
 }

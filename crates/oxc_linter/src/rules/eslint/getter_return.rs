@@ -85,6 +85,7 @@ declare_oxc_lint!(
     GetterReturn,
     eslint,
     correctness,
+    recommended,
     config = GetterReturn,
     version = "0.0.3",
     short_description = "Requires all getters to have a `return` statement.",

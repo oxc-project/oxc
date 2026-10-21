@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-less compatibility: 222/238 (93.28%), 7 files skipped
+less compatibility: 215/238 (90.34%), 7 files skipped
 
 # Failed
 

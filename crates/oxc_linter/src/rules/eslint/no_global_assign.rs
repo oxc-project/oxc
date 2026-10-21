@@ -54,6 +54,7 @@ declare_oxc_lint!(
     NoGlobalAssign,
     eslint,
     correctness,
+    recommended,
     config = NoGlobalAssignConfig,
     version = "0.0.7",
     short_description = "Disallow modifications to read-only global variables.",

@@ -104,7 +104,7 @@ The invariants (placement only; losing a comment is the lossless contract under 
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
       - Except a same-line line comment: it rides a `line_suffix` and lands just past the separator (`a // c\n, b` -> `a, // c`), the separator cannot follow it on the line;
       - an own-line comment leads what follows the separator instead
-  - Grammar-fixed DELIMITER (braces, a head's parens) is neither: it bounds a region and stays user content, never crossed
+  - Grammar-fixed DELIMITER (braces, a head's parens, an argument list's parens) is neither: it bounds a region and stays user content, never crossed
   - (JS/TS) Redundant expression parentheses are NOT delimiters: the formatter drops them and re-derives parens by its own rules, so any paren in the output is formatter-owned
     - Trailing comment inside the dropped pair moves behind the terminator, even across a re-printed pair
     - The source pair stays user content only where a sub-printer claims it and prints the comment inside (per-language keeps tables)

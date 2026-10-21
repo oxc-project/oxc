@@ -293,3 +293,61 @@ run:
 A same-line trailing comment never counts toward the `fits` measurement, the treatment Prettier itself gives JS/JSON line comments and YAML flow collections, but not the block scalar header.
 Same rule as CSS `trailing-line-comment-print-width`.
 The KEY does count: a long key overflowing on `key: |` alone breaks the pair exactly like Prettier.
+
+## document-marker-content
+
+- Why: semantics
+- Pin: `tests/fixtures/yaml/document-marker-content/document.yaml`, `tests/fixtures/yaml/document-marker-content/indented.yaml`, `tests/fixtures/yaml/document-marker-content/key.yaml`, `tests/fixtures/yaml/document-marker-content/scalar.yaml`
+
+```yaml
+# input
+--- ---
+? --- x
+: m
+# (proseWrap: always, printWidth: 10)
+aaaa bbbb --- cccc
+...
+ ---
+
+# ours: no line starts with the marker at column 0
+--- ---
+? --- x
+: m
+aaaa bbbb
+  --- cccc
+...
+ ---
+
+# prettier: the content becomes a marker
+---
+---
+--- x: m
+aaaa bbbb
+--- cccc
+...
+---
+```
+
+Text starting with `---` or `...` never starts a line at column 0, where it is read as a document marker (`"---"` becomes an empty document, the rest fails to parse).
+A root plain scalar on a line of its own stays verbatim from its line start: a lenient parser (js-yaml) reads an indented marker as one, so re-indenting it would change the value there.
+The guarded sites are listed in AGENTS.md "Line starts".
+
+## bom-content
+
+- Why: semantics
+- Pin: `tests/fixtures/yaml/bom-content.yaml`
+
+```yaml
+# input ("␢" marks U+FEFF)
+? ␢a
+: m
+
+# ours: a `---` keeps the key inside a document
+---
+␢a: m
+
+# prettier: the key leads the stream, read back as a BOM, the key becomes "a"
+␢a: m
+```
+
+A U+FEFF never starts the text of a document without `---`, where it is read as a BOM: the document gets a `---` (AGENTS.md "Line starts").

@@ -552,24 +552,21 @@ pub fn transparent_reference_parent<'a, 'b>(
     ctx: &'b LintContext<'a>,
 ) -> (&'b AstNode<'a>, Span) {
     let mut subject_span = node.span();
-    for ancestor in ctx.nodes().ancestors(node.id()) {
-        if matches!(
-            ancestor.kind(),
-            AstKind::ParenthesizedExpression(_)
-                | AstKind::TSAsExpression(_)
-                | AstKind::TSSatisfiesExpression(_)
-                | AstKind::TSTypeAssertion(_)
-                | AstKind::TSNonNullExpression(_)
-                | AstKind::TSInstantiationExpression(_)
-        ) {
-            subject_span = ancestor.span();
-            continue;
-        }
-        return (ancestor, subject_span);
+    let nodes = ctx.nodes();
+    let mut parent = nodes.parent_node(node.id());
+    while matches!(
+        parent.kind(),
+        AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSInstantiationExpression(_)
+    ) {
+        subject_span = parent.span();
+        parent = nodes.parent_node(parent.id());
     }
-    // The Program node is always present at the top of the AST, so the loop
-    // returns before exhausting the ancestor iterator in practice.
-    unreachable!("ancestors iterator must yield the Program node")
+    (parent, subject_span)
 }
 
 // Collapse OXC's formal-parameter wrappers to the parent shape used by ESLint.
@@ -600,7 +597,7 @@ fn export_specifier_is_duplicate_clone<'a>(
         return false;
     }
     match &specifier.exported {
-        ModuleExportName::IdentifierName(inner) => inner.node_id.get() == current_node.id(),
+        ModuleExportName::IdentifierName(inner) => inner.node_id() == current_node.id(),
         _ => false,
     }
 }
@@ -691,7 +688,7 @@ fn object_property_is_import_options_with<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let property_node = ctx.nodes().get_node(property.node_id.get());
+    let property_node = ctx.nodes().get_node(property.node_id());
     let object_node = ctx.nodes().parent_node(property_node.id());
     matches!(
         ctx.nodes().parent_kind(object_node.id()),
@@ -704,7 +701,7 @@ fn object_property_is_inside_dynamic_import_with<'a>(
     property: &ObjectProperty<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    let property_node = ctx.nodes().get_node(property.node_id.get());
+    let property_node = ctx.nodes().get_node(property.node_id());
     let object_node = ctx.nodes().parent_node(property_node.id());
     let outer_property_node = ctx.nodes().parent_node(object_node.id());
     let AstKind::ObjectProperty(outer_property) = outer_property_node.kind() else {

@@ -1,8 +1,8 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        ArrowFunctionExpression, BindingPattern, Expression, FunctionType, PropertyKind,
-        ReturnStatement, TSType, TSTypeName,
+        ArrowFunctionExpression, BindingPattern, Expression, Function, FunctionType, PropertyKind,
+        ReturnStatement,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -10,7 +10,6 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
-use oxc_syntax::operator::UnaryOperator;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -304,8 +303,7 @@ impl ExplicitFunctionReturnType {
             return false;
         }
         let Some(expr) = func.get_expression() else { return false };
-        let Expression::UnaryExpression(unary_expr) = expr else { return false };
-        matches!(unary_expr.operator, UnaryOperator::Void)
+        expr.is_void()
     }
 
     fn is_allowed_function<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
@@ -357,19 +355,25 @@ impl ExplicitFunctionReturnType {
                 self.allowed_names.contains(id.name.as_str())
             }
             AstKind::MethodDefinition(def) => {
-                let Some(name) = def.key.name() else { return false };
+                let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 def.key.is_identifier()
                     && !def.computed
                     && self.allowed_names.contains(name.as_ref())
             }
             AstKind::PropertyDefinition(def) => {
-                let Some(name) = def.key.name() else { return false };
+                let Some(name) = def.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 def.key.is_identifier()
                     && !def.computed
                     && self.allowed_names.contains(name.as_ref())
             }
             AstKind::ObjectProperty(prop) => {
-                let Some(name) = prop.key.name() else { return false };
+                let Some(name) = prop.key.name().and_then(StaticPropertyName::into_cow_str) else {
+                    return false;
+                };
                 prop.key.is_identifier()
                     && !prop.computed
                     && self.allowed_names.contains(name.as_ref())
@@ -418,24 +422,10 @@ impl ExplicitFunctionReturnType {
 
         match expr {
             Expression::TSAsExpression(ts_expr) => {
-                let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
-                    return false;
-                };
-                let TSTypeName::IdentifierReference(id_ref) = &ts_type.type_name else {
-                    return false;
-                };
-
-                id_ref.name == "const"
+                ts_expr.type_annotation.is_const_type_reference()
             }
             Expression::TSTypeAssertion(ts_expr) => {
-                let TSType::TSTypeReference(ts_type) = &ts_expr.type_annotation else {
-                    return false;
-                };
-                let TSTypeName::IdentifierReference(id_ref) = &ts_type.type_name else {
-                    return false;
-                };
-
-                id_ref.name == "const"
+                ts_expr.type_annotation.is_const_type_reference()
             }
             _ => false,
         }
@@ -664,12 +654,7 @@ impl<'a> VisitJs<'a> for ReturnStatementChecker {
             return_statement.argument.as_ref().is_some_and(|argument| is_function(argument));
     }
 
-    fn visit_function(
-        &mut self,
-        _func: &oxc_ast::ast::Function<'a>,
-        _flags: oxc_semantic::ScopeFlags,
-    ) {
-    }
+    fn visit_function(&mut self, _func: &Function<'a>, _flags: oxc_semantic::ScopeFlags) {}
 
     fn visit_arrow_function_expression(&mut self, _it: &ArrowFunctionExpression<'a>) {}
 }

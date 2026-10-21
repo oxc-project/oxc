@@ -1,10 +1,8 @@
-use oxc_ast::{
-    AstKind,
-    ast::{BinaryExpression, Expression},
-};
+use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::operator::BinaryOperator;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -96,6 +94,7 @@ declare_oxc_lint!(
     UseIsnan,
     eslint,
     correctness,
+    recommended,
     conditional_fix,
     config = UseIsnan,
     version = "0.0.3",
@@ -114,16 +113,24 @@ impl Rule for UseIsnan {
                 }
             }
             AstKind::BinaryExpression(expr) if expr.operator.is_equality() => {
+                let negate = matches!(
+                    expr.operator,
+                    BinaryOperator::Inequality | BinaryOperator::StrictInequality
+                );
                 if is_nan_identifier(&expr.left) {
                     ctx.diagnostic_with_fix(
                         comparison_with_nan(expr.left.span(), expr.operator),
-                        |fixer| fixer.replace(expr.span, make_equality_fix(true, expr, ctx)),
+                        |fixer| {
+                            fixer.replace(expr.span, make_equality_fix(&expr.right, negate, ctx))
+                        },
                     );
                 }
                 if is_nan_identifier(&expr.right) {
                     ctx.diagnostic_with_fix(
                         comparison_with_nan(expr.right.span(), expr.operator),
-                        |fixer| fixer.replace(expr.span, make_equality_fix(false, expr, ctx)),
+                        |fixer| {
+                            fixer.replace(expr.span, make_equality_fix(&expr.left, negate, ctx))
+                        },
                     );
                 }
             }
@@ -196,6 +203,7 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
     if let Some(expr) = callee.as_member_expression() {
         return expr
             .static_property_name()
+            .and_then(JSStr::as_str)
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
@@ -203,28 +211,16 @@ fn is_target_callee<'a>(callee: &'a Expression) -> Option<&'a str> {
         let expr = chain.expression.as_member_expression()?;
         return expr
             .static_property_name()
+            .and_then(JSStr::as_str)
             .and_then(|property| TARGET_METHODS.contains(&property).then_some(property));
     }
 
     None
 }
 
-fn make_equality_fix<'a>(
-    nan_on_left: bool,
-    comparison: &BinaryExpression<'a>,
-    ctx: &LintContext<'a>,
-) -> String {
-    let non_nan = if nan_on_left {
-        comparison.right.span().source_text(ctx.source_text())
-    } else {
-        comparison.left.span().source_text(ctx.source_text())
-    };
-
-    let maybe_bang = match comparison.operator {
-        BinaryOperator::Equality | BinaryOperator::StrictEquality => "",
-        BinaryOperator::Inequality | BinaryOperator::StrictInequality => "!",
-        _ => unreachable!(),
-    };
+fn make_equality_fix<'a>(non_nan: &Expression<'a>, negate: bool, ctx: &LintContext<'a>) -> String {
+    let non_nan = non_nan.span().source_text(ctx.source_text());
+    let maybe_bang = if negate { "!" } else { "" };
 
     format!("{maybe_bang}isNaN({non_nan})")
 }

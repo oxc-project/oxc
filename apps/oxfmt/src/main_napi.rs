@@ -90,10 +90,11 @@ pub async fn run_cli(
         sort_tailwindcss_classes_cb,
     )
     .with_init_cb(init_external_services_cb);
+    let _cleanup = external_services.cleanup_guard();
     let js_config_loader = create_js_config_loader(load_js_config_cb);
 
     utils::init_tracing();
-    let result = match command.mode {
+    match command.mode {
         Mode::Lsp => {
             run_lsp(js_config_loader, external_services.clone()).await;
 
@@ -117,13 +118,7 @@ pub async fn run_cli(
             ("cli".to_string(), Some(result.exit_code()))
         }
         _ => unreachable!("All other modes must have been handled above match arm"),
-    };
-
-    // Explicitly drop ThreadsafeFunctions before returning to prevent
-    // use-after-free during V8 cleanup (Node.js issue with TSFN cleanup timing)
-    external_services.cleanup();
-
-    result
+    }
 }
 
 // ---

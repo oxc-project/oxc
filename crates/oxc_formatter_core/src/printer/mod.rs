@@ -13,7 +13,8 @@ use unicode_width::UnicodeWidthChar;
 
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
-    IndentWidth, InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
+    IndentWidth, InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind,
+    format_element::{TextWidth, tag::Prefix, text_width},
 };
 
 use self::call_stack::{
@@ -300,7 +301,7 @@ impl<'a> Printer<'a> {
 
             FormatElement::Tag(StartPrefix(prefix)) => {
                 indent_stack.prefix(
-                    prefix.0,
+                    *prefix,
                     &mut self.state.prefix_nodes,
                     self.options.indent_style(),
                 );
@@ -378,7 +379,7 @@ impl<'a> Printer<'a> {
                 debug_assert!(
                     text.is_some(),
                     "TailwindClass index {index} out of bounds ({} classes): \
-                     Was the embedded IR remapped into the parent's class space (`DispatchPayload::into_doc`)?",
+                     Did a root formatter finalize its `Document` from another class scope?",
                     self.state.sorted_tailwind_classes.len(),
                 );
                 if let Some(text) = text {
@@ -762,16 +763,24 @@ impl<'a> Printer<'a> {
     }
 
     /// Writes `indention`'s prefix chain up to and including its last prefix
-    /// (`trim_last`: that one without its trailing whitespace).
+    /// (`trim_last`: up to its last visible one, without its trailing whitespace;
+    /// the space prefixes after it are trailing whitespace too).
     /// Width is the caller's business.
     fn emit_prefix_chain(&mut self, indention: Indention, trim_last: bool) {
         let node =
             PrefixNode::get(&self.state.prefix_nodes, indention.prefix.expect("has a prefix"));
+        if trim_last && node.prefix.is_spaces() {
+            if node.before.prefix.is_some() {
+                self.emit_prefix_chain(node.before, true);
+            }
+            return;
+        }
         if node.before.prefix.is_some() {
             self.emit_prefix_chain(node.before, false);
         }
         self.emit_level_and_align(node.before);
-        self.state.buffer.print_str(if trim_last { node.prefix.trim_end() } else { node.prefix });
+        let prefix = node.prefix.text();
+        self.state.buffer.print_str(if trim_last { prefix.trim_end() } else { prefix });
     }
 
     #[inline]
@@ -787,7 +796,7 @@ impl<'a> Printer<'a> {
 
     /// Ends the current line; `next` becomes the pending indention of the new one.
     ///
-    /// Ending an EMPTY line inside `prefix_align` still prints its prefixes, the last one trimmed:
+    /// Ending an EMPTY line inside `prefix_align` still prints its prefixes, up to the last visible one trimmed:
     /// Prettier writes the whole indention at every newline and trims trailing whitespace at the next,
     /// so a blank line in a blockquote is `>`.
     /// The levels / aligns after the last prefix are that whitespace.
@@ -992,7 +1001,7 @@ type PrefixId = std::num::NonZeroU32;
 struct PrefixNode {
     /// What prints before the prefix: the indention the prefix was added to (its own chain included).
     before: Indention,
-    prefix: &'static str,
+    prefix: Prefix,
 }
 
 impl PrefixNode {
@@ -1042,7 +1051,7 @@ impl Indention {
     /// and the new indention starts empty after it.
     fn set_prefix(
         self,
-        prefix: &'static str,
+        prefix: Prefix,
         nodes: &mut Vec<PrefixNode>,
         indent_style: IndentStyle,
     ) -> Self {
@@ -1070,7 +1079,7 @@ impl Indention {
         let own =
             node.before.level as usize * indent_width.value() as usize + node.before.align as usize;
         let before = node.before.prefix.map_or(0, |id| Self::chain_width(nodes, id, indent_width));
-        before + own + TextWidth::from_text(node.prefix, indent_width).value() as usize
+        before + own + text_width(node.prefix.text(), indent_width) as usize
     }
 }
 
@@ -1120,11 +1129,11 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         let saved_indent_stack = std::mem::take(&mut printer.state.fits_indent_stack);
         let saved_stack_tem_indent = std::mem::take(&mut printer.state.fits_stack_tem_indent);
         let saved_root_indent_stack = std::mem::take(&mut printer.state.fits_root_indent_stack);
-        debug_assert!(saved_stack.is_empty());
-        debug_assert!(saved_queue.is_empty());
-        debug_assert!(saved_indent_stack.is_empty());
-        debug_assert!(saved_stack_tem_indent.is_empty());
-        debug_assert!(saved_root_indent_stack.is_empty());
+        debug_assert_eq!(saved_stack.len(), 0);
+        debug_assert_eq!(saved_queue.len(), 0);
+        debug_assert_eq!(saved_indent_stack.len(), 0);
+        debug_assert_eq!(saved_stack_tem_indent.len(), 0);
+        debug_assert_eq!(saved_root_indent_stack.len(), 0);
 
         let fits_queue = FitsQueue::new(print_queue, saved_queue);
         let fits_stack = FitsCallStack::new(print_stack, saved_stack);
@@ -1138,7 +1147,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
 
         let fits_state = FitsState {
             pending_indent: printer.state.pending_indent,
+            // Already printed, so it counts like Prettier's `pos` even if it came from a `line`
             pending_space: printer.state.pending_space,
+            pending_line_space: false,
             line_width: printer.state.line_width,
             has_line_suffix: printer.state.line_suffixes.has_pending(),
             sorted_tailwind_classes: printer.state.sorted_tailwind_classes,
@@ -1168,17 +1179,29 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     {
         while let Some(element) = self.queue.pop() {
             match self.fits_element(element)? {
-                Fits::Yes => return Ok(true),
+                Fits::Yes => return Ok(!self.overflows()),
                 Fits::No => return Ok(false),
                 Fits::Maybe => {
+                    // A fill entry ends but the line goes on: the measurement of the next entry
+                    // counts a pending `Space` once text follows, like Prettier measuring
+                    // `[content, separator, next content]` together
                     if predicate.is_end(element)? {
-                        break;
+                        return Ok(self.state.line_width <= usize::from(self.options().print_width));
                     }
                 }
             }
         }
 
-        Ok(true)
+        Ok(!self.overflows())
+    }
+
+    /// Like Prettier's `fits` loop head (`remainingWidth >= 0`),
+    /// checked at every `Fits::Yes` exit except a fill entry boundary (see `fits`):
+    /// a line that already overflows never fits, even if no text was measured.
+    /// A pending `Space` counts, a pending `line` space does not.
+    fn overflows(&self) -> bool {
+        self.state.line_width + usize::from(self.state.pending_space)
+            > usize::from(self.options().print_width)
     }
 
     /// Tests if the content of a `Fill` item fits in [PrintMode::Flat].
@@ -1245,7 +1268,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 if args.mode().is_flat() {
                     match line_mode {
                         LineMode::SoftOrSpace => {
-                            self.state.pending_space = true;
+                            self.state.pending_line_space = true;
                         }
                         LineMode::Soft => {}
                         LineMode::Hard
@@ -1302,17 +1325,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                     // is what the mode's initialized to by default
                     // This means, the printer is outside of the current element at this point and any
                     // line break should be printed as regular line break -> Fits
-                    //
-                    // Before returning, resolve any pending space so the width check is accurate.
-                    // Without this, a deferred `Space` before a group boundary can be lost when
-                    // the fits measurer exits early via an expanded-mode line break, causing the
-                    // measured width to be off by one.
-                    if self.state.pending_space {
-                        self.state.line_width += 1;
-                        if self.state.line_width > usize::from(self.options().print_width) {
-                            return Ok(Fits::No);
-                        }
-                    }
                     return Ok(Fits::Yes);
                 }
             }
@@ -1371,7 +1383,7 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
 
             FormatElement::Tag(StartPrefix(prefix)) => {
                 self.indent_stack.prefix(
-                    prefix.0,
+                    *prefix,
                     &mut self.printer.state.prefix_nodes,
                     self.printer.options.indent_style(),
                 );
@@ -1428,10 +1440,6 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 self.state.has_line_suffix = true;
             }
 
-            FormatElement::Tag(EndLineSuffix) => {
-                return invalid_end_tag(TagKind::LineSuffix, self.stack.top_kind());
-            }
-
             FormatElement::Tag(tag @ StartFill) => {
                 self.fill_depth += 1;
                 self.stack.push(tag.kind(), args);
@@ -1479,7 +1487,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 }
                 self.stack.pop(tag.kind())?;
             }
-            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndPrefix)) => {
+            // `EndLineSuffix` is reached only when measuring inside flushed line suffix content
+            // (`flush_line_suffixes` pushes the frame and its end tag), so leave it like the printer does
+            FormatElement::Tag(tag @ (EndIndent | EndAlign | EndPrefix | EndLineSuffix)) => {
                 self.stack.pop(tag.kind())?;
                 self.indent_stack.pop();
             }
@@ -1515,7 +1525,9 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         self.state.line_width +=
             indent.width(&self.printer.state.prefix_nodes, self.options().indent_width());
 
-        if self.state.pending_space {
+        if std::mem::take(&mut self.state.pending_space)
+            | std::mem::take(&mut self.state.pending_line_space)
+        {
             self.state.line_width += 1;
         }
 
@@ -1524,26 +1536,18 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
                 self.state.line_width += text.len();
             }
             Text::Text { text: _, width } => {
-                if width.is_multiline() {
-                    return if self.must_be_flat
-                        || self.state.line_width + width.value() as usize
-                            > usize::from(self.options().print_width)
-                    {
-                        Fits::No
-                    } else {
-                        Fits::Yes
-                    };
-                }
-
                 self.state.line_width += width.value() as usize;
+
+                // The width is checked at the `Fits::Yes` exit, see `overflows`
+                if width.is_multiline() {
+                    return Fits::from(!self.must_be_flat);
+                }
             }
         }
 
-        if self.state.line_width > usize::from(self.options().print_width) {
+        if self.overflows() {
             return Fits::No;
         }
-
-        self.state.pending_space = false;
 
         Fits::Maybe
     }
@@ -1631,7 +1635,10 @@ impl From<bool> for Fits {
 #[derive(Debug)]
 struct FitsState<'print> {
     pending_indent: Indention,
+    /// A `Space`: like Prettier's `" "`, it counts even if no text follows it.
     pending_space: bool,
+    /// A flat `soft_line_break_or_space`: like Prettier's `line`, it counts only once text follows it.
+    pending_line_space: bool,
     has_line_suffix: bool,
     line_width: usize,
     sorted_tailwind_classes: &'print [String],
@@ -1650,13 +1657,13 @@ mod tests {
     use oxc_allocator::Allocator;
 
     use crate::{
-        Argument, Arguments, Buffer, Document, Format, FormatState, IndentStyle, LineEnding,
-        Printed, Printer, PrinterOptions, SimpleFormatContext, VecBuffer, best_fitting,
+        Document, Format, FormatState, IndentStyle, LineEnding, Printed, Printer, PrinterOptions,
+        SimpleFormatContext, best_fitting,
         builders::{
             align, block_indent, dedent_to_root, empty_line, exact_line_breaks, group,
             hard_line_break, if_group_breaks, if_group_fits_on_line, indent, line_suffix,
             literal_line_break, mark_as_root, prefix_align, soft_block_indent, soft_line_break,
-            soft_line_break_or_space, space, text, token,
+            soft_line_break_or_space, space, space_align, text, token,
         },
         format_args,
         printer::PrintWidth,
@@ -1692,8 +1699,8 @@ mod tests {
     {
         let context = SimpleFormatContext::default();
         let mut state = FormatState::new(context, allocator);
-        let mut buffer = VecBuffer::new(&mut state);
-        write(&mut buffer, Arguments::new(&[Argument::new(root)]));
+        let mut buffer = crate::Formatter::new(&mut state);
+        root.fmt(&mut buffer);
 
         let elements = buffer.into_vec();
         Document::new(elements, Vec::default()).print(0, options).expect("Document to be valid")
@@ -1773,6 +1780,59 @@ mod tests {
             ),
         );
         assert_eq!("a\n  > b\na\n>   b\na\n>   > b", formatted.as_code());
+    }
+
+    #[test]
+    fn space_align_stays_spaces_under_tabs() {
+        let allocator = Allocator::default();
+        let inner = test_format_with(|f| {
+            write!(f, [token("a"), indent(&format_args!(hard_line_break(), token("b")))]);
+        });
+        let quoted = test_format_with(|f| {
+            write!(
+                f,
+                [
+                    token("> "),
+                    prefix_align(&"> ", &format_args!(token("q"), empty_line(), token("r")))
+                ]
+            );
+        });
+        let options =
+            PrinterOptions { indent_style: IndentStyle::Tab, ..PrinterOptions::default() };
+
+        // `align` before an `indent` becomes a tab, `space_align` keeps its columns
+        let result = format_simple_with_options(
+            &allocator,
+            &format_args!(
+                align(2, &inner),
+                hard_line_break(),
+                space_align(2, &inner),
+                hard_line_break(),
+                space_align(2, &space_align(2, &inner))
+            ),
+            options.clone(),
+        );
+        assert_eq!("a\n\t\tb\na\n  \tb\na\n    \tb", result.as_code());
+
+        // Before a prefix too; a blank line trims the spaces with the prefix
+        let result = format_simple_with_options(
+            &allocator,
+            &format_args!(
+                token("x"),
+                space_align(2, &format_args!(hard_line_break(), quoted)),
+                hard_line_break(),
+                prefix_align(
+                    &"> ",
+                    &space_align(2, &format_args!(token("y"), empty_line(), token("z")))
+                )
+            ),
+            options.clone(),
+        );
+        assert_eq!("x\n  > q\n  >\n  > r\ny\n>\n>   z", result.as_code());
+
+        // Wider than one space run: the runs chain, no column is lost
+        let result = format_simple_with_options(&allocator, &space_align(40, &inner), options);
+        assert_eq!(format!("a\n{}\tb", " ".repeat(40)), result.as_code());
     }
 
     #[test]
@@ -2128,6 +2188,26 @@ a",
     }
 
     #[test]
+    fn group_inside_line_suffix() {
+        let allocator = Allocator::default();
+        let result = format_simple(
+            &allocator,
+            &format_args!(
+                token("a"),
+                line_suffix(&group(&format_args!(
+                    token(" b"),
+                    soft_line_break_or_space(),
+                    token("c")
+                ))),
+                hard_line_break(),
+                token("d")
+            ),
+        );
+
+        assert_eq!("a b c\nd", result.as_code());
+    }
+
+    #[test]
     fn dedent_to_root_returns_to_marked_root() {
         let allocator = Allocator::default();
         let result = format_simple(
@@ -2424,8 +2504,7 @@ two lines`,
         let allocator = Allocator::default();
         let context = SimpleFormatContext::default();
         let mut state = FormatState::new(context, &allocator);
-        let mut buffer = VecBuffer::new(&mut state);
-        let mut formatter = crate::Formatter::new(&mut buffer);
+        let mut formatter = crate::Formatter::new(&mut state);
 
         formatter
             .fill()
@@ -2451,7 +2530,7 @@ two lines`,
             )
             .finish();
 
-        let document = Document::new(buffer.into_vec(), Vec::default());
+        let document = Document::new(formatter.into_vec(), Vec::default());
 
         let printed = Printer::new(
             PrinterOptions::default()

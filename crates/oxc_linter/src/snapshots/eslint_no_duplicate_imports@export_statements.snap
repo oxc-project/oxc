@@ -1,0 +1,36 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import type Default from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             export { type Foo, bar } from "module";
+   ·                                ─┬─
+   ·                                 ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:26]
+ 1 │ import type Default from "module";
+   ·                          ────┬───
+   ·                              ╰── Can be merged with this
+ 2 │             export { bar, type Foo } from "module";
+   ·                      ─┬─
+   ·                       ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement
+
+  ⚠ eslint(no-duplicate-imports): 'module' export is duplicated
+   ╭─[no_duplicate_imports.tsx:1:10]
+ 1 │ export { foo, bar } from "module";
+   ·          ─┬─
+   ·           ╰── Can be merged with this
+ 2 │             export { baz, qux } from "module";
+   ·                      ─┬─
+   ·                       ╰── This export is duplicated
+   ╰────
+  help: Merge the duplicated exports into a single export statement

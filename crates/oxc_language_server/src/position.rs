@@ -1,4 +1,4 @@
-use tower_lsp_server::ls_types::Position;
+use tower_lsp_server::gen_lsp_types::Position;
 
 /// Convert a UTF-8 byte offset to an LSP position.
 ///

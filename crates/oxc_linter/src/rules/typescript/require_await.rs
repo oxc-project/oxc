@@ -74,6 +74,7 @@ declare_oxc_lint!(
     RequireAwait(tsgolint),
     typescript,
     pedantic,
+    recommended,
     suggestion,
     version = "1.12.0",
     short_description = "This rule disallows async functions which do not have an await expression.",

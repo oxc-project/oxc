@@ -1,7 +1,7 @@
 use std::{borrow::Cow, ops::Deref};
 
 use oxc_allocator::{Address, ArenaVec, UnstableAddress};
-use oxc_ast::{AstKind, ast::*};
+use oxc_ast::{AstKind, StaticPropertyName, ast::*};
 use oxc_ast_visit::{
     VisitJs,
     walk_js::{self, walk_expression},
@@ -356,10 +356,6 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         }
     }
 
-    // fn target_span(&self) -> Option<Span> {
-    //     self.target_symbol.as_ref().map(|id| id.span)
-    // }
-
     fn with_target_binding(&mut self, binding: Option<&BindingIdentifier<'a>>) -> bool {
         if let Some(id) = binding {
             self.target_symbol = Some(TargetSymbol {
@@ -377,7 +373,9 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
         let Some(id) = prop else {
             return false;
         };
-        if let Some(Cow::Borrowed(name)) = id.static_name() {
+        if let Some(Cow::Borrowed(name)) =
+            id.static_name().and_then(StaticPropertyName::into_cow_str)
+        {
             self.target_symbol =
                 Some(TargetSymbol { span: id.span(), name, kind: TargetSymbolKind::Property });
             true
@@ -482,7 +480,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                 continue;
             };
             if method.value.is_typescript_syntax() {
-                overload_keys.insert((method.r#static, CompactStr::from(method_name.as_ref())));
+                overload_keys.insert((method.r#static, method_name));
             }
         }
 
@@ -496,7 +494,7 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
             let Some(method_name) = method.key.static_name() else {
                 continue;
             };
-            if overload_keys.contains(&(method.r#static, CompactStr::from(method_name.as_ref()))) {
+            if overload_keys.contains(&(method.r#static, method_name)) {
                 self.overloaded_methods.insert(method.span);
             }
         }
@@ -567,14 +565,13 @@ impl<'a, 'c> ExplicitTypesChecker<'a, 'c> {
                     }
                 }
             }
-        } else {
-            walk_js::walk_arrow_function_body(self, &arrow.body);
+        }
+        walk_js::walk_arrow_function_body(self, &arrow.body);
 
-            // AST is immutable in linter, so `unstable_address` produces stable `Address`es
-            let is_hof = self.is_higher_order_function(arrow.unstable_address());
-            if !is_hof && !is_allowed() {
-                self.ctx.diagnostic(func_missing_return_type(span));
-            }
+        // AST is immutable in linter, so `unstable_address` produces stable `Address`es
+        let is_hof = self.is_higher_order_function(arrow.unstable_address());
+        if !is_hof && !is_allowed() {
+            self.ctx.diagnostic(func_missing_return_type(span));
         }
     }
 
@@ -723,7 +720,9 @@ impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
         {
             return;
         }
-        if self.rule.is_some_allowed_name(el.static_name()) {
+        if el.static_name().is_some_and(|name| {
+            self.rule.allowed_names.iter().any(|allowed| name == allowed.as_str())
+        }) {
             return;
         }
 
@@ -814,7 +813,6 @@ impl<'a> VisitJs<'a> for ExplicitTypesChecker<'a, '_> {
         }
     }
     fn visit_formal_parameter(&mut self, it: &FormalParameter<'a>) {
-        // let name = param.get_identifier_name();
         if let Some(ty) = &it.type_annotation {
             if !self.rule.allow_arguments_explicitly_typed_as_any
                 && matches!(ty.type_annotation, TSType::TSAnyKeyword(_))

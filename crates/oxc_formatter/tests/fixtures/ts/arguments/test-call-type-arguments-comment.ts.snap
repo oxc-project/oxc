@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+test<T /* c */>("type arguments", () => {
+  run();
+});
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+test<T /* c */>("type arguments", () => {
+  run();
+});
+
+-------------------
+{ printWidth: 100 }
+-------------------
+test<T /* c */>("type arguments", () => {
+  run();
+});
+
+===================== End =====================

@@ -21,7 +21,8 @@ use rustc_hash::FxHashMap;
 
 use crate::diagnostics;
 use crate::react_compiler_hir::dominator::{
-    PostDominatorFrontiers, compute_post_dominator_frontiers,
+    PostDominatorFrontiers, compute_normal_flow_post_dominator_frontiers,
+    compute_post_dominator_frontiers,
 };
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
@@ -63,8 +64,21 @@ pub fn infer_reactive_places(
     // Collect block IDs for iteration
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
-    let frontiers =
-        compute_post_dominator_frontiers(func, env.next_block_id().index() as u32, false)?;
+    let next_block_id = env.next_block_id().index() as u32;
+    let mut frontiers = compute_post_dominator_frontiers(func, next_block_id, false)?;
+    // Inside `try`, a store ends its block with a `MaybeThrow` whose handler edge skips
+    // the rest of the `try`, so the frontiers above stop at that `MaybeThrow` and miss
+    // the `If`/`Branch`/`Switch` that chose which store ran: a phi over the stores of
+    // a ternary or of `if`/`switch` branches would never become reactive. Also add the
+    // frontiers of normal control flow, keeping those through handler edges.
+    if func
+        .body
+        .blocks
+        .values()
+        .any(|block| matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }))
+    {
+        frontiers.extend(compute_normal_flow_post_dominator_frontiers(func, next_block_id, false)?);
+    }
 
     // Track phi operand reactive flags during fixpoint.
     // In TS, isReactive() sets place.reactive as a side effect. But when a phi

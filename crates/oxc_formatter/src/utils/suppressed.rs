@@ -1,8 +1,9 @@
+use oxc_ast::Comment;
 use oxc_formatter_core::{LINE_TERMINATORS, arena_cow_str, normalize_newlines};
 use oxc_span::Span;
 
 use crate::{
-    Buffer, Format,
+    Format,
     formatter::{prelude::*, trivia::FormatTrailingComments},
     print::write_comments_before_closing_paren,
     utils::typecast::{format_leading_comments_and_open_paren, write_suppressed_cast_target},
@@ -40,7 +41,7 @@ pub fn write_suppressed_expression(
         // ) & C;
         // ```
         let run = write_comments_before_closing_paren(f, span.end);
-        if run.and_then(<[_]>::last).is_some_and(|comment| comment.is_line()) {
+        if run.and_then(<[_]>::last).is_some_and(Comment::is_line) {
             write!(f, [hard_line_break()]);
         }
         write!(f, ")");

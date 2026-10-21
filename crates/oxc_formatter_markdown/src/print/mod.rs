@@ -2,7 +2,7 @@ use std::{borrow::Cow, cell::Cell};
 
 use oxc_allocator::StringBuilder;
 use oxc_formatter_core::{
-    Buffer, Format, Formatter,
+    Format, Formatter,
     builders::{FormatWith, Line, empty_line, exact_line_breaks, hard_line_break, text, token},
     write,
 };
@@ -20,6 +20,7 @@ mod line_shape;
 mod link;
 mod list;
 mod pairing;
+pub use code::XxxInMarkdownCodeBlock;
 pub use pairing::Mark;
 mod parts;
 mod table;
@@ -170,8 +171,10 @@ pub fn is_split_whitespace(c: char) -> bool {
 /// HTML whitespace: `\t\n\f\r` and space.
 pub const HTML_WHITESPACE: [char; 5] = ['\t', '\n', '\u{c}', '\r', ' '];
 
-/// `n` backticks; borrowed from a static run for every realistic length.
-pub fn backticks(n: usize) -> Cow<'static, str> {
-    const RUN: &str = "````````````````````````````````";
-    if n <= RUN.len() { Cow::Borrowed(&RUN[..n]) } else { Cow::Owned("`".repeat(n)) }
+/// `n` backticks or tildes (`ch`); borrowed from a static run for every realistic length.
+pub fn fence_run(ch: u8, n: usize) -> Cow<'static, str> {
+    const BACKTICKS: &str = "````````````````````````````````";
+    const TILDES: &str = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~";
+    let run = if ch == b'`' { BACKTICKS } else { TILDES };
+    if n <= run.len() { Cow::Borrowed(&run[..n]) } else { Cow::Owned(run[..1].repeat(n)) }
 }

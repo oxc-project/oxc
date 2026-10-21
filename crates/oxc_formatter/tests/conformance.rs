@@ -72,6 +72,7 @@ const IGNORE: &[&str] = &[
     "js/babel-plugins",
     // Embedded languages in template literals
     "js/comments-closure-typecast/styled-components.js",
+    "js/embeded",
     "js/multiparser",
     "typescript/multiparser",
     "typescript/angular-component-examples",

@@ -4,6 +4,7 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_semantic::ScopeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 
@@ -463,7 +464,7 @@ fn get_parent_if_thenable<'a, 'b>(
     let Some(member_expr) = call_expr.callee.as_member_expression() else {
         return node;
     };
-    let Some(name) = member_expr.static_property_name() else {
+    let Some(name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
         return node;
     };
 

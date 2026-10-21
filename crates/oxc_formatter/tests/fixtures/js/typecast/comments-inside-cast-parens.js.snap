@@ -143,7 +143,7 @@ const calledTrailing = /** @type {(a: number) => number} */ (
 // A comment between the cast `)` and the arguments stays outside.
 const between = /** @type {(a: number) => number} */ (
   fn // trailing
-)(/* between */ 1);
+) /* between */(1);
 
 // Other hiding sites (`FormatNodeWithoutTrailingComments`): class heritage.
 class Heritage
@@ -227,7 +227,7 @@ const calledTrailing = /** @type {(a: number) => number} */ (
 // A comment between the cast `)` and the arguments stays outside.
 const between = /** @type {(a: number) => number} */ (
   fn // trailing
-)(/* between */ 1);
+) /* between */(1);
 
 // Other hiding sites (`FormatNodeWithoutTrailingComments`): class heritage.
 class Heritage

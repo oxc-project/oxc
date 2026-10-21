@@ -8,7 +8,7 @@ use cow_utils::CowUtils;
 use ignore::DirEntry;
 
 use oxc_config::{
-    ConfigConflict, ConfigDiscovery, ConfigFileNames, DiscoveredConfigFile, is_js_config_path,
+    ConfigConflict, ConfigDiscovery, DiscoveredConfigFile, is_js_config_path, vp_version,
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_linter::{
@@ -17,11 +17,6 @@ use oxc_linter::{
 use rustc_hash::{FxBuildHasher, FxHashMap, FxHashSet};
 
 use crate::utils::normalize_path;
-use crate::{
-    DEFAULT_JSONC_OXLINTRC_NAME, DEFAULT_MTS_OXLINTRC_NAME, DEFAULT_OXLINTRC_NAME,
-    DEFAULT_TS_OXLINTRC_NAME,
-};
-use crate::{VITE_CONFIG_NAME, vp_version};
 
 const GIT_DIR: &str = ".git";
 const NODE_MODULES_DIR: &str = "node_modules";
@@ -36,15 +31,12 @@ pub struct JsConfigResult {
     pub config: Option<Oxlintrc>,
 }
 
-const OXLINT_CONFIG_FILE_NAMES: ConfigFileNames = ConfigFileNames {
-    json: DEFAULT_OXLINTRC_NAME,
-    jsonc: DEFAULT_JSONC_OXLINTRC_NAME,
-    js: &[DEFAULT_TS_OXLINTRC_NAME, DEFAULT_MTS_OXLINTRC_NAME],
-    vite: VITE_CONFIG_NAME,
-};
-
-fn config_discovery() -> ConfigDiscovery {
-    ConfigDiscovery::new(OXLINT_CONFIG_FILE_NAMES, cfg!(feature = "napi") && vp_version().is_some())
+pub fn config_discovery() -> ConfigDiscovery {
+    if cfg!(feature = "napi") && vp_version().is_some() {
+        ConfigDiscovery::vite_plus()
+    } else {
+        ConfigDiscovery::oxlint()
+    }
 }
 
 pub fn config_file_names() -> Vec<&'static str> {
@@ -60,7 +52,7 @@ pub fn config_file_names() -> Vec<&'static str> {
 /// - Checks `/project/src/bar/`, `/project/src/`, `/project/`, `/`
 /// - Returns paths to matching config files found
 ///
-/// In Vite+ mode, only `vite.config.ts` is discovered.
+/// In Vite+ mode, only `vite.config.*` is discovered.
 ///
 /// Conflicts (multiple configs in the same dir) are returned in the second
 /// tuple element so callers can surface them as load errors alongside other
@@ -90,7 +82,7 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
             if !inserted {
                 break;
             }
-            match discovery.find_unique_config_by_readdir(dir, true) {
+            match discovery.find_unique_config_by_readdir(dir) {
                 Ok(Some(config)) => {
                     if config.path() == base_config_path {
                         base_config_found = true;
@@ -110,7 +102,6 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
 
 /// Discover config files by walking DOWN from a root directory.
 /// Will skip the base config file (e.g., root oxlintrc) to avoid duplicate loading.
-/// In Vite+ mode, only `vite.config.ts` is discovered.
 ///
 /// Used by LSP where we have a workspace root and need to discover all configs
 /// upfront for file watching and diagnostics.
@@ -226,16 +217,6 @@ pub enum ConfigLoadError {
     JsConfigFileFoundButJsRuntimeNotAvailable,
 
     Diagnostic(OxcDiagnostic),
-}
-
-impl ConfigLoadError {
-    /// Get the path of the config file that failed
-    pub fn path(&self) -> Option<&Path> {
-        match self {
-            ConfigLoadError::Parse { path, .. } | ConfigLoadError::Build { path, .. } => Some(path),
-            _ => None,
-        }
-    }
 }
 
 /// High-level errors that can occur when loading CLI configurations.
@@ -506,9 +487,7 @@ impl<'a> ConfigLoader<'a> {
 
     /// Try to load config from a specific directory.
     ///
-    /// In Vite+ mode (`VP_VERSION` set): only checks for `vite.config.ts`.
-    /// Otherwise: checks for `.oxlintrc.json`, `.oxlintrc.jsonc`, `oxlint.config.ts`,
-    /// and `oxlint.config.mts`.
+    /// Checks the names from [`config_discovery`].
     ///
     /// Returns `Ok(Some(config))` if found, `Ok(None)` if not found, or `Err` on error.
     fn try_load_config_from_dir(
@@ -517,7 +496,7 @@ impl<'a> ConfigLoader<'a> {
         dir: &Path,
     ) -> Result<Option<Oxlintrc>, OxcDiagnostic> {
         let config_file =
-            discovery.find_unique_config_by_readdir(dir, true).map_err(OxcDiagnostic::from)?;
+            discovery.find_unique_config_by_readdir(dir).map_err(OxcDiagnostic::from)?;
 
         match config_file {
             Some(DiscoveredConfigFile::Json(path) | DiscoveredConfigFile::Jsonc(path)) => {

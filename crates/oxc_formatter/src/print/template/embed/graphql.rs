@@ -1,8 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    FormatElement, IndentWidth, dispatch_fragment_ir,
-    format_element::{LineMode, TextWidth},
+    FormatElement, IndentWidth, dispatch_fragment_ir, format_element::LineMode,
 };
 
 use crate::{
@@ -21,7 +20,7 @@ use crate::{
 /// - tagged template (gql`...`)
 /// - and function call (`graphql(schema, `...`)`)
 pub(super) fn format_graphql_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
@@ -35,7 +34,7 @@ pub(super) fn format_graphql_doc<'a>(
         let Some(cooked) = quasi_elem.value.cooked.as_ref() else {
             return false;
         };
-        let text = cooked.as_str();
+        let Some(text) = cooked.as_str() else { return false };
         // `.cooked` has normalized line terminators
         let lines: Vec<&str> = text.split('\n').collect();
 
@@ -73,7 +72,7 @@ pub(super) fn format_graphql_doc<'a>(
     // Phase 2+3: Build `ir_parts`, one dispatch per non-comment quas.
     // (any failure keeps the whole template verbatim:
     // the quasis are one interleaved template, so degradation is all-or-nothing.
-    // Discarding docs already consumed via `into_doc` is safe, see its rustdoc)
+    // Discarding docs is safe, their Tailwind classes stay inert, see `FormatSession`)
     // Comment-only quasis are synthesized locally.
     // The IR is re-inserted into a JS template literal built from `.cooked` values,
     // so template-literal characters (`` ` ``, `${`, `\`) are re-escaped here
@@ -90,7 +89,7 @@ pub(super) fn format_graphql_doc<'a>(
             };
             Some(ir)
         };
-        let ir = ir.map(|ir| super::escape_template_chars_in_ir(&ir, f));
+        let ir = ir.map(|ir| super::escape_template_chars_in_ir(ir, f));
         ir_parts.push(ir);
     }
 
@@ -139,7 +138,7 @@ pub(super) fn format_graphql_doc<'a>(
                     if has_prev_part {
                         write!(f, [hard_line_break()]);
                     }
-                    let te = TemplateExpression::Expression(expr);
+                    let te = TemplateExpression::Expression(*expr);
                     FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default())
                         .fmt(f);
                     has_prev_part = true;
@@ -187,18 +186,11 @@ fn build_graphql_comment_ir<'a>(
             // Blank line before this comment group -> emit empty line + text
             parts.push(FormatElement::Line(LineMode::Empty));
             parts.push(FormatElement::ExpandParent);
-            let arena_text = allocator.alloc_str(line);
-            let width = TextWidth::from_text(arena_text, indent_width);
-            parts.push(FormatElement::Text { text: arena_text, width });
-        } else {
-            if seen_comment {
-                parts.push(FormatElement::Line(LineMode::Hard));
-                parts.push(FormatElement::ExpandParent);
-            }
-            let arena_text = allocator.alloc_str(line);
-            let width = TextWidth::from_text(arena_text, indent_width);
-            parts.push(FormatElement::Text { text: arena_text, width });
+        } else if seen_comment {
+            parts.push(FormatElement::Line(LineMode::Hard));
+            parts.push(FormatElement::ExpandParent);
         }
+        parts.push(FormatElement::text(allocator.alloc_str(line), indent_width));
 
         seen_comment = true;
     }

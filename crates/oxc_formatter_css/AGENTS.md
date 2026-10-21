@@ -12,7 +12,7 @@ Prettier compatible CSS/SCSS/Less formatter (`oxfmt`'s Tier 1 backend), using th
 - Entry points:
   - `format()`: standalone files, on a service-less session
   - `format_with_session()`: standalone, on the caller's `FormatSession`
-  - `format_to_ir()`: embedded use via the dispatcher (`template_placeholders` = the css-in-js parse mode)
+  - `format_to_ir()`: embedded use via the dispatcher, parsing a fragment (`CssRoot`; `template_placeholders` = the css-in-js parse mode)
   - `parse_for_format()`: the parse `format()` runs, exposed for callers that inspect the AST (e.g. the fixture harness's fingerprint)
 
 ### Forked parser
@@ -37,8 +37,8 @@ The shared policy applies; CSS specifics:
 
 - `oxc-css-parser` is error-tolerant via `parser.recoverable_errors()`, but any parse error still bails out
 - `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (README "Acceptance")
-  - In the css-in-js parse mode (`template_placeholder`, Scss-only) the parser treats it as a statement and emits nothing
-    - `` css`display: flex;` `` is the dominant css-in-js shape
+  - `format_to_ir()` parses a fragment (`CssRoot::Fragment`, the parser's `block_contents`): the root follows the rules inside a block, so it is a statement
+    - `` css`display: flex;` `` is the dominant css-in-js shape, and MDN-style property snippets in Markdown code blocks
   - Less parses and formats it: less.js accepts it at parse time and fails only at eval
 
 ### Comments
@@ -107,14 +107,16 @@ the exact set of supported positions (incl. id / attribute-value / class selecto
   - The `;` is kept only when the source has one; consecutive placeholders preserve the source whitespace (`${a} ${b}` on one line, `${a}\n${b}` on two)
   - A `;`-less placeholder opens a postcss "swallow" run: following declarations keep a source-driven `;` until a source `;` ends the run (`write_statement_sequence_bounded`)
   - `${foo}: ${bar}` parses as a declaration whose property NAME is a placeholder
+  - Glued placeholders and static parts interpolate into one name like `#{}` (`${a}-${b}`, `x-${a}`); see DIVERGENCES.md#placeholder-property-name
 - Value position: `ComponentValue::Placeholder`; rides existing gap-based separator rules
   - One added rule: glued to a paren group → `Separator::SoftBreak` (`${fn}(30px)` breaks BEFORE the parens)
 - Selector position: `InterpolableIdent::Placeholder`; a placeholder mid-selector still triggers "garbage mode" in `write_selector_list`
   - Emits the raw source slice with whitespace runs collapsed (sentinels split back out to `EmbedPlaceholder` via `write_text_with_placeholders`), never breaking
   - Mirrors `postcss-selector-parser` degrading on at-words
   - A statement-position placeholder-led selector must not absorb across a newline (oxc-css-parser `placeholder_starts_qualified_rule`): `${mixin}\n& > .x {}` is two statements
-- String / `url()` position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
-  - The JS host (`oxc_formatter`) counts these and substitutes them inline through its `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
+- String / `url()` / comment position: the CSS lexer keeps these opaque, so a sentinel inside them stays in a verbatim `Text` (no `EmbedPlaceholder`)
+  - The JS host (`oxc_formatter`) counts these and substitutes them through its `Text`-sentinel branch, a deliberate string-scan fallback at the edges of the typed path
+  - The expression prints the same as an `EmbedPlaceholder` one; inside a comment it may sit in a `line_suffix`
 
 `tests/fixtures/embedded/scss/*-placeholders.scss` is the source of truth for which positions parse and how they print (the `embedded/` harness runs `format_to_ir` with the option on); add a fixture there when extending coverage.
 

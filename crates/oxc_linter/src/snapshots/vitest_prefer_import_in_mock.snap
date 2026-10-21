@@ -4,6 +4,20 @@ source: crates/oxc_linter/src/tester.rs
 
   ⚠ vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
    ╭─[prefer_import_in_mock.tsx:1:9]
+ 1 │ vi.mock("\uD800")
+   ·         ────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `"\ud800"` with `import("\ud800")`
+
+  ⚠ vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:11]
+ 1 │ vi.doMock("a\uDC00b", () => ({}))
+   ·           ──────────────────────
+   ╰────
+  help: Dynamic import improves the type information and IntelliSense. Substitute `"a\udc00b"` with `import("a\udc00b")`
+
+  ⚠ vitest(prefer-import-in-mock): Mocked modules must be dynamic imported.
+   ╭─[prefer_import_in_mock.tsx:1:9]
  1 │ vi.mock('foo', () => {})
    ·         ───────────────
    ╰────
