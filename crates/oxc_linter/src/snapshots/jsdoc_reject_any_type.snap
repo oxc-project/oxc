@@ -1,0 +1,192 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:32]
+ 2 │                     /**
+ 3 │                      * @param {any} abc
+   ·                                ───
+ 4 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `*` type.
+   ╭─[reject_any_type.tsx:3:32]
+ 2 │                     /**
+ 3 │                      * @param {*} abc
+   ·                                ─
+ 4 │                      */
+   ╰────
+  help: Replace `*` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:47]
+ 2 │                     /**
+ 3 │                      * @param {string|Promise<any>} abc
+   ·                                               ───
+ 4 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `*` type.
+   ╭─[reject_any_type.tsx:3:38]
+ 2 │                     /**
+ 3 │                      * @param {Array<*>|number} abc
+   ·                                      ─
+ 4 │                      */
+   ╰────
+  help: Replace `*` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:66]
+ 2 │                     /**
+ 3 │                      * @param {{bar: string, [Symbol.dispose](): any}}
+   ·                                                                  ───
+ 4 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:66]
+ 2 │                     /**
+ 3 │                      * @param {{bar: string, [Symbol.dispose](): any}}
+   ·                                                                  ───
+ 4 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:47]
+ 2 │                     /**
+ 3 │                      * @param {Record<string, any>} abc
+   ·                                               ───
+ 4 │                      * @param {any[]} def
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:4:32]
+ 3 │                      * @param {Record<string, any>} abc
+ 4 │                      * @param {any[]} def
+   ·                                ───
+ 5 │                      * @param {...*} ghi
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `*` type.
+   ╭─[reject_any_type.tsx:5:35]
+ 4 │                      * @param {any[]} def
+ 5 │                      * @param {...*} ghi
+   ·                                   ─
+ 6 │                      * @param {?any} jkl
+   ╰────
+  help: Replace `*` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:6:33]
+ 5 │                      * @param {...*} ghi
+ 6 │                      * @param {?any} jkl
+   ·                                 ───
+ 7 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:41]
+ 2 │                     /**
+ 3 │                      * @param {function(any): *} abc
+   ·                                         ───
+ 4 │                      * @param {(a: any) => void} def
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `*` type.
+   ╭─[reject_any_type.tsx:3:47]
+ 2 │                     /**
+ 3 │                      * @param {function(any): *} abc
+   ·                                               ─
+ 4 │                      * @param {(a: any) => void} def
+   ╰────
+  help: Replace `*` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:4:36]
+ 3 │                      * @param {function(any): *} abc
+ 4 │                      * @param {(a: any) => void} def
+   ·                                    ───
+ 5 │                      * @param {T extends string ? any : never} ghi
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:5:51]
+ 4 │                      * @param {(a: any) => void} def
+ 5 │                      * @param {T extends string ? any : never} ghi
+   ·                                                   ───
+ 6 │                      * @param {`prefix-${any}`} jkl
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:6:42]
+ 5 │                      * @param {T extends string ? any : never} ghi
+ 6 │                      * @param {`prefix-${any}`} jkl
+   ·                                          ───
+ 7 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:4:31]
+ 3 │                      * @param {{
+ 4 │                      *   foo: any
+   ·                               ───
+ 5 │                      * }} abc
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:31]
+ 2 │                     /**
+ 3 │                      * @type {any}
+   ·                               ───
+ 4 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:4:35]
+ 3 │                      * @typedef {Object} Foo
+ 4 │                      * @property {any} bar
+   ·                                   ───
+ 5 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:42]
+ 2 │                     /**
+ 3 │                      * @returns {Promise<any>}
+   ·                                          ───
+ 4 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:3:50]
+ 2 │                     /**
+ 3 │                      * @template {Record<string, any>} T
+   ·                                                  ───
+ 4 │                      * @this {any}
+   ╰────
+  help: Replace `any` with a more specific type.
+
+  ⚠ jsdoc(reject-any-type): Unexpected `any` type.
+   ╭─[reject_any_type.tsx:4:31]
+ 3 │                      * @template {Record<string, any>} T
+ 4 │                      * @this {any}
+   ·                               ───
+ 5 │                      */
+   ╰────
+  help: Replace `any` with a more specific type.

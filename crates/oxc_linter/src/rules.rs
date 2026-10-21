@@ -804,6 +804,7 @@ pub(crate) mod jsdoc {
     pub mod implements_on_classes;
     pub mod no_blank_blocks;
     pub mod no_defaults;
+    pub mod reject_any_type;
     pub mod require_param;
     pub mod require_param_description;
     pub mod require_param_name;
