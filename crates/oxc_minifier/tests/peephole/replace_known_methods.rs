@@ -1193,16 +1193,20 @@ fn test_number_constants() {
 
 #[test]
 fn test_fold_integer_index_access() {
-    test_same("v = ''[0]");
+    // An index past the end reads `String.prototype`, which has no index properties.
+    test("v = ''[0]", "v = void 0");
     test_same("v = 'a'[-1]");
     test_same("v = 'a'[0.3]");
     test("v = 'a'[0]", "v = 'a'");
-    test_same("v = 'a'[1]");
+    test("v = 'a'[1]", "v = void 0");
+    test("v = 'a'['1']", "v = void 0");
+    test_same("v = 'a'['01']");
     test("v = 'あ'[0]", "v = 'あ'");
-    test_same("v = 'あ'[1]");
+    test("v = 'あ'[1]", "v = void 0");
+    test("v = 'é'[1]", "v = void 0");
     test("v = '😀'[0]", "v = '\\uD83D'");
     test("v = '😀'[1]", "v = '\\uDE00'");
-    test_same("v = '😀'[2]");
+    test("v = '😀'[2]", "v = void 0");
     test("v = '😀x'[2]", "v = 'x'");
     test_same("v = '😀'[0.5]");
     test_same("v = '😀'['01']");
@@ -1214,7 +1218,8 @@ fn test_fold_integer_index_access() {
     test("v = '\\uD800😀'[2]", "v = '\\uDE00'");
     test("v = '😀\\uD800'[2]", "v = '\\uD800'");
     test("v = '\\uDC00'[0]", "v = '\\uDC00'");
-    test_same("v = 'a\\uD800b'[3]");
+    test("v = 'a\\uD800b'[3]", "v = void 0");
+    test_same("v = 'a'[1]()");
     test_same("v = (foo(), 'a')[1]"); // can be fold into `v = (foo(), 'a')`
 
     test_same("v = [][0]");
