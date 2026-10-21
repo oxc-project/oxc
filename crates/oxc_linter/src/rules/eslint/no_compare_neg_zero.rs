@@ -128,11 +128,8 @@ fn is_neg_zero(expr: &Expression) -> bool {
     if unary.operator != UnaryOperator::UnaryNegation {
         return false;
     }
-    match &unary.argument {
-        Expression::NumericLiteral(number) => number.value == 0.0,
-        Expression::BigIntLiteral(bigint) => bigint.is_zero(),
-        _ => false,
-    }
+    unary.argument.is_number_0()
+        || matches!(&unary.argument, Expression::BigIntLiteral(bigint) if bigint.is_zero())
 }
 
 #[test]

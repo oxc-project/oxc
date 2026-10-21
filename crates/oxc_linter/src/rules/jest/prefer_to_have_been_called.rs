@@ -125,11 +125,8 @@ impl PreferToHaveBeenCalled {
 }
 
 fn is_zero_arg(expr: &Expression<'_>) -> bool {
-    match expr.get_inner_expression() {
-        Expression::NumericLiteral(lit) => lit.value == 0.0,
-        Expression::BigIntLiteral(lit) => lit.value == "0",
-        _ => false,
-    }
+    let expr = expr.get_inner_expression();
+    expr.is_number_0() || matches!(expr, Expression::BigIntLiteral(lit) if lit.value == "0")
 }
 #[test]
 fn test() {

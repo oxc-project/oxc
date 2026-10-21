@@ -213,12 +213,11 @@ impl<'a> VisitJs<'a> for ReturnVisitor {
 fn is_falsy(expr: &Expression<'_>) -> bool {
     match expr {
         Expression::BooleanLiteral(b) => !b.value,
-        Expression::NumericLiteral(n) => n.value == 0.0,
         Expression::NullLiteral(_) => true,
         Expression::StringLiteral(s) => s.value.is_empty(),
         Expression::BigIntLiteral(big) => big.is_zero(),
         Expression::Identifier(ident) => ident.is_undefined() || ident.name == "NaN",
-        _ => false,
+        _ => expr.is_number_0(),
     }
 }
 

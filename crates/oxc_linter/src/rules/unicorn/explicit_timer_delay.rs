@@ -202,7 +202,6 @@ fn is_zero_delay(argument: &Argument<'_>) -> bool {
 
 fn is_zero_expression(expression: &Expression<'_>) -> bool {
     match expression {
-        Expression::NumericLiteral(literal) => literal.value == 0.0,
         Expression::UnaryExpression(unary)
             if matches!(
                 unary.operator,
@@ -211,7 +210,7 @@ fn is_zero_expression(expression: &Expression<'_>) -> bool {
         {
             is_zero_expression(unary.argument.without_parentheses())
         }
-        _ => false,
+        _ => expression.is_number_0(),
     }
 }
 
