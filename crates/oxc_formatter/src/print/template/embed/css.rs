@@ -1,8 +1,6 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{
-    FormatElement, IndentWidth, dispatch_fragment_ir, format_element::TextWidth,
-};
+use oxc_formatter_core::{FormatElement, IndentWidth, dispatch_fragment_ir};
 
 use crate::{
     ast_nodes::AstNode,
@@ -28,8 +26,14 @@ fn write_text_piece<'a>(text: &'a str, indent_width: IndentWidth, f: &mut JsForm
     if text.is_empty() {
         return;
     }
-    let width = TextWidth::from_text(text, indent_width);
-    f.write_element(FormatElement::Text { text, width });
+    f.write_element(FormatElement::text(text, indent_width));
+}
+
+/// Print `${expr}` like a plain template expression, minus source-indentation preservation.
+/// Default options (zero indention) are exactly that (same as graphql.rs).
+fn write_expression<'a>(expr: AstNode<'_, 'a, Expression<'a>>, f: &mut JsFormatter<'_, 'a>) {
+    let te = TemplateExpression::Expression(expr);
+    FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default()).fmt(f);
 }
 
 /// Format a CSS-in-JS template literal via the Doc→IR path with placeholder replacement.
@@ -37,7 +41,7 @@ fn write_text_piece<'a>(text: &'a str, indent_width: IndentWidth, f: &mut JsForm
 /// Joins quasis with special placeholder markers, formats as SCSS,
 /// then replaces placeholder occurrences in the resulting IR with `${expr}` Docs.
 pub(super) fn format_css_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let quasis = &quasi.quasis;
@@ -112,38 +116,35 @@ pub(super) fn format_css_doc<'a>(
 
     // Phase 3: Replace each `${exprN}` placeholder with the formatted expression.
     // Two kinds survive SCSS formatting:
-    // - the typed `EmbedPlaceholder(N)` marker (the main path) -> a breakable group
+    // - the typed `EmbedPlaceholder(N)` marker (the main path)
     // - a `` `PLACEHOLDER-N` `` sentinel still embedded in a `Text` run
-    //   because a string / `url()` keeps it opaque to the CSS lexer -> inline.
+    //   because a string / `url()` / comment keeps it opaque to the CSS lexer
+    // Both print the expression the same way.
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| {
         let indent_width = f.options().indent_width;
         for element in ir {
             match element {
                 FormatElement::EmbedPlaceholder(index) => {
-                    let Some(&expr) = expressions.get(index as usize) else {
-                        continue;
-                    };
-                    // Prettier prints embedded `${expr}` with `printEmbeddedTemplateExpressions()`:
-                    // the plain-template expression logic minus source-indentation preservation.
-                    // Default options (zero indention) are exactly that (same as graphql.rs).
-                    let te = TemplateExpression::Expression(expr);
-                    FormatTemplateExpression::new(&te, FormatTemplateExpressionOptions::default())
-                        .fmt(f);
+                    if let Some(&expr) = expressions.get(index as usize) {
+                        write_expression(expr, f);
+                    }
                 }
-                // A sentinel inside a string / `url()` is always inline `${expr}`.
                 // Same scan as html.rs: `split_on_placeholders` yields alternating
                 // [literal, index, literal, ...] (invalid matches fold into the literal),
                 // so even parts are text and odd parts are a placeholder.
                 FormatElement::Text { text, .. } if text.contains(PLACEHOLDER_PREFIX) => {
-                    let parts =
-                        super::split_on_placeholders(text, PLACEHOLDER_PREFIX, PLACEHOLDER_SUFFIX);
+                    let parts = super::split_on_placeholders(
+                        text.as_str(),
+                        PLACEHOLDER_PREFIX,
+                        PLACEHOLDER_SUFFIX,
+                    );
                     for (i, part) in parts.iter().enumerate() {
                         if i % 2 == 0 {
                             write_text_piece(part, indent_width, f);
                         } else if let Ok(idx) = part.parse::<usize>()
                             && let Some(&expr) = expressions.get(idx)
                         {
-                            write!(f, ["${", expr, "}"]);
+                            write_expression(expr, f);
                         }
                     }
                 }

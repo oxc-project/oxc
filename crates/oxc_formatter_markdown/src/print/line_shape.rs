@@ -217,6 +217,21 @@ pub fn printed_line_opens_block<'a>(
             _ => None,
         })
         .unwrap_or_else(|| children[children.len() - 1].span().end);
+    // A verbatim node keeps its line breaks: the line ends at its first one
+    let end = children[i..]
+        .iter()
+        .filter(|c| {
+            matches!(
+                c,
+                Inline::HtmlInline(_) | Inline::Liquid(_) | Inline::MathSpan(_) | Inline::Image(_)
+            )
+        })
+        .take_while(|c| c.span().start < end)
+        .find_map(|c| {
+            let newline = f.context().slice(c.span()).find('\n')?;
+            Some(c.span().start + u32::try_from(newline).unwrap_or(0))
+        })
+        .map_or(end, |newline| newline.min(end));
     // A leading code span prints joined too (`print_code_span`);
     // the rest is the source, lines joined.
     let (head, rest_start) = match &children[i] {
@@ -248,6 +263,26 @@ pub fn line_opens_block(line: &str, in_paragraph: bool) -> bool {
         None | Some(lexical::LineStart::TableRow | lexical::LineStart::DirectiveCloser) => false,
         Some(_) => true,
     }
+}
+
+/// Under `preserve`, the source line a kept soft break at `brk` follows,
+/// which prints as it is (pipes are never escaped, so it counts as many table cells):
+/// `None` when a node on it spans lines, or when it is itself a block start or line shape
+/// (the break before it may have been dropped, joining it to the line above).
+pub fn line_above<'a>(
+    children: &[Inline<'_>],
+    brk: usize,
+    f: &MarkdownFormatter<'_, 'a>,
+) -> Option<&'a str> {
+    let start = children[..brk]
+        .iter()
+        .rposition(|c| matches!(c, Inline::SoftBreak(_) | Inline::HardBreak(_)))
+        .map_or(0, |k| k + 1);
+    let (base, line) = source_line_at(children, children[start..brk].first()?.span().start, f);
+    (base as usize + line.len() >= children[brk - 1].span().end as usize
+        && !line_opens_block(line, true)
+        && !is_line_shape_start(line))
+    .then_some(line)
 }
 
 /// A line that is not a block only because of what follows on it:

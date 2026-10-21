@@ -315,21 +315,14 @@ impl ConstComparisons {
         bin_expr: &BinaryExpression<'a>,
         ctx: &LintContext<'a>,
     ) {
-        if matches!(
-            bin_expr.operator,
-            BinaryOperator::LessEqualThan
-                | BinaryOperator::GreaterEqualThan
-                | BinaryOperator::LessThan
-                | BinaryOperator::GreaterThan
-        ) && is_same_expression(
-            bin_expr.left.get_inner_expression(),
-            bin_expr.right.get_inner_expression(),
-            ctx,
-        ) {
-            let is_const_truthy = matches!(
-                bin_expr.operator,
-                BinaryOperator::LessEqualThan | BinaryOperator::GreaterEqualThan
-            );
+        if let Ok(operator) = CmpOp::try_from(bin_expr.operator)
+            && is_same_expression(
+                bin_expr.left.get_inner_expression(),
+                bin_expr.right.get_inner_expression(),
+                ctx,
+            )
+        {
+            let is_const_truthy = matches!(operator, CmpOp::Le | CmpOp::Ge);
 
             let precedence_note = Self::logical_precedence_note(node, bin_expr, ctx);
             ctx.diagnostic(constant_comparison_diagnostic(
@@ -339,12 +332,10 @@ impl ConstComparisons {
                     "Because `{}` will {} be {} itself",
                     bin_expr.left.span().source_text(ctx.source_text()),
                     if is_const_truthy { "always" } else { "never" },
-                    match bin_expr.operator {
-                        BinaryOperator::GreaterEqualThan | BinaryOperator::LessEqualThan =>
-                            "equal to",
-                        BinaryOperator::LessThan => "less then",
-                        BinaryOperator::GreaterThan => "greater than",
-                        _ => unreachable!(),
+                    match operator {
+                        CmpOp::Le | CmpOp::Ge => "equal to",
+                        CmpOp::Lt => "less then",
+                        CmpOp::Gt => "greater than",
                     },
                 ),
                 precedence_note,

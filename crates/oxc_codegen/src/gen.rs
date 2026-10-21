@@ -4,6 +4,7 @@ use cow_utils::CowUtils;
 
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::{
     operator::UnaryOperator,
     precedence::{GetPrecedence, Precedence},
@@ -483,7 +484,13 @@ impl Gen for DoWhileStatement<'_> {
                 p.print_block_statement(block, ctx);
                 p.print_soft_space();
             }
-            Statement::EmptyStatement(s) => s.print(p, ctx),
+            Statement::EmptyStatement(s) => {
+                p.print_comments_at(s.span.start);
+                p.add_source_mapping(s.span);
+                p.print_semicolon();
+                p.print_soft_newline();
+                p.print_indent();
+            }
             _ => {
                 p.print_soft_newline();
                 p.indent();
@@ -1171,14 +1178,19 @@ impl Gen for TSNamespaceExportDeclaration<'_> {
     }
 }
 
+/// Get a module export name for comparison.
+///
+/// Compares as a [`JSStr`], so a string name never needs conversion to UTF-8.
 fn get_module_export_name<'a>(
     module_export_name: &ModuleExportName<'a>,
     p: &Codegen<'a>,
-) -> &'a str {
+) -> JSStr<'a> {
     match module_export_name {
-        ModuleExportName::IdentifierName(ident) => ident.name.as_str(),
-        ModuleExportName::IdentifierReference(ident) => p.get_identifier_reference_name(ident),
-        ModuleExportName::StringLiteral(s) => s.value.as_str(),
+        ModuleExportName::IdentifierName(ident) => JSStr::from(ident.name),
+        ModuleExportName::IdentifierReference(ident) => {
+            JSStr::from(p.get_identifier_reference_name(ident))
+        }
+        ModuleExportName::StringLiteral(literal) => literal.value,
     }
 }
 
@@ -1482,17 +1494,24 @@ impl GenExpr for NumericLiteral<'_> {
 
 impl GenExpr for BigIntLiteral<'_> {
     fn gen_expr(&self, p: &mut Codegen, precedence: Precedence, _ctx: Context) {
-        p.print_space_before_identifier();
-        p.add_source_mapping(self.span);
         let value = self.value.as_str();
-        if value.starts_with('-') && precedence >= Precedence::Prefix {
-            p.print_ascii_byte(b'(');
-            p.print_str(value);
-            p.print_str("n)");
+        if value.starts_with('-') {
+            if precedence >= Precedence::Prefix {
+                p.add_source_mapping(self.span);
+                p.print_ascii_byte(b'(');
+                p.print_str(value);
+                p.print_str("n)");
+                return;
+            }
+            // Printed as-is, starting with `-`, so it must not run into a `-` or `--` printed before it,
+            // the same as a negative `NumericLiteral`. `- -1n`, not `--1n`.
+            p.print_space_before_operator(Operator::Unary(UnaryOperator::UnaryNegation));
         } else {
-            p.print_str(value);
-            p.print_ascii_byte(b'n');
+            p.print_space_before_identifier();
         }
+        p.add_source_mapping(self.span);
+        p.print_str(value);
+        p.print_ascii_byte(b'n');
     }
 }
 
@@ -1650,32 +1669,54 @@ impl Gen for SpreadElement<'_> {
 
 impl Gen for ArrayExpression<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
-        let is_multi_line = self.elements.len() > 2;
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        if is_multi_line {
-            p.indent();
-        }
-        for (i, item) in self.elements.iter().enumerate() {
-            if i != 0 {
-                p.print_comma();
-            }
-            if is_multi_line {
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
+            if self.elements.len() > 2 {
+                // 3 or more elements, each on its own line
+                p.indent();
                 p.print_soft_newline();
                 p.print_indent();
-            } else if i != 0 {
-                p.print_soft_space();
-            }
-            item.print(p, ctx);
-            if i == self.elements.len() - 1 && matches!(item, ArrayExpressionElement::Elision(_)) {
-                p.print_comma();
+                item.print(p, ctx);
+
+                for item_ref in others {
+                    item = item_ref;
+
+                    p.print_comma();
+                    p.print_soft_newline();
+                    p.print_indent();
+
+                    item.print(p, ctx);
+                }
+
+                if matches!(item, ArrayExpressionElement::Elision(_)) {
+                    p.print_comma();
+                }
+
+                p.print_soft_newline();
+                p.dedent();
+                p.print_indent();
+            } else {
+                // 1 or 2 elements, on one line
+                item.print(p, ctx);
+
+                if let Some(item_ref) = others.first() {
+                    item = item_ref;
+
+                    p.print_comma();
+                    p.print_soft_space();
+
+                    item.print(p, ctx);
+                }
+
+                if matches!(item, ArrayExpressionElement::Elision(_)) {
+                    p.print_comma();
+                }
             }
         }
-        if is_multi_line {
-            p.print_soft_newline();
-            p.dedent();
-            p.print_indent();
-        }
+
         p.add_source_mapping_end(self.span);
         p.print_ascii_byte(b']');
     }
@@ -2141,24 +2182,35 @@ impl Gen for ArrayAssignmentTarget<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (i, item) in self.elements.iter().enumerate() {
-            if i != 0 {
-                p.print_comma();
-                p.print_soft_space();
-            }
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
             if let Some(item) = item {
                 item.print(p, ctx);
             }
-            if i == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+
+            for item_ref in others {
+                item = item_ref;
+
+                p.print_comma();
+                p.print_soft_space();
+
+                if let Some(item) = item {
+                    item.print(p, ctx);
+                }
+            }
+
+            if let Some(rest) = &self.rest {
+                p.print_comma();
+                p.print_soft_space();
+                rest.print(p, ctx);
+            } else if item.is_none() {
                 p.print_comma();
             }
+        } else if let Some(rest) = &self.rest {
+            rest.print(p, ctx);
         }
-        if let Some(target) = &self.rest {
-            if !self.elements.is_empty() {
-                p.print_soft_space();
-            }
-            target.print(p, ctx);
-        }
+
         p.print_ascii_byte(b']');
     }
 }
@@ -2742,10 +2794,25 @@ impl Gen for JSXAttributeValue<'_> {
             Self::Fragment(fragment) => fragment.print(p, ctx),
             Self::Element(el) => el.print(p, ctx),
             Self::StringLiteral(lit) => {
-                let quote = if lit.value.contains('"') { b'\'' } else { b'"' };
-                p.print_ascii_byte(quote);
-                p.print_str(&lit.value);
-                p.print_ascii_byte(quote);
+                if let Some(value) = lit.value.as_str() {
+                    let quote = if value.contains('"') { b'\'' } else { b'"' };
+                    p.print_ascii_byte(quote);
+                    // Parsed attributes retain their entity spelling. Generated values may contain
+                    // both quotes, so escape the delimiter without changing existing entities.
+                    let mut parts = value.split(char::from(quote));
+                    p.print_str(parts.next().unwrap());
+                    for part in parts {
+                        p.print_str(if quote == b'\'' { "&apos;" } else { "&quot;" });
+                        p.print_str(part);
+                    }
+                    p.print_ascii_byte(quote);
+                } else {
+                    // JSX strings have no backslash escapes. A JavaScript string expression
+                    // preserves lone surrogates without decoding any literal entity text.
+                    p.print_ascii_byte(b'{');
+                    p.print_string_literal(lit, false);
+                    p.print_ascii_byte(b'}');
+                }
             }
             Self::ExpressionContainer(expr_container) => expr_container.print(p, ctx),
         }
@@ -3179,22 +3246,35 @@ impl Gen for ArrayPattern<'_> {
     fn r#gen(&self, p: &mut Codegen, ctx: Context) {
         p.add_source_mapping(self.span);
         p.print_ascii_byte(b'[');
-        for (index, item) in self.elements.iter().enumerate() {
-            if index != 0 {
-                p.print_comma();
-                p.print_soft_space();
-            }
+
+        if let Some((first, others)) = self.elements.split_first() {
+            let mut item = first;
             if let Some(item) = item {
                 item.print(p, ctx);
             }
-            if index == self.elements.len() - 1 && (item.is_none() || self.rest.is_some()) {
+
+            for item_ref in others {
+                item = item_ref;
+
+                p.print_comma();
+                p.print_soft_space();
+
+                if let Some(item) = item {
+                    item.print(p, ctx);
+                }
+            }
+
+            if let Some(rest) = &self.rest {
+                p.print_comma();
+                p.print_soft_space();
+                rest.print(p, ctx);
+            } else if item.is_none() {
                 p.print_comma();
             }
-        }
-        if let Some(rest) = &self.rest {
-            p.print_soft_space();
+        } else if let Some(rest) = &self.rest {
             rest.print(p, ctx);
         }
+
         p.print_ascii_byte(b']');
     }
 }

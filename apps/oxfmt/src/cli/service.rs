@@ -11,7 +11,7 @@ use rayon::prelude::*;
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputMode;
-use crate::core::{FormatResult, FormatStrategy, SourceFormatter, utils};
+use crate::core::{FormatPlan, FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
     /// Path with elapsed time, only measured in check mode
@@ -36,14 +36,14 @@ impl FormatService {
     /// Process entries as they are received from the channel
     pub fn run_streaming(
         &self,
-        rx_entry: mpsc::Receiver<FormatStrategy>,
+        rx_entry: mpsc::Receiver<FormatPlan>,
         tx_error: &DiagnosticSender,
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
-        rx_entry.into_iter().par_bridge().for_each(|strategy| {
+        rx_entry.into_iter().par_bridge().for_each(|plan| {
             let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
 
-            let path: Arc<Path> = Arc::clone(strategy.path());
+            let path = Arc::clone(&plan.path);
             let Ok(source_text) = utils::read_to_string(&path) else {
                 // This happens if binary file is attempted to be formatted
                 // e.g. `.ts` for MPEG-TS video file
@@ -63,7 +63,7 @@ impl FormatService {
                 return;
             };
 
-            let (code, is_changed) = match self.formatter.format(&source_text, strategy) {
+            let (code, is_changed) = match self.formatter.format(&source_text, plan) {
                 FormatResult::Success { code, is_changed } => (code, is_changed),
                 FormatResult::Error(diagnostics) => {
                     let errors = DiagnosticService::wrap_diagnostics(

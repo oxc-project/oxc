@@ -19,7 +19,7 @@ use oxc_estree::{ESTree, JsonSafeString, Serializer as ESTreeSerializer};
 use serde::{Serialize, Serializer as SerdeSerializer};
 
 use crate::{
-    CompactStr, Str,
+    CompactStr, JSStr, Str,
     ident_hasher::{IdentBuildHasher, ident_hash},
 };
 
@@ -223,6 +223,12 @@ impl<'a> Ident<'a> {
     #[inline(always)] // Because this is a no-op
     pub fn as_arena_str(&self) -> Str<'a> {
         Str::from(self.as_str())
+    }
+
+    /// Convert this [`Ident`] into a [`JSStr`].
+    #[inline]
+    pub fn as_js_str(&self) -> JSStr<'a> {
+        JSStr::from(*self)
     }
 
     /// Convert this [`Ident`] into a [`String`].

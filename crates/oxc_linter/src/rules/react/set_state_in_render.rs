@@ -46,6 +46,7 @@ declare_react_compiler_lint!(
     SetStateInRender,
     react,
     correctness,
+    recommended,
     version = "1.79.0",
     short_description = "Disallow setting state during render, which can trigger additional renders and infinite render loops.",
 );

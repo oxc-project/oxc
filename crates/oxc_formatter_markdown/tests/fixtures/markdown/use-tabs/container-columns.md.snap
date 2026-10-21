@@ -1,0 +1,93 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+- a
+  - b
+
+    > q1
+    > q2
+
+1. x
+
+   > q1
+   >
+   > q2
+
+- [ ] task
+
+  > quoted
+
+> - in quote
+>
+>   > nested
+
+Footnote[^1].
+
+[^1]: Note.
+
+    > quoted in footnote
+    > more
+
+==================== Output ====================
+---------------------------------
+{ printWidth: 80, useTabs: true }
+---------------------------------
+- a
+  - b
+
+    > q1
+    > q2
+
+1. x
+
+   > q1
+   >
+   > q2
+
+- [ ] task
+
+  > quoted
+
+> - in quote
+>
+>   > nested
+
+Footnote[^1].
+
+[^1]: Note.
+
+    > quoted in footnote
+    > more
+
+----------------------------------
+{ printWidth: 100, useTabs: true }
+----------------------------------
+- a
+  - b
+
+    > q1
+    > q2
+
+1. x
+
+   > q1
+   >
+   > q2
+
+- [ ] task
+
+  > quoted
+
+> - in quote
+>
+>   > nested
+
+Footnote[^1].
+
+[^1]: Note.
+
+    > quoted in footnote
+    > more
+
+===================== End =====================

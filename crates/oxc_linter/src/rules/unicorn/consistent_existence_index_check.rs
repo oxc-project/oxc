@@ -67,6 +67,7 @@ declare_oxc_lint!(
     ConsistentExistenceIndexCheck,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.12.0",
     short_description = "Enforce consistent style for element existence checks with `indexOf()`, `lastIndexOf()`, `findIndex()`, and `findLastIndex()`.",
@@ -97,8 +98,8 @@ impl Rule for ConsistentExistenceIndexCheck {
         let node = ctx.nodes().get_node(declaration_node_id);
 
         if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
-            if variable_declaration_kind(variables_declarator, ctx)
-                != VariableDeclarationKind::Const
+            if !variable_declaration_kind(variables_declarator, ctx.nodes())
+                .is_some_and(VariableDeclarationKind::is_const)
             {
                 return;
             }
@@ -196,9 +197,11 @@ fn get_replacement(right: &Expression, operator: BinaryOperator) -> Option<GetRe
 fn is_negative_one(expression: &Expression) -> bool {
     if let Expression::UnaryExpression(unary_expression) = expression
         && unary_expression.operator == UnaryOperator::UnaryNegation
-        && let Expression::NumericLiteral(value) = &unary_expression.argument.get_inner_expression()
     {
-        return value.raw.as_ref().unwrap() == "1";
+        return unary_expression
+            .argument
+            .get_inner_expression()
+            .is_specific_raw_number_literal("1");
     }
 
     false

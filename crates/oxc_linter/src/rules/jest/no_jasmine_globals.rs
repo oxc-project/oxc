@@ -65,6 +65,7 @@ declare_oxc_lint!(
     NoJasmineGlobals,
     jest,
     style,
+    recommended,
     conditional_fix,
     version = "0.0.13",
     short_description = "This rule reports on any usage of Jasmine globals, which are not ported to Jest, and suggests alternatives from Jest's own API.",
@@ -173,7 +174,7 @@ fn get_jasmine_property_name<'a>(member_expr: &'a MemberExpression<'a>) -> Optio
         return None;
     }
     let (span, property_name) = member_expr.static_property_info()?;
-    Some((span, property_name))
+    Some((span, property_name.as_str()?))
 }
 
 fn get_non_jasmine_property_messages(name: &str) -> Option<(&'static str, &'static str)> {

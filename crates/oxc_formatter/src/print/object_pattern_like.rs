@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -9,6 +9,7 @@ use crate::{
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
         trivia::format_dangling_comments,
     },
+    utils::object::should_preserve_quote,
     write,
 };
 
@@ -18,8 +19,8 @@ use super::{
 };
 
 pub enum ObjectPatternLike<'a, 'b> {
-    ObjectPattern(&'b AstNode<'a, ObjectPattern<'a>>),
-    ObjectAssignmentTarget(&'b AstNode<'a, ObjectAssignmentTarget<'a>>),
+    ObjectPattern(&'b AstNode<'b, 'a, ObjectPattern<'a>>),
+    ObjectAssignmentTarget(&'b AstNode<'b, 'a, ObjectAssignmentTarget<'a>>),
 }
 
 impl GetSpan for ObjectPatternLike<'_, '_> {
@@ -122,11 +123,30 @@ impl<'a> ObjectPatternLike<'a, '_> {
     }
 
     fn write_properties(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_consistent = f.options().quote_properties.is_consistent();
+        if is_consistent {
+            let quote_needed = match self {
+                Self::ObjectPattern(o) => o
+                    .properties
+                    .iter()
+                    .any(|property| should_preserve_quote(&property.key, property.computed, f)),
+                Self::ObjectAssignmentTarget(o) => o.properties.iter().any(|property| {
+                    matches!(property, AssignmentTargetProperty::AssignmentTargetPropertyProperty(property)
+                        if should_preserve_quote(&property.name, property.computed, f))
+                }),
+            };
+            f.context_mut().push_quote_needed(quote_needed);
+        }
+
         match self {
             Self::ObjectPattern(o) => BindingPropertyList::new(o.properties(), o.rest()).fmt(f),
             Self::ObjectAssignmentTarget(o) => {
                 AssignmentTargetPropertyList::new(o.properties(), o.rest()).fmt(f);
             }
+        }
+
+        if is_consistent {
+            f.context_mut().pop_quote_needed();
         }
     }
 }

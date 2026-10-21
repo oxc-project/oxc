@@ -14,6 +14,7 @@ declare_oxc_lint!(
     NoDisabledTests,
     vitest,
     correctness,
+    recommended,
     docs = DOCUMENTATION,
     version = "0.0.7",
     short_description = SHORT_DESCRIPTION,

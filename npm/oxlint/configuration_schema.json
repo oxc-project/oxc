@@ -57,7 +57,7 @@
       "markdownDescription": "Globs to ignore during linting. Patterns use gitignore-style matching,\nrooted at the directory containing the configuration file.\nFiles outside that directory cannot be matched; patterns containing `..`\nare rejected as a configuration error."
     },
     "jsPlugins": {
-      "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
+      "description": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```",
       "anyOf": [
         {
           "type": "null"
@@ -70,7 +70,7 @@
           "uniqueItems": true
         }
       ],
-      "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
+      "markdownDescription": "JS plugins, allows usage of ESLint plugins with Oxlint.\n\nRead more about JS plugins in\n[the docs](https://oxc.rs/docs/guide/usage/linter/js-plugins.html).\n\nNote: JS plugins are in alpha and not subject to semver.\n\nExamples:\n\nBasic usage with a local plugin path.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.js\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nBasic usage with a TypeScript plugin and a local plugin path.\n\nTypeScript plugin files are supported in the following environments:\n- Deno and Bun: TypeScript files are supported natively.\n- Node.js >=22.18.0: TypeScript files are supported natively with built-in\ntype-stripping enabled by default.\n\nFor older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.\n\n```json\n{\n\"jsPlugins\": [\"./custom-plugin.ts\"],\n\"rules\": {\n\"custom/rule-name\": \"warn\"\n}\n}\n```\n\nUsing a built-in Rust plugin alongside a JS plugin with the same name\nby giving the JS plugin an alias.\n\n```json\n{\n\"plugins\": [\"import\"],\n\"jsPlugins\": [\n{ \"name\": \"import-js\", \"specifier\": \"eslint-plugin-import\" }\n],\n\"rules\": {\n\"import/no-cycle\": \"error\",\n\"import-js/no-unresolved\": \"warn\"\n}\n}\n```"
     },
     "options": {
       "description": "Oxlint config options.",
@@ -8042,6 +8042,9 @@
         "typescript/no-for-in-array": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/no-generated-empty-object-type": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/no-implied-eval": {
           "$ref": "#/definitions/RuleNoConfig"
         },
@@ -9508,7 +9511,24 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "unicorn/prefer-query-selector": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/PreferQuerySelector"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "unicorn/prefer-reflect-apply": {
           "$ref": "#/definitions/RuleNoConfig"
@@ -16917,6 +16937,12 @@
     "OnlyExportComponentsConfig": {
       "type": "object",
       "properties": {
+        "allowCompoundComponents": {
+          "description": "Allow an exported object when every property is a React component.\nThis matches Vite's compound component support. The object must be non-empty,\ncontain no nested objects, spreads, or accessors, and anonymous functions\nmust use a component name as a static property key.\n\n```jsx\n// Allowed when allowCompoundComponents: true\nconst Root = () => <div />;\nconst Label = () => <span />;\nexport const Tag = { Root, Label };\n```",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow an exported object when every property is a React component.\nThis matches Vite's compound component support. The object must be non-empty,\ncontain no nested objects, spreads, or accessors, and anonymous functions\nmust use a component name as a static property key.\n\n```jsx\n// Allowed when allowCompoundComponents: true\nconst Root = () => <div />;\nconst Label = () => <span />;\nexport const Tag = { Root, Label };\n```"
+        },
         "allowConstantExport": {
           "description": "Allow exporting primitive constants (string/number/boolean/template literal)\nalongside component exports without triggering a violation. Recommended when your\nbundler’s Fast Refresh integration supports this (enabled by the plugin’s `vite`\npreset).\n\n```jsx\n// Allowed when allowConstantExport: true\nexport const VERSION = \"3\";\nexport const Foo = () => null;\n```",
           "default": false,
@@ -18026,6 +18052,18 @@
           "default": false,
           "type": "boolean",
           "markdownDescription": "Whether to allow rejecting Promises with values typed as `unknown`."
+        }
+      },
+      "additionalProperties": false
+    },
+    "PreferQuerySelector": {
+      "type": "object",
+      "properties": {
+        "allowWithVariables": {
+          "description": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "When set to `true`, allows using `.getElementById()` and `.getElementsByClassName()` when called with a variable or expression.\nThis avoids the need to manually compose a CSS selector string, which can be less readable."
         }
       },
       "additionalProperties": false

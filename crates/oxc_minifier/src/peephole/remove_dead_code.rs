@@ -198,6 +198,37 @@ impl<'a> PeepholeOptimizations {
         }
         match test_boolean {
             Some(false) => match &for_stmt.init {
+                Some(ForStatementInit::VariableDeclaration(decl)) if !decl.kind.is_var() => {
+                    ctx.replace_statement_with(stmt, |stmt, ctx| {
+                        let Statement::ForStatement(for_stmt) = stmt else { unreachable!() };
+                        let scope_id = for_stmt.scope_id();
+                        let ForStatement { span, init, test, update, body, .. } = for_stmt.unbox();
+                        let Some(ForStatementInit::VariableDeclaration(decl)) = init else {
+                            unreachable!()
+                        };
+                        let mut keep_var = KeepVar::new();
+                        keep_var.visit_statement(&body);
+                        ctx.drop_statement(&body);
+                        if let Some(test) = test {
+                            ctx.drop_expression(&test);
+                        }
+                        if let Some(update) = update {
+                            ctx.drop_expression(&update);
+                        }
+                        let mut statements =
+                            ArenaVec::from_array_in([Statement::VariableDeclaration(decl)], ctx);
+                        if let Some(var_stmt) =
+                            keep_var.get_variable_declaration_statement(&ctx.ast)
+                        {
+                            statements.push(var_stmt);
+                        }
+                        // The initializer still runs, including destructuring effects and TDZ
+                        // checks. Reuse the loop scope to keep its lexical bindings isolated.
+                        Statement::new_block_statement_with_scope_id(
+                            span, statements, scope_id, ctx,
+                        )
+                    });
+                }
                 Some(ForStatementInit::VariableDeclaration(_)) => {
                     let mut keep_var = KeepVar::new();
                     keep_var.visit_statement(&for_stmt.body);
@@ -241,7 +272,6 @@ impl<'a> PeepholeOptimizations {
                 _ => {}
             },
             Some(true) => {
-                // Remove the test expression.
                 if let Some(old) = for_stmt.test.take() {
                     ctx.drop_expression(&old);
                 }
@@ -303,7 +333,6 @@ impl<'a> PeepholeOptimizations {
         // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
         let case_count = switch_stmt.cases.len();
         if case_count == 1 {
-            // Remove sole case if empty and has no side-effect test
             if Self::is_switch_case_removable(&switch_stmt.cases[0], true) {
                 ctx.drop_switch_case(&switch_stmt.cases.pop().unwrap());
             }
@@ -413,10 +442,8 @@ impl<'a> PeepholeOptimizations {
         if s.block.body.is_empty()
             && s.handler.as_ref().is_none_or(|handler| handler.body.body.is_empty())
         {
-            let new_stmt = if let Some(finalizer) = &mut s.finalizer {
-                let mut block = BlockStatement::boxed(finalizer.span, [], ctx);
-                std::mem::swap(finalizer, &mut block);
-                Statement::BlockStatement(block)
+            let new_stmt = if let Some(finalizer) = s.finalizer.take() {
+                Statement::BlockStatement(finalizer)
             } else {
                 Statement::new_empty_statement(s.span, ctx)
             };
@@ -447,7 +474,7 @@ impl<'a> PeepholeOptimizations {
                 }
             } else {
                 // `(a, true) ? b : c` => `a, b`
-                Expression::new_sequence_expression(e.span, [e.test, result_expr], ctx)
+                Self::join_sequence(e.span, e.test, result_expr, ctx)
             }
         });
     }
@@ -476,13 +503,7 @@ impl<'a> PeepholeOptimizations {
                 // so `remove_unused_expression` would return `true` and produce a
                 // structurally-identical fresh `0`.
                 if !e.is_number_0() && Self::remove_unused_expression(e, ctx) {
-                    let new_expr = Expression::new_numeric_literal(
-                        e.span(),
-                        0.0,
-                        None,
-                        NumberBase::Decimal,
-                        ctx,
-                    );
+                    let new_expr = Expression::new_number_0(e.span(), ctx);
                     ctx.replace_expression(e, new_expr);
                 }
                 return true;
@@ -657,6 +678,10 @@ impl<'a> PeepholeOptimizations {
                 match access_value {
                     Expression::Identifier(id) => id.name == "eval" && ctx.is_global_reference(id),
                     match_member_expression!(Expression) => true,
+                    // Example case: `(0, o?.f)()` (`this` is undefined) -> `(o?.f)()` (`this` is `o`)
+                    Expression::ChainExpression(chain) => {
+                        matches!(&chain.expression, match_member_expression!(ChainElement))
+                    }
                     _ => false,
                 }
             }
@@ -675,10 +700,10 @@ impl<'a> PeepholeOptimizations {
                         Expression::Identifier(_)
                         // Example case: `delete (0, foo.#a)` (no error) -> `delete foo.#a` (error)
                         | Expression::PrivateFieldExpression(_)
-                        // Example case: `typeof (0, foo.bar)` (noop) -> `typeof foo.bar` (deletes bar)
+                        // Example case: `delete (0, foo.bar)` (noop) -> `delete foo.bar` (deletes bar)
                         | Expression::ComputedMemberExpression(_)
                         | Expression::StaticMemberExpression(_) => true,
-                        // Example case: `typeof (0, foo?.bar)` (noop) -> `typeof foo?.bar` (deletes bar)
+                        // Example case: `delete (0, foo?.bar)` (noop) -> `delete foo?.bar` (deletes bar)
                         Expression::ChainExpression(chain) => {
                             matches!(&chain.expression, match_member_expression!(ChainElement))
                         }
@@ -705,9 +730,22 @@ impl<'a> PeepholeOptimizations {
     ) -> Expression<'a> {
         Expression::new_sequence_expression(
             span.merge(expr.span()),
-            [Expression::new_numeric_literal(span, 0.0, None, NumberBase::Decimal, ctx), expr],
+            [Expression::new_number_0(span, ctx), expr],
             ctx,
         )
+    }
+
+    /// Wrap `expr` as `(0, expr)` only if [`Self::should_keep_indirect_access`] flags it.
+    pub fn preserve_indirect_access_if_needed(
+        span: Span,
+        expr: Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        if Self::should_keep_indirect_access(&expr, ctx) {
+            Self::preserve_indirect_access(span, expr, ctx)
+        } else {
+            expr
+        }
     }
 
     pub fn remove_dead_code_exit_class_body(body: &mut ClassBody<'a>, _ctx: &mut TraverseCtx<'a>) {

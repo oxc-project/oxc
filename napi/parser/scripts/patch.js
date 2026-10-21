@@ -28,3 +28,7 @@ export { getBufferOffset, parseRaw, parseRawSync }
 `;
 
 fs.writeFileSync(filename, data);
+
+const wasip1BrowserFilename = pathJoin(packageDir, "src-js/parser.wasip1-browser.js");
+const wasip1Browser = fs.readFileSync(wasip1BrowserFilename, "utf-8").replaceAll(/[ \t]+$/gmu, "");
+fs.writeFileSync(wasip1BrowserFilename, wasip1Browser);

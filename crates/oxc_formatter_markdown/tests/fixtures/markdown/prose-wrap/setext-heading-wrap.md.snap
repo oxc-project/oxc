@@ -1,0 +1,64 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+assertion_line: 50
+---
+==================== Input ====================
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+Some paragraph words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+Some heading words that run on and then
+[a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+Some paragraph words that run on and then
+[a link](https://example.com/a/rather/long/path/to/somewhere) end
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+Some heading words that run on and then
+[a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+Some paragraph words that run on and then
+[a link](https://example.com/a/rather/long/path/to/somewhere) end
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+Some paragraph words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+Some paragraph words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+Some paragraph words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+Some heading words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+===
+
+Some paragraph words that run on and then [a link](https://example.com/a/rather/long/path/to/somewhere) end
+
+===================== End =====================

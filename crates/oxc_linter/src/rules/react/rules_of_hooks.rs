@@ -4,8 +4,8 @@ use lazy_regex::Regex;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_ast::{
-    AstKind,
-    ast::{ArrowFunctionExpression, CallExpression, Function},
+    AstKind, FunctionKind, StaticPropertyName,
+    ast::{ArrowFunctionExpression, CallExpression, Function, NewExpression},
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
@@ -254,6 +254,7 @@ declare_oxc_lint!(
     RulesOfHooks,
     react,
     pedantic,
+    recommended,
     version = "0.3.3",
     short_description = "Enforces the Rules of Hooks, ensuring that React Hooks are only called in valid contexts and in the correct order.",
 );
@@ -283,7 +284,7 @@ impl Rule for RulesOfHooks {
 
         let is_use = is_react_function_call(call, "use");
 
-        let Some(parent_func) = parent_func(nodes, node) else {
+        let Some((parent_func, function)) = parent_func(nodes, node) else {
             return ctx.diagnostic(diagnostics::top_level_hook(span, hook_name));
         };
 
@@ -372,7 +373,7 @@ impl Rule for RulesOfHooks {
                 r#async: true,
                 ..
             }) => {
-                if is_directly_inside_component_or_hook(nodes, parent_func.id()) {
+                if is_directly_inside_component_or_hook(nodes, function) {
                     return ctx.diagnostic(diagnostics::async_component(
                         span,
                         async_keyword_span(ctx, *async_span),
@@ -752,14 +753,14 @@ impl<'a> VisitJs<'a> for MayThrowBeforeHook {
 
     fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
 
-    fn visit_call_expression(&mut self, expr: &oxc_ast::ast::CallExpression<'a>) {
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
         self.enter_node(AstKind::CallExpression(expr));
         if !self.found {
             walk_js::walk_call_expression(self, expr);
         }
     }
 
-    fn visit_new_expression(&mut self, expr: &oxc_ast::ast::NewExpression<'a>) {
+    fn visit_new_expression(&mut self, expr: &NewExpression<'a>) {
         self.enter_node(AstKind::NewExpression(expr));
         if !self.found {
             walk_js::walk_new_expression(self, expr);
@@ -767,8 +768,15 @@ impl<'a> VisitJs<'a> for MayThrowBeforeHook {
     }
 }
 
-fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
-    nodes.ancestors(node.id()).find(|node| node.kind().is_function_like())
+fn parent_func<'a>(
+    nodes: &'a AstNodes<'a>,
+    node: &AstNode,
+) -> Option<(&'a AstNode<'a>, FunctionKind<'a, 'a>)> {
+    nodes.ancestors(node.id()).find_map(|node| match node.kind() {
+        AstKind::Function(function) => Some((node, FunctionKind::Function(function))),
+        AstKind::ArrowFunctionExpression(arrow) => Some((node, FunctionKind::Arrow(arrow))),
+        _ => None,
+    })
 }
 
 fn is_inside_try_catch(
@@ -890,38 +898,25 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes
-        .ancestors(node_id)
-        .filter(|node| node.kind().is_function_like())
-        .map(|node| {
-            (
-                node.id(),
-                match node.kind() {
-                    AstKind::Function(func) => func.name().map(Cow::from),
-                    AstKind::ArrowFunctionExpression(_) => {
-                        get_declaration_identifier(nodes, node.id())
-                    }
-                    _ => unreachable!(),
-                },
-            )
+        .ancestor_kinds(node_id)
+        .filter_map(|kind| match kind {
+            AstKind::Function(function) => Some(FunctionKind::Function(function)),
+            AstKind::ArrowFunctionExpression(arrow) => Some(FunctionKind::Arrow(arrow)),
+            _ => None,
         })
-        .any(|(id, ident)| {
-            ident.is_some_and(|name| is_react_component_or_hook_name(&name))
-                || is_memo_or_forward_ref_callback(nodes, id)
-        })
+        .any(|function| is_directly_inside_component_or_hook(nodes, function))
 }
 
-fn is_directly_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
-    let node = nodes.get_node(node_id);
-    let directly_named = match node.kind() {
-        AstKind::Function(func) => {
-            func.name().is_some_and(|name| is_react_component_or_hook_name(name.as_str()))
+fn is_directly_inside_component_or_hook(nodes: &AstNodes, function: FunctionKind<'_, '_>) -> bool {
+    let (node_id, ident) = match function {
+        FunctionKind::Function(func) => (func.node_id(), func.name().map(Cow::from)),
+        FunctionKind::Arrow(arrow) => {
+            (arrow.node_id(), get_declaration_identifier(nodes, arrow.node_id()))
         }
-        AstKind::ArrowFunctionExpression(_) => get_declaration_identifier(nodes, node_id)
-            .is_some_and(|name| is_react_component_or_hook_name(&name)),
-        _ => unreachable!(),
     };
 
-    directly_named || is_memo_or_forward_ref_callback(nodes, node_id)
+    ident.is_some_and(|name| is_react_component_or_hook_name(&name))
+        || is_memo_or_forward_ref_callback(nodes, node_id)
 }
 
 fn get_declaration_identifier<'a>(
@@ -957,7 +952,9 @@ fn get_declaration_identifier<'a>(
                 }
                 // { useHook: () => {} }
                 // { useHook() {} }
-                AstKind::ObjectProperty(prop) => prop.key.name(),
+                AstKind::ObjectProperty(prop) => {
+                    prop.key.name().and_then(StaticPropertyName::into_cow_str)
+                }
                 _ => None,
             }
         }

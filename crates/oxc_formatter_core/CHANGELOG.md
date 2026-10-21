@@ -4,6 +4,45 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 529b057 formatter_core: Keep front matter verbatim when body starts with indented delimiter (#27946) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- d2bea21 formatter: Glue comments to an opener in empty for-head slots and array holes (#27737) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+- 1c393c0 formatter_core: Skip scanning texts with nothing to rewrite (#27561) (leaysgur)
+- 1d3ef10 formatter_core: Keep the embedded IR when nothing in it is rewritten (#27673) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- dd72fbf formatter_markdown: Keep container columns as spaces under `useTabs` (#27277) (leaysgur)
+- c2de02b formatter: Decide embedded template layout from AST, not source shape (#27218) (leaysgur)
+- 36e14df formatter: Keep comments between callee and its opener on the callee side (#27172) (leaysgur)
+
+### ⚡ Performance
+
+- cea47e3 formatter_core: Avoid exponential `will_break` check on nested interned (#27211) (leaysgur)
+
 ## [0.69.0] - 2026-09-21
 
 ### 🚀 Features

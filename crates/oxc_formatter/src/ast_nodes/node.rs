@@ -1,24 +1,41 @@
-use std::{
-    fmt,
-    mem::{transmute, transmute_copy},
-    ops::Deref,
-};
+use std::{fmt, mem::transmute_copy, ops::Deref};
 
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 
-use super::AstNodes;
+use super::{AstNodeKind, AstNodes};
 
-pub struct AstNode<'a, T> {
+/// An AST node with its parent, created on the stack while the formatter descends the AST.
+///
+/// `'parent` is the lifetime of the parent node it refers to, `'a` is the lifetime of the AST.
+/// An accessor for a child borrows `self`, so the parent must outlive the child.
+///
+/// # Links in the arena
+///
+/// A loop that walks down a chain (`a.b.c`, `a && b && c`) cannot keep each node on the stack,
+/// as the next node refers to it as its parent.
+/// Such a link is moved into the arena with `in_arena`, only when the walk continues past it:
+/// - [`AstNodeKind::in_arena`] when the next step matches on its kind
+/// - [`AstNode::in_arena`] when a match has already selected the variant,
+///   as the specific node (e.g. `AstNode<CallExpression>`) is smaller than the kind
+pub struct AstNode<'parent, 'a, T> {
     pub(super) inner: &'a T,
-    pub(super) parent: AstNodes<'a>,
-    pub(super) allocator: &'a Allocator,
+    pub(super) parent: AstNodes<'parent, 'a>,
     /// The start position of the following sibling node, or 0 if none.
     pub(super) following_span_start: u32,
 }
 
-impl<T: fmt::Debug> fmt::Debug for AstNode<'_, T> {
+// Not derived, to not require `T: Copy`
+impl<T> Clone for AstNode<'_, '_, T> {
+    fn clone(&self) -> Self {
+        *self
+    }
+}
+
+impl<T> Copy for AstNode<'_, '_, T> {}
+
+impl<T: fmt::Debug> fmt::Debug for AstNode<'_, '_, T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         f.debug_struct("AstNode")
             .field("inner", &self.inner)
@@ -28,7 +45,7 @@ impl<T: fmt::Debug> fmt::Debug for AstNode<'_, T> {
     }
 }
 
-impl<'a, T> Deref for AstNode<'a, T> {
+impl<'a, T> Deref for AstNode<'_, 'a, T> {
     type Target = T;
 
     fn deref(&self) -> &'a Self::Target {
@@ -36,38 +53,41 @@ impl<'a, T> Deref for AstNode<'a, T> {
     }
 }
 
-impl<'a, T> AsRef<T> for AstNode<'a, T> {
+impl<'a, T> AsRef<T> for AstNode<'_, 'a, T> {
     fn as_ref(&self) -> &'a T {
         self.inner
     }
 }
 
-impl<'a, T> AstNode<'a, Option<T>> {
-    pub fn as_ref(&self) -> Option<&'a AstNode<'a, T>> {
-        self.allocator
-            .alloc(self.inner.as_ref().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            }))
-            .as_ref()
+impl<'parent, 'a, T> AstNode<'parent, 'a, Option<T>> {
+    pub fn as_ref(&self) -> Option<AstNode<'parent, 'a, T>> {
+        self.inner.as_ref().map(|inner| AstNode {
+            inner,
+            parent: self.parent,
+            following_span_start: self.following_span_start,
+        })
     }
 }
 
-impl<T: GetSpan> GetSpan for AstNode<'_, T> {
+impl<T: GetSpan> GetSpan for AstNode<'_, '_, T> {
     fn span(&self) -> Span {
         self.inner.span()
     }
 }
 
-impl<T: GetSpan> GetSpan for &AstNode<'_, T> {
+impl<T: GetSpan> GetSpan for &AstNode<'_, '_, T> {
     fn span(&self) -> Span {
         self.inner.span()
     }
 }
 
-impl<'a, T> AstNode<'a, T> {
+impl<'parent, 'a, T> AstNode<'parent, 'a, T> {
+    /// Returns the AST node, for the lifetime of the AST rather than the borrow of `self` (unlike [`Deref`] and [`AsRef`]).
+    #[inline]
+    pub fn inner(&self) -> &'a T {
+        self.inner
+    }
+
     /// Returns an iterator over all ancestor nodes in the AST, starting from self.
     ///
     /// The iteration includes the current node and proceeds upward through the tree,
@@ -97,13 +117,13 @@ impl<'a, T> AstNode<'a, T> {
     /// let in_arrow_fn = self.ancestors()
     ///     .any(|p| matches!(p, AstNodes::ArrowFunctionExpression(_)));
     /// ```
-    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'a>> {
+    pub fn ancestors(&self) -> impl Iterator<Item = &AstNodes<'parent, 'a>> {
         self.parent().ancestors()
     }
 
     /// Returns the parent node.
     #[inline]
-    pub fn parent(&self) -> &AstNodes<'a> {
+    pub fn parent(&self) -> &AstNodes<'parent, 'a> {
         &self.parent
     }
 
@@ -116,18 +136,30 @@ impl<'a, T> AstNode<'a, T> {
     /// Returns the grandparent node (parent's parent).
     ///
     /// This is a convenience method equivalent to `self.parent().parent()`.
-    pub fn grand_parent(&self) -> &AstNodes<'a> {
+    pub fn grand_parent(&self) -> &AstNodes<'parent, 'a> {
         self.parent().parent()
     }
-}
 
-impl<'a, T> AstNode<'a, T> {
-    pub fn new(inner: &'a T, parent: AstNodes<'a>, allocator: &'a Allocator) -> Self {
-        AstNode { inner, parent, allocator, following_span_start: 0 }
+    pub fn new(inner: &'a T, parent: AstNodes<'parent, 'a>) -> Self {
+        AstNode { inner, parent, following_span_start: 0 }
+    }
+
+    /// Moves this node into the arena, see [links in the arena](AstNode#links-in-the-arena).
+    #[inline]
+    pub fn in_arena(self, allocator: &'parent Allocator) -> &'parent Self {
+        allocator.alloc(self)
     }
 }
 
-impl<T: GetSpan> AstNode<'_, T> {
+impl<'parent> AstNodeKind<'parent, '_> {
+    /// Moves this node into the arena, see [links in the arena](AstNode#links-in-the-arena).
+    #[inline]
+    pub fn in_arena(self, allocator: &'parent Allocator) -> &'parent Self {
+        allocator.alloc(self)
+    }
+}
+
+impl<T: GetSpan> AstNode<'_, '_, T> {
     /// Check if this node is the callee of a CallExpression or NewExpression
     pub fn is_call_like_callee(&self) -> bool {
         let callee = match self.parent() {
@@ -145,29 +177,29 @@ impl<T: GetSpan> AstNode<'_, T> {
     }
 }
 
-impl<'a> AstNode<'a, ArrowFunctionBody<'a>> {
+impl<'parent, 'a> AstNode<'parent, 'a, ArrowFunctionBody<'a>> {
     /// Returns the concise expression body as an [`AstNode`].
-    pub fn as_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {
-        self.allocator
-            .alloc(self.inner.as_expression().map(|inner| AstNode {
-                inner,
-                parent: self.parent,
-                allocator: self.allocator,
-                following_span_start: self.following_span_start,
-            }))
-            .as_ref()
+    pub fn as_expression(&self) -> Option<AstNode<'parent, 'a, Expression<'a>>> {
+        self.inner.as_expression().map(|inner| AstNode {
+            inner,
+            parent: self.parent,
+            following_span_start: self.following_span_start,
+        })
     }
 }
 
-impl<'a> AstNode<'a, ImportExpression<'a>> {
+impl<'a> AstNode<'_, 'a, ImportExpression<'a>> {
     /// Converts the arguments of the ImportExpression into an `AstNode` representing a `Vec` of `Argument`.
     #[inline]
-    pub fn to_arguments(&self) -> &AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+    pub fn arguments(
+        &self,
+        allocator: &'a Allocator,
+    ) -> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
         // Convert ImportExpression's source and options to ArenaVec<'a, Argument<'a>>.
         // This allows us to reuse CallExpression's argument formatting logic when printing
         // import expressions, since import(source, options) has the same structure as
         // a function call with arguments.
-        let mut arguments = ArenaVec::new_in(&self.allocator);
+        let mut arguments = ArenaVec::new_in(&allocator);
 
         // SAFETY: Argument inherits all Expression variants through the inherit_variants! macro,
         // so Expression and Argument have identical memory layout for shared variants.
@@ -187,27 +219,15 @@ impl<'a> AstNode<'a, ImportExpression<'a>> {
             }
         }
 
-        let arguments_ref = self.allocator.alloc(arguments);
-        let following_span_start = self.following_span_start;
-
-        self.allocator.alloc(AstNode {
-            inner: arguments_ref,
-            allocator: self.allocator,
-            parent: AstNodes::ImportExpression({
-                // SAFETY: `self` is already allocated in Arena, so transmute from `&` to `&'a` is safe.
-                unsafe {
-                    transmute::<
-                        &AstNode<'_, ImportExpression<'_>>,
-                        &'a AstNode<'a, ImportExpression<'a>>,
-                    >(self)
-                }
-            }),
-            following_span_start,
-        })
+        AstNode {
+            inner: allocator.alloc(arguments),
+            parent: AstNodes::ImportExpression(self),
+            following_span_start: self.following_span_start,
+        }
     }
 }
 
-impl<'a> AstNode<'a, CallExpression<'a>> {
+impl AstNode<'_, '_, CallExpression<'_>> {
     /// Check if the passing span is the callee of this CallExpression
     pub fn is_callee_span(&self, span: Span) -> bool {
         self.inner.callee.span() == span
@@ -219,7 +239,7 @@ impl<'a> AstNode<'a, CallExpression<'a>> {
     }
 }
 
-impl<'a> AstNode<'a, NewExpression<'a>> {
+impl AstNode<'_, '_, NewExpression<'_>> {
     /// Check if the passing span is the callee of this NewExpression
     pub fn is_callee_span(&self, span: Span) -> bool {
         self.inner.callee.span() == span

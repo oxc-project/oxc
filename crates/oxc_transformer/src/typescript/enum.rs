@@ -331,12 +331,13 @@ impl<'a> TypeScriptEnum {
         for member in members.take_in(ctx) {
             let member_span = member.span;
             let member_name = member.id.static_name();
+            let member_symbol_id = member_name
+                .as_str()
+                .and_then(|name| ctx.scoping().get_binding(enum_scope_id, name.into()));
 
             let init = if let Some(mut initializer) = member.initializer {
                 // Look up the pre-computed constant value from Scoping
-                let constant_value: Option<ConstantValue> = ctx
-                    .scoping()
-                    .get_binding(enum_scope_id, member_name.as_str().into())
+                let constant_value: Option<ConstantValue> = member_symbol_id
                     .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                     .cloned();
 
@@ -390,7 +391,8 @@ impl<'a> TypeScriptEnum {
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
-            let is_str = Self::is_syntactically_string(&init);
+            let is_str = ctx.scoping().is_string_enum_member(enum_scope_id, member_name)
+                || Self::is_syntactically_string(&init);
 
             // Foo["x"] = init
             let member_expr = {
@@ -480,9 +482,10 @@ impl<'a> TypeScriptEnum {
                 .get_binding(scope_id, ident.name.as_str().into())
                 .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                 .is_some(),
-            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => ctx
-                .scoping()
-                .get_binding(scope_id, lit.value.as_str().into())
+            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => lit
+                .value
+                .as_str()
+                .and_then(|name| ctx.scoping().get_binding(scope_id, name.into()))
                 .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                 .is_some(),
             TSEnumMemberName::ComputedTemplateString(_) => false,
@@ -559,7 +562,7 @@ impl<'a> TypeScriptEnum {
     ) -> Option<(ConstantValue, ReferenceId)> {
         let Expression::Identifier(ident) = &expr.object else { return None };
         let Expression::StringLiteral(prop) = &expr.expression else { return None };
-        self.resolve_enum_member(ident, prop.value.as_str(), ctx)
+        self.resolve_enum_member(ident, prop.value.as_str()?, ctx)
     }
 
     /// Resolve an enum member value by identifier and property name.

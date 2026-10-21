@@ -417,7 +417,7 @@ impl TestServer {
             let params: PublishDiagnosticsParams =
                 serde_json::from_value(publish_diagnostics.params().unwrap().clone()).unwrap();
             assert_eq!(params.uri, uri);
-            assert!(params.diagnostics.is_empty());
+            assert_eq!(params.diagnostics, []);
         }
 
         let shutdown_result = self.recv_response().await;

@@ -12,7 +12,7 @@ use oxc_formatter_core::FormatElement;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, SortTailwindcssOptions,
+    SortTailwindcssOptions,
     ast_nodes::{AstNode, AstNodes},
     formatter::{TailwindContextEntry, prelude::*},
     write,
@@ -31,7 +31,7 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 /// - The context is not disabled (e.g., not inside a nested non-Tailwind call)
 /// - The string contains whitespace (indicating multiple classes to sort)
 pub fn tailwind_context_for_string_literal<'a>(
-    string: &AstNode<'a, StringLiteral<'a>>,
+    string: &AstNode<'_, 'a, StringLiteral<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> Option<TailwindContextEntry> {
     f.context().tailwind_context().copied().filter(|ctx| {
@@ -167,7 +167,7 @@ impl CollapseWhitespace {
 /// ```
 pub fn can_collapse_whitespace<'a, 'b>(
     span: Span,
-    ancestors: impl Iterator<Item = &'b AstNodes<'a>>,
+    ancestors: impl Iterator<Item = &'b AstNodes<'b, 'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> CollapseWhitespace
 where
@@ -233,7 +233,7 @@ where
 /// - Preserves boundary spaces when required by concat/template context
 /// - With `preserve_whitespace`, outputs content unchanged
 pub fn write_tailwind_string_literal<'a>(
-    string_literal: &AstNode<'a, StringLiteral<'a>>,
+    string_literal: &AstNode<'_, 'a, StringLiteral<'a>>,
     ctx: TailwindContextEntry,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -264,7 +264,7 @@ pub fn write_tailwind_string_literal<'a>(
     let content = &normalized_string[1..normalized_string.len() - 1];
 
     if ctx.preserve_whitespace {
-        let index = f.context_mut().add_tailwind_class(content.to_string());
+        let index = f.session().add_tailwind_class(content.to_string());
         f.write_element(FormatElement::TailwindClass(index));
         write!(f, quote);
         return;
@@ -291,7 +291,7 @@ pub fn write_tailwind_string_literal<'a>(
     }
 
     // Sorted content
-    let index = f.context_mut().add_tailwind_class(trimmed.to_string());
+    let index = f.session().add_tailwind_class(trimmed.to_string());
     f.write_element(FormatElement::TailwindClass(index));
 
     // Trailing space
@@ -321,7 +321,7 @@ pub fn write_tailwind_string_literal<'a>(
 ///
 /// Based on [prettier-plugin-tailwindcss](https://github.com/tailwindlabs/prettier-plugin-tailwindcss/blob/28beb4e008b913414562addec4abb8ab261f3828/src/index.ts#L511-L566).
 pub fn write_tailwind_template_element<'a>(
-    element: &AstNode<'a, TemplateElement<'a>>,
+    element: &AstNode<'_, 'a, TemplateElement<'a>>,
     ctx: TailwindContextEntry,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -343,7 +343,7 @@ pub fn write_tailwind_template_element<'a>(
     // Write sortable content
     if ctx.preserve_whitespace {
         // Whitespace (including whitespace-only content) round-trips through the sorter unchanged
-        let index = f.context_mut().add_tailwind_class(sortable.to_string());
+        let index = f.session().add_tailwind_class(sortable.to_string());
         f.write_element(FormatElement::TailwindClass(index));
     } else if sortable.trim().is_empty() {
         // Whitespace-only → normalize to single space
@@ -362,7 +362,7 @@ pub fn write_tailwind_template_element<'a>(
             write!(f, text(" "));
         }
 
-        let index = f.context_mut().add_tailwind_class(sortable.trim().to_string());
+        let index = f.session().add_tailwind_class(sortable.trim().to_string());
         f.write_element(FormatElement::TailwindClass(index));
 
         // Trailing space: required if not at end of template, or if binary context requires it
@@ -380,7 +380,7 @@ pub fn write_tailwind_template_element<'a>(
 
 /// Determines whitespace collapse rules for a template element based on binary expression context.
 fn can_collapse_whitespace_template<'a>(
-    element: &AstNode<'a, TemplateElement<'a>>,
+    element: &AstNode<'_, 'a, TemplateElement<'a>>,
     is_first: bool,
     is_last: bool,
     f: &JsFormatter<'_, 'a>,

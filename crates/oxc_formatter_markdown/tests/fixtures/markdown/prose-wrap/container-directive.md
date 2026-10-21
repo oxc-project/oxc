@@ -19,3 +19,15 @@ long enough to wrap when the width is small and prose wrap is always on.
 ::: {.class}
 Pandoc fenced div.
 :::
+
+A paragraph right before an opener:
+:::note
+The opener interrupts it, so a blank line separates them.
+:::
+
+<!-- A fence left open inside a directive closes at its closer, printed explicitly -->
+
+::: code-group
+````js
+a
+:::

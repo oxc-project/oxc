@@ -13,7 +13,7 @@ use oxc_allocator::Allocator;
 use rustc_hash::FxHashMap;
 use serde::{Deserialize, Serialize};
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic, Severity};
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, NamedSource, OxcDiagnostic, Severity};
 use oxc_span::{SourceType, Span};
 
 use super::{AllowWarnDeny, ConfigStore, DisableDirectives, ResolvedLinterState, read_to_string};
@@ -41,6 +41,8 @@ pub struct TsGoLintState {
     fix_suggestions: bool,
     /// If `true`, include TypeScript compiler syntactic and semantic diagnostics.
     type_check: bool,
+    /// If `true`, skip type-aware lint rules while retaining TypeScript diagnostics.
+    type_check_only: bool,
     /// If `true`, request that per-rule debug timings be returned from `tsgolint`.
     timings: bool,
     /// If `true`, the linter will create "ignore this section / line" fixes for all diagnostics
@@ -60,6 +62,7 @@ impl TsGoLintState {
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
+            type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
         }
@@ -84,6 +87,7 @@ impl TsGoLintState {
             fix: fix_kind.contains(FixKind::Fix),
             fix_suggestions: fix_kind.contains(FixKind::Suggestion),
             type_check: false,
+            type_check_only: false,
             timings: false,
             with_ignore_fixes: false,
         })
@@ -105,6 +109,15 @@ impl TsGoLintState {
     #[must_use]
     pub fn with_type_check(mut self, yes: bool) -> Self {
         self.type_check = yes;
+        self
+    }
+
+    /// Set to `true` to skip type-aware lint rules.
+    ///
+    /// Default is `false`.
+    #[must_use]
+    pub fn with_type_check_only(mut self, yes: bool) -> Self {
+        self.type_check_only = yes;
         self
     }
 
@@ -560,13 +573,31 @@ impl TsGoLintState {
         source_overrides: Option<FxHashMap<String, String>>,
         resolved_configs: &mut FxHashMap<PathBuf, ResolvedLinterState>,
     ) -> Payload {
+        if self.type_check_only {
+            let file_paths: Vec<String> = paths
+                .iter()
+                .filter(|path| SourceType::from_path(Path::new(path)).is_ok())
+                .map(|path| path.to_string_lossy().into_owned())
+                .collect();
+            return Payload {
+                version: 2,
+                configs: if file_paths.is_empty() {
+                    vec![]
+                } else {
+                    vec![Config { file_paths, rules: vec![] }]
+                },
+                source_overrides,
+                report_syntactic: self.type_check,
+                report_semantic: self.type_check,
+            };
+        }
+
         let mut config_groups: FxHashMap<BTreeSet<Rule>, Vec<String>> = FxHashMap::default();
 
         for path in paths {
             if SourceType::from_path(Path::new(path)).is_ok() {
-                let path_buf = PathBuf::from(path);
                 let file_path = path.to_string_lossy().to_string();
-
+                let path_buf = PathBuf::from(path);
                 let resolved_config = resolved_configs
                     .entry(path_buf.clone())
                     .or_insert_with(|| self.config_store.resolve(&path_buf));
@@ -1032,6 +1063,8 @@ struct DiagnosticHandler {
     silent: bool,
     should_fix: bool,
     source_text_cache: SourceTextCache,
+    /// One source per file, shared by every diagnostic of that file that is sent as it arrives.
+    named_sources: FxHashMap<PathBuf, Arc<NamedSource<String>>>,
     error_sender: DiagnosticSender,
     /// Messages requiring fixes, grouped by file path: messages.
     messages_requiring_fixes: FxHashMap<PathBuf, Vec<Message>>,
@@ -1045,6 +1078,7 @@ impl DiagnosticHandler {
             silent,
             should_fix,
             source_text_cache: SourceTextCache::default(),
+            named_sources: FxHashMap::default(),
             error_sender,
             messages_requiring_fixes: FxHashMap::default(),
             messages_not_requiring_fixes: FxHashMap::default(),
@@ -1114,19 +1148,25 @@ impl DiagnosticHandler {
         oxc_diagnostic: OxcDiagnostic,
         severity: AllowWarnDeny,
     ) {
-        let source_text = self.get_source_text(path).to_string();
         let oxc_diagnostic = oxc_diagnostic.with_severity(if severity == AllowWarnDeny::Deny {
             Severity::Error
         } else {
             Severity::Warning
         });
-        let diagnostics = DiagnosticService::wrap_diagnostics(
-            &self.cwd,
-            path,
-            &source_text,
-            vec![oxc_diagnostic],
-        );
-        self.error_sender.send(diagnostics).expect("Failed to send diagnostics");
+        let source = self.named_source(path);
+        self.error_sender
+            .send(vec![oxc_diagnostic.with_source_code(source)])
+            .expect("Failed to send diagnostics");
+    }
+
+    fn named_source(&mut self, path: &Path) -> Arc<NamedSource<String>> {
+        if let Some(source) = self.named_sources.get(path) {
+            return Arc::clone(source);
+        }
+        let cwd = self.cwd.clone();
+        let source = DiagnosticService::named_source(cwd, path, self.get_source_text(path));
+        self.named_sources.insert(path.to_path_buf(), Arc::clone(&source));
+        source
     }
 
     /// Consume the handler and return collected messages requiring fixes.

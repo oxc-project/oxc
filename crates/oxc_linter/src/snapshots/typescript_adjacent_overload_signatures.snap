@@ -432,3 +432,42 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Move all "#private" overload signatures together, placing them consecutively before any other members.
   note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
+
+  ⚠ typescript(adjacent-overload-signatures): All "\ud800" signatures should be adjacent.
+   ╭─[adjacent_overload_signatures.tsx:2:9]
+ 1 │ class Foo {
+ 2 │         "\uD800"(): void;
+   ·         ────────
+ 3 │         bar(): void;
+ 4 │         "\uD800"(a: number): void;
+   ·         ────────
+ 5 │       }
+   ╰────
+  help: Move all "\ud800" overload signatures together, placing them consecutively before any other members.
+  note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
+
+  ⚠ typescript(adjacent-overload-signatures): All "\udc00" signatures should be adjacent.
+   ╭─[adjacent_overload_signatures.tsx:2:9]
+ 1 │ class Foo {
+ 2 │         "\uDC00"(): void;
+   ·         ────────
+ 3 │         bar(): void;
+ 4 │         ["\uDC00"](a: number): void;
+   ·         ─────────
+ 5 │       }
+   ╰────
+  help: Move all "\udc00" overload signatures together, placing them consecutively before any other members.
+  note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.
+
+  ⚠ typescript(adjacent-overload-signatures): All "a\ud800b" signatures should be adjacent.
+   ╭─[adjacent_overload_signatures.tsx:2:9]
+ 1 │ interface Foo {
+ 2 │         "a\uD800b"(): void;
+   ·         ──────────
+ 3 │         bar(): void;
+ 4 │         "a\uD800b"(a: number): void;
+   ·         ──────────
+ 5 │       }
+   ╰────
+  help: Move all "a\ud800b" overload signatures together, placing them consecutively before any other members.
+  note: Function overload signatures represent multiple ways a function can be called. Keeping them adjacent makes it easier for developers to understand all available call signatures at a glance.

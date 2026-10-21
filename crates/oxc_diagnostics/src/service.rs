@@ -116,6 +116,21 @@ impl DiagnosticService {
         source_text: &str,
         diagnostics: Vec<OxcDiagnostic>,
     ) -> Vec<Error> {
+        let source = Self::named_source(cwd, path, source_text);
+        diagnostics
+            .into_iter()
+            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
+            .collect()
+    }
+
+    /// The source code and display path [`wrap_diagnostics`](DiagnosticService::wrap_diagnostics) attaches. Each
+    /// call copies `source_text`, so a caller that wraps one file's diagnostics a few at a time should build this once
+    /// per file and share it with [`OxcDiagnostic::with_source_code`].
+    pub fn named_source<C: AsRef<Path>, P: AsRef<Path>>(
+        cwd: C,
+        path: P,
+        source_text: &str,
+    ) -> Arc<NamedSource<String>> {
         // TODO: This causes snapshots to fail when running tests through a JetBrains terminal.
         let is_jetbrains =
             std::env::var("TERMINAL_EMULATOR").is_ok_and(|x| x.eq("JetBrains-JediTerm"));
@@ -129,11 +144,7 @@ impl DiagnosticService {
                 normalized_path.to_string()
             });
 
-        let source = Arc::new(NamedSource::new(path_display, source_text.to_owned()));
-        diagnostics
-            .into_iter()
-            .map(|diagnostic| diagnostic.with_source_code(Arc::clone(&source)))
-            .collect()
+        Arc::new(NamedSource::new(path_display, source_text.to_owned()))
     }
 
     /// # Panics

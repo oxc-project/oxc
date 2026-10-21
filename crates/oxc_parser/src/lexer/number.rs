@@ -69,7 +69,7 @@ fn parse_decimal(s: &str) -> f64 {
     /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
     const MAX_FAST_DECIMAL_LEN: usize = 19;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     if s.len() > MAX_FAST_DECIMAL_LEN {
         return parse_decimal_slow(s);
     }
@@ -95,7 +95,7 @@ fn parse_decimal_with_underscores(s: &str) -> f64 {
     /// `u64::MAX + 1` in decimal is 18446744073709551616 (20 chars).
     const MAX_FAST_DECIMAL_LEN: usize = 19;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     if s.len() > MAX_FAST_DECIMAL_LEN {
         return parse_decimal_slow(&s.cow_replace('_', ""));
     }
@@ -150,7 +150,7 @@ fn parse_binary(s: &str) -> f64 {
     /// overflow a u64, forcing us to take the slow path.
     const MAX_FAST_BINARY_LEN: usize = 64;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0b") && !s.starts_with("0B"));
 
     if s.len() > MAX_FAST_BINARY_LEN {
@@ -177,7 +177,7 @@ fn parse_binary_with_underscores(s: &str) -> f64 {
     /// overflow a u64, forcing us to take the slow path.
     const MAX_FAST_BINARY_LEN: usize = 64;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0b") && !s.starts_with("0B"));
 
     if s.len() > MAX_FAST_BINARY_LEN {
@@ -219,7 +219,7 @@ fn parse_octal(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     const MAX_FAST_OCTAL_LEN: usize = 21;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0o") && !s.starts_with("0O"));
     if s.len() > MAX_FAST_OCTAL_LEN {
         return parse_octal_slow(s);
@@ -245,7 +245,7 @@ fn parse_octal_with_underscores(s: &str) -> f64 {
     /// Numeric strings longer than this have the chance to overflow u64.
     const MAX_FAST_OCTAL_LEN: usize = 21;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0o") && !s.starts_with("0O"));
     if s.len() > MAX_FAST_OCTAL_LEN {
         return parse_octal_with_underscores_slow(s);
@@ -298,7 +298,7 @@ fn parse_hex(s: &str) -> f64 {
     /// Hex strings longer than this have the chance to overflow u64.
     const MAX_FAST_HEX_LEN: usize = 16;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0x"));
 
     if s.len() > MAX_FAST_HEX_LEN {
@@ -325,7 +325,7 @@ fn parse_hex_with_underscores(s: &str) -> f64 {
     /// Hex strings longer than this have the chance to overflow u64.
     const MAX_FAST_HEX_LEN: usize = 16;
 
-    debug_assert!(!s.is_empty());
+    debug_assert_ne!(s, "");
     debug_assert!(!s.starts_with("0x"));
 
     if s.len() > MAX_FAST_HEX_LEN {

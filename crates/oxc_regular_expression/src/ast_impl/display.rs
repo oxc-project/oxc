@@ -74,6 +74,9 @@ impl Display for BoundaryAssertionKind {
             Self::End => "$",
             Self::Boundary => r"\b",
             Self::NegativeBoundary => r"\B",
+            Self::StartBuffer => r"\A",
+            Self::EndBuffer => r"\z",
+            Self::EndBufferOptionalNewline => r"\Z",
         };
         f.write_str(s)
     }
@@ -533,6 +536,10 @@ mod test {
         (r"/(?im-s:.)/u", None),
         (r"/(?m-is:.)/v", None),
         (r"/(?smi:.)/v", Some(r"/(?ims:.)/v")),
+        // Buffer boundaries
+        (r"/\A\z\Z/", None),
+        (r"/\A\z\Z/u", None),
+        (r"/\A\z\Z/v", None),
     ];
 
     #[test]

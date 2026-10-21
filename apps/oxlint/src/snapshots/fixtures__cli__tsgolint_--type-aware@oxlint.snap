@@ -113,6 +113,47 @@ working directory: fixtures/cli/tsgolint
    `----
   help: Use a more robust iteration method such as for-of or array.forEach instead.
 
+  x typescript(no-generated-empty-object-type): This type resolves to `{}`, the empty object type. This was likely not intentional.
+   ,-[no-generated-empty-object-type.ts:3:18]
+ 2 | // These operations resolve to the empty object type.
+ 3 | type EmptyOmit = Omit<Data, "name" | "value">;
+   :                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 4 | type EmptyPick = Pick<Data, never>;
+   `----
+
+  x typescript(no-generated-empty-object-type): This type resolves to `{}`, the empty object type. This was likely not intentional.
+   ,-[no-generated-empty-object-type.ts:4:18]
+ 3 | type EmptyOmit = Omit<Data, "name" | "value">;
+ 4 | type EmptyPick = Pick<Data, never>;
+   :                  ^^^^^^^^^^^^^^^^^
+ 5 | type EmptyNonNullable = NonNullable<unknown>;
+   `----
+
+  x typescript(no-generated-empty-object-type): This type resolves to `{}`, the empty object type. This was likely not intentional.
+   ,-[no-generated-empty-object-type.ts:5:25]
+ 4 | type EmptyPick = Pick<Data, never>;
+ 5 | type EmptyNonNullable = NonNullable<unknown>;
+   :                         ^^^^^^^^^^^^^^^^^^^^
+ 6 | type EmptyIntersection = Omit<Data, "name" | "value"> & Omit<Data, "name" | "value">;
+   `----
+
+  x typescript(no-duplicate-type-constituents): Intersection type constituent is duplicated with  Omit<Data, "name" | "value">.
+   ,-[no-generated-empty-object-type.ts:6:57]
+ 5 | type EmptyNonNullable = NonNullable<unknown>;
+ 6 | type EmptyIntersection = Omit<Data, "name" | "value"> & Omit<Data, "name" | "value">;
+   :                          ^^^^^^^^^^^^^^|^^^^^^^^^^^^^   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+   :                                        `-- Type 'Omit<Data, "name" | "value">' is first declared here.
+ 7 | // These operations retain properties.
+   `----
+
+  x typescript(no-generated-empty-object-type): This type resolves to `{}`, the empty object type. This was likely not intentional.
+   ,-[no-generated-empty-object-type.ts:6:26]
+ 5 | type EmptyNonNullable = NonNullable<unknown>;
+ 6 | type EmptyIntersection = Omit<Data, "name" | "value"> & Omit<Data, "name" | "value">;
+   :                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 | // These operations retain properties.
+   `----
+
   x typescript(no-implied-eval): Implied eval.
    ,-[no-implied-eval.ts:1:12]
  1 | setTimeout('alert("Hi!");', 100);
@@ -171,10 +212,10 @@ working directory: fixtures/cli/tsgolint
    ,-[no-unnecessary-condition.ts:3:19]
  2 | declare const b2: boolean;
  3 | export const t1 = b1 && b2;
-   :                   ^|^
-   :                    `-- Type: object
+   :                   ^^
  4 | 
    `----
+  help: The checked value has type `object`.
 
   x typescript(strict-boolean-expressions): Unexpected object value in conditional. An object is always truthy.
    ,-[no-unnecessary-condition.ts:3:19]
@@ -269,26 +310,22 @@ working directory: fixtures/cli/tsgolint
    `----
 
   x typescript(no-unsafe-type-assertion): Unsafe assertion to `any` detected.
-   ,-[no-unnecessary-type-parameters.ts:4:16]
+   ,-[no-unnecessary-type-parameters.ts:4:10]
  3 | function parseYAML<T>(input: string): T {
  4 |   return input as any as T;
-   :          ^^|^^ ^^^^^^|
-   :            |      |  `-- Asserted type is `any`.
-   :            `-- Original expression has type `string`.
+   :          ^^^^^^^^^^^^
  5 | }
    `----
-  help: Consider using a more specific type to ensure safety.
+  help: The original expression has type `string`, and the assertion changes it to `any`. Keep the original type or use `unknown` and narrow the value before use.
 
   x typescript(no-unsafe-type-assertion): Unsafe assertion from `any` detected.
-   ,-[no-unnecessary-type-parameters.ts:4:23]
+   ,-[no-unnecessary-type-parameters.ts:4:10]
  3 | function parseYAML<T>(input: string): T {
  4 |   return input as any as T;
-   :          ^^^^^^|^^^^^ ^^^^|
-   :                |        | `-- Asserted type is `T`.
-   :                `-- Original expression has type `any`.
+   :          ^^^^^^^^^^^^^^^^^
  5 | }
    `----
-  help: Consider using type guards or a safer assertion.
+  help: The original expression has type `any`, and the assertion changes it to `T`. Use a type guard to check the value before asserting its type.
 
   x typescript(no-unsafe-argument): Unsafe argument of type any assigned to a parameter of type string.
    ,-[no-unsafe-argument.ts:3:13]
@@ -299,14 +336,13 @@ working directory: fixtures/cli/tsgolint
    `----
 
   x typescript(no-unsafe-assignment): Unsafe assignment of an any value.
-   ,-[no-unsafe-assignment.ts:2:19]
+   ,-[no-unsafe-assignment.ts:2:7]
  1 | declare const anyValue: any;
  2 | const str: string = anyValue;
-   :            ^^^|^^ ^ ^^^^|^^^
-   :               |   |     `-- Assigned value has type `any`.
-   :               `-- Target expects type `string`.
+   :       ^^^^^^^^^^^^^^^^^^^^^^
  3 | 
    `----
+  help: Assigned value has type `any`; the target has type `string`. Use a safely typed value or `unknown`, and narrow it before use.
 
   x typescript(no-unsafe-call): Unsafe call of a(n) `any` typed value.
    ,-[no-unsafe-call.ts:2:1]
@@ -315,16 +351,6 @@ working directory: fixtures/cli/tsgolint
    : ^^^^^^^^
  3 | 
    `----
-
-  x typescript(no-unnecessary-condition): Unnecessary comparison between literal values.
-    ,-[no-unsafe-enum-comparison.ts:9:32]
-  8 | }
-  9 | const comparison = Status.Open === Color.Red;
-    :                    ^^^^^|^^^^^ ^^^ ^^^^|^^^^
-    :                         |       |      `-- Type: Color.Red
-    :                         `-- Type: Status.Open
- 10 | 
-    `----
 
   x typescript(no-unsafe-enum-comparison): The two values in this comparison do not have a shared enum type.
     ,-[no-unsafe-enum-comparison.ts:9:20]
@@ -337,6 +363,15 @@ working directory: fixtures/cli/tsgolint
     `----
   help: Compare enum values to members of the same enum, or convert both sides to the same primitive type before comparing them.
 
+  x typescript(no-unnecessary-condition): Unnecessary comparison between literal values.
+    ,-[no-unsafe-enum-comparison.ts:9:20]
+  8 | }
+  9 | const comparison = Status.Open === Color.Red;
+    :                    ^^^^^^^^^^^^^^^^^^^^^^^^^
+ 10 | 
+    `----
+  help: The left side has type `Status.Open`, and the right side has type `Color.Red`.
+
   x typescript(no-unsafe-member-access): Unsafe member access .foo on an `any` value.
    ,-[no-unsafe-member-access.ts:2:10]
  1 | declare const anyValue: any;
@@ -347,36 +382,30 @@ working directory: fixtures/cli/tsgolint
 
   x typescript(no-unsafe-return): Unsafe return of a value of type `any`.
    ,-[no-unsafe-return.ts:3:3]
- 1 | declare const anyValue: any;
  2 | function getString(): string {
-   :                       ^^^|^^
-   :                          `-- Function expects return type `string`.
  3 |   return anyValue;
-   :   ^^^^^^ ^^^^|^^^
-   :      |       `-- Returned expression has type `any`.
+   :   ^^^^^^^^^^^^^^^^
  4 | }
    `----
-
-  x typescript(no-unsafe-type-assertion): Unsafe assertion to `any` detected.
-   ,-[no-unsafe-type-assertion.ts:2:19]
- 1 | declare const value: unknown;
- 2 | const str = value as any;
-   :             ^^|^^ ^^^^^^|
-   :               |      |  `-- Asserted type is `any`.
-   :               `-- Original expression has type `unknown`.
- 3 | 
-   `----
-  help: Consider using a more specific type to ensure safety.
+  help: Returned expression has type `any`; the function return type is `string`. Return a safely typed value or narrow the value before returning it.
 
   x typescript(no-unsafe-assignment): Unsafe assignment of an any value.
-   ,-[no-unsafe-type-assertion.ts:2:11]
+   ,-[no-unsafe-type-assertion.ts:2:7]
  1 | declare const value: unknown;
  2 | const str = value as any;
-   :       ^|^ ^ ^^^^^^|^^^^^
-   :        |  |       `-- Assigned value has type `any`.
-   :        `-- Target is inferred as `any`.
+   :       ^^^^^^^^^^^^^^^^^^
  3 | 
    `----
+  help: Assigned value has type `any`, so the target is also inferred as `any`. Use a safely typed value or `unknown`, and narrow it before use.
+
+  x typescript(no-unsafe-type-assertion): Unsafe assertion to `any` detected.
+   ,-[no-unsafe-type-assertion.ts:2:13]
+ 1 | declare const value: unknown;
+ 2 | const str = value as any;
+   :             ^^^^^^^^^^^^
+ 3 | 
+   `----
+  help: The original expression has type `unknown`, and the assertion changes it to `any`. Keep the original type or use `unknown` and narrow the value before use.
 
   x typescript(no-useless-default-assignment): Default value is useless because the parameter has type `number` (not nullish). This default assignment will never be used.
    ,-[no-useless-default-assignment.ts:1:20]
@@ -389,14 +418,13 @@ working directory: fixtures/cli/tsgolint
   help: Remove the default assignment
 
   x typescript(no-unsafe-type-assertion): Unsafe type assertion: type 'string' is more narrow than the original type.
-   ,-[non-nullable-type-assertion-style.ts:2:23]
+   ,-[non-nullable-type-assertion-style.ts:2:17]
  1 | declare const value: string | null;
  2 | const result1 = value as string;
-   :                 ^^|^^ ^^^^^^^^^|
-   :                   |       |    `-- Asserted type is `string`.
-   :                   `-- Original expression has type `string | null`.
+   :                 ^^^^^^^^^^^^^^^
  3 | 
    `----
+  help: The original expression has type `string | null`, and the assertion changes it to `string`. Use a type guard to narrow the value before asserting a more specific type.
 
   x typescript(non-nullable-type-assertion-style): Use a ! assertion to more succinctly remove null and undefined from the type.
    ,-[non-nullable-type-assertion-style.ts:2:17]
@@ -460,13 +488,12 @@ working directory: fixtures/cli/tsgolint
    `----
 
   x typescript(no-unnecessary-condition): This condition will always return the same value since the types have no overlap.
-   ,-[prefer-nullish-coalescing.ts:2:65]
+   ,-[prefer-nullish-coalescing.ts:2:50]
  1 | declare const nullableString: string | null;
  2 | const nullishResult = nullableString !== null && nullableString !== undefined ? nullableString : 'default';
-   :                                                 ^^^^^^^|^^^^^^^ ^^^^^^^^|^^^^
-   :                                                        |         |      `-- Type: undefined
-   :                                                        `-- Type: string
+   :                                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
    `----
+  help: The left side has type `string`, and the right side has type `undefined`.
 
   x typescript(prefer-optional-chain): Prefer using an optional chain expression instead, as it's more concise and easier to read.
    ,-[prefer-optional-chain.ts:3:1]
@@ -603,20 +630,19 @@ working directory: fixtures/cli/tsgolint
  3 | 
    `----
 
+  x typescript(no-unsafe-assignment): Unsafe assignment of an any value.
+   ,-[restrict-plus-operands.ts:1:5]
+ 1 | let foo = 1n + 1;
+   :     ^^^^^^^^^^^^
+   `----
+  help: Assigned value has type `any`, so the target is also inferred as `any`. Use a safely typed value or `unknown`, and narrow it before use.
+
   x typescript(restrict-plus-operands): Numeric '+' operations must either be both bigints or both numbers.
    ,-[restrict-plus-operands.ts:1:11]
  1 | let foo = 1n + 1;
    :           ^|^^^^|
    :            |  | `-- Type: number
    :            `-- Type: bigint
-   `----
-
-  x typescript(no-unsafe-assignment): Unsafe assignment of an any value.
-   ,-[restrict-plus-operands.ts:1:9]
- 1 | let foo = 1n + 1;
-   :     ^|^ ^ ^^^|^^
-   :      |  |    `-- Assigned value has type `any`.
-   :      `-- Target is inferred as `any`.
    `----
 
   x typescript(no-base-to-string): 'obj' will use Object's default stringification format ('[object Object]') when stringified.
@@ -641,10 +667,10 @@ working directory: fixtures/cli/tsgolint
    ,-[strict-boolean-expressions.ts:2:5]
  1 | const str = 'hello';
  2 | if (str) {
-   :     ^|^^
-   :      `-- Type: "hello"
+   :     ^^^
  3 | }
    `----
+  help: The checked value has type `"hello"`.
 
   x typescript(strict-void-return): Value returned in a context where a void return is expected.
    ,-[strict-void-return.ts:2:11]
@@ -694,8 +720,8 @@ working directory: fixtures/cli/tsgolint
    `----
   help: If your function does not access `this`, you can annotate it with `this: void`, or consider using an arrow function instead.
 
-Found 0 warnings and 81 errors.
-Finished in <variable>ms on 60 files with 59 rules using 1 threads.
+Found 0 warnings and 86 errors.
+Finished in <variable>ms on 61 files with 60 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

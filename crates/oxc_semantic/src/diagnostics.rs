@@ -18,7 +18,11 @@ pub fn redeclaration(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
 
 /// TS(2804): Duplicate identifier '#x'. Static and instance elements cannot share the same private name.
 #[cold]
-pub fn static_and_instance_private_identifier(x0: &str, span1: Span, span2: Span) -> OxcDiagnostic {
+pub fn static_and_instance_private_identifier(
+    x0: impl std::fmt::Display,
+    span1: Span,
+    span2: Span,
+) -> OxcDiagnostic {
     ts_error(
         "2804",
         format!("Duplicate identifier `#{x0}`. Static and instance elements cannot share the same private name."),
@@ -172,19 +176,6 @@ pub fn illegal_use_strict(span: Span) -> OxcDiagnostic {
     .with_help(
         "Wrap this function with an IIFE with a 'use strict' directive that returns this function",
     )
-}
-
-#[cold]
-pub fn top_level(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!(
-        "'{x0}' declaration can only be used at the top level of a module"
-    ))
-    .with_label(span1)
-}
-
-#[cold]
-pub fn module_code(x0: &str, span1: Span) -> OxcDiagnostic {
-    OxcDiagnostic::error(format!("Cannot use {x0} outside a module")).with_label(span1)
 }
 
 #[cold]

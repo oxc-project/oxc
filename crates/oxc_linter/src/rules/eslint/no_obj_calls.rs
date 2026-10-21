@@ -7,6 +7,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{context::LintContext, rule::Rule};
 
@@ -64,6 +65,7 @@ declare_oxc_lint!(
     NoObjCalls,
     eslint,
     correctness,
+    recommended,
     version = "0.0.7",
     short_description = "Disallow calling some global objects as functions.",
 );
@@ -73,7 +75,11 @@ fn is_global_obj(s: &str) -> bool {
 }
 
 fn global_this_member<'a>(expr: &'a MemberExpression<'_>) -> Option<&'a str> {
-    if expr.object().is_specific_id(GLOBAL_THIS) { expr.static_property_name() } else { None }
+    if expr.object().is_specific_id(GLOBAL_THIS) {
+        expr.static_property_name().and_then(JSStr::as_str)
+    } else {
+        None
+    }
 }
 
 fn resolve_global_binding<'a, 'b: 'a>(

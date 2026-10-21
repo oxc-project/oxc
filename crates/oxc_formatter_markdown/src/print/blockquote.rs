@@ -2,7 +2,6 @@
 //! (`prefix_align`; a blank line inside prints as `>`).
 
 use oxc_formatter_core::{
-    Buffer,
     builders::{mark_as_root, prefix_align},
     write,
 };

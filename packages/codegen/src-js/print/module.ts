@@ -18,9 +18,10 @@ import {
   printTSModuleDeclaration,
   printTSTypeAliasDeclaration,
 } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { ExportNamedDeclarationNode } from "./types.ts";
+import type { UnhandledNodes } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -28,6 +29,9 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  *
  * Default, namespace and named specifiers can be combined, and the named ones are the only kind in
  * braces, so the braces are opened and closed around a run rather than around the whole list.
+ *
+ * @param node - Import declaration
+ * @param state - Printer state
  */
 export function printImportDeclaration(node: ESTree.ImportDeclaration, state: State): void {
   printIndent(state);
@@ -141,6 +145,9 @@ export function printImportDeclaration(node: ESTree.ImportDeclaration, state: St
  *
  * An empty clause is written where the AST says the source had one, since `with {}`
  * and no clause are different programs.
+ *
+ * @param attributes - Import attributes, or `null` / `undefined` if there is no `with` clause
+ * @param state - Printer state
  */
 function printImportAttributes(
   attributes: ESTree.ImportAttribute[] | null | undefined,
@@ -187,6 +194,8 @@ function printImportAttributes(
  * The name comes back because the caller compares the two sides to decide whether an `as` clause
  * is needed at all, and it is cheaper to return it than to work it out twice.
  *
+ * @param node - Module export name
+ * @param state - Printer state
  * @returns The name printed
  */
 function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
@@ -203,8 +212,14 @@ function moduleExportName(node: ESTree.ModuleExportName, state: State): string {
 /**
  * Print an `export` statement which names what it exports, whether that is a declaration,
  * a list of specifiers, or a list re-exported from another module.
+ *
+ * @param node - Export named declaration
+ * @param state - Printer state
  */
-export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, state: State): void {
+export function printExportNamedDeclaration(
+  node: ESTree.ExportNamedDeclaration,
+  state: State,
+): void {
   printIndent(state);
 
   writeWithMap(state, "export ", CAT_OTHER, node.start, node.end, node);
@@ -250,7 +265,18 @@ export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, st
         break;
       /* END_IF */
       default:
-        throw new Error(`Unknown export declaration type: ${declaration.type}`);
+        throwUnknownNode(
+          declaration as Exclude<
+            UnhandledNodes<typeof declaration, typeof declaration.type>,
+            // Expressions, which are never declarations - `export default function () {}`
+            // and `export default class {}` are `ExportDefaultDeclaration`s, not handled here
+            | (ESTree.Function & { type: "FunctionExpression" })
+            | (ESTree.Class & { type: "ClassExpression" })
+            // Only ever the `value` of a method with no body, never a declaration
+            | (ESTree.Function & { type: "TSEmptyBodyFunctionExpression" })
+          >,
+          "export declaration",
+        );
     }
     return;
   }
@@ -295,6 +321,9 @@ export function printExportNamedDeclaration(node: ExportNamedDeclarationNode, st
 
 /**
  * Print `export * from "…"`, with the `as name` form where the AST has one.
+ *
+ * @param node - Export all declaration
+ * @param state - Printer state
  */
 export function printExportAllDeclaration(node: ESTree.ExportAllDeclaration, state: State): void {
   printIndent(state);
@@ -324,6 +353,9 @@ export function printExportAllDeclaration(node: ESTree.ExportAllDeclaration, sta
  *
  * The output position is recorded before the value is printed, so that a function or class expression
  * starting there knows to parenthesize itself.
+ *
+ * @param node - Export default declaration
+ * @param state - Printer state
  */
 export function printExportDefaultDeclaration(
   node: ESTree.ExportDefaultDeclaration,

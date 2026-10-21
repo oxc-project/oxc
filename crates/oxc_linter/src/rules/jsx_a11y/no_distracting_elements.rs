@@ -87,6 +87,7 @@ declare_oxc_lint!(
     NoDistractingElements,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoDistractingElementsConfig,
     version = "0.0.22",
     short_description = "Enforces that no distracting elements are used.",

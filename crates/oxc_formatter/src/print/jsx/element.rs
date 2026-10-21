@@ -3,7 +3,7 @@ use oxc_ast::ast::{JSXChild, JSXElement, JSXExpression, JSXExpressionContainer, 
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     best_fitting, format_args,
     formatter::{prelude::*, trivia::FormatTrailingComments},
     parentheses::NeedsParentheses,
@@ -20,8 +20,8 @@ use super::{FormatJsxChildList, JsxChildListLayout};
 /// Union type for JSX elements and fragments that have children
 #[derive(Debug, Clone)]
 pub enum AnyJsxTagWithChildren<'a, 'b> {
-    Element(&'b AstNode<'a, JSXElement<'a>>),
-    Fragment(&'b AstNode<'a, JSXFragment<'a>>),
+    Element(&'b AstNode<'b, 'a, JSXElement<'a>>),
+    Fragment(&'b AstNode<'b, 'a, JSXFragment<'a>>),
 }
 
 impl<'a> AnyJsxTagWithChildren<'a, '_> {
@@ -161,7 +161,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
                     let children = self.children();
                     let format_children = FormatJsxChildList::default()
                         .with_options(list_layout)
-                        .fmt_children(children, f);
+                        .fmt_children(&children, f);
 
                     match format_children {
                         FormatChildrenResult::SingleChild(child) => {
@@ -246,7 +246,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AnyJsxTagWithChildren<'a, '_> {
 /// // As JSX attribute:
 /// <Tooltip title={[].map(name => (<Foo>{name}</Foo>))} />;
 /// ```
-pub fn should_expand(parent: &AstNodes<'_>) -> bool {
+pub fn should_expand(parent: &AstNodes<'_, '_>) -> bool {
     let maybe_jsx_expression_container = match parent {
         AstNodes::ArrowFunctionExpression(arrow) if arrow.is_expression() => match arrow.parent() {
             AstNodes::CallExpression(call) => call.parent(),
@@ -265,9 +265,7 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         match self {
             Self::Element(element) => {
                 let is_self_closing = element.closing_element().is_none();
-                let opening_formatter =
-                    FormatOpeningElement::new(element.opening_element(), is_self_closing);
-                write!(f, opening_formatter);
+                write!(f, FormatOpeningElement::new(&element.opening_element(), is_self_closing));
             }
             Self::Fragment(fragment) => {
                 write!(f, fragment.opening_fragment());
@@ -286,14 +284,14 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
         }
     }
 
-    fn children(&self) -> &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>> {
+    fn children(&self) -> AstNode<'b, 'a, ArenaVec<'a, JSXChild<'a>>> {
         match self {
             Self::Element(element) => element.children(),
             Self::Fragment(fragment) => fragment.children(),
         }
     }
 
-    fn parent(&self) -> &'b AstNodes<'a> {
+    fn parent(&self) -> &'b AstNodes<'b, 'a> {
         match self {
             Self::Element(element) => element.parent(),
             Self::Fragment(fragment) => fragment.parent(),
@@ -316,15 +314,16 @@ impl<'a, 'b> AnyJsxTagWithChildren<'a, 'b> {
                 // Safe because of length check above
                 let child = children.first().unwrap();
 
-                match child.as_ast_nodes() {
-                    AstNodes::JSXText(text) => {
+                match child.as_kind() {
+                    AstNodeKind::JSXText(text) => {
                         if is_meaningful_jsx_text(&text.value) {
                             ElementLayout::Default
                         } else {
                             ElementLayout::NoChildren
                         }
                     }
-                    AstNodes::JSXExpressionContainer(expression) => match &expression.expression {
+                    AstNodeKind::JSXExpressionContainer(expression) => match &expression.expression
+                    {
                         JSXExpression::TemplateLiteral(_) => ElementLayout::Template(expression),
                         JSXExpression::TaggedTemplateExpression(_) => {
                             ElementLayout::Template(expression)
@@ -360,7 +359,7 @@ pub enum ElementLayout<'a, 'b> {
     ///   } that will eventually break across multiple lines ${(40 / 3) * 45}`}
     /// </div>;
     /// ```
-    Template(&'b AstNode<'a, JSXExpressionContainer<'a>>),
+    Template(AstNode<'b, 'a, JSXExpressionContainer<'a>>),
 
     /// Default layout used for all elements that have children and [ElementLayout::Template] does not apply.
     ///

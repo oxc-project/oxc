@@ -25,10 +25,27 @@ pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
 
 pub const PAD: usize = 64;
 
-/// `true` if the SIMD core is compiled in, `false` if the scalar fallback is.
+/// Which implementation of the lexer is compiled in.
+///
+/// - `"AVX2"`: x86_64 with `avx2`, `bmi2` and `popcnt` target features enabled.
+/// - `"Neon"`: aarch64 with `neon` target feature enabled.
+/// - `"generic"`: Everywhere else.
+///
+/// Parts of the pipeline which have no implementation for a platform use the generic one.
+///
 /// Used by CI to ensure it's testing the implementation it thinks it is.
-pub const IS_SIMD: bool =
-    cfg!(all(target_arch = "x86_64", target_feature = "avx2", target_feature = "bmi2"));
+pub const IMPLEMENTATION: &str = if cfg!(all(
+    target_arch = "x86_64",
+    target_feature = "avx2",
+    target_feature = "bmi2",
+    target_feature = "popcnt"
+)) {
+    "AVX2"
+} else if cfg!(all(target_arch = "aarch64", target_feature = "neon")) {
+    "Neon"
+} else {
+    "generic"
+};
 
 thread_local! {
     static SCRATCH: RefCell<Lexer> = RefCell::new(Lexer::new());
@@ -222,8 +239,15 @@ fn empty_result(arena: &Arena) -> LexResult {
     }
 }
 
+/// Move a lane's entries into the arena with a bitwise copy.
+///
+/// This is a move, not a clone, so `T` need not be `Copy`.
+/// The arena owns the entries from here on. The source lane is never read again,
+/// and the clear at the start of the next run runs no destructors because `T` has none.
 #[inline]
-fn copy_lane<T: Copy>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
+fn copy_lane<T>(srcv: &[T], dst: *mut T, cap: u32) -> u32 {
+    const { assert!(!mem::needs_drop::<T>()) };
+
     if dst.is_null() {
         return 0;
     }

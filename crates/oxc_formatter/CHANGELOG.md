@@ -4,6 +4,80 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 782ab6e linter: Search string values without UTF-8 conversion (#26716) (Dunqing)
+- a5d8184 jsdoc: Parse code spans after quotes in descriptions (#27955) (leaysgur)
+- c22a9b2 formatter: Treat static block with only empty statements as empty (#27945) (leaysgur)
+- d3ff3f6 formatter/jsdoc: Write descriptions as written to not close the comment (#27823) (leaysgur)
+- c4c1727 formatter/sort_imports: Keep comments after the last import (#27822) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 2c1cc20 formatter: Keep comment only Vue bindings as-is (#27820) (leaysgur)
+- 1bf236d formatter/sort_imports: Do not use comments as import source (#27819) (leaysgur)
+- a1ef7f4 formatter: Keep typecast parens in same-operator binary and arrow chain (#27812) (leaysgur)
+- de110ce formatter: Keep more parens around `TSInstantiationExpression` (#27811) (leaysgur)
+- 6fe4c1b formatter: Treat lone CR in JSX text and argument blank lines (#27780) (leaysgur)
+- d2bea21 formatter: Glue comments to an opener in empty for-head slots and array holes (#27737) (leaysgur)
+- 6a95ec1 formatter: Keep comment position on holey array (#27730) (leaysgur)
+- 54769da formatter: Break after dangling line comment in holey array (#27729) (leaysgur)
+- 644ca1c formatter: Do not indent logical chains whose right sides all inline (#27667) (leaysgur)
+- a07a0fb formatter: Wrap comment-only JSX expression container in a group (#27666) (leaysgur)
+
+### ⚡ Performance
+
+- e220293 formatter: Check only the operator suppression mark in `is_quiet` (#27952) (leaysgur)
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+- a342f7e formatter: Skip comment handling for nodes with no comment near them (#27557) (leaysgur)
+- d8ce750 formatter: Write string literals with swapped quotes into the arena (#27558) (Yuji Sugiura)
+- 1d3ef10 formatter_core: Keep the embedded IR when nothing in it is rewritten (#27673) (leaysgur)
+
+### 📚 Documentation
+
+- d0dd140 formatter: Note lossy cooked round-trip in template embeds (#27944) (leaysgur)
+- 8a3a6c8 oxfmt: Update stale notes on the JSDoc string-out channel and fixture origins (#27824) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- da692b8 formatter: Wrap `export default class|function` consistently (#27628) (leaysgur)
+- 21dee96 formatter: Keep parens around `TSInstantiationExpression` before ! and export (#27626) (leaysgur)
+- 676cc60 formatter/jsdoc: Preserve paragraphs by checking `@description` tag width (#27439) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- 7f65b75 formatter: Format assignment target property as assignment-like (#27289) (leaysgur)
+- 267557c formatter,oxfmt: Embed only original JSDoc plugin supported languages (#27241) (leaysgur)
+- c2de02b formatter: Decide embedded template layout from AST, not source shape (#27218) (leaysgur)
+- c9e1224 formatter: Handle `quoteProps: consistent` for patterns and computed keys (#27216) (leaysgur)
+- 36e14df formatter: Keep comments between callee and its opener on the callee side (#27172) (leaysgur)
+
+## [0.71.0] - 2026-09-28
+
+### 🚀 Features
+
+- 342527d oxfmt: Bump bundled Prettier version to 3.9.8 (#26999) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- eeba1db formatter: Skip test-call layout when arguments have comments (#27119) (leaysgur)
+- 10b10c5 formatter: Keep comments around `=` on their side and line (#27041) (leaysgur)
+- 9aad365 formatter: Keep comments deferred before an assignment operator (#26997) (waltu)
+- 8fbddb1 formatter/jsdoc: More alignment with original plugin (#27039) (leaysgur)
+- 50be18e formatter: Keep trailing spaces on normal block comments (#27037) (leaysgur)
+- 56d1880 formatter: Nestle adjacent block comments (#27036) (leaysgur)
+- 3be5d94 formatter: Treat `/***` comments as JSDoc (#27035) (leaysgur)
+- cd45f71 formatter: Keep trailing double spaces on JSDoc lines (#26861) (John Costa)
+
 ## [0.69.0] - 2026-09-21
 
 ### 🚀 Features

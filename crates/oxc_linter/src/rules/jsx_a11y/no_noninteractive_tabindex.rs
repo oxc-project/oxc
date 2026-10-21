@@ -90,6 +90,7 @@ declare_oxc_lint!(
     NoNoninteractiveTabindex,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoNoninteractiveTabindexConfig,
     version = "0.15.4",
     short_description = "This rule checks that non-interactive elements don't have a tabIndex which would make them interactive via keyboard navigation.",
@@ -148,8 +149,11 @@ impl Rule for NoNoninteractiveTabindex {
         if let Some(role) = role_attr.value.as_ref() {
             match role {
                 JSXAttributeValue::StringLiteral(role) => {
-                    let is_interactive_role =
-                        role.value.split_whitespace().next().is_some_and(|role| {
+                    let is_interactive_role = role
+                        .value
+                        .as_str()
+                        .and_then(|value| value.split_whitespace().next())
+                        .is_some_and(|role| {
                             is_interactive_role(role)
                                 || self.0.roles.iter().any(|allowed_role| allowed_role == role)
                         });

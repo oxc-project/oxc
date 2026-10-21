@@ -75,55 +75,6 @@
    /** Enables spell checking on the input. */
    @property({
      type: Boolean,
-@@ -503,28 +523,28 @@
-                   @click=${this.handlePasswordToggle}
-                   tabindex="-1"
-                 >
-                   ${
--                  !this.passwordVisible
--                    ? html`
--                        <slot name="show-password-icon">
--                          <wa-icon
--                            name="eye"
--                            library="system"
--                            variant="regular"
--                          ></wa-icon>
--                        </slot>
--                      `
--                    : html`
--                        <slot name="hide-password-icon">
--                          <wa-icon
--                            name="eye-slash"
--                            library="system"
--                            variant="regular"
--                          ></wa-icon>
--                        </slot>
--                      `
--                }
-+                    !this.passwordVisible
-+                      ? html`
-+                          <slot name="show-password-icon">
-+                            <wa-icon
-+                              name="eye"
-+                              library="system"
-+                              variant="regular"
-+                            ></wa-icon>
-+                          </slot>
-+                        `
-+                      : html`
-+                          <slot name="hide-password-icon">
-+                            <wa-icon
-+                              name="eye-slash"
-+                              library="system"
-+                              variant="regular"
-+                            ></wa-icon>
-+                          </slot>
-+                        `
-+                  }
-                 </button>
-               `
-             : ""
-         }
 
 `````
 
@@ -1221,26 +1172,26 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
                   tabindex="-1"
                 >
                   ${
-                  !this.passwordVisible
-                    ? html`
-                        <slot name="show-password-icon">
-                          <wa-icon
-                            name="eye"
-                            library="system"
-                            variant="regular"
-                          ></wa-icon>
-                        </slot>
-                      `
-                    : html`
-                        <slot name="hide-password-icon">
-                          <wa-icon
-                            name="eye-slash"
-                            library="system"
-                            variant="regular"
-                          ></wa-icon>
-                        </slot>
-                      `
-                }
+                    !this.passwordVisible
+                      ? html`
+                          <slot name="show-password-icon">
+                            <wa-icon
+                              name="eye"
+                              library="system"
+                              variant="regular"
+                            ></wa-icon>
+                          </slot>
+                        `
+                      : html`
+                          <slot name="hide-password-icon">
+                            <wa-icon
+                              name="eye-slash"
+                              library="system"
+                              variant="regular"
+                            ></wa-icon>
+                          </slot>
+                        `
+                  }
                 </button>
               `
             : ""
@@ -1307,39 +1258,6 @@ declare global {
    /**
     * Only required for SSR. Set to `true` if you're slotting in a `label` element so the server-rendered markup
     * includes the label before the component hydrates on the client.
-@@ -466,20 +473,20 @@
-                   @click=${this.handlePasswordToggle}
-                   tabindex="-1"
-                 >
-                   ${
--                  !this.passwordVisible
--                    ? html`
--                        <slot name="show-password-icon">
--                          <wa-icon name="eye" library="system" variant="regular"></wa-icon>
--                        </slot>
--                      `
--                    : html`
--                        <slot name="hide-password-icon">
--                          <wa-icon name="eye-slash" library="system" variant="regular"></wa-icon>
--                        </slot>
--                      `
--                }
-+                    !this.passwordVisible
-+                      ? html`
-+                          <slot name="show-password-icon">
-+                            <wa-icon name="eye" library="system" variant="regular"></wa-icon>
-+                          </slot>
-+                        `
-+                      : html`
-+                          <slot name="hide-password-icon">
-+                            <wa-icon name="eye-slash" library="system" variant="regular"></wa-icon>
-+                          </slot>
-+                        `
-+                  }
-                 </button>
-               `
-             : ""
-         }
 
 `````
 
@@ -2343,18 +2261,18 @@ export default class WaInput extends WebAwesomeFormAssociatedElement {
                   tabindex="-1"
                 >
                   ${
-                  !this.passwordVisible
-                    ? html`
-                        <slot name="show-password-icon">
-                          <wa-icon name="eye" library="system" variant="regular"></wa-icon>
-                        </slot>
-                      `
-                    : html`
-                        <slot name="hide-password-icon">
-                          <wa-icon name="eye-slash" library="system" variant="regular"></wa-icon>
-                        </slot>
-                      `
-                }
+                    !this.passwordVisible
+                      ? html`
+                          <slot name="show-password-icon">
+                            <wa-icon name="eye" library="system" variant="regular"></wa-icon>
+                          </slot>
+                        `
+                      : html`
+                          <slot name="hide-password-icon">
+                            <wa-icon name="eye-slash" library="system" variant="regular"></wa-icon>
+                          </slot>
+                        `
+                  }
                 </button>
               `
             : ""

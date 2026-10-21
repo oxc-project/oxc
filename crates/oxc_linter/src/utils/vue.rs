@@ -8,6 +8,7 @@ use oxc_ast::{
     },
 };
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode, ContextSubHost, LintContext, ast_util::get_declaration_from_reference_id,
@@ -209,7 +210,7 @@ pub fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext
         return false;
     };
 
-    matches!(container_name.as_ref(), "computed" | "methods" | "watch")
+    matches!(container_name.as_str(), Some("computed" | "methods" | "watch"))
         && is_vue_component_options_object(
             ctx.nodes().parent_node(container_property_node.id()),
             ctx,
@@ -318,7 +319,7 @@ pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return false;
     };
-    let Some(prop_name) = member_expr.static_property_name() else {
+    let Some(prop_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
         return false;
     };
 
@@ -469,7 +470,7 @@ pub fn get_computed_getter_context(
                 {
                     let vue_options = nodes.parent_node(great.id());
                     if is_vue_component_options_object(vue_options, ctx) {
-                        let key = prop.key.static_name().map(|s| s.to_string());
+                        let key = prop.key.static_name().map(|s| s.display().to_string());
                         return Some(ComputedContext::OptionsApi(key));
                     }
                 }
@@ -487,7 +488,7 @@ pub fn get_computed_getter_context(
                     {
                         let vue_options = nodes.parent_node(computed_prop_node.id());
                         if is_vue_component_options_object(vue_options, ctx) {
-                            let key = key_prop.key.static_name().map(|s| s.to_string());
+                            let key = key_prop.key.static_name().map(|s| s.display().to_string());
                             return Some(ComputedContext::OptionsApi(key));
                         }
                     }

@@ -5,8 +5,10 @@ use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    BoundNames, ToJsString, ToNumber,
-    constant_evaluation::{ConstantEvaluation, ConstantValue, DetermineValueType},
+    BoundNames, ToNumber,
+    constant_evaluation::{
+        ConstantEvaluation, ConstantValue, DetermineValueType, evaluate_to_js_string,
+    },
     side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, is_typed_array_constructor},
 };
 use oxc_semantic::ReferenceFlags;
@@ -124,7 +126,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -139,7 +144,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -154,7 +162,10 @@ impl<'a> PeepholeOptimizations {
         // Only check for computed property restrictions if this is actually a computed property
         if prop.computed
             && let PropertyKey::StringLiteral(str) = &prop.key
-            && property_key_parent.should_keep_as_computed_property(&str.value)
+            && str
+                .value
+                .as_str()
+                .is_some_and(|value| property_key_parent.should_keep_as_computed_property(value))
         {
             return;
         }
@@ -199,16 +210,12 @@ impl<'a> PeepholeOptimizations {
     }
 
     /// `() => { return foo })` -> `() => foo`
-    pub fn substitute_arrow_expression(
-        arrow_expr: &mut ArrowFunctionExpression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) {
+    pub fn substitute_arrow_expression(arrow_expr: &mut ArrowFunctionExpression<'a>) {
         if let Some(body) = arrow_expr.get_function_body_mut()
             && body.directives.is_empty()
             && body.statements.len() == 1
             && let Statement::ReturnStatement(return_statement) = &mut body.statements[0]
-            && let Some(expr) =
-                return_statement.argument.as_mut().map(|argument| argument.take_in(ctx))
+            && let Some(expr) = return_statement.argument.take()
         {
             arrow_expr.body = ArrowFunctionBody::from(expr);
         }
@@ -696,12 +703,12 @@ impl<'a> PeepholeOptimizations {
                         return VerifyArrayArgResult::Invalid;
                     };
                     if test_expr.operator == BinaryOperator::GreaterThan
-                        && test_expr.left.is_specific_id(&name_e)
+                        && test_expr.left.is_specific_id(name_e)
                         && matches!(&test_expr.right, Expression::NumericLiteral(n) if n.value == offset)
                         && cons_expr.operator == BinaryOperator::Subtraction
-                        && matches!(&cons_expr.left, Expression::Identifier(id) if id.name == name_e)
                         && matches!(&cons_expr.right, Expression::NumericLiteral(n) if n.value == offset)
-                        && matches!(&cond_expr.alternate, Expression::NumericLiteral(n) if n.value == 0.0)
+                        && cons_expr.left.is_specific_id(name_e)
+                        && cond_expr.alternate.is_number_0()
                     {
                         VerifyArrayArgResult::WithOffset
                     } else {
@@ -848,8 +855,12 @@ impl<'a> PeepholeOptimizations {
 
         let Some(init) = &mut for_stmt.init else { return };
         let ForStatementInit::VariableDeclaration(var_init) = init else { return };
-        // Need at least two declarators: r, a (optional `e` may precede them)
-        if var_init.declarations.len() < init_decl_len {
+        let Some(siblings) = var_init.declarations.get(init_decl_len..) else { return };
+        // Sibling declarators may be in the source loop or folded into it by `sequences`.
+        // Keep uninitialized `var` siblings, but don't move an initializer across the spread.
+        if !siblings.is_empty()
+            && (!var_init.kind.is_var() || siblings.iter().any(|decl| decl.init.is_some()))
+        {
             return;
         }
 
@@ -955,7 +966,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
-        // Build `var r = [...arguments]` (with optional `.slice(offset)`) as the only declarator and drop test/update/body.
+        // Build `var r = [...arguments]` (with optional `.slice(offset)`) and drop test/update/body.
 
         let r_id_pat = {
             let (r_id, de_id_symbol_id) = r_id_pat_with_info;
@@ -999,34 +1010,26 @@ impl<'a> PeepholeOptimizations {
             };
 
             let new_decl = VariableDeclarator::new(SPAN, r_id_pat, None, Some(arr), false, ctx);
-            // The old declarators (`e`, `a`, and `r`'s original init) are
-            // replaced wholesale — walk them so refs inside (e.g. `e` in
-            // `Array(e > 1 ? e - 1 : 0)`) reach `PassChanges`. The moved-out
-            // `r` binding and `arguments` ident left id-less dummies behind.
-            for decl in &var_init.declarations {
-                ctx.drop_variable_declarator(decl);
+            // Drop only the copy-loop declarators. Siblings remain in the `var` statement.
+            // Walk removed declarators so refs inside them reach `PassChanges`.
+            for decl in var_init.declarations.drain(..init_decl_len) {
+                ctx.drop_variable_declarator(&decl);
             }
-            var_init.declarations = ArenaVec::from_value_in(new_decl, ctx);
+            var_init.declarations.insert(0, new_decl);
         } else {
-            // `for (var; 0;)` with an empty `VariableDeclaration` is invalid JS when printed and
-            // makes `try_fold_for` hoist a bogus `var;`. Use `for (; 0;)` instead so dead-code
-            // folding becomes an empty statement. Walk the dropped
-            // declarators so their refs reach `PassChanges`.
-            for decl in &var_init.declarations {
-                ctx.drop_variable_declarator(decl);
+            // The copied array is unused, but sibling declarations still need to survive.
+            for decl in var_init.declarations.drain(..init_decl_len) {
+                ctx.drop_variable_declarator(&decl);
             }
-            for_stmt.init = None;
+            // Avoid invalid `for (var; 0;)` when no siblings remain.
+            if var_init.declarations.is_empty() {
+                for_stmt.init = None;
+            }
         }
         if let Some(old) = for_stmt.test.take() {
             ctx.drop_expression(&old);
         }
-        for_stmt.test = Some(Expression::new_numeric_literal(
-            for_stmt.span,
-            0.0,
-            None,
-            NumberBase::Decimal,
-            ctx,
-        ));
+        for_stmt.test = Some(Expression::new_number_0(for_stmt.span, ctx));
         if let Some(old) = for_stmt.update.take() {
             ctx.drop_expression(&old);
         }
@@ -1054,6 +1057,14 @@ impl<'a> PeepholeOptimizations {
         }
         if let Some(old) = stmt.argument.take() {
             ctx.drop_expression(&old);
+        }
+    }
+
+    /// Remove `void 0` from a non-delegating `yield`.
+    /// `yield void 0` -> `yield`
+    pub fn substitute_yield_expression(expr: &mut YieldExpression<'a>) {
+        if !expr.delegate && expr.argument.as_ref().is_some_and(Expression::is_void_0) {
+            expr.argument = None;
         }
     }
 
@@ -1166,7 +1177,7 @@ impl<'a> PeepholeOptimizations {
     ) -> Option<&'a str> {
         match callee {
             Expression::StaticMemberExpression(e) => {
-                if !matches!(&e.object, Expression::Identifier(ident) if ident.name == "window") {
+                if !e.object.is_specific_id("window") {
                     return None;
                 }
                 Some(e.property.name.as_str())
@@ -1380,12 +1391,15 @@ impl<'a> PeepholeOptimizations {
     }
 
     pub fn substitute_template_literal(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        let Expression::TemplateLiteral(t) = expr else { return };
-        let Some(val) = t.to_js_string(ctx).filter(|_| !t.may_have_side_effects(ctx)) else {
+        let Expression::TemplateLiteral(t) = &*expr else { return };
+        if t.may_have_side_effects(ctx) {
             return;
-        };
-        let new_value =
-            Expression::new_string_literal(t.span(), Str::from_cow_in(&val, ctx), None, ctx);
+        }
+        let span = t.span();
+        // The cooked value is kept as a `JSStr`, so a template holding a lone surrogate
+        // becomes a string literal with the same code units.
+        let Some(value) = evaluate_to_js_string(expr, ctx) else { return };
+        let new_value = Expression::new_string_literal(span, value, None, ctx);
         ctx.replace_expression(expr, new_value);
     }
 
@@ -1401,19 +1415,18 @@ impl<'a> PeepholeOptimizations {
                 *computed = false;
             }
             PropertyKey::StringLiteral(s) => {
-                let value = s.value.as_str();
+                // Bool field flip on an existing AST node, not a slot replacement.
+                *computed = false;
+                // A key with a lone surrogate is neither an identifier name nor a number.
+                let Some(value) = s.value.as_str() else { return };
                 if is_identifier_name_patched(value) {
-                    // Bool field flip on an existing AST node, not a slot replacement.
-                    *computed = false;
-                    let new_key = PropertyKey::new_static_identifier(s.span, s.value, ctx);
+                    let new_key = PropertyKey::new_static_identifier(s.span, value, ctx);
                     ctx.replace_property_key(key, new_key);
                     return;
                 }
                 if let Some(value) = TraverseCtx::string_to_equivalent_number_value(value)
                     && value >= 0.0
                 {
-                    // Bool field flip on an existing AST node, not a slot replacement.
-                    *computed = false;
                     let new_key = PropertyKey::new_numeric_literal(
                         s.span,
                         value,
@@ -1422,11 +1435,6 @@ impl<'a> PeepholeOptimizations {
                         ctx,
                     );
                     ctx.replace_property_key(key, new_key);
-                    return;
-                }
-                if *computed {
-                    // Bool field flip on an existing AST node, not a slot replacement.
-                    *computed = false;
                 }
             }
             _ => {}
@@ -1689,7 +1697,7 @@ impl<'a> PeepholeOptimizations {
         };
 
         let is_all_string = array.elements.iter().all(|element| {
-            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(_)))
+            element.as_expression().is_some_and(|expr| matches!(expr, Expression::StringLiteral(lit) if !lit.value.has_lone_surrogate()))
         });
         if !is_all_string {
             return;
@@ -1705,7 +1713,8 @@ impl<'a> PeepholeOptimizations {
 
         let strings = array.elements.iter().map(|element| {
             let Expression::StringLiteral(str) = element.to_expression() else { unreachable!() };
-            str.value.as_str()
+            // Checked above before constructing the iterator.
+            str.value.as_str().unwrap()
         });
         let Some(delimiter) = Self::pick_delimiter(&strings) else { return };
 
@@ -1915,7 +1924,8 @@ impl<'a> PeepholeOptimizations {
                 let new_value = if is_pure && Self::is_expression_result_unused(ctx) {
                     Expression::new_void_0(call_expr.span, ctx)
                 } else if let Some(taken) = Self::try_take_iife_body(expr, is_pure, ctx) {
-                    taken
+                    // Replace "(() => o.f)()()" with "(0, o.f)()"
+                    Self::preserve_indirect_access_if_needed(call_expr.span, taken, ctx)
                 } else {
                     return;
                 };
@@ -1923,7 +1933,7 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
             let Some(body) = f.get_function_body_mut() else { return };
-            if body.statements.len() != 1 {
+            if body.statements.len() != 1 || !body.directives.is_empty() {
                 return;
             }
             match &mut body.statements[0] {
@@ -1934,9 +1944,10 @@ impl<'a> PeepholeOptimizations {
                     } else if let Some(taken) =
                         Self::try_take_iife_body(&mut expr_stmt.expression, is_pure, ctx)
                     {
-                        Expression::new_sequence_expression(
+                        Self::join_sequence(
                             expr_stmt.span,
-                            [taken, Expression::new_void_0(call_expr.span, ctx)],
+                            taken,
+                            Expression::new_void_0(call_expr.span, ctx),
                             ctx,
                         )
                     } else {
@@ -1952,7 +1963,8 @@ impl<'a> PeepholeOptimizations {
                             Expression::new_void_0(call_expr.span, ctx)
                         } else if let Some(taken) = Self::try_take_iife_body(argument, is_pure, ctx)
                         {
-                            taken
+                            // Replace "(() => { return o.f })()()" with "(0, o.f)()"
+                            Self::preserve_indirect_access_if_needed(call_expr.span, taken, ctx)
                         } else {
                             return;
                         };

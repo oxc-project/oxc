@@ -162,6 +162,7 @@ declare_oxc_lint!(
     NoEmptyObjectType,
     typescript,
     restriction,
+    recommended,
     conditional_suggestion,
     config = NoEmptyObjectTypeConfig,
     version = "0.12.0",
