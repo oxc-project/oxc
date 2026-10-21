@@ -202,7 +202,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::Using);
         if self.ctx.has_ambient() {
             let using_span = self.cur_token().span();
-            self.error(if kind.is_await() {
+            self.error(if kind.is_await_using() {
                 diagnostics::await_using_declarations_not_allowed_in_ambient_contexts(using_span)
             } else {
                 diagnostics::using_declarations_not_allowed_in_ambient_contexts(using_span)

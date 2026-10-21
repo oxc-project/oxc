@@ -490,7 +490,7 @@ fn report_join(
             fixes.push(Fix::new(",", Span::empty(previous.span.end)));
         }
         let keyword = declaration.kind.as_str();
-        if declaration.kind.is_await() {
+        if declaration.kind.is_await_using() {
             fixes.push(Fix::delete(Span::sized(declaration.span.start, 5)));
             let offset = ctx
                 .find_next_token_within(declaration.span.start, declaration.span.end, "using")
@@ -1092,8 +1092,8 @@ fn test() {
         ("var f, k /* test */, l;", Some(serde_json::json!(["never"]))),
         ("var f,          /* test */ l;", Some(serde_json::json!(["never"]))),
         (
-            "var f, k /* test 
-             some more comment 
+            "var f, k /* test
+             some more comment
              even more */, l = 1, P;",
             Some(serde_json::json!(["never"])),
         ),
@@ -1571,11 +1571,11 @@ fn test() {
             Some(serde_json::json!(["never"])),
         ),
         (
-            "var f, k /* test 
-             some more comment 
+            "var f, k /* test
+             some more comment
              even more */, l = 1, P;",
-            "var f; var k /* test 
-             some more comment 
+            "var f; var k /* test
+             some more comment
              even more */; var l = 1; var P;",
             Some(serde_json::json!(["never"])),
         ),
