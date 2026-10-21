@@ -20,7 +20,7 @@ use crate::{
     frameworks::FrameworkOptions,
     rule::{Rule, TupleRuleConfig},
     utils::{
-        deserialize_regex_vec, find_property, for_each_define_props_type_signature,
+        deserialize_regex_vec, for_each_define_props_type_signature,
         is_vue_component_options_object_excluding_instance, vue_casing,
     },
 };
@@ -121,7 +121,7 @@ impl Rule for PropNameCasing {
                 if !is_vue_component_options_object_excluding_instance(node, ctx) {
                     return;
                 }
-                let Some(props_prop) = find_property(obj, "props") else { return };
+                let Some(props_prop) = obj.find_property("props") else { return };
                 self.check_props_value(&props_prop.value, ctx);
             }
             AstKind::CallExpression(call) => {
