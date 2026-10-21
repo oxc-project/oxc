@@ -490,7 +490,7 @@ fn report_join(
             fixes.push(Fix::new(",", Span::empty(previous.span.end)));
         }
         let keyword = declaration.kind.as_str();
-        if declaration.kind.is_await() {
+        if declaration.kind.is_await_using() {
             fixes.push(Fix::delete(Span::sized(declaration.span.start, 5)));
             let offset = ctx
                 .find_next_token_within(declaration.span.start, declaration.span.end, "using")

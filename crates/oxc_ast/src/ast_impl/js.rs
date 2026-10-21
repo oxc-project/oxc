@@ -1195,7 +1195,7 @@ impl VariableDeclarationKind {
     }
 
     /// Returns `true` if declared using `await using` (such as `await using x`)
-    pub fn is_await(self) -> bool {
+    pub fn is_await_using(self) -> bool {
         self == Self::AwaitUsing
     }
 

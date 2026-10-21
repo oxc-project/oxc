@@ -534,7 +534,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.context_remove(Context::In, |p| p.parse_using_declaration(StatementContext::For));
 
         if matches!(self.cur_kind(), Kind::In) {
-            if using_decl.kind.is_await() {
+            if using_decl.kind.is_await_using() {
                 self.error(diagnostics::await_using_declaration_not_allowed_in_for_in_statement(
                     using_decl.span,
                 ));
@@ -798,7 +798,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 // It is a Syntax Error if UsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
                 // It is a Syntax Error if AwaitUsingDeclaration is contained directly within the StatementList of either a CaseClause or DefaultClause.
-                self.error(if var_decl.kind.is_await() {
+                self.error(if var_decl.kind.is_await_using() {
                     diagnostics::await_using_declaration_not_allowed_in_switch_bare_case(
                         stmt.span(),
                     )
