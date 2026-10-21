@@ -1092,8 +1092,8 @@ fn test() {
         ("var f, k /* test */, l;", Some(serde_json::json!(["never"]))),
         ("var f,          /* test */ l;", Some(serde_json::json!(["never"]))),
         (
-            "var f, k /* test
-             some more comment
+            "var f, k /* test 
+             some more comment 
              even more */, l = 1, P;",
             Some(serde_json::json!(["never"])),
         ),
@@ -1571,11 +1571,11 @@ fn test() {
             Some(serde_json::json!(["never"])),
         ),
         (
-            "var f, k /* test
-             some more comment
+            "var f, k /* test 
+             some more comment 
              even more */, l = 1, P;",
-            "var f; var k /* test
-             some more comment
+            "var f; var k /* test 
+             some more comment 
              even more */; var l = 1; var P;",
             Some(serde_json::json!(["never"])),
         ),
