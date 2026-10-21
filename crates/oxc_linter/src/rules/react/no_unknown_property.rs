@@ -4,7 +4,7 @@ use cow_utils::CowUtils;
 use itertools::Itertools;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeName, JSXElementName},
+    ast::{JSXAttributeItem, JSXElementName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -522,7 +522,7 @@ impl Rule for NoUnknownProperty {
                 let Some(jsx_attr) = attr.as_attribute() else {
                     return true;
                 };
-                let JSXAttributeName::Identifier(ident) = &jsx_attr.name else {
+                let Some(ident) = jsx_attr.name.as_identifier() else {
                     return true;
                 };
                 ident.name.as_str() != "is"
