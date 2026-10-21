@@ -215,7 +215,7 @@ impl AccessorPairs {
             };
 
             let kind = method.kind;
-            if kind != MethodDefinitionKind::Get && kind != MethodDefinitionKind::Set {
+            if !kind.is_accessor() {
                 continue;
             }
 
