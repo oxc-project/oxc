@@ -963,7 +963,6 @@ pub fn is_node_within_call_argument<'a>(
     call: &CallExpression<'a>,
     target_arg_index: usize,
 ) -> bool {
-    // Early exit for out-of-bounds index
     if target_arg_index >= call.arguments.len() {
         return false;
     }
