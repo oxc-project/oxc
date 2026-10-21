@@ -2,9 +2,9 @@ use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ClassElement, Expression, MethodDefinition, MethodDefinitionKind, ObjectProperty,
-        ObjectPropertyKind, PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature,
-        TSMethodSignatureKind, TSSignature, TSTypeLiteral,
+        ClassElement, Expression, MethodDefinition, ObjectProperty, ObjectPropertyKind,
+        PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature, TSMethodSignatureKind,
+        TSSignature, TSTypeLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -260,10 +260,7 @@ impl Rule for GroupedAccessorPairs {
                     let ClassElement::MethodDefinition(method_define) = v else {
                         continue;
                     };
-                    if !matches!(
-                        method_define.kind,
-                        MethodDefinitionKind::Get | MethodDefinitionKind::Set
-                    ) {
+                    if !method_define.kind.is_accessor() {
                         continue;
                     }
                     let (key_name, is_literal) =

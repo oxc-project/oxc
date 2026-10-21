@@ -1,8 +1,8 @@
 use oxc_ast::{
     AstKind, MemberExpressionKind, StaticPropertyName,
     ast::{
-        BindingPattern, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKey,
-        PropertyKind, SimpleAssignmentTarget, UpdateExpression,
+        BindingPattern, MethodDefinition, ObjectProperty, PropertyKey, PropertyKind,
+        SimpleAssignmentTarget, UpdateExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -278,8 +278,7 @@ fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
             !obj_prop.computed && matches!(obj_prop.kind, PropertyKind::Get | PropertyKind::Set)
         }
         AstKind::MethodDefinition(method_def) => {
-            !method_def.computed
-                && matches!(method_def.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
+            !method_def.computed && method_def.kind.is_accessor()
         }
         _ => false,
     }
