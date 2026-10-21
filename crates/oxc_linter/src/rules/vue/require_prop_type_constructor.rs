@@ -201,10 +201,7 @@ fn literal_identifier_replacement(expr: &Expression) -> Option<String> {
 }
 
 fn single_quasi_identifier(tpl: &TemplateLiteral) -> Option<String> {
-    if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
-        return None;
-    }
-    let cooked = tpl.quasis[0].value.cooked?.as_str()?;
+    let cooked = tpl.single_quasi()?.as_str()?;
     is_identifier_name(cooked).then(|| cooked.to_string())
 }
 

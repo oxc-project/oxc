@@ -236,10 +236,7 @@ fn is_define_options_call(call: &CallExpression<'_>) -> bool {
 }
 
 fn single_quasi_value<'a>(tpl: &'a TemplateLiteral<'a>) -> Option<&'a str> {
-    if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
-        return None;
-    }
-    tpl.quasis[0].value.cooked.and_then(JSStr::as_str)
+    tpl.single_quasi().and_then(JSStr::as_str)
 }
 
 fn lower_first_char(name: &str) -> Option<String> {

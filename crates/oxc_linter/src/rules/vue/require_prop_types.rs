@@ -247,9 +247,7 @@ impl RequirePropTypes {
             let name = match expr {
                 Expression::StringLiteral(lit) => lit.value.as_str(),
                 Expression::Identifier(id) => Some(id.name.as_str()),
-                Expression::TemplateLiteral(lit) if lit.expressions.is_empty() => {
-                    lit.quasis.first().and_then(|q| q.value.cooked.and_then(JSStr::as_str))
-                }
+                Expression::TemplateLiteral(lit) => lit.single_quasi().and_then(JSStr::as_str),
                 _ => None,
             }
             .unwrap_or("Unknown prop");
