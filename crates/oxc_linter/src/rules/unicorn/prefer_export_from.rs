@@ -1077,7 +1077,7 @@ impl PreferExportFrom {
 
                 let spec = SpecifierSpec {
                     specifier,
-                    name: specifier.local().name.to_string(),
+                    name: specifier.name().to_string(),
                     decl_type: import_decl.import_kind.is_type(),
                 };
 
@@ -1114,7 +1114,7 @@ fn has_matching_type_alias<'a>(
     let root_scope_id = scoping.root_scope_id();
 
     for specifier in specifiers {
-        let Some(symbol_id) = scoping.get_binding(root_scope_id, specifier.local().name) else {
+        let Some(symbol_id) = scoping.get_binding(root_scope_id, specifier.name()) else {
             continue;
         };
         for declaration_node_id in scoping.symbol_declarations(symbol_id) {
