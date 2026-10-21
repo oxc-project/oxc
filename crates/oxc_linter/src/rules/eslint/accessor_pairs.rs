@@ -274,7 +274,7 @@ impl AccessorPairs {
             });
 
             if !has_pair {
-                if *kind1 == MethodDefinitionKind::Set && self.set_without_get {
+                if kind1.is_set() && self.set_without_get {
                     ctx.diagnostic(setter_without_getter_diagnostic(*span1));
                 } else if kind1.is_get() && self.get_without_set {
                     ctx.diagnostic(getter_without_setter_diagnostic(*span1));

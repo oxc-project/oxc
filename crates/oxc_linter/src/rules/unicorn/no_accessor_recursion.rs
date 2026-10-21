@@ -183,9 +183,7 @@ impl Rule for NoAccessorRecursion {
                             ));
                         }
 
-                        if method_def.kind == MethodDefinitionKind::Set
-                            && is_property_write(target, ctx)
-                        {
+                        if method_def.kind.is_set() && is_property_write(target, ctx) {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
                                 "setters",
