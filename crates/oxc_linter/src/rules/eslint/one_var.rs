@@ -381,7 +381,7 @@ fn is_require(expression: &Expression<'_>) -> bool {
 
 fn declaration_scope(node: &AstNode<'_>, ctx: &LintContext<'_>) -> ScopeId {
     if let AstKind::VariableDeclaration(declaration) = node.kind()
-        && declaration.kind == VariableDeclarationKind::Var
+        && declaration.kind.is_var()
     {
         return ctx
             .scoping()
