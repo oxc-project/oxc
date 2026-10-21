@@ -14,7 +14,9 @@ use smallvec::SmallVec;
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_str::{JSStr, JSStrBuilder};
-use oxc_syntax::number::ToJsString;
+use oxc_syntax::{
+    identifier::is_white_space, line_terminator::is_line_terminator, number::ToJsString,
+};
 
 use crate::{
     StringCharCodeAt, StringIndexOf, StringLastIndexOf, ToInt32, ToJsString as ToJsStringTrait,
@@ -126,9 +128,9 @@ fn try_fold_string_casing<'a>(
     let result = match name {
         "toLowerCase" => Str::from_str_in(&value.cow_to_lowercase(), ctx),
         "toUpperCase" => Str::from_str_in(&value.cow_to_uppercase(), ctx),
-        "trim" => Str::from_str_in(value.trim(), ctx),
-        "trimStart" => Str::from_str_in(value.trim_start(), ctx),
-        "trimEnd" => Str::from_str_in(value.trim_end(), ctx),
+        "trim" => Str::from_str_in(value.trim_matches(is_str_white_space_char), ctx),
+        "trimStart" => Str::from_str_in(value.trim_start_matches(is_str_white_space_char), ctx),
+        "trimEnd" => Str::from_str_in(value.trim_end_matches(is_str_white_space_char), ctx),
         _ => return None,
     };
     Some(ConstantValue::String(result.into()))
@@ -858,7 +860,7 @@ fn try_fold_global_parse_float<'a>(
     // The prefix scan is UTF-8.
     // An input containing a lone surrogate stays unfolded.
     let input_string = input_string.as_str()?;
-    let trimmed = input_string.trim_start();
+    let trimmed = input_string.trim_start_matches(is_str_white_space_char);
     let Some(trimmed_prefix) = find_str_decimal_literal_prefix(trimmed) else {
         return Some(ConstantValue::Number(f64::NAN));
     };
@@ -948,6 +950,13 @@ fn find_str_decimal_literal_prefix(input: &str) -> Option<&str> {
     Some(&input[..last_index])
 }
 
+/// Whether the char is a `StrWhiteSpaceChar` (`WhiteSpace` or `LineTerminator`), the set removed
+/// by `TrimString`. This is not the same set as Rust's `char::is_whitespace`.
+/// <https://tc39.es/ecma262/#sec-trimstring>
+fn is_str_white_space_char(c: char) -> bool {
+    is_white_space(c) || is_line_terminator(c)
+}
+
 fn try_fold_global_parse_int<'a>(
     args: &ArenaVec<'a, Argument<'a>>,
     ctx: &impl ConstantEvaluationCtx<'a>,
@@ -968,7 +977,7 @@ fn try_fold_global_parse_int<'a>(
     // The digit scan is UTF-8.
     // An input containing a lone surrogate stays unfolded.
     let string_value = string_value.as_str()?;
-    let mut string_value = string_value.trim_start();
+    let mut string_value = string_value.trim_start_matches(is_str_white_space_char);
 
     let mut sign = 1;
     if string_value.starts_with('-') {
@@ -1065,4 +1074,17 @@ fn test_find_str_decimal_literal_prefix() {
     assert_eq!(find_str_decimal_literal_prefix("1e2_3"), Some("1e2"));
     assert_eq!(find_str_decimal_literal_prefix("_1"), None);
     assert_eq!(find_str_decimal_literal_prefix("._1"), None);
+}
+
+#[test]
+fn test_is_str_white_space_char() {
+    for c in [
+        '\u{0009}', '\u{000B}', '\u{000C}', '\u{0020}', '\u{00A0}', '\u{1680}', '\u{2000}',
+        '\u{200A}', '\u{202F}', '\u{205F}', '\u{3000}', '\u{FEFF}', '\u{000A}', '\u{000D}',
+        '\u{2028}', '\u{2029}',
+    ] {
+        assert!(is_str_white_space_char(c), "{c:?}");
+    }
+    // White_Space in Unicode, but not in ECMAScript
+    assert!(!is_str_white_space_char('\u{0085}'));
 }
