@@ -281,7 +281,7 @@ impl Rule for ConsistentTypeImports {
                 {
                     let type_names = type_references_without_type_qualifier
                         .iter()
-                        .map(|specifier| specifier.local().name.as_str())
+                        .map(|specifier| specifier.name().as_str())
                         .collect::<Vec<_>>();
 
                     // ['foo', 'bar', 'baz' ] => "foo, bar, and baz".
