@@ -172,9 +172,7 @@ impl Rule for NoUselessUndefined {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IdentifierReference(undefined_literal)
-                if undefined_literal.name == "undefined" =>
-            {
+            AstKind::IdentifierReference(undefined_literal) if undefined_literal.is_undefined() => {
                 let Some(parent_node) = outermost_paren_parent(node, ctx) else {
                     return;
                 };

@@ -453,8 +453,7 @@ impl Rule for ExhaustiveDeps {
                 match inner_expr {
                     Expression::ArrayExpression(array_expr) => Some(array_expr),
                     Expression::Identifier(ident)
-                        if ident.name == "undefined"
-                            && ctx.is_reference_to_global_variable(ident) =>
+                        if ident.is_undefined() && ctx.is_reference_to_global_variable(ident) =>
                     {
                         None
                     }

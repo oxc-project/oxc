@@ -154,7 +154,7 @@ impl<'a> IsConstant<'a, '_> for Expression<'a> {
                 paren_expr.expression.is_constant(in_boolean_position, semantic)
             }
             Self::Identifier(ident) => {
-                ident.name == "undefined" && semantic.is_reference_to_global_variable(ident)
+                ident.is_undefined() && semantic.is_reference_to_global_variable(ident)
             }
             _ if self.is_literal() => true,
             _ => false,
