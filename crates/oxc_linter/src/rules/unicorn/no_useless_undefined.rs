@@ -143,10 +143,6 @@ fn is_function_bind_call(call_expr: &CallExpression) -> bool {
     !call_expr.optional && is_method_call(call_expr, None, Some(&["bind"]), None, None)
 }
 
-fn is_undefined(arg: &Argument) -> bool {
-    arg.as_expression().is_some_and(Expression::is_undefined)
-}
-
 fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
     match node.kind() {
         AstKind::Program(_) => false,
@@ -304,7 +300,11 @@ impl Rule for NoUselessUndefined {
                 }
 
                 let arguments = &call_expr.arguments;
-                if !arguments.last().is_some_and(is_undefined) {
+                if !arguments
+                    .last()
+                    .and_then(Argument::as_expression)
+                    .is_some_and(Expression::is_undefined)
+                {
                     return;
                 }
 
@@ -319,7 +319,7 @@ impl Rule for NoUselessUndefined {
                 let mut undefined_args_spans = Vec::new();
                 for i in (0..arguments.len()).rev() {
                     let arg = &arguments[i];
-                    if is_undefined(arg) {
+                    if arg.as_expression().is_some_and(Expression::is_undefined) {
                         let span = arg.span();
                         undefined_args_spans.push(span);
                     } else {
