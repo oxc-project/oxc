@@ -287,7 +287,7 @@ impl Rule for GroupedAccessorPairs {
                             continue;
                         }
                         let (getter_idx, getter_node, setter_idx, setter_node) =
-                            if first_node.kind == MethodDefinitionKind::Get {
+                            if first_node.kind.is_get() {
                                 (first_idx, first_node, second_idx, second_node)
                             } else {
                                 (second_idx, second_node, first_idx, first_node)

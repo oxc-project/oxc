@@ -227,7 +227,7 @@ impl AccessorPairs {
 
             if let Some(name) = method.key.static_name() {
                 let info = accessors.entry(name).or_default();
-                if kind == MethodDefinitionKind::Get {
+                if kind.is_get() {
                     info.getter = Some(method.key.span());
                 } else {
                     info.setter = Some(method.key.span());
@@ -276,7 +276,7 @@ impl AccessorPairs {
             if !has_pair {
                 if *kind1 == MethodDefinitionKind::Set && self.set_without_get {
                     ctx.diagnostic(setter_without_getter_diagnostic(*span1));
-                } else if *kind1 == MethodDefinitionKind::Get && self.get_without_set {
+                } else if kind1.is_get() && self.get_without_set {
                     ctx.diagnostic(getter_without_setter_diagnostic(*span1));
                 }
             }

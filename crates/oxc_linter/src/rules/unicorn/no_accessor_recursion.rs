@@ -176,7 +176,7 @@ impl Rule for NoAccessorRecursion {
                         if !is_same_key {
                             return;
                         }
-                        if method_def.kind == MethodDefinitionKind::Get {
+                        if method_def.kind.is_get() {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
                                 "getters",
