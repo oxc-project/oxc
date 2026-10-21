@@ -144,14 +144,7 @@ fn is_function_bind_call(call_expr: &CallExpression) -> bool {
 }
 
 fn is_undefined(arg: &Argument) -> bool {
-    if !arg.is_expression() {
-        return false;
-    }
-    let expr: &Expression = arg.to_expression();
-    if let Expression::Identifier(_) = expr {
-        return expr.is_undefined();
-    }
-    false
+    arg.as_expression().is_some_and(Expression::is_undefined)
 }
 
 fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
