@@ -772,6 +772,44 @@ Prettier's compact test call layout merges and reverses the comments, and is not
 We fall back to the regular argument layout when comments sit around the arguments, following prettier/prettier#20043.
 A same-line block comment also falls back, the same output as the other special call layouts (React hook, `require`).
 
+## vitest-test-call
+
+- Why: uniform-rule (same construct, same output: `it.only(name, callback)`)
+- Pin: `tests/fixtures/js/calls/vitest-test-call.js`
+
+```js
+// input (printWidth: 80)
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+
+// ours: both keep the compact test call layout
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+
+// prettier: `it.only` keeps it, `it.concurrent` breaks the arguments
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent(
+  "does something really long and descriptive with the formatter output",
+  async () => {
+    expect(1).toBe(1);
+  },
+);
+```
+
+Vitest's test calls (`.concurrent`, `.sequential`, `.fails`, `.shuffle`, `bench`) and `Deno.test` take the same `(name, callback)` arguments as `it.only`, and get its compact test call layout.
+Prettier's callee list covers only the Jest / Jasmine / Playwright names, so the others print like any other call.
+The full callee list is `contains_a_test_pattern` in `src/utils/call_expression.rs`.
+
 ## callee-arguments-gap-comment
 
 - Why: invariant
