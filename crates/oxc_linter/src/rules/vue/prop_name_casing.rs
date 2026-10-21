@@ -217,11 +217,7 @@ fn property_key_static_name<'a>(key: &PropertyKey<'a>) -> Option<(JSStr<'a>, Spa
             let expr = key.as_expression()?.get_inner_expression();
             match expr {
                 Expression::StringLiteral(lit) => Some((lit.value, lit.span)),
-                Expression::TemplateLiteral(tpl) if tpl.is_no_substitution_template() => {
-                    let quasi = tpl.quasis.first()?;
-                    let cooked = quasi.value.cooked?;
-                    Some((cooked, tpl.span))
-                }
+                Expression::TemplateLiteral(tpl) => Some((tpl.single_quasi()?, tpl.span)),
                 Expression::RegExpLiteral(regex) => Some((regex.raw?.into(), regex.span)),
                 _ => None,
             }
