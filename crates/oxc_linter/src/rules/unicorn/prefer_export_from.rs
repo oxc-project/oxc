@@ -1073,19 +1073,7 @@ impl PreferExportFrom {
             .unwrap()
             .iter()
             .map(|specifier| {
-                let symbol_id = match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-                };
+                let symbol_id = specifier.symbol_id();
 
                 let spec = SpecifierSpec {
                     specifier,
