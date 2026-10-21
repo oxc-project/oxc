@@ -147,7 +147,7 @@ fn handle_watch_inner_property<'a>(inner_prop: &ObjectPropertyKind<'a>, ctx: &Li
         return;
     };
 
-    if obj_prop.key.static_name().is_some_and(|key| key == "handler")
+    if obj_prop.key.is_specific_static_name("handler")
         && matches!(obj_prop.value.get_inner_expression(), Expression::ArrowFunctionExpression(_))
     {
         ctx.diagnostic(no_arrow_functions_in_watch_diagnostic(obj_prop.value.span()));

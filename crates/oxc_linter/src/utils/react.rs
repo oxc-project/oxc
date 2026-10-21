@@ -636,14 +636,12 @@ pub fn function_count_before_lifecycle_component(
 
 fn is_lifecycle_component_method(node: &AstNode, lifecycle_method_name: &str) -> bool {
     match node.kind() {
-        AstKind::ObjectProperty(prop) => {
-            prop.key.static_name().is_some_and(|key| key == lifecycle_method_name)
-        }
+        AstKind::ObjectProperty(prop) => prop.key.is_specific_static_name(lifecycle_method_name),
         AstKind::MethodDefinition(method) => {
-            method.key.static_name().is_some_and(|name| name == lifecycle_method_name)
+            method.key.is_specific_static_name(lifecycle_method_name)
         }
         AstKind::PropertyDefinition(prop) => {
-            prop.key.static_name().is_some_and(|name| name == lifecycle_method_name)
+            prop.key.is_specific_static_name(lifecycle_method_name)
         }
         _ => false,
     }
