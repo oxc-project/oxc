@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, VariableDeclarationKind},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -234,7 +234,7 @@ impl Rule for NoUselessUndefined {
                         else {
                             return;
                         };
-                        if declaration.kind == VariableDeclarationKind::Const {
+                        if declaration.kind.is_const() {
                             return;
                         }
                         if is_has_function_return_type(parent_node, ctx) {
