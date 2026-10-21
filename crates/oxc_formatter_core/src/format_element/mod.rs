@@ -253,26 +253,13 @@ impl<'a> FormatElement<'a> {
         FormatElement::Token { text: ThinStr::new(text) }
     }
 
-    /// Creates a [FormatElement::Text].
+    /// Creates a [FormatElement::Text], measuring its width.
     #[inline]
-    pub const fn text(text: &'a str, width: TextWidth) -> Self {
-        FormatElement::Text { text: ThinStr::new(text), width }
-    }
-
-    /// Returns `true` if self is a [FormatElement::Tag] and [Tag::is_end] is `true`.
-    pub const fn is_end_tag(&self) -> bool {
-        match self {
-            FormatElement::Tag(tag) => tag.is_end(),
-            _ => false,
+    pub fn text(text: &'a str, indent_width: IndentWidth) -> Self {
+        FormatElement::Text {
+            text: ThinStr::new(text),
+            width: TextWidth::from_text(text, indent_width),
         }
-    }
-
-    pub const fn is_text(&self) -> bool {
-        matches!(self, FormatElement::Text { .. } | FormatElement::Token { .. })
-    }
-
-    pub const fn is_space(&self) -> bool {
-        matches!(self, FormatElement::Space)
     }
 }
 
@@ -444,7 +431,7 @@ pub trait FormatElements {
 ///
 /// Saturating does not change how the printer breaks lines, as it only compares widths with the print width,
 /// which is below the maximum for any [`LineWidth`] (asserted below).
-/// Code that uses a width for more than that (e.g. padding table columns) measures it with [`TextWidth::measure`].
+/// Code that uses a width for more than that (e.g. padding table columns) measures it with [`text_width`].
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 #[repr(C, packed)]
 pub struct TextWidth {
@@ -487,19 +474,13 @@ impl TextWidth {
 
     /// Creates a single-line text width.
     #[inline]
-    pub const fn single(width: u32) -> Self {
+    pub(crate) const fn single(width: u32) -> Self {
         Self::encode(width, false)
-    }
-
-    /// Creates a multi-line text width.
-    #[inline]
-    pub const fn multiline(width: u32) -> Self {
-        Self::encode(width, true)
     }
 
     /// Returns the width value.
     #[inline]
-    pub const fn value(self) -> u32 {
+    pub(crate) const fn value(self) -> u32 {
         self.width as u32
     }
 
@@ -508,15 +489,9 @@ impl TextWidth {
     /// NOTE: Uses `UnicodeWidthStr::width()` for accurate emoji sequence handling.
     /// Counting by `char` can lead to incorrect widths for complex Unicode sequences.
     /// e.g. "🗑️" (U+1F5D1 U+FE0F) is a single emoji with width 2, but counting chars gives width 1.
-    pub fn from_text(text: &str, indent_width: IndentWidth) -> TextWidth {
+    pub(crate) fn from_text(text: &str, indent_width: IndentWidth) -> TextWidth {
         let (width, multiline) = Self::measure_text(text, indent_width);
         Self::encode(width, multiline)
-    }
-
-    /// The width of `text` up to its first line break, as [`TextWidth::from_text`] but not saturated.
-    /// Use it where the width is used for more than comparing with the print width (e.g. table column padding).
-    pub fn measure(text: &str, indent_width: IndentWidth) -> u32 {
-        Self::measure_text(text, indent_width).0
     }
 
     /// Returns the width up to the first line break, and whether there is one.
@@ -557,7 +532,7 @@ impl TextWidth {
     /// Creates width from a string known to not contain whitespace.
     /// More efficient than `from_text` when whitespace is guaranteed absent.
     #[expect(clippy::cast_possible_truncation)]
-    pub fn from_non_whitespace_str(name: &str) -> TextWidth {
+    pub(crate) fn from_non_whitespace_str(name: &str) -> TextWidth {
         if is_all_printable_ascii(name) {
             return Self::single(name.len() as u32);
         }
@@ -566,7 +541,7 @@ impl TextWidth {
 
     /// Returns true if the text contains newlines.
     #[inline]
-    pub const fn is_multiline(self) -> bool {
+    pub(crate) const fn is_multiline(self) -> bool {
         (self.flags & Self::MULTILINE_MASK) != 0
     }
 
@@ -574,7 +549,7 @@ impl TextWidth {
     /// (Prettier's `literallineWithoutBreakParent`). No-op for single-line widths.
     #[must_use]
     #[inline]
-    pub const fn without_expand_parent(self) -> Self {
+    pub(crate) const fn without_expand_parent(self) -> Self {
         if self.is_multiline() {
             Self { flags: self.flags | Self::NO_EXPAND_MASK, width: self.width }
         } else {
@@ -585,9 +560,17 @@ impl TextWidth {
     /// Returns true if the text forces enclosing groups to expand:
     /// it contains newlines and is not marked [`Self::without_expand_parent`].
     #[inline]
-    pub const fn propagates_expand(self) -> bool {
+    pub(crate) const fn propagates_expand(self) -> bool {
         (self.flags & (Self::MULTILINE_MASK | Self::NO_EXPAND_MASK)) == Self::MULTILINE_MASK
     }
+}
+
+/// The width of `text` up to its first line break, without saturating.
+///
+/// Measured as [FormatElement::text] does.
+/// Use it where the width is used for more than comparing with the print width (e.g. table column padding).
+pub fn text_width(text: &str, indent_width: IndentWidth) -> u32 {
+    TextWidth::measure_text(text, indent_width).0
 }
 
 #[cfg(test)]
@@ -607,16 +590,16 @@ mod tests {
 
     #[test]
     fn multiline_sets_flag_without_touching_width() {
-        let width = TextWidth::multiline(3);
+        let width = TextWidth::encode(3, true);
         debug_assert_eq!(width.value(), 3);
         debug_assert!(width.is_multiline());
     }
 
     #[test]
-    fn from_text_saturates_but_measure_does_not() {
+    fn from_text_saturates_but_text_width_does_not() {
         let text = "a".repeat(70_000);
         debug_assert_eq!(TextWidth::from_text(&text, indent_width(2)).value(), u32::from(u16::MAX));
-        debug_assert_eq!(TextWidth::measure(&text, indent_width(2)), 70_000);
+        debug_assert_eq!(text_width(&text, indent_width(2)), 70_000);
     }
 
     #[test]
@@ -646,13 +629,13 @@ mod tests {
         let single = TextWidth::single(10);
         debug_assert!(!single.is_multiline());
 
-        let multi = TextWidth::multiline(10);
+        let multi = TextWidth::encode(10, true);
         debug_assert!(multi.is_multiline());
     }
 
     #[test]
     fn without_expand_parent_disables_propagation_keeping_width() {
-        let multi = TextWidth::multiline(3);
+        let multi = TextWidth::encode(3, true);
         debug_assert!(multi.propagates_expand());
 
         let no_expand = multi.without_expand_parent();
@@ -734,7 +717,7 @@ mod tests {
                     }
                     '\n' => {
                         width += text[segment_start..i].width() as u32;
-                        return TextWidth::multiline(width);
+                        return TextWidth::encode(width, true);
                     }
                     _ => {}
                 }

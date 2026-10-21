@@ -5,7 +5,7 @@ mod markdown;
 
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, format_element::TextWidth, map_text_in_ir};
+use oxc_formatter_core::{FormatElement, map_text_in_ir};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -403,7 +403,7 @@ fn escape_text_in_ir<'a>(
     let indent_width = f.options().indent_width;
     map_text_in_ir(ir, allocator, &mut |text, out| {
         let Some(text) = escape(text, allocator) else { return false };
-        out.push(FormatElement::text(text, TextWidth::from_text(text, indent_width)));
+        out.push(FormatElement::text(text, indent_width));
         true
     })
 }

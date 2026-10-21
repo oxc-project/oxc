@@ -19,7 +19,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
     FormatContext, FormatElement, FormatSession, Formatter, IndentWidth, InputKind, LineMode,
-    format_element::{BestFittingElement, Interned, TextWidth},
+    format_element::{BestFittingElement, Interned},
     write::formatter::intern_exact,
 };
 
@@ -247,7 +247,7 @@ pub fn push_text_with_literal_lines<'a>(
             out.push(FormatElement::Line(LineMode::Literal));
         }
         if !line.is_empty() {
-            out.push(FormatElement::text(line, TextWidth::from_text(line, indent_width)));
+            out.push(FormatElement::text(line, indent_width));
         }
     }
 }

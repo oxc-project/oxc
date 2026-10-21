@@ -1,8 +1,6 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{
-    FormatElement, IndentWidth, dispatch_fragment_ir, format_element::TextWidth,
-};
+use oxc_formatter_core::{FormatElement, IndentWidth, dispatch_fragment_ir};
 
 use crate::{
     ast_nodes::AstNode,
@@ -28,8 +26,7 @@ fn write_text_piece<'a>(text: &'a str, indent_width: IndentWidth, f: &mut JsForm
     if text.is_empty() {
         return;
     }
-    let width = TextWidth::from_text(text, indent_width);
-    f.write_element(FormatElement::text(text, width));
+    f.write_element(FormatElement::text(text, indent_width));
 }
 
 /// Print `${expr}` like a plain template expression, minus source-indentation preservation.

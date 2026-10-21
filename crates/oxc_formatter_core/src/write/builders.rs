@@ -321,7 +321,7 @@ where
             .width
             .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width()));
         let width = if self.expand_parent { width } else { width.without_expand_parent() };
-        f.write_element(FormatElement::text(self.text, width));
+        f.write_element(FormatElement::Text { text: ThinStr::new(self.text), width });
     }
 }
 

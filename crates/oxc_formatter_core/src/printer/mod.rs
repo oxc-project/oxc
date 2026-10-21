@@ -13,8 +13,8 @@ use unicode_width::UnicodeWidthChar;
 
 use crate::{
     ActualStart, BestFittingElement, Condition, DedentMode, FormatElement, GroupId, IndentStyle,
-    IndentWidth, InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind, TextWidth,
-    format_element::tag::Prefix,
+    IndentWidth, InvalidDocumentError, LineMode, PrintError, PrintMode, Tag, TagKind,
+    format_element::{TextWidth, tag::Prefix, text_width},
 };
 
 use self::call_stack::{
@@ -1079,7 +1079,7 @@ impl Indention {
         let own =
             node.before.level as usize * indent_width.value() as usize + node.before.align as usize;
         let before = node.before.prefix.map_or(0, |id| Self::chain_width(nodes, id, indent_width));
-        before + own + TextWidth::from_text(node.prefix.text(), indent_width).value() as usize
+        before + own + text_width(node.prefix.text(), indent_width) as usize
     }
 }
 
