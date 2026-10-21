@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentExpression, AssignmentOperator, ClassElement, Expression, MemberExpression,
-        PropertyDefinitionType, Statement,
+        Statement,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -146,7 +146,7 @@ impl Rule for PreferClassFields {
                     return false;
                 }
 
-                if prop.r#type == PropertyDefinitionType::PropertyDefinition {
+                if !prop.r#type.is_abstract() {
                     return prop.key.name().is_some_and(|name| name == property_name);
                 }
             }
