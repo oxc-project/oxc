@@ -78,7 +78,7 @@ impl<'a, 'b> FmtCtx<'a, 'b> {
 /// However, the default value is sufficient in practice.
 pub fn text_element(text: &str) -> FormatElement<'_> {
     let width = TextWidth::from_text(text, IndentWidth::default());
-    FormatElement::Text { text, width }
+    FormatElement::text(text, width)
 }
 
 fn convert_doc<'a>(
@@ -540,7 +540,7 @@ pub fn postprocess<'a>(ir: &mut ArenaVec<'a, FormatElement<'a>>, allocator: &'a 
             let single = read - run_start == 1;
             let text: &str = if single {
                 let FormatElement::Text { text, .. } = ir[run_start] else { unreachable!() };
-                text
+                text.as_str()
             } else {
                 let mut sb = ArenaStringBuilder::new_in(allocator);
                 for element in &ir[run_start..read] {

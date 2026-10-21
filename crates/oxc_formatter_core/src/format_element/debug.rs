@@ -10,8 +10,6 @@
 //! ([`FormatContext::get_tailwind_class`], fed from the document's sorted classes);
 //! a context returning the default `None` prints an `<UNKNOWN_TAILWIND_CLASS_INDEX<..>>` marker.
 
-#![expect(clippy::mutable_key_type)]
-
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
@@ -132,13 +130,10 @@ where
                                 FormatElement::Token { .. } => element.clone(),
                                 FormatElement::Text { text, width: _ } => {
                                     let text = text.cow_replace('"', "\\\"");
-                                    FormatElement::Text {
-                                        text: f.allocator().alloc_str(&text),
-                                        width: TextWidth::from_text(
-                                            &text,
-                                            f.options().indent_width(),
-                                        ),
-                                    }
+                                    FormatElement::text(
+                                        f.allocator().alloc_str(&text),
+                                        TextWidth::from_text(&text, f.options().indent_width()),
+                                    )
                                 }
                                 _ => unreachable!(),
                             };

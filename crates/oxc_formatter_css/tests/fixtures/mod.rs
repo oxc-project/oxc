@@ -96,10 +96,7 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         embedded.ir.iter().map(|element| match element {
             FormatElement::EmbedPlaceholder(index) => {
                 let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
-                FormatElement::Text {
-                    text,
-                    width: TextWidth::from_text(text, options.indent_width),
-                }
+                FormatElement::text(text, TextWidth::from_text(text, options.indent_width))
             }
             other => other.clone(),
         }),

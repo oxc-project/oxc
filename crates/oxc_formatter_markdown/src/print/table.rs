@@ -35,7 +35,7 @@ pub fn write_table<'a>(table: &'a Table<'a>, f: &mut MarkdownFormatter<'_, 'a>) 
         for (i, cell) in row.children.iter().enumerate() {
             let text =
                 collect_phrasing(&cell.children, InlineParent::default(), f).into_str(allocator);
-            let width = TextWidth::from_text(text, f.options().indent_width).value() as usize;
+            let width = TextWidth::measure(text, f.options().indent_width) as usize;
             widths[i] = widths[i].max(width);
             cells.push(Cell { text, width });
         }

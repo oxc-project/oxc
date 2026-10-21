@@ -403,7 +403,7 @@ fn escape_text_in_ir<'a>(
     let indent_width = f.options().indent_width;
     map_text_in_ir(ir, allocator, &mut |text, out| {
         let Some(text) = escape(text, allocator) else { return false };
-        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        out.push(FormatElement::text(text, TextWidth::from_text(text, indent_width)));
         true
     })
 }

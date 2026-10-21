@@ -189,7 +189,7 @@ fn build_graphql_comment_ir<'a>(
             parts.push(FormatElement::ExpandParent);
             let arena_text = allocator.alloc_str(line);
             let width = TextWidth::from_text(arena_text, indent_width);
-            parts.push(FormatElement::Text { text: arena_text, width });
+            parts.push(FormatElement::text(arena_text, width));
         } else {
             if seen_comment {
                 parts.push(FormatElement::Line(LineMode::Hard));
@@ -197,7 +197,7 @@ fn build_graphql_comment_ir<'a>(
             }
             let arena_text = allocator.alloc_str(line);
             let width = TextWidth::from_text(arena_text, indent_width);
-            parts.push(FormatElement::Text { text: arena_text, width });
+            parts.push(FormatElement::text(arena_text, width));
         }
 
         seen_comment = true;

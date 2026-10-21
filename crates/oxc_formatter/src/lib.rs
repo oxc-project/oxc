@@ -360,8 +360,8 @@ pub(crate) enum JsLabels {
 }
 
 impl Label for JsLabels {
-    fn id(&self) -> u64 {
-        *self as u64
+    fn id(&self) -> u32 {
+        *self as u32
     }
 
     fn debug_name(&self) -> &'static str {

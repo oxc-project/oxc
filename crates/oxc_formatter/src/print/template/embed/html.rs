@@ -184,7 +184,7 @@ pub(super) fn format_html_doc<'a>(
         }
         // No placeholder to substitute; push the escaped text if escaping changed it
         let Some(text) = escaped else { return false };
-        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        out.push(FormatElement::text(text, TextWidth::from_text(text, indent_width)));
         true
     });
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| f.write_elements(ir));
@@ -313,7 +313,7 @@ mod tests {
     use super::placeholders_are_sequential;
 
     fn text(text: &'static str) -> FormatElement<'static> {
-        FormatElement::Text { text, width: TextWidth::from_text(text, IndentWidth::default()) }
+        FormatElement::text(text, TextWidth::from_text(text, IndentWidth::default()))
     }
 
     fn best_fitting<'a>(
