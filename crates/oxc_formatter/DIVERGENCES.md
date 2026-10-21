@@ -861,6 +861,9 @@ const a = (make<T>)!;
 x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (a as B)<T>;
 
 // ours
 const a = (make<T>)!;
@@ -868,6 +871,9 @@ const a = (make<T>)!;
 x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (a as B)<T>;
 
 // prettier
 const a = make<T>!;
@@ -875,6 +881,9 @@ make<T><U>();
 x = make<T> + y;
 export default class {}<string>;
 class {}<string>;
+x = c ? a : b<T>;
+x = y++<T>;
+x = a as B<T>;
 ```
 
 Prettier drops the parens around an instantiation expression before `!`,
@@ -884,6 +893,11 @@ Fixed in Prettier `main` by prettier/prettier#20177, which we follow except afte
 Prettier `main` still drops them before type arguments (`make<T><U>()` does not parse)
 and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
 (`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
+
+Prettier (pin and `main`) also drops the parens around an operand that binds looser than the type arguments,
+so they move onto its last piece or no longer parse:
+`c ? a : b<T>`, `a + b<T>`, `!a<T>`, `a as B<T>` and `<B>a<T>` instantiate only `b`, `a` or `B`, and `y++<T>` does not parse.
+We keep them wherever the operand of a non-null assertion `!` keeps them, which binds the same.
 
 ## export-default-leftmost-parens
 

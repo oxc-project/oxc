@@ -844,6 +844,7 @@ fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_, '_>) -> bool {
         | AstNodes::UnaryExpression(_)
         | AstNodes::AwaitExpression(_)
         | AstNodes::TSNonNullExpression(_)
+        | AstNodes::TSInstantiationExpression(_)
         // template tag
         | AstNodes::TaggedTemplateExpression(_)
         // in spread
@@ -978,6 +979,7 @@ fn binary_like_needs_parens(
         | AstNodes::TSTypeAssertion(_)
         | AstNodes::AwaitExpression(_)
         | AstNodes::TSNonNullExpression(_)
+        | AstNodes::TSInstantiationExpression(_)
         | AstNodes::SpreadElement(_)
         | AstNodes::JSXSpreadAttribute(_)
         | AstNodes::ChainExpression(_)
@@ -1081,6 +1083,7 @@ fn unary_like_expression_needs_parens(node: UnaryLike<'_, '_>) -> bool {
 fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_, '_>) -> bool {
     match parent {
         AstNodes::TSNonNullExpression(_)
+        | AstNodes::TSInstantiationExpression(_)
         | AstNodes::StaticMemberExpression(_)
         | AstNodes::PrivateFieldExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
