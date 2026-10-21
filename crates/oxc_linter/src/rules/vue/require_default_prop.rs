@@ -274,7 +274,9 @@ fn check_type_signature<'a>(
 /// `as`/parenthesized expressions by the caller.
 fn is_without_default_value(value: &Expression) -> bool {
     match value {
-        Expression::ObjectExpression(obj) => !prop_is_required(obj) && !prop_has_default(obj),
+        Expression::ObjectExpression(obj) => {
+            !prop_is_required(obj) && find_property(obj, "default").is_none()
+        }
         Expression::Identifier(ident) => NATIVE_TYPES.contains(&ident.name.as_str()),
         // A call/member expression is assumed to produce the default value.
         Expression::CallExpression(_)
@@ -290,13 +292,6 @@ fn prop_is_required(obj: &ObjectExpression) -> bool {
         matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
             if prop.key.is_specific_static_name("required")
                 && matches!(prop.value.get_inner_expression(), Expression::BooleanLiteral(lit) if lit.value))
-    })
-}
-
-fn prop_has_default(obj: &ObjectExpression) -> bool {
-    obj.properties.iter().any(|prop| {
-        matches!(prop, ObjectPropertyKind::ObjectProperty(prop)
-            if prop.key.is_specific_static_name("default"))
     })
 }
 
