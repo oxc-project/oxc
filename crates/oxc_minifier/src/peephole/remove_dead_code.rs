@@ -606,7 +606,11 @@ impl<'a> PeepholeOptimizations {
         if !params.items.iter().all(|param| {
             param.pattern.is_binding_identifier()
                 && param.initializer.as_ref().is_none_or(|init| !init.may_have_side_effects(ctx))
-        }) {
+        }) || params
+            .rest
+            .as_ref()
+            .is_some_and(|rest| !rest.rest.argument.is_binding_identifier())
+        {
             return;
         }
         if body_has_side_effects {

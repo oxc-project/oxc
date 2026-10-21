@@ -2,7 +2,8 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, default_options, test,
-    test_options, test_same, test_same_options, test_same_options_source_type, test_target_same,
+    test_options, test_same, test_same_options, test_same_options_source_type, test_smallest,
+    test_target_same,
 };
 
 #[test]
@@ -1165,4 +1166,30 @@ fn test_substitute_yield_expression() {
     test("function* a() { yield* undefined; }", "function* a() { yield* void 0; }");
     test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
     test_same("function* a(undefined) { yield undefined; }");
+}
+
+#[test]
+fn empty_iife_preserves_rest_destructuring() {
+    test_smallest(
+        "var n = 0; (function (...[v = n++]) {})(); console.log(n);",
+        "var n = 0; (function (...[v = n++]) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...[v = n++]) => {})(); console.log(n);",
+        "var n = 0; ((...[v = n++]) => {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; (function (...{0: v = n++}) {})(); console.log(n);",
+        "var n = 0; (function (...{0: v = n++}) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...{0: v = n++}) => {})(); console.log(n);",
+        "var n = 0; ((...{0: v = n++}) => {})(), console.log(n);",
+    );
+    test_same("(function (...[[v]]) {})();");
+    test_same("((...[[v]]) => {})();");
+    test("(function (...args) {})();", "");
+    test("((...args) => {})();", "");
+    test("x = (function (...args) {})();", "x = void 0;");
+    test("x = ((...args) => {})();", "x = void 0;");
 }
