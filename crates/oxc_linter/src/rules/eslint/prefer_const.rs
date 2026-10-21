@@ -131,22 +131,22 @@ impl Rule for PreferConst {
         let is_for_in_of_init =
             matches!(parent.kind(), AstKind::ForInStatement(_) | AstKind::ForOfStatement(_));
 
-        // For regular for loops (for (let i = 0, j = 1; ...)), we need special handling
-        // If ANY variable in the declaration is reassigned, we can't fix the whole declaration
         let is_for_statement_init = matches!(parent.kind(), AstKind::ForStatement(_));
 
-        let all_declarators_const = decl.declarations.iter().all(|declarator| {
-            let has_init = declarator.init.is_some();
-            declarator.id.get_binding_identifiers().iter().all(|ident| {
-                self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx)
-            })
-        });
+        if is_for_statement_init && decl.declarations.len() > 1 {
+            let any_reassigned = decl.declarations.iter().any(|declarator| {
+                let has_init = declarator.init.is_some();
+                declarator.id.get_binding_identifiers().iter().any(|ident| {
+                    !self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx)
+                })
+            });
 
-        if is_for_statement_init && decl.declarations.len() > 1 && !all_declarators_const {
-            // If any variable is reassigned, we can't convert any of them
-            return;
+            if any_reassigned {
+                return;
+            }
         }
 
+        let mut all_declarators_const = true;
         for (declarator_index, declarator) in decl.declarations.iter().enumerate() {
             let binding_identifiers = declarator.id.get_binding_identifiers();
             let has_init = declarator.init.is_some();
@@ -156,6 +156,7 @@ impl Rule for PreferConst {
                 let symbol_id = ident.symbol_id();
                 self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
             });
+            all_declarators_const &= all_const;
 
             // For destructuring patterns with "all" mode, check if ALL variables should be const
             if matches!(self.0.destructuring, Destructuring::All) && is_destructuring {
