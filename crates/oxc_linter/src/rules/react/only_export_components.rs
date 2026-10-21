@@ -624,17 +624,13 @@ impl OnlyExportComponents {
         let mut analysis = ExportAnalysis::default();
 
         for export_spec in specifiers {
-            let exported_name = match &export_spec.exported {
-                ModuleExportName::IdentifierName(name) => Some(name.name.as_str()),
-                ModuleExportName::IdentifierReference(ident) => Some(ident.name.as_str()),
-                ModuleExportName::StringLiteral(_) => None,
-            };
+            let exported_name = export_spec.exported.identifier_name();
 
             let local_name = export_spec.local.name();
             let span = export_spec.local.span();
 
             let export = exported_name.map_or(ExportType::NonComponent(span), |name| {
-                let name = if name == "default" { local_name.as_str() } else { name };
+                let name = if name == "default" { local_name.as_str() } else { name.as_str() };
                 self.classify_export_reference(ctx, name, local_name.as_str(), span)
             });
             analysis.add_export(export);
