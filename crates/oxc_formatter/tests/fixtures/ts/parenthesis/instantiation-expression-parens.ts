@@ -10,6 +10,7 @@ x = (make<T>) + y;
 x = (make<T>) >> y;
 x = (a + make<T>) - y;
 x = (typeof make<T>) + y;
+x = (<any>(make<T>)) + y;
 export default (class {})<string>;
 export default (function () {})<string>;
 export default (class {})<string> as A;
