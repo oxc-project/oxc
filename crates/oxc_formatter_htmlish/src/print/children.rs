@@ -124,7 +124,8 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
     if !n.has_leading_spaces {
         return Between::Soft;
     }
-    // The compiler layer: between two elements, whitespace that renders keeps its kind (DIVERGENCES.md#vue-element-gap-kind).
+    // The compiler layer: between two elements, whitespace that renders keeps its kind
+    // (DIVERGENCES.md#vue-element-gap-kind).
     if t.rules().keeps_element_gap_kind && t.element(prev).is_some() && t.element(next).is_some() {
         return if has_trailing_line_break(t, prev) { Between::Hard } else { Between::Space };
     }
@@ -148,7 +149,7 @@ pub fn write_children<'a>(
         return;
     }
 
-    // Each pair's separator and blank-line fact, computed once and carried to the next child.
+    // Each pair's separator and blank-line fact, computed once and carried to the next child
     let mut carried = (Between::Nothing, false);
     let mut prev_group_id: Option<GroupId> = None;
     for child in t.children(id) {
@@ -168,12 +169,12 @@ pub fn write_children<'a>(
             continue;
         }
 
-        // A line break on a side is printed outside the child's group; a softer separator inside it.
+        // A line break on a side is printed outside the child's group; a softer separator inside it
         let breaks =
             |between, blank| between != Between::Nothing && (blank || between == Between::Hard);
         let prev_breaks = breaks(prev_between, prev_blank);
         let leading = match node.prev {
-            // After a `Space` (the previous group's trailing), no break before the next child.
+            // After a `Space` (the previous group's trailing), no break before the next child
             Some(prev)
                 if !matches!(prev_between, Between::Nothing | Between::Space) && !prev_breaks =>
             {
@@ -286,7 +287,8 @@ pub fn has_trailing_line_break(t: &Tree<'_>, id: NodeId) -> bool {
     let parent = t.parent(id);
     parent == NodeId::DOCUMENT
         // A line break before a borrowed `>` cannot be printed (`b </p\n>`, `b</p\n>`),
-        // so it is not read either: the next pass sees what this one did (DIVERGENCES.md#line-break-before-borrowed-end).
+        // so it is not read either: the next pass sees what this one did
+        // (DIVERGENCES.md#line-break-before-borrowed-end).
         || (!closing_end_borrowed(t, parent)
             && t.end_tag_start(parent).is_some_and(|end| t.line_breaks(t.source_end(id), end) > 0))
 }

@@ -136,13 +136,18 @@ pub fn format_to_ir<'a>(
 
     // Special cases for js-in-xxx:
     // - Single JSX in Markdown code block: omit the semicolon
-    let embedding_omits_semicolon = embedded_in == Some(JsEmbeddedIn::MarkdownCodeBlock)
-        && program.directives.is_empty()
-        && matches!(
-            program.body.as_slice(),
-            [Statement::ExpressionStatement(statement)] if statement.expression.is_jsx()
-        );
+    // - Single expression in an HTML event handler attribute: omit the semicolon
+    let embedding_omits_semicolon = program.directives.is_empty()
+        && match program.body.as_slice() {
+            [Statement::ExpressionStatement(statement)] => match embedded_in {
+                Some(JsEmbeddedIn::MarkdownCodeBlock) => statement.expression.is_jsx(),
+                Some(JsEmbeddedIn::HtmlEventHandler) => true,
+                _ => false,
+            },
+            _ => false,
+        };
     context.set_embedding_omits_semicolon(embedding_omits_semicolon);
+    context.set_embedded_in(embedded_in);
 
     let (ir, _) = formatter::build_ir(
         context,

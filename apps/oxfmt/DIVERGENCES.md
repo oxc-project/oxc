@@ -304,3 +304,114 @@ title: Home
 A front matter block whose body starts with an indented delimiter (` ---`, ` ...`, ` +++`) stays verbatim in CSS and Markdown (`write_front_matter` in `oxc_formatter_core`).
 The indented delimiter does not close the block, but the body is trimmed before formatting, so it prints at the start of a line.
 On the next parse (Prettier's and ours), the block closes there and the rest of the body moves into the document.
+
+## script-end-in-embedded-template
+
+- Why: semantics (the first `</script` ends an HTML `<script>`, the rest of the code becomes markup)
+- Pin: `conformance/fixtures/edge-cases/html/script-end-in-gql-template.html`
+
+```html
+<!-- input -->
+<script>
+  const query = gql`
+    query {
+      field # <\/script>
+    }
+  `;
+</script>
+
+<!-- ours -->
+<script>
+  const query = gql`
+    query {
+      field # <\/script>
+    }
+  `;
+</script>
+
+<!-- prettier -->
+<script>
+  const query = gql`
+    query {
+      field # </script>
+    }
+  `;
+</script>
+```
+
+An HTML `<script>` body never prints `</script`: one the formatting produces (an embedded template part printed from its cooked value, html-in-js or gql-in-js) prints as `<\/script`.
+Prettier keeps it in html-in-js, css-in-js and markdown-in-js, but a gql-in-js part prints the cooked `</script`, which closes the `<script>` there.
+
+## placeholder-case-in-child
+
+- Why: semantics (Prettier prints a lowercased placeholder in place of the `${}` expression)
+- Pin: `conformance/fixtures/edge-cases/html-in-js/placeholder-case-in-child.js`
+
+```js
+// input
+const a = html`<style>a { ${b}: ${c} }</style>`;
+
+// ours
+const a = html`<style>
+  a {
+    ${b}: ${c};
+  }
+</style>`;
+
+// prettier
+const a = html`<style>
+  a {
+    prettier_html_placeholder_0_0_in_js: ${c};
+  }
+</style>`;
+```
+
+An html-in-js placeholder is found in the child's output ASCII case-insensitively (`HTML_PLACEHOLDER_PREFIX` in `oxc_formatter`):
+CSS lowercases a property name, and the placeholder standing in it with it.
+Prettier looks for the placeholder as it wrote it, so the lowercased one stays in the output and `${b}` is lost.
+
+## pre-like-template-expression
+
+- Why: uniform-rule (same construct, same output: an expression outside `pre`-like content, whose lines indent from the line its `${` starts on; prettier/prettier#20355)
+- Pin: `conformance/fixtures/edge-cases/html-in-js/pre-like-template-expression.js`
+- Conformance: `edge-cases/html-in-js/template-expression-indent.js`, `externals/prettier/js/embeded/indention/19518.js`
+
+```js
+// input
+html`
+  <form>
+    <textarea>
+${foo({
+  x: 1,
+})}</textarea>
+  </form>
+`;
+
+// ours
+html`
+  <form>
+    <textarea>
+${foo({
+  x: 1,
+})}</textarea>
+  </form>
+`;
+
+// prettier
+html`
+  <form>
+    <textarea>
+${foo({
+        x: 1,
+      })}</textarea>
+  </form>
+`;
+```
+
+A `${}` expression in `pre`-like content (`pre`, `textarea`, ...) indents its lines from the whitespace its line starts with,
+as an expression elsewhere does from the line its `${` starts on.
+A line of that content prints from the root, so the expression aligns there (`oxc_formatter_htmlish`'s `write_pre_like_text`);
+one on the line of an element before it (`<pre><b>x</b>${`) indents from that line, as elsewhere.
+Prettier 3.9.6 aligned an expression starting its line so; since 3.9.7 (prettier/prettier#19725, for idempotency) it indents it by the elements around the content instead,
+which leaves `})` right of the `${` it closes.
+Reformatting the expression changes no content: its source is code, not text in the element.

@@ -86,7 +86,10 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
     let session =
         oxc_formatter_core::FormatSession::new(&allocator, oxc_formatter_core::InputKind::Fragment);
     let embedded = oxc_formatter_css::format_to_ir(
-        &session, source, options, /* template_placeholders */ true,
+        &session,
+        source,
+        options,
+        Some(oxc_formatter_css::CssEmbeddedIn::CssInJsTemplate),
     )
     .expect("format should succeed");
     // Simulate the host: replace each typed placeholder with the canonical

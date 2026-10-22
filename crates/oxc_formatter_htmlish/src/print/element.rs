@@ -29,7 +29,7 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
     let item = &t[id];
 
     if should_preserve_content(t, id) {
-        // The opening tag prints the borrowed prefix, once (DIVERGENCES.md#pre-after-borrowed-closing-end).
+        // The opening tag prints the borrowed prefix, once (DIVERGENCES.md#pre-after-borrowed-closing-end)
         write!(f, group(&format_with(|f| write_opening_tag(t, id, f))));
         write!(f, text(node_content(t, id)));
         write_closing_tag(t, id, f);
@@ -88,13 +88,13 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
     let line_after = format_with(|f| {
         if closing_end_borrowed(t, id) {
             if item.script_like {
-                // The body renders nothing, so its end tag takes its own line (DIVERGENCES.md#script-display-none).
+                // The body renders nothing, so its end tag takes its own line (DIVERGENCES.md#script-display-none)
                 write!(f, soft_line_break());
             } else if t[last].has_trailing_spaces && t[last].trailing_sensitive {
                 write!(f, space());
             }
         } else if item.pre_like && t[last].borrows.parent_closing_start {
-            // `<pre>` whose last text prints `</pre`: a line break would be content.
+            // `<pre>` whose last text prints `</pre`: a line break would be content
         } else if hug {
             write!(f, if_group_breaks(&soft_line_break()).with_group_id(Some(attr_group_id)));
         } else if t[last].has_trailing_spaces && t[last].trailing_sensitive {
@@ -102,7 +102,7 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
         } else if t[last].ends_in_pre {
             // `<div><pre />⏎<b>x</b></div>`: the unclosed `pre` ends here, so a line break would be its content
             // (DIVERGENCES.md#pre-content-without-end-tag).
-        } else if !ends_at_indentation(t, id, last, *f.options()) {
+        } else if !ends_at_indentation(t, id, last, f.options()) {
             write!(f, soft_line_break());
         }
     });
@@ -129,12 +129,13 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
 }
 
 /// The last child is a comment or `pre` text ending in a line break plus exactly the element's indentation,
-/// counted in the indent unit (DIVERGENCES.md#end-tag-indentation-as-printed): the end tag already sits where it would be printed.
+/// counted in the indent unit (DIVERGENCES.md#end-tag-indentation-as-printed):
+/// the end tag already sits where it would be printed.
 fn ends_at_indentation(
     t: &Tree<'_>,
     id: NodeId,
     last: NodeId,
-    options: HtmlishFormatOptions,
+    options: &HtmlishFormatOptions,
 ) -> bool {
     let value = match t.kind(last) {
         NodeKind::Comment(comment) => comment.content.slice(t.source()),
@@ -150,7 +151,7 @@ fn ends_at_indentation(
     if !tail.bytes().all(|b| b == unit) {
         return false;
     }
-    // The element's own indentation: one level per ancestor below the document.
+    // The element's own indentation: one level per ancestor below the document
     let mut depth = 0;
     let mut ancestor = t.parent(id);
     while ancestor != NodeId::DOCUMENT {
@@ -166,10 +167,10 @@ fn should_preserve_content(t: &Tree<'_>, id: NodeId) -> bool {
     match t.kind(id) {
         NodeKind::ConditionalComment(comment) => {
             !comment.parsed
-                // `<!--[if lt IE 9]><html><![endif]-->`: an unclosed element inside.
+                // `<!--[if lt IE 9]><html><![endif]-->`: an unclosed element inside
                 || item.last_child.is_some_and(|last| t.is_unclosed(last))
         }
-        // `<pre>` with markup inside.
+        // `<pre>` with markup inside
         _ => {
             item.pre_like
                 && t.children(id).any(|child| !(t.is_text(child) || t.is_interpolation(child)))
@@ -181,7 +182,7 @@ fn should_preserve_content(t: &Tree<'_>, id: NodeId) -> bool {
 fn node_content<'a>(t: &'a Tree<'a>, id: NodeId) -> &'a str {
     let item = &t[id];
     let mut start = t.content_start(id) as usize;
-    // An unclosed element's content runs to where the parser closed it.
+    // An unclosed element's content runs to where the parser closed it
     let mut end = t.end_tag_start(id).unwrap_or(item.span.end) as usize;
     if opening_end_borrowed(t, id) {
         start -= opening_end_marker(t, id).len();
@@ -202,7 +203,8 @@ fn force_break_children(t: &Tree<'_>, id: NodeId) -> bool {
             || item.display == Display::Table)
 }
 
-/// Besides `force_break_children`: the content of `body`, `script`, `style`, nested markup, or a lone child on its own lines.
+/// Besides `force_break_children`:
+/// the content of `body`, `script`, `style`, nested markup, or a lone child on its own lines.
 fn force_break_content(t: &Tree<'_>, id: NodeId) -> bool {
     let item = &t[id];
     if t.element(id).is_some()

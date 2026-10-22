@@ -14,8 +14,11 @@ mod attribute;
 mod block;
 mod children;
 mod element;
+mod embed;
 mod tag;
 mod text;
+
+pub use embed::{CssInHtmlStyleAttribute, JsInHtmlEventHandler};
 
 use block::write_block;
 use children::write_children;
@@ -61,7 +64,8 @@ fn write_child<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>
         start += opening_start_marker(t, id).len();
     }
     let mut end = ignored_end(t, id) as usize;
-    // Whoever borrows the closing `>` prints it, the parent included (DIVERGENCES.md#ignored-closing-end-once).
+    // Whoever borrows the closing `>` prints it,
+    // the parent included (DIVERGENCES.md#ignored-closing-end-once)
     if closing_end_borrowed(t, id) {
         end -= closing_end_marker(t, id).len();
     }
@@ -89,7 +93,7 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             write_closing_tag_end(t, id, f);
         }
         NodeKind::Text(_) | NodeKind::Cdata => write_text(t, id, f),
-        // `{{ }}`; the expression keeps its lines until it is formatted.
+        // `{{ }}`; the expression keeps its lines until it is formatted
         NodeKind::Interpolation(interpolation) => {
             write_opening_tag_start(t, id, f);
             let expression = interpolation.expression.slice(t.source());
@@ -120,8 +124,8 @@ fn write_node<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>)
             );
             write_closing_tag_end(t, id, f);
         }
-        // Comments are printed as written, a `</ div>` too (DIVERGENCES.md#end-tag-with-space-is-comment),
-        // and an omitted element's end tag (`</body>`).
+        // Comments are printed as written,
+        // a `</ div>` too (DIVERGENCES.md#end-tag-with-space-is-comment), and an omitted element's end tag (`</body>`).
         NodeKind::Comment(_) | NodeKind::EndTag(_) => write!(
             f,
             [

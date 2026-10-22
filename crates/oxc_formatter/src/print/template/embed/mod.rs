@@ -302,16 +302,16 @@ fn get_angular_component_property<'a>(
 ///
 /// Handles both:
 /// - CSS: `` `PLACEHOLDER-{N}` ``
-/// - HTML: `PRETTIER_HTML_PLACEHOLDER_{N}_{C}_IN_JS`
+/// - HTML: `PRETTIER_HTML_PLACEHOLDER_{depth}_{N}_IN_JS`, the `{depth}_` passed as part of `prefix`
 ///
-/// The optional `_{digits}` counter group between index and suffix is skipped when present,
-/// so the same function works for both formats.
+/// The prefix and suffix match ASCII case-insensitively: a child may change their case
+/// (CSS lowercases a property name holding an HTML placeholder).
 fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&'a str> {
     let mut result = vec![];
     let mut remaining = text;
 
     loop {
-        let Some(start) = remaining.find(prefix) else {
+        let Some(start) = find_ignore_ascii_case(remaining, prefix) else {
             result.push(remaining);
             break;
         };
@@ -337,21 +337,14 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
         }
 
         let digits = &after_prefix[..digit_end];
-        let mut after_digits = &after_prefix[digit_end..];
-
-        // Skip optional `_{digits}` (e.g., HTML counter `_0`)
-        if let Some(after_underscore) = after_digits.strip_prefix('_') {
-            let counter_end = after_underscore
-                .bytes()
-                .position(|b| !b.is_ascii_digit())
-                .unwrap_or(after_underscore.len());
-            if counter_end > 0 {
-                after_digits = &after_underscore[counter_end..];
-            }
-        }
+        let after_digits = &after_prefix[digit_end..];
 
         // Check for the suffix
-        if let Some(after_suffix) = after_digits.strip_prefix(suffix) {
+        let after_suffix = after_digits
+            .get(..suffix.len())
+            .filter(|s| s.eq_ignore_ascii_case(suffix))
+            .map(|_| &after_digits[suffix.len()..]);
+        if let Some(after_suffix) = after_suffix {
             // Valid placeholder — push the digit index
             result.push(digits);
             remaining = after_suffix;
@@ -366,6 +359,14 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
     }
 
     result
+}
+
+/// `haystack.find(needle)`, ASCII case-insensitively.
+fn find_ignore_ascii_case(haystack: &str, needle: &str) -> Option<usize> {
+    haystack
+        .as_bytes()
+        .windows(needle.len())
+        .position(|w| w.eq_ignore_ascii_case(needle.as_bytes()))
 }
 
 // ---
@@ -492,41 +493,4 @@ fn escape_backticks_raw<'a>(s: &'a str, allocator: &'a Allocator) -> Option<&'a 
     }
     result.push_str(&s[run_start..]);
     Some(result.into_str())
-}
-
-/// Count placeholder occurrences matching `{prefix}{digits}(_{digits})?{suffix}`.
-///
-/// The optional `_{digits}` middle group lets this serve both:
-/// - CSS sentinel `` `PLACEHOLDER-{N}` `` (no counter)
-/// - HTML sentinel `PRETTIER_HTML_PLACEHOLDER_{N}_{C}_IN_JS` (with counter)
-///
-/// Mirrors the grammar that [`split_on_placeholders`] uses for substitution.
-fn count_placeholders(text: &str, prefix: &str, suffix: &str) -> usize {
-    let mut count = 0;
-    let mut rest = text;
-    while let Some(start) = rest.find(prefix) {
-        let after_prefix = &rest[start + prefix.len()..];
-        let digit_end =
-            after_prefix.bytes().position(|b| !b.is_ascii_digit()).unwrap_or(after_prefix.len());
-        if digit_end > 0 {
-            let mut after_digits = &after_prefix[digit_end..];
-            // Skip optional `_{digits}` counter (HTML).
-            if let Some(after_underscore) = after_digits.strip_prefix('_') {
-                let counter_end = after_underscore
-                    .bytes()
-                    .position(|b| !b.is_ascii_digit())
-                    .unwrap_or(after_underscore.len());
-                if counter_end > 0 {
-                    after_digits = &after_underscore[counter_end..];
-                }
-            }
-            if let Some(tail) = after_digits.strip_prefix(suffix) {
-                count += 1;
-                rest = tail;
-                continue;
-            }
-        }
-        rest = &rest[start + prefix.len()..];
-    }
-    count
 }

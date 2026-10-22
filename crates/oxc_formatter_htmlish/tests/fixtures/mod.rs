@@ -32,7 +32,7 @@ impl FixtureFormatter for HtmlishHarness {
 
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {
         let allocator = Allocator::default();
-        let options = HtmlishFormatOptions { variant: variant_of(path), ..*options };
+        let options = HtmlishFormatOptions { variant: variant_of(path), ..options.clone() };
         format(&allocator, source, options)
             .expect("format should succeed")
             .print()
@@ -41,7 +41,7 @@ impl FixtureFormatter for HtmlishHarness {
     }
 
     fn fingerprint(source: &str, path: &Path, options: &Self::Options) -> String {
-        let options = HtmlishFormatOptions { variant: variant_of(path), ..*options };
+        let options = HtmlishFormatOptions { variant: variant_of(path), ..options.clone() };
         let allocator = Allocator::default();
         let parsed = parse_for_format(&allocator, source, &options).expect("source should parse");
         fingerprint::fingerprint(

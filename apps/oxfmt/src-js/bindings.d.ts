@@ -44,7 +44,7 @@ export declare const enum Severity {
  * # Panics
  * Panics if the current working directory cannot be determined.
  */
-export declare function format(filename: string, sourceText: string, options: any | undefined | null, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<FormatResult>
+export declare function format(filename: string, sourceText: string, options: any | undefined | null, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<FormatResult>
 
 export interface FormatResult {
   /** The formatted code. */
@@ -59,7 +59,7 @@ export interface FormatResult {
  * This API is specialized for JS/TS snippets embedded in non-JS files.
  * Unlike `format()`, it is called only for js-in-xxx `textToDoc()` flow.
  */
-export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmtPluginOptionsJson: string, parentContext: string, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<string | null>
+export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmtPluginOptionsJson: string, parentContext: string, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<string | null>
 
 /**
  * NAPI based JS CLI entry point.
@@ -70,11 +70,11 @@ export declare function jsTextToDoc(sourceExt: string, sourceText: string, oxfmt
  * 2. `load_js_config_cb`: Callback to load JS/TS config files
  * 3. `init_external_services_cb`: Callback to initialize external services (JS worker pool)
  * 4. `format_file_cb`: Callback to format files
- * 5. `format_embedded_cb`: Callback to format embedded code in templates
+ * 5. `format_embedded_doc_cb`: Callback to format embedded code in templates as a Prettier Doc
  * 6. `sort_tailwindcss_classes_cb`: Callback to sort Tailwind classes
  *
  * Returns a tuple of `[mode, exitCode]`:
  * - `mode`: If main logic will run in JS side, use this to indicate which mode
  * - `exitCode`: If main logic already ran in Rust side, return the exit code
  */
-export declare function runCli(args: Array<string>, loadJsConfigCb: (path: string) => Promise<any>, initExternalServicesCb: (numThreads: number) => Promise<void>, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedCb: (options: Record<string, any>, code: string) => Promise<string | null>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindcssClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<[string, number | undefined | null]>
+export declare function runCli(args: Array<string>, loadJsConfigCb: (path: string) => Promise<any>, initExternalServicesCb: (numThreads: number) => Promise<void>, formatFileCb: (options: Record<string, any>, code: string) => Promise<{ ok: true; code: string; } | { ok: false; error: string }>, formatEmbeddedDocCb: (options: Record<string, any>, code: string) => Promise<string | null>, sortTailwindcssClassesCb: (options: Record<string, any>, classes: string[]) => Promise<string[] | null>): Promise<[string, number | undefined | null]>

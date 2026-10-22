@@ -1,13 +1,17 @@
 //! Text: filled words, or lines as written where whitespace is content.
 
+use oxc_allocator::StringBuilder;
 use oxc_formatter_core::{
-    builders::{exact_line_breaks, soft_line_break_or_space, text},
-    write,
+    FormatOptions,
+    builders::{align, dedent_to_root, exact_line_breaks, soft_line_break_or_space, text},
+    text_width, write,
 };
 use oxc_htmlish_parser::ast::NodeId;
 
 use super::{
-    HtmlishFormatter, format_with,
+    HtmlishFormatter,
+    embed::write_embedded_content,
+    format_with,
     tag::{closing_tag_suffix, opening_tag_prefix},
 };
 use crate::tree::Tree;
@@ -19,12 +23,20 @@ pub fn write_text<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 
     let suffix = closing_tag_suffix(t, id);
 
     if parent.pre_like {
-        write!(f, [prefix, text(value), suffix]);
+        // Opening the content, it starts on its own line from the root (`line_before` in `element.rs`)
+        let starts_line = parent.first_child == Some(id)
+            && !(t[id].has_leading_spaces && t[id].leading_sensitive);
+        // A JS expression substituted into it indents from its line (`apps/oxfmt/DIVERGENCES.md#pre-like-template-expression`)
+        write!(f, prefix);
+        write_pre_like_text(value, starts_line, f);
+        write!(f, suffix);
         return;
     }
     if parent.script_like {
         write!(f, prefix);
-        write_dedented_lines(value, f);
+        if !write_embedded_content(t, t.parent(id), value, f) {
+            write_dedented_lines(value, f);
+        }
         write!(f, suffix);
         return;
     }
@@ -104,14 +116,68 @@ fn trim_preserving_indentation(value: &str) -> &str {
     &value[start..]
 }
 
+/// [`dedent`] as one text; borrowed when no line is indented.
+pub fn dedent_string<'a>(value: &'a str, f: &HtmlishFormatter<'_, 'a>) -> &'a str {
+    let min = common_indentation(value);
+    if min == 0 {
+        return value;
+    }
+    let mut out = StringBuilder::new_in(f.allocator());
+    for (i, line) in dedent_by(value, min).enumerate() {
+        if i > 0 {
+            out.push('\n');
+        }
+        out.push_str(line);
+    }
+    out.into_str()
+}
+
 /// Prettier's `dedentString`: the lines with their common indentation removed.
 fn dedent(value: &str) -> impl Iterator<Item = &str> {
-    let indentation = |line: &str| line.len() - line.trim_ascii_start().len();
-    let min = value
+    dedent_by(value, common_indentation(value))
+}
+
+/// The lines of `value` with `min` bytes of indentation removed.
+fn dedent_by(value: &str, min: usize) -> impl Iterator<Item = &str> {
+    value.split('\n').map(move |line| line.get(min..).unwrap_or(""))
+}
+
+/// The indentation every non-blank line of `value` shares.
+fn common_indentation(value: &str) -> usize {
+    value
         .split('\n')
         .filter(|line| !line.trim_ascii_start().is_empty())
-        .map(indentation)
+        .map(|line| line.len() - line.trim_ascii_start().len())
         .min()
-        .unwrap_or(0);
-    value.split('\n').map(move |line| line.get(min..).unwrap_or(""))
+        .unwrap_or(0)
+}
+
+/// `pre`-like text as written.
+/// A parent's placeholder for a JS expression on a line that starts at the root (after a line break in the text,
+/// or at its start when the text opens the content on its own line) aligns with the whitespace that line starts with,
+/// so that the expression's own lines indent from its `${`, as anywhere else.
+fn write_pre_like_text<'a>(value: &'a str, starts_line: bool, f: &mut HtmlishFormatter<'_, 'a>) {
+    let prefix = f.context().embedded_in().and_then(|e| e.placeholder).map(|(prefix, _)| prefix);
+    let indent_width = f.options().indent_width();
+    let mut written = 0;
+    while let Some(start) = prefix.and_then(|p| value[written..].find(p)).map(|i| written + i) {
+        let line_end = value[start..].find('\n').map_or(value.len(), |i| start + i);
+        let line_start = value[..start].rfind('\n').map(|i| i + 1).or(starts_line.then_some(0));
+        if let Some(line_start) = line_start {
+            let line = &value[line_start..start];
+            let indentation = &line[..line.len() - line.trim_start_matches([' ', '\t']).len()];
+            let width = u8::try_from(text_width(indentation, indent_width)).unwrap_or(u8::MAX);
+            write!(
+                f,
+                [
+                    text(&value[written..start]),
+                    dedent_to_root(&align(width, &text(&value[start..line_end])))
+                ]
+            );
+        } else {
+            write!(f, text(&value[written..line_end]));
+        }
+        written = line_end;
+    }
+    write!(f, text(&value[written..]));
 }

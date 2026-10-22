@@ -1,5 +1,6 @@
 //! Angular control flow blocks: transparent, their markers print no box (`@if (a) {` … `}`).
 
+use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
     builders::{hard_line_break, indent, text},
     write,
@@ -11,7 +12,6 @@ use super::{
     children::{Between, write_children},
     format_with,
 };
-use oxc_allocator::{Allocator, StringBuilder};
 
 use crate::tree::{Tree, collapse_whitespace};
 
@@ -19,7 +19,7 @@ use crate::tree::{Tree, collapse_whitespace};
 /// a space before a block that continues the previous one (`} @else {`), a line break otherwise.
 pub fn between_block(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
     let (p, n) = (&t[prev], &t[next]);
-    // The run continues into a block's content past its marker.
+    // The run continues into a block's content past its marker
     let spaces = p.has_trailing_spaces
         || n.has_leading_spaces
         || (t.is_block(prev) && p.last_child.is_some_and(|last| t[last].has_trailing_spaces))
@@ -67,13 +67,13 @@ pub fn write_block<'a>(
     let default_never = name == "default never";
     write!(f, ["@", text(name)]);
     if !block.parameters.is_empty() {
-        // `@default never(state)`: Prettier glues the parameters to `never`.
+        // `@default never(state)`: Prettier glues the parameters to `never`
         write!(f, if default_never { "(" } else { " (" });
         for (i, parameter) in block.parameters.iter().enumerate() {
             if i > 0 {
                 write!(f, "; ");
             }
-            // As written until expressions are formatted, on one line.
+            // As written until expressions are formatted, on one line
             let parameter =
                 collapse_whitespace_outside_quotes(f.allocator(), parameter.slice(t.source()));
             write!(f, text(parameter));
@@ -81,7 +81,7 @@ pub fn write_block<'a>(
         write!(f, ")");
     }
     if block.close.is_none() {
-        // `@default never;`; a fall-through `@case (a)` has nothing more.
+        // `@default never;`; a fall-through `@case (a)` has nothing more
         if default_never {
             write!(f, ";");
         }
@@ -104,13 +104,14 @@ pub fn write_block<'a>(
             write!(f, hard_line_break());
         }
     } else if item.next.is_some_and(|next| continues_block(t, id, next)) {
-        // `@if (a) {⏎} @else {`, as Prettier prints a closing `}` before the next block.
+        // `@if (a) {⏎} @else {`, as Prettier prints a closing `}` before the next block
         write!(f, hard_line_break());
     }
     write!(f, "}");
 }
 
-/// [`collapse_whitespace`] outside string literals (`'`, `"`, `` ` ``, a `\\` escaping the next character).
+/// [`collapse_whitespace`] outside string literals
+/// (`'`, `"`, `` ` ``, a `\\` escaping the next character).
 fn collapse_whitespace_outside_quotes<'a>(allocator: &'a Allocator, text: &'a str) -> &'a str {
     if !text.contains(['\'', '"', '`']) {
         return collapse_whitespace(allocator, text);

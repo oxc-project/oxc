@@ -92,6 +92,24 @@ const sources = [
     repo: "mdn/content/files/en-us/web/css/guides",
     version: "5137b45128dcf07ac636da68184f00aab30ec1cc",
   },
+  // html
+  {
+    name: "vite",
+    repo: "vitejs/vite/playground",
+    version: "v8.3.5",
+  },
+  {
+    name: "mdn-learning-area",
+    repo: "mdn/learning-area",
+    // No tags; pin to a commit (2026-10 main)
+    version: "21973263ba859ff3477919087b488157f9d618a6",
+  },
+  {
+    name: "mdn-dom-examples",
+    repo: "mdn/dom-examples",
+    // No tags; pin to a commit (2026-10 main)
+    version: "03ae1ffb325a9202d3a64f26ab5b8361392a5368",
+  },
   // jsdoc
   {
     name: "svelte",

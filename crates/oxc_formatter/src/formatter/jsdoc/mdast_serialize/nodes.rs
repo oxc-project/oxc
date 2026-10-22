@@ -756,7 +756,7 @@ const EMBEDDED_FENCE_LANGUAGES: [&str; 6] = ["css", "less", "scss", "json", "yam
 ///   formatted in-process via [`format_jsdoc_js_snippet`] (`oxc_formatter`'s own parser/formatter).
 /// - Non-JS/TS fenced code of [`EMBEDDED_FENCE_LANGUAGES`]:
 ///   when the session carries a string embedder, routed through it (the string channel);
-///   absent one (Rust-only conformance, or the language has no native branch), preserved verbatim.
+///   absent one (Rust-only conformance) or on its failure, preserved verbatim.
 ///
 /// NOTE: `@example` fences diverge here, see `tag_formatters::format_example_fenced_block`.
 fn format_code_value<'a>(

@@ -11,6 +11,10 @@ mod tree;
 
 pub use crate::{
     context::HtmlishFormatContext,
-    format::{ParsedHtmlish, format, format_to_ir, format_with_session, parse_for_format},
+    format::{
+        HtmlishEmbeddedIn, ParsedHtmlish, format, format_to_ir, format_with_session,
+        parse_for_format,
+    },
     options::{HtmlishFormatOptions, HtmlishVariant, WhitespaceSensitivity},
+    print::{CssInHtmlStyleAttribute, JsInHtmlEventHandler},
 };

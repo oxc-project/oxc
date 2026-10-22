@@ -5,6 +5,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodes},
+    embed_context::is_html_placeholder,
     formatter::{JsFormatter, JsFormatterExt as _},
     print::{BinaryLikeOperator, should_flatten, unary_argument_takes_comment_parens},
     utils::{expression::ExpressionLeftSide, typecast::is_cast_target},
@@ -73,6 +74,11 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, IdentifierReference<'_>> {
         if f.comments().is_marked_as_type_cast_node(self) {
             return false;
         }
+        // An html-in-js placeholder (reaching JS through HTML's `<script>` or `on*` attributes)
+        // stands in for an expression of any precedence, as Prettier's `parentheses/identifier.js` does
+        if is_html_placeholder(self.name.as_str()) {
+            return is_parenthesized_in_source(self, f);
+        }
 
         // `(type) satisfies never;` and similar keyword-at-statement-start cast cases
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/parentheses/identifier.js#L84-L107>
@@ -134,6 +140,47 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, IdentifierReference<'_>> {
             }
         }
     }
+}
+
+/// Whether the source wraps `node` in parentheses of its own (the AST keeps none),
+/// besides those of the syntax around it (a sole call argument, an `if` test, ...).
+fn is_parenthesized_in_source(
+    node: &AstNode<'_, '_, IdentifierReference<'_>>,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    let bytes = f.source_text().as_str().as_bytes();
+    let (mut start, mut end) = (node.span.start as usize, node.span.end as usize);
+    let mut pairs = 0;
+    loop {
+        let before = bytes[..start].iter().rposition(|b| !b.is_ascii_whitespace());
+        let after = bytes[end..].iter().position(|b| !b.is_ascii_whitespace()).map(|i| end + i);
+        match (before, after) {
+            (Some(before), Some(after)) if bytes[before] == b'(' && bytes[after] == b')' => {
+                pairs += 1;
+                (start, end) = (before, after + 1);
+            }
+            _ => break,
+        }
+    }
+    let span = node.span;
+    let syntax_parens = match node.parent() {
+        AstNodes::CallExpression(call) => {
+            matches!(call.arguments.as_slice(), [only] if only.span() == span)
+        }
+        AstNodes::NewExpression(new) => {
+            matches!(new.arguments.as_slice(), [only] if only.span() == span)
+        }
+        AstNodes::ImportExpression(import) => {
+            import.source.span() == span && import.options.is_none()
+        }
+        AstNodes::IfStatement(statement) => statement.test.span() == span,
+        AstNodes::WhileStatement(statement) => statement.test.span() == span,
+        AstNodes::DoWhileStatement(statement) => statement.test.span() == span,
+        AstNodes::SwitchStatement(statement) => statement.discriminant.span() == span,
+        AstNodes::WithStatement(statement) => statement.object.span() == span,
+        _ => false,
+    };
+    pairs > usize::from(syntax_parens)
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, '_, BooleanLiteral> {
