@@ -999,3 +999,31 @@ class C {
   in
 }
 ```
+
+## modified-keyword-class-field-boundary
+
+- Why: uniform-rule (same construct, same output: initialized fields before modified class members)
+- Pin: `tests/fixtures/js/semicolons/keyword-quotes/modified-typescript.ts`
+
+With `semi: false`, omit the separator before decorated or abstract members even
+when their key is `in` or `instanceof`. Their modifier already separates the key
+from the preceding initializer. This follows the same rule as decorated or
+abstract members with ordinary names. Prettier 3.9.10 keeps an unnecessary
+semicolon only for the operator-keyword names.
+
+```ts
+// input
+abstract class C { x = 1; abstract in: number; }
+
+// ours (semi: false)
+abstract class C {
+  x = 1
+  abstract in: number
+}
+
+// prettier (semi: false)
+abstract class C {
+  x = 1;
+  abstract in: number
+}
+```
