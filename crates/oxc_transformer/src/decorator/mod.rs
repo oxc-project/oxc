@@ -1,5 +1,6 @@
 mod legacy;
 mod options;
+mod tc39;
 
 use oxc_ast::ast::*;
 use oxc_traverse::Traverse;
@@ -7,18 +8,25 @@ use oxc_traverse::Traverse;
 use crate::{context::TraverseCtx, state::TransformState};
 
 use legacy::LegacyDecorator;
-pub use options::DecoratorOptions;
+pub use options::{DecoratorOptions, DecoratorVersion};
+use tc39::Tc39Decorator;
 
 pub struct Decorator<'a> {
     options: DecoratorOptions,
 
     // Plugins
     legacy_decorator: LegacyDecorator<'a>,
+    tc39_decorator: Option<Tc39Decorator<'a>>,
 }
 
 impl Decorator<'_> {
     pub fn new(options: DecoratorOptions) -> Self {
-        Self { legacy_decorator: LegacyDecorator::new(options), options }
+        let tc39 = if options.legacy {
+            None
+        } else {
+            Some(Tc39Decorator::new(options.version))
+        };
+        Self { legacy_decorator: LegacyDecorator::new(options), options, tc39_decorator: tc39 }
     }
 }
 
@@ -31,6 +39,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     ) {
         if self.options.legacy {
             self.legacy_decorator.exit_program(node, ctx);
+        } else if let Some(ref mut tc39) = self.tc39_decorator {
+            tc39.exit_program(node, ctx);
         }
     }
 
@@ -45,6 +55,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.exit_statement(stmt, ctx);
+        } else if let Some(ref mut tc39) = self.tc39_decorator {
+            tc39.exit_statement(stmt, ctx);
         }
     }
 
@@ -52,6 +64,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     fn enter_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.enter_class(node, ctx);
+        } else if let Some(ref mut tc39) = self.tc39_decorator {
+            tc39.enter_class(node, ctx);
         }
     }
 
@@ -59,6 +73,8 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     fn exit_class(&mut self, node: &mut Class<'a>, ctx: &mut TraverseCtx<'a>) {
         if self.options.legacy {
             self.legacy_decorator.exit_class(node, ctx);
+        } else if let Some(ref mut tc39) = self.tc39_decorator {
+            tc39.exit_class(node, ctx);
         }
     }
 
@@ -125,6 +141,24 @@ impl<'a> Traverse<'a, TransformState<'a>> for Decorator<'a> {
     ) {
         if self.options.legacy {
             self.legacy_decorator.exit_property_definition(node, ctx);
+        }
+    }
+
+    #[inline]
+    fn enter_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.legacy {
+            self.legacy_decorator.enter_expression(expr, ctx);
+        } else if let Some(ref mut tc39) = self.tc39_decorator {
+            tc39.enter_expression(expr, ctx);
+        }
+    }
+
+    #[inline]
+    fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        if self.options.legacy {
+            self.legacy_decorator.exit_expression(expr, ctx);
+        } else if let Some(ref mut tc39) = self.tc39_decorator {
+            tc39.exit_expression(expr, ctx);
         }
     }
 

@@ -187,6 +187,10 @@ pub enum Helper {
     WriteOnlyError,
     /// Runtime helper `checkInRHS`.
     CheckInRHS,
+    /// Runtime helper `applyDecs2311` (2023-11 decorators).
+    ApplyDecs2311,
+    /// Runtime helper `applyDecs2203R` (2022-03 decorators).
+    ApplyDecs2203R,
     /// Runtime helper `decorate`.
     Decorate,
     /// Runtime helper `decorateParam`.
@@ -229,6 +233,8 @@ impl Helper {
             Self::ReadOnlyError => "readOnlyError",
             Self::WriteOnlyError => "writeOnlyError",
             Self::CheckInRHS => "checkInRHS",
+            Self::ApplyDecs2311 => "applyDecs2311",
+            Self::ApplyDecs2203R => "applyDecs2203R",
             Self::Decorate => "decorate",
             Self::DecorateParam => "decorateParam",
             Self::DecorateMetadata => "decorateMetadata",

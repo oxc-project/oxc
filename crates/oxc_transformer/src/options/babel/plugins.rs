@@ -77,6 +77,8 @@ pub struct BabelPlugins {
     pub explicit_resource_management: bool,
     // Decorator
     pub legacy_decorator: Option<DecoratorOptions>,
+    pub proposal_decorators_v2022_03: bool,
+    pub proposal_decorators_v2023_11: bool,
     // Built-in plugins
     pub styled_components: Option<StyledComponentsOptions>,
     pub tagged_template_escape: bool,
@@ -97,7 +99,13 @@ impl TryFrom<PluginPresetEntries> for BabelPlugins {
                     p.syntax_decorators = Some(entry.value::<SyntaxDecoratorOptions>()?);
                 }
                 "proposal-decorators" => {
-                    p.proposal_decorators = Some(entry.value::<SyntaxDecoratorOptions>()?);
+                    let opts = entry.value::<SyntaxDecoratorOptions>()?;
+                    p.proposal_decorators = Some(opts.clone());
+                    match opts.version.as_str() {
+                        "2022-03" => p.proposal_decorators_v2022_03 = true,
+                        "2023-11" | "2023-05" | "2023-01" => p.proposal_decorators_v2023_11 = true,
+                        _ => {}
+                    }
                 }
                 "transform-typescript" => {
                     p.typescript =

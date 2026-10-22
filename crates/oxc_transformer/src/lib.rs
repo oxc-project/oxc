@@ -374,6 +374,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
             typescript.enter_expression(expr, ctx);
         }
         self.plugins.enter_expression(expr, ctx);
+        self.decorator.enter_expression(expr, ctx);
         self.x2_es2022.enter_expression(expr, ctx);
         self.x2_es2021.enter_expression(expr, ctx);
         self.x2_es2020.enter_expression(expr, ctx);
@@ -795,6 +796,7 @@ impl<'a> TransformerImpl<'a> {
     fn exit_expression_impl(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.exit_expression(expr, ctx);
         self.x1_jsx.exit_expression(expr, ctx);
+        self.decorator.exit_expression(expr, ctx);
         self.x2_es2022.exit_expression(expr, ctx);
         self.x2_es2018.exit_expression(expr, ctx);
         self.x2_es2017.exit_expression(expr, ctx);

@@ -56,8 +56,8 @@ pub const PLUGINS: &[&str] = &[
     "babel-plugin-transform-react-jsx-self",
     "babel-plugin-transform-react-jsx-source",
     "babel-plugin-transform-react-jsx-development",
-    // // Proposal
-    // "babel-plugin-proposal-decorators",
+    // Proposal
+    "babel-plugin-proposal-decorators",
     // RegExp tests ported from esbuild + a few additions
     "regexp",
     // Legacy decorators, tests almost ported from TypeScript
@@ -68,7 +68,6 @@ pub const PLUGINS: &[&str] = &[
 ];
 
 pub const PLUGINS_NOT_SUPPORTED_YET: &[&str] = &[
-    "proposal-decorators",
     "transform-classes",
     "transform-destructuring",
     "transform-modules-commonjs",

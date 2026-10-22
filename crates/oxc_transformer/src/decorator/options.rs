@@ -1,5 +1,17 @@
 use serde::Deserialize;
 
+/// Decorator version to use for the TC39 proposal transform.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default, Deserialize)]
+pub enum DecoratorVersion {
+    /// 2022-03 version (legacy TC39 proposal)
+    #[serde(rename = "2022-03")]
+    V202203,
+    /// 2023-11 version (latest TC39 proposal, default)
+    #[default]
+    #[serde(rename = "2023-11")]
+    V202311,
+}
+
 #[derive(Debug, Clone, Copy, Deserialize)]
 #[serde(default, rename_all = "camelCase", deny_unknown_fields)]
 /// Decorator transform options.
@@ -27,6 +39,11 @@ pub struct DecoratorOptions {
     /// <https://www.typescriptlang.org/tsconfig#strictNullChecks>
     #[serde(default = "default_as_true")]
     pub strict_null_checks: bool,
+
+    /// Which version of the TC39 decorators proposal to use.
+    /// Only used when `legacy` is `false`.
+    #[serde(default)]
+    pub version: DecoratorVersion,
 }
 
 impl Default for DecoratorOptions {
@@ -35,6 +52,7 @@ impl Default for DecoratorOptions {
             legacy: false,
             emit_decorator_metadata: false,
             strict_null_checks: default_as_true(),
+            version: DecoratorVersion::default(),
         }
     }
 }

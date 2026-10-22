@@ -4,7 +4,7 @@ use crate::{
     ReactRefreshOptions,
     common::helper_loader::{HelperLoaderMode, HelperLoaderOptions},
     compiler_assumptions::CompilerAssumptions,
-    decorator::DecoratorOptions,
+    decorator::{DecoratorOptions, DecoratorVersion},
     es2015::ES2015Options,
     es2016::ES2016Options,
     es2017::ES2017Options,
@@ -98,6 +98,7 @@ impl TransformOptions {
                 legacy: true,
                 emit_decorator_metadata: true,
                 strict_null_checks: true,
+                version: DecoratorVersion::V202311,
             },
             plugins: PluginsOptions {
                 styled_components: Some(StyledComponentsOptions::default()),
@@ -180,6 +181,14 @@ impl TryFrom<&BabelOptions> for TransformOptions {
             .or_else(|| options.plugins.typescript.clone())
             .unwrap_or_default();
 
+        let decorator_version = if options.plugins.proposal_decorators_v2023_11 {
+            DecoratorVersion::V202311
+        } else if options.plugins.proposal_decorators_v2022_03 {
+            DecoratorVersion::V202203
+        } else {
+            DecoratorVersion::default()
+        };
+
         let decorator = DecoratorOptions {
             legacy: options.plugins.legacy_decorator.is_some(),
             emit_decorator_metadata: options
@@ -190,6 +199,7 @@ impl TryFrom<&BabelOptions> for TransformOptions {
                 .plugins
                 .legacy_decorator
                 .is_none_or(|o| o.strict_null_checks),
+            version: decorator_version,
         };
 
         let jsx = if let Some(options) = &options.presets.jsx {

@@ -445,6 +445,7 @@ impl From<DecoratorOptions> for oxc::transformer::DecoratorOptions {
     fn from(options: DecoratorOptions) -> Self {
         oxc::transformer::DecoratorOptions {
             legacy: options.legacy.unwrap_or_default(),
+            version: Default::default(),
             emit_decorator_metadata: options.emit_decorator_metadata.unwrap_or_default(),
             strict_null_checks: options.strict_null_checks.unwrap_or(true),
         }
