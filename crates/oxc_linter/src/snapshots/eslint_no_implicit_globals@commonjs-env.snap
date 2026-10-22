@@ -1,0 +1,16 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-implicit-globals): Global variable leak.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ foo = 1;
+   · ───────
+   ╰────
+  help: Declare the variable if it is intended to be local.
+
+  ⚠ eslint(no-implicit-globals): Unexpected assignment to read-only global variable.
+   ╭─[no_implicit_globals.tsx:1:1]
+ 1 │ Array = 1;
+   · ─────────
+   ╰────
