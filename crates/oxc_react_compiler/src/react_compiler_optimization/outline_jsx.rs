@@ -15,6 +15,8 @@ use oxc_allocator::Vec as ArenaVec;
 use oxc_index::IndexVec;
 use oxc_span::Span;
 use oxc_str::{Ident, IdentHashSet, format_ident};
+use oxc_syntax::identifier::{is_identifier_name, is_identifier_part};
+use oxc_syntax::keyword::is_reserved_keyword;
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::react_compiler_hir::Effect;
@@ -277,7 +279,7 @@ fn collect_props<'a>(
                 match attr {
                     JsxAttribute::SpreadAttribute { .. } => return None,
                     JsxAttribute::Attribute { name, name_span, place } => {
-                        let new_name = generate_name(*name);
+                        let new_name = generate_name(to_binding_name(allocator, *name));
                         attributes.push(OutlinedJsxAttribute {
                             original_name: *name,
                             new_name,
@@ -320,6 +322,31 @@ fn collect_props<'a>(
     }
 
     Some(attributes)
+}
+
+/// Derive a valid binding name from a JSX attribute name, e.g. `data-testid` -> `dataTestid`.
+fn to_binding_name<'a>(alloc: &'a oxc_allocator::Allocator, name: Ident<'a>) -> Ident<'a> {
+    if is_identifier_name(&name) && !is_reserved_keyword(&name) {
+        return name;
+    }
+    let mut result = String::new();
+    let mut capitalize = false;
+    for c in name.chars() {
+        if is_identifier_part(c) {
+            if capitalize {
+                result.extend(c.to_uppercase());
+            } else {
+                result.push(c);
+            }
+            capitalize = false;
+        } else {
+            capitalize = !result.is_empty();
+        }
+    }
+    if !is_identifier_name(&result) || is_reserved_keyword(&result) {
+        result.insert(0, '_');
+    }
+    format_ident!(alloc, "{result}")
 }
 
 fn emit_outlined_jsx<'a>(
