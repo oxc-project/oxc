@@ -987,10 +987,15 @@ comment after `const` or `var`, producing code rejected by `node --check`, and
 misparses the `let` case as an expression statement.
 
 ```js
-// input / ours
+// input
 const
 --> comment
 value = 2;
+
+// ours
+const
+  --> comment
+  value = 2;
 
 // prettier
 const --> comment
