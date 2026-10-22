@@ -4,7 +4,7 @@ use lazy_regex::Regex;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_ast::{
-    AstKind, FunctionKind, StaticPropertyName,
+    AstKind, FunctionKind,
     ast::{ArrowFunctionExpression, CallExpression, Function, NewExpression},
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -953,7 +953,16 @@ fn get_declaration_identifier<'a>(
                 // { useHook: () => {} }
                 // { useHook() {} }
                 AstKind::ObjectProperty(prop) => {
-                    prop.key.name().and_then(StaticPropertyName::into_cow_str)
+                    let name = prop.key.name()?;
+                    // The name is only classified as a component or hook name. A lone surrogate
+                    // is neither an uppercase letter nor a digit, and neither is U+FFFD.
+                    let replaced = name.as_str().is_none().then(|| {
+                        name.as_js_str()
+                            .chars()
+                            .map(|c| c.to_char().unwrap_or(char::REPLACEMENT_CHARACTER))
+                            .collect::<String>()
+                    });
+                    replaced.map(Cow::Owned).or_else(|| name.into_cow_str())
                 }
                 _ => None,
             }
@@ -982,6 +991,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Valid because a key that starts with `useX` is a hook name, even with a lone surrogate.
+        r#"({"useX\uDC00": () => { useState(); }});"#,
         // Valid because components can use hooks.
         "
             function ComponentWithHook() {
@@ -2125,6 +2136,8 @@ fn test() {
             const {j = () => { useState(); }} = {};
             ({k = () => { useState(); }} = {});
         ",
+        // A key with a lone surrogate is neither a component nor a hook name.
+        r#"({"f\uDC00": () => { useState(); }});"#,
         // Invalid because it's dangerous and might not warn otherwise.
         // This *must* be invalid.
         // errors: [conditionalError('useState', true)],

@@ -302,7 +302,7 @@ impl<'a> VisitJs<'a> for StatementCounter<'a> {
     fn visit_function(&mut self, func: &Function<'a>, flags: ScopeFlags) {
         self.start_function();
         walk_function(self, func, flags);
-        self.end_function(func.id.as_ref().map(|id| id.name.as_str()), func.span(), false);
+        self.end_function(func.name().map(|name| name.as_str()), func.span(), false);
     }
 
     fn visit_arrow_function_expression(&mut self, arrow: &ArrowFunctionExpression<'a>) {

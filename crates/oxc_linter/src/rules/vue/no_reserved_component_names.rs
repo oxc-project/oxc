@@ -17,8 +17,7 @@ use crate::{
     utils::{
         VUE_RESERVED_DEPRECATED_HTML_ELEMENTS, VUE_RESERVED_HTML_ELEMENTS,
         VUE_RESERVED_KEBAB_CASE_ELEMENTS, VUE_RESERVED_SVG_ELEMENTS, VUE2_BUILTIN_COMPONENT_NAMES,
-        VUE3_BUILTIN_COMPONENT_NAMES_EXTRA, find_property,
-        is_vue_component_options_object_excluding_instance,
+        VUE3_BUILTIN_COMPONENT_NAMES_EXTRA, is_vue_component_options_object_excluding_instance,
     },
 };
 
@@ -123,10 +122,10 @@ impl Rule for NoReservedComponentNames {
 
 impl NoReservedComponentNames {
     fn check_options_object<'a>(&self, obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-        if let Some(name_prop) = find_property(obj, "name") {
+        if let Some(name_prop) = obj.find_property("name") {
             self.check_name_expression(name_prop.value.get_inner_expression(), ctx);
         }
-        let Some(components_prop) = find_property(obj, "components") else { return };
+        let Some(components_prop) = obj.find_property("components") else { return };
         let Expression::ObjectExpression(components_obj) =
             components_prop.value.get_inner_expression()
         else {
@@ -145,7 +144,7 @@ impl NoReservedComponentNames {
     fn check_define_options<'a>(&self, call: &CallExpression<'a>, ctx: &LintContext<'a>) {
         let Some(arg) = call.arguments.first().and_then(|a| a.as_expression()) else { return };
         let Expression::ObjectExpression(obj) = arg.get_inner_expression() else { return };
-        let Some(name_prop) = find_property(obj, "name") else { return };
+        let Some(name_prop) = obj.find_property("name") else { return };
         self.check_name_expression(name_prop.value.get_inner_expression(), ctx);
     }
 
@@ -236,10 +235,7 @@ fn is_define_options_call(call: &CallExpression<'_>) -> bool {
 }
 
 fn single_quasi_value<'a>(tpl: &'a TemplateLiteral<'a>) -> Option<&'a str> {
-    if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
-        return None;
-    }
-    tpl.quasis[0].value.cooked.and_then(JSStr::as_str)
+    tpl.single_quasi().and_then(JSStr::as_str)
 }
 
 fn lower_first_char(name: &str) -> Option<String> {

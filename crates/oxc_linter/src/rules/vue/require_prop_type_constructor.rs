@@ -16,7 +16,7 @@ use crate::{
     fixer::{RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
     rule::Rule,
-    utils::{find_property, is_vue_component_options_object_excluding_instance},
+    utils::is_vue_component_options_object_excluding_instance,
 };
 
 fn require_prop_type_constructor_diagnostic(
@@ -83,7 +83,7 @@ impl Rule for RequirePropTypeConstructor {
                 if !is_vue_component_options_object_excluding_instance(node, ctx) {
                     return;
                 }
-                let Some(props_prop) = find_property(obj, "props") else { return };
+                let Some(props_prop) = obj.find_property("props") else { return };
                 let Expression::ObjectExpression(props_obj) =
                     props_prop.value.get_inner_expression()
                 else {
@@ -127,7 +127,7 @@ fn verify_props<'a>(props_obj: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
                 check_array_elements(arr, &prop_name.display(), ctx);
             }
             Expression::ObjectExpression(obj) => {
-                let Some(type_prop) = find_property(obj, "type") else { continue };
+                let Some(type_prop) = obj.find_property("type") else { continue };
                 let type_value = type_prop.value.get_inner_expression();
                 if let Expression::ArrayExpression(arr) = type_value {
                     check_array_elements(arr, &prop_name.display(), ctx);
@@ -201,10 +201,7 @@ fn literal_identifier_replacement(expr: &Expression) -> Option<String> {
 }
 
 fn single_quasi_identifier(tpl: &TemplateLiteral) -> Option<String> {
-    if !tpl.expressions.is_empty() || tpl.quasis.len() != 1 {
-        return None;
-    }
-    let cooked = tpl.quasis[0].value.cooked?.as_str()?;
+    let cooked = tpl.single_quasi()?.as_str()?;
     is_identifier_name(cooked).then(|| cooked.to_string())
 }
 
