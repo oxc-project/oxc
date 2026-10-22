@@ -1,0 +1,192 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(prefer-array-to-reversed): Use `arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = arr.slice().reverse();
+   ·                  ─────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = arr.slice(0).reverse();
+   ·                  ──────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = arr.concat().reverse();
+   ·                  ──────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = [...arr].reverse();
+   ·                  ──────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `obj.arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = [...obj.arr].reverse();
+   ·                  ──────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `obj.arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = obj.arr.slice().reverse();
+   ·                  ─────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `obj.arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = obj.arr.concat().reverse();
+   ·                  ──────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `someFunc().toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = someFunc().slice(0).reverse();
+   ·                  ─────────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `(a ?? b).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = [...a ?? b].reverse();
+   ·                  ─────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `(a || b).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = [...a || b].reverse();
+   ·                  ─────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `(a ? b : c).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:18]
+ 1 │ const reversed = [...a ? b : c].reverse();
+   ·                  ────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `obj.arr?.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ obj.arr?.slice().reverse();
+   · ──────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `obj.arr?.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ obj.arr?.concat().reverse();
+   · ───────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ arr.concat().reverse();
+   · ──────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:13]
+ 1 │ console.log(arr.slice().reverse());
+   ·             ─────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `Array.from(x).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...Array.from(x)].reverse()
+   · ────────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `Object.keys(o).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ Object.keys(o).slice().reverse()
+   · ────────────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `[1, 2, 3].toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...[1, 2, 3]].reverse()
+   · ────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `(new Foo).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...new Foo].reverse()
+   · ──────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `(0, array).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...(0, array)].reverse()
+   · ─────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `(await x).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...await x].reverse()
+   · ──────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `mySet.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...mySet].reverse()
+   · ────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `(arr as number[]).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...(arr as number[])].reverse()
+   · ────────────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `(obj?.arr).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...obj?.arr].reverse()
+   · ───────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `Array.from(x).toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:42]
+ 1 │ const Array = { from: () => new Set() }; [...Array.from(x)].reverse()
+   ·                                          ────────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `str.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [...str].reverse().join("")
+   · ──────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
+
+  ⚠ oxc(prefer-array-to-reversed): Use `arr.toReversed()` instead of copying and reversing.
+   ╭─[prefer_array_to_reversed.tsx:1:1]
+ 1 │ [/* keep */ ...arr].reverse()
+   · ─────────────────────────────
+   ╰────
+  help: Copying and then calling `reverse()` allocates an extra array. `toReversed()` returns a reversed copy in one step.
