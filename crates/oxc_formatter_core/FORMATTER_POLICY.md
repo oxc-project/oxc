@@ -122,8 +122,8 @@ Printed text is measured by its display width (`TextWidth` / `text_width`, via `
 - Zero-width characters count as 0: nonspacing and enclosing marks (`Mn` / `Me`), and format characters (`U+200B..U+200F`, `U+FEFF`, ...)
 - Everything else counts as 1, ambiguous width included
 
-This holds for the printer's line width and for the width heuristics a language crate measures printed text with (e.g. a short object key).
-A heuristic Prettier defines by a JS `.length` keeps that measure (e.g. JSDoc wrapping in `oxc_formatter`).
+This holds for the printer's line width and for every heuristic comparing text with a column budget (`tabWidth`, a share of `printWidth`, a short object key, ...),
+never a byte or UTF-16 length, even where Prettier uses a JS `.length`.
 
 ## Error semantics
 

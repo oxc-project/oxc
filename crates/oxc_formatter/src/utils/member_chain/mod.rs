@@ -4,6 +4,8 @@ pub mod simple_argument;
 
 use std::iter;
 
+use unicode_width::UnicodeWidthStr;
+
 use oxc_ast::ast::*;
 use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
@@ -399,7 +401,7 @@ pub fn is_member_call_chain<'a>(
 }
 
 fn has_short_name(name: &str, tab_width: u8) -> bool {
-    name.len() <= tab_width as usize
+    name.width() <= tab_width as usize
 }
 
 fn chain_members_iter<'a, 'b>(

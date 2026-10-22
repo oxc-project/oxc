@@ -1017,3 +1017,7 @@ Fixed in Prettier `main` by prettier/prettier#19538, which we follow.
 
 Format characters (`U+200B..U+200F`, `U+FEFF`) are 1 on Prettier `main` too,
 so a string padded with NBSP / ZWNJ pairs, as in an email preview, breaks in Prettier and stays on one line in ours.
+
+Prettier measures some width heuristics by a JS `.length`, so a wide character counts 1 there and 2 in ours:
+a lone call argument of 14 CJK characters (`translateTheThing(漢字…)`) is short for Prettier's `printWidth * 0.25` and not for ours,
+so ours breaks the call's arguments instead of after the `=`.

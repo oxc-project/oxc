@@ -5,3 +5,7 @@ export default moment.defineLocale("bo", {
 });
 // NBSP and ZWNJ (Cf) alternating, like an email preview padding
 const preview = " ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌ ‌";
+// Width heuristics measure the display width too
+古.object({ aaaaaaaaaaaa: 1 }).bbbbbbbbbbbbbbbbbb().cccccccccccccccccccc().ddddddddddddddddd();
+someVeryLongVariableNameForTheAssignmentTarget.someProperty = translateTheThing(漢字漢字漢字漢字漢字漢字漢字);
+const collapsed = text.replace(/[“”]/g, '"').replace(/\s+/g, " ").trim();

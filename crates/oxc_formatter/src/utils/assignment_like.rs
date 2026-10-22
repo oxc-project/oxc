@@ -1,5 +1,7 @@
 use std::ptr;
 
+use unicode_width::UnicodeWidthStr;
+
 use oxc_ast::ast::*;
 use oxc_formatter_core::{Format, ScratchBuffer};
 use oxc_span::GetSpan;
@@ -1238,11 +1240,11 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
 fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> bool {
     match argument {
-        Expression::Identifier(identifier) => identifier.name.len() <= threshold as usize,
+        Expression::Identifier(identifier) => identifier.name.width() <= threshold as usize,
         Expression::UnaryExpression(unary_expression) => {
             is_short_argument(&unary_expression.argument, threshold, f)
         }
-        Expression::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
+        Expression::RegExpLiteral(regex) => regex.regex.pattern.text.width() <= threshold as usize,
         Expression::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
                 f.source_text().text_for(literal.as_ref()),
@@ -1258,12 +1260,12 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
             literal.quasis.len() == 1 && {
                 let raw = literal.quasis[0].value.raw;
-                raw.len() <= threshold as usize && !raw.contains('\n')
+                raw.width() <= threshold as usize && !raw.contains('\n')
             }
         }
         Expression::CallExpression(call) => {
             call.arguments.is_empty()
-                && matches!(&call.callee, Expression::Identifier(ident) if ident.name.len() <= (threshold as usize).saturating_sub(2))
+                && matches!(&call.callee, Expression::Identifier(ident) if ident.name.width() <= (threshold as usize).saturating_sub(2))
         }
         Expression::ThisExpression(_)
         | Expression::NullLiteral(_)
