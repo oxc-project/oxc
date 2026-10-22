@@ -850,7 +850,7 @@ Before an optional call's `?.`, Prettier moves an own-line comment into the argu
 
 ## instantiation-expression-parens
 
-- Why: semantics (Prettier's output no longer parses; prettier/prettier#20177)
+- Why: semantics (Prettier's output no longer parses or changes structure; prettier/prettier#20177, prettier/prettier#20345)
 - Pin: `tests/fixtures/ts/parenthesis/instantiation-expression-parens.ts`
 
 ```ts
@@ -860,6 +860,9 @@ const a = (make<T>)!;
 x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (a as B)<T>;
 
 // ours
 const a = (make<T>)!;
@@ -867,6 +870,9 @@ const a = (make<T>)!;
 x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (a as B)<T>;
 
 // prettier
 const a = make<T>!;
@@ -874,6 +880,9 @@ make<T><U>();
 x = make<T> + y;
 export default class {}<string>;
 class {}<string>;
+x = c ? a : b<T>;
+x = y++<T>;
+x = a as B<T>;
 ```
 
 Prettier drops the parens around an instantiation expression before `!`,
@@ -883,6 +892,10 @@ Fixed in Prettier `main` by prettier/prettier#20177, which we follow except afte
 Prettier `main` still drops them before type arguments (`make<T><U>()` does not parse)
 and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
 (`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
+
+Prettier also drops the parens around an operand that binds looser than the type arguments.
+The type arguments then attach to its last piece only (`c ? a : b<T>`, `a as B<T>`), or the output no longer parses (`y++<T>`).
+Fixed in Prettier `main` by prettier/prettier#20345, which we follow.
 
 ## export-default-leftmost-parens
 
