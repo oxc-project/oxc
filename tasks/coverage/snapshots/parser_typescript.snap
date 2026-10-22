@@ -1,8 +1,8 @@
 commit: 5237fd46
 
 parser_typescript Summary:
-AST Parsed     : 9852/9862 (99.90%)
-Positive Passed: 9842/9862 (99.80%)
+AST Parsed     : 9853/9862 (99.91%)
+Positive Passed: 9843/9862 (99.81%)
 Negative Passed: 1712/2806 (61.01%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
@@ -2382,15 +2382,6 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    · ──────────────────
    ╰────
   help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
-
-Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importSource/importSource3.ts
-
-  × Unexpected token
-   ╭─[typescript/tsc/testdata/tests/cases/conformance/importSource/importSource3.ts:1:20]
- 1 │ import source type from "./f.wasm";
-   ·                    ────
- 2 │ const a: AbstractModuleSource = type;
-   ╰────
 
 
   × TS(1090): 'public' modifier cannot appear on a parameter.
@@ -25205,10 +25196,11 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/impo
    ·        ─────
    ╰────
 
-  × Unexpected token
+  × Expected `from` but found `*`
    ╭─[typescript/tsc/testdata/tests/cases/conformance/importDefer/importDeferTypeConflict2.ts:1:19]
  1 │ import defer type * as ns1 from "./a";
-   ·                   ─
+   ·                   ┬
+   ·                   ╰── `from` expected
    ╰────
 
   × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`

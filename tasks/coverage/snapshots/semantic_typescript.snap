@@ -2,7 +2,7 @@ commit: 5237fd46
 
 semantic_typescript Summary:
 AST Parsed     : 5721/5721 (100.00%)
-Positive Passed: 4156/5721 (72.64%)
+Positive Passed: 4157/5721 (72.66%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -23893,9 +23893,6 @@ rebuilt        : <None>
 Unresolved references mismatch:
 after transform: []
 rebuilt        : ["a"]
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importSource/importSource3.ts
-Unexpected token
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/inferFromBindingPattern.ts
 Bindings mismatch:
