@@ -4,13 +4,12 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::Span;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{
-    AstNode, ast_util::get_declaration_of_variable, config::GlobalValue, context::LintContext,
-    rule::Rule,
+    AstNode, ast_util::get_declaration_of_variable, context::LintContext, rule::Rule,
+    utils::is_enabled_global_reference,
 };
 
 fn implied_eval_diagnostic(span: Span) -> OxcDiagnostic {
@@ -161,13 +160,6 @@ fn global_root_after_same_name_chain<'a>(
 
 fn is_global_candidate_name(name: &str) -> bool {
     matches!(name, "global" | "window" | "globalThis" | "self")
-}
-
-fn is_enabled_global_reference(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
-    ident.is_global_reference(ctx.scoping())
-        && ctx
-            .get_global_variable_value(ident.name.as_str())
-            .is_some_and(|value| value != GlobalValue::Off)
 }
 
 fn is_string_like_argument<'a>(expr: &'a Expression<'a>, ctx: &LintContext<'a>) -> bool {
