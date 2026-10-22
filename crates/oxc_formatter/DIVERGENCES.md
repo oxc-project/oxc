@@ -851,7 +851,7 @@ Before an optional call's `?.`, Prettier moves an own-line comment into the argu
 
 ## instantiation-expression-parens
 
-- Why: semantics (Prettier's output no longer parses; prettier/prettier#20177)
+- Why: semantics (Prettier's output no longer parses or changes structure; prettier/prettier#20177, prettier/prettier#20345)
 - Pin: `tests/fixtures/ts/parenthesis/instantiation-expression-parens.ts`
 
 ```ts
@@ -894,10 +894,9 @@ Prettier `main` still drops them before type arguments (`make<T><U>()` does not 
 and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
 (`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
 
-Prettier (pin and `main`) also drops the parens around an operand that binds looser than the type arguments,
-so they move onto its last piece or no longer parse:
-`c ? a : b<T>`, `a + b<T>`, `!a<T>`, `a as B<T>` and `<B>a<T>` instantiate only `b`, `a` or `B`, and `y++<T>` does not parse.
-We keep them wherever the operand of a non-null assertion `!` keeps them, which binds the same.
+Prettier also drops the parens around an operand that binds looser than the type arguments.
+The type arguments then attach to its last piece only (`c ? a : b<T>`, `a as B<T>`), or the output no longer parses (`y++<T>`).
+Fixed in Prettier `main` by prettier/prettier#20345, which we follow.
 
 ## export-default-leftmost-parens
 
