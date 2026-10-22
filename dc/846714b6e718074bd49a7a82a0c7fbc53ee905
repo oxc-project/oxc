@@ -1,0 +1,19 @@
+Cargo.lock
+  s_dfed799257f548::t_b98bd8352ad541 283,691,3387,3416,3418,3806,4278,4280,4287,4289,4340
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "dc846714b6e718074bd49a7a82a0c7fbc53ee905",
+  "prompts": {},
+  "sessions": {
+    "s_dfed799257f548": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a165cc-a0b4-7a00-9561-f1a04e16a5f7",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
