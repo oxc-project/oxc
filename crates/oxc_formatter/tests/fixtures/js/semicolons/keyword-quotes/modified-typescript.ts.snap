@@ -1,0 +1,248 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// DIVERGENCES.md#modified-keyword-class-field-boundary
+abstract class AbstractProperties {
+  x = 1;
+  abstract in: number;
+  y = 1;
+  abstract instanceof: number;
+}
+abstract class AbstractMethods {
+  x = 1;
+  abstract in(): void;
+  y = 1;
+  abstract instanceof(): void;
+}
+class DecoratedMembers {
+  x = 1;
+  @dec in;
+  y = 1;
+  @dec instanceof() {}
+}
+abstract class OrdinaryMembers {
+  x = 1;
+  abstract property: number;
+  y = 1;
+  abstract method(): void;
+}
+class OrdinaryDecoratedMembers {
+  x = 1;
+  @dec property;
+  y = 1;
+  @dec method() {}
+}
+
+==================== Output ====================
+--------------------------------------------------------
+{ printWidth: 80, quoteProps: "as-needed", semi: false }
+--------------------------------------------------------
+// DIVERGENCES.md#modified-keyword-class-field-boundary
+abstract class AbstractProperties {
+  x = 1
+  abstract in: number
+  y = 1
+  abstract instanceof: number
+}
+abstract class AbstractMethods {
+  x = 1
+  abstract in(): void
+  y = 1
+  abstract instanceof(): void
+}
+class DecoratedMembers {
+  x = 1
+  @dec in
+  y = 1
+  @dec instanceof() {}
+}
+abstract class OrdinaryMembers {
+  x = 1
+  abstract property: number
+  y = 1
+  abstract method(): void
+}
+class OrdinaryDecoratedMembers {
+  x = 1
+  @dec property
+  y = 1
+  @dec method() {}
+}
+
+---------------------------------------------------------
+{ printWidth: 100, quoteProps: "as-needed", semi: false }
+---------------------------------------------------------
+// DIVERGENCES.md#modified-keyword-class-field-boundary
+abstract class AbstractProperties {
+  x = 1
+  abstract in: number
+  y = 1
+  abstract instanceof: number
+}
+abstract class AbstractMethods {
+  x = 1
+  abstract in(): void
+  y = 1
+  abstract instanceof(): void
+}
+class DecoratedMembers {
+  x = 1
+  @dec in
+  y = 1
+  @dec instanceof() {}
+}
+abstract class OrdinaryMembers {
+  x = 1
+  abstract property: number
+  y = 1
+  abstract method(): void
+}
+class OrdinaryDecoratedMembers {
+  x = 1
+  @dec property
+  y = 1
+  @dec method() {}
+}
+
+-------------------------------------------------------
+{ printWidth: 80, quoteProps: "preserve", semi: false }
+-------------------------------------------------------
+// DIVERGENCES.md#modified-keyword-class-field-boundary
+abstract class AbstractProperties {
+  x = 1
+  abstract in: number
+  y = 1
+  abstract instanceof: number
+}
+abstract class AbstractMethods {
+  x = 1
+  abstract in(): void
+  y = 1
+  abstract instanceof(): void
+}
+class DecoratedMembers {
+  x = 1
+  @dec in
+  y = 1
+  @dec instanceof() {}
+}
+abstract class OrdinaryMembers {
+  x = 1
+  abstract property: number
+  y = 1
+  abstract method(): void
+}
+class OrdinaryDecoratedMembers {
+  x = 1
+  @dec property
+  y = 1
+  @dec method() {}
+}
+
+--------------------------------------------------------
+{ printWidth: 100, quoteProps: "preserve", semi: false }
+--------------------------------------------------------
+// DIVERGENCES.md#modified-keyword-class-field-boundary
+abstract class AbstractProperties {
+  x = 1
+  abstract in: number
+  y = 1
+  abstract instanceof: number
+}
+abstract class AbstractMethods {
+  x = 1
+  abstract in(): void
+  y = 1
+  abstract instanceof(): void
+}
+class DecoratedMembers {
+  x = 1
+  @dec in
+  y = 1
+  @dec instanceof() {}
+}
+abstract class OrdinaryMembers {
+  x = 1
+  abstract property: number
+  y = 1
+  abstract method(): void
+}
+class OrdinaryDecoratedMembers {
+  x = 1
+  @dec property
+  y = 1
+  @dec method() {}
+}
+
+---------------------------------------------------------
+{ printWidth: 80, quoteProps: "consistent", semi: false }
+---------------------------------------------------------
+// DIVERGENCES.md#modified-keyword-class-field-boundary
+abstract class AbstractProperties {
+  x = 1
+  abstract in: number
+  y = 1
+  abstract instanceof: number
+}
+abstract class AbstractMethods {
+  x = 1
+  abstract in(): void
+  y = 1
+  abstract instanceof(): void
+}
+class DecoratedMembers {
+  x = 1
+  @dec in
+  y = 1
+  @dec instanceof() {}
+}
+abstract class OrdinaryMembers {
+  x = 1
+  abstract property: number
+  y = 1
+  abstract method(): void
+}
+class OrdinaryDecoratedMembers {
+  x = 1
+  @dec property
+  y = 1
+  @dec method() {}
+}
+
+----------------------------------------------------------
+{ printWidth: 100, quoteProps: "consistent", semi: false }
+----------------------------------------------------------
+// DIVERGENCES.md#modified-keyword-class-field-boundary
+abstract class AbstractProperties {
+  x = 1
+  abstract in: number
+  y = 1
+  abstract instanceof: number
+}
+abstract class AbstractMethods {
+  x = 1
+  abstract in(): void
+  y = 1
+  abstract instanceof(): void
+}
+class DecoratedMembers {
+  x = 1
+  @dec in
+  y = 1
+  @dec instanceof() {}
+}
+abstract class OrdinaryMembers {
+  x = 1
+  abstract property: number
+  y = 1
+  abstract method(): void
+}
+class OrdinaryDecoratedMembers {
+  x = 1
+  @dec property
+  y = 1
+  @dec method() {}
+}
+
+===================== End =====================

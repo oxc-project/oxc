@@ -1,0 +1,185 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#quoted-keyword-class-field-boundary
+class QuotedKeys {
+  x = 1;
+  "in";
+  y = 1;
+  "instanceof"() {}
+}
+class ConsistentKeys {
+  "not-an-identifier";
+  x = 1;
+  "in";
+  y = 1;
+  "instanceof"() {}
+}
+class ConsistentIdentifiers {
+  "not-an-identifier";
+  x = 1;
+  in;
+  y = 1;
+  instanceof() {}
+}
+
+==================== Output ====================
+--------------------------------------------------------
+{ printWidth: 80, quoteProps: "as-needed", semi: false }
+--------------------------------------------------------
+// DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#quoted-keyword-class-field-boundary
+class QuotedKeys {
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+class ConsistentKeys {
+  "not-an-identifier"
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+class ConsistentIdentifiers {
+  "not-an-identifier"
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+
+---------------------------------------------------------
+{ printWidth: 100, quoteProps: "as-needed", semi: false }
+---------------------------------------------------------
+// DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#quoted-keyword-class-field-boundary
+class QuotedKeys {
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+class ConsistentKeys {
+  "not-an-identifier"
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+class ConsistentIdentifiers {
+  "not-an-identifier"
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+
+-------------------------------------------------------
+{ printWidth: 80, quoteProps: "preserve", semi: false }
+-------------------------------------------------------
+// DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#quoted-keyword-class-field-boundary
+class QuotedKeys {
+  x = 1
+  "in"
+  y = 1
+  "instanceof"() {}
+}
+class ConsistentKeys {
+  "not-an-identifier"
+  x = 1
+  "in"
+  y = 1
+  "instanceof"() {}
+}
+class ConsistentIdentifiers {
+  "not-an-identifier"
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+
+--------------------------------------------------------
+{ printWidth: 100, quoteProps: "preserve", semi: false }
+--------------------------------------------------------
+// DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#quoted-keyword-class-field-boundary
+class QuotedKeys {
+  x = 1
+  "in"
+  y = 1
+  "instanceof"() {}
+}
+class ConsistentKeys {
+  "not-an-identifier"
+  x = 1
+  "in"
+  y = 1
+  "instanceof"() {}
+}
+class ConsistentIdentifiers {
+  "not-an-identifier"
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+
+---------------------------------------------------------
+{ printWidth: 80, quoteProps: "consistent", semi: false }
+---------------------------------------------------------
+// DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#quoted-keyword-class-field-boundary
+class QuotedKeys {
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+class ConsistentKeys {
+  "not-an-identifier"
+  "x" = 1
+  "in"
+  "y" = 1
+  "instanceof"() {}
+}
+class ConsistentIdentifiers {
+  "not-an-identifier"
+  "x" = 1
+  "in"
+  "y" = 1
+  "instanceof"() {}
+}
+
+----------------------------------------------------------
+{ printWidth: 100, quoteProps: "consistent", semi: false }
+----------------------------------------------------------
+// DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#quoted-keyword-class-field-boundary
+class QuotedKeys {
+  x = 1;
+  in
+  y = 1;
+  instanceof() {}
+}
+class ConsistentKeys {
+  "not-an-identifier"
+  "x" = 1
+  "in"
+  "y" = 1
+  "instanceof"() {}
+}
+class ConsistentIdentifiers {
+  "not-an-identifier"
+  "x" = 1
+  "in"
+  "y" = 1
+  "instanceof"() {}
+}
+
+===================== End =====================

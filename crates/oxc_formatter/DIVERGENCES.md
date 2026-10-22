@@ -974,3 +974,114 @@ When every right side of a logical chain is an inlined object/array/JSX literal,
 Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
 A chain with a non-inlined right side breaks at the operators and keeps the indent.
 Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.
+
+## binary-keyword-class-field-boundary
+
+- Why: semantics
+- Pin: `tests/fixtures/js/semicolons/binary-keyword-class-fields.js`
+
+Keep a semicolon after an initialized field when the next member prints with
+`in` or `instanceof` as its first token. Prettier 3.9.10 drops the separator with
+`semi: false`, making the key continue the initializer as a binary operator.
+`node --check` accepts the input and rejects that output.
+
+```js
+// input / ours
+class C {
+  x = 1;
+  in
+}
+
+// prettier (semi: false)
+class C {
+  x = 1
+  in
+}
+```
+
+## modified-keyword-class-field-boundary
+
+- Why: uniform-rule (same construct, same output: initialized fields before modified class members)
+- Pin: `tests/fixtures/js/semicolons/keyword-quotes/modified-typescript.ts`
+
+With `semi: false`, omit the separator before decorated, abstract, or async members even
+when their key is `in` or `instanceof`. Their modifier already separates the key
+from the preceding initializer. This follows the same rule as decorated or
+abstract/async members with ordinary names. Prettier 3.9.10 keeps an unnecessary
+semicolon only for the operator-keyword names.
+
+```ts
+// input
+abstract class C { x = 1; abstract in: number; }
+
+// ours (semi: false)
+abstract class C {
+  x = 1
+  abstract in: number
+}
+
+// prettier (semi: false)
+abstract class C {
+  x = 1;
+  abstract in: number
+}
+```
+
+## quoted-keyword-class-field-boundary
+
+- Why: uniform-rule (same construct, same output: initialized fields before quoted property keys)
+- Pin: `tests/fixtures/js/semicolons/keyword-quotes/quoted.js`
+
+With `semi: false`, omit the separator when consistent quoting renders an
+identifier key as `"in"` or `"instanceof"`. This follows the same rule as a
+source string-literal key rendered with those quotes. Prettier 3.9.10 retains
+an unnecessary semicolon when the quoted output originated as an identifier.
+
+```js
+// input
+class C { "not-valid"; x = 1; in; }
+
+// ours (semi: false, quoteProps: "consistent")
+class C {
+  "not-valid"
+  "x" = 1
+  "in"
+}
+
+// prettier (same options)
+class C {
+  "not-valid"
+  "x" = 1;
+  "in"
+}
+```
+
+## trailing-member-suppression-before-semicolon
+
+- Why: invariant
+- Pin: `tests/fixtures/js/semicolons/keyword-quotes/suppressed.js`
+
+Preserve a class member's content when a trailing ignore comment precedes its
+semicolon on a later line. This is the same trailing suppression target defined
+in AGENTS.md. Prettier 3.9.10 formats the content despite its suppression comment.
+
+```js
+// input (semi: false, quoteProps: "consistent")
+class C {
+  "not-valid";
+  in // prettier-ignore
+  ;
+}
+
+// ours
+class C {
+  "not-valid"
+  in // prettier-ignore
+}
+
+// prettier
+class C {
+  "not-valid";
+  "in" // prettier-ignore
+}
+```
