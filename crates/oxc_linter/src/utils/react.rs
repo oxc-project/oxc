@@ -82,6 +82,16 @@ pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXA
     item.as_attribute().and_then(|item| item.value.as_ref())
 }
 
+/// Checks for a JSX attribute expression containing direct `null` or syntactic `undefined`.
+pub fn is_nullish_jsx_attribute_value(value: &JSXAttributeValue<'_>) -> bool {
+    matches!(
+        value,
+        JSXAttributeValue::ExpressionContainer(container)
+            if matches!(container.expression, JSXExpression::NullLiteral(_))
+                || container.expression.is_undefined()
+    )
+}
+
 pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
     match attr {
         JSXAttributeName::NamespacedName(name) => {
