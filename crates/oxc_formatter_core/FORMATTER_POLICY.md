@@ -62,6 +62,8 @@ Rules:
 
 - Every divergence has an entry in the owning layer's `DIVERGENCES.md` and a pin fixture
   - The owning layer decides the behavior: a language crate for single-language behavior, `apps/oxfmt` for embedding
+    - A behavior core decides for every language (see "Text width") is a rule in this document, not an entry;
+      each language crate where it shows pins it as an entry citing that section
   - The pin is a minimal fixture in the owner's `tests/fixtures/`, distilled from whatever exposed the divergence; a conformance file is never the pin, it stays a regression net
   - The fixture points back at its entry: it is named after the slug, or carries a one-line `DIVERGENCES.md#<slug>` marker
     (a fixture pinning several entries, or a language where a comment is content); the why and the deviating lines live in the entry
@@ -111,6 +113,17 @@ The invariants (placement only; losing a comment is the lossless contract under 
     - The line-boundary invariant still gates the move: never across a re-printed paren that ends up on its own line
 
 Per-language translations (which tokens are terminators, the compat tables, cursor bounds disciplines) live in each crate's AGENTS.md.
+
+## Text width
+
+Printed text is measured by its display width (`TextWidth` / `text_width`, via `unicode-width`):
+
+- East Asian wide and fullwidth characters, and emoji presentation sequences count as 2
+- Zero-width characters count as 0: nonspacing and enclosing marks (`Mn` / `Me`), and format characters (`U+200B..U+200F`, `U+FEFF`, ...)
+- Everything else counts as 1, ambiguous width included
+
+This holds for the printer's line width and for the width heuristics a language crate measures printed text with (e.g. a short object key).
+A heuristic Prettier defines by a JS `.length` keeps that measure (e.g. JSDoc wrapping in `oxc_formatter`).
 
 ## Error semantics
 

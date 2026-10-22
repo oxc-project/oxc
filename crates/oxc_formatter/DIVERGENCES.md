@@ -987,3 +987,33 @@ When every right side of a logical chain is an inlined object/array/JSX literal,
 Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
 A chain with a non-inlined right side breaks at the operators and keeps the indent.
 Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.
+
+## text-display-width
+
+- Why: uniform-rule (text width is the display width; oxc#23863, prettier/prettier#19538)
+- Pin: `tests/fixtures/js/unicode/text-display-width.js`
+
+```js
+// input (printWidth 80)
+export default moment.defineLocale("bo", {
+  monthsShort: "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+
+// ours
+export default moment.defineLocale("bo", {
+  monthsShort: "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+
+// prettier
+export default moment.defineLocale("bo", {
+  monthsShort:
+    "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+```
+
+Zero-width characters count as 0 toward the print width (FORMATTER_POLICY.md "Text width"), so the line above fits.
+Prettier counts the Tibetan subjoined letter `ླ` (`U+0FB3`, a nonspacing mark) as 1 and breaks.
+Fixed in Prettier `main` by prettier/prettier#19538, which we follow.
+
+Format characters (`U+200B..U+200F`, `U+FEFF`) are 1 on Prettier `main` too,
+so a string padded with NBSP / ZWNJ pairs, as in an email preview, breaks in Prettier and stays on one line in ours.
