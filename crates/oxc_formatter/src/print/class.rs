@@ -610,7 +610,8 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
             };
             if key.is_some_and(|key| match key {
                 PropertyKey::StaticIdentifier(id) => {
-                    matches!(id.name.as_str(), "in" | "instanceof")
+                    !(f.options().quote_properties.is_consistent() && f.context().is_quote_needed())
+                        && matches!(id.name.as_str(), "in" | "instanceof")
                 }
                 PropertyKey::StringLiteral(literal) => {
                     // TypeScript property definitions keep their quotes regardless of quoteProps.
