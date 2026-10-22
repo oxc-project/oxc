@@ -36,7 +36,7 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_statement_with(stmt, |stmt, ctx| {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                     let IfStatement { test, span, .. } = if_stmt.unbox();
-                    let (op, a) = if Self::is_unary_not(&test) {
+                    let (op, a) = if Self::has_negated_result(&test) {
                         // `if (!a); else b();` => `a && b();`
                         (LogicalOperator::And, Self::minimize_not(span, test, ctx, true))
                     } else {
@@ -97,7 +97,7 @@ impl<'a> PeepholeOptimizations {
                 let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                 let IfStatement { test, consequent, span, .. } = if_stmt.unbox();
                 let Statement::ExpressionStatement(b) = consequent else { unreachable!() };
-                let (op, a) = if Self::is_unary_not(&test) {
+                let (op, a) = if Self::has_negated_result(&test) {
                     // `if (!a) b();` => `a || b();`
                     (LogicalOperator::Or, Self::minimize_not(span, test, ctx, true))
                 } else {
