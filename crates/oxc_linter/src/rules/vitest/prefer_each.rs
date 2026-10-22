@@ -194,6 +194,17 @@ fn test() {
             for (const item of ["a", "b"]) {
               test(`handles ${item}`, () => {});
             }"#,
+        // Test functions imported from other runners (Playwright, `node:test`) are not reported.
+        r#"import { test } from "@playwright/test";
+            for (const kind of ["a", "b"]) {
+              test(`x ${kind}`, () => {});
+            }"#,
+        r#"import { describe, it } from "node:test";
+            describe("d", () => {
+              for (const kind of ["a", "b"]) {
+                it(`x ${kind}`, () => {});
+              }
+            });"#,
     ];
 
     let fail_vitest = vec![
