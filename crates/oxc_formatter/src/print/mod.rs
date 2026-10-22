@@ -38,7 +38,7 @@ mod variable_declaration;
 pub use arrow_function_expression::{
     FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
 };
-pub use binary_like_expression::{BinaryLikeExpression, should_flatten};
+pub use binary_like_expression::{BinaryLikeExpression, BinaryLikeOperator, should_flatten};
 pub use fragment::{FormatFunctionParams, FormatTypeParameters};
 pub use semicolon::write_comments_before_closing_paren;
 pub use template::embed_hug;

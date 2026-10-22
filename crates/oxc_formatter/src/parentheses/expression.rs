@@ -6,7 +6,7 @@ use oxc_span::GetSpan;
 use crate::{
     ast_nodes::{AstNode, AstNodes},
     formatter::{JsFormatter, JsFormatterExt as _},
-    print::{BinaryLikeExpression, should_flatten, unary_argument_takes_comment_parens},
+    print::{BinaryLikeOperator, should_flatten, unary_argument_takes_comment_parens},
     utils::{expression::ExpressionLeftSide, typecast::is_cast_target},
 };
 
@@ -393,11 +393,11 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, BinaryExpression<'_>> {
 
         // For `in` expressions in ForStatement: wrap to avoid ambiguity
         // e.g., `for (var a = (b in c);;)`
-        if self.operator.is_in() && is_in_for_initializer(self) {
+        if self.operator.is_in() && is_in_for_initializer(self.span, parent) {
             return true;
         }
 
-        binary_like_needs_parens(BinaryLikeExpression::BinaryExpression(self), f)
+        binary_like_needs_parens(self.span, self.operator.into(), parent, f)
     }
 }
 
@@ -407,10 +407,8 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, BinaryExpression<'_>> {
 /// separately at the VariableDeclarator level (see `is_for_in_statement_init`).
 ///
 /// <https://github.com/prettier/prettier/issues/907#issuecomment-284304321>
-fn is_in_for_initializer(expr: &AstNode<'_, '_, BinaryExpression<'_>>) -> bool {
-    let ancestors = expr.ancestors();
-
-    for parent in ancestors {
+fn is_in_for_initializer(span: Span, parent: &AstNodes<'_, '_>) -> bool {
+    for parent in parent.ancestors() {
         match parent {
             AstNodes::ExpressionStatement(stmt) => {
                 // Block body: `() => { expr; }` or `function() { expr; }` - continue checking
@@ -422,10 +420,7 @@ fn is_in_for_initializer(expr: &AstNode<'_, '_, BinaryExpression<'_>>) -> bool {
                 return false;
             }
             AstNodes::ForStatement(stmt) => {
-                return stmt
-                    .init
-                    .as_ref()
-                    .is_some_and(|init| init.span().contains_inclusive(expr.span));
+                return stmt.init.as_ref().is_some_and(|init| init.span().contains_inclusive(span));
             }
             // ForInStatement is handled at VariableDeclarator level, not here
             AstNodes::ForInStatement(_) | AstNodes::Program(_) => return false,
@@ -464,8 +459,10 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, PrivateInExpression<'_>> {
             return false;
         }
 
-        is_class_extends(self.span, self.parent())
-            || matches!(self.parent(), AstNodes::UnaryExpression(_))
+        // Same rules as a binary `in` expression
+        let parent = self.parent();
+        is_in_for_initializer(self.span, parent)
+            || binary_like_needs_parens(self.span, BinaryOperator::In.into(), parent, f)
     }
 }
 
@@ -490,7 +487,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, LogicalExpression<'_>> {
         {
             true
         } else {
-            binary_like_needs_parens(BinaryLikeExpression::LogicalExpression(self), f)
+            binary_like_needs_parens(self.span, self.operator.into(), parent, f)
         }
     }
 }
@@ -513,6 +510,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, ConditionalExpression<'_>> {
                 | AstNodes::JSXSpreadAttribute(_)
                 | AstNodes::LogicalExpression(_)
                 | AstNodes::BinaryExpression(_)
+                | AstNodes::PrivateInExpression(_)
         ) {
             return true;
         }
@@ -747,6 +745,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, ArrowFunctionExpression<'_>> {
                 | AstNodes::AwaitExpression(_)
                 | AstNodes::LogicalExpression(_)
                 | AstNodes::BinaryExpression(_)
+                | AstNodes::PrivateInExpression(_)
         ) {
             return true;
         }
@@ -963,10 +962,12 @@ fn is_followed_by_comparison_or_sign(
 }
 
 fn binary_like_needs_parens(
-    binary_like: BinaryLikeExpression<'_, '_>,
+    span: Span,
+    operator: BinaryLikeOperator,
+    parent: &AstNodes<'_, '_>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
-    let parent = match binary_like.parent() {
+    let (parent_operator, parent_right): (BinaryLikeOperator, Span) = match parent {
         // NOTE: The unary adds the parentheses itself when comments are involved.
         // Deliberately binary-like-only: Prettier keeps the inner parentheses for every other argument type (`!((x, y) /* c */)`)
         // (Seems a leftover of prettier#18397's narrow scope, not a principle.)
@@ -986,22 +987,23 @@ fn binary_like_needs_parens(
         | AstNodes::StaticMemberExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
         AstNodes::ComputedMemberExpression(computed) => {
-            return computed.object.span() == binary_like.span();
+            return computed.object.span() == span;
         }
         AstNodes::Class(class) => {
             return class.heritage().is_some_and(|heritage| {
                 let super_class = heritage.expression();
-                super_class.span().contains_inclusive(binary_like.span())
+                super_class.span().contains_inclusive(span)
             });
         }
-        AstNodes::BinaryExpression(binary) => BinaryLikeExpression::BinaryExpression(binary),
-        AstNodes::LogicalExpression(logical) => BinaryLikeExpression::LogicalExpression(logical),
-        parent if parent.is_call_like_callee_span(binary_like.span()) => return true,
+        AstNodes::BinaryExpression(binary) => (binary.operator.into(), binary.right.span()),
+        AstNodes::LogicalExpression(logical) => (logical.operator.into(), logical.right.span()),
+        AstNodes::PrivateInExpression(private_in) => {
+            (BinaryOperator::In.into(), private_in.right.span())
+        }
+        parent if parent.is_call_like_callee_span(span) => return true,
         _ => return false,
     };
 
-    let parent_operator = parent.operator();
-    let operator = binary_like.operator();
     let parent_precedence = parent_operator.precedence();
     let precedence = operator.precedence();
 
@@ -1011,7 +1013,7 @@ fn binary_like_needs_parens(
         return true;
     }
 
-    let is_right = parent.right().span() == binary_like.span();
+    let is_right = parent_right == span;
 
     // `a ** b ** c`
     if is_right && parent_precedence == precedence {
@@ -1187,6 +1189,7 @@ fn ts_as_or_satisfies_needs_parens(span: Span, parent: &AstNodes<'_, '_>) -> boo
         AstNodes::ConditionalExpression(_)
             | AstNodes::LogicalExpression(_)
             | AstNodes::BinaryExpression(_)
+            | AstNodes::PrivateInExpression(_)
     ) || type_cast_like_needs_parens(span, parent)
 }
 
