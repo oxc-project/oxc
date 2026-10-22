@@ -74,6 +74,11 @@ fn test_export_assignment_type_only_siblings() {
     for source in [
         "interface Options {}; export { Options }; const route = {}; export = route;",
         "interface Options {} export default Options; const route = {}; export = route;",
+        "namespace Route { export interface P {} export const x = 1; } export interface O {} export = (Route);",
+        "namespace Route { export interface P {} export const x = 1; } export interface O {} export = Route!;",
+        "namespace Route { export interface P {} export const x = 1; } export interface O {} export = Route as unknown;",
+        "namespace Route { export interface P {} export const x = 1; } export interface O {} export = Route satisfies unknown;",
+        "namespace A { export namespace Route { export interface P {} export const x = 1; } } export interface O {} export = (A).Route;",
         "namespace Route { export interface P {} } interface O {} export { O }; export = Route;",
         "namespace Route { export interface P {} } interface O {} export default O; export = Route;",
         "namespace Route { export interface P {} } interface O {} export type { O }; export = Route;",
@@ -94,6 +99,7 @@ fn test_export_assignment_type_only_siblings() {
     for source in [
         "namespace Route { export interface Params {} } export interface Options {} export = Route;",
         "export namespace Types { export const x = 1; } const route = {}; export = route;",
+        "namespace A { export namespace B { export interface P {} export const x = 1; } } export interface O {} export = A?.B;",
         "declare namespace Route { interface P {} } export interface O {} export = Route;",
         "namespace Route { export interface P {} export const x = 1; } import Alias = Route; export interface O {} export = Alias;",
         "namespace C { export interface P {} } namespace A { export import B = C; } export interface O {} export = A.B;",

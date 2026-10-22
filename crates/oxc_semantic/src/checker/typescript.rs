@@ -617,13 +617,23 @@ impl<'s, 'ctx, 'a> ExportAssignmentResolver<'s, 'ctx, 'a> {
     }
 
     fn target_exports_types(&self, expression: &Expression<'a>, scope: ScopeId) -> bool {
-        let mut target = expression.get_inner_expression();
+        // Only direct entity-name expressions bind the assignment as an alias.
+        // Wrappers bind a property instead, so they do not shadow the target's namespace.
+        let mut target = expression;
         let mut members = vec![];
-        while let Expression::StaticMemberExpression(member) = target {
+        loop {
+            let member = match target {
+                Expression::StaticMemberExpression(member) => member,
+                Expression::ChainExpression(chain) => match &chain.expression {
+                    ChainElement::StaticMemberExpression(member) => member,
+                    _ => return false,
+                },
+                _ => break,
+            };
             members.push(member.property.name);
-            target = member.object.get_inner_expression();
+            target = &member.object;
         }
-        let Some(id) = target.get_identifier_reference() else { return false };
+        let Expression::Identifier(id) = target else { return false };
         let Some(symbol) = self.ctx.scoping.find_binding(scope, id.name) else { return false };
         self.resolve_path(symbol, &members, &mut vec![]).iter().any(|target| {
             self.namespaces.iter().any(|(namespace, ambient)| {
