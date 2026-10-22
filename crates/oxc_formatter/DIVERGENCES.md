@@ -975,3 +975,27 @@ When every right side of a logical chain is an inlined object/array/JSX literal,
 Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
 A chain with a non-inlined right side breaks at the operators and keeps the indent.
 Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.
+
+## binary-keyword-class-field-boundary
+
+- Why: semantics
+- Pin: `tests/fixtures/js/semicolons/binary-keyword-class-fields.js`
+
+Keep a semicolon after an initialized field when the next member prints with
+`in` or `instanceof` as its first token. Prettier 3.9.10 drops the separator with
+`semi: false`, making the key continue the initializer as a binary operator.
+`node --check` accepts the input and rejects that output.
+
+```js
+// input / ours
+class C {
+  x = 1;
+  in
+}
+
+// prettier (semi: false)
+class C {
+  x = 1
+  in
+}
+```

@@ -571,6 +571,45 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 
         let Some(next_element) = next_element else { return false };
 
+        // An unquoted `in` or `instanceof` key would continue the preceding initializer as
+        // a binary expression. Identifier escapes and removable quotes do not survive printing.
+        let has_initializer = match element.as_ref() {
+            ClassElement::PropertyDefinition(def) => def.value.is_some(),
+            ClassElement::AccessorProperty(def) => def.value.is_some(),
+            _ => false,
+        };
+        if has_initializer {
+            let key = match next_element.as_ref() {
+                ClassElement::PropertyDefinition(def)
+                    if !(def.computed
+                        || def.accessibility.is_some()
+                        || def.r#static
+                        || def.declare
+                        || def.r#override
+                        || def.readonly) =>
+                {
+                    Some(&def.key)
+                }
+                ClassElement::MethodDefinition(def)
+                    if !(def.computed
+                        || def.r#static
+                        || def.accessibility.is_some()
+                        || def.r#override
+                        || def.kind.is_accessor()
+                        || def.value.r#async
+                        || def.value.generator) =>
+                {
+                    Some(&def.key)
+                }
+                _ => None,
+            };
+            if key.is_some_and(|key| {
+                key.is_specific_static_name("in") || key.is_specific_static_name("instanceof")
+            }) {
+                return true;
+            }
+        }
+
         match next_element.as_ref() {
             // When the name starts with the generator token or `[`
             ClassElement::MethodDefinition(def) if !def.value.r#async => {
