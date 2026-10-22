@@ -2,7 +2,7 @@ commit: 5237fd46
 
 semantic_typescript Summary:
 AST Parsed     : 5721/5721 (100.00%)
-Positive Passed: 4160/5721 (72.71%)
+Positive Passed: 4161/5721 (72.73%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -8099,9 +8099,6 @@ Expected a semicolon or an implicit semicolon after a statement, but found none
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributesDeclarationEmit.ts
 Expected a semicolon or an implicit semicolon after a statement, but found none
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importDeclWithExportModifierAndExportAssignmentInAmbientContext.ts
-An export assignment cannot be used in a module with other exported elements
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importElisionExportNonExportAndDefault.ts
 Bindings mismatch:

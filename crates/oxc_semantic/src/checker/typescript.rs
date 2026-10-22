@@ -7,7 +7,10 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSStr, Str};
-use oxc_syntax::{scope::ScopeId, symbol::SymbolFlags};
+use oxc_syntax::{
+    scope::ScopeId,
+    symbol::{SymbolFlags, SymbolId},
+};
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
@@ -340,9 +343,21 @@ fn check_ts_export_assignment_in_statements<'a>(
     scope_id: ScopeId,
     ctx: &SemanticBuilder<'a>,
 ) {
+    if !statements.iter().any(|stmt| matches!(stmt, Statement::TSExportAssignment(_))) {
+        return;
+    }
+    let body = ctx
+        .ancestry()
+        .ancestor_kinds()
+        .find_map(|kind| match kind {
+            AstKind::Program(program) => Some(program.body.as_slice()),
+            _ => None,
+        })
+        .unwrap_or(statements);
+    let resolver = ExportAssignmentResolver::new(body, ctx);
     let mut export_assignments = vec![];
     let mut has_other_exports = false;
-    let mut has_any_exports = false;
+    let mut has_non_alias_exports = false;
 
     for stmt in statements {
         match stmt {
@@ -351,22 +366,19 @@ fn check_ts_export_assignment_in_statements<'a>(
             }
             Statement::ExportNamedDeclaration(export_decl) => {
                 // An unmodified specifier may still name an exclusively type-space symbol.
-                has_any_exports |= !export_decl.specifiers.is_empty();
                 has_other_exports |= export_decl.export_kind.is_value()
                     && export_decl.specifiers.iter().any(|specifier| {
                         specifier.export_kind.is_value()
                             && match &specifier.local {
-                                ModuleExportName::IdentifierReference(id) => {
-                                    ctx.scoping.find_binding(scope_id, id.name).is_none_or(
-                                        |symbol| ctx.scoping.symbol_flags(symbol).is_value(),
-                                    )
-                                }
+                                ModuleExportName::IdentifierReference(id) => ctx
+                                    .scoping
+                                    .find_binding(scope_id, id.name)
+                                    .is_none_or(|symbol| resolver.symbol_flags(symbol).is_value()),
                                 _ => true,
                             }
                     });
             }
             Statement::ExportFromDeclaration(export_decl) => {
-                has_any_exports |= !export_decl.specifiers.is_empty();
                 // Preserve the existing treatment of `export {} from "mod"`.
                 has_other_exports |= export_decl.export_kind.is_value()
                     && export_decl
@@ -375,28 +387,34 @@ fn check_ts_export_assignment_in_statements<'a>(
                         .any(|specifier| specifier.export_kind.is_value());
             }
             Statement::ExportDeclaration(export_decl) => {
-                has_any_exports = true;
+                // Aliases do not augment the namespace associated with `export =`.
+                has_non_alias_exports |=
+                    !matches!(export_decl.declaration, Declaration::TSImportEqualsDeclaration(_));
                 has_other_exports |= match &export_decl.declaration {
                     Declaration::TSTypeAliasDeclaration(_)
                     | Declaration::TSInterfaceDeclaration(_) => false,
                     Declaration::TSNamespaceDeclaration(namespace) => {
-                        ctx.scoping.symbol_flags(namespace.id.symbol_id.get().unwrap()).is_value()
+                        resolver.symbol_flags(namespace.id.symbol_id.get().unwrap()).is_value()
+                    }
+                    Declaration::TSImportEqualsDeclaration(alias) => {
+                        alias.import_kind.is_value()
+                            && resolver.symbol_flags(alias.id.symbol_id.get().unwrap()).is_value()
                     }
                     _ => true,
                 };
             }
             Statement::ExportAllDeclaration(export_decl) => {
-                has_any_exports = true;
                 has_other_exports |= export_decl.export_kind.is_value();
             }
             Statement::ExportDefaultDeclaration(export_decl) => {
-                has_any_exports = true;
+                has_non_alias_exports |=
+                    !matches!(export_decl.declaration, ExportDefaultDeclarationKind::Identifier(_));
                 has_other_exports |= match &export_decl.declaration {
                     ExportDefaultDeclarationKind::TSInterfaceDeclaration(_) => false,
                     ExportDefaultDeclarationKind::Identifier(id) => ctx
                         .scoping
                         .find_binding(scope_id, id.name)
-                        .is_none_or(|symbol| ctx.scoping.symbol_flags(symbol).is_value()),
+                        .is_none_or(|symbol| resolver.symbol_flags(symbol).is_value()),
                     _ => true,
                 };
             }
@@ -406,8 +424,8 @@ fn check_ts_export_assignment_in_statements<'a>(
 
     for assignment in export_assignments {
         if has_other_exports
-            || (has_any_exports
-                && export_assignment_shadows_namespace(assignment, statements, scope_id, ctx))
+            || (has_non_alias_exports
+                && resolver.target_exports_types(&assignment.expression, scope_id))
         {
             ctx.error(diagnostics::ts_export_assignment_cannot_be_used_with_other_exports(
                 assignment.span,
@@ -416,146 +434,240 @@ fn check_ts_export_assignment_in_statements<'a>(
     }
 }
 
-/// Type-only siblings still conflict when the assigned namespace exports types or namespaces.
-fn export_assignment_shadows_namespace<'a>(
-    assignment: &TSExportAssignment<'a>,
-    statements: &[Statement<'a>],
-    scope_id: ScopeId,
-    ctx: &SemanticBuilder<'a>,
-) -> bool {
-    let mut target = assignment.expression.get_inner_expression();
-    let mut members = vec![];
-    while let Expression::StaticMemberExpression(member) = target {
-        members.push(member.property.name);
-        target = member.object.get_inner_expression();
+/// Resolve local namespaces and import-equals aliases without depending on the optional node store.
+struct ExportAssignmentResolver<'s, 'ctx, 'a> {
+    namespaces: Vec<(&'s TSNamespaceDeclaration<'a>, bool)>,
+    aliases: Vec<&'s TSImportEqualsDeclaration<'a>>,
+    ctx: &'ctx SemanticBuilder<'a>,
+}
+
+impl<'s, 'ctx, 'a> ExportAssignmentResolver<'s, 'ctx, 'a> {
+    fn new(statements: &'s [Statement<'a>], ctx: &'ctx SemanticBuilder<'a>) -> Self {
+        let mut resolver = Self { namespaces: vec![], aliases: vec![], ctx };
+        resolver.collect(statements, ctx.source_type.is_typescript_definition());
+        resolver
     }
-    let Some(id) = target.get_identifier_reference() else { return false };
-    let Some(mut symbol) = ctx.scoping.find_binding(scope_id, id.name) else { return false };
-    let mut visited = vec![];
-    while ctx.scoping.symbol_flags(symbol).is_import() {
-        if visited.contains(&symbol) {
-            return false;
-        }
-        visited.push(symbol);
-        let mut alias_target = |statement: &Statement<'a>| {
-            let alias = match statement {
-                Statement::TSImportEqualsDeclaration(alias) => alias.as_ref(),
+
+    fn collect(&mut self, statements: &'s [Statement<'a>], ambient: bool) {
+        for statement in statements {
+            match statement {
+                Statement::TSNamespaceDeclaration(namespace) => {
+                    self.collect_namespace(namespace, ambient);
+                }
+                Statement::TSImportEqualsDeclaration(alias) => self.aliases.push(alias),
                 Statement::ExportDeclaration(export) => match &export.declaration {
-                    Declaration::TSImportEqualsDeclaration(alias) => alias.as_ref(),
-                    _ => return None,
-                },
-                _ => return None,
-            };
-            if alias.id.symbol_id.get() != Some(symbol) {
-                return None;
-            }
-            match &alias.module_reference {
-                TSModuleReference::IdentifierReference(id) => Some(id.name),
-                TSModuleReference::QualifiedName(qualified) => {
-                    members.push(qualified.right.name);
-                    let mut left = &qualified.left;
-                    while let TSTypeName::QualifiedName(qualified) = left {
-                        members.push(qualified.right.name);
-                        left = &qualified.left;
+                    Declaration::TSNamespaceDeclaration(namespace) => {
+                        self.collect_namespace(namespace, ambient);
                     }
-                    match left {
-                        TSTypeName::IdentifierReference(id) => Some(id.name),
-                        _ => None,
+                    Declaration::TSImportEqualsDeclaration(alias) => self.aliases.push(alias),
+                    Declaration::TSExternalModuleDeclaration(module) => {
+                        if let Some(body) = &module.body {
+                            self.collect(&body.body, ambient || module.declare);
+                        }
+                    }
+                    _ => {}
+                },
+                Statement::TSExternalModuleDeclaration(module) => {
+                    if let Some(body) = &module.body {
+                        self.collect(&body.body, ambient || module.declare);
                     }
                 }
-                TSModuleReference::ExternalModuleReference(_) => None,
+                Statement::TSGlobalDeclaration(global) => {
+                    self.collect(&global.body.body, ambient || global.declare);
+                }
+                _ => {}
             }
-        };
-        let name = statements.iter().find_map(&mut alias_target).or_else(|| {
-            ctx.ancestry().ancestor_kinds().find_map(|ancestor| match ancestor {
-                AstKind::Program(program) => program.body.iter().find_map(&mut alias_target),
-                AstKind::TSModuleBlock(block) => block.body.iter().find_map(&mut alias_target),
-                _ => None,
-            })
-        });
-        let Some(name) = name else { return false };
-        let alias_scope = ctx.scoping.symbol_scope_id(symbol);
-        let Some(target) = ctx.scoping.find_binding(alias_scope, name) else { return false };
-        symbol = target;
+        }
     }
-    let exports_types = |statement: &Statement<'_>| {
-        let namespace = match statement {
-            Statement::TSNamespaceDeclaration(namespace) => namespace.as_ref(),
-            Statement::ExportDeclaration(export) => match &export.declaration {
-                Declaration::TSNamespaceDeclaration(namespace) => namespace.as_ref(),
-                _ => return false,
-            },
-            _ => return false,
+
+    fn collect_namespace(&mut self, namespace: &'s TSNamespaceDeclaration<'a>, ambient: bool) {
+        let ambient = ambient || namespace.declare;
+        self.namespaces.push((namespace, ambient));
+        match &namespace.body {
+            TSNamespaceDeclarationBody::TSNamespaceDeclaration(nested) => {
+                self.collect_namespace(nested, ambient);
+            }
+            TSNamespaceDeclarationBody::TSModuleBlock(block) => self.collect(&block.body, ambient),
+        }
+    }
+
+    fn symbol_flags(&self, symbol: SymbolId) -> SymbolFlags {
+        let flags = self.ctx.scoping.symbol_flags(symbol);
+        if !flags.is_import() {
+            return flags;
+        }
+        let targets = self.resolve_path(symbol, &[], &mut vec![]);
+        if targets.is_empty() {
+            // External imports are outside this syntax checker's local symbol resolution.
+            self.ctx.scoping.symbol_flags(symbol)
+        } else {
+            targets.into_iter().fold(SymbolFlags::empty(), |flags, target| {
+                flags | self.ctx.scoping.symbol_flags(target)
+            })
+        }
+    }
+
+    fn resolve_alias(&self, symbol: SymbolId, visited: &mut Vec<SymbolId>) -> Vec<SymbolId> {
+        let Some(alias) =
+            self.aliases.iter().find(|alias| alias.id.symbol_id.get() == Some(symbol))
+        else {
+            return vec![symbol];
         };
-        namespace.id.symbol_id.get() == Some(symbol)
-            && namespace_target_exports_types(namespace, &members, ctx)
-    };
-    statements.iter().any(&exports_types)
-        || ctx.ancestry().ancestor_kinds().any(|ancestor| match ancestor {
-            AstKind::Program(program) => program.body.iter().any(&exports_types),
-            AstKind::TSModuleBlock(block) => block.body.iter().any(&exports_types),
+        if visited.contains(&symbol) {
+            return vec![];
+        }
+        let mut members = vec![];
+        let name = match &alias.module_reference {
+            TSModuleReference::IdentifierReference(id) => id.name,
+            TSModuleReference::QualifiedName(qualified) => {
+                members.push(qualified.right.name);
+                let mut left = &qualified.left;
+                while let TSTypeName::QualifiedName(qualified) = left {
+                    members.push(qualified.right.name);
+                    left = &qualified.left;
+                }
+                let TSTypeName::IdentifierReference(id) = left else { return vec![] };
+                id.name
+            }
+            TSModuleReference::ExternalModuleReference(_) => return vec![symbol],
+        };
+        let scope = self.ctx.scoping.symbol_scope_id(symbol);
+        let Some(target) = self.ctx.scoping.find_binding(scope, name) else { return vec![] };
+        visited.push(symbol);
+        let targets = self.resolve_path(target, &members, visited);
+        visited.pop();
+        targets
+    }
+
+    /// Members are stored from the last segment to the first, matching expression traversal.
+    fn resolve_path(
+        &self,
+        symbol: SymbolId,
+        members: &[Ident<'a>],
+        visited: &mut Vec<SymbolId>,
+    ) -> Vec<SymbolId> {
+        let roots = self.resolve_alias(symbol, visited);
+        let Some((name, remaining)) = members.split_last() else { return roots };
+        let mut targets = vec![];
+        for root in roots {
+            for (namespace, ambient) in &self.namespaces {
+                if namespace.id.symbol_id.get() != Some(root) {
+                    continue;
+                }
+                if let Some(member) = self.namespace_member(namespace, *name, *ambient) {
+                    targets.extend(self.resolve_path(member, remaining, visited));
+                }
+            }
+        }
+        targets
+    }
+
+    fn namespace_member(
+        &self,
+        namespace: &TSNamespaceDeclaration<'a>,
+        name: Ident<'a>,
+        ambient: bool,
+    ) -> Option<SymbolId> {
+        let scope = namespace.scope_id.get()?;
+        let TSNamespaceDeclarationBody::TSModuleBlock(block) = &namespace.body else {
+            return self.ctx.scoping.get_binding(scope, name);
+        };
+        for statement in &block.body {
+            match statement {
+                Statement::ExportDeclaration(export) => {
+                    if let Some(symbol) = Self::declaration_symbol(&export.declaration, name) {
+                        return Some(symbol);
+                    }
+                }
+                Statement::ExportNamedDeclaration(export) => {
+                    for specifier in &export.specifiers {
+                        if specifier.exported.name() == name.as_str()
+                            && let ModuleExportName::IdentifierReference(id) = &specifier.local
+                        {
+                            return self.ctx.scoping.find_binding(scope, id.name);
+                        }
+                    }
+                }
+                match_declaration!(Statement) if ambient => {
+                    let declaration = statement.to_declaration();
+                    if !matches!(declaration, Declaration::TSImportEqualsDeclaration(_))
+                        && let Some(symbol) = Self::declaration_symbol(declaration, name)
+                    {
+                        return Some(symbol);
+                    }
+                }
+                _ => {}
+            }
+        }
+        None
+    }
+
+    fn declaration_symbol(declaration: &Declaration<'a>, name: Ident<'a>) -> Option<SymbolId> {
+        if let Declaration::VariableDeclaration(variable) = declaration {
+            let mut symbol = None;
+            variable.bound_names(&mut |id| {
+                if id.name == name {
+                    symbol = id.symbol_id.get();
+                }
+            });
+            symbol
+        } else {
+            declaration.id().filter(|id| id.name == name).and_then(|id| id.symbol_id.get())
+        }
+    }
+
+    fn target_exports_types(&self, expression: &Expression<'a>, scope: ScopeId) -> bool {
+        let mut target = expression.get_inner_expression();
+        let mut members = vec![];
+        while let Expression::StaticMemberExpression(member) = target {
+            members.push(member.property.name);
+            target = member.object.get_inner_expression();
+        }
+        let Some(id) = target.get_identifier_reference() else { return false };
+        let Some(symbol) = self.ctx.scoping.find_binding(scope, id.name) else { return false };
+        self.resolve_path(symbol, &members, &mut vec![]).iter().any(|target| {
+            self.namespaces.iter().any(|(namespace, ambient)| {
+                namespace.id.symbol_id.get() == Some(*target)
+                    && self.namespace_exports_types(namespace, *ambient)
+            })
+        })
+    }
+
+    fn namespace_exports_types(
+        &self,
+        namespace: &TSNamespaceDeclaration<'a>,
+        ambient: bool,
+    ) -> bool {
+        let TSNamespaceDeclarationBody::TSModuleBlock(block) = &namespace.body else {
+            return true; // A dotted namespace exports its nested namespace.
+        };
+        block.body.iter().any(|statement| match statement {
+            Statement::ExportDeclaration(export) => export.declaration.id().is_some_and(|id| {
+                self.symbol_flags(id.symbol_id.get().unwrap())
+                    .intersects(SymbolFlags::Type | SymbolFlags::Namespace)
+            }),
+            Statement::ExportNamedDeclaration(export) => {
+                export.specifiers.iter().any(|specifier| match &specifier.local {
+                    ModuleExportName::IdentifierReference(id) => self
+                        .ctx
+                        .scoping
+                        .find_binding(namespace.scope_id.get().unwrap(), id.name)
+                        .is_some_and(|symbol| {
+                            self.symbol_flags(symbol)
+                                .intersects(SymbolFlags::Type | SymbolFlags::Namespace)
+                        }),
+                    _ => false,
+                })
+            }
+            match_declaration!(Statement) if ambient => {
+                let declaration = statement.to_declaration();
+                !matches!(declaration, Declaration::TSImportEqualsDeclaration(_))
+                    && declaration.id().is_some_and(|id| {
+                        self.symbol_flags(id.symbol_id.get().unwrap())
+                            .intersects(SymbolFlags::Type | SymbolFlags::Namespace)
+                    })
+            }
             _ => false,
         })
-}
-
-/// Follow the member path from the assigned namespace, including dotted namespace bodies.
-fn namespace_target_exports_types(
-    namespace: &TSNamespaceDeclaration<'_>,
-    members: &[Ident<'_>],
-    ctx: &SemanticBuilder<'_>,
-) -> bool {
-    let Some((name, remaining)) = members.split_last() else {
-        return namespace_exports_types(namespace, ctx);
-    };
-    let Some(symbol) = ctx.scoping.get_binding(namespace.scope_id.get().unwrap(), *name) else {
-        return false;
-    };
-    let check_namespace = |nested: &TSNamespaceDeclaration<'_>| {
-        nested.id.symbol_id.get() == Some(symbol)
-            && namespace_target_exports_types(nested, remaining, ctx)
-    };
-    match &namespace.body {
-        TSNamespaceDeclarationBody::TSNamespaceDeclaration(nested) => check_namespace(nested),
-        TSNamespaceDeclarationBody::TSModuleBlock(block) => {
-            block.body.iter().any(|statement| match statement {
-                Statement::TSNamespaceDeclaration(nested) => check_namespace(nested),
-                Statement::ExportDeclaration(export) => match &export.declaration {
-                    Declaration::TSNamespaceDeclaration(nested) => check_namespace(nested),
-                    _ => false,
-                },
-                _ => false,
-            })
-        }
     }
-}
-
-fn namespace_exports_types(
-    namespace: &TSNamespaceDeclaration<'_>,
-    ctx: &SemanticBuilder<'_>,
-) -> bool {
-    let TSNamespaceDeclarationBody::TSModuleBlock(block) = &namespace.body else {
-        // A dotted namespace exports its nested namespace.
-        return true;
-    };
-    block.body.iter().any(|stmt| match stmt {
-        Statement::ExportDeclaration(export) => export.declaration.id().is_some_and(|id| {
-            ctx.scoping
-                .symbol_flags(id.symbol_id.get().unwrap())
-                .intersects(SymbolFlags::Type | SymbolFlags::Namespace)
-        }),
-        Statement::ExportNamedDeclaration(export) => {
-            export.specifiers.iter().any(|specifier| match &specifier.local {
-                ModuleExportName::IdentifierReference(id) => ctx
-                    .scoping
-                    .find_binding(namespace.scope_id.get().unwrap(), id.name)
-                    .is_some_and(|symbol| {
-                        ctx.scoping
-                            .symbol_flags(symbol)
-                            .intersects(SymbolFlags::Type | SymbolFlags::Namespace)
-                    }),
-                _ => false,
-            })
-        }
-        _ => false,
-    })
 }
