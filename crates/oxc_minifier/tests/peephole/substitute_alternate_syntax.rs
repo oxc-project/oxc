@@ -2,7 +2,8 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, default_options, test,
-    test_options, test_same, test_same_options, test_same_options_source_type, test_target_same,
+    test_options, test_same, test_same_options, test_same_options_source_type, test_smallest,
+    test_target_same,
 };
 
 #[test]
@@ -1078,6 +1079,14 @@ fn test_rewrite_arguments_copy_loop() {
         "function _() { var r = [...arguments], keep; use(r, keep) }",
     );
     test(
+        "function _() { for (var keep, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+        "function _() { var keep, r = [...arguments]; use(r, keep) }",
+    );
+    test(
+        "function _() { for (var first, second, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, first, second) }",
+        "function _() { var first, second, r = [...arguments]; use(r, first, second) }",
+    );
+    test(
         "function _() { var items = [], t = 0, i, u, r; for (; t < arguments.length; t++) items[t] = arguments[t]; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
         "function _() { var items = [...arguments], i, u, r; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
     );
@@ -1087,6 +1096,12 @@ fn test_rewrite_arguments_copy_loop() {
     );
     test_same(
         "function _() { for (var r = [], a = 0, keep = side(); a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
+    test_same(
+        "function _() { for (var keep = side(), r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
+    test_same(
+        "function _() { for (var keep; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
     );
 }
 
@@ -1165,4 +1180,30 @@ fn test_substitute_yield_expression() {
     test("function* a() { yield* undefined; }", "function* a() { yield* void 0; }");
     test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
     test_same("function* a(undefined) { yield undefined; }");
+}
+
+#[test]
+fn empty_iife_preserves_rest_destructuring() {
+    test_smallest(
+        "var n = 0; (function (...[v = n++]) {})(); console.log(n);",
+        "var n = 0; (function (...[v = n++]) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...[v = n++]) => {})(); console.log(n);",
+        "var n = 0; ((...[v = n++]) => {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; (function (...{0: v = n++}) {})(); console.log(n);",
+        "var n = 0; (function (...{0: v = n++}) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...{0: v = n++}) => {})(); console.log(n);",
+        "var n = 0; ((...{0: v = n++}) => {})(), console.log(n);",
+    );
+    test_same("(function (...[[v]]) {})();");
+    test_same("((...[[v]]) => {})();");
+    test("(function (...args) {})();", "");
+    test("((...args) => {})();", "");
+    test("x = (function (...args) {})();", "x = void 0;");
+    test("x = ((...args) => {})();", "x = void 0;");
 }

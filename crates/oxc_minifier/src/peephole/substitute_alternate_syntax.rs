@@ -855,7 +855,18 @@ impl<'a> PeepholeOptimizations {
 
         let Some(init) = &mut for_stmt.init else { return };
         let ForStatementInit::VariableDeclaration(var_init) = init else { return };
-        let Some(siblings) = var_init.declarations.get(init_decl_len..) else { return };
+        let leading_var_count = if var_init.kind.is_var() {
+            let Some(var_position) =
+                var_init.declarations.iter().position(|decl| decl.init.is_some())
+            else {
+                return;
+            };
+            var_position
+        } else {
+            0
+        };
+        let pattern_end = leading_var_count + init_decl_len;
+        let Some(siblings) = var_init.declarations.get(pattern_end..) else { return };
         // Sibling declarators may be in the source loop or folded into it by `sequences`.
         // Keep uninitialized `var` siblings, but don't move an initializer across the spread.
         if !siblings.is_empty()
@@ -873,7 +884,7 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        let mut idx = 0usize;
+        let mut idx = leading_var_count;
 
         // Check `e = arguments.length`
         if let Some((e_id_name, _)) = e_id_info {
@@ -1012,13 +1023,13 @@ impl<'a> PeepholeOptimizations {
             let new_decl = VariableDeclarator::new(SPAN, r_id_pat, None, Some(arr), false, ctx);
             // Drop only the copy-loop declarators. Siblings remain in the `var` statement.
             // Walk removed declarators so refs inside them reach `PassChanges`.
-            for decl in var_init.declarations.drain(..init_decl_len) {
+            for decl in var_init.declarations.drain(leading_var_count..pattern_end) {
                 ctx.drop_variable_declarator(&decl);
             }
-            var_init.declarations.insert(0, new_decl);
+            var_init.declarations.insert(leading_var_count, new_decl);
         } else {
             // The copied array is unused, but sibling declarations still need to survive.
-            for decl in var_init.declarations.drain(..init_decl_len) {
+            for decl in var_init.declarations.drain(leading_var_count..pattern_end) {
                 ctx.drop_variable_declarator(&decl);
             }
             // Avoid invalid `for (var; 0;)` when no siblings remain.
@@ -1889,12 +1900,20 @@ impl<'a> PeepholeOptimizations {
         let is_empty_iife = match &call_expr.callee {
             Expression::FunctionExpression(f) => {
                 f.params.is_empty()
+                    && f.params
+                        .rest
+                        .as_ref()
+                        .is_none_or(|rest| rest.rest.argument.is_binding_identifier())
                     && f.body.as_ref().is_some_and(|body| body.is_empty())
                     // ignore async/generator if a return value is not used
                     && ((!f.r#async && !f.generator) || Self::is_expression_result_unused(ctx))
             }
             Expression::ArrowFunctionExpression(f) => {
                 f.params.is_empty()
+                    && f.params
+                        .rest
+                        .as_ref()
+                        .is_none_or(|rest| rest.rest.argument.is_binding_identifier())
                     && f.body.is_empty()
                     // ignore async if a return value is not used
                     && (!f.r#async || Self::is_expression_result_unused(ctx))

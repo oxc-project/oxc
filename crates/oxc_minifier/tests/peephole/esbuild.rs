@@ -371,7 +371,8 @@ fn js_parser_test() {
     test("a = 'abc'[-0]", "a = 'a';");
     test("a = 'abc'[0]", "a = 'a';");
     test("a = 'abc'[2]", "a = 'c';");
-    test("a = 'abc'[3]", "a = 'abc'[3];");
+    // esbuild keeps this; oxc assumes `String.prototype` has no index properties.
+    test("a = 'abc'[3]", "a = void 0;");
     test("a = 'abc'[NaN]", "a = 'abc'[NaN];");
     test("a = 'abc'[-1e100]", "a = 'abc'[-1e100];");
     test("a = 'abc'[1e100]", "a = 'abc'[1e100];");

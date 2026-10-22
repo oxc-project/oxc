@@ -573,11 +573,9 @@ impl NoShadow {
         {
             match ctx.nodes().kind(node_id) {
                 AstKind::VariableDeclarator(declarator) => {
-                    if declarator
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| is_in_range(init.span(), call_expression_end))
-                    {
+                    if declarator.init.as_ref().is_some_and(|init| {
+                        init.span().contains_inclusive(Span::empty(call_expression_end))
+                    }) {
                         return true;
                     }
 
@@ -592,12 +590,18 @@ impl NoShadow {
                     let variable_declaration_id = ctx.nodes().parent_id(node_id);
                     match ctx.nodes().parent_kind(variable_declaration_id) {
                         AstKind::ForInStatement(statement)
-                            if is_in_range(statement.right.span(), call_expression_end) =>
+                            if statement
+                                .right
+                                .span()
+                                .contains_inclusive(Span::empty(call_expression_end)) =>
                         {
                             return true;
                         }
                         AstKind::ForOfStatement(statement)
-                            if is_in_range(statement.right.span(), call_expression_end) =>
+                            if statement
+                                .right
+                                .span()
+                                .contains_inclusive(Span::empty(call_expression_end)) =>
                         {
                             return true;
                         }
@@ -610,16 +614,18 @@ impl NoShadow {
                     if binding_pattern_contains_symbol(
                         &parameter.pattern,
                         shadowed_symbol_span,
-                    ) && parameter
-                        .initializer
-                        .as_ref()
-                        .is_some_and(|init| is_in_range(init.span(), call_expression_end)) =>
+                    ) && parameter.initializer.as_ref().is_some_and(|init| {
+                        init.span().contains_inclusive(Span::empty(call_expression_end))
+                    }) =>
                 {
                     return true;
                 }
                 AstKind::AssignmentPattern(pattern)
                     if binding_pattern_contains_symbol(&pattern.left, shadowed_symbol_span)
-                        && is_in_range(pattern.right.span(), call_expression_end) =>
+                        && pattern
+                            .right
+                            .span()
+                            .contains_inclusive(Span::empty(call_expression_end)) =>
                 {
                     return true;
                 }
@@ -730,10 +736,6 @@ fn is_definition_file(path: &Path) -> bool {
     path.ends_with(".d.ts") || path.ends_with(".d.cts") || path.ends_with(".d.mts")
 }
 
-fn is_in_range(span: Span, location: u32) -> bool {
-    span.start <= location && location <= span.end
-}
-
 fn is_initializer_sentinel(kind: AstKind) -> bool {
     matches!(
         kind,
@@ -791,7 +793,7 @@ fn pattern_initializer_contains_location(
         BindingPattern::BindingIdentifier(_) => false,
         BindingPattern::AssignmentPattern(pattern) => {
             (binding_pattern_contains_symbol(&pattern.left, symbol_span)
-                && is_in_range(pattern.right.span(), location))
+                && pattern.right.span().contains_inclusive(Span::empty(location)))
                 || pattern_initializer_contains_location(&pattern.left, symbol_span, location)
         }
         BindingPattern::ObjectPattern(pattern) => {

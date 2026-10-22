@@ -601,6 +601,16 @@ fn test_function_var_redeclaration_in_module() {
     SemanticTester::js("var a = ''; function a() {}").has_error("already been declared");
 }
 
+#[test]
+fn test_enum_member_redeclaration_with_lone_surrogate() {
+    // Enum member symbols store UTF-8 names, so the checker compares these names itself.
+    SemanticTester::ts(r#"enum A { "\uD800" = 1, "\uD800" = 2 }"#)
+        .has_error("Identifier `\\ud800` has already been declared");
+    SemanticTester::ts(r#"enum B { ["\uDC00"] = 1, [`\uDC00`] = 2 }"#)
+        .has_error("Identifier `\\udc00` has already been declared");
+    SemanticTester::ts(r#"enum C { "\uD800" = 1, "\uDC00" = 2, "\uFFFD" = 3 }"#).build();
+}
+
 // https://github.com/oxc-project/oxc/issues/15961
 #[test]
 fn test_import_value_redeclaration_in_module() {

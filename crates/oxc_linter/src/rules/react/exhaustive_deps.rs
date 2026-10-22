@@ -453,8 +453,7 @@ impl Rule for ExhaustiveDeps {
                 match inner_expr {
                     Expression::ArrayExpression(array_expr) => Some(array_expr),
                     Expression::Identifier(ident)
-                        if ident.name == "undefined"
-                            && ctx.is_reference_to_global_variable(ident) =>
+                        if ident.is_undefined() && ctx.is_reference_to_global_variable(ident) =>
                     {
                         None
                     }
@@ -1101,13 +1100,7 @@ fn is_stable_value<'a, 'b>(
     }
 
     match node.kind() {
-        AstKind::VariableDeclaration(declaration) => {
-            if declaration.kind == VariableDeclarationKind::Const {
-                return true;
-            }
-
-            false
-        }
+        AstKind::VariableDeclaration(declaration) => declaration.kind.is_const(),
         AstKind::VariableDeclarator(declaration) => {
             // if the variable does not have an initializer, then it's not a stable value
             let Some(init) = &declaration.init else {

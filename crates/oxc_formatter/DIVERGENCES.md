@@ -690,7 +690,6 @@ we reuse the reprint path's split (`write_leading_comments_with_asi_guard`, call
 
 - Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc; prettier/prettier#19645, fixed on main by prettier/prettier#19652)
 - Pin: `tests/fixtures/js/comments/type-cast-comment-inside-added-parens.js`
-- Oxfmt: `externals/svelte/internal/client/dom/css.js`
 
 ```js
 // input

@@ -729,7 +729,11 @@ impl<'a> PeepholeOptimizations {
                 let unit = match s.value.as_str() {
                     Some(value) => value.encode_utf16().nth(index),
                     None => s.value.encode_utf16().nth(index),
-                }?;
+                };
+                // An index past the end reads `String.prototype`, which has no index properties.
+                let Some(unit) = unit else {
+                    return Some(Expression::new_void_0(span, ctx));
+                };
                 let mut builder = JSStrBuilder::new_in(ctx);
                 builder.push_code_unit(unit);
                 s.span = span;
