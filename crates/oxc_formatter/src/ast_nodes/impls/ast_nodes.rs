@@ -45,4 +45,14 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
             _ => false,
         }
     }
+
+    /// Check if this is a binary-like expression: `a || b`, `a + b`, or `#x in b`
+    pub fn is_binary_like(&self) -> bool {
+        matches!(
+            self,
+            AstNodes::LogicalExpression(_)
+                | AstNodes::BinaryExpression(_)
+                | AstNodes::PrivateInExpression(_)
+        )
+    }
 }

@@ -499,19 +499,18 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, ConditionalExpression<'_>> {
         }
 
         let parent = self.parent();
-        if matches!(
-            parent,
-            AstNodes::UnaryExpression(_)
-                | AstNodes::AwaitExpression(_)
-                | AstNodes::TSTypeAssertion(_)
-                | AstNodes::TSAsExpression(_)
-                | AstNodes::TSSatisfiesExpression(_)
-                | AstNodes::SpreadElement(_)
-                | AstNodes::JSXSpreadAttribute(_)
-                | AstNodes::LogicalExpression(_)
-                | AstNodes::BinaryExpression(_)
-                | AstNodes::PrivateInExpression(_)
-        ) {
+        if parent.is_binary_like()
+            || matches!(
+                parent,
+                AstNodes::UnaryExpression(_)
+                    | AstNodes::AwaitExpression(_)
+                    | AstNodes::TSTypeAssertion(_)
+                    | AstNodes::TSAsExpression(_)
+                    | AstNodes::TSSatisfiesExpression(_)
+                    | AstNodes::SpreadElement(_)
+                    | AstNodes::JSXSpreadAttribute(_)
+            )
+        {
             return true;
         }
         if let AstNodes::ConditionalExpression(e) = parent {
@@ -735,18 +734,17 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, ArrowFunctionExpression<'_>> {
             return true;
         }
 
-        if matches!(
-            parent,
-            AstNodes::TSAsExpression(_)
-                | AstNodes::TSSatisfiesExpression(_)
-                | AstNodes::TSTypeAssertion(_)
-                | AstNodes::TSInstantiationExpression(_)
-                | AstNodes::UnaryExpression(_)
-                | AstNodes::AwaitExpression(_)
-                | AstNodes::LogicalExpression(_)
-                | AstNodes::BinaryExpression(_)
-                | AstNodes::PrivateInExpression(_)
-        ) {
+        if parent.is_binary_like()
+            || matches!(
+                parent,
+                AstNodes::TSAsExpression(_)
+                    | AstNodes::TSSatisfiesExpression(_)
+                    | AstNodes::TSTypeAssertion(_)
+                    | AstNodes::TSInstantiationExpression(_)
+                    | AstNodes::UnaryExpression(_)
+                    | AstNodes::AwaitExpression(_)
+            )
+        {
             return true;
         }
         if let AstNodes::ConditionalExpression(e) = parent {
@@ -1163,17 +1161,16 @@ fn prints_own_parens(node: &AstNodes<'_, '_>, f: &JsFormatter<'_, '_>) -> bool {
 }
 
 fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_, '_>) -> bool {
-    if matches!(
-        node,
-        AstNodes::UnaryExpression(_)
-            | AstNodes::TSAsExpression(_)
-            | AstNodes::TSSatisfiesExpression(_)
-            | AstNodes::SpreadElement(_)
-            | AstNodes::LogicalExpression(_)
-            | AstNodes::BinaryExpression(_)
-            | AstNodes::PrivateInExpression(_)
-            | AstNodes::TSInstantiationExpression(_),
-    ) {
+    if node.is_binary_like()
+        || matches!(
+            node,
+            AstNodes::UnaryExpression(_)
+                | AstNodes::TSAsExpression(_)
+                | AstNodes::TSSatisfiesExpression(_)
+                | AstNodes::SpreadElement(_)
+                | AstNodes::TSInstantiationExpression(_),
+        )
+    {
         return true;
     }
     if let AstNodes::ConditionalExpression(e) = node {
@@ -1184,13 +1181,9 @@ fn await_or_yield_needs_parens(span: Span, node: &AstNodes<'_, '_>) -> bool {
 }
 
 fn ts_as_or_satisfies_needs_parens(span: Span, parent: &AstNodes<'_, '_>) -> bool {
-    matches!(
-        parent,
-        AstNodes::ConditionalExpression(_)
-            | AstNodes::LogicalExpression(_)
-            | AstNodes::BinaryExpression(_)
-            | AstNodes::PrivateInExpression(_)
-    ) || type_cast_like_needs_parens(span, parent)
+    parent.is_binary_like()
+        || matches!(parent, AstNodes::ConditionalExpression(_))
+        || type_cast_like_needs_parens(span, parent)
 }
 
 fn is_class_extends(span: Span, parent: &AstNodes<'_, '_>) -> bool {
