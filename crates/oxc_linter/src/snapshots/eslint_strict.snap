@@ -1,0 +1,559 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:1]
+ 1 │ "use strict"; foo();
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:18]
+ 1 │ function foo() { 'use strict'; return; }
+   ·                  ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:24]
+ 1 │ var foo = function() { 'use strict'; return; };
+   ·                        ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:38]
+ 1 │ function foo() { return function() { 'use strict'; return; }; }
+   ·                                      ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { "use strict"; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:32]
+ 1 │ 'use strict'; function foo() { "use strict"; return; }
+   ·                                ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:1]
+ 1 │ "use strict"; foo();
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:32]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   ·                                ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:32]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   ·                                ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:2:13]
+ 1 │ /* license */
+ 2 │             function foo() {}
+   ·             ─────────────────
+ 3 │             function bar() {}
+   ╰────
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ function foo() { 'use strict'; return; }
+   · ────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:18]
+ 1 │ function foo() { 'use strict'; return; }
+   ·                  ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ var foo = function() { 'use strict'; return; }
+   · ──────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:24]
+ 1 │ var foo = function() { 'use strict'; return; }
+   ·                        ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ var foo = () => { 'use strict'; return () => 1; }
+   · ─────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:19]
+ 1 │ var foo = () => { 'use strict'; return () => 1; }
+   ·                   ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:32]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   ·                                ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:38]
+ 1 │ 'use strict'; var foo = function() { 'use strict'; return; };
+   ·                                      ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Multiple 'use strict' directives.
+   ╭─[strict.tsx:1:15]
+ 1 │ 'use strict'; 'use strict'; foo();
+   ·               ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:32]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   ·                                ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:32]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   ·                                ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; foo();
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; (function() { 'use strict'; return true; }());
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Unnecessary 'use strict' directive.
+   ╭─[strict.tsx:1:44]
+ 1 │ (function() { 'use strict'; function f() { 'use strict'; return } return true; }());
+   ·                                            ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:2]
+ 1 │ (function() { return true; }());
+   ·  ───────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:2]
+ 1 │ (() => { return true; })();
+   ·  ──────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:2]
+ 1 │ (() => true)();
+   ·  ──────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:11]
+ 1 │ var foo = function() { foo(); 'use strict'; return; }; function bar() { foo(); 'use strict'; }
+   ·           ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:56]
+ 1 │ var foo = function() { foo(); 'use strict'; return; }; function bar() { foo(); 'use strict'; }
+   ·                                                        ───────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Multiple 'use strict' directives.
+   ╭─[strict.tsx:1:32]
+ 1 │ function foo() { 'use strict'; 'use strict'; return; }
+   ·                                ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Multiple 'use strict' directives.
+   ╭─[strict.tsx:1:38]
+ 1 │ var foo = function() { 'use strict'; 'use strict'; return; }
+   ·                                      ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ function foo() { return function() { 'use strict'; return; }; }
+   · ───────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:11]
+ 1 │ var foo = function() { function bar() { 'use strict'; return; } return; }
+   ·           ───────────────────────────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:52]
+ 1 │ function foo() { 'use strict'; return; } var bar = function() { return; };
+   ·                                                    ──────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:49]
+ 1 │ var foo = function() { 'use strict'; return; }; function bar() { return; };
+   ·                                                 ──────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Unnecessary 'use strict' directive.
+   ╭─[strict.tsx:1:52]
+ 1 │ function foo() { 'use strict'; return function() { 'use strict'; 'use strict'; return; }; }
+   ·                                                    ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Multiple 'use strict' directives.
+   ╭─[strict.tsx:1:66]
+ 1 │ function foo() { 'use strict'; return function() { 'use strict'; 'use strict'; return; }; }
+   ·                                                                  ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Unnecessary 'use strict' directive.
+   ╭─[strict.tsx:1:55]
+ 1 │ var foo = function() { 'use strict'; function bar() { 'use strict'; 'use strict'; return; } }
+   ·                                                       ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Multiple 'use strict' directives.
+   ╭─[strict.tsx:1:69]
+ 1 │ var foo = function() { 'use strict'; function bar() { 'use strict'; 'use strict'; return; } }
+   ·                                                                     ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:11]
+ 1 │ var foo = () => { return; };
+   ·           ─────────────────
+   ╰────
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:1:27]
+ 1 │ class A { constructor() { "use strict"; } }
+   ·                           ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:1:19]
+ 1 │ class A { foo() { "use strict"; } }
+   ·                   ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:1:36]
+ 1 │ class A { foo() { function bar() { "use strict"; } } }
+   ·                                    ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:1:27]
+ 1 │ class A { field = () => { "use strict"; } }
+   ·                           ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:1:32]
+ 1 │ class A { field = function() { "use strict"; } }
+   ·                                ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:15]
+ 1 │ 'use strict'; function foo() { return; }
+   ·               ──────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:15]
+ 1 │ 'use strict'; function foo() { return; }
+   ·               ──────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ function foo() { return; }
+   · ──────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo() { 'use strict'; return; }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' directive inside a function with non-simple parameter list throws a syntax error since ES2016.
+   ╭─[strict.tsx:1:23]
+ 1 │ function foo(a = 0) { 'use strict' }
+   ·                       ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' directive inside a function with non-simple parameter list throws a syntax error since ES2016.
+   ╭─[strict.tsx:1:51]
+ 1 │ (function() { 'use strict'; function foo(a = 0) { 'use strict' } }())
+   ·                                                   ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' directive inside a function with non-simple parameter list throws a syntax error since ES2016.
+   ╭─[strict.tsx:1:23]
+ 1 │ function foo(a = 0) { 'use strict' }
+   ·                       ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ 'use strict'; function foo(a = 0) { 'use strict' }
+   · ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' directive inside a function with non-simple parameter list throws a syntax error since ES2016.
+   ╭─[strict.tsx:1:37]
+ 1 │ 'use strict'; function foo(a = 0) { 'use strict' }
+   ·                                     ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:1:23]
+ 1 │ function foo(a = 0) { 'use strict' }
+   ·                       ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:1]
+ 1 │ function foo(a = 0) { 'use strict' }
+   · ────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:23]
+ 1 │ function foo(a = 0) { 'use strict' }
+   ·                       ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:1:37]
+ 1 │ 'use strict'; function foo(a = 0) { 'use strict' }
+   ·                                     ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' directive inside a function with non-simple parameter list throws a syntax error since ES2016.
+   ╭─[strict.tsx:1:23]
+ 1 │ function foo(a = 0) { 'use strict' }
+   ·                       ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' directive inside a function with non-simple parameter list throws a syntax error since ES2016.
+   ╭─[strict.tsx:1:51]
+ 1 │ (function() { 'use strict'; function foo(a = 0) { 'use strict' } }())
+   ·                                                   ────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Wrap function `foo` in a function with 'use strict' directive.
+   ╭─[strict.tsx:1:1]
+ 1 │ function foo(a = 0) { }
+   · ───────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:2]
+ 1 │ (function() { function foo(a = 0) { } }())
+   ·  ──────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the global form of 'use strict'.
+   ╭─[strict.tsx:2:13]
+ 1 │ 'use strict'; class C { static { function foo() { 
+ 2 │             'use strict'; } } }
+   ·             ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Strict mode is not permitted.
+   ╭─[strict.tsx:2:13]
+ 1 │ class C { static { function foo() { 
+ 2 │             'use strict'; } } }
+   ·             ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:2:13]
+ 1 │ class C { static { function foo() {
+ 2 │             'use strict'; } } }
+   ·             ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:2:13]
+ 1 │ class C { static { function foo() {
+ 2 │             'use strict'; } } }
+   ·             ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Unnecessary 'use strict' directive.
+   ╭─[strict.tsx:2:13]
+ 1 │ function foo() {'use strict'; class C { static { function foo() { 
+ 2 │             'use strict'; } } } }
+   ·             ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:2:13]
+ 1 │ class C { static { function foo() { 
+ 2 │             'use strict'; } } }
+   ·             ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): 'use strict' is unnecessary inside of classes.
+   ╭─[strict.tsx:2:13]
+ 1 │ class C { static { function foo() { 
+ 2 │             'use strict';
+   ·             ─────────────
+ 3 │             'use strict'; } } }
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Multiple 'use strict' directives.
+   ╭─[strict.tsx:3:13]
+ 2 │             'use strict';
+ 3 │             'use strict'; } } }
+   ·             ─────────────
+   ╰────
+  help: Delete this code.
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:18]
+ 1 │ module.exports = function identity (value) { return value; }
+   ·                  ───────────────────────────────────────────
+   ╰────
+
+  ⚠ eslint(strict): Use the function form of 'use strict'.
+   ╭─[strict.tsx:1:18]
+ 1 │ module.exports = function identity (value) { return value; }
+   ·                  ───────────────────────────────────────────
+   ╰────

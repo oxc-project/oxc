@@ -248,6 +248,7 @@ export type ImportKind = "none" | "all" | "multiple" | "single";
  * Sorting order for keys. Accepts "asc" for ascending or "desc" for descending.
  */
 export type SortOrder = "desc" | "asc";
+export type Strict = "safe" | "global" | "function" | "never";
 export type ArrayOption = "array" | "array-simple" | "generic";
 export type ReadonlyArrayOption = "array" | "array-simple" | "generic";
 export type DirectiveConfigSchema = boolean | RequireDescription | DescriptionFormatConfig;
@@ -1422,6 +1423,7 @@ export interface DummyRuleMap {
   "sort-imports"?: RuleNoConfig | [AllowWarnDeny, SortImportsOptions];
   "sort-keys"?: RuleNoConfig | [AllowWarnDeny, SortOrder] | [AllowWarnDeny, SortOrder, SortKeysOptions];
   "sort-vars"?: RuleNoConfig | [AllowWarnDeny, SortVars];
+  strict?: RuleNoConfig | [AllowWarnDeny, Strict];
   "symbol-description"?: RuleNoConfig;
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
   "typescript/array-type"?: RuleNoConfig | [AllowWarnDeny, ArrayTypeConfig];
@@ -2035,6 +2037,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, SortOrder]
     | [AllowWarnDeny, SortOrder, SortKeysOptions]
     | [AllowWarnDeny, SortVars]
+    | [AllowWarnDeny, Strict]
     | [AllowWarnDeny, ArrayTypeConfig]
     | [AllowWarnDeny, BanTsCommentConfig]
     | [AllowWarnDeny, ClassLiteralPropertyStyleOption]
