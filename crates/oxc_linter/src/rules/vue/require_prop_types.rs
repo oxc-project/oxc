@@ -173,10 +173,7 @@ impl RequirePropTypes {
     }
 
     fn check_options_props(obj: &ObjectExpression, ctx: &LintContext) {
-        let Some(props_prop) = obj.properties.iter().find_map(|prop| {
-            let ObjectPropertyKind::ObjectProperty(p) = prop else { return None };
-            p.key.is_specific_static_name("props").then_some(p)
-        }) else {
+        let Some(props_prop) = obj.find_property("props") else {
             return;
         };
 
