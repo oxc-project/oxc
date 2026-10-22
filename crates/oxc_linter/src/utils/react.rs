@@ -5,7 +5,7 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Expression, Function,
+        ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression, Function,
         FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
         JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
         JSXOpeningElement, Statement, StaticMemberExpression,
@@ -586,7 +586,12 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     let AstKind::Class(class_expr) = node.kind() else {
         return false;
     };
-    if let Some(super_class) = class_expr.heritage_expression() {
+    is_es6_component_class(class_expr)
+}
+
+/// Checks whether a class extends `Component` or `PureComponent`, optionally on `React`.
+pub fn is_es6_component_class(class: &Class<'_>) -> bool {
+    if let Some(super_class) = class.heritage_expression() {
         if let Some(member_expr) = super_class.as_member_expression()
             && let Expression::Identifier(ident) = member_expr.object()
         {
