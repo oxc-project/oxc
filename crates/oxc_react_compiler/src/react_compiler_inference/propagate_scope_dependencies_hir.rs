@@ -21,6 +21,7 @@ use std::collections::BTreeSet;
 use std::ptr::eq;
 
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::object_shape::HookKind;
 use crate::react_compiler_hir::visitors::{ScopeBlockInfo, ScopeBlockTraversal};
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, DeclarationId, DependencyPathEntry, EvaluationOrder, FunctionId,
@@ -1087,8 +1088,13 @@ fn get_assumed_invoked_functions_impl(
                     if let Some(entry) = temporaries.get(&callee.identifier) {
                         // Direct calls
                         hoistable.insert(entry.0);
-                    } else if maybe_hook.is_some() {
-                        // Assume arguments to all hooks are safe to invoke
+                    } else if maybe_hook.is_some_and(|kind| {
+                        // A `useMemo`/`useCallback` that survives to here was kept as written
+                        // (`Environment::kept_manual_memos`): React calls its callback only when
+                        // the source dependencies change, not on every render.
+                        !matches!(kind, HookKind::UseMemo | HookKind::UseCallback)
+                    }) {
+                        // Assume arguments to all other hooks are safe to invoke
                         for arg in args {
                             if let PlaceOrSpread::Place(p) = arg
                                 && let Some(entry) = temporaries.get(&p.identifier)

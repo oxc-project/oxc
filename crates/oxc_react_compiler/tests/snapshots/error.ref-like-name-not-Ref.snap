@@ -21,11 +21,11 @@ function Foo() {
 	const $ = _c(5);
 	const Ref = useCustomRef();
 	let t0;
-	if ($[0] !== Ref.current) {
+	if ($[0] !== Ref) {
 		t0 = () => {
 			Ref.current?.click();
 		};
-		$[0] = Ref.current;
+		$[0] = Ref;
 		$[1] = t0;
 	} else {
 		t0 = $[1];
