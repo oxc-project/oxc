@@ -1483,6 +1483,18 @@ where
 }
 
 #[cold]
+pub fn invariant_single_predecessor_phi_has_multiple_operands(
+    operands: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Invariant,
+        format!(
+            "Found a block with a single predecessor but where a phi has multiple ({operands}) operands"
+        ),
+    )
+}
+
+#[cold]
 pub fn missing_phi_predecessor_mapping(
     predecessor: impl Display,
     block: impl Display,

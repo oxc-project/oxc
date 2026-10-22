@@ -132,7 +132,7 @@ pub fn compile_fn<'a, const EMIT: bool>(
         return Ok(None);
     }
 
-    prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
 
@@ -141,9 +141,9 @@ pub fn compile_fn<'a, const EMIT: bool>(
 
     drop_manual_memoization(&mut hir, &mut env)?;
 
-    inline_immediately_invoked_function_expressions(&mut hir, &mut env);
+    inline_immediately_invoked_function_expressions(&mut hir, &mut env)?;
 
-    merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator);
+    merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator)?;
 
     assert_consistent_identifiers(&hir, &env.identifiers)?;
     assert_terminal_successors_exist(&hir)?;
@@ -184,7 +184,7 @@ pub fn compile_fn<'a, const EMIT: bool>(
 
     dead_code_elimination(&mut hir, &env);
 
-    prune_maybe_throws(&mut hir, &mut env.functions, &env.identifiers, env.allocator)?;
+    prune_maybe_throws(&mut hir, &mut env)?;
 
     infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
 
