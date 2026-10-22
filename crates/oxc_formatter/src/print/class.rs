@@ -608,7 +608,7 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
                     matches!(id.name.as_str(), "in" | "instanceof")
                 }
                 PropertyKey::StringLiteral(literal) => {
-                    matches!(literal.value.as_str(), "in" | "instanceof")
+                    matches!(literal.value.as_str(), Some("in" | "instanceof"))
                 }
                 _ => false,
             }) {
