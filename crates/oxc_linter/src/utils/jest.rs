@@ -170,6 +170,53 @@ pub struct PossibleJestNode<'a, 'b> {
     pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
 }
 
+impl<'a, 'b> PossibleJestNode<'a, 'b> {
+    /// Resolve a call rooted in a Jest/Vitest global or import, preserving imported aliases.
+    ///
+    /// This does not allocate or scan other calls in the file. Rules using `Rule::run` should
+    /// apply their syntactic checks before resolving a potential test-framework call.
+    pub fn from_call_expression(
+        node: &'b AstNode<'a>,
+        call_expr: &'a CallExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> Option<Self> {
+        let mut expr = &call_expr.callee;
+        let ident = loop {
+            expr = match expr {
+                Expression::Identifier(ident) => break ident,
+                Expression::StaticMemberExpression(member) => &member.object,
+                Expression::ComputedMemberExpression(member) => &member.object,
+                Expression::CallExpression(call) => &call.callee,
+                Expression::TaggedTemplateExpression(tagged) => &tagged.tag,
+                _ => return None,
+            };
+        };
+
+        let reference = ctx.scoping().get_reference(ident.reference_id());
+        let original = if let Some(symbol_id) = reference.symbol_id() {
+            if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+                return None;
+            }
+            let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+            let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id)
+            else {
+                return None;
+            };
+            if !is_jest_import(import_decl) {
+                return None;
+            }
+            find_original_name(import_decl, ident.name.as_str())
+        } else {
+            if !JEST_METHOD_NAMES.contains(&ident.name.as_str()) {
+                return None;
+            }
+            None
+        };
+
+        Some(Self { node, original })
+    }
+}
+
 /// Collect all possible Jest fn Call Expression,
 /// for `expect(1).toBe(1)`, the result will be a collection of node `expect(1)` and node `expect(1).toBe(1)`.
 pub fn collect_possible_jest_call_node<'a, 'c>(
@@ -241,10 +288,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if matches!(
-                    import_decl.source.value.as_str(),
-                    Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
-                ) {
+                if is_jest_import(import_decl) {
                     let original = find_original_name(import_decl, name);
                     return Some(
                         reference_ids.iter().map(move |&reference_id| (reference_id, original)),
@@ -255,6 +299,13 @@ fn collect_ids_referenced_to_import<'a, 'c>(
             None
         })
         .flatten()
+}
+
+fn is_jest_import(import_decl: &ImportDeclaration<'_>) -> bool {
+    matches!(
+        import_decl.source.value.as_str(),
+        Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
+    )
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.
