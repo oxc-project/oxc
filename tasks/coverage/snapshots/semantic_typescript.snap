@@ -2,7 +2,7 @@ commit: 5237fd46
 
 semantic_typescript Summary:
 AST Parsed     : 5721/5721 (100.00%)
-Positive Passed: 4159/5721 (72.70%)
+Positive Passed: 4160/5721 (72.71%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -6953,9 +6953,6 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/expo
 An export assignment cannot be used in a module with other exported elements
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging2.ts
-An export assignment cannot be used in a module with other exported elements
-
-semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging8.ts
 An export assignment cannot be used in a module with other exported elements
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentWithImportStatementPrivacyError.ts

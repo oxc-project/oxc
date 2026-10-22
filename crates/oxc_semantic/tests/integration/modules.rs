@@ -68,3 +68,26 @@ fn test_ts_import_type_qualifier_no_reference() {
         .contains_flags(SymbolFlags::TypeAlias)
         .test();
 }
+
+#[test]
+fn test_export_assignment_type_only_siblings() {
+    for source in [
+        "interface Options {}; export { Options }; const route = {}; export = route;",
+        "const route = {}; export default interface Options {}; export = route;",
+        "namespace Route { export interface Params {} } export = Route;",
+        "namespace Route { export const x = 1; } export interface Options {} export = Route;",
+        "declare module 'm' { interface Options {} export { Options }; const route: {}; export = route; }",
+    ] {
+        assert!(SemanticTester::ts(source).build_with_errors().diagnostics.is_empty(), "{source}");
+    }
+    for source in [
+        "namespace Route { export interface Params {} } export interface Options {} export = Route;",
+        "namespace Route {} namespace Route { export interface Params {} } export interface Options {} export = Route;",
+        "namespace Route { interface Params {} export { Params }; } export type Options = {}; export = Route;",
+        "interface Options {}; const Options = 1; export { Options }; const route = {}; export = route;",
+    ] {
+        let diagnostics = SemanticTester::ts(source).build_with_errors().diagnostics;
+        let codes = diagnostics.iter().map(|d| d.code.to_string()).collect::<Vec<_>>();
+        assert_eq!(codes, ["TS(2309)"], "{source}");
+    }
+}

@@ -7,6 +7,7 @@ use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{JSStr, Str};
+use oxc_syntax::{scope::ScopeId, symbol::SymbolFlags};
 
 use crate::{builder::SemanticBuilder, diagnostics};
 
@@ -104,7 +105,7 @@ pub fn check_ts_external_module_declaration<'a>(
 ) {
     check_ambient_module_declaration(decl.span, ctx);
     if let Some(body) = &decl.body {
-        check_ts_export_assignment_in_statements(&body.body, ctx);
+        check_ts_export_assignment_in_statements(&body.body, decl.scope_id.get().unwrap(), ctx);
     }
 }
 
@@ -313,7 +314,7 @@ pub fn check_ts_export_assignment_in_program<'a>(program: &Program<'a>, ctx: &Se
     if !ctx.source_type.is_typescript() {
         return;
     }
-    check_ts_export_assignment_in_statements(&program.body, ctx);
+    check_ts_export_assignment_in_statements(&program.body, program.scope_id.get().unwrap(), ctx);
 }
 
 fn check_ts_export_assignment_in_namespace_decl<'a>(
@@ -325,32 +326,47 @@ fn check_ts_export_assignment_in_namespace_decl<'a>(
             check_ts_export_assignment_in_namespace_decl(nested, ctx);
         }
         TSNamespaceDeclarationBody::TSModuleBlock(block) => {
-            check_ts_export_assignment_in_statements(&block.body, ctx);
+            check_ts_export_assignment_in_statements(
+                &block.body,
+                namespace_decl.scope_id.get().unwrap(),
+                ctx,
+            );
         }
     }
 }
 
 fn check_ts_export_assignment_in_statements<'a>(
     statements: &[Statement<'a>],
+    scope_id: ScopeId,
     ctx: &SemanticBuilder<'a>,
 ) {
-    let mut export_assignment_spans = vec![];
+    let mut export_assignments = vec![];
     let mut has_other_exports = false;
+    let mut has_any_exports = false;
 
     for stmt in statements {
         match stmt {
             Statement::TSExportAssignment(export_assignment) => {
-                export_assignment_spans.push(export_assignment.span);
+                export_assignments.push(export_assignment);
             }
             Statement::ExportNamedDeclaration(export_decl) => {
-                // ignore `export {}`
+                // An unmodified specifier may still name an exclusively type-space symbol.
+                has_any_exports |= !export_decl.specifiers.is_empty();
                 has_other_exports |= export_decl.export_kind.is_value()
-                    && export_decl
-                        .specifiers
-                        .iter()
-                        .any(|specifier| specifier.export_kind.is_value());
+                    && export_decl.specifiers.iter().any(|specifier| {
+                        specifier.export_kind.is_value()
+                            && match &specifier.local {
+                                ModuleExportName::IdentifierReference(id) => {
+                                    ctx.scoping.find_binding(scope_id, id.name).is_none_or(
+                                        |symbol| ctx.scoping.symbol_flags(symbol).is_value(),
+                                    )
+                                }
+                                _ => true,
+                            }
+                    });
             }
             Statement::ExportFromDeclaration(export_decl) => {
+                has_any_exports |= !export_decl.specifiers.is_empty();
                 // Preserve the existing treatment of `export {} from "mod"`.
                 has_other_exports |= export_decl.export_kind.is_value()
                     && export_decl
@@ -359,24 +375,94 @@ fn check_ts_export_assignment_in_statements<'a>(
                         .any(|specifier| specifier.export_kind.is_value());
             }
             Statement::ExportDeclaration(export_decl) => {
+                has_any_exports = true;
                 has_other_exports |= !matches!(
                     export_decl.declaration,
                     Declaration::TSTypeAliasDeclaration(_) | Declaration::TSInterfaceDeclaration(_)
                 );
             }
             Statement::ExportAllDeclaration(export_decl) => {
+                has_any_exports = true;
                 has_other_exports |= export_decl.export_kind.is_value();
             }
-            Statement::ExportDefaultDeclaration(_) => {
-                has_other_exports = true;
+            Statement::ExportDefaultDeclaration(export_decl) => {
+                has_any_exports = true;
+                has_other_exports |= !matches!(
+                    export_decl.declaration,
+                    ExportDefaultDeclarationKind::TSInterfaceDeclaration(_)
+                );
             }
             _ => {}
         }
     }
 
-    if has_other_exports {
-        for span in export_assignment_spans {
-            ctx.error(diagnostics::ts_export_assignment_cannot_be_used_with_other_exports(span));
+    for assignment in export_assignments {
+        if has_other_exports
+            || (has_any_exports
+                && export_assignment_shadows_namespace(assignment, statements, scope_id, ctx))
+        {
+            ctx.error(diagnostics::ts_export_assignment_cannot_be_used_with_other_exports(
+                assignment.span,
+            ));
         }
     }
+}
+
+/// Type-only siblings still conflict when the assigned namespace exports types or namespaces.
+fn export_assignment_shadows_namespace(
+    assignment: &TSExportAssignment<'_>,
+    statements: &[Statement<'_>],
+    scope_id: ScopeId,
+    ctx: &SemanticBuilder<'_>,
+) -> bool {
+    let Some(id) = assignment.expression.get_identifier_reference() else { return false };
+    let Some(symbol) = ctx.scoping.find_binding(scope_id, id.name) else { return false };
+    let exports_types = |statement: &Statement<'_>| {
+        let namespace = match statement {
+            Statement::TSNamespaceDeclaration(namespace) => namespace.as_ref(),
+            Statement::ExportDeclaration(export) => match &export.declaration {
+                Declaration::TSNamespaceDeclaration(namespace) => namespace.as_ref(),
+                _ => return false,
+            },
+            _ => return false,
+        };
+        namespace.id.symbol_id.get() == Some(symbol) && namespace_exports_types(namespace, ctx)
+    };
+    statements.iter().any(&exports_types)
+        || ctx.ancestry().ancestor_kinds().any(|ancestor| match ancestor {
+            AstKind::Program(program) => program.body.iter().any(&exports_types),
+            AstKind::TSModuleBlock(block) => block.body.iter().any(&exports_types),
+            _ => false,
+        })
+}
+
+fn namespace_exports_types(
+    namespace: &TSNamespaceDeclaration<'_>,
+    ctx: &SemanticBuilder<'_>,
+) -> bool {
+    let TSNamespaceDeclarationBody::TSModuleBlock(block) = &namespace.body else {
+        // A dotted namespace exports its nested namespace.
+        return true;
+    };
+    block.body.iter().any(|stmt| match stmt {
+        Statement::ExportDeclaration(export) => export.declaration.id().is_some_and(|id| {
+            ctx.scoping
+                .symbol_flags(id.symbol_id.get().unwrap())
+                .intersects(SymbolFlags::Type | SymbolFlags::Namespace)
+        }),
+        Statement::ExportNamedDeclaration(export) => {
+            export.specifiers.iter().any(|specifier| match &specifier.local {
+                ModuleExportName::IdentifierReference(id) => ctx
+                    .scoping
+                    .find_binding(namespace.scope_id.get().unwrap(), id.name)
+                    .is_some_and(|symbol| {
+                        ctx.scoping
+                            .symbol_flags(symbol)
+                            .intersects(SymbolFlags::Type | SymbolFlags::Namespace)
+                    }),
+                _ => false,
+            })
+        }
+        _ => false,
+    })
 }
