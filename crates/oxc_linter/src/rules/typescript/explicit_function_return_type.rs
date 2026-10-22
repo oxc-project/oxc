@@ -8,7 +8,7 @@ use oxc_ast::{
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::{GetSpan, Span};
+use oxc_span::Span;
 use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
@@ -16,7 +16,7 @@ use serde::{Deserialize, Serialize};
 
 use crate::{
     AstNode,
-    ast_util::{iter_outer_expressions, outermost_paren_parent},
+    ast_util::{is_iife, outermost_paren_parent},
     context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
 };
@@ -312,7 +312,7 @@ impl ExplicitFunctionReturnType {
                 if self.allow_functions_without_type_parameters && func.type_parameters.is_none() {
                     return true;
                 }
-                if self.allow_iifes && is_iife(node, ctx) {
+                if self.allow_iifes && is_iife(node, ctx.semantic()) {
                     return true;
                 }
                 if self.allowed_names.is_empty() {
@@ -327,7 +327,7 @@ impl ExplicitFunctionReturnType {
                 if self.allow_functions_without_type_parameters && func.type_parameters.is_none() {
                     return true;
                 }
-                if self.allow_iifes && is_iife(node, ctx) {
+                if self.allow_iifes && is_iife(node, ctx.semantic()) {
                     return true;
                 }
                 if self.allowed_names.is_empty() {
@@ -453,15 +453,6 @@ impl ExplicitFunctionReturnType {
         }
         all_return_statements_are_functions(node)
     }
-}
-
-// check function is IIFE (Immediately Invoked Function Expression)
-fn is_iife<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
-    let Some(AstKind::CallExpression(call)) = iter_outer_expressions(ctx.nodes(), node.id()).next()
-    else {
-        return false;
-    };
-    call.callee.span().contains_inclusive(node.span())
 }
 
 /**

@@ -283,6 +283,16 @@ pub fn iter_outer_expressions<'a, 's>(
     })
 }
 
+/// Checks whether the first outer expression calls the node as its callee.
+pub fn is_iife<'a>(node: &AstNode<'a>, semantic: &Semantic<'a>) -> bool {
+    let Some(AstKind::CallExpression(call)) =
+        iter_outer_expressions(semantic.nodes(), node.id()).next()
+    else {
+        return false;
+    };
+    call.callee.span().contains_inclusive(node.span())
+}
+
 pub fn get_declaration_of_variable<'a, 'b>(
     ident: &IdentifierReference<'a>,
     semantic: &'b Semantic<'a>,
