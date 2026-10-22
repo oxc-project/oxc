@@ -83,6 +83,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
         if !kind.is_identifier_reference(false, false) {
+            if self.cur_token().escaped() && matches!(kind, Kind::In | Kind::Instanceof) {
+                return self.fatal_error(diagnostics::escaped_keyword(self.cur_token().span()));
+            }
             return self.unexpected();
         }
         // Track await identifier for potential reparsing in unambiguous mode
@@ -1347,6 +1350,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // RelationalExpression[In, Yield, Await] :
             // [+In] RelationalExpression[+In, ?Yield, ?Await] in ShiftExpression[?Yield, ?Await]
             if kind == Kind::In && !self.ctx.has_in() {
+                break;
+            }
+
+            if matches!(kind, Kind::In | Kind::Instanceof)
+                && self.cur_token().escaped()
+                && self.cur_token().is_on_new_line()
+            {
                 break;
             }
 

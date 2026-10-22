@@ -2,7 +2,7 @@ commit: a56fe4a4
 
 semantic_babel Summary:
 AST Parsed     : 2280/2280 (100.00%)
-Positive Passed: 2185/2280 (95.83%)
+Positive Passed: 2186/2280 (95.88%)
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
 Cannot use export statement outside a module
 
@@ -41,10 +41,6 @@ rebuilt        : ScopeId(2): ["f", "x"]
 Symbol scope ID mismatch for "_await":
 after transform: SymbolId(3): ScopeId(2)
 rebuilt        : SymbolId(2): ScopeId(0)
-
-semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/escaped-in-after-initializer/input.js
-Keywords cannot contain escape characters
-Cannot assign to this expression
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/valid-for-using-binding-of-of/input.js
 Symbol reference IDs mismatch for "of":
@@ -108,8 +104,8 @@ after transform: ["a"]
 rebuilt        : []
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts
-Keywords cannot contain escape characters
-Cannot assign to this expression
+Identifier `\u{69}n` has already been declared
+Identifier `\u{69}n` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/get-generic/input.ts
 Bindings mismatch:

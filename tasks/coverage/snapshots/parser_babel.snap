@@ -1,8 +1,8 @@
 commit: a56fe4a4
 
 parser_babel Summary:
-AST Parsed     : 2278/2280 (99.91%)
-Positive Passed: 2259/2280 (99.08%)
+AST Parsed     : 2280/2280 (100.00%)
+Positive Passed: 2260/2280 (99.12%)
 Negative Passed: 1789/1804 (99.17%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -63,25 +63,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-
    ·                   ╰── `g` has already been declared here
    ╰────
 
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/escaped-in-after-initializer/input.js
-
-  × Keywords cannot contain escape characters
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/escaped-in-after-initializer/input.js:3:3]
- 2 │   x = 1
- 3 │   \u{69}n
-   ·   ───────
- 4 │   y = a
-   ╰────
-
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-properties/escaped-in-after-initializer/input.js:2:7]
- 1 │     class C {
- 2 │ ╭─▶   x = 1
- 3 │ │     \u{69}n
- 4 │ ╰─▶   y = a
- 5 │       \u{69}nstanceof
-   ╰────
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
@@ -120,23 +101,33 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     f();
    ╰────
 
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts
 
-  × Keywords cannot contain escape characters
+  × Identifier `\u{69}n` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts:3:3]
  2 │   x = 1
  3 │   \u{69}n
-   ·   ───────
+   ·   ───┬───
+   ·      ╰── `\u{69}n` has already been declared here
  4 │   y = () => a
+ 5 │   \u{69}nstanceof
+ 6 │   z = 1
+ 7 │   \u{69}n() {}
+   ·   ───┬───
+   ·      ╰── It can not be redeclared here
+ 8 │   \u{69}n = 1
    ╰────
 
-  × Cannot assign to this expression
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts:2:7]
- 1 │     class C {
- 2 │ ╭─▶   x = 1
- 3 │ │     \u{69}n
- 4 │ ╰─▶   y = () => a
- 5 │       \u{69}nstanceof
+  × Identifier `\u{69}n` has already been declared
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts:7:3]
+ 6 │   z = 1
+ 7 │   \u{69}n() {}
+   ·   ───┬───
+   ·      ╰── `\u{69}n` has already been declared here
+ 8 │   \u{69}n = 1
+   ·   ───┬───
+   ·      ╰── It can not be redeclared here
+ 9 │ }
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/members-with-modifier-names/input.ts
