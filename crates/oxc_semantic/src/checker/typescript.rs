@@ -438,12 +438,13 @@ fn check_ts_export_assignment_in_statements<'a>(
 struct ExportAssignmentResolver<'s, 'ctx, 'a> {
     namespaces: Vec<(&'s TSNamespaceDeclaration<'a>, bool)>,
     aliases: Vec<&'s TSImportEqualsDeclaration<'a>>,
+    enums: Vec<&'s TSEnumDeclaration<'a>>,
     ctx: &'ctx SemanticBuilder<'a>,
 }
 
 impl<'s, 'ctx, 'a> ExportAssignmentResolver<'s, 'ctx, 'a> {
     fn new(statements: &'s [Statement<'a>], ctx: &'ctx SemanticBuilder<'a>) -> Self {
-        let mut resolver = Self { namespaces: vec![], aliases: vec![], ctx };
+        let mut resolver = Self { namespaces: vec![], aliases: vec![], enums: vec![], ctx };
         resolver.collect(statements, ctx.source_type.is_typescript_definition());
         resolver
     }
@@ -455,11 +456,13 @@ impl<'s, 'ctx, 'a> ExportAssignmentResolver<'s, 'ctx, 'a> {
                     self.collect_namespace(namespace, ambient);
                 }
                 Statement::TSImportEqualsDeclaration(alias) => self.aliases.push(alias),
+                Statement::TSEnumDeclaration(declaration) => self.enums.push(declaration),
                 Statement::ExportDeclaration(export) => match &export.declaration {
                     Declaration::TSNamespaceDeclaration(namespace) => {
                         self.collect_namespace(namespace, ambient);
                     }
                     Declaration::TSImportEqualsDeclaration(alias) => self.aliases.push(alias),
+                    Declaration::TSEnumDeclaration(declaration) => self.enums.push(declaration),
                     Declaration::TSExternalModuleDeclaration(module) => {
                         if let Some(body) = &module.body {
                             self.collect(&body.body, ambient || module.declare);
@@ -550,6 +553,14 @@ impl<'s, 'ctx, 'a> ExportAssignmentResolver<'s, 'ctx, 'a> {
         let Some((name, remaining)) = members.split_last() else { return roots };
         let mut targets = vec![];
         for root in roots {
+            for declaration in &self.enums {
+                if declaration.id.symbol_id.get() == Some(root)
+                    && let Some(scope) = declaration.body.scope_id.get()
+                    && let Some(member) = self.ctx.scoping.get_binding(scope, *name)
+                {
+                    targets.extend(self.resolve_path(member, remaining, visited));
+                }
+            }
             for (namespace, ambient) in &self.namespaces {
                 if namespace.id.symbol_id.get() != Some(root) {
                     continue;
@@ -636,7 +647,10 @@ impl<'s, 'ctx, 'a> ExportAssignmentResolver<'s, 'ctx, 'a> {
         let Expression::Identifier(id) = target else { return false };
         let Some(symbol) = self.ctx.scoping.find_binding(scope, id.name) else { return false };
         self.resolve_path(symbol, &members, &mut vec![]).iter().any(|target| {
-            self.namespaces.iter().any(|(namespace, ambient)| {
+            self.enums.iter().any(|declaration| {
+                declaration.id.symbol_id.get() == Some(*target)
+                    && !declaration.body.members.is_empty()
+            }) || self.namespaces.iter().any(|(namespace, ambient)| {
                 namespace.id.symbol_id.get() == Some(*target)
                     && self.namespace_exports_types(namespace, *ambient)
             })
