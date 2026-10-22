@@ -1,5 +1,6 @@
+use unicode_width::UnicodeWidthStr;
+
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
@@ -87,7 +88,7 @@ pub fn write_member_name<'a>(
     } else {
         write!(f, key);
 
-        f.source_text().span_width(key.span())
+        f.source_text().text_for(key).width()
     }
 }
 

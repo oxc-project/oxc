@@ -200,7 +200,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 // Handle computed properties
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
-                    f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
+                    f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
                 } else if property.shorthand {
                     let PropertyKey::StaticIdentifier(ident) = &property.key else {
                         unreachable!("Expected static identifier for shorthand property");
@@ -230,7 +230,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
                 // Handle computed properties
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
-                    f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
+                    f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
                 } else {
                     let width = write_member_name(&property.key(), f);
 
@@ -243,7 +243,7 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
 
                 if property.computed {
                     write!(f, ["[", property.name(), "]"]);
-                    f.source_text().span_width(property.name.span()) + 2 < text_width_for_break
+                    f.source_text().text_for(&property.name).width() + 2 < text_width_for_break
                 } else {
                     let width = write_member_name(&property.name(), f);
 
