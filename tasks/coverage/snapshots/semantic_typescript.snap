@@ -6950,10 +6950,14 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/expo
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging1.ts
-An export assignment cannot be used in a module with other exported elements
+Bindings mismatch:
+after transform: ScopeId(0): ["Bar"]
+rebuilt        : ScopeId(0): []
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging2.ts
-An export assignment cannot be used in a module with other exported elements
+Bindings mismatch:
+after transform: ScopeId(0): ["Bar", "mod"]
+rebuilt        : ScopeId(0): ["mod"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentWithImportStatementPrivacyError.ts
 Namespaces exporting non-const are not supported by Oxc. Change to const or see: https://oxc.rs/docs/guide/usage/transformer/typescript.html#partial-namespace-support

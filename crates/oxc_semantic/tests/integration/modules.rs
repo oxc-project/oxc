@@ -73,6 +73,10 @@ fn test_ts_import_type_qualifier_no_reference() {
 fn test_export_assignment_type_only_siblings() {
     for source in [
         "interface Options {}; export { Options }; const route = {}; export = route;",
+        "interface Options {} export default Options; const route = {}; export = route;",
+        "namespace Route { export const x = 1; } import Alias = Route; export interface O {} export = Alias;",
+        "import A = B; import B = A; export interface O {} export = A;",
+        "export namespace Types { export interface Options {} } const route = {}; export = route;",
         "const route = {}; export default interface Options {}; export = route;",
         "namespace Route { export interface Params {} } export = Route;",
         "namespace Route { export const x = 1; } export interface Options {} export = Route;",
@@ -82,6 +86,12 @@ fn test_export_assignment_type_only_siblings() {
     }
     for source in [
         "namespace Route { export interface Params {} } export interface Options {} export = Route;",
+        "export namespace Types { export const x = 1; } const route = {}; export = route;",
+        "namespace Route { export interface P {} export const x = 1; } import Alias = Route; export interface O {} export = Alias;",
+        "namespace A { export namespace B { export interface P {} export const x = 1; } } import Alias = A.B; export interface O {} export = Alias;",
+        "namespace A { export namespace B { export interface P {} export const x = 1; } } export interface O {} export = A.B;",
+        "namespace A.B { export interface P {} export const x = 1; } export interface O {} export = A.B;",
+        "namespace A { export namespace B {} export namespace B { export interface P {} export const x = 1; } } export interface O {} export = A.B;",
         "namespace Route {} namespace Route { export interface Params {} } export interface Options {} export = Route;",
         "namespace Route { interface Params {} export { Params }; } export type Options = {}; export = Route;",
         "interface Options {}; const Options = 1; export { Options }; const route = {}; export = route;",

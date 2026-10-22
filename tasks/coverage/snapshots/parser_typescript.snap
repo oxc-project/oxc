@@ -2,7 +2,7 @@ commit: 5237fd46
 
 parser_typescript Summary:
 AST Parsed     : 9852/9862 (99.90%)
-Positive Passed: 9847/9862 (99.85%)
+Positive Passed: 9849/9862 (99.87%)
 Negative Passed: 1712/2806 (61.01%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
@@ -2211,26 +2211,6 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declara
     ·                    ──
  17 │ 
     ╰────
-
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging1.ts
-
-  × TS(2309): An export assignment cannot be used in a module with other exported elements
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging1.ts:5:1]
- 4 │ }
- 5 │ export = { a: 1, b: "hello" };
-   · ──────────────────────────────
-   ╰────
-  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
-
-Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging2.ts
-
-  × TS(2309): An export assignment cannot be used in a module with other exported elements
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/exportAssignmentMerging2.ts:9:1]
- 8 │ }
- 9 │ export = mod;
-   · ─────────────
-   ╰────
-  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/importAttributeDuplicatePatternMergedResolution.ts
 
