@@ -1,5 +1,7 @@
 use std::ops::Deref;
 
+use unicode_width::UnicodeWidthStr;
+
 use oxc_span::{GetSpan, Span};
 
 /// Source text wrapper providing mechanical byte/offset access for the formatter.
@@ -110,8 +112,8 @@ impl<'a> SourceText<'a> {
     }
 
     // Utility methods
-    /// Get character count of span
+    /// Get the display width of span, the same measure as a printed string's width (wide characters count as 2)
     pub fn span_width(&self, span: Span) -> usize {
-        self.text_for(&span).chars().count()
+        self.text_for(&span).width()
     }
 }
