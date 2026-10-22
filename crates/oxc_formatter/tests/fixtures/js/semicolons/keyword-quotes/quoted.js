@@ -1,4 +1,5 @@
 // DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#quoted-keyword-class-field-boundary
 class QuotedKeys {
   x = 1;
   "in";

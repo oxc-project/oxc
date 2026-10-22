@@ -1,4 +1,5 @@
 // DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#modified-keyword-class-field-boundary
 class Fields {
   x = 1;
   in;

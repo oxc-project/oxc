@@ -1005,10 +1005,10 @@ class C {
 - Why: uniform-rule (same construct, same output: initialized fields before modified class members)
 - Pin: `tests/fixtures/js/semicolons/keyword-quotes/modified-typescript.ts`
 
-With `semi: false`, omit the separator before decorated or abstract members even
+With `semi: false`, omit the separator before decorated, abstract, or async members even
 when their key is `in` or `instanceof`. Their modifier already separates the key
 from the preceding initializer. This follows the same rule as decorated or
-abstract members with ordinary names. Prettier 3.9.10 keeps an unnecessary
+abstract/async members with ordinary names. Prettier 3.9.10 keeps an unnecessary
 semicolon only for the operator-keyword names.
 
 ```ts
@@ -1025,5 +1025,34 @@ abstract class C {
 abstract class C {
   x = 1;
   abstract in: number
+}
+```
+
+## quoted-keyword-class-field-boundary
+
+- Why: uniform-rule (same construct, same output: initialized fields before quoted property keys)
+- Pin: `tests/fixtures/js/semicolons/keyword-quotes/quoted.js`
+
+With `semi: false`, omit the separator when consistent quoting renders an
+identifier key as `"in"` or `"instanceof"`. This follows the same rule as a
+source string-literal key rendered with those quotes. Prettier 3.9.10 retains
+an unnecessary semicolon when the quoted output originated as an identifier.
+
+```js
+// input
+class C { "not-valid"; x = 1; in; }
+
+// ours (semi: false, quoteProps: "consistent")
+class C {
+  "not-valid"
+  "x" = 1
+  "in"
+}
+
+// prettier (same options)
+class C {
+  "not-valid"
+  "x" = 1;
+  "in"
 }
 ```

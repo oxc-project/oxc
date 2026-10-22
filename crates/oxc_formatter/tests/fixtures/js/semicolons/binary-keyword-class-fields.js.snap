@@ -3,6 +3,7 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
 // DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#modified-keyword-class-field-boundary
 class Fields {
   x = 1;
   in;
@@ -33,6 +34,7 @@ class ModifiedKeys {
 { printWidth: 80, semi: true }
 ------------------------------
 // DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#modified-keyword-class-field-boundary
 class Fields {
   x = 1;
   in;
@@ -62,6 +64,7 @@ class ModifiedKeys {
 { printWidth: 100, semi: true }
 -------------------------------
 // DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#modified-keyword-class-field-boundary
 class Fields {
   x = 1;
   in;
@@ -91,6 +94,7 @@ class ModifiedKeys {
 { printWidth: 80, semi: false }
 -------------------------------
 // DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#modified-keyword-class-field-boundary
 class Fields {
   x = 1;
   in
@@ -120,6 +124,7 @@ class ModifiedKeys {
 { printWidth: 100, semi: false }
 --------------------------------
 // DIVERGENCES.md#binary-keyword-class-field-boundary
+// DIVERGENCES.md#modified-keyword-class-field-boundary
 class Fields {
   x = 1;
   in
