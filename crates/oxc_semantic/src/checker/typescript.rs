@@ -344,15 +344,30 @@ fn check_ts_export_assignment_in_statements<'a>(
             }
             Statement::ExportNamedDeclaration(export_decl) => {
                 // ignore `export {}`
-                has_other_exports |= !export_decl.specifiers.is_empty();
+                has_other_exports |= export_decl.export_kind.is_value()
+                    && export_decl
+                        .specifiers
+                        .iter()
+                        .any(|specifier| specifier.export_kind.is_value());
             }
             Statement::ExportFromDeclaration(export_decl) => {
                 // Preserve the existing treatment of `export {} from "mod"`.
-                has_other_exports |= !export_decl.specifiers.is_empty();
+                has_other_exports |= export_decl.export_kind.is_value()
+                    && export_decl
+                        .specifiers
+                        .iter()
+                        .any(|specifier| specifier.export_kind.is_value());
             }
-            Statement::ExportDeclaration(_)
-            | Statement::ExportDefaultDeclaration(_)
-            | Statement::ExportAllDeclaration(_) => {
+            Statement::ExportDeclaration(export_decl) => {
+                has_other_exports |= !matches!(
+                    export_decl.declaration,
+                    Declaration::TSTypeAliasDeclaration(_) | Declaration::TSInterfaceDeclaration(_)
+                );
+            }
+            Statement::ExportAllDeclaration(export_decl) => {
+                has_other_exports |= export_decl.export_kind.is_value();
+            }
+            Statement::ExportDefaultDeclaration(_) => {
                 has_other_exports = true;
             }
             _ => {}
