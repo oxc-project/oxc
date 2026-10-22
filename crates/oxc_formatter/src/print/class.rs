@@ -587,7 +587,9 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
                         || def.r#static
                         || def.declare
                         || def.r#override
-                        || def.readonly) =>
+                        || def.readonly
+                        || def.r#type.is_abstract()
+                        || !def.decorators.is_empty()) =>
                 {
                     Some(&def.key)
                 }
@@ -598,7 +600,9 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
                         || def.r#override
                         || def.kind.is_accessor()
                         || def.value.r#async
-                        || def.value.generator) =>
+                        || def.value.generator
+                        || def.r#type.is_abstract()
+                        || !def.decorators.is_empty()) =>
                 {
                     Some(&def.key)
                 }
