@@ -55,6 +55,11 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     }
 }
 
+/// Checks whether a JSX child is whitespace-only text containing a line feed.
+pub fn is_jsx_multiline_whitespace(child: &JSXChild<'_>) -> bool {
+    matches!(child, JSXChild::Text(text) if text.value.contains('\n') && text.value.trim().is_empty())
+}
+
 pub fn has_jsx_prop<'a, 'b>(
     node: &'b JSXOpeningElement<'a>,
     target_prop: &'b str,
