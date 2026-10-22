@@ -975,3 +975,29 @@ When every right side of a logical chain is an inlined object/array/JSX literal,
 Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
 A chain with a non-inlined right side breaks at the operators and keeps the indent.
 Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.
+
+## html-close-comment-newline
+
+- Why: semantics
+- Pin: `tests/fixtures/js/comments/html-close-declaration.cjs`
+
+A closing HTML comment must start a line. Keep a line break before `-->` when
+printing a comment inside a variable declaration. Prettier 3.9.10 inlines the
+comment after `const` or `var`, producing code rejected by `node --check`, and
+misparses the `let` case as an expression statement.
+
+```js
+// input
+const
+--> comment
+value = 2;
+
+// ours
+const
+  --> comment
+  value = 2;
+
+// prettier
+const --> comment
+  value = 2;
+```

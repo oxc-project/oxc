@@ -555,6 +555,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
             write!(f, [formatted]);
         } else {
             let content = f.source_text().text_for(&comment.span);
+            // Annex B closing HTML comments are only comments at the start of a line.
+            // A leading comment may otherwise be inlined after a declaration keyword.
+            if comment.is_line() && content.starts_with("-->") {
+                write!(f, hard_line_break());
+            }
             if comment.is_multiline_block() {
                 if is_alignable_comment(content) {
                     let mut lines = LineTerminatorSplitter::new(content);
