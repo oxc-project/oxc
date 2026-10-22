@@ -608,13 +608,35 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
                 }
                 _ => None,
             };
+            // The current member will claim its trailing comments before the next member
+            // prints. Only the following leading run can suppress the next member.
+            let comments = f.comments();
+            let mut leading = false;
+            let next_suppressed = comments
+                .all_comments_in_range(element.span().end, next_element.span().start)
+                .any(|comment| {
+                    leading |=
+                        comment.preceded_by_newline() || comments.is_type_cast_comment(comment);
+                    leading && comments.is_suppression_comment(comment)
+                })
+                || comments.has_trailing_suppression_comment(next_element.span().end)
+                || Self::new(next_element, None)
+                    .content_end(f)
+                    .is_some_and(|end| comments.has_trailing_suppression_comment(end));
             if key.is_some_and(|key| match key {
                 PropertyKey::StaticIdentifier(id) => {
-                    !(f.options().quote_properties.is_consistent() && f.context().is_quote_needed())
-                        && matches!(id.name.as_str(), "in" | "instanceof")
+                    if next_suppressed {
+                        matches!(f.source_text().text_for(&id.span), "in" | "instanceof")
+                    } else {
+                        !f.context().is_quote_needed()
+                            && matches!(id.name.as_str(), "in" | "instanceof")
+                    }
                 }
                 PropertyKey::StringLiteral(literal) => {
-                    // TypeScript property definitions keep their quotes regardless of quoteProps.
+                    // Suppressed strings remain quoted, as do TypeScript property definitions.
+                    if next_suppressed {
+                        return false;
+                    }
                     if f.context().source_type().is_typescript()
                         && matches!(next_element.as_ref(), ClassElement::PropertyDefinition(_))
                     {

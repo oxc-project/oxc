@@ -1056,3 +1056,33 @@ class C {
   "in"
 }
 ```
+
+## trailing-member-suppression-before-semicolon
+
+- Why: invariant
+- Pin: `tests/fixtures/js/semicolons/keyword-quotes/suppressed.js`
+
+Preserve a class member's content when a trailing ignore comment precedes its
+semicolon on a later line. This is the same trailing suppression target defined
+in AGENTS.md. Prettier 3.9.10 formats the content despite its suppression comment.
+
+```js
+// input (semi: false, quoteProps: "consistent")
+class C {
+  "not-valid";
+  in // prettier-ignore
+  ;
+}
+
+// ours
+class C {
+  "not-valid"
+  in // prettier-ignore
+}
+
+// prettier
+class C {
+  "not-valid";
+  "in" // prettier-ignore
+}
+```
