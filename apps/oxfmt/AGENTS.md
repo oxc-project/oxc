@@ -79,6 +79,8 @@ NOTE: Rust written formatters never fall back to Prettier, since they exist to r
 Known divergences live in DIVERGENCES.md (embedding / dispatch layer only); single-language ones live in the owning crate's.
 
 - The pin is a minimal repro in `conformance/fixtures/edge-cases/`
+- `conformance/run.ts` compares a category's `projects` (real-world repositories) on Prettier's output of each file, the code a Prettier user hands over,
+  so the divergences that keep what was written do not fire in bulk; its `fixtures` (Prettier's own, the plugins', `edge-cases/`) stay as written, raw shapes are their job
 - `conformance/run.ts` derives the file-to-entry map from every `DIVERGENCES.md` (this one's `Pin:` / `Conformance:`, the crates' `Oxfmt:`), prints the ref next to each failure,
   and warns on a failure no entry lists (unclassified) and on a listed file that passes (stale)
 - All current entries are embedding-layer decisions that outlive the Prettier delegation;

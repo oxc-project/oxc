@@ -449,7 +449,6 @@ The other direction of the same artifact: a map value after `$v: // c` keeps its
 
 - Why: semantics
 - Pin: `tests/fixtures/format/scss/map-item-parens.scss`
-- Oxfmt: `externals/gitlab/stylesheets/framework/variables_overrides.scss`
 
 ```scss
 /* input */
@@ -1088,7 +1087,6 @@ where exactly ours keeps it is printer mechanism, documented at `write_less_bina
 
 - Why: uniform-rule (blank-line preservation; prettier/prettier#16824)
 - Pin: `tests/fixtures/format/scss/map-paren-value-blank-lines.scss`
-- Oxfmt: `externals/gitlab/stylesheets/highlight/conflict_colors.scss`
 
 ```scss
 /* input */
@@ -1580,3 +1578,35 @@ Prettier glues it only between SCSS `if()` branches and keeps the source space e
 
 A broken function call inside a `@supports` declaration indents its arguments one level, as the same declaration does inside a rule;
 Prettier indents the arguments and `)` one level further there, its prelude value group adding its own indent.
+
+## grid-value-broken-in-function
+
+- Why: invariant
+- Pin: `tests/fixtures/format/scss/grid-value-broken-in-function.scss`
+- Oxfmt: `externals/gitlab/stylesheets/page_bundles/work_items.scss`, `externals/webawesome/page/page.styles.ts`
+
+```scss
+/* input (= ours; Prettier's output for the value on one line) */
+a {
+  b {
+    grid-template-columns: minmax(
+        0,
+        1fr
+      ) $work-item-overview-right-sidebar-width-x;
+  }
+}
+
+/* prettier */
+a {
+  b {
+    grid-template-columns:
+      minmax(0, 1fr)
+      $work-item-overview-right-sidebar-width-x;
+  }
+}
+```
+
+Prettier's output is not a fixpoint here.
+A grid value too long for one line breaks inside its function, as Prettier prints it from one line;
+Prettier then reads the line breaks it printed inside the function as the grid's line structure,
+so a second pass moves each top-level value to its own line.

@@ -178,4 +178,5 @@ Failures must be either fixed or classified under "Known divergences".
 
 The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt. Requires a dev build first.
 
-There are also conformance tests for each language that use real-world repositories.
+There are also conformance tests for each language that use real-world repositories,
+compared on Prettier's output of each file (what a Prettier user hands over), not as written; test suites stay as written.
