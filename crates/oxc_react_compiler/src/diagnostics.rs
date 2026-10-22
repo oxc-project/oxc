@@ -1611,12 +1611,24 @@ pub fn invalid_module_type(module: &str, expect_hook: bool, span: Option<Span>) 
         )
 }
 
+const EXPECTED_INLINE_MEMO_FUNCTION: &str =
+    "Expected the first argument to be an inline function expression";
+
 #[cold]
 pub fn expected_inline_memo_function(span: Option<Span>) -> OxcDiagnostic {
-    const MESSAGE: &str = "Expected the first argument to be an inline function expression";
-    diagnostic(ErrorCategory::UseMemo, MESSAGE)
+    diagnostic(ErrorCategory::UseMemo, EXPECTED_INLINE_MEMO_FUNCTION)
         .with_help("Pass an inline function expression as the first argument")
-        .with_labels(span.map(|span| span.primary_label(MESSAGE)))
+        .with_labels(span.map(|span| span.primary_label(EXPECTED_INLINE_MEMO_FUNCTION)))
+}
+
+/// Whether `diagnostic` only says that a manual `useMemo`/`useCallback` could not be
+/// honoured (missing or extra dependencies, unpreserved memoization, or a callback that
+/// is not an inline function). Compiling again with that call kept as written resolves it.
+pub fn is_unhonoured_manual_memo(diagnostic: &OxcDiagnostic) -> bool {
+    ErrorCategory::PreserveManualMemo.matches(diagnostic)
+        || ErrorCategory::MemoDependencies.matches(diagnostic)
+        || (ErrorCategory::UseMemo.matches(diagnostic)
+            && diagnostic.message == EXPECTED_INLINE_MEMO_FUNCTION)
 }
 
 #[cold]

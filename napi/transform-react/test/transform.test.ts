@@ -290,7 +290,7 @@ export function Component({ value }: { value: string }) {
     expect(result.code).not.toContain("<span");
   });
 
-  it("does not enable manual memo dependency validation by default", () => {
+  it("keeps a manual memo whose dependencies can't be honoured", () => {
     const result = transformSync(
       "Component.tsx",
       `import { useMemo } from "react";
@@ -306,6 +306,7 @@ export function Component({ value }: { value: string }) {
 
     expect(result.errors).toEqual([]);
     expect(result.code).toContain("react/compiler-runtime");
+    expect(result.code).toContain("useMemo(");
   });
 
   it("compiles an unsuppressed sibling after a suppression bailout", () => {

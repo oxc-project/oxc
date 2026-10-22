@@ -2,9 +2,37 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/error.useMemo-infer-less-specific-conditional-value-block.ts
 ---
-Diagnostics:
+import { c as _c } from "react/compiler-runtime";
+// @validatePreserveExistingMemoizationGuarantees @enablePreserveExistingMemoizationGuarantees:false
+import { useMemo } from "react";
+import { identity, mutate } from "shared-runtime";
+function Component(t0) {
+	const $ = _c(4);
+	const { propA, propB } = t0;
+	let t1;
+	let t2;
+	if ($[0] !== propA.a || $[1] !== propB.x.y) {
+		t1 = () => {
+			const x = {};
+			if (identity(null) ?? propA.a) {
+				mutate(x);
+				return { value: propB.x.y };
+			}
+		};
+		t2 = [propA.a, propB.x.y];
+		$[0] = propA.a;
+		$[1] = propB.x.y;
+		$[2] = t1;
+		$[3] = t2;
+	} else {
+		t1 = $[2];
+		t2 = $[3];
+	}
+	return useMemo(t1, t2);
+}
+
+
+Lint-mode diagnostics (differ from transform):
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Existing memoization could not be preserved", labels: [LabeledSpan { label: Some("This dependency list does not match the dependencies inferred from the callback"), span: Span { start: 377, end: 397 }, primary: true }, LabeledSpan { label: Some("This dependency is inferred here"), span: Span { start: 288, end: 295 }, primary: false }], help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `propA`, but the source dependencies were [propA.a, propB.x.y]. Inferred less specific property than source"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("PreserveManualMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/preserve-manual-memoization") } }
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Existing memoization could not be preserved", labels: [LabeledSpan { label: Some("This dependency list does not match the dependencies inferred from the callback"), span: Span { start: 377, end: 397 }, primary: true }, LabeledSpan { label: Some("This dependency is inferred here"), span: Span { start: 346, end: 355 }, primary: false }], help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `propB`, but the source dependencies were [propA.a, propB.x.y]. Inferred less specific property than source"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("PreserveManualMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/preserve-manual-memoization") } }
-
-No changes.

@@ -1,0 +1,21 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/keep-manual-memo-missing-deps-rest-props.jsx
+---
+// @compilationMode:"infer" @panicThreshold:"none"
+// https://github.com/oxc-project/oxc/issues/27113
+// The dependency list is incomplete on purpose; the useMemo is kept as written.
+import { useMemo } from "react";
+// `values` is recomputed only when `items` changes, on purpose:
+// `s` / `props.value` are left out so the list does not re-sort while the user interacts with it.
+export function List(t0) {
+	const { s, ...props } = t0;
+	const { items, children } = props;
+	const values = useMemo(() => sortBy(items, s ?? props.value), [items]);
+	return children(values);
+}
+
+
+Lint-mode diagnostics (differ from transform):
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing memoization dependencies", labels: [LabeledSpan { label: Some("This dependency list is missing values used by the callback"), span: Span { start: 522, end: 529 }, primary: true }, LabeledSpan { label: Some("Missing dependency `props.value`"), span: Span { start: 508, end: 519 }, primary: false }, LabeledSpan { label: Some("Missing dependency `s`"), span: Span { start: 503, end: 504 }, primary: false }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }

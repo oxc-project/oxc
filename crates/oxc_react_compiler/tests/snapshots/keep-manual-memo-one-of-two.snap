@@ -1,0 +1,55 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/keep-manual-memo-one-of-two.jsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer" @panicThreshold:"none"
+// Only the useMemo with the incomplete dependency list is kept; the other is compiled as usual.
+import { useMemo } from "react";
+function List(t0) {
+	const $ = _c(11);
+	const { s, items, title } = t0;
+	let t1;
+	if ($[0] !== items.length || $[1] !== title) {
+		t1 = [title, items.length];
+		$[0] = items.length;
+		$[1] = title;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	const heading = t1;
+	let t2;
+	if ($[3] !== items || $[4] !== s) {
+		t2 = () => sortBy(items, s);
+		$[3] = items;
+		$[4] = s;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	let t3;
+	if ($[6] !== items) {
+		t3 = [items];
+		$[6] = items;
+		$[7] = t3;
+	} else {
+		t3 = $[7];
+	}
+	const values = useMemo(t2, t3);
+	let t4;
+	if ($[8] !== heading || $[9] !== values) {
+		t4 = <Rows heading={heading} values={values} />;
+		$[8] = heading;
+		$[9] = values;
+		$[10] = t4;
+	} else {
+		t4 = $[10];
+	}
+	return t4;
+}
+
+
+Lint-mode diagnostics (differ from transform):
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing memoization dependencies", labels: [LabeledSpan { label: Some("This dependency list is missing values used by the callback"), span: Span { start: 340, end: 347 }, primary: true }, LabeledSpan { label: Some("Missing dependency `s`"), span: Span { start: 336, end: 337 }, primary: false }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }

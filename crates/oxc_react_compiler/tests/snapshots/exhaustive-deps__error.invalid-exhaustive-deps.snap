@@ -2,11 +2,131 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/error.invalid-exhaustive-deps.js
 ---
-Diagnostics:
+import { c as _c } from "react/compiler-runtime";
+// @validateExhaustiveMemoizationDependencies
+import { useMemo } from "react";
+import { Stringify } from "shared-runtime";
+function Component(t0) {
+	const $ = _c(25);
+	const { x, y, z } = t0;
+	let t1;
+	if ($[0] !== x.y.z.a) {
+		t1 = () => x?.y.z?.a;
+		$[0] = x.y.z.a;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const t2 = x?.y.z?.a.b;
+	let t3;
+	if ($[2] !== t2) {
+		t3 = [t2];
+		$[2] = t2;
+		$[3] = t3;
+	} else {
+		t3 = $[3];
+	}
+	const a = useMemo(t1, t3);
+	const b = x.y.z?.a;
+	let t4;
+	if ($[4] !== x.y.z.a.b) {
+		t4 = () => x?.y.z.a?.b;
+		$[4] = x.y.z.a.b;
+		$[5] = t4;
+	} else {
+		t4 = $[5];
+	}
+	const t5 = x?.y.z.a?.b.z;
+	let t6;
+	if ($[6] !== t5) {
+		t6 = [t5];
+		$[6] = t5;
+		$[7] = t6;
+	} else {
+		t6 = $[7];
+	}
+	const c = useMemo(t4, t6);
+	x?.y;
+	z?.b;
+	const d = x?.y?.[console.log(y), z?.b];
+	let e;
+	if ($[8] !== x) {
+		e = [];
+		e.push(x);
+		$[8] = x;
+		$[9] = e;
+	} else {
+		e = $[9];
+	}
+	const e_0 = e;
+	const t7 = z?.y?.a;
+	let t8;
+	if ($[10] !== t7 || $[11] !== x || $[12] !== y.z) {
+		t8 = [
+			x,
+			y.z,
+			t7,
+			UNUSED_GLOBAL
+		];
+		$[10] = t7;
+		$[11] = x;
+		$[12] = y.z;
+		$[13] = t8;
+	} else {
+		t8 = $[13];
+	}
+	const f = useMemo(_temp2, t8);
+	const ref1 = useRef(null);
+	const ref2 = useRef(null);
+	const ref = z ? ref1 : ref2;
+	let t9;
+	if ($[14] !== ref) {
+		t9 = () => () => ref.current;
+		$[14] = ref;
+		$[15] = t9;
+	} else {
+		t9 = $[15];
+	}
+	let t10;
+	if ($[16] === Symbol.for("react.memo_cache_sentinel")) {
+		t10 = [];
+		$[16] = t10;
+	} else {
+		t10 = $[16];
+	}
+	const cb = useMemo(t9, t10);
+	let t11;
+	if ($[17] !== a || $[18] !== b || $[19] !== c || $[20] !== cb || $[21] !== d || $[22] !== e_0 || $[23] !== f) {
+		t11 = <Stringify results={[
+			a,
+			b,
+			c,
+			d,
+			e_0,
+			f,
+			cb
+		]} />;
+		$[17] = a;
+		$[18] = b;
+		$[19] = c;
+		$[20] = cb;
+		$[21] = d;
+		$[22] = e_0;
+		$[23] = f;
+		$[24] = t11;
+	} else {
+		t11 = $[24];
+	}
+	return t11;
+}
+function _temp2() {
+	return [];
+}
+
+
+Lint-mode diagnostics (differ from transform):
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing/extra memoization dependencies", labels: [LabeledSpan { label: Some("Missing dependency `x?.y.z?.a`"), span: Span { start: 191, end: 200 }, primary: true }, LabeledSpan { label: Some("Overly precise dependency `x?.y.z?.a.b`, use `x?.y.z?.a` instead"), span: Span { start: 234, end: 245 }, primary: false }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI. Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing/extra memoization dependencies", labels: [LabeledSpan { label: Some("Missing dependency `x?.y.z.a?.b`"), span: Span { start: 403, end: 414 }, primary: true }, LabeledSpan { label: Some("Overly precise dependency `x?.y.z.a?.b.z`, use `x?.y.z.a?.b` instead"), span: Span { start: 448, end: 461 }, primary: false }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI. Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found extra memoization dependencies", labels: [LabeledSpan { label: Some("Unnecessary dependency `x`"), span: Span { start: 740, end: 741 }, primary: true }, LabeledSpan { label: Some("Unnecessary dependency `y.z`"), span: Span { start: 743, end: 746 }, primary: false }, LabeledSpan { label: Some("Unnecessary dependency `z?.y?.a`"), span: Span { start: 748, end: 755 }, primary: false }, LabeledSpan { label: Some("Unnecessary dependency `UNUSED_GLOBAL`. Values declared outside of a component/hook should not be listed as dependencies as the component will not re-render if they change"), span: Span { start: 757, end: 770 }, primary: false }], help: Some("Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing memoization dependencies", labels: [LabeledSpan { label: Some("This dependency list is missing values used by the callback"), span: Span { start: 997, end: 999 }, primary: true }, LabeledSpan { label: Some("Missing dependency `ref`. Refs, setState functions, and other \"stable\" values generally do not need to be added as dependencies, but this variable may change over time to point to different values"), span: Span { start: 924, end: 927 }, primary: false }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
-
-No changes.

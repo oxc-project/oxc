@@ -2,8 +2,61 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/propagate-scope-deps-hir-fork/error.todo-optional-member-expression-with-conditional-optional.js
 ---
-Diagnostics:
+import { c as _c } from "react/compiler-runtime";
+// @validatePreserveExistingMemoizationGuarantees @enableOptionalDependencies @enablePropagateDepsInHIR
+import { ValidateMemoization } from "shared-runtime";
+function Component(props) {
+	const $ = _c(12);
+	let t0;
+	if ($[0] !== props.cond || $[1] !== props.items) {
+		t0 = () => {
+			const x = [];
+			x.push(props?.items);
+			if (props.cond) {
+				x.push(props?.items);
+			}
+			return x;
+		};
+		$[0] = props.cond;
+		$[1] = props.items;
+		$[2] = t0;
+	} else {
+		t0 = $[2];
+	}
+	const t1 = props?.items;
+	let t2;
+	if ($[3] !== props.cond || $[4] !== t1) {
+		t2 = [t1, props.cond];
+		$[3] = props.cond;
+		$[4] = t1;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	const data = useMemo(t0, t2);
+	const t3 = props?.items;
+	let t4;
+	if ($[6] !== props.cond || $[7] !== t3) {
+		t4 = [t3, props.cond];
+		$[6] = props.cond;
+		$[7] = t3;
+		$[8] = t4;
+	} else {
+		t4 = $[8];
+	}
+	let t5;
+	if ($[9] !== data || $[10] !== t4) {
+		t5 = <ValidateMemoization inputs={t4} output={data} />;
+		$[9] = data;
+		$[10] = t4;
+		$[11] = t5;
+	} else {
+		t5 = $[11];
+	}
+	return t5;
+}
+
+
+Lint-mode diagnostics (differ from transform):
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Existing memoization could not be preserved", labels: [LabeledSpan { label: Some("This dependency list does not match the dependencies inferred from the callback"), span: Span { start: 334, end: 360 }, primary: true }, LabeledSpan { label: Some("This dependency is inferred here"), span: Span { start: 251, end: 256 }, primary: false }], help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `props.items`, but the source dependencies were [props?.items, props.cond]. Inferred different dependency than source"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("PreserveManualMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/preserve-manual-memoization") } }
-
-No changes.

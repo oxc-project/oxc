@@ -2,8 +2,27 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/error.validate-useMemo-named-function.js
 ---
-Diagnostics:
+import { c as _c } from "react/compiler-runtime";
+// @validatePreserveExistingMemoizationGuarantees
+// We technically do not need to bailout here if we can check
+// `someHelper`'s reactive deps are a subset of depslist from
+// source. This check is somewhat incompatible with our current
+// representation of manual memoization in HIR, so we bail out
+// for now.
+function Component(props) {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = [];
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	const x = useMemo(someHelper, t0);
+	return x;
+}
+
+
+Lint-mode diagnostics (differ from transform):
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Expected the first argument to be an inline function expression", labels: [LabeledSpan { label: Some("Expected the first argument to be an inline function expression"), span: Span { start: 362, end: 372 }, primary: true }], help: Some("Pass an inline function expression as the first argument"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("UseMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/use-memo") } }
-
-No changes.

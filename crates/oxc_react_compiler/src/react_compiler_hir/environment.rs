@@ -40,6 +40,33 @@ pub enum OutputMode {
     Lint,
 }
 
+/// Manual memoization calls (`useMemo`/`useCallback`) that `drop_manual_memoization`
+/// leaves exactly as written instead of replacing them with compiler memoization.
+///
+/// Set when an earlier attempt could not honour the manual memoization; React's own
+/// hook then enforces the author's dependencies.
+#[derive(Debug, Clone, Default, PartialEq, Eq)]
+pub enum KeptManualMemos {
+    #[default]
+    None,
+    /// Keep each call whose span contains one of these (diagnostic label) spans.
+    Containing(Vec<Span>),
+    All,
+}
+
+impl KeptManualMemos {
+    /// Whether the manual memoization call spanning `call` is kept.
+    pub fn keeps(&self, call: Option<Span>) -> bool {
+        match self {
+            Self::None => false,
+            Self::Containing(spans) => call.is_some_and(|call| {
+                spans.iter().any(|span| call.start <= span.start && span.end <= call.end)
+            }),
+            Self::All => true,
+        }
+    }
+}
+
 /// Analysis identity for an aliasing-effect diagnostic, matching the effect
 /// interning key granularity so identical errors collapse.
 type AliasingDiagnosticKey = (IdentifierId, Cow<'static, str>, Option<Cow<'static, str>>);
@@ -152,6 +179,7 @@ pub struct Environment<'a> {
     pub validate_preserve_existing_memoization_guarantees: bool,
     pub validate_no_set_state_in_render: bool,
     pub enable_preserve_existing_memoization_guarantees: bool,
+    pub kept_manual_memos: KeptManualMemos,
 
     // Type system registries
     globals: GlobalRegistry<'a>,
@@ -259,6 +287,7 @@ impl<'a> Environment<'a> {
             validate_no_set_state_in_render: config.validate_no_set_state_in_render,
             enable_preserve_existing_memoization_guarantees: config
                 .enable_preserve_existing_memoization_guarantees,
+            kept_manual_memos: KeptManualMemos::None,
             globals: global_registry,
             shapes,
             module_types,

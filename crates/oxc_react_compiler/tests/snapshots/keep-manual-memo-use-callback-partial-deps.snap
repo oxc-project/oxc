@@ -1,0 +1,46 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/keep-manual-memo-use-callback-partial-deps.jsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer" @panicThreshold:"none"
+// `suffix` is left out of the dependency list, so the callback keeps the `suffix` it was
+// created with until `prefix` changes. The useCallback is kept as written.
+import { useCallback } from "react";
+function Label(t0) {
+	const $ = _c(8);
+	const { prefix, suffix } = t0;
+	let t1;
+	if ($[0] !== prefix || $[1] !== suffix) {
+		t1 = () => prefix + suffix;
+		$[0] = prefix;
+		$[1] = suffix;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	let t2;
+	if ($[3] !== prefix) {
+		t2 = [prefix];
+		$[3] = prefix;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	const format = useCallback(t1, t2);
+	let t3;
+	if ($[5] !== format || $[6] !== suffix) {
+		t3 = <Text format={format} suffix={suffix} />;
+		$[5] = format;
+		$[6] = suffix;
+		$[7] = t3;
+	} else {
+		t3 = $[7];
+	}
+	return t3;
+}
+
+
+Lint-mode diagnostics (differ from transform):
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing memoization dependencies", labels: [LabeledSpan { label: Some("This dependency list is missing values used by the callback"), span: Span { start: 344, end: 352 }, primary: true }, LabeledSpan { label: Some("Missing dependency `suffix`"), span: Span { start: 336, end: 342 }, primary: false }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }

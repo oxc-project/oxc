@@ -2,8 +2,75 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/error.repro-preserve-memoization-inner-destructured-value-mistaken-as-dependency-mutated-dep.js
 ---
-Diagnostics:
+import { c as _c } from "react/compiler-runtime";
+// @validatePreserveExistingMemoizationGuarantees @enablePreserveExistingMemoizationGuarantees:false
+import { identity, Stringify, useHook } from "shared-runtime";
+/**
+* Repro from https://github.com/facebook/react/issues/34262
+*
+* The compiler memoizes more precisely than the original code, with two reactive scopes:
+* - One for `transform(input)` with `input` as dep
+* - One for `{value}` with `value` as dep
+*
+* When we validate preserving manual memoization we incorrectly reject this, because
+* the original memoization had `object` depending on `input` but our scope depends on
+* `value`.
+*/
+function useInputValue(input) {
+	const $ = _c(4);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = {};
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	const x = t0;
+	useHook();
+	let t1;
+	let t2;
+	if ($[1] !== input) {
+		t1 = () => {
+			const { value } = identity(input, x);
+			return { value };
+		};
+		t2 = [input, x];
+		$[1] = input;
+		$[2] = t1;
+		$[3] = t2;
+	} else {
+		t1 = $[2];
+		t2 = $[3];
+	}
+	const object = React.useMemo(t1, t2);
+	return object;
+}
+function Component() {
+	const $ = _c(3);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = { value: 42 };
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	const t1 = useInputValue(t0);
+	let t2;
+	if ($[1] !== t1.value) {
+		t2 = <Stringify value={t1.value} />;
+		$[1] = t1.value;
+		$[2] = t2;
+	} else {
+		t2 = $[2];
+	}
+	return t2;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{}]
+};
+
+
+Lint-mode diagnostics (differ from transform):
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Existing memoization could not be preserved", labels: [LabeledSpan { label: Some("This dependency may be modified later"), span: Span { start: 977, end: 978 }, primary: true }], help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. This dependency may be mutated later, which could cause the value to change unexpectedly"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("PreserveManualMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/preserve-manual-memoization") } }
-
-No changes.

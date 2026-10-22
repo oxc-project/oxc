@@ -2,8 +2,35 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/error.useMemo-aliased-var.ts
 ---
-Diagnostics:
+import { c as _c } from "react/compiler-runtime";
+// @validatePreserveExistingMemoizationGuarantees @validateExhaustiveMemoizationDependencies:false
+// This is technically a false positive, but source is already breaking
+// `exhaustive-deps` lint rule (and can be considered invalid).
+function useHook(x) {
+	const $ = _c(5);
+	const aliasedX = x;
+	const aliasedProp = x.y.z;
+	let t0;
+	if ($[0] !== x) {
+		t0 = () => [x, x.y.z];
+		$[0] = x;
+		$[1] = t0;
+	} else {
+		t0 = $[1];
+	}
+	let t1;
+	if ($[2] !== aliasedProp || $[3] !== aliasedX) {
+		t1 = [aliasedX, aliasedProp];
+		$[2] = aliasedProp;
+		$[3] = aliasedX;
+		$[4] = t1;
+	} else {
+		t1 = $[4];
+	}
+	return useMemo(t0, t1);
+}
+
+
+Lint-mode diagnostics (differ from transform):
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Existing memoization could not be preserved", labels: [LabeledSpan { label: Some("This dependency list does not match the dependencies inferred from the callback"), span: Span { start: 345, end: 368 }, primary: true }, LabeledSpan { label: Some("This dependency is inferred here"), span: Span { start: 334, end: 335 }, primary: false }], help: Some("React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `x`, but the source dependencies were [aliasedX, aliasedProp]. Inferred different dependency than source"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("PreserveManualMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/preserve-manual-memoization") } }
-
-No changes.

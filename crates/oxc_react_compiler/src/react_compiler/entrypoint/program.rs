@@ -16,12 +16,13 @@ use cow_utils::CowUtils;
 use oxc_ast::AstKind;
 use oxc_ast::ast::*;
 use oxc_ast::builder::AstBuilder;
-use oxc_diagnostics::Diagnostics;
+use oxc_diagnostics::{Diagnostics, LabeledSpan};
 use oxc_span::{GetSpan, SPAN, SourceType, Span};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics::{self, should_panic, with_fallback_label};
 use crate::react_compiler_hir::ReactFunctionType;
+use crate::react_compiler_hir::environment::KeptManualMemos;
 use crate::react_compiler_hir::environment_config::EnvironmentConfig;
 use crate::react_compiler_lowering::FunctionNode;
 use crate::scope::ScopeResolver;
@@ -1053,15 +1054,53 @@ fn try_compile_function<'a, const EMIT: bool>(
 
     // Run the compilation pipeline directly on the oxc function node discovered
     // during the program walk.
-    pipeline::compile_fn::<EMIT>(
-        ast,
-        &source.fn_node,
-        scope,
-        source.fn_type,
-        output_mode,
-        env_config,
-        context,
-    )
+    //
+    // Never silently change what a manual `useMemo`/`useCallback` does: when the only
+    // errors say that manual memoization could not be honoured, compile again with those
+    // calls kept as written (then, if that is not enough, with every manual memo kept), so
+    // React enforces the author's dependencies and the rest of the function is still
+    // compiled. This intentionally diverges from Babel, which skips the function. Lint
+    // mode never retries and reports the diagnostics unchanged. If no attempt succeeds,
+    // the first attempt's errors are reported.
+    let diagnostics_len = context.diagnostics.len();
+    let mut kept_manual_memos = KeptManualMemos::None;
+    let mut first_errors = None;
+    loop {
+        let result = pipeline::compile_fn::<EMIT>(
+            ast,
+            &source.fn_node,
+            scope,
+            source.fn_type,
+            output_mode,
+            env_config,
+            kept_manual_memos.clone(),
+            context,
+        );
+        match result {
+            Err(errors)
+                if pipeline::should_retry_keeping_manual_memos(
+                    output_mode,
+                    &kept_manual_memos,
+                    &errors,
+                ) =>
+            {
+                // The retry logs this function's events again.
+                context.diagnostics.truncate(diagnostics_len);
+                kept_manual_memos = match kept_manual_memos {
+                    KeptManualMemos::None => KeptManualMemos::Containing(
+                        errors
+                            .iter()
+                            .flat_map(|d| d.labels.iter().map(LabeledSpan::span))
+                            .collect(),
+                    ),
+                    KeptManualMemos::Containing(_) | KeptManualMemos::All => KeptManualMemos::All,
+                };
+                first_errors.get_or_insert(errors);
+            }
+            Err(errors) => return Err(first_errors.unwrap_or(errors)),
+            Ok(output) => return Ok(output),
+        }
+    }
 }
 
 /// Build the function declaration used to analyse an outlined component. Outlined functions are

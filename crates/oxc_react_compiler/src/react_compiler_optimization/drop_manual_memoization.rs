@@ -10,6 +10,8 @@
 //!
 //! When validation flags are set, inserts `StartMemoize`/`FinishMemoize` markers.
 //!
+//! Calls listed in `Environment::kept_manual_memos` are left untouched.
+//!
 //! Analogous to TS `Inference/DropManualMemoization.ts`.
 
 use std::mem::discriminant;
@@ -212,6 +214,12 @@ fn process_manual_memo_call<'a>(
     queued_inserts: &mut FxHashMap<InstructionId, Instruction<'a>>,
 ) {
     let instr = &func.instructions[instr_id.index()];
+
+    // An earlier attempt could not honour this call: keep it exactly as written, without
+    // markers, so React's hook enforces the source dependencies.
+    if env.kept_manual_memos.keeps(instr.value.span().copied()) {
+        return;
+    }
 
     let memo_details = extract_manual_memoization_args(instr, manual_memo.kind, sidemap, env);
 
