@@ -1,8 +1,8 @@
 commit: a56fe4a4
 
 parser_babel Summary:
-AST Parsed     : 2276/2280 (99.82%)
-Positive Passed: 2257/2280 (98.99%)
+AST Parsed     : 2278/2280 (99.91%)
+Positive Passed: 2259/2280 (99.08%)
 Negative Passed: 1789/1804 (99.17%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -34,15 +34,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-same-line-let/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-same-line-let/input.js:1:13]
- 1 │ let /* a */ --> c
-   ·             ──
- 2 │ x = 1;
-   ╰────
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
 
   × Cannot use export statement outside a module
@@ -50,15 +41,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-
  1 │ export default from <!-- c
    · ──────
  2 │ "x";
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-let-postfix-decrement-greater-than/input.js
-
-  × Unexpected token
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-let-postfix-decrement-greater-than/input.js:1:5]
- 1 │ let --> 0
-   ·     ──
- 2 │ x = 1
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js

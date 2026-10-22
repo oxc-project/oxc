@@ -21,8 +21,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if peeked.is_assignment_operator() || peeked.is_binary_operator() {
             let expr = self.parse_assignment_expression_or_higher();
             self.parse_expression_statement(start, expr)
-        // let.a = 1, let?.a = 1, let()[a] = 1
-        } else if matches!(peeked, Kind::Dot | Kind::QuestionDot | Kind::LParen) {
+        // let.a = 1, let?.a = 1, let()[a] = 1, let++, let--
+        } else if matches!(
+            peeked,
+            Kind::Dot | Kind::QuestionDot | Kind::LParen | Kind::Plus2 | Kind::Minus2
+        ) {
             let expr = self.parse_expr();
             self.parse_expression_statement(start, expr)
         // single statement let declaration: while (0) let
