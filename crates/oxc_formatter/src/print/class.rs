@@ -36,6 +36,7 @@ use crate::{
         is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
         statement_body::write_head_body_separator,
+        string::{FormatLiteralStringToken, StringLiteralParentKind},
         suppressed::write_suppressed_content,
     },
     write,
@@ -558,7 +559,7 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
         Self { element, next_element }
     }
 
-    fn needs_semicolon(&self) -> bool {
+    fn needs_semicolon(&self, f: &JsFormatter<'_, 'a>) -> bool {
         let Self { element, next_element, .. } = self;
 
         if let ClassElement::PropertyDefinition(def) = element.as_ref()
@@ -608,7 +609,19 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
                     matches!(id.name.as_str(), "in" | "instanceof")
                 }
                 PropertyKey::StringLiteral(literal) => {
-                    matches!(literal.value.as_str(), Some("in" | "instanceof"))
+                    // TypeScript property definitions keep their quotes regardless of quoteProps.
+                    if f.context().source_type().is_typescript()
+                        && matches!(next_element.as_ref(), ClassElement::PropertyDefinition(_))
+                    {
+                        return false;
+                    }
+                    let rendered = FormatLiteralStringToken::new(
+                        f.source_text().text_for(&literal.span),
+                        false,
+                        StringLiteralParentKind::Member,
+                    )
+                    .clean_text(f);
+                    matches!(&*rendered, "in" | "instanceof")
                 }
                 _ => false,
             }) {
@@ -678,7 +691,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
         let needs_semi = is_property
             && match f.options().semicolons {
                 Semicolons::Always => true,
-                Semicolons::AsNeeded => self.needs_semicolon(),
+                Semicolons::AsNeeded => self.needs_semicolon(f),
             };
 
         // A suppressed element prints its content verbatim and its terminator stays the formatter's,
