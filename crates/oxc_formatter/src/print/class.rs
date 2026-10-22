@@ -603,8 +603,14 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
                 }
                 _ => None,
             };
-            if key.is_some_and(|key| {
-                key.is_specific_static_name("in") || key.is_specific_static_name("instanceof")
+            if key.is_some_and(|key| match key {
+                PropertyKey::StaticIdentifier(id) => {
+                    matches!(id.name.as_str(), "in" | "instanceof")
+                }
+                PropertyKey::StringLiteral(literal) => {
+                    matches!(literal.value.as_str(), "in" | "instanceof")
+                }
+                _ => false,
             }) {
                 return true;
             }
