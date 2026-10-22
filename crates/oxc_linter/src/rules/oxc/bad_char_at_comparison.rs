@@ -56,6 +56,7 @@ declare_oxc_lint!(
     BadCharAtComparison,
     oxc,
     correctness,
+    recommended,
     version = "0.0.22",
     short_description = "Warns when a single-character string access is compared with a string of length greater than 1.",
 );
