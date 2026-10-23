@@ -64,8 +64,16 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
               {
                 "children": [
                   {
-                    "children": [],
-                    "flags": "ScopeFlags(Function)",
+                    "children": [
+                      {
+                        "children": [],
+                        "flags": "ScopeFlags(Function)",
+                        "id": 11,
+                        "node": "Function(inner)",
+                        "symbols": []
+                      }
+                    ],
+                    "flags": "ScopeFlags(0x0)",
                     "id": 10,
                     "node": "Function(inner)",
                     "symbols": [
@@ -115,9 +123,17 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
       {
         "children": [
           {
-            "children": [],
-            "flags": "ScopeFlags(Function)",
-            "id": 12,
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 14,
+                "node": "Function(inner)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 13,
             "node": "Function(inner)",
             "symbols": [
               {
@@ -131,7 +147,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
           }
         ],
         "flags": "ScopeFlags(Function)",
-        "id": 11,
+        "id": 12,
         "node": "Function(defaultFunction)",
         "symbols": [
           {
@@ -152,7 +168,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
                 "id": 6,
                 "name": "arguments",
                 "node_id": 66,
-                "scope_id": 11
+                "scope_id": 12
               }
             ]
           }
@@ -161,9 +177,17 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
       {
         "children": [
           {
-            "children": [],
-            "flags": "ScopeFlags(Function)",
-            "id": 14,
+            "children": [
+              {
+                "children": [],
+                "flags": "ScopeFlags(Function)",
+                "id": 17,
+                "node": "Function(inner)",
+                "symbols": []
+              }
+            ],
+            "flags": "ScopeFlags(0x0)",
+            "id": 16,
             "node": "Function(inner)",
             "symbols": [
               {
@@ -177,7 +201,7 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
           }
         ],
         "flags": "ScopeFlags(Function)",
-        "id": 13,
+        "id": 15,
         "node": "Function(writes)",
         "symbols": [
           {
@@ -194,13 +218,13 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
           {
             "children": [],
             "flags": "ScopeFlags(Function | Arrow)",
-            "id": 16,
+            "id": 19,
             "node": "ArrowFunctionExpression",
             "symbols": []
           }
         ],
         "flags": "ScopeFlags(Function)",
-        "id": 15,
+        "id": 18,
         "node": "Function(sloppyVar)",
         "symbols": [
           {
@@ -214,14 +238,14 @@ input_file: crates/oxc_semantic/tests/fixtures/oxc/arguments/enclosing-bindings.
                 "id": 9,
                 "name": "arguments",
                 "node_id": 93,
-                "scope_id": 15
+                "scope_id": 18
               },
               {
                 "flags": "ReferenceFlags(Read)",
                 "id": 10,
                 "name": "arguments",
                 "node_id": 97,
-                "scope_id": 16
+                "scope_id": 19
               }
             ]
           }

@@ -4,7 +4,10 @@ use oxc_ast::{
     AstKind,
     ast::{BindingIdentifier, IdentifierReference, Program, TSEnumMemberName},
 };
-use oxc_ast_visit::{Visit, walk::walk_ts_enum_member_name};
+use oxc_ast_visit::{
+    Visit,
+    walk::{walk_function, walk_ts_enum_member_name},
+};
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 /// Macro to assert that `left >= right`
@@ -148,6 +151,15 @@ impl<'a> Visit<'a> for Counter {
     #[inline]
     fn enter_scope(&mut self, _: ScopeFlags, _: &Cell<Option<ScopeId>>) {
         self.stats.scopes += 1;
+    }
+
+    fn visit_function(&mut self, func: &oxc_ast::ast::Function<'a>, flags: ScopeFlags) {
+        // Named function expressions have a separate name environment outside their
+        // parameter/var scope. It is an implicit semantic scope, not a separate AST node.
+        if func.is_expression() && func.id.is_some() {
+            self.stats.scopes += 1;
+        }
+        walk_function(self, func, flags);
     }
 
     #[inline]
