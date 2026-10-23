@@ -11,6 +11,40 @@ Oxlint is a high-performance linter that implements many popular ESLint rules na
 
 An official migration tool is available, and will be used by this skill: [`@oxlint/migrate`](https://github.com/oxc-project/oxlint-migrate)
 
+## Prerequisites
+
+Before migrating to Oxlint, ensure the following are completed if not already done:
+
+### ESLint Flat Config Migration
+
+The `@oxlint/migrate` tool requires an ESLint flat config (`eslint.config.js`). If the project still uses the legacy format (e.g., `.eslintrc.json`), migrate it first:
+
+```bash
+npx @eslint/migrate-config .eslintrc.json
+```
+
+This generates an `eslint.config.js` from the legacy config. Review and commit it before proceeding.
+
+### TypeScript 6 Migration (type-aware rules only)
+
+If you plan to use type-aware rules via `oxlint-tsgolint`, its TypeScript compiler requires a `tsconfig.json` compatible with TypeScript 6. If the project is still on TypeScript 5, migrate it first. See the [TypeScript 6 migration tracking issue](https://github.com/microsoft/TypeScript/issues/62508) for breaking changes and migration steps.
+
+Use [`@andrewbranch/ts5to6`](https://github.com/andrewbranch/ts5to6) to automate the two main breaking tsconfig changes:
+
+| Flag | What it does |
+| --- | --- |
+| `--fixBaseUrl` | Removes deprecated `baseUrl` (which existed solely to enable `paths`) and updates path mappings accordingly |
+| `--fixRootDir` | Explicitly sets `rootDir` to preserve TypeScript 5.x inference behavior under TypeScript 6's changed defaults |
+
+```bash
+npx @andrewbranch/ts5to6 --fixBaseUrl .
+npx @andrewbranch/ts5to6 --fixRootDir .
+```
+
+Run whichever fixes apply to the project — both can be run independently.
+
+---
+
 ## Step 1: Run Automated Migration
 
 Run the migration tool in the project root:
@@ -39,6 +73,8 @@ If your ESLint config is not at the default location, pass the path explicitly:
 ```bash
 npx @oxlint/migrate ./path/to/eslint.config.js
 ```
+
+> **Type-aware rules**: If the source ESLint config used `@typescript-eslint/recommended-type-checked`, `strict-type-checked`, or any other type-aware rules, add `"typeAware": true` to the `options` section of `.oxlintrc.json` to preserve that coverage. Without it, all type-aware rules are silently skipped. Install `oxlint-tsgolint` after migrating (see Step 3). If you need to skip type-aware rules in specific invocations for speed (e.g., a pre-commit hook), omit `typeAware` from the config and pass `--type-aware` on the CLI only where full type checking is wanted.
 
 ## Step 2: Review Generated Config
 
@@ -106,11 +142,13 @@ Install the core oxlint package (use `yarn install`, `pnpm install`, `vp install
 npm install -D oxlint
 ```
 
-If you want to add the `oxlint-tsgolint` package, if you intend to use type-aware rules that require TypeScript type information:
+If you set `"typeAware": true` in `.oxlintrc.json`, you must also install `oxlint-tsgolint` — it provides the TypeScript compiler required for type-aware rules:
 
 ```bash
 npm install -D oxlint-tsgolint
 ```
+
+> **Diagnosing false positives**: If type-aware rules produce unexpected errors, run with `--type-check` to surface TypeScript compiler diagnostics alongside lint results. Unresolved imports or globals cause values to be typed as `any`, which triggers rules like `typescript/no-unsafe-call`. Resolve the underlying import/type issue before adding disable comments.
 
 No other packages besides the above are needed by default, though you will need to keep/install any additional ESLint plugins that were migrated into `jsPlugins`. Do not add `@oxlint/migrate` to the package.json, it is meant for one-off usage.
 
@@ -122,6 +160,23 @@ Some features require manual attention:
 - `eslint-plugin-prettier`: Supported, but very slow. It is recommended to use [oxfmt](https://oxc.rs/docs/guide/usage/formatter) instead, or switch to `prettier --check` as a separate step alongside oxlint.
 - `settings` in override configs: Oxlint does not support `settings` inside `overrides` blocks.
 - ESLint v9+ plugins: Not all work with oxlint's JS Plugins API, but the majority will.
+
+### React Projects: JSX Transform and Version Setting
+
+If your project uses the **new JSX transform** (`"jsx": "react-jsx"` in tsconfig), explicitly disable `react/react-in-jsx-scope` — the rule requires `import React` in every JSX file, which the new transform makes unnecessary. The migration tool does not disable this automatically.
+
+Additionally, set the React version in `settings` so that version-dependent rules (e.g., `react/no-deprecated`) can evaluate correctly:
+
+```json
+{
+  "settings": {
+    "react": { "version": "19.1.0" }
+  },
+  "rules": {
+    "react/react-in-jsx-scope": "off"
+  }
+}
+```
 
 ### Local Plugins
 
@@ -148,6 +203,35 @@ For ESLint plugins without a built-in oxlint equivalent, use the `jsPlugins` fie
   }
 }
 ```
+
+### ESLint Core Rules Not Yet in Oxlint
+
+Some ESLint built-in rules are not yet natively implemented in oxlint (e.g., `no-restricted-syntax`). Rather than keeping a separate ESLint process for these, use [`oxlint-plugin-eslint`](https://oxc.rs/blog/2026-03-11-oxlint-js-plugins-alpha#migrating-from-eslint) — a JS plugin that bundles all ESLint core rules for use inside oxlint.
+
+Install it:
+
+```bash
+npm install -D oxlint-plugin-eslint
+```
+
+Then reference it in `.oxlintrc.json` using the `eslint-js/` namespace:
+
+```json
+{
+  "jsPlugins": ["oxlint-plugin-eslint"],
+  "rules": {
+    "eslint-js/no-restricted-syntax": [
+      "error",
+      {
+        "selector": "TSEnumDeclaration",
+        "message": "Don't declare enums, use unions or lookup objects instead."
+      }
+    ]
+  }
+}
+```
+
+This avoids maintaining a parallel ESLint config and keeps all linting in one tool.
 
 ## Step 5: Update CI and Scripts
 
@@ -177,10 +261,38 @@ Additional oxlint options:
 
 - `--tsconfig <path>`: Specify tsconfig.json path, likely unnecessary unless you have a non-standard name for `tsconfig.json`.
 
+## Step 6: Finalize
+
+### Replace eslint-disable Comments
+
+Bulk-convert all `// eslint-disable` and `// eslint-disable-next-line` comments to their `oxlint-disable` equivalents:
+
+```bash
+npx @oxlint/migrate --replace-eslint-comments
+```
+
+### Clean Up Remaining ESLint References
+
+Search the entire project for leftover `eslint` strings:
+
+```bash
+grep -ri "eslint" . --exclude-dir=node_modules --exclude-dir=.git
+```
+
+For each match, decide whether to replace or remove it:
+
+| What | Action |
+| --- | --- |
+| `package.json` scripts | Replace with `oxlint` equivalent or remove |
+| `package.json` devDependencies | Remove all `eslint*` packages if no longer needed |
+| CI config files | Replace `eslint` invocations with `oxlint` |
+| `.eslintignore` | Migrate patterns into `ignorePatterns` in `.oxlintrc.json`, then delete the file |
+| `eslint.config.js` / `.eslintrc*` | Delete if ESLint is fully removed |
+| `// eslint-disable` comments | Should be gone after the `--replace-eslint-comments` step above; fix any remaining ones manually |
+| Documentation / README | Update to mention oxlint instead of ESLint |
+
 ## Tips
 
-- You can run alongside ESLint if necessary: Oxlint is designed to complement ESLint during migration, but with JS Plugins many projects can switch over fully without losing many rules.
-- Disable comments work: `// eslint-disable` and `// eslint-disable-next-line` comments are supported by oxlint. Use `--replace-eslint-comments` when running @oxlint/migrate to convert them to `// oxlint-disable` equivalents if desired.
 - List available rules: Run `npx oxlint --rules` to see all supported rules, or refer to the [rule documentation](https://oxc.rs/docs/guide/usage/linter/rules.html).
 - Schema support: Add `"$schema": "./node_modules/oxlint/configuration_schema.json"` to `.oxlintrc.json` for editor autocompletion if the migration tool didn't do it automatically.
 - Output formats: `default`, `stylish`, `json`, `github`, `gitlab`, `junit`, `checkstyle`, `unix`
