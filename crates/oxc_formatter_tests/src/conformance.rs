@@ -3,6 +3,8 @@
 //! Runs a language formatter over the Prettier repository's own test suite (`tests/format/<dir>`)
 //! and compares the output byte-for-byte against Prettier's committed jest snapshots.
 //! Every output is also re-formatted; files whose second pass differs are tracked in the report's `# Not idempotent` section.
+//! Every input is also formatted with CRLF / CR line endings and with a BOM;
+//! files whose variant output differs are tracked in the report's `# Input variants differ` section.
 //! Language specifics arrive through [`ConformanceConfig`] (which fixture dirs, which parser names, what to ignore)
 //! and the `format` callback (spec options → typed options → formatted output), so this module never depends on a language crate.
 //!
@@ -118,10 +120,11 @@ where
         return None;
     }
 
-    let mut total_tested_file_count = 0;
-    let mut total_failed_file_count = 0;
+    let mut total_tested_count = 0;
+    let mut total_passed_count = 0;
     let mut total_skipped_files = vec![];
     let mut total_non_idempotent_files = vec![];
+    let mut total_variant_mismatch_files = vec![];
     let mut failed_reports = String::new();
     failed_reports.push_str("# Failed\n");
     failed_reports.push('\n');
@@ -129,18 +132,13 @@ where
     failed_reports.push_str("| :-------- | :--------------: | :---------: |\n");
     for dir in &test_dirs {
         let inputs = collect_test_files(dir, &format_root, config.ignore, None);
-        // `None`: no spec call targets this language config (shared dir, or every combination skipped).
-        // The files were never exercised, keep them out of the totals instead of counting them as passed.
-        let Some(results) =
-            test_snapshots(config, &mut format, dir, &format_root, &inputs, None, false)
-        else {
-            continue;
-        };
+        let results = test_snapshots(config, &mut format, dir, &format_root, &inputs, None, false);
 
-        total_tested_file_count += results.tested;
-        total_failed_file_count += results.failed.len();
+        total_tested_count += results.tested;
+        total_passed_count += results.passed;
         total_skipped_files.extend(results.skipped);
         total_non_idempotent_files.extend(results.non_idempotent);
+        total_variant_mismatch_files.extend(results.variant_mismatch);
 
         for (path, (failed, passed, ratio)) in results.failed {
             writeln!(
@@ -154,13 +152,12 @@ where
         }
     }
 
-    let passed = total_tested_file_count - total_failed_file_count;
     #[expect(clippy::cast_precision_loss)]
-    let percentage = (passed as f64 / total_tested_file_count as f64) * 100.0;
-    // Files the formatter cannot parse are counted as passed above (they have no diff to report);
-    // surface them so the gap is visible.
+    let percentage = (total_passed_count as f64 / total_tested_count as f64) * 100.0;
+    // Counted per `(input, option set)` run.
+    // Runs the formatter cannot parse are not passed; they have no diff to report, so they are listed separately.
     let summary = format!(
-        "{} compatibility: {passed}/{total_tested_file_count} ({percentage:.2}%), {} files skipped",
+        "{} compatibility: {total_passed_count}/{total_tested_count} ({percentage:.2}%), {} files skipped",
         config.language,
         total_skipped_files.len()
     );
@@ -178,6 +175,12 @@ where
         for (path, parse_failed) in &total_non_idempotent_files {
             let note = if *parse_failed { " (second pass failed to parse)" } else { "" };
             writeln!(report, "- {path}{note}").unwrap();
+        }
+    }
+    if !total_variant_mismatch_files.is_empty() {
+        report.push_str("\n# Input variants differ\n\n");
+        for (path, variants) in &total_variant_mismatch_files {
+            writeln!(report, "- {path} ({})", variants.join(", ")).unwrap();
         }
     }
 
@@ -251,8 +254,10 @@ fn collect_test_files(
 /// Per-dir tallies, keyed by the suite-relative report path (see [`report_path`]).
 #[derive(Default)]
 struct SnapshotResults {
-    /// Files plus snippets that were exercised
+    /// `(input, option set)` runs that were exercised, inputs are files plus snippets
     tested: usize,
+    /// `(input, option set)` runs that matched the snapshot
+    passed: usize,
     /// `(path, (failed_count, passed_count, diff_ratio))` per file with at least one mismatch
     failed: Vec<(String, (usize, usize, f32))>,
     /// Files the formatter failed to parse for at least one options combination
@@ -260,11 +265,11 @@ struct SnapshotResults {
     /// `(path, second_pass_parse_failed)` per file
     /// whose re-formatted output differs from the first pass for at least one options combination
     non_idempotent: Vec<(String, bool)>,
+    /// `(path, variant names)` per file whose input variant output differs for at least one options combination
+    variant_mismatch: Vec<(String, Vec<&'static str>)>,
 }
 
 /// Run the formatter and compare the output with the Prettier's snapshot.
-///
-/// Returns `None` when no spec call applies to this language config.
 fn test_snapshots<F>(
     config: &ConformanceConfig,
     format: &mut F,
@@ -273,7 +278,7 @@ fn test_snapshots<F>(
     test_files: &[PathBuf],
     filter: Option<&str>,
     debug: bool,
-) -> Option<SnapshotResults>
+) -> SnapshotResults
 where
     F: FnMut(&Path, &str, &OptionSet) -> Option<String>,
 {
@@ -353,11 +358,7 @@ where
         }
     }
 
-    // Nothing here targets this language config (shared dir, every combination skipped, ...).
-    if results.tested == 0 {
-        return None;
-    }
-    Some(results)
+    results
 }
 
 /// Result of one (input, option set) run.
@@ -369,6 +370,8 @@ struct CaseOutcome {
     mismatch: Option<f32>,
     /// Whether the second pass failed to parse, when re-formatting did not reproduce the output.
     non_idempotent: Option<bool>,
+    /// Input variants whose output differs from the original input's.
+    variant_mismatch: Vec<&'static str>,
 }
 
 /// Formats one input under one option set and compares it with the snapshot's expected output.
@@ -403,6 +406,34 @@ where
     let idempotent = reformatted.as_deref() == Some(actual.as_str());
     if !idempotent {
         outcome.non_idempotent = Some(reformatted.is_none());
+    }
+
+    // Input variants: line endings are normalized and a BOM is kept as is (`endOfLine` is never `auto` in the suite),
+    // so they must produce the same output.
+    // Inputs already containing `\r` or a BOM are skipped, their variants would not be equivalent.
+    let mut variants = vec![];
+    if !source_text.contains('\r') {
+        variants.push(("CRLF", source_text.cow_replace('\n', "\r\n").into_owned(), actual.clone()));
+        variants.push(("CR", source_text.cow_replace('\n', "\r").into_owned(), actual.clone()));
+    }
+    // BOM + hashbang is a syntax error (Prettier strips the BOM first)
+    if !source_text.starts_with('\u{feff}') && !source_text.starts_with("#!") {
+        variants.push(("BOM", format!("\u{feff}{source_text}"), format!("\u{feff}{actual}")));
+    }
+    for (name, input, expected_output) in variants {
+        let output = format(path, &input, &call.options);
+        if output.as_deref() != Some(expected_output.as_str()) {
+            outcome.variant_mismatch.push(name);
+            if debug {
+                match &output {
+                    Some(output) => {
+                        println!("Input variant {name} differs ⚠️");
+                        print_text_diff(&TextDiff::from_lines(&expected_output, output));
+                    }
+                    None => println!("Input variant {name} failed to parse 💥"),
+                }
+            }
+        }
     }
 
     let escaped =
@@ -450,9 +481,12 @@ where
 struct CaseTally {
     total: usize,
     failed: usize,
+    passed: usize,
     skipped: bool,
     non_idempotent: bool,
     second_pass_parse_failed: bool,
+    variant_mismatch: Vec<&'static str>,
+    /// Sum of line similarity, a matched case counts as `1.0`
     total_diff_ratio: f32,
 }
 
@@ -463,33 +497,38 @@ impl CaseTally {
         if let Some(ratio) = outcome.mismatch {
             self.failed += 1;
             self.total_diff_ratio += ratio;
+        } else if !outcome.skipped {
+            self.passed += 1;
+            self.total_diff_ratio += 1.0;
         }
         if let Some(second_pass_parse_failed) = outcome.non_idempotent {
             self.non_idempotent = true;
             self.second_pass_parse_failed |= second_pass_parse_failed;
         }
+        for name in &outcome.variant_mismatch {
+            if !self.variant_mismatch.contains(name) {
+                self.variant_mismatch.push(*name);
+            }
+        }
     }
 
-    /// Records the row; an input with no option set (no spec call for this language) is not counted.
+    /// Records the row.
     fn finish(self, report_path: String, results: &mut SnapshotResults) {
-        if self.total == 0 {
-            return;
-        }
-        results.tested += 1;
+        results.tested += self.total;
+        results.passed += self.passed;
         if self.failed != 0 {
-            let passed = self.total - self.failed;
             #[expect(clippy::cast_precision_loss)]
-            let max_diff_ratio = self.total as f32;
-            results.failed.push((
-                report_path.clone(),
-                (self.failed, passed, self.total_diff_ratio / max_diff_ratio),
-            ));
+            let ratio = self.total_diff_ratio / self.total as f32;
+            results.failed.push((report_path.clone(), (self.failed, self.passed, ratio)));
         }
         if self.skipped {
             results.skipped.push(report_path.clone());
         }
         if self.non_idempotent {
-            results.non_idempotent.push((report_path, self.second_pass_parse_failed));
+            results.non_idempotent.push((report_path.clone(), self.second_pass_parse_failed));
+        }
+        if !self.variant_mismatch.is_empty() {
+            results.variant_mismatch.push((report_path, self.variant_mismatch));
         }
     }
 }
@@ -555,7 +594,9 @@ fn find_output_from_snapshots(
         let after_options = search_from + pos + options_pattern.len();
         let input_pos = after_filename[after_options..].find(INPUT_SEPARATOR)?;
         let between = &after_filename[after_options..after_options + input_pos];
-        if !between.contains('\n') {
+        // The one line is the indented visualization (`   printWidth: 80 (default) |`),
+        // never another option (`printWidth: Infinity`, which has no visualization line).
+        if !between.contains('\n') && between.starts_with(' ') {
             break &after_filename[after_options + input_pos..];
         }
         search_from = after_options;
@@ -844,9 +885,11 @@ impl Visit<'_> for SpecParser<'_> {
             return;
         }
 
-        // Collect the literal options;
-        // non-literal values (e.g. the `errors` object) never influence formatting and are left out.
+        // Collect the literal options.
+        // A non-literal value (`printWidth: Infinity`) is one the option set cannot hold, so the call is dropped,
+        // as `collect_snippets` drops such sections; only the `errors` object, which never influences formatting, is left out.
         let mut options = OptionSet::new();
+        let mut unsupported = false;
         if let Some(Argument::ObjectExpression(obj_expr)) = expr.arguments.get(2) {
             obj_expr.properties.iter().for_each(|item| {
                 if let ObjectPropertyKind::ObjectProperty(obj_prop) = item
@@ -873,18 +916,25 @@ impl Visit<'_> for SpecParser<'_> {
                             .map(|value| serde_json::Value::String(value.to_owned())),
                         _ => None,
                     };
-                    if let Some(value) = value {
-                        options.insert(name.to_string(), value);
+                    match value {
+                        Some(value) => {
+                            options.insert(name.display().to_string(), value);
+                        }
+                        None => unsupported |= name != "errors",
                     }
 
                     if name != "errors" {
                         snapshot_options.push((
-                            name.to_string(),
+                            name.display().to_string(),
                             obj_prop.value.span().source_text(self.source_text).to_string(),
                         ));
                     }
                 }
             });
+        }
+
+        if unsupported {
+            return;
         }
 
         debug_assert!(!parsers.is_empty(), "`parsers` should not be empty");

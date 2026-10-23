@@ -98,8 +98,11 @@ pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &str,
 ) -> Result<ParsedMarkdown<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    parse_root(allocator, source_text, has_bom)
+    let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    parse_root(allocator, stripped, has_bom).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another

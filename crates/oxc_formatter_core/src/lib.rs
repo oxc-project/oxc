@@ -40,7 +40,7 @@ pub use format_element::tag::{
 };
 pub use format_element::{
     BestFittingElement, FormatElement, FormatElements, Interned, LINE_TERMINATORS, LineMode,
-    PrintMode, TextWidth, normalize_newlines,
+    PrintMode, normalize_newlines, text_width,
 };
 pub use printer::error::{ActualStart, InvalidDocumentError, PrintError};
 pub use printer::{PrintResult, PrintWidth, Printed, PrinterOptions};
@@ -52,7 +52,7 @@ pub use session::embedded::{
     dispatch_fragment_ir, dispatch_ir, map_text_in_ir, push_text_with_literal_lines,
 };
 pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
-pub use source::{SourceText, SpanCursor};
+pub use source::{SourceText, SpanCursor, rebase_labels, restore_crlf_labels};
 pub use write::Format;
 pub use write::arguments::{Argument, Arguments};
 pub use write::buffer::ScratchBuffer;

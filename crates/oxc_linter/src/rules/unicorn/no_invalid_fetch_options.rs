@@ -145,7 +145,13 @@ fn is_invalid_fetch_options<'a>(
                                         if let Some(Expression::StringLiteral(str_lit)) =
                                             &m.initializer
                                         {
-                                            str_lit.value.as_str().map(CompactStr::from)
+                                            // A value with a lone surrogate is not a known method.
+                                            Some(CompactStr::from(
+                                                str_lit
+                                                    .value
+                                                    .as_str()
+                                                    .unwrap_or(&UNKNOWN_METHOD_NAME),
+                                            ))
                                         } else {
                                             None
                                         }
@@ -340,6 +346,8 @@ fn test() {
         "const foo = ({ method }) => new Request(url, { method, body: '' });",
         "function foo([method]) { return fetch(url, { method, body: '' }); }",
         "import { method } from './method'; fetch(url, { method, body: '' });",
+        r#"enum M { A = "\uD800" } fetch(u, {method: M.A, body: "x"})"#,
+        r#"enum M { A = "\uD800", B = "GET" } fetch(u, {method: M.A, body: "x"})"#,
     ];
 
     let fail = vec![

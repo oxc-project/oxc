@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{BindingPattern, VariableDeclarationKind},
-};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -57,7 +54,7 @@ declare_oxc_lint!(
 impl Rule for NoVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::VariableDeclaration(dec) = node.kind()
-            && dec.kind == VariableDeclarationKind::Var
+            && dec.kind.is_var()
         {
             // Skip TypeScript ambient declarations (declare global/module/namespace)
             if has_ambient_typescript_ancestor(node.id(), ctx.nodes()) {

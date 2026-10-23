@@ -19,7 +19,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
     FormatContext, FormatElement, FormatSession, Formatter, IndentWidth, InputKind, LineMode,
-    format_element::{BestFittingElement, Interned, TextWidth},
+    format_element::{BestFittingElement, Interned},
     write::formatter::intern_exact,
 };
 
@@ -142,7 +142,6 @@ pub fn dispatch_ir<'a, C: FormatContext>(
 /// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
 /// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
 /// Nothing is rebuilt until the first change, an IR with none is returned as is.
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
 pub fn map_text_in_ir<'a, F>(
     ir: ArenaVec<'a, FormatElement<'a>>,
     allocator: &'a Allocator,
@@ -156,7 +155,6 @@ where
 }
 
 /// Returns `None` if no element changed.
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
 #[expect(clippy::option_option)]
 fn map_text_in_ir_impl<'a, F>(
     ir: &[FormatElement<'a>],
@@ -174,7 +172,7 @@ where
     for (index, element) in ir.iter().enumerate() {
         let changed = match element {
             FormatElement::Text { text, .. } | FormatElement::Token { text } => {
-                map_text(text, &mut out)
+                map_text(text.as_str(), &mut out)
             }
             FormatElement::BestFitting(best_fitting) => {
                 let mut changed = false;
@@ -249,10 +247,7 @@ pub fn push_text_with_literal_lines<'a>(
             out.push(FormatElement::Line(LineMode::Literal));
         }
         if !line.is_empty() {
-            out.push(FormatElement::Text {
-                text: line,
-                width: TextWidth::from_text(line, indent_width),
-            });
+            out.push(FormatElement::text(line, indent_width));
         }
     }
 }

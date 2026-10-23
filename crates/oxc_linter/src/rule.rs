@@ -776,6 +776,10 @@ mod test {
             &[ImportDeclaration],
         );
         assert_rule_runs_on_node_types(
+            &unicorn::prefer_string_replace_all::PreferStringReplaceAll,
+            &[CallExpression, VariableDeclarator],
+        );
+        assert_rule_runs_on_node_types(
             &promise::always_return::AlwaysReturn::default(),
             &[Function, ArrowFunctionExpression],
         );

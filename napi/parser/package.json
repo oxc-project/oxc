@@ -1,6 +1,6 @@
 {
   "name": "oxc-parser",
-  "version": "0.154.0",
+  "version": "0.155.0",
   "description": "Oxc Parser Node API",
   "keywords": [
     "ast",
@@ -81,7 +81,7 @@
     "@oxc-project/types": "workspace:^"
   },
   "devDependencies": {
-    "@codspeed/vitest-plugin": "^5.0.0",
+    "@codspeed/vitest-plugin": "^6.0.0",
     "@emnapi/core": "catalog:",
     "@emnapi/runtime": "catalog:",
     "@napi-rs/cli": "catalog:",

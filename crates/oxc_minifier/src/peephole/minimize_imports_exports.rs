@@ -247,7 +247,6 @@ impl<'a> PeepholeOptimizations {
             ArenaHashMap::new_in(ctx.allocator());
         let mut merges = ArenaVec::new_in(ctx);
 
-        // Collect the candidates
         for (statement_index, stmt) in stmts.iter().enumerate() {
             match stmt {
                 Statement::ImportDeclaration(import_decl) => {

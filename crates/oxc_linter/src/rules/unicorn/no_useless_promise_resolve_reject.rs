@@ -98,9 +98,11 @@ impl Rule for NoUselessPromiseResolveReject {
             return;
         };
 
-        if !matches!(static_member_expr.property.name.as_str(), "resolve" | "reject") {
-            return;
-        }
+        let is_reject = match static_member_expr.property.name.as_str() {
+            "resolve" => false,
+            "reject" => true,
+            _ => return,
+        };
 
         let Some(parent) = outermost_paren_parent(node, ctx) else {
             return;
@@ -139,44 +141,19 @@ impl Rule for NoUselessPromiseResolveReject {
             return;
         }
 
-        match static_member_expr.property.name.as_str() {
-            "resolve" => {
-                ctx.diagnostic_with_fix(
-                    resolve(node.kind().span(), if is_yield { "yield" } else { "return" }),
-                    |fixer| {
-                        generate_fix(
-                            call_expr,
-                            false,
-                            is_yield,
-                            is_in_try_statement,
-                            fixer,
-                            ctx,
-                            node,
-                        )
-                    },
-                );
-            }
-            "reject" => {
-                if self.0.allow_reject {
-                    return;
-                }
-                ctx.diagnostic_with_fix(
-                    reject(node.kind().span(), if is_yield { "yield" } else { "return" }),
-                    |fixer| {
-                        generate_fix(
-                            call_expr,
-                            true,
-                            is_yield,
-                            is_in_try_statement,
-                            fixer,
-                            ctx,
-                            node,
-                        )
-                    },
-                );
-            }
-            _ => unreachable!(),
+        if is_reject && self.0.allow_reject {
+            return;
         }
+
+        let preferred = if is_yield { "yield" } else { "return" };
+        let diagnostic = if is_reject {
+            reject(node.kind().span(), preferred)
+        } else {
+            resolve(node.kind().span(), preferred)
+        };
+        ctx.diagnostic_with_fix(diagnostic, |fixer| {
+            generate_fix(call_expr, is_reject, is_yield, is_in_try_statement, fixer, ctx, node)
+        });
     }
 }
 

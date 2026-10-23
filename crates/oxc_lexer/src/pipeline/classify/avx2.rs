@@ -2,13 +2,18 @@ use std::arch::x86_64::*;
 
 use crate::token::tk;
 
-use crate::pipeline::chunk::{load256, mm, veq};
+use crate::pipeline::{
+    chunk::{load256, mm, veq},
+    cpu::Avx2,
+};
 
 use super::{
     luts::{MERGED_LUTS, WORD_LUTS},
     punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
 };
 
+#[inline(never)]
+#[target_feature(enable = "avx2,bmi2,popcnt")]
 pub(super) unsafe fn classify_avx2(
     ts: bool,
     src: *const u8,
@@ -21,6 +26,7 @@ pub(super) unsafe fn classify_avx2(
     dot: *mut u64,
     misc: *mut u64,
     kind: *mut u8,
+    cpu: Avx2,
 ) {
     // The merged LUT variants differ only in the keyword-initial bits; the
     // selection happens once, outside the loop.
@@ -99,11 +105,11 @@ pub(super) unsafe fn classify_avx2(
         cw = wordm >> 63;
         cs = wsm >> 63;
         *st.add(b) = (wsm & !sprev) | (wordm & !wprev) | (!wsm & !wordm);
-        let mut k0 = vpunct1(v0, hn0, v_pha, v_phb, v_pht0, v_pht1, v_96);
+        let mut k0 = vpunct1(v0, hn0, v_pha, v_phb, v_pht0, v_pht1, v_96, cpu);
         k0 = _mm256_blendv_epi8(v_ws, k0, nws0);
         k0 = _mm256_blendv_epi8(k0, v_ident, w0);
         k0 = _mm256_blendv_epi8(k0, v_num, d0);
-        let mut k1 = vpunct1(v1, hn1, v_pha, v_phb, v_pht0, v_pht1, v_96);
+        let mut k1 = vpunct1(v1, hn1, v_pha, v_phb, v_pht0, v_pht1, v_96, cpu);
         k1 = _mm256_blendv_epi8(v_ws, k1, nws1);
         k1 = _mm256_blendv_epi8(k1, v_ident, w1);
         k1 = _mm256_blendv_epi8(k1, v_num, d1);
@@ -135,7 +141,7 @@ pub(super) unsafe fn classify_avx2(
 }
 
 #[inline(always)]
-unsafe fn vpunct1(
+fn vpunct1(
     v: __m256i,
     hn: __m256i,
     pa: __m256i,
@@ -143,11 +149,15 @@ unsafe fn vpunct1(
     pt0: __m256i,
     pt1: __m256i,
     v96: __m256i,
+    _cpu: Avx2,
 ) -> __m256i {
-    let h = _mm256_xor_si256(_mm256_shuffle_epi8(pa, v), _mm256_shuffle_epi8(pb, hn));
-    let o0 = _mm256_shuffle_epi8(pt0, h);
-    let o1 = _mm256_shuffle_epi8(pt1, h);
-    let ord = _mm256_blendv_epi8(o0, o1, _mm256_slli_epi16::<3>(h));
-    let ctl = _mm256_cmpgt_epi8(_mm256_set1_epi8(0x20), v);
-    _mm256_blendv_epi8(ord, v96, ctl)
+    // SAFETY: `Avx2` type guarantees required target features are present
+    unsafe {
+        let h = _mm256_xor_si256(_mm256_shuffle_epi8(pa, v), _mm256_shuffle_epi8(pb, hn));
+        let o0 = _mm256_shuffle_epi8(pt0, h);
+        let o1 = _mm256_shuffle_epi8(pt1, h);
+        let ord = _mm256_blendv_epi8(o0, o1, _mm256_slli_epi16::<3>(h));
+        let ctl = _mm256_cmpgt_epi8(_mm256_set1_epi8(0x20), v);
+        _mm256_blendv_epi8(ord, v96, ctl)
+    }
 }

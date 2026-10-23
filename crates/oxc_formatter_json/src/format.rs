@@ -45,7 +45,9 @@ pub fn format<'a>(
     let elements = buffer.into_vec();
     let context = state.into_context();
 
-    if let Some(err) = context.take_error() {
+    if let Some(mut err) = context.take_error() {
+        let (_, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
         return Err(err);
     }
 
@@ -78,8 +80,11 @@ pub fn parse_for_format<'a>(
     source_text: &str,
     options: JsonFormatOptions,
 ) -> Result<ParsedJson<'a>, OxcDiagnostic> {
-    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let parsed = parse_json(allocator, source_text, options.variant)?;
+    let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    let parsed = parse_json(allocator, stripped, options.variant).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })?;
     Ok(ParsedJson {
         expression: parsed.expression,
         comments: parsed.comments,

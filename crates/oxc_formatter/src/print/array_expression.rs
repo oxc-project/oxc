@@ -11,12 +11,12 @@ pub struct FormatArrayExpressionOptions {
 }
 
 pub struct FormatArrayExpression<'a, 'b> {
-    array: &'b AstNode<'a, ArrayExpression<'a>>,
+    array: &'b AstNode<'b, 'a, ArrayExpression<'a>>,
     options: FormatArrayExpressionOptions,
 }
 
 impl<'a, 'b> FormatArrayExpression<'a, 'b> {
-    pub fn new(array: &'b AstNode<'a, ArrayExpression<'a>>) -> Self {
+    pub fn new(array: &'b AstNode<'b, 'a, ArrayExpression<'a>>) -> Self {
         Self { array, options: FormatArrayExpressionOptions::default() }
     }
 }
@@ -42,7 +42,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
             let should_expand = !self.options.is_force_flat_mode
                 && (should_break(self.array) || has_trailing_line_comment());
 
-            let elements = ArrayElementList::new(self.array.elements(), group_id);
+            let array_elements = self.array.elements();
+            let elements = ArrayElementList::new(&array_elements, group_id);
 
             write!(
                 f,

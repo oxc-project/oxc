@@ -131,26 +131,22 @@ impl Rule for PreferConst {
         let is_for_in_of_init =
             matches!(parent.kind(), AstKind::ForInStatement(_) | AstKind::ForOfStatement(_));
 
-        // For regular for loops (for (let i = 0, j = 1; ...)), we need special handling
-        // If ANY variable in the declaration is reassigned, we can't fix the whole declaration
         let is_for_statement_init = matches!(parent.kind(), AstKind::ForStatement(_));
 
         if is_for_statement_init && decl.declarations.len() > 1 {
-            // Check if any declarator is reassigned
             let any_reassigned = decl.declarations.iter().any(|declarator| {
                 let has_init = declarator.init.is_some();
                 declarator.id.get_binding_identifiers().iter().any(|ident| {
-                    let symbol_id = ident.symbol_id();
-                    !self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
+                    !self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx)
                 })
             });
 
-            // If any variable is reassigned, we can't convert any of them
             if any_reassigned {
                 return;
             }
         }
 
+        let mut all_declarators_const = true;
         for (declarator_index, declarator) in decl.declarations.iter().enumerate() {
             let binding_identifiers = declarator.id.get_binding_identifiers();
             let has_init = declarator.init.is_some();
@@ -160,6 +156,7 @@ impl Rule for PreferConst {
                 let symbol_id = ident.symbol_id();
                 self.should_be_const(symbol_id, has_init, is_for_in_of_init, ctx)
             });
+            all_declarators_const &= all_const;
 
             // For destructuring patterns with "all" mode, check if ALL variables should be const
             if matches!(self.0.destructuring, Destructuring::All) && is_destructuring {
@@ -173,7 +170,7 @@ impl Rule for PreferConst {
                                     fixer,
                                     decl,
                                     declarator_index,
-                                    true,
+                                    all_declarators_const,
                                     is_for_in_of_init,
                                     ctx,
                                 )
@@ -193,7 +190,7 @@ impl Rule for PreferConst {
                                     fixer,
                                     decl,
                                     declarator_index,
-                                    all_const,
+                                    all_declarators_const,
                                     is_for_in_of_init,
                                     ctx,
                                 )
@@ -259,16 +256,23 @@ impl PreferConst {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(t) => {
                 Self::has_member_expression_in_assignment_target(&t.binding)
             }
-            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array) => array
-                .elements
-                .iter()
-                .any(|elem| elem.as_ref().is_some_and(Self::has_member_expression_target)),
+            AssignmentTargetMaybeDefault::ArrayAssignmentTarget(array) => {
+                array
+                    .elements
+                    .iter()
+                    .any(|elem| elem.as_ref().is_some_and(Self::has_member_expression_target))
+                    || array.rest.as_ref().is_some_and(|rest| {
+                        Self::has_member_expression_in_assignment_target(&rest.target)
+                    })
+            }
             AssignmentTargetMaybeDefault::ObjectAssignmentTarget(obj) => {
                 obj.properties.iter().any(|prop| match prop {
                     AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
                         Self::has_member_expression_target(&p.binding)
                     }
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
+                }) || obj.rest.as_ref().is_some_and(|rest| {
+                    Self::has_member_expression_in_assignment_target(&rest.target)
                 })
             }
             _ => false,
@@ -281,16 +285,23 @@ impl PreferConst {
             AssignmentTarget::ComputedMemberExpression(_)
             | AssignmentTarget::StaticMemberExpression(_)
             | AssignmentTarget::PrivateFieldExpression(_) => true,
-            AssignmentTarget::ArrayAssignmentTarget(array) => array
-                .elements
-                .iter()
-                .any(|elem| elem.as_ref().is_some_and(Self::has_member_expression_target)),
+            AssignmentTarget::ArrayAssignmentTarget(array) => {
+                array
+                    .elements
+                    .iter()
+                    .any(|elem| elem.as_ref().is_some_and(Self::has_member_expression_target))
+                    || array.rest.as_ref().is_some_and(|rest| {
+                        Self::has_member_expression_in_assignment_target(&rest.target)
+                    })
+            }
             AssignmentTarget::ObjectAssignmentTarget(obj) => {
                 obj.properties.iter().any(|prop| match prop {
                     AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
                         Self::has_member_expression_target(&p.binding)
                     }
                     AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => false,
+                }) || obj.rest.as_ref().is_some_and(|rest| {
+                    Self::has_member_expression_in_assignment_target(&rest.target)
                 })
             }
             _ => false,
@@ -309,7 +320,10 @@ impl PreferConst {
         // Check if this symbol is a parameter
         // Parameters can't be changed to const
         let decl_node = symbol_table.symbol_declaration(symbol_id);
-        if matches!(ctx.nodes().kind(decl_node), AstKind::FormalParameter(_)) {
+        if matches!(
+            ctx.nodes().kind(decl_node),
+            AstKind::FormalParameter(_) | AstKind::CatchParameter(_)
+        ) {
             return false;
         }
 
@@ -323,11 +337,11 @@ impl PreferConst {
             return false;
         }
 
-        // In "all" mode, check if this variable has more than one write
-        // (one is the destructuring assignment itself)
         if matches!(self.0.destructuring, Destructuring::All) {
             let write_count = references.iter().filter(|r| r.is_write()).count();
-            if write_count > 1 {
+            if write_count > 1
+                || matches!(ctx.nodes().kind(decl_node), AstKind::VariableDeclarator(decl) if decl.init.is_some())
+            {
                 return false;
             }
         }
@@ -346,7 +360,10 @@ impl PreferConst {
                 return false;
             }
         }
-        true
+        array_target
+            .rest
+            .as_ref()
+            .is_none_or(|rest| self.can_assignment_target_be_const(&rest.target, symbol_table, ctx))
     }
 
     fn can_assignment_target_maybe_default_be_const(
@@ -440,7 +457,10 @@ impl PreferConst {
                 }
             }
         }
-        true
+        obj_target
+            .rest
+            .as_ref()
+            .is_none_or(|rest| self.can_assignment_target_be_const(&rest.target, symbol_table, ctx))
     }
 
     /// Check if a variable should be declared as const
@@ -589,13 +609,6 @@ impl PreferConst {
             return false;
         }
 
-        // Check if the write is inside any control flow, loops, or certain destructuring assignments
-        // If a destructuring assignment:
-        // 1. Is inside a block (not at function/program level), OR
-        // 2. Contains member expressions (property access)
-        // Then we can't use const because you can't initialize const without a value
-        //
-        // EXCEPTION: Variables declared in for-in/of loop bodies get fresh bindings per iteration
         let mut is_invalid_destructuring = false;
 
         for ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
@@ -623,79 +636,29 @@ impl PreferConst {
                     return true;
                 }
 
-                // If there's a BlockStatement before the scope boundary, and we're in a
-                // destructuring assignment, we can't use const
-                AstKind::BlockStatement(_) => {
-                    // Check if there's a destructuring assignment between us and this block
-                    for inner_ancestor in ctx.nodes().ancestors(write_node_id).skip(1) {
-                        match inner_ancestor.kind() {
-                            AstKind::BlockStatement(_) => break,
-                            AstKind::AssignmentExpression(assign) => {
-                                if matches!(
-                                    assign.left,
-                                    AssignmentTarget::ArrayAssignmentTarget(_)
-                                        | AssignmentTarget::ObjectAssignmentTarget(_)
-                                ) {
-                                    is_invalid_destructuring = true;
-                                    break;
-                                }
-                            }
-                            _ => {}
-                        }
-                    }
-                    // Don't break here - continue checking for for-in/of loops
-                    // which override this check
-                }
-
-                // Check if this is a destructuring assignment with member expression targets
                 AstKind::AssignmentExpression(assign) => {
-                    match &assign.left {
-                        AssignmentTarget::ArrayAssignmentTarget(array_target) => {
-                            // Check if the array contains any member expressions (recursively)
-                            if array_target.elements.iter().any(|elem| {
-                                elem.as_ref().is_some_and(Self::has_member_expression_target)
-                            }) {
-                                is_invalid_destructuring = true;
-                                break;
-                            }
-
-                            // Check if all identifiers in the destructuring can be const
-                            // If any identifier has multiple writes or can't be const,
-                            // we shouldn't suggest const for others in the same pattern
-                            if !self.can_all_destructuring_identifiers_be_const(
+                    if Self::has_member_expression_in_assignment_target(&assign.left) {
+                        is_invalid_destructuring = true;
+                        break;
+                    }
+                    let can_be_const = match &assign.left {
+                        AssignmentTarget::ArrayAssignmentTarget(array_target) => self
+                            .can_all_destructuring_identifiers_be_const(
                                 array_target,
                                 symbol_table,
                                 ctx,
-                            ) {
-                                is_invalid_destructuring = true;
-                                break;
-                            }
-                        }
-                        AssignmentTarget::ObjectAssignmentTarget(obj_target) => {
-                            // Check if the object contains any member expressions (recursively)
-                            if obj_target.properties.iter().any(|prop| match prop {
-                                AssignmentTargetProperty::AssignmentTargetPropertyProperty(p) => {
-                                    Self::has_member_expression_target(&p.binding)
-                                }
-                                AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(_) => {
-                                    false
-                                }
-                            }) {
-                                is_invalid_destructuring = true;
-                                break;
-                            }
-
-                            // Check if all identifiers in the destructuring can be const
-                            if !self.can_all_destructuring_identifiers_be_const_obj(
+                            ),
+                        AssignmentTarget::ObjectAssignmentTarget(obj_target) => self
+                            .can_all_destructuring_identifiers_be_const_obj(
                                 obj_target,
                                 symbol_table,
                                 ctx,
-                            ) {
-                                is_invalid_destructuring = true;
-                                break;
-                            }
-                        }
-                        _ => {}
+                            ),
+                        _ => true,
+                    };
+                    if !can_be_const {
+                        is_invalid_destructuring = true;
+                        break;
                     }
                 }
 
@@ -1685,10 +1648,136 @@ fn test_oxc() {
         ("let [x = -1, y] = [1,2]; y = 0;", "let [x = -1, y] = [1,2]; y = 0;", None),
         ("let {a, b} = c, d;", "let {a, b} = c, d;", None),
         ("let {a, b, c} = {}, e, f;", "let {a, b, c} = {}, e, f;", None),
+        ("let x = 'x', y = 'y'; x = 1", "let x = 'x', y = 'y'; x = 1", None),
+        (
+            "let a = 1, b = 2; a++; console.log(a + b);",
+            "let a = 1, b = 2; a++; console.log(a + b);",
+            None,
+        ),
+        (
+            "let { a, b } = obj, c = 1; a = 2; console.log(a, b, c);",
+            "let { a, b } = obj, c = 1; a = 2; console.log(a, b, c);",
+            Some(serde_json::json!([{ "destructuring": "all" }])),
+        ),
     ];
 
     Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, fail)
         .expect_fix(fix)
         .with_snapshot_suffix("oxc")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_try_destructuring_js() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        (
+            "try { let a; let b = 0; [a, b] = values; use(a, b); } catch {}",
+            Some(serde_json::json!([{"destructuring": "all"}])),
+        ),
+        ("try {} catch (error) { let a; [error, a] = values; use(a); }", None),
+        ("try {} catch (error) { let a; ({error, a} = values); use(a); }", None),
+        ("try { let a; ({a, ...obj.value} = values); use(a); } catch {}", None),
+        ("try { let a; [a, ...obj.value] = values; use(a); } catch {}", None),
+        ("try { let a; [a, {...obj.value}] = values; use(a); } catch {}", None),
+        (
+            "try { let a, b; [a, ...b] = values; b++; use(a); } catch {}",
+            Some(serde_json::json!([{"destructuring": "all"}])),
+        ),
+        (
+            "try { let a, b; ({a, ...b} = values); b++; use(a); } catch {}",
+            Some(serde_json::json!([{"destructuring": "all"}])),
+        ),
+        ("let outer; try { let a; [a, ...outer] = values; use(a); } catch {}", None),
+        ("try {} catch (error) { let a; ({a, ...error} = values); use(a); }", None),
+        ("let a, b; try { [a, b] = values; } catch {} use(a, b);", None),
+        ("try { let a; if (condition) { [a] = values; } use(a); } catch {}", None),
+        ("try { let a; function assign() { [a] = values; } assign(); use(a); } catch {}", None),
+        ("try { let a; [a] = values; a++; } catch {}", None),
+        ("try { let a; [a, obj.value] = values; use(a); } catch {}", None),
+        ("function f(a) { try { let b; [a, b] = values; use(b); } catch {} }", None),
+        ("let a; try { let b; ({a, b} = obj); use(b); } catch {}", None),
+        ("function f() { try { let a; return [a] = values; } catch {} }", None),
+        (
+            "try { let a; use(a); [a] = values; } catch {}",
+            Some(serde_json::json!([{"ignoreReadBeforeAssign": true}])),
+        ),
+        (
+            "try { let a, b; [a, b] = values; b++; } catch {}",
+            Some(serde_json::json!([{"destructuring": "all"}])),
+        ),
+    ];
+
+    let fail = vec![
+        ("try { let a, b; [a, ...b] = values; use(a, b); } catch {}", None),
+        (
+            "try { let a, b; ({a, ...b} = values); use(a, b); } catch {}",
+            Some(serde_json::json!([{"destructuring": "all"}])),
+        ),
+        (
+            "export async function inTry() { try { let a; let b; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }",
+            None,
+        ),
+        ("try { let a, b; ({a, b} = obj); use(a, b); } catch {}", None),
+        ("try { let a, b; ({value: [a = 1, b]} = obj); use(a, b); } catch {}", None),
+        ("try {} catch { let a, b; [a, b] = values; use(a, b); }", None),
+        ("try {} finally { let a, b; ({a, b} = obj); use(a, b); }", None),
+        ("{ let a, b; [a, b] = values; use(a, b); }", None),
+        ("if (condition) { let a, b; [a, b] = values; use(a, b); }", None),
+        ("while (condition) { let a, b; [a, b] = values; use(a, b); }", None),
+        (
+            "try { let a, b; [a, b] = values; use(a, b); } catch {}",
+            Some(serde_json::json!([{"destructuring": "all"}])),
+        ),
+        (
+            "try { let a, b; [a, b] = values; use(a, b); } catch {}",
+            Some(serde_json::json!([{"ignoreReadBeforeAssign": true}])),
+        ),
+    ];
+
+    let fix = vec![(
+        "export async function inTry() { try { let a; let b; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }",
+        "export async function inTry() { try { let a; let b; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }",
+        None,
+    )];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, fail)
+        .change_rule_path_extension("js")
+        .expect_fix(fix)
+        .with_snapshot_suffix("try_destructuring_js")
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_try_destructuring_ts() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("try {} catch (error: any) { let a: number; [error, a] = values; use(a); }", None),
+        ("try { let a: number; ({a, ...obj.value} = values); use(a); } catch {}", None),
+        ("let a: number; try { [a] = values; } catch {} use(a);", None),
+        ("try { let a: number; if (condition) { [a] = values; } use(a); } catch {}", None),
+        ("try { let a: number; [a] = values; a++; } catch {}", None),
+    ];
+
+    let fail = vec![
+        (
+            "export async function inTry() { try { let a: number; let b: number; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }",
+            None,
+        ),
+        ("try { let a: number; let b: number; ({a, b} = obj); use(a, b); } catch {}", None),
+    ];
+
+    let fix = vec![(
+        "export async function inTry() { try { let a: number; let b: number; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }",
+        "export async function inTry() { try { let a: number; let b: number; [a, b] = await Promise.resolve([1, 2]); return a + b; } catch (error) { throw error; } }",
+        None,
+    )];
+
+    Tester::new(PreferConst::NAME, PreferConst::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
+        .expect_fix(fix)
+        .with_snapshot_suffix("try_destructuring_ts")
         .test_and_snapshot();
 }

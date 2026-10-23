@@ -9,14 +9,14 @@ use crate::{
     write,
 };
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Statement<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Statement<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_nodes_with_hardline()
             .entries(self.iter().filter(|stmt| !is_dropped_statement(stmt.as_ref())));
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, BlockStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BlockStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "{");
 
@@ -42,7 +42,7 @@ pub fn is_empty_block(block: &[Statement<'_>]) -> bool {
 /// * empty block that is the 'bons' or 'alt' of an if statement: two lines `{\n}`
 /// * non empty block: put each stmt on its own line: `{\nstmt1;\nstmt2;\n}`
 /// * non empty block with comments (trailing comments on {, or leading comments on })
-fn is_non_collapsible(parent: &AstNodes<'_>) -> bool {
+fn is_non_collapsible(parent: &AstNodes<'_, '_>) -> bool {
     match parent {
         AstNodes::FunctionBody(_)
         | AstNodes::ForStatement(_)

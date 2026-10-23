@@ -5,8 +5,8 @@ use smallvec::SmallVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
-        VariableDeclarationKind, VariableDeclarator,
+        AssignmentExpression, AssignmentTarget as AstAssignmentTarget, BindingPattern, Expression,
+        VariableDeclarator,
     },
 };
 use oxc_cfg::{
@@ -167,7 +167,7 @@ impl Rule for NoUselessAssignment {
             if let Some(var_decl) = var_decl {
                 if let AstKind::VariableDeclaration(var_declaration) =
                     ctx.nodes().parent_node(decl_node.id()).kind()
-                    && var_declaration.kind == VariableDeclarationKind::Const
+                    && var_declaration.kind.is_const()
                 {
                     continue;
                 }
@@ -657,10 +657,10 @@ impl NoUselessAssignment {
         None
     }
 
-    fn get_enclosing_destructuring_assignment(
-        ctx: &LintContext,
+    fn get_enclosing_destructuring_assignment<'a>(
+        ctx: &LintContext<'a>,
         reference: &Reference,
-    ) -> Option<NodeId> {
+    ) -> Option<&'a AssignmentExpression<'a>> {
         let node = ctx.nodes().get_node(reference.node_id());
         if !matches!(node.kind(), AstKind::IdentifierReference(_)) {
             return None;
@@ -674,7 +674,7 @@ impl NoUselessAssignment {
                 AstAssignmentTarget::ArrayAssignmentTarget(_)
                     | AstAssignmentTarget::ObjectAssignmentTarget(_)
             ) {
-                enclosing = Some(ancestor.id());
+                enclosing = Some(assignment);
             }
         }
         enclosing
@@ -686,17 +686,11 @@ impl NoUselessAssignment {
     ) -> SmallVec<[NodeId; 1]> {
         let mut usages = SmallVec::<[DestructuringAssignmentUsage; 1]>::new();
         for reference in ctx.symbol_references(symbol_id).filter(|reference| reference.is_write()) {
-            if let Some(assignment_node_id) =
-                Self::get_enclosing_destructuring_assignment(ctx, reference)
-                && usages.last().is_none_or(|usage| usage.node_id != assignment_node_id)
+            if let Some(assignment) = Self::get_enclosing_destructuring_assignment(ctx, reference)
+                && usages.last().is_none_or(|usage| usage.node_id != assignment.node_id())
             {
-                let AstKind::AssignmentExpression(assignment) =
-                    ctx.nodes().get_node(assignment_node_id).kind()
-                else {
-                    unreachable!("destructuring assignment should be an assignment expression");
-                };
                 usages.push(DestructuringAssignmentUsage {
-                    node_id: assignment_node_id,
+                    node_id: assignment.node_id(),
                     span: assignment.span,
                     left_span: assignment.left.span(),
                     right_span: assignment.right.span(),

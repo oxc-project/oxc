@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement, TSType},
+    ast::{Argument, Expression, FormalParameters, FunctionBody, PropertyKind, Statement, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -113,7 +113,8 @@ impl Rule for PreferNativeCoercionFunctions {
                     || func.return_type.as_ref().is_some_and(|ret| {
                         matches!(ret.type_annotation, TSType::TSTypePredicate(_))
                     })
-                    || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
+                    || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(property)
+                        if property.kind == PropertyKind::Set && property.value.span() == func.span)
                 {
                     return;
                 }
@@ -338,6 +339,9 @@ fn test() {
                 return value;
             })", // {"parser": parsers.typescript},
         "array.some((value): value is string => value)",   // {"parser": parsers.typescript}
+        "object = {async foo(v) {return String(v);}}",
+        "object = {*foo(v) {return String(v);}}",
+        "object = {async *foo(v) {return String(v);}}",
     ];
 
     let fail = vec![
@@ -379,22 +383,6 @@ fn test() {
                 }
                 bar() {}
             }",
-        // TODO: Get these passing.
-        // "object = {
-        //         foo(v) {
-        //             return String(v);
-        //         },
-        //         bar
-        //     }",
-        // "object = {
-        //         foo: function(v) {
-        //             return String(v);
-        //         },
-        //         bar
-        //     }",
-        // "object = {
-        //         [function(v) {return String(v);}]: 1,
-        //     }",
         "const foo = (v, extra) => String(v)",
         "const foo = (v, ) => String(v, extra)",
         "const foo = (v, ) => /* comment */ String(v)",
@@ -416,6 +404,15 @@ fn test() {
         "array.some((v, extra) => v)",
         "array.some((v, ) => /* comment */ v)",
         "array.filter((value): boolean => value)", // {"parser": parsers.typescript}
+        "export const o = {
+            p: function (v) { return String(v); },
+            m(v) { return String(v); },
+            a: (v) => String(v),
+        };",
+        "object = {foo(v) {return String(v);}, bar}",
+        "object = {foo: function(v) {return String(v);}, bar}",
+        "object = {[function(v) {return String(v);}]: 1}",
+        "object = {set [function(v) {return String(v);}](value) {}}",
     ];
 
     Tester::new(

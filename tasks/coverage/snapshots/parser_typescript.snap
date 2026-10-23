@@ -1,9 +1,9 @@
-commit: 4f5ddae2
+commit: 5237fd46
 
 parser_typescript Summary:
-AST Parsed     : 9661/9669 (99.92%)
-Positive Passed: 9654/9669 (99.84%)
-Negative Passed: 1691/2759 (61.29%)
+AST Parsed     : 9853/9862 (99.91%)
+Positive Passed: 9843/9862 (99.81%)
+Negative Passed: 1712/2806 (61.01%)
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/FunctionDeclaration4.ts
@@ -178,6 +178,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/constructorsWithSpecializedSignatures.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contentMapperOutputExtensionsRequiresRewrite.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contextualReturnTypeOfIIFE2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/contextualTypeForInitalizedVariablesFiltersUndefined.ts
@@ -196,9 +198,15 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/crashRegressionTest.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitCircularMergedExportAliases.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitCommonJsModuleReferencedType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitComputedPropertyNameEnum3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitDefaultExportArrowFunctionPrivateName.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitDefaultExportFunctionExpressionPrivateName.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitDestructuringWithOptionalBindingParameters.ts
 
@@ -209,6 +217,10 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitReexportedSymlinkReference3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitRelativeModuleError.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitTwoMergedExportAliases.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitUnreachablePackageExports.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitUnsafeImportSymbolName.ts
 
@@ -221,6 +233,10 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/defaultArgsInOverloads.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/defaultBestCommonTypesHaveDecls.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/defaultRootDirExternalFiles.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/defaultRootDirInheritedInclude.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/defaultValueInConstructorOverload1.ts
 
@@ -504,6 +520,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/inferentiallyTypingAnEmptyArray.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/inheritedOutputDirectoryRoot.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/innerAliases.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/instanceofOnInstantiationExpression.ts
@@ -604,6 +622,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/keepImportsInDts1.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/keyofGenericExtendingClassDoubleLayer.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/keyofIsLiteralContexualType.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/knockout.ts
@@ -635,6 +655,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/letInVarDeclOfForOf_ES5.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/letInVarDeclOfForOf_ES6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/limitDeepInstantiations.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/longObjectInstantiationChain1.ts
 
@@ -716,6 +738,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleKeywordDeprecated.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleKeywordInstantiatedNamespace.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleProperty2.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/moduleResolutionWithExtensions_unexpected2.ts
@@ -732,6 +756,10 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/multivar.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/mutuallyRecursiveInference.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceFunctionReservedDefaultParameter.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceMergedWithImportAliasNoCrash.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/namespaceNotMergedWithFunctionDefaultExport.ts
@@ -739,6 +767,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowByClauseExpressionInSwitchTrue3.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/narrowByClauseExpressionInSwitchTrue6.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/networkPathReferences.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/noImplicitAnyForIn.ts
 
@@ -848,6 +878,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/recursiveComplicatedClasses.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/recursiveConditionalCrash4.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/recursiveFunctionTypes.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/requireOfJsonFileInJsFile.ts
@@ -901,6 +933,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/statics.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/strictModeInConstructor.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/strictSupertypeSchema.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/super.ts
 
@@ -1169,6 +1203,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es2019/globalThisUnknownNoImplicitAny.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es2019/globalThisVarDeclaration.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es2026/mapGetOrInsert.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/es6/Symbols/symbolDeclarationEmit12.ts
 
@@ -1540,7 +1576,17 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importDefer/importDeferNamespace.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importSource/importSource13.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importSource/importSource15.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importSource/importSource17.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/importSource/importSource6.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/interfaces/declarationMerging/genericAndNonGenericInterfaceWithTheSameName.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/interfaces/declarationMerging/mergedInterfaceAugmentationDiagnostics.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/interfaces/declarationMerging/twoGenericInterfacesDifferingByTypeParameterName.ts
 
@@ -1659,6 +1705,10 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/declarations/jsDeclarationsReusesExistingTypeAnnotations.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/declarations/jsDeclarationsTypeReferences3.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/extendsTag10.ts
+
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/extendsTag9.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/jsdoc/importDeferJsdoc.ts
 
@@ -2038,6 +2088,8 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/mapped/mappedTypeWithAny.ts
 
+Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/mapped/recursiveMappedTypes.ts
+
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/members/duplicateNumericIndexers.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/members/duplicateStringIndexers.ts
@@ -2139,6 +2191,26 @@ Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conforma
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/uniqueSymbol/uniqueSymbolsPropertyNames.ts
 
 Expect Syntax Error: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/types/witness/witness.ts
+
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitDefaultImportPrivateClass.ts
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitDefaultImportPrivateClass.ts:5:1]
+ 4 │ }
+ 5 │ export = Route;
+   · ───────────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
+
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitExportAssignmentWithTypeExports.ts
+
+  × TS(2309): An export assignment cannot be used in a module with other exported elements
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/declarationEmitExportAssignmentWithTypeExports.ts:8:1]
+ 7 │ }
+ 8 │ export = Route;
+   · ───────────────
+   ╰────
+  help: If you want to use `export =`, remove other `export`s and put all of them to the right hand value of `export =`. If you want to use `export`s, remove `export =` statement.
 
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/declarationEmitPatternAmbientModuleImportAttributes.ts
 
@@ -2273,6 +2345,16 @@ Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocTh
    ·            ────
    ╰────
 
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/malformedDestructuringAssignmentTransformVariants.ts
+
+  × Cannot assign to this expression
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/malformedDestructuringAssignmentTransformVariants.ts:14:19]
+ 13 │         // Invalid array targets must still visit private and super accesses.
+ 14 │         [super.x, 0, this.#x] = value;
+    ·                   ─
+ 15 │         [super.x, 1 + 2, this.#x] = value;
+    ╰────
+
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/regexInvalidUtf8WithUnicodeFlag.ts
 
   × Invalid Character `⼯`
@@ -2280,6 +2362,16 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/reg
  1 │ ⼯䀠慴杲瑥›獥敮瑸⼊⾀ੵ
    · ──
    ╰────
+
+Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/usingDeclarationsNestedRest.ts
+
+  × 'using' declarations are not allowed at the top level of a script
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/usingDeclarationsNestedRest.ts:1:1]
+ 1 │ using z = { [Symbol.dispose]() {} };
+   · ────────────────────────────────────
+ 2 │ var [...[a, b]] = [0, 1];
+   ╰────
+  help: Wrap this code in a block or use a module
 
 Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/externalModules/verbatimModuleSyntaxRestrictionsCJS.ts
 
@@ -2840,6 +2932,33 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ var r2 = < <T>(x: T) => T>f; // valid
  4 │ var r3 = <<T>(x: T) => T>f; // ambiguous, appears to the parser as a << operation
    ·          ──
+   ╰────
+
+  × 'default' modifier cannot be used here.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/anonymousClassDeclarationWithClassDecorator.ts:8:1]
+ 7 │ @dec
+ 8 │ default class {
+   · ───────
+ 9 │ }
+   ╰────
+  help: Allowed modifiers are: declare, abstract
+
+  × A class name is required.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/anonymousClassDeclarationWithClassDecorator.ts:3:1]
+ 2 │ 
+ 3 │ @dec
+   · ─────
+ 4 │ class {
+ 5 │ }
+   ╰────
+
+  × A class name is required.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/anonymousClassDeclarationWithClassDecorator.ts:7:1]
+ 6 │ 
+ 7 │ @dec
+   · ─────
+ 8 │ default class {
+ 9 │ }
    ╰────
 
   × A class name is required.
@@ -6273,6 +6392,30 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  4 │ 
    ╰────
 
+  × Decorators are not valid here.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/decoratorMetadataObjectLiteralMethodNoCrash.ts:4:7]
+ 3 │ const o = {
+ 4 │     m(@dec x: string) {}
+   ·       ────
+ 5 │ };
+   ╰────
+
+  × Decorators are not valid here.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/decoratorMetadataObjectLiteralMethodNoCrash.ts:13:15]
+ 12 │         return {
+ 13 │             m(@dec x: string) {},
+    ·               ────
+ 14 │             set s(@dec v: number) {}
+    ╰────
+
+  × Decorators are not valid here.
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/decoratorMetadataObjectLiteralMethodNoCrash.ts:14:19]
+ 13 │             m(@dec x: string) {},
+ 14 │             set s(@dec v: number) {}
+    ·                   ────
+ 15 │         };
+    ╰────
+
   × Cannot assign to this expression
    ╭─[typescript/tsc/testdata/tests/cases/compiler/decrementAndIncrementOperators.ts:4:1]
  3 │ // errors
@@ -6317,6 +6460,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ var a;
  3 │ delete a;
    ·        ─
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/deprecatedReferenceInEnumComputedNameNoFlake.ts:5:6]
+ 4 │ export enum Values {
+ 5 │     [oldValue.value] = 1,
+   ·      ──────────────
+ 6 │ }
    ╰────
 
   × Unexpected token
@@ -8430,6 +8581,24 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │     var a = foo.x;
    ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/importedValueInEnumComputedNameNoFlake.ts:4:6]
+ 3 │ export enum Example {
+ 4 │     [key] = 0,
+   ·      ───
+ 5 │ }
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/incompatibleAssignmentInEnumComputedNameNoFlake.ts:4:6]
+ 3 │     enum E {
+ 4 │ ╭─▶     [(() => {
+ 5 │ │           const text = (target = "value");
+ 6 │ │           return text.length;
+ 7 │ ╰─▶     })()]
+ 8 │     }
+   ╰────
+
   × TS(2309): An export assignment cannot be used in a module with other exported elements
    ╭─[typescript/tsc/testdata/tests/cases/compiler/incompatibleExports1.ts:4:5]
  3 │     interface y { a: Date }
@@ -9037,6 +9206,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·        ────
  2 │ /**
    ╰────
+
+  × Adjacent JSX elements must be wrapped in an enclosing tag.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/jsxAttributeInitializerMultipleElementsNoCrash.tsx:4:29]
+ 3 │ 
+ 4 │ const a = <div attr=<span /><span /> />;
+   ·                             ─
+   ╰────
+  help: Did you want a JSX fragment `<>...</>`?
 
   × Unexpected token
    ╭─[typescript/tsc/testdata/tests/cases/compiler/jsxAttributeMissingInitializer.tsx:1:21]
@@ -9666,6 +9843,39 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  40 │     [2] = 2,
     ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/localReferenceInEnumComputedNameNoFlake.ts:4:6]
+ 3 │ export enum Example {
+ 4 │     [unused.value] = 0
+   ·      ────────────
+ 5 │ }
+   ╰────
+
+  × Expected `,` or `)` but found `.`
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/malformedObjectDestructuringAssignmentClassFields.ts:1:6]
+ 1 │ ({x(A.#}=
+   ·    ┬ ┬
+   ·    │ ╰── `,` or `)` expected
+   ·    ╰── Opened here
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/malformedObjectDestructuringAssignmentESDecorators.ts:6:13]
+ 5 │     static {
+ 6 │         ({ m() {}, get g() { return 1; }, set s(v) {} } = this);
+   ·             ─────
+ 7 │     }
+   ╰────
+
+  × Expected `,` or `]` but found `decimal`
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/malformedSuperDestructuringInDecoratedClassStaticBlock.ts:2:33]
+ 1 │ (@c
+ 2 │ class extends B{static{[super.x 0]=[1];}});
+   ·                        ┬        ┬
+   ·                        │        ╰── `,` or `]` expected
+   ·                        ╰── Opened here
+   ╰────
+
   × Invalid Character `!`
    ╭─[typescript/tsc/testdata/tests/cases/compiler/manyCompilerErrorsInTheTwoFiles.ts:1:13]
  1 │ const a =!@#!@$
@@ -9795,10 +10005,34 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  49 │ }
     ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/missingIdentifierInEnumComputedNameNoFlake.ts:3:6]
+ 2 │ export enum Values {
+ 3 │     [missing.value] = 1,
+   ·      ─────────────
+ 4 │ }
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/missingModuleInEnumComputedNameNoFlake.ts:3:6]
+ 2 │ export enum Values {
+ 3 │     [import("missing").value] = 1,
+   ·      ───────────────────────
+ 4 │ }
+   ╰────
+
   × TS(1039): Initializers are not allowed in ambient contexts.
    ╭─[typescript/tsc/testdata/tests/cases/compiler/missingRequiredDeclare.d.ts:1:9]
  1 │ var x = 1;
    ·         ─
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/misspelledIdentifierInEnumComputedNameNoFlake.ts:4:6]
+ 3 │ export enum Values {
+ 4 │     [existingVale.value] = 1,
+   ·      ──────────────────
+ 5 │ }
    ╰────
 
   × The only valid meta property for new is new.target
@@ -12064,6 +12298,25 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  22 │ 
     ╰────
 
+  × TS(1038): A 'declare' modifier cannot be used in an already ambient context.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/redundantDeclareInEnumComputedNameNoFlake.ts:5:13]
+ 4 │         declare namespace Nested {
+ 5 │             declare const value: number;
+   ·             ───────
+ 6 │         }
+   ╰────
+
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/redundantDeclareInEnumComputedNameNoFlake.ts:3:6]
+ 2 │     export enum Values {
+ 3 │ ╭─▶     [(function () {
+ 4 │ │           declare namespace Nested {
+ 5 │ │               declare const value: number;
+ 6 │ │           }
+ 7 │ ╰─▶     }).name] = 1,
+ 8 │     }
+   ╰────
+
   × Invalid regular expression: Unterminated character class
    ╭─[typescript/tsc/testdata/tests/cases/compiler/regExpWithOpenBracketInCharClass.ts:4:4]
  3 │   /[[]/u, // Valid
@@ -13770,6 +14023,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  207 │ 
      ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/stringIncrementInEnumComputedNameNoFlake.ts:4:6]
+ 3 │ export enum Values {
+ 4 │     [(text++).valueOf] = 1,
+   ·      ────────────────
+ 5 │ }
+   ╰────
+
   × Unterminated string
    ╭─[typescript/tsc/testdata/tests/cases/compiler/stringLiteralsErrors.ts:2:11]
  1 │ // Srtings missing line terminator
@@ -14877,13 +15138,21 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    · ──
    ╰────
 
+  × TS(1164): Computed property names are not allowed in enums.
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/unusedCommaOperandInEnumComputedNameNoFlake.ts:3:6]
+ 2 │ export enum Values {
+ 3 │     [(1, 2).valueOf] = 1,
+   ·      ──────────────
+ 4 │ }
+   ╰────
+
   × Expected `;` but found `)`
-    ╭─[typescript/tsc/testdata/tests/cases/compiler/unusedLocalsAndParameters.ts:83:14]
- 82 │ 
- 83 │ for (let x: y) {
+    ╭─[typescript/tsc/testdata/tests/cases/compiler/unusedLocalsAndParameters.ts:90:14]
+ 89 │ 
+ 90 │ for (let x: y) {
     ·              ┬
     ·              ╰── `;` expected
- 84 │     z(x);
+ 91 │     z(x);
     ╰────
 
   × Missing initializer in const declaration
@@ -15100,6 +15369,38 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  3 │ with (ooo.eee.oo.ah_ah.ting.tang.walla.walla) { // error
    · ────
  4 │     bing = true; // no error
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/withStatementCommonJsEmit.ts:3:1]
+ 2 │ 
+ 3 │ with (obj) export let a;
+   · ────
+ 4 │ with (obj) export let d = 1;
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/withStatementCommonJsEmit.ts:4:1]
+ 3 │ with (obj) export let a;
+ 4 │ with (obj) export let d = 1;
+   · ────
+ 5 │ with (obj) var local = 2;
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/withStatementCommonJsEmit.ts:5:1]
+ 4 │ with (obj) export let d = 1;
+ 5 │ with (obj) var local = 2;
+   · ────
+ 6 │ with (obj) {
+   ╰────
+
+  × 'with' statements are not allowed
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/withStatementCommonJsEmit.ts:6:1]
+ 5 │ with (obj) var local = 2;
+ 6 │ with (obj) {
+   · ────
+ 7 │     export let e;
    ╰────
 
   × TS(1235): A namespace declaration is only allowed at the top level of a namespace or module.
@@ -23455,6 +23756,78 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ╰────
   help: Move this after all the overloads
 
+  × TS(2804): Duplicate identifier `#a`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-staticPrivate.ts:14:12]
+ 13 │ class E {
+ 14 │     static #a() {}
+    ·            ─┬
+    ·             ╰── `#a` has already been declared here
+ 15 │     #a() {}
+    ·     ─┬
+    ·      ╰── It can not be redeclared here
+ 16 │     #b() {}
+    ╰────
+
+  × TS(2804): Duplicate identifier `#b`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-staticPrivate.ts:16:5]
+ 15 │     #a() {}
+ 16 │     #b() {}
+    ·     ─┬
+    ·      ╰── `#b` has already been declared here
+ 17 │     static #b() {}
+    ·            ─┬
+    ·             ╰── It can not be redeclared here
+ 18 │     static #c = 0;
+    ╰────
+
+  × TS(2804): Duplicate identifier `#c`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-staticPrivate.ts:18:12]
+ 17 │     static #b() {}
+ 18 │     static #c = 0;
+    ·            ─┬
+    ·             ╰── `#c` has already been declared here
+ 19 │     #c = 0;
+    ·     ─┬
+    ·      ╰── It can not be redeclared here
+ 20 │     #d = 0;
+    ╰────
+
+  × TS(2804): Duplicate identifier `#d`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-staticPrivate.ts:20:5]
+ 19 │     #c = 0;
+ 20 │     #d = 0;
+    ·     ─┬
+    ·      ╰── `#d` has already been declared here
+ 21 │     static #d = 0;
+    ·            ─┬
+    ·             ╰── It can not be redeclared here
+ 22 │     static get #e() { return 0; }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#e`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-staticPrivate.ts:22:16]
+ 21 │     static #d = 0;
+ 22 │     static get #e() { return 0; }
+    ·                ─┬
+    ·                 ╰── `#e` has already been declared here
+ 23 │     set #e(value: number) {}
+    ·         ─┬
+    ·          ╰── It can not be redeclared here
+ 24 │     get #f() { return 0; }
+    ╰────
+
+  × TS(2804): Duplicate identifier `#f`. Static and instance elements cannot share the same private name.
+    ╭─[typescript/tsc/testdata/tests/cases/conformance/esDecorators/classDeclaration/methods/esDecorators-classDeclaration-methods-staticPrivate.ts:24:9]
+ 23 │     set #e(value: number) {}
+ 24 │     get #f() { return 0; }
+    ·         ─┬
+    ·          ╰── `#f` has already been declared here
+ 25 │     static set #f(value: number) {}
+    ·                ─┬
+    ·                 ╰── It can not be redeclared here
+ 26 │ }
+    ╰────
+
   × Expression must be enclosed in parentheses to be used as a decorator.
     ╭─[typescript/tsc/testdata/tests/cases/conformance/esDecorators/esDecorators-decoratorExpression.1.ts:9:4]
   8 │ 
@@ -24794,6 +25167,15 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  2 │ 
    ╰────
 
+  × Expected `from` but found `string`
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/importDefer/importDeferInvalidDefault.ts:5:14]
+ 4 │ 
+ 5 │ import defer "./a.js";
+   ·              ────┬───
+   ·                  ╰── `from` expected
+ 6 │ import defer "./a.js" with { type: "json" };
+   ╰────
+
   × TS(18059): Named imports are not allowed in a deferred import.
    ╭─[typescript/tsc/testdata/tests/cases/conformance/importDefer/importDeferInvalidNamed.ts:1:8]
  1 │ import defer { foo } from "./a";
@@ -24814,10 +25196,11 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
    ·        ─────
    ╰────
 
-  × Unexpected token
+  × Expected `from` but found `*`
    ╭─[typescript/tsc/testdata/tests/cases/conformance/importDefer/importDeferTypeConflict2.ts:1:19]
  1 │ import defer type * as ns1 from "./a";
-   ·                   ─
+   ·                   ┬
+   ·                   ╰── `from` expected
    ╰────
 
   × The only valid property accesses on import are `import.meta`, `import.source()`, and `import.defer()`
@@ -24832,6 +25215,26 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
  1 │ export type X = typeof import.defer("./a").Foo;
    ·                              ┬
    ·                              ╰── `(` expected
+   ╰────
+
+  × Only a single default import is allowed in a source phase import.
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/importSource/importSource11.ts:1:8]
+ 1 │ import source * as a from "./a.js";
+   ·        ──────
+   ╰────
+
+  × Only a single default import is allowed in a source phase import.
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/importSource/importSource4.ts:1:8]
+ 1 │ import source * as a from "./a.js";
+   ·        ──────
+   ╰────
+
+  × Expected `(` but found `;`
+   ╭─[typescript/tsc/testdata/tests/cases/conformance/importSource/importSource5.ts:1:14]
+ 1 │ import.source;
+   ·              ┬
+   ·              ╰── `(` expected
+ 2 │ (import.source)("./a.js");
    ╰────
 
   × The keyword 'interface' is reserved

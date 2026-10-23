@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.89.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 9a424c2 oxlint,oxfmt: Correct Node.js TypeScript support range (#27699) (camc314)
+
 ## [1.88.0] - 2026-10-13
 
 ### 🚀 Features

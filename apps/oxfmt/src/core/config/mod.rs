@@ -337,6 +337,10 @@ impl ConfigResolver {
                 let mut json_string = utils::read_to_string(path)
                     // Do not include OS error, it differs between platforms
                     .map_err(|_| format!("Failed to read {}: File not found", path.display()))?;
+                // Strip BOM, editors on Windows may add it
+                if json_string.starts_with('\u{feff}') {
+                    json_string.drain(..'\u{feff}'.len_utf8());
+                }
                 // Strip comments (JSONC support)
                 json_strip_comments::strip(&mut json_string).map_err(|err| {
                     format!("Failed to strip comments from {}: {err}", path.display())

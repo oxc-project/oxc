@@ -157,7 +157,14 @@ fn is_object_sorted(
                 prev_key = None;
             }
             ObjectPropertyKind::ObjectProperty(obj) => {
-                let Some(key) = obj.key.static_name() else { continue };
+                let Some(key) = obj.key.static_name().or_else(|| {
+                    match obj.key.as_expression()?.without_parentheses() {
+                        Expression::Identifier(ident) => Some(StaticPropertyName::from(ident.name)),
+                        _ => None,
+                    }
+                }) else {
+                    continue;
+                };
 
                 if let Some(ref prev) = prev_key {
                     let ordering = compare_keys(prev, &key, options);
@@ -1047,6 +1054,19 @@ fn test() {
             r#"var obj = {"A": 1, "b": 2, "\uD800": 3}"#,
             Some(serde_json::json!(["asc", { "caseSensitive": false }])),
         ),
+        ("var obj = {a:1, [b]:2, c:3}", None),
+        ("const a = 'z'; var obj = {[a]:1, b:2}", None),
+        ("var obj = {a:1, [b + c]:2, d:3}", None),
+        (
+            "var obj = {a:1, [B]:2, c:3}",
+            Some(serde_json::json!(["asc", { "caseSensitive": false }])),
+        ),
+        ("var obj = {[a2]:1, [a10]:2}", Some(serde_json::json!(["asc", { "natural": true }]))),
+        (
+            "var obj = {b:1,\n\n[a]:2}",
+            Some(serde_json::json!(["asc", { "allowLineSeparatedGroups": true }])),
+        ),
+        ("var obj = {b:1, ...rest, [a]:2}", None),
     ];
 
     let fail = vec![
@@ -1075,7 +1095,7 @@ fn test() {
         ("var obj = {a:1, [b+c]:2, '':3}", None),                           // { "ecmaVersion": 6 },
         ("var obj = {'':1, [b+c]:2, a:3}", Some(serde_json::json!(["desc"]))), // { "ecmaVersion": 6 },
         ("var obj = {b:1, [f()]:2, '':3, a:4}", Some(serde_json::json!(["desc"]))), // { "ecmaVersion": 6 },
-        // ("var obj = {a:1, b:3, [a]: -1, c:2}", None), // { "ecmaVersion": 6 },
+        ("var obj = {a:1, b:3, [a]: -1, c:2}", None),
         ("var obj = {a:1, c:{y:1, x:1}, b:1}", None),
         ("var obj = {a:1, _:2, b:3} // asc", Some(serde_json::json!(["asc"]))),
         ("var obj = {a:1, c:2, b:3}", Some(serde_json::json!(["asc"]))),
@@ -1433,6 +1453,13 @@ fn test() {
             r#"var obj = {"\uD800": 1, "b": 2, "A": 3}"#,
             Some(serde_json::json!(["asc", { "caseSensitive": false }])),
         ),
+        (r#"export const obj5 = {a: 1, ["c"]: 3, b: 2};"#, None),
+        (r#"const S = Symbol("s"); export const obj6 = {a: 1, [S]: 3, b: 2};"#, None),
+        ("var obj = {[c]:1, b:2}", None),
+        ("var obj = {[(c)]:1, b:2}", None),
+        ("var obj = {c:1, [a]:2, b:3}", Some(serde_json::json!(["desc"]))),
+        ("var obj = {[c]:1, [B]:2}", Some(serde_json::json!(["asc", { "caseSensitive": false }]))),
+        ("var obj = {[a10]:1, [a2]:2}", Some(serde_json::json!(["asc", { "natural": true }]))),
     ];
 
     // Add comprehensive fixer tests: the rule now advertises conditional fixes,
@@ -1689,6 +1716,11 @@ fn test() {
             "const values = {b: 2, a: 1 /* comment */ }",
         ),
         // ****************
+        ("var obj = {a:1, b:3, [a]: -1, c:2}", "var obj = {a:1, b:3, [a]: -1, c:2}"),
+        (
+            r#"const S = Symbol("s"); export const obj6 = {a: 1, [S]: 3, b: 2};"#,
+            r#"const S = Symbol("s"); export const obj6 = {a: 1, [S]: 3, b: 2};"#,
+        ),
     ];
 
     Tester::new(SortKeys::NAME, SortKeys::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

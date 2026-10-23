@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- a0a987c ast: [**BREAKING**] Preserve lone surrogates in static member names (#26677) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- bd37e78 ecmascript: Look through sequence expressions in `to_primitive` (#27837) (baltasarblanco)
+- 863b359 ecmascript: Correct parseFloat decimal prefix scanning (#27695) (camc314)
+- 3543672 ecmascript: Do not fold Number.isInteger / isSafeInteger of tiny non-integers to true (#27622) (Baltasar Blanco)
+- 6987a61 ecmascript: BigInt loose equality folding (unknown operands and `StringToBigInt`) (#27656) (Baltasar Blanco)
+- 022306f ecmascript: Do not fold `Math.cbrt` of a negative number to `NaN` (#27621) (Baltasar Blanco)
+
+### ⚡ Performance
+
+- 88b5c35 minifier: Reduce code branches when evaluating roots (#27906) (Armano)
+
 ## [0.154.0] - 2026-10-13
 
 ### ⚡ Performance

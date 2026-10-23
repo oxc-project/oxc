@@ -8,11 +8,13 @@ use std::{
 };
 
 use oxc_allocator::Allocator;
-use oxc_ast::ast::Expression;
+use oxc_ast::ast::{Expression, IdentifierReference};
 use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::Span;
 use oxc_str::static_ident;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
+
+use crate::{config::GlobalValue, context::LintContext};
 
 mod comment;
 mod config;
@@ -120,6 +122,14 @@ pub fn pad_fix_with_token_boundary(source_text: &str, span: Span, replacement: &
     }
 }
 
+/// Checks whether an identifier references a global enabled by the linter configuration.
+pub fn is_enabled_global_reference(ident: &IdentifierReference<'_>, ctx: &LintContext<'_>) -> bool {
+    ident.is_global_reference(ctx.scoping())
+        && ctx
+            .get_global_variable_value(ident.name.as_str())
+            .is_some_and(|value| value != GlobalValue::Off)
+}
+
 pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> bool {
     if let Some(member) = expr.get_member_expr()
         && member.static_property_name().is_some_and(|name| name == "raw")
@@ -132,12 +142,8 @@ pub fn is_string_raw_member_expression(expr: &Expression, scoping: &Scoping) -> 
 }
 
 /// Checks if `haystack` starts with `prefix`, ignoring ASCII case.
-pub fn starts_with_ignore_case(haystack: &str, prefix: &str) -> bool {
-    let len = prefix.len();
-    if haystack.len() < len {
-        return false;
-    }
-    haystack.as_bytes()[..len].eq_ignore_ascii_case(prefix.as_bytes())
+pub fn starts_with_ignore_case(haystack: &[u8], prefix: &str) -> bool {
+    haystack.get(..prefix.len()).is_some_and(|start| start.eq_ignore_ascii_case(prefix.as_bytes()))
 }
 
 /// Reads the content of a path and returns it.

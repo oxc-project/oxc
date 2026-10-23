@@ -14,7 +14,10 @@ use crate::{
     },
     context::YamlFormatContext,
     options::ProseWrap,
-    print::{YamlFormatter, column_of, format_with, to_span, write_node, write_node_or_suppressed},
+    print::{
+        YamlFormatter, column_of, format_with, source_starts_with_document_marker, to_span,
+        write_node, write_node_or_suppressed,
+    },
 };
 
 /// Where a mapping item lives; decides the empty-value layout
@@ -61,6 +64,10 @@ pub fn write_mapping_item<'a>(
     }
 
     let space_before_colon = key_content.is_some_and(|k| matches!(k.content, Content::Alias(_)));
+    // A root mapping key starting with a document marker keeps its `?`: without it the key starts a line at column 0
+    let key_starts_with_marker = in_flow == FlowParent::No
+        && f.context().collection_depth().get() == 1
+        && key_content.is_some_and(|k| source_starts_with_document_marker(k.span.start, f));
 
     if is_empty_value {
         if in_flow == FlowParent::Mapping {
@@ -79,6 +86,7 @@ pub fn write_mapping_item<'a>(
             && is_absolutely_single_line(key_content, f)
             && !parent_tag_is_set
             && !key_content_trailing_comment
+            && !key_starts_with_marker
         {
             write_key(item, f);
             if space_before_colon {
@@ -106,12 +114,14 @@ pub fn write_mapping_item<'a>(
     let value_start = value_node.span.start;
 
     // Force explicit key:
-    // the key isn't an inline node, or the source was already explicit with a comment between `?` and the key,
+    // the key isn't an inline node or starts with a document marker,
+    // or the source was already explicit with a comment between `?` and the key,
     // or between the key and `:` (an implicit `key:` with a comment above the value keeps the implicit form,
     // the comment becomes the value's leading comment instead).
     let explicit_comment_before_key = key.explicit
         && f.context().comments().peek().is_some_and(|c| c.span.end <= key_node.span.start);
     if !is_inline(key_content)
+        || key_starts_with_marker
         || explicit_comment_before_key
         || (key.explicit && has_own_line_comment_before_value(value_node, f))
     {

@@ -547,30 +547,36 @@ Prettier 3.9 changed this to first retry the whole union FLAT on the indented ne
 Community pushback on the 3.9 style (users migrated to Oxfmt over it) put following on hold:
 ours deliberately matches Prettier 3.8's output for this construct.
 
-## arrow-chain-exact-fill-signature
+## arrow-exact-fill-signature
 
-- Why: cost
-- Pin: `tests/fixtures/js/arrow-function/chain-exact-fill-signature.js`
+- Why: uniform-rule (same construct, same output: arrow with a non-conditional body)
+- Pin: `tests/fixtures/js/arrow-function/exact-fill-signature.js`
 
 ```js
 /* input (printWidth 80) */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (x) => cond ? longlonglong : shortshort;
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) => cond ? longlonglong : shortshort;
 
 /* ours */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (x) =>
+  cond ? longlonglong : shortshort;
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) =>
   cond ? longlonglong : shortshort;
 
 /* prettier */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (
+  x,
+) => (cond ? longlonglong : shortshort);
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength =
   (x) => (y) => (cond ? longlonglong : shortshort);
 ```
 
-An arrow chain with a parens-adding conditional body keeps a signature line that EXACTLY fills the print width (the signature alone is measured; both idempotent).
-Prettier counts the hug layout's literal trailing space, so the exact fill overflows:
-it breaks the assignment and retries the chain flat on the indented next line.
-One char over and the outputs converge;
-a naive port of the literal-space structure regresses `js/arrows/currying-4.js` (Prettier gates the hug on the chain's expand state),
-so matching costs more than this exact-width edge is worth.
+An arrow (single or chain) whose signature line EXACTLY fills the print width keeps it and puts the body on the next line, whatever the body.
+Prettier breaks the signature only for a parens-adding conditional body:
+its hug layout puts a literal space after `=>`, outside the group that may break the body onto the next line,
+so the space is counted although it is trimmed whenever the body breaks.
+As the last call argument, Prettier breaks all the arguments instead of hugging the arrow.
+One char over and the outputs converge.
 
 ## suppressed-for-head-declaration
 
@@ -684,7 +690,6 @@ we reuse the reprint path's split (`write_leading_comments_with_asi_guard`, call
 
 - Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc; prettier/prettier#19645, fixed on main by prettier/prettier#19652)
 - Pin: `tests/fixtures/js/comments/type-cast-comment-inside-added-parens.js`
-- Oxfmt: `externals/svelte/internal/client/dom/css.js`
 
 ```js
 // input
@@ -766,6 +771,44 @@ Prettier's compact test call layout merges and reverses the comments, and is not
 We fall back to the regular argument layout when comments sit around the arguments, following prettier/prettier#20043.
 A same-line block comment also falls back, the same output as the other special call layouts (React hook, `require`).
 
+## vitest-test-call
+
+- Why: uniform-rule (same construct, same output: `it.only(name, callback)`)
+- Pin: `tests/fixtures/js/calls/vitest-test-call.js`
+
+```js
+// input (printWidth: 80)
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+
+// ours: both keep the compact test call layout
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+
+// prettier: `it.only` keeps it, `it.concurrent` breaks the arguments
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent(
+  "does something really long and descriptive with the formatter output",
+  async () => {
+    expect(1).toBe(1);
+  },
+);
+```
+
+Vitest's test calls (`.concurrent`, `.sequential`, `.fails`, `.shuffle`, `bench`) and `Deno.test` take the same `(name, callback)` arguments as `it.only`, and get its compact test call layout.
+Prettier's callee list covers only the Jest / Jasmine / Playwright names, so the others print like any other call.
+The full callee list is `contains_a_test_pattern` in `src/utils/call_expression.rs`.
+
 ## callee-arguments-gap-comment
 
 - Why: invariant
@@ -807,29 +850,52 @@ Before an optional call's `?.`, Prettier moves an own-line comment into the argu
 
 ## instantiation-expression-parens
 
-- Why: semantics (Prettier's output no longer parses; prettier/prettier#20177)
+- Why: semantics (Prettier's output no longer parses or changes structure; prettier/prettier#20177, prettier/prettier#20345)
 - Pin: `tests/fixtures/ts/parenthesis/instantiation-expression-parens.ts`
 
 ```ts
 // input
 const a = (make<T>)!;
+(make<T>)<U>();
+x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (a as B)<T>;
 
 // ours
 const a = (make<T>)!;
+(make<T>)<U>();
+x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (a as B)<T>;
 
 // prettier
 const a = make<T>!;
+make<T><U>();
+x = make<T> + y;
 export default class {}<string>;
 class {}<string>;
+x = c ? a : b<T>;
+x = y++<T>;
+x = a as B<T>;
 ```
 
 Prettier drops the parens around an instantiation expression before `!`,
 and the ones that keep a leading `class`/`function` from starting a declaration or statement.
 Fixed in Prettier `main` by prettier/prettier#20177, which we follow except after `export default` (DIVERGENCES.md#export-default-leftmost-parens).
+
+Prettier `main` still drops them before type arguments (`make<T><U>()` does not parse)
+and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
+(`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
+
+Prettier also drops the parens around an operand that binds looser than the type arguments.
+The type arguments then attach to its last piece only (`c ? a : b<T>`, `a as B<T>`), or the output no longer parses (`y++<T>`).
+Fixed in Prettier `main` by prettier/prettier#20345, which we follow.
 
 ## export-default-leftmost-parens
 
@@ -921,3 +987,37 @@ When every right side of a logical chain is an inlined object/array/JSX literal,
 Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
 A chain with a non-inlined right side breaks at the operators and keeps the indent.
 Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.
+
+## text-display-width
+
+- Why: uniform-rule (text width is the display width; oxc#23863, prettier/prettier#19538)
+- Pin: `tests/fixtures/js/unicode/text-display-width.js`
+
+```js
+// input (printWidth 80)
+export default moment.defineLocale("bo", {
+  monthsShort: "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+
+// ours
+export default moment.defineLocale("bo", {
+  monthsShort: "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+
+// prettier
+export default moment.defineLocale("bo", {
+  monthsShort:
+    "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+```
+
+Zero-width characters count as 0 toward the print width (FORMATTER_POLICY.md "Text width"), so the line above fits.
+Prettier counts the Tibetan subjoined letter `ླ` (`U+0FB3`, a nonspacing mark) as 1 and breaks.
+Fixed in Prettier `main` by prettier/prettier#19538, which we follow.
+
+Format characters (`U+200B..U+200F`, `U+FEFF`) are 1 on Prettier `main` too,
+so a string padded with NBSP / ZWNJ pairs, as in an email preview, breaks in Prettier and stays on one line in ours.
+
+Prettier measures some width heuristics by a JS `.length`, so a wide character counts 1 there and 2 in ours:
+a lone call argument of 14 CJK characters (`translateTheThing(漢字…)`) is short for Prettier's `printWidth * 0.25` and not for ours,
+so ours breaks the call's arguments instead of after the `=`.

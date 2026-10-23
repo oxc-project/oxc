@@ -1,16 +1,17 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, fmt::Write, mem};
 
 use cow_utils::CowUtils;
 
-use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, TakeIn};
-use oxc_ast::ast::*;
+use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, StringBuilder, TakeIn};
+use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_compat::ESFeature;
 use oxc_ecmascript::{
-    StringCharAt, StringCharAtResult, ToBigInt, ToIntegerIndex,
-    constant_evaluation::{ConstantEvaluation, DetermineValueType},
+    ArrayJoin, ToBigInt, ToIntegerIndex, ToJsString,
+    constant_evaluation::{ConstantEvaluation, DetermineValueType, ValueType},
     side_effects::{MayHaveSideEffects, is_regexp_syntax_supported},
 };
 use oxc_span::SPAN;
+use oxc_str::{JSStr, JSStrBuilder};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -50,6 +51,7 @@ impl<'a> PeepholeOptimizations {
         };
         let replacement = match name {
             "concat" => Self::try_fold_concat(*span, arguments, callee, ctx),
+            "join" => Self::try_fold_array_join(*span, arguments, object, ctx),
             "pow" => Self::try_fold_pow(*span, arguments, object, ctx),
             "of" => Self::try_fold_array_of(*span, arguments, name, object, ctx),
             _ => None,
@@ -144,9 +146,7 @@ impl<'a> PeepholeOptimizations {
                 return;
             }
 
-            // We don't need to check if the arguments has a side effect here.
-            //
-            // The only side effect Array::concat / String::concat can cause is throwing an error when the created array is too long.
+            // For arrays, creating the intermediate result can throw when it is too long.
             // With the compressor assumption, that error can be moved.
             //
             // For example, if we have `[].concat(a).concat(b)`, the steps before the compression is:
@@ -186,6 +186,52 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
+        let Expression::StaticMemberExpression(member) = &*new_root_callee else { unreachable!() };
+        // Convert the chain directly when each call can interleave its own argument
+        // evaluations and coercions. Keeping the calls' coercion boundaries permits
+        // later calls to mutate earlier arguments, even when flattening is unsafe.
+        if let Expression::StringLiteral(base) = &member.object
+            && ctx.supports_feature(ESFeature::ES2015TemplateLiterals)
+            && collected_arguments
+                .iter()
+                .all(|args| Self::string_concat_can_interleave(args.iter(), ctx))
+        {
+            let argument_count = collected_arguments.iter().map(|args| args.len()).sum::<usize>();
+            let expression_count = collected_arguments
+                .iter()
+                .flat_map(|args| args.iter())
+                .filter(|arg| !matches!(arg, Argument::StringLiteral(_)))
+                .count();
+            // If flattening is unsafe, the alternative is the whole original chain.
+            let call_count = if Self::string_concat_can_interleave(
+                collected_arguments.iter().rev().flat_map(|args| args.iter()),
+                ctx,
+            ) {
+                1
+            } else {
+                collected_arguments.len()
+            };
+            if Self::string_concat_prefers_template(argument_count, expression_count, call_count) {
+                let replacement = Self::fold_string_concat(
+                    original_span,
+                    base.value,
+                    collected_arguments.into_iter().rev().flat_map(|args| args.take_in(ctx)),
+                    expression_count,
+                    ctx,
+                );
+                ctx.replace_expression(node, replacement);
+                return;
+            }
+        }
+        if matches!(member.object, Expression::StringLiteral(_))
+            && !Self::string_concat_can_interleave(
+                collected_arguments.iter().rev().flat_map(|args| args.iter()),
+                ctx,
+            )
+        {
+            return;
+        }
+
         let new_expr = Expression::new_call_expression(
             original_span,
             new_root_callee.take_in(ctx),
@@ -206,7 +252,7 @@ impl<'a> PeepholeOptimizations {
         span: Span,
         args: &mut Arguments<'a>,
         callee: &mut Expression<'a>,
-        ctx: &mut TraverseCtx<'a>,
+        ctx: &TraverseCtx<'a>,
     ) -> Option<Expression<'a>> {
         // let concat chaining reduction handle it first
         if let Ancestor::StaticMemberExpressionObject(parent_member) = ctx.parent()
@@ -271,98 +317,215 @@ impl<'a> PeepholeOptimizations {
             Expression::StringLiteral(base_str) => {
                 if !ctx.supports_feature(ESFeature::ES2015TemplateLiterals)
                     || args.is_empty()
-                    || !args.iter().all(Argument::is_expression)
+                    || !Self::string_concat_can_interleave(args.iter(), ctx)
                 {
                     return None;
                 }
 
-                let base_value = base_str.value.as_str()?;
-                if args.iter().any(|arg| matches!(arg, Argument::StringLiteral(lit) if lit.value.has_lone_surrogate())) {
-                    return None;
-                }
                 let expression_count =
                     args.iter().filter(|arg| !matches!(arg, Argument::StringLiteral(_))).count();
-                let string_count = args.len() - expression_count;
-
-                // whether it is shorter to use `String::concat`
-                if ".concat()".len() + args.len() + "''".len() * string_count
-                    < "${}".len() * expression_count
-                {
+                if !Self::string_concat_prefers_template(args.len(), expression_count, 1) {
                     return None;
                 }
 
-                // Borrow the arena builder field directly.
-                // It's disjoint from `&mut ctx.state` below, so the two can coexist.
-                let ast = &ctx.ast;
-
-                // Reuse a scratch `String` held on `MinifierState` across calls
-                // to accumulate the cooked text of the in-progress quasi. On
-                // flush we copy the text into the arena and clear the scratch.
-                //
-                // INVARIANT: every flush must end with `scratch.clear()` so
-                // the next string-arg `push_str` starts a fresh quasi. Two
-                // expressions in a row rely on this — the second one's flush
-                // sees an empty `scratch`, producing the required empty
-                // separator quasi without a state-machine flag.
-                let scratch = &mut ctx.state.concat_scratch;
-                scratch.clear();
-                scratch.push_str(base_value);
-
-                let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
-                let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
-
-                for argument in args.drain(..) {
-                    if let Argument::StringLiteral(str_lit) = argument {
-                        // Append onto the in-progress quasi.
-                        // Checked before draining the arguments.
-                        scratch.push_str(str_lit.value.as_str().unwrap());
-                    } else {
-                        // Flush the current quasi (possibly empty) before
-                        // pushing the next expression.
-                        let cooked = Str::from_str_in(scratch, ast);
-                        let raw_cow = Self::escape_string_for_template_literal(scratch);
-                        let raw = Str::from_str_in(&raw_cow, ast);
-                        // `raw` is already escaped
-                        quasis.push(TemplateElement::new(
-                            SPAN,
-                            TemplateElementValue { raw, cooked: Some(cooked.into()) },
-                            false,
-                            ast,
-                        ));
-                        scratch.clear(); // maintains INVARIANT above
-                        // checked that all the arguments are expression above
-                        expressions.push(argument.into_expression());
-                    }
-                }
-
-                if expressions.is_empty() {
-                    debug_assert_eq!(quasis.len(), 0);
-                    let s = Str::from_str_in(scratch, ast);
-                    return Some(Expression::new_string_literal(span, s, None, ast));
-                }
-
-                // Flush the trailing quasi. If the last arg was an expression
-                // `scratch` is empty, giving the required trailing empty
-                // quasi; otherwise it holds the accumulated tail text.
-                let cooked = Str::from_str_in(scratch, ast);
-                let raw_cow = Self::escape_string_for_template_literal(scratch);
-                let raw = Str::from_str_in(&raw_cow, ast);
-                // `raw` is already escaped
-                quasis.push(TemplateElement::new(
-                    SPAN,
-                    TemplateElementValue { raw, cooked: Some(cooked.into()) },
-                    true, /* tail */
-                    ast,
-                ));
-
-                debug_assert_eq!(quasis.len(), expressions.len() + 1);
-                Some(Expression::new_template_literal(span, quasis, expressions, ast))
+                Some(Self::fold_string_concat(
+                    span,
+                    base_str.value,
+                    args.drain(..),
+                    expression_count,
+                    ctx,
+                ))
             }
             _ => None,
         }
     }
 
-    pub fn escape_string_for_template_literal(s: &str) -> Cow<'_, str> {
+    fn string_concat_prefers_template(
+        argument_count: usize,
+        expression_count: usize,
+        call_count: usize,
+    ) -> bool {
+        // Estimate the added syntax, excluding the base string and argument contents.
+        let string_count = argument_count - expression_count;
+        let concat_overhead =
+            call_count * ".concat()".len() + argument_count + string_count * "''".len();
+        let template_overhead = expression_count * "${}".len();
+        template_overhead <= concat_overhead
+    }
+
+    /// Build a template after checking that each original call can interleave its arguments.
+    fn fold_string_concat(
+        span: Span,
+        base: JSStr<'a>,
+        arguments: impl Iterator<Item = Argument<'a>>,
+        expression_count: usize,
+        ctx: &TraverseCtx<'a>,
+    ) -> Expression<'a> {
+        let ast = &ctx.ast;
+        let mut expressions = ArenaVec::with_capacity_in(expression_count, ast);
+        let mut quasis = ArenaVec::with_capacity_in(expression_count + 1, ast);
+        let mut cooked = JSStrBuilder::new_in(ctx);
+        cooked.push_js_str(base);
+        for argument in arguments {
+            if let Argument::StringLiteral(lit) = argument {
+                cooked.push_js_str(lit.value);
+            } else {
+                let quasi = mem::replace(&mut cooked, JSStrBuilder::new_in(ctx));
+                quasis.push(Self::template_element(quasi.into_js_str(), false, ast));
+                expressions.push(argument.into_expression());
+            }
+        }
+        let tail = cooked.into_js_str();
+        if expressions.is_empty() {
+            return Expression::new_string_literal(span, tail, None, ast);
+        }
+        quasis.push(Self::template_element(tail, true, ast));
+        Expression::new_template_literal(span, quasis, expressions, ast)
+    }
+
+    /// `concat` evaluates every argument before coercing any of them. Templates interleave
+    /// evaluation and coercion, and flattening a chain delays the inner calls' coercions.
+    /// An earlier object's coercion can observe mutations made by a later argument.
+    fn string_concat_can_interleave<'b>(
+        arguments: impl Iterator<Item = &'b Argument<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool
+    where
+        'a: 'b,
+    {
+        // Coercion methods are assumed pure, so an earlier coercion cannot change
+        // a binding read by a later argument.
+        let mut may_coerce_object = false;
+        for argument in arguments {
+            let Some(argument) = argument.as_expression() else { return false };
+            if may_coerce_object && argument.may_have_side_effects(ctx) {
+                return false;
+            }
+            may_coerce_object |=
+                matches!(argument.value_type(ctx), ValueType::Object | ValueType::Undetermined);
+        }
+        true
+    }
+
+    /// `['a','b'].join()` -> `'a,b'`
+    fn try_fold_array_join(
+        span: Span,
+        arguments: &Arguments<'a>,
+        object: &Expression<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) -> Option<Expression<'a>> {
+        let Expression::ArrayExpression(array) = object else { return None };
+        if array.may_have_side_effects(ctx) || arguments.len() > 1 {
+            return None;
+        }
+
+        let separator = if let Some(argument) = arguments.first() {
+            let separator = argument.as_expression()?;
+            if separator.may_have_side_effects(ctx) {
+                return None;
+            }
+            if separator.value_type(ctx).is_undefined() {
+                None
+            } else {
+                Some(separator.to_js_string(ctx)?)
+            }
+        } else {
+            None
+        };
+        let separator = separator.as_deref().unwrap_or(",");
+
+        let per_element = array.elements.len().saturating_sub(1) * 3;
+        let syntax_savings = per_element + "[].join()".len();
+
+        let added_size = separator.len() * (array.elements.len().saturating_sub(2));
+
+        if syntax_savings <= added_size {
+            return None;
+        }
+
+        let joined = array.array_join(ctx, Some(separator))?;
+        Some(Expression::new_string_literal(span, Str::from_str_in(&joined, ctx), None, ctx))
+    }
+
+    /// A template quasi holding `cooked`.
+    /// The raw text borrows the cooked value when nothing needs escaping.
+    fn template_element(
+        cooked: JSStr<'a>,
+        tail: bool,
+        ast: &AstBuilder<'a>,
+    ) -> TemplateElement<'a> {
+        let raw = Str::from_cow_in(&Self::escape_string_for_template_literal(cooked), ast);
+        TemplateElement::new(SPAN, TemplateElementValue { raw, cooked: Some(cooked) }, tail, ast)
+    }
+
+    /// Join untagged template raw text without forming an interpolation or a decimal escape
+    /// across a boundary. Empty parts do not separate the neighboring source text.
+    pub(super) fn concat_template_literal_raw<const N: usize>(
+        mut parts: [&str; N],
+        ctx: &impl GetAllocator<'a>,
+    ) -> Str<'a> {
+        let mut suffixes = [""; N];
+        for index in 0..N {
+            let Some(next) =
+                parts[index + 1..].iter().find_map(|part| part.as_bytes().first().copied())
+            else {
+                break;
+            };
+            let raw = parts[index];
+            if raw.ends_with('$') && next == b'{' {
+                let backslashes =
+                    raw[..raw.len() - 1].bytes().rev().take_while(|&byte| byte == b'\\').count();
+                if backslashes % 2 == 0 {
+                    // Escape the opening brace, leaving any preceding backslashes unchanged.
+                    suffixes[index] = "\\";
+                }
+            } else if raw.ends_with("\\0") && next.is_ascii_digit() {
+                let prefix = &raw[..raw.len() - 1];
+                let backslashes = prefix.bytes().rev().take_while(|&byte| byte == b'\\').count();
+                if backslashes % 2 == 1 {
+                    parts[index] = prefix;
+                    suffixes[index] = "x00";
+                }
+            }
+        }
+        if suffixes.iter().all(|suffix| suffix.is_empty()) {
+            return Str::from_strs_array_in(parts, ctx);
+        }
+        let capacity = parts
+            .iter()
+            .zip(suffixes)
+            .try_fold(0usize, |length, (part, suffix)| {
+                length.checked_add(part.len())?.checked_add(suffix.len())
+            })
+            .expect("template literal raw text is too long");
+        let mut raw = StringBuilder::with_capacity_in(capacity, ctx.allocator());
+        for (part, suffix) in parts.into_iter().zip(suffixes) {
+            raw.push_str(part);
+            raw.push_str(suffix);
+        }
+        Str::from(raw.into_str())
+    }
+
+    /// Escape a string value as template literal raw text.
+    /// Raw text is source, so a lone surrogate is written as a `\u` escape.
+    pub fn escape_string_for_template_literal(value: JSStr<'_>) -> Cow<'_, str> {
+        let Some(s) = value.as_str() else {
+            let mut raw = String::with_capacity(value.len());
+            for c in value.chars() {
+                match c.to_char() {
+                    Some(c @ ('\\' | '`' | '$')) => {
+                        raw.push('\\');
+                        raw.push(c);
+                    }
+                    Some('\r') => raw.push_str("\\r"),
+                    Some(c) => raw.push(c),
+                    None => {
+                        let _ = write!(raw, "\\u{:04x}", c.to_u32());
+                    }
+                }
+            }
+            return Cow::Owned(raw);
+        };
         if s.contains(['\\', '`', '$', '\r']) {
             Cow::Owned(
                 s.cow_replace("\\", "\\\\")
@@ -381,7 +544,8 @@ impl<'a> PeepholeOptimizations {
         if matches!(
             ctx.parent(),
             Ancestor::CallExpressionCallee(_) | Ancestor::TaggedTemplateExpressionTag(_)
-        ) {
+        ) || Self::is_delete_argument(ctx)
+        {
             return;
         }
 
@@ -560,16 +724,22 @@ impl<'a> PeepholeOptimizations {
 
         match object {
             Expression::StringLiteral(s) => {
-                if let StringCharAtResult::Value(c) =
-                    s.value.as_str()?.char_at(Some(property.into()))
-                {
-                    s.span = span;
-                    s.value = Str::from_str_in(&c.to_string(), ctx).into();
-                    s.raw = None;
-                    Some(object.take_in(ctx))
-                } else {
-                    None
-                }
+                let index = property as usize;
+                // std's UTF-8 decoder is faster for ordinary strings.
+                let unit = match s.value.as_str() {
+                    Some(value) => value.encode_utf16().nth(index),
+                    None => s.value.encode_utf16().nth(index),
+                };
+                // An index past the end reads `String.prototype`, which has no index properties.
+                let Some(unit) = unit else {
+                    return Some(Expression::new_void_0(span, ctx));
+                };
+                let mut builder = JSStrBuilder::new_in(ctx);
+                builder.push_code_unit(unit);
+                s.span = span;
+                s.value = builder.into_js_str();
+                s.raw = None;
+                Some(object.take_in(ctx))
             }
             Expression::ArrayExpression(array_expr) => {
                 let length_until_spread =

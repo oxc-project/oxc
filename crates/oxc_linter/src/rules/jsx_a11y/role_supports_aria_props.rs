@@ -1,7 +1,7 @@
 use cow_utils::CowUtils;
 use oxc_ast::{
     AstKind,
-    ast::{JSXAttributeItem, JSXAttributeValue, JSXExpression, JSXOpeningElement},
+    ast::{JSXAttributeItem, JSXOpeningElement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,11 +10,11 @@ use oxc_span::Span;
 use crate::{
     AstNode,
     context::LintContext,
-    globals::{AriaProperty, VALID_ARIA_ROLES, is_valid_aria_property},
+    globals::{AriaProperty, VALID_ARIA_ROLES},
     rule::Rule,
     utils::{
         get_element_type, get_jsx_attribute_name, get_string_literal_prop_value,
-        has_jsx_prop_ignore_case,
+        has_jsx_prop_ignore_case, is_nullish_jsx_attribute_value,
     },
 };
 
@@ -89,16 +89,19 @@ impl Rule for RoleSupportsAriaProps {
         );
         let is_implicit = role_value.is_some() && role.is_none();
         if let Some(role_value) = role_value {
-            if !VALID_ARIA_ROLES.contains(role_value) {
+            let Some(supported_properties) = get_aria_properties_for_role(role_value) else {
                 return;
-            }
+            };
             for attr in &jsx_el.attributes {
                 if let JSXAttributeItem::Attribute(attr) = attr {
                     let name = get_jsx_attribute_name(&attr.name);
                     let name = name.cow_to_ascii_lowercase();
-                    if is_valid_aria_property(&name)
-                        && attr.value.as_ref().is_none_or(|value| !is_nullish_value(value))
-                        && !is_valid_aria_property_for_role(role_value, &name)
+                    if let Ok(property) = AriaProperty::try_from(name.as_ref())
+                        && attr
+                            .value
+                            .as_ref()
+                            .is_none_or(|value| !is_nullish_jsx_attribute_value(value))
+                        && !supported_properties.contains(&property)
                     {
                         ctx.diagnostic(if is_implicit {
                             is_implicit_diagnostic(attr.span, &name, role_value, &el_type)
@@ -110,15 +113,6 @@ impl Rule for RoleSupportsAriaProps {
             }
         }
     }
-}
-
-fn is_nullish_value(value: &JSXAttributeValue) -> bool {
-    matches!(
-        value,
-        JSXAttributeValue::ExpressionContainer(container)
-            if matches!(container.expression, JSXExpression::NullLiteral(_))
-                || container.expression.is_undefined()
-    )
 }
 
 /// ref: <https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/blob/v6.9.0/src/util/getImplicitRole.js>
@@ -1289,79 +1283,88 @@ const TREEITEM_PROPS: &[AriaProperty] = &[
     AriaProperty::SetSize,
 ];
 
-fn is_valid_aria_property_for_role(role_value: &str, aria_property: &str) -> bool {
-    let Ok(aria_property) = AriaProperty::try_from(aria_property) else {
-        return false;
-    };
+fn get_aria_properties_for_role(role_value: &str) -> Option<&'static [AriaProperty]> {
+    if !VALID_ARIA_ROLES.contains(role_value) {
+        return None;
+    }
     // ref: https://github.com/A11yance/aria-query/blob/fff6f07c714e8048f4fe084cec74f24248e5673d/scripts/roles.json
-    match role_value {
-        "alert" | "banner" | "blockquote" | "command" | "complementary" => {
-            ALERT_ETC_PROPS.contains(&aria_property)
-        }
-        "alertdialog" | "dialog" | "window" => ALERTDIALOG_ETC_PROPS.contains(&aria_property),
-        "application" | "graphics-object" => APPLICATION_ETC_PROPS.contains(&aria_property),
-        "article" => ARTICLE_PROPS.contains(&aria_property),
-        "button" => BUTTON_PROPS.contains(&aria_property),
-        "caption" | "code" | "deletion" | "emphasis" | "generic" => {
-            CAPTION_ETC_PROPS.contains(&aria_property)
-        }
-        "cell" => CELL_PROPS.contains(&aria_property),
-        "checkbox" | "switch" => CHECKBOX_PROPS.contains(&aria_property),
-        "columnheader" | "rowheader" => COLUMN_HEADER_ROW_HEADER_PROPS.contains(&aria_property),
-        "combobox" => COMBOBOX_PROPS.contains(&aria_property),
-        "composite" | "group" => COMPOSITE_GROUP_PROPS.contains(&aria_property),
+    Some(match role_value {
+        "alert" | "banner" | "blockquote" | "command" | "complementary" => ALERT_ETC_PROPS,
+        "alertdialog" | "dialog" | "window" => ALERTDIALOG_ETC_PROPS,
+        "application" | "graphics-object" => APPLICATION_ETC_PROPS,
+        "article" => ARTICLE_PROPS,
+        "button" => BUTTON_PROPS,
+        "caption" | "code" | "deletion" | "emphasis" | "generic" => CAPTION_ETC_PROPS,
+        "cell" => CELL_PROPS,
+        "checkbox" | "switch" => CHECKBOX_PROPS,
+        "columnheader" | "rowheader" => COLUMN_HEADER_ROW_HEADER_PROPS,
+        "combobox" => COMBOBOX_PROPS,
+        "composite" | "group" => COMPOSITE_GROUP_PROPS,
         "contentinfo" | "definition" | "directory" | "document" | "feed" | "figure" | "form"
         | "img" | "landmark" | "list" | "log" | "main" | "marquee" | "math" | "navigation"
         | "note" | "region" | "roletype" | "rowgroup" | "search" | "section" | "sectionhead"
         | "status" | "structure" | "tabpanel" | "term" | "time" | "timer" | "tooltip"
-        | "widget" => CONTENTINFO_ETC_PROPS.contains(&aria_property),
+        | "widget" => CONTENTINFO_ETC_PROPS,
         "doc-abstract"
         | "doc-acknowledgments"
         | "doc-afterword"
         | "doc-appendix"
         | "doc-backlink"
-        | "doc-bibliography" => DOC_ABSTRACT_ETC_PROPS.contains(&aria_property),
-        "doc-biblioentry" | "doc-endnote" => DOC_BIBLOENTRY_ETC_PROPS.contains(&aria_property),
+        | "doc-bibliography" => DOC_ABSTRACT_ETC_PROPS,
+        "doc-biblioentry" | "doc-endnote" => DOC_BIBLOENTRY_ETC_PROPS,
         "doc-biblioref" | "doc-chapter" | "doc-colophon" | "doc-conclusion" | "doc-cover"
         | "doc-credit" | "doc-credits" | "doc-dedication" | "doc-endnotes" | "doc-epigraph"
         | "doc-epilogue" | "doc-errata" | "doc-example" | "doc-footnote" | "doc-foreword"
         | "doc-glossary" | "doc-glossref" | "doc-index" | "doc-introduction" | "doc-noteref"
         | "doc-notice" | "doc-pagelist" | "doc-part" | "doc-preface" | "doc-prologue"
         | "doc-qna" | "doc-subtitle" | "doc-tip" | "doc-toc" | "graphics-document"
-        | "graphics-symbol" => DOC_BIBLIOREF_ETC_PROPS.contains(&aria_property),
-        "doc-pagebreak" => DOC_PAGE_BREAK_PROPS.contains(&aria_property),
-        "doc-pullquote" | "none" => false,
-        "grid" => GRID_PROPS.contains(&aria_property),
-        "gridcell" => GRIDCELL_PROPS.contains(&aria_property),
-        "heading" => HEADING_PROPS.contains(&aria_property),
-        "input" => INPUT_PROPS.contains(&aria_property),
+        | "graphics-symbol" => DOC_BIBLIOREF_ETC_PROPS,
+        "doc-pagebreak" => DOC_PAGE_BREAK_PROPS,
+        "doc-pullquote" | "none" => &[],
+        "grid" => GRID_PROPS,
+        "gridcell" => GRIDCELL_PROPS,
+        "heading" => HEADING_PROPS,
+        "input" => INPUT_PROPS,
         "insertion" | "paragraph" | "presentation" | "strong" | "subscript" | "superscript" => {
-            INSERTION_ETC_PROPS.contains(&aria_property)
+            INSERTION_ETC_PROPS
         }
-        "link" => LINK_PROPS.contains(&aria_property),
-        "listbox" => LISTBOX_PROPS.contains(&aria_property),
-        "listitem" => LISTITEM_PROPS.contains(&aria_property),
-        "mark" => MARK_PROPS.contains(&aria_property),
-        "menu" | "menubar" | "select" | "toolbar" => MENU_ETC_PROPS.contains(&aria_property),
-        "menuitem" => MENUITEM_PROPS.contains(&aria_property),
-        "menuitemcheckbox" | "menuitemradio" => MENUITEMCHECKBOX_ETC_PROPS.contains(&aria_property),
-        "meter" | "progressbar" => METER_PROGRESSBAR_PROPS.contains(&aria_property),
-        "option" => OPTION_PROPS.contains(&aria_property),
-        "radio" => RADIO_PROPS.contains(&aria_property),
-        "radiogroup" => RADIOGROUP_PROPS.contains(&aria_property),
-        "range" => RANGE_PROPS.contains(&aria_property),
-        "row" => ROW_PROPS.contains(&aria_property),
-        "scrollbar" | "separator" => SCROLLBAR_SEPARATOR_PROPS.contains(&aria_property),
-        "searchbox" | "textbox" => SEARCHBOX_TEXTBOX_PROPS.contains(&aria_property),
-        "slider" => SLIDER_PROPS.contains(&aria_property),
-        "spinbutton" => SPINBUTTON_PROPS.contains(&aria_property),
-        "tab" => TAB_PROPS.contains(&aria_property),
-        "table" => TABLE_PROPS.contains(&aria_property),
-        "tablist" => TABLIST_PROPS.contains(&aria_property),
-        "tree" => TREE_PROPS.contains(&aria_property),
-        "treegrid" => TREEGRID_PROPS.contains(&aria_property),
-        "treeitem" => TREEITEM_PROPS.contains(&aria_property),
-        _ => unreachable!("role value is not valid"),
+        "link" => LINK_PROPS,
+        "listbox" => LISTBOX_PROPS,
+        "listitem" => LISTITEM_PROPS,
+        "mark" => MARK_PROPS,
+        "menu" | "menubar" | "select" | "toolbar" => MENU_ETC_PROPS,
+        "menuitem" => MENUITEM_PROPS,
+        "menuitemcheckbox" | "menuitemradio" => MENUITEMCHECKBOX_ETC_PROPS,
+        "meter" | "progressbar" => METER_PROGRESSBAR_PROPS,
+        "option" => OPTION_PROPS,
+        "radio" => RADIO_PROPS,
+        "radiogroup" => RADIOGROUP_PROPS,
+        "range" => RANGE_PROPS,
+        "row" => ROW_PROPS,
+        "scrollbar" | "separator" => SCROLLBAR_SEPARATOR_PROPS,
+        "searchbox" | "textbox" => SEARCHBOX_TEXTBOX_PROPS,
+        "slider" => SLIDER_PROPS,
+        "spinbutton" => SPINBUTTON_PROPS,
+        "tab" => TAB_PROPS,
+        "table" => TABLE_PROPS,
+        "tablist" => TABLIST_PROPS,
+        "tree" => TREE_PROPS,
+        "treegrid" => TREEGRID_PROPS,
+        "treeitem" => TREEITEM_PROPS,
+        _ => return None,
+    })
+}
+
+#[test]
+fn test_role_properties() {
+    for role in &VALID_ARIA_ROLES {
+        assert!(get_aria_properties_for_role(role).is_some(), "Missing properties for role {role}");
+    }
+    for role in ["none", "doc-pullquote"] {
+        assert_eq!(get_aria_properties_for_role(role).unwrap(), [], "{role}");
+    }
+    for role in ["invalid-role", "command", "Button"] {
+        assert!(get_aria_properties_for_role(role).is_none());
     }
 }
 

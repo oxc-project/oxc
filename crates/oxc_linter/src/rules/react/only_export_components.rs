@@ -3,7 +3,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{JSChar, JSStr};
+use oxc_str::JSChar;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
@@ -11,7 +11,7 @@ use serde::{Deserialize, Serialize};
 use crate::{
     context::LintContext,
     rule::{DefaultRuleConfig, Rule},
-    utils::is_react_component_name,
+    utils::{is_es6_component_class, is_react_component_name},
 };
 
 fn export_all_components_diagnostic(span: Span) -> OxcDiagnostic {
@@ -489,8 +489,7 @@ impl OnlyExportComponents {
             ExportDefaultDeclarationKind::ClassDeclaration(class) => {
                 if let Some(id) = class.id.as_ref() {
                     analysis.add_export(
-                        if is_react_component_name(&id.name) && Self::extends_react_component(class)
-                        {
+                        if is_react_component_name(&id.name) && is_es6_component_class(class) {
                             ExportType::ReactComponent
                         } else {
                             ExportType::NonComponent(id.span)
@@ -597,7 +596,7 @@ impl OnlyExportComponents {
                 |id| vec![self.classify_export(id.name.as_str(), id.span, true, None)],
             ),
             Declaration::ClassDeclaration(class) => class.id.as_ref().map_or(vec![], |id| {
-                vec![if is_react_component_name(&id.name) && Self::extends_react_component(class) {
+                vec![if is_react_component_name(&id.name) && is_es6_component_class(class) {
                     ExportType::ReactComponent
                 } else {
                     ExportType::NonComponent(id.span)
@@ -624,17 +623,13 @@ impl OnlyExportComponents {
         let mut analysis = ExportAnalysis::default();
 
         for export_spec in specifiers {
-            let exported_name = match &export_spec.exported {
-                ModuleExportName::IdentifierName(name) => Some(name.name.as_str()),
-                ModuleExportName::IdentifierReference(ident) => Some(ident.name.as_str()),
-                ModuleExportName::StringLiteral(_) => None,
-            };
+            let exported_name = export_spec.exported.identifier_name();
 
             let local_name = export_spec.local.name();
             let span = export_spec.local.span();
 
             let export = exported_name.map_or(ExportType::NonComponent(span), |name| {
-                let name = if name == "default" { local_name.as_str() } else { name };
+                let name = if name == "default" { local_name.as_str() } else { name.as_str() };
                 self.classify_export_reference(ctx, name, local_name.as_str(), span)
             });
             analysis.add_export(export);
@@ -767,24 +762,6 @@ impl OnlyExportComponents {
             Expression::UpdateExpression(_) => "UpdateExpression",
             _ => "",
         }
-    }
-
-    fn extends_react_component(class: &Class) -> bool {
-        class.heritage_expression().is_some_and(|super_class| {
-            if let Some(member_expr) = super_class.as_member_expression()
-                && let Expression::Identifier(ident) = member_expr.object()
-                && ident.name == "React"
-            {
-                return member_expr
-                    .static_property_name()
-                    .and_then(JSStr::as_str)
-                    .is_some_and(|name| matches!(name, "Component" | "PureComponent"));
-            }
-
-            super_class
-                .get_identifier_reference()
-                .is_some_and(|id| matches!(id.name.as_str(), "Component" | "PureComponent"))
-        })
     }
 
     fn is_react_component_initializer(&self, expr: &Expression) -> bool {

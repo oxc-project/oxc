@@ -33,6 +33,13 @@ fn remove(span: Span) -> OxcDiagnostic {
 #[derive(Debug, Default, Clone)]
 pub struct PreferDomNodeDataset;
 
+enum AttributeMethod {
+    Set,
+    Get,
+    Remove,
+    Has,
+}
+
 declare_oxc_lint!(
     /// ### What it does
     ///
@@ -81,16 +88,24 @@ impl Rule for PreferDomNodeDataset {
         };
         let Some(method_name) = method_name.as_str() else { return };
 
-        match method_name {
+        let method = match method_name {
             "setAttribute" => {
                 if call_expr.arguments.len() != 2 {
                     return;
                 }
+                AttributeMethod::Set
             }
-            "removeAttribute" | "hasAttribute" => {
+            "removeAttribute" => {
                 if call_expr.arguments.len() != 1 {
                     return;
                 }
+                AttributeMethod::Remove
+            }
+            "hasAttribute" => {
+                if call_expr.arguments.len() != 1 {
+                    return;
+                }
+                AttributeMethod::Has
             }
             "getAttribute" => {
                 if call_expr.arguments.len() != 1 {
@@ -104,21 +119,24 @@ impl Rule for PreferDomNodeDataset {
                 {
                     return;
                 }
+                AttributeMethod::Get
             }
             _ => return,
-        }
+        };
 
         let Argument::StringLiteral(string_lit) = &call_expr.arguments[0] else {
             return;
         };
 
-        let Some(dataset_property_name) = string_lit.value.as_str().and_then(strip_data_prefix)
-        else {
+        let value = string_lit.value;
+        if !value.starts_with("data-") && !value.starts_with("DATA-") {
             return;
-        };
+        }
+        // The fix writes the rest of the name as text, so it is skipped for a lone surrogate.
+        let dataset_property_name = value.as_str().and_then(strip_data_prefix);
 
-        match method_name {
-            "setAttribute" => {
+        match method {
+            AttributeMethod::Set => {
                 ctx.diagnostic_with_fix(set(span), |fixer| {
                     if call_uses_optional_chain(call_expr) {
                         return fixer.noop();
@@ -127,6 +145,9 @@ impl Rule for PreferDomNodeDataset {
                         return fixer.noop();
                     }
 
+                    let Some(dataset_property_name) = dataset_property_name else {
+                        return fixer.noop();
+                    };
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -141,12 +162,15 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "getAttribute" => {
+            AttributeMethod::Get => {
                 ctx.diagnostic_with_fix(get(span), |fixer| {
                     if call_expr.optional {
                         return fixer.noop();
                     }
 
+                    let Some(dataset_property_name) = dataset_property_name else {
+                        return fixer.noop();
+                    };
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -160,7 +184,7 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "removeAttribute" => {
+            AttributeMethod::Remove => {
                 ctx.diagnostic_with_fix(remove(string_lit.span), |fixer| {
                     if call_expr.optional {
                         return fixer.noop();
@@ -169,6 +193,9 @@ impl Rule for PreferDomNodeDataset {
                         return fixer.noop();
                     }
 
+                    let Some(dataset_property_name) = dataset_property_name else {
+                        return fixer.noop();
+                    };
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -182,12 +209,15 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            "hasAttribute" => {
+            AttributeMethod::Has => {
                 ctx.diagnostic_with_fix(has(span), |fixer| {
                     if call_uses_optional_chain(call_expr) {
                         return fixer.noop();
                     }
 
+                    let Some(dataset_property_name) = dataset_property_name else {
+                        return fixer.noop();
+                    };
                     let dataset_property_name_camel = dash_to_camel_case(dataset_property_name);
                     let object_span = member_expr.object().span();
 
@@ -200,7 +230,6 @@ impl Rule for PreferDomNodeDataset {
                     )
                 });
             }
-            _ => unreachable!(),
         }
     }
 }
@@ -454,6 +483,7 @@ fn test() {
         r#"element.optional?.getAttribute("data-unicorn")?.length;"#,
         r#"element.getAttribute("data-unicorn").toString()"#,
         r#"(await promise).getAttribute("data-foo")"#,
+        r#"el.setAttribute("data-\uD800", "x");"#,
     ];
 
     let fix = vec![
@@ -596,6 +626,7 @@ fn test() {
             r"element.dataset.unicorn.toString()",
         ),
         (r#"(await promise).getAttribute("data-foo")"#, r"(await promise).dataset.foo"),
+        (r#"el.setAttribute("data-\uD800", "x");"#, r#"el.setAttribute("data-\uD800", "x");"#),
     ];
 
     Tester::new(PreferDomNodeDataset::NAME, PreferDomNodeDataset::PLUGIN, pass, fail)

@@ -165,6 +165,7 @@ declare_oxc_lint!(
     CatchOrReturn,
     promise,
     restriction,
+    recommended,
     config = CatchOrReturnConfig,
     version = "0.9.2",
     short_description = "Ensure that each `then()` applied to a promise also has a `catch()`.",

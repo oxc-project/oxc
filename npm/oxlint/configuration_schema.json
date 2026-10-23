@@ -989,6 +989,18 @@
       },
       "additionalProperties": false
     },
+    "AwaitThenableConfig": {
+      "type": "object",
+      "properties": {
+        "allowMixedPromiseArrays": {
+          "description": "Allow Promise aggregators such as `Promise.all` to receive mixed arrays or\niterables containing at least one potentially Promise-like value.\nInputs containing only synchronous values are still reported.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow Promise aggregators such as `Promise.all` to receive mixed arrays or\niterables containing at least one potentially Promise-like value.\nInputs containing only synchronous values are still reported."
+        }
+      },
+      "additionalProperties": false
+    },
     "BanConfigValue": {
       "description": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`",
       "anyOf": [
@@ -7556,7 +7568,24 @@
           ]
         },
         "typescript/await-thenable": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AwaitThenableConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "typescript/ban-ts-comment": {
           "anyOf": [
@@ -8340,6 +8369,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-unsafe-declaration-merging": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "typescript/no-unsafe-enum-assignment": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-unsafe-enum-comparison": {

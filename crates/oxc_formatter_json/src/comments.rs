@@ -168,6 +168,8 @@ pub fn write_hole_comments(comma: u32, f: &mut JsonFormatter<'_, '_>) {
 /// this crate parses every variant leniently as JS, so the lexer accepts a bare LS/PS in an inter-entry gap regardless of variant.
 /// A spec-strict JSON document keeps them inside string literals, so the branch rarely fires for `json` / `jsonc`.
 /// But when it does, treating it as a break matches Prettier (every variant goes through its JS printer).
+///
+/// `oxc_formatter`'s `line_breaks` (`source_text.rs`) counts the same set over a `&str`; keep them in sync.
 pub fn count_newlines(slice: &[u8]) -> usize {
     let mut count = 0;
     let mut i = 0;

@@ -472,21 +472,22 @@ fn get_attribute_expression_value<'a>(
                 // jsx-ast-utils returns undefined for both operators.
                 UnaryOperator::Void | UnaryOperator::Typeof => f64::NAN,
                 UnaryOperator::Delete => 1.0,
-                operator => {
+                UnaryOperator::UnaryNegation => {
                     let argument = get_attribute_expression_value(&unary.argument)?;
-                    if unary.operator == UnaryOperator::UnaryNegation
-                        && matches!(argument, AttributeValue::BigInt(_))
-                    {
+                    if matches!(argument, AttributeValue::BigInt(_)) {
                         return Some(argument);
                     }
-                    match operator {
-                        UnaryOperator::UnaryNegation => -argument.to_number()?,
-                        UnaryOperator::UnaryPlus => argument.to_number()?,
-                        UnaryOperator::LogicalNot => f64::from(!argument.has_value(false)),
-                        UnaryOperator::BitwiseNot => f64::from(!argument.to_number()?.to_int_32()),
-                        _ => unreachable!(),
-                    }
+                    -argument.to_number()?
                 }
+                UnaryOperator::UnaryPlus => {
+                    get_attribute_expression_value(&unary.argument)?.to_number()?
+                }
+                UnaryOperator::LogicalNot => {
+                    f64::from(!get_attribute_expression_value(&unary.argument)?.has_value(false))
+                }
+                UnaryOperator::BitwiseNot => f64::from(
+                    !get_attribute_expression_value(&unary.argument)?.to_number()?.to_int_32(),
+                ),
             };
             AttributeValue::Number(value)
         }

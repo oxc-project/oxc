@@ -1,4 +1,3 @@
-use crate::{config::LexerConfig as Config, diagnostics};
 use oxc_allocator::ArenaStringBuilder;
 use oxc_str::{JSChar, JSStrBuilder};
 use oxc_syntax::{
@@ -8,6 +7,8 @@ use oxc_syntax::{
     },
     line_terminator::{CR, LF, LS, PS, is_irregular_line_terminator},
 };
+
+use crate::{config::LexerConfig as Config, diagnostics};
 
 use super::{Kind, Lexer, Span};
 

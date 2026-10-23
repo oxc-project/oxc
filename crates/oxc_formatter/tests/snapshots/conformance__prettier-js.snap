@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 761/811 (93.83%), 23 files skipped
+js compatibility: 1033/1123 (91.99%), 23 files skipped
 
 # Failed
 
@@ -12,7 +12,7 @@ js compatibility: 761/811 (93.83%), 23 files skipped
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 93.75% |
 | js/arrows/issue-17421.js | 💥💥 | 88.70% |
 | js/assignment-comments/string.js | 💥 | 96.59% |
-| js/binary-expressions/mutiple-comments/17192.js | 💥✨ | 45.83% |
+| js/binary-expressions/mutiple-comments/17192.js | 💥✨ | 95.83% |
 | js/call/no-argument/no-arguments.js | 💥 | 79.49% |
 | js/class-comment/misc.js | 💥 | 66.67% |
 | js/class-comment/superclass.js | 💥 | 70.33% |
@@ -92,6 +92,5 @@ js compatibility: 761/811 (93.83%), 23 files skipped
 - js/comments/first-argument/first-argument.js
 - js/for/continue-and-break-comment-without-blocks.js
 - js/function/issue-12967.js
-- js/object-prop-break-in/short-keys.js
 - jsx/comments/in-attributes.js
 - jsx/spread/child.js

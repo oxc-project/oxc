@@ -30,7 +30,6 @@ Strong motivations, since these break rules every other language follows:
   - Other languages' IR is printed by the parent's printer, so their width counts from the embedding column (e.g. inside a list item)
   - Prettier with the plugin behaves the same as now, but consistency across our languages comes first
   - Pinned in `apps/oxfmt/test/api/markdown.test.ts`
-- No BOM split, which the other crates do
 
 Known limits of the string embedding (text with literal lines, the same as Prettier's `replaceEndOfLine()` on the plugin's string):
 
