@@ -647,6 +647,7 @@ impl Runtime {
                                     section.source.start,
                                     ContextSubHostOptions {
                                         framework_options: section.source.framework_options,
+                                        globals: section.source.globals,
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
                                         ..Default::default()
@@ -788,6 +789,7 @@ impl Runtime {
                                         section.source.start,
                                         ContextSubHostOptions {
                                             framework_options: section.source.framework_options,
+                                            globals: section.source.globals,
                                             parser_tokens: section.parser_tokens,
                                             respect_eslint_disable_directives,
                                             ..Default::default()
@@ -931,6 +933,7 @@ impl Runtime {
                                     section.source.start,
                                     ContextSubHostOptions {
                                         framework_options: section.source.framework_options,
+                                        globals: section.source.globals,
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
                                         ..Default::default()
