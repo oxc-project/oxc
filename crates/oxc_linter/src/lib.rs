@@ -12,6 +12,7 @@ use std::{
     ptr::{self, NonNull},
     rc::Rc,
     string::ToString,
+    sync::Arc,
     time::Duration,
 };
 
@@ -74,7 +75,7 @@ pub use crate::{
         Config, ConfigBuilderError, ConfigStore, ConfigStoreBuilder, ESLintRule, LintIgnoreMatcher,
         LintPlugins, Oxlintrc, ResolvedLinterState,
     },
-    context::{ContextSubHost, ContextSubHostOptions, LintContext},
+    context::{ContextSubHost, ContextSubHostOptions, CrossFileCache, LintContext},
     external_linter::{
         ExternalLinter, ExternalLinterCreateWorkspaceCb, ExternalLinterDestroyWorkspaceCb,
         ExternalLinterLintFileCb, ExternalLinterLoadPluginCb, ExternalLinterSetupRuleConfigsCb,
@@ -344,7 +345,15 @@ impl Linter {
         context_sub_hosts: Vec<ContextSubHost<'a>>,
         allocator: &'a Allocator,
     ) -> Vec<Message> {
-        self.run_with_disable_directives::<false>(path, context_sub_hosts, allocator, None, None).0
+        self.run_with_disable_directives::<false>(
+            path,
+            context_sub_hosts,
+            allocator,
+            None,
+            None,
+            Arc::default(),
+        )
+        .0
     }
 
     /// Same as `run` but also returns the disable directives for the file
@@ -353,6 +362,8 @@ impl Linter {
     /// - `js_allocator_pool`: Optional pool of fixed-size allocators for copying AST before JS transfer.
     ///   When `Some`, the AST will be copied into a fixed-size allocator before passing to JS plugins,
     ///   allowing the main allocator to be a standard (non-fixed-size) allocator.
+    /// - `cross_file_cache`: State shared with the other files of the same lint run; see
+    ///   [`CrossFileCache`].
     ///
     /// # Panics
     /// Panics in debug mode if running with and without optimizations produces different diagnostic counts.
@@ -363,12 +374,19 @@ impl Linter {
         allocator: &'a Allocator,
         js_allocator_pool: Option<&AllocatorPool>,
         rule_timing_store: Option<&RuleTimingStore>,
+        cross_file_cache: Arc<CrossFileCache>,
     ) -> (Vec<Message>, Option<DisableDirectives>) {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host =
-            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
+        let mut ctx_host = Rc::new(ContextHost::new(
+            path,
+            context_sub_hosts,
+            allocator,
+            self.options,
+            config,
+            cross_file_cache,
+        ));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;

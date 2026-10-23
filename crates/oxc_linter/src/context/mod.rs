@@ -22,7 +22,9 @@ use crate::{
     utils::{ReactCompilerResults, build_react_compiler_results},
 };
 
+mod cross_file;
 mod host;
+pub use cross_file::CrossFileCache;
 pub use host::{ContextHost, ContextSubHost, ContextSubHostOptions};
 
 /// Contains all of the state and context specific to this lint rule.
@@ -99,6 +101,12 @@ impl<'a> LintContext<'a> {
     #[inline]
     pub fn module_record(&self) -> &ModuleRecord {
         self.parent.module_record()
+    }
+
+    /// State shared by every file in this lint run; see [`CrossFileCache`].
+    #[inline]
+    pub fn cross_file_cache(&self) -> &CrossFileCache {
+        &self.parent.cross_file_cache
     }
 
     /// Get the control flow graph for the current program.
