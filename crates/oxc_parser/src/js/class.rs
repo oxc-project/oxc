@@ -239,7 +239,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 previous = None;
             }
             let element = p.parse_class_element();
-            p.finish_list_element_comments(&element, &mut list_comments, previous);
+            p.finish_list_element_comments(&element, &mut list_comments, &[], previous);
             Some(element)
         });
         self.attach_comments_before_close(&class_elements);

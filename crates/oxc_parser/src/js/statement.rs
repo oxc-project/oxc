@@ -83,7 +83,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     let expression = p.parse_expr();
                     p.asi();
                     let statement = ExpressionStatement::new(p.end_span(start), expression, p);
-                    p.finish_statement_comments(&statement, &mut list_comments, &directives, None);
+                    p.finish_list_element_comments(
+                        &statement,
+                        &mut list_comments,
+                        &directives,
+                        None,
+                    );
                     match statement {
                         ExpressionStatement {
                             span,
@@ -155,7 +160,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         previous: Option<&Statement<'a>>,
     ) -> Statement<'a> {
         let stmt = self.parse_statement_list_item(stmt_ctx);
-        self.finish_statement_comments(&stmt, list, directives, previous);
+        self.finish_list_element_comments(&stmt, list, directives, previous);
         stmt
     }
 
@@ -822,7 +827,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Some(_) => {}
                 }
             }
-            p.finish_list_element_comments(&case, &mut list_comments, previous);
+            p.finish_list_element_comments(&case, &mut list_comments, &[], previous);
             Some(case)
         });
         self.attach_comments_before_close(&cases);
