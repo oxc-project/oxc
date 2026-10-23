@@ -370,6 +370,9 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXSpreadChild<'a>> {
         let format_inner = format_with(|f| {
             write!(f, [format_leading_comments(self.expression.span()), "..."]);
             self.expression().fmt(f);
+            // Keep the comments before `}` inside the braces, like `JSXExpressionContainer`
+            let comments = f.context().comments().comments_before(self.span.end);
+            write!(f, [FormatTrailingComments::Comments(comments)]);
         });
 
         write!(f, "{");
