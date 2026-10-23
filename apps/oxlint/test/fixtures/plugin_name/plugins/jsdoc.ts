@@ -2,8 +2,9 @@ import type { Plugin } from "#oxlint/plugins";
 
 const plugin: Plugin = {
   meta: {
-    // Name is overridden by alias in config
+    // Namespace and name are overridden by alias in config
     name: "jsdoc",
+    namespace: "custom-jsdoc",
   },
   rules: {
     rule: {

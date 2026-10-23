@@ -31,6 +31,13 @@
    : ^^^^^^^^^^^^^^^^^^^^^^^
    `----
 
+  x e18e(rule): id: e18e/rule
+   ,-[files/index.js:4:1]
+ 3 |  */
+ 4 | function f(foo, bar) {}
+   : ^^^^^^^^^^^^^^^^^^^^^^^
+   `----
+
   x js-jsdoc(rule): id: js-jsdoc/rule
    ,-[files/index.js:4:1]
  3 |  */
@@ -53,13 +60,6 @@
    `----
 
   x no-name-alias2(rule): id: no-name-alias2/rule
-   ,-[files/index.js:4:1]
- 3 |  */
- 4 | function f(foo, bar) {}
-   : ^^^^^^^^^^^^^^^^^^^^^^^
-   `----
-
-  x plugin1-name-from-rule(rule): id: plugin1-name-from-rule/rule
    ,-[files/index.js:4:1]
  3 |  */
  4 | function f(foo, bar) {}
