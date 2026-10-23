@@ -27,10 +27,10 @@ use oxc_codegen::Codegen;
 use oxc_parser::Parser;
 use oxc_react_compiler::{
     AliasingEffectConfig, AliasingSignatureConfig, BuiltInTypeRef, CompilationMode, CompileResult,
-    CompilerOutputMode, DynamicGatingConfig, Effect, EnvironmentConfig, ExhaustiveEffectDepsMode,
-    ExternalFunctionConfig, FunctionTypeConfig, FxIndexMap, GatingConfig, HookTypeConfig,
-    InstrumentationConfig, ObjectTypeConfig, PanicThreshold, PluginOptions, TypeConfig,
-    TypeReferenceConfig, ValueKind, ValueReason, compile, lint,
+    CompilerOutputMode, DynamicGatingConfig, Effect, EnvironmentConfig, ErrorCategory,
+    ExhaustiveEffectDepsMode, ExternalFunctionConfig, FunctionTypeConfig, FxIndexMap, GatingConfig,
+    HookTypeConfig, InstrumentationConfig, ObjectTypeConfig, PanicThreshold, PluginOptions,
+    TypeConfig, TypeReferenceConfig, ValueKind, ValueReason, compile, lint,
 };
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
@@ -131,7 +131,19 @@ fn run_fixture(source: &str) -> String {
         out.push_str("\n\nLint-mode diagnostics (differ from transform):\n\n");
         out.push_str(if lint_body.is_empty() { "(none)\n" } else { &lint_body });
     }
-    if !fatal {
+    // The one sanctioned exception: compile retries a function whose only errors say a
+    // manual `useMemo`/`useCallback` can't be honoured, keeping that call as written,
+    // while lint keeps reporting (and, under `all_errors`, failing on) those errors.
+    let kept_manual_memo = !lint_result.diagnostics.is_empty()
+        && lint_result.diagnostics.iter().all(|diagnostic| {
+            matches!(
+                diagnostic.category,
+                ErrorCategory::PreserveManualMemo
+                    | ErrorCategory::MemoDependencies
+                    | ErrorCategory::UseMemo
+            )
+        });
+    if !fatal && !kept_manual_memo {
         assert_eq!(lint_result.fatal, fatal, "lint and compile fatality diverged");
     }
     out

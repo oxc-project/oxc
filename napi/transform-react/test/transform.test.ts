@@ -290,24 +290,6 @@ export function Component({ value }: { value: string }) {
     expect(result.code).not.toContain("<span");
   });
 
-  it("does not enable manual memo dependency validation by default", () => {
-    const result = transformSync(
-      "Component.tsx",
-      `import { useMemo } from "react";
-      import { typedCapture, typedCreateFrom, typedMutate, ValidateMemoization } from "shared-runtime";
-      function Component({ a, b }: { a: number; b: number }) {
-        const x = useMemo(() => ({ a }), [a, b]);
-        const y = typedCapture(x);
-        const z = typedCreateFrom(y);
-        typedMutate(z, b);
-        return <ValidateMemoization inputs={[a, b]} output={x} />;
-      }`,
-    );
-
-    expect(result.errors).toEqual([]);
-    expect(result.code).toContain("react/compiler-runtime");
-  });
-
   it("compiles an unsuppressed sibling after a suppression bailout", () => {
     const result = transformSync(
       "Components.tsx",

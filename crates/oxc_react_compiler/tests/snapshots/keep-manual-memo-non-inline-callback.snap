@@ -1,0 +1,46 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/keep-manual-memo-non-inline-callback.jsx
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer" @panicThreshold:"none"
+// The callback is not an inline function, so its dependencies can't be checked. The useMemo is
+// kept as written.
+import { useMemo } from "react";
+function List(t0) {
+	const $ = _c(7);
+	const { s, items } = t0;
+	let t1;
+	if ($[0] !== items || $[1] !== s) {
+		t1 = () => sortBy(items, s);
+		$[0] = items;
+		$[1] = s;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	const compute = t1;
+	let t2;
+	if ($[3] !== items) {
+		t2 = [items];
+		$[3] = items;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	const values = useMemo(compute, t2);
+	let t3;
+	if ($[5] !== values) {
+		t3 = <Rows values={values} />;
+		$[5] = values;
+		$[6] = t3;
+	} else {
+		t3 = $[6];
+	}
+	return t3;
+}
+
+
+Lint-mode diagnostics (differ from transform):
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Expected the first argument to be an inline function expression", labels: [LabeledSpan { label: Some("Expected the first argument to be an inline function expression"), span: Span { start: 298, end: 305 }, primary: true }], help: Some("Pass an inline function expression as the first argument"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("UseMemo") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/use-memo") } }

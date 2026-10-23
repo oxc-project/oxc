@@ -2,8 +2,30 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/error.invalid-exhaustive-deps-disallow-unused-stable-types.js
 ---
-Diagnostics:
+import { c as _c } from "react/compiler-runtime";
+// @validateExhaustiveMemoizationDependencies
+import { useState } from "react";
+import { Stringify } from "shared-runtime";
+function Component() {
+	const $ = _c(3);
+	const [state, setState] = useState(0);
+	let t0;
+	let t1;
+	if ($[0] !== state) {
+		t0 = () => [state];
+		t1 = [state, setState];
+		$[0] = state;
+		$[1] = t0;
+		$[2] = t1;
+	} else {
+		t0 = $[1];
+		t1 = $[2];
+	}
+	useMemo(t0, t1);
+	return "oops";
+}
+
+
+Lint-mode diagnostics (differ from transform):
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found extra memoization dependencies", labels: [LabeledSpan { label: Some("Unnecessary dependency `setState`"), span: Span { start: 318, end: 326 }, primary: true }], help: Some("Extra dependencies can cause a value to update more often than it should, resulting in performance problems such as excessive renders or effects firing too often"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
-
-No changes.

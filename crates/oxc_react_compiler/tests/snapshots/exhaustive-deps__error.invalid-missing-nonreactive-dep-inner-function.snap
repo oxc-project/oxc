@@ -2,8 +2,35 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/error.invalid-missing-nonreactive-dep-inner-function.js
 ---
-Diagnostics:
+import { c as _c } from "react/compiler-runtime";
+// @validateExhaustiveMemoizationDependencies
+import { useMemo } from "react";
+import { makeObject_Primitives } from "shared-runtime";
+function useHook() {
+	const $ = _c(2);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		t0 = makeObject_Primitives();
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	const object = t0;
+	let t1;
+	if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+		t1 = () => {
+			const g = () => [object];
+			return g;
+		};
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const fn = useCallback(t1);
+	return fn;
+}
+
+
+Lint-mode diagnostics (differ from transform):
 
 OxcDiagnostic { inner: OxcDiagnosticInner { message: "Found missing memoization dependencies", labels: [LabeledSpan { label: Some("Missing dependency `object`"), span: Span { start: 265, end: 271 }, primary: true }], help: Some("Missing dependencies can cause a value to update less often than it should, resulting in stale UI"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Error, code: OxcCode { scope: Some("react-compiler"), number: Some("MemoDependencies") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/exhaustive-deps") } }
-
-No changes.

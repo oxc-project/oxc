@@ -13,6 +13,7 @@ use oxc_diagnostics::Diagnostics;
 
 use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
+use crate::react_compiler_hir::environment::KeptManualMemos;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 use crate::react_compiler_hir::{
@@ -89,7 +90,24 @@ use super::compile_result::CodegenFunction;
 use super::imports::ProgramContext;
 use crate::options::CompilerOutputMode;
 
+/// Whether a failed attempt should be compiled again with the manual memoization it
+/// could not honour kept as written ([`KeptManualMemos`]).
+///
+/// Only compile output retries; lint mode reports these diagnostics unchanged.
+pub fn should_retry_keeping_manual_memos(
+    mode: CompilerOutputMode,
+    kept_manual_memos: &KeptManualMemos,
+    errors: &Diagnostics,
+) -> bool {
+    mode != CompilerOutputMode::Lint
+        && *kept_manual_memos != KeptManualMemos::All
+        && !errors.is_empty()
+        && errors.iter().all(diagnostics::is_unhonoured_manual_memo)
+}
+
 /// Run the compilation pipeline on a single function.
+///
+/// `kept_manual_memos` lists the manual memoization calls to leave as written.
 ///
 /// On failure, returns the diagnostics of the failed compilation attempt.
 #[allow(clippy::too_many_arguments)]
@@ -100,10 +118,12 @@ pub fn compile_fn<'a, const EMIT: bool>(
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
+    kept_manual_memos: KeptManualMemos,
     context: &mut ProgramContext<'a>,
 ) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
     let mut env = Environment::with_config(ast.allocator(), env_config.clone());
     env.fn_type = fn_type;
+    env.kept_manual_memos = kept_manual_memos;
     env.output_mode = match mode {
         CompilerOutputMode::Ssr => OutputMode::Ssr,
         CompilerOutputMode::Client => OutputMode::Client,
@@ -351,15 +371,19 @@ pub fn compile_fn<'a, const EMIT: bool>(
     }
 
     if env.has_errors() {
+        let errors = env.take_errors();
         // Merge UIDs even on error: in TS, Babel's scope.generateUid() permanently
         // registers names in the scope's `uids` map regardless of whether the function
         // compilation succeeds or fails. Without this merge, failed compilations would
         // "leak" _temp names that subsequent successful compilations wouldn't see,
-        // causing numbering mismatches vs TS.
-        if let Some(uid_names) = env.take_uid_known_names() {
+        // causing numbering mismatches vs TS. An attempt that is about to be retried
+        // is discarded instead, so the retry generates the same names.
+        if !should_retry_keeping_manual_memos(mode, &env.kept_manual_memos, &errors)
+            && let Some(uid_names) = env.take_uid_known_names()
+        {
             context.merge_uid_known_names(&uid_names);
         }
-        return Err(env.take_errors());
+        return Err(errors);
     }
 
     if let Some(uid_names) = env.take_uid_known_names() {
