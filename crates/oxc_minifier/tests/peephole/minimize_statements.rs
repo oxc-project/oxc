@@ -406,7 +406,6 @@ fn test_inline_single_use_function_declaration() {
     );
     test_same("function c() { function f() {} function n() { eval('f'); } r.f = f; }");
     test("function c() { { function f() {} r.f = f; } }", "function c() { r.f = function() {}; }");
-    // regression test script mode
     test("function f() {} r.f = f;", "r.f = function() {};");
     test_smallest(
         "(function(a) { var b = function() { return 1; }; function moved() { return b(); } a.moved = moved; })(a);",
