@@ -55,6 +55,16 @@ export function resetBuffer() {
   uint8 = int32 = float64 = sourceText = sourceTextLatin = void 0;
 }
 
+// Append elements of `arr2` to `arr`, and return the combined array.
+// Not `arr.push(...arr2)`, which throws a stack overflow error if `arr2` is very long
+// (e.g. a file with 150k top-level statements).
+// If `arr` is empty (e.g. no directives), return `arr2` instead of copying it.
+function appendArray(arr, arr2) {
+  if (arr.length === 0) return arr2;
+  for (let i = 0; i < arr2.length; i++) arr.push(arr2[i]);
+  return arr;
+}
+
 function deserializeProgram(pos) {
   let end = deserializeI32(pos + 4),
     program = (parent = {
@@ -68,8 +78,10 @@ function deserializeProgram(pos) {
       parent: null,
     });
   program.hashbang = deserializeOptionHashbang(pos + 56);
-  let body = (program.body = deserializeVecDirective(pos + 88));
-  body.push(...deserializeVecStatement(pos + 112));
+  let body = (program.body = appendArray(
+    deserializeVecDirective(pos + 88),
+    deserializeVecStatement(pos + 112),
+  ));
   {
     let start;
     if (body.length > 0) {
@@ -2474,7 +2486,7 @@ function deserializeFunctionBody(pos) {
       parent,
     }),
     body = deserializeVecDirective(pos + 16);
-  body.push(...deserializeVecStatement(pos + 40));
+  body = appendArray(body, deserializeVecStatement(pos + 40));
   node.body = body;
   parent = previousParent;
   return node;
@@ -5250,7 +5262,7 @@ function deserializeTSModuleBlock(pos) {
       parent,
     }),
     body = deserializeVecDirective(pos + 16);
-  body.push(...deserializeVecStatement(pos + 40));
+  body = appendArray(body, deserializeVecStatement(pos + 40));
   node.body = body;
   parent = previousParent;
   return node;

@@ -121,8 +121,10 @@ impl Program<'_> {
 
     if (!LINTER) program.hashbang = DESER[Option<Hashbang>](POS_OFFSET.hashbang);
 
-    const body = program.body = DESER[Vec<Directive>](POS_OFFSET.directives);
-    body.push(...DESER[Vec<Statement>](POS_OFFSET.body));
+    const body = program.body = appendArray(
+        DESER[Vec<Directive>](POS_OFFSET.directives),
+        DESER[Vec<Statement>](POS_OFFSET.body),
+    );
 
     if (IS_TS) {
         let start;
