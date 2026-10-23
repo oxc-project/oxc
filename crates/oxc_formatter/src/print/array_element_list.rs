@@ -1,3 +1,5 @@
+use std::iter::Peekable;
+
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_formatter_core::{Format, GroupId};
@@ -117,7 +119,7 @@ pub fn can_concisely_print_array_list(
 
     let comments = f.comments();
 
-    let mut comments_iter = comments.comments_before_iter(array_expression_span.end);
+    let mut comments_iter = comments.comments_before_iter(array_expression_span.end).peekable();
 
     for item in list {
         match item {
@@ -158,14 +160,11 @@ pub fn can_concisely_print_array_list(
 //    ^^^^^^^^^^^^ // This is a unary expression with a comment inside
 // ```
 fn has_comment_inside_unary<'a>(
-    comments_iter: &mut impl Iterator<Item = &'a Comment>,
+    comments_iter: &mut Peekable<impl Iterator<Item = &'a Comment>>,
     unary_expr_span: Span,
 ) -> bool {
-    // `comments_iter` is avoid repeatedly iterating over the same comments from the start
-    for comment in comments_iter.by_ref() {
-        if comment.span.start > unary_expr_span.start {
-            return unary_expr_span.contains_inclusive(comment.span);
-        }
-    }
-    false
+    // `comments_iter` is avoid repeatedly iterating over the same comments from the start.
+    // Only skip the comments before this unary: a later one may be inside a later element.
+    while comments_iter.next_if(|comment| comment.span.start <= unary_expr_span.start).is_some() {}
+    comments_iter.peek().is_some_and(|comment| unary_expr_span.contains_inclusive(comment.span))
 }

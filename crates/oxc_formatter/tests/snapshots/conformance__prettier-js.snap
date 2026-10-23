@@ -87,7 +87,6 @@ js compatibility: 1033/1123 (91.99%), 23 files skipped
 
 # Not idempotent
 
-- js/arrays/numbers-negative-comment-after-minus.js
 - js/comments/return-statement.js
 - js/comments/first-argument/first-argument.js
 - js/for/continue-and-break-comment-without-blocks.js
