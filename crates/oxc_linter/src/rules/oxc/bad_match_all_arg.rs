@@ -50,6 +50,7 @@ declare_oxc_lint!(
     BadMatchAllArg,
     oxc,
     correctness,
+    recommended,
     version = "1.76.0",
     short_description = "Warn when `matchAll` is called with a non-global regular expression.",
 );
