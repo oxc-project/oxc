@@ -162,6 +162,7 @@ pub enum RuleCustomizationSeverity {
 pub struct RuleCustomization {
     // note: this will not enable "off" rules; it only customizes active rules
     // it only modifies the severity of returned diagnostics, not the linter configuration
+    // "off" hides diagnostics while still allowing autofix
     pub severity: Option<RuleCustomizationSeverity>,
     // this flag indicates whether to include this rule in "fix all" and "fix all dangerous" code action
     pub autofix: Option<bool>,
