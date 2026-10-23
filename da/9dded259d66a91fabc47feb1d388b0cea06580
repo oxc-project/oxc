@@ -1,0 +1,21 @@
+npm/oxlint/package.json
+  s_81fcdad7dca566::t_767d9a3417b6f9 49
+pnpm-lock.yaml
+  s_81fcdad7dca566::t_87b76617683238 582
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "da9dded259d66a91fabc47feb1d388b0cea06580",
+  "prompts": {},
+  "sessions": {
+    "s_81fcdad7dca566": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16641-573d-74e3-9a9d-67d1b127c995",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
