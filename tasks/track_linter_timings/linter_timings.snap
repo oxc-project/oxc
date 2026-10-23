@@ -259,7 +259,6 @@ jest/prefer-snapshot-hint                                  |      7
 jest/prefer-spy-on                                         |  13005
 jest/prefer-to-be                                          |      0
 jest/prefer-to-have-been-called                            |      0
-jest/prefer-to-have-been-called-times                      |      0
 jest/require-hook                                          |  62613
 jest/require-to-throw-message                              |      0
 jest/require-top-level-describe                            |      7
@@ -727,7 +726,6 @@ vitest/prefer-to-be                                        |      0
 vitest/prefer-to-be-falsy                                  |      0
 vitest/prefer-to-be-object                                 |      0
 vitest/prefer-to-be-truthy                                 |      0
-vitest/prefer-to-have-been-called-times                    |      0
 vitest/require-awaited-expect-poll                         |      0
 vitest/require-hook                                        |  62613
 vitest/require-local-test-context-for-concurrent-snapshots |      0

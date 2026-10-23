@@ -2528,8 +2528,9 @@ impl RuleRunner for crate::rules::jest::prefer_to_have_been_called::PreferToHave
 impl RuleRunner
     for crate::rules::jest::prefer_to_have_been_called_times::PreferToHaveBeenCalledTimes
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::prefer_to_have_length::PreferToHaveLength {
@@ -5120,8 +5121,9 @@ impl RuleRunner for crate::rules::vitest::prefer_to_contain::PreferToContain {
 impl RuleRunner
     for crate::rules::vitest::prefer_to_have_been_called_times::PreferToHaveBeenCalledTimes
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_to_have_length::PreferToHaveLength {
