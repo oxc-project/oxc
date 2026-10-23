@@ -1,3 +1,5 @@
+use std::fmt::Write;
+
 use rustc_hash::FxHashMap;
 
 use oxc_allocator::Allocator;
@@ -37,500 +39,150 @@ fn attach(source: &str, source_type: SourceType) -> Vec<String> {
         .collect()
 }
 
-#[track_caller]
-fn check(source: &str, source_type: SourceType, expected: &[&str]) {
-    assert_eq!(attach(source, source_type), expected, "{source}");
+#[derive(Default)]
+struct Cases(String);
+
+impl Cases {
+    fn group(&mut self, name: &str) {
+        writeln!(self.0, "##### {name}\n").unwrap();
+    }
+
+    fn add(&mut self, source: &str, source_type: SourceType) {
+        let language = match (source_type.is_typescript(), source_type.is_jsx()) {
+            (true, true) => "tsx",
+            (true, false) => "ts",
+            (false, true) => "jsx",
+            (false, false) => "js",
+        };
+        let unambiguous = if source_type.is_unambiguous() { " (unambiguous)" } else { "" };
+        writeln!(self.0, "=== {language}{unambiguous} ===\n{source}\n---").unwrap();
+        for line in attach(source, source_type) {
+            writeln!(self.0, "{line}").unwrap();
+        }
+        self.0.push('\n');
+    }
 }
 
 #[test]
-fn statements() {
-    check("/* only */", SourceType::mjs(), &["/* only */ -> Dangling Program `/* only */`"]);
-    check(
-        "// a\nfoo(); // b\n/* c */ bar();\n// d",
-        SourceType::mjs(),
-        &[
-            "// a -> Leading ExpressionStatement `foo();`",
-            "// b -> Trailing ExpressionStatement `foo();`",
-            "/* c */ -> Leading ExpressionStatement `bar();`",
-            "// d -> Trailing ExpressionStatement `bar();`",
-        ],
-    );
-    check(
-        "'use strict' /* d */;\n// next\nfoo",
-        SourceType::mjs(),
-        &[
-            "/* d */ -> Trailing StringLiteral `'use strict'`",
-            "// next -> Leading ExpressionStatement `foo`",
-        ],
-    );
-}
+fn comment_attachment() {
+    let mut cases = Cases::default();
+    cases.group("statements");
+    cases.add("/* only */", SourceType::mjs());
+    cases.add("// a\nfoo(); // b\n/* c */ bar();\n// d", SourceType::mjs());
+    cases.add("'use strict' /* d */;\n// next\nfoo", SourceType::mjs());
 
-#[test]
-fn expressions() {
-    check(
-        "foo(a, /* b */ b /* after b */, c)",
-        SourceType::mjs(),
-        &[
-            "/* b */ -> Leading IdentifierReference `b`",
-            "/* after b */ -> Trailing IdentifierReference `b`",
-        ],
-    );
-    check(
-        "let x = /* before */ 1 + /* mid */ 2;",
-        SourceType::mjs(),
-        &[
-            "/* before */ -> Leading BinaryExpression `1 + /* mid */ 2`",
-            "/* mid */ -> Leading NumericLiteral `2`",
-        ],
-    );
-    check("`a${/* in */ b}c`", SourceType::mjs(), &["/* in */ -> Leading IdentifierReference `b`"]);
-}
+    cases.group("expressions");
+    cases.add("foo(a, /* b */ b /* after b */, c)", SourceType::mjs());
+    cases.add("let x = /* before */ 1 + /* mid */ 2;", SourceType::mjs());
+    cases.add("`a${/* in */ b}c`", SourceType::mjs());
 
-#[test]
-fn empty_containers() {
-    check(
-        "function f(/* params */) { /* body */ }",
-        SourceType::mjs(),
-        &[
-            "/* params */ -> Dangling FormalParameters `(/* params */)`",
-            "/* body */ -> Dangling FunctionBody `{ /* body */ }`",
-        ],
-    );
-    check(
-        "const x = [/* empty */]; const y = {/* empty */};",
-        SourceType::mjs(),
-        &[
-            "/* empty */ -> Dangling ArrayExpression `[/* empty */]`",
-            "/* empty */ -> Dangling ObjectExpression `{/* empty */}`",
-        ],
-    );
-    check(
-        "class A { static /* s */ { /* in */ } }",
-        SourceType::mjs(),
-        &[
-            "/* s */ -> Dangling StaticBlock `static /* s */ { /* in */ }`",
-            "/* in */ -> Dangling StaticBlock `static /* s */ { /* in */ }`",
-        ],
-    );
-}
+    cases.group("empty_containers");
+    cases.add("function f(/* params */) { /* body */ }", SourceType::mjs());
+    cases.add("const x = [/* empty */]; const y = {/* empty */};", SourceType::mjs());
+    cases.add("class A { static /* s */ { /* in */ } }", SourceType::mjs());
 
-#[test]
-fn jsx() {
-    check(
-        "<div>{/* child */}<a /* attr */ b={c} /></div>",
-        SourceType::jsx(),
-        &[
-            "/* child */ -> Dangling JSXEmptyExpression `/* child */`",
-            "/* attr */ -> Leading JSXAttribute `b={c}`",
-        ],
-    );
-}
+    cases.group("jsx");
+    cases.add("<div>{/* child */}<a /* attr */ b={c} /></div>", SourceType::jsx());
 
-#[test]
-fn typescript() {
-    check(
-        "type T = /* t */ string | /* n */ number;",
-        SourceType::ts(),
-        &[
-            "/* t */ -> Leading TSUnionType `string | /* n */ number`",
-            "/* n */ -> Leading TSNumberKeyword `number`",
-        ],
-    );
-    check(
-        "class A { /* before */ @dec /* after dec */ method() {} }",
-        SourceType::ts(),
-        &[
-            "/* before */ -> Leading MethodDefinition `@dec /* after dec */ method() {}`",
-            "/* after dec */ -> Leading IdentifierName `method`",
-        ],
-    );
-    check(
-        "new Foo /* a */ <T> /* b */ ();",
-        SourceType::ts(),
-        &[
-            "/* a */ -> Leading TSTypeParameterInstantiation `<T>`",
-            "/* b */ -> Trailing TSTypeParameterInstantiation `<T>`",
-        ],
-    );
-    check(
-        "class A extends B/* a */<T>/* b */ {}",
-        SourceType::ts(),
-        &[
-            "/* a */ -> Leading TSTypeParameterInstantiation `<T>`",
-            "/* b */ -> Leading ClassBody `{}`",
-        ],
-    );
-}
+    cases.group("typescript");
+    cases.add("type T = /* t */ string | /* n */ number;", SourceType::ts());
+    cases.add("class A { /* before */ @dec /* after dec */ method() {} }", SourceType::ts());
+    cases.add("new Foo /* a */ <T> /* b */ ();", SourceType::ts());
+    cases.add("class A extends B/* a */<T>/* b */ {}", SourceType::ts());
 
-#[test]
-fn speculation_and_cover_grammar() {
-    check(
-        "let f = (/* a */ a) => a; let g = (/* p */ b);",
-        SourceType::mjs(),
-        &["/* a */ -> Leading FormalParameter `a`", "/* p */ -> Leading IdentifierReference `b`"],
-    );
-    check(
-        "let f = <T,>(/* a */ a: T) => a; x = a < /* b */ b > c;",
-        SourceType::ts(),
-        &[
-            "/* a */ -> Leading FormalParameter `a: T`",
-            "/* b */ -> Leading IdentifierReference `b`",
-        ],
-    );
-    check(
-        "({ a /* a */ = 1, b: /* b */ c } = d);",
-        SourceType::mjs(),
-        &[
-            "/* a */ -> Trailing IdentifierReference `a`",
-            "/* b */ -> Leading IdentifierReference `c`",
-        ],
-    );
-    check(
-        "[/* x */ x, ...rest /* rest */] = y;",
-        SourceType::mjs(),
-        &[
-            "/* x */ -> Leading IdentifierReference `x`",
-            "/* rest */ -> Trailing AssignmentTargetRest `...rest`",
-        ],
-    );
-    check(
-        "import /* 1 */ source /* 2 */ x from 'x';",
-        SourceType::mjs(),
-        &[
-            "/* 1 */ -> Dangling ImportDeclaration `import /* 1 */ source /* 2 */ x from 'x';`",
-            "/* 2 */ -> Leading ImportDefaultSpecifier `x`",
-        ],
-    );
-    check(
-        "await /* a */ x; import 'y';",
-        SourceType::unambiguous(),
-        &["/* a */ -> Leading IdentifierReference `x`"],
-    );
-}
+    cases.group("speculation_and_cover_grammar");
+    cases.add("let f = (/* a */ a) => a; let g = (/* p */ b);", SourceType::mjs());
+    cases.add("let f = <T,>(/* a */ a: T) => a; x = a < /* b */ b > c;", SourceType::ts());
+    cases.add("({ a /* a */ = 1, b: /* b */ c } = d);", SourceType::mjs());
+    cases.add("[/* x */ x, ...rest /* rest */] = y;", SourceType::mjs());
+    cases.add("import /* 1 */ source /* 2 */ x from 'x';", SourceType::mjs());
+    cases.add("await /* a */ x; import 'y';", SourceType::unambiguous());
 
-#[test]
-fn annotations() {
-    check(
+    cases.group("annotations");
+    cases.add(
         "/* @__PURE__ */ foo(); /* #__NO_SIDE_EFFECTS__ */ function g() {}",
         SourceType::mjs(),
-        &[
-            "/* @__PURE__ */ -> Leading CallExpression `foo()`",
-            "/* #__NO_SIDE_EFFECTS__ */ -> Leading Function `function g() {}`",
-        ],
     );
-    check(
-        "x = /* @__PURE__ */ new Foo();",
-        SourceType::mjs(),
-        &["/* @__PURE__ */ -> Leading NewExpression `new Foo()`"],
-    );
-}
+    cases.add("x = /* @__PURE__ */ new Foo();", SourceType::mjs());
 
-#[test]
-fn annotations_among_leading_comments() {
-    check(
-        "// c\n/* @__PURE__ */ foo();",
-        SourceType::mjs(),
-        &[
-            "// c -> Leading ExpressionStatement `foo();`",
-            "/* @__PURE__ */ -> Leading CallExpression `foo()`",
-        ],
-    );
-    check(
+    cases.group("annotations_among_leading_comments");
+    cases.add("// c\n/* @__PURE__ */ foo();", SourceType::mjs());
+    cases.add(
         "/*#__NO_SIDE_EFFECTS__*/ /* c */ /*#__NO_SIDE_EFFECTS__*/ function foo() {}",
         SourceType::mjs(),
-        &[
-            "/*#__NO_SIDE_EFFECTS__*/ -> Leading Function `function foo() {}`",
-            "/* c */ -> Leading Function `function foo() {}`",
-            "/*#__NO_SIDE_EFFECTS__*/ -> Leading Function `function foo() {}`",
-        ],
     );
-}
 
-#[test]
-fn comments_assigned_before_checkpoint() {
-    check(
-        "f(a, // c\n  (b, // e\n  d));",
-        SourceType::mjs(),
-        &["// c -> Trailing IdentifierReference `a`", "// e -> Trailing IdentifierReference `b`"],
-    );
-    check(
-        "f(a, // c\n  async (b, // e\n  d));",
-        SourceType::mjs(),
-        &["// c -> Trailing IdentifierReference `a`", "// e -> Trailing IdentifierReference `b`"],
-    );
-}
+    cases.group("comments_assigned_before_checkpoint");
+    cases.add("f(a, // c\n  (b, // e\n  d));", SourceType::mjs());
+    cases.add("f(a, // c\n  async (b, // e\n  d));", SourceType::mjs());
 
-#[test]
-fn fatal_error() {
-    check("foo(/* a */", SourceType::mjs(), &["/* a */ -> Dangling Program ``"]);
-}
+    cases.group("fatal_error");
+    cases.add("foo(/* a */", SourceType::mjs());
 
-#[test]
-fn list_boundaries() {
-    check(
-        "function f() { 'use strict'; // c\n}",
-        SourceType::mjs(),
-        &["// c -> Trailing Directive `'use strict';`"],
-    );
-    check(
-        "{ foo(); /* c */ }",
-        SourceType::mjs(),
-        &["/* c */ -> Trailing ExpressionStatement `foo();`"],
-    );
-    check(
-        "function f() { return /* c */ (a); }",
-        SourceType::mjs(),
-        &["/* c */ -> Leading ParenthesizedExpression `(a)`"],
-    );
-    check(
-        "var x = /** @class */ (function () {})();",
-        SourceType::mjs(),
-        &["/** @class */ -> Leading CallExpression `(function () {})()`"],
-    );
-    check(
-        "x = { a: /* v */ 1 // c\n};",
-        SourceType::mjs(),
-        &[
-            "/* v */ -> Leading NumericLiteral `1`",
-            "// c -> Trailing ObjectProperty `a: /* v */ 1`",
-        ],
-    );
-    check(
-        "x = [/* a */\u{a0}a];",
-        SourceType::mjs(),
-        &["/* a */ -> Leading IdentifierReference `a`"],
-    );
-    check("x = { a: 1, // c\n};", SourceType::mjs(), &["// c -> Trailing ObjectProperty `a: 1`"]);
-}
+    cases.group("list_boundaries");
+    cases.add("function f() { 'use strict'; // c\n}", SourceType::mjs());
+    cases.add("{ foo(); /* c */ }", SourceType::mjs());
+    cases.add("function f() { return /* c */ (a); }", SourceType::mjs());
+    cases.add("var x = /** @class */ (function () {})();", SourceType::mjs());
+    cases.add("x = { a: /* v */ 1 // c\n};", SourceType::mjs());
+    cases.add("x = [/* a */\u{a0}a];", SourceType::mjs());
+    cases.add("x = { a: 1, // c\n};", SourceType::mjs());
 
-#[test]
-fn comma_separated_lists() {
-    check(
-        "f(\n  a, // c\n  b,\n);",
-        SourceType::mjs(),
-        &["// c -> Trailing IdentifierReference `a`"],
-    );
-    check(
-        "x = [\n  a, // c\n  b,\n];",
-        SourceType::mjs(),
-        &["// c -> Trailing IdentifierReference `a`"],
-    );
-    check(
-        "x = {\n  a: 1, // c\n  b: 2,\n};",
-        SourceType::mjs(),
-        &["// c -> Trailing ObjectProperty `a: 1`"],
-    );
-    check(
-        "function f(\n  a, // c\n  b,\n) {}",
-        SourceType::mjs(),
-        &["// c -> Trailing FormalParameter `a`"],
-    );
-    check(
-        "let a = 1, // c\n  b = 2;",
-        SourceType::mjs(),
-        &["// c -> Trailing VariableDeclarator `a = 1`"],
-    );
-    check(
-        "[\n  a, // c\n  b,\n] = x;",
-        SourceType::mjs(),
-        &["// c -> Trailing IdentifierReference `a`"],
-    );
-    check(
-        "f(\n  a, /* x */ // c\n  b,\n);",
-        SourceType::mjs(),
-        &[
-            "/* x */ -> Trailing IdentifierReference `a`",
-            "// c -> Trailing IdentifierReference `a`",
-        ],
-    );
-    check("f(a, /* c */ b);", SourceType::mjs(), &["/* c */ -> Leading IdentifierReference `b`"]);
-    check(
-        "f(\n  a,\n  // c\n  b,\n);",
-        SourceType::mjs(),
-        &["// c -> Leading IdentifierReference `b`"],
-    );
-}
+    cases.group("comma_separated_lists");
+    cases.add("f(\n  a, // c\n  b,\n);", SourceType::mjs());
+    cases.add("x = [\n  a, // c\n  b,\n];", SourceType::mjs());
+    cases.add("x = {\n  a: 1, // c\n  b: 2,\n};", SourceType::mjs());
+    cases.add("function f(\n  a, // c\n  b,\n) {}", SourceType::mjs());
+    cases.add("let a = 1, // c\n  b = 2;", SourceType::mjs());
+    cases.add("[\n  a, // c\n  b,\n] = x;", SourceType::mjs());
+    cases.add("f(\n  a, /* x */ // c\n  b,\n);", SourceType::mjs());
+    cases.add("f(a, /* c */ b);", SourceType::mjs());
+    cases.add("f(\n  a,\n  // c\n  b,\n);", SourceType::mjs());
 
-#[test]
-fn comment_runs() {
-    check(
-        "f(\n  a,\n  /* x */ // c\n  b,\n);",
-        SourceType::mjs(),
-        &["/* x */ -> Leading IdentifierReference `b`", "// c -> Leading IdentifierReference `b`"],
-    );
-    check(
-        "foo(); /* x */ // c\nbar();",
-        SourceType::mjs(),
-        &[
-            "/* x */ -> Trailing ExpressionStatement `foo();`",
-            "// c -> Trailing ExpressionStatement `foo();`",
-        ],
-    );
-    check(
-        "foo();\n/* x */ // c\nbar();",
-        SourceType::mjs(),
-        &[
-            "/* x */ -> Leading ExpressionStatement `bar();`",
-            "// c -> Leading ExpressionStatement `bar();`",
-        ],
-    );
-    check(
-        "foo(); /* x */ bar();",
-        SourceType::mjs(),
-        &["/* x */ -> Leading ExpressionStatement `bar();`"],
-    );
-    check(
-        "x = a /* x */ + // c\n  b;",
-        SourceType::mjs(),
-        &["/* x */ -> Trailing IdentifierReference `a`", "// c -> Leading IdentifierReference `b`"],
-    );
-}
+    cases.group("comment_runs");
+    cases.add("f(\n  a,\n  /* x */ // c\n  b,\n);", SourceType::mjs());
+    cases.add("foo(); /* x */ // c\nbar();", SourceType::mjs());
+    cases.add("foo();\n/* x */ // c\nbar();", SourceType::mjs());
+    cases.add("foo(); /* x */ bar();", SourceType::mjs());
+    cases.add("x = a /* x */ + // c\n  b;", SourceType::mjs());
 
-#[test]
-fn binding_lists() {
-    check(
-        "const {\n  a, // c\n  b,\n} = x;",
-        SourceType::mjs(),
-        &["// c -> Trailing BindingProperty `a`"],
-    );
-    check(
-        "const [\n  a, // c\n  b,\n] = x;",
-        SourceType::mjs(),
-        &["// c -> Trailing BindingIdentifier `a`"],
-    );
-    check(
-        "function f(\n  a, /* x */ // c\n  b,\n) {}",
-        SourceType::mjs(),
-        &["/* x */ -> Trailing FormalParameter `a`", "// c -> Trailing FormalParameter `a`"],
-    );
-}
+    cases.group("binding_lists");
+    cases.add("const {\n  a, // c\n  b,\n} = x;", SourceType::mjs());
+    cases.add("const [\n  a, // c\n  b,\n] = x;", SourceType::mjs());
+    cases.add("function f(\n  a, /* x */ // c\n  b,\n) {}", SourceType::mjs());
 
-#[test]
-fn line_comment_trailing_whitespace() {
-    check(
-        "function f() {\n  foo(); // a \n  // b\n}",
-        SourceType::mjs(),
-        &[
-            "// a  -> Trailing ExpressionStatement `foo();`",
-            "// b -> Trailing ExpressionStatement `foo();`",
-        ],
-    );
-    check(
-        "x = (\n  a // a \n  // b\n);",
-        SourceType::mjs(),
-        &["// a  -> Trailing IdentifierReference `a`", "// b -> Trailing IdentifierReference `a`"],
-    );
-}
+    cases.group("line_comment_trailing_whitespace");
+    cases.add("function f() {\n  foo(); // a \n  // b\n}", SourceType::mjs());
+    cases.add("x = (\n  a // a \n  // b\n);", SourceType::mjs());
 
-#[test]
-fn operators() {
-    check(
-        "x = a + /* b */ b;\ny = c ? /* d */ d : /* e */ e;",
-        SourceType::mjs(),
-        &[
-            "/* b */ -> Leading IdentifierReference `b`",
-            "/* d */ -> Leading IdentifierReference `d`",
-            "/* e */ -> Leading IdentifierReference `e`",
-        ],
-    );
-    check(
-        "x = a /* op */ + b;",
-        SourceType::mjs(),
-        &["/* op */ -> Trailing IdentifierReference `a`"],
-    );
-}
+    cases.group("operators");
+    cases.add("x = a + /* b */ b;\ny = c ? /* d */ d : /* e */ e;", SourceType::mjs());
+    cases.add("x = a /* op */ + b;", SourceType::mjs());
 
-#[test]
-fn class_elements() {
-    check(
+    cases.group("class_elements");
+    cases.add(
         "class C {\n  // a\n  a() {} // after a\n  /* b */ b = 1;\n  // end\n}",
         SourceType::mjs(),
-        &[
-            "// a -> Leading MethodDefinition `a() {}`",
-            "// after a -> Trailing MethodDefinition `a() {}`",
-            "/* b */ -> Leading PropertyDefinition `b = 1;`",
-            "// end -> Trailing PropertyDefinition `b = 1;`",
-        ],
     );
-    check(
-        "class C {\n  // only\n}",
-        SourceType::mjs(),
-        &["// only -> Dangling ClassBody `{\n  // only\n}`"],
-    );
-}
+    cases.add("class C {\n  // only\n}", SourceType::mjs());
 
-#[test]
-fn empty_class_elements() {
-    check(
-        "class C {\n  a() {}\n  // before semi\n  ;\n  b() {}\n}",
-        SourceType::mjs(),
-        &["// before semi -> Trailing MethodDefinition `a() {}`"],
-    );
-    check(
-        "class C {\n  a() {};\n  // c\n  b() {}\n}",
-        SourceType::mjs(),
-        &["// c -> Leading MethodDefinition `b() {}`"],
-    );
-    check(
-        "class C {\n  a() {}\n  ; /* x */ ;\n  b() {}\n}",
-        SourceType::mjs(),
-        &["/* x */ -> Dangling ClassBody `{\n  a() {}\n  ; /* x */ ;\n  b() {}\n}`"],
-    );
-}
+    cases.group("empty_class_elements");
+    cases.add("class C {\n  a() {}\n  // before semi\n  ;\n  b() {}\n}", SourceType::mjs());
+    cases.add("class C {\n  a() {};\n  // c\n  b() {}\n}", SourceType::mjs());
+    cases.add("class C {\n  a() {}\n  ; /* x */ ;\n  b() {}\n}", SourceType::mjs());
 
-#[test]
-fn switch_cases() {
-    check(
-        "switch (x) {\n  // a\n  case 1:\n    foo();\n    // falls through\n  case 2: // two\n    bar();\n  // end\n}",
-        SourceType::mjs(),
-        &[
-            "// a -> Leading SwitchCase `case 1:\n    foo();`",
-            "// falls through -> Leading SwitchCase `case 2: // two\n    bar();`",
-            "// two -> Leading ExpressionStatement `bar();`",
-            "// end -> Trailing SwitchCase `case 2: // two\n    bar();`",
-        ],
-    );
-    check(
-        "switch (x) {\n  // only\n}",
-        SourceType::mjs(),
-        &["// only -> Dangling SwitchStatement `switch (x) {\n  // only\n}`"],
-    );
-}
+    cases.group("switch_cases");
+    cases.add("switch (x) {\n  // a\n  case 1:\n    foo();\n    // falls through\n  case 2: // two\n    bar();\n  // end\n}", SourceType::mjs());
+    cases.add("switch (x) {\n  // only\n}", SourceType::mjs());
 
-#[test]
-fn decorators_before_export() {
-    check(
-        "// before\n@dec export class C {}",
-        SourceType::ts(),
-        &["// before -> Dangling Program `// before\n@dec export class C {}`"],
-    );
-    check(
-        "foo(); // after foo\n@dec export class C {}",
-        SourceType::ts(),
-        &["// after foo -> Trailing ExpressionStatement `foo();`"],
-    );
-    check(
-        "namespace N {\n  // before\n  @dec export class C {}\n}",
-        SourceType::ts(),
-        &["// before -> Dangling TSModuleBlock `{\n  // before\n  @dec export class C {}\n}`"],
-    );
-}
+    cases.group("decorators_before_export");
+    cases.add("// before\n@dec export class C {}", SourceType::ts());
+    cases.add("foo(); // after foo\n@dec export class C {}", SourceType::ts());
+    cases.add("namespace N {\n  // before\n  @dec export class C {}\n}", SourceType::ts());
 
-#[test]
-fn top_level_await_reparse() {
+    cases.group("top_level_await_reparse");
     let line = "await /x/u; f(a, /* c */ b); // t\n";
-    let expected = [
-        "/* c */ -> Leading IdentifierReference `b`",
-        "// t -> Trailing ExpressionStatement `f(a, /* c */ b);`",
-    ];
-    check(
-        &format!("{line}{line}{line}export {{}};"),
-        SourceType::unambiguous(),
-        &expected.repeat(3),
-    );
-    check(
-        "'use strict'; // c\nawait /x/u;\nimport 'z';",
-        SourceType::unambiguous(),
-        &["// c -> Trailing Directive `'use strict';`"],
-    );
+    cases.add(&format!("{line}{line}{line}export {{}};"), SourceType::unambiguous());
+    cases.add("'use strict'; // c\nawait /x/u;\nimport 'z';", SourceType::unambiguous());
+    insta::assert_snapshot!(cases.0);
 }
