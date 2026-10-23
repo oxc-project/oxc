@@ -1,0 +1,35 @@
+package.json
+  s_81fcdad7dca566::t_d1a6bb01e1e5e8 19
+pnpm-lock.yaml
+  s_81fcdad7dca566::t_ab42963ee52b42 230,232-233,583,2753-2757,2768-2772,2783-2787,2798-2802,2813-2817,2828-2832,5512-5515,8282-8284,8291-8293,8300-8302,8309-8311,8318-8320,8327-8329,11153-11161,11307,11328
+apps/oxlint/fixtures/cli/tsgolint_rule_options/.oxlintrc.json
+  s_81fcdad7dca566::t_4c46c6488d8ee2 6-11
+apps/oxlint/fixtures/cli/tsgolint_rule_options/test.ts
+  s_81fcdad7dca566::t_455a858d6da294 166-171
+apps/oxlint/src-js/package/config.generated.ts
+  s_81fcdad7dca566::t_b1667404c408d7 1428,2039,5609-5616
+apps/oxlint/src/snapshots/fixtures__cli__tsgolint_rule_options_--type-aware@oxlint.snap
+  s_81fcdad7dca566::t_c5ac92f8882e3e 126-147
+crates/oxc_linter/src/generated/rules_enum.rs
+  s_81fcdad7dca566::t_ea07e9d7bb81fe 11568-11570,12322
+crates/oxc_linter/src/rules/typescript/await_thenable.rs
+  s_81fcdad7dca566::t_f79f51fd789f4a 2-3,5,7-17,65,70-78
+npm/oxlint/configuration_schema.json
+  s_81fcdad7dca566::t_de2a1d5e654763 992-1003,7571-7588
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f3157f0580dc186cd948f6f686a97f4cae57e6a1",
+  "prompts": {},
+  "sessions": {
+    "s_81fcdad7dca566": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16641-573d-74e3-9a9d-67d1b127c995",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
