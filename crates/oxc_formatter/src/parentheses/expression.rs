@@ -198,10 +198,12 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, NumericLiteral<'_>> {
             return false;
         }
 
-        if let AstNodes::StaticMemberExpression(member) = self.parent() {
-            return member.object.span() == self.span();
+        match self.parent() {
+            AstNodes::StaticMemberExpression(member) => member.object.span() == self.span(),
+            // `(1).#x`, since `1.#x` does not parse
+            AstNodes::PrivateFieldExpression(member) => member.object.span() == self.span(),
+            _ => false,
         }
-        false
     }
 }
 
@@ -677,6 +679,8 @@ fn chain_expression_needs_parens(span: Span, parent: &AstNodes<'_, '_>) -> bool 
         AstNodes::NewExpression(new) => new.is_callee_span(span),
         AstNodes::CallExpression(call) => call.is_callee_span(span) && !call.optional,
         AstNodes::StaticMemberExpression(member) => !member.optional,
+        // `(a?.b).#x` reads `#x` from `undefined` when `a` is nullish, `a?.b.#x` does not
+        AstNodes::PrivateFieldExpression(member) => !member.optional,
         AstNodes::ComputedMemberExpression(member) => {
             !member.optional && member.object.span() == span
         }
@@ -983,6 +987,8 @@ fn binary_like_needs_parens(
         | AstNodes::JSXSpreadAttribute(_)
         | AstNodes::ChainExpression(_)
         | AstNodes::StaticMemberExpression(_)
+        // `(a ?? b).#x` reads `#x` from the result, `a ?? b.#x` only from `b`
+        | AstNodes::PrivateFieldExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
         AstNodes::ComputedMemberExpression(computed) => {
             return computed.object.span() == span;
@@ -1207,6 +1213,7 @@ fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_, '_>) ->
         | AstNodes::TSSatisfiesExpression(_)
         | AstNodes::AwaitExpression(_)
         | AstNodes::StaticMemberExpression(_)
+        | AstNodes::PrivateFieldExpression(_)
         | AstNodes::ComputedMemberExpression(_)
         | AstNodes::SequenceExpression(_)
         | AstNodes::UnaryExpression(_)

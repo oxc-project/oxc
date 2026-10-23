@@ -41,3 +41,21 @@ class C {
     x = await (#x in b);
   }
 }
+
+// The object of a private field access keeps the parens it needs, as with `.x`
+class D {
+  #x;
+  m(a, b, c) {
+    x = (a ?? b).#x;
+    x = (a || b).#x;
+    x = (a && b).#x;
+    x = (a ?? b)?.#x;
+    x = (a + b).#x;
+    x = (a instanceof b).#x;
+    x = (#x in b).#x;
+    x = (a?.b).#x;
+    x = (a?.b)?.#x;
+    x = (1).#x;
+    x = (a ? b : c).#x;
+  }
+}
