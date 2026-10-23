@@ -1,6 +1,7 @@
 use oxc_allocator::TakeIn;
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
+use oxc_ecmascript::constant_evaluation::ConstantEvaluation;
 use oxc_semantic::ReferenceFlags;
 use oxc_span::{ContentEq, GetSpan, SPAN};
 
@@ -14,7 +15,31 @@ impl<'a> PeepholeOptimizations {
         if let Some(changed) = Self::try_compress_is_null_or_undefined(e, ctx) {
             ctx.replace_expression(expr, changed);
         }
+        Self::minimize_logical_expression_in_boolean_context(expr, ctx);
         Self::try_compress_logical_expression_to_assignment_expression(expr, ctx);
+    }
+
+    fn minimize_logical_expression_in_boolean_context(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::LogicalExpression(logical) = expr else { return };
+        if !ctx.in_boolean_context() {
+            return;
+        }
+        let removable = match logical.operator {
+            LogicalOperator::And => logical.right.get_side_free_boolean_value(ctx) == Some(true),
+            LogicalOperator::Or => logical.right.get_side_free_boolean_value(ctx) == Some(false),
+            LogicalOperator::Coalesce => return,
+        };
+        if !removable {
+            return;
+        }
+        ctx.drop_expression(&logical.right);
+        ctx.replace_expression_with(expr, |expr, _ctx| {
+            let Expression::LogicalExpression(logical) = expr else { unreachable!() };
+            logical.unbox().left
+        });
     }
 
     /// Compress `foo === null || foo === undefined` into `foo == null`.
