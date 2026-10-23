@@ -80,9 +80,23 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                         // Hoist current symbol to target scope when it is not already declared
                         // in the target scope.
                         if !builder.scoping.scope_has_binding(target_scope_id, name) {
-                            // remove current scope binding and add to target scope
-                            // avoid same symbols appear in multi-scopes
-                            builder.scoping.remove_binding(scope_id, name);
+                            // If an enclosing scope between here and the target scope binds the same
+                            // name, e.g. the outer `e` in `catch (e) { catch (e) { var e } }`,
+                            // references inside this scope must keep resolving to this symbol.
+                            // The symbol then stays bound here as well as in the target scope.
+                            // https://tc39.es/ecma262/#sec-variablestatements-in-catch-blocks
+                            let shadowed =
+                                builder.scoping.symbol_flags(symbol_id).is_catch_variable()
+                                    && var_scope_ids
+                                        .iter()
+                                        .skip_while(|&&id| id != scope_id)
+                                        .skip(1)
+                                        .any(|&id| builder.scoping.scope_has_binding(id, name));
+                            if !shadowed {
+                                // remove current scope binding and add to target scope
+                                // avoid same symbols appear in multi-scopes
+                                builder.scoping.remove_binding(scope_id, name);
+                            }
                             builder.scoping.add_binding(target_scope_id, name, symbol_id);
                             builder.scoping.set_symbol_scope_id(symbol_id, target_scope_id);
                         }
