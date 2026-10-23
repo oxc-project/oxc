@@ -16,6 +16,10 @@ declare_react_compiler_lint!(
     /// not call known-impure functions such as `Math.random()`, `Date.now()`,
     /// or `performance.now()` during render.
     ///
+    /// Async function components are exempt, including impure calls in nested
+    /// callbacks. An async component is a Server Component: it renders once per
+    /// request and does not re-render. Async hooks are still checked.
+    ///
     upstream = "purity",
     ///
     /// ### Why is this bad?
@@ -39,6 +43,10 @@ declare_react_compiler_lint!(
     /// function Component() {
     ///   const [rand, setRand] = useState(0);
     ///   return <button onClick={() => setRand(Math.random())}>{rand}</button>;
+    /// }
+    ///
+    /// async function Posts({ posts }) {
+    ///   return <ul>{posts.map(post => <li key={post.id}>{Date.now()}</li>)}</ul>;
     /// }
     /// ```
     Purity,
@@ -79,6 +87,53 @@ function Component(props) {
   return <div>{props.text}</div>;
 }
 ",
+        // https://github.com/oxc-project/oxc/issues/27974
+        "
+export default async function Posts() {
+  const posts = await getPosts();
+  return posts.map(p => <p key={p.id}>{Date.now() - p.createdAt < 86_400_000 ? 'new' : ''}</p>);
+}
+",
+        "
+async function Posts() {
+  const date = Date.now();
+  const now = new Date();
+  const rand = Math.random();
+  return <Foo date={date} now={now} rand={rand} />;
+}
+",
+        // Async arrow components
+        "
+const Posts = async () => {
+  return <p>{Date.now()}</p>;
+};
+",
+        "
+const Posts = async function () {
+  return <p>{new Date().getTime()}</p>;
+};
+",
+        // Nested callbacks run during that same server render.
+        "
+async function Posts({ posts }) {
+  return <ul>{posts.map(p => <li key={p.id}>{Date.now() - p.createdAt}</li>)}</ul>;
+}
+",
+        "
+async function Posts({ posts }) {
+  const label = (post) => (Date.now() - post.createdAt < 86400000 ? 'new' : '');
+  return <ul>{posts.map(p => <li key={p.id}>{label(p)}</li>)}</ul>;
+}
+",
+        // A nested component also renders as part of that server render.
+        "
+async function Posts() {
+  function Badge() {
+    return <span>{Date.now()}</span>;
+  }
+  return <Badge />;
+}
+",
     ];
 
     let fail = vec![
@@ -99,6 +154,37 @@ function Component() {
   const time = new Date().getTime();
   const year = new Date().getFullYear();
   return <Foo date={date} time={time} year={year} />;
+}
+",
+        // Non-async components still report, including beside an async component.
+        "
+function Client() {
+  return <p>{Date.now()}</p>;
+}
+async function Server() {
+  return <p>{Date.now()}</p>;
+}
+",
+        "
+const Client = () => {
+  return <p>{Math.random()}</p>;
+};
+",
+        // Nested callbacks of a non-async component still run on every render.
+        "
+function Posts({ posts }) {
+  return <ul>{posts.map(p => <li key={p.id}>{Date.now()}</li>)}</ul>;
+}
+",
+        // Hooks stay checked, including async hooks.
+        "
+function useNow() {
+  return <span>{Date.now()}</span>;
+}
+",
+        "
+async function useNow() {
+  return <span>{new Date().getTime()}</span>;
 }
 ",
     ];

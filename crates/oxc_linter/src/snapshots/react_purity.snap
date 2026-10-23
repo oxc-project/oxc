@@ -67,3 +67,58 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: `Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
   note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:3:14]
+ 2 │ function Client() {
+ 3 │   return <p>{Date.now()}</p>;
+   ·              ─────┬────
+   ·                   ╰── Cannot call impure function
+ 4 │ }
+   ╰────
+  help: `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:3:14]
+ 2 │ const Client = () => {
+ 3 │   return <p>{Math.random()}</p>;
+   ·              ──────┬──────
+   ·                    ╰── Cannot call impure function
+ 4 │ };
+   ╰────
+  help: `Math.random` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:3:46]
+ 2 │ function Posts({ posts }) {
+ 3 │   return <ul>{posts.map(p => <li key={p.id}>{Date.now()}</li>)}</ul>;
+   ·                                              ─────┬────
+   ·                                                   ╰── Cannot call impure function
+ 4 │ }
+   ╰────
+  help: `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:3:17]
+ 2 │ function useNow() {
+ 3 │   return <span>{Date.now()}</span>;
+   ·                 ─────┬────
+   ·                      ╰── Cannot call impure function
+ 4 │ }
+   ╰────
+  help: `Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
+
+  ⚠ react(purity): Cannot call impure function during render
+   ╭─[purity.tsx:3:17]
+ 2 │ async function useNow() {
+ 3 │   return <span>{new Date().getTime()}</span>;
+   ·                 ─────┬────
+   ·                      ╰── Cannot call impure function
+ 4 │ }
+   ╰────
+  help: `Date` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component re-renders
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/purity
