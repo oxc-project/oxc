@@ -69,19 +69,30 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
     semantic: &'b Semantic<'a>,
 ) -> Option<&'b AstNode<'a>> {
     let mut current_node = node;
-    let source_function_id = node.id();
     // Whether the node has attached JSDoc or not is determined by `JSDocBuilder`
-    while semantic.jsdoc().get_all_by_node(semantic.nodes(), current_node).is_none() {
+    //
+    // An outer function's JSDoc must not apply to a nested function that has none of
+    // its own. That includes nested function declarations (`function outer() {
+    // function inner(value) {} }`) as well as nested function expressions. Check the
+    // parent before accepting the current node: JSDoc attached directly to the outer
+    // function would otherwise be found on the first step out of the nested function.
+    loop {
+        let parent = semantic.nodes().parent_node(current_node.id());
+        if matches!(parent.kind(), AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)) {
+            return None;
+        }
+
+        if semantic.jsdoc().get_all_by_node(semantic.nodes(), current_node).is_some() {
+            return Some(current_node);
+        }
+
         // Tie-breaker, otherwise every loop will end at `Program` node!
         // Maybe more checks should be added
         match current_node.kind() {
-            // Do not leak an outer function's JSDoc into nested function expressions.
             // Keep walking only for the source function node itself, because function
             // JSDoc can be attached on wrapper nodes like `VariableDeclaration`.
-            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_)
-                if current_node.id() != source_function_id =>
-            {
-                return None;
+            AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
+                current_node = parent;
             }
             // Do not apply object-level docs to functions nested in object literals.
             // e.g. `const x = /** ... */ { method(arg) {} }`
@@ -108,11 +119,9 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
                     _ => return None
                 }
             },
-            _ => current_node = semantic.nodes().parent_node(current_node.id()),
+            _ => current_node = parent,
         }
     }
-
-    Some(current_node)
 }
 
 pub fn should_ignore_as_internal(jsdoc: &JSDoc, settings: &JSDocPluginSettings) -> bool {
