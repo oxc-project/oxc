@@ -3643,6 +3643,15 @@ fn ox_codegen_primitive_value<'a>(
             None,
             ast,
         ),
+        PrimitiveValue::BigInt { value, raw, base } => {
+            oxc_ast::ast::Expression::new_big_int_literal(
+                span,
+                ox_str(ast, value.as_str()),
+                raw.as_ref().map(|r| oxc_str::Str::from(ox_str(ast, r.as_str()))),
+                *base,
+                ast,
+            )
+        }
         PrimitiveValue::Null => oxc_ast::ast::Expression::new_null_literal(span, ast),
         PrimitiveValue::Undefined => {
             oxc_ast::ast::Expression::new_identifier(span, "undefined", ast)
