@@ -29,8 +29,18 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Panics if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn alloc_layout(&self, layout: Layout) -> NonNull<u8> {
-        let ptr =
-            self.try_alloc_layout_fast(layout).unwrap_or_else(|| self.alloc_layout_slow(layout));
+        // `COMMIT: true` so that `cursor_ptr` is updated
+        self.alloc_layout_impl::<true>(layout)
+    }
+
+    /// Implementation of [`Arena::alloc_layout`].
+    ///
+    /// Only commits `cursor_ptr` on the fast path if `COMMIT == true`.
+    #[inline(always)]
+    pub(super) fn alloc_layout_impl<const COMMIT: bool>(&self, layout: Layout) -> NonNull<u8> {
+        let ptr = self
+            .try_alloc_layout_fast_impl::<COMMIT>(layout)
+            .unwrap_or_else(|| self.alloc_layout_slow(layout));
 
         #[cfg(all(feature = "track_allocations", not(feature = "disable_track_allocations")))]
         self.stats.record_allocation();
@@ -49,7 +59,19 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     /// Errors if reserving space matching `layout` fails.
     #[inline(always)]
     pub fn try_alloc_layout(&self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
-        let res = if let Some(ptr) = self.try_alloc_layout_fast(layout) {
+        // `COMMIT: true` so that `cursor_ptr` is updated
+        self.try_alloc_layout_impl::<true>(layout)
+    }
+
+    /// Implementation of [`Arena::try_alloc_layout`].
+    ///
+    /// Only commits `cursor_ptr` on the fast path if `COMMIT == true`.
+    #[inline(always)]
+    pub(super) fn try_alloc_layout_impl<const COMMIT: bool>(
+        &self,
+        layout: Layout,
+    ) -> Result<NonNull<u8>, AllocErr> {
+        let res = if let Some(ptr) = self.try_alloc_layout_fast_impl::<COMMIT>(layout) {
             Ok(ptr)
         } else {
             self.try_alloc_layout_slow(layout).ok_or(AllocErr)
@@ -66,6 +88,22 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
     // Only `pub(super)` to expose it for unit tests
     #[inline(always)]
     pub(super) fn try_alloc_layout_fast(&self, layout: Layout) -> Option<NonNull<u8>> {
+        // `COMMIT: true` so that `cursor_ptr` is updated
+        self.try_alloc_layout_fast_impl::<true>(layout)
+    }
+
+    /// Fast path for all allocation methods.
+    ///
+    /// Computes the pointer for `layout` within the current chunk.
+    /// * On success:
+    ///   * Commits `cursor_ptr` if `COMMIT == true`.
+    ///   * Returns `Some(ptr)`.
+    /// * If the current chunk cannot service the request, returns `None`.
+    #[inline(always)]
+    fn try_alloc_layout_fast_impl<const COMMIT: bool>(
+        &self,
+        layout: Layout,
+    ) -> Option<NonNull<u8>> {
         let cursor_ptr = self.cursor_ptr.get().as_ptr();
         let start_ptr = self.start_ptr.get().as_ptr();
 
@@ -299,11 +337,25 @@ impl<const MIN_ALIGN: usize> Arena<MIN_ALIGN> {
         debug_assert!(!new_ptr.is_null());
 
         // SAFETY: `start_ptr` is non-null, so if `new_ptr` was null, `new_ptr.addr().wrapping_sub(start_ptr.addr())`
-        // above would have wrapped around, and we already exited
-        let new_ptr = unsafe { NonNull::new_unchecked(new_ptr) };
+        // above would have wrapped around, and we already exited.
+        //
+        // `NonNull::new(new_ptr).unwrap_unchecked()` rather than `NonNull::new_unchecked(new_ptr)`,
+        // because `unwrap_unchecked` plants an explicit non-null assumption for the compiler
+        // (its `None` arm is `unreachable_unchecked`), whereas `NonNull::new_unchecked` is a plain transmute
+        // which asserts nothing.
+        //
+        // The assumption lets callers which `unwrap_or_else` the returned `Option` fold the `Option`'s
+        // null-niche check into the bounds check above, keeping the hot path to a single branch per allocation.
+        // Without it, they emit a redundant null-check branch when `COMMIT == false`.
+        // When `COMMIT == true`, the write to `cursor_ptr` below happens to give the compiler what it needs anyway,
+        // but the explicit assumption does not rely on that.
+        let new_ptr = unsafe { NonNull::new(new_ptr).unwrap_unchecked() };
 
-        // Update cursor
-        self.cursor_ptr.set(new_ptr);
+        // Update cursor - unless the caller defers the commit until after writing the value
+        // (used by the by-value allocation paths - see `alloc_with_impl`)
+        if COMMIT {
+            self.cursor_ptr.set(new_ptr);
+        }
 
         // Return the pointer
         Some(new_ptr)
