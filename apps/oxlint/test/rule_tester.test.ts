@@ -250,6 +250,47 @@ describe("RuleTester", () => {
         ]
       `);
     });
+
+    it("which are run again", () => {
+      const tester = new RuleTester();
+      tester.run("no-foo", simpleRule, {
+        valid: ["let x;", "let y;", "let x;"],
+        invalid: [],
+      });
+
+      const errors = runCases();
+      expect(errors).toMatchInlineSnapshot(`
+        [
+          null,
+          null,
+          [AssertionError: Detected duplicate test case],
+        ]
+      `);
+
+      // A test runner can run test cases more than once (e.g. Vitest's `--repeats` option, or retries).
+      // A test case run again is not a duplicate of itself, and a duplicate is still reported.
+      expect(runCases()).toEqual(errors);
+    });
+
+    it("which are the same object declared twice", () => {
+      const testCase = { code: "let x;" };
+      const tester = new RuleTester();
+      tester.run("no-foo", simpleRule, {
+        valid: [testCase, "let y;", testCase],
+        invalid: [],
+      });
+
+      const errors = runCases();
+      expect(errors).toMatchInlineSnapshot(`
+        [
+          null,
+          null,
+          [AssertionError: Detected duplicate test case],
+        ]
+      `);
+
+      expect(runCases()).toEqual(errors);
+    });
   });
 
   describe("tests invalid cases", () => {
@@ -782,6 +823,70 @@ describe("RuleTester", () => {
             [AssertionError: Detected duplicate test case],
           ]
         `);
+      });
+
+      it("duplicate code run again", () => {
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [],
+          invalid: [
+            {
+              code: "let foo;",
+              errors: 1,
+            },
+            {
+              code: "foo;",
+              errors: 1,
+            },
+            {
+              code: "let foo;",
+              errors: 1,
+            },
+          ],
+        });
+
+        const errors = runCases();
+        expect(errors).toMatchInlineSnapshot(`
+          [
+            null,
+            null,
+            [AssertionError: Detected duplicate test case],
+          ]
+        `);
+
+        // A test runner can run test cases more than once (e.g. Vitest's `--repeats` option, or retries).
+        // A test case run again is not a duplicate of itself, and a duplicate is still reported.
+        expect(runCases()).toEqual(errors);
+      });
+
+      it("same test case object declared twice", () => {
+        const testCase = {
+          code: "let foo;",
+          errors: 1,
+        };
+        const tester = new RuleTester();
+        tester.run("no-foo", simpleRule, {
+          valid: [],
+          invalid: [
+            testCase,
+            {
+              code: "foo;",
+              errors: 1,
+            },
+            testCase,
+          ],
+        });
+
+        const errors = runCases();
+        expect(errors).toMatchInlineSnapshot(`
+          [
+            null,
+            null,
+            [AssertionError: Detected duplicate test case],
+          ]
+        `);
+
+        expect(runCases()).toEqual(errors);
       });
     });
 
