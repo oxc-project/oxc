@@ -878,6 +878,7 @@ fn remove_unused_class_expression() {
 
     // TypeError
     test_same_options("(class extends (() => {}) {})", &options);
+    test_same_options("(class { static ['prototype']() {} })", &options);
 }
 
 #[test]

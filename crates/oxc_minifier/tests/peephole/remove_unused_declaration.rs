@@ -365,6 +365,10 @@ fn remove_unused_class_declaration() {
 
     // TypeError
     test_same_options("class C extends (() => {}) {}", &options);
+    // TypeError: a static member cannot redefine the constructor's `prototype`
+    test_same_options("class C { static ['prototype']() {} }", &options);
+    test_same_options("class C { static ['prototype'] = 1 }", &options);
+    test_options("class C { ['prototype']() {} }", "", &options);
 }
 
 #[test]
