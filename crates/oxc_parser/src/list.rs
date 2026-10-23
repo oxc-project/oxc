@@ -22,15 +22,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         mut next: impl FnMut(&mut Self) -> Option<T>,
     ) -> ArenaVec<'a, T> {
-        let Some(first) = next(self) else { return ArenaVec::new_in(self) };
-        let Some(second) = next(self) else { return ArenaVec::from_value_in(first, self) };
-        let Some(third) = next(self) else {
+        self.collect_list_with_previous(|p, _| next(p))
+    }
+
+    /// Collect a parser list as [`Self::collect_list`] does, passing the last element collected to
+    /// `next`.
+    #[inline]
+    pub(crate) fn collect_list_with_previous<T>(
+        &mut self,
+        mut next: impl FnMut(&mut Self, Option<&T>) -> Option<T>,
+    ) -> ArenaVec<'a, T> {
+        let Some(first) = next(self, None) else { return ArenaVec::new_in(self) };
+        let Some(second) = next(self, Some(&first)) else {
+            return ArenaVec::from_value_in(first, self);
+        };
+        let Some(third) = next(self, Some(&second)) else {
             return ArenaVec::from_array_in([first, second], self);
         };
-        let Some(fourth) = next(self) else {
+        let Some(fourth) = next(self, Some(&third)) else {
             return ArenaVec::from_array_in([first, second, third], self);
         };
-        let Some(fifth) = next(self) else {
+        let Some(fifth) = next(self, Some(&fourth)) else {
             return ArenaVec::from_array_in([first, second, third, fourth], self);
         };
         let prefix = [first, second, third, fourth, fifth];
@@ -39,7 +51,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let mut list = ArenaVec::with_capacity_in(8, self);
         list.extend(prefix);
-        while let Some(element) = next(self) {
+        while let Some(element) = next(self, list.last()) {
             list.push(element);
         }
         list
@@ -51,25 +63,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn collect_long_list<T>(
         &mut self,
         prefix: [T; 5],
-        mut next: impl FnMut(&mut Self) -> Option<T>,
+        mut next: impl FnMut(&mut Self, Option<&T>) -> Option<T>,
     ) -> ArenaVec<'a, T> {
         let mut tail: [Option<T>; 11] = std::array::from_fn(|_| None);
-        for (index, slot) in tail.iter_mut().enumerate() {
-            let Some(element) = next(self) else {
+        for index in 0..tail.len() {
+            let previous = if index == 0 { prefix.last() } else { tail[index - 1].as_ref() };
+            let Some(element) = next(self, previous) else {
                 let mut list = ArenaVec::with_capacity_in(5 + index, self);
                 list.extend(prefix);
                 list.extend(tail.into_iter().flatten());
                 return list;
             };
-            *slot = Some(element);
+            tail[index] = Some(element);
         }
-        let extra = next(self);
+        let extra = next(self, tail.last().and_then(Option::as_ref));
         let mut list = ArenaVec::with_capacity_in(if extra.is_some() { 32 } else { 16 }, self);
         list.extend(prefix);
         list.extend(tail.into_iter().flatten());
         if let Some(extra) = extra {
             list.push(extra);
-            while let Some(element) = next(self) {
+            while let Some(element) = next(self, list.last()) {
                 list.push(element);
             }
         }
@@ -204,8 +217,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
-        let mut previous = None;
-        let list = self.collect_list(|p| {
+        let list = self.collect_list_with_previous(|p, previous| {
             loop {
                 let kind = p.cur_kind();
                 if kind == close || p.has_fatal_error() {
@@ -229,9 +241,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     p.bump_any();
                     if p.cur_token().follows_comment()
-                        && let Some((node_id, end)) = previous
+                        && let Some(element) = previous
                     {
-                        p.attach_comments_after_element(node_id, end);
+                        p.attach_comments_after_separated_element(element);
                     }
                     let kind = p.cur_kind();
                     if kind == close {
@@ -255,9 +267,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if kind == Kind::Dot3 {
                     rest.replace(parse_rest(p));
                 } else {
-                    let element = parse_element(p);
-                    previous = element.id_and_end();
-                    return Some(element);
+                    return Some(parse_element(p));
                 }
             }
         });

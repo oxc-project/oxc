@@ -8,7 +8,9 @@ use oxc_syntax::node::NodeId;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext,
+    comment_attachment::ListComments,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, Modifiers},
 };
@@ -51,7 +53,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
-        let statements = self.collect_list(|p| {
+        let mut list_comments = self.start_list_comments();
+        let statements = self.collect_list_with_previous(|p, previous| {
             while !p.has_fatal_error() && (is_top_level || !p.at(Kind::RCurly)) {
                 // Commit once module syntax is detected (`export` commits eagerly in
                 // `parse_export_declaration`; `has_module_syntax()` excludes TS's
@@ -76,21 +79,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 // Starting at a string token also excludes parenthesized strings when
                 // `preserve_parens = false`.
                 let stmt = if expecting_directives && p.at(Kind::Str) {
-                    let comments = p.start_statement_comments();
                     let start = p.cur_start();
                     let expression = p.parse_expr();
                     p.asi();
-                    let stmt = Statement::new_expression_statement(p.end_span(start), expression, p);
-                    p.finish_statement_comments(&stmt, comments);
-                    match stmt {
-                        Statement::ExpressionStatement(expr)
-                            if matches!(expr.expression, Expression::StringLiteral(_)) =>
-                        {
-                            let ExpressionStatement { span, node_id, expression, .. } =
-                                expr.unbox();
-                            let Expression::StringLiteral(string) = expression else {
-                                unreachable!()
-                            };
+                    let statement = ExpressionStatement::new(p.end_span(start), expression, p);
+                    p.finish_statement_comments(&statement, &mut list_comments, &directives, None);
+                    match statement {
+                        ExpressionStatement {
+                            span,
+                            node_id,
+                            expression: Expression::StringLiteral(string),
+                            ..
+                        } => {
                             let string = string.unbox();
                             let src = &p.source_text
                                 [string.span.start as usize + 1..string.span.end as usize - 1];
@@ -103,10 +103,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             directives.push(directive);
                             continue;
                         }
-                        stmt => stmt,
+                        statement => Statement::ExpressionStatement(p.alloc(statement)),
                     }
                 } else {
-                    p.parse_statement_list_item(stmt_ctx)
+                    p.parse_statement_in_list(stmt_ctx, &mut list_comments, &directives, previous)
                 };
 
                 // Don't reparse a module declaration: `export` already committed to the
@@ -144,6 +144,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (directives, statements)
     }
 
+    /// Parse a statement in a statement list, and assign comments in and before it.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(crate) fn parse_statement_in_list(
+        &mut self,
+        stmt_ctx: StatementContext,
+        list: &mut ListComments,
+        directives: &[Directive<'a>],
+        previous: Option<&Statement<'a>>,
+    ) -> Statement<'a> {
+        let stmt = self.parse_statement_list_item(stmt_ctx);
+        self.finish_statement_comments(&stmt, list, directives, previous);
+        stmt
+    }
+
     /// `StatementListItem`[Yield, Await, Return] :
     ///     Statement[?Yield, ?Await, ?Return]
     ///     Declaration[?Yield, ?Await]
@@ -153,8 +168,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
-        let comments = self.start_statement_comments();
-
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => self.parse_empty_statement(),
@@ -220,8 +233,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(comments) = no_side_effects_comments {
             self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
         }
-
-        self.finish_statement_comments(&stmt, comments);
 
         stmt
     }
@@ -300,9 +311,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 14.2 Block Statement
     pub(crate) fn parse_block(&mut self) -> BlockStatement<'a> {
         let start = self.cur_start();
-        let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
-            p.parse_statement_list_item(StatementContext::StatementList)
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LCurly);
+        let mut list_comments = self.start_list_comments();
+        let body = self.collect_list_with_previous(|p, previous| {
+            if p.at(Kind::RCurly) || p.has_fatal_error() {
+                return None;
+            }
+            Some(p.parse_statement_in_list(
+                StatementContext::StatementList,
+                &mut list_comments,
+                &[],
+                previous,
+            ))
         });
+        self.expect_closing(Kind::RCurly, opening_span);
         let span = self.end_span(start);
         self.attach_trailing_comments(&[], &body, span.end.saturating_sub(1));
         BlockStatement::new(span, body, self)
@@ -781,7 +804,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // and report only the first duplicate, all in the single parsing pass.
         let mut first_default: Option<Span> = None;
         let mut reported_duplicate = false;
-        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LCurly);
+        let mut list_comments = self.start_list_comments();
+        let cases = self.collect_list_with_previous(|p, previous| {
+            if p.at(Kind::RCurly) || p.has_fatal_error() {
+                return None;
+            }
             let case = p.parse_switch_case();
             if case.test.is_none() {
                 match first_default {
@@ -793,8 +822,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Some(_) => {}
                 }
             }
-            case
+            p.finish_list_element_comments(&case, &mut list_comments, previous);
+            Some(case)
         });
+        self.attach_comments_before_close(&cases);
+        self.expect_closing(Kind::RCurly, opening_span);
         Statement::new_switch_statement(self.end_span(start), discriminant, cases, self)
     }
 
@@ -816,7 +848,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let consequent = self.collect_list(|p| {
+        let mut list_comments = self.start_list_comments();
+        let consequent = self.collect_list_with_previous(|p, previous| {
             let kind = p.cur_kind();
             if matches!(
                 kind,
@@ -825,7 +858,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 return None;
             }
-            let stmt = p.parse_statement_list_item(StatementContext::StatementList);
+            let stmt = p.parse_statement_in_list(
+                StatementContext::StatementList,
+                &mut list_comments,
+                &[],
+                previous,
+            );
             if let Statement::VariableDeclaration(var_decl) = &stmt
                 && var_decl.kind.is_using()
             {

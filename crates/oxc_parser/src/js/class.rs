@@ -220,16 +220,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_class_body(&mut self) -> ArenaBox<'a, ClassBody<'a>> {
         let start = self.cur_start();
-        let class_elements = self.parse_normal_list_breakable(Kind::LCurly, Kind::RCurly, |p| {
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LCurly);
+        let mut list_comments = self.start_list_comments();
+        let class_elements = self.collect_list_with_previous(|p, mut previous| {
+            if p.at(Kind::RCurly) || p.has_fatal_error() {
+                return None;
+            }
             // Skip empty class element `;`
             if p.eat(Kind::Semicolon) {
                 while p.eat(Kind::Semicolon) {}
                 if p.at(Kind::RCurly) {
                     return None;
                 }
+                list_comments.restart(p.prev_token_end);
+                // Elements before an empty class element `;` are not next to the following
+                // element.
+                previous = None;
             }
-            Some(Self::parse_class_element(p))
+            let element = p.parse_class_element();
+            p.finish_list_element_comments(&element, &mut list_comments, previous);
+            Some(element)
         });
+        self.attach_comments_before_close(&class_elements);
+        self.expect_closing(Kind::RCurly, opening_span);
         ClassBody::boxed(self.end_span(start), class_elements, self)
     }
 

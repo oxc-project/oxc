@@ -147,6 +147,11 @@ impl PendingToken {
     }
 
     #[inline]
+    pub(super) fn follows_comment(self) -> bool {
+        self.0 & Self::FOLLOWS_COMMENT != 0
+    }
+
+    #[inline]
     pub(super) fn set_follows_comment(&mut self) {
         self.0 |= Self::FOLLOWS_COMMENT;
     }

@@ -99,9 +99,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
         let mut has_optional = false;
-        let mut previous = None;
 
-        let list = self.collect_list(|p| {
+        let list = self.collect_list_with_previous(|p, previous| {
             loop {
                 let kind = p.cur_kind();
                 if kind == Kind::RParen
@@ -128,9 +127,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                     p.bump_any();
                     if p.cur_token().follows_comment()
-                        && let Some((node_id, end)) = previous
+                        && let Some(param) = previous
                     {
-                        p.attach_comments_after_element(node_id, end);
+                        p.attach_comments_after_separator(param);
                     }
                     let kind = p.cur_kind();
                     if kind == Kind::RParen {
@@ -184,7 +183,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             param.span,
                         ));
                     }
-                    previous = Some((param.node_id.get(), param.span.end));
                     return Some(param);
                 }
             }
