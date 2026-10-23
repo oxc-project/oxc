@@ -298,6 +298,9 @@ pub enum DebugOption {
 
     /// Enable per-rule timing information
     Timings,
+
+    /// Enable per-rule heap allocation information (requires the `debug_allocs` Cargo feature)
+    Memory,
 }
 
 impl DebugOption {
@@ -305,6 +308,8 @@ impl DebugOption {
     const FILES_HELP: &str = "Print the list of files that will be linted, then exit";
     const TIMINGS_NAME: &str = "timings";
     const TIMINGS_HELP: &str = "Enable per-rule timing information";
+    const MEMORY_NAME: &str = "memory";
+    const MEMORY_HELP: &str = "Enable native per-rule allocation counts and bytes (requires compiling oxlint with the `debug_allocs` Cargo feature enabled)";
 }
 
 impl FromStr for DebugOption {
@@ -314,6 +319,11 @@ impl FromStr for DebugOption {
         match option {
             Self::FILES_NAME => Ok(Self::Files),
             Self::TIMINGS_NAME => Ok(Self::Timings),
+            Self::MEMORY_NAME if cfg!(feature = "debug_allocs") => Ok(Self::Memory),
+            Self::MEMORY_NAME => Err(
+                "memory profiling requires compiling oxlint with the `debug_allocs` Cargo feature enabled"
+                    .to_string(),
+            ),
             _ => Err(format!("'{option}' is not a known debug option")),
         }
     }
@@ -339,6 +349,11 @@ impl DebugOptions {
         (DebugOption::TIMINGS_NAME, Style::Text),
         ("` - ", Style::Text),
         (DebugOption::TIMINGS_HELP, Style::Text),
+        (".", Style::Text),
+        ("\n  * `", Style::Text),
+        (DebugOption::MEMORY_NAME, Style::Text),
+        ("` - ", Style::Text),
+        (DebugOption::MEMORY_HELP, Style::Text),
         (".", Style::Text),
     ];
 
@@ -748,6 +763,44 @@ mod lint_options {
             result.is_err_and(|err| err.unwrap_stderr()
                 == "couldn't parse `foo`: 'foo' is not a known debug option")
         );
+    }
+
+    #[cfg(not(feature = "debug_allocs"))]
+    #[test]
+    fn debug_memory_requires_feature() {
+        for value in ["memory", "memory,timings", "timings,memory"] {
+            let args = ["--debug", value, "src"].map(String::from);
+            let result = lint_command().run_inner(args.as_slice());
+            assert_eq!(
+                result
+                    .unwrap_err()
+                    .unwrap_stderr()
+                    .split_whitespace()
+                    .collect::<Vec<_>>()
+                    .join(" "),
+                format!(
+                    "couldn't parse `{value}`: memory profiling requires compiling oxlint with the `debug_allocs` Cargo feature enabled"
+                )
+            );
+        }
+    }
+
+    #[cfg(feature = "debug_allocs")]
+    #[test]
+    fn debug_memory() {
+        let options = get_lint_options("--debug memory src");
+        assert!(options.output_options.debug.contains(DebugOption::Memory));
+        assert!(!options.output_options.debug.contains(DebugOption::Timings));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
+    }
+
+    #[cfg(feature = "debug_allocs")]
+    #[test]
+    fn debug_memory_and_timings() {
+        let options = get_lint_options("--debug memory,timings src");
+        assert!(options.output_options.debug.contains(DebugOption::Memory));
+        assert!(options.output_options.debug.contains(DebugOption::Timings));
+        assert_eq!(options.paths, vec![PathBuf::from("src")]);
     }
 
     #[test]
