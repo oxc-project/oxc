@@ -1,0 +1,17 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "947db158ec53d5f684a42207ef277d7ce945c9aa",
+  "prompts": {},
+  "sessions": {
+    "s_dac938abd5b3c1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16a0c-0800-7c13-9de2-27fc7f5277ec",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
