@@ -531,8 +531,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 );
             }
         };
+        let span = self.end_span(start);
         self.parse_type_member_semicolon();
-        ImportAttribute::new(self.end_span(start), key, value, self)
+        ImportAttribute::new(span, key, value, self)
     }
 
     /// Validate a statement that appears directly in an *internal* namespace body
