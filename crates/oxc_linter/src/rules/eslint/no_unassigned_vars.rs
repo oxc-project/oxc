@@ -1,6 +1,7 @@
 use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::SymbolId;
 use oxc_span::Span;
 
 use crate::{AstNode, context::LintContext, rule::Rule};
@@ -13,6 +14,28 @@ fn no_unassigned_vars_diagnostic(span: Span, ident_name: &str) -> OxcDiagnostic 
         "Variable declared without assignment. Either assign a value or remove the declaration.",
     )
     .with_label(span)
+}
+
+/// `true` when some declaration of `symbol_id` initializes that binding.
+///
+/// ESLint records a `var` initializer, and a `for`-`in` / `for`-`of` variable,
+/// as a write reference. Oxc records those as declarations instead, so
+/// `var x; var x = 1` has no write reference for `x`.
+fn redeclaration_assigns(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
+    ctx.scoping().symbol_redeclarations(symbol_id).iter().any(|redeclaration| {
+        let node = ctx.nodes().get_node(redeclaration.declaration);
+        let AstKind::VariableDeclarator(declarator) = node.kind() else {
+            return false;
+        };
+        if declarator.init.is_some() {
+            return true;
+        }
+        let declaration = ctx.nodes().parent_node(node.id());
+        matches!(
+            ctx.nodes().parent_kind(declaration.id()),
+            AstKind::ForInStatement(_) | AstKind::ForOfStatement(_)
+        )
+    })
 }
 
 #[derive(Debug, Default, Clone)]
@@ -108,7 +131,7 @@ impl Rule for NoUnassignedVars {
                 has_read = true;
             }
         }
-        if has_read {
+        if has_read && !redeclaration_assigns(symbol_id, ctx) {
             ctx.diagnostic(no_unassigned_vars_diagnostic(ident.span, ident.name.as_str()));
         }
     }
@@ -150,6 +173,19 @@ fn test() {
                         }
                     ",
         "for (let p of pathToRemove) { p.remove() }",
+        // https://github.com/oxc-project/oxc/issues/27982
+        // A `var` redeclaration's initializer assigns the binding, in either order.
+        "function f(k) { var x; var x = k; return x; }",
+        "function g(k) { var y = k; var y; return y; }",
+        "function h(k) { var z; if (k) { var z = k; } return z; }",
+        "function sameStatement(k) { var x, x = k; return x; }",
+        "function sameStatementReverse(k) { var x = k, x; return x; }",
+        "function block(k) { var x; { var x = k; } return x; }",
+        "function destructure(k) { var x; var { x } = k; return x; }",
+        "function destructureArray(k) { var x; var [x] = k; return x; }",
+        "function forIn(obj) { var x; for (var x in obj) {} return x; }",
+        "function forOf(obj) { var x; for (var x of obj) {} return x; }",
+        "function forInit() { var x; for (var x = 1;;) { break; } return x; }",
     ];
 
     let fail = vec![
@@ -170,6 +206,13 @@ fn test() {
                             let y: string;
                             console.log(y);
                         ",
+        // Redeclaring without an initializer does not assign.
+        "function bare() { var x; var x; return x; }",
+        // A function or parameter declaration is not a write. ESLint reports these.
+        "function afterFunction() { function x() { return 1; } var x; return x; }",
+        "function afterParam(x) { var x; return x; }",
+        // A default on a different binding reads `x` but does not assign it.
+        "function otherDefault() { var x; var { y = x } = {}; return x; }",
     ];
 
     Tester::new(NoUnassignedVars::NAME, NoUnassignedVars::PLUGIN, pass, fail).test_and_snapshot();
