@@ -117,6 +117,10 @@ pub struct TriviaBuilder<'a> {
 
     pub(crate) irregular_whitespaces: Vec<Span>,
 
+    /// Sorted indices of comments whose preceding token is a comma on the same line, with only
+    /// comments between them.
+    pub(crate) comma_comments: Vec<u32>,
+
     // states
     /// index of processed comments
     processed: usize,
@@ -154,6 +158,7 @@ impl<'a> TriviaBuilder<'a> {
         Self {
             comments: Comments::new_in(allocator),
             irregular_whitespaces: vec![],
+            comma_comments: vec![],
             processed: 0,
             previous_token,
             annotation_comments: AnnotationComments::default(),
@@ -252,13 +257,14 @@ impl<'a> TriviaBuilder<'a> {
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
         // not just since the last token.
         comment.set_preceded_by_newline(pending.saw_newline_for_comment());
+        let follows_comma = self.follows_comma(*pending);
         // A line comment is always followed by a newline. This is never set in `handle_newline`.
         comment.set_followed_by_newline(true);
         let becomes_trailing = self.should_be_treated_as_trailing_comment(*pending)
             && !Self::should_stay_leading(&comment);
         pending.set_saw_newline();
 
-        self.push_comment(comment);
+        self.push_comment(comment, follows_comma);
         if becomes_trailing {
             self.attach_pending_comments(
                 CommentPosition::Trailing,
@@ -298,11 +304,12 @@ impl<'a> TriviaBuilder<'a> {
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
         // not just since the last token.
         comment.set_preceded_by_newline(pending.saw_newline_for_comment());
+        let follows_comma = self.follows_comma(*pending);
         // Block comments don't end with a newline, so reset saw_newline_for_comment.
         // If there's a newline after the block comment, `handle_newline` will set it back to true.
         pending.clear_saw_newline_for_comment();
 
-        self.push_comment(comment);
+        self.push_comment(comment, follows_comma);
         pending.set_has_pending_comments(true);
     }
 
@@ -340,11 +347,22 @@ impl<'a> TriviaBuilder<'a> {
 
     /// Add a comment which was not added before, once it is complete.
     #[inline]
-    fn push_comment(&mut self, comment: Comment) {
+    fn push_comment(&mut self, comment: Comment, follows_comma: bool) {
         // Set annotation flags here (not when working out the content) so the index is correct
         // even when a duplicate from parser lookahead/rewind was skipped.
         self.set_annotation_flags(comment.content, self.comments.len());
+        if follows_comma {
+            #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
+            self.comma_comments.push(self.comments.len() as u32);
+        }
         self.comments.push(comment);
+    }
+
+    /// Whether a comment being added follows a comma on the same line, with only comments
+    /// between them.
+    #[inline]
+    fn follows_comma(&self, pending: PendingToken) -> bool {
+        !pending.saw_newline() && self.previous_token.kind() == Kind::Comma
     }
 
     // For block comments only. This function is not called after line comments because the lexer skips
