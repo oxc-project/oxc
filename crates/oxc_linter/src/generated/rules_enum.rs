@@ -12023,6 +12023,9 @@ impl RuleEnum {
             Self::UnicornNoUselessUndefined(_) => Ok(Self::UnicornNoUselessUndefined(
                 UnicornNoUselessUndefined::from_configuration(value)?,
             )),
+            Self::UnicornNumberLiteralCase(_) => Ok(Self::UnicornNumberLiteralCase(
+                UnicornNumberLiteralCase::from_configuration(value)?,
+            )),
             Self::UnicornNumericSeparatorsStyle(_) => Ok(Self::UnicornNumericSeparatorsStyle(
                 UnicornNumericSeparatorsStyle::from_configuration(value)?,
             )),
