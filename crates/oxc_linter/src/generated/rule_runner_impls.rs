@@ -2271,8 +2271,9 @@ impl RuleRunner for crate::rules::jest::max_nested_describe::MaxNestedDescribe {
 }
 
 impl RuleRunner for crate::rules::jest::no_alias_methods::NoAliasMethods {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::no_commented_out_tests::NoCommentedOutTests {
@@ -4830,8 +4831,9 @@ impl RuleRunner for crate::rules::vitest::max_nested_describe::MaxNestedDescribe
 }
 
 impl RuleRunner for crate::rules::vitest::no_alias_methods::NoAliasMethods {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::no_commented_out_tests::NoCommentedOutTests {

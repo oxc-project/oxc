@@ -218,7 +218,6 @@ jest/consistent-test-it                                    |      7
 jest/expect-expect                                         |      0
 jest/max-expects                                           |      7
 jest/max-nested-describe                                   |      7
-jest/no-alias-methods                                      |      0
 jest/no-commented-out-tests                                |      7
 jest/no-conditional-expect                                 |      0
 jest/no-conditional-in-test                                |  30315
@@ -686,7 +685,6 @@ vitest/expect-expect                                       |      0
 vitest/hoisted-apis-on-top                                 |      0
 vitest/max-expects                                         |      7
 vitest/max-nested-describe                                 |      7
-vitest/no-alias-methods                                    |      0
 vitest/no-commented-out-tests                              |      7
 vitest/no-conditional-expect                               |      0
 vitest/no-conditional-in-test                              |  30315
