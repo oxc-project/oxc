@@ -590,6 +590,13 @@ impl Allocator {
         &self.arena
     }
 
+    /// `true` if this [`Allocator`] is a fixed-size raw-transfer arena.
+    ///
+    /// Empty allocators (no chunks) are not fixed-size.
+    pub fn is_fixed_size(&self) -> bool {
+        self.arena.is_fixed_size()
+    }
+
     /// Create [`Allocator`] from an [`Arena`].
     ///
     /// This method is not public. Only used by [`Allocator::from_raw_parts`].
