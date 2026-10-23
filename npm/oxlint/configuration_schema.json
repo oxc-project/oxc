@@ -8371,6 +8371,9 @@
         "typescript/no-unsafe-declaration-merging": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "typescript/no-unsafe-enum-assignment": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "typescript/no-unsafe-enum-comparison": {
           "$ref": "#/definitions/RuleNoConfig"
         },
