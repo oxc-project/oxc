@@ -17156,6 +17156,11 @@
           "minimum": 0.0,
           "markdownDescription": "Specify a warning threshold. Exits with an error status if warnings exceed this value.\n\nEquivalent to passing `--max-warnings` on the CLI."
         },
+        "noInlineConfig": {
+          "description": "Ignore all supported inline disable and enable directives\n(`oxlint-*` and `eslint-*`).\n\nDefaults to `false`.\nEquivalent to passing `--no-inline-config` on the CLI.\nTakes precedence over `respectEslintDisableDirectives`.\nOnly supported in the root configuration file.",
+          "type": "boolean",
+          "markdownDescription": "Ignore all supported inline disable and enable directives\n(`oxlint-*` and `eslint-*`).\n\nDefaults to `false`.\nEquivalent to passing `--no-inline-config` on the CLI.\nTakes precedence over `respectEslintDisableDirectives`.\nOnly supported in the root configuration file."
+        },
         "reportUnusedDisableDirectives": {
           "description": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file.",
           "allOf": [
@@ -17166,9 +17171,9 @@
           "markdownDescription": "Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).\n\nEquivalent to passing `--report-unused-disable-directives-severity` on the CLI.\nCLI flags take precedence over this value when both are set.\nOnly supported in the root configuration file."
         },
         "respectEslintDisableDirectives": {
-          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file.",
+          "description": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\n\nHas no effect when `noInlineConfig` is `true`.\nOnly supported in the root configuration file.",
           "type": "boolean",
-          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\nOnly supported in the root configuration file."
+          "markdownDescription": "Whether oxlint should respect `eslint-disable*` and `eslint-enable*`\ndirectives in addition to its native `oxlint-*` directives.\n\nDefaults to `true`.\n\nHas no effect when `noInlineConfig` is `true`.\nOnly supported in the root configuration file."
         },
         "typeAware": {
           "description": "Enable rules that require type information.\n\nEquivalent to passing `--type-aware` on the CLI.\n\nNote that this requires the `oxlint-tsgolint` package to be installed.",
