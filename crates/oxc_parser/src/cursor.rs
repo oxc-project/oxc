@@ -440,45 +440,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn parse_normal_list_breakable<F, T>(
-        &mut self,
-        open: Kind,
-        close: Kind,
-        f: F,
-    ) -> ArenaVec<'a, T>
-    where
-        F: Fn(&mut Self) -> Option<T>,
-    {
-        let opening_span = self.cur_token().span();
-        self.expect(open);
-        let mut list = ArenaVec::new_in(self);
-        self.parse_normal_list_breakable_into(&mut list, close, f);
-        self.expect_closing(close, opening_span);
-        list
-    }
-
-    #[expect(clippy::inline_always)]
-    #[inline(always)]
-    fn parse_normal_list_breakable_into<F, T>(
-        &mut self,
-        list: &mut ArenaVec<'a, T>,
-        close: Kind,
-        parse_element: F,
-    ) where
-        F: Fn(&mut Self) -> Option<T>,
-    {
-        loop {
-            if self.at(close) || self.has_fatal_error() {
-                break;
-            }
-            if let Some(element) = parse_element(self) {
-                list.push(element);
-            } else {
-                break;
-            }
-        }
-    }
-
     pub(crate) fn parse_delimited_list<F, T: GetSpan + GetNodeId>(
         &mut self,
         close: Kind,
