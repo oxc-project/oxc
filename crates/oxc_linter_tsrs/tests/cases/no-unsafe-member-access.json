@@ -1,0 +1,356 @@
+{
+  "source": "no_unsafe_member_access_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.noImplicitThis.json",
+      "valid": [
+        {
+          "code": "\nfunction foo(x: { a: number }, y: any) {\n  x[y++];\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }) {\n  x.a;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x?: { a: number }) {\n  x?.a;\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }) {\n  x['a'];\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x?: { a: number }) {\n  x?.['a'];\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: string) {\n  x[y];\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x?: { a: number }, y: string) {\n  x?.[y];\n}\n    "
+        },
+        {
+          "code": "\nfunction foo(x: string[]) {\n  x[1];\n}\n    "
+        },
+        {
+          "code": "\nclass B implements FG.A {}\n    "
+        },
+        {
+          "code": "\ninterface B extends FG.A {}\n    "
+        },
+        {
+          "code": "\nclass B implements F.S.T.A {}\n    "
+        },
+        {
+          "code": "\ninterface B extends F.S.T.A {}\n    "
+        },
+        {
+          "code": "\nfunction foo(x?: { a: number }) {\n  x?.a;\n}\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          }
+        },
+        {
+          "code": "\nfunction foo(x?: { a: number }, y: string) {\n  x?.[y];\n}\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          }
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: 'a') {\n  x?.[y];\n}\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          }
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: NotKnown) {\n  x?.[y];\n}\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nfunction foo(x: any) {\n  x.a;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 3,
+              "column": 5,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: any) {\n  x.a.b.c.d.e.f.g;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 3,
+              "column": 5,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: any }) {\n  x.a.b.c.d.e.f.g;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 3,
+              "column": 7,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: any) {\n  x['a'];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 3,
+              "column": 5,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: any) {\n  x['a']['b']['c'];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 3,
+              "column": 5,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet value: NotKnown;\n\nvalue.property;\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 4,
+              "column": 7,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: any) {\n  x[y];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeComputedMemberAccess",
+              "line": 3,
+              "column": 5,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x?: { a: number }, y: any) {\n  x?.[y];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeComputedMemberAccess",
+              "line": 3,
+              "column": 7,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: any) {\n  x[(y += 1)];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeComputedMemberAccess",
+              "line": 3,
+              "column": 5,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: any) {\n  x[1 as any];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeComputedMemberAccess",
+              "line": 3,
+              "column": 5,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: any) {\n  x[y()];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeComputedMemberAccess",
+              "line": 3,
+              "column": 5,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: string[], y: any) {\n  x[y];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeComputedMemberAccess",
+              "line": 3,
+              "column": 5,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: NotKnown) {\n  x[y];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeComputedMemberAccess",
+              "line": 3,
+              "column": 5,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst methods = {\n  methodA() {\n    return this.methodB()\n  },\n  methodB() {\n    const getProperty = () =\u003e Math.random() \u003e 0.5 ? 'methodB' : 'methodC'\n    return this[getProperty()]()\n  },\n  methodC() {\n    return true\n  },\n  methodD() {\n    return (this?.methodA)?.()\n  }\n};\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeThisMemberExpression",
+              "line": 4,
+              "column": 17,
+              "endColumn": 24,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeThisMemberExpression",
+              "line": 8,
+              "column": 17,
+              "endColumn": 30,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeThisMemberExpression",
+              "line": 14,
+              "column": 19,
+              "endColumn": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass C {\n  getObs$: any;\n  getPopularDepartments(): void {\n    this.getObs$.pipe().subscribe(res =\u003e {\n      log(res);\n    });\n  }\n}\nfunction log(arg: unknown) {}\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 5,
+              "column": 25,
+              "endColumn": 34,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 5,
+              "column": 18,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet value: any;\n\nvalue?.middle.inner;\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          },
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 4,
+              "column": 15,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet value: any;\n\nvalue?.outer.middle.inner;\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          },
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 4,
+              "column": 14,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet value: any;\n\nvalue.outer?.middle.inner;\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          },
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 4,
+              "column": 21,
+              "endColumn": 26,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 4,
+              "column": 7,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet value: any;\n\nvalue.outer.middle?.inner;\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          },
+          "errors": [
+            {
+              "messageId": "unsafeMemberExpression",
+              "line": 4,
+              "column": 7,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(x: { a: number }, y: NotKnown) {\n  x[y];\n}\n      ",
+          "options": {
+            "allowOptionalChaining": true
+          },
+          "errors": [
+            {
+              "messageId": "unsafeComputedMemberAccess",
+              "line": 3,
+              "column": 5,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

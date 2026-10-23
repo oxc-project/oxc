@@ -1,0 +1,190 @@
+{
+  "source": "no_generated_empty_object_type_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "type Constructor = new () =\u003e object; type Alias = Exclude\u003cConstructor, undefined\u003e;"
+        },
+        {
+          "code": "type Data = { a: string }; type Result = (Omit\u003cData, 'a'\u003e) \u0026 { b: number };"
+        },
+        {
+          "code": "\ntype Data = { name: string; num: number };\ntype Expected = Omit\u003cData, 'name'\u003e;\n    "
+        },
+        {
+          "code": "\ntype Data = { name: string; num: number };\ndeclare function doSomething\u003cT extends Omit\u003cData, 'name'\u003e\u003e(param: T): void;\n    "
+        },
+        {
+          "code": "\ntype Names = Array\u003cstring\u003e;\n    "
+        },
+        {
+          "code": "\ntype Empty = {};\n    "
+        },
+        {
+          "code": "\ntype Explicit = {} | { value: number };\n    "
+        },
+        {
+          "code": "\ninterface Empty {}\ntype Alias = Empty;\n    "
+        },
+        {
+          "code": "\nclass Empty {}\ntype Alias = Empty;\n    "
+        },
+        {
+          "code": "\ntype Dictionary = Record\u003cstring, never\u003e;\n    "
+        },
+        {
+          "code": "\ntype Callable = () =\u003e void;\ntype Aliased = Exclude\u003cCallable, undefined\u003e;\n    "
+        },
+        {
+          "code": "\ntype Data = { name: string; num: number };\ntype NullableData = null | Data;\ntype Intersected = Omit\u003cNullableData, 'name'\u003e \u0026 { other: string };\n    "
+        },
+        {
+          "code": "\ntype Data = { name: string; value: number };\ntype Data2 = { name: string };\ntype DistributiveOmit\u003cT, K extends PropertyKey\u003e = T extends unknown\n  ? Omit\u003cT, K\u003e\n  : never;\ntype Expected = DistributiveOmit\u003cData | Data2, 'name'\u003e \u0026 {\n  other: string;\n};\n    "
+        },
+        {
+          "code": "\ndeclare function getEnumNames\u003cT extends string\u003e(\n  myEnum: Record\u003cT, unknown\u003e,\n): T[];\n    "
+        },
+        {
+          "code": "\ntype MakeRequired\u003cBase, Key extends keyof Base\u003e = Omit\u003cBase, Key\u003e \u0026\n  Required\u003cRecord\u003cKey, NonNullable\u003cBase[Key]\u003e\u003e\u003e;\n    "
+        },
+        {
+          "code": "\ntype Emptied\u003cT\u003e = Omit\u003cT, keyof T\u003e;\n    "
+        },
+        {
+          "code": "\ntype Keys\u003cT\u003e = T extends infer U ? keyof U : never;\ntype Mapped\u003cT extends object\u003e = { [Key in Keys\u003cT\u003e]: Key };\ntype Referenced\u003cT extends object\u003e = Mapped\u003cT\u003e;\n    "
+        },
+        {
+          "code": "\ntype Keys\u003cT\u003e = T extends infer U ? keyof U : never;\ntype Mapped\u003cT extends object\u003e = { [Key in Keys\u003cT\u003e]: Key };\ntype Indexed\u003cT extends object\u003e = Mapped\u003cT\u003e[Keys\u003cT\u003e];\n    "
+        },
+        {
+          "code": "\ntype Keys\u003cT\u003e = T extends infer U ? keyof U : never;\ntype Remapped\u003cT extends object\u003e = {\n  [Key in Keys\u003cT\u003e as `get${string \u0026 Key}`]: () =\u003e void;\n};\ntype Referenced\u003cT extends object\u003e = Remapped\u003cT\u003e;\n    "
+        },
+        {
+          "code": "\ntype Keys\u003cT\u003e = T extends infer U ? keyof U : never;\ntype ReadonlyMapped\u003cT extends object\u003e = { readonly [Key in Keys\u003cT\u003e]: number };\ntype Referenced\u003cT extends object\u003e = ReadonlyMapped\u003cT\u003e;\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ntype Data = { name: string; num: number };\ntype NullableData = null | Data;\ntype Unexpected = Omit\u003cNullableData, 'name'\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 4,
+              "column": 19,
+              "endLine": 4,
+              "endColumn": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Data = { name: string; num: number };\ntype NullableData = null | Data;\nfunction doSomething\u003cT extends Omit\u003cNullableData, 'name'\u003e\u003e(param: T) {}\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 4,
+              "column": 32,
+              "endLine": 4,
+              "endColumn": 58,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Data = { name: string; num: number };\ntype Unexpected = Pick\u003cData, never\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 3,
+              "column": 19,
+              "endLine": 3,
+              "endColumn": 36,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Unexpected = NonNullable\u003cunknown\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 2,
+              "column": 19,
+              "endLine": 2,
+              "endColumn": 39,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Data = { name: string; num: number };\ntype NullableData = null | Data;\ndeclare const unexpected: Omit\u003cNullableData, 'name'\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 4,
+              "column": 27,
+              "endLine": 4,
+              "endColumn": 53,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Data = { name: string; num: number };\ntype NullableData = null | Data;\ntype Unexpected = Omit\u003cNullableData, 'name'\u003e;\ntype Referencing = Unexpected;\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 4,
+              "column": 19,
+              "endLine": 4,
+              "endColumn": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Data = { name: string; num: number };\ntype NullableData = null | Data;\ntype Unexpected = Array\u003cOmit\u003cNullableData, 'name'\u003e\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 4,
+              "column": 25,
+              "endLine": 4,
+              "endColumn": 51,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Data = { name: string; value: number };\ntype Data2 = { name: string };\ntype DistributiveOmit\u003cT, K extends PropertyKey\u003e = T extends unknown\n  ? Omit\u003cT, K\u003e\n  : never;\ntype Unexpected = DistributiveOmit\u003cData | Data2, 'name'\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 7,
+              "column": 19,
+              "endLine": 7,
+              "endColumn": 57,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Data = { a: string };\ntype Unexpected = Omit\u003cData, 'a'\u003e \u0026 Omit\u003cData, 'a'\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "noGeneratedEmptyObjectType",
+              "line": 3,
+              "column": 19,
+              "endLine": 3,
+              "endColumn": 52,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

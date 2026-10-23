@@ -1,0 +1,3056 @@
+{
+  "source": "no_floating_promises_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\nasync function test() {\n  await Promise.resolve('value');\n  Promise.resolve('value').then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  Promise.resolve('value')\n    .then(() =\u003e {})\n    .catch(() =\u003e {});\n  Promise.resolve('value')\n    .then(() =\u003e {})\n    .catch(() =\u003e {})\n    .finally(() =\u003e {});\n  Promise.resolve('value').catch(() =\u003e {});\n  return Promise.resolve('value');\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  void Promise.resolve('value');\n}\n      ",
+          "options": {
+            "ignoreVoid": true
+          }
+        },
+        {
+          "code": "\nasync function test() {\n  await Promise.reject(new Error('message'));\n  Promise.reject(new Error('message')).then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  Promise.reject(new Error('message'))\n    .then(() =\u003e {})\n    .catch(() =\u003e {});\n  Promise.reject(new Error('message'))\n    .then(() =\u003e {})\n    .catch(() =\u003e {})\n    .finally(() =\u003e {});\n  Promise.reject(new Error('message')).catch(() =\u003e {});\n  return Promise.reject(new Error('message'));\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  await (async () =\u003e true)();\n  (async () =\u003e true)().then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  (async () =\u003e true)()\n    .then(() =\u003e {})\n    .catch(() =\u003e {});\n  (async () =\u003e true)()\n    .then(() =\u003e {})\n    .catch(() =\u003e {})\n    .finally(() =\u003e {});\n  (async () =\u003e true)().catch(() =\u003e {});\n  return (async () =\u003e true)();\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  async function returnsPromise() {}\n  await returnsPromise();\n  returnsPromise().then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  returnsPromise()\n    .then(() =\u003e {})\n    .catch(() =\u003e {});\n  returnsPromise()\n    .then(() =\u003e {})\n    .catch(() =\u003e {})\n    .finally(() =\u003e {});\n  returnsPromise().catch(() =\u003e {});\n  return returnsPromise();\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  const x = Promise.resolve();\n  const y = x.then(() =\u003e {});\n  y.catch(() =\u003e {});\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  Math.random() \u003e 0.5 ? Promise.resolve().catch(() =\u003e {}) : null;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  (Promise.resolve().catch(() =\u003e {}), 123);\n  (123,\n    Promise.resolve().then(\n      () =\u003e {},\n      () =\u003e {},\n    ));\n  (123,\n    Promise.resolve().then(\n      () =\u003e {},\n      () =\u003e {},\n    ),\n    123);\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  void Promise.resolve().catch(() =\u003e {});\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  Promise.resolve().catch(() =\u003e {}) ||\n    Promise.resolve().then(\n      () =\u003e {},\n      () =\u003e {},\n    );\n}\n    "
+        },
+        {
+          "code": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\nasync function test() {\n  await promiseValue;\n  promiseValue.then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  promiseValue.then(() =\u003e {}).catch(() =\u003e {});\n  promiseValue\n    .then(() =\u003e {})\n    .catch(() =\u003e {})\n    .finally(() =\u003e {});\n  promiseValue.catch(() =\u003e {});\n  return promiseValue;\n}\n    "
+        },
+        {
+          "code": "\ndeclare const promiseUnion: Promise\u003cnumber\u003e | number;\nasync function test() {\n  await promiseUnion;\n  promiseUnion.then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  promiseUnion.then(() =\u003e {}).catch(() =\u003e {});\n  promiseUnion\n    .then(() =\u003e {})\n    .catch(() =\u003e {})\n    .finally(() =\u003e {});\n  promiseUnion.catch(() =\u003e {});\n  promiseValue.finally(() =\u003e {});\n  return promiseUnion;\n}\n    "
+        },
+        {
+          "code": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\nasync function test() {\n  await promiseIntersection;\n  promiseIntersection.then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  promiseIntersection.then(() =\u003e {}).catch(() =\u003e {});\n  promiseIntersection.catch(() =\u003e {});\n  return promiseIntersection;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  await canThen;\n  canThen.then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  canThen.then(() =\u003e {}).catch(() =\u003e {});\n  canThen\n    .then(() =\u003e {})\n    .catch(() =\u003e {})\n    .finally(() =\u003e {});\n  canThen.catch(() =\u003e {});\n  return canThen;\n}\n    "
+        },
+        {
+          "code": "\ndeclare const intersectionPromise: Promise\u003cnumber\u003e \u0026 number;\nasync function test() {\n  await (Math.random() \u003e 0.5 ? numberPromise : 0);\n  await (Math.random() \u003e 0.5 ? foo : 0);\n  await (Math.random() \u003e 0.5 ? bar : 0);\n\n  await intersectionPromise;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  class Thenable {\n    then(callback: () =\u003e void): Thenable {\n      return new Thenable();\n    }\n  }\n  const thenable = new Thenable();\n\n  await thenable;\n  thenable;\n  thenable.then(() =\u003e {});\n  return thenable;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  class NonFunctionParamThenable {\n    then(param: string, param2: number): NonFunctionParamThenable {\n      return new NonFunctionParamThenable();\n    }\n  }\n  const thenable = new NonFunctionParamThenable();\n\n  await thenable;\n  thenable;\n  thenable.then('abc', 'def');\n  return thenable;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  class NonFunctionThenable {\n    then: number;\n  }\n  const thenable = new NonFunctionThenable();\n\n  thenable;\n  thenable.then;\n  return thenable;\n}\n    "
+        },
+        {
+          "code": "\nasync function test() {\n  class CatchableThenable {\n    then(callback: () =\u003e void, callback: () =\u003e void): CatchableThenable {\n      return new CatchableThenable();\n    }\n  }\n  const thenable = new CatchableThenable();\n\n  await thenable;\n  return thenable;\n}\n    "
+        },
+        {
+          "code": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  await promise;\n  promise.then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  promise.then(() =\u003e {}).catch(() =\u003e {});\n  promise\n    .then(() =\u003e {})\n    .catch(() =\u003e {})\n    .finally(() =\u003e {});\n  promise.catch(() =\u003e {});\n  return promise;\n}\n    "
+        },
+        {
+          "code": "\ndeclare const returnsPromise: () =\u003e Promise\u003cvoid\u003e | null;\nasync function test() {\n  await returnsPromise?.();\n  returnsPromise()?.then(\n    () =\u003e {},\n    () =\u003e {},\n  );\n  returnsPromise()\n    ?.then(() =\u003e {})\n    ?.catch(() =\u003e {});\n  returnsPromise()?.catch(() =\u003e {});\n  return returnsPromise();\n}\n    "
+        },
+        {
+          "code": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  await obj1.a?.b?.c?.();\n  await obj2.a?.b?.c();\n  await obj3.a?.b.c?.();\n  await obj4.a.b.c?.();\n  await obj5.a?.().b?.c?.();\n  await obj6?.a.b.c?.();\n\n  return callback?.();\n};\n\nvoid doSomething();\n    "
+        },
+        {
+          "code": "\n        (async () =\u003e {\n          await something();\n        })();\n      ",
+          "options": {
+            "ignoreIIFE": true
+          }
+        },
+        {
+          "code": "\n        (async () =\u003e {\n          something();\n        })();\n      ",
+          "options": {
+            "ignoreIIFE": true
+          }
+        },
+        {
+          "code": "(async function foo() {})();",
+          "options": {
+            "ignoreIIFE": true
+          }
+        },
+        {
+          "code": "\n        function foo() {\n          (async function bar() {})();\n        }\n      ",
+          "options": {
+            "ignoreIIFE": true
+          }
+        },
+        {
+          "code": "\n        const foo = () =\u003e\n          new Promise(res =\u003e {\n            (async function () {\n              await res(1);\n            })();\n          });\n      ",
+          "options": {
+            "ignoreIIFE": true
+          }
+        },
+        {
+          "code": "\n        (async function () {\n          await res(1);\n        })();\n      ",
+          "options": {
+            "ignoreIIFE": true
+          }
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n  void (condition \u0026\u0026 myPromise());\n}\n      "
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n  await (condition \u0026\u0026 myPromise());\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          }
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n  condition \u0026\u0026 void myPromise();\n}\n      "
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n  condition \u0026\u0026 (await myPromise());\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          }
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  let condition = false;\n  condition \u0026\u0026 myPromise();\n  condition = true;\n  condition || myPromise();\n  condition ?? myPromise();\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          }
+        },
+        {
+          "code": "\ndeclare const definitelyCallable: () =\u003e void;\nPromise.reject().catch(definitelyCallable);\n      ",
+          "options": {
+            "ignoreVoid": false
+          }
+        },
+        {
+          "code": "\nPromise.reject()\n  .catch(() =\u003e {})\n  .finally(() =\u003e {});\n      "
+        },
+        {
+          "code": "\nPromise.reject()\n  .catch(() =\u003e {})\n  .finally(() =\u003e {})\n  .finally(() =\u003e {});\n      ",
+          "options": {
+            "ignoreVoid": false
+          }
+        },
+        {
+          "code": "\nPromise.reject()\n  .catch(() =\u003e {})\n  .finally(() =\u003e {})\n  .finally(() =\u003e {})\n  .finally(() =\u003e {});\n      "
+        },
+        {
+          "code": "\nawait Promise.all([Promise.resolve(), Promise.resolve()]);\n      "
+        },
+        {
+          "code": "\ndeclare const promiseArray: Array\u003cPromise\u003cunknown\u003e\u003e;\nvoid promiseArray;\n      "
+        },
+        {
+          "code": "\n[1, 2, void Promise.reject(), 3];\n      ",
+          "options": {
+            "ignoreVoid": false
+          }
+        },
+        {
+          "code": "\n['I', 'am', 'just', 'an', 'array'];\n      "
+        },
+        {
+          "code": "\ninterface SafeThenable\u003cT\u003e {\n  then\u003cTResult1 = T, TResult2 = never\u003e(\n    onfulfilled?:\n      | ((value: T) =\u003e TResult1 | SafeThenable\u003cTResult1\u003e)\n      | undefined\n      | null,\n    onrejected?:\n      | ((reason: any) =\u003e TResult2 | SafeThenable\u003cTResult2\u003e)\n      | undefined\n      | null,\n  ): SafeThenable\u003cTResult1 | TResult2\u003e;\n}\nlet promise: SafeThenable\u003cnumber\u003e = Promise.resolve(5);\n(0, promise);\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafeThenable"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ninterface SafeThenable\u003cT\u003e {\n  then\u003cTResult1 = T, TResult2 = never\u003e(\n    onfulfilled?:\n      | ((value: T) =\u003e TResult1 | SafeThenable\u003cTResult1\u003e)\n      | undefined\n      | null,\n    onrejected?:\n      | ((reason: any) =\u003e TResult2 | SafeThenable\u003cTResult2\u003e)\n      | undefined\n      | null,\n  ): SafeThenable\u003cTResult1 | TResult2\u003e;\n}\nlet promise: SafeThenable\u003cnumber\u003e = Promise.resolve(5);\n0 ? promise : 3;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafeThenable"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\nclass SafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: { a: SafePromise\u003cnumber\u003e } = { a: Promise.resolve(5) };\npromise.a;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\nclass SafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: SafePromise\u003cnumber\u003e = Promise.resolve(5);\npromise;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ntype Foo = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: Foo = Promise.resolve(5);\n0 || promise;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ntype Foo = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: Foo = Promise.resolve(5);\npromise.finally();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ninterface SafeThenable\u003cT\u003e {\n  then\u003cTResult1 = T, TResult2 = never\u003e(\n    onfulfilled?:\n      | ((value: T) =\u003e TResult1 | SafeThenable\u003cTResult1\u003e)\n      | undefined\n      | null,\n    onrejected?:\n      | ((reason: any) =\u003e TResult2 | SafeThenable\u003cTResult2\u003e)\n      | undefined\n      | null,\n  ): SafeThenable\u003cTResult1 | TResult2\u003e;\n}\nlet promise: () =\u003e SafeThenable\u003cnumber\u003e = () =\u003e Promise.resolve(5);\n(0, promise());\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafeThenable"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ninterface SafeThenable\u003cT\u003e {\n  then\u003cTResult1 = T, TResult2 = never\u003e(\n    onfulfilled?:\n      | ((value: T) =\u003e TResult1 | SafeThenable\u003cTResult1\u003e)\n      | undefined\n      | null,\n    onrejected?:\n      | ((reason: any) =\u003e TResult2 | SafeThenable\u003cTResult2\u003e)\n      | undefined\n      | null,\n  ): SafeThenable\u003cTResult1 | TResult2\u003e;\n}\nlet promise: () =\u003e SafeThenable\u003cnumber\u003e = () =\u003e Promise.resolve(5);\n0 ? promise() : 3;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafeThenable"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ntype Foo = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: () =\u003e Foo = () =\u003e Promise.resolve(5);\npromise();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ntype Foo = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: () =\u003e Foo = async () =\u003e 5;\npromise().finally();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\nclass SafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: () =\u003e SafePromise\u003cnumber\u003e = async () =\u003e 5;\n0 || promise();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\nclass SafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: () =\u003e SafePromise\u003cnumber\u003e = async () =\u003e 5;\nnull ?? promise();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\nlet promise: () =\u003e PromiseLike\u003cnumber\u003e = () =\u003e Promise.resolve(5);\npromise();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "lib",
+                "name": "PromiseLike"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ntype Foo\u003cT\u003e = Promise\u003cT\u003e \u0026 { hey?: string };\ndeclare const arrayOrPromiseTuple: Foo\u003cunknown\u003e[];\narrayOrPromiseTuple;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ntype Foo\u003cT\u003e = Promise\u003cT\u003e \u0026 { hey?: string };\ndeclare const arrayOrPromiseTuple: [Foo\u003cunknown\u003e, 5];\narrayOrPromiseTuple;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ntype SafePromise = Promise\u003cnumber\u003e \u0026 { __linterBrands?: string };\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e SafePromise;\nmyTag`abc`;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        declare function it(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        it('...', () =\u003e {});\n      ",
+          "options": {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "file",
+                "name": "it",
+                "path": "file.ts"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nmyTag`abc`.catch(() =\u003e {});\n      "
+        },
+        {
+          "code": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e string;\nmyTag`abc`;\n      "
+        },
+        {
+          "code": "\ndeclare let x: any;\ndeclare const promiseArray: Array\u003cPromise\u003cunknown\u003e\u003e;\nx = promiseArray;\n      "
+        },
+        {
+          "code": "\ndeclare let x: Promise\u003cnumber\u003e;\nx = Promise.resolve(2);\n      "
+        },
+        {
+          "code": "\ndeclare const promiseArray: Array\u003cPromise\u003cunknown\u003e\u003e;\nasync function f() {\n  return promiseArray;\n}\n      "
+        },
+        {
+          "code": "\ndeclare const promiseArray: Array\u003cPromise\u003cunknown\u003e\u003e;\nasync function* generator() {\n  yield* promiseArray;\n}\n      "
+        },
+        {
+          "code": "\nasync function* generator() {\n  yield Promise.resolve();\n}\n      "
+        },
+        {
+          "code": "\ninterface SafeThenable\u003cT\u003e {\n  then\u003cTResult1 = T, TResult2 = never\u003e(\n    onfulfilled?:\n      | ((value: T) =\u003e TResult1 | SafeThenable\u003cTResult1\u003e)\n      | undefined\n      | null,\n    onrejected?:\n      | ((reason: any) =\u003e TResult2 | SafeThenable\u003cTResult2\u003e)\n      | undefined\n      | null,\n  ): SafeThenable\u003cTResult1 | TResult2\u003e;\n}\nlet promise: () =\u003e SafeThenable\u003cnumber\u003e = () =\u003e Promise.resolve(5);\npromise().then(() =\u003e {});\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafeThenable"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        declare module 'abc' {\n          export function it(name: string, action: () =\u003e void): void;\n        }\n        it('...', () =\u003e {});\n      ",
+          "options": {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "package",
+                "name": "it",
+                "package": "abc"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        declare module 'abc' {\n          export function it(name: string, action: () =\u003e void): void;\n        }\n\n        it('...', () =\u003e {});\n      ",
+          "options": {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "package",
+                "name": "it",
+                "package": "abc"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        import { it } from 'node:test';\n\n        it('...', () =\u003e {});\n      ",
+          "skip": true,
+          "options": {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "package",
+                "name": "it",
+                "package": "node:test"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\ninterface SafePromise\u003cT\u003e extends Promise\u003cT\u003e {\n  brand: 'safe';\n}\n\ndeclare const createSafePromise: () =\u003e SafePromise\u003cstring\u003e;\ncreateSafePromise();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ],
+            "checkThenables": true
+          }
+        },
+        {
+          "code": "\ndeclare const createPromiseLike: () =\u003e PromiseLike\u003cnumber\u003e;\ncreatePromiseLike();\n    "
+        },
+        {
+          "code": "\ninterface MyThenable {\n  then(onFulfilled: () =\u003e void, onRejected: () =\u003e void): MyThenable;\n}\n\ndeclare function createMyThenable(): MyThenable;\n\ncreateMyThenable();\n    "
+        },
+        {
+          "code": "\nconst randomAsyncFunction = async () =\u003e {\n  return Promise.resolve(true);\n};\n\nrandomAsyncFunction();\n      ",
+          "options": {
+            "allowForKnownSafeCalls": [
+              "randomAsyncFunction"
+            ]
+          }
+        },
+        {
+          "code": "\nasync function myAsyncFunction() {\n  return Promise.resolve('test');\n}\n\nmyAsyncFunction();\n      ",
+          "options": {
+            "allowForKnownSafeCalls": [
+              "myAsyncFunction"
+            ]
+          }
+        },
+        {
+          "code": "\n      interface CustomNode\u003cP\u003e {\n        getNextNode: () =\u003e CustomNode\u003cP\u003e;\n      }\n\n      declare const createNode: () =\u003e {\n        getNextNode: \u003cT\u003e() =\u003e CustomNode\u003cT\u003e;\n      };\n\n      function wrapNode\u003cT\u003e(getNode: () =\u003e CustomNode\u003cT\u003e) {\n        return getNode;\n      }\n\n      (async () =\u003e {\n        wrapNode(() =\u003e {\n          const node = createNode();\n\n          return wrapNode\u003ctypeof node.getNextNode\u003cany\u003e\u003e(node.getNextNode);\n        });\n      })().catch(() =\u003e {});\n    "
+        },
+        {
+          "code": "\ninterface SafePromise\u003cT\u003e extends Promise\u003cT\u003e {\n  __brand: string;\n}\ntype BrandedSafePromise = SafePromise\u003cnumber\u003e \u0026 { foo: 'bar' };\ndeclare function getPromise(): BrandedSafePromise;\ngetPromise();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nasync function test() {\n  Promise.resolve('value');\n  Promise.resolve('value').then(() =\u003e {});\n  Promise.resolve('value').catch();\n  Promise.resolve('value').finally();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  void Promise.resolve('value');\n  Promise.resolve('value').then(() =\u003e {});\n  Promise.resolve('value').catch();\n  Promise.resolve('value').finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  await Promise.resolve('value');\n  Promise.resolve('value').then(() =\u003e {});\n  Promise.resolve('value').catch();\n  Promise.resolve('value').finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  Promise.resolve('value');\n  void Promise.resolve('value').then(() =\u003e {});\n  Promise.resolve('value').catch();\n  Promise.resolve('value').finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  Promise.resolve('value');\n  await Promise.resolve('value').then(() =\u003e {});\n  Promise.resolve('value').catch();\n  Promise.resolve('value').finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  Promise.resolve('value');\n  Promise.resolve('value').then(() =\u003e {});\n  void Promise.resolve('value').catch();\n  Promise.resolve('value').finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  Promise.resolve('value');\n  Promise.resolve('value').then(() =\u003e {});\n  await Promise.resolve('value').catch();\n  Promise.resolve('value').finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  Promise.resolve('value');\n  Promise.resolve('value').then(() =\u003e {});\n  Promise.resolve('value').catch();\n  void Promise.resolve('value').finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  Promise.resolve('value');\n  Promise.resolve('value').then(() =\u003e {});\n  Promise.resolve('value').catch();\n  await Promise.resolve('value').finally();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 11,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  void obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  await obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 12,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  void obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  await obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 13,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  void obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  await obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 14,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  void obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  await obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 15,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  void obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  await obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 16,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  void obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  await obj6?.a.b.c?.();\n\n  callback?.();\n};\n\ndoSomething();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 18,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  void callback?.();\n};\n\ndoSomething();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  await callback?.();\n};\n\ndoSomething();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 21,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\nvoid doSomething();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst doSomething = async (\n  obj1: { a?: { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj2: { a?: { b?: { c: () =\u003e Promise\u003cvoid\u003e } } },\n  obj3: { a?: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj4: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj5: { a?: () =\u003e { b?: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  obj6?: { a: { b: { c?: () =\u003e Promise\u003cvoid\u003e } } },\n  callback?: () =\u003e Promise\u003cvoid\u003e,\n): Promise\u003cvoid\u003e =\u003e {\n  obj1.a?.b?.c?.();\n  obj2.a?.b?.c();\n  obj3.a?.b.c?.();\n  obj4.a.b.c?.();\n  obj5.a?.().b?.c?.();\n  obj6?.a.b.c?.();\n\n  callback?.();\n};\n\nawait doSomething();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nmyTag`abc`;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nvoid myTag`abc`;\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nawait myTag`abc`;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nmyTag`abc`.then(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nvoid myTag`abc`.then(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nawait myTag`abc`.then(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nmyTag`abc`.finally(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nvoid myTag`abc`.finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e Promise\u003cvoid\u003e;\nawait myTag`abc`.finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  Promise.resolve('value');\n}\n      ",
+          "options": {
+            "ignoreVoid": true
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  void Promise.resolve('value');\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  await Promise.resolve('value');\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  Promise.reject(new Error('message'));\n  Promise.reject(new Error('message')).then(() =\u003e {});\n  Promise.reject(new Error('message')).catch();\n  Promise.reject(new Error('message')).finally();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  void Promise.reject(new Error('message'));\n  Promise.reject(new Error('message')).then(() =\u003e {});\n  Promise.reject(new Error('message')).catch();\n  Promise.reject(new Error('message')).finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  await Promise.reject(new Error('message'));\n  Promise.reject(new Error('message')).then(() =\u003e {});\n  Promise.reject(new Error('message')).catch();\n  Promise.reject(new Error('message')).finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  Promise.reject(new Error('message'));\n  void Promise.reject(new Error('message')).then(() =\u003e {});\n  Promise.reject(new Error('message')).catch();\n  Promise.reject(new Error('message')).finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  Promise.reject(new Error('message'));\n  await Promise.reject(new Error('message')).then(() =\u003e {});\n  Promise.reject(new Error('message')).catch();\n  Promise.reject(new Error('message')).finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  Promise.reject(new Error('message'));\n  Promise.reject(new Error('message')).then(() =\u003e {});\n  void Promise.reject(new Error('message')).catch();\n  Promise.reject(new Error('message')).finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  Promise.reject(new Error('message'));\n  Promise.reject(new Error('message')).then(() =\u003e {});\n  await Promise.reject(new Error('message')).catch();\n  Promise.reject(new Error('message')).finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  Promise.reject(new Error('message'));\n  Promise.reject(new Error('message')).then(() =\u003e {});\n  Promise.reject(new Error('message')).catch();\n  void Promise.reject(new Error('message')).finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  Promise.reject(new Error('message'));\n  Promise.reject(new Error('message')).then(() =\u003e {});\n  Promise.reject(new Error('message')).catch();\n  await Promise.reject(new Error('message')).finally();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  (async () =\u003e true)();\n  (async () =\u003e true)().then(() =\u003e {});\n  (async () =\u003e true)().catch();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  void (async () =\u003e true)();\n  (async () =\u003e true)().then(() =\u003e {});\n  (async () =\u003e true)().catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  await (async () =\u003e true)();\n  (async () =\u003e true)().then(() =\u003e {});\n  (async () =\u003e true)().catch();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  (async () =\u003e true)();\n  void (async () =\u003e true)().then(() =\u003e {});\n  (async () =\u003e true)().catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  (async () =\u003e true)();\n  await (async () =\u003e true)().then(() =\u003e {});\n  (async () =\u003e true)().catch();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  (async () =\u003e true)();\n  (async () =\u003e true)().then(() =\u003e {});\n  void (async () =\u003e true)().catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  (async () =\u003e true)();\n  (async () =\u003e true)().then(() =\u003e {});\n  await (async () =\u003e true)().catch();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  async function returnsPromise() {}\n\n  returnsPromise();\n  returnsPromise().then(() =\u003e {});\n  returnsPromise().catch();\n  returnsPromise().finally();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  async function returnsPromise() {}\n\n  void returnsPromise();\n  returnsPromise().then(() =\u003e {});\n  returnsPromise().catch();\n  returnsPromise().finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  async function returnsPromise() {}\n\n  await returnsPromise();\n  returnsPromise().then(() =\u003e {});\n  returnsPromise().catch();\n  returnsPromise().finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  async function returnsPromise() {}\n\n  returnsPromise();\n  void returnsPromise().then(() =\u003e {});\n  returnsPromise().catch();\n  returnsPromise().finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  async function returnsPromise() {}\n\n  returnsPromise();\n  await returnsPromise().then(() =\u003e {});\n  returnsPromise().catch();\n  returnsPromise().finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 7,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  async function returnsPromise() {}\n\n  returnsPromise();\n  returnsPromise().then(() =\u003e {});\n  void returnsPromise().catch();\n  returnsPromise().finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  async function returnsPromise() {}\n\n  returnsPromise();\n  returnsPromise().then(() =\u003e {});\n  await returnsPromise().catch();\n  returnsPromise().finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 8,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  async function returnsPromise() {}\n\n  returnsPromise();\n  returnsPromise().then(() =\u003e {});\n  returnsPromise().catch();\n  void returnsPromise().finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  async function returnsPromise() {}\n\n  returnsPromise();\n  returnsPromise().then(() =\u003e {});\n  returnsPromise().catch();\n  await returnsPromise().finally();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  Math.random() \u003e 0.5 ? Promise.resolve() : null;\n  Math.random() \u003e 0.5 ? null : Promise.resolve();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "column": 25,
+              "endLine": 3,
+              "endColumn": 42,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  void (Math.random() \u003e 0.5 ? Promise.resolve() : null);\n  Math.random() \u003e 0.5 ? null : Promise.resolve();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  await (Math.random() \u003e 0.5 ? Promise.resolve() : null);\n  Math.random() \u003e 0.5 ? null : Promise.resolve();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "column": 32,
+              "endLine": 4,
+              "endColumn": 49,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  Math.random() \u003e 0.5 ? Promise.resolve() : null;\n  void (Math.random() \u003e 0.5 ? null : Promise.resolve());\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  Math.random() \u003e 0.5 ? Promise.resolve() : null;\n  await (Math.random() \u003e 0.5 ? null : Promise.resolve());\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  (Promise.resolve(), 123);\n  (123, Promise.resolve());\n  (123, Promise.resolve(), 123);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "column": 4,
+              "endLine": 3,
+              "endColumn": 21,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  void (Promise.resolve(), 123);\n  (123, Promise.resolve());\n  (123, Promise.resolve(), 123);\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  await (Promise.resolve(), 123);\n  (123, Promise.resolve());\n  (123, Promise.resolve(), 123);\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "column": 9,
+              "endLine": 4,
+              "endColumn": 26,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  (Promise.resolve(), 123);\n  void (123, Promise.resolve());\n  (123, Promise.resolve(), 123);\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  (Promise.resolve(), 123);\n  await (123, Promise.resolve());\n  (123, Promise.resolve(), 123);\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "column": 9,
+              "endLine": 5,
+              "endColumn": 26,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  (Promise.resolve(), 123);\n  (123, Promise.resolve());\n  void (123, Promise.resolve(), 123);\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  (Promise.resolve(), 123);\n  (123, Promise.resolve());\n  await (123, Promise.resolve(), 123);\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  void Promise.resolve();\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 3,
+              "column": 8,
+              "endLine": 3,
+              "endColumn": 25,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  await Promise.resolve();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  const promise = new Promise((resolve, reject) =\u003e resolve('value'));\n  promise;\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  const promise = new Promise((resolve, reject) =\u003e resolve('value'));\n  await promise;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function returnsPromise() {\n  return 'value';\n}\nvoid returnsPromise();\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function returnsPromise() {\n  return 'value';\n}\nawait returnsPromise();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function returnsPromise() {\n  return 'value';\n}\nvoid /* ... */ returnsPromise();\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function returnsPromise() {\n  return 'value';\n}\nawait /* ... */ returnsPromise();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function returnsPromise() {\n  return 'value';\n}\n(1, returnsPromise());\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function returnsPromise() {\n  return 'value';\n}\nawait (1, returnsPromise());\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function returnsPromise() {\n  return 'value';\n}\nbool ? returnsPromise() : null;\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function returnsPromise() {\n  return 'value';\n}\nawait (bool ? returnsPromise() : null);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  const obj = { foo: Promise.resolve() };\n  obj.foo;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  const obj = { foo: Promise.resolve() };\n  void obj.foo;\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  const obj = { foo: Promise.resolve() };\n  await obj.foo;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  new Promise(resolve =\u003e resolve());\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  void new Promise(resolve =\u003e resolve());\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  await new Promise(resolve =\u003e resolve());\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  promiseValue;\n  promiseValue.then(() =\u003e {});\n  promiseValue.catch();\n  promiseValue.finally();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  void promiseValue;\n  promiseValue.then(() =\u003e {});\n  promiseValue.catch();\n  promiseValue.finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  await promiseValue;\n  promiseValue.then(() =\u003e {});\n  promiseValue.catch();\n  promiseValue.finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  promiseValue;\n  void promiseValue.then(() =\u003e {});\n  promiseValue.catch();\n  promiseValue.finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  promiseValue;\n  await promiseValue.then(() =\u003e {});\n  promiseValue.catch();\n  promiseValue.finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 7,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  promiseValue;\n  promiseValue.then(() =\u003e {});\n  void promiseValue.catch();\n  promiseValue.finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  promiseValue;\n  promiseValue.then(() =\u003e {});\n  await promiseValue.catch();\n  promiseValue.finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 8,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  promiseValue;\n  promiseValue.then(() =\u003e {});\n  promiseValue.catch();\n  void promiseValue.finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseValue: Promise\u003cnumber\u003e;\n\nasync function test() {\n  promiseValue;\n  promiseValue.then(() =\u003e {});\n  promiseValue.catch();\n  await promiseValue.finally();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const promiseUnion: Promise\u003cnumber\u003e | number;\n\nasync function test() {\n  promiseUnion;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseUnion: Promise\u003cnumber\u003e | number;\n\nasync function test() {\n  void promiseUnion;\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseUnion: Promise\u003cnumber\u003e | number;\n\nasync function test() {\n  await promiseUnion;\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n\nasync function test() {\n  promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n\nasync function test() {\n  void promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n\nasync function test() {\n  await promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n\nasync function test() {\n  promiseIntersection;\n  void promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n\nasync function test() {\n  promiseIntersection;\n  await promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 7,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n\nasync function test() {\n  promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  void promiseIntersection.catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n\nasync function test() {\n  promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  await promiseIntersection.catch();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  canThen;\n  canThen.then(() =\u003e {});\n  canThen.catch();\n  canThen.finally();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  void canThen;\n  canThen.then(() =\u003e {});\n  canThen.catch();\n  canThen.finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  await canThen;\n  canThen.then(() =\u003e {});\n  canThen.catch();\n  canThen.finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 7,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  canThen;\n  void canThen.then(() =\u003e {});\n  canThen.catch();\n  canThen.finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  canThen;\n  await canThen.then(() =\u003e {});\n  canThen.catch();\n  canThen.finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 8,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  canThen;\n  canThen.then(() =\u003e {});\n  void canThen.catch();\n  canThen.finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  canThen;\n  canThen.then(() =\u003e {});\n  await canThen.catch();\n  canThen.finally();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 9,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  canThen;\n  canThen.then(() =\u003e {});\n  canThen.catch();\n  void canThen.finally();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  class CanThen extends Promise\u003cnumber\u003e {}\n  const canThen: CanThen = Foo.resolve(2);\n\n  canThen;\n  canThen.then(() =\u003e {});\n  canThen.catch();\n  await canThen.finally();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function test() {\n  class CatchableThenable {\n    then(callback: () =\u003e void, callback: () =\u003e void): CatchableThenable {\n      return new CatchableThenable();\n    }\n  }\n  const thenable = new CatchableThenable();\n\n  thenable;\n  thenable.then(() =\u003e {});\n}\n      ",
+          "options": {
+            "checkThenables": true
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 10,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  class CatchableThenable {\n    then(callback: () =\u003e void, callback: () =\u003e void): CatchableThenable {\n      return new CatchableThenable();\n    }\n  }\n  const thenable = new CatchableThenable();\n\n  void thenable;\n  thenable.then(() =\u003e {});\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  class CatchableThenable {\n    then(callback: () =\u003e void, callback: () =\u003e void): CatchableThenable {\n      return new CatchableThenable();\n    }\n  }\n  const thenable = new CatchableThenable();\n\n  await thenable;\n  thenable.then(() =\u003e {});\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 11,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function test() {\n  class CatchableThenable {\n    then(callback: () =\u003e void, callback: () =\u003e void): CatchableThenable {\n      return new CatchableThenable();\n    }\n  }\n  const thenable = new CatchableThenable();\n\n  thenable;\n  void thenable.then(() =\u003e {});\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function test() {\n  class CatchableThenable {\n    then(callback: () =\u003e void, callback: () =\u003e void): CatchableThenable {\n      return new CatchableThenable();\n    }\n  }\n  const thenable = new CatchableThenable();\n\n  thenable;\n  await thenable.then(() =\u003e {});\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  promise;\n  promise.then(() =\u003e {});\n  promise.catch();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 18,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  void promise;\n  promise.then(() =\u003e {});\n  promise.catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  await promise;\n  promise.then(() =\u003e {});\n  promise.catch();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 19,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  promise;\n  void promise.then(() =\u003e {});\n  promise.catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  promise;\n  await promise.then(() =\u003e {});\n  promise.catch();\n}\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 20,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  promise;\n  promise.then(() =\u003e {});\n  void promise.catch();\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n// https://github.com/DefinitelyTyped/DefinitelyTyped/blob/master/types/promise-polyfill/index.d.ts\n// Type definitions for promise-polyfill 6.0\n// Project: https://github.com/taylorhakes/promise-polyfill\n// Definitions by: Steve Jenkins \u003chttps://github.com/skysteve\u003e\n//                 Daniel Cassidy \u003chttps://github.com/djcsdy\u003e\n// Definitions: https://github.com/DefinitelyTyped/DefinitelyTyped\n\ninterface PromisePolyfillConstructor extends PromiseConstructor {\n  _immediateFn?: (handler: (() =\u003e void) | string) =\u003e void;\n}\n\ndeclare const PromisePolyfill: PromisePolyfillConstructor;\n\nasync function test() {\n  const promise = new PromisePolyfill(() =\u003e {});\n\n  promise;\n  promise.then(() =\u003e {});\n  await promise.catch();\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        (async () =\u003e {\n          await something();\n        })();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        void (async () =\u003e {\n          await something();\n        })();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        await (async () =\u003e {\n          await something();\n        })();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        (async () =\u003e {\n          something();\n        })();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        void (async () =\u003e {\n          something();\n        })();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        await (async () =\u003e {\n          something();\n        })();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "(async function foo() {})();",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "void (async function foo() {})();"
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "await (async function foo() {})();"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        function foo() {\n          (async function bar() {})();\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        function foo() {\n          void (async function bar() {})();\n        }\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        function foo() {\n          await (async function bar() {})();\n        }\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        const foo = () =\u003e\n          new Promise(res =\u003e {\n            (async function () {\n              await res(1);\n            })();\n          });\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        const foo = () =\u003e\n          new Promise(res =\u003e {\n            void (async function () {\n              await res(1);\n            })();\n          });\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        const foo = () =\u003e\n          new Promise(res =\u003e {\n            await (async function () {\n              await res(1);\n            })();\n          });\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        (async function () {\n          await res(1);\n        })();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        void (async function () {\n          await res(1);\n        })();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        await (async function () {\n          await res(1);\n        })();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        (async function () {\n          Promise.resolve();\n        })();\n      ",
+          "options": {
+            "ignoreIIFE": true
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        (async function () {\n          void Promise.resolve();\n        })();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        (async function () {\n          await Promise.resolve();\n        })();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n  promiseIntersection.finally();\n})();\n      ",
+          "options": {
+            "ignoreIIFE": true
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  void promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n  promiseIntersection.finally();\n})();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  await promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n  promiseIntersection.finally();\n})();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  promiseIntersection;\n  void promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n  promiseIntersection.finally();\n})();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  promiseIntersection;\n  await promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n  promiseIntersection.finally();\n})();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  void promiseIntersection.catch();\n  promiseIntersection.finally();\n})();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  await promiseIntersection.catch();\n  promiseIntersection.finally();\n})();\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingVoid",
+              "line": 7,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n  void promiseIntersection.finally();\n})();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\n(async function () {\n  promiseIntersection;\n  promiseIntersection.then(() =\u003e {});\n  promiseIntersection.catch();\n  await promiseIntersection.finally();\n})();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n\n  void condition || myPromise();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n\n  void (void condition || myPromise());\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n\n  await (void condition || myPromise());\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n\n  (await condition) \u0026\u0026 myPromise();\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n\n  await ((await condition) \u0026\u0026 myPromise());\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n\n  condition \u0026\u0026 myPromise();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n\n  void (condition \u0026\u0026 myPromise());\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = true;\n\n  await (condition \u0026\u0026 myPromise());\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = false;\n\n  condition || myPromise();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = false;\n\n  void (condition || myPromise());\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = false;\n\n  await (condition || myPromise());\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = null;\n\n  condition ?? myPromise();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = null;\n\n  void (condition ?? myPromise());\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = null;\n\n  await (condition ?? myPromise());\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = Promise.resolve(true);\n  let condition = true;\n  condition \u0026\u0026 myPromise;\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = Promise.resolve(true);\n  let condition = true;\n  await (condition \u0026\u0026 myPromise);\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = Promise.resolve(true);\n  let condition = false;\n  condition || myPromise;\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = Promise.resolve(true);\n  let condition = false;\n  await (condition || myPromise);\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = Promise.resolve(true);\n  let condition = null;\n  condition ?? myPromise;\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = Promise.resolve(true);\n  let condition = null;\n  await (condition ?? myPromise);\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = false;\n\n  condition || condition || myPromise();\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = false;\n\n  void (condition || condition || myPromise());\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nasync function foo() {\n  const myPromise = async () =\u003e void 0;\n  const condition = false;\n\n  await (condition || condition || myPromise());\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      ",
+          "errors": [
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 4,
+              "column": 1,
+              "endLine": 4,
+              "endColumn": 44,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nvoid Promise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nawait Promise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nvoid Promise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nawait Promise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nvoid Promise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nawait Promise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 7,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nvoid Promise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nawait Promise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 10,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nvoid Promise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nawait Promise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 11,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nvoid Promise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nawait Promise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 12,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nvoid Promise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nawait Promise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 13,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nvoid Promise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nawait Promise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject() || 3;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid (Promise.reject() || 3);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait (Promise.reject() || 3);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nvoid Promise.resolve().then(() =\u003e {}, undefined);\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.resolve().then(() =\u003e {}, undefined);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const maybeCallable: string | (() =\u003e void);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\nawait Promise.resolve().then(() =\u003e {}, maybeCallable);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nawait Promise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nawait Promise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nawait Promise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 7,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nawait Promise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 10,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nawait Promise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 11,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nawait Promise.resolve().catch(null);\nPromise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 12,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nawait Promise.resolve().catch(3);\nPromise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "floatingUselessRejectionHandler",
+              "line": 13,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const maybeCallable: string | (() =\u003e void);\ndeclare const definitelyCallable: () =\u003e void;\nPromise.resolve().then(() =\u003e {}, undefined);\nPromise.resolve().then(() =\u003e {}, null);\nPromise.resolve().then(() =\u003e {}, 3);\nPromise.resolve().then(() =\u003e {}, maybeCallable);\nPromise.resolve().then(() =\u003e {}, definitelyCallable);\n\nPromise.resolve().catch(undefined);\nPromise.resolve().catch(null);\nPromise.resolve().catch(3);\nawait Promise.resolve().catch(maybeCallable);\nPromise.resolve().catch(definitelyCallable);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject() || 3;\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait (Promise.reject() || 3);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject().finally(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "column": 1,
+              "endLine": 2,
+              "endColumn": 35,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject().finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject().finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject()\n  .finally(() =\u003e {})\n  .finally(() =\u003e {});\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floating",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject()\n  .finally(() =\u003e {})\n  .finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject()\n  .finally(() =\u003e {})\n  .finally(() =\u003e {})\n  .finally(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject()\n  .finally(() =\u003e {})\n  .finally(() =\u003e {})\n  .finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject()\n  .finally(() =\u003e {})\n  .finally(() =\u003e {})\n  .finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject()\n  .then(() =\u003e {})\n  .finally(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject()\n  .then(() =\u003e {})\n  .finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject()\n  .then(() =\u003e {})\n  .finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const returnsPromise: () =\u003e Promise\u003cvoid\u003e | null;\nreturnsPromise()?.finally(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const returnsPromise: () =\u003e Promise\u003cvoid\u003e | null;\nvoid returnsPromise()?.finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const returnsPromise: () =\u003e Promise\u003cvoid\u003e | null;\nawait returnsPromise()?.finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\npromiseIntersection.finally(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\nvoid promiseIntersection.finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst promiseIntersection: Promise\u003cnumber\u003e \u0026 number;\nawait promiseIntersection.finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n(Promise.resolve().finally(() =\u003e {}), 123);\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid (Promise.resolve().finally(() =\u003e {}), 123);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait (Promise.resolve().finally(() =\u003e {}), 123);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n(async () =\u003e true)().finally();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid (async () =\u003e true)().finally();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait (async () =\u003e true)().finally();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject(new Error('message')).finally(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject(new Error('message')).finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject(new Error('message')).finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction _\u003cT, S extends Array\u003cT | Promise\u003cT\u003e\u003e\u003e(\n  maybePromiseArray: S | undefined,\n): void {\n  maybePromiseArray?.[0];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nfunction _\u003cT, S extends Array\u003cT | Promise\u003cT\u003e\u003e\u003e(\n  maybePromiseArray: S | undefined,\n): void {\n  void maybePromiseArray?.[0];\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nfunction _\u003cT, S extends Array\u003cT | Promise\u003cT\u003e\u003e\u003e(\n  maybePromiseArray: S | undefined,\n): void {\n  await maybePromiseArray?.[0];\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n[1, 2, 3].map(() =\u003e Promise.reject());\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const array: unknown[];\narray.map(() =\u003e Promise.reject());\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const promiseArray: Array\u003cPromise\u003cunknown\u003e\u003e;\nvoid promiseArray;\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floatingPromiseArray",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const promiseArray: Array\u003cPromise\u003cunknown\u003e\u003e;\nasync function f() {\n  await promiseArray;\n}\n      ",
+          "options": {
+            "ignoreVoid": false
+          },
+          "errors": [
+            {
+              "messageId": "floatingPromiseArray",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[1, 2, Promise.reject(), 3];\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[1, 2, Promise.reject().catch(() =\u003e {}), 3];\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst data = ['test'];\ndata.map(async () =\u003e {\n  await new Promise((_res, rej) =\u003e setTimeout(rej, 1000));\n});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction _\u003cT, S extends Array\u003cT | Array\u003cT | Promise\u003cT\u003e\u003e\u003e\u003e(\n  maybePromiseArrayArray: S | undefined,\n): void {\n  maybePromiseArrayArray?.[0];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT extends Array\u003cPromise\u003cnumber\u003e\u003e\u003e(a: T): void {\n  a;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const a: Array\u003cPromise\u003cnumber\u003e\u003e | undefined;\na;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction f\u003cT extends Array\u003cPromise\u003cnumber\u003e\u003e\u003e(a: T | undefined): void {\n  a;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[Promise.reject()] as const;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function cursed(): [Promise\u003cnumber\u003e, Promise\u003cstring\u003e];\ncursed();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n[\n  'Type Argument number ',\n  1,\n  'is not',\n  Promise.resolve(),\n  'but it still is flagged',\n] as const;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const arrayOrPromiseTuple:\n          | Array\u003cnumber\u003e\n          | [number, number, Promise\u003cunknown\u003e, string];\n        arrayOrPromiseTuple;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const okArrayOrPromiseArray: Array\u003cnumber\u003e | Array\u003cPromise\u003cunknown\u003e\u003e;\n        okArrayOrPromiseArray;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 3,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface UnsafeThenable\u003cT\u003e {\n  then\u003cTResult1 = T, TResult2 = never\u003e(\n    onfulfilled?:\n      | ((value: T) =\u003e TResult1 | UnsafeThenable\u003cTResult1\u003e)\n      | undefined\n      | null,\n    onrejected?:\n      | ((reason: any) =\u003e TResult2 | UnsafeThenable\u003cTResult2\u003e)\n      | undefined\n      | null,\n  ): UnsafeThenable\u003cTResult1 | TResult2\u003e;\n}\nlet promise: UnsafeThenable\u003cnumber\u003e = Promise.resolve(5);\npromise;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafeThenable"
+              }
+            ],
+            "checkThenables": true
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 15,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ninterface UnsafeThenable\u003cT\u003e {\n  then\u003cTResult1 = T, TResult2 = never\u003e(\n    onfulfilled?:\n      | ((value: T) =\u003e TResult1 | UnsafeThenable\u003cTResult1\u003e)\n      | undefined\n      | null,\n    onrejected?:\n      | ((reason: any) =\u003e TResult2 | UnsafeThenable\u003cTResult2\u003e)\n      | undefined\n      | null,\n  ): UnsafeThenable\u003cTResult1 | TResult2\u003e;\n}\nlet promise: UnsafeThenable\u003cnumber\u003e = Promise.resolve(5);\nvoid promise;\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ninterface UnsafeThenable\u003cT\u003e {\n  then\u003cTResult1 = T, TResult2 = never\u003e(\n    onfulfilled?:\n      | ((value: T) =\u003e TResult1 | UnsafeThenable\u003cTResult1\u003e)\n      | undefined\n      | null,\n    onrejected?:\n      | ((reason: any) =\u003e TResult2 | UnsafeThenable\u003cTResult2\u003e)\n      | undefined\n      | null,\n  ): UnsafeThenable\u003cTResult1 | TResult2\u003e;\n}\nlet promise: UnsafeThenable\u003cnumber\u003e = Promise.resolve(5);\nawait promise;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nclass SafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: SafePromise\u003cnumber\u003e = Promise.resolve(5);\npromise.catch();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nclass SafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: SafePromise\u003cnumber\u003e = Promise.resolve(5);\nvoid promise.catch();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nclass SafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: SafePromise\u003cnumber\u003e = Promise.resolve(5);\nawait promise.catch();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nclass UnsafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: () =\u003e UnsafePromise\u003cnumber\u003e = async () =\u003e 5;\npromise().finally();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nclass UnsafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: () =\u003e UnsafePromise\u003cnumber\u003e = async () =\u003e 5;\nvoid promise().finally();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nclass UnsafePromise\u003cT\u003e extends Promise\u003cT\u003e {}\nlet promise: () =\u003e UnsafePromise\u003cnumber\u003e = async () =\u003e 5;\nawait promise().finally();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype UnsafePromise = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: UnsafePromise = Promise.resolve(5);\n0 ? promise.catch() : 2;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ntype UnsafePromise = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: UnsafePromise = Promise.resolve(5);\nvoid (0 ? promise.catch() : 2);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ntype UnsafePromise = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: UnsafePromise = Promise.resolve(5);\nawait (0 ? promise.catch() : 2);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype UnsafePromise = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: () =\u003e UnsafePromise = async () =\u003e 5;\nnull ?? promise().catch();\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ntype UnsafePromise = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: () =\u003e UnsafePromise = async () =\u003e 5;\nvoid (null ?? promise().catch());\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ntype UnsafePromise = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet promise: () =\u003e UnsafePromise = async () =\u003e 5;\nawait (null ?? promise().catch());\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo\u003cT\u003e = Promise\u003cT\u003e \u0026 { hey?: string };\ndeclare const arrayOrPromiseTuple: Foo\u003cunknown\u003e[];\narrayOrPromiseTuple;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Bar"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype SafePromise = Promise\u003cnumber\u003e \u0026 { hey?: string };\nlet foo: SafePromise = Promise.resolve(1);\nlet bar = [Promise.resolve(2), foo];\nbar;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "SafePromise"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo\u003cT\u003e = Promise\u003cT\u003e \u0026 { hey?: string };\ndeclare const arrayOrPromiseTuple: [Foo\u003cunknown\u003e, 5];\narrayOrPromiseTuple;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Bar"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingPromiseArrayVoid",
+              "line": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype SafePromise = Promise\u003cnumber\u003e \u0026 { __linterBrands?: string };\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e SafePromise;\nmyTag`abc`;\n      ",
+          "options": {
+            "allowForKnownSafePromises": [
+              {
+                "from": "file",
+                "name": "Foo"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ntype SafePromise = Promise\u003cnumber\u003e \u0026 { __linterBrands?: string };\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e SafePromise;\nvoid myTag`abc`;\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ntype SafePromise = Promise\u003cnumber\u003e \u0026 { __linterBrands?: string };\ndeclare const myTag: (strings: TemplateStringsArray) =\u003e SafePromise;\nawait myTag`abc`;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function unsafe(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        unsafe('...', () =\u003e {});\n      ",
+          "options": {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "file",
+                "name": "it",
+                "path": "tests/fixtures/file.ts"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        declare function unsafe(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        void unsafe('...', () =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        declare function unsafe(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        await unsafe('...', () =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function it(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        it('...', () =\u003e {}).then(() =\u003e {});\n      ",
+          "options": {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "file",
+                "name": "it",
+                "path": "tests/fixtures/file.ts"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        declare function it(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        void it('...', () =\u003e {}).then(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        declare function it(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        await it('...', () =\u003e {}).then(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function it(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        it('...', () =\u003e {}).finally(() =\u003e {});\n      ",
+          "options": {
+            "allowForKnownSafeCalls": [
+              {
+                "from": "file",
+                "name": "it",
+                "path": "tests/fixtures/file.ts"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        declare function it(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        void it('...', () =\u003e {}).finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        declare function it(...args: unknown[]): Promise\u003cvoid\u003e;\n\n        await it('...', () =\u003e {}).finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const createPromise: () =\u003e PromiseLike\u003cnumber\u003e;\ncreatePromise();\n      ",
+          "options": {
+            "checkThenables": true
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const createPromise: () =\u003e PromiseLike\u003cnumber\u003e;\nvoid createPromise();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const createPromise: () =\u003e PromiseLike\u003cnumber\u003e;\nawait createPromise();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ninterface MyThenable {\n  then(onFulfilled: () =\u003e void, onRejected: () =\u003e void): MyThenable;\n}\n\ndeclare function createMyThenable(): MyThenable;\n\ncreateMyThenable();\n      ",
+          "options": {
+            "checkThenables": true
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 8,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ninterface MyThenable {\n  then(onFulfilled: () =\u003e void, onRejected: () =\u003e void): MyThenable;\n}\n\ndeclare function createMyThenable(): MyThenable;\n\nvoid createMyThenable();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ninterface MyThenable {\n  then(onFulfilled: () =\u003e void, onRejected: () =\u003e void): MyThenable;\n}\n\ndeclare function createMyThenable(): MyThenable;\n\nawait createMyThenable();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const createPromise: () =\u003e Promise\u003cnumber\u003e;\ncreatePromise();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const createPromise: () =\u003e Promise\u003cnumber\u003e;\nvoid createPromise();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const createPromise: () =\u003e Promise\u003cnumber\u003e;\nawait createPromise();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nclass MyPromise\u003cT\u003e extends Promise\u003cT\u003e {}\ndeclare const createMyPromise: () =\u003e MyPromise\u003cnumber\u003e;\ncreateMyPromise();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nclass MyPromise\u003cT\u003e extends Promise\u003cT\u003e {}\ndeclare const createMyPromise: () =\u003e MyPromise\u003cnumber\u003e;\nvoid createMyPromise();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nclass MyPromise\u003cT\u003e extends Promise\u003cT\u003e {}\ndeclare const createMyPromise: () =\u003e MyPromise\u003cnumber\u003e;\nawait createMyPromise();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nclass MyPromise\u003cT\u003e extends Promise\u003cT\u003e {\n  additional: string;\n}\ndeclare const createMyPromise: () =\u003e MyPromise\u003cnumber\u003e;\ncreateMyPromise();\n      ",
+          "options": {
+            "checkThenables": true
+          },
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 6,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nclass MyPromise\u003cT\u003e extends Promise\u003cT\u003e {\n  additional: string;\n}\ndeclare const createMyPromise: () =\u003e MyPromise\u003cnumber\u003e;\nvoid createMyPromise();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nclass MyPromise\u003cT\u003e extends Promise\u003cT\u003e {\n  additional: string;\n}\ndeclare const createMyPromise: () =\u003e MyPromise\u003cnumber\u003e;\nawait createMyPromise();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: any;\nfunction* generator(): Generator\u003cnumber, void, Promise\u003cnumber\u003e\u003e {\n  yield x;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const x: any;\nfunction* generator(): Generator\u003cnumber, void, Promise\u003cnumber\u003e\u003e {\n  void (yield x);\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const x: any;\nfunction* generator(): Generator\u003cnumber, void, Promise\u003cnumber\u003e\u003e {\n  await (yield x);\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const x: Generator\u003cnumber, Promise\u003cnumber\u003e, void\u003e;\nfunction* generator(): Generator\u003cnumber, void, void\u003e {\n  yield* x;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\ndeclare const x: Generator\u003cnumber, Promise\u003cnumber\u003e, void\u003e;\nfunction* generator(): Generator\u003cnumber, void, void\u003e {\n  void (yield* x);\n}\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\ndeclare const x: Generator\u003cnumber, Promise\u003cnumber\u003e, void\u003e;\nfunction* generator(): Generator\u003cnumber, void, void\u003e {\n  await (yield* x);\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst value = {};\nvalue as Promise\u003cnumber\u003e;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nconst value = {};\nvoid (value as Promise\u003cnumber\u003e);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nconst value = {};\nawait (value as Promise\u003cnumber\u003e);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n({}) as Promise\u003cnumber\u003e \u0026 number;\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid (({}) as Promise\u003cnumber\u003e \u0026 number);\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait (({}) as Promise\u003cnumber\u003e \u0026 number);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n({}) as Promise\u003cnumber\u003e \u0026 { yolo?: string };\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid (({}) as Promise\u003cnumber\u003e \u0026 { yolo?: string });\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait (({}) as Promise\u003cnumber\u003e \u0026 { yolo?: string });\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n\u003cPromise\u003cnumber\u003e\u003e{};\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid (\u003cPromise\u003cnumber\u003e\u003e{});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait (\u003cPromise\u003cnumber\u003e\u003e{});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject('foo').then();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject('foo').then();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject('foo').then();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject('foo').finally();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject('foo').finally();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject('foo').finally();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject('foo').finally(...[], () =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject('foo').finally(...[], () =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject('foo').finally(...[], () =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject('foo').then(...[], () =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject('foo').then(...[], () =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject('foo').then(...[], () =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        interface CustomNode\u003cP\u003e {\n          getNextNode: () =\u003e CustomNode\u003cP\u003e;\n        }\n\n        declare const createNode: () =\u003e {\n          getNextNode: \u003cT\u003e() =\u003e CustomNode\u003cT\u003e;\n        };\n\n        function wrapNode\u003cT\u003e(getNode: () =\u003e CustomNode\u003cT\u003e) {\n          return getNode;\n        }\n\n        (async () =\u003e {\n          wrapNode(() =\u003e {\n            const node = createNode();\n\n            return wrapNode\u003ctypeof node.getNextNode\u003cany\u003e\u003e(node.getNextNode);\n          });\n        })();\n      ",
+          "errors": [
+            {
+              "messageId": "floatingVoid",
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\n        interface CustomNode\u003cP\u003e {\n          getNextNode: () =\u003e CustomNode\u003cP\u003e;\n        }\n\n        declare const createNode: () =\u003e {\n          getNextNode: \u003cT\u003e() =\u003e CustomNode\u003cT\u003e;\n        };\n\n        function wrapNode\u003cT\u003e(getNode: () =\u003e CustomNode\u003cT\u003e) {\n          return getNode;\n        }\n\n        void (async () =\u003e {\n          wrapNode(() =\u003e {\n            const node = createNode();\n\n            return wrapNode\u003ctypeof node.getNextNode\u003cany\u003e\u003e(node.getNextNode);\n          });\n        })();\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\n        interface CustomNode\u003cP\u003e {\n          getNextNode: () =\u003e CustomNode\u003cP\u003e;\n        }\n\n        declare const createNode: () =\u003e {\n          getNextNode: \u003cT\u003e() =\u003e CustomNode\u003cT\u003e;\n        };\n\n        function wrapNode\u003cT\u003e(getNode: () =\u003e CustomNode\u003cT\u003e) {\n          return getNode;\n        }\n\n        await (async () =\u003e {\n          wrapNode(() =\u003e {\n            const node = createNode();\n\n            return wrapNode\u003ctypeof node.getNextNode\u003cany\u003e\u003e(node.getNextNode);\n          });\n        })();\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject().catch(undefined).finally(() =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "floatingUselessRejectionHandlerVoid",
+              "line": 2,
+              "column": 1,
+              "endLine": 2,
+              "endColumn": 52,
+              "suggestions": [
+                {
+                  "messageId": "floatingFixVoid",
+                  "output": "\nvoid Promise.reject().catch(undefined).finally(() =\u003e {});\n      "
+                },
+                {
+                  "messageId": "floatingFixAwait",
+                  "output": "\nawait Promise.reject().catch(undefined).finally(() =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

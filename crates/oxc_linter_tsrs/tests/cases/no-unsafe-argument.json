@@ -1,0 +1,366 @@
+{
+  "source": "no_unsafe_argument_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ndoesNotExist(1 as any);\n    "
+        },
+        {
+          "code": "\nconst foo = 1;\nfoo(1 as any);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg: number): void;\nfoo(1, 1 as any, 2 as any);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg: number, arg2: string): void;\nfoo(1, 'a');\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg: any): void;\nfoo(1 as any);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg: unknown): void;\nfoo(1 as any);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(...arg: number[]): void;\nfoo(1, 2, 3);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(...arg: any[]): void;\nfoo(1, 2, 3, 4 as any);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg: number, arg2: number): void;\nconst x = [1, 2] as const;\nfoo(...x);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg: any, arg2: number): void;\nconst x = [1 as any, 2] as const;\nfoo(...x);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: string): void;\nconst x: string[] = [];\nfoo(...x);\n    "
+        },
+        {
+          "code": "\nfunction foo(arg1: number, arg2: number) {}\nfoo(...([1, 1, 1] as [number, number, number]));\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg1: Set\u003cstring\u003e, arg2: Map\u003cstring, string\u003e): void;\n\nconst x = [new Map\u003cstring, string\u003e()] as const;\nfoo(new Set\u003cstring\u003e(), ...x);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(arg1: unknown, arg2: Set\u003cunknown\u003e, arg3: unknown[]): void;\nfoo(1 as any, new Set\u003cany\u003e(), [] as any[]);\n    "
+        },
+        {
+          "code": "\ndeclare function foo(...params: [number, string, any]): void;\nfoo(1, 'a', 1 as any);\n    "
+        },
+        {
+          "code": "\ndeclare function foo\u003cE extends string[]\u003e(...params: E): void;\n\nfoo('a', 'b', 1 as any);\n    "
+        },
+        {
+          "code": "\ndeclare function toHaveBeenCalledWith\u003cE extends any[]\u003e(...params: E): void;\ntoHaveBeenCalledWith(1 as any);\n    "
+        },
+        {
+          "code": "\ndeclare function acceptsMap(arg: Map\u003cstring, string\u003e): void;\nacceptsMap(new Map());\n    "
+        },
+        {
+          "code": "\ntype T = [number, T[]];\ndeclare function foo(t: T): void;\ndeclare const t: T;\n\nfoo(t);\n    "
+        },
+        {
+          "code": "\ntype T = Array\u003cT\u003e;\ndeclare function foo\u003cT\u003e(t: T): T;\nconst t: T = [];\nfoo(t);\n    "
+        },
+        {
+          "code": "\nfunction foo(templates: TemplateStringsArray) {}\nfoo``;\n    "
+        },
+        {
+          "code": "\nfunction foo(templates: TemplateStringsArray, arg: any) {}\nfoo`${1 as any}`;\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare function foo(arg: number): void;\nfoo(1 as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 5,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg: number): void;\nfoo(error);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 5,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: number, arg2: string): void;\nfoo(1, 1 as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 8,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(...arg: number[]): void;\nfoo(1, 2, 3, 1 as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 14,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg: string, ...arg: number[]): void;\nfoo(1 as any, 1 as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 5,
+              "endColumn": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 15,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: number): void;\n\nfoo(...(x as any));\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeSpread",
+              "line": 4,
+              "column": 5,
+              "endColumn": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: number): void;\n\nfoo(...(x as any[]));\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArraySpread",
+              "line": 4,
+              "column": 5,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: number): void;\n\ndeclare const errors: error[];\n\nfoo(...errors);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArraySpread",
+              "line": 6,
+              "column": 5,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: number): void;\n\nconst x = ['a', 1 as any] as const;\nfoo(...x);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeTupleSpread",
+              "line": 5,
+              "column": 5,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: number): void;\n\nconst x = ['a', error] as const;\nfoo(...x);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeTupleSpread",
+              "line": 5,
+              "column": 5,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: number): void;\nfoo(...(['foo', 1, 2] as [string, any, number]));\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeTupleSpread",
+              "line": 3,
+              "column": 5,
+              "endColumn": 48,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: number, arg2: string): void;\n\nconst x = [1] as const;\nfoo('a', ...x, 1 as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 5,
+              "column": 16,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: string, arg2: number, ...rest: string[]): void;\n\nconst x = [1, 2] as [number, ...number[]];\nfoo('a', ...x, 1 as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 5,
+              "column": 16,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg1: Set\u003cstring\u003e, arg2: Map\u003cstring, string\u003e): void;\n\nconst x = [new Map\u003cany, string\u003e()] as const;\nfoo(new Set\u003cany\u003e(), ...x);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 5,
+              "column": 5,
+              "endColumn": 19,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeTupleSpread",
+              "line": 5,
+              "column": 21,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(...params: [number, string, any]): void;\nfoo(1 as any, 'a' as any, 1 as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 5,
+              "endColumn": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 15,
+              "endColumn": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(param1: string, ...params: [number, string, any]): void;\nfoo('a', 1 as any, 'a' as any, 1 as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 10,
+              "endColumn": 18,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeArgument",
+              "line": 3,
+              "column": 20,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype T = [number, T[]];\ndeclare function foo(t: T): void;\ndeclare const t: T;\nfoo(t as any);\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 5,
+              "column": 5,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(\n  templates: TemplateStringsArray,\n  arg1: number,\n  arg2: any,\n  arg3: string,\n) {}\ndeclare const arg: any;\nfoo\u003cnumber\u003e`${arg}${arg}${arg}`;\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 9,
+              "column": 15,
+              "endColumn": 18,
+              "suggestions": []
+            },
+            {
+              "messageId": "unsafeArgument",
+              "line": 9,
+              "column": 27,
+              "endColumn": 30,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(templates: TemplateStringsArray, arg: number) {}\ndeclare const arg: any;\nfoo`${arg}`;\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 4,
+              "column": 7,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype T = [number, T[]];\nfunction foo(templates: TemplateStringsArray, arg: T) {}\ndeclare const arg: any;\nfoo`${arg}`;\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 5,
+              "column": 7,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare function foo(arg: { x: number }): void;\ndeclare const anyValue: any;\nfoo({ ...anyValue });\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArgument",
+              "line": 4,
+              "column": 5,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

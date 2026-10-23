@@ -1,0 +1,223 @@
+{
+  "source": "prefer_return_this_type_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\nclass Foo {\n  f1() {}\n  f2(): Foo {\n    return new Foo();\n  }\n  f3() {\n    return this;\n  }\n  f4(): this {\n    return this;\n  }\n  f5(): any {\n    return this;\n  }\n  f6(): unknown {\n    return this;\n  }\n  f7(foo: Foo): Foo {\n    return Math.random() \u003e 0.5 ? foo : this;\n  }\n  f10(this: Foo, that: Foo): Foo;\n  f11(): Foo {\n    return;\n  }\n  f13(this: Foo): Foo {\n    return this;\n  }\n  f14(): { f14: Function } {\n    return this;\n  }\n  f15(): Foo | this {\n    return Math.random() \u003e 0.5 ? new Foo() : this;\n  }\n}\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  f1 = () =\u003e {};\n  f2 = (): Foo =\u003e {\n    return new Foo();\n  };\n  f3 = () =\u003e this;\n  f4 = (): this =\u003e {\n    return this;\n  };\n  f5 = (): Foo =\u003e new Foo();\n  f6 = '';\n}\n    "
+        },
+        {
+          "code": "\nconst Foo = class {\n  bar() {\n    return this;\n  }\n};\n    "
+        },
+        {
+          "code": "\nclass Base {}\nclass Derived extends Base {\n  f(): Base {\n    return this;\n  }\n}\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  accessor f = () =\u003e {\n    return this;\n  };\n}\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  accessor f = (): this =\u003e {\n    return this;\n  };\n}\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  f?: string;\n}\n    "
+        },
+        {
+          "code": "\nconst Foo = class {\n\tbar(): this {\n    return this;\n  }\n};\n    "
+        },
+        {
+          "code": "\nclass A {\n  static C = class B {\n    d(): B {\n      return new B();\n    }\n  };\n}\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nclass Foo {\n  f(): Foo {\n    return this;\n  }\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  f(): this {\n    return this;\n  }\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  f = function (): Foo {\n    return this;\n  };\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  f = function (): this {\n    return this;\n  };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  f(): Foo {\n    const self = this;\n    return self;\n  }\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  f(): this {\n    const self = this;\n    return self;\n  }\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  f = (): Foo =\u003e {\n    return this;\n  };\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  f = (): this =\u003e {\n    return this;\n  };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  f = (): Foo =\u003e {\n    const self = this;\n    return self;\n  };\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  f = (): this =\u003e {\n    const self = this;\n    return self;\n  };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  f = (): Foo =\u003e this;\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  f = (): this =\u003e this;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 11,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  accessor f = (): Foo =\u003e {\n    return this;\n  };\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  accessor f = (): this =\u003e {\n    return this;\n  };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  accessor f = (): Foo =\u003e this;\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  accessor f = (): this =\u003e this;\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  f1(): Foo | undefined {\n    return this;\n  }\n  f2(): this | undefined {\n    return this;\n  }\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  f1(): this | undefined {\n    return this;\n  }\n  f2(): this | undefined {\n    return this;\n  }\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  bar(): Foo | undefined {\n    if (Math.random() \u003e 0.5) {\n      return this;\n    }\n  }\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  bar(): this | undefined {\n    if (Math.random() \u003e 0.5) {\n      return this;\n    }\n  }\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  bar(num: 1 | 2): Foo {\n    switch (num) {\n      case 1:\n        return this;\n      case 2:\n        return this;\n    }\n  }\n}\n      ",
+          "output": [
+            "\nclass Foo {\n  bar(num: 1 | 2): this {\n    switch (num) {\n      case 1:\n        return this;\n      case 2:\n        return this;\n    }\n  }\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Animal\u003cT\u003e {\n  eat(): Animal\u003cT\u003e {\n    console.log(\"I'm moving!\");\n    return this;\n  }\n}\n      ",
+          "output": [
+            "\nclass Animal\u003cT\u003e {\n  eat(): this {\n    console.log(\"I'm moving!\");\n    return this;\n  }\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 10,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst Foo = class FooClass {\n  f(): FooClass {\n    return this;\n  }\n}\n      ",
+          "output": [
+            "\nconst Foo = class FooClass {\n  f(): this {\n    return this;\n  }\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "useThisType",
+              "line": 3,
+              "column": 8,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

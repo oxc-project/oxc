@@ -1,0 +1,136 @@
+{
+  "source": "no_unsafe_unary_minus_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "+42;"
+        },
+        {
+          "code": "-42;"
+        },
+        {
+          "code": "-42n;"
+        },
+        {
+          "code": "(a: number) =\u003e -a;"
+        },
+        {
+          "code": "(a: bigint) =\u003e -a;"
+        },
+        {
+          "code": "(a: number | bigint) =\u003e -a;"
+        },
+        {
+          "code": "(a: any) =\u003e -a;"
+        },
+        {
+          "code": "(a: 1 | 2) =\u003e -a;"
+        },
+        {
+          "code": "(a: string) =\u003e +a;"
+        },
+        {
+          "code": "(a: number[]) =\u003e -a[0];"
+        },
+        {
+          "code": "\u003cT,\u003e(t: T \u0026 number) =\u003e -t;"
+        },
+        {
+          "code": "(a: { x: number }) =\u003e -a.x;"
+        },
+        {
+          "code": "(a: never) =\u003e -a;"
+        },
+        {
+          "code": "\u003cT extends number\u003e(t: T) =\u003e -t;"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "(a: string) =\u003e -a;",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(a: {}) =\u003e -a;",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(a: number[]) =\u003e -a;",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "-'hello';",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "-`hello`;",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(a: { x: number }) =\u003e -a;",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(a: unknown) =\u003e -a;",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(a: void) =\u003e -a;",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\u003cT,\u003e(t: T) =\u003e -t;",
+          "errors": [
+            {
+              "messageId": "unaryMinus",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

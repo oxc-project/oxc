@@ -1,0 +1,736 @@
+{
+  "source": "no_duplicate_type_constituents_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "type T = 1 | 2;"
+        },
+        {
+          "code": "type T = 1 | '1';"
+        },
+        {
+          "code": "type T = true \u0026 boolean;"
+        },
+        {
+          "code": "type T = null | undefined;"
+        },
+        {
+          "code": "type T = any | unknown;"
+        },
+        {
+          "code": "type T = { a: string } | { b: string };"
+        },
+        {
+          "code": "type T = { a: string; b: number } | { b: number; a: string };"
+        },
+        {
+          "code": "type T = { a: string | number };"
+        },
+        {
+          "code": "type T = Set\u003cstring\u003e | Set\u003cnumber\u003e;"
+        },
+        {
+          "code": "type T = Class\u003cstring\u003e | Class\u003cnumber\u003e;"
+        },
+        {
+          "code": "type T = string[] | number[];"
+        },
+        {
+          "code": "type T = string[][] | string[];"
+        },
+        {
+          "code": "type T = [1, 2, 3] | [1, 2, 4];"
+        },
+        {
+          "code": "type T = [1, 2, 3] | [1, 2, 3, 4];"
+        },
+        {
+          "code": "type T = 'A' | string[];"
+        },
+        {
+          "code": "type T = (() =\u003e string) | (() =\u003e void);"
+        },
+        {
+          "code": "type T = () =\u003e string | void;"
+        },
+        {
+          "code": "type T = () =\u003e null | undefined;"
+        },
+        {
+          "code": "type T = (arg: string | number) =\u003e void;"
+        },
+        {
+          "code": "type T = A | A;"
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = A | B;\n      "
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\nconst a: A | B = 'A';\n      "
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = A | /* comment */ B;\n      "
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = 'A' | 'B';\n      "
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype C = 'C';\ntype T = A | B | C;\n      "
+        },
+        {
+          "code": "type T = readonly string[] | string[];"
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype C = 'C';\ntype D = 'D';\ntype T = (A | B) | (C | D);\n      "
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = (A | B) | (A \u0026 B);\n      "
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = Record\u003cstring, A | B\u003e;\n      "
+        },
+        {
+          "code": "type T = A | A;",
+          "options": {
+            "ignoreUnions": true
+          }
+        },
+        {
+          "code": "type T = A \u0026 A;",
+          "options": {
+            "ignoreIntersections": true
+          }
+        },
+        {
+          "code": "type T = Class\u003cstring\u003e | Class\u003cstring\u003e;"
+        },
+        {
+          "code": "type T = A | A | string;"
+        },
+        {
+          "code": "(a: string | undefined) =\u003e {};"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "type T = 1 | 1;",
+          "output": [
+            "type T = 1  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = true \u0026 true;",
+          "output": [
+            "type T = true  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = null | null;",
+          "output": [
+            "type T = null  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = any | any;",
+          "output": [
+            "type T = any  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = { a: string | string };",
+          "output": [
+            "type T = { a: string   };"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = { a: string } | { a: string };",
+          "skip": true,
+          "output": [
+            "type T = { a: string }  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = { a: string; b: number } | { a: string; b: number };",
+          "skip": true,
+          "output": [
+            "type T = { a: string; b: number }  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = Set\u003cstring\u003e | Set\u003cstring\u003e;",
+          "output": [
+            "type T = Set\u003cstring\u003e  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype IsArray\u003cT\u003e = T extends any[] ? true : false;\ntype ActuallyDuplicated = IsArray\u003cnumber\u003e | IsArray\u003cstring\u003e;\n      ",
+          "output": [
+            "\ntype IsArray\u003cT\u003e = T extends any[] ? true : false;\ntype ActuallyDuplicated = IsArray\u003cnumber\u003e  ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = string[] | string[];",
+          "output": [
+            "type T = string[]  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = string[][] | string[][];",
+          "output": [
+            "type T = string[][]  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = [1, 2, 3] | [1, 2, 3];",
+          "output": [
+            "type T = [1, 2, 3]  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = () =\u003e string | string;",
+          "output": [
+            "type T = () =\u003e string  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = () =\u003e null | null;",
+          "output": [
+            "type T = () =\u003e null  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = (arg: string | string) =\u003e void;",
+          "output": [
+            "type T = (arg: string  ) =\u003e void;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = 'A' | 'A';",
+          "output": [
+            "type T = 'A'  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype T = A | A;\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype T = A  ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\nconst a: A | A = 'A';\n      ",
+          "output": [
+            "\ntype A = 'A';\nconst a: A   = 'A';\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype T = A | /* comment */ A;\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype T = A  /* comment */ ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A1 = 'A';\ntype A2 = 'A';\ntype A3 = 'A';\ntype T = A1 | A2 | A3;\n      ",
+          "output": [
+            "\ntype A1 = 'A';\ntype A2 = 'A';\ntype A3 = 'A';\ntype T = A1    ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = A | B | A;\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype B = 'B';\ntype T = A | B  ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = A | B | A | B;\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype B = 'B';\ntype T = A | B    ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = A | B | A | A;\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype B = 'B';\ntype T = A | B    ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype C = 'C';\ntype T = A | B | A | C;\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype B = 'B';\ntype C = 'C';\ntype T = A | B   | C;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype T = (A | B) | (A | B);\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype B = 'B';\ntype T = (A | B)  ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype T = A | (A | A);\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype T = A  ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype C = 'C';\ntype D = 'D';\ntype F = (A | B) | (A | B) | ((C | D) \u0026 (A | B)) | (A | B);\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype B = 'B';\ntype C = 'C';\ntype D = 'D';\ntype F = (A | B)   | ((C | D) \u0026 (A | B))  ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype B = 'B';\ntype C = (A | B) | A | B | (A | B);\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype B = 'B';\ntype C = (A | B)      ;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type A = (number | string) | number | string;",
+          "output": [
+            "type A = (number | string)    ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type A = (number | (string | null)) | (string | (null | number));",
+          "output": [
+            "type A = (number | (string | null))  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type A = (number \u0026 string) \u0026 number \u0026 string;",
+          "output": [
+            "type A = (number \u0026 string)    ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type A = number \u0026 string \u0026 (number \u0026 string);",
+          "output": [
+            "type A = number \u0026 string \u0026 (  string);",
+            "type A = number \u0026 string  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            },
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype A = 'A';\ntype T = Record\u003cstring, A | A\u003e;\n      ",
+          "output": [
+            "\ntype A = 'A';\ntype T = Record\u003cstring, A  \u003e;\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type T = A | A | string | string;",
+          "output": [
+            "type T = A | A | string  ;"
+          ],
+          "errors": [
+            {
+              "messageId": "duplicate",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(a?: string | undefined) =\u003e {};",
+          "output": [
+            "(a?: string  ) =\u003e {};"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type T = undefined;\n        (arg?: T | string) =\u003e {};\n      ",
+          "output": [
+            "\n        type T = undefined;\n        (arg?:   string) =\u003e {};\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface F {\n          (a?: string | undefined): void;\n        }\n      ",
+          "output": [
+            "\n        interface F {\n          (a?: string  ): void;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type fn = new (a?: string | undefined) =\u003e void;",
+          "output": [
+            "type fn = new (a?: string  ) =\u003e void;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function f(a?: string | undefined) {}",
+          "output": [
+            "function f(a?: string  ) {}"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "f = function (a?: string | undefined) {};",
+          "output": [
+            "f = function (a?: string  ) {};"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "declare function f(a?: string | undefined): void;",
+          "output": [
+            "declare function f(a?: string  ): void;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class bb {\n          f(a?: string | undefined): void;\n        }\n      ",
+          "output": [
+            "\n        declare class bb {\n          f(a?: string  ): void;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface ee {\n          f(a?: string | undefined): void;\n        }\n      ",
+          "output": [
+            "\n        interface ee {\n          f(a?: string  ): void;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface ee {\n          new (a?: string | undefined): void;\n        }\n      ",
+          "output": [
+            "\n        interface ee {\n          new (a?: string  ): void;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type fn = (a?: string | undefined) =\u003e void;",
+          "output": [
+            "type fn = (a?: string  ) =\u003e void;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type fn = (a?: string | (undefined | number)) =\u003e void;",
+          "output": [
+            "type fn = (a?: string | (  number)) =\u003e void;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "type fn = (a?: (undefined | number) | string) =\u003e void;",
+          "output": [
+            "type fn = (a?: (  number) | string) =\u003e void;"
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        abstract class cc {\n          abstract f(a?: string | undefined): void;\n        }\n      ",
+          "output": [
+            "\n        abstract class cc {\n          abstract f(a?: string  ): void;\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "unnecessary",
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

@@ -1,0 +1,490 @@
+{
+  "source": "prefer_find_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      interface JerkCode\u003cT\u003e {\n        filter(predicate: (item: T) =\u003e boolean): JerkCode\u003cT\u003e;\n      }\n\n      declare const jerkCode: JerkCode\u003cstring\u003e;\n\n      jerkCode.filter(item =\u003e item === 'aha')[0];\n    "
+        },
+        {
+          "code": "\n      declare const arr: readonly string[];\n      arr.filter(item =\u003e item === 'aha')[1];\n    "
+        },
+        {
+          "code": "\n      declare const arr: string[];\n      arr.filter(item =\u003e item === 'aha').at(1);\n    "
+        },
+        {
+          "code": "\n      declare const notNecessarilyAnArray: unknown[] | undefined | null | string;\n      notNecessarilyAnArray?.filter(item =\u003e true)[0];\n    "
+        },
+        {
+          "code": "[].filter(() =\u003e true)?.[0];"
+        },
+        {
+          "code": "[].filter(() =\u003e true)?.at?.(0);"
+        },
+        {
+          "code": "[].filter?.(() =\u003e true)[0];"
+        },
+        {
+          "code": "[1, 2, 3].filter(x =\u003e x \u003e 0).at(-Infinity);"
+        },
+        {
+          "code": "\n      declare const arr: string[];\n      declare const cond: Parameters\u003cArray\u003cstring\u003e['filter']\u003e[0];\n      const a = { arr };\n      a?.arr.filter(cond).at(1);\n    "
+        },
+        {
+          "code": "['Just', 'a', 'filter'].filter(x =\u003e x.length \u003e 4);"
+        },
+        {
+          "code": "['Just', 'a', 'find'].find(x =\u003e x.length \u003e 4);"
+        },
+        {
+          "code": "undefined.filter(x =\u003e x)[0];"
+        },
+        {
+          "code": "null?.filter(x =\u003e x)[0];"
+        },
+        {
+          "code": "\n      declare function foo(param: any): any;\n      foo(Symbol.for('foo'));\n    "
+        },
+        {
+          "code": "\n      declare const arr: string[];\n      const s = Symbol.for(\"Don't throw!\");\n      arr.filter(item =\u003e item === 'aha').at(s);\n    "
+        },
+        {
+          "code": "[1, 2, 3].filter(x =\u003e x)[Symbol('0')];"
+        },
+        {
+          "code": "[1, 2, 3].filter(x =\u003e x)[Symbol.for('0')];"
+        },
+        {
+          "code": "(Math.random() \u003c 0.5 ? [1, 2, 3].filter(x =\u003e true) : [1, 2, 3])[0];"
+        },
+        {
+          "code": "\n      (Math.random() \u003c 0.5\n        ? [1, 2, 3].find(x =\u003e true)\n        : [1, 2, 3].filter(x =\u003e true))[0];\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ndeclare const arr: string[];\narr.filter(item =\u003e item === 'aha')[0];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: string[];\narr.find(item =\u003e item === 'aha');\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: Array\u003cstring\u003e;\nconst zero = 0;\narr.filter(item =\u003e item === 'aha')[zero];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: Array\u003cstring\u003e;\nconst zero = 0;\narr.find(item =\u003e item === 'aha');\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: Array\u003cstring\u003e;\nconst zero = 0n;\narr.filter(item =\u003e item === 'aha')[zero];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: Array\u003cstring\u003e;\nconst zero = 0n;\narr.find(item =\u003e item === 'aha');\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: Array\u003cstring\u003e;\nconst zero = -0n;\narr.filter(item =\u003e item === 'aha')[zero];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: Array\u003cstring\u003e;\nconst zero = -0n;\narr.find(item =\u003e item === 'aha');\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: readonly string[];\narr.filter(item =\u003e item === 'aha').at(0);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: readonly string[];\narr.find(item =\u003e item === 'aha');\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: ReadonlyArray\u003cstring\u003e;\n(undefined, arr.filter(item =\u003e item === 'aha')).at(0);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: ReadonlyArray\u003cstring\u003e;\n(undefined, arr.find(item =\u003e item === 'aha'));\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: string[];\nconst zero = 0;\narr.filter(item =\u003e item === 'aha').at(zero);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: string[];\nconst zero = 0;\narr.find(item =\u003e item === 'aha');\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: string[];\narr.filter(item =\u003e item === 'aha')['0'];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: string[];\narr.find(item =\u003e item === 'aha');\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "const two = [1, 2, 3].filter(item =\u003e item === 2)[0];",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "const two = [1, 2, 3].find(item =\u003e item === 2);"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "const fltr = \"filter\"; (([] as unknown[]))[fltr] ((item) =\u003e { return item === 2 }  ) [ 0  ] ;",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "const fltr = \"filter\"; (([] as unknown[]))[\"find\"] ((item) =\u003e { return item === 2 }  )  ;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "(([] as unknown[]))?.[\"filter\"] ((item) =\u003e { return item === 2 }  ) [ 0  ] ;",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "(([] as unknown[]))?.[\"find\"] ((item) =\u003e { return item === 2 }  )  ;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const nullableArray: unknown[] | undefined | null;\nnullableArray?.filter(item =\u003e true)[0];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const nullableArray: unknown[] | undefined | null;\nnullableArray?.find(item =\u003e true);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "([]?.filter(f))[0];",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 1,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "([]?.find(f));"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const objectWithArrayProperty: { arr: unknown[] };\ndeclare function cond(x: unknown): boolean;\nconsole.log((1, 2, objectWithArrayProperty?.arr['filter'](cond)).at(0));\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const objectWithArrayProperty: { arr: unknown[] };\ndeclare function cond(x: unknown): boolean;\nconsole.log((1, 2, objectWithArrayProperty?.arr[\"find\"](cond)));\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n[1, 2, 3].filter(x =\u003e x \u003e 0).at(NaN);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\n[1, 2, 3].find(x =\u003e x \u003e 0);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst idxToLookUp = -0.12635678;\n[1, 2, 3].filter(x =\u003e x \u003e 0).at(idxToLookUp);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\nconst idxToLookUp = -0.12635678;\n[1, 2, 3].find(x =\u003e x \u003e 0);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n[1, 2, 3].filter(x =\u003e x \u003e 0)[`at`](0);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\n[1, 2, 3].find(x =\u003e x \u003e 0);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: string[];\ndeclare const cond: Parameters\u003cArray\u003cstring\u003e['filter']\u003e[0];\nconst a = { arr };\na?.arr\n  .filter(cond) /* what a bad spot for a comment. Let's make sure\n  there's some yucky symbols too. [ . ?. \u003c\u003e   ' ' \\'] */\n  .at('0');\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: string[];\ndeclare const cond: Parameters\u003cArray\u003cstring\u003e['filter']\u003e[0];\nconst a = { arr };\na?.arr\n  .find(cond) /* what a bad spot for a comment. Let's make sure\n  there's some yucky symbols too. [ . ?. \u003c\u003e   ' ' \\'] */\n  ;\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst imNotActuallyAnArray = [\n  [1, 2, 3],\n  [2, 3, 4],\n] as const;\nconst butIAm = [4, 5, 6];\nbutIAm.push(\n  // line comment!\n  ...imNotActuallyAnArray[/* comment */ 'filter' /* another comment */](\n    x =\u003e x[1] \u003e 0,\n  ) /**/[`0`]!,\n);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 9,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\nconst imNotActuallyAnArray = [\n  [1, 2, 3],\n  [2, 3, 4],\n] as const;\nconst butIAm = [4, 5, 6];\nbutIAm.push(\n  // line comment!\n  ...imNotActuallyAnArray[/* comment */ \"find\" /* another comment */](\n    x =\u003e x[1] \u003e 0,\n  ) /**/!,\n);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction actingOnArray\u003cT extends string[]\u003e(values: T) {\n  return values.filter(filter =\u003e filter === 'filter')[\n    /* filter */ -0.0 /* filter */\n  ];\n}\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\nfunction actingOnArray\u003cT extends string[]\u003e(values: T) {\n  return values.find(filter =\u003e filter === 'filter');\n}\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nconst nestedSequenceAbomination =\n  (1,\n  2,\n  (1,\n  2,\n  3,\n  (1, 2, 3, 4),\n  (1, 2, 3, 4, 5, [1, 2, 3, 4, 5, 6].filter(x =\u003e x % 2 == 0)))['0']);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 5,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\nconst nestedSequenceAbomination =\n  (1,\n  2,\n  (1,\n  2,\n  3,\n  (1, 2, 3, 4),\n  (1, 2, 3, 4, 5, [1, 2, 3, 4, 5, 6].find(x =\u003e x % 2 == 0))));\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: { a: 1 }[] \u0026 { b: 2 }[];\narr.filter(f, thisArg)[0];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: { a: 1 }[] \u0026 { b: 2 }[];\narr.find(f, thisArg);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const arr: { a: 1 }[] \u0026 ({ b: 2 }[] | { c: 3 }[]);\narr.filter(f, thisArg)[0];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const arr: { a: 1 }[] \u0026 ({ b: 2 }[] | { c: 3 }[]);\narr.find(f, thisArg);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n(Math.random() \u003c 0.5\n  ? [1, 2, 3].filter(x =\u003e false)\n  : [1, 2, 3].filter(x =\u003e true))[0];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\n(Math.random() \u003c 0.5\n  ? [1, 2, 3].find(x =\u003e false)\n  : [1, 2, 3].find(x =\u003e true));\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nMath.random() \u003c 0.5\n  ? [1, 2, 3].find(x =\u003e true)\n  : [1, 2, 3].filter(x =\u003e true)[0];\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\nMath.random() \u003c 0.5\n  ? [1, 2, 3].find(x =\u003e true)\n  : [1, 2, 3].find(x =\u003e true);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const f: (arg0: unknown, arg1: number, arg2: Array\u003cunknown\u003e) =\u003e boolean,\n  g: (arg0: unknown) =\u003e boolean;\nconst nestedTernaries = (\n  Math.random() \u003c 0.5\n    ? Math.random() \u003c 0.5\n      ? [1, 2, 3].filter(f)\n      : []?.filter(x =\u003e 'shrug')\n    : [2, 3, 4]['filter'](g)\n).at(0.2);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const f: (arg0: unknown, arg1: number, arg2: Array\u003cunknown\u003e) =\u003e boolean,\n  g: (arg0: unknown) =\u003e boolean;\nconst nestedTernaries = (\n  Math.random() \u003c 0.5\n    ? Math.random() \u003c 0.5\n      ? [1, 2, 3].find(f)\n      : []?.find(x =\u003e 'shrug')\n    : [2, 3, 4][\"find\"](g)\n);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const f: (arg0: unknown) =\u003e boolean, g: (arg0: unknown) =\u003e boolean;\nconst nestedTernariesWithSequenceExpression = (\n  Math.random() \u003c 0.5\n    ? ('sequence',\n      'expression',\n      Math.random() \u003c 0.5 ? [1, 2, 3].filter(f) : []?.filter(x =\u003e 'shrug'))\n    : [2, 3, 4]['filter'](g)\n).at(0.2);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const f: (arg0: unknown) =\u003e boolean, g: (arg0: unknown) =\u003e boolean;\nconst nestedTernariesWithSequenceExpression = (\n  Math.random() \u003c 0.5\n    ? ('sequence',\n      'expression',\n      Math.random() \u003c 0.5 ? [1, 2, 3].find(f) : []?.find(x =\u003e 'shrug'))\n    : [2, 3, 4][\"find\"](g)\n);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const spreadArgs: [(x: unknown) =\u003e boolean];\n[1, 2, 3].filter(...spreadArgs).at(0);\n      ",
+          "errors": [
+            {
+              "messageId": "preferFind",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "preferFindSuggestion",
+                  "output": "\ndeclare const spreadArgs: [(x: unknown) =\u003e boolean];\n[1, 2, 3].find(...spreadArgs);\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

@@ -1,0 +1,525 @@
+{
+  "source": "use_unknown_in_catch_callback_variable_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\n      Promise.resolve().catch((err: unknown) =\u003e {\n        throw err;\n      });\n    "
+        },
+        {
+          "code": "\n      let x = Math.random() ? 'ca' + 'tch' : 'catch';\n      Promise.resolve()[x]((err: Error) =\u003e {});\n    "
+        },
+        {
+          "code": "\n      Promise.resolve().then(\n        () =\u003e {},\n        (err: unknown) =\u003e {\n          throw err;\n        },\n      );\n    "
+        },
+        {
+          "code": "\n      Promise.resolve().catch(() =\u003e {\n        throw new Error();\n      });\n    "
+        },
+        {
+          "code": "\n      Promise.reject(new Error()).catch(\"not this rule's problem\");\n    "
+        },
+        {
+          "code": "\n      declare const crappyHandler: (() =\u003e void) | 2;\n      Promise.reject(new Error()).catch(crappyHandler);\n    "
+        },
+        {
+          "code": "\n      Promise.resolve().catch((...args: [unknown]) =\u003e {\n        throw args[0];\n      });\n    "
+        },
+        {
+          "code": "\n      Promise.resolve().catch((...args: [a: unknown]) =\u003e {\n        const err = args[0];\n      });\n    "
+        },
+        {
+          "code": "\n      Promise.resolve().catch((...args: readonly unknown[]) =\u003e {\n        throw args[0];\n      });\n    "
+        },
+        {
+          "code": "\n      declare const notAPromise: { catch: (f: Function) =\u003e void };\n      notAPromise.catch((...args: [a: string, string]) =\u003e {\n        throw args[0];\n      });\n    "
+        },
+        {
+          "code": "\n      declare const catchArgs: [(x: unknown) =\u003e void];\n      Promise.reject(new Error()).catch(...catchArgs);\n    "
+        },
+        {
+          "code": "\n      declare const catchArgs: [\n        string | (() =\u003e never),\n        (shouldntFlag: string) =\u003e void,\n        number,\n      ];\n      Promise.reject(new Error()).catch(...catchArgs);\n    "
+        },
+        {
+          "code": "\n      declare const catchArgs: ['not callable'];\n      Promise.reject(new Error()).catch(...catchArgs);\n    "
+        },
+        {
+          "code": "\n      declare const emptySpread: [];\n      Promise.reject(new Error()).catch(...emptySpread);\n    "
+        },
+        {
+          "code": "\n      Promise.resolve().catch(\n        (\n          ...err: [unknown, string | ((number | unknown) \u0026 { b: () =\u003e void }), string]\n        ) =\u003e {\n          throw err;\n        },\n      );\n    "
+        },
+        {
+          "code": "\n      declare const notAMemberExpression: (...args: any[]) =\u003e {};\n      notAMemberExpression(\n        'This helps get 100% code cov',\n        \"but doesn't test anything useful related to the rule.\",\n      );\n    "
+        },
+        {
+          "code": "\n      Promise.resolve().catch((...[args]: [unknown]) =\u003e {\n        console.log(args);\n      });\n    "
+        },
+        {
+          "code": "\n      Promise.resolve().catch((...{ find }: [unknown]) =\u003e {\n        console.log(find);\n      });\n    "
+        },
+        {
+          "code": "Promise.resolve.then();"
+        },
+        {
+          "code": "Promise.resolve().then(() =\u003e {});"
+        },
+        {
+          "code": "\n      declare const singleTupleArg: [() =\u003e void];\n      Promise.resolve().then(...singleTupleArg, (error: unknown) =\u003e {});\n    "
+        },
+        {
+          "code": "\n      declare const arrayArg: (() =\u003e void)[];\n      Promise.resolve().then(...arrayArg, error =\u003e {});\n    "
+        },
+        {
+          "code": "\ndeclare let iPromiseImAPromise: Promise\u003cany\u003e;\ndeclare const catchArgs: [(x: any) =\u003e void];\niPromiseImAPromise.catch(...catchArgs);\n    "
+        },
+        {
+          "code": "\ndeclare const catchArgs: [\n  string | (() =\u003e never) | ((x: string) =\u003e void),\n  number,\n];\nPromise.reject(new Error()).catch(...catchArgs);\n    "
+        },
+        {
+          "code": "\ndeclare const you: [];\ndeclare const cannot: [];\ndeclare const fool: [];\ndeclare const me: [(x: Error) =\u003e void] | undefined;\nPromise.resolve(undefined).catch(...you, ...cannot, ...fool, ...me!);\n    "
+        },
+        {
+          "code": "\ndeclare const really: undefined[];\ndeclare const dumb: [];\ndeclare const code: (x: Error) =\u003e void;\nPromise.resolve(undefined).catch(...really, ...dumb, code);\n    "
+        },
+        {
+          "code": "\ndeclare const x: ((x: any) =\u003e string)[];\nPromise.resolve('string promise').catch(...x);\n    "
+        },
+        {
+          "code": "\ndeclare const x: any;\nPromise.resolve().catch(...x);\n    "
+        },
+        {
+          "code": "\ndeclare const thenArgs: [() =\u003e {}, (err: any) =\u003e {}];\nPromise.resolve().then(...thenArgs);\n    "
+        },
+        {
+          "code": "\ndeclare const yoloHandler: (x: any) =\u003e void;\nPromise.reject(new Error('I will reject!')).catch(yoloHandler);\n    "
+        },
+        {
+          "code": "\ntype InvalidHandler = (arg: any) =\u003e void;\nPromise.resolve().catch(\u003cInvalidHandler\u003e(\n  function (err /* awkward spot for comment */) {\n    throw err;\n  }\n));\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\nPromise.resolve().catch((err: Error) =\u003e {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((err: unknown) =\u003e {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\n        let method = 'catch';\n        Promise.resolve()[method]((error: Error) =\u003e {});\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\n        let method = 'catch';\n        Promise.resolve()[method]((error: unknown) =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch((e, ...rest: []) =\u003e {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((e: unknown, ...rest: []) =\u003e {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch(\n  (err: string | ((number | unknown) \u0026 { b: () =\u003e void })) =\u003e {\n    throw err;\n  },\n);\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch(\n  (err: unknown) =\u003e {\n    throw err;\n  },\n);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch(\n  (\n    ...err: [\n      unknown[],\n      string | ((number | unknown) \u0026 { b: () =\u003e void }),\n      string,\n    ]\n  ) =\u003e {\n    throw err;\n  },\n);\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 4,
+              "suggestions": [
+                {
+                  "messageId": "wrongRestTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch(\n  (\n    ...err: [unknown]\n  ) =\u003e {\n    throw err;\n  },\n);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch(function (err: string) {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch(function (err: unknown) {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch(function (err /* awkward spot for comment */) {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch(function (err: unknown /* awkward spot for comment */) {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch(function namedCallback(err: string) {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch(function namedCallback(err: unknown) {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch(err =\u003e {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((err: unknown) =\u003e {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().then(\n  () =\u003e {},\n  error =\u003e {},\n);\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().then(\n  () =\u003e {},\n  (error: unknown) =\u003e {},\n);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch((err?) =\u003e {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((err?: unknown) =\u003e {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch((err?: string) =\u003e {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((err?: unknown) =\u003e {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch(err/* with comment */=\u003e {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((err: unknown)/* with comment */=\u003e {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch((err = 2) =\u003e {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((err: unknown = 2) =\u003e {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch((err: any /* comment 1 */ = /* comment 2 */ 2) =\u003e {\n  throw err;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((err: unknown /* comment 1 */ = /* comment 2 */ 2) =\u003e {\n  throw err;\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch((...args) =\u003e {\n  throw args[0];\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownRestTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((...args: [unknown]) =\u003e {\n  throw args[0];\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject(new Error('I will reject!')).catch(([err]: [unknown]) =\u003e {\n  console.log(err);\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknownArrayDestructuringPattern",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve(' a string ').catch(\n  (a: any, b: () =\u003e any, c: (x: string \u0026 number) =\u003e void) =\u003e {},\n);\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 3,
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve(' a string ').catch(\n  (a: unknown, b: () =\u003e any, c: (x: string \u0026 number) =\u003e void) =\u003e {},\n);\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve('object destructuring').catch(({}) =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknownObjectDestructuringPattern",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve('object destructuring').catch(function ({ gotcha }) {\n  return null;\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknownObjectDestructuringPattern",
+              "line": 2,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve()['catch']((x: any) =\u003e 'return');\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve()['catch']((x: unknown) =\u003e 'return');\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.reject().catch((...x: any) =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongRestTypeAnnotationSuggestion",
+                  "output": "\nPromise.reject().catch((...x: [unknown]) =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch((...[args]: [string]) =\u003e {\n  console.log(args);\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongRestTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((...[args]: [unknown]) =\u003e {\n  console.log(args);\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nPromise.resolve().catch((...{ find }: [string]) =\u003e {\n  console.log(find);\n});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 2,
+              "suggestions": [
+                {
+                  "messageId": "wrongRestTypeAnnotationSuggestion",
+                  "output": "\nPromise.resolve().catch((...{ find }: [unknown]) =\u003e {\n  console.log(find);\n});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const condition: boolean;\nPromise.resolve('foo').then(() =\u003e {}, condition ? err =\u003e {} : err =\u003e {});\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 3,
+              "column": 51,
+              "endLine": 3,
+              "endColumn": 54,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\ndeclare const condition: boolean;\nPromise.resolve('foo').then(() =\u003e {}, condition ? (err: unknown) =\u003e {} : err =\u003e {});\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "useUnknown",
+              "line": 3,
+              "column": 63,
+              "endLine": 3,
+              "endColumn": 66,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\ndeclare const condition: boolean;\nPromise.resolve('foo').then(() =\u003e {}, condition ? err =\u003e {} : (err: unknown) =\u003e {});\n      "
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const condition: boolean;\ndeclare const maybeNullishHandler: null | ((err: any) =\u003e void);\nPromise.resolve('foo').catch(\n  condition\n    ? ((err =\u003e {}, err =\u003e {}, maybeNullishHandler) ?? (err =\u003e {}))\n    : (condition \u0026\u0026 (err =\u003e {})) || (err =\u003e {}),\n);\n      ",
+          "errors": [
+            {
+              "messageId": "useUnknown",
+              "line": 6,
+              "column": 56,
+              "endLine": 6,
+              "endColumn": 59,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\ndeclare const condition: boolean;\ndeclare const maybeNullishHandler: null | ((err: any) =\u003e void);\nPromise.resolve('foo').catch(\n  condition\n    ? ((err =\u003e {}, err =\u003e {}, maybeNullishHandler) ?? ((err: unknown) =\u003e {}))\n    : (condition \u0026\u0026 (err =\u003e {})) || (err =\u003e {}),\n);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "useUnknown",
+              "line": 7,
+              "column": 22,
+              "endLine": 7,
+              "endColumn": 25,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\ndeclare const condition: boolean;\ndeclare const maybeNullishHandler: null | ((err: any) =\u003e void);\nPromise.resolve('foo').catch(\n  condition\n    ? ((err =\u003e {}, err =\u003e {}, maybeNullishHandler) ?? (err =\u003e {}))\n    : (condition \u0026\u0026 ((err: unknown) =\u003e {})) || (err =\u003e {}),\n);\n      "
+                }
+              ]
+            },
+            {
+              "messageId": "useUnknown",
+              "line": 7,
+              "column": 38,
+              "endLine": 7,
+              "endColumn": 41,
+              "suggestions": [
+                {
+                  "messageId": "addUnknownTypeAnnotationSuggestion",
+                  "output": "\ndeclare const condition: boolean;\ndeclare const maybeNullishHandler: null | ((err: any) =\u003e void);\nPromise.resolve('foo').catch(\n  condition\n    ? ((err =\u003e {}, err =\u003e {}, maybeNullishHandler) ?? (err =\u003e {}))\n    : (condition \u0026\u0026 (err =\u003e {})) || ((err: unknown) =\u003e {}),\n);\n      "
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

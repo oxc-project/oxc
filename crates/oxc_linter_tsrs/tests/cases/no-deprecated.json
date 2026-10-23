@@ -1,0 +1,1828 @@
+{
+  "source": "no_deprecated_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.includeTypes.json",
+      "valid": [
+        {
+          "code": "/** @deprecated */ var a;"
+        },
+        {
+          "code": "/** @deprecated */ var a = 1;"
+        },
+        {
+          "code": "/** @deprecated */ let a;"
+        },
+        {
+          "code": "/** @deprecated */ let a = 1;"
+        },
+        {
+          "code": "/** @deprecated */ const a = 1;"
+        },
+        {
+          "code": "/** @deprecated */ declare var a: number;"
+        },
+        {
+          "code": "/** @deprecated */ declare let a: number;"
+        },
+        {
+          "code": "/** @deprecated */ declare const a: number;"
+        },
+        {
+          "code": "/** @deprecated */ export var a = 1;"
+        },
+        {
+          "code": "/** @deprecated */ export let a = 1;"
+        },
+        {
+          "code": "/** @deprecated */ export const a = 1;"
+        },
+        {
+          "code": "const [/** @deprecated */ a] = [b];"
+        },
+        {
+          "code": "const [/** @deprecated */ a] = b;"
+        },
+        {
+          "code": "\n      const a = {\n        b: 1,\n        /** @deprecated */ c: 2,\n      };\n\n      a.b;\n    "
+        },
+        {
+          "code": "\n      const a = {\n        b: 1,\n        /** @deprecated */ c: 2,\n      };\n\n      a?.b;\n    "
+        },
+        {
+          "code": "\n      declare const a: {\n        b: 1;\n        /** @deprecated */ c: 2;\n      };\n\n      a.b;\n    "
+        },
+        {
+          "code": "\n      class A {\n        b: 1;\n        /** @deprecated */ c: 2;\n      }\n\n      new A().b;\n    "
+        },
+        {
+          "code": "\n      class A {\n        accessor b: 1;\n        /** @deprecated */ accessor c: 2;\n      }\n\n      new A().b;\n    "
+        },
+        {
+          "code": "\n      declare class A {\n        /** @deprecated */\n        static b: string;\n        static c: string;\n      }\n\n      A.c;\n    "
+        },
+        {
+          "code": "\n      declare class A {\n        /** @deprecated */\n        static accessor b: string;\n        static accessor c: string;\n      }\n\n      A.c;\n    "
+        },
+        {
+          "code": "\n      namespace A {\n        /** @deprecated */\n        export const b = '';\n        export const c = '';\n      }\n\n      A.c;\n    "
+        },
+        {
+          "code": "\n      enum A {\n        /** @deprecated */\n        b = 'b',\n        c = 'c',\n      }\n\n      A.c;\n    "
+        },
+        {
+          "code": "\n      function a(value: 'b' | undefined): void;\n      /** @deprecated */\n      function a(value: 'c' | undefined): void;\n      function a(value: string | undefined): void {\n        // ...\n      }\n\n      a('b');\n    "
+        },
+        {
+          "code": "\n      function a(value: 'b' | undefined): void;\n      /** @deprecated */\n      function a(value: 'c' | undefined): void;\n      function a(value: string | undefined): void {\n        // ...\n      }\n\n      export default a('b');\n    "
+        },
+        {
+          "code": "\n      function notDeprecated(): object {\n        return {};\n      }\n\n      export default notDeprecated();\n    "
+        },
+        {
+          "code": "\n      import { deprecatedFunctionWithOverloads } from './deprecated';\n\n      const foo = deprecatedFunctionWithOverloads();\n    "
+        },
+        {
+          "code": "\n      import * as imported from './deprecated';\n\n      const foo = imported.deprecatedFunctionWithOverloads();\n    "
+        },
+        {
+          "code": "\n      import { ClassWithDeprecatedConstructor } from './deprecated';\n\n      const foo = new ClassWithDeprecatedConstructor();\n    "
+        },
+        {
+          "code": "\n      import * as imported from './deprecated';\n\n      const foo = new imported.ClassWithDeprecatedConstructor();\n    "
+        },
+        {
+          "code": "\n      class A {\n        a(value: 'b'): void;\n        /** @deprecated */\n        a(value: 'c'): void;\n      }\n      declare const foo: A;\n      foo.a('b');\n    "
+        },
+        {
+          "code": "\n      const A = class {\n        /** @deprecated */\n        constructor();\n        constructor(arg: string);\n        constructor(arg?: string) {}\n      };\n\n      new A('a');\n    "
+        },
+        {
+          "code": "\n      type A = {\n        (value: 'b'): void;\n        /** @deprecated */\n        (value: 'c'): void;\n      };\n      declare const foo: A;\n      foo('b');\n    "
+        },
+        {
+          "code": "\n      declare const a: {\n        new (value: 'b'): void;\n        /** @deprecated */\n        new (value: 'c'): void;\n      };\n      new a('b');\n    "
+        },
+        {
+          "code": "\n      namespace assert {\n        export function fail(message?: string | Error): never;\n        /** @deprecated since v10.0.0 - use fail([message]) or other assert functions instead. */\n        export function fail(actual: unknown, expected: unknown): never;\n      }\n\n      assert.fail('');\n    "
+        },
+        {
+          "code": "\n      import assert from 'node:assert';\n\n      assert.fail('');\n    "
+        },
+        {
+          "code": "\n      declare module 'deprecations' {\n        /** @deprecated */\n        export const value = true;\n      }\n\n      import { value } from 'deprecations';\n    "
+        },
+        {
+          "code": "\n      /** @deprecated Use ts directly. */\n      export * as ts from 'typescript';\n    "
+        },
+        {
+          "code": "\n      export {\n        /** @deprecated Use ts directly. */\n        default as ts,\n      } from 'typescript';\n    "
+        },
+        {
+          "code": "\n      export { deprecatedFunction as 'bur' } from './deprecated';\n    "
+        },
+        {
+          "code": "\n      export { 'deprecatedFunction' } from './deprecated';\n    "
+        },
+        {
+          "code": "\n      namespace A {\n        /** @deprecated */\n        export type B = string;\n        export type C = string;\n        export type D = string;\n      }\n\n      export type D = A.C | A.D;\n    "
+        },
+        {
+          "code": "\n      interface Props {\n        anchor: 'foo';\n      }\n      declare const x: Props;\n      const { anchor = '' } = x;\n    "
+        },
+        {
+          "code": "\n      namespace Foo {}\n\n      /**\n       * @deprecated\n       */\n      export import Bar = Foo;\n    "
+        },
+        {
+          "code": "\n      /**\n       * @deprecated\n       */\n      export import Bar = require('./deprecated');\n    "
+        },
+        {
+          "code": "\n      interface Props {\n        anchor: 'foo';\n      }\n      declare const x: { bar: Props };\n      const {\n        bar: { anchor = '' },\n      } = x;\n    "
+        },
+        {
+          "code": "\n      interface Props {\n        anchor: 'foo';\n      }\n      declare const x: [item: Props];\n      const [{ anchor = 'bar' }] = x;\n    "
+        },
+        {
+          "code": "function fn(/** @deprecated */ foo = 4) {}"
+        },
+        {
+          "code": "\n        async function fn() {\n          const d = await import('./deprecated.js');\n          d.default;\n        }\n      ",
+          "tsconfig": "./tsconfig.moduleResolution-node16.json"
+        },
+        {
+          "code": "call();"
+        },
+        {
+          "code": "\n      class Foo implements Foo {\n        get bar(): number {\n          return 42;\n        }\n\n        baz(): number {\n          return this.bar;\n        }\n      }\n    "
+        },
+        {
+          "code": "\n      declare namespace JSX {}\n\n      \u003cfoo bar={1} /\u003e;\n    "
+        },
+        {
+          "code": "\n      declare namespace JSX {\n        interface IntrinsicElements {\n          foo: any;\n        }\n      }\n\n      \u003cfoo bar={1} /\u003e;\n    "
+        },
+        {
+          "code": "\n      declare namespace JSX {\n        interface IntrinsicElements {\n          foo: unknown;\n        }\n      }\n\n      \u003cfoo bar={1} /\u003e;\n    "
+        },
+        {
+          "code": "\n      declare namespace JSX {\n        interface IntrinsicElements {\n          foo: {\n            bar: any;\n          };\n        }\n      }\n      \u003cfoo bar={1} /\u003e;\n    "
+        },
+        {
+          "code": "\n      declare namespace JSX {\n        interface IntrinsicElements {\n          foo: {\n            bar: unknown;\n          };\n        }\n      }\n      \u003cfoo bar={1} /\u003e;\n    "
+        },
+        {
+          "code": "\n      export {\n        /** @deprecated */\n        foo,\n      };\n    "
+        },
+        {
+          "code": "\n/** @deprecated */\nfunction A() {\n  return \u003cdiv /\u003e;\n}\n\nconst a = \u003cA\u003e\u003c/A\u003e;\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "A"
+              }
+            ]
+          },
+          "tsx": true
+        },
+        {
+          "code": "\n/** @deprecated */\ndeclare class A {}\n\nnew A();\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "A"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n/** @deprecated */\nconst deprecatedValue = 45;\nconst bar = deprecatedValue;\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "deprecatedValue"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\nclass MyClass {\n  /** @deprecated */\n  #privateProp = 42;\n  value = this.#privateProp;\n}\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "privateProp"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n/** @deprecated */\nconst deprecatedValue = 45;\nconst bar = deprecatedValue;\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "deprecatedValue"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\nimport { exists } from 'fs';\nexists('/foo');\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "exists",
+                "package": "fs"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\nconst { exists } = import('fs');\nexists('/foo');\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "exists",
+                "package": "fs"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n      declare const test: string;\n      const bar = { test };\n    "
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n      const complex = Symbol() as any;\n      const c = a[complex];\n    "
+        },
+        {
+          "code": "\n      const a = {\n        b: 'string',\n      };\n\n      const c = a['b'];\n    "
+        },
+        {
+          "code": "\n        interface AllowedType {\n          /** @deprecated */\n          prop: string;\n        }\n\n        const obj: AllowedType = {\n          prop: 'test',\n        };\n\n        const value = obj['prop'];\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "AllowedType"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n      const key = {};\n      const c = a[key as any];\n    "
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n      const key = Symbol();\n      const c = a[key as any];\n    "
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n      const key = undefined;\n      const c = a[key as any];\n    "
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n      const c = a['nonExistentProperty'];\n    "
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n      function getKey() {\n        return 'c';\n      }\n\n      const c = a[getKey()];\n    "
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n      const key = {};\n      const c = a[key];\n    "
+        },
+        {
+          "code": "\n      const stringObj = new String('b');\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n      const c = a[stringObj];\n    "
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n      const key = Symbol('key');\n      const c = a[key];\n    "
+        },
+        {
+          "code": "\n      const a = {\n        /** @deprecated */\n        b: 'string',\n      };\n\n\t\tconst key = null;\n\t\tconst c = a[key as any];\n\t"
+        },
+        {
+          "code": "\n\t\tinterface MyInterface {\n\t\t\t/** @deprecated */\n\t\t\tprop: string;\n\t\t}\n\t\tdeclare const obj: MyInterface;\n\t\tconst key = 'prop';\n\t\tconst { [key]: value } = obj;\n\t"
+        },
+        {
+          "code": "\n\t\tinterface MyInterface {\n\t\t\t/** @deprecated */\n\t\t\tprop: string;\n\t\t}\n\t\tdeclare const obj: MyInterface;\n\t\tdeclare const key: string;\n\t\tconst { [key]: value } = obj;\n\t"
+        },
+        {
+          "code": "\n\t\tdeclare const key: string;\n\t\tconst obj = {\n\t\t\t[key]: 'value',\n\t\t};\n\t"
+        },
+        {
+          "code": "\n\t\texport class Test {\n\t/** @deprecated Use something else instead */\n\tpublic get foo(): number {\n\t\treturn 42;\n\t}\n}\n\t\t"
+        },
+        {
+          "code": "const DISALLOWED_CATEGORY_ITEM_REGEXP: RegExp = /regexp/;\n\t\t\tconst content = \"\";\n\t\t\tconst result = [...content.matchAll(DISALLOWED_CATEGORY_ITEM_REGEXP)].map(([, term, description, name, link]) =\u003e ({ link, }));"
+        },
+        {
+          "code": "\nexport interface ErrorOptions {\n  /** @deprecated Use status instead. */\n  statusCode?: number;\n\n  status?: number;\n}\n\nconst x: ErrorOptions = null!\n\nx.statusCode;\n      ",
+          "options": {
+            "allow": [
+              "statusCode"
+            ]
+          }
+        },
+        {
+          "code": "\n        interface ErrorOptions {\n          /** @deprecated Use status instead. */\n          statusCode?: number;\n\n          status?: number;\n        }\n\n        declare function showError(error: ErrorOptions): void;\n        declare const statusCodeName: 'statusCode';\n\n        showError({\n          ['statusCode']: 500,\n        });\n\n        showError({\n          [statusCodeName]: 500,\n        });\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "statusCode"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        declare module 'error-options' {\n          export interface ErrorOptions {\n            /** @deprecated Use status instead. */\n            statusCode?: number;\n\n            status?: number;\n          }\n\n          export function showError(error: ErrorOptions): void;\n        }\n\n        import { showError } from 'error-options';\n\n        declare const statusCodeName: 'statusCode';\n\n        showError({\n          ['statusCode']: 500,\n        });\n\n        showError({\n          [statusCodeName]: 500,\n        });\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "statusCode",
+                "package": "error-options"
+              }
+            ]
+          }
+        },
+        {
+          "code": "\n        declare module 'error-options' {\n          export interface ErrorOptions {\n            /** @deprecated Use status instead. */\n            statusCode?: number;\n\n            status?: number;\n          }\n\n          export function showError(error: ErrorOptions): void;\n        }\n\n        import { showError } from 'error-options';\n\n        declare const statusCodeName: 'statusCode';\n\n        showError({\n          ['statusCode']: 500,\n        });\n\n        showError({\n          [statusCodeName]: 500,\n        });\n      ",
+          "options": {
+            "allow": [
+              "statusCode"
+            ]
+          }
+        },
+        {
+          "code": "\n\t\t\tinterface NavItemOptions { text: string; icon?: string }\n\t\t\tinterface AutoLinkOptions extends NavItemOptions { link: string }\n\t\t\tinterface SidebarGroupOptions extends NavItemOptions {\n\t\t\t\tprefix?: string;\n\t\t\t\tlink?: string;\n\t\t\t\tchildren: SidebarItemOptions[];\n\t\t\t}\n\t\t\tinterface SidebarStructureOptions extends NavItemOptions {\n\t\t\t\tprefix?: string;\n\t\t\t\tlink?: string;\n\t\t\t\tchildren: \"structure\";\n\t\t\t}\n\t\t\ttype SidebarItemOptions = AutoLinkOptions | SidebarGroupOptions | SidebarStructureOptions | string;\n\t\t\ttype SidebarArrayOptions = SidebarItemOptions[];\n\t\t\ttype SidebarObjectOptions = Record\u003cstring, SidebarArrayOptions | \"structure\" | false\u003e;\n\t\t\ttype SidebarOptions = SidebarArrayOptions | SidebarObjectOptions | \"structure\" | false;\n\t\t\tdeclare const sidebar: (options: SidebarOptions) =\u003e SidebarOptions;\n\n\t\t\tsidebar({\n\t\t\t\t\"/\": [{\n\t\t\t\t\ttext: \"Demo\",\n\t\t\t\t\tprefix: \"demo/\",\n\t\t\t\t\tlink: \"demo/\",\n\t\t\t\t\tchildren: \"structure\",\n\t\t\t\t}],\n\t\t\t});\n\t\t"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        interface AProps {\n          /** @deprecated */\n          b: number | string;\n        }\n\n        function A(props: AProps) {\n          return \u003cdiv /\u003e;\n        }\n\n        const a = \u003cA b=\"\" /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ var a = undefined;\n        a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ export var a = undefined;\n        a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ let a = undefined;\n        a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ export let a = undefined;\n        a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ let aLongName = undefined;\n        aLongName;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        const c = a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated Reason. */ const a = { b: 1 };\n        const c = a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        const { c = a } = {};\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        const [c = a] = [];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        console.log(a);\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = 'foo';\n        import(`./path/${a}.js`);\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare function log(...args: unknown): void;\n\n        /** @deprecated */ const a = { b: 1 };\n\n        log(a);\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        console.log(a.b);\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        console.log(a?.b);\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: { c: 1 } };\n        a.b.c;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: { c: 1 } };\n        a.b?.c;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: { c: 1 } };\n        a?.b?.c;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = {\n          /** @deprecated */ b: { c: 1 },\n        };\n        a.b.c;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: {\n          /** @deprecated */ b: { c: 1 };\n        };\n        a.b.c;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        const c = a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        const { c } = a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        declare const test: string;\n        const myObj = {\n          prop: test,\n          deep: {\n            prop: test,\n          },\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        declare const test: string;\n        const bar = {\n          test,\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        const { c = 'd' } = a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */ const a = { b: 1 };\n        const { c: d } = a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        declare const a: string[];\n        const [b] = [a];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        class A {}\n\n        new A();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        export class A {}\n\n        new A();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        const A = class {};\n\n        new A();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        declare class A {}\n\n        new A();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const A = class {\n          /** @deprecated */\n          constructor() {}\n        };\n\n        new A();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const A = class {\n          /** @deprecated */\n          constructor();\n          constructor(arg: string);\n          constructor(arg?: string) {}\n        };\n\n        new A();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const A: {\n          /** @deprecated */\n          new (): string;\n        };\n\n        new A();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        declare class A {\n          constructor();\n        }\n\n        new A();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          /** @deprecated */\n          b: string;\n        }\n\n        declare const a: A;\n\n        const { b } = a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated */\n          b(): string;\n        }\n\n        declare const a: A;\n\n        a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated */\n          b(): string;\n        }\n\n        declare const a: A;\n\n        a.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated */\n          b: () =\u003e string;\n        }\n\n        declare const a: A;\n\n        a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated */\n          b: () =\u003e string;\n        }\n\n        declare const a: A;\n\n        a.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface A {\n          /** @deprecated */\n          b: () =\u003e string;\n        }\n\n        declare const a: A;\n\n        a.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          /** @deprecated */\n          b(): string {\n            return '';\n          }\n        }\n\n        declare const a: A;\n\n        a.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated Use b(value). */\n          b(): string;\n          b(value: string): string;\n        }\n\n        declare const a: A;\n\n        a.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated */\n          static b: string;\n        }\n\n        A.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare const a: {\n          /** @deprecated */\n          b: string;\n        };\n\n        a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface A {\n          /** @deprecated */\n          b: string;\n        }\n\n        declare const a: A;\n\n        a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        export interface A {\n          /** @deprecated */\n          b: string;\n        }\n\n        declare const a: A;\n\n        a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface A {\n          /** @deprecated */\n          b: string;\n        }\n\n        declare const a: A;\n\n        const { b } = a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type A = {\n          /** @deprecated */\n          b: string;\n        };\n\n        declare const a: A;\n\n        const { b } = a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        export type A = {\n          /** @deprecated */\n          b: string;\n        };\n\n        declare const a: A;\n\n        const { b } = a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type A = () =\u003e {\n          /** @deprecated */\n          b: string;\n        };\n\n        declare const a: A;\n\n        const { b } = a();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        type A = string[];\n\n        declare const a: A;\n\n        const [b] = a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        namespace A {\n          /** @deprecated */\n          export const b = '';\n        }\n\n        A.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        export namespace A {\n          /** @deprecated */\n          export const b = '';\n        }\n\n        A.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        namespace A {\n          /** @deprecated */\n          export function b() {}\n        }\n\n        A.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        namespace assert {\n          export function fail(message?: string | Error): never;\n          /** @deprecated since v10.0.0 - use fail([message]) or other assert functions instead. */\n          export function fail(actual: unknown, expected: unknown): never;\n        }\n\n        assert.fail({}, {});\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import assert from 'node:assert';\n\n        assert.fail({}, {});\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        enum A {\n          a,\n        }\n\n        A.a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum A {\n          /** @deprecated */\n          a,\n        }\n\n        A.a;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        function a() {}\n\n        a();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        function a(): void;\n        function a() {}\n\n        a();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function a(): void;\n        /** @deprecated */\n        function a(value: string): void;\n        function a(value?: string) {}\n\n        a('');\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        type A = {\n          (value: 'b'): void;\n          /** @deprecated */\n          (value: 'c'): void;\n        };\n        declare const foo: A;\n        foo('c');\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function a(\n          /** @deprecated */\n          b?: boolean,\n        ) {\n          return b;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        export function isTypeFlagSet(\n          type: ts.Type,\n          flagsToCheck: ts.TypeFlags,\n          /** @deprecated This param is not used and will be removed in the future. */\n          isReceiver?: boolean,\n        ): boolean {\n          const flags = getTypeFlags(type);\n\n          if (isReceiver \u0026\u0026 flags \u0026 ANY_OR_UNKNOWN) {\n            return true;\n          }\n\n          return (flags \u0026 flagsToCheck) !== 0;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        declare function a(...args: unknown[]): string;\n\n        a``;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        const A = () =\u003e \u003cdiv /\u003e;\n\n        const a = \u003cA /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        const A = () =\u003e \u003cdiv /\u003e;\n\n        const a = \u003cA\u003e\u003c/A\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        function A() {\n          return \u003cdiv /\u003e;\n        }\n\n        const a = \u003cA /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        function A() {\n          return \u003cdiv /\u003e;\n        }\n\n        const a = \u003cA\u003e\u003c/A\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        export type A = string;\n        export type B = string;\n        export type C = string;\n\n        export type D = A | B | C;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        namespace A {\n          /** @deprecated */\n          export type B = string;\n          export type C = string;\n          export type D = string;\n        }\n\n        export type D = A.B | A.C | A.D;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Props {\n          /** @deprecated */\n          anchor: 'foo';\n        }\n        declare const x: Props;\n        const { anchor = '' } = x;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Props {\n          /** @deprecated */\n          anchor: 'foo';\n        }\n        declare const x: { bar: Props };\n        const {\n          bar: { anchor = '' },\n        } = x;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Props {\n          /** @deprecated */\n          anchor: 'foo';\n        }\n        declare const x: [item: Props];\n        const [{ anchor = 'bar' }] = x;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface Props {\n          /** @deprecated */\n          foo: Props;\n        }\n        declare const x: Props;\n        const { foo = x } = x;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { DeprecatedClass } from './deprecated';\n\n        const foo = new DeprecatedClass();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { DeprecatedClass } from './deprecated';\n\n        declare function inject(something: new () =\u003e unknown): void;\n\n        inject(DeprecatedClass);\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { deprecatedVariable } from './deprecated';\n\n        const foo = deprecatedVariable;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { DeprecatedClass } from './deprecated';\n\n        declare const x: DeprecatedClass;\n\n        const { foo } = x;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { deprecatedFunction } from './deprecated';\n\n        deprecatedFunction();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = new imported.NormalClass();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { NormalClass } from './deprecated';\n\n        const foo = new NormalClass();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.NormalClass;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { NormalClass } from './deprecated';\n\n        const foo = NormalClass;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { normalVariable } from './deprecated';\n\n        const foo = normalVariable;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.normalVariable;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const { normalVariable } = imported;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { deprecatedVariable } from './deprecated';\n\n        const test = {\n          someField: deprecatedVariable,\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { normalFunction } from './deprecated';\n\n        const foo = normalFunction;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.normalFunction;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const { normalFunction } = imported;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { normalFunction } from './deprecated';\n\n        const foo = normalFunction();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.normalFunction();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { deprecatedFunctionWithOverloads } from './deprecated';\n\n        const foo = deprecatedFunctionWithOverloads('a');\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.deprecatedFunctionWithOverloads('a');\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { reexportedDeprecatedFunctionWithOverloads } from './deprecated';\n\n        const foo = reexportedDeprecatedFunctionWithOverloads;\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.reexportedDeprecatedFunctionWithOverloads;\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const { reexportedDeprecatedFunctionWithOverloads } = imported;\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { reexportedDeprecatedFunctionWithOverloads } from './deprecated';\n\n        const foo = reexportedDeprecatedFunctionWithOverloads();\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.reexportedDeprecatedFunctionWithOverloads();\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { reexportedDeprecatedFunctionWithOverloads } from './deprecated';\n\n        const foo = reexportedDeprecatedFunctionWithOverloads('a');\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.reexportedDeprecatedFunctionWithOverloads('a');\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { ClassWithDeprecatedConstructor } from './deprecated';\n\n        const foo = new ClassWithDeprecatedConstructor('a');\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = new imported.ClassWithDeprecatedConstructor('a');\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { ReexportedClassWithDeprecatedConstructor } from './deprecated';\n\n        const foo = ReexportedClassWithDeprecatedConstructor;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.ReexportedClassWithDeprecatedConstructor;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const { ReexportedClassWithDeprecatedConstructor } = imported;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { ReexportedClassWithDeprecatedConstructor } from './deprecated';\n\n        const foo = ReexportedClassWithDeprecatedConstructor();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.ReexportedClassWithDeprecatedConstructor();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { ReexportedClassWithDeprecatedConstructor } from './deprecated';\n\n        const foo = ReexportedClassWithDeprecatedConstructor('a');\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as imported from './deprecated';\n\n        const foo = imported.ReexportedClassWithDeprecatedConstructor('a');\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import imported from './deprecated';\n\n        imported;\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        async function fn() {\n          const d = await import('./deprecated.js');\n          d.default.default;\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        interface Foo {}\n\n        class Bar implements Foo {}\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        interface Foo {}\n\n        export class Bar implements Foo {}\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        interface Foo {}\n\n        interface Baz {}\n\n        export class Bar implements Baz, Foo {}\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        class Foo {}\n\n        export class Bar extends Foo {}\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        declare function decorator(constructor: Function);\n\n        @decorator\n        export class Foo {}\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        /** @deprecated */\n        function a(): object {\n          return {};\n        }\n\n        export default a();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass A {\n  /** @deprecated */\n  constructor() {}\n}\n\nclass B extends A {\n  constructor() {\n    /** should report but does not */\n    super();\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass A {\n  /** @deprecated test reason*/\n  constructor() {}\n}\n\nclass B extends A {\n  constructor() {\n    /** should report but does not */\n    super();\n  }\n}\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const a = \u003cdiv aria-grabbed\u003e\u003c/div\u003e;",
+          "skip": true,
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare namespace JSX {\n          interface IntrinsicElements {\n            'foo-bar:baz-bam': {\n              name: string;\n              /**\n               * @deprecated\n               */\n              deprecatedProp: string;\n            };\n          }\n        }\n\n        const componentDashed = \u003cfoo-bar:baz-bam name=\"e\" deprecatedProp=\"oh no\" /\u003e;\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import * as React from 'react';\n\n        interface Props {\n          /**\n           * @deprecated\n           */\n          deprecatedProp: string;\n        }\n\n        interface Tab {\n          List: React.FC\u003cProps\u003e;\n        }\n\n        const Tab: Tab = {\n          List: () =\u003e \u003cdiv\u003eHi\u003c/div\u003e,\n        };\n\n        const anotherExample = \u003cTab.List deprecatedProp=\"oh no\" /\u003e;\n      ",
+          "skip": true,
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nimport { exists } from 'fs';\nexists('/foo');\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "package",
+                "name": "exists",
+                "package": "hoge"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated */\n          accessor b: () =\u003e string;\n        }\n\n        declare const a: A;\n\n        a.b;\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated */\n          accessor b: () =\u003e string;\n        }\n\n        declare const a: A;\n\n        a.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          /** @deprecated */\n          accessor b = (): string =\u003e {\n            return '';\n          };\n        }\n\n        declare const a: A;\n\n        a.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        declare class A {\n          /** @deprecated */\n          static accessor b: () =\u003e string;\n        }\n\n        A.b();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class A {\n          /** @deprecated */\n          #b = () =\u003e {};\n\n          c() {\n            this.#b();\n          }\n        }\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = {\n          /** @deprecated */\n          b: 'string',\n        };\n\n        const c = a['b'];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = {\n          /** @deprecated */\n          b: 'string',\n        };\n        const x = 'b';\n        const c = a[x];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = {\n          /** @deprecated */\n          [2]: 'string',\n        };\n        const x = 'b';\n        const c = a[2];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = {\n          /** @deprecated reason for deprecation */\n          b: 'string',\n        };\n\n        const key = 'b';\n        const stringKey = key as const;\n        const c = a[stringKey];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        enum Keys {\n          B = 'b',\n        }\n\n        const a = {\n          /** @deprecated reason for deprecation */\n          b: 'string',\n        };\n\n        const key = Keys.B;\n        const c = a[key];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const a = {\n          /** @deprecated */\n          b: 'string',\n        };\n\n        const key = `b`;\n        const c = a[key];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const stringObj = 'b';\n        const a = {\n          /** @deprecated */\n          b: 'string',\n        };\n        const c = a[stringObj];\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        import { deprecatedFunction } from './deprecated';\n\n        export { deprecatedFunction };\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        export { deprecatedFunction } from './deprecated';\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        export type { T, U } from './deprecated';\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        export { default as foo } from './deprecated';\n      ",
+          "skip": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        export { deprecatedFunction as bar } from './deprecated';\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Base {\n          /** @deprecated */\n          searchPaths(): string[] { return []; }\n        }\n        class Child extends Base {}\n        const child = new Child();\n        child.searchPaths();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        class Base {\n          /** @deprecated use newMethod() instead */\n          searchPaths(): string[] { return []; }\n        }\n        class Child extends Base {}\n        const child = new Child();\n        child.searchPaths();\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface ErrorOptions {\n          /** @deprecated Use code instead. */\n          \"\": number;\n\n          /** @deprecated Use status instead. */\n          statusCode?: number;\n\n          status?: number;\n        }\n\n        interface MethodOptions {\n          /** @deprecated Use status instead. */\n          statusCode(): number;\n        }\n\n        declare function showError(error: ErrorOptions): void;\n        declare function showMethodError(error: MethodOptions): void;\n        declare const emptyName: '';\n        declare const statusCode: number;\n        declare const statusCodeName: 'statusCode';\n\n        showError({\n          \"\": 500,\n        });\n\n        showError({\n          [\"\"]: 500,\n        });\n\n        showError({\n          [emptyName]: 500,\n        });\n\n        showError({\n          statusCode: 500,\n        });\n\n        showError({\n          statusCode,\n        });\n\n        showError({\n          ['statusCode']: 500,\n        });\n\n        showError({\n          [statusCodeName]: 500,\n        });\n\n        showError({\n          get statusCode() {\n            return 500;\n          },\n        });\n\n        showError({\n          set statusCode(value: number) {},\n        });\n\n        showMethodError({\n          statusCode() {\n            return 500;\n          },\n        });\n      ",
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 24,
+              "column": 11,
+              "endColumn": 13,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 28,
+              "column": 11,
+              "endColumn": 15,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 32,
+              "column": 11,
+              "endColumn": 22,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 36,
+              "column": 11,
+              "endColumn": 21,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 40,
+              "column": 11,
+              "endColumn": 21,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 44,
+              "column": 11,
+              "endColumn": 25,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 48,
+              "column": 11,
+              "endColumn": 27,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 52,
+              "column": 15,
+              "endColumn": 25,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 58,
+              "column": 15,
+              "endColumn": 25,
+              "suggestions": []
+            },
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 62,
+              "column": 11,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        interface ErrorOptions {\n          /** @deprecated Use status instead. */\n          statusCode?: number;\n\n          status?: number;\n        }\n\n        declare function showError(error: ErrorOptions): void;\n\n        showError({\n          statusCode: 500,\n        });\n      ",
+          "options": {
+            "allow": [
+              {
+                "from": "file",
+                "name": "statusCode",
+                "path": "other-file.ts"
+              }
+            ]
+          },
+          "errors": [
+            {
+              "messageId": "deprecatedWithReason",
+              "line": 12,
+              "column": 11,
+              "endColumn": 21,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "interface Something {\n  /**\n   * @deprecated\n   */\n  field: number;\n}\nfunction bar(_options: Something) {\n}\nbar({ field: 0 });",
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "line": 9,
+              "column": 7,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "interface SomethingProps {\n  /**\n   * @deprecated\n   */\n  field: number;\n}\nfunction Foo(props: SomethingProps) {\n}\nconst jsx = \u003cFoo field={0} /\u003e;",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "deprecated",
+              "line": 9,
+              "column": 18,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

@@ -1,0 +1,784 @@
+{
+  "source": "no_unsafe_assignment_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.noImplicitThis.json",
+      "valid": [
+        {
+          "code": "const x = 1;"
+        },
+        {
+          "code": "const x: number = 1;"
+        },
+        {
+          "code": "\nconst x = 1,\n  y = 1;\n    "
+        },
+        {
+          "code": "let x;"
+        },
+        {
+          "code": "\nlet x = 1,\n  y;\n    "
+        },
+        {
+          "code": "function foo(a = 1) {}"
+        },
+        {
+          "code": "\nclass Foo {\n  constructor(private a = 1) {}\n}\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  private a = 1;\n}\n    "
+        },
+        {
+          "code": "\nclass Foo {\n  accessor a = 1;\n}\n    "
+        },
+        {
+          "code": "const x: Set\u003cstring\u003e = new Set();"
+        },
+        {
+          "code": "const x: Set\u003cstring\u003e = new Set\u003cstring\u003e();"
+        },
+        {
+          "code": "const [x] = [1];"
+        },
+        {
+          "code": "const [x, y] = [1, 2] as number[];"
+        },
+        {
+          "code": "const [x, ...y] = [1, 2, 3, 4, 5];"
+        },
+        {
+          "code": "const [x, ...y] = [1];"
+        },
+        {
+          "code": "const [{ ...x }] = [{ x: 1 }] as [{ x: any }];"
+        },
+        {
+          "code": "function foo(x = 1) {}"
+        },
+        {
+          "code": "function foo([x] = [1]) {}"
+        },
+        {
+          "code": "function foo([x, ...y] = [1, 2, 3, 4, 5]) {}"
+        },
+        {
+          "code": "function foo([x, ...y] = [1]) {}"
+        },
+        {
+          "code": "const x = new Set\u003cany\u003e();"
+        },
+        {
+          "code": "const x = { y: 1 };"
+        },
+        {
+          "code": "const x = { y = 1 };",
+          "skip": true
+        },
+        {
+          "code": "const x = { y(){} };"
+        },
+        {
+          "code": "const x: { y: number } = { y: 1 };"
+        },
+        {
+          "code": "const x = [...[1, 2, 3]];"
+        },
+        {
+          "code": "const [{ [`x${1}`]: x }] = [{ [`x`]: 1 }] as [{ [`x`]: any }];"
+        },
+        {
+          "code": "\ntype T = [string, T[]];\nconst test: T = ['string', []] as T;\n    "
+        },
+        {
+          "code": "\ntype Props = { a: string };\ndeclare function Foo(props: Props): never;\n\u003cFoo a={'foo'} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ndeclare function Foo(props: { a: string }): never;\n\u003cFoo a=\"foo\" /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "\ndeclare function Foo(props: { a: string }): never;\n\u003cFoo a={} /\u003e;\n      ",
+          "tsx": true
+        },
+        {
+          "code": "const x: unknown = y as any;"
+        },
+        {
+          "code": "const x: unknown[] = y as any[];"
+        },
+        {
+          "code": "const x: Set\u003cunknown\u003e = y as Set\u003cany\u003e;"
+        },
+        {
+          "code": "const x: Map\u003cstring, string\u003e = new Map();"
+        },
+        {
+          "code": "\ntype Foo = { bar: unknown };\nconst bar: any = 1;\nconst foo: Foo = { bar };\n    "
+        },
+        {
+          "code": "\ndeclare const foo: any;\nlet a = 1;\n\na+= foo;\n\t\t"
+        }
+      ],
+      "invalid": [
+        {
+          "code": "const x = 1 as any;",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "column": 9,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x = 1 as any,\n  y = 1;\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo(a = 1 as any) {}",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  constructor(private a = 1 as any) {}\n}\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  private a = 1 as any;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Foo {\n  accessor a = 1 as any;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst [x] = spooky;\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst [[[x]]] = [spooky];\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst {\n  x: { y: z },\n} = { x: spooky };\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "suggestions": []
+            },
+            {
+              "messageId": "anyAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet value: number;\n\nvalue = spooky;\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "line": 4,
+              "column": 7,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst [x] = 1 as any;\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst [x] = [] as any[];\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPattern",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x: Set\u003cstring\u003e = new Set\u003cany\u003e();",
+          "errors": [
+            {
+              "messageId": "unsafeAssignment",
+              "column": 22,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x: Map\u003cstring, string\u003e = new Map\u003cstring, any\u003e();",
+          "errors": [
+            {
+              "messageId": "unsafeAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x: Set\u003cstring[]\u003e = new Set\u003cany[]\u003e();",
+          "errors": [
+            {
+              "messageId": "unsafeAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x: Set\u003cSet\u003cSet\u003cstring\u003e\u003e\u003e = new Set\u003cSet\u003cSet\u003cany\u003e\u003e\u003e();",
+          "errors": [
+            {
+              "messageId": "unsafeAssignment",
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const [x] = [1] as [any]",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 8,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo([x] = [1] as [any]) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 15,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "([x] = [1] as [any])",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 3,
+              "endColumn": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const [[[[x]]]] = [[[[1 as any]]]]",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 11,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo([[[[x]]]] = [[[[1 as any]]]]) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 18,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "([[[[x]]]] = [[[[1 as any]]]])",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 6,
+              "endColumn": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const [[[[x]]]] = [1 as any]",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 8,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo([[[[x]]]] = [1 as any]) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 15,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const [{x}] = [{x: 1}] as [{x: any}]",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 9,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo([{x}] = [{x: 1}] as [{x: any}]) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 16,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "([{x}] = [{x: 1}] as [{x: any}])",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 4,
+              "endColumn": 5,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const [{['x']: x}] = [{['x']: 1}] as [{['x']: any}]",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 16,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo([{['x']: x}] = [{['x']: 1}] as [{['x']: any}]) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 23,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "([{['x']: x}] = [{['x']: 1}] as [{['x']: any}])",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 11,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const [{[`x`]: x}] = [{[`x`]: 1}] as [{[`x`]: any}]",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 16,
+              "endColumn": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo([{[`x`]: x}] = [{[`x`]: 1}] as [{[`x`]: any}]) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 23,
+              "endColumn": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "([{[`x`]: x}] = [{[`x`]: 1}] as [{[`x`]: any}])",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 11,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "[[[[x]]]] = [1 as any];",
+          "errors": [
+            {
+              "messageId": "unsafeAssignment",
+              "line": 1,
+              "column": 11,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x = [...(1 as any)];\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArraySpread",
+              "line": 2,
+              "column": 12,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst x = [...([] as any[])];\n      ",
+          "errors": [
+            {
+              "messageId": "unsafeArraySpread",
+              "line": 2,
+              "column": 12,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const {x} = {x: 1} as {x: any}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 8,
+              "endColumn": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo({x} = {x: 1} as {x: any}) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 15,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "({x} = {x: 1} as {x: any})",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 3,
+              "endColumn": 4,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const {x: y} = {x: 1} as {x: any}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 11,
+              "endColumn": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo({x: y} = {x: 1} as {x: any}) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 18,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "({x: y} = {x: 1} as {x: any})",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 6,
+              "endColumn": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const {x: {y}} = {x: {y: 1}} as {x: {y: any}}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 12,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo({x: {y}} = {x: {y: 1}} as {x: {y: any}}) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 19,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "({x: {y}} = {x: {y: 1}} as {x: {y: any}})",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 7,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const {x: [y]} = {x: {y: 1}} as {x: [any]}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 12,
+              "endColumn": 13,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "function foo({x: [y]} = {x: {y: 1}} as {x: [any]}) {}",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 19,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "({x: [y]} = {x: {y: 1}} as {x: [any]})",
+          "errors": [
+            {
+              "messageId": "unsafeArrayPatternFromTuple",
+              "line": 1,
+              "column": 7,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x = { y: 1 as any };",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "column": 14,
+              "endColumn": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x = { y: { z: 1 as any } };",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "column": 19,
+              "endColumn": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x: { y: Set\u003cSet\u003cSet\u003cstring\u003e\u003e\u003e } = { y: new Set\u003cSet\u003cSet\u003cany\u003e\u003e\u003e() };",
+          "errors": [
+            {
+              "messageId": "unsafeAssignment",
+              "column": 44,
+              "endColumn": 45,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const x = { ...(1 as any) };",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "column": 9,
+              "endColumn": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Props = { a: string };\ndeclare function Foo(props: Props): never;\n\u003cFoo a={1 as any} /\u003e;\n      ",
+          "tsx": true,
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "line": 4,
+              "column": 7,
+              "endColumn": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo() {\n  const bar = this;\n}\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignmentThis",
+              "line": 3,
+              "column": 13,
+              "endColumn": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype T = [string, T[]];\nconst test: T = ['string', []] as any;\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "line": 3,
+              "column": 15,
+              "endColumn": 16,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = { bar: number };\nconst bar: any = 1;\nconst foo: Foo = { bar };\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "line": 4,
+              "column": 20,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ndeclare const foo: any;\ninterface Bar {\n  bar: number\n}\n\nclass Foo {\n  constructor(\n    private readonly param: Bar = Object.create(null)\n  ) {}\n}\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "line": 9,
+              "column": 33,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nlet foo: { foo: 1 };\n\nfoo = { bar: 2 } as any;\n      ",
+          "errors": [
+            {
+              "messageId": "anyAssignment",
+              "line": 4,
+              "column": 5,
+              "endColumn": 6,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

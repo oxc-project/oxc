@@ -1,0 +1,152 @@
+{
+  "source": "related_getter_setter_pairs_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.minimal.json",
+      "valid": [
+        {
+          "code": "\ninterface Example {\n  get value(): string;\n  set value(newValue: string);\n}\n    "
+        },
+        {
+          "code": "\ninterface Example {\n  get value(): string | undefined;\n  set value();\n}\n    "
+        },
+        {
+          "code": "\ninterface Example {\n  get value(): string | undefined;\n  set value(newValue: string, invalid: string);\n}\n    "
+        },
+        {
+          "code": "\ninterface Example {\n  get value(): string;\n  set value(newValue: string | undefined);\n}\n    "
+        },
+        {
+          "code": "\ninterface Example {\n  get value(): number;\n}\n    "
+        },
+        {
+          "code": "\ninterface Example {\n  get value(): number;\n  set value();\n}\n    "
+        },
+        {
+          "code": "\ninterface Example {\n  set value(newValue: string);\n}\n    "
+        },
+        {
+          "code": "\ninterface Example {\n  set value();\n}\n    "
+        },
+        {
+          "code": "\ntype Example = {\n  get value();\n};\n    "
+        },
+        {
+          "code": "\ntype Example = {\n  set value();\n};\n    "
+        },
+        {
+          "code": "\nclass Example {\n  get value() {\n    return '';\n  }\n}\n    "
+        },
+        {
+          "code": "\nclass Example {\n  get value() {\n    return '';\n  }\n  set value() {}\n}\n    "
+        },
+        {
+          "code": "\nclass Example {\n  get value() {\n    return '';\n  }\n  set value(param) {}\n}\n    "
+        },
+        {
+          "code": "\nclass Example {\n  get value() {\n    return '';\n  }\n  set value(param: number) {}\n}\n    "
+        },
+        {
+          "code": "\nclass Example {\n  set value() {}\n}\n    "
+        },
+        {
+          "code": "\ntype Example = {\n  get value(): number;\n  set value(newValue: number);\n};\n    "
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\ninterface Example {\n  get value(): string | undefined;\n  set value(newValue: string);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mismatch",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ninterface Example {\n  get value(): number;\n  set value(newValue: string);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mismatch",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Example = {\n  get value(): number;\n  set value(newValue: string);\n};\n      ",
+          "errors": [
+            {
+              "messageId": "mismatch",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 22,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nclass Example {\n  get value(): boolean {\n    return true;\n  }\n  set value(newValue: string) {}\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mismatch",
+              "line": 3,
+              "column": 16,
+              "endLine": 3,
+              "endColumn": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype GetType = { a: string; b: string };\n\ndeclare class Foo {\n  get a(): GetType;\n\n  set a(x: { c: string });\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mismatch",
+              "line": 5,
+              "column": 12,
+              "endLine": 5,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype GetType = { a: string; b: string };\n\ntype SetTypeUnused = { c: string };\n\ndeclare class Foo {\n  get a(): GetType;\n\n  set a(x: { c: string });\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mismatch",
+              "line": 7,
+              "column": 12,
+              "endLine": 7,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype GetType = { a: string; b: string };\n\ntype SetType = { c: string };\n\ndeclare class Foo {\n  get a(): GetType;\n\n  set a(x: SetType);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "mismatch",
+              "line": 7,
+              "column": 12,
+              "endLine": 7,
+              "endColumn": 19,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}

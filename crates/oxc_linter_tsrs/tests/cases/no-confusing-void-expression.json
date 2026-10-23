@@ -1,0 +1,1144 @@
+{
+  "source": "no_confusing_void_expression_test.go",
+  "groups": [
+    {
+      "tsconfig": "tsconfig.json",
+      "valid": [
+        {
+          "code": "() =\u003e Math.random();"
+        },
+        {
+          "code": "console.log('foo');"
+        },
+        {
+          "code": "foo \u0026\u0026 console.log(foo);"
+        },
+        {
+          "code": "foo || console.log(foo);"
+        },
+        {
+          "code": "foo ? console.log(true) : console.log(false);"
+        },
+        {
+          "code": "console?.log('foo');"
+        },
+        {
+          "code": "\n        () =\u003e console.log('foo');\n      ",
+          "options": {
+            "ignoreArrowShorthand": true
+          }
+        },
+        {
+          "code": "\n        foo =\u003e foo \u0026\u0026 console.log(foo);\n      ",
+          "options": {
+            "ignoreArrowShorthand": true
+          }
+        },
+        {
+          "code": "\n        foo =\u003e foo || console.log(foo);\n      ",
+          "options": {
+            "ignoreArrowShorthand": true
+          }
+        },
+        {
+          "code": "\n        foo =\u003e (foo ? console.log(true) : console.log(false));\n      ",
+          "options": {
+            "ignoreArrowShorthand": true
+          }
+        },
+        {
+          "code": "\n        !void console.log('foo');\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        +void (foo \u0026\u0026 console.log(foo));\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        -void (foo || console.log(foo));\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        () =\u003e void ((foo \u0026\u0026 void console.log(true)) || console.log(false));\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        const x = void (foo ? console.log(true) : console.log(false));\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        !(foo \u0026\u0026 void console.log(foo));\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        !!(foo || void console.log(foo));\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        const x = (foo \u0026\u0026 void console.log(true)) || void console.log(false);\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        () =\u003e (foo ? void console.log(true) : void console.log(false));\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\n        return void console.log('foo');\n      ",
+          "options": {
+            "ignoreVoidOperator": true
+          }
+        },
+        {
+          "code": "\nfunction cool(input: string) {\n  return console.log(input), input;\n}\n    "
+        },
+        {
+          "code": "\nfunction cool(input: string) {\n  return input, console.log(input), input;\n}\n      ",
+          "skip": true
+        },
+        {
+          "code": "\nfunction test(): void {\n  return console.log('bar');\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nconst test = (): void =\u003e {\n  return console.log('bar');\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nconst test = (): void =\u003e console.log('bar');\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nfunction test(): void {\n  {\n    return console.log('foo');\n  }\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nconst obj = {\n  test(): void {\n    return console.log('foo');\n  },\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nclass Foo {\n  test(): void {\n    return console.log('foo');\n  }\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nfunction test() {\n  function nestedTest(): void {\n    return console.log('foo');\n  }\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = () =\u003e void;\nconst test = (() =\u003e console.log()) as Foo;\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = {\n  foo: () =\u003e void;\n};\nconst test: Foo = {\n  foo: () =\u003e console.log(),\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nconst test = {\n  foo: () =\u003e console.log(),\n} as {\n  foo: () =\u003e void;\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nconst test: {\n  foo: () =\u003e void;\n} = {\n  foo: () =\u003e console.log(),\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = {\n  foo: { bar: () =\u003e void };\n};\n\nconst test = {\n  foo: { bar: () =\u003e console.log() },\n} as Foo;\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = {\n  foo: { bar: () =\u003e void };\n};\n\nconst test: Foo = {\n  foo: { bar: () =\u003e console.log() },\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype MethodType = () =\u003e void;\n\nclass App {\n  private method: MethodType = () =\u003e console.log();\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ninterface Foo {\n  foo: () =\u003e void;\n}\n\nfunction bar(): Foo {\n  return {\n    foo: () =\u003e console.log(),\n  };\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = () =\u003e () =\u003e () =\u003e void;\nconst x: Foo = () =\u003e () =\u003e () =\u003e console.log();\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = {\n  foo: () =\u003e void;\n};\n\nconst test = {\n  foo: () =\u003e console.log(),\n} as Foo;\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = () =\u003e void;\nconst test: Foo = () =\u003e console.log('foo');\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ninterface Props {\n  onEvent: () =\u003e void\n}\n\ndeclare function Component(props: Props): any;\n\n\u003cComponent onEvent={() =\u003e console.log()} /\u003e;\n\t\t\t",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "tsx": true
+        },
+        {
+          "code": "\ndeclare function foo(arg: () =\u003e void): void;\nfoo(() =\u003e console.log());\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ndeclare function foo(arg: (() =\u003e void) | (() =\u003e string)): void;\nfoo(() =\u003e console.log());\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ndeclare function foo(arg: (() =\u003e void) | (() =\u003e string) | string): void;\nfoo(() =\u003e console.log());\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ndeclare function foo(arg: () =\u003e void | string): void;\nfoo(() =\u003e console.log());\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ndeclare function foo(options: { cb: () =\u003e void }): void;\nfoo({ cb: () =\u003e console.log() });\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nconst obj = {\n  foo: { bar: () =\u003e console.log() },\n} as {\n  foo: { bar: () =\u003e void };\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nfunction test(): void \u0026 void {\n  return console.log('foo');\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = void;\n\ndeclare function foo(): Foo;\n\nfunction test(): Foo {\n  return foo();\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\ntype Foo = void;\nconst test = (): Foo =\u003e console.log('err');\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nconst test: () =\u003e any = (): void =\u003e console.log();\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nfunction test(): void | string {\n  return console.log('bar');\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        },
+        {
+          "code": "\nexport function makeDate(): Date;\nexport function makeDate(m: number): void;\nexport function makeDate(m?: number): Date | void {\n  if (m !== undefined) {\n    return console.log('123');\n  }\n  return new Date();\n}\n\ndeclare const test: (cb: () =\u003e void) =\u003e void;\n\ntest((() =\u003e {\n  return console.log('123');\n}) as typeof makeDate | (() =\u003e string));\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          }
+        }
+      ],
+      "invalid": [
+        {
+          "code": "\n        const x = console.log('foo');\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const x = console?.log('foo');\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 19,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        console.error(console.log('foo'));\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        [console.log('foo')];\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        ({ x: console.log('foo') });\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        void console.log('foo');\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 14,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        console.log('foo') ? true : false;\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 9,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        (console.log('foo') \u0026\u0026 true) || false;\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        (cond \u0026\u0026 console.log('ok')) || console.log('error');\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        !console.log('foo');\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction notcool(input: string) {\n  return input, console.log(input);\n}\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExpr",
+              "line": 3,
+              "column": 17,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "() =\u003e console.log('foo');",
+          "output": [
+            "() =\u003e{  console.log('foo'); };"
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 7,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo =\u003e foo \u0026\u0026 console.log(foo);",
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(foo: undefined) =\u003e foo \u0026\u0026 console.log(foo);",
+          "output": [
+            "(foo: undefined) =\u003e{  foo \u0026\u0026 console.log(foo); };"
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo =\u003e foo || console.log(foo);",
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(foo: undefined) =\u003e foo || console.log(foo);",
+          "output": [
+            "(foo: undefined) =\u003e{  foo || console.log(foo); };"
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "(foo: void) =\u003e foo || console.log(foo);",
+          "output": [
+            "(foo: void) =\u003e{  foo || console.log(foo); };"
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 23,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "foo =\u003e (foo ? console.log(true) : console.log(false));",
+          "output": [
+            "foo =\u003e{ foo ? console.log(true) : console.log(false); };"
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 15,
+              "suggestions": []
+            },
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 35,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f() {\n          return console.log('foo');\n          console.log('bar');\n        }\n      ",
+          "output": [
+            "\n        function f() {\n           console.log('foo');; return;\n          console.log('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturn",
+              "line": 3,
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f() {\n          console.log('foo')\n          return ['bar', 'baz'].forEach(console.log)\n          console.log('quux')\n        }\n      ",
+          "output": [
+            "\n        function f() {\n          console.log('foo')\n          ; ['bar', 'baz'].forEach(console.log); return;\n          console.log('quux')\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturn",
+              "line": 4,
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f() {\n          console.log('foo');\n          return console.log('bar');\n        }\n      ",
+          "output": [
+            "\n        function f() {\n          console.log('foo');\n           console.log('bar');\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 4,
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        function f() {\n          console.log('foo')\n          return ['bar', 'baz'].forEach(console.log)\n        }\n      ",
+          "output": [
+            "\n        function f() {\n          console.log('foo')\n          ; ['bar', 'baz'].forEach(console.log)\n        }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 4,
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const f = () =\u003e {\n          if (cond) {\n            return console.error('foo');\n          }\n          console.log('bar');\n        };\n      ",
+          "output": [
+            "\n        const f = () =\u003e {\n          if (cond) {\n             console.error('foo');; return;\n          }\n          console.log('bar');\n        };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturn",
+              "line": 4,
+              "column": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const f = function () {\n          if (cond) return console.error('foo');\n          console.log('bar');\n        };\n      ",
+          "output": [
+            "\n        const f = function () {\n          if (cond) {  console.error('foo');; return; }\n          console.log('bar');\n        };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturn",
+              "line": 3,
+              "column": 28,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const f = function () {\n          let num = 1;\n          return num ? console.log('foo') : num;\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 4,
+              "column": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const f = function () {\n          let undef = undefined;\n          return undef ? console.log('foo') : undef;\n        };\n      ",
+          "output": [
+            "\n        const f = function () {\n          let undef = undefined;\n           undef ? console.log('foo') : undef;\n        };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 4,
+              "column": 26,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const f = function () {\n          let num = 1;\n          return num || console.log('foo');\n        };\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 4,
+              "column": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        const f = function () {\n          let bar = void 0;\n          return bar || console.log('foo');\n        };\n      ",
+          "output": [
+            "\n        const f = function () {\n          let bar = void 0;\n           bar || console.log('foo');\n        };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 4,
+              "column": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        let num = 1;\n        const foo = () =\u003e (num ? console.log('foo') : num);\n      ",
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        let bar = void 0;\n        const foo = () =\u003e (bar ? console.log('foo') : bar);\n      ",
+          "output": [
+            "\n        let bar = void 0;\n        const foo = () =\u003e{ bar ? console.log('foo') : bar; };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 34,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "return console.log('foo');",
+          "options": {
+            "ignoreVoidOperator": true
+          },
+          "output": [
+            "return void console.log('foo');"
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnWrapVoid",
+              "line": 1,
+              "column": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "console.error(console.log('foo'));",
+          "options": {
+            "ignoreVoidOperator": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidVoidExprWrapVoid",
+              "line": 1,
+              "column": 15,
+              "suggestions": [
+                {
+                  "messageId": "voidExprWrapVoid",
+                  "output": "console.error(void console.log('foo'));"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "console.log('foo') ? true : false;",
+          "options": {
+            "ignoreVoidOperator": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidVoidExprWrapVoid",
+              "line": 1,
+              "column": 1,
+              "suggestions": [
+                {
+                  "messageId": "voidExprWrapVoid",
+                  "output": "void console.log('foo') ? true : false;"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "const x = foo ?? console.log('foo');",
+          "options": {
+            "ignoreVoidOperator": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidVoidExprWrapVoid",
+              "line": 1,
+              "column": 18,
+              "suggestions": [
+                {
+                  "messageId": "voidExprWrapVoid",
+                  "output": "const x = foo ?? void console.log('foo');"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "foo =\u003e foo || console.log(foo);",
+          "options": {
+            "ignoreVoidOperator": true
+          },
+          "output": [
+            "foo =\u003e foo || void console.log(foo);"
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrowWrapVoid",
+              "line": 1,
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "!!console.log('foo');",
+          "options": {
+            "ignoreVoidOperator": true
+          },
+          "errors": [
+            {
+              "messageId": "invalidVoidExprWrapVoid",
+              "line": 1,
+              "column": 3,
+              "suggestions": [
+                {
+                  "messageId": "voidExprWrapVoid",
+                  "output": "!!void console.log('foo');"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test() {\n  return console.log('foo');\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nfunction test() {\n   console.log('foo');\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "const test = () =\u003e console.log('foo');",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "const test = () =\u003e{  console.log('foo'); };"
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 1,
+              "column": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst test = () =\u003e {\n  return console.log('foo');\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nconst test = () =\u003e {\n   console.log('foo');\n};\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction foo(): void {\n  const bar = () =\u003e {\n    return console.log();\n  };\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nfunction foo(): void {\n  const bar = () =\u003e {\n     console.log();\n  };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        (): any =\u003e console.log('foo');\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\n        (): any =\u003e{  console.log('foo'); };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 2,
+              "column": 20,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\n        (): unknown =\u003e console.log('foo');\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\n        (): unknown =\u003e{  console.log('foo'); };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 2,
+              "column": 24,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(): void {\n  () =\u003e () =\u003e console.log();\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nfunction test(): void {\n  () =\u003e () =\u003e{  console.log(); };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = any;\n(): Foo =\u003e console.log();\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\ntype Foo = any;\n(): Foo =\u003e{  console.log(); };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = unknown;\n(): Foo =\u003e console.log();\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\ntype Foo = unknown;\n(): Foo =\u003e{  console.log(); };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(): any {\n  () =\u003e () =\u003e console.log();\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nfunction test(): any {\n  () =\u003e () =\u003e{  console.log(); };\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 15,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(): unknown {\n  return console.log();\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nfunction test(): unknown {\n   console.log();\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(): any {\n  return console.log();\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nfunction test(): any {\n   console.log();\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 3,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = () =\u003e any;\n(): Foo =\u003e () =\u003e console.log();\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\ntype Foo = () =\u003e any;\n(): Foo =\u003e () =\u003e{  console.log(); };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = () =\u003e unknown;\n(): Foo =\u003e () =\u003e console.log();\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\ntype Foo = () =\u003e unknown;\n(): Foo =\u003e () =\u003e{  console.log(); };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 18,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = () =\u003e any;\nconst test: Foo = () =\u003e console.log();\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\ntype Foo = () =\u003e any;\nconst test: Foo = () =\u003e{  console.log(); };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = () =\u003e unknown;\nconst test: Foo = () =\u003e console.log();\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\ntype Foo = () =\u003e unknown;\nconst test: Foo = () =\u003e{  console.log(); };\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprArrow",
+              "line": 3,
+              "column": 25,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\ntype Foo = () =\u003e void;\n\nconst foo: Foo = function () {\n  function bar() {\n    return console.log();\n  }\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\ntype Foo = () =\u003e void;\n\nconst foo: Foo = function () {\n  function bar() {\n     console.log();\n  }\n};\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 6,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nconst foo = function () {\n  function bar() {\n    return console.log();\n  }\n};\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nconst foo = function () {\n  function bar() {\n     console.log();\n  }\n};\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 4,
+              "column": 12,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nreturn console.log('foo');\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\n{  console.log('foo');; return; }\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturn",
+              "line": 2,
+              "column": 8,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(): void;\nfunction test(arg: string): any;\nfunction test(arg?: string): any | void {\n  if (arg) {\n    return arg;\n  }\n  return console.log();\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nfunction test(): void;\nfunction test(arg: string): any;\nfunction test(arg?: string): any | void {\n  if (arg) {\n    return arg;\n  }\n   console.log();\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 8,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        },
+        {
+          "code": "\nfunction test(arg: string): any;\nfunction test(): void;\nfunction test(arg?: string): any | void {\n  if (arg) {\n    return arg;\n  }\n  return console.log();\n}\n      ",
+          "options": {
+            "ignoreVoidReturningFunctions": true
+          },
+          "output": [
+            "\nfunction test(arg: string): any;\nfunction test(): void;\nfunction test(arg?: string): any | void {\n  if (arg) {\n    return arg;\n  }\n   console.log();\n}\n      "
+          ],
+          "errors": [
+            {
+              "messageId": "invalidVoidExprReturnLast",
+              "line": 8,
+              "column": 10,
+              "suggestions": []
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "unconverted": []
+}
