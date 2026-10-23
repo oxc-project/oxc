@@ -253,3 +253,38 @@ source: crates/oxc_linter/src/tester.rs
    ·         ▲
    ╰────
   help: Rename the file to 'foo-bar.vue'
+
+  ⚠ unicorn(filename-case): Directory name should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'foo-bar'
+
+  ⚠ unicorn(filename-case): Directory name should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'foo-bar'
+
+  ⚠ unicorn(filename-case): Directory name should be in camelCase
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'fooBar'
+
+  ⚠ unicorn(filename-case): Directory name should be in PascalCase
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'Src'
+
+  ⚠ unicorn(filename-case): Directory name should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'bad-dir'
+
+  ⚠ unicorn(filename-case): Directory name should be in camelCase
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'fooBar'
+
+  ⚠ unicorn(filename-case): Directory name should be in kebab-case
+   ╭─[filename_case.tsx:1:1]
+   ╰────
+  help: Rename the directory to 'foobar'

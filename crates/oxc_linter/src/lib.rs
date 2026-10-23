@@ -286,6 +286,7 @@ pub struct Linter {
     config: ConfigStore,
     external_linter: Option<ExternalLinter>,
     workspace_uri: Option<Box<str>>,
+    cwd: Option<Box<Path>>,
 }
 
 impl Linter {
@@ -294,7 +295,15 @@ impl Linter {
         config: ConfigStore,
         external_linter: Option<ExternalLinter>,
     ) -> Self {
-        Self { options, config, external_linter, workspace_uri: None }
+        Self { options, config, external_linter, workspace_uri: None, cwd: None }
+    }
+
+    /// Set the working directory used to resolve linted file paths relative to
+    /// the project root (e.g. for rules that check directory names).
+    #[must_use]
+    pub fn with_cwd(mut self, cwd: &Path) -> Self {
+        self.cwd = Some(cwd.to_path_buf().into_boxed_path());
+        self
     }
 
     #[must_use]
@@ -367,8 +376,14 @@ impl Linter {
         let ResolvedLinterState { rules, config, external_rules } = self.config.resolve(path);
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
-        let mut ctx_host =
-            Rc::new(ContextHost::new(path, context_sub_hosts, allocator, self.options, config));
+        let mut ctx_host = Rc::new(ContextHost::new(
+            path,
+            self.cwd.as_deref(),
+            context_sub_hosts,
+            allocator,
+            self.options,
+            config,
+        ));
 
         #[cfg(debug_assertions)]
         let mut current_diagnostic_index = 0;
