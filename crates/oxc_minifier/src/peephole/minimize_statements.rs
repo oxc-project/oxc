@@ -292,6 +292,7 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
+        // `function a() {} b.a = a;` => `b.a = function a() {};`
         Self::inline_single_use_function_declaration(&mut expr_stmt.expression, result, ctx);
 
         // In a derived constructor, `this` after an unconditional `super()` is safe to drop.
@@ -442,7 +443,7 @@ impl<'a> PeepholeOptimizations {
 
     /// Move an immediately preceding single-use function declaration into an
     /// assignment expression.
-    /// `function a() {} b.a = a;` -> `b.a = function a() {};`
+    /// `function a() {} b.a = a;` => `b.a = function a() {};`
     fn inline_single_use_function_declaration(
         expr: &mut Expression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
