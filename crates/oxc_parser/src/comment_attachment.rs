@@ -23,8 +23,9 @@
 use oxc_ast::{
     AstKind, Comment, CommentContent, CommentPlacement,
     ast::{
-        BindingPattern, ClassElement, Directive, Expression, JSXChild, ObjectPropertyKind, Program,
-        Statement, TSSignature, TSTemplateLiteralType, TSType, TemplateLiteral,
+        BindingPattern, BindingProperty, ClassElement, Directive, Expression, JSXChild,
+        ObjectPropertyKind, Program, Statement, TSSignature, TSTemplateLiteralType, TSType,
+        TemplateLiteral,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -138,17 +139,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.attach_inside_statement(stmt, state);
         // Comments before decorators preceding the statement's span are not next to it.
         let leading_end = if span.start == state.start { state.leading_end } else { state.leading };
-        for comment in
-            &mut self.lexer.trivia_builder.comments[state.leading as usize..leading_end as usize]
-        {
-            if comment.node_id.get() != NodeId::ROOT {
+        let comments = &mut self.lexer.trivia_builder.comments;
+        for index in state.leading as usize..leading_end as usize {
+            if comments[index].node_id.get() != NodeId::ROOT {
                 continue;
             }
-            // A comment between two statements trails the first if it ends its line.
-            if state.sibling != NodeId::DUMMY
-                && !comment.preceded_by_newline()
-                && comment.followed_by_newline()
-            {
+            let trails = state.sibling != NodeId::DUMMY
+                && trails_preceding(
+                    comments,
+                    index,
+                    comments[state.leading as usize].span.start,
+                    state.start,
+                );
+            let comment = &mut comments[index];
+            if trails {
                 comment.node_id.set(state.sibling);
                 comment.placement = CommentPlacement::Trailing;
             } else {
@@ -278,20 +282,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Assign comments ending the line after a list separator as trailing on the preceding
-    /// element.
+    /// Assign comments after a list separator which trail the preceding element.
     #[cold]
     #[inline(never)]
     pub(crate) fn attach_comments_after_separator<T: GetSpan + GetNodeId>(&mut self, element: &T) {
-        let node_id = element.node_id();
+        self.attach_comments_after_element(element.node_id(), element.span().end);
+    }
+
+    /// Assign comments after a separator which trail the preceding element, if it is not an
+    /// elision.
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn attach_comments_after_separated_element<T: SeparatedElement>(
+        &mut self,
+        element: &T,
+    ) {
+        if let Some((node_id, end)) = element.id_and_end() {
+            self.attach_comments_after_element(node_id, end);
+        }
+    }
+
+    fn attach_comments_after_element(&mut self, node_id: NodeId, element_end: u32) {
         let (start, end) = self.leading_comments();
-        let trivia = &mut self.lexer.trivia_builder;
-        for index in start..end {
-            let comment = &mut trivia.comments[index as usize];
-            if comment.followed_by_newline()
-                && trivia.comma_comments.binary_search(&index).is_ok()
-                && comment.node_id.get() == NodeId::ROOT
+        let token_start = self.cur_token().start();
+        let comments = &mut self.lexer.trivia_builder.comments;
+        for index in start as usize..end as usize {
+            if comments[index].node_id.get() == NodeId::ROOT
+                && trails_preceding(comments, index, element_end, token_start)
             {
+                let comment = &mut comments[index];
                 comment.node_id.set(node_id);
                 comment.placement = CommentPlacement::Trailing;
                 self.assigned_comments += 1;
@@ -583,19 +602,22 @@ impl<'w> Walker<'w> {
             self.comma_comments.binary_search(&index).is_ok()
                 || self.follows(index, frame.preceding_end)
         });
-        let following =
-            following.filter(|&(_, start)| self.precedes(index, start)).map(|(node_id, _)| node_id);
+        let following = following.filter(|&(_, start)| self.precedes(index, start));
         let (node_id, placement) = match (preceding, following) {
-            (Some(preceding), Some(following)) => {
-                let comment = &self.comments[index as usize];
-                if !comment.preceded_by_newline() && comment.followed_by_newline() {
+            (Some(preceding), Some((following, following_start))) => {
+                if trails_preceding(
+                    self.comments,
+                    index as usize,
+                    frame.preceding_end,
+                    following_start,
+                ) {
                     (preceding, CommentPlacement::Trailing)
                 } else {
                     (following, CommentPlacement::Leading)
                 }
             }
             (Some(preceding), None) => (preceding, CommentPlacement::Trailing),
-            (None, Some(following)) => (following, CommentPlacement::Leading),
+            (None, Some((following, _))) => (following, CommentPlacement::Leading),
             (None, None) => (frame.node_id, CommentPlacement::Dangling),
         };
         let comment = &mut self.comments[index as usize];
@@ -605,24 +627,24 @@ impl<'w> Walker<'w> {
 
     /// Whether only whitespace and comments separate the comment from a preceding child ending at
     /// `preceding_end`.
-    #[expect(clippy::cast_possible_truncation, reason = "Source offsets fit within u32")]
     fn follows(&self, index: u32, preceding_end: u32) -> bool {
         let mut index = index as usize;
-        let mut position = self.comments[index].span.start;
         loop {
-            if position < preceding_end {
+            let start = self.comments[index].span.start;
+            if start < preceding_end {
                 return false;
             }
-            let gap = &self.source_text[preceding_end as usize..position as usize];
-            position = preceding_end + gap.trim_end_matches(is_whitespace).len() as u32;
-            if position == preceding_end {
+            // Line comments may end with whitespace, so the gap starts after the previous comment.
+            let gap_start = index.checked_sub(1).map_or(preceding_end, |previous| {
+                self.comments[previous].span.end.max(preceding_end)
+            });
+            if !self.source_text[gap_start as usize..start as usize].chars().all(is_whitespace) {
+                return false;
+            }
+            if gap_start == preceding_end {
                 return true;
             }
-            if index == 0 || self.comments[index - 1].span.end != position {
-                return false;
-            }
             index -= 1;
-            position = self.comments[index].span.start;
         }
     }
 
@@ -647,6 +669,52 @@ impl<'w> Walker<'w> {
             }
             position = self.comments[index].span.end;
         }
+    }
+}
+
+/// Whether a comment between two nodes trails the first, rather than leading the second.
+///
+/// It does if it is on the same line as the first node, and that line ends after it or after
+/// later comments before the second node. In `a, /* x */ // y` both comments trail `a`, and in
+/// `a, /* x */ b` the comment leads `b`.
+///
+/// `from` is the end of the first node and `to` is the start of the second.
+fn trails_preceding(comments: &[Comment], index: usize, from: u32, to: u32) -> bool {
+    let mut first = index;
+    loop {
+        if comments[first].preceded_by_newline() {
+            return false;
+        }
+        if first == 0 || comments[first - 1].span.start < from {
+            break;
+        }
+        first -= 1;
+    }
+    let mut last = index;
+    while !comments[last].followed_by_newline() {
+        last += 1;
+        if last == comments.len() || comments[last].span.start >= to {
+            return false;
+        }
+    }
+    true
+}
+
+/// A list element which owns comments ending its line after the following separator.
+pub trait SeparatedElement {
+    /// ID and end of the element, or `None` for an elision.
+    fn id_and_end(&self) -> Option<(NodeId, u32)>;
+}
+
+impl SeparatedElement for BindingProperty<'_> {
+    fn id_and_end(&self) -> Option<(NodeId, u32)> {
+        Some((self.node_id(), self.span.end))
+    }
+}
+
+impl SeparatedElement for Option<BindingPattern<'_>> {
+    fn id_and_end(&self) -> Option<(NodeId, u32)> {
+        self.as_ref().map(|pattern| (pattern.node_id(), pattern.span().end))
     }
 }
 
