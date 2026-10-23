@@ -1,5 +1,6 @@
 ---
 source: crates/oxc_linter/src/tester.rs
+assertion_line: 522
 ---
 
   ⚠ jsx-a11y(autocomplete-valid): `foo` is not a valid value for `autocomplete`.
@@ -29,6 +30,48 @@ source: crates/oxc_linter/src/tester.rs
    ·                    ───────────────────────
    ╰────
   help: Change `home url` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `work name` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='work name' />;
+   ·                    ────────────────────────
+   ╰────
+  help: Change `work name` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `shipping section-a street-address` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='shipping section-a street-address' />;
+   ·                    ────────────────────────────────────────────────
+   ╰────
+  help: Change `shipping section-a street-address` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `section-a billing` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='section-a billing' />;
+   ·                    ────────────────────────────────
+   ╰────
+  help: Change `section-a billing` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `on webauthn` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='on webauthn' />;
+   ·                    ──────────────────────────
+   ╰────
+  help: Change `on webauthn` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `billing on` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='billing on' />;
+   ·                    ─────────────────────────
+   ╰────
+  help: Change `billing on` to a valid value for `autocomplete`.
+
+  ⚠ jsx-a11y(autocomplete-valid): `email webauthn webauthn` is not a valid value for `autocomplete`.
+   ╭─[autocomplete_valid.tsx:1:20]
+ 1 │ <input type='text' autocomplete='email webauthn webauthn' />;
+   ·                    ──────────────────────────────────────
+   ╰────
+  help: Change `email webauthn webauthn` to a valid value for `autocomplete`.
 
   ⚠ jsx-a11y(autocomplete-valid): `baz` is not a valid value for `autocomplete`.
    ╭─[autocomplete_valid.tsx:1:6]
