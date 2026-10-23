@@ -1,0 +1,49 @@
+crates/oxc_parser/Cargo.toml
+  s_b583aeb2a871b3::t_0b50719779a753 24
+crates/oxc_parser/src/comment_attachment.rs
+  s_b583aeb2a871b3::t_bf348b136c2746 1-684
+crates/oxc_parser/src/cursor.rs
+  s_b583aeb2a871b3::t_ebaa4ba86e26f2 19,321,332,339-350
+crates/oxc_parser/src/js/declaration.rs
+  s_b583aeb2a871b3::t_bf58fafafe19e9 130-132
+crates/oxc_parser/src/js/expression.rs
+  s_b583aeb2a871b3::t_8419e1f7e68385 1-2,11,323,330,525-527,788-789,991,1053-1055,1169-1171,1497,1509,1534,1551-1552,1558-1592,1596,1600,1608,1619,1623,1627,1631,1633
+crates/oxc_parser/src/js/grammar.rs
+  s_b583aeb2a871b3::t_e628193990948e 100-103,181-184
+crates/oxc_parser/src/js/module.rs
+  s_b583aeb2a871b3::t_c70c13d32b304d 564-565
+crates/oxc_parser/src/js/object.rs
+  s_b583aeb2a871b3::t_735719774859fb 24-26,36,126
+crates/oxc_parser/src/js/statement.rs
+  s_b583aeb2a871b3::t_ae2d33cc14cc62 1-2,7,97,102-108,135-136,149,213-214,217-218,222-234,238,244,248,250,255,262,265,271,274,299-301,739-740
+crates/oxc_parser/src/lexer/comment.rs
+  s_b583aeb2a871b3::t_415757da89c0cb 29,86
+crates/oxc_parser/src/lexer/token.rs
+  s_b583aeb2a871b3::t_040ce6a3edf671 16-17,25,52,83,278-293
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_b583aeb2a871b3::t_5446a580c711f9 566,570-574,578-586
+crates/oxc_parser/src/lib.rs
+  s_b583aeb2a871b3::t_d799661c386700 70,99,104,176-181,667-674,716-718,759-764
+crates/oxc_parser/tests/comment_attachment.rs
+  s_b583aeb2a871b3::t_b1ee6a44a9b699 1-273
+tasks/coverage/src/driver.rs
+  s_b583aeb2a871b3::t_b1d91593e7d15f 192-200
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_b583aeb2a871b3::t_80dfd812491c6d 3-5,14-16,36-38,47-49,58-60,69-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "591fd6f6b412b2393f81bc7b09d54fec0f359bc0",
+  "prompts": {},
+  "sessions": {
+    "s_b583aeb2a871b3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a165f2-68a2-7b23-ac44-587fc84a4735",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
