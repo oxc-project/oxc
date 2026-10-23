@@ -9,6 +9,7 @@ use oxc_syntax::node::GetNodeId;
 
 use crate::{
     ParserConfig as Config, ParserImpl,
+    comment_attachment::SeparatedElement,
     diagnostics::{self, ParserDiagnostic},
     lexer::Kind,
 };
@@ -188,7 +189,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ControlFlow::Continue(())
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
+    pub(crate) fn parse_delimited_list_with_rest<E, A: SeparatedElement, R, D>(
         &mut self,
         close: Kind,
         opening_span: Span,
@@ -203,6 +204,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let mut rest: Option<ArenaBox<'a, BindingRestElement<'a>>> = None;
         let mut first = true;
+        let mut previous = None;
         let list = self.collect_list(|p| {
             loop {
                 let kind = p.cur_kind();
@@ -226,6 +228,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         return None;
                     }
                     p.bump_any();
+                    if p.cur_token().follows_comment()
+                        && let Some((node_id, end)) = previous
+                    {
+                        p.attach_comments_after_element(node_id, end);
+                    }
                     let kind = p.cur_kind();
                     if kind == close {
                         if rest.is_some() && !p.ctx.has_ambient() {
@@ -248,7 +255,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 if kind == Kind::Dot3 {
                     rest.replace(parse_rest(p));
                 } else {
-                    return Some(parse_element(p));
+                    let element = parse_element(p);
+                    previous = element.id_and_end();
+                    return Some(element);
                 }
             }
         });

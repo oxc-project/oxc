@@ -115,11 +115,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut first = at_parameter_start;
         let mut has_optional = false;
         let mut has_parsed = PARSED;
+        let mut previous = None;
 
         let list = self.collect_list(|p| {
             if PARSED && has_parsed {
                 if let Some(param) = parsed(p) {
                     has_optional |= param.optional;
+                    previous = Some((param.node_id.get(), param.span.end));
                     return Some(param);
                 }
                 has_parsed = false;
@@ -149,6 +151,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         return None;
                     }
                     p.bump_any();
+                    if p.cur_token().follows_comment()
+                        && let Some((node_id, end)) = previous
+                    {
+                        p.attach_comments_after_element(node_id, end);
+                    }
                     let kind = p.cur_kind();
                     if kind == Kind::RParen {
                         if rest.is_some() && !p.ctx.has_ambient() {
@@ -207,6 +214,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 } else if has_optional && param.initializer.is_none() {
                     p.error(diagnostics::required_parameter_after_optional_parameter(param.span));
                 }
+                previous = Some((param.node_id.get(), param.span.end));
                 return Some(param);
             }
         });
