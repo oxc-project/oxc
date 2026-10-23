@@ -244,7 +244,6 @@ jest/padding-around-after-all-blocks                       |      0
 jest/padding-around-test-blocks                            |      0
 jest/prefer-each                                           |      6
 jest/prefer-ending-with-an-expect                          |      0
-jest/prefer-equality-matcher                               |      0
 jest/prefer-expect-assertions                              |      7
 jest/prefer-expect-resolves                                |      0
 jest/prefer-hooks-in-order                                 |      7
@@ -706,7 +705,6 @@ vitest/prefer-called-once                                  |      0
 vitest/prefer-called-times                                 |      0
 vitest/prefer-describe-function-title                      |      0
 vitest/prefer-each                                         |      6
-vitest/prefer-equality-matcher                             |      0
 vitest/prefer-expect-assertions                            |      7
 vitest/prefer-expect-resolves                              |      0
 vitest/prefer-expect-type-of                               |      0

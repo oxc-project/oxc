@@ -2441,8 +2441,9 @@ impl RuleRunner for crate::rules::jest::prefer_ending_with_an_expect::PreferEndi
 }
 
 impl RuleRunner for crate::rules::jest::prefer_equality_matcher::PreferEqualityMatcher {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::prefer_expect_assertions::PreferExpectAssertions {
@@ -5010,8 +5011,9 @@ impl RuleRunner for crate::rules::vitest::prefer_each::PreferEach {
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_equality_matcher::PreferEqualityMatcher {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_expect_assertions::PreferExpectAssertions {
