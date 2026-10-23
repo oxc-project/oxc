@@ -60,13 +60,6 @@ impl StatementReturnStatus {
         matches!(self, Self::AlwaysExplicit | Self::AlwaysImplicit | Self::AlwaysMixed)
     }
 
-    pub fn may_return_explicit(self) -> bool {
-        matches!(
-            self,
-            Self::AlwaysExplicit | Self::AlwaysMixed | Self::SomeExplicit | Self::SomeMixed
-        )
-    }
-
     pub fn may_return_implicit(self) -> bool {
         matches!(
             self,
