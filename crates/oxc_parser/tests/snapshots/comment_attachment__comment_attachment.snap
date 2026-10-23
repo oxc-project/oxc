@@ -1,0 +1,542 @@
+---
+source: crates/oxc_parser/tests/comment_attachment.rs
+expression: cases.0
+---
+##### statements
+
+=== js ===
+/* only */
+---
+/* only */ -> Dangling Program `/* only */`
+
+=== js ===
+// a
+foo(); // b
+/* c */ bar();
+// d
+---
+// a -> Leading ExpressionStatement `foo();`
+// b -> Trailing ExpressionStatement `foo();`
+/* c */ -> Leading ExpressionStatement `bar();`
+// d -> Trailing ExpressionStatement `bar();`
+
+=== js ===
+'use strict' /* d */;
+// next
+foo
+---
+/* d */ -> Trailing StringLiteral `'use strict'`
+// next -> Leading ExpressionStatement `foo`
+
+##### expressions
+
+=== js ===
+foo(a, /* b */ b /* after b */, c)
+---
+/* b */ -> Leading IdentifierReference `b`
+/* after b */ -> Trailing IdentifierReference `b`
+
+=== js ===
+let x = /* before */ 1 + /* mid */ 2;
+---
+/* before */ -> Leading BinaryExpression `1 + /* mid */ 2`
+/* mid */ -> Leading NumericLiteral `2`
+
+=== js ===
+`a${/* in */ b}c`
+---
+/* in */ -> Leading IdentifierReference `b`
+
+##### empty_containers
+
+=== js ===
+function f(/* params */) { /* body */ }
+---
+/* params */ -> Dangling FormalParameters `(/* params */)`
+/* body */ -> Dangling FunctionBody `{ /* body */ }`
+
+=== js ===
+const x = [/* empty */]; const y = {/* empty */};
+---
+/* empty */ -> Dangling ArrayExpression `[/* empty */]`
+/* empty */ -> Dangling ObjectExpression `{/* empty */}`
+
+=== js ===
+class A { static /* s */ { /* in */ } }
+---
+/* s */ -> Dangling StaticBlock `static /* s */ { /* in */ }`
+/* in */ -> Dangling StaticBlock `static /* s */ { /* in */ }`
+
+##### jsx
+
+=== jsx ===
+<div>{/* child */}<a /* attr */ b={c} /></div>
+---
+/* child */ -> Dangling JSXEmptyExpression `/* child */`
+/* attr */ -> Leading JSXAttribute `b={c}`
+
+##### typescript
+
+=== ts (unambiguous) ===
+type T = /* t */ string | /* n */ number;
+---
+/* t */ -> Leading TSUnionType `string | /* n */ number`
+/* n */ -> Leading TSNumberKeyword `number`
+
+=== ts (unambiguous) ===
+class A { /* before */ @dec /* after dec */ method() {} }
+---
+/* before */ -> Leading MethodDefinition `@dec /* after dec */ method() {}`
+/* after dec */ -> Leading IdentifierName `method`
+
+=== ts (unambiguous) ===
+new Foo /* a */ <T> /* b */ ();
+---
+/* a */ -> Leading TSTypeParameterInstantiation `<T>`
+/* b */ -> Trailing TSTypeParameterInstantiation `<T>`
+
+=== ts (unambiguous) ===
+class A extends B/* a */<T>/* b */ {}
+---
+/* a */ -> Leading TSTypeParameterInstantiation `<T>`
+/* b */ -> Leading ClassBody `{}`
+
+##### speculation_and_cover_grammar
+
+=== js ===
+let f = (/* a */ a) => a; let g = (/* p */ b);
+---
+/* a */ -> Leading FormalParameter `a`
+/* p */ -> Leading IdentifierReference `b`
+
+=== ts (unambiguous) ===
+let f = <T,>(/* a */ a: T) => a; x = a < /* b */ b > c;
+---
+/* a */ -> Leading FormalParameter `a: T`
+/* b */ -> Leading IdentifierReference `b`
+
+=== js ===
+({ a /* a */ = 1, b: /* b */ c } = d);
+---
+/* a */ -> Trailing IdentifierReference `a`
+/* b */ -> Leading IdentifierReference `c`
+
+=== js ===
+[/* x */ x, ...rest /* rest */] = y;
+---
+/* x */ -> Leading IdentifierReference `x`
+/* rest */ -> Trailing AssignmentTargetRest `...rest`
+
+=== js ===
+import /* 1 */ source /* 2 */ x from 'x';
+---
+/* 1 */ -> Dangling ImportDeclaration `import /* 1 */ source /* 2 */ x from 'x';`
+/* 2 */ -> Leading ImportDefaultSpecifier `x`
+
+=== js (unambiguous) ===
+await /* a */ x; import 'y';
+---
+/* a */ -> Leading IdentifierReference `x`
+
+##### annotations
+
+=== js ===
+/* @__PURE__ */ foo(); /* #__NO_SIDE_EFFECTS__ */ function g() {}
+---
+/* @__PURE__ */ -> Leading CallExpression `foo()`
+/* #__NO_SIDE_EFFECTS__ */ -> Leading Function `function g() {}`
+
+=== js ===
+x = /* @__PURE__ */ new Foo();
+---
+/* @__PURE__ */ -> Leading NewExpression `new Foo()`
+
+##### annotations_among_leading_comments
+
+=== js ===
+// c
+/* @__PURE__ */ foo();
+---
+// c -> Leading ExpressionStatement `foo();`
+/* @__PURE__ */ -> Leading CallExpression `foo()`
+
+=== js ===
+/*#__NO_SIDE_EFFECTS__*/ /* c */ /*#__NO_SIDE_EFFECTS__*/ function foo() {}
+---
+/*#__NO_SIDE_EFFECTS__*/ -> Leading Function `function foo() {}`
+/* c */ -> Leading Function `function foo() {}`
+/*#__NO_SIDE_EFFECTS__*/ -> Leading Function `function foo() {}`
+
+##### comments_assigned_before_checkpoint
+
+=== js ===
+f(a, // c
+  (b, // e
+  d));
+---
+// c -> Trailing IdentifierReference `a`
+// e -> Trailing IdentifierReference `b`
+
+=== js ===
+f(a, // c
+  async (b, // e
+  d));
+---
+// c -> Trailing IdentifierReference `a`
+// e -> Trailing IdentifierReference `b`
+
+##### fatal_error
+
+=== js ===
+foo(/* a */
+---
+/* a */ -> Dangling Program ``
+
+##### list_boundaries
+
+=== js ===
+function f() { 'use strict'; // c
+}
+---
+// c -> Trailing Directive `'use strict';`
+
+=== js ===
+{ foo(); /* c */ }
+---
+/* c */ -> Trailing ExpressionStatement `foo();`
+
+=== js ===
+function f() { return /* c */ (a); }
+---
+/* c */ -> Leading ParenthesizedExpression `(a)`
+
+=== js ===
+var x = /** @class */ (function () {})();
+---
+/** @class */ -> Leading CallExpression `(function () {})()`
+
+=== js ===
+x = { a: /* v */ 1 // c
+};
+---
+/* v */ -> Leading NumericLiteral `1`
+// c -> Trailing ObjectProperty `a: /* v */ 1`
+
+=== js ===
+x = [/* a */ a];
+---
+/* a */ -> Leading IdentifierReference `a`
+
+=== js ===
+x = { a: 1, // c
+};
+---
+// c -> Trailing ObjectProperty `a: 1`
+
+##### comma_separated_lists
+
+=== js ===
+f(
+  a, // c
+  b,
+);
+---
+// c -> Trailing IdentifierReference `a`
+
+=== js ===
+x = [
+  a, // c
+  b,
+];
+---
+// c -> Trailing IdentifierReference `a`
+
+=== js ===
+x = {
+  a: 1, // c
+  b: 2,
+};
+---
+// c -> Trailing ObjectProperty `a: 1`
+
+=== js ===
+function f(
+  a, // c
+  b,
+) {}
+---
+// c -> Trailing FormalParameter `a`
+
+=== js ===
+let a = 1, // c
+  b = 2;
+---
+// c -> Trailing VariableDeclarator `a = 1`
+
+=== js ===
+[
+  a, // c
+  b,
+] = x;
+---
+// c -> Trailing IdentifierReference `a`
+
+=== js ===
+f(
+  a, /* x */ // c
+  b,
+);
+---
+/* x */ -> Trailing IdentifierReference `a`
+// c -> Trailing IdentifierReference `a`
+
+=== js ===
+f(a, /* c */ b);
+---
+/* c */ -> Leading IdentifierReference `b`
+
+=== js ===
+f(
+  a,
+  // c
+  b,
+);
+---
+// c -> Leading IdentifierReference `b`
+
+##### comment_runs
+
+=== js ===
+f(
+  a,
+  /* x */ // c
+  b,
+);
+---
+/* x */ -> Leading IdentifierReference `b`
+// c -> Leading IdentifierReference `b`
+
+=== js ===
+foo(); /* x */ // c
+bar();
+---
+/* x */ -> Trailing ExpressionStatement `foo();`
+// c -> Trailing ExpressionStatement `foo();`
+
+=== js ===
+foo();
+/* x */ // c
+bar();
+---
+/* x */ -> Leading ExpressionStatement `bar();`
+// c -> Leading ExpressionStatement `bar();`
+
+=== js ===
+foo(); /* x */ bar();
+---
+/* x */ -> Leading ExpressionStatement `bar();`
+
+=== js ===
+x = a /* x */ + // c
+  b;
+---
+/* x */ -> Trailing IdentifierReference `a`
+// c -> Leading IdentifierReference `b`
+
+##### binding_lists
+
+=== js ===
+const {
+  a, // c
+  b,
+} = x;
+---
+// c -> Trailing BindingProperty `a`
+
+=== js ===
+const [
+  a, // c
+  b,
+] = x;
+---
+// c -> Trailing BindingIdentifier `a`
+
+=== js ===
+function f(
+  a, /* x */ // c
+  b,
+) {}
+---
+/* x */ -> Trailing FormalParameter `a`
+// c -> Trailing FormalParameter `a`
+
+##### line_comment_trailing_whitespace
+
+=== js ===
+function f() {
+  foo(); // a 
+  // b
+}
+---
+// a  -> Trailing ExpressionStatement `foo();`
+// b -> Trailing ExpressionStatement `foo();`
+
+=== js ===
+x = (
+  a // a 
+  // b
+);
+---
+// a  -> Trailing IdentifierReference `a`
+// b -> Trailing IdentifierReference `a`
+
+##### operators
+
+=== js ===
+x = a + /* b */ b;
+y = c ? /* d */ d : /* e */ e;
+---
+/* b */ -> Leading IdentifierReference `b`
+/* d */ -> Leading IdentifierReference `d`
+/* e */ -> Leading IdentifierReference `e`
+
+=== js ===
+x = a /* op */ + b;
+---
+/* op */ -> Trailing IdentifierReference `a`
+
+##### class_elements
+
+=== js ===
+class C {
+  // a
+  a() {} // after a
+  /* b */ b = 1;
+  // end
+}
+---
+// a -> Leading MethodDefinition `a() {}`
+// after a -> Trailing MethodDefinition `a() {}`
+/* b */ -> Leading PropertyDefinition `b = 1;`
+// end -> Trailing PropertyDefinition `b = 1;`
+
+=== js ===
+class C {
+  // only
+}
+---
+// only -> Dangling ClassBody `{
+  // only
+}`
+
+##### empty_class_elements
+
+=== js ===
+class C {
+  a() {}
+  // before semi
+  ;
+  b() {}
+}
+---
+// before semi -> Trailing MethodDefinition `a() {}`
+
+=== js ===
+class C {
+  a() {};
+  // c
+  b() {}
+}
+---
+// c -> Leading MethodDefinition `b() {}`
+
+=== js ===
+class C {
+  a() {}
+  ; /* x */ ;
+  b() {}
+}
+---
+/* x */ -> Dangling ClassBody `{
+  a() {}
+  ; /* x */ ;
+  b() {}
+}`
+
+##### switch_cases
+
+=== js ===
+switch (x) {
+  // a
+  case 1:
+    foo();
+    // falls through
+  case 2: // two
+    bar();
+  // end
+}
+---
+// a -> Leading SwitchCase `case 1:
+    foo();`
+// falls through -> Leading SwitchCase `case 2: // two
+    bar();`
+// two -> Leading ExpressionStatement `bar();`
+// end -> Trailing SwitchCase `case 2: // two
+    bar();`
+
+=== js ===
+switch (x) {
+  // only
+}
+---
+// only -> Dangling SwitchStatement `switch (x) {
+  // only
+}`
+
+##### decorators_before_export
+
+=== ts (unambiguous) ===
+// before
+@dec export class C {}
+---
+// before -> Dangling Program `// before
+@dec export class C {}`
+
+=== ts (unambiguous) ===
+foo(); // after foo
+@dec export class C {}
+---
+// after foo -> Trailing ExpressionStatement `foo();`
+
+=== ts (unambiguous) ===
+namespace N {
+  // before
+  @dec export class C {}
+}
+---
+// before -> Dangling TSModuleBlock `{
+  // before
+  @dec export class C {}
+}`
+
+##### top_level_await_reparse
+
+=== js (unambiguous) ===
+await /x/u; f(a, /* c */ b); // t
+await /x/u; f(a, /* c */ b); // t
+await /x/u; f(a, /* c */ b); // t
+export {};
+---
+/* c */ -> Leading IdentifierReference `b`
+// t -> Trailing ExpressionStatement `f(a, /* c */ b);`
+/* c */ -> Leading IdentifierReference `b`
+// t -> Trailing ExpressionStatement `f(a, /* c */ b);`
+/* c */ -> Leading IdentifierReference `b`
+// t -> Trailing ExpressionStatement `f(a, /* c */ b);`
+
+=== js (unambiguous) ===
+'use strict'; // c
+await /x/u;
+import 'z';
+---
+// c -> Trailing Directive `'use strict';`
