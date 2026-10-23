@@ -242,9 +242,20 @@ fn scan_long_comment_baseline(
 }
 
 impl<C: Config> Lexer<'_, C> {
+    /// Record that the current token follows a comment, and the number of comments before it.
+    #[inline]
+    fn set_follows_comment(&mut self) {
+        if !self.pending.follows_comment() {
+            self.pending.set_follows_comment();
+            #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
+            let len = self.trivia_builder.comments.len() as u32;
+            self.trivia_builder.token_comments_start = len;
+        }
+    }
+
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
-        self.pending.set_follows_comment();
+        self.set_follows_comment();
         let start = self.source.position();
         let bytes = self.source.remaining().as_bytes();
         let mut scan = LineCommentScan { has_legal_tag: false };
@@ -284,6 +295,7 @@ impl<C: Config> Lexer<'_, C> {
     ///
     /// Position of source must be after the opening `/*`.
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
+        self.set_follows_comment();
         let start = self.source.position();
         let mut scan = BlockCommentScan { has_line_break: false, has_legal_tag: false };
         let end = scan_comment(&mut scan, self.source.remaining().as_bytes());

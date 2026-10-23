@@ -98,7 +98,7 @@ use oxc_ast::{
 use oxc_data_structures::brands::{BrandOrigin, BrandScope, Unbranded};
 use oxc_diagnostics::Diagnostics;
 use oxc_span::{SourceType, Span};
-use oxc_syntax::{module_record::ModuleRecord, node::NodeId};
+use oxc_syntax::module_record::ModuleRecord;
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
@@ -562,9 +562,6 @@ struct ParserImpl<'a, C: ParserConfig> {
 
     comment_attacher: CommentAttacher,
 
-    /// End and ID of the latest statement completed with comments around it.
-    last_statement: (u32, NodeId),
-
     /// Parser state
     state: ParserState<'a>,
 
@@ -615,7 +612,6 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             prev_token_end: 0,
             assigned_comments: 0,
             comment_attacher: CommentAttacher::default(),
-            last_statement: (u32::MAX, NodeId::DUMMY),
             state: ParserState::new(allocator),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
@@ -878,8 +874,15 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             let edit_start = original_index;
 
             // Parse the statement with await context enabled (TopLevel context is already set)
+            let previous = stmt_index.checked_sub(1).and_then(|index| statements.get(index));
+            let mut list_comments = self.start_list_comments();
             let stmt = self.context_add(Context::Await, |p| {
-                p.parse_statement_list_item(StatementContext::Program)
+                p.parse_statement_in_list(
+                    StatementContext::Program,
+                    &mut list_comments,
+                    &[],
+                    previous,
+                )
             });
 
             // Replace the statement if the index is valid

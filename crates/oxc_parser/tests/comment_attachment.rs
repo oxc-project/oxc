@@ -386,3 +386,97 @@ fn line_comment_trailing_whitespace() {
         &["// a  -> Trailing IdentifierReference `a`", "// b -> Trailing IdentifierReference `a`"],
     );
 }
+
+#[test]
+fn operators() {
+    check(
+        "x = a + /* b */ b;\ny = c ? /* d */ d : /* e */ e;",
+        SourceType::mjs(),
+        &[
+            "/* b */ -> Leading IdentifierReference `b`",
+            "/* d */ -> Leading IdentifierReference `d`",
+            "/* e */ -> Leading IdentifierReference `e`",
+        ],
+    );
+    check(
+        "x = a /* op */ + b;",
+        SourceType::mjs(),
+        &["/* op */ -> Trailing IdentifierReference `a`"],
+    );
+}
+
+#[test]
+fn class_elements() {
+    check(
+        "class C {\n  // a\n  a() {} // after a\n  /* b */ b = 1;\n  // end\n}",
+        SourceType::mjs(),
+        &[
+            "// a -> Leading MethodDefinition `a() {}`",
+            "// after a -> Trailing MethodDefinition `a() {}`",
+            "/* b */ -> Leading PropertyDefinition `b = 1;`",
+            "// end -> Trailing PropertyDefinition `b = 1;`",
+        ],
+    );
+    check(
+        "class C {\n  // only\n}",
+        SourceType::mjs(),
+        &["// only -> Dangling ClassBody `{\n  // only\n}`"],
+    );
+}
+
+#[test]
+fn empty_class_elements() {
+    check(
+        "class C {\n  a() {}\n  // before semi\n  ;\n  b() {}\n}",
+        SourceType::mjs(),
+        &["// before semi -> Trailing MethodDefinition `a() {}`"],
+    );
+    check(
+        "class C {\n  a() {};\n  // c\n  b() {}\n}",
+        SourceType::mjs(),
+        &["// c -> Leading MethodDefinition `b() {}`"],
+    );
+    check(
+        "class C {\n  a() {}\n  ; /* x */ ;\n  b() {}\n}",
+        SourceType::mjs(),
+        &["/* x */ -> Dangling ClassBody `{\n  a() {}\n  ; /* x */ ;\n  b() {}\n}`"],
+    );
+}
+
+#[test]
+fn switch_cases() {
+    check(
+        "switch (x) {\n  // a\n  case 1:\n    foo();\n    // falls through\n  case 2: // two\n    bar();\n  // end\n}",
+        SourceType::mjs(),
+        &[
+            "// a -> Leading SwitchCase `case 1:\n    foo();`",
+            "// falls through -> Leading SwitchCase `case 2: // two\n    bar();`",
+            "// two -> Leading ExpressionStatement `bar();`",
+            "// end -> Trailing SwitchCase `case 2: // two\n    bar();`",
+        ],
+    );
+    check(
+        "switch (x) {\n  // only\n}",
+        SourceType::mjs(),
+        &["// only -> Dangling SwitchStatement `switch (x) {\n  // only\n}`"],
+    );
+}
+
+#[test]
+fn decorators_before_export() {
+    check(
+        "// before\n@dec export class C {}",
+        SourceType::ts(),
+        &["// before -> Dangling Program `// before\n@dec export class C {}`"],
+    );
+    check(
+        "foo(); // after foo\n@dec export class C {}",
+        SourceType::ts(),
+        &["// after foo -> Trailing ExpressionStatement `foo();`"],
+    );
+    check(
+        "namespace N {\n  // before\n  @dec export class C {}\n}",
+        SourceType::ts(),
+        &["// before -> Dangling TSModuleBlock `{\n  // before\n  @dec export class C {}\n}`"],
+    );
+}
