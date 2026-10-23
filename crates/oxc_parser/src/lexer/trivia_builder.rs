@@ -629,19 +629,27 @@ mod test {
     }
 
     fn get_comments(source_text: &str) -> Vec<Comment> {
-        let allocator = Allocator::default();
-        let source_type = SourceType::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.diagnostics.is_empty());
-        ret.program.comments.into_iter().collect::<Vec<_>>()
+        parse_comments(source_text, SourceType::default())
     }
 
     fn get_comments_typescript(source_text: &str) -> Vec<Comment> {
+        parse_comments(source_text, SourceType::default().with_typescript(true))
+    }
+
+    /// Parse comments, clearing their owners, which `tests/comment_attachment.rs` covers.
+    fn parse_comments(source_text: &str, source_type: SourceType) -> Vec<Comment> {
         let allocator = Allocator::default();
-        let source_type = SourceType::default().with_typescript(true);
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
-        ret.program.comments.into_iter().collect::<Vec<_>>()
+        ret.program
+            .comments
+            .into_iter()
+            .map(|comment| Comment {
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
+                ..comment
+            })
+            .collect()
     }
 
     #[test]

@@ -4,6 +4,7 @@ use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
 use oxc_str::Str;
+use oxc_syntax::node::NodeId;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
@@ -93,12 +94,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         if matches!(&expr.expression, Expression::StringLiteral(string)
                             if expr.span.start == string.span.start) =>
                     {
-                        let ExpressionStatement { span, expression, .. } = expr.unbox();
+                        let ExpressionStatement { span, node_id, expression, .. } = expr.unbox();
                         let Expression::StringLiteral(string) = expression else { unreachable!() };
                         let string = string.unbox();
                         let src = &self.source_text
                             [string.span.start as usize + 1..string.span.end as usize - 1];
-                        directives.push(Directive::new(span, string, Str::from(src), self));
+                        let directive = Directive::new(span, string, Str::from(src), self);
+                        self.replace_statement_comment_owner(
+                            node_id.get(),
+                            directive.node_id.get(),
+                            span,
+                        );
+                        directives.push(directive);
                         continue;
                     }
                     stmt => {
@@ -125,6 +132,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             statements.push(stmt);
         }
 
+        let end = self.cur_token().start();
+        self.attach_trailing_comments(&directives, &statements, end);
         (directives, statements)
     }
 
@@ -137,6 +146,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+        let comments = self.start_statement_comments();
 
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
@@ -204,6 +214,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
         }
 
+        self.finish_statement_comments(&stmt, comments);
+
         stmt
     }
 
@@ -214,52 +226,52 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         comments: (u32, NonZeroU32),
         stmt: &mut Statement<'a>,
     ) {
-        if Self::set_pure_on_function_stmt(stmt) {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(node_id) = Self::set_pure_on_function_stmt(stmt) {
+            self.apply_no_side_effects_comments(comments, node_id);
         }
     }
 
-    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
+    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> Option<NodeId> {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
             Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
                 ExportDefaultDeclarationKind::FunctionExpression(func)
                 | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
-                _ => false,
+                _ => None,
             },
             Statement::ExportDeclaration(decl) => match &mut decl.declaration {
                 Declaration::FunctionDeclaration(func) => {
                     func.pure = true;
-                    true
+                    Some(func.node_id.get())
                 }
                 Declaration::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
                     {
                         Self::set_pure_on_function_expr(expr)
                     } else {
-                        false
+                        None
                     }
                 }
-                _ => false,
+                _ => None,
             },
             Statement::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                 if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init) {
                     Self::set_pure_on_function_expr(expr)
                 } else {
-                    false
+                    None
                 }
             }
-            _ => false,
+            _ => None,
         }
     }
 
@@ -284,7 +296,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
             p.parse_statement_list_item(StatementContext::StatementList)
         });
-        BlockStatement::boxed(self.end_span(start), body, self)
+        let span = self.end_span(start);
+        self.attach_trailing_comments(&[], &body, span.end.saturating_sub(1));
+        BlockStatement::boxed(span, body, self)
     }
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
@@ -722,7 +736,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let argument = if self.eat(Kind::Semicolon) || self.can_insert_semicolon() {
             None
         } else {
-            let expr = self.context_add(Context::In, ParserImpl::parse_expr);
+            let expr =
+                self.parse_after_delimiter(|p| p.context_add(Context::In, ParserImpl::parse_expr));
             self.asi();
             Some(expr)
         };

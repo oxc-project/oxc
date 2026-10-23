@@ -67,6 +67,7 @@
 use std::any::Any;
 
 mod ast_builder;
+mod comment_attachment;
 pub mod config;
 mod context;
 mod cursor;
@@ -95,11 +96,12 @@ use oxc_ast::{
 };
 use oxc_diagnostics::Diagnostics;
 use oxc_span::{SourceType, Span};
-use oxc_syntax::module_record::ModuleRecord;
+use oxc_syntax::{module_record::ModuleRecord, node::NodeId};
 
 pub use crate::lexer::{Kind, Token};
 use crate::{
     ast_builder::ParserAstBuilder,
+    comment_attachment::CommentAttacher,
     config::{
         LexerConfig, NoTokensParserConfig, ParserConfig, RuntimeParserConfig, TokensParserConfig,
     },
@@ -170,6 +172,12 @@ pub struct ParserReturn<'a> {
     /// Every node has a unique node ID within this AST. Program has ID zero;
     /// other IDs follow construction order and may have gaps from discarded nodes.
     /// Semantic analysis replaces these with its own dense node IDs.
+    ///
+    /// Every comment in [`Program::comments`] is assigned an owning node in this AST, with a
+    /// [`CommentPlacement`](oxc_ast::CommentPlacement) relative to it. A comment is leading on the
+    /// child after it, or trailing on the child before it on the same line, of the deepest node
+    /// containing it. Otherwise it is dangling in that node. Comments are dangling in Program
+    /// after a fatal error.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
@@ -656,6 +664,14 @@ struct ParserImpl<'a, C: ParserConfig> {
     /// The end range of the previous token
     prev_token_end: u32,
 
+    /// Number of comments assigned to a node.
+    assigned_comments: u32,
+
+    comment_attacher: CommentAttacher,
+
+    /// End and ID of the latest statement completed with comments around it.
+    last_statement: (u32, NodeId),
+
     /// Parser state
     state: ParserState<'a>,
 
@@ -697,6 +713,9 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             fatal_error: None,
             token: Token::default(),
             prev_token_end: 0,
+            assigned_comments: 0,
+            comment_attacher: CommentAttacher::default(),
+            last_statement: (u32::MAX, NodeId::DUMMY),
             state: ParserState::new(),
             ctx: Self::default_context(source_type, options),
             ast: ParserAstBuilder::new(allocator),
@@ -735,6 +754,12 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             self.lexer.errors.clear();
             self.errors.clear();
             self.error(overlong_error);
+        }
+
+        if has_fatal_error {
+            comment_attachment::attach_comments_to_program(&mut self.lexer.trivia_builder.comments);
+        } else {
+            self.attach_remaining_comments(&program);
         }
 
         let mut is_flow_language = false;
