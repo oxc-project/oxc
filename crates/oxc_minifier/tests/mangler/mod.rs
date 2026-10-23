@@ -432,3 +432,36 @@ fn annex_b_block_scoped_function() {
         insta::assert_snapshot!("annex_b_block_scoped_function", snapshot);
     });
 }
+
+/// With `keep_names`, a binding whose value is an anonymous function or class gets its `name`
+/// from the binding (NamedEvaluation), also when it is a parameter or a catch clause binding
+/// with a default value: `((foo = () => {}) => foo.name)()` is `"foo"`.
+#[test]
+fn keep_names_in_parameters_and_catch_clauses() {
+    let options = MangleOptions {
+        keep_names: MangleOptionsKeepNames::all_true(),
+        ..MangleOptions::default()
+    };
+
+    test(
+        "function _(foo = function() {}, bar) { foo(bar) }",
+        "function _(foo = function() {}, e) { foo(e) }",
+        &options,
+    );
+    test(
+        "function _({ foo = () => {} }, [Bar = class {}], ...[baz = function() {}]) { foo(Bar, baz) }",
+        "function _({ foo = () => {} }, [Bar = class {}], ...[baz = function() {}]) { foo(Bar, baz) }",
+        &options,
+    );
+    test(
+        "function _() { try {} catch ({ foo = () => {}, bar }) { foo(bar) } }",
+        "function _() { try {} catch ({ foo = () => {}, bar: e }) { foo(e) } }",
+        &options,
+    );
+    // Not anonymous function definitions: the names are not observable, so they are mangled.
+    test(
+        "function _(foo = 1, bar = (0, function() {})) { foo(bar) }",
+        "function _(e = 1, t = (0, function() {})) { e(t) }",
+        &options,
+    );
+}
