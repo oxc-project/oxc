@@ -202,7 +202,10 @@ impl<'a, 'b> PossibleJestNode<'a, 'b> {
             else {
                 return None;
             };
-            if !is_jest_import(import_decl) {
+            if !matches!(
+                import_decl.source.value.as_str(),
+                Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
+            ) {
                 return None;
             }
             find_original_name(import_decl, ident.name.as_str())
@@ -288,7 +291,10 @@ fn collect_ids_referenced_to_import<'a, 'c>(
                 };
                 let name = semantic.scoping().symbol_name(symbol_id);
 
-                if is_jest_import(import_decl) {
+                if matches!(
+                    import_decl.source.value.as_str(),
+                    Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
+                ) {
                     let original = find_original_name(import_decl, name);
                     return Some(
                         reference_ids.iter().map(move |&reference_id| (reference_id, original)),
@@ -299,13 +305,6 @@ fn collect_ids_referenced_to_import<'a, 'c>(
             None
         })
         .flatten()
-}
-
-fn is_jest_import(import_decl: &ImportDeclaration<'_>) -> bool {
-    matches!(
-        import_decl.source.value.as_str(),
-        Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
-    )
 }
 
 /// Find name in the Import Declaration, not use name because of lifetime not long enough.
