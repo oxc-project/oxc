@@ -531,7 +531,7 @@ fn is_allowed_string_like_in_container<'a>(
     is_prop: bool,
 ) -> bool {
     is_whitespace(s)
-        || contains_line_break(s)
+        || s.contains(['\n', '\r'])
         || contains_html_entity(s)
         || is_prop && contains_both_quote_characters(s)
         || !is_prop && contains_disallowed_jsx_text_chars(s)
@@ -544,10 +544,6 @@ fn is_allowed_string_like_in_container<'a>(
 
 fn is_whitespace(s: &str) -> bool {
     !s.is_empty() && s.chars().all(char::is_whitespace)
-}
-
-fn contains_line_break(s: &str) -> bool {
-    s.chars().any(|c| matches!(c, '\n' | '\r'))
 }
 
 fn contains_line_break_literal(s: &str) -> bool {

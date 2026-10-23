@@ -1,7 +1,9 @@
-commit: 4f5ddae2
+commit: 5237fd46
 
 estree_typescript_tokens Summary:
-AST Parsed     : 9590/9591 (99.99%)
-Positive Passed: 9590/9591 (99.99%)
+AST Parsed     : 9768/9770 (99.98%)
+Positive Passed: 9768/9770 (99.98%)
 Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/jsdocThisTagWithThisParameter.ts
 Identifier expected. 'this' is a reserved word that cannot be used here.
+Fatal error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/malformedDestructuringAssignmentTransformVariants.ts
+Cannot assign to this expression

@@ -4,6 +4,24 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- c7d229b transformer: [**BREAKING**] Decode JSX entities to lone surrogates (#26712) (Dunqing)
+
+### ⚡ Performance
+
+- fe1d367 codegen: Remove branches from loops printing arrays (#27840) (overlookmotel)
+- 7bb6b62 codegen: Reduce hashmap lookups in `print_annotation_comment` (#27845) (overlookmotel)
+- 31ffd08 codegen: Avoid unnecessary comment clone (#27843) (overlookmotel)
+- a6456b7 codegen: Remove branch from `print_space_before_identifier` (#27842) (overlookmotel)
+- eeff416 codegen: Simplify `print_space_before_identifier` (#27841) (overlookmotel)
+
+### 📚 Documentation
+
+- 29caafd codegen: Format table in doc comment (#27839) (overlookmotel)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🐛 Bug Fixes

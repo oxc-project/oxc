@@ -12,7 +12,7 @@ checker.ts:
 App.tsx:
   file size: 415342 # 415.34 kB
   sys allocs: 23
-  sys reallocs: 2
+  sys reallocs: 1
   sys deallocs: 28
   sys alloc bytes: 2796 # 2.80 kB
   sys peak growth: 2584 # 2.58 kB
@@ -23,7 +23,7 @@ App.tsx:
 RadixUIAdoptionSection.jsx:
   file size: 2520 # 2.52 kB
   sys allocs: 19
-  sys reallocs: 2
+  sys reallocs: 1
   sys deallocs: 24
   sys alloc bytes: 2208 # 2.21 kB
   sys peak growth: 2144 # 2.14 kB
@@ -67,7 +67,7 @@ binder.ts:
 kitchen-sink.tsx:
   file size: 732898 # 732.90 kB
   sys allocs: 182
-  sys reallocs: 3
+  sys reallocs: 2
   sys deallocs: 196
   sys alloc bytes: 16794 # 16.79 kB
   sys peak growth: 3218 # 3.22 kB

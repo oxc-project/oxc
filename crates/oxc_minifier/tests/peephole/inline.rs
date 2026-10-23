@@ -697,6 +697,8 @@ fn small_value() {
 
     test_options("const foo = 'aaa'; log(foo), log(foo)", "log('aaa'), log('aaa')", &options);
     test_same_options("const foo = 'aaaa'; log(foo), log(foo)", &options);
+    // A lone surrogate takes 3 bytes but prints as a 6-character escape.
+    test_same_options(r"const foo = '\uD800'; log(foo), log(foo)", &options);
 
     test_options("const foo = true; log(foo), log(foo)", "log(!0), log(!0)", &options);
     test_options("const foo = false; log(foo), log(foo)", "log(!1), log(!1)", &options);

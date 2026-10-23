@@ -113,7 +113,7 @@ impl Rule for NoUnusedPrivateClassMembers {
                     })
                 {
                     ctx.diagnostic(no_unused_private_class_members_diagnostic(
-                        &element.name,
+                        element.name.display(),
                         element.span,
                     ));
                 }

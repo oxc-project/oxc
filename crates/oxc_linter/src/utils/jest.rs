@@ -7,7 +7,7 @@ use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        Argument, CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
         match_member_expression,
     },
 };
@@ -110,6 +110,16 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
     ]
     .iter()
     .any(|ext| file_path.ends_with(ext))
+}
+
+/// Finds the last directly represented function or arrow argument, skipping spreads and wrappers.
+pub fn find_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
+    call_expr
+        .arguments
+        .iter()
+        .rev()
+        .filter_map(Argument::as_expression)
+        .find(|expr| expr.is_function())
 }
 
 pub fn is_type_of_jest_fn_call<'a>(

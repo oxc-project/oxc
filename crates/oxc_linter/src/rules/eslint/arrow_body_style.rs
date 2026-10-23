@@ -4,7 +4,9 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{ArrowFunctionExpression, Expression, ReturnStatement, Statement},
+    ast::{
+        ArrowFunctionExpression, Expression, ParenthesizedExpression, ReturnStatement, Statement,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -318,19 +320,35 @@ impl ArrowBodyStyle {
             return fixer.noop();
         };
 
-        let expr_text = ctx.source_range(expr.span());
-
-        // Check if the expression is a parenthesized object literal: `() => ({ ... })`
-        // In that case, we need to remove the outer parens when converting to block:
-        // `() => ({ ... })` → `() => { return { ... } }`
-        let inner_expr = expr.get_inner_expression();
-        if matches!(inner_expr, Expression::ObjectExpression(_)) {
-            let inner_text = ctx.source_range(inner_expr.span());
-            return fixer.replace(body.span(), format!("{{return {inner_text}}}"));
+        // Only the parens around the object literal can be dropped; a type assertion wrapping it
+        // must be kept: `() => ({ ... }) as T` → `() => { return { ... } as T }`
+        if let Some(paren) = Self::leading_parenthesized_object(expr) {
+            let object_text = ctx.source_range(paren.expression.without_parentheses().span());
+            let rest_text = ctx.source_range(Span::new(paren.span.end, expr.span().end));
+            return fixer.replace(body.span(), format!("{{return {object_text}{rest_text}}}"));
         }
 
-        // For all other expressions, just wrap in `{ return ... }`
+        let expr_text = ctx.source_range(expr.span());
         fixer.replace(body.span(), format!("{{return {expr_text}}}"))
+    }
+
+    /// Find the parenthesized object literal a concise body starts with, looking through
+    /// postfix TS wrappers: `({ ... })`, `({ ... }) as T`, `({ ... }) satisfies T`, `({ ... })!`
+    fn leading_parenthesized_object<'b, 'a>(
+        expr: &'b Expression<'a>,
+    ) -> Option<&'b ParenthesizedExpression<'a>> {
+        match expr {
+            Expression::ParenthesizedExpression(paren) => {
+                matches!(paren.expression.without_parentheses(), Expression::ObjectExpression(_))
+                    .then_some(&**paren)
+            }
+            Expression::TSAsExpression(e) => Self::leading_parenthesized_object(&e.expression),
+            Expression::TSSatisfiesExpression(e) => {
+                Self::leading_parenthesized_object(&e.expression)
+            }
+            Expression::TSNonNullExpression(e) => Self::leading_parenthesized_object(&e.expression),
+            _ => None,
+        }
     }
 
     /// Fix: Convert block body to concise body
@@ -1101,6 +1119,79 @@ var foo = () =>
     ];
 
     Tester::new(ArrowBodyStyle::NAME, ArrowBodyStyle::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_typescript() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        ("var foo = () => { return <Foo>{ id }; };", Some(serde_json::json!(["always"]))),
+        ("var foo = () => { return { id } as Foo; };", Some(serde_json::json!(["always"]))),
+    ];
+
+    let fail = vec![
+        ("var foo = () => <Foo>{ id };", Some(serde_json::json!(["always"]))),
+        ("var foo = () => <Foo>({ id });", Some(serde_json::json!(["always"]))),
+        ("var foo = () => ({ id }) as Foo;", Some(serde_json::json!(["always"]))),
+        ("var foo = () => ({ id }) satisfies Foo;", Some(serde_json::json!(["always"]))),
+        ("var foo = () => ({ id })!;", Some(serde_json::json!(["always"]))),
+        ("var foo = () => (({ id }) as Foo);", Some(serde_json::json!(["always"]))),
+        ("var foo = () => <Foo>JSON.parse(id);", Some(serde_json::json!(["always"]))),
+        (
+            "var foo = () => ({ id }) as Foo;",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+    ];
+
+    let fix = vec![
+        (
+            "var foo = () => <Foo>{ id };",
+            "var foo = () => {return <Foo>{ id }};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var foo = () => <Foo>({ id });",
+            "var foo = () => {return <Foo>({ id })};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var foo = () => ({ id }) as Foo;",
+            "var foo = () => {return { id } as Foo};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var foo = () => ({ id }) satisfies Foo;",
+            "var foo = () => {return { id } satisfies Foo};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var foo = () => ({ id })!;",
+            "var foo = () => {return { id }!};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var foo = () => (({ id }) as Foo);",
+            "var foo = () => {return (({ id }) as Foo)};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var foo = () => <Foo>JSON.parse(id);",
+            "var foo = () => {return <Foo>JSON.parse(id)};",
+            Some(serde_json::json!(["always"])),
+        ),
+        (
+            "var foo = () => ({ id }) as Foo;",
+            "var foo = () => {return { id } as Foo};",
+            Some(serde_json::json!(["as-needed", { "requireReturnForObjectLiteral": true }])),
+        ),
+    ];
+
+    Tester::new(ArrowBodyStyle::NAME, ArrowBodyStyle::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
+        .with_snapshot_suffix("ts")
         .expect_fix(fix)
         .test_and_snapshot();
 }

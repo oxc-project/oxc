@@ -3,7 +3,7 @@ use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
         trivia::{FormatTrailingComments, format_leading_comments},
@@ -187,7 +187,7 @@ fn arrow_body_keeps_trailing_comment_inside_parens(body: &Expression<'_>) -> boo
 /// only a sequence keeps its parens as an assignment's right-hand side.
 pub fn write_trailing_comments_inside_parens<'a>(
     f: &mut JsFormatter<'_, 'a>,
-    parent: &AstNodes<'a>,
+    parent: &AstNodes<'_, 'a>,
     node_end: u32,
     is_sequence: bool,
 ) {
@@ -271,7 +271,7 @@ where
 /// own-line ones are left for the next node's leading pass;
 /// the caller (the generated `Statement` fmt) prints the trailing comments.
 pub fn write_suppressed_statement<'a>(
-    stmt: &AstNode<'a, Statement<'a>>,
+    stmt: &AstNode<'_, 'a, Statement<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let span = statement_span(stmt.as_ref());
@@ -279,10 +279,12 @@ pub fn write_suppressed_statement<'a>(
     {
         return false;
     }
-    match stmt.as_ast_nodes() {
+    match &stmt.as_kind() {
         // The `semi: false` ASI guard goes before a leading type cast comment, verbatim or not:
         // Prettier's `printIgnored` puts it after and breaks the cast (DIVERGENCES.md#suppressed-cast-comment-asi-guard)
-        AstNodes::ExpressionStatement(stmt) => write_leading_comments_with_asi_guard(stmt, true, f),
+        AstNodeKind::ExpressionStatement(stmt) => {
+            write_leading_comments_with_asi_guard(stmt, true, f);
+        }
         _ => format_leading_comments(span).fmt(f),
     }
     if write_suppressed_content(span, suppressed_statement_content_end(stmt.as_ref(), f), f) {

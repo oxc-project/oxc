@@ -3,10 +3,10 @@ use oxc_ast::{
     AstKind,
     ast::{
         Class, ClassElement, ClassType, Declaration, ExportDefaultDeclarationKind, FormalParameter,
-        FormalParameterRest, Function, FunctionType, MethodDefinition, MethodDefinitionKind,
-        ModuleDeclaration, PropertyKey, Statement, TSCallSignatureDeclaration,
-        TSConstructSignatureDeclaration, TSMethodSignature, TSMethodSignatureKind, TSSignature,
-        TSThisParameter, TSType, TSTypeAnnotation, TSTypeParameter, TSTypeParameterDeclaration,
+        FormalParameterRest, Function, FunctionType, MethodDefinition, ModuleDeclaration,
+        PropertyKey, Statement, TSCallSignatureDeclaration, TSConstructSignatureDeclaration,
+        TSMethodSignature, TSMethodSignatureKind, TSSignature, TSThisParameter, TSType,
+        TSTypeAnnotation, TSTypeParameter, TSTypeParameterDeclaration,
     },
 };
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -231,7 +231,7 @@ impl UnifiedSignatures {
             let ClassElement::MethodDefinition(method) = element else {
                 continue;
             };
-            if method.value.body.is_some() || is_getter_or_setter_method(method.kind) {
+            if method.value.body.is_some() || method.kind.is_accessor() {
                 continue;
             }
 
@@ -446,10 +446,6 @@ fn get_overload_key(
     };
 
     format!("{}{}{}", overload_key_bit(computed), overload_key_bit(r#static), info)
-}
-
-fn is_getter_or_setter_method(kind: MethodDefinitionKind) -> bool {
-    matches!(kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
 }
 
 fn compare_signatures<'a>(

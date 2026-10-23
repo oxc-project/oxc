@@ -24,7 +24,7 @@ fn class_methods_use_this_diagnostic(
     span: Span,
     name: Option<StaticPropertyName<'_>>,
 ) -> OxcDiagnostic {
-    let method_name_str = name.map_or(String::new(), |name| format!(" `{name}`"));
+    let method_name_str = name.map_or(String::new(), |name| format!(" `{}`", name.display()));
     OxcDiagnostic::warn(format!("Expected method{method_name_str} to have this."))
         .with_help(format!("Consider converting method{method_name_str} to a static method."))
         .with_label(span)

@@ -16,9 +16,11 @@
 use std::mem::replace;
 
 use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexSlice;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use crate::diagnostics;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
     AliasingEffect, BlockId, BlockKind, Effect, FunctionId, GENERATED_SOURCE, HirFunction,
@@ -32,7 +34,7 @@ pub fn merge_consecutive_blocks<'a>(
     func: &mut HirFunction<'a>,
     functions: &mut IndexSlice<FunctionId, [HirFunction<'a>]>,
     alloc: &'a Allocator,
-) {
+) -> Result<(), OxcDiagnostic> {
     // Collect inner function IDs for recursive processing
     let inner_func_ids: Vec<FunctionId> = func
         .body
@@ -54,8 +56,9 @@ pub fn merge_consecutive_blocks<'a>(
         // Use std::mem::replace to temporarily take the inner function out,
         // process it, then put it back (standard borrow checker workaround)
         let mut inner_func = replace(&mut functions[func_id], placeholder_function(alloc));
-        merge_consecutive_blocks(&mut inner_func, functions, alloc);
+        let result = merge_consecutive_blocks(&mut inner_func, functions, alloc);
         functions[func_id] = inner_func;
+        result?;
     }
 
     // Build fallthrough set
@@ -103,20 +106,21 @@ pub fn merge_consecutive_blocks<'a>(
         let eval_order = func.body.blocks[&pred_id].terminal.evaluation_order();
 
         // Collect phi data from the block being merged
-        let phis: Vec<_> = block
+        let phis = block
             .phis
             .iter()
             .map(|phi| {
-                assert_eq!(
-                    phi.operands.len(),
-                    1,
-                    "Found a block with a single predecessor but where a phi has multiple ({}) operands",
-                    phi.operands.len()
-                );
+                if phi.operands.len() != 1 {
+                    return Err(
+                        diagnostics::invariant_single_predecessor_phi_has_multiple_operands(
+                            phi.operands.len(),
+                        ),
+                    );
+                }
                 let operand = *phi.operands.values().next().unwrap();
-                (phi.place.identifier, operand)
+                Ok((phi.place.identifier, operand))
             })
-            .collect();
+            .collect::<Result<Vec<_>, _>>()?;
         let block_instr_ids = block.instructions.clone_in(alloc);
         let block_terminal = block.terminal.clone_in(alloc);
 
@@ -181,6 +185,8 @@ pub fn merge_consecutive_blocks<'a>(
             merged.get(block_id)
         });
     }
+
+    Ok(())
 }
 
 /// Tracks which blocks have been merged and into which target.

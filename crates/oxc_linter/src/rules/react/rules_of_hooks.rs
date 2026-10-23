@@ -4,7 +4,7 @@ use lazy_regex::Regex;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_ast::{
-    AstKind, StaticPropertyName,
+    AstKind, FunctionKind,
     ast::{ArrowFunctionExpression, CallExpression, Function, NewExpression},
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -284,7 +284,7 @@ impl Rule for RulesOfHooks {
 
         let is_use = is_react_function_call(call, "use");
 
-        let Some(parent_func) = parent_func(nodes, node) else {
+        let Some((parent_func, function)) = parent_func(nodes, node) else {
             return ctx.diagnostic(diagnostics::top_level_hook(span, hook_name));
         };
 
@@ -373,7 +373,7 @@ impl Rule for RulesOfHooks {
                 r#async: true,
                 ..
             }) => {
-                if is_directly_inside_component_or_hook(nodes, parent_func.id()) {
+                if is_directly_inside_component_or_hook(nodes, function) {
                     return ctx.diagnostic(diagnostics::async_component(
                         span,
                         async_keyword_span(ctx, *async_span),
@@ -768,8 +768,15 @@ impl<'a> VisitJs<'a> for MayThrowBeforeHook {
     }
 }
 
-fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
-    nodes.ancestors(node.id()).find(|node| node.kind().is_function_like())
+fn parent_func<'a>(
+    nodes: &'a AstNodes<'a>,
+    node: &AstNode,
+) -> Option<(&'a AstNode<'a>, FunctionKind<'a, 'a>)> {
+    nodes.ancestors(node.id()).find_map(|node| match node.kind() {
+        AstKind::Function(function) => Some((node, FunctionKind::Function(function))),
+        AstKind::ArrowFunctionExpression(arrow) => Some((node, FunctionKind::Arrow(arrow))),
+        _ => None,
+    })
 }
 
 fn is_inside_try_catch(
@@ -891,38 +898,25 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes
-        .ancestors(node_id)
-        .filter(|node| node.kind().is_function_like())
-        .map(|node| {
-            (
-                node.id(),
-                match node.kind() {
-                    AstKind::Function(func) => func.name().map(Cow::from),
-                    AstKind::ArrowFunctionExpression(_) => {
-                        get_declaration_identifier(nodes, node.id())
-                    }
-                    _ => unreachable!(),
-                },
-            )
+        .ancestor_kinds(node_id)
+        .filter_map(|kind| match kind {
+            AstKind::Function(function) => Some(FunctionKind::Function(function)),
+            AstKind::ArrowFunctionExpression(arrow) => Some(FunctionKind::Arrow(arrow)),
+            _ => None,
         })
-        .any(|(id, ident)| {
-            ident.is_some_and(|name| is_react_component_or_hook_name(&name))
-                || is_memo_or_forward_ref_callback(nodes, id)
-        })
+        .any(|function| is_directly_inside_component_or_hook(nodes, function))
 }
 
-fn is_directly_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
-    let node = nodes.get_node(node_id);
-    let directly_named = match node.kind() {
-        AstKind::Function(func) => {
-            func.name().is_some_and(|name| is_react_component_or_hook_name(name.as_str()))
+fn is_directly_inside_component_or_hook(nodes: &AstNodes, function: FunctionKind<'_, '_>) -> bool {
+    let (node_id, ident) = match function {
+        FunctionKind::Function(func) => (func.node_id(), func.name().map(Cow::from)),
+        FunctionKind::Arrow(arrow) => {
+            (arrow.node_id(), get_declaration_identifier(nodes, arrow.node_id()))
         }
-        AstKind::ArrowFunctionExpression(_) => get_declaration_identifier(nodes, node_id)
-            .is_some_and(|name| is_react_component_or_hook_name(&name)),
-        _ => unreachable!(),
     };
 
-    directly_named || is_memo_or_forward_ref_callback(nodes, node_id)
+    ident.is_some_and(|name| is_react_component_or_hook_name(&name))
+        || is_memo_or_forward_ref_callback(nodes, node_id)
 }
 
 fn get_declaration_identifier<'a>(
@@ -959,7 +953,16 @@ fn get_declaration_identifier<'a>(
                 // { useHook: () => {} }
                 // { useHook() {} }
                 AstKind::ObjectProperty(prop) => {
-                    prop.key.name().and_then(StaticPropertyName::into_cow_str)
+                    let name = prop.key.name()?;
+                    // The name is only classified as a component or hook name. A lone surrogate
+                    // is neither an uppercase letter nor a digit, and neither is U+FFFD.
+                    let replaced = name.as_str().is_none().then(|| {
+                        name.as_js_str()
+                            .chars()
+                            .map(|c| c.to_char().unwrap_or(char::REPLACEMENT_CHARACTER))
+                            .collect::<String>()
+                    });
+                    replaced.map(Cow::Owned).or_else(|| name.into_cow_str())
                 }
                 _ => None,
             }
@@ -988,6 +991,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Valid because a key that starts with `useX` is a hook name, even with a lone surrogate.
+        r#"({"useX\uDC00": () => { useState(); }});"#,
         // Valid because components can use hooks.
         "
             function ComponentWithHook() {
@@ -2131,6 +2136,8 @@ fn test() {
             const {j = () => { useState(); }} = {};
             ({k = () => { useState(); }} = {});
         ",
+        // A key with a lone surrogate is neither a component nor a hook name.
+        r#"({"f\uDC00": () => { useState(); }});"#,
         // Invalid because it's dangerous and might not warn otherwise.
         // This *must* be invalid.
         // errors: [conditionalError('useState', true)],

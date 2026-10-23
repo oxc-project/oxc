@@ -4,8 +4,8 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         ArrowFunctionExpression, AssignmentExpression, AssignmentTarget, Class, ClassBody,
-        ClassElement, Expression, Function, MethodDefinition, MethodDefinitionKind,
-        PropertyDefinition, PropertyKey, Statement, TSAccessibility,
+        ClassElement, Expression, Function, MethodDefinition, PropertyDefinition, PropertyKey,
+        Statement, TSAccessibility,
     },
 };
 use oxc_ast_visit::VisitJs;
@@ -155,7 +155,7 @@ impl Rule for ClassLiteralPropertyStyle {
 fn check_fields_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Get
+            && method.kind.is_get()
             && !method.r#override
             && let Some(body) = &method.value.body
             && let Some(Statement::ReturnStatement(return_statement)) = body.statements.first()
@@ -198,7 +198,7 @@ fn check_getters_mode<'a>(class_body: &ClassBody<'a>, ctx: &LintContext<'a>) {
     let mut excluded_properties: FxHashSet<StaticPropertyName<'a>> = FxHashSet::default();
     for element in &class_body.body {
         if let ClassElement::MethodDefinition(method) = element
-            && method.kind == MethodDefinitionKind::Constructor
+            && method.kind.is_constructor()
             && let Some(body) = &method.value.body
         {
             let mut collector =
@@ -282,7 +282,7 @@ fn has_duplicate_setter<'a>(class_body: &ClassBody<'a>, getter: &MethodDefinitio
         let ClassElement::MethodDefinition(method) = element else {
             return false;
         };
-        if method.kind != MethodDefinitionKind::Set || method.r#static != getter.r#static {
+        if !method.kind.is_set() || method.r#static != getter.r#static {
             return false;
         }
         property_keys_match(&method.key, &getter.key)

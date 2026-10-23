@@ -78,7 +78,6 @@ pub fn run(
         }
     };
 
-    // Create formatter and format
     let formatter =
         SourceFormatter::new(num_of_threads).with_external_services(Some(external_services));
 

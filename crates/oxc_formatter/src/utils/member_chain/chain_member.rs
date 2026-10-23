@@ -31,22 +31,22 @@ pub enum CallExpressionPosition {
 #[derive(Clone, Debug)]
 pub enum ChainMember<'a, 'b> {
     /// Holds onto a [oxc_ast::ast::StaticMemberExpression]
-    StaticMember(&'b AstNode<'a, StaticMemberExpression<'a>>),
+    StaticMember(&'b AstNode<'b, 'a, StaticMemberExpression<'a>>),
 
     /// Holds onto a [oxc_ast::ast::CallExpression]
     CallExpression {
-        expression: &'b AstNode<'a, CallExpression<'a>>,
+        expression: &'b AstNode<'b, 'a, CallExpression<'a>>,
         position: CallExpressionPosition,
     },
 
     /// Holds onto a [oxc_ast::ast::ComputedMemberExpression]
-    ComputedMember(&'b AstNode<'a, ComputedMemberExpression<'a>>),
+    ComputedMember(&'b AstNode<'b, 'a, ComputedMemberExpression<'a>>),
 
-    TSNonNullExpression(&'b AstNode<'a, TSNonNullExpression<'a>>),
+    TSNonNullExpression(&'b AstNode<'b, 'a, TSNonNullExpression<'a>>),
 
     /// Any other node that are not [oxc_ast::ast::CallExpression] or [oxc_ast::ast::StaticMemberExpression]
     /// Are tracked using this variant
-    Node(&'b AstNode<'a, Expression<'a>>),
+    Node(&'b AstNode<'b, 'a, Expression<'a>>),
 }
 
 impl ChainMember<'_, '_> {
@@ -136,11 +136,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ChainMember<'a, '_> {
 }
 
 pub struct FormatComputedMemberExpressionWithoutObject<'a, 'b>(
-    pub &'b AstNode<'a, ComputedMemberExpression<'a>>,
+    pub &'b AstNode<'b, 'a, ComputedMemberExpression<'a>>,
 );
 
-impl<'a> Deref for FormatComputedMemberExpressionWithoutObject<'a, '_> {
-    type Target = AstNode<'a, ComputedMemberExpression<'a>>;
+impl<'a, 'b> Deref for FormatComputedMemberExpressionWithoutObject<'a, 'b> {
+    type Target = AstNode<'b, 'a, ComputedMemberExpression<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.0
@@ -164,7 +164,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatComputedMemberExpressionWitho
                 group(&format_args!(
                     self.optional().then_some("?."),
                     "[",
-                    soft_block_indent(self.expression()),
+                    soft_block_indent(&self.expression()),
                     "]"
                 ))
             );

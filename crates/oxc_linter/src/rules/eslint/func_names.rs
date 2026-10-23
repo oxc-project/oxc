@@ -4,7 +4,7 @@ use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
-        FunctionType, ObjectAssignmentTarget, PropertyKind,
+        FunctionType, ObjectAssignmentTarget,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -326,9 +326,7 @@ fn is_valid_identifier_name(name: &str) -> bool {
 fn is_object_or_class_method(parent_node: &AstNode) -> bool {
     match parent_node.kind() {
         AstKind::MethodDefinition(_) => true,
-        AstKind::ObjectProperty(property) => {
-            property.method || matches!(property.kind, PropertyKind::Get | PropertyKind::Set)
-        }
+        AstKind::ObjectProperty(property) => property.method || property.kind.is_accessor(),
         _ => false,
     }
 }

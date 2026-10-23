@@ -177,7 +177,7 @@ fn check_parents<'a>(
         | AstKind::LogicalExpression(_) => {
             return check_parents(parent_node, visited, InConditional(true), ctx);
         }
-        AstKind::Function(function) => {
+        AstKind::Function(function) if function.is_declaration() => {
             let Some(ident) = &function.id else {
                 return InConditional(false);
             };

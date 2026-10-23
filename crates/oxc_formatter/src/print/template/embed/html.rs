@@ -1,8 +1,8 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    DispatchRequest, DispatchResponse, FormatElement, InputKind, format_element::TextWidth,
-    map_text_in_ir, push_text_with_literal_lines,
+    DispatchRequest, DispatchResponse, FormatElement, InputKind, map_text_in_ir,
+    push_text_with_literal_lines,
 };
 
 use crate::{
@@ -30,7 +30,7 @@ const COUNTER: &str = "0";
 ///
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
     is_angular: bool,
 ) -> bool {
@@ -184,7 +184,7 @@ pub(super) fn format_html_doc<'a>(
         }
         // No placeholder to substitute; push the escaped text if escaping changed it
         let Some(text) = escaped else { return false };
-        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        out.push(FormatElement::text(text, indent_width));
         true
     });
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| f.write_elements(ir));
@@ -306,14 +306,12 @@ fn placeholders_are_sequential(ir: &[FormatElement<'_>], next: &mut usize) -> bo
 #[cfg(test)]
 mod tests {
     use oxc_allocator::{Allocator, ArenaVec};
-    use oxc_formatter_core::{
-        BestFittingElement, FormatElement, IndentWidth, format_element::TextWidth,
-    };
+    use oxc_formatter_core::{BestFittingElement, FormatElement, IndentWidth};
 
     use super::placeholders_are_sequential;
 
     fn text(text: &'static str) -> FormatElement<'static> {
-        FormatElement::Text { text, width: TextWidth::from_text(text, IndentWidth::default()) }
+        FormatElement::text(text, IndentWidth::default())
     }
 
     fn best_fitting<'a>(

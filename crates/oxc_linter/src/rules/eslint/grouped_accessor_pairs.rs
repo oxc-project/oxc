@@ -2,9 +2,9 @@ use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind, StaticPropertyName,
     ast::{
-        ClassElement, Expression, MethodDefinition, MethodDefinitionKind, ObjectProperty,
-        ObjectPropertyKind, PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature,
-        TSMethodSignatureKind, TSSignature, TSTypeLiteral,
+        ClassElement, Expression, MethodDefinition, ObjectProperty, ObjectPropertyKind,
+        PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature, TSMethodSignatureKind,
+        TSSignature, TSTypeLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -260,10 +260,7 @@ impl Rule for GroupedAccessorPairs {
                     let ClassElement::MethodDefinition(method_define) = v else {
                         continue;
                     };
-                    if !matches!(
-                        method_define.kind,
-                        MethodDefinitionKind::Get | MethodDefinitionKind::Set
-                    ) {
+                    if !method_define.kind.is_accessor() {
                         continue;
                     }
                     let (key_name, is_literal) =
@@ -287,7 +284,7 @@ impl Rule for GroupedAccessorPairs {
                             continue;
                         }
                         let (getter_idx, getter_node, setter_idx, setter_node) =
-                            if first_node.kind == MethodDefinitionKind::Get {
+                            if first_node.kind.is_get() {
                                 (first_idx, first_node, second_idx, second_node)
                             } else {
                                 (second_idx, second_node, first_idx, first_node)
@@ -434,9 +431,9 @@ fn get_diagnostic_access_name(
     } else {
         // e.g. "class foo { get #a {} set #a(val) {} }" we should get #a
         let (real_key, private_prefix) = if is_private {
-            (format!("#{base_key}"), "private ")
+            (format!("#{}", base_key.display()), "private ")
         } else {
-            (format!("'{base_key}'"), "")
+            (format!("'{}'", base_key.display()), "")
         };
         format!("{static_prefix}{private_prefix}{access_word} {real_key}")
     }
