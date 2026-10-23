@@ -561,10 +561,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         let mut stmt = Statement::from(decl);
-        if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_stmt(&mut stmt)
-        {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(comments) = no_side_effects_comments {
+            self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
         }
         stmt
     }
