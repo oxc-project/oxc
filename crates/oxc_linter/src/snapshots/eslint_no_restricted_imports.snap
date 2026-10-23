@@ -849,6 +849,24 @@ source: crates/oxc_linter/src/tester.rs
    · ─────────────────
    ╰────
 
+  ⚠ eslint(no-restricted-imports): 'fs' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import(`fs`);
+   · ────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'node:http' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import(`node:http`);
+   · ───────────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo/bar' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import(`foo/bar`);
+   · ─────────────────
+   ╰────
+
   ⚠ eslint(no-restricted-imports): '@anthropic-ai/sdk' import is restricted from being used.
    ╭─[no_restricted_imports.tsx:1:1]
  1 │ import('@anthropic-ai/sdk');

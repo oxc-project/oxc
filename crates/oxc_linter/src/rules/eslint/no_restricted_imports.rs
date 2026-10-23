@@ -12,9 +12,7 @@ use serde_json::Value;
 
 use oxc_ast::{
     AstKind,
-    ast::{
-        Expression, ImportExpression, StringLiteral, TSImportEqualsDeclaration, TSModuleReference,
-    },
+    ast::{Expression, ImportExpression, TSImportEqualsDeclaration, TSModuleReference},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -794,22 +792,20 @@ impl RestrictedPath {
 
     fn get_string_literal_result(
         &self,
-        literal: &StringLiteral,
+        name: &str,
+        span: Span,
         is_type: bool,
     ) -> Option<ImportNameViolation> {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return None;
         }
 
-        let Some(name) = literal.value.as_str() else {
-            return None;
-        };
         let name = CompactStr::from(name);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
             NameSpanAllowedResult::NameDisallowed => {
-                Some(ImportNameViolation::Name(NameSpan::new(name, literal.span)))
+                Some(ImportNameViolation::Name(NameSpan::new(name, span)))
             }
             NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
             NameSpanAllowedResult::Allowed => None,
@@ -909,22 +905,20 @@ impl RestrictedPattern {
 
     fn get_string_literal_result(
         &self,
-        literal: &StringLiteral,
+        name: &str,
+        span: Span,
         is_type: bool,
     ) -> Option<ImportNameViolation> {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
             return None;
         }
 
-        let Some(name) = literal.value.as_str() else {
-            return None;
-        };
         let name = CompactStr::from(name);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
             NameSpanAllowedResult::NameDisallowed => {
-                Some(ImportNameViolation::Name(NameSpan::new(name, literal.span)))
+                Some(ImportNameViolation::Name(NameSpan::new(name, span)))
             }
             NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
             NameSpanAllowedResult::Allowed => None,
@@ -1273,10 +1267,15 @@ impl NoRestrictedImports {
             return;
         };
 
+        let Some(source) = reference.expression.value.as_str() else {
+            return;
+        };
+
         self.report_string_literal_source(
             ctx,
             entry.span,
-            &reference.expression,
+            source,
+            reference.expression.span,
             entry.import_kind.is_type(),
             false,
         );
@@ -1287,14 +1286,29 @@ impl NoRestrictedImports {
         ctx: &LintContext<'_>,
         import_expression: &ImportExpression,
     ) {
-        // Only string-literal sources are checkable; `import(bar)`, `import('a' + b)` are ignored.
-        let Expression::StringLiteral(source) = &import_expression.source else {
+        // Only static sources are checkable: a string literal or a template with no
+        // substitutions. `import(bar)`, `import('a' + b)` and `` import(`a${b}`) `` are ignored.
+        let (source, source_span) = match &import_expression.source {
+            Expression::StringLiteral(literal) => (literal.value.as_str(), literal.span),
+            Expression::TemplateLiteral(template) => {
+                (template.single_quasi().and_then(oxc_str::JSStr::as_str), template.span)
+            }
+            _ => return,
+        };
+        let Some(source) = source else {
             return;
         };
 
         // `is_type` is `false` (a runtime `import()` is never a type import); `is_dynamic_import`
         // is `true` so name-scoped restrictions are skipped.
-        self.report_string_literal_source(ctx, import_expression.span, source, false, true);
+        self.report_string_literal_source(
+            ctx,
+            import_expression.span,
+            source,
+            source_span,
+            false,
+            true,
+        );
     }
 
     /// Checks a string-literal module source against the configured `paths` and `patterns`.
@@ -1303,14 +1317,11 @@ impl NoRestrictedImports {
         &self,
         ctx: &LintContext<'_>,
         span: Span,
-        source_literal: &StringLiteral,
+        source: &str,
+        source_span: Span,
         is_type: bool,
         is_dynamic_import: bool,
     ) {
-        let Some(source) = source_literal.value.as_str() else {
-            return;
-        };
-
         for path in &self.paths {
             if source != path.name.as_str() {
                 continue;
@@ -1324,7 +1335,7 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let Some(result) = &path.get_string_literal_result(source_literal, is_type) else {
+            let Some(result) = &path.get_string_literal_result(source, source_span, is_type) else {
                 continue;
             };
 
@@ -1347,7 +1358,8 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let Some(result) = &pattern.get_string_literal_result(source_literal, is_type) else {
+            let Some(result) = &pattern.get_string_literal_result(source, source_span, is_type)
+            else {
                 continue;
             };
 
@@ -2044,9 +2056,10 @@ fn test() {
             Some(serde_json::json!([{ "patterns": [{ "group": ["a*/b"] }] }])),
         ),
         ("import('foo/bar');", Some(serde_json::json!([{ "patterns": ["foo/baz"] }]))),
-        // non-literal dynamic import sources are ignored
+        // non-static dynamic import sources are ignored
         ("import(foo);", Some(serde_json::json!(["foo"]))),
-        ("import(`foo`);", Some(serde_json::json!(["foo"]))),
+        ("import(`foo${bar}`);", Some(serde_json::json!(["foo"]))),
+        ("import(`os`);", Some(serde_json::json!(["fs"]))),
         ("import('foo' + bar);", Some(serde_json::json!(["foo"]))),
         // `importNames` / `allowImportNames` do not apply to dynamic imports, so a name-scoped
         // path/pattern restriction never fires on `import('...')`
@@ -3343,6 +3356,10 @@ fn test() {
         // dynamic `import()` with a string-literal source
         ("import('fs');", Some(serde_json::json!(["fs"]))),
         ("import('foo/bar');", Some(serde_json::json!([{ "patterns": ["foo/*"] }]))),
+        // a template with no substitutions names its module as a string literal does
+        ("import(`fs`);", Some(serde_json::json!(["fs"]))),
+        ("import(`node:http`);", Some(serde_json::json!([{ "paths": ["node:http"] }]))),
+        ("import(`foo/bar`);", Some(serde_json::json!([{ "patterns": ["foo/*"] }]))),
         (
             "import('@anthropic-ai/sdk');",
             Some(serde_json::json!([{
