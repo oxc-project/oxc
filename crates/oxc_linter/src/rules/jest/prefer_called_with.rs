@@ -46,12 +46,18 @@ fn test() {
         ("expect(fn).toBeCalled();", None),
         ("expect(fn).resolves.toBeCalled();", None),
         ("expect(fn).toHaveBeenCalled();", None),
+        ("expect(fn).toHaveBeenCalledOnce();", None),
     ];
 
     let fix = vec![
         ("expect(fn).toBeCalled();", "expect(fn).toBeCalledWith();", None),
         ("expect(fn).resolves.toBeCalled();", "expect(fn).resolves.toBeCalledWith();", None),
         ("expect(fn).toHaveBeenCalled();", "expect(fn).toHaveBeenCalledWith();", None),
+        (
+            "expect(fn).toHaveBeenCalledOnce();",
+            "expect(fn).toHaveBeenCalledExactlyOnceWith();",
+            None,
+        ),
     ];
 
     Tester::new(PreferCalledWith::NAME, PreferCalledWith::PLUGIN, pass, fail)
