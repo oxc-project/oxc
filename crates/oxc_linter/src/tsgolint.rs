@@ -217,7 +217,6 @@ impl TsGoLintState {
                                                     .rules
                                                     .iter()
                                                     .find(|(rule, _)| {
-                                                        // Other plugins can have a rule with the same name, e.g. `unicorn/prefer-string-starts-ends-with`.
                                                         rule.is_tsgolint_rule()
                                                             && rule.name() == tsgolint_diagnostic.rule
                                                     })
