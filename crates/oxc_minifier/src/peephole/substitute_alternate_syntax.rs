@@ -1421,7 +1421,10 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
     ) {
         match key {
-            PropertyKey::NumericLiteral(_) if *computed => {
+            // `-2`, `-0`, `Infinity` and `NaN` are not valid literal keys, so they keep their brackets.
+            PropertyKey::NumericLiteral(n)
+                if *computed && n.value.is_finite() && n.value.is_sign_positive() =>
+            {
                 // Bool field flip on an existing AST node, not a slot replacement.
                 *computed = false;
             }
