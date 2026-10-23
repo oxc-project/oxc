@@ -135,6 +135,11 @@ interface Config {
   languageOptions?: LanguageOptions;
 
   /**
+   * Shared settings made available to rules.
+   */
+  settings?: Settings;
+
+  /**
    * Current working directory for the linter.
    * If not provided, defaults to the directory containing the test file.
    */
@@ -294,7 +299,6 @@ const TEST_CASE_PROP_KEYS_ARRAY = [
   "only",
   "filename",
   "options",
-  "settings",
   "before",
   "after",
   "output",
@@ -318,7 +322,6 @@ interface TestCase extends Config {
   only?: boolean;
   filename?: string;
   options?: Options;
-  settings?: Settings;
   before?(this: this): void;
   after?(this: this): void;
 }
@@ -1102,6 +1105,8 @@ function addConfigPropsFrom(config: Config, merged: Config): void {
     if (TEST_CASE_PROP_KEYS.has(key)) continue;
     if (key === "languageOptions") {
       merged.languageOptions = mergeLanguageOptions(config.languageOptions, merged.languageOptions);
+    } else if (key === "settings") {
+      merged.settings = mergeSettings(config.settings, merged.settings);
     } else {
       (merged as Record<string, unknown>)[key] = config[key];
     }
@@ -1126,12 +1131,44 @@ function mergeConfigIntoTestCase<T extends ValidTestCase | InvalidTestCase>(
     ...config,
     ...test,
     languageOptions: mergeLanguageOptions(test.languageOptions, config.languageOptions),
+    settings: mergeSettings(test.settings, config.settings),
   };
 
   // Call hook to modify test case before it is run.
   // `modifyTestCase` is only available in conformance build - it's only for conformance testing.
   if (CONFORMANCE && modifyTestCase !== null) modifyTestCase(merged);
 
+  return merged;
+}
+
+/**
+ * Merge settings while preserving nested defaults and replacing arrays.
+ * @param local - Settings from the more specific configuration
+ * @param base - Settings inherited from the base configuration
+ * @returns Merged settings
+ */
+function mergeSettings(local: Settings | undefined, base: Settings | undefined): Settings {
+  const merged = { ...base, ...local };
+  delete merged.__proto__;
+  if (base === undefined || local === undefined) return merged;
+
+  for (const key of Object.keys(local)) {
+    if (key === "__proto__" || !Object.hasOwn(base, key)) continue;
+    const baseValue = base[key];
+    const localValue = local[key];
+    if (
+      baseValue !== null
+      && typeof baseValue === "object"
+      && !Array.isArray(baseValue)
+      && localValue !== null
+      && typeof localValue === "object"
+      && !Array.isArray(localValue)
+    ) {
+      merged[key] = mergeSettings(localValue, baseValue);
+    } else if (localValue === undefined) {
+      merged[key] = baseValue;
+    }
+  }
   return merged;
 }
 
