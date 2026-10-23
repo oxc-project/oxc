@@ -156,7 +156,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         statements: &[Statement<'a>],
     ) -> Statement<'a> {
         let stmt = self.parse_statement_list_item(stmt_ctx);
-        self.finish_statement_comments(&stmt, list, directives, statements);
+        self.finish_list_element_comments(&stmt, list, directives, statements);
         stmt
     }
 
@@ -822,7 +822,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Some(_) => {}
                 }
             }
-            self.finish_list_element_comments(&case, &mut list_comments, &cases);
+            self.finish_list_element_comments(&case, &mut list_comments, &[], &cases);
             cases.push(case);
         }
         self.attach_comments_before_close(&cases);
