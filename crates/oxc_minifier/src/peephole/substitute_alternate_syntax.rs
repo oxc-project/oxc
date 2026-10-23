@@ -1172,7 +1172,7 @@ impl<'a> PeepholeOptimizations {
             // `BigInt(1n)` -> `1n`
             "BigInt" => match arg {
                 None => None,
-                Some(arg) => matches!(arg, Expression::BigIntLiteral(_)).then(|| arg.take_in(ctx)),
+                Some(arg) => arg.is_big_int_literal().then(|| arg.take_in(ctx)),
             },
             _ => None,
         };

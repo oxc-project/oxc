@@ -11,7 +11,7 @@ use oxc_ecmascript::{
 use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, SPAN};
 use oxc_str::JSStr;
-use oxc_syntax::operator::{AssignmentOperator, BinaryOperator, LogicalOperator};
+use oxc_syntax::operator::{BinaryOperator, LogicalOperator};
 
 use crate::{TraverseCtx, generated::ancestor::Ancestor};
 
@@ -1209,7 +1209,7 @@ pub(super) fn is_cjs_module_exports_hint(expr: &Expression<'_>) -> bool {
     let Expression::AssignmentExpression(assign) = expr else {
         return false;
     };
-    assign.operator == AssignmentOperator::Assign
+    assign.operator.is_assign()
         && assign
             .left
             .as_member_expression()
