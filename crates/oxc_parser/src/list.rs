@@ -9,7 +9,7 @@ use oxc_syntax::node::GetNodeId;
 
 use crate::{
     ParserConfig as Config, ParserImpl,
-    comment_attachment::SeparatedElement,
+    comment_attachment::{ListElement, SeparatedElement},
     diagnostics::{self, ParserDiagnostic},
     lexer::Kind,
 };
@@ -116,6 +116,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if p.at(close) || p.has_fatal_error() { None } else { parse_element(p) }
         });
         self.expect_closing(close, opening_span);
+        list
+    }
+
+    /// Parse a `{ }` list of elements without separators, e.g. block statements and class elements,
+    /// assigning each element's comments as it is parsed. With `EMPTY_ELEMENTS`, `;` can appear
+    /// between elements, as in a class body.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(crate) fn parse_element_list<const EMPTY_ELEMENTS: bool, T: ListElement>(
+        &mut self,
+        mut parse_element: impl FnMut(&mut Self) -> T,
+    ) -> ArenaVec<'a, T> {
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LCurly);
+        let mut list_comments = self.start_list_comments();
+        let list = self.collect_list_with_previous(|p, mut previous| {
+            loop {
+                if p.at(Kind::RCurly) || p.has_fatal_error() {
+                    return None;
+                }
+                if EMPTY_ELEMENTS && p.eat(Kind::Semicolon) {
+                    while p.eat(Kind::Semicolon) {}
+                    list_comments.restart(p.prev_token_end);
+                    // Elements before `;` are not next to the following element.
+                    previous = None;
+                    continue;
+                }
+                let element = parse_element(p);
+                p.finish_list_element_comments(&element, &mut list_comments, &[], previous);
+                return Some(element);
+            }
+        });
+        self.attach_comments_before_close(&list);
+        self.expect_closing(Kind::RCurly, opening_span);
         list
     }
 
