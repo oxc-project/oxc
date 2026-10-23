@@ -1490,6 +1490,7 @@ export interface TSModuleDeclaration extends Span {
   type: "TSModuleDeclaration";
   id: BindingIdentifier | StringLiteral | TSQualifiedName;
   body: TSModuleBlock | null;
+  attributes?: Array<ImportAttribute>;
   kind: TSModuleDeclarationKind;
   declare: boolean;
   global: false;

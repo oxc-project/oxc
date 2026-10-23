@@ -708,6 +708,7 @@
   |   ],
   |   "TSModuleDeclaration": [
   |     "id",
+  |     "attributes",
   |     "body"
   |   ],
   |   "TSNamedTupleMember": [

@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     Format, FormatTrailingCommas, JsLabels, TrailingSeparator,
-    ast_nodes::{AstNode, AstNodeKind},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     format_args,
     formatter::{
         JsFormatter, prelude::*, separated::FormatSeparatedIter, trivia::FormatLeadingComments,
@@ -202,6 +202,9 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ImportNamespaceSpecifier<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, WithClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        if matches!(self.parent(), AstNodes::TSExternalModuleDeclaration(_)) {
+            return super::format_ts_module_attributes(self, f);
+        }
         if f.options().quote_properties.is_consistent() {
             let quote_needed = self.with_entries.iter().any(|attribute| {
                 matches!(&attribute.key, ImportAttributeKey::StringLiteral(string)

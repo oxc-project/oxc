@@ -8697,12 +8697,14 @@ impl<'a> Statement<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     #[inline]
     pub fn new_ts_external_module_declaration(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, WithClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
@@ -8710,6 +8712,7 @@ impl<'a> Statement<'a> {
         Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed(
             span,
             id,
+            attributes,
             body,
             declare,
             builder.builder(),
@@ -8723,6 +8726,7 @@ impl<'a> Statement<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     /// * `scope_id`
@@ -8730,6 +8734,7 @@ impl<'a> Statement<'a> {
     pub fn new_ts_external_module_declaration_with_scope_id(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, WithClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         scope_id: ScopeId,
@@ -8738,6 +8743,7 @@ impl<'a> Statement<'a> {
         Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed_with_scope_id(
             span,
             id,
+            attributes,
             body,
             declare,
             scope_id,
@@ -9586,12 +9592,14 @@ impl<'a> Declaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     #[inline]
     pub fn new_ts_external_module_declaration(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, WithClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
@@ -9599,6 +9607,7 @@ impl<'a> Declaration<'a> {
         Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed(
             span,
             id,
+            attributes,
             body,
             declare,
             builder.builder(),
@@ -9612,6 +9621,7 @@ impl<'a> Declaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     /// * `scope_id`
@@ -9619,6 +9629,7 @@ impl<'a> Declaration<'a> {
     pub fn new_ts_external_module_declaration_with_scope_id(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, WithClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         scope_id: ScopeId,
@@ -9627,6 +9638,7 @@ impl<'a> Declaration<'a> {
         Self::TSExternalModuleDeclaration(TSExternalModuleDeclaration::boxed_with_scope_id(
             span,
             id,
+            attributes,
             body,
             declare,
             scope_id,
@@ -24979,12 +24991,14 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     #[inline]
     pub fn new(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, WithClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
@@ -24994,6 +25008,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
+            attributes,
             body,
             declare,
             scope_id: Default::default(),
@@ -25008,18 +25023,23 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     #[inline]
     pub fn boxed(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, WithClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         builder: &impl GetAstBuilder<'a>,
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
-        ArenaBox::new_in(Self::new(span, id, body, declare, builder), &builder.allocator())
+        ArenaBox::new_in(
+            Self::new(span, id, attributes, body, declare, builder),
+            &builder.allocator(),
+        )
     }
 
     /// Build a [`TSExternalModuleDeclaration`] with `scope_id`.
@@ -25030,6 +25050,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     /// * `scope_id`
@@ -25037,6 +25058,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     pub fn new_with_scope_id(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, WithClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         scope_id: ScopeId,
@@ -25047,6 +25069,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
             node_id: Cell::new(builder.node_id()),
             span,
             id,
+            attributes,
             body,
             declare,
             scope_id: Cell::new(Some(scope_id)),
@@ -25061,6 +25084,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     /// ## Parameters
     /// * `span`: The [`Span`] covering this node
     /// * `id`
+    /// * `attributes`
     /// * `body`
     /// * `declare`
     /// * `scope_id`
@@ -25068,6 +25092,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     pub fn boxed_with_scope_id(
         span: Span,
         id: StringLiteral<'a>,
+        attributes: Option<ArenaBox<'a, WithClause<'a>>>,
         body: Option<ArenaBox<'a, TSModuleBlock<'a>>>,
         declare: bool,
         scope_id: ScopeId,
@@ -25075,7 +25100,7 @@ impl<'a> TSExternalModuleDeclaration<'a> {
     ) -> ArenaBox<'a, Self> {
         let builder = builder.builder();
         ArenaBox::new_in(
-            Self::new_with_scope_id(span, id, body, declare, scope_id, builder),
+            Self::new_with_scope_id(span, id, attributes, body, declare, scope_id, builder),
             &builder.allocator(),
         )
     }
