@@ -11565,6 +11565,9 @@ impl RuleEnum {
             Self::TypescriptArrayType(_) => {
                 Ok(Self::TypescriptArrayType(TypescriptArrayType::from_configuration(value)?))
             }
+            Self::TypescriptAwaitThenable(_) => Ok(Self::TypescriptAwaitThenable(
+                TypescriptAwaitThenable::from_configuration(value)?,
+            )),
             Self::TypescriptBanTsComment(_) => {
                 Ok(Self::TypescriptBanTsComment(TypescriptBanTsComment::from_configuration(value)?))
             }
@@ -12316,6 +12319,7 @@ impl RuleEnum {
     }
     pub fn to_configuration(&self) -> Option<Result<serde_json::Value, serde_json::Error>> {
         match self {
+            Self::TypescriptAwaitThenable(rule) => rule.to_configuration(),
             Self::TypescriptClassLiteralPropertyStyle(rule) => rule.to_configuration(),
             Self::TypescriptConsistentReturn(rule) => rule.to_configuration(),
             Self::TypescriptConsistentTypeExports(rule) => rule.to_configuration(),
