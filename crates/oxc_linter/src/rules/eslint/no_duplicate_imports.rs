@@ -280,7 +280,13 @@ impl Rule for NoDuplicateImports {
                 ));
             }
 
-            for entry in &module_record.indirect_export_entries {
+            for entries in module_record
+                .indirect_export_entries
+                .chunk_by(|a, b| a.statement_span == b.statement_span)
+            {
+                // Check each declaration once, preserving value exports in mixed declarations.
+                let entry = entries.iter().find(|entry| !entry.is_type).unwrap_or(&entries[0]);
+
                 // Skip checking `export { ... };` without `from` clause, matching ESLint behavior.
                 //
                 // In an export list, `entry.statement_span` points to the **import** statement,
@@ -294,6 +300,7 @@ impl Rule for NoDuplicateImports {
                 let Some(module_request) = &entry.module_request else {
                     continue;
                 };
+
                 let source = &module_request.name;
                 let span = entry.span;
 
@@ -587,6 +594,10 @@ fn test() {
         (
             r#"export { something } from "os";
             export * from "os";"#,
+            Some(serde_json::json!([{ "includeExports": true }])),
+        ),
+        (
+            r#"export { value1, value2 } from "some-module";"#,
             Some(serde_json::json!([{ "includeExports": true }])),
         ),
         (
@@ -928,5 +939,43 @@ fn test() {
     ];
 
     Tester::new(NoDuplicateImports::NAME, NoDuplicateImports::PLUGIN, pass, fail)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_export_statements() {
+    use crate::tester::Tester;
+
+    let options = Some(serde_json::json!([{ "includeExports": true }]));
+    let pass = vec![
+        (r#"export { type Foo, bar } from "module";"#, options.clone()),
+        (r#"export { bar, type Foo } from "module";"#, options.clone()),
+        (r#"export type { Foo, Bar } from "module";"#, options.clone()),
+        (
+            r#"import type Default from "module";
+            export type { Foo, Bar } from "module";"#,
+            options.clone(),
+        ),
+    ];
+    let fail = vec![
+        (
+            r#"import type Default from "module";
+            export { type Foo, bar } from "module";"#,
+            options.clone(),
+        ),
+        (
+            r#"import type Default from "module";
+            export { bar, type Foo } from "module";"#,
+            options.clone(),
+        ),
+        (
+            r#"export { foo, bar } from "module";
+            export { baz, qux } from "module";"#,
+            options,
+        ),
+    ];
+
+    Tester::new(NoDuplicateImports::NAME, NoDuplicateImports::PLUGIN, pass, fail)
+        .with_snapshot_suffix("export_statements")
         .test_and_snapshot();
 }
