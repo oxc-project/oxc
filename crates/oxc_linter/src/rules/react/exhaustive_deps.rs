@@ -1454,18 +1454,15 @@ impl<'a> VisitJs<'a> for ExhaustiveDepsVisitor<'a, '_> {
     }
 }
 
+// Only the outermost function in the effect callback decides: a function returned by a
+// nested callback is not the effect cleanup.
+// https://github.com/facebook/react/blob/e8738f0c628b4c321c5ce8077390ba48a8208341/packages/eslint-plugin-react-hooks/src/rules/ExhaustiveDeps.ts#L485-L497
 fn is_inside_effect_cleanup(stack: &[AstType]) -> bool {
-    let mut iter = stack.iter().rev();
-
-    while let Some(&cur) = iter.next() {
-        if matches!(cur, AstType::Function | AstType::ArrowFunctionExpression)
-            && iter.next() == Some(&AstType::ReturnStatement)
-        {
-            return true;
-        }
-    }
-
-    false
+    stack
+        .iter()
+        .position(|ty| matches!(ty, AstType::Function | AstType::ArrowFunctionExpression))
+        .and_then(|index| index.checked_sub(1))
+        .is_some_and(|index| stack[index] == AstType::ReturnStatement)
 }
 
 mod fix {
@@ -2754,6 +2751,25 @@ const Component = ({ filter }) => {
         r"function MyComponent(props) {
           const isError = props.value instanceof Error;
           useMemo(() => isError, [isError]);
+        }",
+        // Only a function returned by the effect callback itself is its cleanup,
+        // not one returned by a callback nested in the effect.
+        // https://github.com/oxc-project/oxc/issues/28135
+        r"function MyComponent() {
+          const listenersRef = useRef(new Set<() => void>());
+          useEffect(() => {
+            const store = {
+              subscribe: (listener: () => void) => {
+                listenersRef.current.add(listener);
+                return () => {
+                  listenersRef.current.delete(listener);
+                };
+              },
+            };
+            void store;
+            return () => {};
+          }, []);
+          return null;
         }",
     ];
 
