@@ -41,18 +41,24 @@ impl<'a> VuePartialLoader<'a> {
         let script_start_finder = Finder::new(SCRIPT_START);
         let comment_start_finder = FinderRev::new(COMMENT_START);
         let comment_end_finder: Finder<'_> = Finder::new(COMMENT_END);
-        // find opening "<script"
-        *pointer += find_script_start(
-            self.source_text,
-            *pointer,
-            &script_start_finder,
-            &comment_start_finder,
-            &comment_end_finder,
-        )?;
+        loop {
+            // find opening "<script"
+            *pointer += find_script_start(
+                self.source_text,
+                *pointer,
+                &script_start_finder,
+                &comment_start_finder,
+                &comment_end_finder,
+            )?;
 
-        // skip `<script-`
-        if !self.source_text[*pointer..].starts_with([' ', '>']) {
-            return self.parse_script(pointer);
+            // skip `<script-...>` tags and keep searching for a real `<script>` block
+            let is_script_tag_boundary = self.source_text[*pointer..]
+                .chars()
+                .next()
+                .is_some_and(|ch| ch.is_whitespace() || ch == '>');
+            if is_script_tag_boundary {
+                break;
+            }
         }
 
         // find closing ">"
@@ -288,6 +294,81 @@ mod test {
         <script>a</script>
         ";
         let sources = VuePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 1);
+        assert_eq!(sources[0].source_text, "a");
+    }
+
+    #[test]
+    fn test_parse_vue_script_tag_allows_newline_after_script_name() {
+        let source_text = r#"
+        <script
+          lang="ts">
+          debugger;
+        </script>
+        "#;
+
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text.trim(), "debugger;");
+        assert!(result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
+    }
+
+    #[test]
+    fn test_parse_vue_script_tag_allows_tab_after_script_name() {
+        let source_text = "<script\tlang=\"ts\">\n  debugger;\n</script>\n";
+
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text.trim(), "debugger;");
+        assert!(result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
+    }
+
+    #[test]
+    fn test_parse_vue_script_tag_with_gt_in_generic_attribute() {
+        let source_text = r#"
+        <script
+            setup
+            lang="ts"
+            generic="Item extends Record<string, string>"
+            >
+            debugger;
+        </script>
+        "#;
+
+        let result = parse_vue(source_text);
+        assert_eq!(result.source_text.trim(), "debugger;");
+        assert!(result.source_type.is_typescript());
+        assert!(result.source_type.is_module());
+    }
+
+    #[test]
+    fn test_multiple_scripts_with_multiline_setup_open_tag() {
+        let source_text = r#"
+        <script lang="ts">
+        export interface Props { a: string }
+        </script>
+
+        <script
+            setup
+            lang="ts"
+            generic="Item extends Record<string, string>"
+        >
+        debugger;
+        </script>
+        "#;
+
+        let sources = VuePartialLoader::new(source_text).parse();
+        assert_eq!(sources.len(), 2);
+        assert_eq!(sources[0].source_text.trim(), "export interface Props { a: string }");
+        assert_eq!(sources[1].source_text.trim(), "debugger;");
+    }
+
+    #[test]
+    fn test_parse_vue_with_many_script_like_tags() {
+        let mut source_text = "<script-setup>noop</script-setup>\n".repeat(2_000);
+        source_text.push_str("<script>a</script>\n");
+
+        let sources = VuePartialLoader::new(&source_text).parse();
         assert_eq!(sources.len(), 1);
         assert_eq!(sources[0].source_text, "a");
     }
