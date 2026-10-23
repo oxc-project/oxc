@@ -162,6 +162,13 @@ impl<'a> SymbolLiveness<'a> {
         self.recursive_functions.as_ref().is_some_and(|graph| graph.is_dead(symbol_id))
     }
 
+    /// Stop tracking a function declaration after it becomes an expression.
+    pub fn unregister_function_declaration(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
+        if let Some(graph) = self.recursive_functions.as_mut() {
+            graph.unregister(scope_id, symbol_id);
+        }
+    }
+
     fn mark_implicitly_observable(&mut self, symbol_id: SymbolId) {
         self.implicitly_observable.set_bit(symbol_id.index());
     }
@@ -262,6 +269,17 @@ impl<'a> FunctionGraph<'a> {
     fn register(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
         self.function_by_scope[scope_id.index()] = Some(symbol_id);
         self.candidates.set_bit(symbol_id.index());
+    }
+
+    fn unregister(&mut self, scope_id: ScopeId, symbol_id: SymbolId) {
+        if self.function_by_scope.get(scope_id.index()).copied().flatten() != Some(symbol_id) {
+            return;
+        }
+        debug_assert!(!self.dead.contains(symbol_id.index()));
+        // The expression is no longer a declaration owner; its references must
+        // be treated as unowned by the declaration reachability graph.
+        self.function_by_scope[scope_id.index()] = None;
+        self.candidates.unset_bit(symbol_id.index());
     }
 
     #[inline]
