@@ -275,7 +275,7 @@ impl<'a> FunctionGraph<'a> {
         if self.function_by_scope.get(scope_id.index()).copied().flatten() != Some(symbol_id) {
             return;
         }
-        debug_assert!(!self.dead.contains(symbol_id.index()));
+        debug_assert!(!self.is_dead(symbol_id));
         // The expression is no longer a declaration owner; its references must
         // be treated as unowned by the declaration reachability graph.
         self.function_by_scope[scope_id.index()] = None;
