@@ -1529,7 +1529,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             self.bump_any(); // bump operator
             let rhs_start = self.cur_start();
-            let rhs = self.parse_binary_expression_or_higher(left_precedence);
+            let rhs = self
+                .parse_after_delimiter(|p| p.parse_binary_expression_or_higher(left_precedence));
 
             lhs = if kind.is_logical_operator() {
                 let span = self.end_span(lhs_start);
@@ -1599,13 +1600,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return lhs;
         }
         let consequent = self.context_add(Context::In, |p| {
-            p.parse_assignment_expression_or_higher_impl(
-                /* allow_return_type_in_arrow_function */ false,
-            )
+            p.parse_after_delimiter(|p| {
+                p.parse_assignment_expression_or_higher_impl(
+                    /* allow_return_type_in_arrow_function */ false,
+                )
+            })
         });
         self.expect_conditional_alternative(question_span);
-        let alternate =
-            self.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function);
+        let alternate = self.parse_after_delimiter(|p| {
+            p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
+        });
         Expression::new_conditional_expression(
             self.end_span(lhs_start),
             lhs,

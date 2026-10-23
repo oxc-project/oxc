@@ -21,6 +21,10 @@ pub struct TriviaBuilder<'a> {
     /// comments between them.
     pub(crate) comma_comments: Vec<u32>,
 
+    /// Number of comments lexed before the first comment preceding the current token, if the
+    /// token follows a comment. It may be higher after lookahead.
+    pub(crate) token_comments_start: u32,
+
     // states
     /// index of processed comments
     processed: usize,
@@ -58,6 +62,7 @@ impl<'a> TriviaBuilder<'a> {
             comments: ArenaVec::new_in(&allocator),
             irregular_whitespaces: vec![],
             comma_comments: vec![],
+            token_comments_start: 0,
             processed: 0,
             saw_newline: true,
             saw_newline_for_comment: true,

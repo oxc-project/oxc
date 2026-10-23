@@ -8,7 +8,9 @@ use oxc_syntax::node::NodeId;
 
 use super::{VariableDeclarationParent, grammar::CoverGrammar};
 use crate::{
-    Context, ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
+    Context, ParserConfig as Config, ParserImpl, StatementContext,
+    comment_attachment::ListComments,
+    diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, Modifiers},
 };
@@ -51,6 +53,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
+        let mut list_comments = self.start_list_comments();
         while !self.has_fatal_error() {
             if !is_top_level && self.at(Kind::RCurly) {
                 break;
@@ -72,7 +75,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 None
             };
 
-            let stmt = self.parse_statement_list_item(stmt_ctx);
+            let stmt = self.parse_statement_in_list(
+                stmt_ctx,
+                &mut list_comments,
+                &directives,
+                &statements,
+            );
 
             // Don't reparse a module declaration: `export` already committed to the
             // Module goal while parsing, so reparsing would record the export twice.
@@ -137,6 +145,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         (directives, statements)
     }
 
+    /// Parse a statement in a statement list, and assign comments in and before it.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(crate) fn parse_statement_in_list(
+        &mut self,
+        stmt_ctx: StatementContext,
+        list: &mut ListComments,
+        directives: &[Directive<'a>],
+        statements: &[Statement<'a>],
+    ) -> Statement<'a> {
+        let stmt = self.parse_statement_list_item(stmt_ctx);
+        self.finish_statement_comments(&stmt, list, directives, statements);
+        stmt
+    }
+
     /// `StatementListItem`[Yield, Await, Return] :
     ///     Statement[?Yield, ?Await, ?Return]
     ///     Declaration[?Yield, ?Await]
@@ -146,8 +169,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
-        let comments = self.start_statement_comments();
-
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => self.parse_empty_statement(),
@@ -213,8 +234,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if let Some(comments) = no_side_effects_comments {
             self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
         }
-
-        self.finish_statement_comments(&stmt, comments);
 
         stmt
     }
@@ -293,9 +312,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 14.2 Block Statement
     pub(crate) fn parse_block(&mut self) -> ArenaBox<'a, BlockStatement<'a>> {
         let start = self.cur_start();
-        let body = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
-            p.parse_statement_list_item(StatementContext::StatementList)
-        });
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LCurly);
+        let mut body = ArenaVec::new_in(self);
+        let mut list_comments = self.start_list_comments();
+        while !self.at(Kind::RCurly) && !self.has_fatal_error() {
+            let stmt = self.parse_statement_in_list(
+                StatementContext::StatementList,
+                &mut list_comments,
+                &[],
+                &body,
+            );
+            body.push(stmt);
+        }
+        self.expect_closing(Kind::RCurly, opening_span);
         let span = self.end_span(start);
         self.attach_trailing_comments(&[], &body, span.end.saturating_sub(1));
         BlockStatement::boxed(span, body, self)
@@ -774,20 +804,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // and report only the first duplicate, all in the single parsing pass.
         let mut first_default: Option<Span> = None;
         let mut reported_duplicate = false;
-        let cases = self.parse_normal_list(Kind::LCurly, Kind::RCurly, |p| {
-            let case = p.parse_switch_case();
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LCurly);
+        let mut cases = ArenaVec::new_in(self);
+        let mut list_comments = self.start_list_comments();
+        while !self.at(Kind::RCurly) && !self.has_fatal_error() {
+            let case = self.parse_switch_case();
             if case.test.is_none() {
                 match first_default {
                     None => first_default = Some(case.span),
                     Some(first_span) if !reported_duplicate => {
-                        p.error(diagnostics::switch_multiple_default_clause(first_span, case.span));
+                        self.error(diagnostics::switch_multiple_default_clause(
+                            first_span, case.span,
+                        ));
                         reported_duplicate = true;
                     }
                     Some(_) => {}
                 }
             }
-            case
-        });
+            self.finish_list_element_comments(&case, &mut list_comments, &cases);
+            cases.push(case);
+        }
+        self.attach_comments_before_close(&cases);
+        self.expect_closing(Kind::RCurly, opening_span);
         Statement::new_switch_statement(self.end_span(start), discriminant, cases, self)
     }
 
@@ -810,6 +849,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.expect(Kind::Colon);
         let mut consequent = ArenaVec::new_in(self);
+        let mut list_comments = self.start_list_comments();
         loop {
             let kind = self.cur_kind();
             if matches!(
@@ -819,7 +859,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             {
                 break;
             }
-            let stmt = self.parse_statement_list_item(StatementContext::StatementList);
+            let stmt = self.parse_statement_in_list(
+                StatementContext::StatementList,
+                &mut list_comments,
+                &[],
+                &consequent,
+            );
             if let Statement::VariableDeclaration(var_decl) = &stmt
                 && var_decl.kind.is_using()
             {
