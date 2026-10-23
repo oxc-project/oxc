@@ -12,3 +12,25 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Variable `someGlobal` is declared outside of the component/hook. Reassigning this value during render is a side effect which can cause unpredictable behavior. If this variable is used in rendering, use useState instead. Otherwise, update it in an effect
   note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/globals
+
+  ⚠ react(globals): Cannot reassign variables declared outside of the component/hook
+   ╭─[globals.tsx:4:3]
+ 3 │ function useFoo() {
+ 4 │   someGlobal = true;
+   ·   ─────┬────
+   ·        ╰── `someGlobal` cannot be reassigned
+ 5 │   return useState(0);
+   ╰────
+  help: Variable `someGlobal` is declared outside of the component/hook. Reassigning this value during render is a side effect which can cause unpredictable behavior. If this variable is used in rendering, use useState instead. Otherwise, update it in an effect
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/globals
+
+  ⚠ react(globals): Cannot reassign variables declared outside of the component/hook
+   ╭─[globals.tsx:4:3]
+ 3 │ const Component = React.memo(function (props) {
+ 4 │   someGlobal = true;
+   ·   ─────┬────
+   ·        ╰── `someGlobal` cannot be reassigned
+ 5 │   return <div>{props.text}</div>;
+   ╰────
+  help: Variable `someGlobal` is declared outside of the component/hook. Reassigning this value during render is a side effect which can cause unpredictable behavior. If this variable is used in rendering, use useState instead. Otherwise, update it in an effect
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/globals
