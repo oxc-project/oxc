@@ -1,0 +1,29 @@
+crates/oxc_parser/src/cursor.rs
+  s_b583aeb2a871b3::t_586d23d6d7a3b9 26-31,357-358,368-373
+crates/oxc_parser/tests/comment_attachment.rs
+  s_b583aeb2a871b3::t_0d1f399f93b289 228-262,518-536
+crates/oxc_parser/src/lib.rs
+  s_b583aeb2a871b3::t_aa170e61571b6d 94,867,891-895,908-913,915,936
+crates/oxc_parser/src/js/class.rs
+  s_b583aeb2a871b3::t_435a68f39c3fc9 253
+crates/oxc_parser/src/comment_attachment.rs
+  s_b583aeb2a871b3::t_bb3ded8c961fb2 34-35,54,88,92,132-133,135,140,144,150,152,155,157,165,189-193,195-200,205,207,220,230,240,249-251,256-266,268-269,273-274,287,291-292,325-330,335,356-358,370-371,387,391,443-445,448,452-453,464,477,489-491,493-495,498,500,502-505,510-521,526-528,755-775,778-785,787,789,793,804,826,832
+crates/oxc_parser/src/js/statement.rs
+  s_b583aeb2a871b3::t_45b41db449530b 159,825
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "33d3a3a6c651fe717396e71ebef44087b069d53e",
+  "prompts": {},
+  "sessions": {
+    "s_b583aeb2a871b3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a165f2-68a2-7b23-ac44-587fc84a4735",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
