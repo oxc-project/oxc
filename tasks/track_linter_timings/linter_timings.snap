@@ -231,7 +231,6 @@ jest/no-export                                             |      7
 jest/no-focused-tests                                      |      0
 jest/no-hooks                                              |      0
 jest/no-identical-title                                    |      7
-jest/no-interpolation-in-snapshots                         |      0
 jest/no-jasmine-globals                                    |  75618
 jest/no-large-snapshots                                    |      7
 jest/no-mocks-import                                       |      7
@@ -701,7 +700,6 @@ vitest/no-hooks                                            |      0
 vitest/no-identical-title                                  |      7
 vitest/no-import-node-test                                 |      7
 vitest/no-importing-vitest-globals                         |  31466
-vitest/no-interpolation-in-snapshots                       |      0
 vitest/no-large-snapshots                                  |      7
 vitest/no-mocks-import                                     |      7
 vitest/no-restricted-matchers                              |      0

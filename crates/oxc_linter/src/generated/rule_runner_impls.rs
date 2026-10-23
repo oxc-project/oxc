@@ -2344,8 +2344,9 @@ impl RuleRunner for crate::rules::jest::no_identical_title::NoIdenticalTitle {
 }
 
 impl RuleRunner for crate::rules::jest::no_interpolation_in_snapshots::NoInterpolationInSnapshots {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TemplateLiteral]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::no_jasmine_globals::NoJasmineGlobals {
@@ -4897,8 +4898,9 @@ impl RuleRunner for crate::rules::vitest::no_importing_vitest_globals::NoImporti
 impl RuleRunner
     for crate::rules::vitest::no_interpolation_in_snapshots::NoInterpolationInSnapshots
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TemplateLiteral]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::no_large_snapshots::NoLargeSnapshots {
