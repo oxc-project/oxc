@@ -121,8 +121,12 @@ impl<'a> PeepholeOptimizations {
         ctx.replace_expression_with(expr, |old, ctx| {
             let Expression::BinaryExpression(e) = old else { unreachable!() };
             let e = e.unbox();
-            let boolean_context = ctx.in_boolean_context();
-            if b { e.left } else { Self::minimize_not(e.span, e.left, ctx, boolean_context) }
+            if b {
+                e.left
+            } else {
+                let boolean_context = ctx.in_boolean_context();
+                Self::minimize_not(e.span, e.left, ctx, boolean_context)
+            }
         });
     }
 
