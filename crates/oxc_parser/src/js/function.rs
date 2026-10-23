@@ -99,6 +99,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut rest: Option<ArenaBox<'a, FormalParameterRest<'a>>> = None;
         let mut first = true;
         let mut has_optional = false;
+        let mut previous = None;
 
         let list = self.collect_list(|p| {
             loop {
@@ -126,6 +127,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         return None;
                     }
                     p.bump_any();
+                    if p.cur_token().follows_comment()
+                        && let Some((node_id, end)) = previous
+                    {
+                        p.attach_comments_after_element(node_id, end);
+                    }
                     let kind = p.cur_kind();
                     if kind == Kind::RParen {
                         if rest.is_some() && !p.ctx.has_ambient() {
@@ -178,6 +184,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                             param.span,
                         ));
                     }
+                    previous = Some((param.node_id.get(), param.span.end));
                     return Some(param);
                 }
             }
