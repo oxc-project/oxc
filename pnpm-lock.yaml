@@ -579,7 +579,7 @@ importers:
   npm/oxlint:
     dependencies:
       oxlint-tsgolint:
-        specifier: '>=7.0.2003'
+        specifier: '>=7.0.2005'
         version: 7.0.2005
       vite-plus:
         specifier: '*'
