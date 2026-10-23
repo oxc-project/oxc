@@ -148,3 +148,10 @@ source: crates/oxc_linter/src/tester.rs
    ·              ───────────────
    ╰────
   help: Add missing aria props `aria-controls`, `aria-expanded` to the element with `combobox` role.
+
+  ⚠ jsx-a11y(role-has-required-aria-props): `combobox` role is missing required aria props `aria-controls`, `aria-expanded`.
+   ╭─[role_has_required_aria_props.tsx:1:6]
+ 1 │ <Foo role='combobox' as='div' />
+   ·      ───────────────
+   ╰────
+  help: Add missing aria props `aria-controls`, `aria-expanded` to the element with `combobox` role.
