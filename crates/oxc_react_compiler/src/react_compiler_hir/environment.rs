@@ -132,6 +132,12 @@ pub struct Environment<'a> {
     // Output mode (Client, Ssr, Lint)
     pub output_mode: OutputMode,
 
+    // Whether the original function can receive outlined siblings without
+    // escaping its lexical scope. Function declarations are inserted after
+    // their source declaration; expression and arrow roots are appended to
+    // the program body.
+    pub allow_outer_lexical_outlining: bool,
+
     // Pre-resolved import local names for instrumentation/hook guards/memo cache.
     // Set by the program-level code before compilation.
     pub instrument_fn_name: Option<Ident<'a>>,
@@ -248,6 +254,7 @@ impl<'a> Environment<'a> {
             skip_compilation: false,
             fn_type: ReactFunctionType::Other,
             output_mode: OutputMode::Client,
+            allow_outer_lexical_outlining: false,
             instrument_fn_name: None,
             instrument_gating_name: None,
             hook_guard_name: None,
