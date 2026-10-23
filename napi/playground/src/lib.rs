@@ -31,8 +31,8 @@ use oxc::{
 use oxc_formatter::{
     ArrowParentheses, AttributePosition, BracketSameLine, BracketSpacing, CustomGroupDefinition,
     Expand, GroupEntry, ImportModifier, ImportSelector, JsFormatOptions, OperatorPosition,
-    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, TrailingCommas,
-    default_groups, default_internal_patterns,
+    QuoteProperties, QuoteStyle, Semicolons, SortImportsOptions, SortOrder, SortType,
+    TrailingCommas, default_groups, default_internal_patterns,
 };
 use oxc_formatter_core::{IndentStyle, IndentWidth, LineEnding, LineWidth};
 use oxc_linter::{
@@ -550,6 +550,11 @@ impl Oxc {
                 .as_ref()
                 .and_then(|o| o.parse::<SortOrder>().ok())
                 .unwrap_or_default();
+            let sort_type = sort_imports_config
+                .r#type
+                .as_ref()
+                .and_then(|t| t.parse::<SortType>().ok())
+                .unwrap_or_default();
 
             let custom_groups = sort_imports_config
                 .custom_groups
@@ -619,6 +624,7 @@ impl Oxc {
                 partition_by_comment: sort_imports_config.partition_by_comment.unwrap_or(false),
                 sort_side_effects: sort_imports_config.sort_side_effects.unwrap_or(false),
                 order,
+                sort_type,
                 ignore_case: sort_imports_config.ignore_case.unwrap_or(true),
                 newlines_between: sort_imports_config.newlines_between.unwrap_or(true),
                 internal_pattern: sort_imports_config

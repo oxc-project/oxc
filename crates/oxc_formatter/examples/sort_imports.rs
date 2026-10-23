@@ -19,11 +19,13 @@ fn main() -> Result<(), String> {
     let partition_by_comment = args.contains("--partition_by_comment");
     let sort_side_effects = args.contains("--sort_side_effects");
     let order = args.opt_value_from_str("--order").unwrap_or(None).unwrap_or(SortOrder::Asc);
+    let sort_type = args.opt_value_from_str("--type").unwrap_or(None).unwrap_or_default();
     let ignore_case = !args.contains("--no_ignore_case");
     let newlines_between = !args.contains("--no_newlines_between");
 
     let sort_imports_options = SortImportsOptions {
         order,
+        sort_type,
         partition_by_newline,
         partition_by_comment,
         sort_side_effects,
