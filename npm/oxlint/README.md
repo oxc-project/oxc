@@ -56,3 +56,19 @@ Run
 - `npx oxlint@latest --rules` for the list of rules.
 - `npx skills add https://github.com/oxc-project/oxc --skill migrate-oxlint` to install the [`migrate-oxlint`](https://skills.sh/oxc-project/oxc/migrate-oxlint) skill, then run `/migrate-oxlint` to migrate from ESLint.
 - See also [migrate from ESLint](https://oxc.rs/docs/guide/usage/linter/migrate-from-eslint.html).
+
+### Rule documentation mirrors
+
+Set `OXLINT_RULES_URL` to use a different documentation base URL. For example,
+`OXLINT_RULES_URL=https://docs.example.com/linter/rules` produces rule links such as
+`https://docs.example.com/linter/rules/eslint/no-debugger.html`.
+
+For a mirror with a different layout, use a full URL template with `{plugin}` and `{rule}`:
+
+```sh
+OXLINT_RULES_URL='https://github.com/oxc-project/website/blob/main/src/docs/guide/usage/linter/rules/{plugin}/{rule}.md' oxlint .
+```
+
+The override applies to diagnostics (including editor diagnostics), SARIF rule links, and
+`--rules --format json`. An unset or empty value uses the Oxc website. Set the variable
+before starting oxlint or the editor's language server; it is read once per process.
