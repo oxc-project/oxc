@@ -244,6 +244,7 @@ fn scan_long_comment_baseline(
 impl<C: Config> Lexer<'_, C> {
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
+        self.pending.set_follows_comment();
         let start = self.source.position();
         let bytes = self.source.remaining().as_bytes();
         let mut scan = LineCommentScan { has_legal_tag: false };

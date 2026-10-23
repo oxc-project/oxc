@@ -397,14 +397,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 arrow_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     arrow_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.apply_no_side_effects_comments(comments, func.node_id.get());
                 }
             }
             Expression::FunctionExpression(func_expr) => {
                 func_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     func_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.apply_no_side_effects_comments(comments, func.node_id.get());
                 }
             }
             _ => {}
@@ -1835,7 +1835,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
                     {
                         func.pure = true;
-                        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                        self.apply_no_side_effects_comments(comments, func.node_id.get());
                     }
                     return arrow_expr;
                 }
@@ -1860,7 +1860,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                self.apply_no_side_effects_comments(comments, func.node_id.get());
             }
             return arrow_expr;
         }
@@ -1953,7 +1953,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         expr: &mut Expression<'a>,
     ) {
         if Self::set_pure_on_function_expr(expr) {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+            self.apply_no_side_effects_comments(comments, func.node_id.get());
         }
     }
 
