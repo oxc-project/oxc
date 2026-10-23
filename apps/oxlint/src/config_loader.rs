@@ -69,8 +69,19 @@ pub fn discover_configs_in_ancestors<P: AsRef<Path>>(
     for file in files {
         let path = file.as_ref();
         let mut base_config_found = false;
+        let base_config_dir = base_config_path.parent();
         // Start from the file's parent directory and walk up the tree
         let mut current = path.parent();
+
+        if let Some(node_modules_dir) = path
+            .ancestors()
+            .take_while(|ancestor| Some(*ancestor) != base_config_dir)
+            .filter(|ancestor| ancestor.file_name() == Some(OsStr::new(NODE_MODULES_DIR)))
+            .last()
+        {
+            current = node_modules_dir.parent();
+        }
+
         while let Some(dir) = current {
             if base_config_found {
                 // Stop if we've reached the base config file (e.g., root oxlintrc)
@@ -1359,6 +1370,45 @@ mod test {
             path.starts_with(nested_dir),
             "Expected config in packages/foo, got: {}",
             path.display()
+        );
+    }
+
+    #[test]
+    fn test_discover_configs_in_ancestors_skips_node_modules() {
+        use super::discover_configs_in_ancestors;
+
+        let root_dir = tempfile::tempdir().unwrap();
+
+        let base_config = root_dir.path().join(".oxlintrc.json");
+        std::fs::write(&base_config, r#"{ "rules": {} }"#).unwrap();
+
+        let app_dir = root_dir.path().join("packages").join("app");
+        std::fs::create_dir_all(&app_dir).unwrap();
+
+        let app_config = app_dir.join(".oxlintrc.json");
+        std::fs::write(&app_config, r#"{ "rules": {} }"#).unwrap();
+
+        let dependency_dir = app_dir.join("node_modules").join("foo");
+        std::fs::create_dir_all(&dependency_dir).unwrap();
+
+        let dependency_config = dependency_dir.join(".oxlintrc.json");
+        std::fs::write(&dependency_config, r#"{ "rules": {} }"#).unwrap();
+
+        let dependency_file = dependency_dir.join("index.js");
+        std::fs::write(&dependency_file, "const foo = 1;").unwrap();
+
+        let (discovered, conflicts) =
+            discover_configs_in_ancestors(&[dependency_file], &base_config);
+
+        assert!(conflicts.is_empty());
+
+        let paths: Vec<_> = discovered.iter().map(|config| config.path()).collect();
+
+        assert!(paths.contains(&app_config.as_path()), "Expected project config to be discovered");
+
+        assert!(
+            !paths.contains(&dependency_config.as_path()),
+            "Expected config inside node_modules to be skipped"
         );
     }
 }
