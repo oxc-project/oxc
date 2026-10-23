@@ -449,7 +449,7 @@ impl<'a> PeepholeOptimizations {
         result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if Self::is_script_root_scope(ctx) {
+        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
             return;
         }
 
@@ -458,16 +458,14 @@ impl<'a> PeepholeOptimizations {
             return;
         }
         let Expression::Identifier(reference) = &assignment.right else { return };
-
         let Some(Statement::FunctionDeclaration(function)) = result.last() else { return };
         let Some(id) = &function.id else { return };
         let symbol_id = id.symbol_id();
-        if ctx.current_scope_flags().contains_direct_eval()
+        if ctx.scoping().get_reference(reference.reference_id()).symbol_id() != Some(symbol_id)
             || ctx.state.symbols.is_implicitly_observable(symbol_id)
             || ctx.state.symbols.function_is_dead(symbol_id)
             || ctx.scoping().get_resolved_references(symbol_id).count() != 1
             || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
-            || ctx.scoping().get_reference(reference.reference_id()).symbol_id() != Some(symbol_id)
         {
             return;
         }
