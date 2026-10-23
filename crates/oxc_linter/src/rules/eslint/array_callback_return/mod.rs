@@ -687,7 +687,6 @@ fn test() {
   });"#,
             Some(serde_json::json!([{"allowImplicit": true}])),
         ),
-        // https://github.com/oxc-project/oxc/issues/28128
         ("[1, 2].reduce((total, x) => total + x, 0)", None),
         ("[1, 2].reduceRight((total, x) => { return total + x; }, 0)", None),
         ("foo.map(function() { return 1; }, thisArg)", None),
@@ -696,12 +695,6 @@ fn test() {
     ];
 
     let fail = vec![
-        // https://github.com/oxc-project/oxc/issues/28128
-        ("[1, 2].reduce((total, x) => { if (x > 1) { return total + x; } }, 0)", None),
-        ("[1, 2].reduceRight((total, x) => { if (x > 1) { return total + x; } }, 0)", None),
-        ("foo.reduce(function() {}, 0)", None),
-        ("foo.map(function() {}, thisArg)", None),
-        ("Array.from(x, function() {}, thisArg)", None),
         ("Array.from(x, function() {})", None),
         ("Array.from(x, function foo() {})", None),
         // ("Int32Array.from(x, function() {})", None),
@@ -989,6 +982,11 @@ const _test = fruits.map((fruit) => {
             "foo.forEach(x => { if (a === b) { return (x + a); } });",
             Some(serde_json::json!([{"allowVoid": true, "checkForEach": true}])),
         ),
+        ("[1, 2].reduce((total, x) => { if (x > 1) { return total + x; } }, 0)", None),
+        ("[1, 2].reduceRight((total, x) => { if (x > 1) { return total + x; } }, 0)", None),
+        ("foo.reduce(function() {}, 0)", None),
+        ("foo.map(function() {}, thisArg)", None),
+        ("Array.from(x, function() {}, thisArg)", None),
     ];
 
     Tester::new(ArrayCallbackReturn::NAME, ArrayCallbackReturn::PLUGIN, pass, fail)
