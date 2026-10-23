@@ -526,6 +526,19 @@ impl ConfigStoreBuilder {
         overrides: OxlintOverrides,
         external_plugin_store: &mut ExternalPluginStore,
     ) -> Result<ResolvedOxlintOverrides, Vec<OverrideRulesError>> {
+        if overrides.is_empty() {
+            return Ok(ResolvedOxlintOverrides::default());
+        }
+
+        // A rule set in one override can belong to a plugin that another override enables for the
+        // same file, so resolve rules against the plugins of every override.
+        // `Config::apply_overrides` skips rules whose plugin is not enabled for the linted file.
+        let override_plugins = overrides
+            .iter()
+            .filter_map(|override_config| override_config.plugins)
+            .fold(LintPlugins::empty(), |plugins, override_plugins| plugins | override_plugins);
+        let all_rules = self.get_all_rules_for_plugins(Some(override_plugins));
+
         let resolved = overrides
             .into_iter()
             .map(|override_config| {
@@ -533,8 +546,6 @@ impl ConfigStoreBuilder {
                 let mut external_rules = Vec::new();
                 let mut rules_map = FxHashMap::default();
                 let mut external_rules_map = FxHashMap::default();
-
-                let all_rules = self.get_all_rules_for_plugins(override_config.plugins);
 
                 // Resolve rules for this override
                 override_config.rules.override_rules(
