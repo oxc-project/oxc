@@ -358,18 +358,31 @@ fn can_add_undefined(ts_type: &TSType<'_>) -> bool {
 /// Intersections and unions with `any` or `unknown` are excluded: their result depends on the
 /// referenced type in ways that may already include `undefined` or call for TS9025.
 fn is_widenable_type_reference(ts_type: &TSType<'_>) -> bool {
+    widenable_and_addable(ts_type).0
+}
+
+/// Returns `(is_widenable_type_reference(ts_type), can_add_undefined(ts_type))`, walking each
+/// nested union and parenthesized type once so deeply nested annotations stay linear.
+fn widenable_and_addable(ts_type: &TSType<'_>) -> (bool, bool) {
     match ts_type {
-        TSType::TSTypeReference(_) => true,
+        TSType::TSTypeReference(_) => (true, false),
         TSType::TSParenthesizedType(parenthesized) => {
-            is_widenable_type_reference(&parenthesized.type_annotation)
+            widenable_and_addable(&parenthesized.type_annotation)
         }
         TSType::TSUnionType(union) => {
-            union.types.iter().any(is_widenable_type_reference)
-                && union.types.iter().all(|member| {
+            let mut has_reference = false;
+            let mut members_widenable = true;
+            let mut all_addable = true;
+            for member in &union.types {
+                let (widenable, addable) = widenable_and_addable(member);
+                has_reference |= widenable;
+                all_addable &= addable;
+                members_widenable &=
                     !matches!(member, TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_))
-                        && (is_widenable_type_reference(member) || can_add_undefined(member))
-                })
+                        && (widenable || addable);
+            }
+            (has_reference && members_widenable, all_addable)
         }
-        _ => false,
+        _ => (false, can_add_undefined(ts_type)),
     }
 }

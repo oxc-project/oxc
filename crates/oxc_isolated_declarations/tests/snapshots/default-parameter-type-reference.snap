@@ -19,3 +19,4 @@ export declare function anyUnion(s: any | S, w: string): void;
 export declare function aliasWithUndefined(s: MaybeS | undefined, w: string): void;
 export declare function explicitUndefined(s: S | undefined, w: string): void;
 export declare function lastParameter(w: string, s?: S): void;
+export declare function nestedUnion(s: ((((((((((((((((((((((((((((((((S | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | undefined, w: string): void;

@@ -25,3 +25,6 @@ export function aliasWithUndefined(s: MaybeS = undefined, w: string): void {}
 export function explicitUndefined(s: S | undefined = undefined, w: string): void {}
 
 export function lastParameter(w: string, s: S = { a: 1 }): void {}
+
+// Deeply nested unions are walked once per level.
+export function nestedUnion(s: ((((((((((((((((((((((((((((((((S | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) | string) = { a: 1 }, w: string): void {}
