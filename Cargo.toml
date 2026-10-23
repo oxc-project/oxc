@@ -346,7 +346,7 @@ inherits = "release"
 panic = "unwind"
 opt-level = 2 # Compile faster
 codegen-units = 256 # Compile faster
-lto = "thin" # Faster compile time with thin LTO
+lto = false # Compile faster: cross-crate LTO re-optimizes the whole binary on every rebuild
 debug-assertions = true # Make sure `debug_assert!`s pass
 overflow-checks = true # Catch arithmetic overflow errors
 
