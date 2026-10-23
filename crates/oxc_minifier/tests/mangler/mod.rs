@@ -229,6 +229,44 @@ fn private_member_mangling() {
     });
 }
 
+#[test]
+fn private_member_mangling_with_direct_eval() {
+    let options = MangleOptions::default();
+
+    // Direct eval in a class method means private members must NOT be mangled,
+    // because eval can reference the private field names as strings.
+    // https://github.com/oxc-project/oxc/issues/26485
+    let source_text = "class Outer { #secret = 123; read() { return eval(\"this.#secret\") } }";
+    let mangled = mangle(source_text, &options);
+    assert!(
+        mangled.contains("#secret = 123"),
+        "Private field #secret should NOT be mangled when there is direct eval, got:\n{mangled}"
+    );
+
+    // Indirect eval (e.g., (0, eval)("...")) does allow private mangling
+    let source_text =
+        "class Outer { #secret = 123; read() { return (0, eval)(\"this.#secret\") } }";
+    let mangled = mangle(source_text, &options);
+    assert!(
+        mangled.contains("#e = 123"),
+        "Private field #secret SHOULD be mangled with indirect eval, got:\n{mangled}"
+    );
+
+    // Direct eval in a nested function inside a class should also prevent mangling
+    let source_text = "class Outer { #secret = 123; read() { function inner() { eval(\"\") } return this.#secret } }";
+    let mangled = mangle(source_text, &options);
+    assert!(
+        mangled.contains("#secret = 123"),
+        "Private field #secret should NOT be mangled with direct eval in nested function, got:\n{mangled}"
+    );
+
+    // Two classes: one with eval, one without - only the eval class should keep names
+    let source_text = "class WithEval { #x = 1; m() { eval(\"\") } } class WithoutEval { #y = 2; m() { return this.#y } }";
+    let mangled = mangle(source_text, &options);
+    assert!(mangled.contains("#x = 1"), "WithEval class should keep #x, got:\n{mangled}");
+    assert!(mangled.contains("#e = 2"), "WithoutEval class should mangle #y, got:\n{mangled}");
+}
+
 /// A named function expression whose name is shadowed by a same-named declaration in its
 /// body must receive the same mangled name as the shadowing symbol; otherwise the emitted
 /// fn-expr name collides with whichever unrelated outer-scope variable happens to own slot 0.
