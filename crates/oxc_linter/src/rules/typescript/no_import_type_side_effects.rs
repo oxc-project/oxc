@@ -124,6 +124,8 @@ impl Rule for NoImportTypeSideEffects {
                     )));
                 }
 
+                // Cover the entire declaration so another fix cannot merge value specifiers
+                // into an import that is becoming type-only in the same pass.
                 fix.push(Fix::new("", Span::empty(import_decl.span.end)));
 
                 fix.with_message("Convert to top-level type import")
@@ -174,4 +176,53 @@ fn test() {
     Tester::new(NoImportTypeSideEffects::NAME, NoImportTypeSideEffects::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn test_no_duplicates_fix_conflict() {
+    use serde_json::json;
+
+    use crate::tester::Tester;
+
+    let config = json!({
+        "plugins": ["typescript", "import"],
+        "rules": {
+            "import/no-duplicates": ["error", { "prefer-inline": true }],
+        },
+    });
+
+    let source = r#"import { type Foo } from "./x";
+import { baz } from "./x";
+export type T = Foo;
+export const v = baz;"#;
+    let first_pass = r#"import type { Foo } from "./x";
+import { baz } from "./x";
+export type T = Foo;
+export const v = baz;"#;
+    let fixed = r#"import { type Foo,baz } from "./x";
+export type T = Foo;
+export const v = baz;"#;
+
+    let reversed = r#"import { baz } from "./x";
+import { type Foo } from "./x";
+export type T = Foo;
+export const v = baz;"#;
+    let reversed_fixed = r#"import { baz,type Foo } from "./x";
+export type T = Foo;
+export const v = baz;"#;
+
+    let pass =
+        vec![(fixed, None, Some(config.clone())), (reversed_fixed, None, Some(config.clone()))];
+    let fix = vec![
+        // Defer merging until the next pass, when the top-level type qualifier is visible.
+        (source, first_pass, None, Some(config.clone())),
+        (first_pass, fixed, None, Some(config.clone())),
+        // Merging first must also prevent the other rule from converting the value import.
+        (reversed, reversed_fixed, None, Some(config)),
+    ];
+
+    Tester::new(NoImportTypeSideEffects::NAME, NoImportTypeSideEffects::PLUGIN, pass, vec![])
+        .with_import_plugin(true)
+        .expect_fix(fix)
+        .test();
 }
