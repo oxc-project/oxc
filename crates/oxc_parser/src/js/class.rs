@@ -250,6 +250,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.finish_list_element_comments(
                 &element,
                 &mut list_comments,
+                &[],
                 &class_elements[previous..],
             );
             class_elements.push(element);

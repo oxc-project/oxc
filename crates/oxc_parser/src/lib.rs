@@ -91,7 +91,7 @@ pub mod lexer;
 
 use oxc_allocator::{Allocator, ArenaBox, ArenaVec, Dummy, GetAllocator};
 use oxc_ast::{
-    ast::{Expression, Program, Statement},
+    ast::{Directive, Expression, Program, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
 use oxc_diagnostics::Diagnostics;
@@ -864,7 +864,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             && self.module_record_builder.has_module_syntax()
             && !self.state.potential_await_reparse.is_empty()
         {
-            self.reparse_potential_top_level_awaits(&mut statements);
+            self.reparse_potential_top_level_awaits(&directives, &mut statements);
         }
 
         let span = Span::new(0, self.source_text.len() as u32);
@@ -888,7 +888,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     /// In unambiguous mode, statements like `await /x/u` are initially parsed as
     /// `await / x / u` (identifier with divisions). If ESM syntax is detected,
     /// we need to reparse them with the await context enabled.
-    fn reparse_potential_top_level_awaits(&mut self, statements: &mut ArenaVec<'a, Statement<'a>>) {
+    fn reparse_potential_top_level_awaits(
+        &mut self,
+        directives: &[Directive<'a>],
+        statements: &mut ArenaVec<'a, Statement<'a>>,
+    ) {
         let original_tokens =
             if self.lexer.config.tokens() { Some(self.lexer.take_tokens()) } else { None };
         let original = original_tokens.as_ref().map_or(&[][..], |tokens| tokens.as_slice());
@@ -901,8 +905,14 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
             if self.lexer.config.tokens() { checkpoints.len() } else { 0 },
             self,
         );
+        // Comments after the first reparsed statement may be owned by replaced nodes. Unassign
+        // them once rather than on each rewind, and assign those not owned by reparsed statements
+        // by walking Program.
+        if let Some((_, checkpoint)) = checkpoints.first() {
+            self.unassign_comments(Span::new(checkpoint.prev_token_end(), u32::MAX));
+        }
         for (stmt_index, checkpoint) in checkpoints {
-            self.rewind(checkpoint);
+            self.rewind_keeping_comments(checkpoint);
             let replacement_start = replacements.len();
 
             if self.lexer.config.tokens() {
@@ -923,7 +933,7 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
                 p.parse_statement_in_list(
                     StatementContext::Program,
                     &mut list_comments,
-                    &[],
+                    directives,
                     preceding,
                 )
             });

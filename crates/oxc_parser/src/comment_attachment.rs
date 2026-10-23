@@ -31,6 +31,8 @@
 //! A comment whose owner is [`NodeId::ROOT`] is unassigned until parsing finishes. Program is the
 //! only node with that ID and is not complete until then.
 
+use std::ops::Range;
+
 use oxc_ast::{
     AstKind, Comment, CommentContent, CommentPlacement,
     ast::{
@@ -49,7 +51,7 @@ use oxc_syntax::{
 
 use crate::{ParserConfig as Config, ParserImpl};
 
-/// Reusable buffers for walks, to avoid allocating for each statement.
+/// Reusable buffers for walks, to avoid allocating for each walk.
 #[derive(Default)]
 pub struct CommentAttacher {
     pending: Vec<u32>,
@@ -83,11 +85,11 @@ pub struct DelimitedComments {
     to: u32,
 }
 
-/// Comment state of a list of statements, or of other nodes without separators.
+/// Comment state of a list without separators: statements, class elements or switch cases.
 pub struct ListComments {
     /// Number of comments lexed when the list last had no unassigned comments.
     seen: u32,
-    /// Start of the list. Comments after it and before the first statement lead that statement.
+    /// Start of the list. Comments after it and before the first element lead that element.
     start: u32,
     /// Number of unassigned comments lexed before the list, which are outside it.
     outside: u32,
@@ -127,67 +129,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Assign comments preceding and inside a completed list element which are not owned by its
-    /// nested statements or list elements. `elements` precede it in its list.
+    /// nested statements or list elements. `elements` precede it in its list, after `directives`
+    /// in a statement list.
     #[inline]
-    pub(crate) fn finish_list_element_comments<T: ListElement<'a>>(
+    pub(crate) fn finish_list_element_comments<T: ListElement>(
         &mut self,
         element: &T,
         list: &mut ListComments,
+        directives: &[Directive<'a>],
         elements: &[T],
     ) {
         #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
         if self.lexer.trivia_builder.comments.len() as u32 != list.seen {
-            self.finish_list_element_comments_cold(element, list, elements);
-        }
-    }
-
-    /// Assign comments preceding and inside a completed statement. `directives` and `statements`
-    /// precede it in its list.
-    #[inline]
-    pub(crate) fn finish_statement_comments(
-        &mut self,
-        stmt: &Statement<'a>,
-        list: &mut ListComments,
-        directives: &[Directive<'a>],
-        statements: &[Statement<'a>],
-    ) {
-        #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
-        if self.lexer.trivia_builder.comments.len() as u32 != list.seen {
-            self.finish_statement_comments_cold(stmt, list, directives, statements);
+            self.finish_list_element_comments_cold(element, list, directives, elements);
         }
     }
 
     #[cold]
     #[inline(never)]
-    fn finish_statement_comments_cold(
+    fn finish_list_element_comments_cold<T: ListElement>(
         &mut self,
-        stmt: &Statement<'a>,
+        element: &T,
         list: &mut ListComments,
         directives: &[Directive<'a>],
-        statements: &[Statement<'a>],
+        elements: &[T],
     ) {
-        self.attach_list_element_leading_comments(stmt, list, || match statements.last() {
+        self.attach_list_element_leading_comments(element, list, || match elements.last() {
             Some(previous) => Some((previous.span().end, previous.node_id())),
             None => directives.last().map(|previous| (previous.span.end, previous.node_id.get())),
         });
     }
 
-    #[cold]
-    #[inline(never)]
-    fn finish_list_element_comments_cold<T: ListElement<'a>>(
-        &mut self,
-        element: &T,
-        list: &mut ListComments,
-        elements: &[T],
-    ) {
-        self.attach_list_element_leading_comments(element, list, || {
-            elements.last().map(|previous| (previous.span().end, previous.node_id()))
-        });
-    }
-
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn attach_list_element_leading_comments<T: ListElement<'a>>(
+    fn attach_list_element_leading_comments<T: ListElement>(
         &mut self,
         element: &T,
         list: &mut ListComments,
@@ -211,40 +186,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             None => (list.start, None),
         };
         let span = element.span();
-        let comments = &mut self.lexer.trivia_builder.comments;
-        // Comments inside the element are usually assigned, so the pending comments are usually
-        // the comments before it, between the previous element and this one. Otherwise some
-        // pending comments are before the previous element's end.
-        let last_start = comments.get(lexed.wrapping_sub(1)).map_or(u32::MAX, |c| c.span.start);
-        let end = if last_start < span.start {
-            lexed
-        } else if last_start < span.end {
-            let mut end = lexed - 1;
-            let limit = end.saturating_sub(4);
-            while end > limit && comments[end - 1].node_id.get() != NodeId::ROOT {
-                end -= 1;
-            }
-            partition_before(comments, end, span.start)
-        } else {
-            0
-        };
+        let comments = &self.lexer.trivia_builder.comments;
+        // The pending comments are usually the last comments lexed, between the previous element
+        // and this one. Otherwise some are inside it or not next to it, or annotation comments
+        // assigned to the element are among them.
+        let end = lexed;
         let start = end.wrapping_sub(pending);
-        if start >= end || comments[start].span.start < from || element.starts_before_span() {
+        if start >= end
+            || comments[end - 1].span.start >= span.start
+            || comments[start].span.start < from
+            || element.starts_before_span()
+            || comments[start..end].iter().any(|comment| comment.node_id.get() != NodeId::ROOT)
+        {
             self.attach_list_element_comments(element, lexed, pending, from, sibling);
             return;
         }
         let node_id = element.node_id();
+        let comments = &mut self.lexer.trivia_builder.comments;
         for index in start..end {
-            let comment_trails =
-                sibling.filter(|_| trails_preceding(comments, index, from, span.start));
-            let comment = &mut comments[index];
-            if let Some(sibling) = comment_trails {
-                comment.node_id.set(sibling);
-                comment.placement = CommentPlacement::Trailing;
-            } else {
-                comment.node_id.set(node_id);
-                comment.placement = CommentPlacement::Leading;
-            }
+            assign_between(comments, index, from, span.start, sibling, node_id);
         }
         #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
         {
@@ -257,7 +217,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// element.
     #[cold]
     #[inline(never)]
-    fn attach_list_element_comments<T: ListElement<'a>>(
+    fn attach_list_element_comments<T: ListElement>(
         &mut self,
         element: &T,
         lexed: usize,
@@ -267,10 +227,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) {
         let span = element.span();
         let comments = &self.lexer.trivia_builder.comments;
-        let mut inside_end = lexed;
-        while inside_end > 0 && comments[inside_end - 1].span.start >= span.end {
-            inside_end -= 1;
-        }
+        let inside_end = partition_before(comments, lexed, span.end);
         let inside_start = partition_before(comments, inside_end, span.start);
         let mut leading_start = inside_start;
         while leading_start > 0 && comments[leading_start - 1].span.start >= from {
@@ -280,7 +237,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // are inside it.
         let leading = inside_start - leading_start;
         if pending != leading + (lexed - inside_end) {
-            self.walk_list_element(element, inside_start, inside_end - inside_start);
+            self.walk_comments(inside_start..inside_end, |walker| element.visit(walker));
         }
         // Comments before decorators preceding the span are assigned by walking Program.
         if element.starts_before_span() {
@@ -289,54 +246,50 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let node_id = element.node_id();
         let comments = &mut self.lexer.trivia_builder.comments;
         for index in leading_start..inside_start {
-            if comments[index].node_id.get() != NodeId::ROOT {
-                continue;
+            if comments[index].node_id.get() == NodeId::ROOT {
+                assign_between(comments, index, from, span.start, sibling, node_id);
+                self.assigned_comments += 1;
             }
-            let comment_trails =
-                sibling.filter(|_| trails_preceding(comments, index, from, span.start));
-            let comment = &mut comments[index];
-            if let Some(sibling) = comment_trails {
-                comment.node_id.set(sibling);
-                comment.placement = CommentPlacement::Trailing;
-            } else {
-                comment.node_id.set(node_id);
-                comment.placement = CommentPlacement::Leading;
-            }
-            self.assigned_comments += 1;
         }
     }
 
-    /// Assign comments inside a list element which are not owned by its nested statements or list
-    /// elements, by walking it.
-    #[cold]
-    #[inline(never)]
+    /// Assign an unassigned comment.
+    fn assign_comment(&mut self, index: usize, node_id: NodeId, placement: CommentPlacement) {
+        let comment = &mut self.lexer.trivia_builder.comments[index];
+        debug_assert_eq!(comment.node_id.get(), NodeId::ROOT);
+        comment.node_id.set(node_id);
+        comment.placement = placement;
+        self.assigned_comments += 1;
+    }
+
+    /// Assign the unassigned comments in `range` by walking the node `visit` visits, which
+    /// contains them.
     #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
-    fn walk_list_element<T: ListElement<'a>>(&mut self, element: &T, first: usize, inside: usize) {
-        let comments = &self.lexer.trivia_builder.comments[first..];
+    fn walk_comments(&mut self, range: Range<usize>, visit: impl FnOnce(&mut Walker<'_>)) {
+        let trivia = &mut self.lexer.trivia_builder;
         let pending = &mut self.comment_attacher.pending;
         pending.clear();
         pending.extend(
-            (first..first + inside)
-                .filter(|&index| comments[index - first].node_id.get() == NodeId::ROOT)
+            range
+                .filter(|&index| trivia.comments[index].node_id.get() == NodeId::ROOT)
                 .map(|index| index as u32),
         );
         if pending.is_empty() {
             return;
         }
         self.assigned_comments += pending.len() as u32;
-        let trivia = &mut self.lexer.trivia_builder;
         let mut walker = Walker::new(
             &mut trivia.comments,
             &trivia.comma_comments,
             &mut self.comment_attacher,
             self.source_text,
         );
-        element.visit(&mut walker);
+        visit(&mut walker);
         walker.finish();
     }
 
-    /// Assign comments after the last directive or statement of a list and before the closing
-    /// token at `end` as trailing on it.
+    /// Assign comments after the last directive or statement of a list and ending before `end`
+    /// as trailing on it.
     #[inline]
     pub(crate) fn attach_trailing_comments(
         &mut self,
@@ -369,14 +322,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     #[inline(never)]
     fn attach_trailing_comments_cold(&mut self, start: u32, node_id: NodeId, end: u32) {
-        for comment in self.lexer.trivia_builder.comments.iter_mut().rev() {
+        let comments = &self.lexer.trivia_builder.comments;
+        // Comments after `end` may have been lexed before a rewind.
+        let mut index = partition_before(comments, comments.len(), end);
+        while index > 0 {
+            index -= 1;
+            let comment = &self.lexer.trivia_builder.comments[index];
             if comment.span.start < start {
                 break;
             }
             if comment.span.end <= end && comment.node_id.get() == NodeId::ROOT {
-                comment.node_id.set(node_id);
-                comment.placement = CommentPlacement::Trailing;
-                self.assigned_comments += 1;
+                self.assign_comment(index, node_id, CommentPlacement::Trailing);
             }
         }
     }
@@ -397,11 +353,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline(never)]
     fn attach_comments_before_close_cold(&mut self, node_id: NodeId) {
         let (start, end) = self.leading_comments();
-        for comment in &mut self.lexer.trivia_builder.comments[start as usize..end as usize] {
-            if comment.node_id.get() == NodeId::ROOT {
-                comment.node_id.set(node_id);
-                comment.placement = CommentPlacement::Trailing;
-                self.assigned_comments += 1;
+        for index in start as usize..end as usize {
+            if self.lexer.trivia_builder.comments[index].node_id.get() == NodeId::ROOT {
+                self.assign_comment(index, node_id, CommentPlacement::Trailing);
             }
         }
     }
@@ -413,8 +367,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.attach_comments_after_element(element.node_id(), element.span().end);
     }
 
-    /// Assign comments after a separator which trail the preceding element, if it is not an
-    /// elision.
+    /// Assign comments after a separator which trail the preceding element, if it is not an array
+    /// pattern elision.
     #[cold]
     #[inline(never)]
     pub(crate) fn attach_comments_after_separated_element<T: SeparatedElement>(
@@ -429,15 +383,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn attach_comments_after_element(&mut self, node_id: NodeId, element_end: u32) {
         let (start, end) = self.leading_comments();
         let token_start = self.cur_token().start();
-        let comments = &mut self.lexer.trivia_builder.comments;
         for index in start as usize..end as usize {
+            let comments = &self.lexer.trivia_builder.comments;
             if comments[index].node_id.get() == NodeId::ROOT
                 && trails_preceding(comments, index, element_end, token_start)
             {
-                let comment = &mut comments[index];
-                comment.node_id.set(node_id);
-                comment.placement = CommentPlacement::Trailing;
-                self.assigned_comments += 1;
+                self.assign_comment(index, node_id, CommentPlacement::Trailing);
             }
         }
     }
@@ -489,19 +440,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if node_start != leading.to {
             return;
         }
-        let comments = &mut self.lexer.trivia_builder.comments;
-        let mut index = leading.end as usize;
+        // Comments after the token may have been lexed before a rewind.
+        let comments = &self.lexer.trivia_builder.comments;
+        let mut index = partition_before(comments, leading.end as usize, leading.to);
         while index > 0 {
             index -= 1;
-            let comment = &mut comments[index];
+            let comment = &self.lexer.trivia_builder.comments[index];
             if comment.span.start < leading.from {
                 break;
             }
-            // Comments after the token may have been lexed before a rewind.
-            if comment.span.start < leading.to && comment.node_id.get() == NodeId::ROOT {
-                comment.node_id.set(node_id);
-                comment.placement = CommentPlacement::Leading;
-                self.assigned_comments += 1;
+            if comment.node_id.get() == NodeId::ROOT {
+                self.assign_comment(index, node_id, CommentPlacement::Leading);
             }
         }
     }
@@ -512,10 +461,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let comments = &self.lexer.trivia_builder.comments;
         let token_start = self.cur_token().start();
         // Comments after the current token may have been lexed before a rewind.
-        let mut end = comments.len();
-        while end > 0 && comments[end - 1].span.start >= token_start {
-            end -= 1;
-        }
+        let end = partition_before(comments, comments.len(), token_start);
         let mut start = end;
         while start > 0 && comments[start - 1].span.start >= self.prev_token_end {
             start -= 1;
@@ -528,7 +474,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[inline(never)]
     pub(crate) fn unassign_comments(&mut self, span: Span) {
         let comments = &mut self.lexer.trivia_builder.comments;
-        let start = comments.partition_point(|comment| comment.span.start < span.start);
+        let start = partition_before(comments, comments.len(), span.start);
         for comment in &mut comments[start..] {
             if comment.span.start >= span.end {
                 break;
@@ -540,62 +486,47 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Assign comments to the node an annotation applies to.
-    pub(crate) fn attach_annotation_comments(&mut self, start: u32, end: u32, node_id: NodeId) {
-        for comment in &mut self.lexer.trivia_builder.comments[start as usize..end as usize] {
-            if matches!(comment.content, CommentContent::Pure | CommentContent::NoSideEffects)
-                && comment.node_id.get() == NodeId::ROOT
-            {
-                comment.node_id.set(node_id);
-                comment.placement = CommentPlacement::Leading;
-                self.assigned_comments += 1;
-            }
-        }
-    }
-
-    /// Unassign comments assigned after a checkpoint, whose owners may have been discarded.
+    /// Unassign comments assigned after a checkpoint, whose owners may be discarded.
+    /// `prev_token_end` and `token_start` are the end of the previous token and the start of the
+    /// current token at the checkpoint.
     ///
-    /// Nodes completed after the checkpoint, and so the comments they own, start after
-    /// `prev_token_end`.
+    /// Nodes completed after the checkpoint start at or after `token_start`, so they own comments
+    /// after `prev_token_end` as leading or dangling comments. Comments between the tokens which
+    /// trail a node were assigned before the checkpoint.
     #[cold]
     #[inline(never)]
-    pub(crate) fn rewind_comments(&mut self, prev_token_end: u32, assigned_comments: u32) {
+    pub(crate) fn rewind_comments(&mut self, prev_token_end: u32, token_start: u32) {
         let comments = &mut self.lexer.trivia_builder.comments;
-        let start = comments.partition_point(|comment| comment.span.start < prev_token_end);
+        let start = partition_before(comments, comments.len(), prev_token_end);
         for comment in &mut comments[start..] {
-            if comment.node_id.get() != NodeId::ROOT {
+            if comment.node_id.get() != NodeId::ROOT
+                && (comment.span.start >= token_start
+                    || comment.placement != CommentPlacement::Trailing)
+            {
                 comment.node_id.set(NodeId::ROOT);
                 self.assigned_comments -= 1;
             }
         }
-        debug_assert_eq!(self.assigned_comments, assigned_comments);
+    }
+
+    /// Assign comments to the node an annotation applies to.
+    pub(crate) fn attach_annotation_comments(&mut self, start: u32, end: u32, node_id: NodeId) {
+        for index in start as usize..end as usize {
+            let comment = &self.lexer.trivia_builder.comments[index];
+            if matches!(comment.content, CommentContent::Pure | CommentContent::NoSideEffects)
+                && comment.node_id.get() == NodeId::ROOT
+            {
+                self.assign_comment(index, node_id, CommentPlacement::Leading);
+            }
+        }
     }
 
     /// Assign the remaining comments by walking Program.
-    #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
     pub(crate) fn attach_remaining_comments(&mut self, program: &Program<'a>) {
-        let trivia = &mut self.lexer.trivia_builder;
-        let comments = &mut trivia.comments;
-        if self.assigned_comments as usize == comments.len() {
-            return;
+        let len = self.lexer.trivia_builder.comments.len();
+        if self.assigned_comments as usize != len {
+            self.walk_comments(0..len, |walker| walker.visit_program(program));
         }
-        let pending = &mut self.comment_attacher.pending;
-        pending.clear();
-        pending.extend(
-            comments
-                .iter()
-                .enumerate()
-                .filter(|(_, comment)| comment.node_id.get() == NodeId::ROOT)
-                .map(|(index, _)| index as u32),
-        );
-        let mut walker = Walker::new(
-            comments,
-            &trivia.comma_comments,
-            &mut self.comment_attacher,
-            self.source_text,
-        );
-        walker.visit_program(program);
-        walker.finish();
     }
 }
 
@@ -821,36 +752,45 @@ fn trails_preceding(comments: &[Comment], index: usize, from: u32, to: u32) -> b
     true
 }
 
-/// Index of the first of `comments[..end]` which starts at or after `pos`, searching backward
-/// from `end` as the result is usually close to it.
-fn partition_before(comments: &[Comment], end: usize, pos: u32) -> usize {
-    if end == 0 || comments[end - 1].span.start < pos {
-        return end;
-    }
-    partition_before_far(comments, end, pos)
+/// Assign an unassigned comment between a list element ending at `from` with ID `sibling`, and
+/// one starting at `to` with ID `node_id`, as trailing on the first or leading on the second.
+/// The caller counts it as assigned.
+#[expect(clippy::inline_always)]
+#[inline(always)]
+fn assign_between(
+    comments: &mut [Comment],
+    index: usize,
+    from: u32,
+    to: u32,
+    sibling: Option<NodeId>,
+    node_id: NodeId,
+) {
+    let (node_id, placement) = match sibling.filter(|_| trails_preceding(comments, index, from, to))
+    {
+        Some(sibling) => (sibling, CommentPlacement::Trailing),
+        None => (node_id, CommentPlacement::Leading),
+    };
+    let comment = &mut comments[index];
+    comment.node_id.set(node_id);
+    comment.placement = placement;
 }
 
-#[inline(never)]
-fn partition_before_far(comments: &[Comment], end: usize, pos: u32) -> usize {
-    let mut high = end;
-    let mut step = 1;
-    loop {
-        let low = high.saturating_sub(step);
-        if low == high {
-            return 0;
+/// Index of the first of `comments[..end]` which starts at or after `pos`. It is usually `end` or
+/// close to it, but many comments may be after `pos` after a rewind.
+fn partition_before(comments: &[Comment], end: usize, pos: u32) -> usize {
+    let limit = end.saturating_sub(4);
+    let mut index = end;
+    while index > limit {
+        if comments[index - 1].span.start < pos {
+            return index;
         }
-        if comments[low].span.start < pos {
-            return low
-                + 1
-                + comments[low + 1..high].partition_point(|comment| comment.span.start < pos);
-        }
-        high = low;
-        step *= 2;
+        index -= 1;
     }
+    comments[..index].partition_point(|comment| comment.span.start < pos)
 }
 
 /// A node in a list without separators, which owns the comments before it.
-pub trait ListElement<'a>: GetSpan + GetNodeId {
+pub trait ListElement: GetSpan + GetNodeId {
     /// Visit the node with a walker.
     fn visit(&self, walker: &mut Walker<'_>);
 
@@ -861,7 +801,7 @@ pub trait ListElement<'a>: GetSpan + GetNodeId {
     }
 }
 
-impl<'a> ListElement<'a> for Statement<'a> {
+impl ListElement for Statement<'_> {
     fn visit(&self, walker: &mut Walker<'_>) {
         walker.visit_statement(self);
     }
@@ -883,13 +823,13 @@ impl<'a> ListElement<'a> for Statement<'a> {
     }
 }
 
-impl<'a> ListElement<'a> for ClassElement<'a> {
+impl ListElement for ClassElement<'_> {
     fn visit(&self, walker: &mut Walker<'_>) {
         walker.visit_class_element(self);
     }
 }
 
-impl<'a> ListElement<'a> for SwitchCase<'a> {
+impl ListElement for SwitchCase<'_> {
     fn visit(&self, walker: &mut Walker<'_>) {
         walker.visit_switch_case(self);
     }
