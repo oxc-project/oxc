@@ -1,0 +1,23 @@
+crates/oxc_formatter/src/print/semicolon.rs
+  s_e1985f4d1ce7d3::t_476b92c8f87f64 376-377,385-387
+crates/oxc_formatter/tests/fixtures/ts/semicolons/suppressed-ambient-module-attributes.ts
+  s_e1985f4d1ce7d3::t_73a19cb3603df6 1-6
+crates/oxc_formatter/tests/fixtures/ts/semicolons/suppressed-ambient-module-attributes.ts.snap
+  s_e1985f4d1ce7d3::t_dd42e913929516 1-53
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b85ff3f82bd243df47ef245cdebce4f33c125e7d",
+  "prompts": {},
+  "sessions": {
+    "s_e1985f4d1ce7d3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16a57-e46b-7041-83c4-6f30f82cb0ac",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
