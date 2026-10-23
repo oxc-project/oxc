@@ -292,6 +292,8 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
+        Self::inline_single_use_function_declaration(&mut expr_stmt.expression, result, ctx);
+
         // In a derived constructor, `this` after an unconditional `super()` is safe to drop.
         // Walk backwards through preceding sibling statements looking for `super()`.
         // Only consider top-level expression statements — `super()` inside `if`/loops
@@ -436,6 +438,49 @@ impl<'a> PeepholeOptimizations {
             }
             _ => false,
         }
+    }
+
+    /// Move an immediately preceding single-use function declaration into an
+    /// assignment expression.
+    /// `function a() {} b.a = a;` -> `b.a = function a() {};`
+    fn inline_single_use_function_declaration(
+        expr: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if Self::is_script_root_scope(ctx) {
+            return;
+        }
+
+        let Expression::AssignmentExpression(assignment) = expr else { return };
+        if assignment.operator != AssignmentOperator::Assign {
+            return;
+        }
+        let Expression::Identifier(reference) = &assignment.right else { return };
+
+        let Some(Statement::FunctionDeclaration(function)) = result.last() else { return };
+        let Some(id) = &function.id else { return };
+        let symbol_id = id.symbol_id();
+        if ctx.current_scope_flags().contains_direct_eval()
+            || ctx.state.symbols.is_implicitly_observable(symbol_id)
+            || ctx.state.symbols.function_is_dead(symbol_id)
+            || ctx.scoping().get_resolved_references(symbol_id).count() != 1
+            || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
+            || ctx.scoping().get_reference(reference.reference_id()).symbol_id() != Some(symbol_id)
+        {
+            return;
+        }
+
+        let Some(scope_id) = function.scope_id.get() else { return };
+        if let Some(liveness) = ctx.state.symbols.liveness_mut() {
+            liveness.unregister_function_declaration(scope_id, symbol_id);
+        }
+
+        let Statement::FunctionDeclaration(mut function) = result.pop().unwrap() else {
+            unreachable!();
+        };
+        function.r#type = FunctionType::FunctionExpression;
+        ctx.replace_expression(&mut assignment.right, Expression::FunctionExpression(function));
     }
 
     /// Check if a switch case can be inlined by verifying:
