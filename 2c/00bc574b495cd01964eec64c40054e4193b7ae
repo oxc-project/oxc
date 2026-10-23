@@ -1,0 +1,43 @@
+apps/oxlint/fixtures/cli/tsgolint/.oxlintrc.json
+  s_81fcdad7dca566::t_ab371971e5eecd 35
+apps/oxlint/fixtures/cli/tsgolint/no-unsafe-enum-assignment.ts
+  s_81fcdad7dca566::t_dfcc0beb973baa 1-24
+apps/oxlint/src-js/package/config.generated.ts
+  s_81fcdad7dca566::t_066a84d669ac1c 1493
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_--type-aware --silent@oxlint.snap"
+  s_81fcdad7dca566::t_d1942b7c32dd71 9-10
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_--type-aware -c config-test.json@oxlint.snap"
+  s_81fcdad7dca566::t_e82c1bdb8be4bc 45
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_--type-aware test.svelte@oxlint.snap"
+  s_81fcdad7dca566::t_b67244e26b60e4 19
+apps/oxlint/src/snapshots/fixtures__cli__tsgolint_--type-aware@oxlint.snap
+  s_81fcdad7dca566::t_0ec3e133ec356a 355-402,771-772
+"apps/oxlint/src/snapshots/fixtures__cli__tsgolint_-c config-type-aware.json@oxlint.snap"
+  s_81fcdad7dca566::t_36bcc2d1d0e6f5 45
+crates/oxc_linter/src/generated/rule_runner_impls.rs
+  s_81fcdad7dca566::t_77904211a7a5d6 1975-1979
+crates/oxc_linter/src/generated/rules_enum.rs
+  s_81fcdad7dca566::t_8f3b66cf51c549 582,1186,2065-2651,2938,3866,4887,5928,6973-6975,8651-8654,10646,12663,13552,14494,15450,16383,17410,18456,19403,20279,21227
+crates/oxc_linter/src/rules.rs
+  s_81fcdad7dca566::t_530cd72a17d929 302
+crates/oxc_linter/src/rules/typescript/no_unsafe_enum_assignment.rs
+  s_81fcdad7dca566::t_1c9e1891148452 1-61
+npm/oxlint/configuration_schema.json
+  s_81fcdad7dca566::t_423dccd9924096 8374-8376
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2c00bc574b495cd01964eec64c40054e4193b7ae",
+  "prompts": {},
+  "sessions": {
+    "s_81fcdad7dca566": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16641-573d-74e3-9a9d-67d1b127c995",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
