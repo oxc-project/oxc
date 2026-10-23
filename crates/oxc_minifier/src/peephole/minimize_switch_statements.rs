@@ -71,6 +71,7 @@ impl<'a> PeepholeOptimizations {
             let mut selected_case = selected_case.unwrap();
             selected_case.test = Some(Self::make_sequence_expression(kept_tests, ctx));
             if let Some(var_decl) = keep_var.get_variable_declaration_statement(ctx) {
+                ctx.preserve_statement_declarations(&var_decl);
                 selected_case.consequent.push(var_decl);
             }
             switch_stmt.cases.push(selected_case);
@@ -122,6 +123,7 @@ impl<'a> PeepholeOptimizations {
             }
         }
         if let Some(var_decl) = keep_var.get_variable_declaration_statement(ctx) {
+            ctx.preserve_statement_declarations(&var_decl);
             selected_case.consequent.push(var_decl);
         }
         switch_stmt.cases = ArenaVec::from_value_in(selected_case, ctx);

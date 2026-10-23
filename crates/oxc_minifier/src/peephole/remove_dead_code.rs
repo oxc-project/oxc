@@ -426,7 +426,19 @@ impl<'a> PeepholeOptimizations {
                 for dropped in handler.body.body.take_in(ctx) {
                     ctx.drop_statement(&dropped);
                 }
-                if let Some(var_decl) = var.get_variable_declaration_statement(&ctx.ast) {
+                if let Some(Statement::VariableDeclaration(mut var_decl)) =
+                    var.get_variable_declaration_statement(&ctx.ast)
+                {
+                    for declarator in &mut var_decl.declarations {
+                        if let BindingPattern::BindingIdentifier(ident) = &mut declarator.id
+                            && let Some(symbol_id) = ident.symbol_id.get()
+                            && ctx.scoping().symbol_flags(symbol_id).is_catch_variable()
+                        {
+                            ident.symbol_id.set(None);
+                        }
+                    }
+                    let var_decl = Statement::VariableDeclaration(var_decl);
+                    ctx.preserve_statement_declarations(&var_decl);
                     handler.body.body.push(var_decl);
                 }
             }

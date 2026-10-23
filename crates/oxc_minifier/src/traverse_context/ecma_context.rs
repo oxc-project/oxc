@@ -1,4 +1,4 @@
-use oxc_allocator::{GetAllocator, ReplaceWith};
+use oxc_allocator::{ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::ast::*;
 use oxc_compat::{ESFeature, EngineTargets};
 use oxc_ecmascript::{
@@ -475,8 +475,35 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     #[inline]
     pub fn replace_statement(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
         self.dropped_subtree_collector().visit_statement(slot);
+        self.preserve_statement_declarations(&new);
         *slot = new;
         self.state.record_ast_change();
+    }
+
+    /// Keep Scoping declaration records for bindings in a replacement subtree.
+    ///
+    /// Some transformations recreate a binding with its original `SymbolId`
+    /// and span after dropping the old AST node.
+    #[inline]
+    pub fn preserve_statement_declarations(&mut self, stmt: &Statement<'a>) {
+        struct RetainedDeclarationCollector<'s, 'a> {
+            declarations: &'s mut ArenaVec<'a, (SymbolId, oxc_span::Span)>,
+        }
+        impl<'ast> Visit<'ast> for RetainedDeclarationCollector<'_, '_> {
+            fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'ast>) {
+                if let Some(symbol_id) = ident.symbol_id.get() {
+                    let declaration = (symbol_id, ident.span);
+                    if !self.declarations.contains(&declaration) {
+                        self.declarations.push(declaration);
+                    }
+                }
+            }
+        }
+
+        RetainedDeclarationCollector {
+            declarations: &mut self.state.pass_changes.retained_declarations,
+        }
+        .visit_statement(stmt);
     }
 
     /// Replace a statement slot with a value built from the owned old statement.
@@ -492,6 +519,7 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
     ) {
         let ctx = &mut *self;
         slot.replace_with(|old| replacer(old, ctx));
+        self.preserve_statement_declarations(slot);
         self.state.record_ast_change();
     }
 
