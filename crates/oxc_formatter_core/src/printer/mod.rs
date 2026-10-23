@@ -831,24 +831,21 @@ impl<'a> Printer<'a> {
 
         match text {
             Text::Token(text) => {
-                // SAFETY: `text` is a ASCII-only string
-                unsafe {
-                    self.state.buffer.print_bytes_unchecked(text.as_bytes());
-                }
+                self.state.buffer.print_str_short(text);
                 self.state.line_width += text.len();
             }
             Text::Text { text, width } => {
                 if width.is_multiline() {
                     let line_break_position = text.find('\n').unwrap_or(text.len());
                     let (first_line, remaining) = text.split_at(line_break_position);
-                    self.state.buffer.print_str(first_line);
+                    self.state.buffer.print_str_short(first_line);
                     self.state.line_width += width.value() as usize;
                     // Print the remaining lines
                     for char in remaining.chars() {
                         self.print_char(char);
                     }
                 } else {
-                    self.state.buffer.print_str(text);
+                    self.state.buffer.print_str_short(text);
                     self.state.line_width += width.value() as usize;
                 }
             }
