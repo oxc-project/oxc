@@ -4,7 +4,6 @@ mod inline;
 mod minimize_binary_expression;
 mod minimize_conditional_expression;
 mod minimize_conditions;
-mod minimize_expression_in_boolean_context;
 mod minimize_for_statement;
 mod minimize_if_statement;
 mod minimize_imports_exports;
@@ -441,23 +440,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
         } else {
             match stmt {
                 Statement::BlockStatement(_) => Self::try_optimize_block(stmt, ctx),
-                Statement::IfStatement(s) => {
-                    Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
+                Statement::IfStatement(_) => {
                     Self::try_fold_if(stmt, ctx);
                     Self::try_minimize_if(stmt, ctx);
                 }
-                Statement::WhileStatement(s) => {
-                    Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
-                }
-                Statement::ForStatement(s) => {
-                    if let Some(test) = &mut s.test {
-                        Self::minimize_expression_in_boolean_context(test, ctx);
-                    }
-                    Self::try_fold_for(stmt, ctx);
-                }
-                Statement::DoWhileStatement(s) => {
-                    Self::minimize_expression_in_boolean_context(&mut s.test, ctx);
-                }
+                Statement::ForStatement(_) => Self::try_fold_for(stmt, ctx),
                 Statement::TryStatement(_) => Self::try_fold_try(stmt, ctx),
                 Statement::LabeledStatement(_) => Self::try_fold_labeled(stmt, ctx),
                 Statement::SwitchStatement(_) => {
@@ -630,11 +617,11 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                     Self::substitute_object_or_array_constructor(expr, ctx);
                 }
                 Expression::ConditionalExpression(logical_expr) => {
-                    Self::minimize_expression_in_boolean_context(&mut logical_expr.test, ctx);
                     if let Some(changed) = Self::minimize_conditional_expression(logical_expr, ctx)
                     {
                         ctx.replace_expression(expr, changed);
                     }
+                    Self::minimize_conditional_expression_in_boolean_context(expr, ctx);
                     Self::try_fold_conditional_expression(expr, ctx);
                 }
                 Expression::AssignmentExpression(e) => {
@@ -660,15 +647,6 @@ impl<'a> Traverse<'a> for PeepholeOptimizations {
                 Expression::Identifier(_) => Self::inline_identifier_reference(expr, ctx),
                 _ => {}
             }
-        }
-    }
-
-    fn exit_unary_expression(&mut self, expr: &mut UnaryExpression<'a>, ctx: &mut TraverseCtx<'a>) {
-        if ctx.is_tree_shake_only() {
-            return;
-        }
-        if expr.operator.is_not() {
-            Self::minimize_expression_in_boolean_context(&mut expr.argument, ctx);
         }
     }
 

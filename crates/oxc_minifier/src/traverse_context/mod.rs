@@ -3,9 +3,9 @@ use oxc_ast::{
     ast::{Expression, IdentifierReference, Statement},
     builder::{AstBuilder, GetAstBuilder},
 };
-use oxc_semantic::Scoping;
+use oxc_semantic::{IsGlobalReference, Scoping};
 use oxc_span::Span;
-use oxc_str::Ident;
+use oxc_str::{Ident, static_ident};
 use oxc_syntax::{
     reference::{ReferenceFlags, ReferenceId},
     scope::{ScopeFlags, ScopeId},
@@ -653,6 +653,44 @@ impl<'a, State> TraverseCtx<'a, State> {
     /// This is a shortcut for `ctx.scoping.delete_reference_for_identifier`.
     pub fn delete_reference_for_identifier(&mut self, ident: &IdentifierReference) {
         self.scoping.delete_reference_for_identifier(ident);
+    }
+
+    /// Whether the current expression allows boolean simplification based on its ancestors.
+    ///
+    /// Only transparent expression edges are followed. Calls, assignments, and
+    /// other value-consuming parents are boundaries, except for the global
+    /// `Boolean` builtin, which observes only argument truthiness.
+    pub fn in_boolean_context(&self) -> bool {
+        self.ancestors()
+            .find_map(|ancestor| match ancestor {
+                Ancestor::IfStatementTest(_)
+                | Ancestor::WhileStatementTest(_)
+                | Ancestor::DoWhileStatementTest(_)
+                | Ancestor::ForStatementTest(_)
+                | Ancestor::ConditionalExpressionTest(_)
+                | Ancestor::ExpressionStatementExpression(_) => Some(true),
+                Ancestor::UnaryExpressionArgument(unary) => Some(unary.operator().is_not()),
+                Ancestor::CallExpressionArguments(call)
+                    if !*call.optional()
+                        && call
+                            .callee()
+                            .is_global_reference_name(static_ident!("Boolean"), self.scoping()) =>
+                {
+                    Some(true)
+                }
+                Ancestor::LogicalExpressionLeft(logical) if !logical.operator().is_coalesce() => {
+                    None
+                }
+                Ancestor::LogicalExpressionRight(logical) if !logical.operator().is_coalesce() => {
+                    None
+                }
+                Ancestor::ConditionalExpressionConsequent(_)
+                | Ancestor::ConditionalExpressionAlternate(_)
+                | Ancestor::SequenceExpressionExpressions(_) => None,
+                // `??` operands and all other parents consume the exact value.
+                _ => Some(false),
+            })
+            .unwrap_or(false)
     }
 }
 
