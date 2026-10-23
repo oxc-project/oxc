@@ -1,8 +1,9 @@
 use oxc_span::SourceType;
+use oxc_str::CompactStr;
 
 use crate::frameworks::FrameworkOptions;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone)]
 #[non_exhaustive]
 pub struct JavaScriptSource<'a> {
     pub source_text: &'a str,
@@ -15,6 +16,10 @@ pub struct JavaScriptSource<'a> {
 
     // some partial sources can have special options defined, like Vue's `<script setup>`.
     pub framework_options: FrameworkOptions,
+
+    /// Variables that the framework declares for this block, like the keys of Astro's
+    /// `<script define:vars={{ ... }}>`.
+    pub globals: Vec<CompactStr>,
 }
 
 impl<'a> JavaScriptSource<'a> {
@@ -25,6 +30,7 @@ impl<'a> JavaScriptSource<'a> {
             start: 0,
             is_partial: false,
             framework_options: FrameworkOptions::Default,
+            globals: Vec::new(),
         }
     }
 
@@ -43,7 +49,20 @@ impl<'a> JavaScriptSource<'a> {
         framework_options: FrameworkOptions,
         start: u32,
     ) -> Self {
-        Self { source_text, source_type, start, is_partial: true, framework_options }
+        Self {
+            source_text,
+            source_type,
+            start,
+            is_partial: true,
+            framework_options,
+            globals: Vec::new(),
+        }
+    }
+
+    #[must_use]
+    pub fn with_globals(mut self, globals: Vec<CompactStr>) -> Self {
+        self.globals = globals;
+        self
     }
 
     pub fn as_str(&self) -> &'a str {
