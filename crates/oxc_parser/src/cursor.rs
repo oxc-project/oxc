@@ -8,6 +8,7 @@ use oxc_syntax::node::GetNodeId;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
+    comment_attachment::SeparatedElement,
     diagnostics::{self, ParserDiagnostic},
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
@@ -573,7 +574,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn parse_delimited_list_with_rest<E, A, R, D>(
+    pub(crate) fn parse_delimited_list_with_rest<E, A: SeparatedElement, R, D>(
         &mut self,
         close: Kind,
         opening_span: Span,
@@ -600,7 +601,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_delimited_list_with_rest_into<E, A, R, D>(
+    fn parse_delimited_list_with_rest_into<E, A: SeparatedElement, R, D>(
         &mut self,
         list: &mut ArenaVec<'a, A>,
         close: Kind,
@@ -638,6 +639,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     break;
                 }
                 self.bump_any();
+                if self.cur_token().follows_comment()
+                    && let Some(element) = list.last()
+                {
+                    self.attach_comments_after_separated_element(element);
+                }
                 let kind = self.cur_kind();
                 if kind == close {
                     if rest.is_some() && !self.ctx.has_ambient() {

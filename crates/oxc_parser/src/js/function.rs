@@ -114,6 +114,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     break;
                 }
                 self.bump_any();
+                if self.cur_token().follows_comment()
+                    && let Some(param) = list.last()
+                {
+                    self.attach_comments_after_separator(param);
+                }
                 let kind = self.cur_kind();
                 if kind == Kind::RParen {
                     if rest.is_some() && !self.ctx.has_ambient() {

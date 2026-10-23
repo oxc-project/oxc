@@ -303,12 +303,86 @@ fn comma_separated_lists() {
     check(
         "f(\n  a, /* x */ // c\n  b,\n);",
         SourceType::mjs(),
-        &["/* x */ -> Leading IdentifierReference `b`", "// c -> Trailing IdentifierReference `a`"],
+        &[
+            "/* x */ -> Trailing IdentifierReference `a`",
+            "// c -> Trailing IdentifierReference `a`",
+        ],
     );
     check("f(a, /* c */ b);", SourceType::mjs(), &["/* c */ -> Leading IdentifierReference `b`"]);
     check(
         "f(\n  a,\n  // c\n  b,\n);",
         SourceType::mjs(),
         &["// c -> Leading IdentifierReference `b`"],
+    );
+}
+
+#[test]
+fn comment_runs() {
+    check(
+        "f(\n  a,\n  /* x */ // c\n  b,\n);",
+        SourceType::mjs(),
+        &["/* x */ -> Leading IdentifierReference `b`", "// c -> Leading IdentifierReference `b`"],
+    );
+    check(
+        "foo(); /* x */ // c\nbar();",
+        SourceType::mjs(),
+        &[
+            "/* x */ -> Trailing ExpressionStatement `foo();`",
+            "// c -> Trailing ExpressionStatement `foo();`",
+        ],
+    );
+    check(
+        "foo();\n/* x */ // c\nbar();",
+        SourceType::mjs(),
+        &[
+            "/* x */ -> Leading ExpressionStatement `bar();`",
+            "// c -> Leading ExpressionStatement `bar();`",
+        ],
+    );
+    check(
+        "foo(); /* x */ bar();",
+        SourceType::mjs(),
+        &["/* x */ -> Leading ExpressionStatement `bar();`"],
+    );
+    check(
+        "x = a /* x */ + // c\n  b;",
+        SourceType::mjs(),
+        &["/* x */ -> Trailing IdentifierReference `a`", "// c -> Leading IdentifierReference `b`"],
+    );
+}
+
+#[test]
+fn binding_lists() {
+    check(
+        "const {\n  a, // c\n  b,\n} = x;",
+        SourceType::mjs(),
+        &["// c -> Trailing BindingProperty `a`"],
+    );
+    check(
+        "const [\n  a, // c\n  b,\n] = x;",
+        SourceType::mjs(),
+        &["// c -> Trailing BindingIdentifier `a`"],
+    );
+    check(
+        "function f(\n  a, /* x */ // c\n  b,\n) {}",
+        SourceType::mjs(),
+        &["/* x */ -> Trailing FormalParameter `a`", "// c -> Trailing FormalParameter `a`"],
+    );
+}
+
+#[test]
+fn line_comment_trailing_whitespace() {
+    check(
+        "function f() {\n  foo(); // a \n  // b\n}",
+        SourceType::mjs(),
+        &[
+            "// a  -> Trailing ExpressionStatement `foo();`",
+            "// b -> Trailing ExpressionStatement `foo();`",
+        ],
+    );
+    check(
+        "x = (\n  a // a \n  // b\n);",
+        SourceType::mjs(),
+        &["// a  -> Trailing IdentifierReference `a`", "// b -> Trailing IdentifierReference `a`"],
     );
 }
