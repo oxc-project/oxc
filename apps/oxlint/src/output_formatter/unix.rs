@@ -10,6 +10,8 @@ use crate::output_formatter::InternalFormatter;
 #[derive(Debug, Default)]
 pub struct UnixOutputFormatter;
 
+// Keeps the default `reports_config_warnings`: tools parse the `file:line:column` every line
+// starts with.
 impl InternalFormatter for UnixOutputFormatter {
     fn get_diagnostic_reporter(&self) -> Box<dyn DiagnosticReporter> {
         Box::new(UnixReporter::default())

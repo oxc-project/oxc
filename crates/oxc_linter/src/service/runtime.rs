@@ -634,8 +634,11 @@ impl Runtime {
                             dep.section_contents.len()
                         );
 
+                        // The governing config is looked up once; its overrides are
+                        // applied once there is something to lint.
+                        let file_config = me.linter.file_config(path);
                         let respect_eslint_disable_directives =
-                            me.linter.respect_eslint_disable_directives();
+                            file_config.respect_eslint_disable_directives;
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                             .section_module_records
                             .into_iter()
@@ -671,14 +674,15 @@ impl Runtime {
                             return;
                         }
 
-                        let (mut messages, disable_directives) =
-                            me.linter.run_with_disable_directives::<TIMINGS>(
-                                path,
-                                context_sub_hosts,
-                                allocator_guard,
-                                me.js_allocator_pool(),
-                                rule_timing_store,
-                            );
+                        let resolved = file_config.resolve(path);
+                        let (mut messages, disable_directives) = me.linter.run_resolved::<TIMINGS>(
+                            path,
+                            resolved,
+                            context_sub_hosts,
+                            allocator_guard,
+                            me.js_allocator_pool(),
+                            rule_timing_store,
+                        );
 
                         // Store the disable directives for this file
                         if let Some(disable_directives) = disable_directives {
@@ -775,8 +779,12 @@ impl Runtime {
                                 section_contents.len()
                             );
 
+                            let path = Path::new(&module_to_lint.path);
+                            // The governing config is looked up once; its overrides are
+                            // applied once there is something to lint.
+                            let file_config = me.linter.file_config(path);
                             let respect_eslint_disable_directives =
-                                me.linter.respect_eslint_disable_directives();
+                                file_config.respect_eslint_disable_directives;
                             let context_sub_hosts: Vec<ContextSubHost<'_>> = module_to_lint
                                 .section_module_records
                                 .into_iter()
@@ -810,11 +818,11 @@ impl Runtime {
                                 return;
                             }
 
-                            let path = Path::new(&module_to_lint.path);
-
+                            let resolved = file_config.resolve(path);
                             let (section_messages, disable_directives) =
-                                me.linter.run_with_disable_directives::<false>(
+                                me.linter.run_resolved::<false>(
                                     path,
+                                    resolved,
                                     context_sub_hosts,
                                     allocator_guard,
                                     me.js_allocator_pool(),
@@ -918,8 +926,12 @@ impl Runtime {
                     }| {
                         assert_eq!(module.section_module_records.len(), section_contents.len());
 
+                        let path = Path::new(&module.path);
+                        // The governing config is looked up once; its overrides are
+                        // applied once there is something to lint.
+                        let file_config = me.linter.file_config(path);
                         let respect_eslint_disable_directives =
-                            me.linter.respect_eslint_disable_directives();
+                            file_config.respect_eslint_disable_directives;
                         let context_sub_hosts: Vec<ContextSubHost<'_>> = module
                             .section_module_records
                             .into_iter()
@@ -953,8 +965,18 @@ impl Runtime {
                             return;
                         }
 
+                        let resolved = file_config.resolve(path);
                         messages.lock().unwrap().extend(
-                            me.linter.run(Path::new(&module.path), context_sub_hosts, allocator_guard),
+                            me.linter
+                                .run_resolved::<false>(
+                                    path,
+                                    resolved,
+                                    context_sub_hosts,
+                                    allocator_guard,
+                                    None,
+                                    None,
+                                )
+                                .0,
                         );
                     });
                 },
