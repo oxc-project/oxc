@@ -373,6 +373,13 @@ impl DisableDirectives {
     }
 
     pub fn collect_unused_disable_comments(&self) -> Vec<DisableRuleComment> {
+        self.collect_unused_disable_comments_filtered(&[])
+    }
+
+    pub fn collect_unused_disable_comments_filtered(
+        &self,
+        exempt: &[String],
+    ) -> Vec<DisableRuleComment> {
         let used = self.used_disable_comments.borrow();
 
         self.intervals
@@ -401,6 +408,10 @@ impl DisableDirectives {
                         }
                         match &interval.val {
                             DisabledRule::Single { rule_name, name_span, .. } => {
+                                // Skip rules exempt from unused-directive reporting.
+                                if exempt.contains(rule_name) {
+                                    return None;
+                                }
                                 Some(RuleCommentRule {
                                     directive_prefix: interval.val.directive_prefix(),
                                     rule_name: rule_name.clone(),
@@ -1350,12 +1361,14 @@ semi*/
 /// # Arguments
 /// * `directives` - The disable directives to check for unused comments
 /// * `severity` - The severity level (Warn or Deny) for the diagnostics
+/// * `exempt` - Rule ids that must not be reported as unused directives
 ///
 /// # Returns
 /// A vector of diagnostics for all unused directives
 pub fn create_unused_directives_diagnostics(
     directives: &DisableDirectives,
     severity: crate::AllowWarnDeny,
+    exempt: &[String],
 ) -> Vec<oxc_diagnostics::OxcDiagnostic> {
     use oxc_diagnostics::OxcDiagnostic;
 
@@ -1368,7 +1381,7 @@ pub fn create_unused_directives_diagnostics(
     };
 
     // Report unused disable comments
-    let unused_disable = directives.collect_unused_disable_comments();
+    let unused_disable = directives.collect_unused_disable_comments_filtered(exempt);
     for unused_comment in unused_disable {
         let span = unused_comment.span;
         match unused_comment.r#type {
@@ -2123,5 +2136,36 @@ function test() {
             directives.contains("export", export_span),
             "`import/export` directive must suppress the `export` rule"
         );
+    }
+
+    #[test]
+    fn exempt_rules_are_not_reported_as_unused() {
+        let allocator = Allocator::default();
+        let exempt = ["no-console".to_string()];
+
+        let build = |source_text: &str| {
+            let semantic = process_source(&allocator, source_text);
+            DisableDirectivesBuilder::new().build(semantic.source_text(), semantic.comments())
+        };
+
+        // A single-rule directive whose only rule is exempt is dropped entirely,
+        // but is still reported when the rule is not exempt.
+        let directives = build("// oxlint-disable-next-line no-console\nconst a = 1;\n");
+        assert!(directives.collect_unused_disable_comments_filtered(&exempt).is_empty());
+        assert_eq!(directives.collect_unused_disable_comments().len(), 1);
+
+        // A directive mixing an exempt and a non-exempt rule still reports the non-exempt rule.
+        let directives = build("// oxlint-disable-next-line no-console, no-debugger\nconst a = 1;\n");
+        let unused = directives.collect_unused_disable_comments_filtered(&exempt);
+        assert_eq!(unused.len(), 1);
+        let RuleCommentType::Single(rules) = &unused[0].r#type else {
+            panic!("expected the surviving non-exempt rule to be reported individually");
+        };
+        assert_eq!(rules.len(), 1);
+        assert_eq!(rules[0].rule_name, "no-debugger");
+
+        // A directive naming only non-exempt rules is unaffected.
+        let directives = build("// oxlint-disable-next-line no-debugger\nconst a = 1;\n");
+        assert_eq!(directives.collect_unused_disable_comments_filtered(&exempt).len(), 1);
     }
 }
