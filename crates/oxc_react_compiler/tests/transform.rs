@@ -717,3 +717,95 @@ export default Component;\n";
     assert!(output.contains("// keep: trailing"), "trailing comment lost:\n{output}");
     assert!(!output.contains("// drop: inner"), "inner comment should not be recovered:\n{output}");
 }
+
+#[test]
+fn ambient_variables_remain_global_after_compilation() {
+    for kind in ["const", "let", "var"] {
+        let source = format!(
+            "function Component() {{
+                declare {kind} __BUILD__: string | undefined;
+                const build = typeof __BUILD__ === 'undefined' ? 'dev' : __BUILD__;
+                return <div>{{build}}</div>;
+            }}"
+        );
+        let allocator = Allocator::default();
+        let (program, result) = transform_source(&source, SourceType::tsx(), &allocator, options());
+        assert!(result.changed, "{kind} declaration should compile: {:?}", result.diagnostics);
+        assert!(result.diagnostics.is_empty(), "{kind}: {:?}", result.diagnostics);
+        let output = Codegen::new().build(&program).code;
+        let parsed = Parser::new(&allocator, &output, SourceType::jsx()).parse();
+        assert!(
+            parsed.diagnostics.is_empty(),
+            "invalid JavaScript for {kind}: {:?}",
+            parsed.diagnostics
+        );
+        let semantic = SemanticBuilder::new().build(&parsed.program).semantic;
+        assert!(
+            semantic.scoping().root_unresolved_references().contains_key("__BUILD__"),
+            "ambient {kind} must not introduce a runtime binding"
+        );
+    }
+}
+
+#[test]
+fn nested_function_does_not_capture_ambient_variable() {
+    let source = "function Component() {
+        declare const __BUILD__: string;
+        const readBuild = () => __BUILD__;
+        return <button onClick={readBuild}>build</button>;
+    }";
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    let parsed = Parser::new(&allocator, &output, SourceType::jsx()).parse();
+    assert!(parsed.diagnostics.is_empty(), "invalid JavaScript: {:?}", parsed.diagnostics);
+    let semantic = SemanticBuilder::new().build(&parsed.program).semantic;
+    assert!(
+        semantic.scoping().root_unresolved_references().contains_key("__BUILD__"),
+        "the callback must read the ambient global, not an uninitialized local capture"
+    );
+}
+
+#[test]
+fn ambient_reference_before_declaration_is_not_hoisted() {
+    let source = "function Component() {
+        const build = typeof __BUILD__ === 'undefined' ? 'dev' : __BUILD__;
+        declare const __BUILD__: string | undefined;
+        return <div>{build}</div>;
+    }";
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    let parsed = Parser::new(&allocator, &output, SourceType::jsx()).parse();
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+    let semantic = SemanticBuilder::new().build(&parsed.program).semantic;
+    assert!(
+        semantic.scoping().root_unresolved_references().contains_key("__BUILD__"),
+        "a type declaration must not create a hoisted runtime local"
+    );
+}
+
+#[test]
+fn ordinary_uninitialized_local_is_preserved_beside_ambient_declaration() {
+    let source = "function Component({ flag }) {
+        let value;
+        declare const __BUILD__: string;
+        if (flag) value = __BUILD__;
+        return <div>{value}</div>;
+    }";
+    let allocator = Allocator::default();
+    let (program, result) = transform_source(source, SourceType::tsx(), &allocator, options());
+    assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+    assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+    let output = Codegen::new().build(&program).code;
+    let parsed = Parser::new(&allocator, &output, SourceType::jsx()).parse();
+    assert!(parsed.diagnostics.is_empty(), "{:?}", parsed.diagnostics);
+    let semantic = SemanticBuilder::new().build(&parsed.program).semantic;
+    let globals = semantic.scoping().root_unresolved_references();
+    assert!(globals.contains_key("__BUILD__"), "the ambient value must remain external");
+    assert!(!globals.contains_key("value"), "the ordinary local must not become a global");
+}
