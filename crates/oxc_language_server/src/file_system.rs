@@ -11,7 +11,14 @@ use crate::{ConcurrentHashMap, LanguageId, TextDocument, uri_utils::uri_to_file_
 
 #[derive(Debug, Default)]
 pub struct LSPFileSystem {
-    files: ConcurrentHashMap<Uri, (LanguageId, Arc<str>)>,
+    files: ConcurrentHashMap<Uri, OpenDocument>,
+}
+
+#[derive(Debug)]
+struct OpenDocument {
+    language_id: LanguageId,
+    version: i32,
+    text: Arc<str>,
 }
 
 /// Represents a resolved file path that can be used for file system operations.
@@ -80,31 +87,45 @@ impl LSPFileSystem {
     }
 
     pub fn set(&self, uri: Uri, content: String) {
-        let language_id = self.get_language_id(&uri).unwrap_or_default();
-        self.files.pin().insert(uri, (language_id, Arc::from(content)));
+        let version = self.get_version(&uri).unwrap_or_default();
+        self.set_with_version(uri, version, content);
     }
 
-    pub fn set_with_language(&self, uri: Uri, language_id: LanguageId, content: String) {
-        self.files.pin().insert(uri, (language_id, Arc::from(content)));
+    pub fn set_with_version(&self, uri: Uri, version: i32, content: String) {
+        let language_id = self.get_language_id(&uri).unwrap_or_default();
+        self.set_with_language(uri, language_id, version, content);
+    }
+
+    pub fn set_with_language(
+        &self,
+        uri: Uri,
+        language_id: LanguageId,
+        version: i32,
+        content: String,
+    ) {
+        self.files
+            .pin()
+            .insert(uri, OpenDocument { language_id, version, text: Arc::from(content) });
     }
 
     pub fn get_language_id(&self, uri: &Uri) -> Option<LanguageId> {
-        self.files.pin().get(uri).map(|(lang, _)| lang.clone())
+        self.files.pin().get(uri).map(|doc| doc.language_id.clone())
+    }
+
+    pub fn get_version(&self, uri: &Uri) -> Option<i32> {
+        self.files.pin().get(uri).map(|doc| doc.version)
     }
 
     pub fn get_document<'a>(&self, uri: &'a Uri) -> TextDocument<'a> {
         self.files.pin().get(uri).map_or_else(
-            || TextDocument { uri, language_id: LanguageId::default(), text: None },
-            |(language_id, content)| TextDocument {
+            || TextDocument { uri, language_id: LanguageId::default(), text: None, version: None },
+            |doc| TextDocument {
                 uri,
-                language_id: language_id.clone(),
-                text: Some(Arc::clone(content)),
+                language_id: doc.language_id.clone(),
+                text: Some(Arc::clone(&doc.text)),
+                version: Some(doc.version),
             },
         )
-    }
-
-    pub fn is_open(&self, uri: &Uri) -> bool {
-        self.files.pin().contains_key(uri)
     }
 
     pub fn remove(&self, uri: &Uri) {
@@ -127,6 +148,10 @@ mod tests {
 
     fn path_from_fixture(fixture: &str) -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("fixtures").join(fixture)
+    }
+
+    fn uri_of_fixture(name: &str) -> Uri {
+        file_path_to_uri(path_from_fixture("same_path_different_uri").join(name)).unwrap()
     }
 
     fn path_to_lossy_string(path: &Path) -> Cow<'_, str> {
@@ -180,5 +205,47 @@ mod tests {
             path_to_lossy_string(&dir)
                 .cow_replace("same_path_different_uri", "Same_Path_Different_URI")
         );
+    }
+
+    #[test]
+    fn test_get_version() {
+        let fs = LSPFileSystem::default();
+        let uri = uri_of_fixture("test.txt");
+
+        assert_eq!(fs.get_version(&uri), None);
+        assert_eq!(fs.get_document(&uri).version, None);
+
+        fs.set_with_language(uri.clone(), LanguageId::new("plaintext".to_string()), 4, "a".into());
+        assert_eq!(fs.get_version(&uri), Some(4));
+        assert_eq!(fs.get_document(&uri).version, Some(4));
+
+        fs.set_with_version(uri.clone(), 5, "b".into());
+        assert_eq!(fs.get_version(&uri), Some(5));
+        assert_eq!(fs.get_document(&uri).text.as_deref(), Some("b"));
+        assert_eq!(fs.get_language_id(&uri), Some(LanguageId::new("plaintext".to_string())));
+    }
+
+    #[test]
+    fn test_set_keeps_the_version() {
+        let fs = LSPFileSystem::default();
+        let uri = uri_of_fixture("test.txt");
+
+        fs.set_with_language(uri.clone(), LanguageId::default(), 7, "a".into());
+        fs.set(uri.clone(), "b".into());
+
+        assert_eq!(fs.get_version(&uri), Some(7));
+        assert_eq!(fs.get_document(&uri).text.as_deref(), Some("b"));
+    }
+
+    #[test]
+    fn test_remove_drops_the_version() {
+        let fs = LSPFileSystem::default();
+        let uri = uri_of_fixture("test.txt");
+
+        fs.set_with_version(uri.clone(), 2, "a".into());
+        fs.remove(&uri);
+
+        assert_eq!(fs.get_version(&uri), None);
+        assert_eq!(fs.get_document(&uri).version, None);
     }
 }

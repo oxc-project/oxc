@@ -770,7 +770,8 @@ mod tests {
                 uri: Uri::from_str("file:///root/file.js").unwrap(),
                 range: Range::default(),
                 context: CodeActionContext::default(),
-                is_open_document: false,
+                document_version: None,
+                document_text: None,
             })
             .await;
 
@@ -781,7 +782,8 @@ mod tests {
                 uri: Uri::from_str("file:///root/code_action.config").unwrap(),
                 range: Range::default(),
                 context: CodeActionContext::default(),
-                is_open_document: false,
+                document_version: None,
+                document_text: None,
             })
             .await;
 
