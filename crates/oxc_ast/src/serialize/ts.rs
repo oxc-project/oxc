@@ -54,10 +54,12 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
         declare = DESER[bool](POS_OFFSET.declare);
 
     const previousParent = parent;
+    const withClause = DESER[Option<Box<WithClause>>](POS_OFFSET.attributes);
     const body = DESER[Option<Box<TSModuleBlock>>](POS_OFFSET.body);
     const node = parent = {
         type: 'TSModuleDeclaration',
         id: null,
+        ...(withClause !== null && { attributes: withClause.attributes }),
         ...(body !== null && { body }),
         kind: 'module',
         declare,
@@ -69,8 +71,11 @@ impl ESTree for ExpressionStatementDirective<'_, '_> {
     };
 
     node.id = DESER[StringLiteral](POS_OFFSET.id);
-    const attributes = DESER[Option<Box<WithClause>>](POS_OFFSET.attributes);
-    if (attributes !== null) node.attributes = attributes.attributes;
+    if (withClause !== null) {
+        if (PARENT) {
+            for (const attribute of withClause.attributes) attribute.parent = node;
+        }
+    }
     if (body !== null) {
         if (PARENT) body.parent = node;
     }

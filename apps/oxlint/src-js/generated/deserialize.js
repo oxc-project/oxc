@@ -5237,11 +5237,13 @@ function deserializeTSExternalModuleDeclaration(pos) {
     end = deserializeI32(pos + 4),
     declare = deserializeBool(pos + 80),
     previousParent = parent,
+    withClause = deserializeOptionBoxWithClause(pos + 64),
     body = deserializeOptionBoxTSModuleBlock(pos + 72),
     node = (parent = {
       __proto__: NodeProto,
       type: "TSModuleDeclaration",
       id: null,
+      ...(withClause !== null && { attributes: withClause.attributes }),
       ...(body !== null && { body }),
       kind: "module",
       declare,
@@ -5252,8 +5254,7 @@ function deserializeTSExternalModuleDeclaration(pos) {
       parent,
     });
   node.id = deserializeStringLiteral(pos + 16);
-  let attributes = deserializeOptionBoxWithClause(pos + 64);
-  attributes !== null && (node.attributes = attributes.attributes);
+  if (withClause !== null) for (let attribute of withClause.attributes) attribute.parent = node;
   body !== null && (body.parent = node);
   parent = previousParent;
   return node;
