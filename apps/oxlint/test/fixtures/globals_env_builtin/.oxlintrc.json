@@ -1,0 +1,20 @@
+{
+  "jsPlugins": ["./plugin.ts"],
+  "categories": {
+    "correctness": "off"
+  },
+  "rules": {
+    "globals-env-builtin-plugin/unresolved-globals": "error"
+  },
+  "env": {
+    "browser": true
+  },
+  "overrides": [
+    {
+      "files": ["files/builtin_disabled.js"],
+      "env": {
+        "builtin": false
+      }
+    }
+  ]
+}
