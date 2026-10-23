@@ -1,0 +1,21 @@
+package.json
+  s_81fcdad7dca566::t_d1a6bb01e1e5e8 19
+pnpm-lock.yaml
+  s_81fcdad7dca566::t_ab42963ee52b42 230,232-233,583,2753-2757,2768-2772,2783-2787,2798-2802,2813-2817,2828-2832,5512-5515,8282-8284,8291-8293,8300-8302,8309-8311,8318-8320,8327-8329,11153-11161,11307,11328
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f4a821ec4533fcce5d55a6f21faede757a38fb03",
+  "prompts": {},
+  "sessions": {
+    "s_81fcdad7dca566": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a16641-573d-74e3-9a9d-67d1b127c995",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
