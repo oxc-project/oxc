@@ -58,7 +58,10 @@ pub fn validate_no_capitalized_calls(
                     property_span,
                     ..
                 } => {
-                    if prop_name.starts_with(|c: char| c.is_ascii_uppercase()) {
+                    // Match LoadGlobal: skip ALL-CAPS names (`Date.UTC`).
+                    if prop_name.starts_with(|c: char| c.is_ascii_uppercase())
+                        && prop_name.as_str() != prop_name.cow_to_uppercase()
+                    {
                         capitalized_properties.insert(lvalue_id, (*prop_name, *property_span));
                     }
                 }
