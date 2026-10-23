@@ -1249,13 +1249,16 @@ impl<'a> PeepholeOptimizations {
                     }
                     // `new Array(8)` -> `Array(8)`
                     else if let Expression::NumericLiteral(n) = arg {
-                        // new Array(2) -> `[,,]`
-                        // this does not work with IE8 and below
-                        // learned from https://github.com/babel/minify/pull/45
                         #[expect(clippy::cast_possible_truncation, clippy::cast_sign_loss)]
                         if n.value.fract() == 0.0 {
                             let n_int = n.value as usize;
                             if (1..=6).contains(&n_int) {
+                                // Keep the sized constructor: JavaScriptCore has a dedicated
+                                // allocation path for `new Array(n)`, unlike an elision literal.
+                                if is_new_expr {
+                                    return;
+                                }
+                                // `Array(2)` -> `[,,]`
                                 let elisions = repeat_with(|| {
                                     ArrayExpressionElement::new_elision(n.span, ctx)
                                 })
