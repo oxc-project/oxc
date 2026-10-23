@@ -834,7 +834,7 @@ fn test_fold_boolean_constructor() {
     test_same("var a = Boolean?.({})");
 
     test("var a = Boolean()", "var a = !1;");
-    test_same("var a = Boolean(!0, !1);");
+    test("var a = Boolean(!0, !1);", "var a = Boolean(1, 0);");
 }
 
 #[test]

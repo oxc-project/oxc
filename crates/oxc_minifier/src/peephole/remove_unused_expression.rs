@@ -138,9 +138,6 @@ impl<'a> PeepholeOptimizations {
             return true;
         }
         let Expression::LogicalExpression(logical_expr) = e else { return false };
-        if !logical_expr.operator.is_coalesce() {
-            Self::minimize_expression_in_boolean_context(&mut logical_expr.left, ctx);
-        }
         if Self::remove_unused_expression(&mut logical_expr.right, ctx) {
             Self::remove_unused_expression(&mut logical_expr.left, ctx);
             let new_expr = logical_expr.left.take_in(ctx);

@@ -113,7 +113,7 @@ pub struct SymbolValue<'a> {
     /// `var` whose declarative prelude isn't clean): a read before the
     /// initializer sees `undefined`, but `undefined` and the falsy init are
     /// indistinguishable inside `if (x)` / `x ? …` / `!x`, so such reads fold to
-    /// `false` there. See `minimize_expression_in_boolean_context` / #14001.
+    /// `false` there. See boolean-context identifier folding / #14001.
     pub boolean_falsy: bool,
 }
 
