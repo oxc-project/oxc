@@ -8,7 +8,7 @@ use oxc_syntax::node::GetNodeId;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
-    comment_attachment::SeparatedElement,
+    comment_attachment::{ListElement, SeparatedElement},
     diagnostics::{self, ParserDiagnostic},
     error_handler::FatalError,
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
@@ -451,6 +451,37 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let element = parse_element(self);
             list.push(element);
         }
+    }
+
+    /// Parse a `{ }` list of elements without separators, e.g. block statements and class elements,
+    /// assigning each element's comments as it is parsed. With `EMPTY_ELEMENTS`, `;` can appear
+    /// between elements, as in a class body.
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(crate) fn parse_element_list<const EMPTY_ELEMENTS: bool, T: ListElement>(
+        &mut self,
+        mut parse_element: impl FnMut(&mut Self) -> T,
+    ) -> ArenaVec<'a, T> {
+        let opening_span = self.cur_token().span();
+        self.expect(Kind::LCurly);
+        let mut list = ArenaVec::new_in(self);
+        let mut list_comments = self.start_list_comments();
+        // Elements before `;` are not next to the following element.
+        let mut siblings = 0;
+        while !self.at(Kind::RCurly) && !self.has_fatal_error() {
+            if EMPTY_ELEMENTS && self.eat(Kind::Semicolon) {
+                while self.eat(Kind::Semicolon) {}
+                list_comments.restart(self.prev_token_end);
+                siblings = list.len();
+                continue;
+            }
+            let element = parse_element(self);
+            self.finish_list_element_comments(&element, &mut list_comments, &[], &list[siblings..]);
+            list.push(element);
+        }
+        self.attach_comments_before_close(&list);
+        self.expect_closing(Kind::RCurly, opening_span);
+        list
     }
 
     pub(crate) fn parse_delimited_list<F, T: GetSpan + GetNodeId>(

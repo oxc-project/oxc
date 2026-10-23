@@ -140,8 +140,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             statements.push(stmt);
         }
 
-        let end = self.cur_token().start();
-        self.attach_trailing_comments(&directives, &statements, end);
+        if statements.is_empty() {
+            self.attach_comments_before_close(&directives);
+        } else {
+            self.attach_comments_before_close(&statements);
+        }
         (directives, statements)
     }
 
@@ -312,23 +315,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 14.2 Block Statement
     pub(crate) fn parse_block(&mut self) -> ArenaBox<'a, BlockStatement<'a>> {
         let start = self.cur_start();
-        let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
-        let mut body = ArenaVec::new_in(self);
-        let mut list_comments = self.start_list_comments();
-        while !self.at(Kind::RCurly) && !self.has_fatal_error() {
-            let stmt = self.parse_statement_in_list(
-                StatementContext::StatementList,
-                &mut list_comments,
-                &[],
-                &body,
-            );
-            body.push(stmt);
-        }
-        self.expect_closing(Kind::RCurly, opening_span);
-        let span = self.end_span(start);
-        self.attach_trailing_comments(&[], &body, span.end.saturating_sub(1));
-        BlockStatement::boxed(span, body, self)
+        let body = self.parse_element_list::<false, _>(|p| {
+            p.parse_statement_list_item(StatementContext::StatementList)
+        });
+        BlockStatement::boxed(self.end_span(start), body, self)
     }
 
     pub(crate) fn parse_block_statement(&mut self) -> Statement<'a> {
@@ -804,29 +794,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // and report only the first duplicate, all in the single parsing pass.
         let mut first_default: Option<Span> = None;
         let mut reported_duplicate = false;
-        let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
-        let mut cases = ArenaVec::new_in(self);
-        let mut list_comments = self.start_list_comments();
-        while !self.at(Kind::RCurly) && !self.has_fatal_error() {
-            let case = self.parse_switch_case();
+        let cases = self.parse_element_list::<false, _>(|p| {
+            let case = p.parse_switch_case();
             if case.test.is_none() {
                 match first_default {
                     None => first_default = Some(case.span),
                     Some(first_span) if !reported_duplicate => {
-                        self.error(diagnostics::switch_multiple_default_clause(
-                            first_span, case.span,
-                        ));
+                        p.error(diagnostics::switch_multiple_default_clause(first_span, case.span));
                         reported_duplicate = true;
                     }
                     Some(_) => {}
                 }
             }
-            self.finish_list_element_comments(&case, &mut list_comments, &[], &cases);
-            cases.push(case);
-        }
-        self.attach_comments_before_close(&cases);
-        self.expect_closing(Kind::RCurly, opening_span);
+            case
+        });
         Statement::new_switch_statement(self.end_span(start), discriminant, cases, self)
     }
 

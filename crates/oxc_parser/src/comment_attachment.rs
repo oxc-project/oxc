@@ -288,55 +288,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         walker.finish();
     }
 
-    /// Assign comments after the last directive or statement of a list and ending before `end`
-    /// as trailing on it.
-    #[inline]
-    pub(crate) fn attach_trailing_comments(
-        &mut self,
-        directives: &[Directive<'a>],
-        statements: &[Statement<'a>],
-        end: u32,
-    ) {
-        let last_end = match statements.last() {
-            Some(stmt) => stmt.span().end,
-            None => match directives.last() {
-                Some(directive) => directive.span.end,
-                None => return,
-            },
-        };
-        if self
-            .lexer
-            .trivia_builder
-            .comments
-            .last()
-            .is_some_and(|comment| comment.span.end > last_end)
-        {
-            let node_id = match statements.last() {
-                Some(stmt) => stmt.node_id(),
-                None => directives.last().unwrap().node_id.get(),
-            };
-            self.attach_trailing_comments_cold(last_end, node_id, end);
-        }
-    }
-
-    #[cold]
-    #[inline(never)]
-    fn attach_trailing_comments_cold(&mut self, start: u32, node_id: NodeId, end: u32) {
-        let comments = &self.lexer.trivia_builder.comments;
-        // Comments after `end` may have been lexed before a rewind.
-        let mut index = partition_before(comments, comments.len(), end);
-        while index > 0 {
-            index -= 1;
-            let comment = &self.lexer.trivia_builder.comments[index];
-            if comment.span.start < start {
-                break;
-            }
-            if comment.span.end <= end && comment.node_id.get() == NodeId::ROOT {
-                self.assign_comment(index, node_id, CommentPlacement::Trailing);
-            }
-        }
-    }
-
     /// Assign comments after the last element of a list and before the closing token as trailing
     /// on that element, if no separator follows it.
     #[inline]
