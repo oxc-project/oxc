@@ -941,6 +941,7 @@ fn is_followed_by_comparison_or_sign(
                 (span, parent) = (expr.span, expr.parent());
             }
             AstNodes::UnaryExpression(expr) => (span, parent) = (expr.span, expr.parent()),
+            AstNodes::TSTypeAssertion(expr) => (span, parent) = (expr.span, expr.parent()),
             AstNodes::BinaryExpression(expr) => {
                 return expr.left.span() == span
                     && matches!(
