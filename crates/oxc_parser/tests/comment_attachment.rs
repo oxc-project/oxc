@@ -226,6 +226,41 @@ fn annotations() {
 }
 
 #[test]
+fn annotations_among_leading_comments() {
+    check(
+        "// c\n/* @__PURE__ */ foo();",
+        SourceType::mjs(),
+        &[
+            "// c -> Leading ExpressionStatement `foo();`",
+            "/* @__PURE__ */ -> Leading CallExpression `foo()`",
+        ],
+    );
+    check(
+        "/*#__NO_SIDE_EFFECTS__*/ /* c */ /*#__NO_SIDE_EFFECTS__*/ function foo() {}",
+        SourceType::mjs(),
+        &[
+            "/*#__NO_SIDE_EFFECTS__*/ -> Leading Function `function foo() {}`",
+            "/* c */ -> Leading Function `function foo() {}`",
+            "/*#__NO_SIDE_EFFECTS__*/ -> Leading Function `function foo() {}`",
+        ],
+    );
+}
+
+#[test]
+fn comments_assigned_before_checkpoint() {
+    check(
+        "f(a, // c\n  (b, // e\n  d));",
+        SourceType::mjs(),
+        &["// c -> Trailing IdentifierReference `a`", "// e -> Trailing IdentifierReference `b`"],
+    );
+    check(
+        "f(a, // c\n  async (b, // e\n  d));",
+        SourceType::mjs(),
+        &["// c -> Trailing IdentifierReference `a`", "// e -> Trailing IdentifierReference `b`"],
+    );
+}
+
+#[test]
 fn fatal_error() {
     check("foo(/* a */", SourceType::mjs(), &["/* a */ -> Dangling Program ``"]);
 }
@@ -478,5 +513,24 @@ fn decorators_before_export() {
         "namespace N {\n  // before\n  @dec export class C {}\n}",
         SourceType::ts(),
         &["// before -> Dangling TSModuleBlock `{\n  // before\n  @dec export class C {}\n}`"],
+    );
+}
+
+#[test]
+fn top_level_await_reparse() {
+    let line = "await /x/u; f(a, /* c */ b); // t\n";
+    let expected = [
+        "/* c */ -> Leading IdentifierReference `b`",
+        "// t -> Trailing ExpressionStatement `f(a, /* c */ b);`",
+    ];
+    check(
+        &format!("{line}{line}{line}export {{}};"),
+        SourceType::unambiguous(),
+        &expected.repeat(3),
+    );
+    check(
+        "'use strict'; // c\nawait /x/u;\nimport 'z';",
+        SourceType::unambiguous(),
+        &["// c -> Trailing Directive `'use strict';`"],
     );
 }

@@ -21,6 +21,12 @@ pub struct ParserCheckpoint<'a> {
     has_fatal_error: bool,
 }
 
+impl ParserCheckpoint<'_> {
+    pub(crate) fn prev_token_end(&self) -> u32 {
+        self.prev_token_end
+    }
+}
+
 impl<'a, C: Config> ParserImpl<'a, C> {
     /// Get current token's span start.
     #[inline]
@@ -368,7 +374,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } = checkpoint;
 
         if self.assigned_comments != assigned_comments {
-            self.rewind_comments(prev_token_end, assigned_comments);
+            self.rewind_comments(prev_token_end, cur_token.start());
+            debug_assert_eq!(self.assigned_comments, assigned_comments);
         }
 
         // A fatal error set after the checkpoint is discarded. If it is a lexer error that
@@ -388,8 +395,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Rewind to `checkpoint`, keeping the comments and irregular whitespace lexed after it.
     /// Only for when the source after `checkpoint` is not all lexed again.
+    /// Comments are not unassigned, which the caller has done.
     pub(crate) fn rewind_keeping_trivia(&mut self, mut checkpoint: ParserCheckpoint<'a>) {
         self.lexer.keep_trivia(&mut checkpoint.lexer);
+        checkpoint.assigned_comments = self.assigned_comments;
         self.rewind(checkpoint);
     }
 
