@@ -8,6 +8,7 @@ use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, Str};
 use oxc_syntax::{
+    node::NodeId,
     number::{BigintBase, NumberBase},
     precedence::Precedence,
 };
@@ -319,14 +320,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 arrow_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     arrow_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.apply_no_side_effects_comments(comments, arrow_expr.node_id.get());
                 }
             }
             Expression::FunctionExpression(func_expr) => {
                 func_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     func_expr.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                    self.apply_no_side_effects_comments(comments, func_expr.node_id.get());
                 }
             }
             _ => {}
@@ -521,12 +522,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
         let (elements, comma_start) = self.context_add(Context::In, |p| {
-            p.parse_delimited_list(
-                Kind::RBrack,
-                Kind::Comma,
-                opening_span,
-                Self::parse_array_expression_element,
-            )
+            p.parse_delimited_list(Kind::RBrack, Kind::Comma, opening_span, |p| {
+                p.parse_after_delimiter(Self::parse_array_expression_element)
+            })
         });
         if let Some(comma_start) = comma_start
             && matches!(elements.last(), Some(ArrayExpressionElement::SpreadElement(_)))
@@ -990,7 +988,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         optional: bool,
     ) -> Expression<'a> {
         self.bump_any(); // advance `[`
-        let property = self.context_add(Context::In, Self::parse_expr);
+        let property = self.context_add(Context::In, |p| p.parse_after_delimiter(Self::parse_expr));
         self.expect(Kind::RBrack);
         Expression::new_computed_member_expression(
             self.end_span(lhs_start),
@@ -1052,12 +1050,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // ArgumentList[Yield, Await] :
             //   AssignmentExpression[+In, ?Yield, ?Await]
             let (call_arguments, _) = self.context_add(Context::In, |p| {
-                p.parse_delimited_list(
-                    Kind::RParen,
-                    Kind::Comma,
-                    opening_span,
-                    Self::parse_call_argument,
-                )
+                p.parse_delimited_list(Kind::RParen, Kind::Comma, opening_span, |p| {
+                    p.parse_after_delimiter(Self::parse_call_argument)
+                })
             });
             self.expect(Kind::RParen);
             call_arguments
@@ -1171,12 +1166,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
         let (call_arguments, _) = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(
-                Kind::RParen,
-                Kind::Comma,
-                opening_span,
-                Self::parse_call_argument,
-            )
+            p.parse_delimited_list(Kind::RParen, Kind::Comma, opening_span, |p| {
+                p.parse_after_delimiter(Self::parse_call_argument)
+            })
         });
         self.expect(Kind::RParen);
         Expression::new_call_expression(
@@ -1502,7 +1494,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                self.apply_no_side_effects_comments(comments, func.node_id.get());
             }
             return arrow_expr;
         }
@@ -1514,7 +1506,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                self.apply_no_side_effects_comments(comments, func.node_id.get());
             }
             return arrow_expr;
         }
@@ -1539,7 +1531,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                self.apply_no_side_effects_comments(comments, func.node_id.get());
             }
             return arrow_expr;
         }
@@ -1570,8 +1562,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         comments: (u32, NonZeroU32),
         expr: &mut Expression<'a>,
     ) {
-        if Self::set_pure_on_call_or_new_expr(expr) {
+        if let Some(node_id) = Self::set_pure_on_call_or_new_expr(expr) {
             self.lexer.trivia_builder.mark_pure_comments_applied(comments);
+            self.attach_annotation_comments(comments.0, comments.1.get(), node_id);
         }
     }
 
@@ -1582,20 +1575,29 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         comments: (u32, NonZeroU32),
         expr: &mut Expression<'a>,
     ) {
-        if Self::set_pure_on_function_expr(expr) {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(node_id) = Self::set_pure_on_function_expr(expr) {
+            self.apply_no_side_effects_comments(comments, node_id);
         }
     }
 
-    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {
+    pub(crate) fn apply_no_side_effects_comments(
+        &mut self,
+        comments: (u32, NonZeroU32),
+        node_id: NodeId,
+    ) {
+        self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        self.attach_annotation_comments(comments.0, comments.1.get(), node_id);
+    }
+
+    fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> Option<NodeId> {
         match expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
-                true
+                Some(call_expr.node_id.get())
             }
             Expression::NewExpression(new_expr) => {
                 new_expr.pure = true;
-                true
+                Some(new_expr.node_id.get())
             }
             expr @ match_member_expression!(Expression) => {
                 Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
@@ -1603,7 +1605,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::ChainExpression(chain_expr) => match &mut chain_expr.expression {
                 ChainElement::CallExpression(call_expr) => {
                     call_expr.pure = true;
-                    true
+                    Some(call_expr.node_id.get())
                 }
                 element @ match_member_expression!(ChainElement) => {
                     Self::set_pure_on_call_or_new_expr(
@@ -1614,21 +1616,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     Self::set_pure_on_call_or_new_expr(&mut non_null_expr.expression)
                 }
             },
-            _ => false,
+            _ => None,
         }
     }
 
-    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> bool {
+    pub(crate) fn set_pure_on_function_expr(expr: &mut Expression<'a>) -> Option<NodeId> {
         match expr {
             Expression::FunctionExpression(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
             Expression::ArrowFunctionExpression(func) => {
                 func.pure = true;
-                true
+                Some(func.node_id.get())
             }
-            _ => false,
+            _ => None,
         }
     }
 
