@@ -3,7 +3,8 @@
 //! Each comment is owned by the deepest node containing it, or by a child of that node next to it:
 //!
 //! * Leading on the following child.
-//! * Trailing on the preceding child, if the comment is on the same line as the end of that child.
+//! * Trailing on the preceding child, if the comment is on the same line as the end of that child
+//!   or the comma after it.
 //! * Otherwise dangling on the containing node.
 //!
 //! Most comments are assigned during parsing, where the owner follows from the surrounding tokens:
@@ -195,8 +196,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return;
         }
         self.assigned_comments += pending.len() as u32;
+        let trivia = &mut self.lexer.trivia_builder;
         let mut walker = Walker::new(
-            &mut self.lexer.trivia_builder.comments,
+            &mut trivia.comments,
+            &trivia.comma_comments,
             &mut self.comment_attacher,
             self.source_text,
         );
@@ -268,6 +271,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let (start, end) = self.leading_comments();
         for comment in &mut self.lexer.trivia_builder.comments[start as usize..end as usize] {
             if comment.node_id.get() == NodeId::ROOT {
+                comment.node_id.set(node_id);
+                comment.placement = CommentPlacement::Trailing;
+                self.assigned_comments += 1;
+            }
+        }
+    }
+
+    /// Assign comments ending the line after a list separator as trailing on the preceding
+    /// element.
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn attach_comments_after_separator<T: GetSpan + GetNodeId>(&mut self, element: &T) {
+        let node_id = element.node_id();
+        let (start, end) = self.leading_comments();
+        let trivia = &mut self.lexer.trivia_builder;
+        for index in start..end {
+            let comment = &mut trivia.comments[index as usize];
+            if comment.followed_by_newline()
+                && trivia.comma_comments.binary_search(&index).is_ok()
+                && comment.node_id.get() == NodeId::ROOT
+            {
                 comment.node_id.set(node_id);
                 comment.placement = CommentPlacement::Trailing;
                 self.assigned_comments += 1;
@@ -410,7 +434,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Assign the remaining comments by walking Program.
     #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
     pub(crate) fn attach_remaining_comments(&mut self, program: &Program<'a>) {
-        let comments = &mut self.lexer.trivia_builder.comments;
+        let trivia = &mut self.lexer.trivia_builder;
+        let comments = &mut trivia.comments;
         if self.assigned_comments as usize == comments.len() {
             return;
         }
@@ -423,7 +448,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 .filter(|(_, comment)| comment.node_id.get() == NodeId::ROOT)
                 .map(|(index, _)| index as u32),
         );
-        let mut walker = Walker::new(comments, &mut self.comment_attacher, self.source_text);
+        let mut walker = Walker::new(
+            comments,
+            &trivia.comma_comments,
+            &mut self.comment_attacher,
+            self.source_text,
+        );
         walker.visit_program(program);
         walker.finish();
     }
@@ -439,6 +469,8 @@ pub fn attach_comments_to_program(comments: &mut [Comment]) {
 
 struct Walker<'w> {
     comments: &'w mut [Comment],
+    /// Sorted indices of comments following a comma on the same line.
+    comma_comments: &'w [u32],
     pending: &'w [u32],
     frames: &'w mut Vec<Frame>,
     source_text: &'w str,
@@ -450,6 +482,7 @@ impl<'w> Walker<'w> {
     #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
     fn new(
         comments: &'w mut [Comment],
+        comma_comments: &'w [u32],
         attacher: &'w mut CommentAttacher,
         source_text: &'w str,
     ) -> Self {
@@ -464,7 +497,7 @@ impl<'w> Walker<'w> {
             preceding: None,
             preceding_end: 0,
         });
-        Self { comments, pending, frames, source_text, depth: 0 }
+        Self { comments, comma_comments, pending, frames, source_text, depth: 0 }
     }
 
     fn finish(mut self) {
@@ -546,7 +579,10 @@ impl<'w> Walker<'w> {
     ///
     /// `following` is the next child and its start.
     fn assign(&mut self, index: u32, frame: &Frame, following: Option<(NodeId, u32)>) {
-        let preceding = frame.preceding.filter(|_| self.follows(index, frame.preceding_end));
+        let preceding = frame.preceding.filter(|_| {
+            self.comma_comments.binary_search(&index).is_ok()
+                || self.follows(index, frame.preceding_end)
+        });
         let following =
             following.filter(|&(_, start)| self.precedes(index, start)).map(|(node_id, _)| node_id);
         let (node_id, placement) = match (preceding, following) {
@@ -568,7 +604,7 @@ impl<'w> Walker<'w> {
     }
 
     /// Whether only whitespace and comments separate the comment from a preceding child ending at
-    /// `preceding_end`. For example, a comment after a trailing comma is dangling in its container.
+    /// `preceding_end`.
     #[expect(clippy::cast_possible_truncation, reason = "Source offsets fit within u32")]
     fn follows(&self, index: u32, preceding_end: u32) -> bool {
         let mut index = index as usize;

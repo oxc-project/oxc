@@ -265,9 +265,50 @@ fn list_boundaries() {
         SourceType::mjs(),
         &["/* a */ -> Leading IdentifierReference `a`"],
     );
+    check("x = { a: 1, // c\n};", SourceType::mjs(), &["// c -> Trailing ObjectProperty `a: 1`"]);
+}
+
+#[test]
+fn comma_separated_lists() {
     check(
-        "x = { a: 1, // c\n};",
+        "f(\n  a, // c\n  b,\n);",
         SourceType::mjs(),
-        &["// c -> Dangling ObjectExpression `{ a: 1, // c\n}`"],
+        &["// c -> Trailing IdentifierReference `a`"],
+    );
+    check(
+        "x = [\n  a, // c\n  b,\n];",
+        SourceType::mjs(),
+        &["// c -> Trailing IdentifierReference `a`"],
+    );
+    check(
+        "x = {\n  a: 1, // c\n  b: 2,\n};",
+        SourceType::mjs(),
+        &["// c -> Trailing ObjectProperty `a: 1`"],
+    );
+    check(
+        "function f(\n  a, // c\n  b,\n) {}",
+        SourceType::mjs(),
+        &["// c -> Trailing FormalParameter `a`"],
+    );
+    check(
+        "let a = 1, // c\n  b = 2;",
+        SourceType::mjs(),
+        &["// c -> Trailing VariableDeclarator `a = 1`"],
+    );
+    check(
+        "[\n  a, // c\n  b,\n] = x;",
+        SourceType::mjs(),
+        &["// c -> Trailing IdentifierReference `a`"],
+    );
+    check(
+        "f(\n  a, /* x */ // c\n  b,\n);",
+        SourceType::mjs(),
+        &["/* x */ -> Leading IdentifierReference `b`", "// c -> Trailing IdentifierReference `a`"],
+    );
+    check("f(a, /* c */ b);", SourceType::mjs(), &["/* c */ -> Leading IdentifierReference `b`"]);
+    check(
+        "f(\n  a,\n  // c\n  b,\n);",
+        SourceType::mjs(),
+        &["// c -> Leading IdentifierReference `b`"],
     );
 }

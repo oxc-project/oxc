@@ -4,6 +4,7 @@ use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
+use oxc_syntax::node::GetNodeId;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
@@ -477,7 +478,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    pub(crate) fn parse_delimited_list<F, T>(
+    pub(crate) fn parse_delimited_list<F, T: GetSpan + GetNodeId>(
         &mut self,
         close: Kind,
         separator: Kind,
@@ -500,7 +501,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(crate) fn parse_delimited_list_into<F, T>(
+    pub(crate) fn parse_delimited_list_into<F, T: GetSpan + GetNodeId>(
         &mut self,
         list: &mut ArenaVec<'a, T>,
         close: Kind,
@@ -532,6 +533,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 return None;
             }
             self.advance(separator);
+            if self.cur_token().follows_comment() {
+                self.attach_comments_after_separator(list.last().unwrap());
+            }
             let kind = self.cur_kind();
             if kind == close {
                 let trailing_separator = self.prev_token_end - 1;
