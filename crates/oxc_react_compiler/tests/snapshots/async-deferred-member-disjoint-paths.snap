@@ -1,0 +1,22 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-deferred-member-disjoint-paths.js
+---
+function Component(t0) {
+	const { cond } = t0;
+	let count = 0;
+	const opts = { cb: _temp };
+	const run = async () => {
+		await 0;
+		opts.cb();
+	};
+	if (cond) {
+		run();
+	} else {
+		opts.cb = () => count++;
+	}
+	return null;
+}
+function _temp() {
+	return null;
+}

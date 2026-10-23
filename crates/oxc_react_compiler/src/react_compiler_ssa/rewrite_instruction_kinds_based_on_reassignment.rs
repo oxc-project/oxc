@@ -251,8 +251,8 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                     let kind = kind.ok_or_else(diagnostics::ssa_expected_operand)?;
                     destructure_kind_spans.push((block_index, local_idx, kind));
                 }
-                InstructionValue::PostfixUpdate { lvalue, .. }
-                | InstructionValue::PrefixUpdate { lvalue, .. } => {
+                InstructionValue::PostfixUpdateLocal { lvalue, .. }
+                | InstructionValue::PrefixUpdateLocal { lvalue, .. } => {
                     let ident = &env.identifiers[lvalue.identifier];
                     let decl_id = ident.declaration_id;
                     let Some(existing) = declarations.get(&decl_id) else {
@@ -267,6 +267,23 @@ pub fn rewrite_instruction_kinds_based_on_reassignment(
                         }
                         DeclarationLoc::ParamOrContext => {
                             // Already Let
+                        }
+                    }
+                }
+                InstructionValue::PostfixUpdateContext { lvalue, .. }
+                | InstructionValue::PrefixUpdateContext { lvalue, .. } => {
+                    let ident = &env.identifiers[lvalue.identifier];
+                    if let Some(existing) = declarations.get(&ident.declaration_id) {
+                        match existing {
+                            DeclarationLoc::Instruction {
+                                block_index: bi,
+                                instr_local_index: ili,
+                            } => {
+                                let_spans.push((*bi, *ili));
+                            }
+                            DeclarationLoc::ParamOrContext => {
+                                // Already Let
+                            }
                         }
                     }
                 }
