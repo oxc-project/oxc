@@ -1,0 +1,35 @@
+crates/oxc_parser/src/comment_attachment.rs
+  s_b583aeb2a871b3::t_4e06ecfd9d9ec0 7,11-13,15-29,37-39,86-90,92-101,105,108-113,115-125,129-145,150-152,154-156,162-213,215-225,227-239,241-242,249-252,255-286,289-306,309-310,314,334,610,824-897
+crates/oxc_parser/src/js/class.rs
+  s_b583aeb2a871b3::t_10fde2dbc9f1e0 233-239,241-244,246-247,249-258
+crates/oxc_parser/src/js/expression.rs
+  s_b583aeb2a871b3::t_756ab9e1bfed99 1389-1390,1457-1461,1464-1466
+crates/oxc_parser/src/js/statement.rs
+  s_b583aeb2a871b3::t_020c796b304967 11-13,56,78-83,148-162,315-328,807-812,817-819,825-829,852,862-867
+crates/oxc_parser/src/lexer/comment.rs
+  s_b583aeb2a871b3::t_65731d5662fce3 27-37,40,97
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_b583aeb2a871b3::t_ffaee9d9a61f51 24-27,65
+crates/oxc_parser/src/lib.rs
+  s_b583aeb2a871b3::t_e4475c7bab928c 99,920-921,923-928
+crates/oxc_parser/tests/comment_attachment.rs
+  s_b583aeb2a871b3::t_848c77313a0003 389-482
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_b583aeb2a871b3::t_1ca1dbb6e621ef 15,70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d739db136534904bdf59e68c6f466e0487bb240b",
+  "prompts": {},
+  "sessions": {
+    "s_b583aeb2a871b3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a165f2-68a2-7b23-ac44-587fc84a4735",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
