@@ -26,6 +26,7 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
 impl<'a, C: Config> Lexer<'a, C> {
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
+        self.pending.set_follows_comment();
         let start = self.source.position();
         let remaining = self.source.remaining().as_bytes();
         let Some(index) = memchr::memchr3(b'\r', b'\n', LS_OR_PS_FIRST, remaining) else {

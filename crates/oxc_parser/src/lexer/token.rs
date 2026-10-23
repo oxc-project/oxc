@@ -13,7 +13,8 @@ use super::kind::Kind;
 // - Bits 72-79 (8 bits): `is_on_new_line` (`bool`)
 // - Bits 80-87 (8 bits): `escaped` (`bool`)
 // - Bits 88-95 (8 bits): `has_separator` (`bool`)
-// - Bits 96-127 (32 bits): unused
+// - Bits 96-103 (8 bits): `follows_comment` (`bool`)
+// - Bits 104-127 (24 bits): unused
 
 const START_SHIFT: usize = 0;
 const END_SHIFT: usize = 32;
@@ -21,6 +22,7 @@ const KIND_SHIFT: usize = 64;
 const IS_ON_NEW_LINE_SHIFT: usize = 72;
 const ESCAPED_SHIFT: usize = 80;
 const HAS_SEPARATOR_SHIFT: usize = 88;
+const FOLLOWS_COMMENT_SHIFT: usize = 96;
 
 const START_MASK: u128 = 0xFFFF_FFFF; // 32 bits
 const END_MASK: u128 = 0xFFFF_FFFF; // 32 bits
@@ -47,6 +49,7 @@ const _: () = {
     assert!(is_valid_shift::<bool>(IS_ON_NEW_LINE_SHIFT));
     assert!(is_valid_shift::<bool>(ESCAPED_SHIFT));
     assert!(is_valid_shift::<bool>(HAS_SEPARATOR_SHIFT));
+    assert!(is_valid_shift::<bool>(FOLLOWS_COMMENT_SHIFT));
 };
 
 #[derive(Clone, Copy, PartialEq, Eq)]
@@ -63,6 +66,7 @@ impl Default for Token {
         // is_on_new_line: false,
         // escaped: false,
         // has_separator: false,
+        // follows_comment: false,
         const _: () = assert!(Kind::Eof as u8 == 0);
         Self(0)
     }
@@ -77,6 +81,7 @@ impl fmt::Debug for Token {
             .field("is_on_new_line", &self.is_on_new_line())
             .field("escaped", &self.escaped())
             .field("has_separator", &self.has_separator())
+            .field("follows_comment", &self.follows_comment())
             .finish()
     }
 }
@@ -97,8 +102,9 @@ impl Token {
 /// Flags of the token being lexed, and trivia state since the previous token, packed in one `u32`
 /// so the lexer reads and resets all per-token state with one load and one store.
 ///
-/// The low 3 bytes are `is_on_new_line`, `escaped` and `has_separator`, in the same layout as in
-/// [`Token`]. The other bits are trivia state, used by `TriviaBuilder`.
+/// The low 3 bytes and bit 24 are `is_on_new_line`, `escaped`, `has_separator` and
+/// `follows_comment`, in the same layout as in [`Token`]. The other bits are trivia state,
+/// used by `TriviaBuilder`.
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 pub(super) struct PendingToken(u32);
 
@@ -106,13 +112,15 @@ impl PendingToken {
     const IS_ON_NEW_LINE: u32 = 1;
     const ESCAPED: u32 = 1 << (ESCAPED_SHIFT - IS_ON_NEW_LINE_SHIFT);
     const HAS_SEPARATOR: u32 = 1 << (HAS_SEPARATOR_SHIFT - IS_ON_NEW_LINE_SHIFT);
-    const TOKEN_FLAGS: u32 = Self::IS_ON_NEW_LINE | Self::ESCAPED | Self::HAS_SEPARATOR;
+    const FOLLOWS_COMMENT: u32 = 1 << (FOLLOWS_COMMENT_SHIFT - IS_ON_NEW_LINE_SHIFT);
+    const TOKEN_FLAGS: u32 =
+        Self::IS_ON_NEW_LINE | Self::ESCAPED | Self::HAS_SEPARATOR | Self::FOLLOWS_COMMENT;
     /// Saw a newline since the last token.
-    const SAW_NEWLINE: u32 = 1 << 24;
+    const SAW_NEWLINE: u32 = 1 << 25;
     /// Saw a newline since the last comment or token.
-    const SAW_NEWLINE_FOR_COMMENT: u32 = 1 << 25;
+    const SAW_NEWLINE_FOR_COMMENT: u32 = 1 << 26;
     /// Comments have been added which are not yet attached to a token.
-    const HAS_PENDING_COMMENTS: u32 = 1 << 26;
+    const HAS_PENDING_COMMENTS: u32 = 1 << 27;
 
     pub(super) const NONE: Self = Self(0);
     pub(super) const START_OF_FILE: Self =
@@ -136,6 +144,11 @@ impl PendingToken {
     #[inline]
     pub(super) fn set_has_separator(&mut self) {
         self.0 |= Self::HAS_SEPARATOR;
+    }
+
+    #[inline]
+    pub(super) fn set_follows_comment(&mut self) {
+        self.0 |= Self::FOLLOWS_COMMENT;
     }
 
     #[inline]
@@ -315,6 +328,16 @@ impl Token {
         // SAFETY: 8 bits starting at `HAS_SEPARATOR_SHIFT` are only set in `Token::default` and
         // `Token::new`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
         unsafe { self.read_bool(HAS_SEPARATOR_SHIFT) }
+    }
+
+    /// Whether a comment was lexed between the previous token and this token.
+    ///
+    /// Re-lexed tokens may not preserve this flag.
+    #[inline]
+    pub fn follows_comment(&self) -> bool {
+        // SAFETY: 8 bits starting at `FOLLOWS_COMMENT_SHIFT` are only set in `Token::default` and
+        // `Token::new`. Both only set these bits to 0 or 1, so valid to read as a `bool`.
+        unsafe { self.read_bool(FOLLOWS_COMMENT_SHIFT) }
     }
 
     /// Read `bool` from 8 bits starting at bit position `shift`.
