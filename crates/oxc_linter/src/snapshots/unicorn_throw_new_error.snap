@@ -202,3 +202,24 @@ source: crates/oxc_linter/src/tester.rs
    ·                   ─────────────
    ╰────
   help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:15]
+ 1 │ const error = Other.TaggedError('message');
+   ·               ────────────────────────────
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:15]
+ 1 │ const error = Other.Error('message');
+   ·               ──────────────────────
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.
+
+  ⚠ unicorn(throw-new-error): Require `new` when throwing an error.
+   ╭─[throw_new_error.tsx:1:15]
+ 1 │ const error = Schema.CustomError('message');
+   ·               ─────────────────────────────
+   ╰────
+  help: Using `new` ensures the error is correctly initialized.

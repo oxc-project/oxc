@@ -19,6 +19,9 @@ declare_oxc_lint!(
     ///
     /// This rule makes sure you always use `new` when throwing an error.
     ///
+    /// Effect's `Data.TaggedError`, `Schema.TaggedError`, and `Schema.Error` are
+    /// error-class factories rather than constructors and do not require `new`.
+    ///
     /// ### Why is this bad?
     ///
     /// In JavaScript, omitting `new` (e.g., `throw Error('message')`) is allowed,
@@ -65,7 +68,7 @@ impl Rule for ThrowNewError {
             return;
         }
 
-        if is_data_tagged_error(call_expr.callee.without_parentheses()) {
+        if is_effect_error_factory(call_expr.callee.without_parentheses()) {
             return;
         }
 
@@ -88,8 +91,10 @@ impl Rule for ThrowNewError {
     }
 }
 
-fn is_data_tagged_error(callee: &Expression<'_>) -> bool {
+fn is_effect_error_factory(callee: &Expression<'_>) -> bool {
     callee.is_specific_member_access("Data", "TaggedError")
+        || callee.is_specific_member_access("Schema", "TaggedError")
+        || callee.is_specific_member_access("Schema", "Error")
 }
 
 #[test]
@@ -115,6 +120,12 @@ fn test() {
         r#"throw lib["Error"]()"#,
         "throw lib.getError()",
         "class QueryError extends Data.TaggedError('QueryError') {}",
+        "class QueryError extends Schema.TaggedError<QueryError>()('QueryError', {}) {}",
+        "class QueryError extends Schema.Error<QueryError>()({}) {}",
+        "const ErrorClass = Schema.TaggedError<ErrorClass>()('ErrorClass', {});",
+        "const ErrorClass = Schema.Error<ErrorClass>()({});",
+        "const ErrorClass = (Schema.TaggedError)<ErrorClass>()('ErrorClass', {});",
+        "const ErrorClass = (Schema.Error)<ErrorClass>()({});",
         "function RegisterServiceError() {\n    return function <T extends new (...arguments_: any[]) => Error>(constructor: T) {\n        return constructor;\n    };\n}\n\n@RegisterServiceError()\nexport class SomeError extends Error {}",
         "@decorators.RegisterServiceError()\nexport class SomeError extends Error {}",
         "class Service {\n    @OnQueueError()\n    handle() {}\n}",
@@ -151,10 +162,18 @@ fn test() {
         // Unlike the `Data.TaggedError` factory above, generic error-looking calls in `extends`
         // clauses should still match upstream `eslint-plugin-unicorn` behavior.
         "class Foo extends CustomError() {}",
+        "const error = Other.TaggedError('message');",
+        "const error = Other.Error('message');",
+        "const error = Schema.CustomError('message');",
     ];
 
     let fix = vec![
         ("throw Error()", "throw new Error()"),
+        ("const error = Other.Error('message');", "const error = new Other.Error('message');"),
+        (
+            "const error = Schema.CustomError('message');",
+            "const error = new Schema.CustomError('message');",
+        ),
         ("throw (( getGlobalThis().Error ))()", "throw new (( getGlobalThis().Error ))()"),
         ("const error = Error()", "const error = new Error()"),
         ("throw Object.assign(Error(), {foo})", "throw Object.assign(new Error(), {foo})"),
