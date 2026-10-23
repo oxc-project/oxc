@@ -73,6 +73,41 @@ source: crates/oxc_linter/src/tester.rs
   help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
 
   ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:29]
+ 1 │ function foo() { return hey.then(x => x) }
+   ·                             ────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:39]
+ 1 │ async function foo() { return thing().then(x => x) }
+   ·                                       ────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:29]
+ 1 │ function foo() { return hey.catch(x => x) }
+   ·                             ─────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:29]
+ 1 │ function foo() { return hey.finally(() => {}) }
+   ·                             ───────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
+   ╭─[prefer_await_to_then.tsx:1:45]
+ 1 │ async function foo() { return await thing().then(x => x) }
+   ·                                             ────
+   ╰────
+  help: Use `await` with `try`/`catch` instead of promise chaining for more readable and maintainable async code.
+
+  ⚠ promise(prefer-await-to-then): Prefer await to then()/catch()/finally()
    ╭─[prefer_await_to_then.tsx:1:13]
  1 │ something().then(async () => await somethingElse())
    ·             ────
