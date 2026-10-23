@@ -320,14 +320,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 arrow_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     arrow_expr.pure = true;
-                    self.apply_no_side_effects_comments(comments, arrow_expr.node_id.get());
+                    self.apply_no_side_effects_comments(comments, arrow_expr.node_id());
                 }
             }
             Expression::FunctionExpression(func_expr) => {
                 func_expr.pife = true;
                 if let Some(comments) = no_side_effects_comments {
                     func_expr.pure = true;
-                    self.apply_no_side_effects_comments(comments, func_expr.node_id.get());
+                    self.apply_no_side_effects_comments(comments, func_expr.node_id());
                 }
             }
             _ => {}
@@ -1498,7 +1498,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
-                self.apply_no_side_effects_comments(comments, func.node_id.get());
+                self.apply_no_side_effects_comments(comments, func.node_id());
             }
             return arrow_expr;
         }
@@ -1510,7 +1510,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
-                self.apply_no_side_effects_comments(comments, func.node_id.get());
+                self.apply_no_side_effects_comments(comments, func.node_id());
             }
             return arrow_expr;
         }
@@ -1535,7 +1535,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
             {
                 func.pure = true;
-                self.apply_no_side_effects_comments(comments, func.node_id.get());
+                self.apply_no_side_effects_comments(comments, func.node_id());
             }
             return arrow_expr;
         }
@@ -1597,11 +1597,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match expr.get_inner_expression_mut() {
             Expression::CallExpression(call_expr) => {
                 call_expr.pure = true;
-                Some(call_expr.node_id.get())
+                Some(call_expr.node_id())
             }
             Expression::NewExpression(new_expr) => {
                 new_expr.pure = true;
-                Some(new_expr.node_id.get())
+                Some(new_expr.node_id())
             }
             expr @ match_member_expression!(Expression) => {
                 Self::set_pure_on_call_or_new_expr(expr.to_member_expression_mut().object_mut())
@@ -1609,7 +1609,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Expression::ChainExpression(chain_expr) => match &mut chain_expr.expression {
                 ChainElement::CallExpression(call_expr) => {
                     call_expr.pure = true;
-                    Some(call_expr.node_id.get())
+                    Some(call_expr.node_id())
                 }
                 element @ match_member_expression!(ChainElement) => {
                     Self::set_pure_on_call_or_new_expr(
@@ -1628,11 +1628,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match expr {
             Expression::FunctionExpression(func) => {
                 func.pure = true;
-                Some(func.node_id.get())
+                Some(func.node_id())
             }
             Expression::ArrowFunctionExpression(func) => {
                 func.pure = true;
-                Some(func.node_id.get())
+                Some(func.node_id())
             }
             _ => None,
         }
