@@ -4,23 +4,24 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
-use oxc_ecmascript::side_effects::is_error_constructor;
 use oxc_ecmascript::{
     BoundNames, ToNumber,
     constant_evaluation::{
         ConstantEvaluation, ConstantValue, DetermineValueType, evaluate_to_js_string,
     },
-    side_effects::{MayHaveSideEffects, MayHaveSideEffectsContext, is_typed_array_constructor},
+    side_effects::{
+        MayHaveSideEffects, MayHaveSideEffectsContext, is_error_constructor,
+        is_typed_array_constructor,
+    },
 };
 use oxc_semantic::ReferenceFlags;
-use oxc_span::GetSpan;
-use oxc_span::SPAN;
+use oxc_span::{GetSpan, SPAN};
 use oxc_str::static_ident;
-use oxc_syntax::precedence::GetPrecedence;
 use oxc_syntax::{
     identifier::is_identifier_name_patched,
     number::NumberBase,
     operator::{BinaryOperator, UnaryOperator},
+    precedence::GetPrecedence,
 };
 
 use crate::TraverseCtx;
