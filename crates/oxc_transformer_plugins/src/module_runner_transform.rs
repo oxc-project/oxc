@@ -31,7 +31,7 @@
 //!
 //! Based on [Vite](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/ssrTransform.ts)'s ssrTransform.
 //!
-//! All tests are copy-pasted from [ssrTransform.spec.ts](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/__tests__/ssrTransform.spec.ts).
+//! Tests are adapted from [ssrTransform.spec.ts](https://github.com/vitejs/vite/blob/00deea4ff88e30e299cb40a801b5dc0205ac913d/packages/vite/src/node/ssr/__tests__/ssrTransform.spec.ts), with additional regression cases.
 //!
 //! ## Integrate into main `Transformer` in future
 //!
