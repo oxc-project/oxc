@@ -679,7 +679,6 @@ vitest/prefer-spy-on                                       |  13005
 vitest/require-awaited-expect-poll                         |      0
 vitest/require-hook                                        |  62613
 vitest/require-local-test-context-for-concurrent-snapshots |      0
-vitest/require-mock-type-parameters                        |      0
 vitest/require-test-timeout                                |      7
 vitest/require-top-level-describe                          |      7
 vitest/valid-expect                                        |      7
