@@ -229,7 +229,6 @@ jest/no-large-snapshots                                    |      7
 jest/no-mocks-import                                       |      7
 jest/no-standalone-expect                                  |      7
 jest/no-test-return-statement                              |  14199
-jest/no-untyped-mock-factory                               |      0
 jest/prefer-each                                           |      6
 jest/prefer-ending-with-an-expect                          |      0
 jest/prefer-expect-assertions                              |      7
