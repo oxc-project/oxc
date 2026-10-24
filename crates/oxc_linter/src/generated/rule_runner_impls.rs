@@ -5151,8 +5151,9 @@ impl RuleRunner for crate::rules::vitest::prefer_to_be_object::PreferToBeObject 
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_to_be_truthy::PreferToBeTruthy {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_to_contain::PreferToContain {
