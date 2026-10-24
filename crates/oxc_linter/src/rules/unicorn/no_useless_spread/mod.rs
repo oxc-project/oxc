@@ -2,8 +2,9 @@ use oxc_allocator::{Allocator, ArenaVec, CloneIn};
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, NewExpression,
-        ObjectExpression, ObjectPropertyKind, SpreadElement,
+        ArrayExpression, ArrayExpressionElement, CallExpression, Expression, IdentifierReference,
+        NewExpression, ObjectExpression, ObjectPropertyKind, SpreadElement, TSType,
+        TSTypeAnnotation, TSTypeName,
     },
     builder::AstBuilder,
 };
@@ -13,7 +14,9 @@ use oxc_span::{GetSpan, SPAN, Span};
 
 mod const_eval;
 
-use const_eval::{ConstEval, is_array_from, is_new_typed_array};
+use const_eval::{
+    ConstEval, TYPED_ARRAY_NAMES, is_array_from, is_functional_array_method, is_new_typed_array,
+};
 
 use crate::{
     AstNode,
@@ -419,7 +422,11 @@ fn check_useless_clone<'a>(
     }
 
     let hint = target.const_eval();
-    let hint_matches_expr = if is_array { hint.is_array() } else { hint.is_object() };
+    let hint_matches_expr = if is_array {
+        hint.is_array() && !is_clone_of_typed_array_variable(target, ctx)
+    } else {
+        hint.is_object()
+    };
     if hint_matches_expr {
         let name = diagnostic_name(ctx, target);
 
@@ -446,6 +453,57 @@ fn check_useless_clone<'a>(
             fix_by_removing_array_spread(fixer, &array_or_obj_span, spread_elem)
         });
     }
+}
+
+/// Matches a clone method called on a variable whose type annotation is a
+/// typed array, e.g. `buf.slice()` where `buf: Uint8Array`.
+///
+/// Like `new Uint8Array(x).slice()`, this returns a typed array, so spreading
+/// it converts to a plain array rather than cloning one.
+fn is_clone_of_typed_array_variable<'a>(expr: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
+    let Expression::CallExpression(call) = expr else {
+        return false;
+    };
+    if !is_functional_array_method(call) {
+        return false;
+    }
+    let Some(member_expr) = call.callee.get_member_expr() else {
+        return false;
+    };
+    match member_expr.object().get_inner_expression() {
+        Expression::Identifier(ident) => is_typed_array_variable(ident, ctx),
+        object @ Expression::CallExpression(_) => is_clone_of_typed_array_variable(object, ctx),
+        _ => false,
+    }
+}
+
+/// Whether `ident` refers to a parameter or variable annotated as a typed
+/// array, e.g. `buf: Uint8Array` or `const buf: Uint8Array<ArrayBuffer> = …`.
+fn is_typed_array_variable(ident: &IdentifierReference, ctx: &LintContext) -> bool {
+    let Some(symbol_id) = ctx.scoping().get_reference(ident.reference_id()).symbol_id() else {
+        return false;
+    };
+    let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+    let type_annotation = match declaration.kind() {
+        AstKind::FormalParameter(param) if param.pattern.is_binding_identifier() => {
+            param.type_annotation.as_deref()
+        }
+        AstKind::VariableDeclarator(declarator) if declarator.id.is_binding_identifier() => {
+            declarator.type_annotation.as_deref()
+        }
+        _ => None,
+    };
+    type_annotation.is_some_and(is_typed_array_type)
+}
+
+fn is_typed_array_type(type_annotation: &TSTypeAnnotation) -> bool {
+    let TSType::TSTypeReference(type_ref) = &type_annotation.type_annotation else {
+        return false;
+    };
+    let TSTypeName::IdentifierReference(name) = &type_ref.type_name else {
+        return false;
+    };
+    TYPED_ARRAY_NAMES.contains(&name.name.as_str())
 }
 
 fn diagnostic_name<'a>(ctx: &LintContext<'a>, expr: &Expression<'a>) -> Option<&'a str> {
@@ -824,5 +882,37 @@ fn test() {
     Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
         .change_rule_path_extension("mjs")
         .expect_fix(fix)
+        .test_and_snapshot();
+}
+
+#[test]
+fn test_typescript() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // Issue: <https://github.com/oxc-project/oxc/issues/27707>
+        // A clone method on a variable annotated as a typed array returns a
+        // typed array, so the surrounding spread converts to a plain array.
+        "function hex(buf: Uint8Array) { return [...buf.slice()].map(f).join(''); }",
+        "function hex(buf: Uint8Array<ArrayBuffer>) { return [...buf.slice(0, 12)]; }",
+        "function f(buf: Float64Array) { return [...buf.map(g).filter(h)]; }",
+        "const buf: Uint8Array = getBytes(); const bytes = [...buf.toSorted()];",
+    ];
+
+    let fail = vec![
+        "function f(arr: number[]) { return [...arr.slice()]; }",
+        "function f(bufs: Uint8Array[]) { return [...bufs.slice()]; }",
+        "function f({ buf }: { buf: Uint8Array }) { return [...buf.slice()]; }",
+    ];
+
+    let fix = vec![(
+        "function f(arr: number[]) { return [...arr.slice()]; }",
+        "function f(arr: number[]) { return arr.slice(); }",
+    )];
+
+    Tester::new(NoUselessSpread::NAME, NoUselessSpread::PLUGIN, pass, fail)
+        .change_rule_path_extension("ts")
+        .expect_fix(fix)
+        .with_snapshot_suffix("typescript")
         .test_and_snapshot();
 }
