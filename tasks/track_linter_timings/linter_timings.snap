@@ -233,7 +233,6 @@ jest/no-mocks-import                                       |      7
 jest/no-standalone-expect                                  |      7
 jest/no-test-return-statement                              |  14199
 jest/no-untyped-mock-factory                               |      0
-jest/padding-around-after-all-blocks                       |      0
 jest/padding-around-test-blocks                            |      0
 jest/prefer-each                                           |      6
 jest/prefer-ending-with-an-expect                          |      0
@@ -678,7 +677,6 @@ vitest/no-large-snapshots                                  |      7
 vitest/no-mocks-import                                     |      7
 vitest/no-standalone-expect                                |      7
 vitest/no-test-return-statement                            |  14199
-vitest/padding-around-after-all-blocks                     |      0
 vitest/padding-around-test-blocks                          |      0
 vitest/prefer-called-exactly-once-with                     |  14953
 vitest/prefer-called-once                                  |      0
