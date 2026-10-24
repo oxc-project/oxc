@@ -50,14 +50,15 @@ pub struct ContextSubHost<'a> {
     pub(super) parser_tokens: ArenaBox<'a, [Token]>,
     /// Original source text for the whole file being linted.
     pub(super) actual_source_text: &'a str,
-    /// Stable source text for this script section
-    /// which remains available even after `semantic` is taken while running JS plugins.
-    pub(super) source_text: &'a str,
     /// The source text offset of the sub host
     pub(super) source_text_offset: u32,
 }
 
 impl<'a> ContextSubHost<'a> {
+    pub(crate) fn source_text_offset(&self) -> u32 {
+        self.source_text_offset
+    }
+
     /// # Panics
     /// If `semantic.cfg()` is `None`.
     pub fn new(
@@ -73,8 +74,6 @@ impl<'a> ContextSubHost<'a> {
             "`LintContext` depends on `Semantic::cfg`, Build your semantic with cfg enabled(`SemanticBuilder::with_cfg`)."
         );
 
-        let source_text = semantic.source_text();
-
         let disable_directives = DisableDirectivesBuilder::new()
             .with_respect_eslint_disable_directives(options.respect_eslint_disable_directives)
             .build(semantic.source_text(), semantic.comments());
@@ -84,7 +83,6 @@ impl<'a> ContextSubHost<'a> {
         Self {
             semantic,
             module_record,
-            source_text,
             source_text_offset,
             disable_directives,
             framework_options: options.framework_options,
@@ -116,18 +114,14 @@ impl<'a> ContextSubHost<'a> {
     }
 
     /// Shared reference to the original full-file source text.
-    pub fn actual_source_text(&self) -> &'a str {
+    pub(crate) fn actual_source_text(&self) -> &'a str {
         self.actual_source_text
     }
 
-    /// Source text offset of this sub host within the full file.
-    pub fn source_text_offset(&self) -> u32 {
-        self.source_text_offset
-    }
-
+    /// Source text of this script block.
     #[inline]
     pub fn source_text(&self) -> &'a str {
-        self.source_text
+        self.semantic.source_text()
     }
 }
 
@@ -319,12 +313,12 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Shared reference to the original full-file source text of the current file.
-    pub fn actual_source_text(&self) -> &'a str {
+    pub(crate) fn actual_source_text(&self) -> &'a str {
         self.current_sub_host().actual_source_text()
     }
 
     /// Source text offset of the current sub host within the full file.
-    pub fn current_source_text_offset(&self) -> u32 {
+    pub(crate) fn current_source_text_offset(&self) -> u32 {
         self.current_sub_host().source_text_offset()
     }
 
