@@ -2589,8 +2589,9 @@ impl RuleRunner for crate::rules::jest::valid_expect::ValidExpect {
 }
 
 impl RuleRunner for crate::rules::jest::valid_expect_in_promise::ValidExpectInPromise {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::valid_title::ValidTitle {
@@ -5220,8 +5221,9 @@ impl RuleRunner for crate::rules::vitest::valid_expect::ValidExpect {
 }
 
 impl RuleRunner for crate::rules::vitest::valid_expect_in_promise::ValidExpectInPromise {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::valid_title::ValidTitle {
