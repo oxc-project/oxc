@@ -5036,8 +5036,9 @@ impl RuleRunner for crate::rules::vitest::prefer_comparison_matcher::PreferCompa
 impl RuleRunner
     for crate::rules::vitest::prefer_describe_function_title::PreferDescribeFunctionTitle
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_each::PreferEach {
