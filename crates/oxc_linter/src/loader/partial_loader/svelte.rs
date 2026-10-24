@@ -13,6 +13,8 @@ pub struct SveltePartialLoader<'a> {
     source_text: &'a str,
 }
 
+pub(super) const EXTENSION: &str = "svelte";
+
 impl<'a> SveltePartialLoader<'a> {
     pub fn new(source_text: &'a str) -> Self {
         Self { source_text }

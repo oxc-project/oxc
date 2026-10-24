@@ -17,7 +17,8 @@ const COMMENT_END: &str = "-->";
 
 /// File extensions that can contain JS/TS code in certain parts, such as in `<script>` tags, and can
 /// be loaded using the [`PartialLoader`].
-pub const LINT_PARTIAL_LOADER_EXTENSIONS: &[&str] = &["vue", "astro", "svelte"];
+pub const LINT_PARTIAL_LOADER_EXTENSIONS: &[&str] =
+    &[vue::EXTENSION, astro::EXTENSION, svelte::EXTENSION];
 
 /// All valid JavaScript/TypeScript extensions, plus additional framework files that
 /// contain JavaScript/TypeScript code in them (e.g., Vue, Astro, Svelte, etc.).
@@ -26,16 +27,62 @@ pub const LINTABLE_EXTENSIONS: &[&str] =
 
 pub struct PartialLoader;
 
+#[derive(Clone, Copy)]
+enum PartialLoaderKind {
+    Vue,
+    Astro,
+    Svelte,
+}
+
+const PARTIAL_LOADERS: &[PartialLoaderKind] =
+    &[PartialLoaderKind::Vue, PartialLoaderKind::Astro, PartialLoaderKind::Svelte];
+
+impl PartialLoaderKind {
+    fn for_extension(ext: &str) -> Option<Self> {
+        PARTIAL_LOADERS.iter().copied().find(|loader| loader.extension() == ext)
+    }
+
+    fn extension(self) -> &'static str {
+        match self {
+            Self::Vue => vue::EXTENSION,
+            Self::Astro => astro::EXTENSION,
+            Self::Svelte => svelte::EXTENSION,
+        }
+    }
+
+    fn parse(self, source_text: &str) -> Vec<JavaScriptSource<'_>> {
+        match self {
+            Self::Vue => VuePartialLoader::new(source_text).parse(),
+            Self::Astro => AstroPartialLoader::new(source_text).parse(),
+            Self::Svelte => SveltePartialLoader::new(source_text).parse(),
+        }
+    }
+
+    fn parse_for_external_linter(self, source_text: &str) -> Vec<JavaScriptSource<'_>> {
+        match self {
+            Self::Vue => VuePartialLoader::new(source_text).parse_for_external_linter(),
+            Self::Astro | Self::Svelte => self.parse(source_text),
+        }
+    }
+}
+
 impl PartialLoader {
     /// Extract js section of special files.
     /// Returns `None` if the special file does not have a js section.
     pub fn parse<'a>(ext: &str, source_text: &'a str) -> Option<Vec<JavaScriptSource<'a>>> {
-        match ext {
-            "vue" => Some(VuePartialLoader::new(source_text).parse()),
-            "astro" => Some(AstroPartialLoader::new(source_text).parse()),
-            "svelte" => Some(SveltePartialLoader::new(source_text).parse()),
-            _ => None,
-        }
+        PartialLoaderKind::for_extension(ext).map(|loader| loader.parse(source_text))
+    }
+
+    /// Extract js sections for external linters.
+    ///
+    /// Some frameworks need to preserve a synthetic section even when there is no `<script>`
+    /// so JS plugins can still report against the original file.
+    pub fn parse_for_external_linter<'a>(
+        ext: &str,
+        source_text: &'a str,
+    ) -> Option<Vec<JavaScriptSource<'a>>> {
+        PartialLoaderKind::for_extension(ext)
+            .map(|loader| loader.parse_for_external_linter(source_text))
     }
 }
 
