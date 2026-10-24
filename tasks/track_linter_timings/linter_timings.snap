@@ -680,7 +680,6 @@ vitest/prefer-mock-promise-shorthand                       |  62606
 vitest/prefer-mock-return-shorthand                        |  62606
 vitest/prefer-snapshot-hint                                |      7
 vitest/prefer-spy-on                                       |  13005
-vitest/prefer-strict-boolean-matchers                      |      0
 vitest/require-awaited-expect-poll                         |      0
 vitest/require-hook                                        |  62613
 vitest/require-local-test-context-for-concurrent-snapshots |      0
