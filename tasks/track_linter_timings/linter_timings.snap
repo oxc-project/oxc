@@ -649,7 +649,6 @@ unicorn/switch-case-braces                              |    284
 unicorn/switch-case-break-position                      |   2320
 unicorn/text-encoding-identifier-case                   |  63132
 unicorn/throw-new-error                                 |  62606
-vitest/consistent-each-for                              |      0
 vitest/consistent-test-filename                         |      7
 vitest/consistent-test-it                               |      7
 vitest/consistent-vitest-vi                             |  62709
