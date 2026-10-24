@@ -932,15 +932,22 @@ pub fn get_reverse_postordered_blocks<'a>(
     let mut used_fallthroughs: FxHashSet<BlockId> = FxHashSet::default();
     let mut postorder: Vec<BlockId> = Vec::new();
 
-    fn visit(
-        hir: &HIR<'_>,
-        block_id: BlockId,
-        is_used: bool,
-        visited: &mut FxHashSet<BlockId>,
-        used: &mut FxHashSet<BlockId>,
-        used_fallthroughs: &mut FxHashSet<BlockId>,
-        postorder: &mut Vec<BlockId>,
-    ) {
+    enum Visit {
+        Enter { block_id: BlockId, is_used: bool },
+        Exit(BlockId),
+    }
+
+    // Keep DFS state on the heap: even shallow generated source can lower to
+    // a long chain of blocks that exceeds the native or WebAssembly call stack.
+    let mut stack = vec![Visit::Enter { block_id: hir.entry, is_used: true }];
+    while let Some(visit) = stack.pop() {
+        let (block_id, is_used) = match visit {
+            Visit::Enter { block_id, is_used } => (block_id, is_used),
+            Visit::Exit(block_id) => {
+                postorder.push(block_id);
+                continue;
+            }
+        };
         let was_used = used.contains(&block_id);
         let was_visited = visited.contains(&block_id);
         visited.insert(block_id);
@@ -948,7 +955,7 @@ pub fn get_reverse_postordered_blocks<'a>(
             used.insert(block_id);
         }
         if was_visited && (was_used || !is_used) {
-            return;
+            continue;
         }
 
         let block = hir
@@ -956,10 +963,17 @@ pub fn get_reverse_postordered_blocks<'a>(
             .get(&block_id)
             .unwrap_or_else(|| panic!("[HIRBuilder] expected block {:?} to exist", block_id));
 
-        // Visit successors in reverse order so that when we reverse the
-        // postorder list, sibling edges come out in program order.
-        let mut successors = each_terminal_successor(&block.terminal);
-        successors.reverse();
+        // A fallthrough first visited as unused must be traversed again when
+        // reached by a used successor, but must only be emitted once.
+        if !was_visited {
+            stack.push(Visit::Exit(block_id));
+        }
+
+        // LIFO visits successors in reverse order, so reversing postorder
+        // restores source order. Push fallthrough last to visit it first.
+        for successor in each_terminal_successor(&block.terminal) {
+            stack.push(Visit::Enter { block_id: successor, is_used });
+        }
 
         let fallthrough = terminal_fallthrough(&block.terminal);
 
@@ -969,18 +983,9 @@ pub fn get_reverse_postordered_blocks<'a>(
             if is_used {
                 used_fallthroughs.insert(ft);
             }
-            visit(hir, ft, false, visited, used, used_fallthroughs, postorder);
-        }
-        for successor in successors {
-            visit(hir, successor, is_used, visited, used, used_fallthroughs, postorder);
-        }
-
-        if !was_visited {
-            postorder.push(block_id);
+            stack.push(Visit::Enter { block_id: ft, is_used: false });
         }
     }
-
-    visit(hir, hir.entry, true, &mut visited, &mut used, &mut used_fallthroughs, &mut postorder);
 
     let mut blocks = OrderedMap::default();
     for block_id in postorder.into_iter().rev() {
@@ -1119,23 +1124,19 @@ pub fn mark_predecessors(hir: &mut HIR) {
 
     let mut visited: FxHashSet<BlockId> = FxHashSet::default();
 
-    fn visit(
-        hir: &mut HIR,
-        block_id: BlockId,
-        prev_block_id: Option<BlockId>,
-        visited: &mut FxHashSet<BlockId>,
-    ) {
+    let mut stack = vec![(hir.entry, None)];
+    while let Some((block_id, prev_block_id)) = stack.pop() {
         // Add predecessor
         if let Some(prev_id) = prev_block_id {
             if let Some(block) = hir.blocks.get_mut(&block_id) {
                 block.preds.insert(prev_id);
             } else {
-                return;
+                continue;
             }
         }
 
         if visited.contains(&block_id) {
-            return;
+            continue;
         }
         visited.insert(block_id);
 
@@ -1143,15 +1144,15 @@ pub fn mark_predecessors(hir: &mut HIR) {
         let successors = if let Some(block) = hir.blocks.get(&block_id) {
             each_terminal_successor(&block.terminal)
         } else {
-            return;
+            continue;
         };
 
-        for successor in successors {
-            visit(hir, successor, Some(block_id), visited);
+        // Preserve the recursive DFS's predecessor insertion order, including
+        // edges to already-visited blocks. Phi operand order depends on it.
+        for successor in successors.into_iter().rev() {
+            stack.push((successor, Some(block_id)));
         }
     }
-
-    visit(hir, hir.entry, None, &mut visited);
 }
 
 // ---------------------------------------------------------------------------
@@ -1164,4 +1165,128 @@ pub fn create_temporary_place(env: &mut Environment<'_>, span: Option<Span>) -> 
     // Update the span on the allocated identifier
     env.identifiers[id].span = span;
     Place { identifier: id, reactive: false, effect: Effect::Unknown, span: None }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn graph<'a>(alloc: &'a Allocator, terminals: Vec<Terminal<'a>>) -> HIR<'a> {
+        let mut blocks = OrderedMap::default();
+        for (index, terminal) in terminals.into_iter().enumerate() {
+            let id = BlockId::new(index);
+            blocks.insert(
+                id,
+                BasicBlock {
+                    kind: BlockKind::Block,
+                    id,
+                    instructions: ArenaVec::new_in(&alloc),
+                    terminal,
+                    preds: ArenaOrderedSet::new_in(alloc),
+                    phis: ArenaVec::new_in(&alloc),
+                },
+            );
+        }
+        HIR { entry: BlockId::new(0), blocks }
+    }
+
+    fn goto(block: usize) -> Terminal<'static> {
+        Terminal::Goto {
+            block: BlockId::new(block),
+            variant: GotoVariant::Break,
+            id: EvaluationOrder::UNSET,
+            span: None,
+        }
+    }
+
+    fn sequence(block: usize, fallthrough: usize) -> Terminal<'static> {
+        Terminal::Sequence {
+            block: BlockId::new(block),
+            fallthrough: BlockId::new(fallthrough),
+            id: EvaluationOrder::UNSET,
+            span: None,
+        }
+    }
+
+    fn unreachable() -> Terminal<'static> {
+        Terminal::Unreachable { id: EvaluationOrder::UNSET, span: None }
+    }
+
+    #[test]
+    fn block_traversals_handle_long_successor_and_fallthrough_chains() {
+        // Generated components can have long CFG paths even with shallow JSX.
+        // Exercise both recursive edges of the former DFS without relying on
+        // parser or later compiler passes to support an equally large input.
+        const LEN: usize = 20_000;
+        for fallthrough in [false, true] {
+            let alloc = Allocator::default();
+            let mut terminals = (1..LEN)
+                .map(|next| if fallthrough { sequence(next, next) } else { goto(next) })
+                .collect::<Vec<_>>();
+            terminals.push(unreachable());
+            let mut hir = graph(&alloc, terminals);
+            let blocks = get_reverse_postordered_blocks(&hir, &alloc);
+            assert_eq!(blocks.len(), LEN);
+            assert!(blocks.keys().copied().eq((0..LEN).map(BlockId::new)));
+            if fallthrough {
+                assert!(matches!(
+                    blocks[&BlockId::new(LEN - 2)].terminal,
+                    Terminal::Sequence { .. }
+                ));
+            }
+            mark_predecessors(&mut hir);
+            assert!(hir.blocks[&BlockId::new(0)].preds.is_empty());
+            for index in 1..LEN {
+                assert!(
+                    hir.blocks[&BlockId::new(index)]
+                        .preds
+                        .iter()
+                        .copied()
+                        .eq([BlockId::new(index - 1)])
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn block_traversals_preserve_successor_order_and_cycles() {
+        let alloc = Allocator::default();
+        let mut hir = graph(
+            &alloc,
+            vec![
+                Terminal::MaybeThrow {
+                    continuation: BlockId::new(1),
+                    handler: Some(BlockId::new(2)),
+                    id: EvaluationOrder::UNSET,
+                    span: None,
+                    effects: None,
+                },
+                goto(3),
+                goto(3),
+                goto(0),
+            ],
+        );
+        let blocks = get_reverse_postordered_blocks(&hir, &alloc);
+        assert!(blocks.keys().copied().eq([0, 1, 2, 3].map(BlockId::new)));
+        mark_predecessors(&mut hir);
+        assert!(hir.blocks[&BlockId::new(3)].preds.iter().copied().eq([1, 2].map(BlockId::new)));
+        assert!(hir.blocks[&BlockId::new(0)].preds.iter().copied().eq([BlockId::new(3)]));
+    }
+
+    #[test]
+    fn reverse_postorder_revisits_fallthroughs_when_used() {
+        let alloc = Allocator::default();
+        // Block 2 and its successors are first visited as unused fallthroughs.
+        // Reaching 2 through 1 must propagate usage to 3, and mark 4 as a used
+        // fallthrough. Block 5 is only reachable through unused 4 and is dropped.
+        let hir = graph(
+            &alloc,
+            vec![sequence(1, 2), goto(2), sequence(3, 4), goto(0), goto(5), unreachable()],
+        );
+        let blocks = get_reverse_postordered_blocks(&hir, &alloc);
+        assert!(blocks.keys().copied().eq([0, 1, 2, 3, 4].map(BlockId::new)));
+        assert!(matches!(blocks[&BlockId::new(2)].terminal, Terminal::Sequence { .. }));
+        assert!(matches!(blocks[&BlockId::new(3)].terminal, Terminal::Goto { .. }));
+        assert!(matches!(blocks[&BlockId::new(4)].terminal, Terminal::Unreachable { .. }));
+    }
 }
