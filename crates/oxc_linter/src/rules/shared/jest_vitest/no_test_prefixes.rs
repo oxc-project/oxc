@@ -3,6 +3,7 @@ use oxc_ast::{
     ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -47,16 +48,16 @@ struct ParsedNoTestPrefixesCall {
     member_names: Vec<String>,
 }
 
-pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c LintContext<'a>) {
-    run(jest_node, ctx);
-}
-
-fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
-    let Some(jest_fn_call) = parse_no_test_prefixes_call(call_expr, possible_jest_node, ctx) else {
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(jest_fn_call) = parse_no_test_prefixes_call(call_expr, &possible_jest_node, ctx)
+    else {
         return;
     };
 
