@@ -848,6 +848,56 @@ Its function declarations keep the same-line block comment outside (`function fo
 Before `<`, Prettier glues an own-line comment back onto the callee's line (`foo// c` + `<T>(a)`); we keep it own-line.
 Before an optional call's `?.`, Prettier moves an own-line comment into the arguments as well; we keep it own-line.
 
+## amd-call-comment-around-arguments
+
+- Why: invariant
+- Pin: `tests/fixtures/js/calls/amd-call-comment-around-arguments.js`
+
+```js
+// input
+define("lib/a", ["deps/b"],
+/**
+ * @param {B} b
+ */
+(b) => {});
+define(["a"], // c
+function (a) {});
+define(["a"], function (a) {} // c
+);
+
+// ours
+define(
+  "lib/a",
+  ["deps/b"],
+  /**
+   * @param {B} b
+   */
+  (b) => {},
+);
+define(
+  ["a"], // c
+  function (a) {},
+);
+define(
+  ["a"],
+  function (a) {}, // c
+);
+
+// prettier (first pass; its second pass moves the JSDoc in front of the comma)
+define("lib/a", ["deps/b"], /**
+ * @param {B} b
+ */
+(b) => {});
+define(["a"], function (a) {}); // c
+define(["a"], function (a) {}); // c
+```
+
+The AMD layout of `define` and `require` joins the arguments with spaces, so a comment around them that ends its line can't stay in place: an end-of-line one is pushed behind the callback (or into its body) or past the `)`, and an own-line one joins the previous line (a multiline JSDoc then moves in front of the comma on the next pass).
+The output crosses content and is not a fixpoint.
+When such a comment sits around the arguments, we format the call like any other call instead, the same gaps the test call layout checks (DIVERGENCES.md#test-call-comment-order).
+Prettier already does this for `require` when its first argument has a comment, but not for `define`, nor for a comment after a later argument.
+A comment that doesn't end its line (`["deps/b"], /* c */ (b) => {}`) keeps the AMD layout, as in Prettier.
+
 ## instantiation-expression-parens
 
 - Why: semantics (Prettier's output no longer parses or changes structure; prettier/prettier#20177, prettier/prettier#20345)

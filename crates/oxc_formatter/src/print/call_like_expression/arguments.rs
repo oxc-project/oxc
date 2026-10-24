@@ -28,9 +28,11 @@ use crate::{
     },
     source_text::line_breaks,
     utils::{
-        call_expression::is_test_call_expression,
-        expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
-        member_chain::simple_argument::SimpleArgument, typecast::is_cast_target,
+        call_expression::{argument_gaps, is_test_call_expression},
+        expression::as_call_expression_without_chain_wrappers,
+        is_long_curried_call,
+        member_chain::simple_argument::SimpleArgument,
+        typecast::is_cast_target,
     },
     write,
 };
@@ -965,6 +967,15 @@ fn is_commonjs_or_amd_call(
     let Expression::Identifier(ident) = &call.callee else {
         return false;
     };
+
+    // The AMD layout joins the arguments with spaces, so a comment around them that ends its
+    // line can't keep its place: it joins the line before it, or lands on the other side of a
+    // comma, the callback body or the `)`.
+    if argument_gaps(call)
+        .any(|(start, end)| f.comments().has_own_line_comment_in_range(start, end))
+    {
+        return false;
+    }
 
     match ident.name.as_str() {
         "require" => {
