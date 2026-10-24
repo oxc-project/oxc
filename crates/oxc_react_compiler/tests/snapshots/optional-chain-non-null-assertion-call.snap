@@ -14,9 +14,9 @@ export function Value(t0) {
 	const $ = _c(7);
 	const { obj } = t0;
 	let t1;
-	if ($[0] !== obj?.get) {
+	if ($[0] !== obj) {
 		t1 = obj?.get().value;
-		$[0] = obj?.get;
+		$[0] = obj;
 		$[1] = t1;
 	} else {
 		t1 = $[1];

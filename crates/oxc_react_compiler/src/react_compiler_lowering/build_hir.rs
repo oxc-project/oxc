@@ -3008,10 +3008,35 @@ fn lower_optional_call_expression_impl<'a>(
                 });
             }
             // `a?.b!()`: as above, lower the optional link inside the assertion.
+            // When the assertion wraps a member, keep it a method call so the
+            // receiver stays the `this` value and a dependency of the call.
             oxc::Expression::TSNonNullExpression(_) => {
-                let value = lower_chain_subexpr(builder, &call.callee)?;
-                let callee_place = lower_value_to_temporary(builder, value)?;
-                callee_info = Some(CalleeInfo::CallExpression { callee: callee_place });
+                let mut inner = &call.callee;
+                while let oxc::Expression::TSNonNullExpression(t) = inner {
+                    inner = &t.expression;
+                }
+                if let Some(member) = inner.as_member_expression() {
+                    if expr_contains_optional(inner) {
+                        let (obj, value) = lower_optional_member_expression_impl(
+                            builder,
+                            member,
+                            Some(alternate),
+                        )?;
+                        callee_info =
+                            Some(CalleeInfo::MethodCall { receiver: obj, property: value });
+                    } else {
+                        let lowered = lower_member_expression(builder, member)?;
+                        let property_place = lower_value_to_temporary(builder, lowered.value)?;
+                        callee_info = Some(CalleeInfo::MethodCall {
+                            receiver: lowered.object,
+                            property: property_place,
+                        });
+                    }
+                } else {
+                    let value = lower_chain_subexpr(builder, &call.callee)?;
+                    let callee_place = lower_value_to_temporary(builder, value)?;
+                    callee_info = Some(CalleeInfo::CallExpression { callee: callee_place });
+                }
             }
             other => {
                 let callee_place = lower_expression_to_temporary(builder, other)?;
