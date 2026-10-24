@@ -9496,6 +9496,9 @@
         "unicorn/prefer-number-coercion": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/prefer-number-is-safe-integer": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/prefer-number-properties": {
           "anyOf": [
             {
