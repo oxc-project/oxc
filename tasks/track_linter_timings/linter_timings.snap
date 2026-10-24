@@ -242,7 +242,6 @@ jest/prefer-mock-promise-shorthand                         |  62606
 jest/prefer-mock-return-shorthand                          |  62606
 jest/prefer-snapshot-hint                                  |      7
 jest/prefer-spy-on                                         |  13005
-jest/prefer-to-have-been-called                            |      0
 jest/require-hook                                          |  62613
 jest/require-top-level-describe                            |      7
 jest/valid-expect                                          |      7
