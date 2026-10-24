@@ -58,6 +58,12 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, TSFunctionType<'_>> {
             return true;
         }
 
+        // A generic function type right after the `<` of a type assertion would start with
+        // `<<`, which is read as a left shift: `<<T>(x: T) => T>f` doesn't parse.
+        if self.type_parameters.is_some() && matches!(parent, AstNodes::TSTypeAssertion(_)) {
+            return true;
+        }
+
         function_like_type_needs_parentheses(self.span(), parent, Some(&self.return_type))
     }
 }

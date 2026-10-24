@@ -897,6 +897,29 @@ Prettier also drops the parens around an operand that binds looser than the type
 The type arguments then attach to its last piece only (`c ? a : b<T>`, `a as B<T>`), or the output no longer parses (`y++<T>`).
 Fixed in Prettier `main` by prettier/prettier#20345, which we follow.
 
+## type-assertion-generic-function-parens
+
+- Why: semantics (Prettier's output no longer parses)
+- Pin: `tests/fixtures/ts/parenthesis/type-assertion-generic-function-parens.ts`
+
+```ts
+// input
+var a = < <T>(x: T) => T>f;
+var b = <(<T>() => void)>f;
+
+// ours
+var a = <(<T>(x: T) => T)>f;
+var b = <(<T>() => void)>f;
+
+// prettier
+var a = <<T>(x: T) => T>f;
+var b = <<T>() => void>f;
+```
+
+A generic function type printed right after the `<` of a type assertion starts with `<<`, which is read as a left shift, so tsc rejects Prettier's output ("Expression expected").
+We keep the type in parens there, as Prettier does for a function type in other ambiguous positions (a union member, an arrow function's return type).
+A function type without type parameters, a constructor type (`<new <T>() => T>f`) and a function type nested inside another type don't start with `<` and print as before.
+
 ## export-default-leftmost-parens
 
 - Why: uniform-rule (same construct, same output: expression statement)
