@@ -4,6 +4,7 @@ use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaVec, CloneIn, GetAllocator, TakeIn};
 use oxc_ast::ast::*;
 use oxc_compat::ESFeature;
+use oxc_ecmascript::side_effects::is_error_constructor;
 use oxc_ecmascript::{
     BoundNames, ToNumber,
     constant_evaluation::{
@@ -1335,8 +1336,7 @@ impl<'a> PeepholeOptimizations {
         let Expression::NewExpression(e) = expr else { return };
         let Expression::Identifier(ident) = &e.callee else { return };
         let name = ident.name.as_str();
-        if !matches!(name, "Error" | "AggregateError" | "Function" | "RegExp")
-            && !Self::is_native_error_name(name)
+        if !matches!(name, "Function" | "RegExp" | "AggregateError") && !is_error_constructor(name)
         {
             return;
         }
@@ -1353,27 +1353,10 @@ impl<'a> PeepholeOptimizations {
                             !ty.is_undetermined() && !ty.is_object()
                         }))
             }
-            "Error" | "AggregateError" | "Function" => true,
-            _ if Self::is_native_error_name(name) => true,
-            _ => unreachable!(),
+            _ => true,
         } {
             ctx.replace_expression_with(expr, Self::transform_new_expr_to_call_expr);
         }
-    }
-
-    /// Whether the name matches any native error name.
-    ///
-    /// See <https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-native-error-types-used-in-this-standard> for the list of native errors.
-    fn is_native_error_name(name: &str) -> bool {
-        matches!(
-            name,
-            "EvalError"
-                | "RangeError"
-                | "ReferenceError"
-                | "SyntaxError"
-                | "TypeError"
-                | "URIError"
-        )
     }
 
     pub fn substitute_chain_call_expression(
