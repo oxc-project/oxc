@@ -219,7 +219,6 @@ jest/expect-expect                                         |      0
 jest/max-expects                                           |      7
 jest/max-nested-describe                                   |      7
 jest/no-commented-out-tests                                |      7
-jest/no-conditional-expect                                 |      0
 jest/no-conditional-in-test                                |  30315
 jest/no-confusing-set-timeout                              |      7
 jest/no-deprecated-functions                               |  94090
@@ -665,7 +664,6 @@ vitest/hoisted-apis-on-top                                 |      0
 vitest/max-expects                                         |      7
 vitest/max-nested-describe                                 |      7
 vitest/no-commented-out-tests                              |      7
-vitest/no-conditional-expect                               |      0
 vitest/no-conditional-in-test                              |  30315
 vitest/no-conditional-tests                                |      0
 vitest/no-duplicate-hooks                                  |      7

@@ -2282,8 +2282,9 @@ impl RuleRunner for crate::rules::jest::no_commented_out_tests::NoCommentedOutTe
 }
 
 impl RuleRunner for crate::rules::jest::no_conditional_expect::NoConditionalExpect {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::no_conditional_in_test::NoConditionalInTest {
@@ -4863,8 +4864,9 @@ impl RuleRunner for crate::rules::vitest::no_commented_out_tests::NoCommentedOut
 }
 
 impl RuleRunner for crate::rules::vitest::no_conditional_expect::NoConditionalExpect {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::no_conditional_in_test::NoConditionalInTest {
