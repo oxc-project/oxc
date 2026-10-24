@@ -1123,6 +1123,17 @@ fn dce_keeps_annex_b_alias_observed_by_outer_eval() {
     }
 }
 
+// https://github.com/oxc-project/oxc/issues/24659
+#[test]
+fn annex_b_existing_var_invalidates_cached_value_facts() {
+    test_with_options_source_type(
+        "function outer(c) { var f = 1; if (c) { function f() {} } return () => f; } console.log(typeof outer(true)(), typeof outer(false)());",
+        "function outer(c) { var f = 1; if (c) { function f() {} } return () => f; } console.log(typeof outer(true)(), typeof outer(false)());",
+        SourceType::cjs(),
+        CompressOptions::smallest(),
+    );
+}
+
 #[test]
 fn dce_keeps_script_root_var_in_nested_statement_after_cycle_removed() {
     let source = "function outer() { function d1() { return x + d2() } function d2() { return d1() } return 1 } outer(); switch (1) { case 1: var x = 42; }";
