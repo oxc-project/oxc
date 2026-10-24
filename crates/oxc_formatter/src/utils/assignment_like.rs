@@ -425,6 +425,13 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
             return AssignmentLikeLayout::NeverBreakAfterOperator;
         }
 
+        // As in Prettier, a comment ending the operator's line or leading the right-hand side on its
+        // own line breaks after the operator before the left-hand side layouts are considered:
+        // under `BreakLeftHandSide` it would be flushed past the value, then move again.
+        if has_line_comment_on_operator_line || self.has_own_line_comment_before_right(f) {
+            return AssignmentLikeLayout::BreakAfterOperator;
+        }
+
         if self.should_break_left_hand_side(right_shape, left_may_break) {
             return AssignmentLikeLayout::BreakLeftHandSide;
         }
@@ -548,6 +555,31 @@ impl<'a, 'b> AssignmentLike<'a, 'b> {
     /// The comments glued after the operator up to a line comment ending its line (`= /* c */ // d`),
     /// printed right after the operator (see `Comments::mark_suppressed_after_operator` for their suppression target).
     /// Comments the left side deferred are still pending: nothing glues, all lead the right-hand side in order.
+    /// Whether a comment between the operator and the right-hand side ends its line,
+    /// Prettier's `hasLeadingOwnLineComment` for the value (position-based, for the layout decision).
+    /// A type-cast comment hugs its parenthesized node, so the scan stops there, as in `should_break_after_operator`.
+    fn has_own_line_comment_before_right(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        let Some(right) = self.get_right_expression() else {
+            return false;
+        };
+        if right.is_jsx() {
+            return false;
+        }
+        let Some(operator_end) = self.commented_operator_position(f) else {
+            return false;
+        };
+        let comments = f.context().comments();
+        for comment in comments.all_comments_in_range(operator_end, right.span().start) {
+            if comment.followed_by_newline() {
+                return true;
+            }
+            if comments.is_type_cast_comment(comment) {
+                break;
+            }
+        }
+        false
+    }
+
     fn operator_line_run(operator_end: u32, f: &JsFormatter<'_, 'a>) -> &'a [Comment] {
         if f.context().comments().has_comment_before(operator_end) {
             return &[];
