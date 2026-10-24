@@ -243,7 +243,6 @@ jest/prefer-hooks-in-order                                 |      7
 jest/prefer-hooks-on-top                                   |      7
 jest/prefer-importing-jest-globals                         |      7
 jest/prefer-jest-mocked                                    |   2576
-jest/prefer-lowercase-title                                |      0
 jest/prefer-mock-promise-shorthand                         |  62606
 jest/prefer-mock-return-shorthand                          |  62606
 jest/prefer-snapshot-hint                                  |      7
@@ -694,7 +693,6 @@ vitest/prefer-hooks-in-order                               |      7
 vitest/prefer-hooks-on-top                                 |      7
 vitest/prefer-import-in-mock                               |      0
 vitest/prefer-importing-vitest-globals                     |      7
-vitest/prefer-lowercase-title                              |      0
 vitest/prefer-mock-promise-shorthand                       |  62606
 vitest/prefer-mock-return-shorthand                        |  62606
 vitest/prefer-snapshot-hint                                |      7
