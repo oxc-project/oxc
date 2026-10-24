@@ -2558,8 +2558,9 @@ impl RuleRunner for crate::rules::jest::require_hook::RequireHook {
 }
 
 impl RuleRunner for crate::rules::jest::require_to_throw_message::RequireToThrowMessage {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::require_top_level_describe::RequireTopLevelDescribe {
@@ -5177,8 +5178,9 @@ impl RuleRunner for crate::rules::vitest::require_test_timeout::RequireTestTimeo
 }
 
 impl RuleRunner for crate::rules::vitest::require_to_throw_message::RequireToThrowMessage {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::require_top_level_describe::RequireTopLevelDescribe {
