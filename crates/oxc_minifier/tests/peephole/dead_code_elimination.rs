@@ -1115,6 +1115,15 @@ fn dce_keeps_sloppy_duplicate_block_functions() {
 }
 
 #[test]
+fn dce_keeps_annex_b_alias_observed_by_outer_eval() {
+    let source =
+        "{ function f() { return 1 } } { function f() { return 2 } } console.log(eval('f()'));";
+    for source_type in [SourceType::script(), SourceType::cjs()] {
+        test_same_source_type(source, source_type);
+    }
+}
+
+#[test]
 fn dce_keeps_script_root_var_in_nested_statement_after_cycle_removed() {
     let source = "function outer() { function d1() { return x + d2() } function d2() { return d1() } return 1 } outer(); switch (1) { case 1: var x = 42; }";
     // Script globals can be rebound through global-object properties without a
