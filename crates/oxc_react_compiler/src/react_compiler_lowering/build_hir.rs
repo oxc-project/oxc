@@ -2743,6 +2743,9 @@ fn expr_contains_optional(expr: &oxc::Expression) -> bool {
         oxc::Expression::PrivateFieldExpression(p) => {
             p.optional || expr_contains_optional(&p.object)
         }
+        // A non-null assertion does not end the chain: `a?.b!()` is still an
+        // optional call in Babel's AST.
+        oxc::Expression::TSNonNullExpression(t) => expr_contains_optional(&t.expression),
         _ => false,
     }
 }
@@ -2872,6 +2875,12 @@ fn lower_optional_member_expression_impl<'a>(
                 let value_place = lower_value_to_temporary(builder, value)?;
                 object = Some(value_place);
             }
+            // `a?.b!.c`: the non-null assertion keeps the chain going, so the
+            // optional link inside it must still be lowered as optional.
+            oxc::Expression::TSNonNullExpression(_) => {
+                let value = lower_chain_subexpr(builder, object_expr)?;
+                object = Some(lower_value_to_temporary(builder, value)?);
+            }
             other => {
                 object = Some(lower_expression_to_temporary(builder, other)?);
             }
@@ -2997,6 +3006,12 @@ fn lower_optional_call_expression_impl<'a>(
                     receiver: lowered.object,
                     property: property_place,
                 });
+            }
+            // `a?.b!()`: as above, lower the optional link inside the assertion.
+            oxc::Expression::TSNonNullExpression(_) => {
+                let value = lower_chain_subexpr(builder, &call.callee)?;
+                let callee_place = lower_value_to_temporary(builder, value)?;
+                callee_info = Some(CalleeInfo::CallExpression { callee: callee_place });
             }
             other => {
                 let callee_place = lower_expression_to_temporary(builder, other)?;
