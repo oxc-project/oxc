@@ -29,6 +29,23 @@ const plugin: Plugin = {
         };
       },
     },
+    "report-template-from-section": {
+      create(context) {
+        return {
+          Program() {
+            if (!context.sourceCode.text.includes("reportFromHere")) return;
+
+            const range = findActualRange(context.physicalFilename, "section-bad");
+            if (range === null) return;
+
+            context.report({
+              message: "Unexpected section marker",
+              actualRange: range,
+            });
+          },
+        };
+      },
+    },
   },
 };
 

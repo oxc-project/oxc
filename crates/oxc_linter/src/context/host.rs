@@ -317,9 +317,14 @@ impl<'a> ContextHost<'a> {
         self.current_sub_host().actual_source_text()
     }
 
-    /// Source text offset of the current sub host within the full file.
-    pub(crate) fn current_source_text_offset(&self) -> u32 {
-        self.current_sub_host().source_text_offset()
+    /// Sub host containing `span`, given in full-file coordinates.
+    pub(crate) fn sub_host_containing(&self, span: Span) -> Option<&ContextSubHost<'a>> {
+        self.sub_hosts.iter().find(|sub_host| {
+            let start = sub_host.source_text_offset;
+            #[expect(clippy::cast_possible_truncation)]
+            let end = start + sub_host.source_text().len() as u32;
+            start <= span.start && span.end <= end
+        })
     }
 
     /// Path to the file being linted.
@@ -384,9 +389,15 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Add a diagnostic that is already expressed in actual file coordinates.
-    #[inline]
     pub(crate) fn push_diagnostic_in_actual_coordinates(&self, diagnostic: Message) {
-        self.diagnostics.borrow_mut().push(diagnostic);
+        let mut diagnostics = self.diagnostics.borrow_mut();
+        // Every sub host is linted with the whole file in view, so each can report the same diagnostic.
+        if self.sub_hosts.len() > 1
+            && diagnostics.iter().any(|existing| existing.error == diagnostic.error)
+        {
+            return;
+        }
+        diagnostics.push(diagnostic);
     }
 
     // Append a list of diagnostics. Only used in report_unused_directives.

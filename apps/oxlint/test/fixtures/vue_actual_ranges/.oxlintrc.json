@@ -2,6 +2,7 @@
   "jsPlugins": ["./plugin.ts"],
   "categories": { "correctness": "off" },
   "rules": {
-    "vue-actual-plugin/report-template": "error"
+    "vue-actual-plugin/report-template": "error",
+    "vue-actual-plugin/report-template-from-section": "error"
   }
 }

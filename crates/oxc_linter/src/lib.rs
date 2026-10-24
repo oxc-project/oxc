@@ -300,19 +300,6 @@ fn source_text_utf16_len(source_text: &str, span_converter: &Utf8ToUtf16) -> u32
     source_text_utf16_len
 }
 
-fn map_actual_span_to_section(span: Span, section_offset: u32, section_len: u32) -> Option<Span> {
-    if section_offset == 0 {
-        return Some(span);
-    }
-
-    let section_end = section_offset.saturating_add(section_len);
-    if span.start < section_offset || span.end > section_end {
-        return None;
-    }
-
-    Some(span.move_left(section_offset))
-}
-
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
 pub struct Linter {
@@ -891,11 +878,6 @@ impl Linter {
             Ok(LintFileOutput { diagnostics, timings }) => {
                 self.record_external_timings(rule_timing_store, external_rules, timings);
 
-                #[expect(clippy::cast_possible_truncation)]
-                let current_section_len =
-                    ctx_host.current_sub_host().semantic().source_text().len() as u32;
-                let current_section_offset = ctx_host.current_source_text_offset();
-
                 for diagnostic in diagnostics {
                     let (
                         source_text,
@@ -937,21 +919,18 @@ impl Linter {
                     let (plugin_name, rule_name) =
                         self.config.resolve_plugin_rule_names(external_rule_id);
 
-                    let disable_directives_span = if use_actual_range {
-                        map_actual_span_to_section(
-                            span,
-                            current_section_offset,
-                            current_section_len,
-                        )
+                    let rule = format!("{plugin_name}/{rule_name}");
+                    let is_disabled = if use_actual_range {
+                        // Disable directives only apply within the script block they are in.
+                        ctx_host.sub_host_containing(span).is_some_and(|sub_host| {
+                            sub_host
+                                .disable_directives()
+                                .contains(&rule, span.move_left(sub_host.source_text_offset()))
+                        })
                     } else {
-                        Some(span)
+                        ctx_host.disable_directives().contains(&rule, span)
                     };
-                    if let Some(disable_directives_span) = disable_directives_span
-                        && ctx_host.disable_directives().contains(
-                            &format!("{plugin_name}/{rule_name}"),
-                            disable_directives_span,
-                        )
-                    {
+                    if is_disabled {
                         continue;
                     }
 
