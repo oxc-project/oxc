@@ -650,6 +650,7 @@ unicorn/prefer-native-coercion-functions                   |  16812
 unicorn/prefer-negative-index                              |  62606
 unicorn/prefer-node-protocol                               |  62732
 unicorn/prefer-number-coercion                             |  62606
+unicorn/prefer-number-is-safe-integer                      |  83210
 unicorn/prefer-number-properties                           | 157910
 unicorn/prefer-object-from-entries                         |  62606
 unicorn/prefer-optional-catch-binding                      |    111
