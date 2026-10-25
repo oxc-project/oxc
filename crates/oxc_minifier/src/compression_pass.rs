@@ -11,9 +11,10 @@ use oxc_ast_visit::Visit;
 use oxc_ast_visit::{VisitJs, walk_js::walk_call_expression};
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{BitSet, GetAllocator};
+use oxc_allocator::{ArenaVec, BitSet, GetAllocator};
 use oxc_ast::ast::*;
-use oxc_semantic::Scoping;
+use oxc_semantic::{Scoping, SymbolId};
+use oxc_span::Span;
 use oxc_syntax::scope::{ScopeFlags, ScopeId};
 
 use crate::{
@@ -87,6 +88,56 @@ fn debug_assert_no_over_prune(program: &Program<'_>, removed_references: &BitSet
         }
     }
     OverPruneCheck { removed_references }.visit_program(program);
+}
+
+fn declaration_key((symbol_id, span): &(SymbolId, Span)) -> (usize, u32, u32) {
+    (symbol_id.index(), span.start, span.end)
+}
+
+/// Collect binding identities still present in the AST, sorted for efficient
+/// membership checks against declarations seen in dropped subtrees.
+fn collect_live_declarations<'a>(
+    program: &Program<'_>,
+    allocator: &impl GetAllocator<'a>,
+) -> ArenaVec<'a, (SymbolId, Span)> {
+    struct LiveDeclarationCollector<'a> {
+        declarations: ArenaVec<'a, (SymbolId, Span)>,
+    }
+    impl<'ast> Visit<'ast> for LiveDeclarationCollector<'_> {
+        fn visit_binding_identifier(&mut self, ident: &BindingIdentifier<'ast>) {
+            if let Some(symbol_id) = ident.symbol_id.get() {
+                self.declarations.push((symbol_id, ident.span));
+            }
+        }
+    }
+
+    let mut collector = LiveDeclarationCollector { declarations: ArenaVec::new_in(allocator) };
+    collector.visit_program(program);
+    collector.declarations.sort_unstable_by_key(declaration_key);
+    collector.declarations.dedup();
+    collector.declarations
+}
+
+#[cfg(debug_assertions)]
+fn debug_assert_no_under_prune_declarations(
+    scoping: &Scoping,
+    live_declarations: &[(SymbolId, Span)],
+) {
+    for symbol_id in scoping.symbol_ids() {
+        for redeclaration in scoping.symbol_redeclarations(symbol_id) {
+            let declaration = (symbol_id, redeclaration.span);
+            assert!(
+                live_declarations
+                    .binary_search_by_key(&declaration_key(&declaration), declaration_key)
+                    .is_ok(),
+                "incremental scoping under-prune: redeclaration {symbol_id:?} at \
+                 {:?} is absent from the live program — a drop site bypassed the \
+                 `drop_*` / `replace_*` helpers, or the caller passed a `scoping` \
+                 inconsistent with `program`",
+                redeclaration.span,
+            );
+        }
+    }
 }
 
 /// Debug-only converse of [`debug_assert_no_over_prune`], run once by the
@@ -209,6 +260,7 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
 /// every step below is a cheap no-op.
 fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool {
     let had_removed_references = !ctx.state.pass_changes.removed_references.is_empty();
+    let had_removed_declarations = !ctx.state.pass_changes.removed_declarations.is_empty();
     let liveness_inputs_changed = ctx.state.pass_changes.direct_eval_dropped
         || (had_removed_references && symbol_liveness::dead_references_affect_analysis(ctx));
 
@@ -240,7 +292,34 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     #[cfg(debug_assertions)]
     debug_assert_no_stale_direct_eval(program, ctx.scoping());
 
-    // (3) Reset the accumulator for the next pass. `references_len` only grows
+    // (3) Declarations — prune metadata only when the exact declaration is
+    //     absent from the resulting AST. Some transformations move bindings
+    //     into replacement subtrees, so a dropped-subtree mark alone is not
+    //     enough to decide whether Scoping should forget the declaration.
+    if had_removed_declarations {
+        let live_declarations = collect_live_declarations(program, ctx);
+        ctx.state.pass_changes.removed_declarations.sort_unstable_by_key(declaration_key);
+        ctx.state.pass_changes.removed_declarations.dedup();
+        for &(symbol_id, span) in &ctx.state.pass_changes.removed_declarations {
+            if live_declarations
+                .binary_search_by_key(&declaration_key(&(symbol_id, span)), declaration_key)
+                .is_err()
+            {
+                ctx.scoping.scoping_mut().remove_symbol_declaration(symbol_id, span);
+            }
+        }
+        #[cfg(debug_assertions)]
+        debug_assert_no_under_prune_declarations(ctx.scoping(), &live_declarations);
+        ctx.state.pass_changes.removed_declarations.clear();
+    } else {
+        #[cfg(debug_assertions)]
+        {
+            let live_declarations = collect_live_declarations(program, ctx);
+            debug_assert_no_under_prune_declarations(ctx.scoping(), &live_declarations);
+        }
+    }
+
+    // (4) Reset the accumulator for the next pass. `references_len` only grows
     //     (helpers mint, never delete, references), so the bitset is
     //     re-allocated only when refs were minted this pass; otherwise a
     //     memset reuses the warm allocation (a bump arena never reclaims the

@@ -160,6 +160,15 @@ fn test_fold_try_statement() {
     test("try { foo() } catch (e) { bar() } finally {}", "try { foo() } catch { bar() }");
     test_same("try { foo() } catch { bar() } finally { baz() }");
 
+    test_unused("try { x() } catch (e) { var e; }", "try { x() } catch {}");
+    test_unused("try { x() } catch (e) { var e; var e; }", "try { x() } catch {}");
+    test_unused(
+        "try { x() } catch (e) { use(e); try { y() } catch (e) { var e; } }",
+        "try { x() } catch (e) { use(e); try { y() } catch {} }",
+    );
+    test_unused("try { x() } catch (e) { if (false) { var e; } }", "try { x() } catch {}");
+    test_unused("try {} catch (e) { if (false) { var e; } }", "");
+
     // Leak regression: when the empty `try` drops, the catch arm's write-ref
     // to `x` must be walked into `PassChanges`, else the stale write blocks
     // constant inlining of `x`.
