@@ -2,7 +2,7 @@ use oxc_ast::ast::Expression;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::static_ident;
+use oxc_str::{JSStr, static_ident};
 
 use crate::{AstNode, context::LintContext, globals::GLOBAL_OBJECT_NAMES, rule::Rule};
 
@@ -70,10 +70,10 @@ impl Rule for PreferGlobalNumberConstants {
         };
 
         // `Number.NaN`, `Number["NaN"]`, but not `Number.#foo`.
-        let Some(property) = member_expr.static_property_name() else {
+        let Some(property) = member_expr.static_property_name().and_then(JSStr::as_str) else {
             return;
         };
-        let (property, replacement) = match property.as_str() {
+        let (property, replacement) = match property {
             "NaN" => ("NaN", "NaN"),
             "POSITIVE_INFINITY" => ("POSITIVE_INFINITY", "Infinity"),
             "NEGATIVE_INFINITY" => ("NEGATIVE_INFINITY", "-Infinity"),
