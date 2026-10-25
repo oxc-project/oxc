@@ -1,8 +1,7 @@
-use oxc_allocator::{Allocator, ArenaVec, BitSet};
+use oxc_allocator::{Allocator, BitSet};
 use oxc_data_structures::stack::NonEmptyStack;
-use oxc_semantic::{Scoping, SymbolId};
+use oxc_semantic::Scoping;
 use oxc_span::SourceType;
-use oxc_span::Span;
 use oxc_str::{Ident, IdentHashSet};
 use oxc_syntax::scope::ScopeId;
 
@@ -60,12 +59,6 @@ pub struct PassChanges<'a> {
     /// At least one direct `eval(...)` call was dropped this pass. Gates
     /// the small `LiveDirectEvalCollector` walk at flush time.
     pub(crate) direct_eval_dropped: bool,
-
-    /// Declarations found in dropped subtrees, recorded as `(SymbolId, Span)`
-    /// so flush can remove stale redeclaration metadata from Scoping. The
-    /// final AST is checked before pruning because transformations may move a
-    /// declaration into a replacement subtree.
-    pub(crate) removed_declarations: ArenaVec<'a, (SymbolId, Span)>,
 }
 
 impl<'a> PassChanges<'a> {
@@ -74,7 +67,6 @@ impl<'a> PassChanges<'a> {
             revisit_requested: false,
             removed_references: BitSet::new_in(references_len, allocator),
             direct_eval_dropped: false,
-            removed_declarations: ArenaVec::new_in(&allocator),
         }
     }
 }
@@ -191,7 +183,6 @@ impl<'a> MinifierState<'a> {
         !self.pass_changes.revisit_requested
             && self.pass_changes.removed_references.is_empty()
             && !self.pass_changes.direct_eval_dropped
-            && self.pass_changes.removed_declarations.is_empty()
     }
 }
 

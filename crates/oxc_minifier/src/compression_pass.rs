@@ -118,28 +118,6 @@ fn collect_live_declarations<'a>(
     collector.declarations
 }
 
-#[cfg(debug_assertions)]
-fn debug_assert_no_under_prune_declarations(
-    scoping: &Scoping,
-    live_declarations: &[(SymbolId, Span)],
-) {
-    for symbol_id in scoping.symbol_ids() {
-        for redeclaration in scoping.symbol_redeclarations(symbol_id) {
-            let declaration = (symbol_id, redeclaration.span);
-            assert!(
-                live_declarations
-                    .binary_search_by_key(&declaration_key(&declaration), declaration_key)
-                    .is_ok(),
-                "incremental scoping under-prune: redeclaration {symbol_id:?} at \
-                 {:?} is absent from the live program — a drop site bypassed the \
-                 `drop_*` / `replace_*` helpers, or the caller passed a `scoping` \
-                 inconsistent with `program`",
-                redeclaration.span,
-            );
-        }
-    }
-}
-
 /// Debug-only converse of [`debug_assert_no_over_prune`], run once by the
 /// `Compressor` driver after the fixed-point loop: every reference that
 /// existed when the loop began and is still in a symbol's resolved-references
@@ -260,7 +238,6 @@ fn debug_assert_no_stale_direct_eval(program: &Program<'_>, scoping: &Scoping) {
 /// every step below is a cheap no-op.
 fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool {
     let had_removed_references = !ctx.state.pass_changes.removed_references.is_empty();
-    let had_removed_declarations = !ctx.state.pass_changes.removed_declarations.is_empty();
     let liveness_inputs_changed = ctx.state.pass_changes.direct_eval_dropped
         || (had_removed_references && symbol_liveness::dead_references_affect_analysis(ctx));
 
@@ -292,30 +269,25 @@ fn flush_pass_changes(program: &Program<'_>, ctx: &mut TraverseCtx<'_>) -> bool 
     #[cfg(debug_assertions)]
     debug_assert_no_stale_direct_eval(program, ctx.scoping());
 
-    // (3) Declarations — prune metadata only when the exact declaration is
-    //     absent from the resulting AST. Some transformations move bindings
-    //     into replacement subtrees, so a dropped-subtree mark alone is not
-    //     enough to decide whether Scoping should forget the declaration.
-    if had_removed_declarations {
+    // (3) Declarations — sweep Scoping's redeclaration records against the final AST
+    //     instead of trusting the dropped-subtree marks: a drop site that bypasses the
+    //     `drop_*` / `replace_*` helpers is still pruned, and a binding moved into a
+    //     replacement subtree (e.g. `KeepVar`) is still live and kept.
+    let mut redeclarations = ArenaVec::new_in(ctx);
+    for symbol_id in ctx.scoping().symbol_ids() {
+        for redeclaration in ctx.scoping().symbol_redeclarations(symbol_id) {
+            redeclarations.push((symbol_id, redeclaration.span));
+        }
+    }
+    if !redeclarations.is_empty() {
         let live_declarations = collect_live_declarations(program, ctx);
-        ctx.state.pass_changes.removed_declarations.sort_unstable_by_key(declaration_key);
-        ctx.state.pass_changes.removed_declarations.dedup();
-        for &(symbol_id, span) in &ctx.state.pass_changes.removed_declarations {
+        for &(symbol_id, span) in &redeclarations {
             if live_declarations
                 .binary_search_by_key(&declaration_key(&(symbol_id, span)), declaration_key)
                 .is_err()
             {
                 ctx.scoping.scoping_mut().remove_symbol_declaration(symbol_id, span);
             }
-        }
-        #[cfg(debug_assertions)]
-        debug_assert_no_under_prune_declarations(ctx.scoping(), &live_declarations);
-        ctx.state.pass_changes.removed_declarations.clear();
-    } else {
-        #[cfg(debug_assertions)]
-        {
-            let live_declarations = collect_live_declarations(program, ctx);
-            debug_assert_no_under_prune_declarations(ctx.scoping(), &live_declarations);
         }
     }
 
