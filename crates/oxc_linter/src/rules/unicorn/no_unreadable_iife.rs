@@ -47,6 +47,7 @@ declare_oxc_lint!(
     NoUnreadableIife,
     unicorn,
     pedantic,
+    recommended,
     conditional_suggestion,
     version = "0.0.19",
     short_description = "This rule disallows IIFEs with a parenthesized arrow function body.",

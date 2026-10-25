@@ -67,6 +67,7 @@ declare_oxc_lint!(
     ConsistentExistenceIndexCheck,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.12.0",
     short_description = "Enforce consistent style for element existence checks with `indexOf()`, `lastIndexOf()`, `findIndex()`, and `findLastIndex()`.",
@@ -97,8 +98,8 @@ impl Rule for ConsistentExistenceIndexCheck {
         let node = ctx.nodes().get_node(declaration_node_id);
 
         if let AstKind::VariableDeclarator(variables_declarator) = node.kind() {
-            if variable_declaration_kind(variables_declarator, ctx)
-                != VariableDeclarationKind::Const
+            if !variable_declaration_kind(variables_declarator, ctx.nodes())
+                .is_some_and(VariableDeclarationKind::is_const)
             {
                 return;
             }

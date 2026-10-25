@@ -46,7 +46,9 @@ mod ast_impl;
 mod ast_kind_impl;
 pub mod builder;
 pub mod precedence;
+mod static_property_name;
 mod trivia;
+pub use static_property_name::StaticPropertyName;
 
 #[cfg(feature = "serialize")]
 mod serialize;
@@ -76,7 +78,7 @@ pub use generated::ast_kind;
 
 pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPlacement, CommentPosition};
 pub use ast_kind::{AstKind, AstType};
-pub use ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind};
+pub use ast_kind_impl::{FunctionKind, MemberExpressionKind, ModuleDeclarationKind};
 pub use trivia::{
     CommentsRange, comments_range, get_comment_at, has_comments_between, is_inside_comment,
 };

@@ -1,8 +1,15 @@
-commit: 4f4ef5d4
+commit: a56fe4a4
 
 semantic_babel Summary:
-AST Parsed     : 2239/2239 (100.00%)
-Positive Passed: 2148/2239 (95.94%)
+AST Parsed     : 2280/2280 (100.00%)
+Positive Passed: 2186/2280 (95.88%)
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
+Cannot use export statement outside a module
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js
+Identifier `f` has already been declared
+Identifier `g` has already been declared
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/decorators/decorators-after-export/input.js
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
@@ -95,6 +102,10 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Unresolved references mismatch:
 after transform: ["a"]
 rebuilt        : []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts
+Identifier `\u{69}n` has already been declared
+Identifier `\u{69}n` has already been declared
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/get-generic/input.ts
 Bindings mismatch:

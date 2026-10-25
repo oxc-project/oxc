@@ -140,7 +140,7 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                             && ctx.source_type.is_typescript()
                         {
                             ctx.error(diagnostics::static_and_instance_private_identifier(
-                                &element.name,
+                                element.name.display(),
                                 prev_element.span,
                                 element.span,
                             ));
@@ -383,8 +383,11 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
                     for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
                         for element in &ctx.class_table_builder.classes.elements[ancestor_class_id]
                         {
-                            if element.is_private {
-                                names.push(element.name.as_ref());
+                            // Private names originate from identifiers, which are always UTF-8.
+                            if element.is_private
+                                && let Some(name) = element.name.as_str()
+                            {
+                                names.push(name);
                             }
                         }
                     }
@@ -536,7 +539,7 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     {
         ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
     }
-    if decl.kind.is_await() && is_in_class_static_block(ctx) {
+    if decl.kind.is_await_using() && is_in_class_static_block(ctx) {
         ctx.error(diagnostics::class_static_block_await_using(decl.span));
     }
 }

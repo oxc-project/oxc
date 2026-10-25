@@ -13,6 +13,7 @@ declare_oxc_lint!(
     NoStandaloneExpect,
     jest,
     correctness,
+    recommended,
     config = SharedNoStandaloneExpect::NoStandaloneExpectConfig,
     docs = SharedNoStandaloneExpect::DOCUMENTATION,
     version = "0.0.13",

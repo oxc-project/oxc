@@ -16,15 +16,13 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_semantic::IsGlobalReference;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
-    config::GlobalValue,
     context::{ContextHost, LintContext},
     rule::{Rule, TupleRuleConfig},
-    utils::deserialize_required_regex_option,
+    utils::{deserialize_required_regex_option, is_enabled_global_reference},
 };
 
 fn id_match_diagnostic(span: Span, name: &str, pattern: &str) -> OxcDiagnostic {
@@ -262,7 +260,7 @@ impl IdMatch {
             return;
         }
 
-        if is_known_external_global(ident, ctx) {
+        if is_enabled_global_reference(ident, ctx) {
             return;
         }
 
@@ -531,13 +529,6 @@ impl IdMatch {
     }
 }
 
-pub fn is_known_external_global(ident: &IdentifierReference, ctx: &LintContext) -> bool {
-    ident.is_global_reference(ctx.scoping())
-        && ctx
-            .get_global_variable_value(ident.name.as_str())
-            .is_some_and(|value| value != GlobalValue::Off)
-}
-
 fn binding_is_import_local<'a>(ident: &BindingIdentifier<'a>, parent: &AstNode<'a>) -> bool {
     match parent.kind() {
         AstKind::ImportDefaultSpecifier(specifier) => specifier.local.span == ident.span,
@@ -552,24 +543,21 @@ pub fn transparent_reference_parent<'a, 'b>(
     ctx: &'b LintContext<'a>,
 ) -> (&'b AstNode<'a>, Span) {
     let mut subject_span = node.span();
-    for ancestor in ctx.nodes().ancestors(node.id()) {
-        if matches!(
-            ancestor.kind(),
-            AstKind::ParenthesizedExpression(_)
-                | AstKind::TSAsExpression(_)
-                | AstKind::TSSatisfiesExpression(_)
-                | AstKind::TSTypeAssertion(_)
-                | AstKind::TSNonNullExpression(_)
-                | AstKind::TSInstantiationExpression(_)
-        ) {
-            subject_span = ancestor.span();
-            continue;
-        }
-        return (ancestor, subject_span);
+    let nodes = ctx.nodes();
+    let mut parent = nodes.parent_node(node.id());
+    while matches!(
+        parent.kind(),
+        AstKind::ParenthesizedExpression(_)
+            | AstKind::TSAsExpression(_)
+            | AstKind::TSSatisfiesExpression(_)
+            | AstKind::TSTypeAssertion(_)
+            | AstKind::TSNonNullExpression(_)
+            | AstKind::TSInstantiationExpression(_)
+    ) {
+        subject_span = parent.span();
+        parent = nodes.parent_node(parent.id());
     }
-    // The Program node is always present at the top of the AST, so the loop
-    // returns before exhausting the ancestor iterator in practice.
-    unreachable!("ancestors iterator must yield the Program node")
+    (parent, subject_span)
 }
 
 // Collapse OXC's formal-parameter wrappers to the parent shape used by ESLint.

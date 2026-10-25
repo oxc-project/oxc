@@ -2,7 +2,11 @@ use crate::pipeline::chunk::{eqm, load64};
 
 use super::common::lic_verify_at;
 
-pub unsafe fn scan_block_comment(src: *const u8, n: usize, mut i: usize) -> (usize, bool, i64) {
+pub unsafe fn scan_block_comment_generic(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+) -> (usize, bool, i64) {
     let mut saw_nl = false;
     let mut lic_q: i64 = -1;
     while i + 8 <= n {
@@ -50,7 +54,7 @@ pub unsafe fn scan_block_comment(src: *const u8, n: usize, mut i: usize) -> (usi
 /// metadata. A 0xE2 that isn't LS/PS (typographic punctuation in prose) is
 /// cleared from the mask and the scan continues; the LS/PS confirm can read
 /// the pad, which never matches 0x80.
-pub unsafe fn scan_line_comment(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
+pub unsafe fn scan_line_comment_generic(src: *const u8, n: usize, mut i: usize) -> (usize, i64) {
     let mut lic_q: i64 = -1;
     while i + 8 <= n {
         let x = load64(src, i);

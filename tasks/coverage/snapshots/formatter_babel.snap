@@ -1,8 +1,14 @@
-commit: 4f4ef5d4
+commit: a56fe4a4
 
 formatter_babel Summary:
-AST Parsed     : 2239/2239 (100.00%)
-Positive Passed: 2233/2239 (99.73%)
+AST Parsed     : 2280/2280 (100.00%)
+Positive Passed: 2269/2280 (99.52%)
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-declaration/input.js
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-declaration-cr/input.js
+
+Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-declaration-line-separator/input.js
+
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-private-method/input.js
@@ -15,3 +21,7 @@ Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basi
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/sequence-expression/input.js
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/escaped-in-after-initializer/input.js
+Cannot assign to this expression
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts
+Cannot assign to this expression

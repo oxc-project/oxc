@@ -882,6 +882,14 @@ impl LanguageServer for Backend {
         &self,
         params: DocumentDiagnosticParams,
     ) -> Result<DocumentDiagnosticReport> {
+        // The client can request diagnostics even if the server wants to use push mode.
+        // Some client will ignore the (not set) server diagnostic capability and still request diagnostics.
+        if self.capabilities.get().unwrap().diagnostic_mode != DiagnosticMode::Pull {
+            return Ok(DocumentDiagnosticReport::RelatedFullDocumentDiagnosticReport(
+                RelatedFullDocumentDiagnosticReport::default(),
+            ));
+        }
+
         let uri = &params.text_document.uri;
         let Some(worker) = self.worker_manager.get_worker_for_uri(uri).await else {
             return Ok(DocumentDiagnosticReport::RelatedFullDocumentDiagnosticReport(

@@ -596,7 +596,7 @@ export interface Oxlintrc {
    *
    * TypeScript plugin files are supported in the following environments:
    * - Deno and Bun: TypeScript files are supported natively.
-   * - Node.js >=22.18.0 and Node.js ^20.19.0: TypeScript files are supported natively with built-in
+   * - Node.js >=22.18.0: TypeScript files are supported natively with built-in
    * type-stripping enabled by default.
    *
    * For older Node.js versions, TypeScript plugins are not supported. Please use JavaScript plugins or upgrade your Node version.
@@ -1425,7 +1425,7 @@ export interface DummyRuleMap {
   "symbol-description"?: RuleNoConfig;
   "typescript/adjacent-overload-signatures"?: RuleNoConfig;
   "typescript/array-type"?: RuleNoConfig | [AllowWarnDeny, ArrayTypeConfig];
-  "typescript/await-thenable"?: RuleNoConfig;
+  "typescript/await-thenable"?: RuleNoConfig | [AllowWarnDeny, AwaitThenableConfig];
   "typescript/ban-ts-comment"?: RuleNoConfig | [AllowWarnDeny, BanTsCommentConfig];
   "typescript/ban-tslint-comment"?: RuleNoConfig;
   "typescript/ban-types"?: RuleNoConfig;
@@ -1490,6 +1490,7 @@ export interface DummyRuleMap {
   "typescript/no-unsafe-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-call"?: RuleNoConfig;
   "typescript/no-unsafe-declaration-merging"?: RuleNoConfig;
+  "typescript/no-unsafe-enum-assignment"?: RuleNoConfig;
   "typescript/no-unsafe-enum-comparison"?: RuleNoConfig;
   "typescript/no-unsafe-function-type"?: RuleNoConfig;
   "typescript/no-unsafe-member-access"?: RuleNoConfig | [AllowWarnDeny, NoUnsafeMemberAccessConfig];
@@ -2037,6 +2038,7 @@ export interface DummyRuleMap {
     | [AllowWarnDeny, SortOrder, SortKeysOptions]
     | [AllowWarnDeny, SortVars]
     | [AllowWarnDeny, ArrayTypeConfig]
+    | [AllowWarnDeny, AwaitThenableConfig]
     | [AllowWarnDeny, BanTsCommentConfig]
     | [AllowWarnDeny, ClassLiteralPropertyStyleOption]
     | [AllowWarnDeny, PreferGenericType]
@@ -5605,6 +5607,14 @@ export interface ArrayTypeConfig {
    * The array type expected for readonly cases. If omitted, the value for `default` will be used.
    */
   readonly?: ReadonlyArrayOption;
+}
+export interface AwaitThenableConfig {
+  /**
+   * Allow Promise aggregators such as `Promise.all` to receive mixed arrays or
+   * iterables containing at least one potentially Promise-like value.
+   * Inputs containing only synchronous values are still reported.
+   */
+  allowMixedPromiseArrays?: boolean;
 }
 /**
  * This rule allows you to specify how different TypeScript directive comments

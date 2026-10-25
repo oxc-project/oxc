@@ -54,6 +54,7 @@ declare_oxc_lint!(
     AriaProps,
     jsx_a11y,
     correctness,
+    recommended,
     conditional_fix,
     version = "0.0.22",
     short_description = "Enforces that elements do not use invalid ARIA attributes.",
@@ -69,7 +70,7 @@ impl Rule for AriaProps {
         // allocating so the common non-ARIA attribute (including camelCase names like
         // `className`/`onClick`, which would otherwise allocate a lowercased copy)
         // short-circuits before the lowercasing.
-        if !starts_with_ignore_case(&name, "aria-") {
+        if !starts_with_ignore_case(name.as_bytes(), "aria-") {
             return;
         }
         let name = name.cow_to_ascii_lowercase();

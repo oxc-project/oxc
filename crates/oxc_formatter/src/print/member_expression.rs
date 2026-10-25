@@ -1,5 +1,5 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -17,21 +17,21 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ComputedMemberExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ComputedMemberExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, self.object());
         FormatComputedMemberExpressionWithoutObject(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, StaticMemberExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, StaticMemberExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // Before the recording: printing the object consumes its cast comment
         let object_is_cast_target = is_cast_target(self.object.span(), f);
         let is_member_chain = {
-            let mut recording = f.start_recording();
-            write!(recording, [self.object()]);
-            recording.stop().has_label(LabelId::of(JsLabels::MemberChain))
+            let start = f.elements().len();
+            write!(f, [self.object()]);
+            f.elements()[start..].has_label(LabelId::of(JsLabels::MemberChain))
         };
 
         match layout(self, is_member_chain, object_is_cast_target, f) {
@@ -87,7 +87,7 @@ fn operator_token(optional: bool) -> &'static str {
 /// `object_is_cast_target`:
 /// a cast-target object is neither a call nor an identifier to the rules below (see `is_cast_target`).
 fn layout<'a>(
-    node: &AstNode<'a, StaticMemberExpression<'a>>,
+    node: &AstNode<'_, 'a, StaticMemberExpression<'a>>,
     is_member_chain: bool,
     object_is_cast_target: bool,
     f: &JsFormatter<'_, 'a>,
@@ -151,7 +151,7 @@ fn layout<'a>(
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, PrivateFieldExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, PrivateFieldExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.object(), self.optional().then_some("?"), ".", self.field()]);
     }

@@ -1,4 +1,7 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{
+    AstKind,
+    ast::{ChainElement, Expression},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -360,9 +363,7 @@ fn is_empty_string(expr: &Expression) -> bool {
     match expr.without_parentheses() {
         Expression::StringLiteral(lit) => lit.value.is_empty(),
         Expression::TemplateLiteral(template) => {
-            template.expressions.is_empty()
-                && template.quasis.len() == 1
-                && template.quasis[0].value.raw.is_empty()
+            template.is_no_substitution_template() && template.quasis[0].value.raw.is_empty()
         }
         _ => false,
     }
@@ -413,15 +414,14 @@ fn is_indexof_call(expr: &Expression) -> bool {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             if let Expression::ChainExpression(chain) = callee
-                && let oxc_ast::ast::ChainElement::StaticMemberExpression(member) =
-                    &chain.expression
+                && let ChainElement::StaticMemberExpression(member) = &chain.expression
             {
                 return matches!(member.property.name.as_str(), "indexOf" | "lastIndexOf");
             }
             false
         }
         Expression::ChainExpression(chain) => {
-            if let oxc_ast::ast::ChainElement::CallExpression(call) = &chain.expression
+            if let ChainElement::CallExpression(call) = &chain.expression
                 && let Expression::StaticMemberExpression(member) =
                     call.callee.without_parentheses()
             {

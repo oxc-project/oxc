@@ -3,7 +3,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Class, ClassElement, ClassType, Declaration, ExportDefaultDeclarationKind, FormalParameter,
-        FormalParameterRest, Function, FunctionType, MethodDefinition, MethodDefinitionKind,
+        FormalParameterRest, Function, FunctionType, MethodDefinition, ModuleDeclaration,
         PropertyKey, Statement, TSCallSignatureDeclaration, TSConstructSignatureDeclaration,
         TSMethodSignature, TSMethodSignatureKind, TSSignature, TSThisParameter, TSType,
         TSTypeAnnotation, TSTypeParameter, TSTypeParameterDeclaration,
@@ -231,7 +231,7 @@ impl UnifiedSignatures {
             let ClassElement::MethodDefinition(method) = element else {
                 continue;
             };
-            if method.value.body.is_some() || is_getter_or_setter_method(method.kind) {
+            if method.value.body.is_some() || method.kind.is_accessor() {
                 continue;
             }
 
@@ -376,7 +376,7 @@ fn get_statement_overload<'a>(
 
     let module_declaration = statement.as_module_declaration()?;
     match module_declaration {
-        oxc_ast::ast::ModuleDeclaration::ExportDeclaration(export_decl) => {
+        ModuleDeclaration::ExportDeclaration(export_decl) => {
             let Declaration::FunctionDeclaration(function) = &export_decl.declaration else {
                 return None;
             };
@@ -393,7 +393,7 @@ fn get_statement_overload<'a>(
                 },
             ))
         }
-        oxc_ast::ast::ModuleDeclaration::ExportDefaultDeclaration(export_default) => {
+        ModuleDeclaration::ExportDefaultDeclaration(export_default) => {
             let ExportDefaultDeclarationKind::FunctionDeclaration(function) =
                 &export_default.declaration
             else {
@@ -446,10 +446,6 @@ fn get_overload_key(
     };
 
     format!("{}{}{}", overload_key_bit(computed), overload_key_bit(r#static), info)
-}
-
-fn is_getter_or_setter_method(kind: MethodDefinitionKind) -> bool {
-    matches!(kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
 }
 
 fn compare_signatures<'a>(

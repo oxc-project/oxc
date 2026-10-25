@@ -1,7 +1,7 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{Expression, ObjectProperty, PropertyKind, WithClause},
+    ast::{Expression, ObjectProperty, ObjectPropertyKind, PropertyKind, WithClause},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -61,6 +61,7 @@ declare_oxc_lint!(
     RequireModuleAttributes,
     unicorn,
     style,
+    recommended,
     suggestion,
     version = "1.35.0",
     short_description = "This rule enforces a non-empty attribute list in `import`/`export` statements and `import()` expressions.",
@@ -176,7 +177,7 @@ fn check_with_clause(
 fn fix_empty_with_property(
     fixer: RuleFixer<'_, '_>,
     empty_with_prop: &ObjectProperty<'_>,
-    properties: &ArenaVec<'_, oxc_ast::ast::ObjectPropertyKind<'_>>,
+    properties: &ArenaVec<'_, ObjectPropertyKind<'_>>,
 ) -> RuleFix {
     // Find the position of the empty_with_prop in properties
     let prop_index = properties

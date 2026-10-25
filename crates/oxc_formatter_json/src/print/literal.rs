@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::ast::{NumericLiteral, StringLiteral};
 use oxc_formatter_core::{
-    Buffer, Format, FormatContext, arena_cow_str,
+    Format, FormatContext, arena_cow_str,
     builders::text,
     spec::{format_trimmed_number, normalize_string},
     write,

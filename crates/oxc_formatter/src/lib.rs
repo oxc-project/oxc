@@ -39,9 +39,9 @@ pub use detect_code_removal::detect_code_removal;
 // `crate::write!` / `crate::format_args!` / `crate::best_fitting!`
 // call-sites in `oxc_formatter` continue to work without changes.
 pub(crate) use oxc_formatter_core::{best_fitting, format_args, write};
-// Internal-only re-exports so crate-local `use crate::{Buffer, Format};` continues to work
+// Internal-only re-exports so crate-local `use crate::Format;` continues to work
 // without leaking these IR primitives in the public API.
-pub(crate) use oxc_formatter_core::{Buffer, Format};
+pub(crate) use oxc_formatter_core::Format;
 
 use self::formatter::prelude::tag::Label;
 use crate::print::{FormatFunctionParams, FormatTypeParameters};
@@ -130,7 +130,7 @@ pub fn format_to_ir<'a>(
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
     let program = parse(allocator, allocator.alloc_str(source_text), source_type)?;
-    let node = AstNode::new(program, AstNodes::Dummy(), allocator);
+    let node = AstNode::new(program, AstNodes::Dummy());
     let mut context =
         JsFormatContext::new(program.source_text, program.source_type, &program.comments, options);
 
@@ -195,7 +195,7 @@ pub fn format_fragment<'a>(
             // Parens are forced only in the binding-LHS context with multiple params or a rest element.
             let with_parens = matches!(context, FragmentContext::FunctionParamsAsBindingLhs)
                 && (1 < params.items.len() || params.rest.is_some());
-            let node = AstNode::new(params, AstNodes::Dummy(), allocator);
+            let node = AstNode::new(params, AstNodes::Dummy());
             let content = FormatFunctionParams::new(&node, with_parens);
             format_node(
                 &session,
@@ -215,7 +215,7 @@ pub fn format_fragment<'a>(
             let Some(type_params) = decl.type_parameters.as_deref() else {
                 return Err(OxcDiagnostic::error("Expected type parameters in wrapped fragment"));
             };
-            let node = AstNode::new(type_params, AstNodes::Dummy(), allocator);
+            let node = AstNode::new(type_params, AstNodes::Dummy());
             let content = FormatTypeParameters::new(&node);
             format_node(
                 &session,
@@ -227,6 +227,14 @@ pub fn format_fragment<'a>(
             )
         }
     };
+
+    // Losing a comment is worse than leaving the fragment as-is (e.g. `v-slot="/* c */"` has no params to attach to).
+    // Prettier also fails and keeps the source then.
+    // NOTE: Keeping the source (whitespace included) is just the cheapest way to match Prettier.
+    // Printing the comments instead is fine once the Vue formatter moves to Rust.
+    if !formatted.context().comments().unprinted_comments().is_empty() {
+        return Err(OxcDiagnostic::error("Some comments in the fragment were not printed"));
+    }
 
     Ok(formatted)
 }
@@ -258,7 +266,7 @@ fn format_program_with_session<'a>(
     program: &'a Program<'a>,
     options: JsFormatOptions,
 ) -> Formatted<'a, JsFormatContext<'a>> {
-    let node = AstNode::new(program, AstNodes::Dummy(), session.allocator());
+    let node = AstNode::new(program, AstNodes::Dummy());
     format_node(
         session,
         options,
@@ -352,8 +360,8 @@ pub(crate) enum JsLabels {
 }
 
 impl Label for JsLabels {
-    fn id(&self) -> u64 {
-        *self as u64
+    fn id(&self) -> u32 {
+        *self as u32
     }
 
     fn debug_name(&self) -> &'static str {

@@ -11,7 +11,6 @@
 use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
-    Buffer,
     builders::{exact_line_breaks, hard_line_break, text},
     write,
 };

@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.89.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 9a424c2 oxlint,oxfmt: Correct Node.js TypeScript support range (#27699) (camc314)
+
+## [1.88.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+
+### 🚀 Features
+
+- bde9f69 oxlint/lsp: Show config errors to LSP client (#25486) (Sysix)
+- 3c361a7 linter/unicorn/prefer-query-selector: Add `allowWithVariables` option (#27346) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 2349a31 oxfmt: Follow symlinked configs in discovery (#27389) (leaysgur)
+- 6e573f9 oxlint,oxfmt: Set stderr blocking (#27363) (leaysgur)
+
+### ⚡ Performance
+
+- c5f47ed linter/plugins: Inline `firstCommentAtOrAfter` into call sites (#27539) (overlookmotel)
+- c5f9235 linter/plugins: Use shift over multiply for powers of 2 (#27536) (overlookmotel)
+
+### 📚 Documentation
+
+- 98cc2b4 linter/plugins: Improve documentation for `firstCommentAtOrAfter` (#27538) (overlookmotel)
+
 ## [1.86.0] - 2026-09-28
 
 ### 🚀 Features

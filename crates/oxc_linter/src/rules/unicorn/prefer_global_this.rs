@@ -59,6 +59,7 @@ declare_oxc_lint!(
     PreferGlobalThis,
     unicorn,
     style,
+    recommended,
     suggestion,
     version = "0.16.12",
     short_description = "Prefer `globalThis` over environment-specific global aliases like `window`, `self`, and `global`.",
@@ -98,7 +99,10 @@ impl Rule for PreferGlobalThis {
                     }
                     if let Some(Expression::StringLiteral(lit)) =
                         call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                        && WINDOW_SPECIFIC_EVENTS.contains(&lit.value.as_str())
+                        && lit
+                            .value
+                            .as_str()
+                            .is_some_and(|value| WINDOW_SPECIFIC_EVENTS.contains(&value))
                     {
                         return;
                     }

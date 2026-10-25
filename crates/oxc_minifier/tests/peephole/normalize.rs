@@ -78,7 +78,34 @@ fn drop_console_does_not_leak_references() {
 #[test]
 fn drop_debugger() {
     let options = CompressOptions { drop_debugger: true, ..default_options() };
+
     test_options("debugger", "", &options);
+    test_options(
+        "export function f(x) { debugger; if (x) debugger; return x }",
+        "export function f(x) { return x }",
+        &options,
+    );
+    test_options(
+        "export function f(x) { debugger; if (x) { debugger; } return x }",
+        "export function f(x) { return x }",
+        &options,
+    );
+    test_options("if (foo()) debugger", "foo()", &options);
+    test_options("if (x) debugger; else foo()", "x || foo()", &options);
+    test_options("if (x) foo(); else debugger", "x && foo()", &options);
+    test_options("while (foo()) debugger", "for (; foo(););", &options);
+    test_options("do debugger; while (foo())", "do; while (foo());", &options);
+    test_options("for (foo(); bar(); baz()) debugger", "for (foo(); bar(); baz());", &options);
+    test_options("for (var x in foo()) debugger", "for (var x in foo());", &options);
+    test_options("for (var x of foo()) debugger", "for (var x of foo());", &options);
+    test_options("label: debugger", "", &options);
+}
+
+#[test]
+fn keep_debugger() {
+    test_same("export function f(x) { debugger; if (x) debugger; return x }");
+    test_same("if (x) debugger; else debugger;");
+    test_same("for (; foo();) debugger;");
 }
 
 #[test]

@@ -4,6 +4,54 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 🚀 Features
+
+- 7bb2697 minifier: Minimize array join expression (#27905) (Armano)
+- 6b5057b minifier: Add de morgan optimization for void expressions (#27375) (Armano)
+
+### 🐛 Bug Fixes
+
+- ce6a088 minifier: Fold string indices by UTF-16 code unit (#27096) (Dunqing)
+- bd37e78 ecmascript: Look through sequence expressions in `to_primitive` (#27837) (baltasarblanco)
+- d92789d minifier: Drop debugger statements in unbraced bodies (#27867) (camc314)
+- 863b359 ecmascript: Correct parseFloat decimal prefix scanning (#27695) (camc314)
+- a2534c6 minifier: Preserve lexical initializers in dead for loops (#27676) (camc314)
+- 3543672 ecmascript: Do not fold Number.isInteger / isSafeInteger of tiny non-integers to true (#27622) (Baltasar Blanco)
+- 6987a61 ecmascript: BigInt loose equality folding (unknown operands and `StringToBigInt`) (#27656) (Baltasar Blanco)
+- 40e5644 minifier: Preserve indirect access when folding into call targets (#27082) (waltu)
+- 022306f ecmascript: Do not fold `Math.cbrt` of a negative number to `NaN` (#27621) (Baltasar Blanco)
+
+### ⚡ Performance
+
+- 88b5c35 minifier: Reduce code branches when evaluating roots (#27906) (Armano)
+
+## [0.154.0] - 2026-10-13
+
+### 🚀 Features
+
+- 3d00bbd minifier: Add folding of delete expression (#27522) (Armano)
+
+### 🐛 Bug Fixes
+
+- 1e4c6ee minifier: Preserve parameter writes through mapped arguments (#27494) (Dunqing)
+- f8e9a50 semantic: Stop arguments resolution at ordinary functions (#26929) (camc314)
+- c57d9c7 parser: Apply no-side-effects annotations after export (#27504) (camc314)
+- 02577b1 minifier: Preserve delete semantic when folding non-finite numbers (#27466) (Armano)
+- f14ead5 minifier: Eliminate unused IIFE calls with constant arguments (#27434) (Dunqing)
+- 7e6a050 semantic: Visit `TSMethodSignature` computed method keys in enclosing scope (#27357) (camc314)
+
+### ⚡ Performance
+
+- cd1c192 minifier: Optimize unused expression removal in minimize_if (#27545) (Armano)
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+- 180d4e7 minifier: Avoid unecessary import/export merging for cjs/scripts (#27291) (Armano)
+
+### 📚 Documentation
+
+- c993555 minifier: Align guides with current implementation (#27584) (Cameron)
+
 ## [0.153.0] - 2026-10-05
 
 ### 🚀 Features

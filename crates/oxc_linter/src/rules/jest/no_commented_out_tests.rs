@@ -9,7 +9,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct NoCommentedOutTests;
 
-declare_oxc_lint!(NoCommentedOutTests, jest, suspicious, docs = DOCUMENTATION, version = "0.0.8",);
+declare_oxc_lint!(
+    NoCommentedOutTests,
+    jest,
+    suspicious,
+    recommended,
+    docs = DOCUMENTATION,
+    version = "0.0.8",
+);
 
 impl Rule for NoCommentedOutTests {
     fn run_once(&self, ctx: &LintContext) {

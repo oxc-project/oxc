@@ -5,7 +5,10 @@ use serde::de::Error;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FormalParameter, Function, Statement},
+    ast::{
+        BlockStatement, CallExpression, Expression, ExpressionStatement, FormalParameter, Function,
+        IdentifierReference, IfStatement, Statement,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
@@ -308,7 +311,7 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
         }
     }
 
-    fn check_identifier(&mut self, ident: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn check_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let Some(node) = get_declaration_of_variable(ident, self.ctx) else {
             return;
         };
@@ -341,14 +344,14 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         walk_js::walk_call_expression(self, call_expr);
     }
 
-    fn visit_expression_statement(&mut self, stmt: &oxc_ast::ast::ExpressionStatement<'a>) {
+    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
         self.check_expression(&stmt.expression);
         if !self.found_assertion {
             walk_js::walk_expression_statement(self, stmt);
         }
     }
 
-    fn visit_block_statement(&mut self, block: &oxc_ast::ast::BlockStatement<'a>) {
+    fn visit_block_statement(&mut self, block: &BlockStatement<'a>) {
         for stmt in &block.body {
             self.visit_statement(stmt);
             if self.found_assertion {
@@ -357,7 +360,7 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         }
     }
 
-    fn visit_if_statement(&mut self, if_stmt: &oxc_ast::ast::IfStatement<'a>) {
+    fn visit_if_statement(&mut self, if_stmt: &IfStatement<'a>) {
         if let Statement::BlockStatement(block_stmt) = &if_stmt.consequent {
             self.visit_block_statement(block_stmt);
         }

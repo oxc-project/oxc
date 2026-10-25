@@ -41,6 +41,7 @@ declare_oxc_lint!(
     PreferAddEventListener,
     unicorn,
     suspicious,
+    recommended,
     pending,
     version = "0.0.16",
     short_description = "Prefer `.addEventListener()` and `.removeEventListener()` over `on`-functions.",
@@ -63,6 +64,7 @@ impl Rule for PreferAddEventListener {
         let Some((span, name)) = member_expr.static_property_info() else {
             return;
         };
+        let Some(name) = name.as_str() else { return };
 
         if !name.starts_with("on") {
             return;

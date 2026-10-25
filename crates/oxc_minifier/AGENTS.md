@@ -8,19 +8,22 @@ Build the best JavaScript minifier: smallest output, 100% correct, reasonably fa
 
 ### Architecture
 
-- Fixed-point iteration in `PeepholeOptimizations::run_in_loop`
+- Fixed-point iteration in `Compressor::run_in_loop`
 - Arena allocation via `oxc_allocator`
-- 17+ optimizations in `src/peephole/`
+- Optimizations dispatched by `src/peephole/mod.rs`
+- Pass completion and incremental semantic updates in `src/compression_pass.rs`
 
 ### Key Files
 
 ```
 src/
-├── lib.rs           # Entry point
-├── compressor.rs    # Pipeline orchestration
-├── ctx.rs           # Shared utilities
-├── state.rs         # Optimization state
-├── peephole/
+├── lib.rs              # Entry point
+├── compressor.rs       # Pipeline orchestration
+├── compression_pass.rs # Pass completion and semantic updates
+├── traverse_context/   # Traversal, AST mutation, and ECMAScript utilities
+├── state.rs            # Configuration and per-pass changes
+├── symbol_state.rs     # Symbol values, metadata, and liveness
+└── peephole/
 │   ├── mod.rs       # Optimization dispatch
 │   └── *.rs         # Individual optimizations
 ```
@@ -53,7 +56,7 @@ Before selecting verification checks, read the [verification guidance](../../.ag
 #### Optimization Structure
 
 ```rust
-pub fn optimize_something(expr: &mut Expression, ctx: &mut Ctx) {
+pub fn optimize_something<'a>(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
     // Check if optimization applies
     if !can_optimize(expr, ctx) {
         return;
@@ -65,19 +68,24 @@ pub fn optimize_something(expr: &mut Expression, ctx: &mut Ctx) {
 }
 ```
 
-Always route slot replacements through the typed `ctx.replace_*` helpers —
-they are the only way to signal a mutation: the mutation flag is private to
-`MinifierState` (compiler-enforced), so a bare `*slot = …` write cannot mark
-the pass as changed and will stall the fixed-point loop. For in-place edits
-that don't replace a slot (operand swaps, field flips, element removals), call
-`ctx.notice_change()`; if a raw slot write is genuinely required (e.g. an enum
-slot with no typed helper), pair it with `ctx.notice_change()` and a comment
-explaining why.
+Use the typed `ctx.replace_*` helpers when replacing a slot. They record
+discarded references and direct `eval` calls as well as requesting another pass.
+When moving the old node into the replacement, use `replace_expression_with` or
+`replace_statement_with`; report discarded subtrees inside the closure with
+`ctx.drop_*`, and do not report nodes moved into the result as dropped.
+
+For in-place edits that retain all subtrees (operand swaps or field flips), call
+`ctx.notice_change()`. When removing a subtree from a collection or an optional
+field, call the corresponding `ctx.drop_*` helper before discarding it.
+`notice_change()` alone does not update semantic references. If a raw slot write
+is required because no typed helper exists, record discarded subtrees, call
+`ctx.notice_change()`, and explain why.
 
 #### Traversal Hook
 
 ```rust
 // In peephole/mod.rs
+// Within impl<'a> Traverse<'a> for PeepholeOptimizations
 fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
     match expr {
         Expression::BinaryExpression(_) => {
@@ -119,16 +127,16 @@ fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'
 
 ```bash
 # Debug conformance failures
-cargo coverage --debug
+cargo coverage minifier --debug
 
 # Test single file
-cargo run -p oxc_minifier --example minifier test.js
+cargo run -p oxc_minifier --example minifier -- test.js
 
 # Test idempotency
-cargo run -p oxc_minifier --example minifier test.js --twice
+cargo run -p oxc_minifier --example minifier -- test.js --twice
 ```
 
-### Key Utilities in `ctx.rs`
+### Key Utilities in `traverse_context/`
 
 - `eval_binary()` - Evaluate binary expressions
 - `value_to_expr()` - Convert constant to AST node

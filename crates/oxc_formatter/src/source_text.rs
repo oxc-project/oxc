@@ -12,6 +12,18 @@ use oxc_syntax::{
     line_terminator::{CR, LF, is_line_terminator},
 };
 
+/// The line terminators in `text`, with `\r\n` as one.
+///
+/// `oxc_formatter_json`'s `count_newlines` counts the same set over bytes; keep them in sync.
+pub fn line_breaks(text: &str) -> impl Iterator<Item = char> + '_ {
+    let mut prev = '\0';
+    text.chars().filter(move |&c| {
+        let is_break = is_line_terminator(c) && !(c == LF && prev == CR);
+        prev = c;
+        is_break
+    })
+}
+
 /// JS/TS-specific source scanning, layered on the core mechanical [`SourceText`].
 pub trait SourceTextExt {
     /// Check if span contains line terminators.

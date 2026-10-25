@@ -1,5 +1,6 @@
 use std::{
-    fmt::{self, Debug, Write},
+    borrow::Cow,
+    fmt::{self, Debug, Display, Write},
     hash::{Hash, Hasher},
     iter::FusedIterator,
     marker::PhantomData,
@@ -8,8 +9,15 @@ use std::{
 };
 
 use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Dummy, GetAllocator};
+#[cfg(feature = "serialize")]
+use oxc_estree::{ESTree, LoneSurrogatesString, Serializer as ESTreeSerializer};
 
 use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
+
+#[path = "js_str/pattern.rs"]
+mod pattern;
+
+pub use pattern::JSStrPattern;
 
 /// An immutable JavaScript string borrowed from source text or arena memory.
 ///
@@ -34,6 +42,7 @@ use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
 /// * [`from_bytes_unchecked`] re-borrows them under the same invariants.
 ///
 /// Consumers read the value with [`as_str`], [`chars`], or [`encode_utf16`].
+/// Search methods such as [`contains`] inspect it without UTF-8 conversion.
 ///
 /// Equality uses the canonical bytes, and UTF-8 values hash like `str`. Ordering
 /// by these bytes would differ from JavaScript's UTF-16 ordering, so `JSStr`
@@ -85,6 +94,7 @@ use crate::{Ident, JSChar, JSStrBuilder, Str, wtf8::*};
 /// [`as_str`]: Self::as_str
 /// [`chars`]: Self::chars
 /// [`encode_utf16`]: Self::encode_utf16
+/// [`contains`]: Self::contains
 #[derive(Clone, Copy)]
 #[repr(C)]
 pub struct JSStr<'a> {
@@ -125,6 +135,18 @@ impl<'a> JSStr<'a> {
         JSStr::from(value).clone_in(allocator.allocator())
     }
 
+    /// Borrow a borrowed `Cow`, or copy an owned one into the arena, like [`Str::from_cow_in`].
+    ///
+    /// # Panics
+    /// Panics if the byte length exceeds `u32::MAX`.
+    #[inline]
+    pub fn from_cow_in(value: &Cow<'a, str>, allocator: &impl GetAllocator<'a>) -> Self {
+        match value {
+            Cow::Borrowed(value) => JSStr::from(*value),
+            Cow::Owned(value) => JSStr::from_str_in(value, allocator),
+        }
+    }
+
     /// Concatenate JavaScript strings into an arena.
     ///
     /// Leading and trailing surrogates pair across string boundaries, including empty strings between them.
@@ -146,6 +168,16 @@ impl<'a> JSStr<'a> {
             builder.push_js_str(value);
         }
         builder.into_js_str()
+    }
+
+    /// Borrow the value as an arena [`Str`], or return `None` if it contains a lone surrogate.
+    ///
+    /// This is [`as_str`] for consumers that store the value in the AST.
+    ///
+    /// [`as_str`]: Self::as_str
+    #[inline]
+    pub fn as_arena_str(self) -> Option<Str<'a>> {
+        self.as_str().map(Str::from)
     }
 
     /// Borrow the value as UTF-8, or return `None` if it contains a lone surrogate.
@@ -212,6 +244,80 @@ impl<'a> JSStr<'a> {
     #[inline]
     pub fn encode_utf16(self) -> impl FusedIterator<Item = u16> + Clone + 'a {
         EncodeUtf16 { chars: JSChars { remaining: self.as_bytes() }, pending: 0 }
+    }
+
+    /// Return whether the value contains `pattern`.
+    ///
+    /// See [`JSStrPattern`] for the accepted patterns and how they treat lone surrogates.
+    /// Like `str::contains`, an empty text pattern always matches.
+    ///
+    /// ```
+    /// # use oxc_allocator::Allocator;
+    /// # let allocator = Allocator::new();
+    /// use oxc_str::JSStrBuilder;
+    ///
+    /// let mut builder = JSStrBuilder::new_in(&&allocator);
+    /// builder.push_str("a\n");
+    /// builder.push_code_unit(0xD800);
+    /// let value = builder.into_js_str();
+    /// assert_eq!(value.as_str(), None);
+    /// assert!(value.contains('\n'));
+    /// assert!(!value.contains("ab"));
+    /// ```
+    #[inline]
+    pub fn contains<P: JSStrPattern>(self, pattern: P) -> bool {
+        pattern.find_in(self).is_some()
+    }
+
+    /// Return whether the value starts with `pattern`.
+    ///
+    /// See [`JSStrPattern`] for the accepted patterns and how they treat lone surrogates.
+    #[inline]
+    pub fn starts_with<P: JSStrPattern>(self, pattern: P) -> bool {
+        pattern.is_prefix_of(self)
+    }
+
+    /// Return whether the value ends with `pattern`.
+    ///
+    /// See [`JSStrPattern`] for the accepted patterns and how they treat lone surrogates.
+    #[inline]
+    pub fn ends_with<P: JSStrPattern>(self, pattern: P) -> bool {
+        pattern.is_suffix_of(self)
+    }
+
+    /// Return the byte offset of the first match of `pattern`, or `None`.
+    ///
+    /// Like `str::find`, the offset counts bytes of the encoded value,
+    /// here its WTF-8 representation, not UTF-16 code units.
+    /// It can be compared with [`len`] and with other offsets from the same value.
+    /// See [`JSStrPattern`] for the accepted patterns.
+    ///
+    /// [`len`]: Self::len
+    #[inline]
+    pub fn find<P: JSStrPattern>(self, pattern: P) -> Option<usize> {
+        pattern.find_in(self)
+    }
+
+    /// Return the byte offset of the last match of `pattern`, or `None`.
+    ///
+    /// The offset has the same meaning as for [`find`].
+    ///
+    /// [`find`]: Self::find
+    #[inline]
+    pub fn rfind<P: JSStrPattern>(self, pattern: P) -> Option<usize> {
+        pattern.rfind_in(self)
+    }
+
+    /// Return an adapter that implements [`Display`], like [`Path::display`].
+    ///
+    /// UTF-8 text is written as is, and each lone surrogate is written as `\uXXXX` in lowercase hex.
+    /// The output is for diagnostics, not for source code. It is not injective: `"\uD800"` and
+    /// `"\\ud800"` both print as `\ud800`, so never compare or key by it.
+    ///
+    /// [`Path::display`]: std::path::Path::display
+    #[inline]
+    pub fn display(self) -> impl Display + 'a {
+        JSStrDisplay(self)
     }
 
     /// Borrow the underlying canonical WTF-8 bytes.
@@ -370,6 +476,37 @@ impl Debug for JSStr<'_> {
     }
 }
 
+/// [`Display`] adapter returned by [`JSStr::display`].
+struct JSStrDisplay<'a>(JSStr<'a>);
+
+impl Display for JSStrDisplay<'_> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        if let Some(value) = self.0.as_str() {
+            return f.write_str(value);
+        }
+        for c in self.0.chars() {
+            if let Some(c) = c.to_char() {
+                f.write_char(c)?;
+            } else {
+                write!(f, "\\u{:04x}", c.to_u32())?;
+            }
+        }
+        Ok(())
+    }
+}
+
+#[cfg(feature = "serialize")]
+impl ESTree for JSStr<'_> {
+    #[inline]
+    fn serialize<S: ESTreeSerializer>(&self, serializer: S) {
+        if let Some(value) = self.as_str() {
+            value.serialize(serializer);
+        } else {
+            LoneSurrogatesString(self.chars().map(JSChar::to_u32)).serialize(serializer);
+        }
+    }
+}
+
 impl<'new_alloc> CloneIn<'new_alloc> for JSStr<'_> {
     type Cloned = JSStr<'new_alloc>;
 
@@ -395,7 +532,7 @@ impl<'a> Dummy<'a> for JSStr<'a> {
 
 /// Iterator over [`JSChar`]s comprising a [`JSStr`].
 //
-// `remaining` is always canonical WTF-8 starting at a code-point boundary.
+// `remaining` is always canonical WTF-8 that starts and ends at code-point boundaries.
 #[derive(Clone)]
 struct JSChars<'a> {
     remaining: &'a [u8],
@@ -439,6 +576,19 @@ impl Iterator for JSChars<'_> {
     fn size_hint(&self) -> (usize, Option<usize>) {
         let len = self.remaining.len();
         (len.div_ceil(char::MAX_LEN_UTF8), Some(len))
+    }
+}
+
+impl DoubleEndedIterator for JSChars<'_> {
+    #[inline]
+    fn next_back(&mut self) -> Option<JSChar> {
+        // The last non-continuation byte starts the final code point,
+        // and the bytes after it are exactly that code point's continuation bytes.
+        let start = self.remaining.iter().rposition(|&byte| byte & !CONT_MASK != CONT_TAG)?;
+        let (rest, last) = self.remaining.split_at(start);
+        self.remaining = rest;
+        // `last` is one complete code point, so it is valid WTF-8 at a code-point boundary.
+        JSChars { remaining: last }.next()
     }
 }
 

@@ -1,12 +1,10 @@
-use std::borrow::Cow;
-
 use oxc_allocator::ArenaBox;
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
-        ClassElement, Expression, MethodDefinition, MethodDefinitionKind, ObjectProperty,
-        ObjectPropertyKind, PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature,
-        TSMethodSignatureKind, TSSignature, TSTypeLiteral,
+        ClassElement, Expression, MethodDefinition, ObjectProperty, ObjectPropertyKind,
+        PropertyKey, PropertyKind, TSInterfaceBody, TSMethodSignature, TSMethodSignatureKind,
+        TSSignature, TSTypeLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -195,7 +193,7 @@ impl Rule for GroupedAccessorPairs {
         match node.kind() {
             AstKind::ObjectExpression(obj_expr) => {
                 let mut prop_map = FxHashMap::<
-                    (String, bool),
+                    (StaticPropertyName<'a>, bool),
                     Vec<(usize, &ArenaBox<'_, ObjectProperty<'_>>)>,
                 >::default();
                 let properties = &obj_expr.properties;
@@ -254,7 +252,7 @@ impl Rule for GroupedAccessorPairs {
             AstKind::ClassBody(class_body) => {
                 let method_defines = &class_body.body;
                 let mut prop_map = FxHashMap::<
-                    (String, bool, bool, bool),
+                    (StaticPropertyName<'a>, bool, bool, bool),
                     Vec<(usize, &ArenaBox<'_, MethodDefinition<'_>>)>,
                 >::default();
 
@@ -262,10 +260,7 @@ impl Rule for GroupedAccessorPairs {
                     let ClassElement::MethodDefinition(method_define) = v else {
                         continue;
                     };
-                    if !matches!(
-                        method_define.kind,
-                        MethodDefinitionKind::Get | MethodDefinitionKind::Set
-                    ) {
+                    if !method_define.kind.is_accessor() {
                         continue;
                     }
                     let (key_name, is_literal) =
@@ -289,7 +284,7 @@ impl Rule for GroupedAccessorPairs {
                             continue;
                         }
                         let (getter_idx, getter_node, setter_idx, setter_node) =
-                            if first_node.kind == MethodDefinitionKind::Get {
+                            if first_node.kind.is_get() {
                                 (first_idx, first_node, second_idx, second_node)
                             } else {
                                 (second_idx, second_node, first_idx, first_node)
@@ -347,7 +342,7 @@ impl GroupedAccessorPairs {
 
     fn check_ts_signatures<'a>(&self, signatures: &[TSSignature<'a>], ctx: &LintContext<'a>) {
         let mut prop_map = FxHashMap::<
-            (String, bool),
+            (StaticPropertyName<'a>, bool),
             Vec<(usize, &ArenaBox<'_, TSMethodSignature<'_>>)>,
         >::default();
 
@@ -398,13 +393,12 @@ impl GroupedAccessorPairs {
 fn get_key_name_and_check_literal<'a>(
     ctx: &LintContext<'a>,
     prop_key: &PropertyKey<'a>,
-) -> (String, bool) {
-    let key_name = prop_key
-        .name()
-        .unwrap_or_else(|| {
-            Cow::Borrowed(prop_key.as_expression().unwrap().span().source_text(ctx.source_text()))
-        })
-        .to_string();
+) -> (StaticPropertyName<'a>, bool) {
+    let key_name = prop_key.name().unwrap_or_else(|| {
+        StaticPropertyName::from(
+            prop_key.as_expression().unwrap().span().source_text(ctx.source_text()),
+        )
+    });
     let is_literal =
         if matches!(prop_key, PropertyKey::StaticIdentifier(_) | PropertyKey::PrivateIdentifier(_))
         {
@@ -426,7 +420,7 @@ fn get_key_name_and_check_literal<'a>(
 
 fn get_diagnostic_access_name(
     access_word: &str,
-    base_key: &str,
+    base_key: &StaticPropertyName<'_>,
     is_computed: bool,
     is_static: bool,
     is_private: bool,
@@ -437,9 +431,9 @@ fn get_diagnostic_access_name(
     } else {
         // e.g. "class foo { get #a {} set #a(val) {} }" we should get #a
         let (real_key, private_prefix) = if is_private {
-            (format!("#{base_key}"), "private ")
+            (format!("#{}", base_key.display()), "private ")
         } else {
-            (format!("'{base_key}'"), "")
+            (format!("'{}'", base_key.display()), "")
         };
         format!("{static_prefix}{private_prefix}{access_word} {real_key}")
     }
@@ -636,6 +630,11 @@ fn test() {
             "type T = { set prop(value: any), get prop(): any }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
         ),
+        // Lone surrogates pair by identity, and literal `\uD800` text is a different key.
+        (r#"({ get "\uD800"() {}, set "\uD800"(v) {} })"#, None),
+        (r#"({ get "\uD800"() {}, a: 1, set "\\uD800"(v) {} })"#, None),
+        (r#"({ get "\uD800"() {}, a: 1, set "\uDC00"(v) {} })"#, None),
+        (r#"class A { get "\uD800"() {} a() {} static set "\uD800"(v) {} }"#, None),
     ];
 
     let fail = vec![
@@ -838,6 +837,13 @@ fn test() {
         (
             "type T = { get a(): any, set a(value: any) }",
             Some(serde_json::json!(["setBeforeGet", { "enforceForTSTypes": true }])),
+        ),
+        (r#"({ get "\uD800"() {}, a: 1, set "\uD800"(v) {} })"#, None),
+        (r#"({ get "\uDC00"() {}, a: 1, set ["\uDC00"](v) {} })"#, None),
+        (r#"class A { get "a\uD800b"() {} a() {} set [`a\uD800b`](v) {} }"#, None),
+        (
+            r#"interface I { get "\uD800"(): any, between: true, set "\uD800"(value: any) }"#,
+            Some(serde_json::json!(["anyOrder", { "enforceForTSTypes": true }])),
         ),
     ];
 

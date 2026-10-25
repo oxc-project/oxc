@@ -80,7 +80,7 @@ fn is_embedded(path: &Path) -> bool {
 /// Format through `format_to_ir` and print the raw IR, mirroring what the
 /// oxfmt dispatcher + parent template printing do (minus `${}` substitution).
 fn format_embedded(source: &str, options: CssFormatOptions) -> String {
-    use oxc_formatter_core::{Document, FormatElement, FormatOptions, TextWidth};
+    use oxc_formatter_core::{Document, FormatElement, FormatOptions};
 
     let allocator = Allocator::default();
     let session =
@@ -96,10 +96,7 @@ fn format_embedded(source: &str, options: CssFormatOptions) -> String {
         embedded.ir.iter().map(|element| match element {
             FormatElement::EmbedPlaceholder(index) => {
                 let text = allocator.alloc_str(&std::format!("`PLACEHOLDER-{index}`"));
-                FormatElement::Text {
-                    text,
-                    width: TextWidth::from_text(text, options.indent_width),
-                }
+                FormatElement::text(text, options.indent_width)
             }
             other => other.clone(),
         }),

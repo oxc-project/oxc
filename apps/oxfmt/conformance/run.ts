@@ -27,7 +27,10 @@ const DIVERGENCES_FILES = globSync("{apps/oxfmt,crates/oxc_formatter*}/DIVERGENC
 
 type Category = {
   name: string;
-  sources: Source[];
+  /** Test suites (Prettier's own, the plugins', `edge-cases/`): compared as written. */
+  fixtures: Source[];
+  /** Real-world projects: compared on Prettier's output of the file, as written when it has no stable one. */
+  projects: Source[];
   optionSets: Record<string, unknown>[];
 };
 
@@ -43,11 +46,16 @@ type Source = {
 const categories: Category[] = [
   {
     name: "js-in-vue",
-    sources: [
-      { dir: join(EXTERNALS_DIR, "prettier"), ext: ".vue" },
-      { dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".vue" },
+    fixtures: [
+      {
+        dir: join(EXTERNALS_DIR, "prettier"),
+        ext: ".vue",
+        // Parser error messages and range formatting are not formatter concerns
+        excludes: ["/_errors_/", "vue/range/"],
+      },
       { dir: join(FIXTURES_DIR, "edge-cases", "js-in-vue") },
     ],
+    projects: [{ dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".vue" }],
     optionSets: [
       { printWidth: 80 },
       { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true },
@@ -55,7 +63,7 @@ const categories: Category[] = [
   },
   {
     name: "gql-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-graphql"),
         ext: ".js",
@@ -63,11 +71,12 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
     name: "css-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-css"),
         ext: ".js",
@@ -80,11 +89,12 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "css-in-js") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
     name: "html-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-html"),
         ext: ".js",
@@ -95,28 +105,26 @@ const categories: Category[] = [
         ext: ".js",
         excludes: ["format.test.js"],
       },
-      {
-        dir: join(EXTERNALS_DIR, "webawesome"),
-        ext: ".ts",
-      },
       { dir: join(FIXTURES_DIR, "edge-cases", "html-in-js") },
     ],
+    projects: [{ dir: join(EXTERNALS_DIR, "webawesome"), ext: ".ts" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
   },
   {
     name: "angular-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "typescript/angular-component-examples"),
         ext: ".ts",
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "angular-in-js") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
   },
   {
     name: "md-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-markdown"),
         ext: ".js",
@@ -124,11 +132,12 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "md-in-js") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
   },
   {
     name: "xxx-in-js-comment",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-html/language-comment"),
         ext: ".js",
@@ -141,11 +150,12 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
     name: "svelte",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "plugin-svelte"),
         ext: "input.html",
@@ -153,6 +163,7 @@ const categories: Category[] = [
         resolveFilePath: (name) => name.replace("/input.html", ".svelte"),
       },
     ],
+    projects: [],
     optionSets: [
       { printWidth: 80, svelte: {} },
       {
@@ -173,10 +184,11 @@ const categories: Category[] = [
   },
   {
     name: "astro",
-    sources: [
+    fixtures: [
       { dir: join(EXTERNALS_DIR, "plugin-astro"), ext: "input.astro" },
       { dir: join(FIXTURES_DIR, "edge-cases", "astro") },
     ],
+    projects: [],
     optionSets: [
       { printWidth: 80, astro: {} },
       {
@@ -193,7 +205,7 @@ const categories: Category[] = [
   },
   {
     name: "markdown",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "markdown"),
         ext: ".md",
@@ -202,12 +214,14 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-md") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
   },
   {
     // Real-world documents, dense with fenced code (css / html / js)
     name: "markdown-mdn",
-    sources: [
+    fixtures: [],
+    projects: [
       { dir: join(EXTERNALS_DIR, "mdn-learn"), ext: ".md" },
       { dir: join(EXTERNALS_DIR, "mdn-css-guides"), ext: ".md" },
     ],
@@ -218,17 +232,20 @@ const categories: Category[] = [
   },
   {
     name: "graphql",
-    sources: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
+    fixtures: [],
+    projects: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
     name: "less",
-    sources: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
+    fixtures: [],
+    projects: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
     name: "css",
-    sources: [
+    fixtures: [],
+    projects: [
       { dir: join(EXTERNALS_DIR, "mantine"), ext: ".css" },
       { dir: join(EXTERNALS_DIR, "docusaurus"), ext: ".css" },
     ],
@@ -236,7 +253,8 @@ const categories: Category[] = [
   },
   {
     name: "yaml",
-    sources: [
+    fixtures: [],
+    projects: [
       { dir: join(EXTERNALS_DIR, "aws-cloudformation-templates"), ext: ".yaml" },
       { dir: join(EXTERNALS_DIR, "aws-cloudformation-templates"), ext: ".yml" },
       { dir: join(EXTERNALS_DIR, "gitlab-ci-templates"), ext: ".yml" },
@@ -250,7 +268,8 @@ const categories: Category[] = [
   },
   {
     name: "scss",
-    sources: [
+    fixtures: [],
+    projects: [
       { dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".scss" },
       { dir: join(EXTERNALS_DIR, "gitlab"), ext: ".scss" },
     ],
@@ -258,7 +277,8 @@ const categories: Category[] = [
   },
   {
     name: "jsdoc",
-    sources: [{ dir: join(EXTERNALS_DIR, "svelte"), ext: ".js" }],
+    fixtures: [],
+    projects: [{ dir: join(EXTERNALS_DIR, "svelte"), ext: ".js" }],
     optionSets: [{ printWidth: 100 }],
   },
 ];
@@ -269,7 +289,10 @@ const divergences = collectDivergences();
 const results: CategoryResult[] = [];
 
 for (const category of categories) {
-  const fixtures = collectFixtures(category.sources);
+  const fixtures = [
+    ...collectFixtures(category.fixtures ?? [], false),
+    ...collectFixtures(category.projects ?? [], true),
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
   if (fixtures.length === 0) {
     console.log(`[${category.name}] No fixtures found, skipping.`);
@@ -321,7 +344,7 @@ function collectDivergences(): Map<string, string[]> {
   return map;
 }
 
-type Fixture = { name: string; fullPath: string };
+type Fixture = { name: string; fullPath: string; isProject: boolean };
 
 type Failure = {
   name: string;
@@ -341,7 +364,7 @@ type CategoryResult = {
   optionSetResults: OptionSetResult[];
 };
 
-function collectFixtures(sources: Source[]): Fixture[] {
+function collectFixtures(sources: Source[], isProject: boolean): Fixture[] {
   const results: Fixture[] = [];
 
   for (const source of sources) {
@@ -359,11 +382,11 @@ function collectFixtures(sources: Source[]): Fixture[] {
       if (source.excludes?.some((s) => relPath.includes(s))) continue;
 
       const name = source.resolveFilePath?.(relPath) ?? relPath;
-      results.push({ name, fullPath });
+      results.push({ name, fullPath, isProject });
     }
   }
 
-  return results.sort((a, b) => a.name.localeCompare(b.name));
+  return results;
 }
 
 async function runCategory(category: Category, fixtures: Fixture[]): Promise<CategoryResult> {
@@ -374,14 +397,18 @@ async function runCategory(category: Category, fixtures: Fixture[]): Promise<Cat
     const failures: Failure[] = [];
 
     for (const fixture of fixtures) {
-      const content = readFileSync(fixture.fullPath, "utf8");
-      const [oxfmtResult, prettierResult] = await compareWithPrettier(
-        fixture.name,
-        content,
-        options,
-      );
+      let input = readFileSync(fixture.fullPath, "utf8");
+      let expected = await formatWithPrettier(fixture.name, input, options);
+      // A project hands over Prettier's output, unless Prettier cannot read it back either
+      if (fixture.isProject && expected !== null) {
+        const again = await formatWithPrettier(fixture.name, expected, options);
+        if (again !== null) [input, expected] = [expected, again];
+      }
+      const prettierResult = expected ?? "ERROR";
+      const oxfmtResult = await formatWithOxfmt(fixture.name, input, options);
 
-      if (oxfmtResult === prettierResult) {
+      // Both failing to parse is not a pass, the fixture exercised nothing
+      if (oxfmtResult === prettierResult && oxfmtResult !== "ERROR") {
         passed++;
       } else {
         failures.push({
@@ -403,31 +430,30 @@ async function runCategory(category: Category, fixtures: Fixture[]): Promise<Cat
   return { name: category.name, optionSetResults };
 }
 
-async function compareWithPrettier(
+/** `null` when Prettier fails. */
+async function formatWithPrettier(
   fileName: string,
   content: string,
-  options: Record<string, unknown> = {},
-): Promise<[string, string]> {
-  let prettierResult: string;
+  options: Record<string, unknown>,
+): Promise<string | null> {
   try {
-    prettierResult = await prettier.format(content, {
+    return await prettier.format(content, {
       ...options,
       filepath: fileName,
       plugins: [sveltePlugin, astroPlugin],
     });
   } catch {
-    prettierResult = "ERROR";
+    return null;
   }
+}
 
-  let oxfmtResult: string;
+async function formatWithOxfmt(
+  fileName: string,
+  content: string,
+  options: Record<string, unknown>,
+): Promise<string> {
   const res = await format(fileName, content, options);
-  if (res.errors.length !== 0) {
-    oxfmtResult = "ERROR";
-  } else {
-    oxfmtResult = res.code;
-  }
-
-  return [oxfmtResult, prettierResult];
+  return res.errors.length === 0 ? res.code : "ERROR";
 }
 
 function writeReport(results: CategoryResult[], divergences: Map<string, string[]>) {

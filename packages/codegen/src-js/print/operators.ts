@@ -128,6 +128,8 @@ export const PADDED_ASSIGN_OPERATORS = {
  * to decide whether the next operator needs separating.
  *
  * `typeof`, `void` and `delete` never reach here - they end in an identifier character and are handled as words.
+ *
+ * @param operator - Unary operator
  */
 export function unaryOperatorCode(operator: string): Category {
   debugAssert(!["typeof", "void", "delete"].includes(operator));
@@ -146,6 +148,8 @@ export function unaryOperatorCode(operator: string): Category {
 
 /**
  * The category `++` or `--` leaves in `last`, as `unaryOperatorCode` does for unary operators.
+ *
+ * @param operator - `++` or `--`
  */
 export function updateOperatorCode(operator: string): Category {
   return operator === "++" ? CAT_OP_UPD_INC : CAT_OP_UPD_DEC;

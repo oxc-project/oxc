@@ -10,22 +10,19 @@
 //! ([`FormatContext::get_tailwind_class`], fed from the document's sorted classes);
 //! a context returning the default `None` prints an `<UNKNOWN_TAILWIND_CLASS_INDEX<..>>` marker.
 
-#![expect(clippy::mutable_key_type)]
-
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
 
 use crate::{
-    Argument, Arguments, Buffer, BufferExtensions, Document, Format, FormatContext, FormatElement,
-    FormatOptions, FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
-    VecBuffer,
+    Document, Format, FormatContext, FormatElement, FormatState, Formatter, PrintMode, Printer,
+    PrinterOptions, SimpleFormatContext,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
     format_element::{
-        LineMode, TextWidth,
+        LineMode,
         tag::{self, DedentMode, GroupMode, Tag},
     },
-    write, write as w,
+    write as w,
 };
 
 impl<'a> Document<'a> {
@@ -61,10 +58,10 @@ impl std::fmt::Display for DisplayDocument<'_, '_> {
 
         let mut state: FormatState<'_, SimpleFormatContext<'_>> =
             FormatState::new(context, &allocator);
-        let mut buffer = VecBuffer::new(&mut state);
+        let mut buffer = Formatter::new(&mut state);
 
         let elements = FormatElementSlice(self.elements);
-        write(&mut buffer, Arguments::new(&[Argument::new(&elements)]));
+        elements.fmt(&mut buffer);
 
         let elements = buffer.into_vec();
         let document = Document::new(elements, Vec::default());
@@ -105,7 +102,10 @@ where
         let mut iter = self.0.iter().peekable();
 
         while let Some(element) = iter.next() {
-            if !first_element && !in_text && !element.is_end_tag() {
+            if !first_element
+                && !in_text
+                && !matches!(element, FormatElement::Tag(tag) if tag.is_end())
+            {
                 // Write a separator between every two elements
                 w!(f, [token(","), soft_line_break_or_space()]);
             }
@@ -126,29 +126,24 @@ where
                         FormatElement::Space => {
                             w!(f, [token(" ")]);
                         }
-                        element if element.is_text() => {
-                            // escape quotes
-                            let new_element = match element {
-                                // except for static text because source_position is unknown
-                                FormatElement::Token { .. } => element.clone(),
-                                FormatElement::Text { text, width: _ } => {
-                                    let text = text.cow_replace('"', "\\\"");
-                                    FormatElement::Text {
-                                        text: f.allocator().alloc_str(&text),
-                                        width: TextWidth::from_text(
-                                            &text,
-                                            f.options().indent_width(),
-                                        ),
-                                    }
-                                }
-                                _ => unreachable!(),
-                            };
-                            f.write_element(new_element);
+                        // Tokens are written as is, without escaping quotes
+                        FormatElement::Token { .. } => f.write_element(element.clone()),
+                        // escape quotes
+                        FormatElement::Text { text: content, .. } => {
+                            let escaped = content.cow_replace('"', "\\\"");
+                            w!(f, [text(f.allocator().alloc_str(&escaped))]);
                         }
                         _ => unreachable!(),
                     }
 
-                    let is_next_text = iter.peek().is_some_and(|e| e.is_text() || e.is_space());
+                    let is_next_text = matches!(
+                        iter.peek(),
+                        Some(
+                            FormatElement::Space
+                                | FormatElement::Token { .. }
+                                | FormatElement::Text { .. }
+                        )
+                    );
 
                     if !is_next_text {
                         w!(f, [token("\"")]);
