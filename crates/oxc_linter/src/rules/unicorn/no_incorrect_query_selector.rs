@@ -8,6 +8,7 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use oxc_syntax::operator::{BinaryOperator, UnaryOperator};
 
 use crate::{
@@ -279,8 +280,8 @@ fn is_left_hand_side<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
 
 fn get_static_string_argument<'a>(call_expr: &CallExpression<'a>) -> Option<&'a str> {
     match call_expr.arguments[0].as_expression()?.without_parentheses() {
-        Expression::StringLiteral(literal) => Some(literal.value.as_str()),
-        Expression::TemplateLiteral(literal) => literal.single_quasi().map(|quasi| quasi.as_str()),
+        Expression::StringLiteral(literal) => literal.value.as_str(),
+        Expression::TemplateLiteral(literal) => literal.single_quasi().and_then(JSStr::as_str),
         _ => None,
     }
 }
@@ -304,7 +305,7 @@ fn get_const_initializer<'a>(
     else {
         return None;
     };
-    if variable_declaration_kind(declarator, ctx) != VariableDeclarationKind::Const
+    if variable_declaration_kind(declarator, ctx.nodes()) != Some(VariableDeclarationKind::Const)
         || !matches!(declarator.id, BindingPattern::BindingIdentifier(_))
     {
         return None;
