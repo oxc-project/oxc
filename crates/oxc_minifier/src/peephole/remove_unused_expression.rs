@@ -240,6 +240,9 @@ impl<'a> PeepholeOptimizations {
             }
         }
 
+        if !ctx.is_tree_shake_only() {
+            Self::de_morgan_for_void_expr(logical_expr, ctx);
+        }
         false
     }
 
@@ -600,9 +603,10 @@ impl<'a> PeepholeOptimizations {
                         false
                     }
                     (false, false) => {
-                        let new_expr = Expression::new_sequence_expression(
+                        let new_expr = Self::join_sequence(
                             binary_expr.span,
-                            [binary_expr.left.take_in(ctx), binary_expr.right.take_in(ctx)],
+                            binary_expr.left.take_in(ctx),
+                            binary_expr.right.take_in(ctx),
                             ctx,
                         );
                         ctx.replace_expression(e, new_expr);
@@ -794,7 +798,10 @@ impl<'a> PeepholeOptimizations {
         if symbol_value.references.has_reads() {
             return false;
         }
+        let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
+        // `(a = o.f)()` => `(0, o.f)()`
+        let new_expr = Self::preserve_indirect_access_if_needed(span, new_expr, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -869,7 +876,10 @@ impl<'a> PeepholeOptimizations {
         // refs dead). Safe in value positions too — a plain `=` assignment's
         // value IS the RHS value.
         let Expression::AssignmentExpression(assign_expr) = e else { unreachable!() };
+        let span = assign_expr.span;
         let new_expr = assign_expr.right.take_in(ctx);
+        // `(b.x = o.f)()` => `(0, o.f)()`
+        let new_expr = Self::preserve_indirect_access_if_needed(span, new_expr, ctx);
         ctx.replace_expression(e, new_expr);
         false
     }
@@ -905,7 +915,7 @@ impl<'a> PeepholeOptimizations {
         match target {
             AssignmentTarget::StaticMemberExpression(e) => Some(e.property.name.as_str()),
             AssignmentTarget::ComputedMemberExpression(e) => match &e.expression {
-                Expression::StringLiteral(s) => Some(s.value.as_str()),
+                Expression::StringLiteral(s) => s.value.as_str(),
                 _ => None,
             },
             _ => None,

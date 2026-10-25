@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_yaml/tests/conformance.rs
 expression: report
 ---
-yaml compatibility: 922/1012 (91.11%), 0 files skipped
+yaml compatibility: 1516/1615 (93.87%), 0 files skipped
 
 # Failed
 
@@ -80,8 +80,8 @@ yaml compatibility: 922/1012 (91.11%), 0 files skipped
 | yaml/spec/anchors-and-tags.yml | 💥💥 | 75.00% |
 | yaml/spec/node-anchor-and-tag-on-seperate-lines.yml | 💥💥 | 50.00% |
 | yaml/spec/spec-example-6-1-indentation-spaces.yml | 💥💥 | 84.62% |
-| yaml/spec/spec-example-7-20-single-pair-explicit-entry.yml | 💥✨ | 12.50% |
-| yaml/spec/spec-example-9-4-explicit-documents.yml | 💥✨ | 33.33% |
+| yaml/spec/spec-example-7-20-single-pair-explicit-entry.yml | 💥✨ | 62.50% |
+| yaml/spec/spec-example-9-4-explicit-documents.yml | 💥✨ | 83.33% |
 | yaml/spec/various-combinations-of-tags-and-anchors.yml | 💥💥 | 75.00% |
 | yaml/yaml-test-suite/snippet: 2G84-4.yaml - Literal modifers | 💥 | 50.00% |
 | yaml/yaml-test-suite/snippet: 6HB6.yaml - Spec Example 6.1. Indentation Spaces | 💥 | 84.62% |

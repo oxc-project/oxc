@@ -51,6 +51,7 @@ declare_oxc_lint!(
     NoThisBeforeSuper,
     eslint,
     correctness,
+    recommended,
     version = "0.2.6",
     short_description = "Require calling `super()` before using `this` or `super`.",
 );

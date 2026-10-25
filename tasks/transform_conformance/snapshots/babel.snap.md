@@ -1,6 +1,6 @@
-commit: 4f4ef5d4
+commit: a56fe4a4
 
-Passed: 741/1166
+Passed: 741/1167
 
 # All Passed:
 * babel-plugin-transform-logical-assignment-operators
@@ -170,8 +170,11 @@ x Output mismatch
 x Output mismatch
 
 
-# babel-plugin-transform-unicode-sets-regex (0/4)
+# babel-plugin-transform-unicode-sets-regex (0/5)
 * basic/basic/input.js
+x Output mismatch
+
+* basic/issue-18259/input.js
 x Output mismatch
 
 * basic/string-properties/input.js

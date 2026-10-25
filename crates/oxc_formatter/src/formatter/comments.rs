@@ -602,6 +602,54 @@ impl<'a> Comments<'a> {
                 .any(|comment| self.is_suppression_comment(comment))
     }
 
+    /// Whether no comment is for the generated `fmt` of the node at `span` to print or to act on,
+    /// so that it can skip all of its comment queries:
+    /// - every unprinted comment ends after the node and after its parent (`enclosing_span`)
+    ///   - none leads it, none is in it
+    ///   - its trailing pass only claims comments that end in the parent ([`Self::get_trailing_comments`])
+    /// - nothing suppresses it ([`Self::is_span_suppressed`])
+    ///   - no unprinted comment ends before it, so only the operator's mark is left of [`Self::is_suppressed`]
+    /// - if it `can_be_cast_target`, no printed type cast comment makes it one ([`Self::printed_type_cast_comment_before`])
+    ///
+    /// Every comment the node's `write` prints is after these, so its trailing pass would still find none.
+    /// Debug builds assert that the skipped queries agree (the type cast one in the generated `fmt`).
+    #[inline]
+    pub fn is_quiet(
+        &self,
+        span: Span,
+        enclosing_span: impl Fn() -> Span,
+        following_span_start: u32,
+        can_be_cast_target: bool,
+    ) -> bool {
+        let quiet = self.unprinted_comments().first().is_none_or(|next| {
+            next.span.end > span.end
+                && next.span.end > enclosing_span().end
+                && !self.has_trailing_suppression_comment(span.end)
+        }) && self.operator_suppressed_start != Some(span.start)
+            && !(can_be_cast_target && self.printed_type_cast_comment_before(span.start).is_some());
+        debug_assert!(
+            !quiet
+                || (self.comments_before(span.start).is_empty()
+                    && self
+                        .get_trailing_comments(enclosing_span(), span, following_span_start)
+                        .is_empty()
+                    && !self.is_span_suppressed(span)),
+            "a quiet node at {span:?} has comments to format"
+        );
+        quiet
+    }
+
+    /// The last printed comment, if it is a type cast comment followed by `(` before `start`
+    /// that no cast target has handled yet (see `classify_type_cast`).
+    pub fn printed_type_cast_comment_before(&self, start: u32) -> Option<&'a Comment> {
+        if self.is_handled_type_cast_comment() {
+            return None;
+        }
+        self.printed_comments().last().filter(|comment| {
+            comment.span.end <= start && self.is_type_cast_comment_followed_by_paren(comment)
+        })
+    }
+
     /// Whether a leading comment or one trailing the node's end suppresses it
     /// (`A = 1, // prettier-ignore`); the check every generated `fmt` runs.
     #[inline]

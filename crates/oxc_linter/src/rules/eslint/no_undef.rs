@@ -51,7 +51,7 @@ declare_oxc_lint!(
     /// ```
     NoUndef,
     eslint,
-    nursery,
+    nursery, // TODO: Add to recommended
     config = NoUndef,
     version = "0.0.8",
     short_description = "Disallow the use of undeclared variables.",

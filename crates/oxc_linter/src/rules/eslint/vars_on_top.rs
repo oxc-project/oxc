@@ -1,5 +1,5 @@
 use oxc_ast::AstKind;
-use oxc_ast::ast::{Declaration, Expression, Program, Statement, VariableDeclarationKind};
+use oxc_ast::ast::{Declaration, Expression, Program, Statement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -98,7 +98,7 @@ impl Rule for VarsOnTop {
         let AstKind::VariableDeclaration(declaration) = node.kind() else {
             return;
         };
-        if declaration.kind != VariableDeclarationKind::Var {
+        if !declaration.kind.is_var() {
             return;
         }
 

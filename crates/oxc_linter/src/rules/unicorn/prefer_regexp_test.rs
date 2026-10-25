@@ -1,13 +1,16 @@
-use oxc_allocator::{GetAddress, UnstableAddress};
 use oxc_ast::{
     AstKind,
     ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
+use oxc_syntax::operator::UnaryOperator;
 
-use crate::{AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule};
+use crate::{
+    AstNode, ast_util::outermost_paren_parent, context::LintContext, rule::Rule,
+    utils::is_logical_expression,
+};
 
 fn prefer_regexp_test_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Prefer `RegExp#test()` over `String#match()` and `RegExp#exec()`.")
@@ -47,6 +50,7 @@ declare_oxc_lint!(
     PreferRegexpTest,
     unicorn,
     pedantic,
+    recommended,
     fix,
     version = "0.0.16",
     short_description = "Prefers `RegExp#test()` over `String#match()` and `String#exec()`.",
@@ -70,86 +74,79 @@ impl Rule for PreferRegexpTest {
             return;
         }
 
-        let (span, name) = match member_expr {
+        let (span, is_match) = match member_expr {
             MemberExpression::StaticMemberExpression(v) => {
-                if !matches!(v.property.name.as_str(), "match" | "exec") {
-                    return;
-                }
-                (v.property.span, &v.property.name)
+                let is_match = match v.property.name.as_str() {
+                    "match" => true,
+                    "exec" => false,
+                    _ => return,
+                };
+                (v.property.span, is_match)
             }
             _ => return,
         };
 
-        let Some(parent) = outermost_paren_parent(node, ctx) else {
-            return;
+        let mut boolean_node = node;
+        let parent = loop {
+            let Some(parent) = outermost_paren_parent(boolean_node, ctx) else {
+                return;
+            };
+            if !is_logical_expression(parent) {
+                break parent;
+            }
+            boolean_node = parent;
         };
 
         match parent.kind() {
             AstKind::ForStatement(for_stmt) => {
                 let Some(test) = &for_stmt.test else { return };
 
-                let Expression::CallExpression(call_expr2) = test else {
-                    return;
-                };
-
-                // Check if the `test` of the for statement is the same node as the call expression.
-                if call_expr2.address() != call_expr.unstable_address() {
+                if test.get_inner_expression().span() != boolean_node.kind().span() {
                     return;
                 }
             }
             AstKind::ConditionalExpression(conditional_expr) => {
-                let Expression::CallExpression(call_expr2) = &conditional_expr.test else {
-                    return;
-                };
-
-                // Check if the `test` of the conditional expression is the same node as the call expression.
-                if call_expr2.address() != call_expr.unstable_address() {
+                if conditional_expr.test.get_inner_expression().span() != boolean_node.kind().span()
+                {
                     return;
                 }
             }
             AstKind::CallExpression(call_expr) => {
+                if call_expr.optional || call_expr.arguments.len() != 1 {
+                    return;
+                }
+
                 let Expression::Identifier(ident) = &call_expr.callee else {
                     return;
                 };
 
-                if ident.name.as_str() != "Boolean" {
+                if ident.name.as_str() != "Boolean" || !ctx.is_reference_to_global_variable(ident) {
                     return;
                 }
             }
-            AstKind::WhileStatement(_)
-            | AstKind::DoWhileStatement(_)
-            | AstKind::IfStatement(_)
-            | AstKind::UnaryExpression(_) => {}
+            AstKind::UnaryExpression(unary_expr)
+                if unary_expr.operator == UnaryOperator::LogicalNot => {}
+            AstKind::WhileStatement(_) | AstKind::DoWhileStatement(_) | AstKind::IfStatement(_) => {
+            }
             _ => return,
         }
 
-        match name.as_str() {
-            "match" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
+        if member_expr.object().is_literal()
+            && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
+        {
+            return;
+        }
 
-                if let Some(expr) = call_expr.arguments[0].as_expression()
-                    && expr.is_literal()
-                    && !matches!(expr, Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
-            }
-            "exec" => {
-                if member_expr.object().is_literal()
-                    && !matches!(member_expr.object(), Expression::RegExpLiteral(_))
-                {
-                    return;
-                }
-            }
-            _ => unreachable!("expected match or test, got: {:?}", name),
+        if is_match
+            && let Some(expr) = call_expr.arguments[0].as_expression()
+            && expr.is_literal()
+            && !matches!(expr, Expression::RegExpLiteral(_))
+        {
+            return;
         }
 
         ctx.diagnostic_with_fix(prefer_regexp_test_diagnostic(span), |fixer| {
-            if name.as_str() == "exec" {
+            if !is_match {
                 return fixer.replace(span, "test");
             }
             let mut fix = fixer.new_fix_with_capacity(3);
@@ -195,6 +192,23 @@ fn test() {
         "if (foo.match(null)) {}",
         "if (foo.match(1n)) {}",
         "if (foo.match(true)) {}",
+        "const value = a && s.match(/x/);",
+        "const value = s.match(/x/) || a;",
+        "if (s.match(/x/) ?? a) {}",
+        "if (a ?? s.match(/x/)) {}",
+        "for (a && s.match(/x/); ; ) {}",
+        "for (; ; a || /x/.exec(s)) {}",
+        "const value = a ? s.match(/x/) || b : b && /x/.exec(s);",
+        "if (consume(a && s.match(/x/))) {}",
+        "const value = typeof (a && s.match(/x/));",
+        "const value = +(a || /x/.exec(s));",
+        "Boolean(a && s.match(/x/), b);",
+        "Boolean(...(a && s.match(/x/)));",
+        "Boolean?.(a && s.match(/x/));",
+        "function f(Boolean) { return Boolean(a && s.match(/x/)); }",
+        "if ((a && s.match(/x/)) ?? b) {}",
+        "if (a ?? (b || /x/.exec(s))) {}",
+        "if (a && (b ?? s.match(/x/))) {}",
     ];
 
     let fail = vec![
@@ -277,6 +291,16 @@ fn test() {
             if(str.match(re));",
         "!/a/u.exec(foo)",
         "!/a/v.exec(foo)",
+        "export function f(a, s) {\n  if (a && s.match(/x/)) {}\n  if (s.match(/x/) || a) {}\n  if (s.match(/x/)) {}\n}",
+        "if (s.match(/x/) && a) {}",
+        "if (a || s.match(/x/)) {}",
+        "if ((a && (b || (s.match(/x/))))) {}",
+        "while (a && /x/.exec(s)) {}",
+        "do {} while (/x/.exec(s) || a);",
+        "for (; (a && s.match(/x/)); ) {}",
+        "const value = (s.match(/x/) || a) ? 1 : 2;",
+        "const value = Boolean(a && s.match(/x/));",
+        "const value = !(a || /x/.exec(s));",
     ];
 
     let fix = vec![
@@ -309,6 +333,19 @@ fn test() {
         ),
         ("const re = /a/; if (re.exec(foo)) {}", "const re = /a/; if (re.test(foo)) {}"),
         ("const re = /a/; if (someStr.match(re)) {}", "const re = /a/; if (re.test(someStr)) {}"),
+        (
+            "export function f(a, s) {\n  if (a && s.match(/x/)) {}\n  if (s.match(/x/) || a) {}\n  if (s.match(/x/)) {}\n}",
+            "export function f(a, s) {\n  if (a && /x/.test(s)) {}\n  if (/x/.test(s) || a) {}\n  if (/x/.test(s)) {}\n}",
+        ),
+        ("if (s.match(/x/) && a) {}", "if (/x/.test(s) && a) {}"),
+        ("if (a || s.match(/x/)) {}", "if (a || /x/.test(s)) {}"),
+        ("if ((a && (b || (s.match(/x/))))) {}", "if ((a && (b || (/x/.test(s))))) {}"),
+        ("while (a && /x/.exec(s)) {}", "while (a && /x/.test(s)) {}"),
+        ("do {} while (/x/.exec(s) || a);", "do {} while (/x/.test(s) || a);"),
+        ("for (; (a && s.match(/x/)); ) {}", "for (; (a && /x/.test(s)); ) {}"),
+        ("const value = (s.match(/x/) || a) ? 1 : 2;", "const value = (/x/.test(s) || a) ? 1 : 2;"),
+        ("const value = Boolean(a && s.match(/x/));", "const value = Boolean(a && /x/.test(s));"),
+        ("const value = !(a || /x/.exec(s));", "const value = !(a || /x/.test(s));"),
     ];
 
     Tester::new(PreferRegexpTest::NAME, PreferRegexpTest::PLUGIN, pass, fail)

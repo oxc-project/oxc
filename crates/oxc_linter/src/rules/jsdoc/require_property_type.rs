@@ -46,6 +46,7 @@ declare_oxc_lint!(
     RequirePropertyType,
     jsdoc,
     correctness,
+    recommended,
     version = "0.2.18",
     short_description = "Requires that each `@property` tag has a type value (within curly brackets).",
 );

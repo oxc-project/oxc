@@ -592,11 +592,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for TemplateElement<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             tail: CloneIn::clone_in_impl(&self.tail, with_semantic_ids, allocator),
-            lone_surrogates: CloneIn::clone_in_impl(
-                &self.lone_surrogates,
-                with_semantic_ids,
-                allocator,
-            ),
         }
     }
 }
@@ -3239,11 +3234,6 @@ impl<'new_alloc> CloneIn<'new_alloc> for StringLiteral<'_> {
             span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
             value: CloneIn::clone_in_impl(&self.value, with_semantic_ids, allocator),
             raw: CloneIn::clone_in_impl(&self.raw, with_semantic_ids, allocator),
-            lone_surrogates: CloneIn::clone_in_impl(
-                &self.lone_surrogates,
-                with_semantic_ids,
-                allocator,
-            ),
         }
     }
 }
@@ -5781,5 +5771,39 @@ impl<'new_alloc> CloneIn<'new_alloc> for CommentContent {
         allocator: &'new_alloc Allocator,
     ) -> Self::Cloned {
         *self
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for CommentPlacement {
+    type Cloned = CommentPlacement;
+
+    #[inline(always)]
+    fn clone_in_impl(
+        &self,
+        _with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        *self
+    }
+}
+
+impl<'new_alloc> CloneIn<'new_alloc> for Comment {
+    type Cloned = Comment;
+
+    fn clone_in_impl(
+        &self,
+        with_semantic_ids: CloneInSemanticIds,
+        allocator: &'new_alloc Allocator,
+    ) -> Self::Cloned {
+        Comment {
+            span: CloneIn::clone_in_impl(&self.span, with_semantic_ids, allocator),
+            attached_to: CloneIn::clone_in_impl(&self.attached_to, with_semantic_ids, allocator),
+            node_id: CloneIn::clone_in_impl(&self.node_id, with_semantic_ids, allocator),
+            placement: CloneIn::clone_in_impl(&self.placement, with_semantic_ids, allocator),
+            kind: CloneIn::clone_in_impl(&self.kind, with_semantic_ids, allocator),
+            position: CloneIn::clone_in_impl(&self.position, with_semantic_ids, allocator),
+            newlines: CloneIn::clone_in_impl(&self.newlines, with_semantic_ids, allocator),
+            content: CloneIn::clone_in_impl(&self.content, with_semantic_ids, allocator),
+        }
     }
 }

@@ -44,6 +44,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Consider giving this function expression a name.
 
+  ⚠ eslint(func-names): Unexpected unnamed function `/a/gi`.
+   ╭─[func_names.tsx:1:13]
+ 1 │ ({ [/a/ig]: function() {} })
+   ·             ────────
+   ╰────
+  help: Consider giving this function expression a name.
+
   ⚠ eslint(func-names): Unexpected unnamed function.
    ╭─[func_names.tsx:1:21]
  1 │ Foo.prototype.bar = function() {};

@@ -89,7 +89,9 @@ pub use crate::{
     module_record::ModuleRecord,
     options::LintOptions,
     options::{AllowWarnDeny, InvalidFilterKind, LintFilter, LintFilterKind},
-    rule::{RuleCategory, RuleFixMeta, RuleMeta, RuleRunFunctionsImplemented, RuleRunner},
+    rule::{
+        RuleCategory, RuleFixMeta, RuleFlags, RuleMeta, RuleRunFunctionsImplemented, RuleRunner,
+    },
     service::{LintService, LintServiceOptions, OsFileSystem, RuntimeFileSystem},
     suppression::{OxlintSuppressionFileAction, SuppressionManager},
     timing::{RuleTimingRecord, RuleTimingSource, RuleTimingStore},
@@ -792,7 +794,7 @@ impl Linter {
         span_converter.convert_program(program);
 
         // Convert comment spans to UTF-16.
-        // Also set the `content` field (byte 15) of each comment to `None` (0).
+        // Also set the `content` field of each comment to `None` (0).
         // JS side uses this byte as a "deserialized" flag for tracking lazy deserialization.
         if let Some(mut converter) = span_converter.converter() {
             for comment in &mut program.comments {

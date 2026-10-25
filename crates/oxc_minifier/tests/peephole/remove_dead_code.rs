@@ -90,6 +90,45 @@ fn test_fold_useless_for() {
 }
 
 #[test]
+fn test_fold_dead_for_lexical_initializer() {
+    for kind in ["let", "const"] {
+        test_unused(
+            &format!("function f(){{for({kind} x=console.log('effect');false;){{}}}} f();"),
+            "function f(){console.log('effect')} f();",
+        );
+        test(
+            &format!("for ({kind} x = foo(); false; update()) {{ body(); }}"),
+            "{ let x = foo(); }",
+        );
+        test(
+            &format!("for ({kind} x = foo(), y = bar(x); false;) {{}}"),
+            "{ let x = foo(), y = bar(x); }",
+        );
+        test(
+            &format!("let x = 1; for ({kind} x = foo(); false;) {{}} use(x);"),
+            "let x = 1; { let x = foo(); } use(1);",
+        );
+        test(
+            &format!("for ({kind} x = eval('x'); false;) {{}}"),
+            &format!("{{ {kind} x = eval('x'); }}"),
+        );
+        test(&format!("for ({kind} x = x; false;) {{}}"), "{ let x = x; }");
+        test(&format!("if (a) for ({kind} x = foo(); false;) {{}}"), "if (a) { let x = foo(); }");
+        test(
+            &format!("for ({kind} x = foo(); false;) {{ var y = bar(); }} use(y);"),
+            "{ let x = foo(); var y; } use(y);",
+        );
+        // Destructuring can invoke getters, iterators, and default initializers.
+        for pattern in ["{x}", "[x]", "{x = foo()}", "[x = foo()]"] {
+            test_unused(
+                &format!("for ({kind} {pattern} = source; false;) {{}}"),
+                &format!("{{ let {pattern} = source; }}"),
+            );
+        }
+    }
+}
+
+#[test]
 fn test_minimize_loop_with_constant_condition_vanilla_for() {
     test("for(;true;) foo()", "for(;;) foo()");
     test("for(;0;) foo()", "");
@@ -235,7 +274,7 @@ fn remove_unused_expressions_in_sequence() {
     // already-`0` element re-records a mutation every iteration, spinning
     // the fixed-point loop into the 10-iteration debug_assert.
     test_same("(sideEffect(), 0, foo.bar)();");
-    test_same("delete (sideEffect(), 0, foo.bar);");
+    test("delete (sideEffect(), 0, foo.bar);", "sideEffect(), foo.bar;");
 
     test("typeof (0, foo);", "foo");
     test_same("v = typeof (0, foo);");
@@ -243,11 +282,11 @@ fn remove_unused_expressions_in_sequence() {
     test("v = function(foo) { return typeof (0, foo) }", "v = function(foo) { return typeof foo }");
     test("typeof 0", "");
 
-    test_same("delete (0, foo);");
-    test_same("delete (0, foo.#bar);");
-    test_same("delete (0, foo.bar);");
-    test_same("delete (0, foo[bar]);");
-    test_same("delete (0, foo?.bar);");
+    test("delete (0, foo);", "foo");
+    test("delete (0, foo.#bar);", "foo.#bar");
+    test("delete (0, foo.bar);", "foo.bar");
+    test("delete (0, foo[bar]);", "foo[bar]");
+    test("delete (0, foo?.bar);", "foo?.bar");
 }
 
 #[test]
@@ -293,6 +332,21 @@ fn remove_empty_function() {
 
     test_same_options("function* foo({}) {} foo()", &options);
     test_options("var foo = function*({}) {}; foo()", "(function*({}) {})()", &options);
+}
+
+#[test]
+fn pure_function_preserves_rest_destructuring() {
+    test_same("function foo(...[v = side_effect()]) {} foo(), foo();");
+    test_same("function foo(...[v = side_effect()]) {} use(foo(), foo());");
+    test_same("var foo = function (...[v = side_effect()]) {}; foo(), foo();");
+    test_same("var foo = function (...[v = side_effect()]) {}; use(foo(), foo());");
+    test_same("var foo = (...[v = side_effect()]) => {}; foo(), foo();");
+    test_same("var foo = (...[v = side_effect()]) => {}; use(foo(), foo());");
+    test_same("function foo(...{0: v = side_effect()}) {} foo(), foo();");
+    test_same("function foo(...{0: v = side_effect()}) {} use(foo(), foo());");
+    test_same("function foo(...[[v]]) {} foo(), foo();");
+    test_same("function foo(...[[v]]) {} use(foo(), foo());");
+    test("function foo(...args) {} foo();", "function foo(...args) {}");
 }
 
 #[test]

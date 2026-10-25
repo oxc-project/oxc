@@ -35,7 +35,7 @@ text
 A document whose first block is a thematic break gets `***`, never `---`:
 the next run (Prettier's and ours) would read `---` ... `---` as front matter and swallow `text` into it,
 which is what the input itself would be with a `---` at the end (`front-matter.md`).
-Prettier `main` prints `***` since #19839; the pin (3.9.9) still prints `---`.
+Prettier `main` prints `***` since #19839; the pin (3.9.10) still prints `---`.
 
 ## url-escaping
 
@@ -554,7 +554,7 @@ except between a Korean and a CJ letter, where it is a space.
 Browsers disagree on such a break (Firefox drops it, Chrome and Safari render a space),
 so removing it or making it a space changes the rendered text in some of them.
 Joined, an autolink literal also takes the CJ punctuation after it (`http://x.y2.。次`).
-Prettier `main` keeps the break since #20143; the pin (3.9.9) removes it or makes it a space.
+Prettier `main` keeps the break since #20143; the pin (3.9.10) removes it or makes it a space.
 
 ## wiki-link-risk-link-text
 

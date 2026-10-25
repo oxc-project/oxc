@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{TSMappedType, TSSignature, TSType, TSTypeName},
+    ast::{
+        TSMappedType, TSMappedTypeModifierOperator, TSSignature, TSType, TSTypeName,
+        TSTypeOperatorOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -365,13 +368,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                         let is_optional = mapped.optional.is_some_and(|o| {
                             matches!(
                                 o,
-                                oxc_ast::ast::TSMappedTypeModifierOperator::True
-                                    | oxc_ast::ast::TSMappedTypeModifierOperator::Plus
+                                TSMappedTypeModifierOperator::True
+                                    | TSMappedTypeModifierOperator::Plus
                             )
                         });
-                        let is_required = mapped.optional.is_some_and(|o| {
-                            matches!(o, oxc_ast::ast::TSMappedTypeModifierOperator::Minus)
-                        });
+                        let is_required = mapped
+                            .optional
+                            .is_some_and(|o| matches!(o, TSMappedTypeModifierOperator::Minus));
 
                         let mut record = format!("Record<{key_type}, {value_type}>");
                         if is_required {
@@ -480,7 +483,7 @@ fn contains_convertible_index_signature(r#type: &TSType) -> bool {
 
 fn is_bare_keyof(r#type: &TSType) -> bool {
     matches!(r#type, TSType::TSTypeOperatorType(op)
-        if matches!(op.operator, oxc_ast::ast::TSTypeOperatorOperator::Keyof))
+        if matches!(op.operator, TSTypeOperatorOperator::Keyof))
 }
 
 fn mapped_type_value_references_key(

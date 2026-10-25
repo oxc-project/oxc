@@ -198,29 +198,6 @@ impl<'a> TemplateElement<'a> {
         value.raw = escape_template_element_raw(value.raw, builder.allocator());
         TemplateElement::new(span, value, tail, builder)
     }
-
-    /// Build a [`TemplateElement`] with `lone_surrogates`, escaping special characters in the raw value.
-    ///
-    /// Like [`TemplateElement::new_with_lone_surrogates`], but escapes backticks, `${`,
-    /// backslashes, and carriage returns in `value.raw` first.
-    ///
-    /// ## Parameters
-    /// * `span`: The [`Span`] covering this node
-    /// * `value`
-    /// * `tail`
-    /// * `lone_surrogates`: The template element contains lone surrogates.
-    #[inline]
-    pub fn new_escape_raw_with_lone_surrogates(
-        span: Span,
-        mut value: TemplateElementValue<'a>,
-        tail: bool,
-        lone_surrogates: bool,
-        builder: &impl GetAstBuilder<'a>,
-    ) -> Self {
-        let builder = builder.builder();
-        value.raw = escape_template_element_raw(value.raw, builder.allocator());
-        TemplateElement::new_with_lone_surrogates(span, value, tail, lone_surrogates, builder)
-    }
 }
 
 /// Escape special characters for template element raw value.

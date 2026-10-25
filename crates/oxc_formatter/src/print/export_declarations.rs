@@ -4,7 +4,7 @@ use oxc_span::GetSpan;
 
 use crate::{
     FormatTrailingCommas,
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind},
     format_args,
     formatter::{
         JsFormatter,
@@ -28,7 +28,7 @@ use super::FormatWrite;
 fn format_export_keyword_with_class_decorators<'a>(
     span: Span,
     keyword: &'static str,
-    declaration: &AstNodes<'a>,
+    declaration: &AstNodeKind<'_, 'a>,
     f: &mut JsFormatter<'_, 'a>,
 ) {
     // `@decorator export class Cls {}`
@@ -40,7 +40,7 @@ fn format_export_keyword_with_class_decorators<'a>(
         FormatLeadingComments::CommentsOfNode(comments, span.start).fmt(f);
     });
 
-    if let AstNodes::Class(class) = declaration
+    if let AstNodeKind::Class(class) = declaration
         && !class.decorators.is_empty()
         && !class.is_expression()
     {
@@ -78,7 +78,7 @@ fn format_export_keyword_with_class_decorators<'a>(
 fn format_export_specifiers_block<'a>(
     span: Span,
     export_kind: ImportOrExportKind,
-    specifiers: &AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>>,
+    specifiers: &AstNode<'_, 'a, ArenaVec<'a, ExportSpecifier<'a>>>,
     f: &mut JsFormatter<'_, 'a>,
 ) {
     let needs_space = f.options().bracket_spacing.value();
@@ -119,13 +119,13 @@ fn format_export_specifiers_block<'a>(
     write!(f, "}");
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExportDefaultDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
         format_export_keyword_with_class_decorators(
             self.span,
             "export default",
-            declaration.as_ast_nodes(),
+            &declaration.as_kind(),
             f,
         );
 
@@ -137,7 +137,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
                 self.span.end,
                 false,
             );
-            write!(f, FormatContentWithSemicolon::new(declaration, content_end, self.span.end));
+            write!(f, FormatContentWithSemicolon::new(&declaration, content_end, self.span.end));
         } else {
             write!(f, declaration);
         }
@@ -146,7 +146,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDefaultDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExportAllDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let prefix = format_with(|f| {
             write!(f, ["export", space(), self.export_kind(), "*", space()]);
@@ -157,7 +157,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
         });
         format_source_with_clause_and_semicolon(
             &prefix,
-            self.source(),
+            &self.source(),
             self.with_clause(),
             self.span.end,
             f,
@@ -165,15 +165,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportAllDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExportDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let declaration = self.declaration();
-        format_export_keyword_with_class_decorators(
-            self.span,
-            "export",
-            declaration.as_ast_nodes(),
-            f,
-        );
+        format_export_keyword_with_class_decorators(self.span, "export", &declaration.as_kind(), f);
         write!(f, declaration);
         // No semicolon here: the declaration prints its own,
         // together with its trailing comments
@@ -181,25 +176,25 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportDeclaration<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportNamedDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExportNamedDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         self.format_leading_comments(f);
         write!(f, ["export", space()]);
-        format_export_specifiers_block(self.span, self.export_kind(), self.specifiers(), f);
+        format_export_specifiers_block(self.span, self.export_kind(), &self.specifiers(), f);
         write!(f, OptionalSemicolon);
         self.format_trailing_comments(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportFromDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExportFromDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         self.format_leading_comments(f);
         write!(f, ["export", space()]);
-        format_export_specifiers_block(self.span, self.export_kind(), self.specifiers(), f);
+        format_export_specifiers_block(self.span, self.export_kind(), &self.specifiers(), f);
 
         format_source_with_clause_and_semicolon(
             &format_args!(space(), "from", space()),
-            self.source(),
+            &self.source(),
             self.with_clause(),
             self.span.end,
             f,
@@ -208,7 +203,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportFromDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ExportSpecifier<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, ExportSpecifier<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let trailing_separator = FormatTrailingCommas::ES5.trailing_separator(f.options());
         f.join_with(soft_line_break_or_space()).entries(
@@ -231,7 +226,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ExportSpec
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ExportSpecifier<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let comments = f.context().comments().line_comments_before(self.exported.span().end);
         write!(f, [FormatLeadingComments::Comments(comments)]);
@@ -245,13 +240,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ExportSpecifier<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSExportAssignment<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSExportAssignment<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["export = ", self.expression(), OptionalSemicolon]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSNamespaceExportDeclaration<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSNamespaceExportDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["export as namespace ", self.id(), OptionalSemicolon]);
     }

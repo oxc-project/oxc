@@ -79,6 +79,8 @@ NOTE: Rust written formatters never fall back to Prettier, since they exist to r
 Known divergences live in DIVERGENCES.md (embedding / dispatch layer only); single-language ones live in the owning crate's.
 
 - The pin is a minimal repro in `conformance/fixtures/edge-cases/`
+- `conformance/run.ts` compares a category's `projects` (real-world repositories) on Prettier's output of each file, the code a Prettier user hands over,
+  so the divergences that keep what was written do not fire in bulk; its `fixtures` (Prettier's own, the plugins', `edge-cases/`) stay as written, raw shapes are their job
 - `conformance/run.ts` derives the file-to-entry map from every `DIVERGENCES.md` (this one's `Pin:` / `Conformance:`, the crates' `Oxfmt:`), prints the ref next to each failure,
   and warns on a failure no entry lists (unclassified) and on a listed file that passes (stale)
 - All current entries are embedding-layer decisions that outlive the Prettier delegation;
@@ -124,7 +126,8 @@ A separate string-out channel (the session's `string_embedder` service, NOT the 
   - the embedder carries the caller's effective print width; both branches honor it (native via `PrintWidth` override, Prettier via `printWidth` in the options JSON), so a fence prints at the same width a JS/TS snippet in the same position would (see `upstream-jsdoc-bugs.md` #11 for the deliberate divergence from upstream's flat `printWidth - 4`)
 
 NOTE: The string-out channel outlives the html rewrite; its full exit criterion is owned by `oxc_formatter_core`'s AGENTS.md (domain (4)).
-The half owned here: JSDoc's string-out is NOT structural, fences can move to IR-out (session dispatch inside the comment IR) once the printer grows a per-line prefix mechanism for the `*` continuation, deferred for verification time, not by design.
+The half owned here: JSDoc's string-out is NOT structural, fences can move to IR-out (session dispatch inside the comment IR).
+The printer already has the per-line prefix mechanism the `*` continuation needs (`prefix_align`); what remains is JSDoc emitting its output as lines plus embedded IR instead of one string, deferred for verification time, not by design.
 
 ### Tailwind CSS class sorting
 

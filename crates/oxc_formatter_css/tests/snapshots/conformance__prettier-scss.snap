@@ -2,7 +2,7 @@
 source: crates/oxc_formatter_css/tests/conformance.rs
 expression: report
 ---
-scss compatibility: 74/90 (82.22%), 6 files skipped
+scss compatibility: 107/136 (78.68%), 6 files skipped
 
 # Failed
 
@@ -14,7 +14,7 @@ scss compatibility: 74/90 (82.22%), 6 files skipped
 | scss/comments/maps.scss | 💥 | 66.67% |
 | scss/comments/variable-declaration.scss | 💥 | 81.25% |
 | scss/function/arbitrary-arguments-comment.scss | 💥💥 | 72.73% |
-| scss/map/15193.scss | 💥✨ | 42.86% |
+| scss/map/15193.scss | 💥✨ | 92.86% |
 | scss/map/comment.scss | 💥💥 | 73.91% |
 | scss/map/function-argument/functional-argument.scss | 💥 | 96.00% |
 | scss/parens/2.scss | 💥 | 75.00% |

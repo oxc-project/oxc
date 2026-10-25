@@ -4,6 +4,35 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- c7d229b transformer: [**BREAKING**] Decode JSX entities to lone surrogates (#26712) (Dunqing)
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+- a0a987c ast: [**BREAKING**] Preserve lone surrogates in static member names (#26677) (Dunqing)
+
+### 🚀 Features
+
+- 5d91db8 ast: Generate node ID setters for enums (#27500) (camc314)
+
+## [0.154.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+- b5e8eff parser: [**BREAKING**] Assign node IDs during parsing (#27411) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7e6a050 semantic: Visit `TSMethodSignature` computed method keys in enclosing scope (#27357) (camc314)
+
+### ⚡ Performance
+
+- 5487247 ast: Generate derive for `CloneIn` on `Comment` (#27542) (overlookmotel)
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+
 ## [0.153.0] - 2026-10-05
 
 ### 🚀 Features

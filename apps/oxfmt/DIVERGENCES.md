@@ -153,7 +153,7 @@ A fenced code block's fence outnumbers the backtick (or tilde) runs of the conte
 Markdown in a code block formats its own fences, so `~~~` becomes a backtick fence the outer one must outnumber;
 Prettier keeps the outer fence at three and the inner fence closes it on the next parse.
 The same holds for markdown-in-js, whose fences are `~`.
-Prettier `main` counts the printed content since #19908; the pin (3.9.9) still counts the source.
+Prettier `main` counts the printed content since #19908; the pin (3.9.10) still counts the source.
 
 ## line-ranged-code-block
 
@@ -275,3 +275,32 @@ Prettier keeps `json` / `json5` blocks as written: their parser rejects a blank 
 `prettier-plugin-astro` formats it with bundled `sass-formatter`, which we do not bundle (patched out).
 Rare in Astro projects (GitHub code search, 2026-10: about 350 files in 72 repos, vs 29k for `lang="scss"`).
 Not tested but `oxc-css-parser` already parses it, so we can add Sass support for `oxc_formatter_css` in the future.
+
+## front-matter-indented-delimiter
+
+- Why: semantics
+- Pin: `conformance/fixtures/edge-cases/xxx-in-md/front-matter-indented-delimiter.md`
+
+```markdown
+<!-- input -->
+---
+ ---
+title:   Home
+---
+
+<!-- ours -->
+---
+ ---
+title:   Home
+---
+
+<!-- prettier -->
+---
+---
+title: Home
+---
+```
+
+A front matter block whose body starts with an indented delimiter (` ---`, ` ...`, ` +++`) stays verbatim in CSS and Markdown (`write_front_matter` in `oxc_formatter_core`).
+The indented delimiter does not close the block, but the body is trimmed before formatting, so it prints at the start of a line.
+On the next parse (Prettier's and ours), the block closes there and the rest of the body moves into the document.

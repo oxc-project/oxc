@@ -19,7 +19,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
     FormatContext, FormatElement, FormatSession, Formatter, IndentWidth, InputKind, LineMode,
-    format_element::{BestFittingElement, Interned, TextWidth},
+    format_element::{BestFittingElement, Interned},
     write::formatter::intern_exact,
 };
 
@@ -141,9 +141,9 @@ pub fn dispatch_ir<'a, C: FormatContext>(
 /// `map_text` receives each `Text` and `Token` run (a child may print any character as a token, e.g. JS's `` ` ``);
 /// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
 /// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
+/// Nothing is rebuilt until the first change, an IR with none is returned as is.
 pub fn map_text_in_ir<'a, F>(
-    ir: &[FormatElement<'a>],
+    ir: ArenaVec<'a, FormatElement<'a>>,
     allocator: &'a Allocator,
     map_text: &mut F,
 ) -> ArenaVec<'a, FormatElement<'a>>
@@ -151,54 +151,78 @@ where
     F: FnMut(&'a str, &mut ArenaVec<'a, FormatElement<'a>>) -> bool,
 {
     let mut interned_cache = FxHashMap::default();
-    map_text_in_ir_impl(ir, allocator, map_text, &mut interned_cache)
+    map_text_in_ir_impl(&ir, allocator, map_text, &mut interned_cache).unwrap_or(ir)
 }
 
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
+/// Returns `None` if no element changed.
+#[expect(clippy::option_option)]
 fn map_text_in_ir_impl<'a, F>(
     ir: &[FormatElement<'a>],
     allocator: &'a Allocator,
     map_text: &mut F,
-    interned_cache: &mut FxHashMap<Interned<'a>, Option<FormatElement<'a>>>,
-) -> ArenaVec<'a, FormatElement<'a>>
+    // `None` for an unchanged subtree, `Some(None)` for one rebuilt empty
+    interned_cache: &mut FxHashMap<Interned<'a>, Option<Option<FormatElement<'a>>>>,
+) -> Option<ArenaVec<'a, FormatElement<'a>>>
 where
     F: FnMut(&'a str, &mut ArenaVec<'a, FormatElement<'a>>) -> bool,
 {
-    let mut out = ArenaVec::with_capacity_in(ir.len(), &allocator);
-    for element in ir {
-        match element {
+    // Holds nothing until the first change, then the rebuilt IR
+    let mut out = ArenaVec::new_in(&allocator);
+    let mut rebuilt = false;
+    for (index, element) in ir.iter().enumerate() {
+        let changed = match element {
             FormatElement::Text { text, .. } | FormatElement::Token { text } => {
-                if !map_text(text, &mut out) {
-                    out.push(element.clone());
-                }
+                map_text(text.as_str(), &mut out)
             }
             FormatElement::BestFitting(best_fitting) => {
+                let mut changed = false;
                 let mut variants =
                     ArenaVec::with_capacity_in(best_fitting.variants().len(), &allocator);
                 for variant in best_fitting.variants() {
-                    let mapped = map_text_in_ir_impl(variant, allocator, map_text, interned_cache);
-                    variants.push(mapped.into_arena_slice());
+                    match map_text_in_ir_impl(variant, allocator, map_text, interned_cache) {
+                        Some(mapped) => {
+                            changed = true;
+                            variants.push(mapped.into_arena_slice());
+                        }
+                        None => variants.push(variant),
+                    }
                 }
-                // SAFETY: This rebuild preserves the original BestFitting's variant count.
-                out.push(FormatElement::BestFitting(unsafe {
-                    BestFittingElement::from_vec_unchecked(variants)
-                }));
+                changed && {
+                    // SAFETY: This rebuild preserves the original BestFitting's variant count.
+                    out.push(FormatElement::BestFitting(unsafe {
+                        BestFittingElement::from_vec_unchecked(variants)
+                    }));
+                    true
+                }
             }
             FormatElement::Interned(interned) => {
                 let mapped = if let Some(mapped) = interned_cache.get(interned) {
                     mapped.clone()
                 } else {
-                    let mapped = map_text_in_ir_impl(interned, allocator, map_text, interned_cache);
-                    let mapped = intern_exact(allocator, mapped.into_iter());
+                    let mapped = map_text_in_ir_impl(interned, allocator, map_text, interned_cache)
+                        .map(|mapped| intern_exact(allocator, mapped.into_iter()));
                     interned_cache.insert(interned.clone(), mapped.clone());
                     mapped
                 };
-                out.extend(mapped);
+                mapped.is_some_and(|mapped| {
+                    out.extend(mapped);
+                    true
+                })
             }
-            _ => out.push(element.clone()),
+            _ => false,
+        };
+        if rebuilt {
+            if !changed {
+                out.push(element.clone());
+            }
+        } else if changed {
+            // Put the elements before the first change in front of its replacement
+            out.reserve(ir.len() - 1);
+            out.splice(0..0, ir[..index].iter().cloned());
+            rebuilt = true;
         }
     }
-    out
+    rebuilt.then_some(out)
 }
 
 /// Pushes `text` with each newline as a literal line (Prettier's `replaceEndOfLine()`).
@@ -223,10 +247,7 @@ pub fn push_text_with_literal_lines<'a>(
             out.push(FormatElement::Line(LineMode::Literal));
         }
         if !line.is_empty() {
-            out.push(FormatElement::Text {
-                text: line,
-                width: TextWidth::from_text(line, indent_width),
-            });
+            out.push(FormatElement::text(line, indent_width));
         }
     }
 }

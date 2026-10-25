@@ -17,11 +17,11 @@ use oxc_language_server::{
 };
 
 use crate::core::{
-    ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
-    SourceFormatter, build_global_ignore_matchers, classify_file, config_discovery, is_ignored,
+    ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, Language, ResolveOutcome,
+    SourceFormatter, build_global_ignore_matchers, config_discovery, is_ignored,
     resolve_ignore_paths, utils,
 };
-use crate::lsp::create_fake_file_path_from_language_id;
+use crate::lsp::create_fake_file_path;
 use crate::lsp::options::FormatOptions as LSPFormatOptions;
 
 pub struct ServerFormatterBuilder {
@@ -367,11 +367,15 @@ impl ServerFormatter {
 
     /// Resolve config and format a file at the given path.
     /// Returns `None` if the file is unsupported or ignored.
+    ///
+    /// `language` is given for an in-memory document (from its `languageId`),
+    /// which then decides the formatter, see [`crate::core::ConfigResolver::classify`].
     fn resolve_and_format(
         &self,
         scopes: &ConfigScopes,
         path: &Path,
         source_text: &str,
+        language: Option<Language>,
     ) -> Result<Option<FormatResult>, String> {
         let resolver = match scopes.resolve(path) {
             Ok(r) => r,
@@ -389,7 +393,7 @@ impl ServerFormatter {
             return Ok(None);
         }
 
-        let Some(strategy) = classify_file(path) else {
+        let Some(strategy) = resolver.classify(path, language) else {
             debug!("Unsupported file type for formatting: {}", path.display());
             return Ok(None);
         };
@@ -416,7 +420,7 @@ impl ServerFormatter {
             debug!("File is ignored by .prettierignore: {}", path.display());
             return Ok(None);
         }
-        self.resolve_and_format(&state.scopes, path, source_text)
+        self.resolve_and_format(&state.scopes, path, source_text, None)
     }
 
     fn format_in_memory(
@@ -425,12 +429,12 @@ impl ServerFormatter {
         source_text: &str,
         language_id: &LanguageId,
     ) -> Result<Option<FormatResult>, String> {
-        let Some(path) = create_fake_file_path_from_language_id(language_id, &self.root_path, uri)
-        else {
+        let Some(language) = Language::from_lsp_id(language_id.as_str()) else {
             debug!("Unsupported language id for in-memory formatting: {language_id:?}");
             return Ok(None);
         };
-        self.resolve_and_format(&self.snapshot().scopes, &path, source_text)
+        let path = create_fake_file_path(language, &self.root_path, uri);
+        self.resolve_and_format(&self.snapshot().scopes, &path, source_text, Some(language))
     }
 }
 

@@ -1,8 +1,8 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    DispatchRequest, DispatchResponse, FormatElement, InputKind, format_element::TextWidth,
-    map_text_in_ir, push_text_with_literal_lines,
+    DispatchRequest, DispatchResponse, FormatElement, InputKind, map_text_in_ir,
+    push_text_with_literal_lines,
 };
 
 use crate::{
@@ -30,7 +30,7 @@ const COUNTER: &str = "0";
 ///
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
     is_angular: bool,
 ) -> bool {
@@ -43,7 +43,7 @@ pub(super) fn format_html_doc<'a>(
         let Some(cooked) = quasis[0].value.cooked.as_ref() else {
             return false;
         };
-        let cooked = cooked.as_str();
+        let Some(cooked) = cooked.as_str() else { return false };
 
         if cooked.trim().is_empty() {
             write!(f, ["``"]);
@@ -73,7 +73,7 @@ pub(super) fn format_html_doc<'a>(
 
         // Re-escape template chars in `Text` runs:
         // the IR is reinserted into a JS template literal built from `.cooked` values.
-        let ir = super::escape_template_chars_in_ir(&ir, f);
+        let ir = super::escape_template_chars_in_ir(ir, f);
 
         let content = format_once(|f| f.write_elements(ir));
         let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
@@ -104,7 +104,8 @@ pub(super) fn format_html_doc<'a>(
             let Some(cooked) = quasi_elem.value.cooked.as_ref() else {
                 return false;
             };
-            sb.push_str(cooked.as_str());
+            let Some(cooked) = cooked.as_str() else { return false };
+            sb.push_str(cooked);
         }
         sb.into_str()
     };
@@ -158,7 +159,7 @@ pub(super) fn format_html_doc<'a>(
     // and substituting placeholders inside every `BestFitting` variant.
     // Escaping cannot alter placeholders: the sentinel is ASCII word characters only.
     let indent_width = f.options().indent_width;
-    let ir = map_text_in_ir(&ir, allocator, &mut |text, out| {
+    let ir = map_text_in_ir(ir, allocator, &mut |text, out| {
         let escaped = super::escape_template_chars(text, allocator);
         let text = escaped.unwrap_or(text);
         if text.contains(PLACEHOLDER_PREFIX) {
@@ -183,7 +184,7 @@ pub(super) fn format_html_doc<'a>(
         }
         // No placeholder to substitute; push the escaped text if escaping changed it
         let Some(text) = escaped else { return false };
-        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        out.push(FormatElement::text(text, indent_width));
         true
     });
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| f.write_elements(ir));
@@ -305,14 +306,12 @@ fn placeholders_are_sequential(ir: &[FormatElement<'_>], next: &mut usize) -> bo
 #[cfg(test)]
 mod tests {
     use oxc_allocator::{Allocator, ArenaVec};
-    use oxc_formatter_core::{
-        BestFittingElement, FormatElement, IndentWidth, format_element::TextWidth,
-    };
+    use oxc_formatter_core::{BestFittingElement, FormatElement, IndentWidth};
 
     use super::placeholders_are_sequential;
 
     fn text(text: &'static str) -> FormatElement<'static> {
-        FormatElement::Text { text, width: TextWidth::from_text(text, IndentWidth::default()) }
+        FormatElement::text(text, IndentWidth::default())
     }
 
     fn best_fitting<'a>(

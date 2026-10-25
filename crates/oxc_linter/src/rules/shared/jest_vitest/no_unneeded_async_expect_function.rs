@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, Statement},
+    ast::{Argument, ArrowFunctionExpression, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
@@ -103,7 +103,7 @@ pub fn run_on_jest_node<'a, 'c>(jest_node: &PossibleJestNode<'a, 'c>, ctx: &'c L
 
 /// Gets the span of the awaited call expression from an async arrow function.
 /// Returns `None` if the function body doesn't contain exactly one await of a call expression.
-fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpression) -> Option<Span> {
+fn get_awaited_call_span_from_arrow(arrow: &ArrowFunctionExpression) -> Option<Span> {
     // Case 1: Arrow function with expression body (async () => await doSomething())
     if arrow.is_expression() {
         if let Some(Expression::AwaitExpression(await_expr)) = arrow.get_expression()
@@ -118,7 +118,7 @@ fn get_awaited_call_span_from_arrow(arrow: &oxc_ast::ast::ArrowFunctionExpressio
     get_awaited_call_span_from_block(arrow.get_function_body().unwrap())
 }
 
-fn get_awaited_call_span_from_block(body: &oxc_ast::ast::FunctionBody) -> Option<Span> {
+fn get_awaited_call_span_from_block(body: &FunctionBody) -> Option<Span> {
     if body.statements.len() == 1
         && let Some(stmt) = body.statements.first()
         && let Statement::ExpressionStatement(expr_stmt) = stmt

@@ -21,7 +21,7 @@ use oxc_formatter_core::{StringEmbedder, TailwindSorter};
 use crate::core::{
     embed::{FormatEmbeddedWithConfigCallback, dispatcher, jsdoc_fence},
     language::{Route, route_embedded},
-    options::inject_print_width,
+    options::inject_string_embed_options,
 };
 
 /// Build the napi build's string embedder installed on the session.
@@ -62,8 +62,8 @@ pub fn build_string_embedder(
             let Some(mut options) = dispatch_config.prettier_options_for(prettier_language) else {
                 return Err(format!("No plugin enabled for parser: {parser_name}"));
             };
-            // The same effective width the native branch prints at
-            inject_print_width(&mut options, print_width);
+            // The same effective width and line ending the native branch prints with
+            inject_string_embed_options(&mut options, print_width);
             (format_embedded)(options, code)
                 .map(|mut code| {
                     // Remove trailing newline added by Prettier without allocation.

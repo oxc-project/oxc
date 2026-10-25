@@ -5,10 +5,11 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::{context::LintContext, rule::Rule, utils::PossibleJestNode};
 
-fn add_type_parameter_to_module_mock_diagnostic(module_name: &str, span: Span) -> OxcDiagnostic {
+fn add_type_parameter_to_module_mock_diagnostic(module_name: JSStr, span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn(
         "`jest.mock()` factories should not be used without an explicit type parameter.",
     )
@@ -138,15 +139,18 @@ impl NoUntypedMockFactory {
         };
 
         if let Expression::StringLiteral(string_literal) = expr {
+            let value = string_literal.value;
             ctx.diagnostic_with_fix(
-                add_type_parameter_to_module_mock_diagnostic(
-                    string_literal.value.as_str(),
-                    property_span,
-                ),
+                add_type_parameter_to_module_mock_diagnostic(value, property_span),
                 |fixer| {
-                    let mut code = String::with_capacity(string_literal.value.len() + 20);
+                    // The fix is built from `&str`, so a name with a lone surrogate is
+                    // reported without it.
+                    let Some(value) = value.as_str() else {
+                        return fixer.noop();
+                    };
+                    let mut code = String::with_capacity(value.len() + 20);
                     code.push_str("<typeof import('");
-                    code.push_str(string_literal.value.as_str());
+                    code.push_str(value);
                     code.push_str("')>");
 
                     fixer.insert_text_after(&call_expr.callee, code)
@@ -154,7 +158,7 @@ impl NoUntypedMockFactory {
             );
         } else if let Expression::Identifier(ident) = expr {
             ctx.diagnostic(add_type_parameter_to_module_mock_diagnostic(
-                ident.name.as_str(),
+                JSStr::from(ident.name),
                 property_span,
             ));
         }
@@ -281,6 +285,12 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r"jest.mock('\uD800', () => ({}))", None),
+        (r"jest.doMock('a\uDC00b', () => ({}))", None),
+        // Ordinary names keep `str` Debug rendering, so an apostrophe is not escaped.
+        (r#"jest.mock("it's", () => ({}))"#, None),
         (
             "
                 jest.mock('../moduleName', () => {
@@ -334,6 +344,8 @@ fn test() {
     ];
 
     let fix = vec![
+        // A name with a lone surrogate gets no fix.
+        (r"jest.mock('\uD800', () => ({}))", r"jest.mock('\uD800', () => ({}))", None),
         (
             "
                 jest.mock('../moduleName', () => {

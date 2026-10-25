@@ -101,15 +101,11 @@ impl<'a> Traverse<'a> for Normalize {
     fn exit_statements(
         &mut self,
         stmts: &mut ArenaVec<'a, Statement<'a>>,
-        ctx: &mut TraverseCtx<'a>,
+        _ctx: &mut TraverseCtx<'a>,
     ) {
         // No console handling here: `exit_expression` has already rewritten
         // every console call (statement position included) to `void 0`.
-        stmts.retain(|stmt| match stmt {
-            Statement::EmptyStatement(_) => false,
-            Statement::DebuggerStatement(_) if ctx.options().drop_debugger => false,
-            _ => true,
-        });
+        stmts.retain(|stmt| !matches!(stmt, Statement::EmptyStatement(_)));
     }
 
     fn exit_variable_declaration(
@@ -124,6 +120,10 @@ impl<'a> Traverse<'a> for Normalize {
 
     fn exit_statement(&mut self, stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
         match stmt {
+            Statement::DebuggerStatement(debugger) if ctx.options().drop_debugger => {
+                let new_stmt = Statement::new_empty_statement(debugger.span, ctx);
+                ctx.replace_statement(stmt, new_stmt);
+            }
             Statement::WhileStatement(_) if self.options.convert_while_to_fors => {
                 Self::convert_while_to_for(stmt, ctx);
             }
@@ -375,6 +375,10 @@ impl<'a> Normalize {
             return None;
         }
         if !ctx.is_global_reference(ident) {
+            return None;
+        }
+        // `delete Number.NaN` is false (or throws in strict mode), but `delete NaN` is true.
+        if Self::is_unary_delete_ancestor(ctx.ancestors()) {
             return None;
         }
         Some(Expression::new_nan(ident.span, ctx))

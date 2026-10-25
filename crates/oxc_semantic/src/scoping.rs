@@ -6,7 +6,7 @@ use self_cell::self_cell;
 use oxc_allocator::{Allocator, ArenaVec, BitSet, CloneIn, CloneInSemanticIds};
 use oxc_index::IndexVec;
 use oxc_span::Span;
-use oxc_str::{ArenaIdentHashMap, Ident};
+use oxc_str::{ArenaIdentHashMap, Ident, JSStr};
 use oxc_syntax::constant_value::ConstantValue;
 use oxc_syntax::{
     node::NodeId,
@@ -717,6 +717,19 @@ impl Scoping {
         self.enum_data.set_member_value(symbol_id, value);
     }
 
+    /// Whether an enum member has a string initializer, including non-UTF-8 names and values.
+    pub fn is_string_enum_member(&self, scope_id: ScopeId, name: JSStr<'_>) -> bool {
+        name.as_str()
+            .and_then(|name| self.get_binding(scope_id, name.into()))
+            .and_then(|symbol_id| self.get_enum_member_value(symbol_id))
+            .is_some_and(|value| matches!(value, ConstantValue::String(_)))
+            || self.enum_data.is_string_member(scope_id, name)
+    }
+
+    pub(crate) fn add_string_enum_member(&mut self, scope_id: ScopeId, name: JSStr<'_>) {
+        self.enum_data.add_string_member(scope_id, name);
+    }
+
     /// Get the body scopes for an enum declaration symbol.
     /// Returns multiple scopes for merged enum declarations.
     ///
@@ -913,6 +926,11 @@ impl Scoping {
     ///
     /// Bindings are resolved by walking up the scope tree until a binding is
     /// found. If no binding is found, [`None`] is returned.
+    ///
+    /// This lookup does not model the implicit `arguments` object. It walks past
+    /// function boundaries, so `arguments` can resolve to a binding in an outer
+    /// scope. A transform that needs a function's own `arguments` must create an
+    /// unbound reference instead of looking the name up.
     pub fn find_binding(&self, mut scope_id: ScopeId, name: Ident<'_>) -> Option<SymbolId> {
         let cell = self.cell.borrow_dependent();
         loop {

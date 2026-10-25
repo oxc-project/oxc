@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 1e4c6ee minifier: Preserve parameter writes through mapped arguments (#27494) (Dunqing)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🚀 Features

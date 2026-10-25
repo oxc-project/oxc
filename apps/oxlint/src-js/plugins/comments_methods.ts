@@ -12,6 +12,8 @@ import {
   initComments,
   initCommentsBuffer,
 } from "./comments.ts";
+// oxlint-disable-next-line no-unused-vars -- used in inlined `firstTokenAtOrAfter`
+import { TOKEN_SIZE32_SHIFT } from "./tokens.ts";
 import {
   initTokensAndCommentsBuffer,
   tokensAndCommentsInt32,
@@ -227,7 +229,18 @@ export function commentsExistBetween(
   );
 }
 
-/** Find the first comment whose `start` is at or after `offset`. */
+/**
+ * Find the first comment whose `start` is at or after `offset`.
+ *
+ * Searched range starts at `startIndex` and ends at `length`.
+ * Returns `length` if all comments have `start` < `offset`.
+ *
+ * Note: Source text is limited to 1 GiB max, so number of comments cannot exceed 2^30.
+ * This makes it safe to use `>> 1` for division by 2 below (which is faster than `>>> 1`).
+ *
+ * This function is inlined into call sites by `inline_search` TSDown plugin.
+ * All call sites must have `COMMENT_SIZE32` const in scope.
+ */
 function firstCommentAtOrAfter(
   int32: Int32Array,
   offset: number,

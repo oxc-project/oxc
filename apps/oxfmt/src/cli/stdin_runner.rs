@@ -9,8 +9,7 @@ use oxc_diagnostics::{DiagnosticService, GraphicalReportHandler};
 use super::{CliRunResult, FormatCommand, Mode};
 use crate::core::{
     ConfigScopes, ExternalServices, FormatResult, JsConfigLoaderCb, ResolveOutcome,
-    SourceFormatter, build_global_ignore_matchers, classify_file, is_ignored, resolve_ignore_paths,
-    utils,
+    SourceFormatter, build_global_ignore_matchers, is_ignored, resolve_ignore_paths, utils,
 };
 
 pub struct StdinRunner {
@@ -51,14 +50,12 @@ impl StdinRunner {
         // Single threaded for stdin formatting
         let num_of_threads = 1;
 
-        // Read source code from stdin
         let mut source_text = String::new();
         if let Err(err) = io::stdin().read_to_string(&mut source_text) {
             utils::print_and_flush(stderr, &format!("Failed to read from stdin: {err}\n"));
             return CliRunResult::InvalidOptionConfig;
         }
 
-        // Load config
         let config_scopes = match ConfigScopes::load(
             &cwd,
             config_options.config.as_deref(),
@@ -116,7 +113,7 @@ impl StdinRunner {
             return CliRunResult::FormatSucceeded;
         }
 
-        let Some(strategy) = classify_file(&filepath) else {
+        let Some(strategy) = config_resolver.classify(&filepath, None) else {
             utils::print_and_flush(stderr, "Unsupported file type for stdin-filepath\n");
             return CliRunResult::InvalidOptionConfig;
         };
@@ -132,7 +129,6 @@ impl StdinRunner {
             }
         };
 
-        // Create formatter and format
         let source_formatter = SourceFormatter::new(num_of_threads)
             .with_external_services(Some(self.external_services));
 

@@ -63,6 +63,7 @@ declare_oxc_lint!(
     NoDuplicateTypeConstituents(tsgolint),
     typescript,
     correctness,
+    recommended,
     fix,
     config = NoDuplicateTypeConstituentsConfig,
     version = "1.12.0",

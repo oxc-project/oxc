@@ -91,18 +91,17 @@ impl PreferEachConfig {
         // loop (not nested in another call) can be reported.
         let mut enclosing_loop = None;
         for parent_node in ctx.nodes().ancestors(node.id()) {
-            match parent_node.kind() {
+            let body = match parent_node.kind() {
                 AstKind::CallExpression(_) => return,
-                AstKind::ForStatement(_)
-                | AstKind::ForInStatement(_)
-                | AstKind::ForOfStatement(_) => {
-                    enclosing_loop = Some(parent_node);
-                    break;
-                }
-                _ => {}
-            }
+                AstKind::ForStatement(statement) => &statement.body,
+                AstKind::ForInStatement(statement) => &statement.body,
+                AstKind::ForOfStatement(statement) => &statement.body,
+                _ => continue,
+            };
+            enclosing_loop = Some((parent_node, body));
+            break;
         }
-        let Some(loop_node) = enclosing_loop else { return };
+        let Some((loop_node, body)) = enclosing_loop else { return };
 
         if skip.contains(&loop_node.id()) {
             return;
@@ -126,14 +125,10 @@ impl PreferEachConfig {
             return;
         }
 
-        let (loop_span, body) = match loop_node.kind() {
-            AstKind::ForStatement(statement) => (statement.span, &statement.body),
-            AstKind::ForInStatement(statement) => (statement.span, &statement.body),
-            AstKind::ForOfStatement(statement) => (statement.span, &statement.body),
-            _ => unreachable!(),
-        };
-
         skip.insert(loop_node.id());
-        ctx.diagnostic(use_prefer_each(Span::new(loop_span.start, body.span().start), fn_name));
+        ctx.diagnostic(use_prefer_each(
+            Span::new(loop_node.span().start, body.span().start),
+            fn_name,
+        ));
     }
 }

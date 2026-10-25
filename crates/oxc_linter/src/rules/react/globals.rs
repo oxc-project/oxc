@@ -50,6 +50,7 @@ declare_react_compiler_lint!(
     Globals,
     react,
     correctness,
+    recommended,
     version = "1.79.0",
     short_description = "Disallow assigning to or mutating globals during render.",
 );

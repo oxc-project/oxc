@@ -50,6 +50,8 @@ const PRESERVE_PARENS_MODES = [false, true];
 
 /**
  * Split source text on every ECMAScript line terminator and retain each line's UTF-16 start offset.
+ *
+ * @param sourceText - Source text
  */
 export function getEcmaScriptLineTable(sourceText: string): {
   lines: string[];

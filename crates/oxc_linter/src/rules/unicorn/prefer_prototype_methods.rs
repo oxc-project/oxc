@@ -2,13 +2,11 @@ use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
-    AstNode,
-    ast_util::is_method_call,
-    context::LintContext,
-    rule::Rule,
-    utils::{is_empty_array_expression, is_empty_object_expression, pad_fix_with_token_boundary},
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    utils::pad_fix_with_token_boundary,
 };
 
 fn known_method(span: Span, obj_name: &str, method_name: &str) -> OxcDiagnostic {
@@ -52,6 +50,7 @@ declare_oxc_lint!(
     PreferPrototypeMethods,
     unicorn,
     pedantic,
+    recommended,
     fix,
     version = "0.0.21",
     short_description = "This rule prefers borrowing methods from the prototype instead of the instance.",
@@ -98,18 +97,14 @@ impl Rule for PreferPrototypeMethods {
         };
         let object_expr = method_expr.object().without_parentheses();
 
-        if !is_empty_array_expression(object_expr) && !is_empty_object_expression(object_expr) {
-            return;
-        }
-
         let constructor_name = match object_expr {
-            Expression::ArrayExpression(_) => "Array",
-            Expression::ObjectExpression(_) => "Object",
-            _ => unreachable!(),
+            Expression::ArrayExpression(array) if array.elements.is_empty() => "Array",
+            Expression::ObjectExpression(object) if object.properties.is_empty() => "Object",
+            _ => return,
         };
         // TODO: Replace `static_property_name` with a function similar to `getPropertyName`
         // in @eslint-community/eslint-utils to generate better error messages for some cases.
-        let method_name = method_expr.static_property_name();
+        let method_name = method_expr.static_property_name().and_then(JSStr::as_str);
 
         ctx.diagnostic_with_fix(
             method_name.map_or_else(
