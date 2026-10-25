@@ -33,7 +33,8 @@ pub(crate) fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: us
     while g < run && tokens.src[p + g] == b'>' {
         g += 1;
     }
-    run_shortcut(tokens, p, g).unwrap_or_else(|| context::angles_before(tokens, walks, p)).min(g)
+    let quick = if walks.run_rules() { run_shortcut(tokens, p, g) } else { None };
+    quick.unwrap_or_else(|| context::angles_before(tokens, walks, p)).min(g)
 }
 
 /// The lists a `>` run of `run` bytes at `pos` closes, when its context cannot matter: the run
@@ -56,12 +57,7 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
             let c = tokens.src[p];
             match c {
                 b')' | b']' | b'}' => {
-                    let open = match c {
-                        b')' => b'(',
-                        b']' => b'[',
-                        _ => b'{',
-                    };
-                    let o = tokens.match_delim_back(p, open, c)?;
+                    let o = tokens.match_delim_back(p)?;
                     q = tokens.prev_sig(o);
                     continue;
                 }
@@ -120,11 +116,7 @@ fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
     if t.kind == tk!(Ident) {
         let x = tokens.peek(t.pos + 1);
         if x.kind == tk!(Ident) && tokens.ident_kw(x.pos) == tk!(KwExtends) {
-            let f = tokens.peek(x.pos + 1);
-            let tag = f.kind >= OP_KIND_BASE && matches!(f.byte, b'=' | b'>' | b'/');
-            if !tag {
-                return true;
-            }
+            return true;
         }
     }
     match tokens.prev_token(lt) {
@@ -173,7 +165,7 @@ fn return_type_colon(tokens: &Tokens, c: usize) -> bool {
     let Prev::Op(rp, b')') = tokens.prev_token(c) else {
         return false;
     };
-    let Some(lp) = tokens.match_delim_back(rp, b'(', b')') else {
+    let Some(lp) = tokens.match_delim_back(rp) else {
         return false;
     };
     match tokens.prev_token(lp) {

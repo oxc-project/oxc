@@ -283,9 +283,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
                 // has no next sibling inside the block to defer to,
                 // so the last node's trailing pass RENDERS it (own-line style, detected by its lines-before)
                 // instead of letting it escape the block.
-                if total_lines_before > 0
-                    || previous_comment.is_some_and(|comment| comment.is_line())
-                {
+                if total_lines_before > 0 || previous_comment.is_some_and(Comment::is_line) {
                     write!(
                         f,
                         [line_suffix(&format_with(|f| {
@@ -300,7 +298,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTrailingComments<'a> {
                                     //   [>*
                                     //    * docs
                                     //   */ [> still on the same line <]
-                                    if previous_comment.copied().is_some_and(Comment::is_line) {
+                                    if previous_comment.is_some_and(Comment::is_line) {
                                         write!(f, [hard_line_break()]);
                                     } else {
                                         write!(f, [space()]);
@@ -466,7 +464,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatDanglingComments<'a> {
                 }
 
                 if matches!(indent, DanglingIndentMode::Soft)
-                    && previous_comment.copied().is_some_and(Comment::is_line)
+                    && previous_comment.is_some_and(Comment::is_line)
                 {
                     write!(f, [hard_line_break()]);
                 }

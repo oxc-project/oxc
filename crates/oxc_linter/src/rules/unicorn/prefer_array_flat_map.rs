@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{
     AstKind,
-    ast::{Argument, BindingPattern, CallExpression, Expression},
+    ast::{Argument, BindingPattern, CallExpression, Expression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -51,6 +51,7 @@ declare_oxc_lint!(
     PreferArrayFlatMap,
     unicorn,
     perf,
+    recommended,
     fix_suggestion,
     version = "0.0.14",
     short_description = "Prefer a single `.flatMap()` over `.map().flat()` or `.filter().flatMap()`.",
@@ -205,7 +206,8 @@ fn is_known_non_indexed_receiver<'a>(expression: &Expression<'a>, ctx: &LintCont
     if let Expression::Identifier(identifier) = expression
         && let Some(declaration) = get_declaration_of_variable(identifier, ctx)
         && let AstKind::VariableDeclarator(declaration) = declaration.kind()
-        && variable_declaration_kind(declaration, ctx).is_const()
+        && variable_declaration_kind(declaration, ctx.nodes())
+            .is_some_and(VariableDeclarationKind::is_const)
         && declaration.id.is_binding_identifier()
         && let Some(initializer) = &declaration.init
     {

@@ -106,6 +106,7 @@ declare_oxc_lint!(
     NoDuplicates,
     import,
     style,
+    recommended,
     conditional_fix,
     config = NoDuplicates,
     version = "0.2.11",
@@ -168,8 +169,9 @@ impl Rule for NoDuplicates {
                     .and_then(|decl| decl.with_clause.as_ref())
                     .into_iter()
                     .flat_map(|clause| &clause.with_entries)
+                    // The canonical bytes identify the value and give a stable order.
                     .map(|attribute| {
-                        (attribute.key.as_arena_str().as_str(), attribute.value.value.as_str())
+                        (attribute.key.as_js_str().as_bytes(), attribute.value.value.as_bytes())
                     })
                     .collect::<Vec<_>>();
                 attributes.sort_unstable();

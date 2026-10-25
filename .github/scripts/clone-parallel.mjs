@@ -10,10 +10,10 @@ import { existsSync, mkdirSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 // Submodule commit SHAs - updated automatically by .github/workflows/update_submodules.yml
-const TEST262_SHA = "0a888ef3715cf6c8a8c34b843173e675c6f708f6";
-const BABEL_SHA = "fd665901dece022a0eda2ae7adda03bc9baabd5e";
-const TYPESCRIPT_SHA = "f29aeb9f825d96feea27841f3f7342dbf0df68a8";
-const ESTREE_CONFORMANCE_SHA = "3eb6986e64bc6bb220f64f16e1732425e64042a0";
+const TEST262_SHA = "d53ebc8b1931d9f1541e43d59650776e4b766248";
+const BABEL_SHA = "a56fe4a4ed5c7dd17a8f87798586d318c14669a2";
+const TYPESCRIPT_SHA = "5237fd46890956e4bb8177a1a05dcd69e4166560";
+const ESTREE_CONFORMANCE_SHA = "1945cf767b8ebe7529fa08d6b4c9d02493cb9922";
 const NODE_COMPAT_TABLE_SHA = "499beb6f1daa36f10c26b85a7f3ec3b3448ded23";
 
 const repoRoot = join(import.meta.dirname, "..", "..");

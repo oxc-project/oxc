@@ -1,0 +1,96 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Every line deviates from Prettier (DIVERGENCES.md#instantiation-expression-parens).
+const a = (make<T>)!;
+(make<T>)!.b;
+(make<T>)!();
+(make<T>)<U>;
+(make<T>)<U>();
+new (make<T>)<U>();
+(make<T>)<U>``;
+x = (make<T>) + y;
+x = (make<T>) >> y;
+x = (a + make<T>) - y;
+x = (typeof make<T>) + y;
+export default (class {})<string>;
+export default (function () {})<string>;
+export default (class {})<string> as A;
+(class {})<string>;
+(function () {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (++y)<T>;
+x = (a + b)<T>;
+x = (a ?? b)<T>;
+x = (!a)<T>;
+x = (typeof a)<T>;
+x = (a as B)<T>;
+x = (a satisfies B)<T>;
+x = (<B>a)<T>;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Every line deviates from Prettier (DIVERGENCES.md#instantiation-expression-parens).
+const a = (make<T>)!;
+(make<T>)!.b;
+(make<T>)!();
+(make<T>)<U>;
+(make<T>)<U>();
+new (make<T>)<U>();
+(make<T>)<U>``;
+x = (make<T>) + y;
+x = (make<T>) >> y;
+x = a + (make<T>) - y;
+x = typeof (make<T>) + y;
+export default (class {})<string>;
+export default (function () {})<string>;
+export default (class {})<string> as A;
+(class {})<string>;
+(function () {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (++y)<T>;
+x = (a + b)<T>;
+x = (a ?? b)<T>;
+x = (!a)<T>;
+x = (typeof a)<T>;
+x = (a as B)<T>;
+x = (a satisfies B)<T>;
+x = (<B>a)<T>;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Every line deviates from Prettier (DIVERGENCES.md#instantiation-expression-parens).
+const a = (make<T>)!;
+(make<T>)!.b;
+(make<T>)!();
+(make<T>)<U>;
+(make<T>)<U>();
+new (make<T>)<U>();
+(make<T>)<U>``;
+x = (make<T>) + y;
+x = (make<T>) >> y;
+x = a + (make<T>) - y;
+x = typeof (make<T>) + y;
+export default (class {})<string>;
+export default (function () {})<string>;
+export default (class {})<string> as A;
+(class {})<string>;
+(function () {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (++y)<T>;
+x = (a + b)<T>;
+x = (a ?? b)<T>;
+x = (!a)<T>;
+x = (typeof a)<T>;
+x = (a as B)<T>;
+x = (a satisfies B)<T>;
+x = (<B>a)<T>;
+
+===================== End =====================

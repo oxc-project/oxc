@@ -1,4 +1,4 @@
-use std::borrow::Cow;
+use std::{borrow::Cow, collections::hash_map::Entry};
 
 use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
@@ -17,7 +17,7 @@ type CommentList = SmallVec<[Comment; 1]>;
 pub type CommentsMap = FxHashMap</* attached_to */ u32, CommentList>;
 
 /// Whether a comment remains meaningful if its original AST anchor is removed.
-fn preserve_when_orphaned(comment: Comment) -> bool {
+fn preserve_when_orphaned(comment: &Comment) -> bool {
     comment.is_legal() || comment.is_coverage_ignore_file()
 }
 
@@ -87,7 +87,7 @@ impl Codegen<'_> {
             // back to the canonical literal for the dropped ones.
             if comment.is_pure() || comment.is_no_side_effects() {
                 if comment.is_leading() && self.options.print_annotation_comment() {
-                    self.annotation_comments.insert(comment.attached_to, *comment);
+                    self.annotation_comments.insert(comment.attached_to, comment.clone());
                 }
                 continue;
             }
@@ -102,12 +102,12 @@ impl Codegen<'_> {
 
             if add {
                 self.has_property_key_annotations |= comment.is_property_key_annotation();
-                if preserve_when_orphaned(*comment)
+                if preserve_when_orphaned(comment)
                     && let Err(idx) = self.orphan_comment_keys.binary_search(&comment.attached_to)
                 {
                     self.orphan_comment_keys.insert(idx, comment.attached_to);
                 }
-                self.comments.entry(comment.attached_to).or_default().push(*comment);
+                self.comments.entry(comment.attached_to).or_default().push(comment.clone());
             }
         }
     }
@@ -140,13 +140,17 @@ impl Codegen<'_> {
         kind: AnnotationKind,
         newline_after: bool,
     ) {
+        // `entry` probes the map once, and the comment is moved out of it rather than cloned.
+        // `entry` reserves capacity when the key is absent, which allocates if the map is empty,
+        // so check for that first. `annotation_comments` being empty is a common case.
         if self.source_text.is_some()
-            && let Some(comment) = self.annotation_comments.get(&start).copied()
-            && kind.matches(&comment)
-            // Inline line comments would swallow the rest of the line.
-            && (!comment.is_line() || newline_after)
+            && !self.annotation_comments.is_empty()
+            && let Entry::Occupied(entry) = self.annotation_comments.entry(start)
+            && kind.matches(entry.get())
+            // Inline line comments would swallow the rest of the line
+            && (!entry.get().is_line() || newline_after)
         {
-            self.annotation_comments.remove(&start);
+            let comment = entry.remove();
             self.print_comment(&comment);
             if newline_after {
                 self.print_hard_newline();
@@ -202,9 +206,11 @@ impl Codegen<'_> {
         if !self.has_property_key_annotations {
             return;
         }
-        if self.comments.get(&start).is_some_and(|comments| {
-            comments.iter().any(|comment| comment.is_property_key_annotation())
-        }) {
+        if self
+            .comments
+            .get(&start)
+            .is_some_and(|comments| comments.iter().any(Comment::is_property_key_annotation))
+        {
             self.print_leading_comments_anchored_to_self(start);
         }
     }
@@ -249,7 +255,7 @@ impl Codegen<'_> {
         if self
             .comments
             .get(&start)
-            .is_some_and(|comments| comments.iter().any(|comment| comment.is_annotation()))
+            .is_some_and(|comments| comments.iter().any(Comment::is_annotation))
         {
             self.print_leading_comments_anchored_to_self(start);
         }
@@ -288,10 +294,10 @@ impl Codegen<'_> {
         let comments = &mut self.comments;
         for k in self.orphan_comment_keys.drain(..idx) {
             let Some(entry) = comments.get_mut(&k) else { continue };
-            debug_assert!(entry.iter().any(|c| preserve_when_orphaned(*c)));
+            debug_assert!(entry.iter().any(preserve_when_orphaned));
             entry.retain(|comment| {
-                if preserve_when_orphaned(*comment) {
-                    orphans.push(*comment);
+                if preserve_when_orphaned(comment) {
+                    orphans.push(comment.clone());
                     false
                 } else {
                     true
@@ -483,7 +489,7 @@ impl Codegen<'_> {
                 text = Cow::Owned(buffer);
             }
             if set.insert(text) {
-                comments.push(*comment);
+                comments.push(comment.clone());
             }
         }
 

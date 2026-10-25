@@ -6,10 +6,10 @@ use oxc_ast::{
     },
 };
 
+use oxc_ast::StaticPropertyName;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
-use oxc_str::CompactStr;
 use rustc_hash::FxHashSet;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -20,7 +20,7 @@ use crate::{
     context::LintContext,
     frameworks::FrameworkOptions,
     rule::{DefaultRuleConfig, Rule},
-    utils::{find_property, for_each_define_props_type_signature},
+    utils::for_each_define_props_type_signature,
 };
 
 fn max_props_diagnostic(span: Span, cur: u32, limit: u32) -> OxcDiagnostic {
@@ -172,7 +172,7 @@ impl MaxProps {
             return;
         };
 
-        let Some(props_prop) = find_property(obj_expr, "props") else {
+        let Some(props_prop) = obj_expr.find_property("props") else {
             return;
         };
         let Expression::ObjectExpression(props_obj_expr) = props_prop.value.get_inner_expression()
@@ -193,7 +193,7 @@ impl MaxProps {
 fn get_type_argument_keys<'a>(
     ctx: &LintContext<'a>,
     type_argument: &TSType<'a>,
-) -> FxHashSet<CompactStr> {
+) -> FxHashSet<StaticPropertyName<'a>> {
     let mut keys = FxHashSet::default();
     for_each_define_props_type_signature(type_argument, ctx, &mut |signature| {
         let name = match signature {
@@ -202,7 +202,7 @@ fn get_type_argument_keys<'a>(
             _ => return,
         };
         if let Some(name) = name {
-            keys.insert(CompactStr::from(name));
+            keys.insert(name);
         }
     });
     keys

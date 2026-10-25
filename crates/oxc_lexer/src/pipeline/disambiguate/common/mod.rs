@@ -10,8 +10,8 @@ mod closers;
 mod tokens;
 mod walk;
 
-pub(crate) use closers::Closers;
+pub(crate) use closers::{Closers, Open};
 pub(crate) use tokens::{Peek, Prev, Tokens};
 pub(crate) use walk::{Brackets, prev_sig};
 
-pub(super) use walk::{kind_at, word_is_any, word_len};
+pub(super) use walk::word_len;

@@ -11,7 +11,9 @@ mod avx2;
     target_feature = "bmi2",
     target_feature = "popcnt"
 ))]
-pub(super) use avx2::{scan_block_comment, scan_line_comment};
+pub(super) use avx2::{
+    scan_block_comment_avx2 as scan_block_comment, scan_line_comment_avx2 as scan_line_comment,
+};
 
 #[cfg(not(all(
     target_arch = "x86_64",
@@ -26,7 +28,10 @@ mod generic;
     target_feature = "bmi2",
     target_feature = "popcnt"
 )))]
-pub(super) use generic::{scan_block_comment, scan_line_comment};
+pub(super) use generic::{
+    scan_block_comment_generic as scan_block_comment,
+    scan_line_comment_generic as scan_line_comment,
+};
 
 mod common;
 pub(super) use common::{scan_ident_esc, scan_number, scan_quoted, scan_regex, scan_tmpl_text};

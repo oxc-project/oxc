@@ -1,16 +1,20 @@
+use std::ptr;
+
+use unicode_width::UnicodeWidthStr;
+
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, BufferExtensions, Format, ScratchBuffer};
+use oxc_formatter_core::{Format, ScratchBuffer};
 use oxc_span::GetSpan;
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     formatter::{
         JsFormatter,
         prelude::{FormatElements, format_once, line_suffix_boundary, *},
         trivia::{FormatTrailingComments, is_alignable_block_comment},
     },
     print::{
-        BinaryLikeExpression, alias_union_breaks_after_operator,
+        BinaryLikeExpression, alias_union_breaks_after_operator, embed_hug,
         is_line_ending_trailing_jsdoc_comment, type_alias_left_end, union_prints_itself,
     },
     utils::{
@@ -26,13 +30,14 @@ use super::string::{FormatLiteralStringToken, StringLiteralParentKind};
 
 #[derive(Clone, Copy)]
 pub enum AssignmentLike<'a, 'b> {
-    VariableDeclarator(&'b AstNode<'a, VariableDeclarator<'a>>),
-    AssignmentExpression(&'b AstNode<'a, AssignmentExpression<'a>>),
-    ObjectProperty(&'b AstNode<'a, ObjectProperty<'a>>),
-    BindingProperty(&'b AstNode<'a, BindingProperty<'a>>),
-    PropertyDefinition(&'b AstNode<'a, PropertyDefinition<'a>>),
-    AccessorProperty(&'b AstNode<'a, AccessorProperty<'a>>),
-    TSTypeAliasDeclaration(&'b AstNode<'a, TSTypeAliasDeclaration<'a>>),
+    VariableDeclarator(&'b AstNode<'b, 'a, VariableDeclarator<'a>>),
+    AssignmentExpression(&'b AstNode<'b, 'a, AssignmentExpression<'a>>),
+    ObjectProperty(&'b AstNode<'b, 'a, ObjectProperty<'a>>),
+    BindingProperty(&'b AstNode<'b, 'a, BindingProperty<'a>>),
+    AssignmentTargetPropertyProperty(&'b AstNode<'b, 'a, AssignmentTargetPropertyProperty<'a>>),
+    PropertyDefinition(&'b AstNode<'b, 'a, PropertyDefinition<'a>>),
+    AccessorProperty(&'b AstNode<'b, 'a, AccessorProperty<'a>>),
+    TSTypeAliasDeclaration(&'b AstNode<'b, 'a, TSTypeAliasDeclaration<'a>>),
 }
 
 /// Determines how a assignment like be formatted
@@ -144,8 +149,8 @@ fn format_left_trailing_comments(start: u32, f: &mut JsFormatter<'_, '_>) {
 
     let comments = if end_of_line_comments.is_empty() {
         let comments = f.context().comments().comments_before_character(start, b'=');
-        if comments.iter().any(|c| c.preceded_by_newline()) { &[] } else { comments }
-    } else if end_of_line_comments.last().is_some_and(|c| c.is_multiline_block()) {
+        if comments.iter().any(Comment::preceded_by_newline) { &[] } else { comments }
+    } else if end_of_line_comments.last().is_some_and(Comment::is_multiline_block) {
         // A line-ending multiline block is promoted own-line above the right-hand side
         &[]
     } else {
@@ -158,7 +163,7 @@ fn format_left_trailing_comments(start: u32, f: &mut JsFormatter<'_, '_>) {
 /// The minimum number of overlapping characters between left and right hand side
 const MIN_OVERLAP_FOR_BREAK: u8 = 3;
 
-impl<'a> AssignmentLike<'a, '_> {
+impl<'a, 'b> AssignmentLike<'a, 'b> {
     fn write_left(&self, f: &mut JsFormatter<'_, 'a>) -> bool {
         match self {
             AssignmentLike::VariableDeclarator(declarator) => {
@@ -195,7 +200,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 // Handle computed properties
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
-                    f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
+                    f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
                 } else if property.shorthand {
                     let PropertyKey::StaticIdentifier(ident) = &property.key else {
                         unreachable!("Expected static identifier for shorthand property");
@@ -203,7 +208,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     write!(f, text(ident.name.as_str()));
                     false
                 } else {
-                    let width = write_member_name(property.key(), f);
+                    let width = write_member_name(&property.key(), f);
 
                     width < text_width_for_break
                 }
@@ -225,9 +230,22 @@ impl<'a> AssignmentLike<'a, '_> {
                 // Handle computed properties
                 if property.computed {
                     write!(f, ["[", property.key(), "]"]);
-                    f.source_text().span_width(property.key.span()) + 2 < text_width_for_break
+                    f.source_text().text_for(&property.key).width() + 2 < text_width_for_break
                 } else {
-                    let width = write_member_name(property.key(), f);
+                    let width = write_member_name(&property.key(), f);
+
+                    width < text_width_for_break
+                }
+            }
+            AssignmentLike::AssignmentTargetPropertyProperty(property) => {
+                let text_width_for_break =
+                    (f.options().indent_width.value() + MIN_OVERLAP_FOR_BREAK) as usize;
+
+                if property.computed {
+                    write!(f, ["[", property.name(), "]"]);
+                    f.source_text().text_for(&property.name).width() + 2 < text_width_for_break
+                } else {
+                    let width = write_member_name(&property.name(), f);
 
                     width < text_width_for_break
                 }
@@ -253,7 +271,7 @@ impl<'a> AssignmentLike<'a, '_> {
                 if property.readonly {
                     write!(f, ["readonly", space()]);
                 }
-                format_property_key(property.key(), property.computed, f);
+                format_property_key(&property.key(), property.computed, f);
                 if property.optional {
                     write!(f, "?");
                 }
@@ -282,7 +300,7 @@ impl<'a> AssignmentLike<'a, '_> {
                     write!(f, ["override", space()]);
                 }
                 write!(f, ["accessor", space()]);
-                format_property_key(property.key(), property.computed, f);
+                format_property_key(&property.key(), property.computed, f);
                 if property.definite {
                     write!(f, "!");
                 }
@@ -301,7 +319,7 @@ impl<'a> AssignmentLike<'a, '_> {
                         [declaration.id(), FormatNodeWithoutTrailingComments(type_parameters)]
                     );
                 } else {
-                    write!(f, [FormatNodeWithoutTrailingComments(declaration.id())]);
+                    write!(f, [FormatNodeWithoutTrailingComments(&declaration.id())]);
                 }
                 let start = type_alias_left_end(declaration);
 
@@ -331,6 +349,9 @@ impl<'a> AssignmentLike<'a, '_> {
                     write!(f, [":"]);
                 }
             }
+            Self::AssignmentTargetPropertyProperty(_) => {
+                write!(f, [":"]);
+            }
             Self::PropertyDefinition(property_class_member) => {
                 debug_assert!(property_class_member.value().is_some());
                 write!(f, [space(), "="]);
@@ -348,24 +369,27 @@ impl<'a> AssignmentLike<'a, '_> {
     fn write_right(&self, f: &mut JsFormatter<'_, 'a>, layout: AssignmentLikeLayout) {
         match self {
             Self::VariableDeclarator(declarator) => {
-                write!(f, [with_assignment_layout(declarator.init().unwrap(), Some(layout))]);
+                write!(f, [with_assignment_layout(&declarator.init().unwrap(), Some(layout))]);
             }
             Self::AssignmentExpression(assignment) => {
                 let right = assignment.right();
-                write!(f, [with_assignment_layout(right, Some(layout))]);
+                write!(f, [with_assignment_layout(&right, Some(layout))]);
             }
             Self::ObjectProperty(property) => {
                 let value = property.value();
-                write!(f, [with_assignment_layout(value, Some(layout))]);
+                write!(f, [with_assignment_layout(&value, Some(layout))]);
             }
             Self::BindingProperty(property) => {
                 write!(f, property.value());
             }
+            Self::AssignmentTargetPropertyProperty(property) => {
+                write!(f, property.binding());
+            }
             Self::PropertyDefinition(property) => {
-                write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
+                write!(f, [with_assignment_layout(&property.value().unwrap(), Some(layout))]);
             }
             Self::AccessorProperty(property) => {
-                write!(f, [with_assignment_layout(property.value().unwrap(), Some(layout))]);
+                write!(f, [with_assignment_layout(&property.value().unwrap(), Some(layout))]);
             }
             Self::TSTypeAliasDeclaration(declaration) => {
                 write!(f, [declaration.type_annotation()]);
@@ -459,7 +483,7 @@ impl<'a> AssignmentLike<'a, '_> {
     fn right_expression_shape(&self, f: &JsFormatter<'_, 'a>) -> Option<&Expression<'a>> {
         self.get_right_expression()
             .filter(|expr| !is_cast_target(expr.span(), f))
-            .map(AsRef::as_ref)
+            .map(|expr| expr.inner())
     }
 
     /// A leading multi-line `*`-aligned block comment on the right-hand side
@@ -481,6 +505,7 @@ impl<'a> AssignmentLike<'a, '_> {
             AssignmentLike::AssignmentExpression(assignment) => assignment.right.span(),
             AssignmentLike::ObjectProperty(property) => property.value.span(),
             AssignmentLike::BindingProperty(property) => property.value.span(),
+            AssignmentLike::AssignmentTargetPropertyProperty(property) => property.binding.span(),
             AssignmentLike::PropertyDefinition(property) => property.value.as_ref()?.span(),
             AssignmentLike::AccessorProperty(property) => property.value.as_ref()?.span(),
             AssignmentLike::TSTypeAliasDeclaration(decl) => decl.type_annotation.span(),
@@ -488,7 +513,7 @@ impl<'a> AssignmentLike<'a, '_> {
         Some(span.start)
     }
 
-    fn get_right_expression(&self) -> Option<&AstNode<'a, Expression<'a>>> {
+    fn get_right_expression(&self) -> Option<AstNode<'b, 'a, Expression<'a>>> {
         match self {
             AssignmentLike::VariableDeclarator(variable_decorator) => variable_decorator.init(),
             AssignmentLike::AssignmentExpression(assignment) => Some(assignment.right()),
@@ -497,7 +522,9 @@ impl<'a> AssignmentLike<'a, '_> {
                 property_class_member.value()
             }
             AssignmentLike::AccessorProperty(property) => property.value(),
-            AssignmentLike::BindingProperty(_) | AssignmentLike::TSTypeAliasDeclaration(_) => None,
+            AssignmentLike::BindingProperty(_)
+            | AssignmentLike::AssignmentTargetPropertyProperty(_)
+            | AssignmentLike::TSTypeAliasDeclaration(_) => None,
         }
     }
 
@@ -510,7 +537,9 @@ impl<'a> AssignmentLike<'a, '_> {
             return None;
         }
         let operator = match self {
-            Self::ObjectProperty(_) | Self::BindingProperty(_) => b':',
+            Self::ObjectProperty(_)
+            | Self::BindingProperty(_)
+            | Self::AssignmentTargetPropertyProperty(_) => b':',
             _ => b'=',
         };
         Some(comments.position_after_character(self.left_end(), operator))
@@ -524,7 +553,7 @@ impl<'a> AssignmentLike<'a, '_> {
             return &[];
         }
         let run = f.context().comments().end_of_line_comments_after(operator_end);
-        if run.last().is_some_and(|c| c.is_line()) { run } else { &[] }
+        if run.last().is_some_and(Comment::is_line) { run } else { &[] }
     }
 
     /// End of the left-hand side (type annotation included), before the operator and any comments around it.
@@ -538,6 +567,7 @@ impl<'a> AssignmentLike<'a, '_> {
             Self::AssignmentExpression(assignment) => assignment.left.span().end,
             Self::ObjectProperty(property) => property.key.span().end,
             Self::BindingProperty(property) => property.key.span().end,
+            Self::AssignmentTargetPropertyProperty(property) => property.name.span().end,
             Self::PropertyDefinition(property) => property
                 .type_annotation
                 .as_ref()
@@ -554,7 +584,9 @@ impl<'a> AssignmentLike<'a, '_> {
     /// when a [variable declarator](VariableDeclarator) doesn't have initializer.
     fn has_only_left_hand_side(&self) -> bool {
         match self {
-            Self::AssignmentExpression(_) | Self::TSTypeAliasDeclaration(_) => false,
+            Self::AssignmentExpression(_)
+            | Self::AssignmentTargetPropertyProperty(_)
+            | Self::TSTypeAliasDeclaration(_) => false,
             Self::VariableDeclarator(declarator) => declarator.init.is_none(),
             Self::PropertyDefinition(property) => property.value().is_none(),
             Self::AccessorProperty(property) => property.value().is_none(),
@@ -655,14 +687,14 @@ impl<'a> AssignmentLike<'a, '_> {
     /// for nodes that belong to TypeScript too.
     fn should_break_after_operator(
         &self,
-        right_expression: Option<&AstNode<'a, Expression<'a>>>,
+        right_expression: Option<AstNode<'_, 'a, Expression<'a>>>,
         is_left_short: bool,
         alias_union_prints_itself: bool,
         f: &mut JsFormatter<'_, 'a>,
     ) -> bool {
         let comments = f.context().comments();
         if let Some(right_expression) = right_expression {
-            should_break_after_operator(right_expression, is_left_short, f)
+            should_break_after_operator(&right_expression, is_left_short, f)
         } else if let AssignmentLike::TSTypeAliasDeclaration(decl) = self {
             let annotation_start = decl.type_annotation.span().start;
             // For TSTypeAliasDeclaration, check if the type annotation is a union type with comments
@@ -709,7 +741,8 @@ impl<'a> AssignmentLike<'a, '_> {
                 }
             }
         } else {
-            false
+            // A pattern on the right side: only comments on their own line force the break
+            self.right_start().is_some_and(|start| comments.has_leading_own_line_comment(start))
         }
     }
 
@@ -763,6 +796,7 @@ impl<'a> AssignmentLike<'a, '_> {
             }
             AssignmentLike::ObjectProperty(_)
             | AssignmentLike::BindingProperty(_)
+            | AssignmentLike::AssignmentTargetPropertyProperty(_)
             | AssignmentLike::PropertyDefinition(_)
             | AssignmentLike::AccessorProperty(_)
             | AssignmentLike::TSTypeAliasDeclaration(_) => false,
@@ -774,7 +808,7 @@ impl<'a> AssignmentLike<'a, '_> {
 ///
 /// Based on <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L196-L264>
 fn should_break_after_operator<'a>(
-    right: &AstNode<'a, Expression<'a>>,
+    right: &AstNode<'_, 'a, Expression<'a>>,
     is_left_short: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
@@ -827,9 +861,9 @@ fn should_break_after_operator<'a>(
         Expression::ClassExpression(class) => !class.decorators.is_empty(),
         // Based on https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/assignment.js#L235-L263
         _ if is_left_short => false,
-        _ => get_innermost_expression(right, f).is_some_and(|inner| {
-            matches!(inner.as_ref(), Expression::StringLiteral(_))
-                || is_poorly_breakable_member_or_call_chain(inner, f)
+        _ => get_innermost_expression(right.inner(), f).is_some_and(|inner| {
+            matches!(inner, Expression::StringLiteral(_))
+                || is_poorly_breakable_member_or_call_chain(right, inner, f)
         }),
     }
 }
@@ -840,16 +874,16 @@ fn should_break_after_operator<'a>(
 ///
 /// `None` when the walk reaches a cast target (`!/** @type {T} */ ("s")`): a cast target has no shape.
 /// The caller has already checked the entry node.
-fn get_innermost_expression<'a, 'b>(
-    mut current: &'b AstNode<'a, Expression<'a>>,
+fn get_innermost_expression<'a>(
+    mut current: &'a Expression<'a>,
     f: &JsFormatter<'_, 'a>,
-) -> Option<&'b AstNode<'a, Expression<'a>>> {
+) -> Option<&'a Expression<'a>> {
     loop {
-        let argument = match current.as_ast_nodes() {
-            AstNodes::UnaryExpression(unary) => unary.argument(),
-            AstNodes::TSNonNullExpression(non_null) => non_null.expression(),
-            AstNodes::AwaitExpression(expr) => expr.argument(),
-            AstNodes::YieldExpression(expr) => match expr.argument() {
+        let argument = match current {
+            Expression::UnaryExpression(unary) => &unary.argument,
+            Expression::TSNonNullExpression(non_null) => &non_null.expression,
+            Expression::AwaitExpression(expr) => &expr.argument,
+            Expression::YieldExpression(expr) => match &expr.argument {
                 Some(argument) => argument,
                 None => break,
             },
@@ -879,7 +913,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             // (it can incur in some transformation, like removing some escapes, etc.).
             //
             // 1. we create a scratch accumulator as a temporary heap buffer
-            //    (see `AccumulatorBuffer` for why neither the arena nor the shared scratch fits)
+            //    (see `ScratchBuffer` for why neither the arena nor the element stack fits)
             // 2. we write the left hand side into the buffer and retrieve the `is_left_short` info which is computed only when we format it
             // 3. we compute the layout
             // 4. we write the left node inside the main buffer based on the layout
@@ -891,8 +925,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
             let operator_end = self.commented_operator_position(f);
             let view_limit =
                 operator_end.map(|end| f.context_mut().comments_mut().limit_comments_up_to(end));
-            let is_left_short =
-                self.write_left(&mut Formatter::new(&mut formatted_left.writer(f.state_mut())));
+            let is_left_short = formatted_left.write(f, |f| self.write_left(f));
             if let Some(view_limit) = view_limit {
                 f.context_mut().comments_mut().restore_view_limit(view_limit);
             }
@@ -1011,12 +1044,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentLike<'a, '_> {
 /// Formats an expression and passes the assignment layout to its formatting function if the expressions
 /// formatting rule takes the layout as an option.
 pub struct WithAssignmentLayout<'a, 'b> {
-    expression: &'b AstNode<'a, Expression<'a>>,
+    expression: &'b AstNode<'b, 'a, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
 }
 
 pub fn with_assignment_layout<'a, 'b>(
-    expression: &'b AstNode<'a, Expression<'a>>,
+    expression: &'b AstNode<'b, 'a, Expression<'a>>,
     layout: Option<AssignmentLikeLayout>,
 ) -> WithAssignmentLayout<'a, 'b> {
     WithAssignmentLayout { expression, layout }
@@ -1028,8 +1061,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for WithAssignmentLayout<'a, '_> {
         // which is reached through the shared generated `fmt` (suppression, type casts, parentheses, comments);
         // the span-keyed context slot hands it across that frame.
         // A cast target has no shape; the layout never reaches the arrow inside.
-        if let (Some(layout), AstNodes::ArrowFunctionExpression(arrow)) =
-            (self.layout, self.expression.as_ast_nodes())
+        if let (Some(layout), AstNodeKind::ArrowFunctionExpression(arrow)) =
+            (self.layout, &self.expression.as_kind())
             && !is_cast_target(arrow.span(), f)
         {
             f.context_mut().set_arrow_assignment_layout(arrow.span(), layout);
@@ -1044,8 +1077,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for WithAssignmentLayout<'a, '_> {
 /// A chain that has no calls at all or all of whose calls have no arguments
 /// or have only one which [is_short_argument], except for member call chains
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L329>
+///
+/// `expression` is the innermost expression of `right`, see [get_innermost_expression].
 fn is_poorly_breakable_member_or_call_chain<'a>(
-    expression: &AstNode<'a, Expression<'a>>,
+    right: &AstNode<'_, 'a, Expression<'a>>,
+    expression: &'a Expression<'a>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let threshold = f.options().line_width.value() / 4;
@@ -1059,10 +1095,11 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
     // Simple head is `JsIdentifierExpression` or `JsThisExpression`
     let mut is_chain_head_simple = false;
 
-    // Keeping track of all call expressions in the chain to check them later
-    let mut call_expressions = vec![];
+    // The outermost call and the number of calls, their nodes are created below once these checks pass
+    let mut first_call = None;
+    let mut call_count = 0;
 
-    let mut expression = expression.as_ast_nodes();
+    let mut expression = expression;
 
     loop {
         // A cast target ends the chain without a simple head
@@ -1070,30 +1107,42 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
             break;
         }
         expression = match expression {
-            AstNodes::TSNonNullExpression(assertion) => assertion.expression().as_ast_nodes(),
-            AstNodes::CallExpression(call_expression) => {
+            Expression::TSNonNullExpression(assertion) => &assertion.expression,
+            Expression::CallExpression(call_expression) => {
                 is_chain = true;
-                let callee = &call_expression.callee();
-                call_expressions.push(call_expression);
-                callee.as_ast_nodes()
+                first_call.get_or_insert(&**call_expression);
+                call_count += 1;
+                &call_expression.callee
             }
-            AstNodes::StaticMemberExpression(node) => {
+            Expression::StaticMemberExpression(node) => {
                 is_chain = true;
-                node.object().as_ast_nodes()
+                &node.object
             }
-            AstNodes::ComputedMemberExpression(node) => {
+            Expression::ComputedMemberExpression(node) => {
                 is_chain = true;
-                node.object().as_ast_nodes()
+                &node.object
             }
-            AstNodes::PrivateFieldExpression(node) => {
+            Expression::PrivateFieldExpression(node) => {
                 is_chain = true;
-                node.object().as_ast_nodes()
+                &node.object
             }
-            AstNodes::ChainExpression(chain) => {
+            Expression::ChainExpression(chain) => {
                 is_chain = true;
-                chain.expression().as_ast_nodes()
+                let element = &chain.expression;
+                if is_cast_target(element.span(), f) {
+                    break;
+                }
+                match element {
+                    ChainElement::CallExpression(call_expression) => {
+                        first_call.get_or_insert(&**call_expression);
+                        call_count += 1;
+                        &call_expression.callee
+                    }
+                    ChainElement::TSNonNullExpression(assertion) => &assertion.expression,
+                    element => element.as_member_expression().unwrap().object(),
+                }
             }
-            AstNodes::IdentifierReference(_) | AstNodes::ThisExpression(_) => {
+            Expression::Identifier(_) | Expression::ThisExpression(_) => {
                 is_chain_head_simple = true;
                 break;
             }
@@ -1107,13 +1156,51 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         return false;
     }
 
-    if call_expressions.is_empty() {
+    let Some(first_call) = first_call else {
         return true;
-    }
+    };
 
-    if f.comments().has_comment_in_span(call_expressions[0].span) {
+    if f.comments().has_comment_in_span(first_call.span) {
         return false;
     }
+
+    // The nodes of the calls, as the checks below need the parents:
+    // the walk of `get_innermost_expression` and the loop above, with the links in the arena
+    let allocator = f.allocator();
+    let right = right.as_kind();
+    let mut node = &right;
+    let mut call_expressions = Vec::with_capacity(call_count);
+    loop {
+        let child = match node {
+            AstNodeKind::CallExpression(call) => {
+                call_expressions.push(call);
+                if call_expressions.len() == call_count {
+                    break;
+                }
+                call.callee()
+            }
+            AstNodeKind::UnaryExpression(expr) => expr.argument(),
+            AstNodeKind::AwaitExpression(expr) => expr.argument(),
+            AstNodeKind::YieldExpression(expr) => match expr.argument() {
+                Some(argument) => argument,
+                None => break,
+            },
+            AstNodeKind::TSNonNullExpression(expr) => expr.expression(),
+            AstNodeKind::StaticMemberExpression(expr) => expr.object(),
+            AstNodeKind::ComputedMemberExpression(expr) => expr.object(),
+            AstNodeKind::PrivateFieldExpression(expr) => expr.object(),
+            AstNodeKind::ChainExpression(chain) => {
+                node = chain.expression().as_kind().in_arena(allocator);
+                continue;
+            }
+            _ => break,
+        };
+        node = child.as_kind().in_arena(allocator);
+    }
+    debug_assert!(
+        call_expressions.len() == call_count
+            && call_expressions.first().is_some_and(|call| ptr::eq(call.inner(), first_call))
+    );
 
     for call_expression in &call_expressions {
         let args = &call_expression.arguments;
@@ -1121,9 +1208,11 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
         let is_breakable_call = match args.len() {
             0 => false,
             1 => match args.iter().next() {
-                Some(first_argument) => first_argument
-                    .as_expression()
-                    .is_none_or(|e| !is_short_argument(e, threshold, f)),
+                // An embedded template is formatted, so its source length says nothing
+                Some(first_argument) => first_argument.as_expression().is_none_or(|e| {
+                    embed_hug(e, Some(call_expression), f).is_some()
+                        || !is_short_argument(e, threshold, f)
+                }),
                 None => false,
             },
             _ => true,
@@ -1135,14 +1224,14 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 
         let is_breakable_type_arguments = call_expression
             .type_arguments()
-            .is_some_and(|type_arguments| is_complex_type_arguments(type_arguments, f));
+            .is_some_and(|type_arguments| is_complex_type_arguments(&type_arguments, f));
 
         if is_breakable_type_arguments {
             return false;
         }
     }
 
-    !is_member_call_chain(call_expressions[0], f)
+    call_expressions.first().is_some_and(|call| !is_member_call_chain(call, f))
 }
 
 /// This function checks if [`Argument`] is short
@@ -1151,11 +1240,11 @@ fn is_poorly_breakable_member_or_call_chain<'a>(
 /// [Prettier applies]: <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/utils/index.js#L433-L484>
 fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> bool {
     match argument {
-        Expression::Identifier(identifier) => identifier.name.len() <= threshold as usize,
+        Expression::Identifier(identifier) => identifier.name.width() <= threshold as usize,
         Expression::UnaryExpression(unary_expression) => {
             is_short_argument(&unary_expression.argument, threshold, f)
         }
-        Expression::RegExpLiteral(regex) => regex.regex.pattern.text.len() <= threshold as usize,
+        Expression::RegExpLiteral(regex) => regex.regex.pattern.text.width() <= threshold as usize,
         Expression::StringLiteral(literal) => {
             let formatter = FormatLiteralStringToken::new(
                 f.source_text().text_for(literal.as_ref()),
@@ -1171,12 +1260,12 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
             // Prettier: https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L402-L405
             literal.quasis.len() == 1 && {
                 let raw = literal.quasis[0].value.raw;
-                raw.len() <= threshold as usize && !raw.contains('\n')
+                raw.width() <= threshold as usize && !raw.contains('\n')
             }
         }
         Expression::CallExpression(call) => {
             call.arguments.is_empty()
-                && matches!(&call.callee, Expression::Identifier(ident) if ident.name.len() <= (threshold as usize).saturating_sub(2))
+                && matches!(&call.callee, Expression::Identifier(ident) if ident.name.width() <= (threshold as usize).saturating_sub(2))
         }
         Expression::ThisExpression(_)
         | Expression::NullLiteral(_)
@@ -1193,7 +1282,7 @@ fn is_short_argument(argument: &Expression, threshold: u16, f: &JsFormatter) -> 
 ///
 /// <https://github.com/prettier/prettier/blob/a043ac0d733c4d53f980aa73807a63fc914f23bd/src/language-js/print/assignment.js#L432-L459>
 fn is_complex_type_arguments<'a>(
-    type_arguments: &AstNode<'a, TSTypeParameterInstantiation<'a>>,
+    type_arguments: &AstNode<'_, 'a, TSTypeParameterInstantiation<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let params = &type_arguments.params;

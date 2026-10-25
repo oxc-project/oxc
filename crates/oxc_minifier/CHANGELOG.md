@@ -4,6 +4,101 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 🚀 Features
+
+- 7bb2697 minifier: Minimize array join expression (#27905) (Armano)
+- 6b5057b minifier: Add de morgan optimization for void expressions (#27375) (Armano)
+
+### 🐛 Bug Fixes
+
+- ce6a088 minifier: Fold string indices by UTF-16 code unit (#27096) (Dunqing)
+- bd37e78 ecmascript: Look through sequence expressions in `to_primitive` (#27837) (baltasarblanco)
+- d92789d minifier: Drop debugger statements in unbraced bodies (#27867) (camc314)
+- 863b359 ecmascript: Correct parseFloat decimal prefix scanning (#27695) (camc314)
+- a2534c6 minifier: Preserve lexical initializers in dead for loops (#27676) (camc314)
+- 3543672 ecmascript: Do not fold Number.isInteger / isSafeInteger of tiny non-integers to true (#27622) (Baltasar Blanco)
+- 6987a61 ecmascript: BigInt loose equality folding (unknown operands and `StringToBigInt`) (#27656) (Baltasar Blanco)
+- 40e5644 minifier: Preserve indirect access when folding into call targets (#27082) (waltu)
+- 022306f ecmascript: Do not fold `Math.cbrt` of a negative number to `NaN` (#27621) (Baltasar Blanco)
+
+### ⚡ Performance
+
+- 88b5c35 minifier: Reduce code branches when evaluating roots (#27906) (Armano)
+
+## [0.154.0] - 2026-10-13
+
+### 🚀 Features
+
+- 3d00bbd minifier: Add folding of delete expression (#27522) (Armano)
+
+### 🐛 Bug Fixes
+
+- 1e4c6ee minifier: Preserve parameter writes through mapped arguments (#27494) (Dunqing)
+- f8e9a50 semantic: Stop arguments resolution at ordinary functions (#26929) (camc314)
+- c57d9c7 parser: Apply no-side-effects annotations after export (#27504) (camc314)
+- 02577b1 minifier: Preserve delete semantic when folding non-finite numbers (#27466) (Armano)
+- f14ead5 minifier: Eliminate unused IIFE calls with constant arguments (#27434) (Dunqing)
+- 7e6a050 semantic: Visit `TSMethodSignature` computed method keys in enclosing scope (#27357) (camc314)
+
+### ⚡ Performance
+
+- cd1c192 minifier: Optimize unused expression removal in minimize_if (#27545) (Armano)
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+- 180d4e7 minifier: Avoid unecessary import/export merging for cjs/scripts (#27291) (Armano)
+
+### 📚 Documentation
+
+- c993555 minifier: Align guides with current implementation (#27584) (Cameron)
+
+## [0.153.0] - 2026-10-05
+
+### 🚀 Features
+
+- 61003c7 minifier: Fold undefined argument in non delegating yield (#27324) (Armano)
+- adb1139 minifier: Merge import statements against the same module (#25534) (翠)
+- cc82598 minifier: Merge import and export statements against the same module (#25533) (翠)
+- 1c352ce minifier: Minimize bitwise binary expressions (#27107) (Armano)
+- d1a0bcc minifier: Merge statements after terminating if block branches (#26667) (Armano)
+- 7a95376 minifier: Merge adjucent if stmt with the same content (#26445) (Armano)
+
+### 🐛 Bug Fixes
+
+- 565d75d minifier: Correct indopedency when processing nested sequences (#27273) (Armano)
+- da1fed2 minifier: Fold conditional expressions with long sequences (#27083) (Armano)
+- 4cf9ae2 minifier: Preserve sibling declarations in arguments copy rewrite (#27140) (camc314)
+
+### ⚡ Performance
+
+- 99e3c15 minifier: Small performance improvement when merging imports (#27238) (Armano)
+- 466ef10 minifier: Update expressions in place in `merge_import_export` (#27226) (Armano)
+- 028ffb8 minifier: Update nodes in place in `wrap_to_avoid_ambiguous_else` (#27194) (Armano)
+- 6fcd135 minifier: Avoid conversion from ident to str when for substitute symbols (#27209) (Armano)
+- 0b9799d minifier: Reduce usage of minimize_conditional (#26028) (Armano)
+- 3ca3ded minifier: Short-circuit IfStatement termination on alternate (#25198) (Armano)
+
+### 📚 Documentation
+
+- 335ce79 agents: Scope verification for local and stacked work (#27299) (Dunqing)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- c380c85 minifier: Preserve iife with directives (#27060) (Armano)
+- d79ad19 codegen: Remove redundant dollar escapes in minified templates (#26924) (camc314)
+
+### ⚡ Performance
+
+- 0afbf85 minifier: Fold logical expressions in place (#26768) (Armano)
+- 3471f29 minifier: Avoid creation of empty block when folding try finally (#26971) (Armano)
+- 3893d64 minifier: Update boolean context expressions in place (#26823) (Armano)
+- de8af47 minifier: Take return argument directly when converting arrow fn (#26830) (Armano)
+- fc37ba0 minifier: Reduce allocations when minimizing assignments (#26609) (Armano)
+- dce64f6 minifier: Use ident hashes for catch var and arguments (#26907) (Armano)
+- 57610b3 minifier: Use ident hashes in label comparison (#26887) (Armano)
+
 ## [0.151.0] - 2026-09-21
 
 ### 🐛 Bug Fixes

@@ -71,6 +71,7 @@ declare_oxc_lint!(
     NoDeprecatedEventsApi,
     vue,
     correctness,
+    recommended,
     version = "1.62.0",
     short_description = "Disallow using deprecated Events API (`$on`, `$off`, `$once`) in Vue.js 3.0.0+.",
 );

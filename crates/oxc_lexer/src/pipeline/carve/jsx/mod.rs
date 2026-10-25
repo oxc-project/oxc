@@ -8,7 +8,6 @@ use crate::pipeline::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
     },
-    tables::Tables,
     token_view,
 };
 
@@ -64,7 +63,6 @@ enum JFrameKind {
 /// so those bits are cleared there to keep `coalesce` and `keywords` from
 /// re-interpreting it.
 pub(super) unsafe fn carve_jsx(
-    t: &Tables,
     srcs: &[u8],
     n: usize,
     st: *mut u64,
@@ -195,7 +193,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                     }
                     b'/' => {
-                        i = lex_slash(t, src, srcs, n, st, kind, opch, word, ts, s, lanes);
+                        i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes);
                     }
                     b'<' => {
                         let c1 = if s + 1 < n { *src.add(s + 1) } else { 0 };
@@ -214,11 +212,9 @@ pub(super) unsafe fn carve_jsx(
                             i = s + 1;
                         } else if not_operator_position(
                             &token_view(
-                                t,
                                 src,
                                 st,
                                 opch,
-                                word,
                                 kind,
                                 n,
                                 ts,
@@ -247,7 +243,7 @@ pub(super) unsafe fn carve_jsx(
                                 mode = JMode::Tag;
                             } else if is_id_start(tc)
                                 && jsx_over_type_params(
-                                    t, src, srcs, st, opch, kind, word, n, s, tpos, ts, lanes,
+                                    src, srcs, st, opch, kind, word, n, s, tpos, ts, lanes,
                                 )
                             {
                                 // Element - unless `.tsx` says this is a
@@ -295,11 +291,9 @@ pub(super) unsafe fn carve_jsx(
                 let c = *src.add(s);
                 if c == b'<' {
                     let tokens = token_view(
-                        t,
                         src,
                         st,
                         opch,
-                        word,
                         kind,
                         n,
                         ts,

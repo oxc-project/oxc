@@ -1,7 +1,8 @@
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, BindingPattern, CallExpression, Expression, NewExpression, VariableDeclarator,
+        Argument, BindingPattern, CallExpression, Expression, NewExpression,
+        VariableDeclarationKind, VariableDeclarator,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -177,14 +178,14 @@ fn is_process_get_builtin_module_call(call: &CallExpression<'_>, modules: &[&str
     }
     matches!(
         &call.arguments[0],
-        Argument::StringLiteral(lit) if modules.contains(&lit.value.as_str())
+        Argument::StringLiteral(lit) if lit.value.as_str().is_some_and(|value| modules.contains(&value))
     )
 }
 
 fn is_parent_literal(argument: &Argument<'_>) -> bool {
     matches!(
         argument,
-        Argument::StringLiteral(lit) if lit.value.as_str() == "." || lit.value.as_str() == "./"
+        Argument::StringLiteral(lit) if lit.value == "." || lit.value == "./"
     )
 }
 
@@ -317,7 +318,7 @@ fn import_declaration_source<'a>(
     else {
         return None;
     };
-    Some(import_declaration.source.value.as_str())
+    import_declaration.source.value.as_str()
 }
 
 fn check_variable_declarator(
@@ -329,7 +330,9 @@ fn check_variable_declarator(
     ctx: &LintContext<'_>,
     visited: &mut FxHashSet<SymbolId>,
 ) -> bool {
-    if !variable_declaration_kind(variable_declarator, ctx).is_const() {
+    if !variable_declaration_kind(variable_declarator, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
+    {
         return false;
     }
 
@@ -392,7 +395,8 @@ fn iterate_problems_from_filename(
     }
 
     let AstKind::VariableDeclarator(parent) = ctx.nodes().kind(parent_id) else { return };
-    if !variable_declaration_kind(parent, ctx).is_const()
+    if !variable_declaration_kind(parent, ctx.nodes())
+        .is_some_and(VariableDeclarationKind::is_const)
         || parent.init.as_ref().is_none_or(|init| init.span() != node_span)
     {
         return;

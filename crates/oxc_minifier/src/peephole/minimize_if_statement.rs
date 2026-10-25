@@ -20,8 +20,13 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_statement_with(stmt, |stmt, ctx| {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                     let IfStatement { mut test, span, .. } = if_stmt.unbox();
-                    Self::remove_unused_expression(&mut test, ctx);
-                    Statement::new_expression_statement(span, test, ctx)
+                    if Self::remove_unused_expression(&mut test, ctx) {
+                        // `if (0) {}` => `;`
+                        ctx.drop_expression(&test);
+                        Statement::new_empty_statement(span, ctx)
+                    } else {
+                        Statement::new_expression_statement(span, test, ctx)
+                    }
                 });
                 return;
             }
@@ -31,13 +36,12 @@ impl<'a> PeepholeOptimizations {
                 ctx.replace_statement_with(stmt, |stmt, ctx| {
                     let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                     let IfStatement { test, span, .. } = if_stmt.unbox();
-                    let (op, a) = match test {
+                    let (op, a) = if Self::has_negated_result(&test) {
                         // `if (!a); else b();` => `a && b();`
-                        Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                            (LogicalOperator::And, unary_expr.unbox().argument)
-                        }
+                        (LogicalOperator::And, Self::minimize_not(span, test, ctx, true))
+                    } else {
                         // `if (a); else b();` => `a || b();`
-                        e => (LogicalOperator::Or, e),
+                        (LogicalOperator::Or, test)
                     };
                     let b = expr_stmt.unbox().expression;
                     let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
@@ -93,13 +97,12 @@ impl<'a> PeepholeOptimizations {
                 let Statement::IfStatement(if_stmt) = stmt else { unreachable!() };
                 let IfStatement { test, consequent, span, .. } = if_stmt.unbox();
                 let Statement::ExpressionStatement(b) = consequent else { unreachable!() };
-                let (op, a) = match test {
+                let (op, a) = if Self::has_negated_result(&test) {
                     // `if (!a) b();` => `a || b();`
-                    Expression::UnaryExpression(unary_expr) if unary_expr.operator.is_not() => {
-                        (LogicalOperator::Or, unary_expr.unbox().argument)
-                    }
+                    (LogicalOperator::Or, Self::minimize_not(span, test, ctx, true))
+                } else {
                     // `if (a)  b();` => `a && b();`
-                    e => (LogicalOperator::And, e),
+                    (LogicalOperator::And, test)
                 };
                 let b = b.unbox().expression;
                 let expr = Self::join_with_left_associative_op(span, op, a, b, ctx);
@@ -127,13 +130,9 @@ impl<'a> PeepholeOptimizations {
             && if2.alternate.is_some()
         {
             let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-            let new_consequent = Statement::new_block_statement_with_scope_id(
-                if_stmt.consequent.span(),
-                [if_stmt.consequent.take_in(ctx)],
-                scope_id,
-                ctx,
-            );
-            ctx.replace_statement(&mut if_stmt.consequent, new_consequent);
+            ctx.replace_statement_with(&mut if_stmt.consequent, |e, ctx| {
+                Statement::new_block_statement_with_scope_id(e.span(), [e], scope_id, ctx)
+            });
         }
     }
 

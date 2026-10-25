@@ -9,7 +9,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct NoIdenticalTitle;
 
-declare_oxc_lint!(NoIdenticalTitle, vitest, style, docs = DOCUMENTATION, version = "0.0.14",);
+declare_oxc_lint!(
+    NoIdenticalTitle,
+    vitest,
+    style,
+    recommended,
+    docs = DOCUMENTATION,
+    version = "0.0.14",
+);
 
 impl Rule for NoIdenticalTitle {
     fn run_once(&self, ctx: &LintContext) {

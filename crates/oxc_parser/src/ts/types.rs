@@ -1,6 +1,7 @@
-use oxc_allocator::{ArenaBox, ArenaVec, Dummy, GetAllocator};
+use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, SPAN};
+use oxc_str::Ident;
 use oxc_syntax::operator::UnaryOperator;
 
 use crate::{
@@ -134,7 +135,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         if matches!(kind, Kind::LBrack | Kind::LCurly) {
             let errors_count = self.errors_count();
-            self.parse_binding_pattern_kind();
+            self.parse_binding_pattern();
             if !self.has_fatal_error() && errors_count == self.errors_count() {
                 return true;
             }
@@ -259,24 +260,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     {
         let start = self.cur_start();
         let has_leading_operator = self.eat(kind);
-        /* hasLeadingOperator && parseFunctionOrConstructorTypeToError(isUnionType) ||*/
-        let mut ty = parse_constituent_type(self);
-        if self.at(kind) || has_leading_operator {
-            let mut types = ArenaVec::from_value_in(ty, self);
-            while self.eat(kind) {
-                let ty =
-                    /*parseFunctionOrConstructorTypeToError(isUnionType) || */
-                    parse_constituent_type(self);
-                types.push(ty);
-            }
-            let span = self.end_span(start);
-            ty = match kind {
-                Kind::Pipe => TSType::new_ts_union_type(span, types, self),
-                Kind::Amp => TSType::new_ts_intersection_type(span, types, self),
-                _ => unreachable!(),
-            };
+        let ty = parse_constituent_type(self);
+        if !self.at(kind) && !has_leading_operator {
+            return ty;
         }
-        ty
+        let mut types = ArenaVec::from_value_in(ty, self);
+        while self.eat(kind) {
+            let ty = parse_constituent_type(self);
+            types.push(ty);
+        }
+        let span = self.end_span(start);
+        match kind {
+            Kind::Pipe => TSType::new_ts_union_type(span, types, self),
+            Kind::Amp => TSType::new_ts_intersection_type(span, types, self),
+            _ => unreachable!(),
+        }
     }
 
     fn parse_type_operator_or_higher(&mut self) -> TSType<'a> {
@@ -969,39 +967,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LBrack);
 
-        let mut seen_rest_span: Option<Span> = None;
         let mut seen_optional_span: Option<Span> = None;
         let (elements, _) =
             self.parse_delimited_list(Kind::RBrack, Kind::Comma, opening_span, |me| {
                 let tuple = me.parse_tuple_element();
-                // check for array type, because unknown types can be destructed, example of valid code:
-                // type C<T extends unknown[]> = [...string[], ...T];
-                // example of invalid code:
-                // type C<T extends unknown[]> = [...string[], ...T[]];
-                if let TSTupleElement::TSRestType(rest) = &tuple
-                    && let Some(rest_type) = (match &rest.type_annotation {
-                        TSType::TSNamedTupleMember(named) => named.element_type.as_ts_type(),
-                        ty => Some(ty),
-                    })
-                    && match rest_type {
-                        TSType::TSArrayType(_) => true,
-                        // Check for `Array<...>` type
-                        TSType::TSTypeReference(ts_ref) => match &ts_ref.type_name {
-                            TSTypeName::IdentifierReference(id_ref) => id_ref.name == "Array",
-                            _ => false,
-                        },
-                        _ => false,
-                    }
-                {
-                    if let Some(seen_span) = seen_rest_span {
-                        me.error(diagnostics::rest_element_cannot_follow_another_rest_element(
-                            seen_span,
-                            tuple.span(),
-                        ));
-                    }
-                    seen_rest_span = Some(tuple.span());
-                }
-
                 if !match &tuple {
                     TSTupleElement::TSOptionalType(_) | TSTupleElement::TSRestType(_) => true,
                     TSTupleElement::TSNamedTupleMember(named) => named.optional,
@@ -1019,12 +988,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     TSTupleElement::TSNamedTupleMember(named) => named.optional,
                     _ => false,
                 } {
-                    if let Some(seen_rest_span) = seen_rest_span {
-                        me.error(diagnostics::optional_element_cannot_follow_rest_element(
-                            tuple.span(),
-                            seen_rest_span,
-                        ));
-                    }
                     seen_optional_span = Some(tuple.span());
                 }
 
@@ -1196,8 +1159,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if (!is_with && !is_assert) || self.cur_token().escaped() {
             self.error(diagnostics::ts_import_type_options_expected_with(key_span));
         }
-        // Use the actual string from the source (not a static string) to ensure it's in the arena
-        let key_name = self.ident(self.cur_string());
+        // Recover with an empty name for lone surrogates; the invalid key was diagnosed above.
+        let key_name = self.ident(if self.at(Kind::Str) {
+            self.cur_js_string().as_str().unwrap_or_default()
+        } else {
+            self.cur_string()
+        });
         let with_key_start = self.cur_start();
         self.bump_any();
         let with_key = IdentifierName::boxed(self.end_span(with_key_start), key_name, self);
@@ -1261,8 +1228,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
             let prop_start = self.cur_start();
 
-            // Check for computed property
-            if self.at(Kind::LBrack) {
+            let (key, value, computed) = if self.at(Kind::LBrack) {
                 let bracket_span = self.cur_token().span();
                 self.error(diagnostics::ts_import_type_options_invalid_key(bracket_span));
                 // Parse as computed to recover
@@ -1272,31 +1238,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.expect(Kind::Colon);
                 let value = self.parse_assignment_expression_or_higher();
                 let key = PropertyKey::new_string_literal(bracket_span, "", None, self);
-                let property = ObjectPropertyKind::new_object_property(
-                    self.end_span(prop_start),
-                    PropertyKind::Init,
-                    key,
-                    value,
-                    false,
-                    false,
-                    true, /* computed */
-                    self,
-                );
-                properties.push(property);
-                continue;
-            }
-
-            // Parse identifier or string key
-            let key = if self.at(Kind::Str) {
-                let string_literal = self.parse_literal_string();
-                PropertyKey::StringLiteral(self.alloc(string_literal))
+                (key, value, true)
             } else {
-                let ident = self.parse_identifier_name();
-                PropertyKey::StaticIdentifier(self.alloc(ident))
+                let key = if self.at(Kind::Str) {
+                    let string_literal = self.parse_literal_string();
+                    PropertyKey::StringLiteral(self.alloc(string_literal))
+                } else {
+                    let ident = self.parse_identifier_name();
+                    PropertyKey::StaticIdentifier(self.alloc(ident))
+                };
+                self.expect(Kind::Colon);
+                let value = self.parse_assignment_expression_or_higher();
+                (key, value, false)
             };
-
-            self.expect(Kind::Colon);
-            let value = self.parse_assignment_expression_or_higher();
 
             let property = ObjectPropertyKind::new_object_property(
                 self.end_span(prop_start),
@@ -1305,7 +1259,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 value,
                 false,
                 false,
-                false,
+                computed,
                 self,
             );
             properties.push(property);
@@ -1527,7 +1481,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut parameter_count = 0;
         let mut comma_start = None;
         let parameter = if self.at(Kind::RBrack) || self.has_fatal_error() {
-            TSIndexSignatureName::dummy(self.allocator())
+            let ty = TSType::new_ts_any_keyword(SPAN, self);
+            let annotation = TSTypeAnnotation::boxed(SPAN, ty, self);
+            TSIndexSignatureName::new(SPAN, Ident::empty(), annotation, self)
         } else {
             parameter_count = 1;
             let parameter = self.parse_ts_index_signature_name();
@@ -1598,7 +1554,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return;
         }
         // Didn't have a comma.  We must have a (possible ASI) semicolon.
-        self.bump(Kind::Semicolon);
+        self.asi();
     }
 
     fn parse_ts_index_signature_name(&mut self) -> TSIndexSignatureName<'a> {

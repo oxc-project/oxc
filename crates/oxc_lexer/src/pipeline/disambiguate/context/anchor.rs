@@ -1,8 +1,3 @@
-//! Anchors: tokens whose context is certain from their neighbours alone, where a bounded walk
-//! may start. Statement keywords that are not property names, members or JSX attributes; a
-//! `function` or `class` whose token before says declaration or expression; the `(` whose group
-//! holds the query when the token before makes it an expression's.
-
 use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use super::*;
@@ -16,11 +11,8 @@ use crate::pipeline::disambiguate::{
 pub(super) enum Anchor {
     /// A statement starts at the token here.
     Stmt(usize),
-    /// An operand starts at the token here: an expression-position `function` / `class`, or the
-    /// `(` whose group holds the query.
+    /// An operand starts at the paren here, whose group holds the query.
     Expr(usize),
-    /// The bounded walk already covers this point and continues from where it stopped.
-    Continue { semi: u32, brace: u32 },
 }
 
 /// Is the word at `p` an attribute inside a JSX opening tag? Scans back over attribute names,
@@ -42,13 +34,7 @@ fn in_jsx_tag(tokens: &Tokens, p: usize) -> bool {
             match tokens.src[w] {
                 b'=' => {}
                 b'}' | b')' | b']' => {
-                    let c = tokens.src[w];
-                    let open = match c {
-                        b')' => b'(',
-                        b']' => b'[',
-                        _ => b'{',
-                    };
-                    let Some(o) = tokens.match_delim_back(w, open, c) else {
+                    let Some(o) = tokens.match_delim_back(w) else {
                         return false;
                     };
                     q = tokens.prev_sig(o);
@@ -91,111 +77,6 @@ fn stmt_boundary(tokens: &Tokens, p: usize, prev: Prev) -> bool {
     }
 }
 
-/// `function` / `class` at `at` (`async` for `async function`): a declaration or an expression,
-/// read off the token before. `named` says a name follows (a label's `:` then precedes a
-/// declaration, a property's an expression; only a name allows ASI to start a declaration).
-fn fn_class_anchor(
-    tokens: &Tokens,
-    at: usize,
-    prev: Prev,
-    class: bool,
-    named: bool,
-) -> Option<Anchor> {
-    let broken = |q: usize| {
-        let e = tokens.next_start(q + 1);
-        tokens.line_break_between(e, at)
-    };
-    let stmt = Some(Anchor::Stmt(at));
-    let expr = Some(Anchor::Expr(at));
-    match prev {
-        Prev::None => stmt,
-        Prev::Op(q, c) => match c {
-            b';' | b'{' => stmt,
-            b'}' => {
-                if in_jsx_tag(tokens, at) {
-                    None
-                } else {
-                    stmt
-                }
-            }
-            // `if (x) function f() {}`; a decorator's `)` before a class expression.
-            b')' => {
-                if !class || (named && broken(q)) {
-                    stmt
-                } else {
-                    None
-                }
-            }
-            b']' => {
-                if named && broken(q) {
-                    stmt
-                } else {
-                    None
-                }
-            }
-            b'>' if q > 0 && tokens.src[q - 1] == b'=' => expr,
-            // A value or type ended on the previous line.
-            b'>' => {
-                if named && broken(q) {
-                    stmt
-                } else {
-                    expr
-                }
-            }
-            b'+' | b'-' if tokens.src[q + 1] == c || (q > 0 && tokens.src[q - 1] == c) => {
-                if named && broken(q) { stmt } else { None }
-            }
-            b':' => {
-                if named {
-                    None
-                } else {
-                    expr
-                }
-            }
-            _ => expr,
-        },
-        Prev::Word(_, tk!(KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)) => stmt,
-        // Restricted productions: a line break ends the statement.
-        Prev::Word(q, tk!(KwReturn | KwYield)) => {
-            if named && broken(q) {
-                stmt
-            } else {
-                expr
-            }
-        }
-        #[rustfmt::skip]
-        Prev::Word(
-            _,
-            tk!(KwTypeof | KwThrow | KwAwait | KwVoid | KwDelete | KwNew | KwIn | KwOf | KwInstanceof | KwCase)
-        ) => expr,
-        // A heritage expression: what follows it is the enclosing class's body.
-        Prev::Word(_, tk!(KwExtends)) => None,
-        Prev::Word(q, _) | Prev::Other(q) => {
-            if named && broken(q) {
-                stmt
-            } else {
-                None
-            }
-        }
-    }
-}
-
-/// `function` at `at` (or the `async` before it), with the token after `function` at `f`: a named
-/// function is a declaration or an expression by its context; an anonymous one is an expression,
-/// or a method named `function`, which is no anchor.
-fn function_anchor(tokens: &Tokens, at: usize, prev: Prev, f: Peek) -> Option<Anchor> {
-    if f.kind == tk!(Ident) || (f.kind >= OP_KIND_BASE && f.byte == b'*') {
-        fn_class_anchor(tokens, at, prev, false, true)
-    } else if f.kind >= OP_KIND_BASE && f.byte == b'(' {
-        match fn_class_anchor(tokens, at, prev, false, false) {
-            Some(Anchor::Expr(a)) => Some(Anchor::Expr(a)),
-            _ => None,
-        }
-    } else {
-        None
-    }
-}
-
 /// Is the word at `p` an anchor? Also its keyword code (0: a plain name).
 pub(super) fn anchor_at(tokens: &Tokens, p: usize) -> (u8, Option<Anchor>) {
     let e = tokens.next_start(p + 1);
@@ -210,7 +91,7 @@ fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
     }
     let prev = tokens.prev_token(p);
     // A property name.
-    if prev.is_member_dot(tokens.src) {
+    if prev.is_member_dot(tokens) {
         return None;
     }
     let f = tokens.peek(e);
@@ -220,22 +101,24 @@ fn anchor_of(tokens: &Tokens, p: usize, e: usize, kw: u8) -> Option<Anchor> {
     let f_kw = if f.kind == tk!(Ident) { tokens.ident_kw(f.pos) } else { 0 };
     let same_line = !tokens.line_break_between(e, f.pos);
     match kw {
-        tk!(KwFunction) => function_anchor(tokens, p, prev, f),
-        tk!(KwClass) => {
-            if f.kind == tk!(Ident) {
-                fn_class_anchor(tokens, p, prev, true, true)
-            } else if f.kind >= OP_KIND_BASE && matches!(f.byte, b'{' | b'<') {
-                fn_class_anchor(tokens, p, prev, true, false)
-            } else {
-                None
-            }
-        }
-        tk!(KwAsync) => {
-            if f_kw == tk!(KwFunction) && same_line {
-                function_anchor(tokens, p, prev, tokens.peek(f.pos + 1))
-            } else {
-                None
-            }
+        // A named function or class where only a declaration can start.
+        tk!(KwFunction | KwClass | KwAsync) => {
+            let head = match kw {
+                tk!(KwAsync) if f_kw == tk!(KwFunction) && same_line => tokens.peek(f.pos + 1),
+                tk!(KwAsync) => return None,
+                _ => f,
+            };
+            let named = head.kind == tk!(Ident)
+                || (kw != tk!(KwClass) && head.kind >= OP_KIND_BASE && head.byte == b'*');
+            let start = match prev {
+                Prev::None | Prev::Op(_, b';' | b'{') => true,
+                Prev::Op(_, b'}') => !in_jsx_tag(tokens, p),
+                Prev::Word(_, w) => {
+                    matches_tk!(w, KwElse | KwDo | KwExport | KwDefault | KwDeclare | KwAbstract)
+                }
+                _ => false,
+            };
+            (named && start).then_some(Anchor::Stmt(p))
         }
         tk!(
             KwVar | KwConst | KwReturn | KwThrow | KwCase | KwExport | KwImport | KwEnum | KwElse
@@ -312,22 +195,6 @@ fn second_follower(tokens: &Tokens, f: usize, ops: &[u8]) -> bool {
 fn second_word(tokens: &Tokens, f: usize) -> u8 {
     let s = tokens.peek(f + 1);
     if s.kind == tk!(Ident) { tokens.ident_kw(s.pos) } else { 0 }
-}
-
-/// After the `}` at `c`: the position of a token that must start a statement or member there
-/// (a name, string, number, private name or decorator; not `as` / `satisfies` / `in` /
-/// `instanceof`, which continue a value), or None.
-pub(super) fn brace_boundary(tokens: &Tokens, c: usize) -> Option<usize> {
-    let f = tokens.peek(c + 1);
-    let ok = match f.kind {
-        tk!(Ident) => !matches_tk!(
-            tokens.ident_kw(f.pos),
-            KwAs | KwSatisfies | KwIn | KwInstanceof | KwOf | KwImplements | KwExtends | KwFrom
-        ),
-        tk!(PrivateIdent | String | Number | BigInt) => true,
-        _ => f.kind >= OP_KIND_BASE && f.byte == b'@',
-    };
-    ok.then_some(f.pos)
 }
 
 /// The `(` at `p` holds the query: where the walk starts when the token before makes the paren an

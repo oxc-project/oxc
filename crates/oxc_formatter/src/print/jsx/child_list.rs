@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, FormatElement, ScratchBuffer};
+use oxc_formatter_core::{FormatElement, ScratchBuffer};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -34,7 +34,7 @@ impl FormatJsxChildList {
 
     pub fn fmt_children<'a, 'b>(
         &self,
-        children: &'b AstNode<'a, ArenaVec<'a, JSXChild<'a>>>,
+        children: &'b AstNode<'b, 'a, ArenaVec<'a, JSXChild<'a>>>,
         f: &mut JsFormatter<'_, 'a>,
     ) -> FormatChildrenResult<'a, 'b> {
         // Use Biome's exact approach - no need for jsx_split_children at this stage
@@ -371,7 +371,7 @@ impl FormatJsxChildList {
     }
 
     fn children_meta(
-        children: &AstNode<'_, ArenaVec<'_, JSXChild<'_>>>,
+        children: &AstNode<'_, '_, ArenaVec<'_, JSXChild<'_>>>,
         comments: &Comments<'_>,
     ) -> ChildrenMeta {
         let mut meta = ChildrenMeta::default();
@@ -563,7 +563,7 @@ enum MultilineLayout {
 struct MultilineBuilder<'a> {
     layout: MultilineLayout,
     /// Heap accumulator; the flat and multiline builders write alternately,
-    /// so each owns its own (see [`ScratchBuffer::writer`]).
+    /// so each owns its own (see [`ScratchBuffer::write`]).
     result: ScratchBuffer<'a>,
 }
 
@@ -607,8 +607,7 @@ impl<'a> MultilineBuilder<'a> {
         separator: Option<&dyn Format<'a, JsFormatContext<'a>>>,
         f: &mut JsFormatter<'_, 'a>,
     ) {
-        let mut buffer = self.result.writer(f.state_mut());
-        match self.layout {
+        self.result.write(f, |buffer| match self.layout {
             MultilineLayout::Fill => {
                 // Make sure that the separator and content only ever write a single element
                 buffer.write_element(FormatElement::Tag(Tag::StartEntry));
@@ -624,7 +623,7 @@ impl<'a> MultilineBuilder<'a> {
             MultilineLayout::NoFill => {
                 write!(buffer, [content, separator]);
             }
-        }
+        });
     }
 
     /// Writes a separator into the last entry if it is an entry.
@@ -720,8 +719,7 @@ impl<'a> FlatBuilder<'a> {
             return;
         }
 
-        let mut buffer = self.result.writer(f.state_mut());
-        write!(buffer, [content]);
+        self.result.write(f, |buffer| write!(buffer, [content]));
     }
 
     fn disable(&mut self) {

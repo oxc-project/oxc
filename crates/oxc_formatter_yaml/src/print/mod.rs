@@ -1,5 +1,5 @@
 use oxc_formatter_core::{
-    Buffer, Format, Formatter,
+    Format, Formatter,
     builders::{FormatWith, group, hard_line_break, space, text, token},
     write,
 };
@@ -57,6 +57,18 @@ pub fn column_of(source: &str, offset: u32) -> u32 {
     let count =
         source.as_bytes()[..offset as usize].iter().rev().take_while(|&&b| b != b'\n').count();
     u32::try_from(count).unwrap_or(u32::MAX)
+}
+
+/// Whether `text` starts with a document marker: `---`/`...` followed by a blank or the end.
+/// At column 0 it would be read as one, see AGENTS.md "Line starts".
+pub fn starts_with_document_marker(text: &str) -> bool {
+    (text.starts_with("---") || text.starts_with("..."))
+        && text.as_bytes().get(3).is_none_or(|b| matches!(b, b' ' | b'\t' | b'\n'))
+}
+
+/// [starts_with_document_marker] for the source text from `offset`.
+pub fn source_starts_with_document_marker(offset: u32, f: &YamlFormatter<'_, '_>) -> bool {
+    starts_with_document_marker(&f.context().source_text().as_str()[offset as usize..])
 }
 
 /// Emits a node's properties (anchor/tag) in their source order.

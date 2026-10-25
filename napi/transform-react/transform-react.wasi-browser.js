@@ -1341,6 +1341,36 @@ function __rollbackWasiInitialization() {
   return __rollbackWasmEnvForWasiInitialization()
 }
 
+// A view of the addon's crash flag, one word of the shared wasm memory, for the
+// pool workers: they raise it when their wasm thread dies, and the shutdown
+// waits inside the cleanup calls on this thread then trap instead of waiting on
+// the dead thread for good. Undefined for an addon built with an older napi.
+let __wasiAddonCrashFlag
+
+function __captureWasiAddonCrashFlag(instance) {
+  try {
+    const getAddress = instance.exports.napi_wasm_thread_crash_flag_address
+    if (typeof getAddress !== 'function') {
+      return
+    }
+    const address = getAddress() >>> 0
+    const buffer = __sharedMemory.buffer
+    if (address === 0 || address % 4 !== 0 || address + 4 > buffer.byteLength) {
+      return
+    }
+    __wasiAddonCrashFlag = new Int32Array(buffer, address, 1)
+  } catch {}
+}
+
+function __shareWasiAddonCrashFlag(worker) {
+  if (__wasiAddonCrashFlag === undefined) {
+    return
+  }
+  try {
+    worker.postMessage({ __napiRsAddonCrashFlag: __wasiAddonCrashFlag })
+  } catch {}
+}
+
 let __wasiModule
 let __napiModule
 
@@ -1371,6 +1401,7 @@ try {
         type: 'module',
       })
       __wasiWorkers.add(worker)
+      __shareWasiAddonCrashFlag(worker)
 
 
       return worker
@@ -1386,6 +1417,10 @@ try {
     },
     beforeInit({ instance }) {
       __napiInstance = instance
+      __captureWasiAddonCrashFlag(instance)
+      for (const worker of __wasiWorkers) {
+        __shareWasiAddonCrashFlag(worker)
+      }
       for (const name of Object.keys(instance.exports)) {
         if (name.startsWith('__napi_register__')) {
           instance.exports[name]()

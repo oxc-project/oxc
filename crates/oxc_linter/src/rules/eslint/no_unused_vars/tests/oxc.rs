@@ -247,6 +247,24 @@ fn test_vars_self_use_js() {
 }
 
 #[test]
+fn discarded_instance_initializers() {
+    let pass = vec![
+        "let f = () => 0; (class { static field = f() }, 0);",
+        "let f = () => 0; (class { [f()] = 0 }, 0);",
+        "let f = () => 0; (class { static accessor field = f() }, 0);",
+        "let f = () => 0; (class { accessor [f()] = 0 }, 0);",
+    ];
+    let fail = vec![
+        "let C; (C = class { field = new C() }, 0);",
+        "let C; (C = class { accessor field = new C() }, 0);",
+    ];
+
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
 fn test_vars_discarded_reads() {
     let pass = vec![
         // https://github.com/oxc-project/oxc/pull/4445#issuecomment-2254122889
@@ -307,6 +325,18 @@ fn test_vars_discarded_reads() {
                 <button onClick={() => (onDismiss?.(), remove())}>x</button>
             );
         };",
+        "let a = (v) => v; module.exports = (x, y) => (x ? a(y) : 0, y);",
+        "let a = (v) => v; module.exports = (x, y) => (x ? 0 : a(y), y);",
+        "let a = (v) => v; module.exports = (x, y) => (x && a(y), y);",
+        "let a = (v) => v; module.exports = (x, y) => (x || a(y), y);",
+        "let a = (v) => v; module.exports = (x, y) => (x ?? a(y), y);",
+        "module.exports = (x, y, a) => (x ? a(y) : 0, y);",
+        "module.exports = (x, y, a) => (x && a(y), y);",
+        "module.exports = (x, y, a) => (x ? new a(y) : 0, y);",
+        "module.exports = (x, y, a) => (x ? a?.(y) : 0, y);",
+        "module.exports = (x, y, a) => (x ? (0, a)(y) : 0, y);",
+        "module.exports = (x, y, a) => (x ? a((y, 0)) : 0, y);",
+        "module.exports = (x, y, a) => (x ? (a(y), 0) : 0, y);",
     ];
 
     let fail = vec![
@@ -1929,17 +1959,6 @@ fn test_ambient_export_modifiers() {
         .test();
 }
 
-// #[test]
-// fn test_template() {
-//     let pass = vec![];
-
-//     let fail = vec![];
-
-//     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
-//         .with_snapshot_suffix("<replace>")
-//         .test_and_snapshot();
-// }
-
 #[test]
 fn test_remove_array_element_before_rest() {
     let fix = vec![(
@@ -2079,6 +2098,50 @@ fn ignore_patterns_in_array_rest() {
         ("const [..._rest] = items;", array_options.clone()),
         ("const [...[rest]] = items;", array_options),
         ("const [...{length}] = items;", object_options),
+    ];
+    Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
+        .intentionally_allow_no_fix_tests()
+        .test();
+}
+
+#[test]
+fn disabled_arguments_do_not_report_used_ignore_patterns() {
+    let options = Some(json!([{
+        "args": "none", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+    }]));
+    let pass = vec![
+        ("function f(_a) { return _a; } f();", options.clone()),
+        ("function f(..._args) { return _args; } f();", options.clone()),
+        ("function f({_a}) { return _a; } f();", options.clone()),
+        ("function f([_a]) { return _a; } f();", options),
+    ];
+    let fail = vec![
+        (
+            "function f([_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "destructuredArrayIgnorePattern": "^_",
+                "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(...[_a]) { return _a; } f();",
+            Some(json!([{
+                "args": "none", "argsIgnorePattern": "^_",
+                "destructuredArrayIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "function f(_a) { return _a; } f();",
+            Some(json!([{
+                "args": "all", "argsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
+        (
+            "const _a = 1; use(_a);",
+            Some(json!([{
+                "args": "none", "varsIgnorePattern": "^_", "reportUsedIgnorePattern": true
+            }])),
+        ),
     ];
     Tester::new(NoUnusedVars::NAME, NoUnusedVars::PLUGIN, pass, fail)
         .intentionally_allow_no_fix_tests()

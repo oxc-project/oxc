@@ -1,11 +1,11 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, RemoveSoftLinesBuffer, SourceText, format_element};
+use oxc_formatter_core::{FormatElement, format_element};
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format, FormatTrailingCommas, TrailingSeparator,
-    ast_nodes::{AstNode, AstNodes},
+    Format, FormatTrailingCommas, TrailingSeparator,
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     format_args,
     formatter::{
         Comments, JoinBuilderJsExt as _, JsFormatContext, JsFormatter, JsFormatterExt as _,
@@ -19,12 +19,14 @@ use crate::{
         FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
         array_element_list::can_concisely_print_array_list,
         arrow_function_expression::{
-            FunctionCacheMode, GroupedCallArgumentLayout, is_huggable_html_embed,
+            FunctionCacheMode, GroupedCallArgumentLayout,
             is_multiline_template_starting_on_same_line,
         },
+        embed_hug,
         function::FormatFunction,
         parameters::has_only_simple_parameters,
     },
+    source_text::line_breaks,
     utils::{
         call_expression::is_test_call_expression,
         expression::as_call_expression_without_chain_wrappers, is_long_curried_call,
@@ -33,7 +35,7 @@ use crate::{
     write,
 };
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let l_paren_token = "(";
         let r_paren_token = ")";
@@ -61,6 +63,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                 None
             };
 
+        let call = call_expression.map(AsRef::as_ref);
+
         if is_simple_module_import
             || call_expression.is_some_and(|call| {
                 is_commonjs_or_amd_call(self, call, f)
@@ -73,11 +77,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
                                     | Argument::TaggedTemplateExpression(_)
                             )
                         ))
-                        && is_test_call_expression(call))
+                        && is_test_call_expression(call, f.comments()))
             })
-            || is_multiline_template_only_args(self, f.source_text())
-            || is_graphql_call_with_single_template_arg(self, call_expression)
-            || is_huggable_html_embed_single_arg(self, f)
+            || is_verbatim_multiline_template_sole_arg(arguments, call, f)
             || is_react_hook_with_deps_array(self, f.comments())
         {
             return write!(
@@ -101,12 +103,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
         let has_empty_line = arguments.windows(2).any(|window| {
             let (cur_arg, next_arg) = (&window[0], &window[1]);
 
-            // Count newlines between arguments, short-circuiting at 2 for performance
-            // Check if there are at least two newlines between arguments
-            f.source_text()
-                .bytes_range(cur_arg.span().end, next_arg.span().start)
-                .iter()
-                .filter(|&&b| b == b'\n')
+            // Check if there are at least two line breaks between arguments
+            line_breaks(f.source_text().slice_range(cur_arg.span().end, next_arg.span().start))
                 .nth(1)
                 .is_some()
         });
@@ -118,7 +116,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Argument<'
             return format_all_args_broken_out(self, true, f);
         }
 
-        if let Some(group_layout) = arguments_grouped_layout(self, f) {
+        // A sole embedded template expands like a last argument (unlike a verbatim one)
+        let group_layout = match arguments.as_slice() {
+            [argument]
+                if argument.as_expression().and_then(|expr| embed_hug(expr, call, f))
+                    == Some(true) =>
+            {
+                Some(GroupedCallArgumentLayout::GroupedLastArgument)
+            }
+            _ => arguments_grouped_layout(self, f),
+        };
+        if let Some(group_layout) = group_layout {
             write_grouped_arguments(self, group_layout, f);
         } else if call_expression.is_some_and(|call| is_long_curried_call(call)) {
             let trailing_operator = FormatTrailingCommas::All.trailing_separator(f.options());
@@ -207,14 +215,14 @@ pub fn is_function_composition_args(args: &[Argument<'_>]) -> bool {
     false
 }
 
-fn format_all_elements_broken_out<'a, 'b>(
-    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+fn format_all_elements_broken_out<'a>(
+    node: &AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>>,
     elements: impl Iterator<Item = (Option<FormatElement<'a>>, usize)>,
     expand: bool,
-    mut buffer: impl Buffer<'a, JsFormatContext<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     write!(
-        buffer,
+        f,
         [group(&format_args!(
             "(",
             soft_block_indent(&format_once(move |f| {
@@ -243,14 +251,14 @@ fn format_all_elements_broken_out<'a, 'b>(
     );
 }
 
-fn format_all_args_broken_out<'a, 'b>(
-    node: &'b AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+fn format_all_args_broken_out<'a>(
+    node: &AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>>,
     expand: bool,
-    mut buffer: impl Buffer<'a, JsFormatContext<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
 ) {
     let last_index = node.len() - 1;
     write!(
-        buffer,
+        f,
         [group(&format_args!(
             "(",
             soft_block_indent(&format_with(move |f| {
@@ -347,7 +355,7 @@ fn should_group_first_argument(
         || f.comments()
             .comments_in_range(first_span.end, second.span().start)
             .iter()
-            .any(|c| c.followed_by_newline())
+            .any(Comment::followed_by_newline)
     {
         return false;
     }
@@ -602,7 +610,7 @@ fn can_group_arrow_function_expression_argument(
 }
 
 fn write_grouped_arguments<'a>(
-    node: &AstNode<'a, ArenaVec<'a, Argument<'a>>>,
+    node: &AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>>,
     group_layout: GroupedCallArgumentLayout,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -628,8 +636,8 @@ fn write_grouped_arguments<'a>(
 
             let interned = f.intern(&format_once(|f| {
                 if is_grouped_argument {
-                    match argument.as_ast_nodes() {
-                        AstNodes::Function(function)
+                    match &argument.as_kind() {
+                        AstNodeKind::Function(function)
                             if !group_layout.is_grouped_first()
                                 && (!only_one_argument
                                     || function_has_only_simple_parameters(function)) =>
@@ -637,7 +645,7 @@ fn write_grouped_arguments<'a>(
                             has_cached = true;
                             return write!(f, [FormatFunction::new_cached(function), comma]);
                         }
-                        AstNodes::ArrowFunctionExpression(arrow) => {
+                        AstNodeKind::ArrowFunctionExpression(arrow) => {
                             has_cached = true;
                             return write!(
                                 f,
@@ -675,8 +683,8 @@ fn write_grouped_arguments<'a>(
     }
 
     // First write the most expanded variant because it needs `arguments`.
-    let most_expanded = best_fitting_variant(f.state_mut(), |buffer| {
-        format_all_elements_broken_out(node, elements.iter().cloned(), true, buffer);
+    let most_expanded = best_fitting_variant(f, |f| {
+        format_all_elements_broken_out(node, elements.iter().cloned(), true, f);
     });
 
     // Now reformat the first or last argument if they happen to be a function or arrow function expression.
@@ -697,9 +705,9 @@ fn write_grouped_arguments<'a>(
             }
         };
 
-        let function_params = match argument.as_ast_nodes() {
-            AstNodes::ArrowFunctionExpression(arrow) => Some(&arrow.params),
-            AstNodes::Function(function) => Some(&function.params),
+        let function_params = match argument.as_ref() {
+            Argument::ArrowFunctionExpression(arrow) => Some(&arrow.params),
+            Argument::FunctionExpression(function) => Some(&function.params),
             _ => None,
         };
 
@@ -721,13 +729,13 @@ fn write_grouped_arguments<'a>(
             // For decorated function patterns like `decorator("name")((props: {...}) => {...})`,
             // the arrow function should be kept hugged even if its signature breaks.
             // <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L241-L292>
-            let is_decorated = is_decorated_function(argument);
+            let is_decorated = is_decorated_function(&argument);
 
             // Remove soft lines from the cached parameters and check if they would break.
             // If they break even without soft lines, we need to use the expanded layout.
             // However, decorated functions are allowed to break while staying hugged.
             let interned = f.intern(&format_once(|f| {
-                RemoveSoftLinesBuffer::new(f).write_element(cached_element);
+                f.remove_soft_lines(|f| f.write_element(cached_element));
             }));
 
             if let Some(interned) = interned {
@@ -747,16 +755,16 @@ fn write_grouped_arguments<'a>(
 
         *grouped_element = if group_layout.is_grouped_first() {
             f.intern(&format_with(|f| {
-                FormatGroupedFirstArgument { argument }.fmt(f);
+                FormatGroupedFirstArgument { argument: &argument }.fmt(f);
                 write!(f, (last_index != 0).then_some(","));
             }))
         } else {
-            f.intern(&FormatGroupedLastArgument { argument, is_only: only_one_argument })
+            f.intern(&FormatGroupedLastArgument { argument: &argument, is_only: only_one_argument })
         }
     }
 
     // Write the second variant that forces the group of the first/last argument to expand.
-    let middle_variant = best_fitting_variant(f.state_mut(), |buffer| {
+    let middle_variant = best_fitting_variant(f, |buffer| {
         write!(
             buffer,
             [
@@ -797,7 +805,7 @@ fn write_grouped_arguments<'a>(
         ArenaVec::from_array_in([middle_variant, most_expanded], f)
     } else {
         // Write the most flat variant with the first or last argument grouped.
-        let most_flat = best_fitting_variant(f.state_mut(), |buffer| {
+        let most_flat = best_fitting_variant(f, |buffer| {
             write!(
                 buffer,
                 [
@@ -835,15 +843,15 @@ fn write_grouped_arguments<'a>(
 
 /// Helper for formatting the first grouped argument (see [should_group_first_argument]).
 struct FormatGroupedFirstArgument<'a, 'b> {
-    argument: &'b AstNode<'a, Argument<'a>>,
+    argument: &'b AstNode<'b, 'a, Argument<'a>>,
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedFirstArgument<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        match self.argument.as_ast_nodes() {
+        match &self.argument.as_kind() {
             // Call the arrow function formatting but explicitly passes the call argument layout down
             // so that the arrow function formatting removes any soft line breaks between parameters and the return type.
-            AstNodes::ArrowFunctionExpression(arrow) => {
+            AstNodeKind::ArrowFunctionExpression(arrow) => {
                 FormatJsArrowFunctionExpression::new_with_options(
                     arrow,
                     FormatJsArrowFunctionExpressionOptions {
@@ -864,7 +872,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedFirstArgument<'a, '_> 
 /// Helper for formatting the last grouped argument (see [should_group_last_argument]).
 struct FormatGroupedLastArgument<'a, 'b> {
     /// The argument to format
-    argument: &'b AstNode<'a, Argument<'a>>,
+    argument: &'b AstNode<'b, 'a, Argument<'a>>,
     /// Is this the only argument in the arguments list
     is_only: bool,
 }
@@ -874,13 +882,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatGroupedLastArgument<'a, '_> {
         // For function and arrow expressions, re-format the node and pass the argument that it is the
         // last grouped argument. This changes the formatting of parameters, type parameters, and return types
         // to remove any soft line breaks.
-        match self.argument.as_ast_nodes() {
-            AstNodes::Function(function)
+        match &self.argument.as_kind() {
+            AstNodeKind::Function(function)
                 if !self.is_only || function_has_only_simple_parameters(function) =>
             {
                 FormatFunction::new_cached(function).fmt(f);
             }
-            AstNodes::ArrowFunctionExpression(arrow) => {
+            AstNodeKind::ArrowFunctionExpression(arrow) => {
                 FormatJsArrowFunctionExpression::new_with_options(
                     arrow,
                     FormatJsArrowFunctionExpressionOptions {
@@ -902,7 +910,7 @@ fn function_has_only_simple_parameters(function: &Function<'_>) -> bool {
 
 /// Tests if this a simple module import like `import("module-name")` or `require("module-name")`.
 pub fn is_simple_module_import(
-    arguments: &AstNode<'_, ArenaVec<'_, Argument<'_>>>,
+    arguments: &AstNode<'_, '_, ArenaVec<'_, Argument<'_>>>,
     comments: &Comments,
 ) -> bool {
     if arguments.len() != 1 {
@@ -951,7 +959,7 @@ pub fn is_simple_module_import(
 /// Tests if amd's [`define`](https://github.com/amdjs/amdjs-api/wiki/AMD#define-function-) function.
 fn is_commonjs_or_amd_call(
     arguments: &[Argument<'_>],
-    call: &AstNode<'_, CallExpression<'_>>,
+    call: &AstNode<'_, '_, CallExpression<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     let Expression::Identifier(ident) = &call.callee else {
@@ -1014,38 +1022,17 @@ fn is_commonjs_or_amd_call(
     }
 }
 
-/// Returns `true` if `arguments` contains a single [multiline template literal argument that starts on its own ](is_multiline_template_starting_on_same_line).
-fn is_multiline_template_only_args(arguments: &[Argument], source_text: SourceText) -> bool {
-    if arguments.len() != 1 {
-        return false;
-    }
-
-    arguments
-        .first()
-        .unwrap()
-        .as_expression()
-        .is_some_and(|expr| is_multiline_template_starting_on_same_line(expr, source_text))
-}
-
-/// Returns `true` if `arguments` is a single template literal inside a `graphql()` call.
-/// This triggers the "hugging" layout where the backtick is adjacent to `(`.
-fn is_graphql_call_with_single_template_arg<'a>(
+/// Returns `true` for a sole template argument printed verbatim (not embedded)
+/// that [starts on the same line and spans lines](is_multiline_template_starting_on_same_line).
+pub fn is_verbatim_multiline_template_sole_arg(
     arguments: &[Argument],
-    call: Option<&&AstNode<'a, CallExpression<'a>>>,
+    call: Option<&CallExpression>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
-    arguments.len() == 1
-        && matches!(arguments.first(), Some(Argument::TemplateLiteral(_)))
-        && call.is_some_and(
-            |c| matches!(&c.callee, Expression::Identifier(id) if id.name.as_str() == "graphql"),
-        )
-}
-
-/// Returns `true` if the single argument is an HTML embed template that should be hugged.
-fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &JsFormatter<'_, '_>) -> bool {
-    if arguments.len() != 1 {
-        return false;
-    }
-    arguments.first().unwrap().as_expression().is_some_and(|expr| is_huggable_html_embed(expr, f))
+    matches!(arguments, [argument] if argument.as_expression().is_some_and(|expr| {
+        embed_hug(expr, call, f).is_none()
+            && is_multiline_template_starting_on_same_line(expr, f.source_text())
+    }))
 }
 
 /// This function is used to check if the code is a hook-like code:
@@ -1054,7 +1041,7 @@ fn is_huggable_html_embed_single_arg(arguments: &[Argument], f: &JsFormatter<'_,
 /// useMemo(() => {}, [])
 /// ```
 fn is_react_hook_with_deps_array(
-    arguments: &AstNode<'_, ArenaVec<'_, Argument<'_>>>,
+    arguments: &AstNode<'_, '_, ArenaVec<'_, Argument<'_>>>,
     comments: &Comments,
 ) -> bool {
     if arguments.len() > 3 || arguments.len() < 2 {
@@ -1108,9 +1095,9 @@ fn is_react_hook_with_deps_array(
 /// ```
 ///
 /// <https://github.com/prettier/prettier/blob/0273e33fc691e28e4ab3f3c8ee86918b65cf823d/src/language-js/print/function-parameters.js#L240-L291>
-fn is_decorated_function(argument: &AstNode<'_, Argument<'_>>) -> bool {
+fn is_decorated_function(argument: &AstNode<'_, '_, Argument<'_>>) -> bool {
     // Check if the argument is an arrow function with a block body
-    let AstNodes::ArrowFunctionExpression(arrow) = argument.as_ast_nodes() else {
+    let AstNodeKind::ArrowFunctionExpression(arrow) = argument.as_kind() else {
         return false;
     };
 

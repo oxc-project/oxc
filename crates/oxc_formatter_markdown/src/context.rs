@@ -1,6 +1,6 @@
 use std::cell::{Cell, RefCell};
 
-use oxc_formatter_core::{FormatContext, SourceText, TailwindCollector};
+use oxc_formatter_core::{FormatContext, SourceText};
 use oxc_markdown_parser::Span;
 
 use crate::options::MarkdownFormatOptions;
@@ -38,6 +38,8 @@ pub struct MarkdownFormatContext<'a> {
     opaque_spans: RefCell<Vec<(Span, bool)>>,
     /// Emphasis markers are printed as written: normalizing them would change what pairs.
     literal_markers: Cell<bool>,
+    /// Embedded in a JS template literal: code fences use `~`.
+    in_js_template: bool,
 }
 
 /// Whether text is printed as written, newlines included.
@@ -61,7 +63,12 @@ pub struct ListFrame {
 }
 
 impl<'a> MarkdownFormatContext<'a> {
-    pub fn new(options: MarkdownFormatOptions, source_code: &'a str, blanks: &'a [Span]) -> Self {
+    pub fn new(
+        options: MarkdownFormatOptions,
+        source_code: &'a str,
+        blanks: &'a [Span],
+        in_js_template: bool,
+    ) -> Self {
         Self {
             options,
             source_text: SourceText::new(source_code),
@@ -74,6 +81,7 @@ impl<'a> MarkdownFormatContext<'a> {
             code_span_literal_runs: RefCell::new(Vec::new()),
             opaque_spans: RefCell::new(Vec::new()),
             literal_markers: Cell::new(false),
+            in_js_template,
         }
     }
 
@@ -131,17 +139,9 @@ impl<'a> MarkdownFormatContext<'a> {
     pub fn literal_markers(&self) -> &Cell<bool> {
         &self.literal_markers
     }
-}
 
-/// A dispatched child's classes would remap into this host's index space (`DispatchPayload::into_doc`);
-/// the only child today, front matter yaml, returns none.
-// TODO: Once fenced code dispatches to html / vue / svelte (whose Tailwind sorter returns classes),
-// collect them as `JsFormatContext` does for its html-in-js children
-// (`tailwind_classes` + `add_class` / `take_tailwind_classes`; the root sorts them via
-// `session.sort_tailwind_classes`, `format_to_ir` returns them in `EmbeddedIr`).
-impl TailwindCollector for MarkdownFormatContext<'_> {
-    fn add_class(&mut self, _class: String) -> usize {
-        unreachable!("no embedded child of Markdown collects Tailwind classes")
+    pub fn in_js_template(&self) -> bool {
+        self.in_js_template
     }
 }
 

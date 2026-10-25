@@ -296,12 +296,48 @@ fn full_rule_name(
 fn upstream_docs_url(plugin: &str, name: &str) -> Option<String> {
     let override_url: Option<&'static str> = match (plugin, name) {
         ("react", "rules-of-hooks") => Some("https://react.dev/reference/rules/rules-of-hooks"),
-        ("react", "exhaustive-deps") => Some(
+        // React Compiler rules without a dedicated upstream page share the
+        // `eslint-plugin-react-hooks` README with `exhaustive-deps`.
+        (
+            "react",
+            "exhaustive-deps"
+            | "capitalized-calls"
+            | "exhaustive-effect-dependencies"
+            | "hooks"
+            | "invariant"
+            | "memo-dependencies"
+            | "no-deriving-state-in-effects"
+            | "rule-suppression"
+            | "syntax"
+            | "todo"
+            | "void-use-memo",
+        ) => Some(
             "https://github.com/facebook/react/blob/main/packages/eslint-plugin-react-hooks/README.md",
         ),
         ("react", "only-export-components") => Some(
             "https://github.com/ArnaudBarre/eslint-plugin-react-refresh/blob/main/docs/only-export-components.md",
         ),
+        // React Compiler rules are ported from `eslint-plugin-react-hooks`, not
+        // `eslint-plugin-react`. Those with a page on react.dev link to it.
+        (
+            "react",
+            "error-boundaries"
+            | "globals"
+            | "immutability"
+            | "incompatible-library"
+            | "preserve-manual-memoization"
+            | "purity"
+            | "refs"
+            | "set-state-in-effect"
+            | "set-state-in-render"
+            | "static-components"
+            | "unsupported-syntax"
+            | "use-memo",
+        ) => {
+            return Some(format!(
+                "https://react.dev/reference/eslint-plugin-react-hooks/lints/{name}"
+            ));
+        }
         _ => None,
     };
     if let Some(url) = override_url {
@@ -370,4 +406,38 @@ fn ordinal(n: usize) -> String {
         },
     };
     format!("{n}{suffix}")
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_linter::table::RuleTable;
+
+    use super::upstream_docs_url;
+
+    /// React Compiler rules must never point at `eslint-plugin-react`, where
+    /// they do not exist.
+    #[test]
+    fn react_compiler_rules_do_not_link_to_eslint_plugin_react() {
+        let table = RuleTable::new(None);
+        let mut checked = 0;
+        for section in &table.sections {
+            for rule in &section.rows {
+                let is_react_compiler_rule = rule
+                    .documentation
+                    .is_some_and(|doc| doc.contains("Powered by the React Compiler"));
+                if !is_react_compiler_rule {
+                    continue;
+                }
+                checked += 1;
+                let url = upstream_docs_url(rule.plugin.as_str(), rule.name).unwrap();
+                assert!(
+                    !url.contains("jsx-eslint/eslint-plugin-react/"),
+                    "{}/{} links to {url}",
+                    rule.plugin,
+                    rule.name
+                );
+            }
+        }
+        assert!(checked > 0);
+    }
 }

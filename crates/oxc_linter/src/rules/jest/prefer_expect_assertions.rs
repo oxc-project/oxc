@@ -110,8 +110,8 @@ fn is_expect_shadowed_in(callback: &Expression<'_>, ctx: &LintContext<'_>) -> bo
 
 fn callback_scope_id(callback: &Expression<'_>) -> Option<ScopeId> {
     match callback {
-        Expression::FunctionExpression(func) => func.scope_id.get(),
-        Expression::ArrowFunctionExpression(func) => func.scope_id.get(),
+        Expression::FunctionExpression(func) => Some(func.scope_id()),
+        Expression::ArrowFunctionExpression(func) => Some(func.scope_id()),
         _ => None,
     }
 }

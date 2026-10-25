@@ -30,16 +30,16 @@ mod type_context;
 pub(super) use common::{Brackets, Closers, Tokens, prev_sig};
 pub(super) use context::Walks;
 pub(super) use operator::not_operator_position;
-pub(super) use type_context::{
-    arrow_after_params, gt_run_split, jsx_site_is_expression, lt_run_split, ts_type_region_open,
-    type_parameter_list_head,
-};
+pub(super) use type_context::{gt_run_split, jsx_over_generic, lt_run_split};
 
 // Every scan is exact past its budget; the budget only bounds the work one site can spend.
 
 /// Step cap for the scan back to an anchor (tokens plus the groups it jumps over);
 /// past it the walk from the start of the source answers.
 pub(crate) const WALK_SCAN_CAP: u32 = 2048;
+
+/// Scan steps bounded walks may take, plus one per 32 bytes, before the full walk answers the rest.
+pub(crate) const LOCAL_WALK_BUDGET: u32 = 16384;
 
 /// Step cap for the rules which answer without a walk: finding the JSX tag around a keyword,
 /// and settling a `>` run from the tokens around it.

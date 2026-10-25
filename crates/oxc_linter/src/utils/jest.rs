@@ -7,7 +7,7 @@ use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        Argument, CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
         match_member_expression,
     },
 };
@@ -110,6 +110,16 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
     ]
     .iter()
     .any(|ext| file_path.ends_with(ext))
+}
+
+/// Finds the last directly represented function or arrow argument, skipping spreads and wrappers.
+pub fn find_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
+    call_expr
+        .arguments
+        .iter()
+        .rev()
+        .filter_map(Argument::as_expression)
+        .find(|expr| expr.is_function())
 }
 
 pub fn is_type_of_jest_fn_call<'a>(
@@ -233,7 +243,7 @@ fn collect_ids_referenced_to_import<'a, 'c>(
 
                 if matches!(
                     import_decl.source.value.as_str(),
-                    "@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest"
+                    Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
                 ) {
                     let original = find_original_name(import_decl, name);
                     return Some(
@@ -279,17 +289,26 @@ pub fn get_node_name<'a>(expr: &'a Expression<'a>) -> CompactStr {
     chain.join(".").into()
 }
 
+// Keep non-UTF-8 segments as escaped Debug text.
+// Dropping them could make an unrelated property chain match a known Jest name.
 pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> SmallVec<[Cow<'a, str>; 4]> {
     let mut chain: SmallVec<[Cow<'a, str>; 4]> = SmallVec::new();
 
     match expr {
         Expression::Identifier(ident) => chain.push(Cow::Borrowed(ident.name.as_str())),
         Expression::StringLiteral(string_literal) => {
-            chain.push(Cow::Borrowed(&string_literal.value));
+            chain.push(
+                string_literal.value.as_str().map_or_else(
+                    || Cow::Owned(format!("{:?}", string_literal.value)),
+                    Cow::Borrowed,
+                ),
+            );
         }
         Expression::TemplateLiteral(template_literal) => {
             if let Some(quasi) = template_literal.single_quasi() {
-                chain.push(Cow::Borrowed(quasi.as_str()));
+                chain.push(
+                    quasi.as_str().map_or_else(|| Cow::Owned(format!("{quasi:?}")), Cow::Borrowed),
+                );
             }
         }
         Expression::TaggedTemplateExpression(tagged_expr) => {
@@ -300,7 +319,9 @@ pub fn get_node_name_vec<'a>(expr: &'a Expression<'a>) -> SmallVec<[Cow<'a, str>
             let member_expr = expr.to_member_expression();
             chain.extend(get_node_name_vec(member_expr.object()));
             if let Some(name) = member_expr.static_property_name() {
-                chain.push(Cow::Borrowed(name));
+                chain.push(
+                    name.as_str().map_or_else(|| Cow::Owned(format!("{name:?}")), Cow::Borrowed),
+                );
             }
         }
         Expression::NewExpression(new_expr) => {

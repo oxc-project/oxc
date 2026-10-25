@@ -5,6 +5,7 @@ import {
   CAT_CLOSE_BRACKET,
   CAT_IDENT,
   CAT_LT,
+  CAT_OP_LT_THEN_UN_NOT,
   CAT_OP_UN_NOT,
   CAT_OTHER,
   CAT_QUESTION,
@@ -38,9 +39,9 @@ import {
 } from "./precedence.ts";
 import { printDirectivesAndStatements } from "./statement.ts";
 import { printString } from "./string.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { UnknownNode } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -49,6 +50,11 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * The operand prints at `PREC_EXPONENTIATION`, which leaves a unary operand unwrapped while still parenthesizing
  * anything looser, and the whole expression is wrapped once the surrounding precedence reaches `PREC_COMPARE`,
  * which is where `as` binds.
+ *
+ * @param node - TS `as` or `satisfies` expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 export function printTSAsOrSatisfiesExpression(
   node: ESTree.TSAsExpression | ESTree.TSSatisfiesExpression,
@@ -75,11 +81,11 @@ export function printTSAsOrSatisfiesExpression(
  *
  * A prefix `TSJSDocNullableType` spaces itself off a preceding `?`, as `?` followed by `?T`
  * would otherwise merge into `??`.
+ *
+ * @param node - TS type
+ * @param state - Printer state
  */
-function printTSType(
-  node: ESTree.TSTupleElement | ESTree.TSQualifiedName | UnknownNode,
-  state: State,
-): void {
+function printTSType(node: ESTree.TSTupleElement | ESTree.TSQualifiedName, state: State): void {
   switch (node.type) {
     case "TSTypeReference":
       printTSTypeName(node.typeName, state);
@@ -266,12 +272,20 @@ function printTSType(
         printTSType(tsTypeAnnotationOf(node.typeAnnotation), state);
         write(state, "!", CAT_OP_UN_NOT);
       } else {
-        write(state, "!", CAT_OP_UN_NOT);
+        // `CAT_OP_LT_THEN_UN_NOT` exists to keep a `--` written next from completing `<!--`.
+        // That can't happen here - a type follows the `!`, and no type starts with `--`.
+        // So `CAT_OP_UN_NOT` is always safe here.
+        // In debug builds we have to use `CAT_OP_LT_THEN_UN_NOT` after a `<` (e.g. `Array<!string>`),
+        // because `debugAssertCategoryMatches` requires it for every `!` which follows a `<`,
+        // and would throw in tests if it's not.
+        // In release builds, we use `CAT_OP_UN_NOT` unconditionally, to avoid the branch.
+        debugAssertLastFresh(state);
+        write(state, "!", DEBUG && state.last === CAT_LT ? CAT_OP_LT_THEN_UN_NOT : CAT_OP_UN_NOT);
         printTSType(tsTypeAnnotationOf(node.typeAnnotation), state);
       }
       break;
     default:
-      throw new Error(`Unknown type node: ${node.type}`);
+      throwUnknownNode(node, "TS type");
   }
 }
 
@@ -280,6 +294,9 @@ function printTSType(
  * takes the space-before-identifier check - every other segment follows a `.`.
  *
  * `this` is one of the names a qualified name can be rooted at, hence the `ThisExpression` arm.
+ *
+ * @param node - TS type name
+ * @param state - Printer state
  */
 function printTSTypeName(
   node: ESTree.TSTypeName | ESTree.IdentifierName | ESTree.BindingIdentifier,
@@ -302,6 +319,9 @@ function printTSTypeName(
  * The `<...>` on a type reference, call, `new` expression or JSX element name.
  * Every one of those sites has the list as an optional field, so the null check lives here
  * rather than at each call site.
+ *
+ * @param typeArguments - Type arguments, or `null` / `undefined` if there are none
+ * @param state - Printer state
  */
 export function printTypeArguments(
   typeArguments: ESTree.TSTypeParameterInstantiation | null | undefined,
@@ -326,6 +346,9 @@ export function printTypeArguments(
  * print its raw text instead of a reformatted value.
  *
  * A unary operand such as `-1` prints at `PREC_COMMA` precedence so it is not wrapped, as in Oxc.
+ *
+ * @param literal - Literal type's literal
+ * @param state - Printer state
  */
 function printTSLiteral(literal: ESTree.TSLiteral, state: State): void {
   // A literal type holds a `Literal`, a `TemplateLiteral` or a `UnaryExpression` and nothing else,
@@ -346,6 +369,9 @@ function printTSLiteral(literal: ESTree.TSLiteral, state: State): void {
 /**
  * Members joined with `|`, each wrapped where `parenthesizeTypeOfUnionType` says so.
  * No leading `|` is printed, so a union node holding a single member prints as that member alone.
+ *
+ * @param node - TS union type
+ * @param state - Printer state
  */
 function printTSUnionType(node: ESTree.TSUnionType, state: State): void {
   const { types } = node;
@@ -368,6 +394,8 @@ function printTSUnionType(node: ESTree.TSUnionType, state: State): void {
  * `oxc_codegen` decides here whether a type prints starting with a non-identifier character,
  * so a preceding keyword needs no separating space. In pretty mode a space is printed either way,
  * so nothing computes it.
+ *
+ * @param ty - Union member
  */
 function parenthesizeTypeOfUnionType(ty: ESTree.TSType): boolean {
   switch (ty.type) {
@@ -386,6 +414,9 @@ function parenthesizeTypeOfUnionType(ty: ESTree.TSType): boolean {
 /**
  * The `&` counterpart of `printTSUnionType`, down to reusing the union's wrapping rule for members
  * which are not themselves intersections.
+ *
+ * @param node - TS intersection type
+ * @param state - Printer state
  */
 function printTSIntersectionType(node: ESTree.TSIntersectionType, state: State): void {
   const { types } = node;
@@ -404,6 +435,8 @@ function printTSIntersectionType(node: ESTree.TSIntersectionType, state: State):
  * A nested intersection of more than one member is wrapped, and anything else falls through to
  * `parenthesizeTypeOfUnionType` - which is what parenthesizes a union inside an intersection, where
  * `&` binds tighter than `|`.
+ *
+ * @param ty - Intersection member
  */
 function parenthesizeTypeOfIntersectionType(ty: ESTree.TSType): boolean {
   if (ty.type === "TSIntersectionType") return ty.types.length > 1;
@@ -414,6 +447,8 @@ function parenthesizeTypeOfIntersectionType(ty: ESTree.TSType): boolean {
  * The wrapping rule for the operand of a postfix construct - `T[]`, `T[K]` and a tuple's `T?`. All of
  * those bind tighter than the listed types, so an unwrapped operand would re-parse with the postfix
  * applied to only its last member.
+ *
+ * @param ty - Operand of the postfix construct
  */
 function parenthesizeTypeOfPostfixType(ty: ESTree.TSType): boolean {
   switch (ty.type) {
@@ -433,6 +468,9 @@ function parenthesizeTypeOfPostfixType(ty: ESTree.TSType): boolean {
 /**
  * An empty type literal collapses to `{}`. Otherwise every member goes on its own indented line closed
  * with `;`, and the closing brace is indented back to the level of whatever contains it.
+ *
+ * @param node - TS type literal
+ * @param state - Printer state
  */
 function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
   const { members } = node;
@@ -463,8 +501,12 @@ function printTSTypeLiteral(node: ESTree.TSTypeLiteral, state: State): void {
  *
  * Accessor signatures keep their `get`/`set` prefix, index signatures go to `printTSIndexSignature`,
  * and an unrecognized member type throws.
+ *
+ * @param node - TS signature
+ * @param state - Printer state
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
-function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, ctx: number): void {
+function printTSSignature(node: ESTree.TSSignature, state: State, ctx: number): void {
   switch (node.type) {
     case "TSPropertySignature":
       if (node.readonly) write(state, "readonly ", CAT_OTHER);
@@ -515,7 +557,7 @@ function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, 
       if (node.returnType != null) printTypeAnnotation(node.returnType, state);
       break;
     default:
-      throw new Error(`Unknown signature type: ${node.type}`);
+      throwUnknownNode(node, "signature");
   }
 }
 
@@ -523,6 +565,10 @@ function printTSSignature(node: ESTree.TSSignature | UnknownNode, state: State, 
  * A signature's key.
  * A string key is re-printed by `printString` rather than passed to the expression printer,
  * so it comes out in the printer's own quotes instead of whatever the source used.
+ *
+ * @param key - Signature's key
+ * @param state - Printer state
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): void {
   switch (key.type) {
@@ -549,6 +595,9 @@ function printSignatureKey(key: ESTree.PropertyKey, state: State, ctx: number): 
  * The `: T` half of an annotated binding, parameter, property or return type.
  * Takes the wrapper node the AST stores rather than the type inside it, so a caller
  * can pass the field straight through.
+ *
+ * @param annotation - Type annotation
+ * @param state - Printer state
  */
 export function printTypeAnnotation(annotation: ESTree.TSTypeAnnotation, state: State): void {
   write(state, ": ", CAT_OTHER);
@@ -559,6 +608,8 @@ export function printTypeAnnotation(annotation: ESTree.TSTypeAnnotation, state: 
  * TS-ESTree wraps types in a `TSTypeAnnotation` node.
  * Fields vary in whether they hold that wrapper or a bare type, so every read which could be either
  * goes through here instead of the callers knowing which.
+ *
+ * @param annotation - Type annotation, or a bare type
  */
 function tsTypeAnnotationOf(annotation: ESTree.TSTypeAnnotation | ESTree.TSType): ESTree.TSType {
   return annotation.type === "TSTypeAnnotation" ? annotation.typeAnnotation : annotation;
@@ -570,6 +621,9 @@ function tsTypeAnnotationOf(annotation: ESTree.TSTypeAnnotation | ESTree.TSType)
  *
  * ESTree models the parameter as a list, but an index signature has exactly one -
  * Oxc's own AST stores a single parameter - so only the first entry is read.
+ *
+ * @param node - TS index signature
+ * @param state - Printer state
  */
 export function printTSIndexSignature(node: ESTree.TSIndexSignature, state: State): void {
   if (node.static) write(state, "static ", CAT_OTHER);
@@ -594,6 +648,9 @@ export function printTSIndexSignature(node: ESTree.TSIndexSignature, state: Stat
  * Two or more parameters print one per indented line while a single one stays inline,
  * which is Oxc's rule rather than a decision taken from the printed width.
  * As with `printTypeArguments`, a missing list is not an error.
+ *
+ * @param typeParameters - Type parameters, or `null` / `undefined` if there are none
+ * @param state - Printer state
  */
 export function printTypeParameters(
   typeParameters: ESTree.TSTypeParameterDeclaration | null | undefined,
@@ -635,6 +692,9 @@ export function printTypeParameters(
 /**
  * One type parameter with its modifiers, constraint and default. The modifiers are independent flags, so
  * the fixed print order here - `const`, `in`, `out` - is what gives them an order at all.
+ *
+ * @param node - TS type parameter
+ * @param state - Printer state
  */
 function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void {
   // No `printSpaceBeforeIdentifier` needed, either here or before the name.
@@ -669,6 +729,9 @@ function printTSTypeParameter(node: ESTree.TSTypeParameter, state: State): void 
  * `<T>(a: A) => R`.
  * The arrow comes from `printParenParamsArrow`, so the return type is printed as a bare type
  * rather than through `printTypeAnnotation`, which would put a `:` in front of it.
+ *
+ * @param node - TS function type
+ * @param state - Printer state
  */
 function printTSFunctionType(node: ESTree.TSFunctionType, state: State): void {
   printTypeParameters(node.typeParameters, state);
@@ -681,6 +744,9 @@ function printTSFunctionType(node: ESTree.TSFunctionType, state: State): void {
  * Anything else falls through to `printTSType`.
  *
  * The optional form borrows the postfix wrapping rule, since a trailing `?` binds as tightly as `[]`.
+ *
+ * @param node - TS tuple element
+ * @param state - Printer state
  */
 function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
   switch (node.type) {
@@ -711,13 +777,17 @@ function printTSTupleElement(node: ESTree.TSTupleElement, state: State): void {
  * `C extends E ? T : F`. The check type is wrapped when it is a function, constructor or conditional
  * type, and the extends type only when it is itself conditional - otherwise its `?` would be read as
  * this conditional's.
+ *
+ * @param node - TS conditional type
+ * @param state - Printer state
  */
 function printTSConditionalType(node: ESTree.TSConditionalType, state: State): void {
   const { checkType, extendsType } = node;
+  const checkTypeType = checkType.type;
   const checkWrap =
-    checkType.type === "TSFunctionType"
-    || checkType.type === "TSConstructorType"
-    || checkType.type === "TSConditionalType";
+    checkTypeType === "TSFunctionType"
+    || checkTypeType === "TSConstructorType"
+    || checkTypeType === "TSConditionalType";
 
   if (checkWrap) write(state, "(", CAT_OTHER);
   printTSType(checkType, state);
@@ -744,6 +814,9 @@ function printTSConditionalType(node: ESTree.TSConditionalType, state: State): v
  * and the type annotation is optional.
  *
  * The braces are padded with spaces and the whole type stays on one line, however large it is.
+ *
+ * @param node - TS mapped type
+ * @param state - Printer state
  */
 function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
   writeNoLast(state, "{ ");
@@ -791,6 +864,9 @@ function printTSMappedType(node: ESTree.TSMappedType, state: State): void {
  * `keyof T`, `unique symbol` and `readonly T[]`. The operator is written as an identifier so a keyword
  * before it keeps its separating space, and the operand is wrapped where the operator would otherwise
  * bind to only part of it.
+ *
+ * @param node - TS type operator
+ * @param state - Printer state
  */
 function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
   writeIdent(state, node.operator);
@@ -814,6 +890,9 @@ function printTSTypeOperator(node: ESTree.TSTypeOperator, state: State): void {
 /**
  * `x is T`, with the optional `asserts` prefix.
  * The `is T` half is optional too, which is what makes a bare `asserts x` print.
+ *
+ * @param node - TS type predicate
+ * @param state - Printer state
  */
 function printTSTypePredicate(node: ESTree.TSTypePredicate, state: State): void {
   if (node.asserts) write(state, "asserts ", CAT_OTHER);
@@ -841,6 +920,9 @@ function printTSTypePredicate(node: ESTree.TSTypePredicate, state: State): void 
 /**
  * The operand of `typeof`, which is a name in every case but `import("...")` -
  * an import type can stand where a name would.
+ *
+ * @param node - TS type query expression name
+ * @param state - Printer state
  */
 function printTSTypeQueryExprName(node: ESTree.TSTypeQueryExprName, state: State): void {
   if (node.type === "TSImportType") {
@@ -858,6 +940,9 @@ function printTSTypeQueryExprName(node: ESTree.TSTypeQueryExprName, state: State
  *
  * The options argument prints at `PREC_LOWEST` through the expression printer,
  * and both the qualifier and the type arguments are optional.
+ *
+ * @param node - TS import type
+ * @param state - Printer state
  */
 function printTSImportType(node: ESTree.TSImportType, state: State): void {
   write(state, "import(", CAT_OTHER);
@@ -883,6 +968,9 @@ function printTSImportType(node: ESTree.TSImportType, state: State): void {
  * The dotted chain after `import(...)`.
  * Every segment follows a `.` written by the caller, so unlike `printTSTypeName`,
  * no space-before-identifier check is needed.
+ *
+ * @param node - TS import type qualifier
+ * @param state - Printer state
  */
 function printTSImportTypeQualifier(node: ESTree.TSImportTypeQualifier, state: State): void {
   if (node.type === "TSQualifiedName") {
@@ -900,6 +988,11 @@ function printTSImportTypeQualifier(node: ESTree.TSImportTypeQualifier, state: S
  * A `<` written immediately before would merge into `<<`, so `last` is checked and a space inserted -
  * Oxc does the same by looking at the last byte written. The operand prints at `PREC_EXPONENTIATION`,
  * which leaves `<T>-x` unwrapped.
+ *
+ * @param node - TS type assertion
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 export function printTSTypeAssertion(
   node: ESTree.TSTypeAssertion,
@@ -930,6 +1023,9 @@ export function printTSTypeAssertion(
  * `global` is the one kind with no name of its own, so nothing is printed where the id would go.
  *
  * A missing body is the declaration form and ends in `;` instead of a block.
+ *
+ * @param node - TS module or global declaration
+ * @param state - Printer state
  */
 export function printTSModuleDeclaration(
   node: ESTree.TSModuleDeclaration | ESTree.TSGlobalDeclaration,
@@ -964,6 +1060,9 @@ export function printTSModuleDeclaration(
 /**
  * The body of a namespace or module. It goes through `printDirectivesAndStatements` rather than a
  * plain statement loop, so a directive prologue inside a module block is still recognized.
+ *
+ * @param body - Module block
+ * @param state - Printer state
  */
 function printModuleBlock(body: ESTree.TSModuleBlock, state: State): void {
   const statements = body.body;
@@ -990,6 +1089,9 @@ function printModuleBlock(body: ESTree.TSModuleBlock, state: State): void {
  *
  * The body uses the same one-member-per-line layout as `printTSTypeLiteral`,
  * including the `{}` form when there are no members.
+ *
+ * @param node - TS interface declaration
+ * @param state - Printer state
  */
 export function printTSInterfaceDeclaration(
   node: ESTree.TSInterfaceDeclaration,
@@ -1046,6 +1148,9 @@ export function printTSInterfaceDeclaration(
  * `type X<T> = ...`, including the `declare` form.
  * An alias body is the one position where a type can need parentheses purely because of what it starts with -
  * see `isLeftmostIntrinsicReference`.
+ *
+ * @param node - TS type alias declaration
+ * @param state - Printer state
  */
 export function printTSTypeAliasDeclaration(
   node: ESTree.TSTypeAliasDeclaration,
@@ -1076,6 +1181,8 @@ export function printTSTypeAliasDeclaration(
  *
  * The leftmost edge is walked with a loop rather than recursion - through array and indexed-access
  * object types, the first member of a union or intersection, and a conditional's check type.
+ *
+ * @param ty - Type alias's body
  */
 function isLeftmostIntrinsicReference(ty: ESTree.TSType): boolean {
   for (;;) {
@@ -1111,6 +1218,8 @@ function isLeftmostIntrinsicReference(ty: ESTree.TSType): boolean {
  * Members print one per indented line with a comma after all but the last, and an enum with no members
  * collapses to `{}`.
  *
+ * @param node - TS enum declaration
+ * @param state - Printer state
  */
 export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: State): void {
   printSpaceBeforeIdentifier(state);
@@ -1152,6 +1261,9 @@ export function printTSEnumDeclaration(node: ESTree.TSEnumDeclaration, state: St
  * A member name is written bare when it is an identifier and quoted when it is a string, so `A` and `"a"`
  * stay distinct. A template name prints only its first quasi, as such a name has to be a constant string
  * and so has no substitutions.
+ *
+ * @param node - TS enum member
+ * @param state - Printer state
  */
 function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
   const { id } = node;
@@ -1184,6 +1296,9 @@ function printTSEnumMember(node: ESTree.TSEnumMember, state: State): void {
  * `import X = require("mod")` and `import X = A.B`, which share everything up to the `=`.
  *
  * The `type` modifier goes after `import`, as `import type X = require("mod")` is the spelling TypeScript accepts.
+ *
+ * @param node - TS import equals declaration
+ * @param state - Printer state
  */
 export function printTSImportEqualsDeclaration(
   node: ESTree.TSImportEqualsDeclaration,

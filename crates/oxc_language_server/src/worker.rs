@@ -843,7 +843,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(no_diagnostics.is_empty());
+        assert_eq!(no_diagnostics, []);
 
         let error = worker
             .run_diagnostic(TextDocument::new(
@@ -907,7 +907,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(no_diagnostics.is_empty());
+        assert_eq!(no_diagnostics, []);
 
         let error = worker
             .run_diagnostic_on_change(TextDocument::new(
@@ -970,7 +970,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert!(no_diagnostics.is_empty());
+        assert_eq!(no_diagnostics, []);
 
         let error = worker
             .run_diagnostic_on_save(TextDocument::new(

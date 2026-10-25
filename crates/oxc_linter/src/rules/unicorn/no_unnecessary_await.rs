@@ -46,6 +46,7 @@ declare_oxc_lint!(
     NoUnnecessaryAwait,
     unicorn,
     correctness,
+    recommended,
     conditional_fix,
     version = "0.0.12",
     short_description = "Disallow awaiting non-promise values.",

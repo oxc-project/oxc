@@ -41,6 +41,7 @@ declare_oxc_lint!(
     JsxNoUndef,
     react,
     correctness,
+    recommended,
     version = "0.1.1",
     short_description = "Disallow undeclared variables in JSX.",
 );

@@ -350,7 +350,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if ctx.has_ambient() {
                 self.error(diagnostics::generator_in_ambient_context(self.end_span(generator)));
             } else if body.is_none() {
-                self.error(diagnostics::overload_signature_generator(self.end_span(start)));
+                self.error(diagnostics::overload_signature_generator(
+                    self.end_span(start.min(generator)),
+                ));
             }
         }
         self.verify_modifiers(
@@ -452,20 +454,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         r#async: bool,
     ) -> Expression<'a> {
-        let func_kind = FunctionKind::Expression;
-        self.expect(Kind::Function);
-
-        let generator = self.eat(Kind::Star).then_some(self.prev_token_end - 1);
-        let id = self.parse_function_id(func_kind, r#async, generator.is_some());
-        let function = self.parse_function(
-            start,
-            id,
-            r#async,
-            generator,
-            func_kind,
-            FormalParameterKind::FormalParameter,
-            &Modifiers::empty(),
-        );
+        let function = self.parse_function_impl(start, r#async, FunctionKind::Expression);
         Expression::FunctionExpression(function)
     }
 

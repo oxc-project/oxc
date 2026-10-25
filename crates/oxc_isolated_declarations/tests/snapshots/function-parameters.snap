@@ -22,7 +22,7 @@ export declare function withAnyUndefinedUnion(a: any | undefined, b: string): vo
 type Foo = {};
 export declare function withAnyTypeReferenceUnion(a: any | Foo, b: string): void;
 export declare function withAnyTypeReferenceUndefinedUnion(a: any | Foo | undefined, b: string): void;
-export declare function withAnyTypeOperatorUnion(a: any | keyof {}, b: string): void;
+export declare function withAnyTypeOperatorUnion(a: any | keyof {} | undefined, b: string): void;
 export declare function withAnyIntersectionTypeReferenceUnion(a: any | (Foo & {}), b: string): void;
 export declare function withUnknown(a: unknown | undefined, b: string): void;
 export declare function withUnknownUnion(a: unknown | string | undefined, b: string): void;
@@ -53,15 +53,6 @@ export {};
  26 | export const fooBad2 = ({a, b} = { a: 1, b: 2 }): number => {
     :                         ^^^^^^^^^^^^^^^^^^^^^^^
  27 |   return 2;
-    `----
-
-  x TS9025: Declaration emit for this parameter requires implicitly adding
-  | undefined to it's type. This is not supported with --isolatedDeclarations.
-    ,-[38:42]
- 37 | export function withAnyTypeReferenceUndefinedUnion(a: any | Foo | undefined = {}, b: string): void { }
- 38 | export function withAnyTypeOperatorUnion(a: any | keyof {} = 1, b: string): void { }
-    :                                          ^^^^^^^^^^^^^^^^^^^^^
- 39 | export function withAnyIntersectionTypeReferenceUnion(a: any | (Foo & {}) = {}, b: string): void { }
     `----
 
 

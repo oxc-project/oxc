@@ -125,12 +125,10 @@ impl Rule for Named {
         let module_record = ctx.module_record();
 
         for import_entry in &module_record.import_entries {
-            // Get named import
             let ImportImportName::Name(import_name) = &import_entry.import_name else {
                 continue;
             };
             let specifier = import_entry.module_request.name();
-            // Get remote module record
             let Some(remote_module_record) = module_record.get_loaded_module(specifier) else {
                 continue;
             };
@@ -143,7 +141,6 @@ impl Rule for Named {
             if name == "default" && remote_module_record.export_default.is_some() {
                 continue;
             }
-            // Check remote bindings
             if remote_module_record.exported_bindings.contains_key(name) {
                 continue;
             }
@@ -167,14 +164,12 @@ impl Rule for Named {
                 continue;
             };
             let specifier = module_request.name();
-            // Get remote module record
             let Some(remote_module_record) = module_record.get_loaded_module(specifier) else {
                 continue;
             };
             if !remote_module_record.has_module_syntax {
                 continue;
             }
-            // Check remote bindings
             let name = import_name.name();
             // `export { default as foo } from './source'` <> `export default xxx`
             if name == "default" && has_default_export(&remote_module_record) {

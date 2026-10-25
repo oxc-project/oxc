@@ -5,7 +5,7 @@ use rustc_hash::FxHashSet;
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Expression, Function,
+        ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression, Function,
         FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
         JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
         JSXOpeningElement, Statement, StaticMemberExpression,
@@ -55,6 +55,11 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     }
 }
 
+/// Checks whether a JSX child is whitespace-only text containing a line feed.
+pub fn is_jsx_multiline_whitespace(child: &JSXChild<'_>) -> bool {
+    matches!(child, JSXChild::Text(text) if text.value.contains('\n') && text.value.trim().is_empty())
+}
+
 pub fn has_jsx_prop<'a, 'b>(
     node: &'b JSXOpeningElement<'a>,
     target_prop: &'b str,
@@ -77,6 +82,16 @@ pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXA
     item.as_attribute().and_then(|item| item.value.as_ref())
 }
 
+/// Checks for a JSX attribute expression containing direct `null` or syntactic `undefined`.
+pub fn is_nullish_jsx_attribute_value(value: &JSXAttributeValue<'_>) -> bool {
+    matches!(
+        value,
+        JSXAttributeValue::ExpressionContainer(container)
+            if matches!(container.expression, JSXExpression::NullLiteral(_))
+                || container.expression.is_undefined()
+    )
+}
+
 pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
     match attr {
         JSXAttributeName::NamespacedName(name) => {
@@ -87,7 +102,9 @@ pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
 }
 
 pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
-    get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
+    get_prop_value(item)
+        .and_then(JSXAttributeValue::as_string_literal)
+        .and_then(|s| s.value.as_str())
 }
 
 // TODO: Move the a11y methods to their own util for jsx-a11y?
@@ -561,7 +578,8 @@ pub fn is_es5_component(node: &AstNode) -> bool {
     if let Some(member_expr) = call_expr.callee.as_member_expression()
         && let Expression::Identifier(ident) = member_expr.object()
     {
-        return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
+        return ident.name == PRAGMA
+            && member_expr.static_property_name().is_some_and(|name| name == CREATE_CLASS);
     }
 
     if let Some(ident_reference) = call_expr.callee.get_identifier_reference() {
@@ -578,7 +596,12 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     let AstKind::Class(class_expr) = node.kind() else {
         return false;
     };
-    if let Some(super_class) = class_expr.heritage_expression() {
+    is_es6_component_class(class_expr)
+}
+
+/// Checks whether a class extends `Component` or `PureComponent`, optionally on `React`.
+pub fn is_es6_component_class(class: &Class<'_>) -> bool {
+    if let Some(super_class) = class.heritage_expression() {
         if let Some(member_expr) = super_class.as_member_expression()
             && let Expression::Identifier(ident) = member_expr.object()
         {
@@ -633,14 +656,12 @@ pub fn function_count_before_lifecycle_component(
 
 fn is_lifecycle_component_method(node: &AstNode, lifecycle_method_name: &str) -> bool {
     match node.kind() {
-        AstKind::ObjectProperty(prop) => {
-            prop.key.static_name().is_some_and(|key| key == lifecycle_method_name)
-        }
+        AstKind::ObjectProperty(prop) => prop.key.is_specific_static_name(lifecycle_method_name),
         AstKind::MethodDefinition(method) => {
-            method.key.static_name().is_some_and(|name| name == lifecycle_method_name)
+            method.key.is_specific_static_name(lifecycle_method_name)
         }
         AstKind::PropertyDefinition(prop) => {
-            prop.key.static_name().is_some_and(|name| name == lifecycle_method_name)
+            prop.key.is_specific_static_name(lifecycle_method_name)
         }
         _ => false,
     }
@@ -693,7 +714,7 @@ pub fn get_element_type<'c, 'a>(
         })
         .and_then(get_prop_value)
         .and_then(JSXAttributeValue::as_string_literal)
-        .map(|s| s.value.as_str());
+        .and_then(|s| s.value.as_str());
 
     let raw_type = polymorphic_prop.map_or(name, Cow::Borrowed);
     match jsx_a11y.components.get(raw_type.as_ref()) {
@@ -704,7 +725,7 @@ pub fn get_element_type<'c, 'a>(
 
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
     match value {
-        JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
+        JSXAttributeValue::StringLiteral(str) => str.value.as_str().ok_or(())?.parse().or(Err(())),
         JSXAttributeValue::ExpressionContainer(container) => {
             parse_jsx_expression(&container.expression)
         }
@@ -722,7 +743,7 @@ fn parse_jsx_expression(expression: &JSXExpression) -> Result<f64, ()> {
 
 fn parse_expression(expression: &Expression) -> Result<f64, ()> {
     match expression {
-        Expression::StringLiteral(str) => str.value.parse().or(Err(())),
+        Expression::StringLiteral(str) => str.value.as_str().ok_or(())?.parse().or(Err(())),
         Expression::TemplateLiteral(tmpl) => {
             tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
         }

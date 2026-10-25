@@ -50,6 +50,7 @@ declare_oxc_lint!(
     NoArrayMethodThisArgument,
     unicorn,
     style,
+    recommended,
     pending,
     version = "0.16.12",
     short_description = "Disallows the use of the `thisArg` parameter in array iteration methods such as `map`, `filter`, `some`, `every`, and similar methods.",
@@ -145,7 +146,7 @@ fn is_node_not_function(expr: &Expression) -> bool {
         | Expression::NewExpression(_)
         | Expression::TaggedTemplateExpression(_)
         | Expression::ThisExpression(_) => true,
-        Expression::Identifier(ident) if ident.name == "undefined" => true,
+        Expression::Identifier(ident) => ident.is_undefined(),
         Expression::CallExpression(call_expr) => {
             !is_method_call(call_expr, None, Some(&["bind"]), None, None)
         }

@@ -4,6 +4,58 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### ⚡ Performance
+
+- 2ab6b63 packages/codegen: Remove redundant `printSpaceBeforeIdentifier` and `last` updates in `printParams` (#27652) (overlookmotel)
+- e533278 codegen: Reduce writes in `printDecorators` (#27651) (overlookmotel)
+
+### 📚 Documentation
+
+- 3de03c1 packages/codegen: Correct outdated comments (#27838) (overlookmotel)
+
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 760b60b codegen, packages/codegen: Remove extraneous space before `RestElement` in `ArrayPattern` (#27613) (overlookmotel)
+- 0353d37 packages/codegen: Support printing `V8IntrinsicExpression`s (#27597) (overlookmotel)
+- f50257e codegen: Avoid extra indent before empty do-while bodies (#27407) (camc314)
+- 5461c1a packages/codegen: Fix printing negative `BigIntLiteral` after `-` (#27377) (overlookmotel)
+- bebef88 packages/codegen: Fix debug assert fail printing `TSJSDocNonNullableType` (#27373) (overlookmotel)
+
+### ⚡ Performance
+
+- e1c97f8 packages/codegen: Remove all `printSpaceBeforeIdentifier` calls (#27620) (overlookmotel)
+- 70ecfdd packages/codegen: Skip redundant `printSpaceBeforeIdentifier` call (#27619) (overlookmotel)
+- 3c289f3 packages/codegen: Remove branches from loops printing arrays (#27614) (overlookmotel)
+- 27f5b45 packages/codegen: Remove branch printing `RestElement` in `ArrayPattern` (#27608) (overlookmotel)
+- adc90ed packages/codegen: Reduce branches in `printArguments` (#27607) (overlookmotel)
+- 262dd21 packages/codegen: Remove unnecessary `printSpaceBeforeIdentifier` calls (#27606) (overlookmotel)
+- 4bb9722 packages/codegen: Print `SpreadElement` arguments via `printExpression` (#27599) (overlookmotel)
+- 0c98dc5 packages/codegen: Reduce megamorphic `type` reads in `printParams` (#27595) (overlookmotel)
+- e3780b5 packages/codegen: Reduce writes in `printForOfStatement` (#27594) (overlookmotel)
+- 8d0ba20 packages/codegen: Reduce megamorphic `type` reads in `printForOfStatement` (#27593) (overlookmotel)
+- b29f35e packages/codegen: Reduce megamorphic `type` reads in `printDirectivesAndStatements` (#27592) (overlookmotel)
+- 256259d packages/codegen: Reduce megamorphic `type` reads in `printConditionalExpression` (#27591) (overlookmotel)
+- a9bd942 packages/codegen: Reduce megamorphic `type` reads in `printObjectProperty` (#27590) (overlookmotel)
+- 0a386ff packages/codegen: Ensure `shorthand` var is always a boolean (#27589) (overlookmotel)
+- 8d4c633 packages/codegen: Reduce branches in `printObjectProperty` (#27588) (overlookmotel)
+- b4c8c04 packages/codegen: Reduce megamorphic `type` reads in `printMemberExpression` (#27587) (overlookmotel)
+- ff5eae8 packages/codegen: Reduce megamorphic `type` reads (#27586) (overlookmotel)
+- 961f318 packages/codegen: Reduce megamorphic `type` reads in `binCheckAndPrepare` (#27460) (overlookmotel)
+- 3d2f93f packages/codegen: Reduce megamorphic property accesses for `BinaryExpression`s (#27459) (overlookmotel)
+- 675ec5e packages/codegen: Reduce megamorphic property accesses in `printBinaryish` (#27458) (overlookmotel)
+- b0dbfff packages/codegen: Reduce writes and branches printing functions (#27455) (overlookmotel)
+- 5f3865c packages/codegen: Reduce writes for optional `MemberExpression`s (#27454) (overlookmotel)
+
+### 📚 Documentation
+
+- 59472c5 packages/codegen: Add `@param`s to JSDoc comments which had none (#27601) (overlookmotel)
+- 5ee0fc9 packages/codegen: Complete `@param` lists in partly documented JSDoc comments (#27600) (overlookmotel)
+- 12dfa25 packages/codegen: Correct doc comment for `printBinaryish` (#27456) (overlookmotel)
+
 ## [0.151.0] - 2026-09-21
 
 ### 🚀 Features

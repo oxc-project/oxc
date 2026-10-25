@@ -3,7 +3,6 @@ use crate::{lanes::Lanes, token::tk};
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
     find::{find_line_terminator, find_opener, find_opener6},
-    tables::Tables,
 };
 
 use super::common::{
@@ -12,7 +11,6 @@ use super::common::{
 };
 
 pub(super) unsafe fn carve_js(
-    t: &Tables,
     srcs: &[u8],
     n: usize,
     st: *mut u64,
@@ -96,7 +94,7 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(t, src, srcs, n, st, kind, opch, word, ts, s, lanes);
+                i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.

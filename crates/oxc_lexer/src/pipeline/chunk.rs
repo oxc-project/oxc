@@ -1,10 +1,5 @@
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-mod primitives {
+#[cfg(target_arch = "x86_64")]
+mod primitives_avx2 {
     use std::arch::x86_64::*;
 
     /// Load 256 bits starting at byte `i` as an `__m256i`.
@@ -13,7 +8,8 @@ mod primitives {
     ///
     /// # SAFETY
     ///
-    /// `src.add(i)` must be valid for reads of 32 bytes.
+    /// - `src.add(i)` must be valid for reads of 32 bytes.
+    /// - CPU must support AVX2.
     #[inline(always)]
     pub unsafe fn load256(src: *const u8, i: usize) -> __m256i {
         _mm256_loadu_si256(src.add(i) as *const __m256i)
@@ -23,31 +19,34 @@ mod primitives {
     ///
     /// Returns a `__m256i` where each of the 32 lanes is `0xFF`
     /// where the lane in `v` equals `c`, and `0x00` where it does not.
+    ///
+    /// # SAFETY
+    ///
+    /// CPU must support AVX2.
     #[inline(always)]
-    pub fn veq(v: __m256i, c: u8) -> __m256i {
-        // SAFETY: These intrinsics touch no memory and require only the `avx2` target feature,
-        // which this module's `#[cfg]` guarantees
+    pub unsafe fn veq(v: __m256i, c: u8) -> __m256i {
+        // SAFETY: These intrinsics touch no memory. Caller guarantees CPU supports AVX2.
         unsafe { _mm256_cmpeq_epi8(v, _mm256_set1_epi8(c as i8)) }
     }
 
     /// Gather the top bit of each byte of chunk `v` into a 32-bit mask.
     ///
     /// Bit N of the result is the top bit of byte N in `v`.
+    ///
+    /// # SAFETY
+    ///
+    /// CPU must support AVX2.
     #[inline(always)]
-    pub fn mm(v: __m256i) -> u32 {
-        // SAFETY: This intrinsic touches no memory and requires only the `avx2` target feature,
-        // which this module's `#[cfg]` guarantees
+    pub unsafe fn mm(v: __m256i) -> u32 {
+        // SAFETY: This intrinsic touches no memory. Caller guarantees CPU supports AVX2.
         unsafe { _mm256_movemask_epi8(v) as u32 }
     }
 }
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
-mod primitives {
+#[cfg(target_arch = "x86_64")]
+pub(super) use primitives_avx2::*;
+
+mod primitives_generic {
     use std::ptr;
 
     /// Load 64 bits starting at byte `i` as a `u64`.
@@ -78,4 +77,4 @@ mod primitives {
     }
 }
 
-pub(super) use primitives::*;
+pub(super) use primitives_generic::*;

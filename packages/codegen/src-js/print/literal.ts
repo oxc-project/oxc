@@ -37,6 +37,11 @@ type LiteralNode =
  *
  * The kind is told apart by the type of `value` and by which extra property is present,
  * since the node itself does not say.
+ *
+ * @param node - Literal
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 export function printLiteral(
   node: LiteralNode,
@@ -84,6 +89,11 @@ export function printLiteral(
  *
  * In TypeScript positions the source text is printed back rather than the shortest form,
  * so a type keeps the digits it was written with.
+ *
+ * @param node - Numeric literal
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printNumericLiteral(
   node: ESTree.NumericLiteral,
@@ -152,6 +162,9 @@ function printNumericLiteral(
  *
  * A regex with no flags ends in `/`, which is recorded as its own category, because a `/`
  * immediately after it would open a comment.
+ *
+ * @param node - Regular expression literal
+ * @param state - Printer state
  */
 function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
   // Neither of the separating spaces below can be needed in pretty mode, so the check is not made.
@@ -190,17 +203,29 @@ function printRegExpLiteral(node: ESTree.RegExpLiteral, state: State): void {
 /**
  * Print a bigint literal, parenthesizing a negative one where the position needs it,
  * same as `printNumericLiteral` does.
+ *
+ * Also like `printNumericLiteral`, a negative one is spaced off a preceding `-` or `--`
+ * the same way a unary minus is, so `-(-1n)` prints as `- -1n`, not `--1n`.
+ *
+ * @param node - BigInt literal
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
  */
 function printBigIntLiteral(node: ESTree.BigIntLiteral, state: State, precedence: number): void {
-  printSpaceBeforeIdentifier(state);
-
   const value = node.bigint;
-  if (value.startsWith("-") && precedence >= PREC_PREFIX) {
-    writeWithMapNoLast(state, "(", node.start, node.end, node);
-    writeNoLast(state, value);
-    write(state, "n)", CAT_CLOSE_BRACKET);
+  if (value.startsWith("-")) {
+    if (precedence >= PREC_PREFIX) {
+      writeWithMapNoLast(state, "(", node.start, node.end, node);
+      writeNoLast(state, value);
+      write(state, "n)", CAT_CLOSE_BRACKET);
+      return;
+    }
+
+    printSpaceBeforeOperator(state, CAT_OP_UN_NEG);
   } else {
-    writeWithMapNoLast(state, value, node.start, node.end, node);
-    writeIdent(state, "n");
+    printSpaceBeforeIdentifier(state);
   }
+
+  writeWithMapNoLast(state, value, node.start, node.end, node);
+  writeIdent(state, "n");
 }

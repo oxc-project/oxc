@@ -18,12 +18,12 @@
 //!
 //! The four positions we currently preserve, all `minify`-only:
 //!
-//! | Helper                            | Pattern                                                |
-//! | --------------------------------- | ------------------------------------------------------ |
-//! | [`try_print_require_call`]         | `require("…")`                                         |
-//! | [`try_print_define_property_call`] | `Object.defineProperty(_, "name", …)` / `Reflect.…`     |
-//! | [`try_print_exports_computed_target`] | `exports[STR] = …` / `module.exports[STR] = …`      |
-//! | [`try_print_equality_string`]      | `key === "default"` / `key === "__esModule"` (and `==`/`!=`/`!==`) |
+//! | Helper                                | Pattern                                                                |
+//! | ------------------------------------- | ---------------------------------------------------------------------- |
+//! | [`try_print_require_call`]            | `require("...")`                                                       |
+//! | [`try_print_define_property_call`]    | `Object.defineProperty(_, "name", ...)` / `Reflect....`                |
+//! | [`try_print_exports_computed_target`] | `exports[STR] = ...` / `module.exports[STR] = ...`                     |
+//! | [`try_print_equality_string`]         | `key === "default"` / `key === "__esModule"` (and `==` / `!=` / `!==`) |
 //!
 //! Each helper returns `true` if it printed the construct, so the caller can
 //! fall back to the default print path when the helper declines.
@@ -158,7 +158,7 @@ pub fn try_print_equality_string(
     let Expression::StringLiteral(str_lit) = operand else {
         return false;
     };
-    if !matches!(str_lit.value.as_str(), "default" | "__esModule") {
+    if !matches!(str_lit.value.as_str(), Some("default" | "__esModule")) {
         return false;
     }
     p.print_string_literal(str_lit, false);

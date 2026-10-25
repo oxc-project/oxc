@@ -47,7 +47,7 @@
 
 use oxc_ast::ast::*;
 use oxc_span::SPAN;
-use oxc_str::{Ident, Str, static_ident};
+use oxc_str::{Ident, JSStr, static_ident};
 use oxc_traverse::{Ancestor, Traverse};
 
 use crate::{context::TraverseCtx, state::TransformState};
@@ -83,7 +83,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                         break ident.name.into();
                     }
                     AssignmentTarget::StaticMemberExpression(expr) => {
-                        break expr.property.name.into();
+                        break expr.property.name.as_js_str();
                     }
                     // Babel does not handle computed member expressions e.g. `foo["bar"]`,
                     // so we diverge from Babel here, but that's probably an improvement
@@ -107,15 +107,13 @@ impl<'a> Traverse<'a, TransformState<'a>> for ReactDisplayName {
                     // Babel only handles static identifiers e.g. `{foo: React.createClass({})}`,
                     // whereas we also handle e.g. `{"foo-bar": React.createClass({})}`,
                     // so we diverge from Babel here, but that's probably an improvement
-                    if let Some(name) = prop.key().static_name() {
-                        break Str::from_str_in(&name, ctx);
-                    }
-                    return;
+                    let Some(name) = prop.key().static_name() else { return };
+                    break name.into_js_str_in(ctx);
                 }
                 // `export default React.createClass({})`
                 // Uses the current file name as the display name.
                 Ancestor::ExportDefaultDeclarationDeclaration(_) => {
-                    break Str::from_str_in(&ctx.state.filename, ctx);
+                    break JSStr::from_str_in(&ctx.state.filename, ctx);
                 }
                 // Stop crawling up when hit a statement
                 _ if ancestor.is_parent_of_statement() => return,
@@ -153,7 +151,11 @@ impl<'a> ReactDisplayName {
     }
 
     /// Add key value `displayName: name` to the `React.createClass` object.
-    fn add_display_name(obj_expr: &mut ObjectExpression<'a>, name: Str<'a>, ctx: &TraverseCtx<'a>) {
+    fn add_display_name(
+        obj_expr: &mut ObjectExpression<'a>,
+        name: JSStr<'a>,
+        ctx: &TraverseCtx<'a>,
+    ) {
         const DISPLAY_NAME: Ident<'static> = static_ident!("displayName");
 
         // Not safe with existing display name.

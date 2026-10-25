@@ -97,6 +97,19 @@ fn tagged_template() {
     test("(!0 ? o.f : !1)()", "(0, o.f)()");
     test("(!0 ? o.f : !1)``", "(0, o.f)``");
 
+    test("(1, o?.f)()", "(0, o?.f)()");
+    test("(1, o?.f)``", "(0, o?.f)``");
+    test("(!0 && o?.f)()", "(0, o?.f)()");
+    test("(!0 && o?.f)``", "(0, o?.f)``");
+    test("(!0 ? o?.f : !1)()", "(0, o?.f)()");
+    test("(!0 ? o?.f : !1)``", "(0, o?.f)``");
+    test("(1, o?.[k])()", "(0, o?.[k])()");
+    test("(1, o?.f.g)()", "(0, o?.f.g)()");
+    test("(1, o?.f())()", "(o?.f())()");
+    test_same(
+        "(function(o) { console.log((0, o?.f)(42)) })({ a: 'PASS', f(b) { return this.a || b } })",
+    );
+
     test("foo(true && o.f)", "foo(o.f)");
     test("foo(true ? o.f : false)", "foo(o.f)");
 }

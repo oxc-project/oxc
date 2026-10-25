@@ -64,6 +64,11 @@ pub fn prune_non_escaping_scopes<'a>(
     // First build up a map of which instructions are involved in creating which values,
     // and which values are returned.
     let mut state = CollectState::new();
+    // A named function expression's private name is available on entry, even
+    // when it is only captured by a nested function.
+    if let Some(self_binding) = &func.self_binding {
+        state.declare(env.identifiers[self_binding.identifier].declaration_id);
+    }
     for param in &func.params {
         let place = match param {
             ParamPattern::Place(p) => p,

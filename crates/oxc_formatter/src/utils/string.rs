@@ -2,6 +2,7 @@ use std::{borrow::Cow, ops::Deref};
 
 use unicode_width::UnicodeWidthStr;
 
+use oxc_allocator::Allocator;
 use oxc_formatter_core::{Format, arena_cow_str, spec::normalize_string};
 use oxc_span::SourceType;
 use oxc_syntax::identifier::is_identifier_name_patched;
@@ -55,7 +56,7 @@ impl<'a> FormatLiteralStringToken<'a> {
         };
 
         let string_cleaner =
-            LiteralStringNormalizer::new(*self, chosen_quote_style, is_quote_needed);
+            LiteralStringNormalizer::new(*self, chosen_quote_style, is_quote_needed, f.allocator());
 
         let content = string_cleaner.normalize_text(source_type);
 
@@ -83,9 +84,8 @@ impl CleanedStringLiteralText<'_> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for CleanedStringLiteralText<'a> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        // In the common case the literal needs no normalization, so `text` borrows a slice of the
-        // source (`Cow::Borrowed`) which already outlives the buffer; pass it straight through and
-        // only copy into the arena for the owned (normalized) case.
+        // `text` borrows the source or the arena (quotes swapped) in all but the rare cases left owned,
+        // which are copied into the arena here.
         text(arena_cow_str(&self.text, f)).fmt(f);
     }
 }
@@ -189,6 +189,8 @@ struct LiteralStringNormalizer<'a> {
     chosen_quote_style: QuoteStyle,
     /// State whether we need to print the quotes or not.
     is_quote_needed: bool,
+    /// Arena for the strings with other quotes, so that `fmt` does not copy them again.
+    allocator: &'a Allocator,
 }
 
 impl<'a> LiteralStringNormalizer<'a> {
@@ -196,8 +198,9 @@ impl<'a> LiteralStringNormalizer<'a> {
         token: FormatLiteralStringToken<'a>,
         chosen_quote_style: QuoteStyle,
         is_quote_needed: bool,
+        allocator: &'a Allocator,
     ) -> Self {
-        Self { token, chosen_quote_style, is_quote_needed }
+        Self { token, chosen_quote_style, is_quote_needed, allocator }
     }
 
     fn normalize_text(&self, source_type: SourceType) -> Cow<'a, str> {
@@ -223,23 +226,13 @@ impl<'a> LiteralStringNormalizer<'a> {
 
         let (normalized, chosen_quote) = normalize_jsx_string(raw_content, self.chosen_quote_style);
 
-        let quote_char = chosen_quote.as_char();
-
         match normalized {
             Cow::Borrowed(s) if s == raw_content && current_quote == chosen_quote => {
                 // No changes needed, return original
                 normalize_newlines(self.token.string, ['\r'])
             }
-            Cow::Borrowed(s) => {
-                // Content unchanged but quotes need swapping
-                let normalized_newlines = normalize_newlines(s, ['\r']);
-                Cow::Owned(std::format!("{quote_char}{normalized_newlines}{quote_char}"))
-            }
-            Cow::Owned(s) => {
-                // Content changed
-                let normalized_newlines = normalize_newlines(&s, ['\r']);
-                Cow::Owned(std::format!("{quote_char}{normalized_newlines}{quote_char}"))
-            }
+            // Content changed or quotes need swapping
+            _ => self.quoted(chosen_quote, &normalize_newlines(&normalized, ['\r'])),
         }
     }
 
@@ -273,16 +266,12 @@ impl<'a> LiteralStringNormalizer<'a> {
                 }
             }
             Cow::Owned(string) => {
-                let mut s = String::with_capacity(string.len() + 2);
                 let quote = if string_information.raw_content_has_quotes {
-                    string_information.current_quote.as_char()
+                    string_information.current_quote
                 } else {
-                    string_information.preferred_quote.as_char()
+                    string_information.preferred_quote
                 };
-                s.push(quote);
-                s.push_str(&string);
-                s.push(quote);
-                Cow::Owned(s)
+                self.quoted(quote, &string)
             }
         }
     }
@@ -333,13 +322,9 @@ impl<'a> LiteralStringNormalizer<'a> {
 
         match polished_raw_content {
             Cow::Borrowed(raw_content) => self.swap_quotes(raw_content, string_information),
-            Cow::Owned(mut s) => {
-                // content is owned, meaning we allocated a new string,
-                // so we force replacing quotes, regardless
-                s.insert(0, preferred_quote.as_char());
-                s.push(preferred_quote.as_char());
-                Cow::Owned(s)
-            }
+            // content is owned, meaning we allocated a new string,
+            // so we force replacing quotes, regardless
+            Cow::Owned(s) => self.quoted(preferred_quote, &s),
         }
     }
 
@@ -350,14 +335,19 @@ impl<'a> LiteralStringNormalizer<'a> {
     }
 
     fn swap_quotes(&self, content_to_use: &'a str, str_info: StringInformation) -> Cow<'a, str> {
-        let preferred_quote = str_info.preferred_quote.as_char();
         let original = self.token.string;
 
-        if original.starts_with(preferred_quote) {
+        if original.starts_with(str_info.preferred_quote.as_char()) {
             Cow::Borrowed(original)
         } else {
-            Cow::Owned(std::format!("{preferred_quote}{content_to_use}{preferred_quote}"))
+            self.quoted(str_info.preferred_quote, content_to_use)
         }
+    }
+
+    /// `content` in `quote`s, in the arena.
+    fn quoted(&self, quote: QuoteStyle, content: &str) -> Cow<'a, str> {
+        let quote = quote.as_str();
+        Cow::Borrowed(self.allocator.alloc_concat_strs_array([quote, content, quote]))
     }
 }
 

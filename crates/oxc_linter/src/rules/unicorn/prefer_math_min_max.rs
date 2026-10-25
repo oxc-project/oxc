@@ -22,7 +22,6 @@ pub struct PreferMathMinMax;
 enum TypeOptions {
     Min,
     Max,
-    Unknown,
 }
 
 declare_oxc_lint!(
@@ -54,6 +53,7 @@ declare_oxc_lint!(
     PreferMathMinMax,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "0.10.1",
     short_description = "Prefers use of `Math.min()` and `Math.max()` instead of ternary expressions when performing simple comparisons.",
@@ -69,12 +69,11 @@ impl Rule for PreferMathMinMax {
             return;
         };
 
-        let condition_type =
-            is_min_max(test_expr, &conditional_expr.consequent, &conditional_expr.alternate, ctx);
-
-        if matches!(condition_type, TypeOptions::Unknown) {
+        let Some(condition_type) =
+            is_min_max(test_expr, &conditional_expr.consequent, &conditional_expr.alternate, ctx)
+        else {
             return;
-        }
+        };
 
         ctx.diagnostic_with_suggestion(
             prefer_math_min_max_diagnostic(conditional_expr.span),
@@ -84,7 +83,6 @@ impl Rule for PreferMathMinMax {
                 let method = match condition_type {
                     TypeOptions::Max => "max",
                     TypeOptions::Min => "min",
-                    TypeOptions::Unknown => unreachable!(),
                 };
                 fixer.replace(
                     conditional_expr.span,
@@ -100,7 +98,7 @@ fn is_min_max(
     consequent: &Expression,
     alternate: &Expression,
     ctx: &LintContext,
-) -> TypeOptions {
+) -> Option<TypeOptions> {
     let is_matched = matches!(
         (condition.left.get_inner_expression(), condition.right.get_inner_expression()),
         (Expression::NumericLiteral(_) | Expression::UnaryExpression(_), Expression::Identifier(_))
@@ -111,26 +109,26 @@ fn is_min_max(
     );
 
     if !condition.operator.is_compare() || !is_matched {
-        return TypeOptions::Unknown;
+        return None;
     }
 
     if is_same_expression(&condition.left, consequent, ctx)
         && is_same_expression(&condition.right, alternate, ctx)
     {
         if matches!(condition.operator, BinaryOperator::LessThan | BinaryOperator::LessEqualThan) {
-            return TypeOptions::Min;
+            return Some(TypeOptions::Min);
         }
-        return TypeOptions::Max;
+        return Some(TypeOptions::Max);
     } else if is_same_expression(&condition.left, alternate, ctx)
         && is_same_expression(&condition.right, consequent, ctx)
     {
         if matches!(condition.operator, BinaryOperator::LessThan | BinaryOperator::LessEqualThan) {
-            return TypeOptions::Max;
+            return Some(TypeOptions::Max);
         }
-        return TypeOptions::Min;
+        return Some(TypeOptions::Min);
     }
 
-    TypeOptions::Unknown
+    None
 }
 
 #[test]

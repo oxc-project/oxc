@@ -96,6 +96,7 @@ declare_oxc_lint!(
     UnboundMethod(tsgolint),
     typescript,
     correctness,
+    recommended,
     config = UnboundMethodConfig,
     version = "1.12.0",
     short_description = "This rule enforces that unbound methods are called with their expected scope.",

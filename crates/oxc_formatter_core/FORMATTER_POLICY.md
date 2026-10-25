@@ -62,6 +62,8 @@ Rules:
 
 - Every divergence has an entry in the owning layer's `DIVERGENCES.md` and a pin fixture
   - The owning layer decides the behavior: a language crate for single-language behavior, `apps/oxfmt` for embedding
+    - A behavior core decides for every language (see "Text width") is a rule in this document, not an entry;
+      each language crate where it shows pins it as an entry citing that section
   - The pin is a minimal fixture in the owner's `tests/fixtures/`, distilled from whatever exposed the divergence; a conformance file is never the pin, it stays a regression net
   - The fixture points back at its entry: it is named after the slug, or carries a one-line `DIVERGENCES.md#<slug>` marker
     (a fixture pinning several entries, or a language where a comment is content); the why and the deviating lines live in the entry
@@ -104,13 +106,24 @@ The invariants (placement only; losing a comment is the lossless contract under 
     - Comments may move behind a terminator (per-language compat tables decide when); they always stay before a separator
       - Except a same-line line comment: it rides a `line_suffix` and lands just past the separator (`a // c\n, b` -> `a, // c`), the separator cannot follow it on the line;
       - an own-line comment leads what follows the separator instead
-  - Grammar-fixed DELIMITER (braces, a head's parens) is neither: it bounds a region and stays user content, never crossed
+  - Grammar-fixed DELIMITER (braces, a head's parens, an argument list's parens) is neither: it bounds a region and stays user content, never crossed
   - (JS/TS) Redundant expression parentheses are NOT delimiters: the formatter drops them and re-derives parens by its own rules, so any paren in the output is formatter-owned
     - Trailing comment inside the dropped pair moves behind the terminator, even across a re-printed pair
     - The source pair stays user content only where a sub-printer claims it and prints the comment inside (per-language keeps tables)
     - The line-boundary invariant still gates the move: never across a re-printed paren that ends up on its own line
 
 Per-language translations (which tokens are terminators, the compat tables, cursor bounds disciplines) live in each crate's AGENTS.md.
+
+## Text width
+
+Printed text is measured by its display width (`TextWidth` / `text_width`, via `unicode-width`):
+
+- East Asian wide and fullwidth characters, and emoji presentation sequences count as 2
+- Zero-width characters count as 0: nonspacing and enclosing marks (`Mn` / `Me`), and format characters (`U+200B..U+200F`, `U+FEFF`, ...)
+- Everything else counts as 1, ambiguous width included
+
+This holds for the printer's line width and for every heuristic comparing text with a column budget (`tabWidth`, a share of `printWidth`, a short object key, ...),
+never a byte or UTF-16 length, even where Prettier uses a JS `.length`.
 
 ## Error semantics
 
@@ -178,4 +191,5 @@ Failures must be either fixed or classified under "Known divergences".
 
 The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt. Requires a dev build first.
 
-There are also conformance tests for each language that use real-world repositories.
+There are also conformance tests for each language that use real-world repositories,
+compared on Prettier's output of each file (what a Prettier user hands over), not as written; test suites stay as written.

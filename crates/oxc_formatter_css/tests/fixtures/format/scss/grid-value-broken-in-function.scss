@@ -1,0 +1,13 @@
+a {
+  b {
+    grid-template-columns: minmax(0, 1fr) $work-item-overview-right-sidebar-width-x;
+  }
+}
+c {
+  d {
+    grid-template-columns: minmax(
+        0,
+        1fr
+      ) $work-item-overview-right-sidebar-width-x;
+  }
+}
