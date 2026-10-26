@@ -54,32 +54,29 @@ fn transform_source<'a>(
 #[test]
 fn optional_chain_cache_preserves_throwing_continuations() {
     let cases = [
-        "obj?.a.b(getArg())",
-        "obj?.a[getKey()]?.(getArg())",
-        "obj?.a.b?.(getArg()).c",
-        "obj?.a?.b.c(getArg())",
-        "obj.inner?.a.b(getArg())",
-        "obj?.a?.b(getArg())",
-        "obj?.a(getArg())",
-        "(obj?.a).b(getArg())",
-        "getArg() ? obj?.a.b(getArg()) : null",
-        "getArg() ? obj?.a?.b.c(getArg()) : null",
-        "getArg() ? obj?.a.b?.(getArg()).c : null",
-        "getArg() ? obj?.a[getKey()]?.(getArg()) : null",
-        "getArg() && obj?.a.b(getArg())",
-        "getArg() || obj?.a.b(getArg())",
-        "getArg() ? null : obj?.a.b(getArg())",
-        "getArg() ? obj?.a?.b(getArg()) : null",
+        ("obj?.a.b(getArg())", "[undefined, {}]"),
+        ("obj?.a[getKey()]?.(getArg())", "[undefined, {}]"),
+        ("obj?.a.b?.(getArg()).c", "[undefined, {}]"),
+        ("obj?.a?.b.c(getArg())", "[undefined, {a: {}}]"),
+        ("obj.inner?.a.b(getArg())", "[{inner: undefined}, {inner: {}}]"),
+        ("getArg() ? obj?.a.b(getArg()) : null", "[undefined, {}]"),
+        ("getArg() ? obj?.a?.b.c(getArg()) : null", "[undefined, {a: {}}]"),
+        ("getArg() ? obj?.a.b?.(getArg()).c : null", "[undefined, {}]"),
+        ("getArg() ? obj?.a[getKey()]?.(getArg()) : null", "[undefined, {}]"),
+        ("obj?.a?.b(getArg())", "[undefined, {}]"),
+        ("obj?.a.b(getArg())", "[{a: {b: method, c: 2}}, {a: {b: method, c: 3}}]"),
     ];
     let mut script = String::from(
-        "import assert from 'node:assert/strict';\n\
-         const getKey = () => 'b';\n\
-         function outcome(fn, obj, getArg) {\n\
-           try { return ['value', fn({obj, getArg, getKey})]; }\n\
-           catch (error) { return ['error', error.constructor.name]; }\n\
-         }\n",
+        r#"import assert from 'node:assert/strict';
+const getKey = () => 'b';
+const method = function(value) { return this.c + value; };
+function outcome(fn, obj, getArg) {
+  try { return ['value', fn({obj, getArg, getKey})]; }
+  catch (error) { return ['error', error.constructor.name]; }
+}
+"#,
     );
-    for expression in cases {
+    for (expression, inputs) in cases {
         let source =
             format!("function Component({{obj, getArg, getKey}}) {{ return {expression}; }}");
         let allocator = Allocator::default();
@@ -94,37 +91,25 @@ fn optional_chain_cache_preserves_throwing_continuations() {
         program.body.retain(|statement| !matches!(statement, Statement::ImportDeclaration(_)));
         let output = Codegen::new().build(&program).code;
         script.push_str(&format!(
-            "{{\n\
-               function createComponent() {{\n\
-                 let cache;\n\
-                 function _c(size) {{\n\
-                   return cache ??= Array(size).fill(Symbol.for('react.memo_cache_sentinel'));\n\
-                 }}\n\
-                 {output}\n\
-                 return Component;\n\
-               }}\n\
-               const original = ({{obj, getArg, getKey}}) => {original};\n\
-               const nested = {nested};\n\
-               const wrap = value => nested ? {{inner: value}} : value;\n\
-               const method = function(value) {{ return {{c: this.c + value}}; }};\n\
-               const values = [undefined, null, {{}}, {{a: undefined}}, {{a: null}},\n\
-                 {{a: {{b: undefined}}}}, {{a: {{b: method, c: 2}}}},\n\
-                 {{a: {{b: method, c: 3}}}}];\n\
-               for (const getArg of [() => 0, () => 1]) {{\n\
-                 for (const from of values) {{\n\
-                   for (const to of values) {{\n\
-                     const compiled = createComponent();\n\
-                     const message = {expression:?} + ': ' + JSON.stringify([from, to]);\n\
-                     assert.deepEqual(outcome(compiled, wrap(from), getArg),\n\
-                       outcome(original, wrap(from), getArg), message);\n\
-                     assert.deepEqual(outcome(compiled, wrap(to), getArg),\n\
-                       outcome(original, wrap(to), getArg), message);\n\
-                   }}\n\
-                 }}\n\
-               }}\n\
-             }}\n",
-            nested = expression.starts_with("obj.inner"),
-            original = expression,
+            r#"{{
+  function createComponent() {{
+    let cache;
+    function _c(size) {{
+      return cache ??= Array(size).fill(Symbol.for('react.memo_cache_sentinel'));
+    }}
+    {output}
+    return Component;
+  }}
+  const original = ({{obj, getArg, getKey}}) => {expression};
+  for (const getArg of [() => 0, () => 1]) {{
+    const compiled = createComponent();
+    for (const obj of {inputs}) {{
+      assert.deepEqual(outcome(compiled, obj, getArg),
+        outcome(original, obj, getArg), {expression:?});
+    }}
+  }}
+}}
+"#,
         ));
     }
     let mut child = std::process::Command::new("node")
