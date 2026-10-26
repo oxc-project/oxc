@@ -322,6 +322,20 @@ impl<'a, 'env> OxcContext<'a, 'env> {
         validated
     }
 
+    /// A new name that is not used anywhere in the function, unlike
+    /// `synthesize_name`, which returns the same name for the same input.
+    fn fresh_name(&mut self, name: &str) -> Ident<'a> {
+        let allocator = self.env.allocator;
+        let mut index = 0u32;
+        loop {
+            let candidate = format_ident!(allocator, "{name}{index}");
+            if self.unique_identifiers.insert(candidate) {
+                return candidate;
+            }
+            index += 1;
+        }
+    }
+
     fn record_error(&mut self, diagnostic: OxcDiagnostic) -> Result<(), OxcDiagnostic> {
         self.env.record_error(diagnostic)
     }
@@ -729,11 +743,47 @@ fn ox_codegen_reactive_scope<'a>(
 
     let mut deps = scope_deps;
     deps.sort_unstable_by(|a, b| compare_scope_dependency(a, b, cx.env));
+    let reassigned_declarations = scope_reassignments
+        .iter()
+        .map(|id| cx.env.identifiers[*id].declaration_id)
+        .collect::<Vec<_>>();
 
     for dep in &deps {
         let index = cx.alloc_cache_index();
         let cache_name = cx.synthesize_name("$");
-        let dep_expr = ox_codegen_dependency(cx, dep)?;
+        let mut dep_expr = ox_codegen_dependency(cx, dep)?;
+        let mut dep_value = ox_codegen_dependency(cx, dep)?;
+        // The scope reassigns the dependency, so read it once before the scope runs:
+        // storing it afterwards would key the cache on the scope's output instead.
+        if reassigned_declarations.contains(&cx.env.identifiers[dep.identifier].declaration_id) {
+            let name = cx.fresh_name("t");
+            let binding = oxc_ast::ast::BindingPattern::new_binding_identifier(
+                SPAN,
+                ox_str(&cx.ast, &name),
+                &cx.ast,
+            );
+            let declarator = oxc_ast::ast::VariableDeclarator::new(
+                SPAN,
+                binding,
+                None,
+                Some(dep_expr),
+                false,
+                &cx.ast,
+            );
+            statements.push(oxc::Statement::VariableDeclaration(
+                oxc_ast::ast::VariableDeclaration::boxed(
+                    SPAN,
+                    oxc::VariableDeclarationKind::Const,
+                    [declarator],
+                    false,
+                    &cx.ast,
+                ),
+            ));
+            dep_expr =
+                oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, &name), &cx.ast);
+            dep_value =
+                oxc_ast::ast::Expression::new_identifier(SPAN, ox_str(&cx.ast, &name), &cx.ast);
+        }
         let comparison = oxc_ast::ast::Expression::new_binary_expression(
             SPAN,
             ox_cache_index(&cx.ast, &cache_name, index),
@@ -743,7 +793,6 @@ fn ox_codegen_reactive_scope<'a>(
         );
         change_exprs.push(comparison);
 
-        let dep_value = ox_codegen_dependency(cx, dep)?;
         let store = oxc_ast::ast::Expression::new_assignment_expression(
             SPAN,
             oxc::AssignmentOperator::Assign,
