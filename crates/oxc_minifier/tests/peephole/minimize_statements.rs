@@ -1,5 +1,6 @@
-use oxc_span::SourceType;
 use std::fmt::Write;
+
+use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, default_options, test, test_options_source_type, test_same,
