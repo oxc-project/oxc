@@ -23,11 +23,11 @@ pub struct CssInJsTemplate;
 /// which would need escaping in the template.
 pub struct MarkdownInJsTemplate;
 
-/// Child→parent pair context for HTML/Angular formatted as an embedded child (html-in-js).
-pub struct HtmlEmbedMeta {
-    /// Whether the parsed HTML has more than one root element.
-    /// Used to decide whether to `indent` the template content.
-    pub has_multiple_root_elements: Option<bool>,
+/// Parent→child context for HTML/Angular dispatched from a JS template literal (html-in-js).
+pub struct HtmlInJsTemplate {
+    /// The backticks hug the content (no whitespace on both ends, whitespace sensitivity not `ignore`):
+    /// the child indents its content when more than one node prints at the root.
+    pub indent_multiple_roots: bool,
 }
 
 /// What a dispatched JS/TS program is embedded in, for the print rules that depend on it.

@@ -1,3 +1,5 @@
+use std::num::NonZeroU32;
+
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::*;
 use oxc_span::{GetSpan, Span};
@@ -198,16 +200,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             _ => self.parse_expression_or_labeled_statement(),
         };
 
-        if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_stmt(&mut stmt)
-        {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(comments) = no_side_effects_comments {
+            self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
         }
 
         stmt
     }
 
-    pub(super) fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
+    #[cold]
+    #[inline(never)]
+    pub(super) fn apply_no_side_effects_comments_to_statement(
+        &mut self,
+        comments: (u32, NonZeroU32),
+        stmt: &mut Statement<'a>,
+    ) {
+        if Self::set_pure_on_function_stmt(stmt) {
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        }
+    }
+
+    fn set_pure_on_function_stmt(stmt: &mut Statement<'a>) -> bool {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;

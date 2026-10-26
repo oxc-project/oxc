@@ -1,3 +1,5 @@
+use std::num::NonZeroU32;
+
 use cow_utils::CowUtils;
 use oxc_allocator::{ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::ast::*;
@@ -785,10 +787,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
         let mut expr = parse(self);
-        if let Some(comments) = pure_comments
-            && Self::set_pure_on_call_or_new_expr(&mut expr)
-        {
-            self.lexer.trivia_builder.mark_pure_comments_applied(comments);
+        if let Some(comments) = pure_comments {
+            self.apply_pure_comments_to_call(comments, &mut expr);
         }
         expr
     }
@@ -1556,13 +1556,35 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut expr =
             self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function);
 
-        if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_expr(&mut expr)
-        {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(comments) = no_side_effects_comments {
+            self.apply_no_side_effects_comments_to_function(comments, &mut expr);
         }
 
         expr
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn apply_pure_comments_to_call(
+        &mut self,
+        comments: (u32, NonZeroU32),
+        expr: &mut Expression<'a>,
+    ) {
+        if Self::set_pure_on_call_or_new_expr(expr) {
+            self.lexer.trivia_builder.mark_pure_comments_applied(comments);
+        }
+    }
+
+    #[cold]
+    #[inline(never)]
+    fn apply_no_side_effects_comments_to_function(
+        &mut self,
+        comments: (u32, NonZeroU32),
+        expr: &mut Expression<'a>,
+    ) {
+        if Self::set_pure_on_function_expr(expr) {
+            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        }
     }
 
     fn set_pure_on_call_or_new_expr(expr: &mut Expression<'a>) -> bool {

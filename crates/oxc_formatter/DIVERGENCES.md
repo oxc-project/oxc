@@ -1021,3 +1021,61 @@ so a string padded with NBSP / ZWNJ pairs, as in an email preview, breaks in Pre
 Prettier measures some width heuristics by a JS `.length`, so a wide character counts 1 there and 2 in ours:
 a lone call argument of 14 CJK characters (`translateTheThing(漢字…)`) is short for Prettier's `printWidth * 0.25` and not for ours,
 so ours breaks the call's arguments instead of after the `=`.
+
+## html-close-comment-newline
+
+- Why: semantics
+- Pin: `tests/fixtures/js/comments/html-close-declaration.cjs`
+
+```js
+// input
+const
+--> comment
+value = 2;
+/* block */ --> comment
+
+// ours
+const
+  --> comment
+  value = 2;
+/* block */
+--> comment
+
+// prettier
+const --> comment
+  value = 2;
+/* block */ --> comment
+```
+
+A closing HTML comment (`-->`, Annex B) is a comment only at the start of a line.
+Prettier inlines it after `const` or `var`, producing a syntax error, and misparses the `let` case as an expression statement.
+We always print a line break before `-->`, which also splits a block comment preceding it on the same line, where Prettier's output stays valid.
+
+## string-binary-keyword-class-key
+
+- Why: semantics
+- Pin: `tests/fixtures/js/semicolons/binary-keyword-class-key.js`, `tests/fixtures/ts/semicolons/binary-keyword-class-key-quoted.ts`
+
+```js
+// input (semi: false)
+class A {
+  a = 1;
+  "in";
+}
+
+// ours
+class A {
+  a = 1;
+  in
+}
+
+// prettier
+class A {
+  a = 1
+  in
+}
+```
+
+A class member named `in` or `instanceof` would continue the previous property's value as a binary operator, so the `;` before it is kept.
+Prettier checks only an identifier key, but also prints the string key `"in"` unquoted, producing a syntax error.
+We check a string key by its value, which also keeps the `;` before a key that stays quoted (TypeScript, `quoteProps: "preserve"`), where Prettier's output stays valid.

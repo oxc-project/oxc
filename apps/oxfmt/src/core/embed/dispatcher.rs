@@ -226,17 +226,17 @@ impl ResolvedDispatchConfig {
 }
 
 /// Fallback invoked for [`Route::Prettier`] languages.
-/// Same shape as `FormatDispatcher` minus the request envelope
-/// (the Doc path consumes neither `input_kind` nor `parent_context` today;
+/// Same shape as `FormatDispatcher`, plus the routed language
+/// (the Doc path consumes `parent_context` only for html(angular)-in-js's [`oxc_formatter::HtmlInJsTemplate`], not `input_kind`;
 /// re-examine if it ever serves envelope-bearing inputs).
 ///
 /// Assembled only in napi builds ([`super::prettier_doc`]);
 /// the pure Rust build passes `None` and these languages are deliberately preserved as-is.
 pub type PrettierDocFallback = Arc<
-    dyn for<'a> Fn(
+    dyn for<'a, 'r> Fn(
             &FormatSession<'a>,
             PrettierLanguage,
-            &str,
+            &DispatchRequest<'r>,
         ) -> Result<DispatchResponse<'a>, String>
         + Send
         + Sync,
@@ -323,7 +323,7 @@ pub fn build_dispatcher(
             // deliberate skip otherwise (pure build).
             Route::Prettier(language) => {
                 if let Some(fallback) = &fallback {
-                    fallback(session, language, text)
+                    fallback(session, language, &request)
                 } else {
                     debug!(
                         "No fallback for Prettier language '{}' in this build, part stays as-is",
@@ -349,7 +349,7 @@ fn format_native<'a, E: std::fmt::Display>(
     format_to_ir: impl FnOnce() -> Result<EmbeddedIr<'a>, E>,
 ) -> DispatchResponse<'a> {
     debug_span!("oxfmt::embed::format_to_ir", language).in_scope(|| match format_to_ir() {
-        Ok(embedded) => DispatchResponse::Formatted(embedded.into()),
+        Ok(embedded) => DispatchResponse::Formatted(embedded),
         Err(err) => {
             debug!("native '{language}' format_to_ir failed, part stays as-is: {err}");
             DispatchResponse::PreserveOriginal

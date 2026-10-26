@@ -7,7 +7,7 @@ use std::{cell::RefCell, rc::Rc, sync::Arc};
 use oxc_allocator::Allocator;
 
 use crate::{
-    DispatchPayload, DispatchRequest, DispatchResponse, Document, FormatDispatcher, LineEnding,
+    DispatchRequest, DispatchResponse, Document, EmbeddedIr, FormatDispatcher, LineEnding,
     PrinterOptions, UniqueGroupIdBuilder,
 };
 
@@ -200,8 +200,7 @@ impl<'a> FormatSession<'a> {
     ) -> Result<Option<String>, String> {
         let text_len = request.text.len();
         let scoped = self.with_new_tailwind_scope();
-        let DispatchResponse::Formatted(DispatchPayload { doc, .. }) = scoped.dispatch(request)?
-        else {
+        let DispatchResponse::Formatted(EmbeddedIr { ir: doc }) = scoped.dispatch(request)? else {
             return Ok(None);
         };
 
@@ -282,8 +281,8 @@ mod tests {
 
     use super::{FormatSession, InputKind, MAX_DISPATCH_DEPTH, SessionServices, TailwindSorter};
     use crate::{
-        DispatchPayload, DispatchRequest, DispatchResponse, Document, FormatDispatcher,
-        FormatElement, FormatState, Interned, PrinterOptions,
+        DispatchRequest, DispatchResponse, Document, EmbeddedIr, FormatDispatcher, FormatElement,
+        FormatState, Interned, PrinterOptions,
     };
 
     fn request<'r>() -> DispatchRequest<'r> {
@@ -307,10 +306,7 @@ mod tests {
     fn dispatch_preserves_a_bom_headed_text() {
         let allocator = Allocator::default();
         let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
-            Ok(DispatchResponse::Formatted(DispatchPayload {
-                doc: ArenaVec::new_in(&ctx.allocator()),
-                child_context: None,
-            }))
+            Ok(DispatchResponse::Formatted(EmbeddedIr { ir: ArenaVec::new_in(&ctx.allocator()) }))
         });
         let session = FormatSession::with_services(
             &allocator,
@@ -329,10 +325,7 @@ mod tests {
     fn dispatch_stops_at_the_depth_limit() {
         let allocator = Allocator::default();
         let dispatcher: FormatDispatcher = Arc::new(|ctx, _request| {
-            Ok(DispatchResponse::Formatted(DispatchPayload {
-                doc: ArenaVec::new_in(&ctx.allocator()),
-                child_context: None,
-            }))
+            Ok(DispatchResponse::Formatted(EmbeddedIr { ir: ArenaVec::new_in(&ctx.allocator()) }))
         });
         let mut session = FormatSession::with_services(
             &allocator,
@@ -405,7 +398,7 @@ mod tests {
                 [FormatElement::Interned(Interned::new(inner))],
                 &ctx.allocator(),
             );
-            Ok(DispatchResponse::Formatted(DispatchPayload { doc, child_context: None }))
+            Ok(DispatchResponse::Formatted(EmbeddedIr { ir: doc }))
         });
         let session = FormatSession::with_services(
             &allocator,
@@ -426,7 +419,7 @@ mod tests {
             [FormatElement::TailwindClass(parent_index), FormatElement::Space],
             &&allocator,
         );
-        elements.extend(payload.doc);
+        elements.extend(payload.ir);
 
         let printed = Document::new(elements, session.take_sorted_tailwind_classes())
             .print(0, PrinterOptions::default())

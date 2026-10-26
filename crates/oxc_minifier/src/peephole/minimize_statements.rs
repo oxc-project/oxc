@@ -358,8 +358,7 @@ impl<'a> PeepholeOptimizations {
             };
             if kind.name == id.name {
                 if decl.init.is_none()
-                    && (declaration_kind == VariableDeclarationKind::Var
-                        || assign_expr.right.is_literal_value(true, ctx))
+                    && (declaration_kind.is_var() || assign_expr.right.is_literal_value(true, ctx))
                 {
                     // "var a; a = b();" => "var a = b();"
                     decl.init = Some(assign_expr.right.take_in(ctx));
@@ -1400,7 +1399,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::UnaryExpression(unary_expr) => {
-                if unary_expr.operator != UnaryOperator::Delete
+                if !unary_expr.operator.is_delete()
                     && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         &mut unary_expr.argument,
                         search_for,

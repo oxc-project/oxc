@@ -160,8 +160,8 @@ just conformance                       # Run all conformance tests (alias: cargo
 cargo test -p <crate_name>             # Test specific crate
 
 # Conformance for specific tools
-cargo coverage -- parser               # Parser conformance
-cargo coverage -- transformer          # Transformer conformance
+cargo coverage parser                  # Parser conformance
+cargo coverage transformer             # Transformer conformance
 cargo run -p oxc_transform_conformance # Transformer Babel tests
 
 # NAPI packages
@@ -175,7 +175,7 @@ Each crate follows distinct testing patterns:
 #### oxc_parser
 
 - **Conformance only** via `tasks/coverage`
-- **Command**: `cargo coverage -- parser`
+- **Command**: `cargo coverage parser`
 - **Suites**: Test262, Babel, TypeScript
 - **Special**: `just allocs` for allocation tracking
 
