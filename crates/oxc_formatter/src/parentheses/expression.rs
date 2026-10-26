@@ -908,7 +908,7 @@ fn class_extends_needs_parens_through_non_null(expression: &Expression<'_>) -> b
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, '_, TSInstantiationExpression<'_>> {
-    fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, f: &JsFormatter<'_, '_>) -> bool {
         let object = match self.parent() {
             AstNodes::StaticMemberExpression(expr) => &expr.object,
             AstNodes::ComputedMemberExpression(expr) => &expr.object,
@@ -920,7 +920,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, TSInstantiationExpression<'_>> {
             AstNodes::CallExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
             AstNodes::NewExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
             AstNodes::TaggedTemplateExpression(expr) if expr.type_arguments.is_some() => &expr.tag,
-            _ => return is_followed_by_comparison_or_sign(self),
+            _ => return is_followed_by_comparison_or_sign(self, f),
         };
 
         self.span == object.span()
@@ -929,34 +929,43 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, TSInstantiationExpression<'_>> {
 
 /// Whether the instantiation expression ends the left operand of `+`, `-`, `<` or `>`-led operators:
 /// TypeScript reads `f<T> + x` as `f < T > +x` and rejects `f<T> < x`,
-/// also when `f<T>` only ends the operand (`(a + f<T>) - x`, `(typeof f<T>) + x`).
+/// also when `f<T>` only ends that operand without parentheses (`(a + f<T>) - x`, `(<A>await f<T>) + x`).
 fn is_followed_by_comparison_or_sign(
     node: &AstNode<'_, '_, TSInstantiationExpression<'_>>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
     let mut span = node.span;
-    let mut parent = node.parent();
-    loop {
-        match parent {
-            AstNodes::BinaryExpression(expr) if expr.right.span() == span => {
-                (span, parent) = (expr.span, expr.parent());
-            }
-            AstNodes::UnaryExpression(expr) => (span, parent) = (expr.span, expr.parent()),
-            AstNodes::BinaryExpression(expr) => {
-                return expr.left.span() == span
-                    && matches!(
-                        expr.operator,
-                        BinaryOperator::Addition
-                            | BinaryOperator::Subtraction
-                            | BinaryOperator::LessThan
-                            | BinaryOperator::GreaterThan
-                            | BinaryOperator::GreaterEqualThan
-                            | BinaryOperator::ShiftRight
-                            | BinaryOperator::ShiftRightZeroFill
-                    );
-            }
-            _ => return false,
+    for ancestor in node.ancestors() {
+        if let AstNodes::BinaryExpression(expr) = ancestor
+            && expr.left.span() == span
+        {
+            return matches!(
+                expr.operator,
+                BinaryOperator::Addition
+                    | BinaryOperator::Subtraction
+                    | BinaryOperator::LessThan
+                    | BinaryOperator::GreaterThan
+                    | BinaryOperator::GreaterEqualThan
+                    | BinaryOperator::ShiftRight
+                    | BinaryOperator::ShiftRightZeroFill
+            );
         }
+        // `f<T>` still ends these as the right or only operand, unless their own parentheses close it.
+        // Looser ones (`a && f<T>`, `yield f<T>`, ...) always print them before a binary operator.
+        if !matches!(
+            ancestor,
+            AstNodes::BinaryExpression(_)
+                | AstNodes::PrivateInExpression(_)
+                | AstNodes::UnaryExpression(_)
+                | AstNodes::AwaitExpression(_)
+                | AstNodes::TSTypeAssertion(_)
+        ) || prints_own_parens(ancestor, f)
+        {
+            return false;
+        }
+        span = ancestor.span();
     }
+    false
 }
 
 fn binary_like_needs_parens(

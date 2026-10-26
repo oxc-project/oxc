@@ -14,6 +14,9 @@ x = (make<T>) + y;
 x = (make<T>) >> y;
 x = (a + make<T>) - y;
 x = (typeof make<T>) + y;
+x = (<any>(make<T>)) + y;
+x = (<A>await make<T>) + y;
+class C { #p; m() { x = (#p in make<T>) > y; } }
 export default (class {})<string>;
 export default (function () {})<string>;
 export default (class {})<string> as A;
@@ -46,6 +49,14 @@ x = (make<T>) + y;
 x = (make<T>) >> y;
 x = a + (make<T>) - y;
 x = typeof (make<T>) + y;
+x = <any>(make<T>) + y;
+x = <A>await (make<T>) + y;
+class C {
+  #p;
+  m() {
+    x = #p in (make<T>) > y;
+  }
+}
 export default (class {})<string>;
 export default (function () {})<string>;
 export default (class {})<string> as A;
@@ -77,6 +88,14 @@ x = (make<T>) + y;
 x = (make<T>) >> y;
 x = a + (make<T>) - y;
 x = typeof (make<T>) + y;
+x = <any>(make<T>) + y;
+x = <A>await (make<T>) + y;
+class C {
+  #p;
+  m() {
+    x = #p in (make<T>) > y;
+  }
+}
 export default (class {})<string>;
 export default (function () {})<string>;
 export default (class {})<string> as A;
