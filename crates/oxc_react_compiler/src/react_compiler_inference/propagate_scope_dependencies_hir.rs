@@ -24,9 +24,9 @@ use crate::react_compiler_hir::visitors::{ScopeBlockInfo, ScopeBlockTraversal};
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, DeclarationId, DependencyPathEntry, EvaluationOrder, FunctionId,
     GotoVariant, HirFunction, IdentifierId, Instruction, InstructionId, InstructionKind,
-    InstructionValue, JsxAttribute, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place,
-    PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
-    ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
+    InstructionValue, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place, PlaceOrSpread,
+    PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration, ReactiveScopeDependency, ScopeId,
+    Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
 use crate::react_compiler_optimization::dead_code_elimination::find_semantic_only_caught_instructions;
 use oxc_span::Span;
@@ -1066,30 +1066,9 @@ fn get_assumed_invoked_functions_impl(
                         }
                     }
                 }
-                InstructionValue::JsxExpression { props, children, .. } => {
-                    // Assume JSX attributes and children are safe to invoke
-                    for prop in props {
-                        if let JsxAttribute::Attribute { place, .. } = prop
-                            && let Some(entry) = temporaries.get(&place.identifier)
-                        {
-                            hoistable.insert(entry.0);
-                        }
-                    }
-                    if let Some(children) = children {
-                        for child in children {
-                            if let Some(entry) = temporaries.get(&child.identifier) {
-                                hoistable.insert(entry.0);
-                            }
-                        }
-                    }
-                }
-                InstructionValue::JsxFragment { children, .. } => {
-                    for child in children {
-                        if let Some(entry) = temporaries.get(&child.identifier) {
-                            hoistable.insert(entry.0);
-                        }
-                    }
-                }
+                // Unlike the TS implementation, functions passed to JSX are not assumed
+                // invoked: event handlers run after render, if at all, so their property
+                // reads must not become cache guards that run during render.
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     // Recursively traverse into other function expressions
                     // TS passes the shared temporaries map to the recursive call
