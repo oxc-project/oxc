@@ -73,6 +73,5 @@ ts compatibility: 754/819 (92.06%), 16 files skipped
 # Not idempotent
 
 - jsx/comments/in-attributes.js
-- jsx/spread/child.js
 - typescript/as/comments/17407.ts
 - typescript/method-chain/object/issue-17239.ts
