@@ -2,13 +2,7 @@ commit: a56fe4a4
 
 formatter_babel Summary:
 AST Parsed     : 2280/2280 (100.00%)
-Positive Passed: 2269/2280 (99.52%)
-Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-declaration/input.js
-
-Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-declaration-cr/input.js
-
-Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-declaration-line-separator/input.js
-
+Positive Passed: 2272/2280 (99.65%)
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-private-method/input.js
