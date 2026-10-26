@@ -28,25 +28,25 @@ function Component(t0) {
 function _temp2(item) {
 	const t0 = item.label;
 	const T0 = _temp;
-	return <T0 dataId={item.id} t={t0} key={item.id} dataTestid="row" ariaLabel={item.label} />;
+	return <T0 p={item.id} t={t0} key={item.id} p1="row" p2={item.label} />;
 }
 function _temp(t0) {
 	const $ = _c(7);
-	const { "dataId": dataId, "t": t, "dataTestid": dataTestid, "ariaLabel": ariaLabel } = t0;
+	const { "p": p, "t": t, "p1": p1, "p2": p2 } = t0;
 	let t1;
-	if ($[0] !== dataId || $[1] !== t) {
-		t1 = <span data-id={dataId}>{t}</span>;
-		$[0] = dataId;
+	if ($[0] !== p || $[1] !== t) {
+		t1 = <span data-id={p}>{t}</span>;
+		$[0] = p;
 		$[1] = t;
 		$[2] = t1;
 	} else {
 		t1 = $[2];
 	}
 	let t2;
-	if ($[3] !== ariaLabel || $[4] !== dataTestid || $[5] !== t1) {
-		t2 = <li data-testid={dataTestid} aria-label={ariaLabel}>{t1}</li>;
-		$[3] = ariaLabel;
-		$[4] = dataTestid;
+	if ($[3] !== p1 || $[4] !== p2 || $[5] !== t1) {
+		t2 = <li data-testid={p1} aria-label={p2}>{t1}</li>;
+		$[3] = p1;
+		$[4] = p2;
 		$[5] = t1;
 		$[6] = t2;
 	} else {
