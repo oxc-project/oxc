@@ -1,0 +1,23 @@
+crates/oxc_parser/src/lib.rs
+  s_be800834b6a14b::t_f9a7803abd5bf5 1086-1148
+tasks/coverage/misc/fail/oxc-28158.js
+  s_be800834b6a14b::t_2d6000a759eecb 1-7
+tasks/coverage/misc/pass/oxc-28158.ts
+  s_be800834b6a14b::t_012737b44781b7 1-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ddd86118a728309e6efa631bdae9896dfb579ddc",
+  "prompts": {},
+  "sessions": {
+    "s_be800834b6a14b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d67a7e5c-f624-4a5b-a1a8-93e081fa062c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
