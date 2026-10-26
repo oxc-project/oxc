@@ -1048,7 +1048,7 @@ const --> comment
 ```
 
 A closing HTML comment (`-->`, Annex B) is a comment only at the start of a line.
-Prettier inlines it after `const` or `var`, producing code rejected by `node --check`, and misparses the `let` case as an expression statement.
+Prettier inlines it after `const` or `var`, producing a syntax error, and misparses the `let` case as an expression statement.
 We always print a line break before `-->`, which also splits a block comment preceding it on the same line, where Prettier's output stays valid.
 
 ## string-binary-keyword-class-key
@@ -1077,5 +1077,5 @@ class A {
 ```
 
 A class member named `in` or `instanceof` would continue the previous property's value as a binary operator, so the `;` before it is kept.
-Prettier checks only an identifier key, but also prints the string key `"in"` unquoted, producing code rejected by `node --check`.
+Prettier checks only an identifier key, but also prints the string key `"in"` unquoted, producing a syntax error.
 We check a string key by its value, which also keeps the `;` before a key that stays quoted (TypeScript, `quoteProps: "preserve"`), where Prettier's output stays valid.
