@@ -1,0 +1,53 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A suppressed bodyless ambient module prints verbatim through its `with { ... }` attributes.
+// oxfmt-ignore
+declare module "*.a"   with {   type: "css"  }  ;
+// prettier-ignore
+export declare module "*.b"   with {   type: "css"  }
+const afterAsi   =   1;
+
+==================== Output ====================
+------------------------------
+{ printWidth: 80, semi: true }
+------------------------------
+// A suppressed bodyless ambient module prints verbatim through its `with { ... }` attributes.
+// oxfmt-ignore
+declare module "*.a"   with {   type: "css"  };
+// prettier-ignore
+export declare module "*.b"   with {   type: "css"  };
+const afterAsi = 1;
+
+-------------------------------
+{ printWidth: 100, semi: true }
+-------------------------------
+// A suppressed bodyless ambient module prints verbatim through its `with { ... }` attributes.
+// oxfmt-ignore
+declare module "*.a"   with {   type: "css"  };
+// prettier-ignore
+export declare module "*.b"   with {   type: "css"  };
+const afterAsi = 1;
+
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+// A suppressed bodyless ambient module prints verbatim through its `with { ... }` attributes.
+// oxfmt-ignore
+declare module "*.a"   with {   type: "css"  }
+// prettier-ignore
+export declare module "*.b"   with {   type: "css"  }
+const afterAsi = 1
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+// A suppressed bodyless ambient module prints verbatim through its `with { ... }` attributes.
+// oxfmt-ignore
+declare module "*.a"   with {   type: "css"  }
+// prettier-ignore
+export declare module "*.b"   with {   type: "css"  }
+const afterAsi = 1
+
+===================== End =====================

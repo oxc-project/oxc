@@ -1244,6 +1244,7 @@ pub enum TSTypePredicateName<'a> {
             type: 'TSModuleDeclaration';
             id: BindingIdentifier | StringLiteral | TSQualifiedName;
             body: TSModuleBlock | null;
+            attributes?: Array<ImportAttribute>;
             kind: TSModuleDeclarationKind;
             declare: boolean;
             global: false;
@@ -1255,6 +1256,7 @@ pub struct TSExternalModuleDeclaration<'a> {
     pub node_id: Cell<NodeId>,
     pub span: Span,
     pub id: StringLiteral<'a>,
+    pub attributes: Option<Box<'a, WithClause<'a>>>,
     #[scope(enter_before)]
     pub body: Option<Box<'a, TSModuleBlock<'a>>>,
     pub declare: bool,

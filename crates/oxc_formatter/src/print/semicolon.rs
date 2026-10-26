@@ -373,7 +373,8 @@ pub fn suppressed_statement_content_end(
 }
 
 /// [`suppressed_statement_content_end`] for a declaration (also behind `export`):
-/// the last declarator, a type alias's type, a bodyless (`declare`) function's signature, a bodyless `declare module "m"`.
+/// the last declarator, a type alias's type, a bodyless (`declare`) function's signature,
+/// a bodyless `declare module "m"` (through its `with { ... }` attributes, if any).
 fn declaration_content_end(declaration: &Declaration<'_>, f: &JsFormatter<'_, '_>) -> Option<u32> {
     match declaration {
         // `VariableDeclaration` always has at least one declarator
@@ -381,7 +382,9 @@ fn declaration_content_end(declaration: &Declaration<'_>, f: &JsFormatter<'_, '_
         Declaration::FunctionDeclaration(function) => function_content_end(function, f),
         Declaration::TSTypeAliasDeclaration(s) => Some(s.type_annotation.span().end),
         Declaration::TSImportEqualsDeclaration(s) => Some(s.module_reference.span().end),
-        Declaration::TSExternalModuleDeclaration(s) if s.body.is_none() => Some(s.id.span.end),
+        Declaration::TSExternalModuleDeclaration(s) if s.body.is_none() => {
+            Some(s.attributes.as_ref().map_or(s.id.span.end, |attributes| attributes.span.end))
+        }
         _ => None,
     }
 }

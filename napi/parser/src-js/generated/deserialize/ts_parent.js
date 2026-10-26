@@ -4604,12 +4604,14 @@ function deserializeTSTypePredicateName(pos) {
 function deserializeTSExternalModuleDeclaration(pos) {
   let start = deserializeI32(pos),
     end = deserializeI32(pos + 4),
-    declare = deserializeBool(pos + 72),
+    declare = deserializeBool(pos + 80),
     previousParent = parent,
-    body = deserializeOptionBoxTSModuleBlock(pos + 64),
+    withClause = deserializeOptionBoxWithClause(pos + 64),
+    body = deserializeOptionBoxTSModuleBlock(pos + 72),
     node = (parent = {
       type: "TSModuleDeclaration",
       id: null,
+      ...(withClause !== null && { attributes: withClause.attributes }),
       ...(body !== null && { body }),
       kind: "module",
       declare,
@@ -4619,6 +4621,7 @@ function deserializeTSExternalModuleDeclaration(pos) {
       parent,
     });
   node.id = deserializeStringLiteral(pos + 16);
+  if (withClause !== null) for (let attribute of withClause.attributes) attribute.parent = node;
   body !== null && (body.parent = node);
   parent = previousParent;
   return node;

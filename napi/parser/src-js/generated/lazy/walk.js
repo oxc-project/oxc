@@ -4450,7 +4450,8 @@ function walkTSExternalModuleDeclaration(pos, ast, visitors) {
   }
 
   walkStringLiteral(pos + 16, ast, visitors);
-  walkOptionBoxTSModuleBlock(pos + 64, ast, visitors);
+  walkOptionBoxWithClause(pos + 64, ast, visitors);
+  walkOptionBoxTSModuleBlock(pos + 72, ast, visitors);
 
   if (exit !== null) exit(node);
 }
