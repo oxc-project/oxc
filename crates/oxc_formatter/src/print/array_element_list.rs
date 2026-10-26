@@ -145,9 +145,13 @@ pub fn can_concisely_print_array_list(
     //   // This is fine
     //   thats
     // ]
+    //
+    // [ // Also fine, it moves to its own line
+    //   a,
+    // ]
     // ```
 
     !comments
-        .all_comments_in_range(array_expression_span.start, array_expression_span.end)
+        .all_comments_in_range(list[0].span().start, array_expression_span.end)
         .any(|comment| comment.is_line() && !comment.preceded_by_newline())
 }
