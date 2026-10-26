@@ -199,12 +199,6 @@ impl PrettierLanguage {
             _ => None,
         }
     }
-
-    /// Whether the Doc→IR conversion must surface `HtmlEmbedMeta`
-    /// (`htmlHasMultipleRootElements`) to the embed site.
-    pub fn wants_html_meta(self) -> bool {
-        matches!(self, Self::Html | Self::Angular)
-    }
 }
 
 // ---
