@@ -257,14 +257,14 @@ impl<'a> PeepholeOptimizations {
             unreachable!();
         };
         let mut e = e.unbox();
-        if !Self::remove_unused_expression(&mut e.left, ctx) {
-            // `(a(), V) OP 1` => `(a(), V, 1)`
-            Self::join_sequence(e.span, e.left, e.right, ctx)
-        } else {
+        if Self::remove_unused_expression(&mut e.left, ctx) {
             ctx.drop_expression(&e.left);
             // `(V OP o.f)` => `(0, o.f)`
             // `(V OP x)` => `x`
             Self::preserve_indirect_access_if_needed(e.left.span(), e.right, ctx)
+        } else {
+            // `(a(), V) OP 1` => `(a(), V, 1)`
+            Self::join_sequence(e.span, e.left, e.right, ctx)
         }
     }
 
