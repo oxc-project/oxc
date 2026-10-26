@@ -13,6 +13,7 @@ pub mod type_config;
 pub mod visitors;
 
 use std::fmt;
+use std::sync::Arc;
 
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
@@ -1342,7 +1343,9 @@ pub enum Type<'a> {
     },
     Poly,
     Phi {
-        operands: Vec<Type<'a>>,
+        /// Shared so resolving a phi whose operands reach the same types along
+        /// many paths builds each of them once.
+        operands: Arc<[Type<'a>]>,
     },
     Property {
         object_type: Box<Type<'a>>,
