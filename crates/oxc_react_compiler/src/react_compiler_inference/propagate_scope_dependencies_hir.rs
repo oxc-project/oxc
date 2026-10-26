@@ -1575,6 +1575,25 @@ impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
     }
 
     fn add_dependency(&mut self, dep: ReactiveScopeDependency<'a>) {
+        let mut hoistable_ptr = self.hoistable_roots.get(&dep.identifier).map(|(node, _)| node);
+        let mut path_len = dep.path.len();
+        for (index, entry) in dep.path.iter().enumerate() {
+            if !matches!(
+                hoistable_ptr.map(|node| node.access_type),
+                Some(HoistableAccessType::NonNull)
+            ) && !entry.optional
+            {
+                // A conditionally evaluated continuation cannot be hoisted. Track
+                // the last optional guard rather than its possibly undefined result,
+                // so a cached short circuit cannot hide a later throwing access.
+                path_len =
+                    dep.path[..index].iter().rposition(|entry| entry.optional).unwrap_or(index);
+                break;
+            }
+            hoistable_ptr = hoistable_ptr
+                .and_then(|node| node.properties.get(&entry.property).map(|entry| &entry.node));
+        }
+
         let root = self.dep_roots.entry(dep.identifier).or_insert_with(|| {
             (
                 DependencyNode {
@@ -1591,7 +1610,7 @@ impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
         let hoistable_cursor_root = self.hoistable_roots.get(&dep.identifier);
         let mut hoistable_ptr: Option<&HoistableNode> = hoistable_cursor_root.map(|(n, _)| n);
 
-        for entry in &dep.path {
+        for entry in &dep.path[..path_len] {
             let next_hoistable =
                 hoistable_ptr.and_then(|h| h.properties.get(&entry.property).map(|e| &e.node));
             let access_type = match hoistable_ptr.map(|h| h.access_type) {

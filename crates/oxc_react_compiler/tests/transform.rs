@@ -62,12 +62,19 @@ fn optional_chain_cache_preserves_throwing_continuations() {
         "obj?.a?.b(getArg())",
         "obj?.a(getArg())",
         "(obj?.a).b(getArg())",
+        "getArg() ? obj?.a.b(getArg()) : null",
+        "getArg() ? obj?.a?.b.c(getArg()) : null",
+        "getArg() ? obj?.a.b?.(getArg()).c : null",
+        "getArg() ? obj?.a[getKey()]?.(getArg()) : null",
+        "getArg() && obj?.a.b(getArg())",
+        "getArg() || obj?.a.b(getArg())",
+        "getArg() ? null : obj?.a.b(getArg())",
+        "getArg() ? obj?.a?.b(getArg()) : null",
     ];
     let mut script = String::from(
         "import assert from 'node:assert/strict';\n\
-         const getArg = () => 1;\n\
          const getKey = () => 'b';\n\
-         function outcome(fn, obj) {\n\
+         function outcome(fn, obj, getArg) {\n\
            try { return ['value', fn({obj, getArg, getKey})]; }\n\
            catch (error) { return ['error', error.constructor.name]; }\n\
          }\n",
@@ -103,12 +110,16 @@ fn optional_chain_cache_preserves_throwing_continuations() {
                const values = [undefined, null, {{}}, {{a: undefined}}, {{a: null}},\n\
                  {{a: {{b: undefined}}}}, {{a: {{b: method, c: 2}}}},\n\
                  {{a: {{b: method, c: 3}}}}];\n\
-               for (const from of values) {{\n\
-                 for (const to of values) {{\n\
-                   const compiled = createComponent();\n\
-                   outcome(compiled, wrap(from));\n\
-                   assert.deepEqual(outcome(compiled, wrap(to)), outcome(original, wrap(to)),\n\
-                     {expression:?} + ': ' + JSON.stringify([from, to]));\n\
+               for (const getArg of [() => 0, () => 1]) {{\n\
+                 for (const from of values) {{\n\
+                   for (const to of values) {{\n\
+                     const compiled = createComponent();\n\
+                     const message = {expression:?} + ': ' + JSON.stringify([from, to]);\n\
+                     assert.deepEqual(outcome(compiled, wrap(from), getArg),\n\
+                       outcome(original, wrap(from), getArg), message);\n\
+                     assert.deepEqual(outcome(compiled, wrap(to), getArg),\n\
+                       outcome(original, wrap(to), getArg), message);\n\
+                   }}\n\
                  }}\n\
                }}\n\
              }}\n",
