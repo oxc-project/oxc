@@ -9220,6 +9220,9 @@
         "unicorn/no-object-as-default-parameter": {
           "$ref": "#/definitions/RuleNoConfig"
         },
+        "unicorn/no-object-methods-with-collections": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
         "unicorn/no-process-exit": {
           "$ref": "#/definitions/RuleNoConfig"
         },
