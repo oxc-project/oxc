@@ -1157,6 +1157,23 @@ fn lower_type_cast_expression<'a>(
     Ok(InstructionValue::TypeCastExpression { value, cast: cast(type_annotation), span })
 }
 
+/// Bind `value` to a promoted temporary so that codegen emits it as a
+/// declaration at this point instead of inlining it at each use.
+fn bind_temporary(
+    builder: &mut HirBuilder<'_, '_>,
+    kind: InstructionKind,
+    value: Place,
+    span: Option<Span>,
+) -> Result<Place, OxcDiagnostic> {
+    let binding = build_temporary_place(builder, span);
+    promote_temporary(builder, binding.identifier);
+    lower_value_to_temporary(
+        builder,
+        InstructionValue::StoreLocal { lvalue: LValue { kind, place: binding }, value, span },
+    )?;
+    Ok(binding)
+}
+
 /// Lower a member-expression update target into a receiver place + property +
 /// load value, mirroring `lower_member_expression_impl`.
 fn lower_member_expression_for_update<'a>(
@@ -4119,66 +4136,63 @@ fn lower_expression<'a>(
             let span = Some(update.span);
             match simple_assignment_target_ref_from_simple(&update.argument) {
                 Some(SimpleAssignmentTargetRef::Member(member)) => {
-                    let binary_op = match update.operator {
-                        oxc::UpdateOperator::Increment => BinaryOperator::Addition,
-                        oxc::UpdateOperator::Decrement => BinaryOperator::Subtraction,
-                    };
-                    // Use the member expression's span (not the update expression's)
-                    // to match TS behavior where the inner operations use leftExpr.node.span
                     let member_span = Some(member.span());
                     let lowered = lower_member_expression_for_update(builder, member)?;
-                    let object = lowered.object;
-                    let lowered_property = lowered.property;
-                    let computed = lowered.computed;
-                    let property_span = lowered.property_span;
-                    let prev_value = lower_value_to_temporary(builder, lowered.value)?;
+                    let previous = lower_value_to_temporary(builder, lowered.value)?;
 
-                    let one = lower_value_to_temporary(
+                    // `++` and `--` convert the operand with ToNumeric and add a one
+                    // of the same type, which `previous + 1` does not do for strings
+                    // and BigInts. Update a local copy instead and store it back.
+                    let local =
+                        bind_temporary(builder, InstructionKind::Let, previous, member_span)?;
+                    let operation = update.operator;
+                    let update_value = lower_value_to_temporary(
                         builder,
-                        InstructionValue::Primitive {
-                            value: PrimitiveValue::Number(FloatValue::new(1.0)),
-                            span: None,
+                        if update.prefix {
+                            InstructionValue::PrefixUpdateLocal {
+                                lvalue: local,
+                                operation,
+                                value: local,
+                                span,
+                            }
+                        } else {
+                            InstructionValue::PostfixUpdateLocal {
+                                lvalue: local,
+                                operation,
+                                value: local,
+                                span,
+                            }
                         },
                     )?;
+                    let result =
+                        bind_temporary(builder, InstructionKind::Const, update_value, span)?;
                     let updated = lower_value_to_temporary(
                         builder,
-                        InstructionValue::BinaryExpression {
-                            operator: binary_op,
-                            left: prev_value,
-                            right: one,
-                            span: member_span,
-                        },
+                        InstructionValue::LoadLocal { place: local, span: member_span },
                     )?;
-
-                    // Store back using the property from the lowered member expression.
-                    // For prefix, the result is the PropertyStore/ComputedStore lvalue
-                    // (matching TS which uses newValuePlace). For postfix, it's prev_value.
-                    let new_value_place = match lowered_property {
-                        MemberProperty::Literal(prop_literal) => lower_value_to_temporary(
+                    match lowered.property {
+                        MemberProperty::Literal(property) => lower_value_to_temporary(
                             builder,
                             InstructionValue::PropertyStore {
-                                object,
-                                property: prop_literal,
-                                computed,
-                                property_span,
+                                object: lowered.object,
+                                property,
+                                computed: lowered.computed,
+                                property_span: lowered.property_span,
                                 value: updated,
                                 span: member_span,
                             },
                         )?,
-                        MemberProperty::Computed(prop_place) => lower_value_to_temporary(
+                        MemberProperty::Computed(property) => lower_value_to_temporary(
                             builder,
                             InstructionValue::ComputedStore {
-                                object,
-                                property: prop_place,
+                                object: lowered.object,
+                                property,
                                 value: updated,
                                 span: member_span,
                             },
                         )?,
                     };
-
-                    // Return previous for postfix, newValuePlace for prefix
-                    let result_place = if update.prefix { new_value_place } else { prev_value };
-                    Ok(InstructionValue::LoadLocal { place: result_place, span: result_place.span })
+                    Ok(InstructionValue::LoadLocal { place: result, span: result.span })
                 }
                 Some(SimpleAssignmentTargetRef::Identifier(ident)) => {
                     let symbol = builder.scope().resolve_reference(ident);
