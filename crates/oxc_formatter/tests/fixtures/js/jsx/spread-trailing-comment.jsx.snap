@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/fixtures/mod.rs
 ---
 ==================== Input ====================
-// A comment before `}` stays inside the braces, as in an expression child.
+// A comment before `}` stays inside the braces of a spread child or attribute.
 <div>
   {
     ...a
@@ -16,12 +16,19 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
     /* comment */
   }
 </div>;
+
+<div
+  {
+    ...a
+    //comment
+  }
+/>;
 
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
 ------------------
-// A comment before `}` stays inside the braces, as in an expression child.
+// A comment before `}` stays inside the braces of a spread child or attribute.
 <div>
   {
     ...a
@@ -35,11 +42,18 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
     /* comment */
   }
 </div>;
+
+<div
+  {
+    ...a
+    //comment
+  }
+/>;
 
 -------------------
 { printWidth: 100 }
 -------------------
-// A comment before `}` stays inside the braces, as in an expression child.
+// A comment before `}` stays inside the braces of a spread child or attribute.
 <div>
   {
     ...a
@@ -53,5 +67,12 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
     /* comment */
   }
 </div>;
+
+<div
+  {
+    ...a
+    //comment
+  }
+/>;
 
 ===================== End =====================
