@@ -204,6 +204,20 @@ fn collect_binding_names_from_pattern(
 ///
 /// Implements the TS BlockStatement hoisting pass: identifies forward references to
 /// block-scoped bindings and emits DeclareContext instructions to hoist them.
+/// Lower the `finally` block of a `try` statement after the rest of it. The
+/// `finally` clause is not supported, so the function is not compiled, but lint
+/// rules still need to see the values the block uses.
+fn lower_finally_block<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    try_stmt: &oxc::TryStatement<'a>,
+    parent_scope: Option<ScopeId>,
+) -> Result<(), OxcDiagnostic> {
+    if let Some(finalizer) = &try_stmt.finalizer {
+        lower_block_statement(builder, &finalizer.body, finalizer.scope_id.get(), parent_scope)?;
+    }
+    Ok(())
+}
+
 fn lower_block_statement<'a>(
     builder: &mut HirBuilder<'a, '_>,
     statements: &[oxc::Statement<'a>],
@@ -6486,6 +6500,15 @@ fn lower_statement<'a>(
                             finally_keyword_span,
                         ),
                     )?;
+                    // The function is not compiled, but lint rules still analyze it, so
+                    // lower both blocks for them to see the values they use.
+                    lower_block_statement(
+                        builder,
+                        &try_stmt.block.body,
+                        try_stmt.block.scope_id.get(),
+                        parent_scope,
+                    )?;
+                    lower_finally_block(builder, try_stmt, parent_scope)?;
                     return Ok(());
                 }
             };
@@ -6614,6 +6637,7 @@ fn lower_statement<'a>(
                 },
                 continuation_block,
             );
+            lower_finally_block(builder, try_stmt, parent_scope)?;
         }
         oxc::Statement::BreakStatement(brk) => {
             let span = Some(brk.span);
