@@ -34,8 +34,6 @@ export default defineConfig({
       // prettier-plugin-svelte's peer dependency; must be installed by the user
       "svelte/compiler",
       // prettier-plugin-astro's dependency (native binding); must be installed by the user
-      // NOTE: The plugin depends on `^0.4.0`, but our peer range (`npm/oxfmt/package.json`) also allows `^0.5.0`,
-      // which Astro 7.3.5+ and our tests use. Drop `^0.4.0` once the plugin itself depends on `^0.5.0`.
       "@astrojs/compiler-rs",
     ],
     alwaysBundle: [
