@@ -939,6 +939,33 @@ fn test_compress_destructuring_assignment_target() {
     test("var {y: y} = x", "var {y} = x");
     test("var {y: z, 'z': y} = x", "var {y: z, z: y} = x");
     test("var {y: y, 'z': z} = x", "var {y, z} = x");
+    test("var {y: y = f()} = x", "var {y = f()} = x");
+
+    test("({ y: y } = x)", "({ y } = x)");
+    test("({ 'y': y } = x)", "({ y } = x)");
+    test("({ y: y = 1 } = x)", "({ y = 1 } = x)");
+    test("({ y: y = f() } = x)", "({ y = f() } = x)");
+    test("({ y: y = y } = x)", "({ y = y } = x)");
+    test("({ y: y = function() {} } = x)", "({ y = function() {} } = x)");
+    test("({ y: y = f(), z: z } = x)", "({ y = f(), z } = x)");
+    test("({ a: { y: y = f() } } = x)", "({ a: { y = f() } } = x)");
+    test("[{ y: y = f() }] = x", "[{ y = f() }] = x");
+    test("for ({ y: y = f() } of x);", "for ({ y = f() } of x);");
+    test("for ({ y: y = f() } in x);", "for ({ y = f() } in x);");
+    test(
+        "async function g() { for await ({ y: y = f() } of x); }",
+        "async function g() { for await ({ y = f() } of x); }",
+    );
+    test("function* g() { ({ y: y = yield } = x) }", "function* g() { ({ y = yield } = x) }");
+    test(
+        "async function g() { ({ y: y = await f() } = x) }",
+        "async function g() { ({ y = await f() } = x) }",
+    );
+    test("({ y: y = 1, ...z } = x)", "({ y = 1, ...z } = x)");
+    test("({ ['y']: y = 1 } = x)", "({ y = 1 } = x)");
+    test_same("({ [y]: y = 1 } = x)");
+    test_same("({ y: z = f() } = x)");
+    test_same("({ y: a.y = f() } = x)");
 }
 
 #[test]

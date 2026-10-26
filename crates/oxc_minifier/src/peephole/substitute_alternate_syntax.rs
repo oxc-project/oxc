@@ -96,7 +96,7 @@ impl<'a> PeepholeOptimizations {
         prop: &mut AssignmentTargetProperty<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        // `a: a` -> `a`
+        // `a: a` -> `a`, `a: a = b` -> `a = b`
         if let AssignmentTargetProperty::AssignmentTargetPropertyProperty(assign_target_prop_prop) =
             prop
         {
@@ -105,11 +105,16 @@ impl<'a> PeepholeOptimizations {
                 return;
             };
             if prop_name == ident.name {
+                let ident = ident.take_in(ctx);
+                // `identifier_mut` also matches `a: a = b`, so keep its default.
+                let init = match &mut assign_target_prop_prop.binding {
+                    AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(target) => {
+                        Some(target.init.take_in(ctx))
+                    }
+                    _ => None,
+                };
                 let new_prop = AssignmentTargetProperty::new_assignment_target_property_identifier(
-                    ident.span,
-                    ident.take_in(ctx),
-                    None,
-                    ctx,
+                    ident.span, ident, init, ctx,
                 );
                 ctx.replace_assignment_target_property(prop, new_prop);
             }
