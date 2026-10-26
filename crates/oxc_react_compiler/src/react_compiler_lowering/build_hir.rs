@@ -1174,8 +1174,33 @@ fn bind_temporary(
     Ok(binding)
 }
 
-/// Lower a member-expression update target into a receiver place + property +
-/// load value, mirroring `lower_member_expression_impl`.
+/// Lower an operand that a read-modify-write such as `obj[key()] += v` uses
+/// twice, once for the load and once for the store. Codegen inlines
+/// temporaries at each use, so anything but a plain identifier or literal is
+/// first bound to a constant and evaluated once.
+fn lower_reused_operand<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    expr: &oxc::Expression<'a>,
+) -> Result<Place, OxcDiagnostic> {
+    let value = lower_expression_to_temporary(builder, expr)?;
+    if matches!(
+        expr,
+        oxc::Expression::Identifier(_)
+            | oxc::Expression::StringLiteral(_)
+            | oxc::Expression::NumericLiteral(_)
+            | oxc::Expression::BigIntLiteral(_)
+            | oxc::Expression::BooleanLiteral(_)
+            | oxc::Expression::NullLiteral(_)
+    ) {
+        return Ok(value);
+    }
+    let span = Some(expr.span());
+    let binding = bind_temporary(builder, InstructionKind::Const, value, span)?;
+    lower_value_to_temporary(builder, InstructionValue::LoadLocal { place: binding, span })
+}
+
+/// Lower the target of an update or compound assignment, whose object and
+/// computed key are each evaluated once and used by both the load and the store.
 fn lower_member_expression_for_update<'a>(
     builder: &mut HirBuilder<'a, '_>,
     target: &oxc::MemberExpression<'a>,
@@ -1184,7 +1209,7 @@ fn lower_member_expression_for_update<'a>(
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let property_span = Some(m.property.span);
-            let object = lower_expression_to_temporary(builder, &m.object)?;
+            let object = lower_reused_operand(builder, &m.object)?;
             let prop_literal = PropertyLiteral::String(m.property.name);
             let value = InstructionValue::PropertyLoad {
                 object,
@@ -1203,7 +1228,7 @@ fn lower_member_expression_for_update<'a>(
         }
         oxc::MemberExpression::ComputedMemberExpression(m) => {
             let span = Some(m.span);
-            let object = lower_expression_to_temporary(builder, &m.object)?;
+            let object = lower_reused_operand(builder, &m.object)?;
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
                 let property_span = Some(lit.span);
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
@@ -1222,7 +1247,7 @@ fn lower_member_expression_for_update<'a>(
                     value,
                 });
             }
-            let property = lower_expression_to_temporary(builder, &m.expression)?;
+            let property = lower_reused_operand(builder, &m.expression)?;
             let value = InstructionValue::ComputedLoad { object, property, span };
             Ok(LoweredMemberExpression {
                 object,
@@ -4673,7 +4698,7 @@ fn lower_assignment_expression<'a>(
             }
             Some(SimpleAssignmentTargetRef::Member(member)) => {
                 let member_span = Some(member.span());
-                let lowered = lower_member_expression(builder, member)?;
+                let lowered = lower_member_expression_for_update(builder, member)?;
                 let object = lowered.object;
                 let lowered_property = lowered.property;
                 let computed = lowered.computed;
