@@ -4,12 +4,12 @@
 # stdout
 ```
   x react(globals): Cannot reassign variables declared outside of the component/hook
-   ,-[files/memo.jsx:5:3]
- 4 | export const Component = React.memo(function (props) {
- 5 |   someGlobal = true;
+   ,-[files/memo.jsx:6:3]
+ 5 | export const Component = React.memo(function (props) {
+ 6 |   someGlobal = true;
    :   ^^^^^|^^^^
    :        `-- `someGlobal` cannot be reassigned
- 6 |   return <div>{props.text}</div>;
+ 7 |   return <div>{props.text}</div>;
    `----
   help: Variable `someGlobal` is declared outside of the component/hook. Reassigning this value during render is a side effect which can cause unpredictable behavior. If this variable is used in
         rendering, use useState instead. Otherwise, update it in an effect
