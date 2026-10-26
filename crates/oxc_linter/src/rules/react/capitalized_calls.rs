@@ -92,6 +92,7 @@ impl CapitalizedCalls {
         ReactCompilerEnvOptions {
             capitalized_calls_allow: self.0.allow.clone(),
             capitalized_calls_allow_pattern: self.0.allow_pattern.clone(),
+            ..ReactCompilerEnvOptions::default()
         }
     }
 }

@@ -221,6 +221,7 @@ fn parse_pragma(source: &str) -> (SourceType, PluginOptions) {
                 }
             }
             "outputMode" => options.output_mode = value.and_then(|v| unquote(v).parse().ok()),
+            "lintSkipReactiveScopePasses" => options.lint_skip_reactive_scope_passes = true,
             // Fixed test default (upstream `testComplexPluginOptionDefaults`).
             "gating" => {
                 options.gating = Some(GatingConfig {

@@ -14,15 +14,18 @@ use crate::{
 
 /// Environment additions to the shared React Compiler run that come from rule
 /// configuration, extracted once per resolved config in `Linter::run` (from the
-/// `react/capitalized-calls` rule's options). Config-derived rather than
-/// per-run rule state, so the single shared run stays valid for any
-/// combination of enabled rules.
+/// `react/capitalized-calls` rule's options and whether `react/todo` or
+/// `react/invariant` is enabled). Config-derived rather than per-run rule state,
+/// so the single shared run stays valid for any combination of enabled rules.
 #[derive(Debug, Default, Clone)]
 pub struct ReactCompilerEnvOptions {
     /// Extra allowed names for `validateNoCapitalizedCalls`.
     pub capitalized_calls_allow: Vec<String>,
     /// Allowed-name pattern for `validateNoCapitalizedCalls`.
     pub capitalized_calls_allow_pattern: Option<Regex>,
+    /// Whether `react/todo` or `react/invariant` is enabled. Otherwise lint skips
+    /// the compiler passes that only report those categories.
+    pub report_todo_and_invariant: bool,
 }
 
 /// The compiler options the React Compiler family of rules lints with — `lint`
@@ -68,6 +71,7 @@ fn react_compiler_plugin_options(env_options: &ReactCompilerEnvOptions) -> Plugi
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::All,
             ..EnvironmentConfig::default()
         },
+        lint_skip_reactive_scope_passes: !env_options.report_todo_and_invariant,
         ..PluginOptions::default()
     }
 }

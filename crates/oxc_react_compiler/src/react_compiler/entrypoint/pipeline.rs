@@ -16,8 +16,9 @@ use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
 use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
 use crate::react_compiler_hir::{
-    ReactFunctionType, assert_consistent_identifiers, assert_terminal_preds_exist,
-    assert_terminal_successors_exist, assert_valid_block_nesting,
+    HirFunction, InstructionValue, ReactFunctionType, assert_consistent_identifiers,
+    assert_terminal_preds_exist, assert_terminal_successors_exist, assert_valid_block_nesting,
+    is_use_effect_hook_type, is_use_insertion_effect_hook_type, is_use_layout_effect_hook_type,
 };
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
@@ -231,6 +232,31 @@ pub fn compile_fn<'a, const EMIT: bool>(
         validate_no_freezing_known_mutable_functions(&hir, &mut env);
     }
 
+    // Lint does not emit a rewrite. Without useMemo/useCallback there is no
+    // manual memoization to validate, so callers that do not need `Todo` and
+    // `Invariant` diagnostics can skip the reactive-scope passes below, which
+    // only report those. Reactive places are still inferred when an effect hook
+    // call needs its dependencies checked.
+    if !EMIT
+        && env.output_mode == OutputMode::Lint
+        && context.opts.lint_skip_reactive_scope_passes
+        && !hir_has_start_memoize(&hir)
+    {
+        if env.enable_validations() {
+            if env.config.validate_static_components {
+                let errors = validate_static_components(&hir, &env.functions);
+                log_errors_as_events(&errors, context);
+            }
+            if env.config.validate_exhaustive_effect_dependencies != ExhaustiveEffectDepsMode::Off
+                && calls_effect_hook(&hir, &env)
+            {
+                infer_reactive_places(&mut hir, &mut env)?;
+                validate_exhaustive_dependencies(&mut hir, &mut env)?;
+            }
+        }
+        return finish_lint_fn(&mut env, context);
+    }
+
     infer_reactive_places(&mut hir, &mut env)?;
 
     if env.enable_validations()
@@ -383,4 +409,46 @@ pub fn compile_fn<'a, const EMIT: bool>(
 /// matching TS `env.logErrors()`. No enclosing-function fallback label.
 fn log_errors_as_events(errors: &Diagnostics, context: &mut ProgramContext) {
     context.diagnostics.extend(errors.iter().cloned());
+}
+
+fn hir_has_start_memoize(hir: &HirFunction<'_>) -> bool {
+    hir.instructions
+        .iter()
+        .any(|instruction| matches!(instruction.value, InstructionValue::StartMemoize { .. }))
+}
+
+/// Whether `hir` calls an effect hook, by type — the calls
+/// [`validate_exhaustive_dependencies`] checks. Nested functions are not
+/// scanned because the validator does not check effect calls inside them.
+fn calls_effect_hook(hir: &HirFunction<'_>, env: &Environment<'_>) -> bool {
+    hir.instructions.iter().any(|instruction| {
+        let callee = match &instruction.value {
+            InstructionValue::CallExpression { callee, .. } => callee,
+            InstructionValue::MethodCall { property, .. } => property,
+            _ => return false,
+        };
+        let ty = &env.types[env.identifiers[callee.identifier].type_];
+        is_use_effect_hook_type(ty)
+            || is_use_layout_effect_hook_type(ty)
+            || is_use_insertion_effect_hook_type(ty)
+    })
+}
+
+fn finish_lint_fn<'a>(
+    env: &mut Environment<'a>,
+    context: &mut ProgramContext<'a>,
+) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
+    if env.config.throw_unknown_exception_testonly {
+        return Err(Diagnostics::from(diagnostics::invariant_unexpected_error()));
+    }
+    if env.has_errors() {
+        if let Some(uid_names) = env.take_uid_known_names() {
+            context.merge_uid_known_names(&uid_names);
+        }
+        return Err(env.take_errors());
+    }
+    if let Some(uid_names) = env.take_uid_known_names() {
+        context.merge_uid_known_names(&uid_names);
+    }
+    Ok(None)
 }
