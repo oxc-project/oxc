@@ -555,8 +555,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatCommentText<'_> {
             write!(f, [formatted]);
         } else {
             let content = f.source_text().text_for(&comment.span);
-            // Annex B closing HTML comments are only comments at the start of a line.
-            // A leading comment may otherwise be inlined after a declaration keyword.
+            // `-->` is a comment only at the start of a line, but it may be printed after code (`const --> c`).
+            // Whether it starts a line is unknown here, so always break before it.
+            // This also splits an already valid `/* c */ --> c`, see DIVERGENCES.md#html-close-comment-newline
             if comment.kind == CommentKind::HtmlClose {
                 write!(f, hard_line_break());
             }
