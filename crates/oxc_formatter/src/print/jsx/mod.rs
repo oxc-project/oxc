@@ -17,7 +17,7 @@ use crate::{
     formatter::{
         TailwindContextEntry,
         prelude::*,
-        trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
+        trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     utils::{
         expression::as_call_expression_without_chain_wrappers,
@@ -187,15 +187,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXExpressionContainer<'a>> {
                     if should_inline {
                         write!(f, self.expression());
                     } else {
-                        write!(
-                            f,
-                            soft_block_indent(&format_with(|f| {
-                                write!(f, [self.expression()]);
-                                let comments =
-                                    f.context().comments().comments_before(self.span.end);
-                                write!(f, [FormatTrailingComments::Comments(comments)]);
-                            }))
-                        );
+                        write!(f, soft_block_indent(&self.expression()));
                     }
                 });
 
@@ -215,11 +207,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXExpressionContainer<'a>> {
                     f,
                     [group(&format_args!(
                         "{",
-                        soft_block_indent(&format_with(|f| {
-                            write!(f, [self.expression()]);
-                            let comments = f.context().comments().comments_before(self.span.end);
-                            write!(f, [FormatTrailingComments::Comments(comments)]);
-                        })),
+                        soft_block_indent(&self.expression()),
                         line_suffix_boundary(),
                         "}"
                     ))]
@@ -363,11 +351,7 @@ fn write_jsx_spread<'a>(
     let has_comment = comments.has_comment_before(argument_span.start)
         || comments.has_comment_in_range(argument_span.end, span.end);
     let format_inner = format_with(|f| {
-        write!(f, [format_leading_comments(argument_span), "..."]);
-        argument.fmt(f);
-        // Keep the comments before `}` inside the braces, like `JSXExpressionContainer`
-        let comments = f.context().comments().comments_before(span.end);
-        write!(f, [FormatTrailingComments::Comments(comments)]);
+        write!(f, [format_leading_comments(argument_span), "...", argument]);
     });
 
     write!(f, "{");
