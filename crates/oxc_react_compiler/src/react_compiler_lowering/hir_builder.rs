@@ -789,6 +789,9 @@ impl<'a, 'b> HirBuilder<'a, 'b> {
             // No binding found: this is a global
             return Ok(VariableBinding::Global { name });
         };
+        if self.scope.is_ambient_binding(symbol_id) {
+            return Ok(VariableBinding::Global { name });
+        }
         // Treat type-only declarations as globals so the compiler doesn't try to
         // create or initialize HIR bindings for them. Inline enums are opaque
         // pass-through instructions, matching upstream's `UnsupportedNode`, so
