@@ -170,6 +170,16 @@ pub fn compile_fn<'a, const EMIT: bool>(
 
     optimize_props_method_calls(&mut hir, &env);
 
+    // Async function components are Server Components: they render once per
+    // request and never re-render, so `Date.now()` / `Math.random()` are not a
+    // purity hazard. Nested functions are analysed with this same config, which
+    // covers callbacks that run during that render. Async hooks are not
+    // components and stay checked. The upstream React Compiler does not
+    // special-case this (facebook/react#34834).
+    if hir.is_async && env.fn_type == ReactFunctionType::Component {
+        env.config.validate_no_impure_functions_in_render = false;
+    }
+
     analyse_functions(&mut hir, &mut env, &mut |_inner_func, _inner_env| {})?;
 
     if env.has_invariant_errors() {
