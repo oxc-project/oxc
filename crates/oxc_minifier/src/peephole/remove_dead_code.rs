@@ -467,11 +467,7 @@ impl<'a> PeepholeOptimizations {
             if Self::remove_unused_expression(&mut e.test, ctx) {
                 ctx.drop_expression(&e.test);
                 // `(1 ? a.b : 0)()` => `(0, a.b)()`
-                if Self::should_keep_indirect_access(&result_expr, ctx) {
-                    Self::preserve_indirect_access(e.span, result_expr, ctx)
-                } else {
-                    result_expr
-                }
+                Self::preserve_indirect_access_if_needed(e.span, result_expr, ctx)
             } else {
                 // `(a, true) ? b : c` => `a, b`
                 Self::join_sequence(e.span, e.test, result_expr, ctx)
