@@ -1,0 +1,80 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/object-computed-proto-key.js
+---
+import { c as _c } from "react/compiler-runtime";
+// A computed `["__proto__"]` key defines an own property, while the
+// non-computed spellings set the object's prototype.
+function Component(t0) {
+	const $ = _c(21);
+	const { value } = t0;
+	let t1;
+	let t10;
+	let t2;
+	let t3;
+	let t4;
+	let t5;
+	let t6;
+	let t7;
+	let t8;
+	let t9;
+	if ($[0] !== value) {
+		const own = { ["__proto__"]: value };
+		const prototype = { "__proto__": value };
+		const shorthandProto = { __proto__: value };
+		t3 = Object.keys(own).join(",");
+		t4 = "|";
+		t5 = String(Object.getPrototypeOf(own) === value);
+		t6 = "|";
+		t7 = Object.keys(prototype).join(",");
+		t8 = "|";
+		t9 = String(Object.getPrototypeOf(prototype) === value);
+		t10 = "|";
+		t2 = String;
+		t1 = Object.getPrototypeOf(shorthandProto);
+		$[0] = value;
+		$[1] = t1;
+		$[2] = t10;
+		$[3] = t2;
+		$[4] = t3;
+		$[5] = t4;
+		$[6] = t5;
+		$[7] = t6;
+		$[8] = t7;
+		$[9] = t8;
+		$[10] = t9;
+	} else {
+		t1 = $[1];
+		t10 = $[2];
+		t2 = $[3];
+		t3 = $[4];
+		t4 = $[5];
+		t5 = $[6];
+		t6 = $[7];
+		t7 = $[8];
+		t8 = $[9];
+		t9 = $[10];
+	}
+	const t11 = t2(t1 === value);
+	let t12;
+	if ($[11] !== t10 || $[12] !== t11 || $[13] !== t3 || $[14] !== t4 || $[15] !== t5 || $[16] !== t6 || $[17] !== t7 || $[18] !== t8 || $[19] !== t9) {
+		t12 = <div>{t3}{t4}{t5}{t6}{t7}{t8}{t9}{t10}{t11}</div>;
+		$[11] = t10;
+		$[12] = t11;
+		$[13] = t3;
+		$[14] = t4;
+		$[15] = t5;
+		$[16] = t6;
+		$[17] = t7;
+		$[18] = t8;
+		$[19] = t9;
+		$[20] = t12;
+	} else {
+		t12 = $[20];
+	}
+	return t12;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ value: { x: 1 } }]
+};
