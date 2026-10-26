@@ -1,15 +1,12 @@
 //! Prettier test-suite provisioning.
 //!
 //! The conformance tests compare output against the Prettier repository's own test suite (`tests/format`).
-//! The pin is the `prettier` version in `apps/oxfmt/package.json`,
-//! the same Prettier that oxfmt bundles as the oracle.
+//! The pin is the `prettier` version in `apps/oxfmt/package.json`, the same Prettier that oxfmt bundles as the oracle.
 //! So the suite and the oracle cannot drift apart.
 //! [`ensure_prettier_suite`] downloads the release tarball on demand (degit-style, no git objects, `tests/format` only),
-//! so neither CI nor local runs need a separate clone step;
-//! a warm checkout is verified offline.
+//! so neither CI nor local runs need a separate clone step; a warm checkout is verified offline.
 //!
-//! Bumping Prettier =
-//! bumping `apps/oxfmt/package.json` + regenerating the conformance snapshots against it
+//! Bumping Prettier = bumping `apps/oxfmt/package.json` + regenerating the conformance snapshots against it
 //! (they must change together; the suite re-provisions itself).
 
 use std::{
@@ -22,8 +19,8 @@ use std::{
 /// The version pin. Also serves as the cross-process provisioning lock.
 const PACKAGE_JSON: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../../apps/oxfmt/package.json");
 
-/// Root of the extracted Prettier suite (gitignored). Contains `tests/format`
-/// plus a `.version` stamp written after a successful extraction.
+/// Root of the extracted Prettier suite (gitignored).
+/// Contains `tests/format` plus a `.version` stamp written after a successful extraction.
 #[must_use]
 pub fn prettier_suite_root() -> &'static Path {
     Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/prettier"))

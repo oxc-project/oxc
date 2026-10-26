@@ -24,3 +24,12 @@ class A {
       this.#testerConfig.languageOptions.parserOptions?.tsconfigRootDir;
   }
 }
+
+// A line comment ending the `=` line does not expand the left side's type arguments / parameters
+// (no `line_suffix_boundary` in the ordered break-after-operator arm)
+let e: Foo<X,Y> = // c
+  foo(a, b);
+const g: Foo<X,Y> = /* b */ // c
+  1;
+type T2<A,B> = // c
+  Foo<A,B>;

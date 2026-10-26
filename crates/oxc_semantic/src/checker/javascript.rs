@@ -2,12 +2,12 @@ use memchr::memchr_iter;
 use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use oxc_allocator::GetAddress;
-use oxc_ast::{AstKind, ModuleDeclarationKind, ast::*};
+use oxc_ast::{AstKind, ast::*};
 use oxc_ecmascript::{BoundNames, IsSimpleParameterList, PropName};
-use oxc_span::{GetSpan, ModuleKind, Span, best_match};
+use oxc_span::{Span, best_match};
 use oxc_str::Ident;
 use oxc_syntax::{
-    class::ClassId,
+    class::{ClassId, ElementKind},
     number::NumberBase,
     operator::UnaryOperator,
     scope::{ScopeFlags, ScopeId},
@@ -88,7 +88,20 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
         let mut defined_elements =
             FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
         for (element_id, element) in elements.iter_enumerated() {
-            if let Some(prev_element_id) = defined_elements.insert(&element.name, element_id) {
+            // Public and private names belong to separate namespaces.
+            let previous =
+                defined_elements.entry((&element.name, element.is_private)).or_insert([None; 2]);
+            let prev_element_id = if element.is_private {
+                // Keep setters separate so a valid getter/setter pair cannot hide a
+                // repeated accessor.
+                let index = usize::from(element.kind.contains(ElementKind::Setter));
+                let prev_element_id = previous[index].or(previous[1 - index]);
+                previous[index] = Some(element_id);
+                prev_element_id
+            } else {
+                previous[0].replace(element_id)
+            };
+            if let Some(prev_element_id) = prev_element_id {
                 let prev_element = &elements[prev_element_id];
 
                 let mut is_duplicate = element.is_private == prev_element.is_private
@@ -127,7 +140,7 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                             && ctx.source_type.is_typescript()
                         {
                             ctx.error(diagnostics::static_and_instance_private_identifier(
-                                &element.name,
+                                element.name.display(),
                                 prev_element.span,
                                 element.span,
                             ));
@@ -370,8 +383,11 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
                     for ancestor_class_id in ctx.class_table_builder.classes.ancestors(class_id) {
                         for element in &ctx.class_table_builder.classes.elements[ancestor_class_id]
                         {
-                            if element.is_private {
-                                names.push(element.name.as_ref());
+                            // Private names originate from identifiers, which are always UTF-8.
+                            if element.is_private
+                                && let Some(name) = element.name.as_str()
+                            {
+                                names.push(name);
                             }
                         }
                     }
@@ -509,44 +525,6 @@ pub fn check_directive(directive: &Directive, ctx: &SemanticBuilder<'_>) {
     }
 }
 
-pub fn check_module_declaration(decl: &ModuleDeclarationKind, ctx: &SemanticBuilder<'_>) {
-    // It is ambiguous between script and module for `TypeScript`, skipping this check for now.
-    // Basically we need to "upgrade" from script to module if we see any module syntax inside the
-    // semantic builder
-    if ctx.source_type.is_typescript() {
-        return;
-    }
-
-    let text = match decl {
-        ModuleDeclarationKind::Import(_) => "import statement",
-        ModuleDeclarationKind::ExportAll(_)
-        | ModuleDeclarationKind::Export(_)
-        | ModuleDeclarationKind::ExportDefault(_)
-        | ModuleDeclarationKind::ExportNamed(_)
-        | ModuleDeclarationKind::ExportFrom(_)
-        | ModuleDeclarationKind::TSExportAssignment(_)
-        | ModuleDeclarationKind::TSNamespaceExport(_) => "export statement",
-    };
-    let start = decl.span().start;
-    let span = Span::sized(start, 6);
-    match ctx.source_type.module_kind() {
-        ModuleKind::Unambiguous => {
-            #[cfg(debug_assertions)]
-            panic!("Technically unreachable, omit to avoid panic.");
-        }
-        // CommonJS uses require/module.exports, not import/export statements
-        ModuleKind::Script | ModuleKind::CommonJS => {
-            ctx.error(diagnostics::module_code(text, span));
-        }
-        ModuleKind::Module => {
-            if matches!(ctx.ancestry().parent_kind(), AstKind::Program(_)) {
-                return;
-            }
-            ctx.error(diagnostics::top_level(text, span));
-        }
-    }
-}
-
 /// Check that `using` declarations are not at the top level in script mode.
 /// `using` is allowed:
 /// - At the top level of ES modules
@@ -561,7 +539,7 @@ pub fn check_variable_declaration(decl: &VariableDeclaration, ctx: &SemanticBuil
     {
         ctx.error(diagnostics::using_declaration_not_allowed_in_script(decl.span));
     }
-    if decl.kind.is_await() && is_in_class_static_block(ctx) {
+    if decl.kind.is_await_using() && is_in_class_static_block(ctx) {
         ctx.error(diagnostics::class_static_block_await_using(decl.span));
     }
 }
@@ -797,7 +775,9 @@ pub fn check_break_statement(stmt: &BreakStatement, ctx: &SemanticBuilder<'_>) {
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_break(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -840,7 +820,9 @@ pub fn check_continue_statement(stmt: &ContinueStatement, ctx: &SemanticBuilder<
                     },
                 );
             }
-            AstKind::Function(_) | AstKind::StaticBlock(_) => {
+            AstKind::Function(_)
+            | AstKind::ArrowFunctionExpression(_)
+            | AstKind::StaticBlock(_) => {
                 return stmt.label.as_ref().map_or_else(
                     || ctx.error(diagnostics::invalid_continue(stmt.span)),
                     |label| ctx.error(diagnostics::invalid_label_jump_target(label.span)),
@@ -1292,9 +1274,16 @@ pub fn check_unary_expression(unary_expr: &UnaryExpression, ctx: &SemanticBuilde
 }
 
 fn is_in_formal_parameters(ctx: &SemanticBuilder<'_>) -> bool {
-    for node_kind in ctx.ancestry().ancestor_kinds() {
+    let mut ancestors = ctx.ancestry().ancestor_kinds().peekable();
+    while let Some(node_kind) = ancestors.next() {
         match node_kind {
             AstKind::FormalParameter(_) => return true,
+            // Only the rest binding belongs to the parameter; decorators use the surrounding context.
+            AstKind::BindingRestElement(_)
+                if matches!(ancestors.peek(), Some(AstKind::FormalParameterRest(_))) =>
+            {
+                return true;
+            }
             AstKind::Program(_) | AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => {
                 break;
             }

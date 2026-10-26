@@ -22,6 +22,12 @@ const STRING_ESCAPE_REGEX =
  *
  * Pretty mode always uses double quotes, matching Oxc's default options, so there is no quote to choose.
  * Almost no string needs escaping, so the scan for characters or sequences which do is all that happens on the common path.
+ *
+ * @param state - Printer state
+ * @param value - String to print
+ * @param start - Start offset of `node` in the source, for the source mapping
+ * @param end - End offset of `node` in the source, for the source mapping
+ * @param node - Node the string is mapped to
  */
 export function printString(
   state: State,
@@ -48,6 +54,9 @@ export function printString(
  *
  * Runs of ordinary characters are copied in chunks rather than one at a time, so the cost is in
  * the escapes rather than the length. Kept out of `printString` because it almost never runs.
+ *
+ * @param state - Printer state
+ * @param value - String to print, which needs escaping
  */
 function printEscapedStringContents(state: State, value: string): void {
   let chunkStart = 0;
@@ -146,6 +155,8 @@ function printEscapedStringContents(state: State, value: string): void {
  *
  * For template literal quasis, which are printed from their raw text and so never pass through the
  * string escaper.
+ *
+ * @param text - Raw text
  */
 export function escapeScriptCloseTag(text: string): string {
   if (!text.includes("</")) return text;

@@ -1,17 +1,19 @@
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format, RemoveSoftLinesBuffer, SourceText};
+use oxc_formatter_core::{Format, SourceText};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    ast_nodes::{AstNode, AstNodes},
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     format_args,
     formatter::{JsFormatContext, JsFormatter, prelude::*, trivia::FormatTrailingComments},
     options::FormatTrailingCommas,
-    print::function::FormatContentWithCacheMode,
+    print::{embed_hug, function::FormatContentWithCacheMode},
     utils::{
-        assignment_like::AssignmentLikeLayout, expression::ExpressionLeftSide,
+        assignment_like::AssignmentLikeLayout,
+        expression::ExpressionLeftSide,
         format_node_without_trailing_comments::FormatNodeWithoutTrailingComments,
-        suppressed::write_suppressed_expression, typecast::format_leading_comments_and_open_paren,
+        suppressed::write_suppressed_expression,
+        typecast::{format_leading_comments_and_open_paren, is_cast_target},
     },
     write,
 };
@@ -21,7 +23,7 @@ use super::{
     sequence_expression::sequence_leading_comments_start,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let options = FormatJsArrowFunctionExpressionOptions {
             // Handed over by `WithAssignmentLayout` when this arrow is the RHS of an assignment-like;
@@ -35,7 +37,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ArrowFunctionExpression<'a>> {
 
 #[derive(Clone, Copy)]
 pub struct FormatJsArrowFunctionExpression<'a, 'b> {
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
     options: FormatJsArrowFunctionExpressionOptions,
 }
 
@@ -78,7 +80,7 @@ pub enum FunctionCacheMode {
 
 impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
     pub fn new_with_options(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+        arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
     ) -> Self {
         Self { arrow, options }
@@ -86,7 +88,7 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
     #[inline]
     pub fn format(&self, f: &mut JsFormatter<'_, 'a>) {
-        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options);
+        let layout = ArrowFunctionLayout::for_arrow(self.arrow, self.options, f);
 
         match layout {
             ArrowFunctionLayout::Chain(chain) => {
@@ -154,19 +156,23 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
 
                 write!(f, formatted_signature);
 
-                let body_has_soft_line_break =
-                    arrow_expression.is_none_or(|expression| match expression {
+                let body_has_soft_line_break = arrow_expression.is_none_or(|expression| {
+                    let body_kind_hugs = match expression {
                         Expression::ArrowFunctionExpression(_)
                         | Expression::ArrayExpression(_)
                         | Expression::ObjectExpression(_) => {
                             !has_own_line_comment_before_body(arrow, f)
                         }
                         Expression::JSXElement(_) | Expression::JSXFragment(_) => true,
-                        _ => {
+                        _ => embed_hug(expression, None, f).unwrap_or_else(|| {
                             is_multiline_template_starting_on_same_line(expression, f.source_text())
-                                || is_huggable_html_embed(expression, f)
-                        }
-                    });
+                        }),
+                    };
+                    // A cast-wrapped body has no kind (see `is_cast_target`)
+                    // Prettier also keeps a parens-adding conditional on the same line (its hug layout);
+                    // we don't, see DIVERGENCES.md#arrow-exact-fill-signature
+                    body_kind_hugs && !is_cast_target(expression.span(), f)
+                });
 
                 if body_has_soft_line_break {
                     // A block body pushed down by its head-side comments is indented under the arrow:
@@ -197,34 +203,18 @@ impl<'a, 'b> FormatJsArrowFunctionExpression<'a, 'b> {
                         || (matches!(self.arrow.parent(), AstNodes::JSXExpressionContainer(container)
                             if !f.context().comments().has_comment_in_range(arrow.span.end, container.span.end)));
 
-                    if should_add_parens {
-                        // The leading space must be a literal space rather than a soft line:
-                        // it is counted when measuring whether the signature fits,
-                        // so a signature that fills the line exactly gets broken,
-                        // matching Prettier's `printArrowFunctionBody`.
-                        write!(
-                            f,
-                            [
-                                space(),
-                                group(&format_args!(
-                                    if_group_fits_on_line(&token("(")),
-                                    indent(&format_args!(soft_line_break(), format_body)),
-                                    if_group_fits_on_line(&token(")")),
-                                    is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                                    should_add_soft_line.then_some(soft_line_break())
-                                ))
-                            ]
-                        );
-                    } else {
-                        write!(
-                            f,
-                            group(&format_args!(
-                                soft_line_indent_or_space(&format_body),
-                                is_last_call_arg.then_some(&FormatTrailingCommas::All),
-                                should_add_soft_line.then_some(soft_line_break())
-                            ))
-                        );
-                    }
+                    write!(
+                        f,
+                        group(&format_args!(
+                            soft_line_indent_or_space(&format_args!(
+                                should_add_parens.then_some(if_group_fits_on_line(&token("("))),
+                                format_body,
+                                should_add_parens.then_some(if_group_fits_on_line(&token(")")))
+                            )),
+                            is_last_call_arg.then_some(&FormatTrailingCommas::All),
+                            should_add_soft_line.then_some(soft_line_break())
+                        ))
+                    );
                 }
             }
         }
@@ -239,7 +229,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatJsArrowFunctionExpression<'a,
 
 enum ArrowFunctionLayout<'a, 'b> {
     /// Arrow function with a non-arrow function body
-    Single(&'b AstNode<'a, ArrowFunctionExpression<'a>>),
+    Single(&'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>),
 
     /// A chain of at least two arrow functions.
     ///
@@ -263,8 +253,9 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
     /// Determines the layout for the passed arrow function. See [ArrowFunctionLayout] for a description
     /// of the different layouts.
     fn for_arrow(
-        arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+        arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
         options: FormatJsArrowFunctionExpressionOptions,
+        f: &JsFormatter<'_, 'a>,
     ) -> ArrowFunctionLayout<'a, 'b> {
         let mut head = None;
         let mut middle = Vec::new();
@@ -277,11 +268,13 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
 
         loop {
             if is_non_grouped_or_grouped_last_argument
-                && let AstNodes::ArrowFunctionExpression(next) = current.body().as_ast_nodes()
+                && let AstNodeKind::ArrowFunctionExpression(next) = current.body().as_kind()
+                // A type cast keeps its parens: `(a) => /** @type {T} */ ((b) => c)`
+                && !is_cast_target(next.span(), f)
             {
                 should_break = should_break || Self::should_break_chain(current);
 
-                should_break = should_break || Self::should_break_chain(next);
+                should_break = should_break || Self::should_break_chain(&next);
 
                 if head.is_none() {
                     head = Some(current);
@@ -289,7 +282,8 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
                     middle.push(current);
                 }
 
-                current = next;
+                // In the arena, as it is the parent of the next arrow function
+                current = next.in_arena(f.allocator());
                 continue;
             }
             break match head {
@@ -325,7 +319,7 @@ impl<'a, 'b> ArrowFunctionLayout<'a, 'b> {
         // This matches Prettier, which allows type annotations when
         // grouping arrow expressions, but disallows them when grouping
         // normal function expressions.
-        if !has_only_simple_parameters(parameters, true) {
+        if !has_only_simple_parameters(parameters, None, true) {
             return true;
         }
 
@@ -375,81 +369,16 @@ pub fn is_multiline_template_starting_on_same_line(
         && !source_text.has_line_terminator_before(start)
 }
 
-/// Returns `true` if the expression is an HTML embed template that should be hugged.
-///
-/// This covers both ``html`...` `` tagged templates and ``/* HTML */ `...` `` comment-annotated templates.
-/// It is needed when the source is single-line but HTML formatting introduces line breaks.
-/// Without this, `ExpandParent` emitted by the HTML formatter causes `will_break()` to return `true`,
-/// expanding the surrounding construct instead of hugging.
-///
-/// Prettier hugs HTML embed templates when the content has leading AND trailing whitespace,
-/// or when `htmlWhitespaceSensitivity` is `"ignore"`.
-/// In these cases, the template stays on the same line as the parent construct:
-/// - Call arguments: ``foo(html`<div>...</div>`)``
-/// - Arrow function body: ``const a = (b) => html`<div>...</div>` ``
-///
-/// When there is no leading+trailing whitespace,
-/// `hug: false` is set and the template is expanded (not hugged).
-///
-/// Prettier achieves this via `label({ embed: true, hug })` + `shouldExpandLastArg`.
-/// We replicate it by detecting the same conditions on the expression.
-pub fn is_huggable_html_embed(expression: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    let template = match expression {
-        Expression::TaggedTemplateExpression(tagged) => {
-            if !matches!(&tagged.tag, Expression::Identifier(id) if id.name.as_str() == "html") {
-                return false;
-            }
-            // Exclude cases where a line comment between tag and quasi forces a line break
-            // e.g., ``html // oops \n`...` ``
-            if f.source_text()
-                .contains_newline_between(tagged.tag.span().end, tagged.quasi.span.start)
-            {
-                return false;
-            }
-            &tagged.quasi
-        }
-        Expression::TemplateLiteral(template) => {
-            // Check for `/* HTML */` leading comment
-            let comments = f.comments().comments_before(template.span.start);
-            if !comments.last().is_some_and(|comment| {
-                comment.is_block() && f.source_text().text_for(&comment.content_span()) == " HTML "
-            }) {
-                return false;
-            }
-            template.as_ref()
-        }
-        _ => return false,
-    };
-
-    // Always hug when htmlWhitespaceSensitivity is "ignore"
-    if f.options().html_whitespace_sensitivity_ignore {
-        return true;
-    }
-
-    // Hug when the cooked content has both leading and trailing whitespace
-    let has_leading_ws = template
-        .quasis
-        .first()
-        .and_then(|q| q.value.cooked.as_ref())
-        .is_some_and(|s| s.starts_with(|c: char| c.is_ascii_whitespace()));
-    let has_trailing_ws = template
-        .quasis
-        .last()
-        .and_then(|q| q.value.cooked.as_ref())
-        .is_some_and(|s| s.ends_with(|c: char| c.is_ascii_whitespace()));
-    has_leading_ws && has_trailing_ws
-}
-
 struct ArrowChain<'a, 'b> {
     /// The top most arrow function in the chain
-    head: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    head: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
 
     /// The arrow functions in the chain that are neither the first nor the last.
     /// Empty for chains consisting only of two arrow functions.
-    middle: Vec<&'b AstNode<'a, ArrowFunctionExpression<'a>>>,
+    middle: Vec<&'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>>,
 
     /// The last arrow function in the chain
-    tail: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    tail: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
 
     options: FormatJsArrowFunctionExpressionOptions,
 
@@ -459,7 +388,7 @@ struct ArrowChain<'a, 'b> {
 
 impl<'a, 'b> ArrowChain<'a, 'b> {
     /// Returns an iterator over all arrow functions in this chain
-    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'a, ArrowFunctionExpression<'a>>> {
+    fn arrows(&self) -> impl Iterator<Item = &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>> {
         use std::iter::once;
         once(self.head).chain(self.middle.iter().copied()).chain(once(self.tail))
     }
@@ -499,6 +428,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
         // If the body is _not_ one of those kinds, then we'll want to insert a
         // soft line break before the body so that it prints on a separate line
         // in its entirety.
+        // A cast-wrapped body has no kind (see `is_cast_target`).
+        // Prettier also keeps a parens-adding conditional on the same line (its hug layout) unless the chain breaks;
+        // we don't, see DIVERGENCES.md#arrow-exact-fill-signature.
         let body_on_separate_line = !tail.get_expression().is_none_or(|expression| {
             matches!(
                 expression,
@@ -507,7 +439,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                     | Expression::SequenceExpression(_)
                     | Expression::JSXElement(_)
                     | Expression::JSXFragment(_)
-            )
+            ) && !is_cast_target(expression.span(), f)
         });
 
         // An own-line comment before the tail body forces the body onto its own line even for the kinds above,
@@ -654,25 +586,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
                 }
             } else {
                 let should_add_parens = tail_body.as_expression().is_some_and(should_add_parens);
-                if should_add_parens {
-                    // Known divergence from Prettier: with a signature that exactly fills the line,
-                    // Prettier breaks it because the hug layout's literal space is counted
-                    // when measuring fits (see the single-arrow branch above), while this soft-line
-                    // wrapping (`soft_line_indent_or_space` in `format_tail_body`) stops the measurement.
-                    // Porting the literal-space structure here is NOT enough: Prettier gates the hug
-                    // on `!shouldBreakChain` (`expand_signatures` here) and otherwise breaks without
-                    // parens; a naive port regresses `js/arrows/currying-4.js`.
-                    write!(
-                        f,
-                        [
-                            if_group_fits_on_line(&token("(")),
-                            format_tail_body,
-                            if_group_fits_on_line(&token(")"))
-                        ]
-                    );
-                } else {
-                    write!(f, [format_tail_body]);
-                }
+                write!(
+                    f,
+                    [
+                        should_add_parens.then_some(if_group_fits_on_line(&token("("))),
+                        format_tail_body,
+                        should_add_parens.then_some(if_group_fits_on_line(&token(")")))
+                    ]
+                );
             }
         });
 
@@ -753,7 +674,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ArrowChain<'a, '_> {
 /// An own-line comment cannot appear before the `=>` (no line terminator is allowed there),
 /// so any hit in this range belongs to the body.
 fn has_own_line_comment_before_body<'a>(
-    arrow: &AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &AstNode<'_, 'a, ArrowFunctionExpression<'a>>,
     f: &JsFormatter<'_, 'a>,
 ) -> bool {
     let signature_end =
@@ -761,13 +682,13 @@ fn has_own_line_comment_before_body<'a>(
     f.comments().has_own_line_comment_in_range(signature_end, arrow.body().span().start)
 }
 
-fn should_add_parens(expression: &AstNode<'_, Expression<'_>>) -> bool {
+fn should_add_parens(expression: AstNode<'_, '_, Expression<'_>>) -> bool {
     // Add parentheses to avoid confusion between `a => b ? c : d` and `a <= b ? c : d`
     // but only if the body isn't an object/function or class expression because parentheses are always required in that
     // case and added by the object expression itself
-    if matches!(&**expression, Expression::ConditionalExpression(_)) {
+    if matches!(&*expression, Expression::ConditionalExpression(_)) {
         !matches!(
-            ExpressionLeftSide::leftmost(expression).as_ref(),
+            ExpressionLeftSide::leftmost(&expression),
             Expression::ObjectExpression(_)
                 | Expression::FunctionExpression(_)
                 | Expression::ClassExpression(_)
@@ -787,7 +708,7 @@ fn has_rest_object_or_array_parameter(params: &FormalParameters) -> bool {
 /// Formats the parameters and return type annotation without any soft line breaks if `is_grouped_call_argument` is `true`
 /// so that the parameters and return type are kept on the same line.
 fn format_signature<'a, 'b>(
-    arrow: &'b AstNode<'a, ArrowFunctionExpression<'a>>,
+    arrow: &'b AstNode<'b, 'a, ArrowFunctionExpression<'a>>,
     is_grouped_call_argument: bool,
     is_first_in_chain: bool,
     cache_mode: FunctionCacheMode,
@@ -798,7 +719,7 @@ fn format_signature<'a, 'b>(
                 arrow.r#async().then_some("async "),
                 arrow.type_parameters(),
                 arrow.params(),
-                arrow.return_type().map(FormatNodeWithoutTrailingComments),
+                arrow.return_type().as_ref().map(FormatNodeWithoutTrailingComments),
             ))
             .fmt(f);
         });
@@ -810,8 +731,7 @@ fn format_signature<'a, 'b>(
                 write!(f, format_head);
             } else {
                 write!(f, [space()]);
-                let mut buffer = RemoveSoftLinesBuffer::new(f);
-                write!(buffer, format_head);
+                f.remove_soft_lines(|f| write!(f, format_head));
             }
         } else {
             write!(

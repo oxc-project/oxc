@@ -1,0 +1,17 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/implicit-arguments-bailout-preserves-renders.js
+---
+Diagnostics:
+
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Implicit 'arguments' is not supported", labels: [LabeledSpan { label: Some("Implicit 'arguments' is not supported"), span: Span { start: 70, end: 79 }, primary: true }], help: Some("React Compiler does not support compiling functions that reference the implicit arguments object"), note: Some("React Compiler skipped optimizing this component or hook"), severity: Warning, code: OxcCode { scope: Some("react-compiler"), number: Some("UnsupportedSyntax") }, url: Some("https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax") } }
+
+// @panicThreshold:"none"
+function Component(props) {
+	return <div>{arguments[0].value}</div>;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [],
+	sequentialRenders: [{ value: 1 }, { value: 2 }]
+};

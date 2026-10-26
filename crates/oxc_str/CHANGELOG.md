@@ -4,6 +4,39 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- c7d229b transformer: [**BREAKING**] Decode JSX entities to lone surrogates (#26712) (Dunqing)
+- e3c1b11 ast: [**BREAKING**] Preserve lone surrogates in static property names (#27095) (Dunqing)
+- a0a987c ast: [**BREAKING**] Preserve lone surrogates in static member names (#26677) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 7c47246 linter: Check module specifiers and string values that contain lone surrogates (#26717) (Dunqing)
+- 782ab6e linter: Search string values without UTF-8 conversion (#26716) (Dunqing)
+
+## [0.152.0] - 2026-09-28
+
+### 🚀 Features
+
+- 02331c8 str: Add `JSStr`, `JSChar` and `JSStrBuilder` types (#26435) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- c55b35d str: Correct clippy reason (#27013) (overlookmotel)
+
+### 📚 Documentation
+
+- dfa6cf9 str: Reformat and simplify comments (#27011) (overlookmotel)
+
+## [0.149.0] - 2026-09-07
+
+### 🚀 Features
+
+- 32bdc5b allocator: Construct `ArenaHashSet` with any `Default` hasher (#26372) (Dunqing)
+
 ## [0.142.0] - 2026-07-27
 
 ### 🚀 Features

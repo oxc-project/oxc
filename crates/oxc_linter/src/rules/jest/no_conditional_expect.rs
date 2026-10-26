@@ -10,7 +10,14 @@ use crate::{
 #[derive(Debug, Default, Clone)]
 pub struct NoConditionalExpect;
 
-declare_oxc_lint!(NoConditionalExpect, jest, correctness, docs = DOCUMENTATION, version = "0.0.12",);
+declare_oxc_lint!(
+    NoConditionalExpect,
+    jest,
+    correctness,
+    recommended,
+    docs = DOCUMENTATION,
+    version = "0.0.12",
+);
 
 impl Rule for NoConditionalExpect {
     fn run_on_jest_node<'a, 'c>(
@@ -298,6 +305,10 @@ fn test() {
             });",
             None,
         ),
+        ("it('foo', function () { expect(1).toBe(1); });", None),
+        ("it('foo', function callback() { expect(1).toBe(1); });", None),
+        ("const callback = function () { if (x) { expect(1).toBe(1); } };", None),
+        ("const callback = function named() { if (x) { expect(1).toBe(1); } };", None),
     ];
 
     let fail = vec![
@@ -753,6 +764,12 @@ fn test() {
             ",
             None,
         ),
+        ("it('foo', function () { if (x) { expect(1).toBe(1); } });", None),
+        ("it('foo', function callback() { if (x) { expect(1).toBe(1); } });", None),
+        ("it('foo', async function () { if (x) { expect(1).toBe(1); } });", None),
+        ("test.only('foo', function () { x && expect(1).toBe(1); });", None),
+        ("test.each([1])('foo', function () { x ? expect(1).toBe(1) : noop(); });", None),
+        ("it('foo', function () { promise.catch(function () { expect(1).toBe(1); }); });", None),
     ];
 
     Tester::new(NoConditionalExpect::NAME, NoConditionalExpect::PLUGIN, pass, fail)

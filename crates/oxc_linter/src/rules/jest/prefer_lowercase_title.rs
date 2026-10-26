@@ -35,6 +35,43 @@ impl Rule for PreferLowercaseTitle {
 }
 
 #[test]
+fn test_escaped_titles() {
+    use crate::tester::Tester;
+
+    let escaped_first_characters = [
+        r"it('\u0046oo\uD800', () => {})",
+        r"it('\x46oo\uD800', () => {})",
+        r"it(`\u{46}oo\uDC00`, () => {})",
+        r"it('\u0046oo', () => {})",
+        r"it('\
+Foo\uD800', () => {})",
+    ];
+    for plugin in ["jest", "vitest"] {
+        for first_only in [true, false] {
+            let config = Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": first_only }]));
+            let mut fix: Vec<_> = escaped_first_characters
+                .iter()
+                .map(|&source| (source, source, config.clone()))
+                .collect();
+            if first_only {
+                fix.push((r"it('Foo\nBar', () => {})", r"it('foo\nBar', () => {})", config));
+            } else {
+                for source in [
+                    r"it('Foo\nBar', () => {})",
+                    r"it(`Foo\${Bar}`, () => {})",
+                    r"it('Foo \uD800', () => {})",
+                ] {
+                    fix.push((source, source, config.clone()));
+                }
+            }
+            Tester::new("prefer-lowercase-title", plugin, Vec::<&str>::new(), vec![])
+                .expect_fix(fix)
+                .test();
+        }
+    }
+}
+
+#[test]
 fn test() {
     use crate::{rule::RuleMeta, tester::Tester};
 
@@ -42,6 +79,13 @@ fn test() {
         ("it.each()", None),
         ("it.each()(1)", None),
         ("randomFunction()", None),
+        (r"it('\uD800', function () {})", None),
+        (r"it('\uD800 Foo', function () {})", None),
+        (r"it('foo \uD800 Bar', function () {})", None),
+        (
+            r"it('GET \uD800', function () {})",
+            Some(serde_json::json!([{ "allowedPrefixes": ["GET"] }])),
+        ),
         ("foo.bar()", None),
         ("it()", None),
         ("it(' ', function () {})", None),
@@ -168,6 +212,14 @@ fn test() {
 
     let fail = vec![
         ("it('Foo', function () {})", None),
+        ("it(\"Foo's bar\", function () {})", None),
+        ("it('Foo \"bar\"', function () {})", None),
+        (r"it('Foo \uD800', function () {})", None),
+        (r"it(`Foo \uDC00`, function () {})", None),
+        (
+            r"it('\uD800 Foo', function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
         ("xit('Foo', function () {})", None),
         ("it(\"Foo\", function () {})", None),
         ("it(`Foo`, function () {})", None),
@@ -246,6 +298,8 @@ fn test() {
 
     let fix = vec![
         ("it('Foo', function () {})", "it('foo', function () {})", None),
+        (r"it('Foo \uD800', function () {})", r"it('foo \uD800', function () {})", None),
+        (r"it(`Foo \uDC00`, function () {})", r"it(`foo \uDC00`, function () {})", None),
         ("xit('Foo', function () {})", "xit('foo', function () {})", None),
         ("it(\"Foo\", function () {})", "it(\"foo\", function () {})", None),
         ("it(`Foo`, function () {})", "it(`foo`, function () {})", None),

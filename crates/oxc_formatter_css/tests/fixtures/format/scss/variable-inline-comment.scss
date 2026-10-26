@@ -40,7 +40,7 @@ $z: // c
   $n: // c
     1;
 }
-// DIVERGENCE (DIVERGENCES.md "comment-preceded-map-indent"): the map keeps its
+// DIVERGENCE (DIVERGENCES.md#comment-preceded-map-indent): the map keeps its
 // shape under the continuation indent; Prettier dedents it to `(\n  k: v,\n);`.
 $m1: // c
   (k: v);

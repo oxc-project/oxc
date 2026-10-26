@@ -11,7 +11,7 @@ fn no_control_regex_diagnostic(control_chars: &[Character]) -> OxcDiagnostic {
     let count = control_chars.len();
     debug_assert!(count > 0);
 
-    let labels: Vec<_> = control_chars
+    let labels = control_chars
         .iter()
         .map(|ch| {
             let label = match ch.kind {
@@ -22,13 +22,11 @@ fn no_control_regex_diagnostic(control_chars: &[Character]) -> OxcDiagnostic {
                 }
                 _ => {
                     // Show the code point since the character itself is not printable
-                    let ch = format!("U+{:04X}", ch.value);
-                    format!("'{ch}' is a control character.")
+                    format!("'U+{:04X}' is a control character.", ch.value)
                 }
             };
             ch.span.label(label)
-        })
-        .collect();
+        });
 
     OxcDiagnostic::warn(if count > 1 {
         "Unexpected control characters"
@@ -84,6 +82,7 @@ declare_oxc_lint!(
     NoControlRegex,
     eslint,
     correctness,
+    recommended,
     version = "0.0.7",
     short_description = "Disallows control characters and some escape sequences that match control characters in regular expressions.",
 );

@@ -1,4 +1,4 @@
-# DIVERGENCE (prettier#15528): a blank line right after a node is preserved
+# DIVERGENCE (DIVERGENCES.md#blank-lines; prettier#15528): a blank line right after a node is preserved
 # (normalized to one) for every node kind alike, and never invented.
 - a
 - b

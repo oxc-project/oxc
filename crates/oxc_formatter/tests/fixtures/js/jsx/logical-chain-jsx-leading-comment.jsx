@@ -44,3 +44,26 @@ const D = () => (
       )}
   </div>
 );
+
+// 5. An own-line `//` comment only breaks the JSX operand, not the chain (#26466).
+function App() {
+  return (
+    <>
+      {!isEditing && isTruncated && (
+        // This comment breaks the formatting
+        <div />
+      )}
+    </>
+  );
+}
+
+// 6. Own-line comments before a JSX fragment also keep the conditions together.
+const E = () => (
+  <div>
+    {a || b || (
+      // First comment
+      // Second comment
+      <><span>x</span></>
+    )}
+  </div>
+);

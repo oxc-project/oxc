@@ -27,12 +27,12 @@ use super::parameters::{ParameterLayout, ParameterList};
 ///
 /// For a plain binding position (e.g., `{ item }`), use the default (no parens).
 pub struct FormatFunctionParams<'a, 'b> {
-    node: &'b AstNode<'a, FormalParameters<'a>>,
+    node: &'b AstNode<'b, 'a, FormalParameters<'a>>,
     with_parens: bool,
 }
 
 impl<'a, 'b> FormatFunctionParams<'a, 'b> {
-    pub fn new(node: &'b AstNode<'a, FormalParameters<'a>>, with_parens: bool) -> Self {
+    pub fn new(node: &'b AstNode<'b, 'a, FormalParameters<'a>>, with_parens: bool) -> Self {
         Self { node, with_parens }
     }
 }
@@ -67,11 +67,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunctionParams<'a, '_> {
 /// Does NOT include angle bracket delimiters `<`/`>` or group wrapping.
 /// And trailing commas are suppressed.
 pub struct FormatTypeParameters<'a, 'b> {
-    decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>,
+    decl: &'b AstNode<'b, 'a, TSTypeParameterDeclaration<'a>>,
 }
 
 impl<'a, 'b> FormatTypeParameters<'a, 'b> {
-    pub fn new(decl: &'b AstNode<'a, TSTypeParameterDeclaration<'a>>) -> Self {
+    pub fn new(decl: &'b AstNode<'b, 'a, TSTypeParameterDeclaration<'a>>) -> Self {
         Self { decl }
     }
 }
@@ -82,7 +82,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatTypeParameters<'a, '_> {
 
         soft_block_indent(&format_with(|f| {
             f.join_with(soft_line_break_or_space()).entries_with_trailing_separator(
-                params,
+                &params,
                 ",",
                 TrailingSeparator::Omit,
             );

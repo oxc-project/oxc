@@ -4,6 +4,90 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 529b057 formatter_core: Keep front matter verbatim when body starts with indented delimiter (#27946) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- d2bea21 formatter: Glue comments to an opener in empty for-head slots and array holes (#27737) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+- 1c393c0 formatter_core: Skip scanning texts with nothing to rewrite (#27561) (leaysgur)
+- 1d3ef10 formatter_core: Keep the embedded IR when nothing in it is rewritten (#27673) (leaysgur)
+
+## [0.73.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 372849e formatter: Fix crash on css-in-js comment containing interpolation (#27638) (leaysgur)
+- d730fdd formatter_core: Leave blank frontmatter without dispatcher (#27359) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 💥 BREAKING CHANGES
+
+- e2c68b1 oxfmt: [**BREAKING**] Format `parser:markdown` files by `oxc_formatter_markdown` (#27256) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- dd72fbf formatter_markdown: Keep container columns as spaces under `useTabs` (#27277) (leaysgur)
+- c2de02b formatter: Decide embedded template layout from AST, not source shape (#27218) (leaysgur)
+- 36e14df formatter: Keep comments between callee and its opener on the callee side (#27172) (leaysgur)
+
+### ⚡ Performance
+
+- cea47e3 formatter_core: Avoid exponential `will_break` check on nested interned (#27211) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 🚀 Features
+
+- 7717813 formatter_markdown: Implement markdown formatter (#26434) (leaysgur)
+
+### 📚 Documentation
+
+- e012542 formatter_core: Add note for blanked front matter (#26786) (leaysgur)
+- 11ff089 formatter_markdown: Follow updated DIVERGENCES policy (#26776) (leaysgur)
+- 0c16983 formatter_core: Clean up FORMATTER_POLICY (#26745) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- 586f27a formatter_core: Add `prefix_align` builder and `Tag::(Start|End)Prefix` (#26520) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- dea2ba0 formatter_core: Do not panic with align(0) (#26468) (leaysgur)
+
+### 📚 Documentation
+
+- 66fda4f formatter: Update AGENTS.md comment handling (#26551) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🐛 Bug Fixes
+
+- 104061b formatter: Keep JSDoc cast parens with a comment inside them (#26374) (leaysgur)
+- 172ddb6 formatter_css: Keep a same-line line comment on its line (#26321) (leaysgur)
+- 534a0fe formatter_css: Keep a line comment on its comma's line (#26319) (leaysgur)
+- 2028896 formatter_css: Preserve comments around SCSS/Less variable values (#26276) (leaysgur)
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+
+### 📚 Documentation
+
+- 32084d4 formatter_core: Clarify printer hard_line compression (#26312) (leaysgur)
+- 26a1fa4 formatter_core: Refine FORMATTER_POLICY (#26266) (leaysgur)
+
 ## [0.66.0] - 2026-08-31
 
 ### 📚 Documentation

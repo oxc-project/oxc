@@ -6,8 +6,8 @@
 foo = 1 /* a */;
 const myVar = "asdf" /* b */;
 let noInit: string | number /* c */;
-// Note: Prettier moves the comment only for an exported type alias and keeps
-// `type T = string /* t */;` as-is; oxfmt intentionally applies the rule uniformly
+// DIVERGES: Prettier moves the comment only for an exported type alias and keeps
+// `type T = string /* t */;` as-is; see DIVERGENCES.md#type-alias-trailing-comment-move
 type T = string /* t */;
 function f() {
   return foo /* d */;

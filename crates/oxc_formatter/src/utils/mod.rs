@@ -18,7 +18,7 @@ use oxc_ast::ast::{
     CallExpression, Declaration, Decorator, ExportDeclaration, ExportDefaultDeclaration,
     ExportDefaultDeclarationKind, PropertyKey, Statement,
 };
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::ast_nodes::{AstNode, AstNodes};
 
@@ -35,6 +35,16 @@ pub fn export_declaration_span(export: &ExportDeclaration<'_>) -> Span {
         span_with_decorators_before_export(&class.decorators, export.span)
     } else {
         export.span
+    }
+}
+
+/// A statement's span as the statement lists and the suppression check see it:
+/// extended over pre-`export` class decorators (see [`export_declaration_span`]).
+pub fn statement_span(stmt: &Statement<'_>) -> Span {
+    match stmt {
+        Statement::ExportDeclaration(export) => export_declaration_span(export),
+        Statement::ExportDefaultDeclaration(export) => export_default_declaration_span(export),
+        _ => stmt.span(),
     }
 }
 
@@ -73,7 +83,7 @@ pub fn is_keyword_property_key(key: &PropertyKey<'_>) -> bool {
 /// ```javascript
 /// `connect(a, b, c)(d)`
 /// ```
-pub fn is_long_curried_call(call: &AstNode<'_, CallExpression<'_>>) -> bool {
+pub fn is_long_curried_call(call: &AstNode<'_, '_, CallExpression<'_>>) -> bool {
     if let AstNodes::CallExpression(parent_call) = call.parent()
         && parent_call.is_callee_span(call.span)
     {

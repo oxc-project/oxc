@@ -54,7 +54,7 @@ describe("JSDoc", () => {
     );
   });
 
-  it("should format fenced scss, less and graphql through the native dispatch registry", async () => {
+  it("should format fenced scss and less through the native dispatch registry, keeping graphql verbatim", async () => {
     const source = `
 /**
  * \`\`\`scss
@@ -91,19 +91,14 @@ describe("JSDoc", () => {
  * \`\`\`
  *
  * \`\`\`graphql
- * query Q {
- *   user {
- *     id
- *     name
- *   }
- * }
+ * query Q  { user { id   name } }
  * \`\`\`
  */
 `.trimStart(),
     );
   });
 
-  it("should format fenced json, json5 and yaml via the native registry", async () => {
+  it("should format fenced json and yaml via the native registry, keeping json5 verbatim", async () => {
     const source = `
 /**
  * \`\`\`json
@@ -132,7 +127,7 @@ describe("JSDoc", () => {
  * \`\`\`
  *
  * \`\`\`json5
- * { a: 1 }
+ * {a:1,}
  * \`\`\`
  *
  * \`\`\`yaml
@@ -148,17 +143,17 @@ describe("JSDoc", () => {
   it("should print native fences at the fence's effective width, not the full printWidth", async () => {
     // Effective width at top level = printWidth(100) - " * "(3) - 4 = 93,
     // the same width JS/TS snippets in the same position already use.
-    // The 94-char field line must break; the 92-char one must not.
+    // The 94-char line must break; the 93-char one must not.
     // (Upstream `prettier-plugin-jsdoc` uses a flat printWidth - 4, which overflows `printWidth` for indented comments;
     // see crates/oxc_formatter/tests/jsdoc/upstream-jsdoc-bugs.md)
     const source = `
 /**
- * \`\`\`graphql
- * query { fieldName(argOne: "value1", argTwo: "value2", argThree: "value3", four: 4444, five: 5555577) }
+ * \`\`\`json
+ * { "argOne": "value1", "argTwo": "value2", "argThree": "value3", "four": 4444, "five": 555555 }
  * \`\`\`
  *
- * \`\`\`graphql
- * query { fieldName(argOne: "value1", argTwo: "value2", argThree: "value3", four: 4444, five: 55555) }
+ * \`\`\`json
+ * { "argOne": "value1", "argTwo": "value2", "argThree": "value3", "four": 4444, "five": 55555 }
  * \`\`\`
  */
 `.trim();
@@ -168,22 +163,18 @@ describe("JSDoc", () => {
     expect(result.code).toBe(
       `
 /**
- * \`\`\`graphql
- * query {
- *   fieldName(
- *     argOne: "value1"
- *     argTwo: "value2"
- *     argThree: "value3"
- *     four: 4444
- *     five: 5555577
- *   )
+ * \`\`\`json
+ * {
+ *   "argOne": "value1",
+ *   "argTwo": "value2",
+ *   "argThree": "value3",
+ *   "four": 4444,
+ *   "five": 555555
  * }
  * \`\`\`
  *
- * \`\`\`graphql
- * query {
- *   fieldName(argOne: "value1", argTwo: "value2", argThree: "value3", four: 4444, five: 55555)
- * }
+ * \`\`\`json
+ * { "argOne": "value1", "argTwo": "value2", "argThree": "value3", "four": 4444, "five": 55555 }
  * \`\`\`
  */
 `.trimStart(),

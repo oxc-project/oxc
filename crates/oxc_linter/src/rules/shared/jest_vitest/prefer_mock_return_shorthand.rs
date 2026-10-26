@@ -4,7 +4,6 @@ use oxc_ast::{
         AccessorProperty, Argument, CallExpression, Expression, FormalParameter,
         FormalParameterRest, Function, IdentifierReference, ImportExpression, NewExpression,
         PropertyDefinition, Statement, StaticBlock, TaggedTemplateExpression, ThisExpression,
-        VariableDeclarationKind,
     },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
@@ -90,6 +89,7 @@ pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let Some((property_span, property_name)) = mem_expr.static_property_info() else {
         return;
     };
+    let Some(property_name) = property_name.as_str() else { return };
 
     let Some(expr) = call_expr.arguments.first().and_then(Argument::as_expression) else {
         return;
@@ -159,7 +159,7 @@ fn is_mutable(symbol_id: SymbolId, ctx: &LintContext<'_>) -> bool {
     if let AstKind::VariableDeclarator(_) = ctx.nodes().kind(decl_node_id)
         && let AstKind::VariableDeclaration(parent) = ctx.nodes().parent_kind(decl_node_id)
     {
-        return parent.kind != VariableDeclarationKind::Const;
+        return !parent.kind.is_const();
     }
 
     false

@@ -5,6 +5,7 @@
 // and change the type semantics (issue #20182).
 //
 // NOTE: Prettier 3.9.5 prints the comment outside (and breaks the cast);
+// every added-paren line deviates (DIVERGENCES.md#cast-comment-inside-added-parens).
 
 // Cast binds to `(root)`; the `??` gets formatter-added parens in ternary branches.
 var target = /** @type {ShadowRoot} */ (root).host

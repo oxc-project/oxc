@@ -1,0 +1,42 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A comment between `!` and `important` stays there, printed once,
+// in the value positions Sass adds to the declaration form.
+a {
+  mid: red ! /* mid-value */ important blue;
+  fn: call(red ! /* function argument */ important);
+}
+
+$var: red ! /* Sass variable */ important;
+$flags: red ! /* c */ important !default;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A comment between `!` and `important` stays there, printed once,
+// in the value positions Sass adds to the declaration form.
+a {
+  mid: red ! /* mid-value */ important blue;
+  fn: call(red ! /* function argument */ important);
+}
+
+$var: red ! /* Sass variable */ important;
+$flags: red ! /* c */ important !default;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A comment between `!` and `important` stays there, printed once,
+// in the value positions Sass adds to the declaration form.
+a {
+  mid: red ! /* mid-value */ important blue;
+  fn: call(red ! /* function argument */ important);
+}
+
+$var: red ! /* Sass variable */ important;
+$flags: red ! /* c */ important !default;
+
+===================== End =====================

@@ -1483,6 +1483,18 @@ where
 }
 
 #[cold]
+pub fn invariant_single_predecessor_phi_has_multiple_operands(
+    operands: impl Display,
+) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Invariant,
+        format!(
+            "Found a block with a single predecessor but where a phi has multiple ({operands}) operands"
+        ),
+    )
+}
+
+#[cold]
 pub fn missing_phi_predecessor_mapping(
     predecessor: impl Display,
     block: impl Display,
@@ -1531,6 +1543,15 @@ pub fn unsupported_eval(span: Span) -> OxcDiagnostic {
             "Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler",
         )
         .with_label(span.primary_label("`eval` cannot be analyzed by React Compiler"))
+}
+
+#[cold]
+pub fn unsupported_implicit_arguments(span: Span) -> OxcDiagnostic {
+    diagnostic(ErrorCategory::UnsupportedSyntax, "Implicit 'arguments' is not supported")
+        .with_help(
+            "React Compiler does not support compiling functions that reference the implicit arguments object",
+        )
+        .with_label(span.primary_label("Implicit 'arguments' is not supported"))
 }
 
 #[cold]

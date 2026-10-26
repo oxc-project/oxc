@@ -1,0 +1,3 @@
+<view>
+<text   class="a">{{msg}}</text>
+</view>

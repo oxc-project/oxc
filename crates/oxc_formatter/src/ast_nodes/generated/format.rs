@@ -13,470 +13,646 @@ use crate::{
         trivia::{format_leading_comments, format_trailing_comments},
     },
     parentheses::NeedsParentheses,
-    print::FormatWrite,
+    print::{FormatWrite, semicolon::write_suppressed_statement},
     utils::{
         suppressed::{FormatSuppressedNode, write_suppressed_expression},
         typecast::{
-            format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren,
-            format_type_cast_comment_node,
+            TypeCast, classify_type_cast, format_leading_comments_and_open_paren,
+            format_outer_leading_comments_and_open_paren, format_type_cast_comment_node,
         },
     },
 };
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Program<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Program<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         self.write(f);
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Expression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Expression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if f.comments().has_trailing_suppression_comment(self.span().end) {
-            format_leading_comments(self.span()).fmt(f);
-            FormatSuppressedNode(self.span()).fmt(f);
-            format_trailing_comments(
-                self.parent.span(),
-                self.inner.span(),
-                self.following_span_start,
-            )
-            .fmt(f);
-            return;
-        }
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             Expression::BooleanLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<BooleanLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<BooleanLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::NullLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<NullLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<NullLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::NumericLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<NumericLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<NumericLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::BigIntLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<BigIntLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<BigIntLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::RegExpLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<RegExpLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<RegExpLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::StringLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::TemplateLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<TemplateLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TemplateLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::Identifier(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::Super(inner) => {
-                allocator
-                    .alloc(AstNode::<Super> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
+                AstNode::<Super> { inner, parent, following_span_start: self.following_span_start }
                     .fmt(f);
             }
             Expression::ArrayExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ArrayExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ArrayExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::ArrowFunctionExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ArrowFunctionExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ArrowFunctionExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::AssignmentExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<AssignmentExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AssignmentExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::AwaitExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<AwaitExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AwaitExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::BinaryExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<BinaryExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<BinaryExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::CallExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<CallExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<CallExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::ChainExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ChainExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ChainExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::ClassExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<Class> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
+                AstNode::<Class> { inner, parent, following_span_start: self.following_span_start }
                     .fmt(f);
             }
             Expression::ConditionalExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ConditionalExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ConditionalExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::FunctionExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<Function> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Function> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::ImportExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ImportExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ImportExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::LogicalExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<LogicalExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<LogicalExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::NewExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<NewExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<NewExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::ObjectExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ObjectExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ObjectExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::ParenthesizedExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ParenthesizedExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ParenthesizedExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::SequenceExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<SequenceExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<SequenceExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::TaggedTemplateExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TaggedTemplateExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TaggedTemplateExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::ThisExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ThisExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ThisExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::UnaryExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<UnaryExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<UnaryExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::UpdateExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<UpdateExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<UpdateExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::YieldExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<YieldExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<YieldExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::PrivateInExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<PrivateInExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<PrivateInExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::ImportMeta(inner) => {
-                allocator
-                    .alloc(AstNode::<ImportMeta> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ImportMeta> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::NewTarget(inner) => {
-                allocator
-                    .alloc(AstNode::<NewTarget> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<NewTarget> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::JSXElement(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXElement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXElement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::JSXFragment(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXFragment> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXFragment> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::TSAsExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TSAsExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSAsExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::TSSatisfiesExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TSSatisfiesExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSSatisfiesExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::TSTypeAssertion(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTypeAssertion> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypeAssertion> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::TSNonNullExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNonNullExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNonNullExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::TSInstantiationExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TSInstantiationExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSInstantiationExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Expression::V8IntrinsicExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<V8IntrinsicExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<V8IntrinsicExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_member_expression!(Expression) => {
                 let inner = it.to_member_expression();
-                allocator
-                    .alloc(AstNode::<'a, MemberExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<MemberExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierName<'a>> {
+impl<'a> NeedsParentheses<'a> for AstNode<'_, 'a, Expression<'a>> {
+    fn needs_parentheses(&self, f: &JsFormatter<'_, 'a>) -> bool {
+        match self.inner {
+            Expression::BooleanLiteral(inner) => AstNode::<BooleanLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::NullLiteral(inner) => AstNode::<NullLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::NumericLiteral(inner) => AstNode::<NumericLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::BigIntLiteral(inner) => AstNode::<BigIntLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::RegExpLiteral(inner) => AstNode::<RegExpLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::StringLiteral(inner) => AstNode::<StringLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TemplateLiteral(inner) => AstNode::<TemplateLiteral> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::Identifier(inner) => AstNode::<IdentifierReference> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::Super(inner) => AstNode::<Super> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ArrayExpression(inner) => AstNode::<ArrayExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ArrowFunctionExpression(inner) => AstNode::<ArrowFunctionExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::AssignmentExpression(inner) => AstNode::<AssignmentExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::AwaitExpression(inner) => AstNode::<AwaitExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::BinaryExpression(inner) => AstNode::<BinaryExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::CallExpression(inner) => AstNode::<CallExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ChainExpression(inner) => AstNode::<ChainExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ClassExpression(inner) => AstNode::<Class> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ConditionalExpression(inner) => AstNode::<ConditionalExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::FunctionExpression(inner) => AstNode::<Function> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ImportExpression(inner) => AstNode::<ImportExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::LogicalExpression(inner) => AstNode::<LogicalExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::NewExpression(inner) => AstNode::<NewExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ObjectExpression(inner) => AstNode::<ObjectExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ParenthesizedExpression(inner) => AstNode::<ParenthesizedExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::SequenceExpression(inner) => AstNode::<SequenceExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TaggedTemplateExpression(inner) => AstNode::<TaggedTemplateExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ThisExpression(inner) => AstNode::<ThisExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::UnaryExpression(inner) => AstNode::<UnaryExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::UpdateExpression(inner) => AstNode::<UpdateExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::YieldExpression(inner) => AstNode::<YieldExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::PrivateInExpression(inner) => AstNode::<PrivateInExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ImportMeta(inner) => AstNode::<ImportMeta> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::NewTarget(inner) => AstNode::<NewTarget> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::JSXElement(inner) => AstNode::<JSXElement> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::JSXFragment(inner) => AstNode::<JSXFragment> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSAsExpression(inner) => AstNode::<TSAsExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSSatisfiesExpression(inner) => AstNode::<TSSatisfiesExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSTypeAssertion(inner) => AstNode::<TSTypeAssertion> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSNonNullExpression(inner) => AstNode::<TSNonNullExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::TSInstantiationExpression(inner) => AstNode::<TSInstantiationExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::V8IntrinsicExpression(inner) => AstNode::<V8IntrinsicExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::ComputedMemberExpression(inner) => AstNode::<ComputedMemberExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::StaticMemberExpression(inner) => AstNode::<StaticMemberExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+            Expression::PrivateFieldExpression(inner) => AstNode::<PrivateFieldExpression> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }
+            .needs_parentheses(f),
+        }
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, IdentifierName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -484,9 +660,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierName<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierReference<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, IdentifierReference<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -515,12 +711,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IdentifierReference<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingIdentifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BindingIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -528,12 +733,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingIdentifier<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabelIdentifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, LabelIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -541,9 +755,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabelIdentifier<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThisExpression> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ThisExpression> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -572,9 +806,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThisExpression> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrayExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -603,53 +857,55 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayExpressionElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrayExpressionElement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ArrayExpressionElement::SpreadElement(inner) => {
-                allocator
-                    .alloc(AstNode::<SpreadElement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<SpreadElement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ArrayExpressionElement::Elision(inner) => {
-                allocator
-                    .alloc(AstNode::<Elision> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Elision> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_expression!(ArrayExpressionElement) => {
                 let inner = it.to_expression();
-                allocator
-                    .alloc(AstNode::<'a, Expression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Expression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Elision> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Elision> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -657,9 +913,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Elision> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -688,42 +964,46 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectPropertyKind<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectPropertyKind<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ObjectPropertyKind::ObjectProperty(inner) => {
-                allocator
-                    .alloc(AstNode::<ObjectProperty> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ObjectProperty> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ObjectPropertyKind::SpreadProperty(inner) => {
-                allocator
-                    .alloc(AstNode::<SpreadElement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<SpreadElement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectProperty<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -731,50 +1011,63 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectProperty<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PropertyKey<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PropertyKey<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             PropertyKey::StaticIdentifier(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             PropertyKey::PrivateIdentifier(inner) => {
-                allocator
-                    .alloc(AstNode::<PrivateIdentifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<PrivateIdentifier> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_expression!(PropertyKey) => {
                 let inner = it.to_expression();
-                allocator
-                    .alloc(AstNode::<'a, Expression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Expression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateLiteral<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TemplateLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -803,9 +1096,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateLiteral<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TaggedTemplateExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TaggedTemplateExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -834,12 +1147,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TaggedTemplateExpressio
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TemplateElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -847,49 +1160,62 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TemplateElement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MemberExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, MemberExpression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             MemberExpression::ComputedMemberExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ComputedMemberExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ComputedMemberExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             MemberExpression::StaticMemberExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<StaticMemberExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StaticMemberExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             MemberExpression::PrivateFieldExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<PrivateFieldExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<PrivateFieldExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ComputedMemberExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ComputedMemberExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -918,9 +1244,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ComputedMemberExpressio
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticMemberExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, StaticMemberExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -949,9 +1295,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticMemberExpression<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateFieldExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PrivateFieldExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -980,9 +1346,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateFieldExpression<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CallExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, CallExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1011,9 +1397,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CallExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NewExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1042,9 +1448,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportMeta> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportMeta> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1073,9 +1499,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportMeta> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewTarget> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NewTarget> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1104,12 +1550,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NewTarget> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SpreadElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, SpreadElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1117,40 +1572,55 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SpreadElement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Argument<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Argument<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             Argument::SpreadElement(inner) => {
-                allocator
-                    .alloc(AstNode::<SpreadElement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<SpreadElement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_expression!(Argument) => {
                 let inner = it.to_expression();
-                allocator
-                    .alloc(AstNode::<'a, Expression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Expression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UpdateExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, UpdateExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1179,9 +1649,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UpdateExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UnaryExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, UnaryExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1210,9 +1700,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, UnaryExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BinaryExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BinaryExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1241,9 +1751,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BinaryExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateInExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PrivateInExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1272,9 +1802,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateInExpression<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LogicalExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, LogicalExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1303,9 +1853,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LogicalExpression<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ConditionalExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ConditionalExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1334,9 +1904,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ConditionalExpression<'
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1365,145 +1955,131 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentExpression<'a
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTarget<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTarget<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             it @ match_simple_assignment_target!(AssignmentTarget) => {
                 let inner = it.to_simple_assignment_target();
-                allocator
-                    .alloc(AstNode::<'a, SimpleAssignmentTarget> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<SimpleAssignmentTarget> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_assignment_target_pattern!(AssignmentTarget) => {
                 let inner = it.to_assignment_target_pattern();
-                allocator
-                    .alloc(AstNode::<'a, AssignmentTargetPattern> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AssignmentTargetPattern> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SimpleAssignmentTarget<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, SimpleAssignmentTarget<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             SimpleAssignmentTarget::AssignmentTargetIdentifier(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             SimpleAssignmentTarget::TSAsExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TSAsExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSAsExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             SimpleAssignmentTarget::TSSatisfiesExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TSSatisfiesExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSSatisfiesExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             SimpleAssignmentTarget::TSNonNullExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNonNullExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNonNullExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             SimpleAssignmentTarget::TSTypeAssertion(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTypeAssertion> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypeAssertion> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_member_expression!(SimpleAssignmentTarget) => {
                 let inner = it.to_member_expression();
-                allocator
-                    .alloc(AstNode::<'a, MemberExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<MemberExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPattern<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTargetPattern<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             AssignmentTargetPattern::ArrayAssignmentTarget(inner) => {
-                allocator
-                    .alloc(AstNode::<ArrayAssignmentTarget> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ArrayAssignmentTarget> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             AssignmentTargetPattern::ObjectAssignmentTarget(inner) => {
-                allocator
-                    .alloc(AstNode::<ObjectAssignmentTarget> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ObjectAssignmentTarget> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayAssignmentTarget<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrayAssignmentTarget<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1511,12 +2087,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayAssignmentTarget<'
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectAssignmentTarget<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectAssignmentTarget<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1524,12 +2109,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectAssignmentTarget<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetRest<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTargetRest<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1537,43 +2131,47 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetRest<'a
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetMaybeDefault<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTargetMaybeDefault<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             AssignmentTargetMaybeDefault::AssignmentTargetWithDefault(inner) => {
-                allocator
-                    .alloc(AstNode::<AssignmentTargetWithDefault> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AssignmentTargetWithDefault> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_assignment_target!(AssignmentTargetMaybeDefault) => {
                 let inner = it.to_assignment_target();
-                allocator
-                    .alloc(AstNode::<'a, AssignmentTarget> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AssignmentTarget> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetWithDefault<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTargetWithDefault<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1581,42 +2179,48 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetWithDef
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetProperty<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTargetProperty<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             AssignmentTargetProperty::AssignmentTargetPropertyIdentifier(inner) => {
-                allocator
-                    .alloc(AstNode::<AssignmentTargetPropertyIdentifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AssignmentTargetPropertyIdentifier> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             AssignmentTargetProperty::AssignmentTargetPropertyProperty(inner) => {
-                allocator
-                    .alloc(AstNode::<AssignmentTargetPropertyProperty> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AssignmentTargetPropertyProperty> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropertyIdentifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>>
+    for AstNode<'_, 'a, AssignmentTargetPropertyIdentifier<'a>>
+{
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1624,12 +2228,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropert
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropertyProperty<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentTargetPropertyProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -1637,9 +2250,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentTargetPropert
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SequenceExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, SequenceExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1668,9 +2301,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SequenceExpression<'a>>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Super> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Super> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1699,9 +2352,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Super> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AwaitExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AwaitExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1730,9 +2403,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AwaitExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ChainExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ChainExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1761,50 +2454,63 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ChainExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ChainElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ChainElement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ChainElement::CallExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<CallExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<CallExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ChainElement::TSNonNullExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNonNullExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNonNullExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_member_expression!(ChainElement) => {
                 let inner = it.to_member_expression();
-                allocator
-                    .alloc(AstNode::<'a, MemberExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<MemberExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ParenthesizedExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ParenthesizedExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -1833,14 +2539,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ParenthesizedExpression
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Statement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Statement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        if !matches!(self.inner, Statement::ExpressionStatement(_))
-            && f.comments().has_trailing_suppression_comment(self.span().end)
-        {
-            format_leading_comments(self.span()).fmt(f);
-            FormatSuppressedNode(self.span()).fmt(f);
+        if write_suppressed_statement(self, f) {
             format_trailing_comments(
                 self.parent.span(),
                 self.inner.span(),
@@ -1849,221 +2551,189 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Statement<'a>> {
             .fmt(f);
             return;
         }
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             Statement::BlockStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<BlockStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<BlockStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::BreakStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<BreakStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<BreakStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::ContinueStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<ContinueStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ContinueStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::DebuggerStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<DebuggerStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<DebuggerStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::DoWhileStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<DoWhileStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<DoWhileStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::EmptyStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<EmptyStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<EmptyStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::ExpressionStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<ExpressionStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ExpressionStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::ForInStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<ForInStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ForInStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::ForOfStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<ForOfStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ForOfStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::ForStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<ForStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ForStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::IfStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<IfStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IfStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::LabeledStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<LabeledStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<LabeledStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::ReturnStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<ReturnStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ReturnStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::SwitchStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<SwitchStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<SwitchStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::ThrowStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<ThrowStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ThrowStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::TryStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<TryStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TryStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::WhileStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<WhileStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<WhileStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Statement::WithStatement(inner) => {
-                allocator
-                    .alloc(AstNode::<WithStatement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<WithStatement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_declaration!(Statement) => {
                 let inner = it.to_declaration();
-                allocator
-                    .alloc(AstNode::<'a, Declaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Declaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_module_declaration!(Statement) => {
                 let inner = it.to_module_declaration();
-                allocator
-                    .alloc(AstNode::<'a, ModuleDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ModuleDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Directive<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Directive<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2071,12 +2741,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Directive<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Hashbang<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Hashbang<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2084,12 +2763,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Hashbang<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BlockStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BlockStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2097,122 +2785,106 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BlockStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Declaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Declaration<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             Declaration::VariableDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<VariableDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<VariableDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Declaration::FunctionDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<Function> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Function> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Declaration::ClassDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<Class> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
+                AstNode::<Class> { inner, parent, following_span_start: self.following_span_start }
                     .fmt(f);
             }
             Declaration::TSTypeAliasDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTypeAliasDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypeAliasDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Declaration::TSInterfaceDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSInterfaceDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSInterfaceDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Declaration::TSEnumDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSEnumDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSEnumDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Declaration::TSExternalModuleDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSExternalModuleDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSExternalModuleDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Declaration::TSNamespaceDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNamespaceDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNamespaceDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Declaration::TSGlobalDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSGlobalDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSGlobalDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             Declaration::TSImportEqualsDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSImportEqualsDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSImportEqualsDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, VariableDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2220,12 +2892,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclaration<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclarator<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, VariableDeclarator<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2233,12 +2914,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, VariableDeclarator<'a>>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, EmptyStatement> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, EmptyStatement> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2246,12 +2936,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, EmptyStatement> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExpressionStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ExpressionStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2259,12 +2949,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExpressionStatement<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IfStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, IfStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2272,12 +2971,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, IfStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DoWhileStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, DoWhileStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2285,12 +2993,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DoWhileStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WhileStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, WhileStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2298,12 +3015,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WhileStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ForStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2311,43 +3037,47 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatementInit<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ForStatementInit<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ForStatementInit::VariableDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<VariableDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<VariableDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_expression!(ForStatementInit) => {
                 let inner = it.to_expression();
-                allocator
-                    .alloc(AstNode::<'a, Expression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Expression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForInStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ForInStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2355,43 +3085,47 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForInStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForStatementLeft<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ForStatementLeft<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ForStatementLeft::VariableDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<VariableDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<VariableDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_assignment_target!(ForStatementLeft) => {
                 let inner = it.to_assignment_target();
-                allocator
-                    .alloc(AstNode::<'a, AssignmentTarget> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AssignmentTarget> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForOfStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ForOfStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2399,12 +3133,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ForOfStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ContinueStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ContinueStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2412,12 +3155,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ContinueStatement<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BreakStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BreakStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2425,12 +3177,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BreakStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ReturnStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ReturnStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2438,12 +3199,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ReturnStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, WithStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2451,12 +3221,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, SwitchStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2464,12 +3243,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchCase<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, SwitchCase<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2477,12 +3265,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, SwitchCase<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabeledStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, LabeledStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2490,12 +3287,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, LabeledStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThrowStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ThrowStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2503,12 +3309,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ThrowStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TryStatement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TryStatement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2516,12 +3331,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TryStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchClause<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, CatchClause<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2529,12 +3344,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchClause<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchParameter<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, CatchParameter<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2542,12 +3357,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, CatchParameter<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DebuggerStatement> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, DebuggerStatement> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2555,62 +3379,62 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, DebuggerStatement> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingPattern<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BindingPattern<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             BindingPattern::BindingIdentifier(inner) => {
-                allocator
-                    .alloc(AstNode::<BindingIdentifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<BindingIdentifier> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             BindingPattern::ObjectPattern(inner) => {
-                allocator
-                    .alloc(AstNode::<ObjectPattern> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ObjectPattern> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             BindingPattern::ArrayPattern(inner) => {
-                allocator
-                    .alloc(AstNode::<ArrayPattern> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ArrayPattern> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             BindingPattern::AssignmentPattern(inner) => {
-                allocator
-                    .alloc(AstNode::<AssignmentPattern> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AssignmentPattern> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentPattern<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AssignmentPattern<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2618,12 +3442,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AssignmentPattern<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectPattern<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ObjectPattern<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2631,12 +3464,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ObjectPattern<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingProperty<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BindingProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2644,12 +3486,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingProperty<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayPattern<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrayPattern<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2657,12 +3508,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrayPattern<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingRestElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BindingRestElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2670,9 +3530,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BindingRestElement<'a>>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Function<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Function<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -2701,12 +3581,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Function<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameters<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, FormalParameters<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2714,12 +3594,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameters<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameter<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, FormalParameter<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2727,12 +3616,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameter<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameterRest<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, FormalParameterRest<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2740,12 +3638,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FormalParameterRest<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FunctionBody<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, FunctionBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2753,40 +3651,55 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, FunctionBody<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionBody<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrowFunctionBody<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ArrowFunctionBody::FunctionBody(inner) => {
-                allocator
-                    .alloc(AstNode::<FunctionBody> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<FunctionBody> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_expression!(ArrowFunctionBody) => {
                 let inner = it.to_expression();
-                allocator
-                    .alloc(AstNode::<'a, Expression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Expression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArrowFunctionExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -2815,9 +3728,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArrowFunctionExpression
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, YieldExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, YieldExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -2846,9 +3779,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, YieldExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Class<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Class<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -2877,12 +3830,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Class<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassHeritage<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ClassHeritage<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2890,12 +3852,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassHeritage<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassBody<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ClassBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -2903,72 +3865,70 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassBody<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ClassElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ClassElement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ClassElement::StaticBlock(inner) => {
-                allocator
-                    .alloc(AstNode::<StaticBlock> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StaticBlock> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ClassElement::MethodDefinition(inner) => {
-                allocator
-                    .alloc(AstNode::<MethodDefinition> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<MethodDefinition> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ClassElement::PropertyDefinition(inner) => {
-                allocator
-                    .alloc(AstNode::<PropertyDefinition> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<PropertyDefinition> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ClassElement::AccessorProperty(inner) => {
-                allocator
-                    .alloc(AstNode::<AccessorProperty> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<AccessorProperty> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ClassElement::TSIndexSignature(inner) => {
-                allocator
-                    .alloc(AstNode::<TSIndexSignature> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSIndexSignature> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MethodDefinition<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, MethodDefinition<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2976,12 +3936,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, MethodDefinition<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PropertyDefinition<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PropertyDefinition<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -2989,12 +3958,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PropertyDefinition<'a>>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateIdentifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, PrivateIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3002,12 +3980,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, PrivateIdentifier<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticBlock<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, StaticBlock<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3015,102 +4002,94 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StaticBlock<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ModuleDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ModuleDeclaration<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ModuleDeclaration::ImportDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<ImportDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ImportDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleDeclaration::ExportAllDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<ExportAllDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ExportAllDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleDeclaration::ExportDefaultDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<ExportDefaultDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ExportDefaultDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleDeclaration::ExportDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<ExportDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ExportDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleDeclaration::ExportNamedDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<ExportNamedDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ExportNamedDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleDeclaration::ExportFromDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<ExportFromDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ExportFromDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleDeclaration::TSExportAssignment(inner) => {
-                allocator
-                    .alloc(AstNode::<TSExportAssignment> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSExportAssignment> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleDeclaration::TSNamespaceExportDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNamespaceExportDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNamespaceExportDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AccessorProperty<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, AccessorProperty<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3118,9 +4097,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, AccessorProperty<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3149,12 +4148,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3162,52 +4170,54 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDeclaration<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDeclarationSpecifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportDeclarationSpecifier<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ImportDeclarationSpecifier::ImportSpecifier(inner) => {
-                allocator
-                    .alloc(AstNode::<ImportSpecifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ImportSpecifier> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ImportDeclarationSpecifier::ImportDefaultSpecifier(inner) => {
-                allocator
-                    .alloc(AstNode::<ImportDefaultSpecifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ImportDefaultSpecifier> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ImportDeclarationSpecifier::ImportNamespaceSpecifier(inner) => {
-                allocator
-                    .alloc(AstNode::<ImportNamespaceSpecifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ImportNamespaceSpecifier> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportSpecifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportSpecifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3215,12 +4225,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportSpecifier<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDefaultSpecifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportDefaultSpecifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3228,12 +4247,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportDefaultSpecifier<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportNamespaceSpecifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportNamespaceSpecifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3241,12 +4269,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportNamespaceSpecifie
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithClause<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, WithClause<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3254,12 +4291,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, WithClause<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportAttribute<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportAttribute<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3267,42 +4313,43 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportAttribute<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ImportAttributeKey<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ImportAttributeKey<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ImportAttributeKey::Identifier(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ImportAttributeKey::StringLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ExportDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        self.write(f);
+    }
+}
+
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ExportNamedDeclaration<'a>> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -3310,12 +4357,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDeclaration<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportNamedDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ExportFromDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
+            format_leading_comments(self.span()).fmt(f);
+            FormatSuppressedNode(self.span()).fmt(f);
             self.format_trailing_comments(f);
         } else {
             self.write(f);
@@ -3323,38 +4370,27 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportNamedDeclaration<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportFromDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ExportDefaultDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
-        if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
-            self.format_trailing_comments(f);
-        } else {
-            self.write(f);
-        }
+        self.write(f);
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDefaultDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ExportAllDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
-        if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
-            self.format_trailing_comments(f);
-        } else {
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
             self.write(f);
+            return;
         }
-    }
-}
-
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportAllDeclaration<'a>> {
-    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3362,12 +4398,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportAllDeclaration<'a
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportSpecifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ExportSpecifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3375,100 +4420,100 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportSpecifier<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ExportDefaultDeclarationKind<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ExportDefaultDeclarationKind<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ExportDefaultDeclarationKind::FunctionDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<Function> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Function> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ExportDefaultDeclarationKind::ClassDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<Class> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
+                AstNode::<Class> { inner, parent, following_span_start: self.following_span_start }
                     .fmt(f);
             }
             ExportDefaultDeclarationKind::TSInterfaceDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSInterfaceDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSInterfaceDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_expression!(ExportDefaultDeclarationKind) => {
                 let inner = it.to_expression();
-                allocator
-                    .alloc(AstNode::<'a, Expression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Expression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ModuleExportName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ModuleExportName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             ModuleExportName::IdentifierName(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleExportName::IdentifierReference(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             ModuleExportName::StringLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, V8IntrinsicExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, V8IntrinsicExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3497,9 +4542,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, V8IntrinsicExpression<'
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BooleanLiteral> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BooleanLiteral> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3528,9 +4593,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BooleanLiteral> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NullLiteral> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NullLiteral> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3559,9 +4644,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NullLiteral> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NumericLiteral<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, NumericLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3590,9 +4695,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, NumericLiteral<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StringLiteral<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, StringLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3621,9 +4746,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, StringLiteral<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BigIntLiteral<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, BigIntLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3652,9 +4797,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, BigIntLiteral<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, RegExpLiteral<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, RegExpLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -3683,7 +4848,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, RegExpLiteral<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if format_type_cast_comment_node(self, false, f) {
             return;
@@ -3699,12 +4864,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXElement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXOpeningElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3712,12 +4886,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningElement<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXClosingElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXClosingElement<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3725,7 +4908,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXClosingElement<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXFragment<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXFragment<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         if format_type_cast_comment_node(self, false, f) {
             return;
@@ -3741,12 +4924,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXFragment<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningFragment> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXOpeningFragment> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3754,12 +4946,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXOpeningFragment> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXClosingFragment> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXClosingFragment> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3767,72 +4968,70 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXClosingFragment> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXElementName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXElementName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXElementName::Identifier(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXIdentifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXIdentifier> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXElementName::IdentifierReference(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXElementName::NamespacedName(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXNamespacedName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXNamespacedName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXElementName::MemberExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXMemberExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXMemberExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXElementName::ThisExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ThisExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ThisExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXNamespacedName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXNamespacedName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3840,12 +5039,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXNamespacedName<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXMemberExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXMemberExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3853,52 +5061,54 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXMemberExpression<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXMemberExpressionObject<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXMemberExpressionObject<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXMemberExpressionObject::IdentifierReference(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXMemberExpressionObject::MemberExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXMemberExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXMemberExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXMemberExpressionObject::ThisExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ThisExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ThisExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXExpressionContainer<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXExpressionContainer<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3906,43 +5116,47 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXExpressionContainer<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXExpression<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXExpression::EmptyExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXEmptyExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXEmptyExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_expression!(JSXExpression) => {
                 let inner = it.to_expression();
-                allocator
-                    .alloc(AstNode::<'a, Expression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<Expression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXEmptyExpression> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXEmptyExpression> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3950,42 +5164,46 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXEmptyExpression> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttributeItem<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXAttributeItem<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXAttributeItem::Attribute(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXAttribute> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXAttribute> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXAttributeItem::SpreadAttribute(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXSpreadAttribute> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXSpreadAttribute> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttribute<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXAttribute<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -3993,12 +5211,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttribute<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadAttribute<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXSpreadAttribute<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4006,92 +5233,87 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadAttribute<'a>>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttributeName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXAttributeName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXAttributeName::Identifier(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXIdentifier> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXIdentifier> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXAttributeName::NamespacedName(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXNamespacedName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXNamespacedName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXAttributeValue<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXAttributeValue<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXAttributeValue::StringLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXAttributeValue::ExpressionContainer(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXExpressionContainer> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXExpressionContainer> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXAttributeValue::Element(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXElement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXElement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXAttributeValue::Fragment(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXFragment> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXFragment> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXIdentifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXIdentifier<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4099,72 +5321,70 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXIdentifier<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXChild<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXChild<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             JSXChild::Text(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXText> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXText> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXChild::Element(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXElement> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXElement> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXChild::Fragment(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXFragment> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXFragment> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXChild::ExpressionContainer(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXExpressionContainer> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXExpressionContainer> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             JSXChild::Spread(inner) => {
-                allocator
-                    .alloc(AstNode::<JSXSpreadChild> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSXSpreadChild> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadChild<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXSpreadChild<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4172,12 +5392,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXSpreadChild<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXText<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSXText<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4185,12 +5414,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSXText<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisParameter<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSThisParameter<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4198,12 +5436,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisParameter<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSEnumDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4211,12 +5458,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumDeclaration<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumBody<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSEnumBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4224,12 +5480,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumBody<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumMember<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSEnumMember<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4237,62 +5502,62 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumMember<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSEnumMemberName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSEnumMemberName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSEnumMemberName::Identifier(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSEnumMemberName::String(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSEnumMemberName::ComputedString(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSEnumMemberName::ComputedTemplateString(inner) => {
-                allocator
-                    .alloc(AstNode::<TemplateLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TemplateLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAnnotation<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeAnnotation<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4300,12 +5565,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAnnotation<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSLiteralType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSLiteralType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4313,459 +5587,391 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSLiteralType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSLiteral<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSLiteral<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSLiteral::BooleanLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<BooleanLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<BooleanLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSLiteral::NumericLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<NumericLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<NumericLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSLiteral::BigIntLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<BigIntLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<BigIntLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSLiteral::StringLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<StringLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<StringLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSLiteral::TemplateLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<TemplateLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TemplateLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSLiteral::UnaryExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<UnaryExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<UnaryExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSType<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSType::TSAnyKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSAnyKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSAnyKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSBigIntKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSBigIntKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSBigIntKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSBooleanKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSBooleanKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSBooleanKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSIntrinsicKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSIntrinsicKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSIntrinsicKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSNeverKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNeverKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNeverKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSNullKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNullKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNullKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSNumberKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNumberKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNumberKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSObjectKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSObjectKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSObjectKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSStringKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSStringKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSStringKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSSymbolKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSSymbolKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSSymbolKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSUndefinedKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSUndefinedKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSUndefinedKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSUnknownKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSUnknownKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSUnknownKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSVoidKeyword(inner) => {
-                allocator
-                    .alloc(AstNode::<TSVoidKeyword> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSVoidKeyword> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSArrayType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSArrayType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSArrayType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSConditionalType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSConditionalType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSConditionalType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSConstructorType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSConstructorType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSConstructorType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSFunctionType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSFunctionType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSFunctionType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSImportType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSImportType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSImportType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSIndexedAccessType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSIndexedAccessType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSIndexedAccessType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSInferType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSInferType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSInferType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSIntersectionType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSIntersectionType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSIntersectionType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSLiteralType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSLiteralType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSLiteralType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSMappedType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSMappedType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSMappedType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSNamedTupleMember(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNamedTupleMember> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNamedTupleMember> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSTemplateLiteralType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTemplateLiteralType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTemplateLiteralType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSThisType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSThisType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSThisType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSTupleType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTupleType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTupleType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSTypeLiteral(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTypeLiteral> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypeLiteral> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSTypeOperatorType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTypeOperator> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypeOperator> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSTypePredicate(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTypePredicate> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypePredicate> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSTypeQuery(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTypeQuery> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypeQuery> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSTypeReference(inner) => {
-                allocator
-                    .alloc(AstNode::<TSTypeReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypeReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSUnionType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSUnionType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSUnionType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::TSParenthesizedType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSParenthesizedType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSParenthesizedType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::JSDocNullableType(inner) => {
-                allocator
-                    .alloc(AstNode::<JSDocNullableType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSDocNullableType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::JSDocNonNullableType(inner) => {
-                allocator
-                    .alloc(AstNode::<JSDocNonNullableType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSDocNonNullableType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSType::JSDocUnknownType(inner) => {
-                allocator
-                    .alloc(AstNode::<JSDocUnknownType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<JSDocUnknownType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConditionalType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSConditionalType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -4794,20 +6000,25 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConditionalType<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSUnionType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
-        if !is_suppressed && format_type_cast_comment_node(self, false, f) {
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
+        if is_suppressed {
+            write_suppressed_expression(
+                self.span(),
+                self.leading_comments_start(),
+                self.needs_parentheses(f),
+                f,
+            );
+            self.format_trailing_comments(f);
+            return;
+        }
+        if format_type_cast_comment_node(self, false, f) {
             return;
         }
         let needs_parentheses = self.needs_parentheses(f);
         format_outer_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
-        if is_suppressed {
-            self.write_suppressed_leading_comments(f);
-            self.write_suppressed(f);
-        } else {
-            self.write(f);
-        }
+        self.write(f);
         if needs_parentheses {
             ")".fmt(f);
         }
@@ -4815,9 +6026,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnionType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntersectionType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSIntersectionType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -4846,12 +6077,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntersectionType<'a>>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSParenthesizedType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSParenthesizedType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4859,9 +6099,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSParenthesizedType<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeOperator<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeOperator<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -4890,12 +6150,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeOperator<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSArrayType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSArrayType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4903,12 +6172,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSArrayType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexedAccessType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSIndexedAccessType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4916,12 +6194,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexedAccessType<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTupleType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTupleType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4929,12 +6216,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTupleType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamedTupleMember<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNamedTupleMember<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4942,12 +6238,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamedTupleMember<'a>>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSOptionalType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSOptionalType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4955,12 +6260,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSOptionalType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSRestType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSRestType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -4968,53 +6282,55 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSRestType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTupleElement<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTupleElement<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSTupleElement::TSOptionalType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSOptionalType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSOptionalType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSTupleElement::TSRestType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSRestType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSRestType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_ts_type!(TSTupleElement) => {
                 let inner = it.to_ts_type();
-                allocator
-                    .alloc(AstNode::<'a, TSType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAnyKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSAnyKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5022,12 +6338,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAnyKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSStringKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSStringKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5035,12 +6360,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSStringKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBooleanKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSBooleanKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5048,12 +6382,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBooleanKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNumberKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNumberKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5061,12 +6404,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNumberKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNeverKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNeverKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5074,12 +6426,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNeverKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntrinsicKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSIntrinsicKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5087,12 +6448,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIntrinsicKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnknownKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSUnknownKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5100,12 +6470,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUnknownKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNullKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNullKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5113,12 +6492,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNullKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUndefinedKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSUndefinedKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5126,12 +6514,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSUndefinedKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSVoidKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSVoidKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5139,12 +6536,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSVoidKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSymbolKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSSymbolKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5152,12 +6558,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSymbolKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisType> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSThisType> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5165,12 +6580,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSThisType> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSObjectKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSObjectKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5178,12 +6602,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSObjectKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBigIntKeyword> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSBigIntKeyword> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5191,12 +6624,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSBigIntKeyword> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeReference<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeReference<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5204,52 +6646,54 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeReference<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSTypeName::IdentifierReference(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSTypeName::QualifiedName(inner) => {
-                allocator
-                    .alloc(AstNode::<TSQualifiedName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSQualifiedName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSTypeName::ThisExpression(inner) => {
-                allocator
-                    .alloc(AstNode::<ThisExpression> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<ThisExpression> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSQualifiedName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSQualifiedName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5257,12 +6701,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSQualifiedName<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterInstantiation<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeParameterInstantiation<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5270,12 +6723,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterInstanti
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameter<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeParameter<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5283,12 +6745,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameter<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeParameterDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5296,12 +6767,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeParameterDeclarat
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAliasDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeAliasDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5309,12 +6789,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAliasDeclaration<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSClassImplements<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSClassImplements<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5322,12 +6811,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSClassImplements<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSInterfaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5335,12 +6833,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceDeclaration<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceBody<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSInterfaceBody<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5348,12 +6855,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceBody<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSPropertySignature<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSPropertySignature<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5361,72 +6877,70 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSPropertySignature<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSignature<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSSignature<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSSignature::TSIndexSignature(inner) => {
-                allocator
-                    .alloc(AstNode::<TSIndexSignature> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSIndexSignature> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSSignature::TSPropertySignature(inner) => {
-                allocator
-                    .alloc(AstNode::<TSPropertySignature> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSPropertySignature> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSSignature::TSCallSignatureDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSCallSignatureDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSCallSignatureDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSSignature::TSConstructSignatureDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSConstructSignatureDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSConstructSignatureDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSSignature::TSMethodSignature(inner) => {
-                allocator
-                    .alloc(AstNode::<TSMethodSignature> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSMethodSignature> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignature<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSIndexSignature<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5434,12 +6948,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignature<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSCallSignatureDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSCallSignatureDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5447,12 +6970,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSCallSignatureDeclarat
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMethodSignature<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSMethodSignature<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5460,12 +6992,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMethodSignature<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructSignatureDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSConstructSignatureDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5473,12 +7014,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructSignatureDec
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignatureName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSIndexSignatureName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5486,12 +7036,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSIndexSignatureName<'a
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceHeritage<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSInterfaceHeritage<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5499,12 +7058,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInterfaceHeritage<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypePredicate<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypePredicate<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5512,42 +7080,46 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypePredicate<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypePredicateName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypePredicateName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSTypePredicateName::Identifier(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSTypePredicateName::This(inner) => {
-                allocator
-                    .alloc(AstNode::<TSThisType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSThisType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSExternalModuleDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5555,12 +7127,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleDeclara
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNamespaceDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5568,42 +7149,46 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclaration<
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceDeclarationBody<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNamespaceDeclarationBody<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSNamespaceDeclarationBody::TSNamespaceDeclaration(inner) => {
-                allocator
-                    .alloc(AstNode::<TSNamespaceDeclaration> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSNamespaceDeclaration> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSNamespaceDeclarationBody::TSModuleBlock(inner) => {
-                allocator
-                    .alloc(AstNode::<TSModuleBlock> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSModuleBlock> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSGlobalDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSGlobalDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5611,12 +7196,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSGlobalDeclaration<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleBlock<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSModuleBlock<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5624,12 +7218,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleBlock<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeLiteral<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeLiteral<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5637,9 +7240,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeLiteral<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInferType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSInferType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5668,9 +7291,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInferType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeQuery<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeQuery<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5699,43 +7342,47 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeQuery<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeQueryExprName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeQueryExprName<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSTypeQueryExprName::TSImportType(inner) => {
-                allocator
-                    .alloc(AstNode::<TSImportType> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSImportType> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             it @ match_ts_type_name!(TSTypeQueryExprName) => {
                 let inner = it.to_ts_type_name();
-                allocator
-                    .alloc(AstNode::<'a, TSTypeName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSTypeName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSImportType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5743,42 +7390,46 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportTypeQualifier<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSImportTypeQualifier<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSImportTypeQualifier::Identifier(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSImportTypeQualifier::QualifiedName(inner) => {
-                allocator
-                    .alloc(AstNode::<TSImportTypeQualifiedName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSImportTypeQualifiedName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportTypeQualifiedName<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSImportTypeQualifiedName<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5786,9 +7437,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportTypeQualifiedNa
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSFunctionType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSFunctionType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5817,9 +7488,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSFunctionType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructorType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSConstructorType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5848,12 +7539,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSConstructorType<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMappedType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSMappedType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5861,12 +7561,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSMappedType<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTemplateLiteralType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTemplateLiteralType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5874,9 +7583,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTemplateLiteralType<'
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAsExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSAsExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5905,9 +7634,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSAsExpression<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSatisfiesExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSSatisfiesExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5936,9 +7685,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSSatisfiesExpression<'
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAssertion<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSTypeAssertion<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -5967,12 +7736,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSTypeAssertion<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportEqualsDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSImportEqualsDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -5980,52 +7758,54 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSImportEqualsDeclarati
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSModuleReference<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSModuleReference<'a>> {
     #[inline]
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let allocator = self.allocator;
         let parent = self.parent;
         match self.inner {
             TSModuleReference::ExternalModuleReference(inner) => {
-                allocator
-                    .alloc(AstNode::<TSExternalModuleReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSExternalModuleReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSModuleReference::IdentifierReference(inner) => {
-                allocator
-                    .alloc(AstNode::<IdentifierReference> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<IdentifierReference> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
             TSModuleReference::QualifiedName(inner) => {
-                allocator
-                    .alloc(AstNode::<TSQualifiedName> {
-                        inner,
-                        parent,
-                        allocator,
-                        following_span_start: self.following_span_start,
-                    })
-                    .fmt(f);
+                AstNode::<TSQualifiedName> {
+                    inner,
+                    parent,
+                    following_span_start: self.following_span_start,
+                }
+                .fmt(f);
             }
         }
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleReference<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSExternalModuleReference<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6033,9 +7813,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExternalModuleReferen
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNonNullExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNonNullExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -6064,12 +7864,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNonNullExpression<'a>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Decorator<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, Decorator<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6077,12 +7886,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, Decorator<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExportAssignment<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSExportAssignment<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6090,12 +7908,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSExportAssignment<'a>>
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceExportDeclaration<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSNamespaceExportDeclaration<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6103,9 +7930,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSNamespaceExportDeclar
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInstantiationExpression<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, TSInstantiationExpression<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            true,
+        ) {
+            debug_assert!(
+                matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                "a quiet node is in a type cast"
+            );
+            let needs_parentheses = self.needs_parentheses(f);
+            if needs_parentheses {
+                "(".fmt(f);
+            }
+            self.write(f);
+            if needs_parentheses {
+                ")".fmt(f);
+            }
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         if is_suppressed {
             write_suppressed_expression(
                 self.span(),
@@ -6134,12 +7981,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, TSInstantiationExpressi
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNullableType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSDocNullableType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6147,12 +8003,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNullableType<'a>> 
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNonNullableType<'a>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSDocNonNullableType<'a>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }
@@ -6160,12 +8025,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocNonNullableType<'a
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, JSDocUnknownType> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, JSDocUnknownType> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_suppressed = f.comments().is_suppressed(self.suppressed_span().start);
+        if f.comments().is_quiet(
+            self.span(),
+            || self.parent.span(),
+            self.following_span_start,
+            false,
+        ) {
+            self.write(f);
+            return;
+        }
+        let is_suppressed = f.comments().is_span_suppressed(self.span());
         self.format_leading_comments(f);
         if is_suppressed {
-            self.write_suppressed(f);
+            FormatSuppressedNode(self.span()).fmt(f);
         } else {
             self.write(f);
         }

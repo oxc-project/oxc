@@ -1,7 +1,6 @@
 use std::ops::Deref;
 
 use oxc_ast::ast::*;
-use oxc_formatter_core::Buffer;
 
 use super::{
     FormatWrite, arrow_function_expression::FunctionCacheMode, block_statement::is_empty_block,
@@ -11,19 +10,19 @@ use crate::{
     utils::statement_body::write_head_body_separator, write,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Function<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Function<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatFunction::new(self).fmt(f);
     }
 }
 
 pub struct FormatFunction<'a, 'b> {
-    pub function: &'b AstNode<'a, Function<'a>>,
+    pub function: &'b AstNode<'b, 'a, Function<'a>>,
     pub cache_mode: FunctionCacheMode,
 }
 
-impl<'a> Deref for FormatFunction<'a, '_> {
-    type Target = AstNode<'a, Function<'a>>;
+impl<'a, 'b> Deref for FormatFunction<'a, 'b> {
+    type Target = AstNode<'b, 'a, Function<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.function
@@ -31,11 +30,11 @@ impl<'a> Deref for FormatFunction<'a, '_> {
 }
 
 impl<'a, 'b> FormatFunction<'a, 'b> {
-    pub fn new(function: &'b AstNode<'a, Function<'a>>) -> Self {
+    pub fn new(function: &'b AstNode<'b, 'a, Function<'a>>) -> Self {
         Self { function, cache_mode: FunctionCacheMode::NoCache }
     }
 
-    pub fn new_cached(function: &'b AstNode<'a, Function<'a>>) -> Self {
+    pub fn new_cached(function: &'b AstNode<'b, 'a, Function<'a>>) -> Self {
         Self { function, cache_mode: FunctionCacheMode::Cache }
     }
 
@@ -115,13 +114,13 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatFunction<'a, '_> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, FunctionBody<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FunctionBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write_head_body_separator(self.span.start, f);
 
         let statements = self.statements();
         let directives = self.directives();
-        if is_empty_block(statements) && directives.is_empty() {
+        if is_empty_block(&statements) && directives.is_empty() {
             write!(f, ["{", format_dangling_comments(self.span).with_block_indent(), "}"]);
         } else {
             write!(f, ["{", block_indent(&format_args!(directives, statements)), "}"]);
@@ -196,4 +195,17 @@ where
             f.write_element(grouped);
         }
     }
+}
+
+/// A bodyless function (`declare function f(): void;`, an overload, an abstract method) ends at its signature,
+/// extended over dropped source parens; one with a body has no terminator.
+pub fn function_content_end(function: &Function<'_>, f: &JsFormatter<'_, '_>) -> Option<u32> {
+    function.body.is_none().then(|| function_signature_end(function, f))
+}
+
+/// The end of a function's signature (its return type, else its parameters), extended over dropped source parens.
+pub fn function_signature_end(function: &Function<'_>, f: &JsFormatter<'_, '_>) -> u32 {
+    let signature_end =
+        function.return_type.as_ref().map_or(function.params.span.end, |rt| rt.span.end);
+    f.comments().end_including_source_parens(signature_end, function.span.end)
 }

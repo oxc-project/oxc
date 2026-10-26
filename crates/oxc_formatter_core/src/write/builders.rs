@@ -8,20 +8,18 @@ use std::num::NonZeroU8;
 use oxc_allocator::ArenaVec;
 
 use crate::{
-    Argument, Arguments, Buffer, Format, FormatContext, FormatElement, FormatOptions, FormatState,
-    Formatter, GroupId, HeapVecBuffer,
+    Argument, Arguments, Format, FormatContext, FormatElement, FormatOptions, Formatter, GroupId,
     format_element::{
-        self, LineMode, PrintMode, TextWidth,
+        self, LineMode, PrintMode, TextWidth, ThinStr,
         tag::{self, Condition, DedentMode, GroupMode, LabelId, Tag},
     },
-    write,
 };
 
 use Tag::{
     EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-    EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, StartAlign, StartConditionalContent,
-    StartDedent, StartEntry, StartFill, StartGroup, StartIndent, StartIndentIfGroupBreaks,
-    StartLabelled, StartLineSuffix,
+    EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndPrefix, StartAlign,
+    StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
+    StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartPrefix,
 };
 
 // ---------------------------------------------------------------------------
@@ -35,12 +33,25 @@ pub const fn soft_line_break() -> Line {
 }
 
 /// A forced line break that is always printed.
+///
+/// Consecutive hard line breaks print as ONE newline:
+/// the printer only emits a newline when the current line holds content,
+/// so an element that ends its own line (a line comment, [block_indent]) may be followed by
+/// another `hard_line_break` without leaving a blank line.
+/// Emitters rely on this instead of tracking "did the previous element already break" (pinned by printer tests).
+///
+/// NOTE: Prettier's printer does not merge; `apps/oxfmt`'s `prettier_compat` mirrors the rule at the IR <-> Doc boundary.
+///
+/// Where the newline count IS the content, use [exact_line_breaks] or [literal_line_break] instead.
 #[inline]
 pub const fn hard_line_break() -> Line {
     Line::new(LineMode::Hard)
 }
 
 /// A forced empty line.
+///
+/// Merges like [hard_line_break] (never more than one blank line in a row),
+/// but a preceding `hard_line_break` does not absorb it: the blank line still prints.
 #[inline]
 pub const fn empty_line() -> Line {
     Line::new(LineMode::Empty)
@@ -233,7 +244,7 @@ impl<T> std::fmt::Debug for FormatOnce<T> {
 #[inline]
 pub fn token(text: &'static str) -> Token {
     debug_assert_token_ascii_only_and_no_linebreaks(text);
-    Token { text }
+    Token { text: ThinStr::new(text) }
 }
 
 fn debug_assert_token_ascii_only_and_no_linebreaks(text: &str) {
@@ -245,10 +256,11 @@ fn debug_assert_token_ascii_only_and_no_linebreaks(text: &str) {
 
 #[derive(Clone, Copy, Eq, PartialEq)]
 pub struct Token {
-    text: &'static str,
+    text: ThinStr<'static>,
 }
 
 impl<C> Format<'_, C> for Token {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_, '_, C>) {
         f.write_element(FormatElement::Token { text: self.text });
     }
@@ -256,7 +268,7 @@ impl<C> Format<'_, C> for Token {
 
 impl std::fmt::Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        std::write!(f, "Token({})", self.text)
+        std::write!(f, "Token({})", self.text.as_str())
     }
 }
 
@@ -303,12 +315,13 @@ impl<'a, C> Format<'a, C> for Text<'a>
 where
     C: FormatContext,
 {
+    #[inline]
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         let width = self
             .width
             .unwrap_or_else(|| TextWidth::from_text(self.text, f.options().indent_width()));
         let width = if self.expand_parent { width } else { width.without_expand_parent() };
-        f.write_element(FormatElement::Text { text: self.text, width });
+        f.write_element(FormatElement::Text { text: ThinStr::new(self.text), width });
     }
 }
 
@@ -458,6 +471,13 @@ impl<C> std::fmt::Debug for FormatLabelled<'_, '_, C> {
 // ---------------------------------------------------------------------------
 
 /// Adds a level of indentation to the given content.
+///
+/// Indention is a property of the LINE BREAK, not of the content:
+/// every line break taken inside `content` starts its line one level deeper, whatever is printed on that line.
+/// So `[indent([a, hard_line_break()]), b]` indents `b`, and `[hard_line_break(), indent([b])]` does not indent `b`'s first line.
+/// Place the break in the scope whose indention the next line should take (the same holds for `align` and `prefix_align`).
+/// This is what lets `group(indent(line))` followed by an opaque `rhs` indent only the first line of `rhs`;
+/// a content-scoped rule (Biome re-syncs the pending indention at `EndAlign`) cannot express that, so it is not adopted.
 #[inline]
 pub fn indent<'a, 'ast, C, Content>(content: &'a Content) -> Indent<'a, 'ast, C>
 where
@@ -577,28 +597,32 @@ impl<C> std::fmt::Debug for Dedent<'_, '_, C> {
 
 /// Aligns its content by indenting the content by `count` spaces.
 ///
-/// # Panics
+/// Like [indent], this applies to the line breaks taken inside `content`, not to the content itself.
 ///
-/// Panics if `count` is `0`.
+/// A `count` of `0` writes the content as-is:
+/// no align frame is pushed, so it neither measures nor turns into a tab when the indent style is tabs.
+/// `count` is often computed (a column difference, the indent width, which may be `0`),
+/// and every such caller would otherwise need the same guard.
 pub fn align<'ast, C, Content>(count: u8, content: &Content) -> Align<'_, 'ast, C>
 where
     Content: Format<'ast, C>,
 {
-    Align {
-        count: NonZeroU8::new(count).expect("Alignment count must be a non-zero number."),
-        content: Argument::new(content),
-    }
+    Align { count: NonZeroU8::new(count), content: Argument::new(content) }
 }
 
 #[derive(Copy, Clone)]
 pub struct Align<'a, 'ast, C> {
-    count: NonZeroU8,
+    /// `None`: zero-width, no frame.
+    count: Option<NonZeroU8>,
     content: Argument<'a, 'ast, C>,
 }
 
 impl<'ast, C> Format<'ast, C> for Align<'_, 'ast, C> {
     fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
-        f.write_element(FormatElement::Tag(StartAlign(tag::Align(self.count))));
+        let Some(count) = self.count else {
+            return Arguments::from(&self.content).fmt(f);
+        };
+        f.write_element(FormatElement::Tag(StartAlign(tag::Align(count))));
         Arguments::from(&self.content).fmt(f);
         f.write_element(FormatElement::Tag(EndAlign));
     }
@@ -608,6 +632,94 @@ impl<C> std::fmt::Debug for Align<'_, '_, C> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Align")
             .field("count", &self.count)
+            .field("content", &"{{content}}")
+            .finish()
+    }
+}
+
+// ---------------------------------------------------------------------------
+// PrefixAlign
+// ---------------------------------------------------------------------------
+
+/// Prints `prefix` after the indention on every line break inside `content`.
+///
+/// Prettier's `align("> ", doc)`: a markdown blockquote, a JSDoc `* `.
+/// `prefix_align(&"> ", &body)`: see [tag::Prefix] for the double reference.
+///
+/// Like [indent], this applies to the line breaks taken inside `content`:
+/// a break as the last element puts the prefix before whatever follows the tag,
+/// and a blank line meant to END the prefixed block has to sit outside the tag
+/// (`[prefix_align(&"> ", ..), empty_line(), b]`, not inside it).
+/// Inside the prefix, `indent` / `align` add to the right of it,
+/// so `prefix_align(&"> ", indent(..))` prints `>   x`
+/// while `align(2, prefix_align(&"> ", ..))` prints `  > x`.
+/// A blank line inside prints the prefixes up to the last visible one with its trailing whitespace trimmed (`>`),
+/// as Prettier's end-of-line trimming leaves them.
+#[inline]
+pub fn prefix_align<'a, 'ast, C, Content>(
+    prefix: &'static &'static str,
+    content: &'a Content,
+) -> PrefixAlign<'a, 'ast, C>
+where
+    Content: Format<'ast, C>,
+{
+    PrefixAlign {
+        prefix: PrefixKind::Token(tag::Prefix::new(prefix)),
+        content: Argument::new(content),
+    }
+}
+
+/// Aligns `content` by `count` spaces that stay spaces under `useTabs`.
+///
+/// Unlike [align], whose spaces become a tab when an `indent` or a prefix follows them in tab mode
+/// (Prettier's number align), these columns are syntax:
+/// a markdown container's content column, whose width the next parse counts (a tab is up to 4 columns).
+/// An `indent` inside adds to the right of them (`␣␣\t`), like [prefix_align].
+/// `0` aligns nothing.
+#[inline]
+pub fn space_align<'a, 'ast, C, Content>(
+    count: usize,
+    content: &'a Content,
+) -> PrefixAlign<'a, 'ast, C>
+where
+    Content: Format<'ast, C>,
+{
+    PrefixAlign { prefix: PrefixKind::Spaces(count), content: Argument::new(content) }
+}
+
+#[derive(Copy, Clone, Debug)]
+enum PrefixKind {
+    Token(tag::Prefix),
+    Spaces(usize),
+}
+
+#[derive(Copy, Clone)]
+pub struct PrefixAlign<'a, 'ast, C> {
+    prefix: PrefixKind,
+    content: Argument<'a, 'ast, C>,
+}
+
+impl<'ast, C> Format<'ast, C> for PrefixAlign<'_, 'ast, C> {
+    fn fmt(&self, f: &mut Formatter<'_, 'ast, C>) {
+        let prefixes: &mut dyn ExactSizeIterator<Item = tag::Prefix> = match self.prefix {
+            PrefixKind::Token(prefix) => &mut std::iter::once(prefix),
+            PrefixKind::Spaces(count) => &mut tag::Prefix::spaces(count),
+        };
+        let depth = prefixes.len();
+        for prefix in prefixes {
+            f.write_element(FormatElement::Tag(StartPrefix(prefix)));
+        }
+        Arguments::from(&self.content).fmt(f);
+        for _ in 0..depth {
+            f.write_element(FormatElement::Tag(EndPrefix));
+        }
+    }
+}
+
+impl<C> std::fmt::Debug for PrefixAlign<'_, '_, C> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("PrefixAlign")
+            .field("prefix", &self.prefix)
             .field("content", &"{{content}}")
             .finish()
     }
@@ -675,15 +787,15 @@ impl<'ast, C> Format<'ast, C> for BlockIndent<'_, 'ast, C> {
         match self.mode {
             IndentMode::Soft => {
                 let line = soft_line_break();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::Block => {
                 let line = hard_line_break();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::SoftLineOrSpace | IndentMode::SoftSpace => {
                 let line = soft_line_break_or_space();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
         }
 
@@ -702,15 +814,15 @@ impl<'ast, C> Format<'ast, C> for BlockIndent<'_, 'ast, C> {
         match self.mode {
             IndentMode::Soft => {
                 let line = soft_line_break();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::Block => {
                 let line = hard_line_break();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::SoftSpace => {
                 let line = soft_line_break_or_space();
-                write(f, Arguments::new(&[Argument::new(&line)]));
+                line.fmt(f);
             }
             IndentMode::SoftLineOrSpace => (),
         }
@@ -953,16 +1065,16 @@ impl<'fmt, 'ast, C> BestFitting<'fmt, 'ast, C> {
 ///
 /// This is the single place encoding the variant shape the printer's [`format_element::BestFittingElement`] relies on:
 /// an entry-tag-wrapped, exactly-sized arena slice.
-/// The content is staged on the heap so only that final slice lands in the arena (see [`HeapVecBuffer`]).
 pub fn best_fitting_variant<'ast, C>(
-    state: &mut FormatState<'ast, C>,
-    content: impl FnOnce(&mut HeapVecBuffer<'_, 'ast, C>),
+    f: &mut Formatter<'_, 'ast, C>,
+    content: impl FnOnce(&mut Formatter<'_, 'ast, C>),
 ) -> &'ast [FormatElement<'ast>] {
-    let mut buffer = HeapVecBuffer::new(state);
-    buffer.write_element(FormatElement::Tag(StartEntry));
-    content(&mut buffer);
-    buffer.write_element(FormatElement::Tag(EndEntry));
-    buffer.take_into_arena_slice()
+    f.format_to_vec(|f| {
+        f.write_element(FormatElement::Tag(StartEntry));
+        content(f);
+        f.write_element(FormatElement::Tag(EndEntry));
+    })
+    .into_arena_slice()
 }
 
 impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
@@ -972,7 +1084,7 @@ impl<'ast, C> Format<'ast, C> for BestFitting<'_, 'ast, C> {
         let mut formatted_variants = Vec::with_capacity(variants.len());
 
         for variant in variants {
-            formatted_variants.push(best_fitting_variant(f.state_mut(), |buffer| {
+            formatted_variants.push(best_fitting_variant(f, |buffer| {
                 buffer.write_fmt(Arguments::from(variant));
             }));
         }

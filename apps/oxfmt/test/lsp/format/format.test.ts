@@ -1,3 +1,5 @@
+import fs from "node:fs/promises";
+import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
 import { pathToFileURL } from "node:url";
 import { describe, expect, it } from "vitest";
@@ -12,6 +14,7 @@ describe("LSP formatting", () => {
       ["format/test.json", "json"],
       ["format/test.vue", "vue"],
       ["format/test.svelte", "svelte"],
+      ["format/test.astro", "astro"],
       ["format/test.toml", "toml"],
       ["format/formatted.ts", "typescript"],
       ["format/test.txt", "plaintext"],
@@ -23,10 +26,13 @@ describe("LSP formatting", () => {
   describe("config options", () => {
     it.each([
       ["config-semi/test.ts", "typescript"],
+      ["config-symlink/test.ts", "typescript"],
       ["config-js-semi/test.ts", "typescript"],
       ["config-no-sort-package-json/package.json", "json"],
       ["config-vue-indent/test.vue", "vue"],
       ["config-svelte/test.svelte", "svelte"],
+      ["config-astro/test.astro", "astro"],
+      ["config-associations/test.html", "html"],
       ["config-sort-imports/test.js", "javascript"],
       ["config-sort-tailwindcss/test.tsx", "typescriptreact"],
       ["config-sort-tailwindcss/test.vue", "vue"],
@@ -46,6 +52,22 @@ describe("LSP formatting", () => {
       ]);
       expect(
         await formatFixture(FIXTURES_DIR, fixturePath, "typescript", client),
+      ).toMatchSnapshot();
+    });
+
+    it("should ignore nested vite config in Vite+ mode", async () => {
+      await using client = createLspConnection({ VP_VERSION: "1" });
+      const rootUri = pathToFileURL(join(FIXTURES_DIR, "config-vite-nested-ignored")).href;
+      await client.initialize([{ uri: rootUri, name: "test" }], {}, [
+        { workspaceUri: rootUri, options: null },
+      ]);
+      expect(
+        await formatFixture(
+          FIXTURES_DIR,
+          "config-vite-nested-ignored/child/test.ts",
+          "typescript",
+          client,
+        ),
       ).toMatchSnapshot();
     });
   });
@@ -90,6 +112,8 @@ describe("LSP formatting", () => {
       ["untitled://Untitled-4", "format/test.toml", "toml"],
       ["untitled://Untitled-5", "format/formatted.ts", "typescript"],
       ["untitled://Untitled-6", "format/test.txt", "plaintext"],
+      // `associations` (`**/*.html` as Angular) do not apply, the `languageId` decides
+      ["untitled://Untitled-7", "config-associations/test.html", "html"],
       // with path
       ["vscode-userdata:/c%3A/Users/User/settings.json", "format/test.tsx", "typescriptreact"],
     ])("should format uri %s", async (uri, path, languageId) => {
@@ -104,6 +128,54 @@ describe("LSP formatting", () => {
     ])("should handle %s", async (path, languageId) => {
       expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
     });
+
+    // Workspace root must be the fixture dir (not the file's dir) for `vendor/` to match
+    it.each([
+      "ignore-prettierignore-patterns/vendor/a.ts",
+      "ignore-prettierignore-patterns/drop.gen.ts",
+      "ignore-prettierignore-patterns/keep.gen.ts",
+    ])("should handle %s", async (path) => {
+      const rootUri = pathToFileURL(join(FIXTURES_DIR, "ignore-prettierignore-patterns")).href;
+      await using client = createLspConnection();
+      await client.initialize([{ uri: rootUri, name: "test" }], {}, [
+        { workspaceUri: rootUri, options: null },
+      ]);
+
+      expect(await formatFixture(FIXTURES_DIR, path, "typescript", client)).toMatchSnapshot();
+    });
+
+    it("should reload `.prettierignore` on watched file change", async () => {
+      const dir = await fs.mkdtemp(join(tmpdir(), "oxfmt-lsp-prettierignore-"));
+      try {
+        const filePath = join(dir, "a.ts");
+        await fs.writeFile(filePath, "const   x   =   1\n");
+        const rootUri = pathToFileURL(dir).href;
+        const fileUri = pathToFileURL(filePath).href;
+
+        await using client = createLspConnection();
+        await client.initialize([{ uri: rootUri, name: "test" }], {}, [
+          { workspaceUri: rootUri, options: null },
+        ]);
+        await client.didOpen(fileUri, "typescript", "const   x   =   1\n");
+        expect(await client.format(fileUri)).not.toHaveLength(0);
+
+        await fs.writeFile(join(dir, ".prettierignore"), "a.ts\n");
+        await client.didChangeWatchedFiles([pathToFileURL(join(dir, ".prettierignore")).href]);
+        // No edits (`null`) once ignored
+        expect(await client.format(fileUri)).toBeNull();
+      } finally {
+        await fs.rm(dir, { recursive: true, force: true });
+      }
+    });
+  });
+
+  describe("error handling on format", () => {
+    it.each([["config-invalid-override/test.ts", "typescript"]])(
+      "should handle %s",
+      async (path, languageId) => {
+        expect(await formatFixture(FIXTURES_DIR, path, languageId)).toMatchSnapshot();
+      },
+    );
   });
 
   describe("initializationOptions", () => {

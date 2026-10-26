@@ -4,6 +4,38 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 📚 Documentation
+
+- 97dc427 formatter_graphql: Unify DIVERGENCES reference (#26747) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- 3b054de formatter_graphql: Align comment printing after open `{` (#26271) (leaysgur)
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
 ## [0.66.0] - 2026-08-31
 
 ### 📚 Documentation

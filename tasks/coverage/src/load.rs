@@ -208,8 +208,11 @@ fn load_typescript(filter: Option<&str>) -> Vec<TypeScriptFile> {
         !supported || unsupported
     };
 
-    walk_and_read(Path::new("typescript/tests/cases"), filter, skip_path)
+    let files = walk_and_read(Path::new(typescript::CASES_PATH), filter, skip_path);
+    let reference_baselines = typescript::ReferenceBaselines::new();
+    files
         .into_par_iter()
+        .filter(|(path, _)| reference_baselines.contains(path))
         .map(|(path, code)| {
             let content = typescript::meta::TestCaseContent::make_units_from_test(&path, &code);
             let should_fail = content

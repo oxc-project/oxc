@@ -36,11 +36,11 @@ pub use format_element::document::Document;
 pub use format_element::formatted::Formatted;
 pub use format_element::group_id::{GroupId, UniqueGroupIdBuilder};
 pub use format_element::tag::{
-    self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Tag, TagKind,
+    self, Align, Condition, DedentMode, Group, GroupMode, Label, LabelId, Prefix, Tag, TagKind,
 };
 pub use format_element::{
     BestFittingElement, FormatElement, FormatElements, Interned, LINE_TERMINATORS, LineMode,
-    PrintMode, TextWidth, normalize_newlines,
+    PrintMode, normalize_newlines, text_width,
 };
 pub use printer::error::{ActualStart, InvalidDocumentError, PrintError};
 pub use printer::{PrintResult, PrintWidth, Printed, PrinterOptions};
@@ -48,17 +48,14 @@ pub use printer::{PrintResult, PrintWidth, Printed, PrinterOptions};
 // which is what makes print-without-finalize unrepresentable outside core.
 pub(crate) use printer::Printer;
 pub use session::embedded::{
-    DispatchPayload, DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher,
-    TailwindCollector, dispatch_fragment_ir,
+    DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher, dispatch_fragment_ir,
+    dispatch_ir, map_text_in_ir, push_text_with_literal_lines,
 };
 pub use session::{FormatSession, InputKind, SessionServices, StringEmbedder, TailwindSorter};
-pub use source::{SourceText, SpanCursor};
+pub use source::{SourceText, SpanCursor, rebase_labels, restore_crlf_labels};
+pub use write::Format;
 pub use write::arguments::{Argument, Arguments};
-pub use write::buffer::{
-    AccumulatorBuffer, Buffer, BufferExtensions, HeapVecBuffer, Recorded, Recording,
-    RemoveSoftLinesBuffer, ScratchBuffer, VecBuffer,
-};
+pub use write::buffer::ScratchBuffer;
 pub use write::extensions::{MemoizeFormat, Memoized};
 pub use write::formatter::{Formatter, arena_cow_str};
 pub use write::state::FormatState;
-pub use write::{Format, write};

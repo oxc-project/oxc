@@ -1,20 +1,20 @@
 use oxc_formatter_core::{
-    Buffer,
-    builders::{empty_line, hard_line_break, space, text},
+    builders::{hard_line_break, space, text},
     write,
 };
-use oxc_yaml_parser::ast::{Directive, Document, Root};
+use oxc_span::Span;
+use oxc_yaml_parser::ast::{Content, Directive, Document, Node, Root};
 
 use crate::{
     comments::{
-        Gap, SourceComment, classify_gap, flush_leading_comments, gap_anchor_after_consumed,
-        gap_upper_bound, is_suppressed_last_before, write_blank_preserving_break,
-        write_single_comment, write_suppressed_node, write_trailing_same_line_comment,
+        flush_leading_comments, gap_anchor_after_consumed, gap_upper_bound,
+        is_suppressed_last_before, write_blank_preserving_break, write_end_comments,
+        write_suppressed_node, write_trailing_same_line_comment,
     },
     print::{
         YamlFormatter,
         block::{ends_with_keep_chomped_block, item_gap_anchor, last_descendant_block_scalar},
-        to_span, write_node_or_suppressed,
+        column_of, source_starts_with_document_marker, to_span, write_node_or_suppressed,
     },
 };
 
@@ -97,31 +97,6 @@ fn write_document_separator<'a>(
     write_blank_preserving_break(anchor, upper_bound, f);
 }
 
-/// Writes a document body's end comments, one per line, preserving the source's blank lines (normalized to one).
-/// In front of the first comment (measured from `anchor`) and between consecutive comments alike.
-/// See [`write_document_separator`] for the deliberate non-follow.
-fn write_end_comments(
-    anchor: Option<u32>,
-    comments: &[SourceComment],
-    f: &mut YamlFormatter<'_, '_>,
-) {
-    let source = f.context().source_text();
-    for (i, comment) in comments.iter().enumerate() {
-        let span = comment.span;
-        let prev_end = if i == 0 { anchor } else { Some(comments[i - 1].span.end) };
-        let blank = prev_end.is_some_and(|prev_end| {
-            prev_end < span.start
-                && classify_gap(source.bytes_range(prev_end, span.start)) == Gap::Blank
-        });
-        if blank {
-            write!(f, empty_line());
-        } else {
-            write!(f, hard_line_break());
-        }
-        write_single_comment(span, f);
-    }
-}
-
 /// Prettier's `shouldPrintDocumentEndMarker`:
 /// an explicit `...`, or a following document whose head has directives or leading comments
 /// (which would otherwise be ambiguous without the marker).
@@ -163,12 +138,38 @@ fn write_document<'a>(document: &'a Document<'a>, f: &mut YamlFormatter<'_, 'a>)
     }
 
     if let Some(node) = &document.body.content {
+        let source = f.context().source_text();
+        // A plain scalar starting with `---`/`...` never starts a line at column 0: it would become a marker
+        // (a root mapping key keeps its `?` instead, `print/mapping_item.rs`)
+        let starts_with_marker = matches!(node.content, Content::Plain(_))
+            && source_starts_with_document_marker(node.span.start, f);
+        let on_marker_line = starts_with_marker
+            && document.directives_end_marker.is_some_and(|marker| {
+                source.all_bytes_match(marker.end, node.span.start, |b| matches!(b, b' ' | b'\t'))
+            });
+        if on_marker_line {
+            // On the `---` line, it stays there
+            needs_line = false;
+            write!(f, space());
+        } else if document.directives_end_marker.is_none()
+            && source.as_str()[first_key_start(node) as usize..].starts_with('\u{FEFF}')
+        {
+            // Content starting with U+FEFF needs a `---`: outside a document it would be read as a BOM
+            write!(f, "---");
+            needs_line = true;
+        }
         if needs_line {
             write!(f, hard_line_break());
         }
         // Whole-body suppression needs the explicit head form (`# oxfmt-ignore` above `---`);
         // an ignore right above the body is `write_node_or_suppressed`'s per-node rule.
-        let suppressed = if head_ignores_body {
+        let suppressed = if starts_with_marker && !on_marker_line {
+            // On a line of its own, it stays verbatim from its line start, indentation included:
+            // indented, a lenient parser (js-yaml) may still read it as a marker
+            let line_start = node.span.start - column_of(source.as_str(), node.span.start);
+            write_suppressed_node(Span::new(line_start, node.span.end), f);
+            false
+        } else if head_ignores_body {
             write_suppressed_node(to_span(node.span), f);
             true
         } else {
@@ -180,6 +181,16 @@ fn write_document<'a>(document: &'a Document<'a>, f: &mut YamlFormatter<'_, 'a>)
             write_trailing_same_line_comment(node.span.end, &[], f);
         }
     }
+}
+
+/// Where a block mapping's first key starts: a one-line explicit key loses its `?` (`print/mapping_item.rs`),
+/// so the key text may lead the output.
+fn first_key_start(node: &Node<'_>) -> u32 {
+    let key = match &node.content {
+        Content::Mapping(mapping) => mapping.children.first().and_then(|item| item.key_content()),
+        _ => None,
+    };
+    key.map_or(node.span.start, |key| key.span.start)
 }
 
 /// Re-joins directive words with single spaces (whitespace runs between them are normalized).

@@ -1,5 +1,6 @@
 // A comment before an `@include` argument leads that argument (`/* c */ 1`),
-// never crossing it or its comma; `//` keeps its own line.
+// never crossing it or its comma; an own-line `//` keeps its own line,
+// a `//` on the comma's line stays there (`1, // c`).
 // Same rule as function arguments (`fn( // c`) and paren list elements.
 @include m( // c
   1);

@@ -4,6 +4,97 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.89.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 9a424c2 oxlint,oxfmt: Correct Node.js TypeScript support range (#27699) (camc314)
+
+## [1.88.0] - 2026-10-13
+
+### 💥 BREAKING CHANGES
+
+- 7730e14 ast: [**BREAKING**] Refactor comment attachment storage (#27512) (camc314)
+- c904b61 ast: [**BREAKING**] Add comment attachment storage (#27393) (camc314)
+
+### 🚀 Features
+
+- bde9f69 oxlint/lsp: Show config errors to LSP client (#25486) (Sysix)
+- 3c361a7 linter/unicorn/prefer-query-selector: Add `allowWithVariables` option (#27346) (Mikhail Baev)
+
+### 🐛 Bug Fixes
+
+- 2349a31 oxfmt: Follow symlinked configs in discovery (#27389) (leaysgur)
+- 6e573f9 oxlint,oxfmt: Set stderr blocking (#27363) (leaysgur)
+
+### ⚡ Performance
+
+- c5f47ed linter/plugins: Inline `firstCommentAtOrAfter` into call sites (#27539) (overlookmotel)
+- c5f9235 linter/plugins: Use shift over multiply for powers of 2 (#27536) (overlookmotel)
+
+### 📚 Documentation
+
+- 98cc2b4 linter/plugins: Improve documentation for `firstCommentAtOrAfter` (#27538) (overlookmotel)
+
+## [1.86.0] - 2026-09-28
+
+### 🚀 Features
+
+- 9d80eed linter/react/only-export-components: Support `allowCompoundComponents` (#27117) (Kuroda Kayn)
+- e05b155 linter: Add typescript/no-generated-empty-object-type (#26958) (camc314)
+
+### 🐛 Bug Fixes
+
+- 611e4ed linter/plugins: Include executing selectors in JS plugin rule timings (#27111) (overlookmotel)
+- 571cfa3 oxlint: Skip type-aware lint rules in type-check-only mode (#27076) (camc314)
+- d0b2462 oxlint: Skip undefined children in CFG walker (#27075) (camc314)
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+
+## [1.85.0] - 2026-09-21
+
+### 🚀 Features
+
+- 415b742 oxlint,oxfmt: Do not discover nested config in Vite+ mode (#26763) (leaysgur)
+
+## [1.84.0] - 2026-09-21
+
+### 🚀 Features
+
+- 809090c oxlint,oxfmt: Find all `vite.config.*` variants (#26755) (leaysgur)
+- a047b67 linter: Report JavaScript plugin rule timings (#26415) (Alexander Lichter)
+
+### 🐛 Bug Fixes
+
+- 927bfa4 oxlint/lsp: Align nested config handling with `configPath` semantics (#26762) (leaysgur)
+- 7811f0a parser: Preserve reparsed `await` tokens (#26619) (camc314)
+
+### 📚 Documentation
+
+- aa7de00 lsp: Document that the `run` option only applies to push mode clients (#26670) (im10furry)
+
+## [1.83.0] - 2026-09-14
+
+### 🐛 Bug Fixes
+
+- 72bc7f2 oxlint: Replace backlashes path for "no js runtime" diagnostic (#26599) (Sysix)
+
+## [1.82.0] - 2026-09-07
+
+### 🚀 Features
+
+- 6a0e19c linter/eslint/no-unmodified-loop-condition: Support `checkConditionalExpressions` option (#26249) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8c7ea76 ast_visit: Account for trimmed source offsets (#26223) (Cameron)
+- 07851b9 parser: Fix debug assert failure when lexer error with tokens enabled (#26229) (overlookmotel)
+- 9cee146 oxlint/lsp: Don't try to parse fix message, always fallback (#26204) (Sysix)
+- b41bb35 linter: Qualify rules in rules output (#26250) (camc314)
+
+### 🛡️ Security
+
+- 9a612d5 deps: Update npm packages (#26178) (renovate[bot])
+
 ## [1.81.0] - 2026-08-31
 
 ### 🐛 Bug Fixes

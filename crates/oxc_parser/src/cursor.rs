@@ -3,6 +3,7 @@
 use oxc_allocator::{ArenaBox, ArenaVec};
 use oxc_ast::ast::{BindingRestElement, RegExpFlags};
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl,
@@ -11,11 +12,10 @@ use crate::{
     lexer::{Kind, LexerCheckpoint, Token, cold_branch},
 };
 
-#[derive(Clone)]
 pub struct ParserCheckpoint<'a> {
     lexer: LexerCheckpoint<'a>,
     cur_token: Token,
-    prev_span_end: u32,
+    prev_token_end: u32,
     errors_pos: usize,
     fatal_error: Option<FatalError<'a>>,
 }
@@ -76,8 +76,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.lexer.get_string(self.token)
     }
 
+    /// Get the decoded value of the current string literal.
+    pub(crate) fn cur_js_string(&self) -> JSStr<'a> {
+        self.lexer.get_js_string(self.token)
+    }
+
     /// Get current template string
-    pub(crate) fn cur_template_string(&self) -> Option<&'a str> {
+    pub(crate) fn cur_template_string(&self) -> Option<JSStr<'a>> {
         self.lexer.get_template_string(self.token.start())
     }
 
@@ -311,7 +316,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint(),
             cur_token: self.token,
-            prev_span_end: self.prev_token_end,
+            prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
         }
@@ -321,19 +326,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         ParserCheckpoint {
             lexer: self.lexer.checkpoint_with_error_recovery(),
             cur_token: self.token,
-            prev_span_end: self.prev_token_end,
+            prev_token_end: self.prev_token_end,
             errors_pos: self.errors.len(),
             fatal_error: self.fatal_error.take(),
         }
     }
 
     pub(crate) fn rewind(&mut self, checkpoint: ParserCheckpoint<'a>) {
-        let ParserCheckpoint { lexer, cur_token, prev_span_end, errors_pos, fatal_error } =
+        let ParserCheckpoint { lexer, cur_token, prev_token_end, errors_pos, fatal_error } =
             checkpoint;
 
         self.lexer.rewind(lexer);
         self.token = cur_token;
-        self.prev_token_end = prev_span_end;
+        self.prev_token_end = prev_token_end;
         self.errors.truncate(errors_pos);
         self.fatal_error = fatal_error;
     }
@@ -412,11 +417,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         F: FnMut(&mut Self) -> T,
     {
         loop {
-            let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if self.at(close) || self.has_fatal_error() {
                 break;
             }
             let element = parse_element(self);
@@ -497,22 +498,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     where
         F: FnMut(&mut Self) -> T,
     {
-        // Cache cur_kind() to avoid redundant calls in compound checks
-        let kind = self.cur_kind();
-        if kind == close
-            || matches!(kind, Kind::Eof | Kind::Undetermined)
-            || self.fatal_error.is_some()
-        {
+        if self.at(close) || self.has_fatal_error() {
             return None;
         }
         let element = parse_element(self);
         list.push(element);
         loop {
             let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if kind == close || self.has_fatal_error() {
                 return None;
             }
             if kind != separator {
@@ -584,10 +577,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut first = true;
         loop {
             let kind = self.cur_kind();
-            if kind == close
-                || matches!(kind, Kind::Eof | Kind::Undetermined)
-                || self.fatal_error.is_some()
-            {
+            if kind == close || self.has_fatal_error() {
                 break;
             }
 

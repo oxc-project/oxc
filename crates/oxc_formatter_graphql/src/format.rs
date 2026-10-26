@@ -1,7 +1,7 @@
 use oxc_allocator::{Allocator, ArenaVec};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
-    Buffer, Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, VecBuffer,
+    Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter,
     builders::{hard_line_break, text},
     write,
 };
@@ -25,17 +25,16 @@ pub fn format<'a>(
     source_text: &str,
     options: GraphqlFormatOptions,
 ) -> Result<Formatted<'a, GraphqlFormatContext<'a>>, OxcDiagnostic> {
-    let (has_bom, source_text) = oxc_formatter_core::spec::split_bom(source_text);
-    let (document, source, comments) = parse_document(allocator, source_text)?;
+    let parsed = parse_for_format(allocator, source_text)?;
 
-    let context = GraphqlFormatContext::new(options, source, comments);
+    let context = GraphqlFormatContext::new(options, parsed.source, parsed.comments);
     let mut state = FormatState::new(context, allocator);
     // Pre-allocate: measured on 1,241 real-world files (gitlab operations, github/saleor schemas),
     // 0.4x source bytes plus a 1024-element floor for small operation documents avoided reallocation for the entire corpus.
-    let capacity = (source.len() * 2 / 5).max(1024);
-    let mut buffer = VecBuffer::with_capacity(capacity, &mut state);
+    let capacity = (parsed.source.len() * 2 / 5).max(1024);
+    let mut buffer = Formatter::with_capacity(capacity, &mut state);
 
-    write!(&mut buffer, FormatGraphqlRoot { document, has_bom });
+    write!(&mut buffer, FormatGraphqlRoot { document: parsed.document, has_bom: parsed.has_bom });
 
     let elements = buffer.into_vec();
     let context = state.into_context();
@@ -43,6 +42,36 @@ pub fn format<'a>(
     let ir = Document::new(elements, Vec::new());
 
     Ok(Formatted::new(ir, context))
+}
+
+/// [`parse_for_format`] output: the AST, plus the envelope [`format()`] prints around it.
+pub struct ParsedGraphql<'a> {
+    pub document: &'a GraphQLDocument<'a>,
+    /// Sorted comment spans; oxc-graphql-parser keeps them out of the AST.
+    pub comments: &'a [Span],
+    /// Arena source every span indexes into.
+    source: &'a str,
+    has_bom: bool,
+}
+
+/// Parse `source_text` the way the formatter does, for callers that inspect the AST
+/// (e.g. a harness comparing what the source held against the formatted output).
+///
+/// [`format()`] goes through this too, so what a caller sees is exactly what gets formatted.
+/// Owns the BOM split.
+///
+/// # Errors
+/// Same as [`format()`].
+pub fn parse_for_format<'a>(
+    allocator: &'a Allocator,
+    source_text: &str,
+) -> Result<ParsedGraphql<'a>, OxcDiagnostic> {
+    let (has_bom, stripped) = oxc_formatter_core::spec::split_bom(source_text);
+    let (document, source, comments) = parse_document(allocator, stripped).map_err(|mut err| {
+        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+        err
+    })?;
+    Ok(ParsedGraphql { document, comments, source, has_bom })
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
@@ -66,12 +95,11 @@ pub fn format_to_ir<'a>(
 
     let context = GraphqlFormatContext::new(options, source, comments);
     let mut state = FormatState::new_with_session(context, session.clone());
-    let mut buffer = VecBuffer::new(&mut state);
+    let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatGraphqlEmbedded { document });
 
-    // GraphQL never collects Tailwind classes.
-    Ok(EmbeddedIr { ir: buffer.into_vec(), tailwind_classes: Vec::new() })
+    Ok(EmbeddedIr { ir: buffer.into_vec() })
 }
 
 /// Parse the source into a direct AST and collect comment trivia,

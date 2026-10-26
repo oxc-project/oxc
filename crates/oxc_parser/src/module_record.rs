@@ -13,6 +13,9 @@ pub struct ModuleRecordBuilder<'a> {
     module_record: ModuleRecord<'a>,
     export_entries: ArenaVec<'a, ExportEntry<'a>>,
     exported_bindings_duplicated: ArenaVec<'a, NameSpan<'a>>,
+    /// `default` exports of declarations skipped because their module request is not UTF-8.
+    /// They still count towards the duplicate default export check.
+    skipped_default_exports: ArenaVec<'a, Span>,
 }
 
 impl<'a> ModuleRecordBuilder<'a> {
@@ -23,6 +26,7 @@ impl<'a> ModuleRecordBuilder<'a> {
             module_record: ModuleRecord::new(allocator),
             export_entries: ArenaVec::new_in(&allocator),
             exported_bindings_duplicated: ArenaVec::new_in(&allocator),
+            skipped_default_exports: ArenaVec::new_in(&allocator),
         }
     }
 
@@ -68,7 +72,8 @@ impl<'a> ModuleRecordBuilder<'a> {
                         .indirect_export_entries
                         .iter()
                         .filter_map(|export_entry| export_entry.export_name.default_export_span()),
-                );
+                )
+                .chain(self.skipped_default_exports.iter().copied());
             if default_exports.clone().count() > 1 {
                 errors.push(diagnostics::duplicate_default_export(default_exports.collect()));
             }
@@ -200,7 +205,10 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_import_declaration(&mut self, decl: &ImportDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        self.module_record.has_module_syntax = true;
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else { return };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
 
         if let Some(specifiers) = &decl.specifiers {
             for specifier in specifiers {
@@ -242,29 +250,37 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_import: true,
             },
         );
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_all_declaration(&mut self, decl: &ExportAllDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
-        let export_entry = ExportEntry {
+        self.module_record.has_module_syntax = true;
+        let exported = decl.exported.as_ref().map(|name| NameSpan::new(name.name(), name.span()));
+        // The duplicate-export check does not depend on the module request,
+        // so the exported name is registered before the request is examined.
+        if let Some(exported) = &exported {
+            self.add_export_binding(exported.name, exported.span);
+        }
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else {
+            if let Some(exported) = exported.filter(|exported| exported.name == "default") {
+                self.skipped_default_exports.push(exported.span);
+            }
+            return;
+        };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
+        self.add_export_entry(ExportEntry {
             statement_span: decl.span,
             span: decl.span,
             module_request: Some(module_request.clone()),
-            import_name: decl
-                .exported
-                .as_ref()
-                .map_or(ExportImportName::AllButDefault, |_| ExportImportName::All),
-            export_name: decl.exported.as_ref().map_or(ExportExportName::Null, |exported_name| {
-                ExportExportName::Name(NameSpan::new(exported_name.name(), exported_name.span()))
-            }),
+            import_name: if exported.is_some() {
+                ExportImportName::All
+            } else {
+                ExportImportName::AllButDefault
+            },
+            export_name: exported.map_or(ExportExportName::Null, ExportExportName::Name),
             local_name: ExportLocalName::default(),
             is_type: decl.export_kind.is_type(),
-        };
-        self.add_export_entry(export_entry);
-        if let Some(exported_name) = &decl.exported {
-            self.add_export_binding(exported_name.name(), exported_name.span());
-        }
+        });
         self.add_module_request(
             module_request.name,
             RequestedModule {
@@ -274,7 +290,6 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_import: false,
             },
         );
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn visit_export_default_declaration(
@@ -360,7 +375,23 @@ impl<'a> ModuleRecordBuilder<'a> {
     }
 
     pub fn visit_export_from_declaration(&mut self, decl: &ExportFromDeclaration<'a>) {
-        let module_request = NameSpan::new(decl.source.value, decl.source.span);
+        self.module_record.has_module_syntax = true;
+        // The duplicate-export check does not depend on the module request,
+        // so exported names are registered before the request is examined.
+        for specifier in &decl.specifiers {
+            self.add_export_binding(specifier.exported.name(), specifier.exported.span());
+        }
+        // Module records still require UTF-8 module specifiers. Keep other values in the AST only.
+        let Some(source) = decl.source.value.as_str() else {
+            self.skipped_default_exports.extend(
+                decl.specifiers
+                    .iter()
+                    .filter(|specifier| specifier.exported.name() == "default")
+                    .map(|specifier| specifier.exported.span()),
+            );
+            return;
+        };
+        let module_request = NameSpan::new(source.into(), decl.source.span);
         self.add_module_request(
             module_request.name,
             RequestedModule {
@@ -390,10 +421,7 @@ impl<'a> ModuleRecordBuilder<'a> {
                 is_type: specifier.export_kind.is_type() || decl.export_kind.is_type(),
             };
             self.add_export_entry(export_entry);
-            self.add_export_binding(specifier.exported.name(), specifier.exported.span());
         }
-
-        self.module_record.has_module_syntax = true;
     }
 
     pub fn set_module_syntax(&mut self) {

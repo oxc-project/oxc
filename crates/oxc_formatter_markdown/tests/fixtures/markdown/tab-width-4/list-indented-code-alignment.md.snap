@@ -1,0 +1,102 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+- [x] task item
+
+      indented code
+
+- unordered item
+
+      indented code
+
+- outer item
+
+  - nested item
+
+        indented code
+
+- item with extra code indentation
+
+          indented code
+
+- foo
+
+  bar
+
+      indented code in a bullet item
+      second line
+
+- [ ] task
+
+          indented code in a task item
+          second line
+
+==================== Output ====================
+-------------------------------
+{ printWidth: 80, tabWidth: 4 }
+-------------------------------
+- [x] task item
+
+      indented code
+
+- unordered item
+
+      indented code
+
+- outer item
+
+    - nested item
+
+          indented code
+
+- item with extra code indentation
+
+          indented code
+
+- foo
+
+    bar
+
+      indented code in a bullet item
+      second line
+
+- [ ] task
+
+          indented code in a task item
+          second line
+
+--------------------------------
+{ printWidth: 100, tabWidth: 4 }
+--------------------------------
+- [x] task item
+
+      indented code
+
+- unordered item
+
+      indented code
+
+- outer item
+
+    - nested item
+
+          indented code
+
+- item with extra code indentation
+
+          indented code
+
+- foo
+
+    bar
+
+      indented code in a bullet item
+      second line
+
+- [ ] task
+
+          indented code in a task item
+          second line
+
+===================== End =====================

@@ -55,6 +55,7 @@ type: `string`
 
 Path to the config file. Similar to `--config` CLI option.
 If set, it disables searching for config files.
+An empty string is treated as unset.
 
 
 ## disableNestedConfig
@@ -64,6 +65,7 @@ type: `boolean`
 
 Whether to disable nested config support. Similar to `--disable-nested-config` CLI option.
 It gets automatically enabled when `configPath` is set.
+Nested config support is always disabled in Vite+ mode.
 
 
 ## fixKind
@@ -101,6 +103,11 @@ type: `"onSave" | "onType"`
 If your editor does not support `textDocument/diagnostic`,
 this option handles when diagnostics are sent to the client.
 
+This option only applies to clients which use the push model. Clients which support
+`textDocument/diagnostic` ask for diagnostics themselves (the pull model), so `run`
+currently has no effect for them.
+See [#26613](https://github.com/oxc-project/oxc/issues/26613)
+
 
 ## tsConfigPath
 
@@ -109,6 +116,7 @@ type: `string`
 
 Path to the tsconfig file. Similar to `--tsconfig` CLI option.
 If set, it disables auto discovery for tsconfig files.
+An empty string is treated as unset.
 
 
 ## typeAware

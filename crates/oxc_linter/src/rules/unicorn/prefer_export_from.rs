@@ -1,5 +1,6 @@
 use cow_utils::CowUtils;
 use indexmap::IndexMap;
+use itertools::Itertools;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -8,9 +9,8 @@ use oxc_ast::{
     AstKind,
     ast::{
         BindingPattern, ExportFromDeclaration, ExportSpecifier, ImportAttributeKey,
-        ImportDeclaration, ImportDeclarationSpecifier, ImportOrExportKind, ModuleExportName,
-        Program, Statement, VariableDeclarationKind, VariableDeclarator, WithClause,
-        WithClauseKeyword,
+        ImportDeclaration, ImportDeclarationSpecifier, ModuleExportName, Statement,
+        VariableDeclarator, WithClause, WithClauseKeyword,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -147,7 +147,7 @@ impl PreferExportFrom {
 
         let re_export_decl = find_corresponding_export(ctx, import_decl);
 
-        let source = import_decl.source.value.as_str();
+        let source = ctx.source_range(import_decl.source.span);
         let with_clause = import_decl.with_clause.as_ref().map(|with_clause| {
             let keyword = match with_clause.keyword {
                 WithClauseKeyword::With => "with",
@@ -159,14 +159,14 @@ impl PreferExportFrom {
                 .map(|attribute| {
                     let key = match &attribute.key {
                         ImportAttributeKey::Identifier(ident_name) => ident_name.name.as_str(),
-                        ImportAttributeKey::StringLiteral(string_literal) => {
-                            string_literal.value.as_str()
-                        }
+                        ImportAttributeKey::StringLiteral(string_literal) => string_literal
+                            .value
+                            .as_str()
+                            .unwrap_or_else(|| ctx.source_range(string_literal.span)),
                     };
                     let value = &attribute.value.raw.unwrap();
                     format!("{key}: {value}")
                 })
-                .collect::<Vec<_>>()
                 .join(", ");
 
             format!("{keyword} {{ {entries} }}")
@@ -312,7 +312,7 @@ impl PreferExportFrom {
                 !matches!(
                     declaration_node.kind(),
                     AstKind::VariableDeclaration(variable_declaration)
-                        if variable_declaration.kind == VariableDeclarationKind::Const
+                        if variable_declaration.kind.is_const()
                             && matches!(
                                 ctx.nodes().parent_node(declaration_node.id()).kind(),
                                 AstKind::ExportDeclaration(_)
@@ -398,8 +398,7 @@ impl PreferExportFrom {
                 let name = format!("* as {export_name}");
 
                 let import_ts_kind = import_decl.import_kind;
-                let ts_kind = import_ts_kind == ImportOrExportKind::Type
-                    || export_ts_kind == ImportOrExportKind::Type;
+                let ts_kind = import_ts_kind.is_type() || export_ts_kind.is_type();
 
                 let violation = Violation {
                     export_name: name,
@@ -407,8 +406,7 @@ impl PreferExportFrom {
                     import_specifier_id: reference_node_id,
                     is_namespace_export: true,
                     is_typescript_type: ts_kind,
-                    needs_source: (import_ts_kind == ImportOrExportKind::Value
-                        && export_ts_kind == ImportOrExportKind::Type),
+                    needs_source: (import_ts_kind.is_value() && export_ts_kind.is_type()),
                     symbol_id,
                 };
 
@@ -418,18 +416,17 @@ impl PreferExportFrom {
                 ImportDeclarationSpecifier::ImportSpecifier(_)
                     | ImportDeclarationSpecifier::ImportDefaultSpecifier(_)
             ) {
-                let ts_kind = if matches!(&import_decl.import_kind, ImportOrExportKind::Type) {
+                let ts_kind = if import_decl.import_kind.is_type() {
                     true
                 } else if let ImportDeclarationSpecifier::ImportSpecifier(import_specifier) =
                     specifier_spec.specifier
                 {
-                    import_specifier.import_kind == ImportOrExportKind::Type
+                    import_specifier.import_kind.is_type()
                 } else {
                     false
                 };
 
-                let needs_source =
-                    !ts_kind && matches!(export_decl.export_kind, ImportOrExportKind::Type);
+                let needs_source = !ts_kind && export_decl.export_kind.is_type();
 
                 let violation = Violation {
                     export_name,
@@ -458,7 +455,7 @@ impl PreferExportFrom {
         let next_parent_node = ctx.nodes().parent_node(var_decl.node_id());
 
         if let AstKind::VariableDeclaration(var_declaration) = next_parent_node.kind()
-            && var_declaration.kind == VariableDeclarationKind::Const
+            && var_declaration.kind.is_const()
             && let AstKind::ExportDeclaration(export_named_decl) =
                 ctx.nodes().parent_node(next_parent_node.id()).kind()
         {
@@ -585,7 +582,7 @@ impl PreferExportFrom {
                 };
                 let temp_export =
                     if let ModuleExportName::StringLiteral(literal) = &export_specifier.exported {
-                        literal.raw.as_ref().unwrap()
+                        literal.raw.as_ref().unwrap().as_str()
                     } else {
                         export_specifier.exported.name().as_str()
                     };
@@ -761,7 +758,7 @@ impl PreferExportFrom {
     }
 
     fn format_export_statement(exports: &str, source: &str, with_clause: Option<&str>) -> String {
-        let mut result = format!("export {{ {exports} }} from '{source}'");
+        let mut result = format!("export {{ {exports} }} from {source}");
 
         if let Some(clause) = with_clause {
             result.push(' ');
@@ -783,7 +780,7 @@ impl PreferExportFrom {
         let formatted_name =
             if is_typescript_type { format!("type {name}") } else { name.to_string() };
 
-        let mut result = format!("export {formatted_name} from '{source}'");
+        let mut result = format!("export {formatted_name} from {source}");
 
         if let Some(clause) = with_clause {
             result.push(' ');
@@ -1026,8 +1023,7 @@ impl PreferExportFrom {
         if result_parts.is_empty() {
             String::new()
         } else {
-            let import_kind =
-                if import_decl.import_kind == ImportOrExportKind::Type { " type" } else { "" };
+            let import_kind = if import_decl.import_kind.is_type() { " type" } else { "" };
             let with_clause = import_decl
                 .with_clause
                 .as_ref()
@@ -1040,7 +1036,7 @@ impl PreferExportFrom {
     }
 
     fn get_processed_exports_str(exports_str: &str, re_export: &ExportFromDeclaration) -> String {
-        if matches!(re_export.export_kind, ImportOrExportKind::Type) {
+        if re_export.export_kind.is_type() {
             exports_str.cow_replace("type ", "").to_string()
         } else {
             exports_str.to_string()
@@ -1077,24 +1073,12 @@ impl PreferExportFrom {
             .unwrap()
             .iter()
             .map(|specifier| {
-                let symbol_id = match specifier {
-                    ImportDeclarationSpecifier::ImportSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-
-                    ImportDeclarationSpecifier::ImportDefaultSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-
-                    ImportDeclarationSpecifier::ImportNamespaceSpecifier(specifier) => {
-                        specifier.local.symbol_id()
-                    }
-                };
+                let symbol_id = specifier.symbol_id();
 
                 let spec = SpecifierSpec {
                     specifier,
-                    name: specifier.local().name.to_string(),
-                    decl_type: import_decl.import_kind == ImportOrExportKind::Type,
+                    name: specifier.name().to_string(),
+                    decl_type: import_decl.import_kind.is_type(),
                 };
 
                 (symbol_id, spec)
@@ -1121,7 +1105,7 @@ fn has_matching_type_alias<'a>(
     import_decl: &'a ImportDeclaration<'a>,
     ctx: &LintContext<'a>,
 ) -> bool {
-    if !matches!(import_decl.import_kind, ImportOrExportKind::Value) {
+    if !import_decl.import_kind.is_value() {
         return false;
     }
     let Some(specifiers) = &import_decl.specifiers else { return false };
@@ -1130,7 +1114,7 @@ fn has_matching_type_alias<'a>(
     let root_scope_id = scoping.root_scope_id();
 
     for specifier in specifiers {
-        let Some(symbol_id) = scoping.get_binding(root_scope_id, specifier.local().name) else {
+        let Some(symbol_id) = scoping.get_binding(root_scope_id, specifier.name()) else {
             continue;
         };
         for declaration_node_id in scoping.symbol_declarations(symbol_id) {
@@ -1148,19 +1132,15 @@ fn find_corresponding_export<'a>(
     ctx: &LintContext<'a>,
     import_decl: &'a ImportDeclaration<'a>,
 ) -> Option<&'a ExportFromDeclaration<'a>> {
-    let source = import_decl.source.value.as_str();
     let program = ctx.nodes().program();
 
-    for requested_module in ctx.module_record().requested_modules.get(source)? {
-        if requested_module.is_import {
-            continue;
-        }
-
-        let Some(export_decl) =
-            find_export_named_declaration_by_span(program, requested_module.statement_span)
-        else {
+    for statement in &program.body {
+        let Statement::ExportFromDeclaration(export_decl) = statement else {
             continue;
         };
+        if export_decl.source.value != import_decl.source.value {
+            continue;
+        }
 
         if is_matching_export_kind(import_decl, export_decl)
             && has_matching_with_clause(
@@ -1176,18 +1156,6 @@ fn find_corresponding_export<'a>(
     None
 }
 
-fn find_export_named_declaration_by_span<'a>(
-    program: &'a Program<'a>,
-    span: Span,
-) -> Option<&'a ExportFromDeclaration<'a>> {
-    program.body.iter().find_map(|statement| {
-        let Statement::ExportFromDeclaration(export_decl) = statement else {
-            return None;
-        };
-        (export_decl.span() == span).then_some(export_decl.as_ref())
-    })
-}
-
 fn is_matching_export_kind(
     import_decl: &ImportDeclaration<'_>,
     export_decl: &ExportFromDeclaration<'_>,
@@ -1196,8 +1164,8 @@ fn is_matching_export_kind(
         return true;
     }
 
-    matches!(import_decl.import_kind, ImportOrExportKind::Type)
-        && export_decl.specifiers.iter().all(|s| matches!(s.export_kind, ImportOrExportKind::Type))
+    import_decl.import_kind.is_type()
+        && export_decl.specifiers.iter().all(|s| s.export_kind.is_type())
 }
 
 fn has_matching_with_clause(
@@ -1500,9 +1468,13 @@ fn test() {
         "import {foo} from './foo.json';
             export {foo};
                 export {bar} from './foo.json' with { type: 'unknown' };",
+        "import {a} from \"\\uD800\";\nexport {a};",
+        "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
     ];
 
     let fix = vec![
+        (r#"import {foo} from "foo'bar";export {foo};"#, "export { foo } from \"foo'bar\";\n"),
+        (r"import {foo} from 'foo\\bar';export {foo};", "export { foo } from 'foo\\\\bar';\n"),
         // the `{` inside the comment is not the start of the specifier list; the
         // exported name used to be swallowed into the comment
         (
@@ -1791,7 +1763,7 @@ fn test() {
             r#"import { foo } from "foo";
             export { foo };
             export type { bar } from "foo";"#,
-            "export { foo } from 'foo';\n\n            export type { bar } from \"foo\";",
+            "export { foo } from \"foo\";\n\n            export type { bar } from \"foo\";",
         ),
         (
             r#"import { foo } from "foo";
@@ -1866,7 +1838,7 @@ fn test() {
         (
             r#"import type foo from "foo";
             export default foo"#,
-            "export { type default } from 'foo';\n",
+            "export { type default } from \"foo\";\n",
         ),
         (
             "import {type foo} from 'foo';
@@ -1953,6 +1925,11 @@ fn test() {
             export {foo};
             export {bar,} from 'foo';",
             "export {bar, default as foo,} from 'foo';",
+        ),
+        ("import {a} from \"\\uD800\";\nexport {a};", "export { a } from \"\\uD800\";\n"),
+        (
+            "import {a} from \"\\uD800\";\nexport {a};\nexport {b} from \"\\uD800\";",
+            "export {b, a} from \"\\uD800\";",
         ),
     ];
     Tester::new(PreferExportFrom::NAME, PreferExportFrom::PLUGIN, pass, fail)

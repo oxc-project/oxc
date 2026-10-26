@@ -54,6 +54,7 @@ declare_oxc_lint!(
     PreferStringStartsEndsWith,
     unicorn,
     correctness,
+    recommended,
     fix,
     version = "0.0.18",
     short_description = "Prefer `String#startsWith()` and `String#endsWith()` over `RegExp#test()`.",

@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrayExpressionElement, CallExpression, Expression},
+    ast::{ArrayExpressionElement, CallExpression, Expression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -49,6 +49,7 @@ declare_oxc_lint!(
     PreferSetSize,
     unicorn,
     correctness,
+    recommended,
     fix,
     version = "0.0.19",
     short_description = "Prefer `Set#size` over `Set#length` when the `Set` is converted to an array.",
@@ -139,7 +140,8 @@ fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
     if let Expression::Identifier(ident) = maybe_set
         && let Some(maybe_decl) = get_declaration_of_variable(ident, ctx)
         && let AstKind::VariableDeclarator(var_decl) = maybe_decl.kind()
-        && variable_declaration_kind(var_decl, ctx).is_const()
+        && variable_declaration_kind(var_decl, ctx.nodes())
+            .is_some_and(VariableDeclarationKind::is_const)
         && var_decl.id.is_binding_identifier()
         && let Some(init) = &var_decl.init
     {

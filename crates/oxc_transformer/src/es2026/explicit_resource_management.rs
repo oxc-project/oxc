@@ -41,7 +41,7 @@ use oxc_allocator::{Address, ArenaBox, ArenaVec, GetAddress, ReplaceWith, TakeIn
 use oxc_ast::ast::*;
 use oxc_ecmascript::BoundNames;
 use oxc_semantic::{NodeId, ScopeFlags, ScopeId, SymbolFlags, SymbolId};
-use oxc_span::{SPAN, Span};
+use oxc_span::{GetSpan, SPAN, Span};
 use oxc_str::static_ident;
 use oxc_traverse::{BoundIdentifier, Traverse};
 
@@ -80,25 +80,30 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         }
         let variable_decl_kind = decl.kind;
 
-        // `for (using x of y)` -> `for (const _x of y)`
-        decl.kind = VariableDeclarationKind::Const;
-
         let variable_declarator = decl.declarations.first_mut().unwrap();
 
-        let variable_declarator_binding_ident =
-            variable_declarator.id.get_binding_identifier().unwrap();
+        let Some(variable_declarator_binding_ident) =
+            variable_declarator.id.get_binding_identifier()
+        else {
+            // The parser already reported the invalid binding pattern.
+            return;
+        };
+
         let variable_declarator_binding_name = variable_declarator_binding_ident.name;
 
         let for_of_init_symbol_id = variable_declarator_binding_ident.symbol_id();
 
         let temp_id = ctx.generate_uid_based_on_node(
-            variable_declarator.id.get_binding_identifier().unwrap(),
+            variable_declarator_binding_ident,
             for_of_stmt_scope_id,
             SymbolFlags::ConstVariable | SymbolFlags::BlockScopedVariable,
         );
 
         let binding_pattern =
             mem::replace(&mut variable_declarator.id, temp_id.create_binding_pattern(ctx));
+
+        // `for (using x of y)` -> `for (const _x of y)`
+        decl.kind = VariableDeclarationKind::Const;
 
         // `using x = _x;`
         let using_stmt = Statement::new_variable_declaration(
@@ -301,11 +306,14 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
         match stmt {
             Statement::BlockStatement(_) => self.transform_block_statement(stmt, ctx),
             Statement::SwitchStatement(_) => self.transform_switch_statement(stmt, ctx),
+            Statement::ForStatement(_) | Statement::LabeledStatement(_) => {
+                Self::transform_for_statement(stmt, ctx);
+            }
             _ => {}
         }
     }
 
-    /// Transform try statement.
+    /// Transform `using` declarations in each of the try, catch, and finally blocks.
     ///
     /// ```js
     /// try {
@@ -326,38 +334,25 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
     /// } catch (err) { }
     /// ```
     fn enter_try_statement(&mut self, node: &mut TryStatement<'a>, ctx: &mut TraverseCtx<'a>) {
-        let scope_id = node.block.scope_id();
-
-        if let Some((new_stmts, needs_await, using_ctx)) =
-            self.transform_statements(&mut node.block.body, scope_id, ctx)
-        {
-            let block_stmt_scope_id = ctx.insert_scope_between(
-                ctx.scoping().scope_parent_id(scope_id).unwrap(),
-                scope_id,
-                ScopeFlags::empty(),
-            );
-
-            node.block.body = ArenaVec::from_value_in(
-                Self::create_try_stmt(
-                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
-                    &using_ctx,
-                    block_stmt_scope_id,
-                    needs_await,
-                    SPAN,
-                    ctx,
-                ),
-                ctx,
-            );
-
-            let current_hoist_scope_id = ctx.current_hoist_scope_id();
-            node.block.set_scope_id(block_stmt_scope_id);
-            ctx.scoping_mut().move_binding_by_symbol_id(
-                scope_id,
-                current_hoist_scope_id,
-                using_ctx.symbol_id,
-            );
-
-            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
+        self.transform_try_block(&mut node.block, ctx);
+        if let Some(handler) = &mut node.handler {
+            let original_scope_id = handler.body.scope_id();
+            self.transform_try_block(&mut handler.body, ctx);
+            let new_scope_id = handler.body.scope_id();
+            if new_scope_id != original_scope_id
+                && let Some(param) = &handler.param
+            {
+                param.pattern.bound_names(&mut |ident| {
+                    ctx.scoping_mut().move_binding_by_symbol_id(
+                        original_scope_id,
+                        new_scope_id,
+                        ident.symbol_id(),
+                    );
+                });
+            }
+        }
+        if let Some(finalizer) = &mut node.finalizer {
+            self.transform_try_block(finalizer, ctx);
         }
     }
 
@@ -593,6 +588,128 @@ impl<'a> Traverse<'a, TransformState<'a>> for ExplicitResourceManagement<'a> {
 }
 
 impl<'a> ExplicitResourceManagement<'a> {
+    /// Wrap a try, catch, or finally block containing `using` declarations in a disposal try.
+    fn transform_try_block(
+        &mut self,
+        block: &mut ArenaBox<'a, BlockStatement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let scope_id = block.scope_id();
+
+        if let Some((new_stmts, needs_await, using_ctx)) =
+            self.transform_statements(&mut block.body, scope_id, ctx)
+        {
+            let block_stmt_scope_id = ctx.insert_scope_between(
+                ctx.scoping().scope_parent_id(scope_id).unwrap(),
+                scope_id,
+                ScopeFlags::empty(),
+            );
+
+            block.body = ArenaVec::from_value_in(
+                Self::create_try_stmt(
+                    BlockStatement::boxed_with_scope_id(SPAN, new_stmts, scope_id, ctx),
+                    &using_ctx,
+                    block_stmt_scope_id,
+                    needs_await,
+                    SPAN,
+                    ctx,
+                ),
+                ctx,
+            );
+
+            let current_hoist_scope_id = ctx.current_hoist_scope_id();
+            block.set_scope_id(block_stmt_scope_id);
+            ctx.scoping_mut().move_binding_by_symbol_id(
+                scope_id,
+                current_hoist_scope_id,
+                using_ctx.symbol_id,
+            );
+
+            ctx.scoping_mut().change_scope_parent_id(scope_id, Some(block_stmt_scope_id));
+        }
+    }
+
+    /// Dispose a classic `for` loop's initializers after the entire loop completes.
+    /// Keep any labels inside the `try` so labeled `continue` statements still target the loop.
+    fn transform_for_statement(stmt: &mut Statement<'a>, ctx: &mut TraverseCtx<'a>) {
+        let mut loop_stmt = &mut *stmt;
+        while let Statement::LabeledStatement(labeled) = loop_stmt {
+            loop_stmt = &mut labeled.body;
+        }
+        let Statement::ForStatement(for_stmt) = loop_stmt else { return };
+        let Some(ForStatementInit::VariableDeclaration(decl)) = &mut for_stmt.init else {
+            return;
+        };
+        let is_await_using = match decl.kind {
+            VariableDeclarationKind::Using => false,
+            VariableDeclarationKind::AwaitUsing => true,
+            _ => return,
+        };
+
+        let using_ctx = ctx.generate_uid(
+            "usingCtx",
+            ctx.current_hoist_scope_id(),
+            SymbolFlags::FunctionScopedVariable,
+        );
+        decl.kind = VariableDeclarationKind::Const;
+        for declarator in &mut decl.declarations {
+            if let Some(init) = declarator.init.take() {
+                declarator.init = Some(Expression::new_call_expression(
+                    SPAN,
+                    Expression::new_static_member_expression(
+                        SPAN,
+                        using_ctx.create_read_expression(ctx),
+                        IdentifierName::new(
+                            SPAN,
+                            if is_await_using { static_ident!("a") } else { static_ident!("u") },
+                            ctx,
+                        ),
+                        false,
+                        ctx,
+                    ),
+                    None,
+                    [Argument::from(init)],
+                    false,
+                    ctx,
+                ));
+            }
+        }
+
+        let span = stmt.span();
+        let parent_scope_id = ctx.current_scope_id();
+        let body_scope_id = ctx.insert_scope_below_statement(stmt, ScopeFlags::empty());
+        let callee = helper_load(Helper::UsingCtx, ctx);
+        let context_stmt = Statement::new_variable_declaration(
+            SPAN,
+            VariableDeclarationKind::Var,
+            [VariableDeclarator::new(
+                SPAN,
+                using_ctx.create_binding_pattern(ctx),
+                None,
+                Some(Expression::new_call_expression(SPAN, callee, None, [], false, ctx)),
+                false,
+                ctx,
+            )],
+            false,
+            ctx,
+        );
+        stmt.replace_with(|loop_stmt| {
+            Self::create_try_stmt(
+                BlockStatement::boxed_with_scope_id(
+                    SPAN,
+                    [context_stmt, loop_stmt],
+                    body_scope_id,
+                    ctx,
+                ),
+                &using_ctx,
+                parent_scope_id,
+                is_await_using,
+                span,
+                ctx,
+            )
+        });
+    }
+
     /// Transform block statement.
     ///
     /// Input:

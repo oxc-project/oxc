@@ -64,7 +64,7 @@ pub fn is_import_from_module(
         return false;
     };
 
-    import_decl.source.value.as_str() == module_name
+    import_decl.source.value == module_name
 }
 
 /// Returns `true` when `ident` resolves to a named import with the given source module and
@@ -268,7 +268,7 @@ pub fn is_same_expression(left: &Expression, right: &Expression, ctx: &LintConte
         }
         (Expression::StringLiteral(string_lit), Expression::TemplateLiteral(template_lit))
         | (Expression::TemplateLiteral(template_lit), Expression::StringLiteral(string_lit)) => {
-            return template_lit.single_quasi().is_some_and(|val| val.as_str() == string_lit.value);
+            return template_lit.single_quasi().is_some_and(|val| val == string_lit.value);
         }
         (Expression::TemplateLiteral(left_str), Expression::TemplateLiteral(right_str)) => {
             return left_str.quasis.content_eq(&right_str.quasis)
@@ -375,16 +375,18 @@ pub fn is_same_member_expression(
         (Some(_), None) | (None, Some(_)) => {
             return false;
         }
-        (None, None) => {
-            if let (
+        (None, None) => match (left, right) {
+            (
                 MemberExpression::PrivateFieldExpression(left),
                 MemberExpression::PrivateFieldExpression(right),
-            ) = (left, right)
-            {
+            ) => {
                 return left.field.name == right.field.name
                     && is_same_expression(&left.object, &right.object, ctx);
             }
-        }
+            (MemberExpression::PrivateFieldExpression(_), _)
+            | (_, MemberExpression::PrivateFieldExpression(_)) => return false,
+            _ => {}
+        },
     }
 
     if let (
@@ -398,7 +400,7 @@ pub fn is_same_member_expression(
             // x[/regex/] === x['/regex/']
             (Expression::StringLiteral(string_lit), Expression::RegExpLiteral(regex_lit))
             | (Expression::RegExpLiteral(regex_lit), Expression::StringLiteral(string_lit)) => {
-                if string_lit.value != regex_lit.raw.as_ref().unwrap() {
+                if string_lit.value != regex_lit.raw.as_ref().unwrap().as_str() {
                     return false;
                 }
             }
@@ -408,7 +410,7 @@ pub fn is_same_member_expression(
             | (Expression::RegExpLiteral(regex_lit), Expression::TemplateLiteral(template_lit)) => {
                 if !template_lit
                     .single_quasi()
-                    .is_some_and(|val| val == regex_lit.raw.as_ref().unwrap())
+                    .is_some_and(|val| val == regex_lit.raw.as_ref().unwrap().as_str())
                 {
                     return false;
                 }
@@ -436,14 +438,14 @@ pub fn call_expr_member_expr_property_span(call_expr: &CallExpression) -> Span {
     call_expr
         .callee
         .as_member_expression()
-        .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+        .and_then(MemberExpression::static_property_info)
         .map_or(call_expr.span, |(span, _)| span)
 }
 
 pub fn does_expr_match_any_path<'a, P, S>(mut expr: &Expression, paths: P) -> bool
 where
     P: IntoIterator<Item = S>,
-    S: AsRef<[&'a str]>,
+    S: IntoIterator<Item = &'a str>,
 {
     // Member chains are short in practice; keep the segments on the stack.
     let mut path: SmallVec<[&str; 4]> = SmallVec::new();
@@ -459,18 +461,9 @@ where
 
     let Expression::Identifier(ident) = expr else { return false };
     path.push(ident.name.as_str());
-    let path = path.iter().rev();
+    let path = path.iter().rev().copied();
 
-    for e in paths {
-        let expected_path = e.as_ref();
-        if expected_path.len() == path.len()
-            && expected_path.iter().zip(path.clone()).all(|(x, y)| x == y)
-        {
-            return true;
-        }
-    }
-
-    false
+    paths.into_iter().any(|expected_path| expected_path.into_iter().eq(path.clone()))
 }
 
 /// Returns the precedence of an expression if it has one.

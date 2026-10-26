@@ -1,4 +1,4 @@
-use tower_lsp_server::ls_types::Position;
+use tower_lsp_server::gen_lsp_types::Position;
 
 /// Convert a UTF-8 byte offset to an LSP position.
 ///
@@ -141,6 +141,43 @@ mod tests {
         assert_eq!("🍄".len(), 4);
         assert_eq!(utf16_len("🍄"), 2);
         assert_position("🍄\nabc", 6, (1, 1));
+    }
+
+    #[test]
+    fn single_line() {
+        let source = "foo.bar!;";
+        assert_position(source, 0, (0, 0));
+        assert_position(source, 4, (0, 4));
+        assert_position(source, 9, (0, 9));
+    }
+
+    #[test]
+    fn multi_line() {
+        let source = "console.log(\n  foo.bar!\n);";
+        assert_position(source, 0, (0, 0));
+        assert_position(source, 12, (0, 12));
+        assert_position(source, 13, (1, 0));
+        assert_position(source, 23, (1, 10));
+        assert_position(source, 24, (2, 0));
+        assert_position(source, 26, (2, 2));
+    }
+
+    #[test]
+    fn multi_byte() {
+        let source = "let foo = \n  '👍';";
+        assert_position(source, 10, (0, 10));
+        assert_position(source, 11, (1, 0));
+        assert_position(source, 14, (1, 3));
+        assert_position(source, 18, (1, 5));
+        assert_position(source, 19, (1, 6));
+    }
+
+    #[test]
+    fn unicode_line_and_paragraph_separators_are_not_lsp_line_breaks() {
+        let source = "a\u{2028}b\nc\u{2029}d";
+        assert_position(source, source.find('b').unwrap(), (0, 2));
+        assert_position(source, source.find('c').unwrap(), (1, 0));
+        assert_position(source, source.find('d').unwrap(), (1, 2));
     }
 
     #[cfg(test)]

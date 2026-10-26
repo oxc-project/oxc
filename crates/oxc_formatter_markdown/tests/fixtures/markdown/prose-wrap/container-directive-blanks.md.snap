@@ -1,0 +1,122 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+:::note
+
+Prettier can not ensure that `filepath` exists on disk.
+
+:::
+
+::: tip
+tight
+:::
+
+:::warning
+
+:::
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+:::note
+
+Prettier can not ensure that `filepath` exists on disk.
+
+:::
+
+::: tip
+tight
+:::
+
+:::warning
+
+:::
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+:::note
+
+Prettier can not ensure that `filepath` exists on disk.
+
+:::
+
+::: tip
+tight
+:::
+
+:::warning
+
+:::
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+:::note
+
+Prettier can not ensure that `filepath` exists on disk.
+
+:::
+
+::: tip
+tight
+:::
+
+:::warning
+
+:::
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+:::note
+
+Prettier can not ensure that `filepath` exists on disk.
+
+:::
+
+::: tip
+tight
+:::
+
+:::warning
+
+:::
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+:::note
+
+Prettier can not ensure that `filepath` exists on disk.
+
+:::
+
+::: tip
+tight
+:::
+
+:::warning
+
+:::
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+:::note
+
+Prettier can not ensure that `filepath` exists on disk.
+
+:::
+
+::: tip
+tight
+:::
+
+:::warning
+
+:::
+
+===================== End =====================

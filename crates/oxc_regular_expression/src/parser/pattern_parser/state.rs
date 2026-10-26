@@ -1,7 +1,8 @@
+use oxc_allocator::Allocator;
 use oxc_str::Str;
 use rustc_hash::FxHashSet;
 
-use crate::parser::reader::Reader;
+use crate::parser::{pattern_parser::group_name::capturing_group_name, reader::Reader};
 
 /// NOTE: Currently all of properties are read-only from outside of this module.
 /// Even inside of this module, it is not changed after initialized.
@@ -32,6 +33,7 @@ impl<'a> State<'a> {
     pub fn initialize_with_parsing(
         &mut self,
         reader: &mut Reader<'a>,
+        allocator: &'a Allocator,
     ) -> Result<(), DuplicatedNamedCapturingGroupOffsets> {
         // PERF: Fast path, no `(` in the decoded units.
         // Provably no capturing group (named or unnamed) and no duplicate name.
@@ -48,7 +50,8 @@ impl<'a> State<'a> {
         }
 
         let checkpoint = reader.checkpoint();
-        let (num_of_left_capturing_parens, capturing_group_names) = parse_capturing_groups(reader)?;
+        let (num_of_left_capturing_parens, capturing_group_names) =
+            parse_capturing_groups(reader, self.unicode_mode, allocator)?;
         reader.rewind(checkpoint);
 
         // In Annex B, this is `false` by default.
@@ -70,6 +73,8 @@ impl<'a> State<'a> {
 /// Returns: Result<(num_of_left_parens, capturing_group_names), duplicated_named_capturing_group_offsets>
 fn parse_capturing_groups<'a>(
     reader: &mut Reader<'a>,
+    unicode_mode: bool,
+    allocator: &'a Allocator,
 ) -> Result<(u32, FxHashSet<Str<'a>>), DuplicatedNamedCapturingGroupOffsets> {
     // Count only normal CapturingGroup(named, unnamed)
     //   (?<name>...), (...)
@@ -122,6 +127,7 @@ fn parse_capturing_groups<'a>(
             // Collect capturing group names
             if reader.eat2('?', '<') {
                 let span_start = reader.offset();
+                let name_start = reader.checkpoint();
                 while let Some(ch) = reader.peek() {
                     if ch == '>' as u32 {
                         break;
@@ -130,8 +136,17 @@ fn parse_capturing_groups<'a>(
                 }
                 let span_end = reader.offset();
 
-                if reader.eat('>') {
-                    let group_name = reader.str(span_start, span_end);
+                if reader.peek() == Some('>' as u32) {
+                    let group_name = capturing_group_name(
+                        reader.str(span_start, span_end).as_str(),
+                        reader.code_points_since(name_start),
+                        unicode_mode,
+                        allocator,
+                    );
+                    reader.advance();
+                    let Some(group_name) = group_name else {
+                        continue;
+                    };
                     let alternative_path = tracker.get_alternative_path();
 
                     // Check for duplicates with existing groups
@@ -260,8 +275,9 @@ mod tests {
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
+            let allocator = Allocator::default();
             let (num_of_left_capturing_parens, capturing_group_names) =
-                parse_capturing_groups(&mut reader).unwrap();
+                parse_capturing_groups(&mut reader, true, &allocator).unwrap();
 
             let actual = (num_of_left_capturing_parens, capturing_group_names.len());
             assert_eq!(expected, actual, "{source_text}");
@@ -281,7 +297,11 @@ mod tests {
         ] {
             let mut reader = Reader::initialize(source_text, true, false).unwrap();
 
-            assert!(parse_capturing_groups(&mut reader).is_err(), "{source_text}");
+            let allocator = Allocator::default();
+            assert!(
+                parse_capturing_groups(&mut reader, true, &allocator).is_err(),
+                "{source_text}"
+            );
         }
     }
 }

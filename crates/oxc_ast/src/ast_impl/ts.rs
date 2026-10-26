@@ -5,7 +5,7 @@
 
 use std::fmt;
 
-use oxc_str::Str;
+use oxc_str::JSStr;
 
 use crate::ast::*;
 
@@ -13,7 +13,7 @@ impl<'a> TSEnumMemberName<'a> {
     /// Get the name of this enum member.
     /// # Panics
     /// Panics if `self` is a `TemplateString` with no quasi.
-    pub fn static_name(&self) -> Str<'a> {
+    pub fn static_name(&self) -> JSStr<'a> {
         match self {
             Self::Identifier(ident) => ident.name.into(),
             Self::String(lit) | Self::ComputedString(lit) => lit.value,
@@ -253,29 +253,6 @@ impl TSModuleReference<'_> {
     /// Returns `true` if this is an [`TSModuleReference::ExternalModuleReference`].
     pub fn is_external(&self) -> bool {
         matches!(self, Self::ExternalModuleReference(_))
-    }
-}
-
-impl<'a> Decorator<'a> {
-    /// Get the name of the decorator
-    /// ```ts
-    /// // The name of the decorator is `decorator`
-    /// @decorator
-    /// @decorator.a.b
-    /// @decorator(xx)
-    /// @decorator.a.b(xx)
-    /// ```
-    pub fn name(&self) -> Option<&'a str> {
-        match &self.expression {
-            Expression::Identifier(ident) => Some(ident.name.as_str()),
-            expr @ match_member_expression!(Expression) => {
-                expr.to_member_expression().static_property_name()
-            }
-            Expression::CallExpression(call) => {
-                call.callee.get_member_expr().and_then(MemberExpression::static_property_name)
-            }
-            _ => None,
-        }
     }
 }
 

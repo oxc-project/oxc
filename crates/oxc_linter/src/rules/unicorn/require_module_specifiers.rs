@@ -50,6 +50,7 @@ declare_oxc_lint!(
     RequireModuleSpecifiers,
     unicorn,
     suspicious,
+    recommended,
     fix,
     version = "1.20.0",
     short_description = "Enforce a non-empty specifier list in `import` and `export` statements.",

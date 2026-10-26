@@ -1,8 +1,5 @@
 # externals/ng-zorro-antd/components/style/themes/variable.less
 
-> fill break position (Prettier breaks inside the wide chunk, ours at the separator). See crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
-> trailing `//` comment never counts toward print width. See crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
-
 ## Option 1
 
 `````json
@@ -30,38 +27,7 @@
  @background-color-dark: hsv(0, 0, 94%); // dark grey background color
  
  // Disabled states
-@@ -530,24 +526,18 @@
- @input-padding-horizontal-base: @input-padding-horizontal;
- @input-padding-horizontal-sm: @control-padding-horizontal-sm - @line-width;
- @input-padding-horizontal-lg: @input-padding-horizontal;
- @input-padding-vertical-base: max(
--  (
--      round(
--          ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
--        ) /
--        10
--    ) -
-+  (round(
-+        ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
-+      ) /
-+      10) -
-     @border-width-base,
-   3px
- );
- @input-padding-vertical-sm: max(
--  (
--      round(
--          ((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10
--        ) /
--        10
--    ) -
-+  (round(((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10) /
-+      10) -
-     @border-width-base,
-   0
- );
- @input-padding-vertical-lg: (
-@@ -910,11 +900,12 @@
+@@ -910,11 +906,12 @@
  @tabs-card-head-background: @background-color-light;
  @tabs-card-height: 40px;
  @tabs-card-active-color: @primary-color;
@@ -612,16 +578,22 @@
 @input-padding-horizontal-sm: @control-padding-horizontal-sm - @line-width;
 @input-padding-horizontal-lg: @input-padding-horizontal;
 @input-padding-vertical-base: max(
-  (round(
-        ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
-      ) /
-      10) -
+  (
+      round(
+          ((@input-height-base - @font-size-base * @line-height-base) / 2) * 10
+        ) /
+        10
+    ) -
     @border-width-base,
   3px
 );
 @input-padding-vertical-sm: max(
-  (round(((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10) /
-      10) -
+  (
+      round(
+          ((@input-height-sm - @font-size-base * @line-height-base) / 2) * 10
+        ) /
+        10
+    ) -
     @border-width-base,
   0
 );

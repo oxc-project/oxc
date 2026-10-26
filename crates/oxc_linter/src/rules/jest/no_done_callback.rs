@@ -76,6 +76,7 @@ declare_oxc_lint!(
     jest,
     // TODO: add suggestion (see jest-community/eslint-plugin-jest#586)
     style,
+    recommended,
     pending,
     version = "0.0.13",
     short_description = "This rule checks the function parameter of hooks & tests for use of the done argument, suggesting you return a promise instead.",

@@ -10,8 +10,9 @@ use oxc_ast::{
     AstKind, AstType,
     ast::{
         Argument, ArrayExpressionElement, ArrowFunctionBody, ArrowFunctionExpression,
-        BindingPattern, CallExpression, ChainElement, Expression, FormalParameters, Function,
-        FunctionBody, IdentifierReference, StaticMemberExpression, VariableDeclarationKind,
+        BindingIdentifier, BindingPattern, CallExpression, ChainElement, Expression,
+        FormalParameters, Function, FunctionBody, IdentifierReference, StaticMemberExpression,
+        VariableDeclarationKind,
     },
     match_expression,
 };
@@ -84,12 +85,7 @@ fn missing_dependency_diagnostic(
         format!("'{}'", deps[0])
     } else {
         let mut iter = deps.iter();
-        let all_but_last = iter
-            .by_ref()
-            .take(deps.len() - 1)
-            .map(|s| format!("'{s}'"))
-            .collect::<Vec<_>>()
-            .join(", ");
+        let all_but_last = iter.by_ref().take(deps.len() - 1).map(|s| format!("'{s}'")).join(", ");
         let last = iter.next().unwrap();
         format!("{all_but_last}, and '{last}'")
     };
@@ -275,6 +271,7 @@ declare_oxc_lint!(
     ExhaustiveDeps,
     react,
     correctness,
+    recommended,
     safe_fixes_and_dangerous_suggestions,
     config = ExhaustiveDepsConfig,
     version = "0.12.0",
@@ -456,8 +453,7 @@ impl Rule for ExhaustiveDeps {
                 match inner_expr {
                     Expression::ArrayExpression(array_expr) => Some(array_expr),
                     Expression::Identifier(ident)
-                        if ident.name == "undefined"
-                            && ctx.is_reference_to_global_variable(ident) =>
+                        if ident.is_undefined() && ctx.is_reference_to_global_variable(ident) =>
                     {
                         None
                     }
@@ -1104,13 +1100,7 @@ fn is_stable_value<'a, 'b>(
     }
 
     match node.kind() {
-        AstKind::VariableDeclaration(declaration) => {
-            if declaration.kind == VariableDeclarationKind::Const {
-                return true;
-            }
-
-            false
-        }
+        AstKind::VariableDeclaration(declaration) => declaration.kind.is_const(),
         AstKind::VariableDeclarator(declaration) => {
             // if the variable does not have an initializer, then it's not a stable value
             let Some(init) = &declaration.init else {
@@ -1131,10 +1121,7 @@ fn is_stable_value<'a, 'b>(
                 if let Some(function_body) = function_body {
                     return is_function_stable(
                         function_body,
-                        declaration
-                            .id
-                            .get_binding_identifier()
-                            .map(oxc_ast::ast::BindingIdentifier::symbol_id),
+                        declaration.id.get_binding_identifier().map(BindingIdentifier::symbol_id),
                         ctx,
                         component_scope_id,
                         visited,
@@ -1143,7 +1130,8 @@ fn is_stable_value<'a, 'b>(
             }
 
             // if the variables is a constant, and the initializer is a literal, then it's a stable value. (excluding regex literals)
-            if variable_declaration_kind(declaration, ctx) == VariableDeclarationKind::Const
+            if variable_declaration_kind(declaration, ctx.nodes())
+                .is_some_and(VariableDeclarationKind::is_const)
                 && (matches!(
                     init.get_inner_expression(),
                     Expression::BooleanLiteral(_)
@@ -1207,18 +1195,23 @@ fn is_stable_value<'a, 'b>(
 
             false
         }
-        AstKind::ArrowFunctionExpression(_) | AstKind::Function(_) => {
-            let function_body = match node.kind() {
-                AstKind::ArrowFunctionExpression(arrow_func) => {
-                    Some(CallbackBody::Arrow(&arrow_func.body))
-                }
-                AstKind::Function(func) => func.body.as_deref().map(CallbackBody::Function),
-                _ => unreachable!(),
-            };
+        AstKind::ArrowFunctionExpression(arrow_func) => is_function_stable(
+            CallbackBody::Arrow(&arrow_func.body),
+            None,
+            ctx,
+            component_scope_id,
+            visited,
+        ),
+        AstKind::Function(func) => {
+            let Some(function_body) = func.body.as_deref() else { return false };
 
-            let Some(function_body) = function_body else { return false };
-
-            is_function_stable(function_body, None, ctx, component_scope_id, visited)
+            is_function_stable(
+                CallbackBody::Function(function_body),
+                None,
+                ctx,
+                component_scope_id,
+                visited,
+            )
         }
         _ => false,
     }

@@ -35,7 +35,10 @@ pub fn is_valid_regexp<'a>(
             // validated below because support for that constructor form varies by target.
             Some(Expression::RegExpLiteral(_)) => ("", true),
             // String literal: extract the pattern to validate
-            Some(Expression::StringLiteral(s)) if !s.lone_surrogates => (s.value.as_str(), false),
+            Some(Expression::StringLiteral(s)) => {
+                let Some(pattern) = s.value.as_str() else { return false };
+                (pattern, false)
+            }
             // Non-literal argument: can't statically determine, assume side effects
             _ => return false,
         },
@@ -45,7 +48,10 @@ pub fn is_valid_regexp<'a>(
     let flags = match args.get(1) {
         None => None,
         Some(arg) => match arg.as_expression() {
-            Some(Expression::StringLiteral(s)) => Some(s.value.as_str()),
+            Some(Expression::StringLiteral(s)) => {
+                let Some(flags) = s.value.as_str() else { return false };
+                Some(flags)
+            }
             // Non-literal flags: can't statically determine, assume side effects
             _ => return false,
         },
@@ -148,8 +154,10 @@ pub(super) fn is_unconditionally_pure_constructor(name: &str) -> bool {
 }
 
 /// Whether the name is an Error constructor.
+///
+/// See <https://tc39.es/ecma262/multipage/fundamental-objects.html#sec-native-error-types-used-in-this-standard> for the list of native errors.
 #[rustfmt::skip]
-pub(super) fn is_error_constructor(name: &str) -> bool {
+pub fn is_error_constructor(name: &str) -> bool {
     matches!(name, "Error" | "EvalError" | "RangeError" | "ReferenceError"
             | "SyntaxError" | "TypeError" | "URIError")
 }
@@ -455,6 +463,9 @@ pub(super) fn is_known_global_property(global: &str, property: &str) -> bool {
     match global {
         "Math" => matches!(property, "E" | "LN10" | "LN2" | "LOG10E" | "LOG2E" | "PI" | "SQRT1_2" | "SQRT2")
             || is_pure_math_method(property),
+        "Number" => matches!(property,
+            "POSITIVE_INFINITY" | "NEGATIVE_INFINITY"  | "EPSILON" | "NaN"
+            | "MAX_VALUE" | "MIN_VALUE" | "MAX_SAFE_INTEGER" | "MIN_SAFE_INTEGER"),
         "console" => matches!(property,
             "assert" | "clear" | "count" | "countReset" | "debug" | "dir" | "dirxml"
             | "error" | "group" | "groupCollapsed" | "groupEnd" | "info" | "log"

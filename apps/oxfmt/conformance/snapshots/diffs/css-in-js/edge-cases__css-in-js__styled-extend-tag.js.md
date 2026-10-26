@@ -1,7 +1,5 @@
 # edge-cases/css-in-js/styled-extend-tag.js
 
-> `Xxx.extend` not recognized as tag. See apps/oxfmt/DIVERGENCES.md#styled-extend-tag
-
 ## Option 1
 
 `````json
@@ -16,7 +14,7 @@
 +++ oxfmt
 @@ -1,9 +1,9 @@
  // DIVERGES: `Xxx.extend` / `Xxx.extend.attr(...)` is not a css-in-js tag, the template stays verbatim;
- // see apps/oxfmt/DIVERGENCES.md "styled-extend-tag"
+ // see apps/oxfmt/DIVERGENCES.md#styled-extend-tag
  const TomatoButton = Button.extend`
 -  color: tomato;
 +	color  : tomato  ;
@@ -33,7 +31,7 @@
 
 `````js
 // DIVERGES: `Xxx.extend` / `Xxx.extend.attr(...)` is not a css-in-js tag, the template stays verbatim;
-// see apps/oxfmt/DIVERGENCES.md "styled-extend-tag"
+// see apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 const TomatoButton = Button.extend`
 	color  : tomato  ;
 `;
@@ -48,7 +46,7 @@ border-color : black;
 
 `````js
 // DIVERGES: `Xxx.extend` / `Xxx.extend.attr(...)` is not a css-in-js tag, the template stays verbatim;
-// see apps/oxfmt/DIVERGENCES.md "styled-extend-tag"
+// see apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 const TomatoButton = Button.extend`
   color: tomato;
 `;
@@ -73,7 +71,7 @@ Button.extend.attr({})`
 +++ oxfmt
 @@ -1,9 +1,9 @@
  // DIVERGES: `Xxx.extend` / `Xxx.extend.attr(...)` is not a css-in-js tag, the template stays verbatim;
- // see apps/oxfmt/DIVERGENCES.md "styled-extend-tag"
+ // see apps/oxfmt/DIVERGENCES.md#styled-extend-tag
  const TomatoButton = Button.extend`
 -  color: tomato;
 +	color  : tomato  ;
@@ -90,7 +88,7 @@ Button.extend.attr({})`
 
 `````js
 // DIVERGES: `Xxx.extend` / `Xxx.extend.attr(...)` is not a css-in-js tag, the template stays verbatim;
-// see apps/oxfmt/DIVERGENCES.md "styled-extend-tag"
+// see apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 const TomatoButton = Button.extend`
 	color  : tomato  ;
 `;
@@ -105,7 +103,7 @@ border-color : black;
 
 `````js
 // DIVERGES: `Xxx.extend` / `Xxx.extend.attr(...)` is not a css-in-js tag, the template stays verbatim;
-// see apps/oxfmt/DIVERGENCES.md "styled-extend-tag"
+// see apps/oxfmt/DIVERGENCES.md#styled-extend-tag
 const TomatoButton = Button.extend`
   color: tomato;
 `;

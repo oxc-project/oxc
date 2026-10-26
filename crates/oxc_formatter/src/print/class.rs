@@ -2,7 +2,6 @@ use std::ops::Deref;
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::Buffer;
 use oxc_span::GetSpan;
 
 use crate::{
@@ -12,11 +11,17 @@ use crate::{
     formatter::{
         prelude::*,
         separated::FormatSeparatedIter,
-        trivia::{FormatLeadingComments, FormatTrailingComments},
+        trivia::{
+            FormatLeadingComments, FormatTrailingComments, format_leading_comments,
+            format_trailing_comments,
+        },
     },
     parentheses::NeedsParentheses,
     print::{
-        function::should_group_function_parameters,
+        block_statement::is_empty_block,
+        function::{
+            function_content_end, function_signature_end, should_group_function_parameters,
+        },
         semicolon::{
             OptionalSemicolon, assignment_chain_leaf_end,
             trailing_comments_to_move_behind_semicolon,
@@ -31,6 +36,7 @@ use crate::{
         is_keyword_property_key,
         object::{format_property_key, should_preserve_quote},
         statement_body::write_head_body_separator,
+        suppressed::write_suppressed_content,
     },
     write,
 };
@@ -40,18 +46,13 @@ use super::{
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ClassBody<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if f.options().quote_properties.is_consistent() {
-            let quote_needed = self.body.iter().any(|signature| {
-                let key = match signature {
-                    ClassElement::PropertyDefinition(property) => &property.key,
-                    ClassElement::AccessorProperty(property) => &property.key,
-                    ClassElement::MethodDefinition(method) => &method.key,
-                    _ => return false,
-                };
-
-                should_preserve_quote(key, f)
+            let quote_needed = self.body.iter().any(|element| {
+                element
+                    .property_key()
+                    .is_some_and(|key| should_preserve_quote(key, element.computed(), f))
             });
             f.context_mut().push_quote_needed(quote_needed);
         }
@@ -64,7 +65,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ClassBody<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ClassElement<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, ClassElement<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         // Join class elements with hard line breaks between them
         let mut join = f.join_nodes_with_hardline();
@@ -78,14 +79,14 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, ClassEleme
 }
 
 impl<'a> Format<'a, JsFormatContext<'a>>
-    for (&AstNode<'a, ClassElement<'a>>, Option<&AstNode<'a, ClassElement<'a>>>)
+    for (AstNode<'_, 'a, ClassElement<'a>>, Option<AstNode<'_, 'a, ClassElement<'a>>>)
 {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        FormatClassElementWithSemicolon::new(self.0, self.1).fmt(f);
+        FormatClassElementWithSemicolon::new(&self.0, self.1.as_ref()).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, MethodDefinition<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.decorators()]);
 
@@ -118,7 +119,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         if value.generator {
             write!(f, "*");
         }
-        format_property_key(self.key(), self.computed, f);
+        format_property_key(&self.key(), self.computed, f);
 
         if self.optional {
             write!(f, "?");
@@ -127,7 +128,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         format_grouped_parameters_with_return_type_for_method(
             value.type_parameters(),
             value.this_param.as_deref(),
-            value.params(),
+            &value.params(),
             value.return_type(),
             f,
         );
@@ -146,10 +147,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
         let node_end = self.span.end;
         let comments = f.context().comments().comments_before(node_end);
         if !comments.is_empty() {
-            let content_end = f.comments().end_including_source_parens(
-                value.return_type().map_or_else(|| value.params().span.end, |rt| rt.span.end),
-                node_end,
-            );
+            let content_end = function_signature_end(&value, f);
             if let Some(trailing_comments) =
                 trailing_comments_to_move_behind_semicolon(f, content_end, node_end)
             {
@@ -161,23 +159,23 @@ impl<'a> FormatWrite<'a> for AstNode<'a, MethodDefinition<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, PropertyDefinition<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, PropertyDefinition<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         AssignmentLike::PropertyDefinition(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, PrivateIdentifier<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, PrivateIdentifier<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["#", text_without_whitespace(self.name().as_str())]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, StaticBlock<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["static", space(), "{"]);
 
-        if self.body.is_empty() {
+        if is_empty_block(&self.body) {
             write!(f, [format_dangling_comments(self.span).with_block_indent()]);
         } else {
             write!(f, [block_indent(&self.body())]);
@@ -187,13 +185,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, StaticBlock<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, AccessorProperty<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, AccessorProperty<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         AssignmentLike::AccessorProperty(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSIndexSignature<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.r#static {
             write!(f, ["static", space()]);
@@ -206,7 +204,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
             f,
             [
                 "[",
-                group(&soft_block_indent(self.parameter())),
+                group(&soft_block_indent(&self.parameter())),
                 "]",
                 self.type_annotation(),
                 is_class.then_some(OptionalSemicolon)
@@ -215,13 +213,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignature<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSIndexSignatureName<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSIndexSignatureName<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [text_without_whitespace(self.name().as_str()), self.type_annotation()]);
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSClassImplements<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, TSClassImplements<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let last_index = self.len().saturating_sub(1);
         let mut joiner = f.join_with(soft_line_break_or_space());
@@ -240,19 +238,19 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, TSClassImp
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSClassImplements<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSClassImplements<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.expression(), self.type_arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ClassHeritage<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ClassHeritage<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, [self.expression(), self.type_arguments()]);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Class<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         if self.r#type == ClassType::ClassExpression
             && (!self.decorators.is_empty() && self.needs_parentheses(f))
@@ -264,10 +262,10 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Class<'a>> {
     }
 }
 
-struct FormatClass<'a, 'b>(pub &'b AstNode<'a, Class<'a>>);
+struct FormatClass<'a, 'b>(pub &'b AstNode<'b, 'a, Class<'a>>);
 
-impl<'a> Deref for FormatClass<'a, '_> {
-    type Target = AstNode<'a, Class<'a>>;
+impl<'a, 'b> Deref for FormatClass<'a, 'b> {
+    type Target = AstNode<'b, 'a, Class<'a>>;
 
     fn deref(&self) -> &Self::Target {
         self.0
@@ -279,8 +277,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
         let decorators = self.decorators();
         let type_parameters = self.type_parameters();
         let heritage = self.heritage();
-        let super_class = heritage.map(AstNode::<ClassHeritage<'a>>::expression);
-        let super_type_arguments = heritage.and_then(AstNode::<ClassHeritage<'a>>::type_arguments);
+        let super_class = heritage.as_ref().map(AstNode::<ClassHeritage<'a>>::expression);
+        let super_type_arguments =
+            heritage.as_ref().and_then(AstNode::<ClassHeritage<'a>>::type_arguments);
         let implements = self.implements();
         let body = self.body();
 
@@ -311,7 +310,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                 if type_parameters.is_none() && super_class.is_none() && implements.is_empty() {
                     // The id's trailing pass would claim an end-of-line comment
                     // and flush it past the body's `{`; leave it for the head-body separator.
-                    FormatNodeWithoutTrailingComments(id).fmt(f);
+                    FormatNodeWithoutTrailingComments(&id).fmt(f);
                 } else {
                     write!(f, id);
                 }
@@ -344,7 +343,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
             // after the class name, maintaining their position before the extends clause.
             if let Some(super_class) = &super_class {
                 let comments = f.context().comments().comments_before(super_class.span().start);
-                if comments.iter().any(|c| c.preceded_by_newline()) {
+                if comments.iter().any(Comment::preceded_by_newline) {
                     indent(&FormatTrailingComments::Comments(comments)).fmt(f);
                 }
             }
@@ -372,8 +371,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                     // Check if there are trailing line comments after the extends clause
                     // These comments need special handling to ensure they're placed correctly
                     // relative to the extends expression and any type arguments
-                    let has_trailing_line_comments =
-                        comments.iter().any(|comment| comment.is_line());
+                    let has_trailing_line_comments = comments.iter().any(Comment::is_line);
 
                     let content = format_with(|f| {
                         if let Some(type_arguments) = type_arguments {
@@ -384,7 +382,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                                 type_arguments.fmt(f);
                             }
                         } else if implements.is_empty() {
-                            FormatNodeWithoutTrailingComments(extends).fmt(f);
+                            FormatNodeWithoutTrailingComments(&extends).fmt(f);
                             // Line comments are handled separately to ensure proper placement
                             if !has_trailing_line_comments {
                                 FormatTrailingComments::Comments(comments).fmt(f);
@@ -434,7 +432,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
                             FormatLeadingComments::Comments(leading_comments),
                             (!leading_comments.is_empty()).then_some(hard_line_break()),
                             "implements",
-                            group(&soft_line_indent_or_space(implements))
+                            group(&soft_line_indent_or_space(&implements))
                         ]
                     );
                 } else {
@@ -495,7 +493,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClass<'a, '_> {
 /// 3. Implements is a qualified name and has no type arguments
 /// 4. There are comments in the heritage clause area
 /// 5. There are trailing line comments after type parameters
-fn should_group<'a>(class: &AstNode<'a, Class<'a>>, f: &JsFormatter<'_, 'a>) -> bool {
+fn should_group<'a>(class: &AstNode<'_, 'a, Class<'a>>, f: &JsFormatter<'_, 'a>) -> bool {
     let heritage = class.heritage.as_ref();
 
     if usize::from(heritage.is_some()) + class.implements.len() > 1 {
@@ -548,14 +546,14 @@ fn should_group<'a>(class: &AstNode<'a, Class<'a>>, f: &JsFormatter<'_, 'a>) -> 
 }
 
 pub struct FormatClassElementWithSemicolon<'a, 'b> {
-    element: &'b AstNode<'a, ClassElement<'a>>,
-    next_element: Option<&'b AstNode<'a, ClassElement<'a>>>,
+    element: &'b AstNode<'b, 'a, ClassElement<'a>>,
+    next_element: Option<&'b AstNode<'b, 'a, ClassElement<'a>>>,
 }
 
 impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
     pub fn new(
-        element: &'b AstNode<'a, ClassElement<'a>>,
-        next_element: Option<&'b AstNode<'a, ClassElement<'a>>>,
+        element: &'b AstNode<'b, 'a, ClassElement<'a>>,
+        next_element: Option<&'b AstNode<'b, 'a, ClassElement<'a>>>,
     ) -> Self {
         Self { element, next_element }
     }
@@ -573,10 +571,15 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
 
         let Some(next_element) = next_element else { return false };
 
+        // When the name starts with `[`, `in` or `instanceof`.
+        // NOTE: These only continue a previous property with a value (`x = a` + `in`, `x = a` + `[b]`),
+        // but kept regardless of it like Prettier, an unneeded `;` is harmless.
+        let starts_with_hazard = next_element.computed()
+            || next_element.property_key().is_some_and(is_binary_keyword_key);
         match next_element.as_ref() {
-            // When the name starts with the generator token or `[`
+            // Or the generator token
             ClassElement::MethodDefinition(def) if !def.value.r#async => {
-                (def.computed
+                (starts_with_hazard
                     && !(def.kind.is_accessor()
                         || def.r#static
                         || def.accessibility.is_some()
@@ -584,7 +587,7 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
                     || def.value.generator
             }
             ClassElement::PropertyDefinition(def) => {
-                def.computed
+                starts_with_hazard
                     && !(def.accessibility.is_some()
                         || def.r#static
                         || def.declare
@@ -592,7 +595,8 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
                         || def.readonly)
             }
             ClassElement::AccessorProperty(def) => {
-                def.computed && !(def.accessibility.is_some() || def.r#static || def.r#override)
+                starts_with_hazard
+                    && !(def.accessibility.is_some() || def.r#static || def.r#override)
             }
             ClassElement::TSIndexSignature(_) => true,
             _ => false,
@@ -600,46 +604,89 @@ impl<'a, 'b> FormatClassElementWithSemicolon<'a, 'b> {
     }
 }
 
+/// `in` or `instanceof` would continue the previous property's value as a binary operator.
+/// A string key may be printed unquoted, so it is checked by its value.
+/// See DIVERGENCES.md#string-binary-keyword-class-key
+fn is_binary_keyword_key(key: &PropertyKey<'_>) -> bool {
+    match key {
+        PropertyKey::StaticIdentifier(ident) => matches!(ident.name.as_str(), "in" | "instanceof"),
+        PropertyKey::StringLiteral(literal) => {
+            literal.value == "in" || literal.value == "instanceof"
+        }
+        _ => false,
+    }
+}
+
+impl FormatClassElementWithSemicolon<'_, '_> {
+    /// Where the element's content ends and its `;` takes over, for the kinds that take one:
+    /// a property's value (the chain leaf, like an expression statement), type annotation or key,
+    /// a bodyless method's signature, an index signature's type.
+    /// A definite/optional marker may sit between it and the `;` (`z? /* e */;`);
+    /// a comment there still ends up behind the semicolon like Prettier.
+    fn content_end(&self, f: &JsFormatter<'_, '_>) -> Option<u32> {
+        let (value, type_annotation, key) = match self.element.as_ref() {
+            ClassElement::PropertyDefinition(def) => (&def.value, &def.type_annotation, &def.key),
+            ClassElement::AccessorProperty(def) => (&def.value, &def.type_annotation, &def.key),
+            ClassElement::MethodDefinition(def) => return function_content_end(&def.value, f),
+            ClassElement::TSIndexSignature(def) => return Some(def.type_annotation.span.end),
+            ClassElement::StaticBlock(_) => return None,
+        };
+        Some(
+            value
+                .as_ref()
+                .map(|value| assignment_chain_leaf_end(value, f))
+                .or_else(|| type_annotation.as_ref().map(|ta| ta.span.end))
+                .unwrap_or_else(|| key.span().end),
+        )
+    }
+}
+
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let needs_semi = matches!(
-            self.element.as_ref(),
+        let element = self.element;
+        let span = element.span();
+        let is_property = matches!(
+            element.as_ref(),
             ClassElement::PropertyDefinition(_) | ClassElement::AccessorProperty(_)
         );
-
-        let needs_semi = needs_semi
+        let needs_semi = is_property
             && match f.options().semicolons {
                 Semicolons::Always => true,
                 Semicolons::AsNeeded => self.needs_semicolon(),
-            }
-            // Don't add semicolon if the element is suppressed (has `oxfmt-ignore`),
-            // because the suppressed source text already includes the original semicolon.
-            && !f.comments().is_suppressed(self.element.span().start);
+            };
 
-        if needs_semi {
+        // A suppressed element prints its content verbatim and its terminator stays the formatter's,
+        // like a statement (`write_suppressed_statement`); the element's own `fmt` would print the `;` as content.
+        let suppressed = f.comments().is_node_suppressed(span, || self.content_end(f));
+        if !suppressed && !needs_semi {
+            return write!(f, element);
+        }
+
+        if suppressed {
+            format_leading_comments(span).fmt(f);
+            // The verbatim range keeps the source parens the reprint would drop (`p = (q = 1)`),
+            // which the comment-move boundary `content_end` stops short of.
+            let verbatim_end = self
+                .content_end(f)
+                .map(|end| f.comments().end_including_source_parens(end, span.end));
+            if write_suppressed_content(span, verbatim_end, f) {
+                if is_property {
+                    if needs_semi {
+                        write!(f, ";");
+                    }
+                } else {
+                    // A bodyless method / index signature: the formatter's `;`, per `semi`
+                    OptionalSemicolon.fmt(f);
+                }
+            }
+        } else {
             // Same-line comments between the content end and the source semicolon
             // move behind it like Prettier: `x = 1 /* c */;` -> `x = 1; /* c */`
             // (the class element owns its own semicolon machinery,
             // so this cannot go through `FormatContentWithSemicolon`)
-            let node_end = self.element.span().end;
-            let (value, type_annotation, key) = match self.element.as_ref() {
-                ClassElement::PropertyDefinition(def) => {
-                    (&def.value, &def.type_annotation, &def.key)
-                }
-                ClassElement::AccessorProperty(def) => (&def.value, &def.type_annotation, &def.key),
-                _ => {
-                    unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");
-                }
-            };
-            // The value end is the chain leaf's, like an expression statement.
-            // A definite/optional marker may sit between `content_end` and the `;`
-            // (`z? /* e */;` -> `content_end` is after `z`);
-            // the comment still ends up behind the semicolon like Prettier.
-            let content_end = value
-                .as_ref()
-                .map(assignment_chain_leaf_end)
-                .or_else(|| type_annotation.as_ref().map(|ta| ta.span.end))
-                .unwrap_or_else(|| key.span().end);
+            let node_end = span.end;
+            // A property always has a content end
+            let content_end = self.content_end(f).unwrap();
             // `node_end` bound: the element may have no source `;` at all
             // (a dropped-paren terminator, `p = (q = 1 /* c */)`).
             // The gate's same-line run moves behind the `;`,
@@ -647,41 +694,31 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatClassElementWithSemicolon<'a,
             if let Some(trailing_comments) =
                 trailing_comments_to_move_behind_semicolon(f, content_end, node_end)
             {
-                format_content_without_comments_after(self.element, content_end, f);
+                format_content_without_comments_after(element, content_end, f);
                 write!(f, [";", FormatTrailingComments::Comments(trailing_comments)]);
             } else {
-                write!(f, [FormatNodeWithoutTrailingComments(self.element), ";"]);
+                write!(f, [FormatNodeWithoutTrailingComments(element), ";"]);
             }
-            match self.element.as_ast_nodes() {
-                AstNodes::PropertyDefinition(prop) => {
-                    prop.format_trailing_comments(f);
-                }
-                AstNodes::AccessorProperty(prop) => {
-                    prop.format_trailing_comments(f);
-                }
-                _ => {
-                    unreachable!("Only `PropertyDefinition` and `AccessorProperty` can reach here");
-                }
-            }
-        } else {
-            write!(f, self.element);
         }
+        format_trailing_comments(element.parent().span(), span, element.following_span_start())
+            .fmt(f);
     }
 }
 
 /// Based on <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/print/function.js#L160-L176>
 pub fn format_grouped_parameters_with_return_type_for_method<'a>(
-    type_parameters: Option<&AstNode<'a, TSTypeParameterDeclaration<'a>>>,
+    type_parameters: Option<AstNode<'_, 'a, TSTypeParameterDeclaration<'a>>>,
     this_param: Option<&TSThisParameter<'a>>,
-    params: &AstNode<'a, FormalParameters<'a>>,
-    return_type: Option<&AstNode<'a, TSTypeAnnotation<'a>>>,
+    params: &AstNode<'_, 'a, FormalParameters<'a>>,
+    return_type: Option<AstNode<'_, 'a, TSTypeAnnotation<'a>>>,
     f: &mut JsFormatter<'_, 'a>,
 ) {
     write!(f, type_parameters);
 
     group(&format_with(|f| {
         let format_parameters = params.memoized();
-        let format_return_type = return_type.map(FormatNodeWithoutTrailingComments).memoized();
+        let format_return_type =
+            return_type.as_ref().map(FormatNodeWithoutTrailingComments).memoized();
 
         // Inspect early, in case the `return_type` is formatted before `parameters`
         // in `should_group_function_parameters`.
@@ -690,9 +727,9 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
         let should_break_parameters = should_break_function_parameters(params);
         let should_group_parameters = should_break_parameters
             || should_group_function_parameters(
-                type_parameters.map(AsRef::as_ref),
+                type_parameters.as_ref().map(AsRef::as_ref),
                 params.parameters_count() + usize::from(this_param.is_some()),
-                return_type.map(AsRef::as_ref),
+                return_type.as_ref().map(AsRef::as_ref),
                 &format_return_type,
                 f,
             );
@@ -735,6 +772,6 @@ pub fn format_grouped_parameters_with_return_type_for_method<'a>(
 /// ```ts
 /// constructor(private id: string) {}
 /// ```
-fn should_break_function_parameters<'a>(params: &AstNode<'a, FormalParameters<'a>>) -> bool {
+fn should_break_function_parameters<'a>(params: &AstNode<'_, 'a, FormalParameters<'a>>) -> bool {
     params.parameters_count() > 1 && params.items().iter().any(|param| param.has_modifier())
 }

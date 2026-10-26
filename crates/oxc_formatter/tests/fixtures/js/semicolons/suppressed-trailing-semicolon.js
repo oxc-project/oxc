@@ -1,7 +1,7 @@
 // The ignored range of a suppressed statement excludes a (possibly distant)
-// trailing `;` — even one owned by a nested single-statement body — and the
-// formatter prints its own terminator only when one was stripped, never
-// doubling it (a doubled `;` would re-parse as an extra EmptyStatement).
+// trailing `;`, even one owned by a nested single-statement body, and the
+// formatter prints its own terminator per `semi`, never doubling it
+// (a doubled `;` would re-parse as an extra EmptyStatement).
 
 // oxfmt-ignore
 debugger
@@ -37,7 +37,7 @@ function g() {
   ;[].sort()
 }
 
-// No source `;` at the end — nothing is stripped, nothing is added.
+// No source `;` at the end: the terminator is still the formatter's, but a `}` body has none.
 // oxfmt-ignore
 while   (   1)   { foo (   ) }
 

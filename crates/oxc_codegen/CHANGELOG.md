@@ -4,6 +4,83 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- c7d229b transformer: [**BREAKING**] Decode JSX entities to lone surrogates (#26712) (Dunqing)
+
+### ⚡ Performance
+
+- fe1d367 codegen: Remove branches from loops printing arrays (#27840) (overlookmotel)
+- 7bb6b62 codegen: Reduce hashmap lookups in `print_annotation_comment` (#27845) (overlookmotel)
+- 31ffd08 codegen: Avoid unnecessary comment clone (#27843) (overlookmotel)
+- a6456b7 codegen: Remove branch from `print_space_before_identifier` (#27842) (overlookmotel)
+- eeff416 codegen: Simplify `print_space_before_identifier` (#27841) (overlookmotel)
+
+### 📚 Documentation
+
+- 29caafd codegen: Format table in doc comment (#27839) (overlookmotel)
+
+## [0.154.0] - 2026-10-13
+
+### 🐛 Bug Fixes
+
+- 760b60b codegen, packages/codegen: Remove extraneous space before `RestElement` in `ArrayPattern` (#27613) (overlookmotel)
+- f50257e codegen: Avoid extra indent before empty do-while bodies (#27407) (camc314)
+- 82bfc5f codegen: Fix printing negative `BigIntLiteral` after `-` (#27378) (overlookmotel)
+
+## [0.153.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- b2793fa parser: Reject module syntax in script (#27220) (leaysgur)
+
+### ⚡ Performance
+
+- d37d1db codegen: Pre-allocate sourcemap builder vectors (#27230) (codspeed)
+
+## [0.152.0] - 2026-09-28
+
+### 🐛 Bug Fixes
+
+- 5186328 parser: Handle HTML comment values (#22933) (Boshen)
+- d79ad19 codegen: Remove redundant dollar escapes in minified templates (#26924) (camc314)
+
+## [0.150.0] - 2026-09-14
+
+### 🚀 Features
+
+- 9ef028c codegen: Add `ascii_only` option (#25994) (Samuel Attard)
+
+### 🐛 Bug Fixes
+
+- d7713ad parser: Classify Unicode line breaks in block comments (#26536) (camc314)
+- 32d00c5 codegen: Preserve instantiation expression precedence (#26424) (camc314)
+- ae6c386 codegen: Preserve in restriction through yield arguments (#26413) (camc314)
+- 42ac916 codegen: Preserve private-in right operand precedence (#26411) (camc314)
+
+### ⚡ Performance
+
+- d198982 codegen: Outline postfix source mapping work (#26450) (camc314)
+- 8bfb8c0 codegen: Avoid duplicate sourcemap name lookups (#26441) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 💥 BREAKING CHANGES
+
+- 2c9a947 parser: [**BREAKING**] Reduce `MAX_LEN` to 256 bytes below `u32::MAX` (#26352) (overlookmotel)
+
+### 🚀 Features
+
+- bfb4c57 parser: Distinguish unapplied no-side-effects comments (#26120) (碳苯 Carbon)
+
+### 🐛 Bug Fixes
+
+- b156333 codegen: Order accessibility before abstract on accessors (#26392) (camc314)
+- 2da73b7 codegen: Print matching quoted import names as identifiers (#26386) (camc314)
+- 0a81d29 codegen: Preserve private-in left operand precedence (#26383) (camc314)
+
 ## [0.147.0] - 2026-08-24
 
 ### 🐛 Bug Fixes

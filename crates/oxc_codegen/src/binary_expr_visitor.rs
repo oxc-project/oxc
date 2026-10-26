@@ -226,7 +226,7 @@ impl<'a> BinaryExpressionVisitor<'a> {
         }
 
         if let Expression::PrivateInExpression(e) = self.e.left() {
-            e.gen_expr(p, Precedence::Lowest, Context::empty());
+            e.gen_expr(p, self.left_precedence, self.ctx);
             self.visit_right_and_finish(p);
             return false;
         }

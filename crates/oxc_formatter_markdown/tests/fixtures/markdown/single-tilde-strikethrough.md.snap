@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<!-- `~x~` is not strikethrough (GitHub only strikes `~~x~~`); it is kept as written -->
+
+H~2~O and ~~struck~~ text.
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<!-- `~x~` is not strikethrough (GitHub only strikes `~~x~~`); it is kept as written -->
+
+H~2~O and ~~struck~~ text.
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<!-- `~x~` is not strikethrough (GitHub only strikes `~~x~~`); it is kept as written -->
+
+H~2~O and ~~struck~~ text.
+
+===================== End =====================

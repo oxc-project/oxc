@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, VariableDeclarationKind},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoUselessUndefined,
     unicorn,
     pedantic,
+    recommended,
     fix,
     config = NoUselessUndefined,
     version = "0.6.1",
@@ -113,6 +114,8 @@ static FUNCTION_NAMES: &[&str] = &[
     "toEqual",
     "toHaveBeenCalledWith",
     "unshift",
+    // `React.useRef(undefined)`
+    "useRef",
 ];
 
 fn is_match_ignore_func_name(name: &str) -> bool {
@@ -140,17 +143,6 @@ fn is_function_bind_call(call_expr: &CallExpression) -> bool {
     !call_expr.optional && is_method_call(call_expr, None, Some(&["bind"]), None, None)
 }
 
-fn is_undefined(arg: &Argument) -> bool {
-    if !arg.is_expression() {
-        return false;
-    }
-    let expr: &Expression = arg.to_expression();
-    if let Expression::Identifier(_) = expr {
-        return expr.is_undefined();
-    }
-    false
-}
-
 fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
     match node.kind() {
         AstKind::Program(_) => false,
@@ -169,9 +161,7 @@ impl Rule for NoUselessUndefined {
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IdentifierReference(undefined_literal)
-                if undefined_literal.name == "undefined" =>
-            {
+            AstKind::IdentifierReference(undefined_literal) if undefined_literal.is_undefined() => {
                 let Some(parent_node) = outermost_paren_parent(node, ctx) else {
                     return;
                 };
@@ -231,7 +221,7 @@ impl Rule for NoUselessUndefined {
                         else {
                             return;
                         };
-                        if declaration.kind == VariableDeclarationKind::Const {
+                        if declaration.kind.is_const() {
                             return;
                         }
                         if is_has_function_return_type(parent_node, ctx) {
@@ -307,11 +297,18 @@ impl Rule for NoUselessUndefined {
                     return;
                 }
 
-                if should_ignore(&call_expr.callee) {
+                let arguments = &call_expr.arguments;
+                if !arguments
+                    .last()
+                    .and_then(Argument::as_expression)
+                    .is_some_and(Expression::is_undefined)
+                {
                     return;
                 }
 
-                let arguments = &call_expr.arguments;
+                if should_ignore(&call_expr.callee) {
+                    return;
+                }
 
                 // Ignore arguments in `Function#bind()`, but not `this` argument
                 if is_function_bind_call(call_expr) && arguments.len() != 1 {
@@ -320,9 +317,9 @@ impl Rule for NoUselessUndefined {
                 let mut undefined_args_spans = Vec::new();
                 for i in (0..arguments.len()).rev() {
                     let arg = &arguments[i];
-                    if is_undefined(arg) {
+                    if arg.as_expression().is_some_and(Expression::is_undefined) {
                         let span = arg.span();
-                        undefined_args_spans.insert(0, span);
+                        undefined_args_spans.push(span);
                     } else {
                         break;
                     }
@@ -331,6 +328,7 @@ impl Rule for NoUselessUndefined {
                 if undefined_args_spans.is_empty() {
                     return;
                 }
+                undefined_args_spans.reverse();
                 let first_undefined_span = undefined_args_spans[0];
                 let last_undefined_span = undefined_args_spans[undefined_args_spans.len() - 1];
                 let mut start = first_undefined_span.start;
@@ -406,6 +404,8 @@ fn test() {
         ("array.unshift(undefined);", None),
         ("createContext(undefined);", None),
         ("React.createContext(undefined);", None),
+        ("useRef(undefined);", None),
+        ("React.useRef(undefined);", None),
         ("setState(undefined)", None),
         ("setState?.(undefined)", None),
         ("props.setState(undefined)", None),
@@ -544,6 +544,8 @@ fn test() {
         ),
         ("createContext<T>(undefined);", None),
         ("React.createContext<T>(undefined);", None),
+        ("useRef<T>(undefined);", None),
+        ("React.useRef<T>(undefined);", None),
         (
             "
             const y: any = {}
@@ -779,6 +781,28 @@ fn test_issue_14368() {
         Some(serde_json::json!([{ "checkArguments": true }])),
     )];
 
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_trailing_arguments() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "call(undefined, ...values);",
+        "call(...values);",
+        "call?.(value);",
+        "call.bind(receiver);",
+        "call.bind(receiver, undefined);",
+    ];
+    let fail =
+        vec!["call(...values, undefined, undefined);", "call?.(value, undefined, undefined);"];
+    let fix = vec![
+        ("call(...values, undefined, undefined);", "call(...values);", None),
+        ("call?.(value, undefined, undefined);", "call?.(value);", None),
+    ];
     Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test();

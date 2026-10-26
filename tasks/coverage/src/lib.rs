@@ -122,8 +122,8 @@ impl CoverageResult {
 
     fn parsed(&self) -> bool {
         match &self.result {
-            TestResult::ParseError(_, panicked) | TestResult::CorrectError(_, panicked) => {
-                !panicked
+            TestResult::ParseError(_, is_fatal) | TestResult::CorrectError(_, is_fatal) => {
+                !is_fatal
             }
             _ => true,
         }
@@ -261,8 +261,8 @@ pub fn snapshot_results(name: &str, test_root: &Path, results: &[CoverageResult]
     for r in &failed_positives {
         let path = normalize_path(Path::new("tasks/coverage").join(&r.path));
         match &r.result {
-            TestResult::ParseError(error, panicked) => {
-                let label = if *panicked { "Panicked" } else { "Expect to Parse" };
+            TestResult::ParseError(error, is_fatal) => {
+                let label = if *is_fatal { "Fatal error" } else { "Expect to Parse" };
                 writeln!(out, "{label}: {path}").unwrap();
                 out.push_str(error);
                 out.push('\n'); // Blank line after error content
@@ -308,7 +308,7 @@ pub struct AppArgs {
 
 const TEST262_PATH: &str = "test262/test";
 const BABEL_PATH: &str = "babel/packages/babel-parser/test/fixtures";
-const TYPESCRIPT_PATH: &str = "typescript/tests/cases";
+const TYPESCRIPT_PATH: &str = typescript::CASES_PATH;
 const MISC_PATH: &str = "misc";
 const ESTREE_ACORN_JSX_PATH: &str = "estree-conformance/tests/acorn-jsx";
 
@@ -371,8 +371,7 @@ impl AppArgs {
     ///
     /// Compare `oxc_lexer`'s token spans against the parser's token stream over the corpora.
     /// Opt-in (kept out of `run_all`) — requires `lexer` Cargo feature.
-    /// Runs against whichever of the lexer's two implementations the build selects -
-    /// the SIMD core on a static AVX2/BMI2 x86_64 build, the scalar fallback otherwise.
+    /// Runs against whichever of the lexer's implementations the build selects (see `oxc_lexer::IMPLEMENTATION`).
     /// `oxc_lexer` only supports little endian at present.
     ///
     /// # Panics
@@ -380,6 +379,10 @@ impl AppArgs {
     pub fn run_lexer(&self, data: &TestData) {
         #[cfg(all(feature = "lexer", target_endian = "little"))]
         {
+            // Report which implementation was built.
+            // CI checks this line to make sure the build it expected is the build it got.
+            println!("Lexer implementation: {}", oxc_lexer::IMPLEMENTATION);
+
             self.run_tool(
                 "lexer_test262",
                 TEST262_PATH,

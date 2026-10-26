@@ -130,8 +130,8 @@ fn test_mathematical_expression_edge_cases() {
     test("Infinity + 1", ""); // eliminated as unused expression
     test("Infinity - Infinity", ""); // eliminated as unused expression
     test("Infinity / Infinity", ""); // eliminated as unused expression
-    test_same("Math.PI * 2"); // runtime value
-    test_same("Math.E + 1"); // runtime value
+    test("Math.PI * 2", ""); // eliminated as unused expression
+    test("Math.E + 1", ""); // eliminated as unused expression
     test("-0 + 0", ""); // eliminated as unused expression
     test("-0 * 1", ""); // eliminated as unused expression
     test("1 / -0", ""); // eliminated as unused expression

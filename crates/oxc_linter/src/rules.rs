@@ -267,6 +267,7 @@ pub(crate) mod typescript {
     pub mod no_extraneous_class;
     pub mod no_floating_promises;
     pub mod no_for_in_array;
+    pub mod no_generated_empty_object_type;
     pub mod no_implied_eval;
     pub mod no_import_type_side_effects;
     pub mod no_inferrable_types;
@@ -298,6 +299,7 @@ pub(crate) mod typescript {
     pub mod no_unsafe_assignment;
     pub mod no_unsafe_call;
     pub mod no_unsafe_declaration_merging;
+    pub mod no_unsafe_enum_assignment;
     pub mod no_unsafe_enum_comparison;
     pub mod no_unsafe_function_type;
     pub mod no_unsafe_member_access;

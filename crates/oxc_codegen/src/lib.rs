@@ -16,7 +16,7 @@ use oxc_span::{GetSpan, SourceType, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::{
     class::ClassId,
-    identifier::{is_identifier_part, is_identifier_part_ascii},
+    identifier::is_identifier_part_ascii,
     operator::{BinaryOperator, UnaryOperator, UpdateOperator},
     precedence::Precedence,
 };
@@ -46,6 +46,39 @@ pub use options::{CodegenOptions, CommentOptions, LegalComment};
 
 // Re-export `IndentChar` from `oxc_data_structures`
 pub use oxc_data_structures::code_buffer::IndentChar;
+
+#[repr(C, align(128))]
+struct Align128<T>(pub(crate) T);
+
+/// Lookup table for whether a byte which is last byte of output when printing an identifier
+/// is one that needs a space printed after it.
+///
+/// Used by [`print_space_before_identifier`].
+///
+/// Non-ASCII characters can appear in various places (e.g. in strings),
+/// but in such cases an ASCII character (e.g. `"`) is always printed after them.
+/// Only case in which last byte of output can be non-ASCII when printing an identifier
+/// or keyword (when [`print_space_before_identifier`] is called) is when what was
+/// last printed was an identifier ending with a non-ASCII character.
+/// So non-ASCII must be an identifier, and a space is required.
+///
+/// Non-ASCII characters in identifiers are extremely rare in real-world code,
+/// so only the first 128 bytes of this table will ever be read.
+/// Aligned on 128, so occupies 2 x 128-byte cache lines on Apple Silicon,
+/// and 2 pairs of 64-byte cache lines on x86.
+///
+/// [`print_space_before_identifier`]: Codegen::print_space_before_identifier
+static IDENT_BYTES: Align128<[bool; 256]> = {
+    let mut slots = [true; 256];
+
+    let mut i = 0u8;
+    while i < 128 {
+        slots[i as usize] = is_identifier_part_ascii(i as char);
+        i += 1;
+    }
+
+    Align128(slots)
+};
 
 /// Output from [`Codegen::build`]
 #[non_exhaustive]
@@ -100,7 +133,9 @@ pub struct Codegen<'a> {
 
     // states
     prev_op_end: usize,
-    prev_reg_exp_end: usize,
+    /// Output position after a regex or escaped identifier that requires a separating space
+    /// before a following identifier, even if its last byte is not an identifier character.
+    need_space_before_identifier: usize,
     need_space_before_dot: usize,
     print_next_indent_as_space: bool,
     binary_expr_stack: Stack<BinaryExpressionVisitor<'a>>,
@@ -148,6 +183,22 @@ pub struct Codegen<'a> {
     sourcemap_builder: Option<SourcemapBuilder<'a>>,
 }
 
+/// How [`Codegen::print_non_ascii_escaped`] escapes a non-ASCII character, by the grammar
+/// of the text being printed.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum NonAsciiEscape {
+    /// An IdentifierName.
+    Identifier,
+    /// A regular expression's pattern source (raw text; an escaping backslash is consumed;
+    /// astral characters become a surrogate pair, valid with or without the `u`/`v` flags).
+    RegExp,
+    /// An untagged template literal quasi (raw text; an escaping backslash is consumed, an
+    /// LS/PS line continuation is respelled with LF, `</script` is escaped).
+    TemplateRaw,
+    /// A directive's raw string text (as `TemplateRaw`, without the `</script` handling).
+    Directive,
+}
+
 impl Default for Codegen<'_> {
     fn default() -> Self {
         Self::new()
@@ -187,7 +238,7 @@ impl<'a> Codegen<'a> {
             class_stack: Stack::with_capacity(4),
             next_class_id: ClassId::from_usize(0),
             prev_op_end: 0,
-            prev_reg_exp_end: 0,
+            need_space_before_identifier: 0,
             prev_op: None,
             start_of_stmt: 0,
             start_of_arrow_expr: 0,
@@ -303,7 +354,195 @@ impl<'a> Codegen<'a> {
     /// Push str into the buffer
     #[inline]
     pub fn print_str(&mut self, s: &str) {
-        self.code.print_str(s);
+        self.code.print_str_short(s);
+    }
+
+    /// Print an identifier name (binding, reference, label, private name, property key),
+    /// `\u`-escaping non-ASCII characters when [CodegenOptions::ascii_only] is set.
+    #[inline]
+    pub fn print_name(&mut self, s: &str) {
+        if !self.options.ascii_only || s.is_ascii() {
+            self.code.print_str_short(s);
+        } else {
+            self.print_non_ascii_escaped(s, NonAsciiEscape::Identifier);
+            self.need_space_before_identifier = self.code.len();
+        }
+    }
+
+    /// Print `s`, replacing every non-ASCII character with an escape sequence according to
+    /// `mode` (see [NonAsciiEscape]). ASCII runs are copied through unchanged, except that
+    /// `</script` is escaped in [NonAsciiEscape::TemplateRaw] mode like everywhere else
+    /// template text is printed.
+    #[cold]
+    pub(crate) fn print_non_ascii_escaped(&mut self, s: &str, mode: NonAsciiEscape) {
+        let raw = mode != NonAsciiEscape::Identifier;
+        let mut start = 0;
+        for (i, ch) in s.char_indices() {
+            if ch.is_ascii() {
+                continue;
+            }
+            // In raw text (regex source, template raw) the character may itself be the
+            // target of a backslash: an identity escape `\é` in a non-`u` regex, a
+            // NonEscapeCharacter `\é` or a LineContinuation `\<LS>` in a template. Emitting
+            // `\uXXXX` after that backslash would produce `\\uXXXX` — an escaped backslash
+            // followed by literal text — so the backslash is consumed here instead: `\é` and
+            // `\u00E9` mean the same in both grammars.
+            let mut end = i;
+            let mut escaped = false;
+            if raw {
+                let backslashes =
+                    s.as_bytes()[start..i].iter().rev().take_while(|&&b| b == b'\\').count();
+                escaped = backslashes % 2 == 1;
+                if escaped {
+                    end = i - 1;
+                }
+            }
+            if start < end {
+                if mode == NonAsciiEscape::TemplateRaw {
+                    self.print_str_escaping_script_close_tag(&s[start..end]);
+                } else {
+                    self.code.print_str(&s[start..end]);
+                }
+            }
+            start = i + ch.len_utf8();
+            // A LineContinuation (`\` + LS/PS) stays a LineContinuation, spelled with LF: it
+            // contributes nothing to the cooked value either way, and keeping a continuation in
+            // place means the surrounding characters still lex the same (`$\<LS>{`, `\0\<LS>1`).
+            let line_continuation = escaped
+                && matches!(mode, NonAsciiEscape::TemplateRaw | NonAsciiEscape::Directive)
+                && matches!(ch, '\u{2028}' | '\u{2029}');
+            if line_continuation {
+                self.print_str("\\\n");
+                continue;
+            }
+            match mode {
+                NonAsciiEscape::RegExp => self.print_unicode_escape_utf16(ch),
+                NonAsciiEscape::Identifier
+                | NonAsciiEscape::TemplateRaw
+                | NonAsciiEscape::Directive => self.print_unicode_escape(ch),
+            }
+        }
+        if start < s.len() {
+            if mode == NonAsciiEscape::TemplateRaw {
+                self.print_str_escaping_script_close_tag(&s[start..]);
+            } else {
+                self.code.print_str(&s[start..]);
+            }
+        }
+    }
+
+    /// Print `ch` as `\uXXXX`, or as `\u{X…}` above the BMP (ES2015 code point escape:
+    /// valid in string literals, template literals and identifier names).
+    #[inline]
+    pub(crate) fn print_unicode_escape(&mut self, ch: char) {
+        if let Ok(unit) = u16::try_from(ch as u32) {
+            self.print_u16_escape(unit);
+        } else {
+            self.print_code_point_escape(ch as u32);
+        }
+    }
+
+    /// Print `ch` as `\uXXXX`, or as an escaped UTF-16 surrogate pair above the BMP. Used in
+    /// regular expression source, where `\u{…}` requires the `u`/`v` flag. Surrogate pair
+    /// escapes preserve the original character's matching behavior under the pattern's flags.
+    #[inline]
+    fn print_unicode_escape_utf16(&mut self, ch: char) {
+        let mut units = [0u16; 2];
+        for unit in ch.encode_utf16(&mut units) {
+            self.print_u16_escape(*unit);
+        }
+    }
+
+    #[inline]
+    fn print_code_point_escape(&mut self, cp: u32) {
+        const HEX: &[u8; 16] = b"0123456789ABCDEF";
+        self.print_str("\\u{");
+        let mut started = false;
+        for shift in (0..8).rev() {
+            let nibble = (cp >> (shift * 4)) & 0xF;
+            if nibble != 0 || started || shift == 0 {
+                started = true;
+                self.print_ascii_byte(HEX[nibble as usize]);
+            }
+        }
+        self.print_ascii_byte(b'}');
+    }
+
+    #[inline]
+    fn print_u16_escape(&mut self, unit: u16) {
+        const HEX: &[u8; 16] = b"0123456789ABCDEF";
+        let bytes = [
+            b'\\',
+            b'u',
+            HEX[(unit >> 12) as usize & 0xF],
+            HEX[(unit >> 8) as usize & 0xF],
+            HEX[(unit >> 4) as usize & 0xF],
+            HEX[unit as usize & 0xF],
+        ];
+        // SAFETY: all 6 bytes are ASCII
+        unsafe { self.code.print_bytes_unchecked(&bytes) };
+    }
+
+    /// Print a template literal quasi's raw text, removing redundant dollar escapes when minifying
+    /// untagged templates. Only untagged templates are escaped under
+    /// [CodegenOptions::ascii_only]: a tag function (e.g. `String.raw`) can observe the raw
+    /// text, which escaping would change.
+    #[inline]
+    pub(crate) fn print_template_quasi_raw(&mut self, raw: &str, tagged: bool) {
+        let mut start = 0;
+        if self.options.minify && !tagged {
+            let bytes = raw.as_bytes();
+            for (index, _) in raw.match_indices("\\$") {
+                // Keep escapes which prevent interpolation.
+                if bytes.get(index + 2) == Some(&b'{') {
+                    continue;
+                }
+
+                // Keep backslashes which are themselves escaped.
+                let preceding_backslashes =
+                    bytes[..index].iter().rev().take_while(|&&b| b == b'\\').count();
+                if preceding_backslashes % 2 != 0 {
+                    continue;
+                }
+
+                // The preserved chunk ends with an even backslash run, and the next starts
+                // with `$`, so printing them separately preserves escape handling.
+                self.print_template_quasi_raw_chunk(&raw[start..index], tagged);
+                start = index + 1;
+            }
+        }
+        self.print_template_quasi_raw_chunk(&raw[start..], tagged);
+    }
+
+    #[inline]
+    fn print_template_quasi_raw_chunk(&mut self, raw: &str, tagged: bool) {
+        if !self.options.ascii_only || tagged || raw.is_ascii() {
+            self.print_str_escaping_script_close_tag(raw);
+        } else {
+            self.print_non_ascii_escaped(raw, NonAsciiEscape::TemplateRaw);
+        }
+    }
+
+    /// Print a directive's raw string text, escaping non-ASCII characters under
+    /// [CodegenOptions::ascii_only].
+    #[inline]
+    pub(crate) fn print_directive_raw(&mut self, raw: &str) {
+        if !self.options.ascii_only || raw.is_ascii() {
+            self.code.print_str(raw);
+        } else {
+            self.print_non_ascii_escaped(raw, NonAsciiEscape::Directive);
+        }
+    }
+
+    /// Print a regular expression's pattern source, escaping non-ASCII characters under
+    /// [CodegenOptions::ascii_only].
+    #[inline]
+    pub(crate) fn print_regex_pattern(&mut self, pattern: &str) {
+        if !self.options.ascii_only || pattern.is_ascii() {
+            self.code.print_str(pattern);
+        } else {
+            self.print_non_ascii_escaped(pattern, NonAsciiEscape::RegExp);
+        }
     }
 
     /// Push str into the buffer, escaping `</script` to `<\/script`.
@@ -423,7 +662,7 @@ impl<'a> Codegen<'a> {
 
     /// Print a string as a JavaScript string literal.
     pub fn print_string(&mut self, s: &str) {
-        self.print_string_impl(s, false, false);
+        self.print_string_impl(s.into(), false);
     }
 }
 
@@ -477,29 +716,16 @@ impl<'a> Codegen<'a> {
     fn print_space_before_identifier(&mut self) {
         let Some(byte) = self.last_byte() else { return };
 
-        if self.prev_reg_exp_end != self.code.len() {
-            let is_identifier = if byte.is_ascii() {
-                // Fast path for ASCII (very common case)
-                is_identifier_part_ascii(byte as char)
-            } else {
-                is_identifier_part(self.last_char().unwrap())
-            };
-            if !is_identifier {
-                return;
-            }
+        let force_print_space = self.need_space_before_identifier == self.code.len();
+        let last_byte_is_ident = IDENT_BYTES.0[byte as usize];
+        if force_print_space || last_byte_is_ident {
+            self.print_hard_space();
         }
-
-        self.print_hard_space();
     }
 
     #[inline]
     fn last_byte(&self) -> Option<u8> {
         self.code.last_byte()
-    }
-
-    #[inline]
-    fn last_char(&self) -> Option<char> {
-        self.code.last_char()
     }
 
     #[inline]
@@ -821,6 +1047,15 @@ impl<'a> Codegen<'a> {
         }
     }
 
+    /// A component reference in JSX position (`<Foo/>`, `<Foo.Bar/>`). JSX names have no escape
+    /// syntax, so — unlike [`IdentifierReference`] elsewhere — the (possibly renamed) name is
+    /// printed verbatim even under `ascii_only`.
+    fn print_jsx_identifier_reference(&mut self, ident: &IdentifierReference<'_>) {
+        let name = self.get_identifier_reference_name(ident);
+        self.add_source_mapping_for_name(ident.span, name);
+        self.print_str(name);
+    }
+
     #[inline]
     fn get_identifier_reference_name(&self, reference: &IdentifierReference<'a>) -> &'a str {
         if let Some(scoping) = &self.scoping
@@ -951,14 +1186,27 @@ impl<'a> Codegen<'a> {
     /// give every node a trailing end-mapping. Synthesized nodes whose `span.end`
     /// has no source byte are skipped.
     #[cfg(feature = "sourcemap")]
+    #[inline]
     fn add_source_mapping_after_postfix(&mut self, span: Span, precedence: Precedence) {
+        #[inline(never)]
+        fn add_mapping(
+            sourcemap_builder: &mut SourcemapBuilder<'_>,
+            output: &[u8],
+            source_text: Option<&str>,
+            span: Span,
+        ) {
+            if !span.is_empty()
+                && matches!(output.last(), Some(b')' | b']'))
+                && source_text.is_none_or(|src| (span.end as usize) < src.len())
+            {
+                sourcemap_builder.add_source_mapping(output, span.end, None);
+            }
+        }
+
         if precedence == Precedence::Postfix
             && let Some(sourcemap_builder) = self.sourcemap_builder.as_mut()
-            && !span.is_empty()
-            && matches!(self.code.as_bytes().last(), Some(b')' | b']'))
-            && self.source_text.is_none_or(|src| (span.end as usize) < src.len())
         {
-            sourcemap_builder.add_source_mapping(self.code.as_bytes(), span.end, None);
+            add_mapping(sourcemap_builder, self.code.as_bytes(), self.source_text, span);
         }
     }
 

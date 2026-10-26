@@ -4,6 +4,43 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 4d8195c formatter_yaml: Keep a root plain scalar starting with a document marker verbatim (#27947) (leaysgur)
+- 52ee29d formatter_yaml: Never start col-0 line with document marker or BOM (#27818) (leaysgur)
+- 5b2acb0 formatter_core: Report error position releative to CRLF source (#27777) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+
+## [0.69.0] - 2026-09-21
+
+### 📚 Documentation
+
+- 09ecfa7 formatter_yaml: Unify DIVERGENCES reference (#26746) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
+### 🐛 Bug Fixes
+
+- d226e6f formatter_yaml: Bump oxc-yaml-parser to 0.0.6 (#26472) (leaysgur)
+- 8b41fc0 formatter_yaml: Clamp `tab_width: 0` to 1 to keep semantics (#26471) (leaysgur)
+- dea2ba0 formatter_core: Do not panic with align(0) (#26468) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 📚 Documentation
+
+- 4fabdcc formatter,formatter_css,formatter_graphql,formatter_yaml: Update DIVERGENCES.md (#26267) (leaysgur)
+
 ## [0.66.0] - 2026-08-31
 
 ### 🐛 Bug Fixes

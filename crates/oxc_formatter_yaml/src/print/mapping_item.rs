@@ -1,8 +1,7 @@
 use oxc_formatter_core::{
-    Buffer, Format, GroupId, MemoizeFormat, best_fitting,
+    Format, GroupId, MemoizeFormat, best_fitting,
     builders::{
-        align, expand_parent, group, hard_line_break, if_group_breaks, if_group_fits_on_line,
-        line_suffix, space,
+        align, expand_parent, group, hard_line_break, if_group_breaks, if_group_fits_on_line, space,
     },
     format_args, write,
 };
@@ -10,12 +9,15 @@ use oxc_yaml_parser::ast::{Content, MappingItem, Node};
 
 use crate::{
     comments::{
-        Gap, classify_gap, flush_leading_comments, pending_same_line_comment, write_single_comment,
-        write_trailing_same_line_comment,
+        FormatCommentBeforeContent, FormatLineCommentSuffix, Gap, classify_gap,
+        flush_leading_comments, pending_same_line_comment, write_trailing_same_line_comment,
     },
     context::YamlFormatContext,
     options::ProseWrap,
-    print::{YamlFormatter, column_of, format_with, to_span, write_node, write_node_or_suppressed},
+    print::{
+        YamlFormatter, column_of, format_with, source_starts_with_document_marker, to_span,
+        write_node, write_node_or_suppressed,
+    },
 };
 
 /// Where a mapping item lives; decides the empty-value layout
@@ -56,15 +58,16 @@ pub fn write_mapping_item<'a>(
         }
         if let Some(comment) = same_line_comment {
             f.context().comments().take_before(comment.span.end);
-            let content = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
-                write_single_comment(comment.span, f);
-            });
-            write!(f, [line_suffix(&content), expand_parent()]);
+            write!(f, FormatLineCommentSuffix::new(comment.span).with_expand_parent());
         }
         return;
     }
 
     let space_before_colon = key_content.is_some_and(|k| matches!(k.content, Content::Alias(_)));
+    // A root mapping key starting with a document marker keeps its `?`: without it the key starts a line at column 0
+    let key_starts_with_marker = in_flow == FlowParent::No
+        && f.context().collection_depth().get() == 1
+        && key_content.is_some_and(|k| source_starts_with_document_marker(k.span.start, f));
 
     if is_empty_value {
         if in_flow == FlowParent::Mapping {
@@ -83,6 +86,7 @@ pub fn write_mapping_item<'a>(
             && is_absolutely_single_line(key_content, f)
             && !parent_tag_is_set
             && !key_content_trailing_comment
+            && !key_starts_with_marker
         {
             write_key(item, f);
             if space_before_colon {
@@ -110,12 +114,14 @@ pub fn write_mapping_item<'a>(
     let value_start = value_node.span.start;
 
     // Force explicit key:
-    // the key isn't an inline node, or the source was already explicit with a comment between `?` and the key,
+    // the key isn't an inline node or starts with a document marker,
+    // or the source was already explicit with a comment between `?` and the key,
     // or between the key and `:` (an implicit `key:` with a comment above the value keeps the implicit form,
     // the comment becomes the value's leading comment instead).
     let explicit_comment_before_key = key.explicit
         && f.context().comments().peek().is_some_and(|c| c.span.end <= key_node.span.start);
     if !is_inline(key_content)
+        || key_starts_with_marker
         || explicit_comment_before_key
         || (key.explicit && has_own_line_comment_before_value(value_node, f))
     {
@@ -138,15 +144,14 @@ pub fn write_mapping_item<'a>(
                 }
                 f.context().comments().take_before(span.end);
                 write!(f, hard_line_break());
-                write_single_comment(span, f);
+                write!(f, FormatCommentBeforeContent::new(span));
             }
         });
         write!(f, align(2, &key_and_comments));
         write!(f, hard_line_break());
         let comments = f.context().comments().take_before(colon);
         for comment in comments {
-            write_single_comment(comment.span, f);
-            write!(f, hard_line_break());
+            write!(f, FormatCommentBeforeContent::new(comment.span));
         }
         write!(f, ": ");
         write!(f, align(2, &format_with(|f| write_value(item, f))));

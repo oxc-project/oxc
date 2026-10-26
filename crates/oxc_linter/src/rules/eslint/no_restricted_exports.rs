@@ -18,7 +18,7 @@ use oxc_span::Span;
 
 use crate::{
     AstNode,
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     utils::deserialize_regex_option,
 };
@@ -207,6 +207,17 @@ impl Rule for NoRestrictedExports {
                 c
             },
         )
+    }
+
+    fn should_run(&self, _ctx: &ContextHost) -> bool {
+        let defaults = &self.restrict_default_exports;
+        !self.restricted_named_exports.is_empty()
+            || self.restricted_named_exports_pattern.is_some()
+            || defaults.default_from
+            || defaults.direct
+            || defaults.named
+            || defaults.named_from
+            || defaults.namespace_from
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

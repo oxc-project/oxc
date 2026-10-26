@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{Buffer, Format};
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::print::semicolon::{
@@ -15,17 +15,13 @@ use crate::{
     write,
 };
 
-use crate::utils::suppressed::FormatSuppressedNode;
-
-use super::{
-    FormatWrite, variable_declaration_content_end, write_suppressed_statement_with_semicolon,
-};
+use super::FormatWrite;
 
 /// Whether the declaration is a `for`/`for-in`/`for-of` head,
 /// terminated by the head itself (the head-vs-body test is by span: a declaration can also be the body).
 /// Everywhere else the declaration terminates itself, including `export const ...`,
 /// whose `ExportDeclaration` prints no semicolon of its own (see its `FormatWrite` implementation).
-fn is_for_head_declaration(decl: &AstNode<'_, VariableDeclaration<'_>>) -> bool {
+fn is_for_head_declaration(decl: &AstNode<'_, '_, VariableDeclaration<'_>>) -> bool {
     match decl.parent() {
         AstNodes::ForStatement(stmt) => {
             stmt.init.as_ref().is_some_and(|init| init.span() == decl.span())
@@ -36,22 +32,7 @@ fn is_for_head_declaration(decl: &AstNode<'_, VariableDeclaration<'_>>) -> bool 
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
-    fn write_suppressed(&self, f: &mut JsFormatter<'_, 'a>) {
-        if is_for_head_declaration(self) {
-            // No terminator of its own to re-add:
-            // Prettier appends one anyway and corrupts the head (DIVERGENCES.md#suppressed-for-head-declaration)
-            FormatSuppressedNode(self.span()).fmt(f);
-        } else {
-            // The ignored range ends at the last declarator; the terminator is always the formatter's
-            write_suppressed_statement_with_semicolon(
-                self.span().start,
-                variable_declaration_content_end(self, f),
-                f,
-            );
-        }
-    }
-
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, VariableDeclaration<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let semicolon = !is_for_head_declaration(self);
 
@@ -77,7 +58,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
                     });
                 write!(
                     f,
-                    FormatContentWithSemicolon::new(declarations, content_end, self.span().end)
+                    FormatContentWithSemicolon::new(&declarations, content_end, self.span().end)
                 );
             } else {
                 write!(f, declarations);
@@ -87,7 +68,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclaration<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, VariableDeclarator<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, VariableDeclarator<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let length = self.len();
 
@@ -138,7 +119,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, VariableDe
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, VariableDeclarator<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, VariableDeclarator<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         AssignmentLike::VariableDeclarator(self).fmt(f);
     }

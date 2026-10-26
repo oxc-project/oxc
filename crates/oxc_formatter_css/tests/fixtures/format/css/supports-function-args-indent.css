@@ -1,0 +1,3 @@
+/* DIVERGENCES.md#supports-function-args-indent */
+@supports not (clip-path: shape(from center left, curve by 200px 0 with 50% -50% from start / 50% 0 from origin, close)) {
+}

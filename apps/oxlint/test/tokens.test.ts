@@ -96,6 +96,23 @@ const CallExpression = { range: [48, 54] } as Node;
 
 // https://github.com/eslint/eslint/blob/v9.39.1/tests/lib/languages/js/source-code/token-store.js#L62-L155
 describe("when calling getTokens", () => {
+  it("should strip HTML comment markers and preserve comment ranges", () => {
+    const source = "<!--a\n-->\n<!--\n//b\n/*c*/\nfoo;";
+    setup(source);
+    const program = { range: [0, source.length] } as Node;
+    const comments = getTokens(program, {
+      includeComments: true,
+      filter: (token) => token.type === "Line" || token.type === "Block",
+    });
+    expect(comments.map(({ type, value, range }) => ({ type, value, range }))).toEqual([
+      { type: "Line", value: "a", range: [0, 5] },
+      { type: "Line", value: "", range: [6, 9] },
+      { type: "Line", value: "", range: [10, 14] },
+      { type: "Line", value: "b", range: [15, 18] },
+      { type: "Block", value: "c", range: [19, 24] },
+    ]);
+  });
+
   it("should retrieve all tokens for root node", () => {
     expect(getTokens(Program).map((token) => token.value)).toEqual([
       "var",

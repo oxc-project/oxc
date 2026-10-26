@@ -16,7 +16,7 @@ use crate::{
     rule::Rule,
     utils::{
         KnownMemberExpressionProperty, ParsedExpectFnCall, ParsedJestFnCallNew, PossibleJestNode,
-        parse_jest_fn_call,
+        find_test_callback, parse_jest_fn_call,
     },
 };
 
@@ -187,6 +187,7 @@ declare_oxc_lint!(
     PreferCalledExactlyOnceWith,
     vitest,
     style,
+    recommended,
     dangerous_fix,
     version = "1.58.0",
     short_description = "It checks when a target is asserted with both `toHaveBeenCalledOnce` and `toHaveBeenCalledWith` instead of `toHaveBeenCalledExactlyOnceWith`.",
@@ -369,7 +370,7 @@ fn parse_call_expression_statement<'a>(
 
     match parse_jest_fn_call(call_expr, &PossibleJestNode { node, original: None }, ctx) {
         Some(ParsedJestFnCallNew::GeneralJest(_)) => {
-            let callback = get_test_callback(call_expr)?;
+            let callback = find_test_callback(call_expr)?;
 
             let body = get_callback_body(callback)?;
 
@@ -434,12 +435,6 @@ fn get_source_code_line_span(statement_span: Span, ctx: &LintContext<'_>) -> Spa
         .map_or(statement_span.start, |index| index + 1);
 
     Span::new(column_0_span_index, line_end)
-}
-
-fn get_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
-    call_expr.arguments.iter().rev().filter_map(|arg| arg.as_expression()).find(|expr| {
-        matches!(expr, Expression::FunctionExpression(_) | Expression::ArrowFunctionExpression(_))
-    })
 }
 
 fn get_callback_body<'a>(callback: &'a Expression<'a>) -> Option<&'a FunctionBody<'a>> {

@@ -15,9 +15,13 @@ use oxc_ast::{
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::{ContextHost, LintContext},
+    rule::Rule,
+};
 
 fn no_restricted_properties_diagnostic(property: &PropertyDetails, span: Span) -> OxcDiagnostic {
     let mut warn_text = match (&property.object, &property.property) {
@@ -258,6 +262,10 @@ impl Rule for NoRestrictedProperties {
         Ok(Self { restricted_properties: Box::new(PropertyDetailsList(properties)) })
     }
 
+    fn should_run(&self, _ctx: &ContextHost) -> bool {
+        !self.restricted_properties.0.is_empty()
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::StaticMemberExpression(expression) => {
@@ -401,7 +409,7 @@ impl NoRestrictedProperties {
 
 fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a, str>> {
     match expression {
-        Expression::StringLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
+        Expression::StringLiteral(literal) => literal.value.as_str().map(Cow::Borrowed),
         Expression::RegExpLiteral(literal) => literal.raw.map(|r| Cow::Borrowed(r.as_str())),
         Expression::NumericLiteral(literal) => Some(Cow::Owned(literal.value.to_string())),
         Expression::BigIntLiteral(literal) => Some(Cow::Borrowed(literal.value.as_str())),
@@ -409,8 +417,8 @@ fn expression_property_name<'a>(expression: &'a Expression<'a>) -> Option<Cow<'a
             Some(Cow::Borrowed(if literal.value { "true" } else { "false" }))
         }
         Expression::NullLiteral(_) => Some(Cow::Borrowed("null")),
-        Expression::TemplateLiteral(literal) if literal.quasis.len() == 1 => {
-            literal.quasis[0].value.cooked.map(|cooked| Cow::Borrowed(cooked.as_str()))
+        Expression::TemplateLiteral(literal) => {
+            literal.single_quasi().and_then(JSStr::as_str).map(Cow::Borrowed)
         }
         _ => None,
     }

@@ -1,7 +1,7 @@
 // Comments between try/catch/finally heads and their `{` stay outside the
 // braces (head-body comment policy), and comments before the `finally`
 // keyword never cross it.
-// Known divergence (js/try/try.js, js/comments/try.js): Prettier pulls
+// Known divergence (DIVERGENCES.md#head-body-comment-relocation; js/try/try.js, js/comments/try.js): Prettier pulls
 // line and own-line comments into the following block instead -- attachment
 // artifacts of the kind prettier is currently fixing elsewhere
 // (prettier#19894 family).

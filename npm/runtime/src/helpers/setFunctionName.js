@@ -1,6 +1,6 @@
 var _typeof = require("./typeof.js")["default"];
 function setFunctionName(e, t, n) {
-  "symbol" == _typeof(t) && (t = (t = t.description) ? "[" + t + "]" : "");
+  "symbol" == _typeof(t) && (t = void 0 === (t = t.description) ? "" : "[" + t + "]");
   try {
     Object.defineProperty(e, "name", {
       configurable: !0,

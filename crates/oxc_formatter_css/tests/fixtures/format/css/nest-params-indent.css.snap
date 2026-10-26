@@ -4,7 +4,7 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 ==================== Input ====================
 /*
  * `@nest` continuation lines indent at +2, how selector lists indent everywhere else.
- * DIVERGES from Prettier (DIVERGENCES.md "nest-params-indent"), which lands at
+ * DIVERGES from Prettier (DIVERGENCES.md#nest-params-indent), which lands at
  * +4 (comma-separated selectors) / +6 (wrapped selector parts),
  * an artifact of its generic at-rule params indent.
  */
@@ -31,7 +31,7 @@ a {
 ------------------
 /*
  * `@nest` continuation lines indent at +2, how selector lists indent everywhere else.
- * DIVERGES from Prettier (DIVERGENCES.md "nest-params-indent"), which lands at
+ * DIVERGES from Prettier (DIVERGENCES.md#nest-params-indent), which lands at
  * +4 (comma-separated selectors) / +6 (wrapped selector parts),
  * an artifact of its generic at-rule params indent.
  */
@@ -62,7 +62,7 @@ a {
 -------------------
 /*
  * `@nest` continuation lines indent at +2, how selector lists indent everywhere else.
- * DIVERGES from Prettier (DIVERGENCES.md "nest-params-indent"), which lands at
+ * DIVERGES from Prettier (DIVERGENCES.md#nest-params-indent), which lands at
  * +4 (comma-separated selectors) / +6 (wrapped selector parts),
  * an artifact of its generic at-rule params indent.
  */

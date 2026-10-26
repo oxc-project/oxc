@@ -1,9 +1,8 @@
 use oxc_ast::ast::{
-    BinaryExpression, Expression, IdentifierReference, TSEnumDeclaration, TSEnumMemberName,
-    UnaryExpression,
+    BinaryExpression, Expression, IdentifierReference, TSEnumDeclaration, UnaryExpression,
 };
 use oxc_ecmascript::{ToInt32, ToUint32};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, Ident, JSStr};
 use oxc_syntax::{
     constant_value::ConstantValue,
     number::ToJsString,
@@ -69,23 +68,71 @@ pub fn evaluate_enum_members(decl: &TSEnumDeclaration<'_>, scoping: &mut Scoping
             }
         };
 
-        if let Some(ref val) = value {
-            let member_name = match &member.id {
-                TSEnumMemberName::Identifier(ident) => Some(ident.name.as_str()),
-                TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => {
-                    Some(lit.value.as_str())
-                }
-                TSEnumMemberName::ComputedTemplateString(_) => None,
-            };
-            if let Some(name) = member_name
-                && let Some(symbol_id) = scoping.get_binding(scope_id, name.into())
-            {
-                scoping.set_enum_member_value(symbol_id, val.clone());
-            }
+        let member_name = member.id.static_name();
+        let member_symbol =
+            member_name.as_str().and_then(|name| scoping.get_binding(scope_id, name.into()));
+        let is_string = matches!(value, Some(ConstantValue::String(_)))
+            || (value.is_none()
+                && member.initializer.as_ref().is_some_and(|init| {
+                    is_string_expression(init, &EnumEvalCtx { scope_id, enum_symbol_id, scoping })
+                }));
+        if let Some(ref value) = value
+            && let Some(symbol_id) = member_symbol
+        {
+            scoping.set_enum_member_value(symbol_id, value.clone());
+        } else if is_string {
+            // Preserve the kind even when the constant or member name cannot convert to UTF-8.
+            scoping.add_string_enum_member(scope_id, member_name);
         }
 
         prev_value = value;
     }
+}
+
+/// Determine string kind once, alongside constant evaluation, before transformation rewrites references.
+fn is_string_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> bool {
+    match expr.without_parentheses() {
+        Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
+        Expression::BinaryExpression(expr) if expr.operator == BinaryOperator::Addition => {
+            is_string_expression(&expr.left, ctx) || is_string_expression(&expr.right, ctx)
+        }
+        Expression::Identifier(ident) => {
+            if let Some(scopes) =
+                ctx.enum_symbol_id.and_then(|id| ctx.scoping.get_enum_body_scopes(id))
+            {
+                for &scope_id in scopes {
+                    if scope_id != ctx.scope_id
+                        && ctx.scoping.get_binding(scope_id, ident.name).is_some()
+                    {
+                        return ctx.scoping.is_string_enum_member(scope_id, ident.name.into());
+                    }
+                }
+            }
+            resolve_identifier_symbol(ident, ctx).is_some_and(|symbol_id| {
+                ctx.scoping.is_string_enum_member(
+                    ctx.scoping.symbol_scope_id(symbol_id),
+                    ident.name.into(),
+                )
+            })
+        }
+        Expression::StaticMemberExpression(member) => {
+            is_string_member(&member.object, member.property.name.into(), ctx)
+        }
+        Expression::ComputedMemberExpression(member) => {
+            let Expression::StringLiteral(name) = &member.expression else { return false };
+            is_string_member(&member.object, name.value, ctx)
+        }
+        _ => false,
+    }
+}
+
+fn is_string_member(object: &Expression<'_>, name: JSStr<'_>, ctx: &EnumEvalCtx<'_>) -> bool {
+    let Expression::Identifier(ident) = object else { return false };
+    resolve_identifier_symbol(ident, ctx)
+        .and_then(|symbol_id| ctx.scoping.get_enum_body_scopes(symbol_id))
+        .is_some_and(|scopes| {
+            scopes.iter().any(|&scope| ctx.scoping.is_string_enum_member(scope, name))
+        })
 }
 
 fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<ConstantValue> {
@@ -98,16 +145,19 @@ fn evaluate_expression(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<C
         Expression::UnaryExpression(expr) => eval_unary_expression(expr, ctx),
         Expression::NumericLiteral(lit) => Some(ConstantValue::Number(lit.value)),
         Expression::StringLiteral(lit) => {
-            Some(ConstantValue::String(CompactStr::from(lit.value.as_str())))
+            Some(ConstantValue::String(CompactStr::from(lit.value.as_str()?)))
         }
         Expression::TemplateLiteral(lit) => {
             if let Some(quasi) = lit.single_quasi() {
-                Some(ConstantValue::String(CompactStr::from(quasi.as_str())))
+                Some(ConstantValue::String(CompactStr::from(quasi.as_str()?)))
             } else {
                 let mut value = String::new();
                 for (i, quasi) in lit.quasis.iter().enumerate() {
-                    let cooked_or_raw = quasi.value.cooked.as_ref().unwrap_or(&quasi.value.raw);
-                    value.push_str(cooked_or_raw.as_str());
+                    let cooked_or_raw = match quasi.value.cooked {
+                        Some(cooked) => cooked.as_str()?,
+                        None => quasi.value.raw.as_str(),
+                    };
+                    value.push_str(cooked_or_raw);
                     if i < lit.expressions.len() {
                         match evaluate_expression(&lit.expressions[i], ctx)? {
                             ConstantValue::String(s) => value.push_str(&s),
@@ -165,7 +215,7 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
         Expression::StaticMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(member_expr.property.name.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(member_expr.property.name, obj_symbol_id, ctx.scoping)
         }
         Expression::ComputedMemberExpression(member_expr) => {
             let Expression::Identifier(obj_ident) = &member_expr.object else { return None };
@@ -173,7 +223,11 @@ fn evaluate_ref(expr: &Expression<'_>, ctx: &EnumEvalCtx<'_>) -> Option<Constant
                 return None;
             };
             let obj_symbol_id = resolve_identifier_symbol(obj_ident, ctx)?;
-            find_in_enum_body_scopes(prop_lit.value.as_str(), obj_symbol_id, ctx.scoping)
+            find_in_enum_body_scopes(
+                Ident::from(prop_lit.value.as_str()?),
+                obj_symbol_id,
+                ctx.scoping,
+            )
         }
         _ => None,
     }
@@ -258,18 +312,13 @@ fn eval_unary_expression(
 ) -> Option<ConstantValue> {
     let value = evaluate_expression(&expr.argument, ctx)?;
 
-    // Babel uses JS coercion for unary on strings: `+"s"` → `"s"`, `-"s"` → NaN, `~"s"` → -1.
-    // TypeScript would leave these unevaluated (computed members). We align with Babel.
+    // TypeScript leaves unary operations on strings unevaluated (computed members),
+    // so we decline here too — folding them would need ToNumber coercion, and a
+    // folded value that does not match the runtime result is worse than none at
+    // all (`-"3"` must produce -3, `~"4"` -5).
     let value = match value {
         ConstantValue::Number(v) => v,
-        ConstantValue::String(_) => {
-            return match expr.operator {
-                UnaryOperator::UnaryPlus => Some(value),
-                UnaryOperator::UnaryNegation => Some(ConstantValue::Number(f64::NAN)),
-                UnaryOperator::BitwiseNot => Some(ConstantValue::Number(-1.0)),
-                _ => None,
-            };
-        }
+        ConstantValue::String(_) => return None,
     };
 
     match expr.operator {
@@ -289,13 +338,13 @@ fn eval_unary_expression(
 /// // The symbol `A` has two body scopes — this searches both.
 /// ```
 fn find_in_enum_body_scopes(
-    member_name: &str,
+    member_name: Ident<'_>,
     enum_symbol_id: SymbolId,
     scoping: &Scoping,
 ) -> Option<ConstantValue> {
     let body_scopes = scoping.get_enum_body_scopes(enum_symbol_id)?;
     for &body_scope in body_scopes {
-        if let Some(member_symbol_id) = scoping.get_binding(body_scope, member_name.into())
+        if let Some(member_symbol_id) = scoping.get_binding(body_scope, member_name)
             && let Some(value) = scoping.get_enum_member_value(member_symbol_id)
         {
             return Some(value.clone());

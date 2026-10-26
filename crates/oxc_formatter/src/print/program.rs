@@ -5,13 +5,13 @@ use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
 use crate::{
-    Buffer, Format,
+    Format,
     ast_nodes::AstNode,
     formatter::{prelude::*, trivia::FormatTrailingComments},
     ir_transform::sort_imports_chunk,
-    print::semicolon::OptionalSemicolon,
+    print::semicolon::{OptionalSemicolon, suppressed_statement_content_end},
     utils::{
-        export_declaration_span, export_default_declaration_span, is_dropped_statement,
+        is_dropped_statement, statement_span,
         string::{FormatLiteralStringToken, StringLiteralParentKind},
     },
     write,
@@ -19,8 +19,28 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Program<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // BOM: JS is the exception to the entries-own-the-strip rule.
+        // `format_program` is AST-in (the formatter never owns pre-parse text)
+        // and oxc_parser lexes U+FEFF as whitespace itself.
+        // Detect at print time, re-emit once at byte 0.
+        let has_bom = oxc_formatter_core::spec::split_bom(f.source_text().as_str()).0;
+
+        write!(
+            f,
+            [has_bom.then_some(text("\u{feff}")), FormatProgramBody(self), hard_line_break()]
+        );
+    }
+}
+
+/// A program without its envelope (BOM, trailing newline): the embedded root of [`crate::format_to_ir`],
+/// whose host owns the layout around it.
+pub struct FormatProgramBody<'a, 'b>(pub &'b AstNode<'b, 'a, Program<'a>>);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for FormatProgramBody<'a, '_> {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let program = self.0;
         let format_trailing_comments = format_with(|f| {
             write!(
                 f,
@@ -28,31 +48,24 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Program<'a>> {
             );
         });
 
-        // BOM: JS is the exception to the entries-own-the-strip rule — `format_program`
-        // is AST-in (the formatter never owns pre-parse text) and oxc_parser lexes
-        // U+FEFF as whitespace itself. Detect at print time, re-emit once at byte 0.
-        let has_bom = oxc_formatter_core::spec::split_bom(f.source_text().as_str()).0;
-
         write!(
             f,
             [
-                has_bom.then_some(text("\u{feff}")),
-                self.hashbang(),
-                self.directives(),
-                FormatStatementsWithImports(self.body()),
-                format_trailing_comments,
-                hard_line_break()
+                program.hashbang(),
+                program.directives(),
+                FormatStatementsWithImports(&program.body()),
+                format_trailing_comments
             ]
         );
     }
 }
 
 pub(super) struct FormatStatementsWithImports<'a, 'b>(
-    pub &'b AstNode<'a, ArenaVec<'a, Statement<'a>>>,
+    pub &'b AstNode<'b, 'a, ArenaVec<'a, Statement<'a>>>,
 );
 
-impl<'a> Deref for FormatStatementsWithImports<'a, '_> {
-    type Target = AstNode<'a, ArenaVec<'a, Statement<'a>>>;
+impl<'a, 'b> Deref for FormatStatementsWithImports<'a, 'b> {
+    type Target = AstNode<'b, 'a, ArenaVec<'a, Statement<'a>>>;
     fn deref(&self) -> &Self::Target {
         self.0
     }
@@ -70,25 +83,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
             // so they are excluded from the sortable run.
             if import_sort_enabled
                 && matches!(stmt.as_ref(), Statement::ImportDeclaration(_))
-                && !is_import_suppressed(stmt, join.fmt())
+                && !is_import_suppressed(&stmt, join.fmt())
             {
-                let next_stmt = format_import_decls_with_sort(stmt, &mut stmts_iter, &mut join);
+                let next_stmt = format_import_decls_with_sort(&stmt, &mut stmts_iter, &mut join);
                 match next_stmt {
                     Some(next_stmt) => stmt = next_stmt,
                     None => break,
                 }
             }
 
-            let span = match stmt.as_ref() {
-                // `@decorator export class A {}`: Start the span at the decorator
-                Statement::ExportDeclaration(export) => export_declaration_span(export),
-                Statement::ExportDefaultDeclaration(export) => {
-                    export_default_declaration_span(export)
-                }
-                _ => stmt.span(),
-            };
-
-            join.entry(span, stmt);
+            join.entry(statement_span(stmt.as_ref()), &stmt);
         }
     }
 }
@@ -108,10 +112,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatStatementsWithImports<'a, '_>
 // This function consumes the whole run, so is unlikely to be called more than once, even in files with lots of imports.
 #[cold]
 fn format_import_decls_with_sort<'a, 'iter>(
-    stmt: &AstNode<'a, Statement<'a>>,
-    stmts_iter: &mut impl Iterator<Item = &'iter AstNode<'a, Statement<'a>>>,
+    stmt: &AstNode<'_, 'a, Statement<'a>>,
+    stmts_iter: &mut impl Iterator<Item = AstNode<'iter, 'a, Statement<'a>>>,
     join: &mut JoinNodesBuilder<'_, '_, 'a, Line>,
-) -> Option<&'iter AstNode<'a, Statement<'a>>> {
+) -> Option<AstNode<'iter, 'a, Statement<'a>>> {
     // Output inter-statement separator separately, so `chunk_start` points
     // to start of IR for the `ImportDeclaration` itself
     join.separator_no_entry(stmt.span());
@@ -127,11 +131,11 @@ fn format_import_decls_with_sort<'a, 'iter>(
     let mut next_stmt = None;
     for stmt in stmts_iter {
         if let Statement::ImportDeclaration(decl) = stmt.as_ref() {
-            if is_import_suppressed(stmt, join.fmt()) {
+            if is_import_suppressed(&stmt, join.fmt()) {
                 next_stmt = Some(stmt);
                 break;
             }
-            join.entry(decl.span, stmt);
+            join.entry(decl.span, &stmt);
             count += 1;
         } else {
             next_stmt = Some(stmt);
@@ -149,13 +153,12 @@ fn format_import_decls_with_sort<'a, 'iter>(
 
 /// An `ImportDeclaration` is suppressed if it has a leading or trailing suppression comment,
 /// which causes it to be emitted verbatim and act as a partition boundary, excluding it from the sortable run.
-fn is_import_suppressed(stmt: &AstNode<'_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
-    let span = stmt.span();
-    let comments = f.comments();
-    comments.is_suppressed(span.start) || comments.has_trailing_suppression_comment(span.end)
+fn is_import_suppressed(stmt: &AstNode<'_, '_, Statement<'_>>, f: &JsFormatter<'_, '_>) -> bool {
+    f.comments()
+        .is_node_suppressed(stmt.span(), || suppressed_statement_content_end(stmt.as_ref(), f))
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Directive<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let Some(last_directive) = self.last() else {
             // No directives, no extra new line
@@ -192,7 +195,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, Directive<
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Directive<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(
             f,
@@ -209,7 +212,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, Directive<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, Hashbang<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, Hashbang<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, ["#!", text(self.value().as_str().trim_end())]);
 

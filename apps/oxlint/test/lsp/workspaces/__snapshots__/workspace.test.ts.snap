@@ -1,6 +1,6 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`LSP multi workspace linting > basic linting > should handle { path: 'config-default-both/workspace1/test.ts', languageId: 'typescript' } 1`] = `
+exports[`LSP multi workspace linting > basic linting > should handle config-default-both 1`] = `
 "--- FILE -----------
 config-default-both/workspace1/test.ts
 --- Diagnostics ---------
@@ -18,7 +18,7 @@ help: Remove the debugger statement
 --------------------"
 `;
 
-exports[`LSP multi workspace linting > basic linting > should handle { path: 'default-both/workspace1/test.ts', languageId: 'typescript' } 1`] = `
+exports[`LSP multi workspace linting > basic linting > should handle default-both 1`] = `
 "--- FILE -----------
 default-both/workspace1/test.ts
 --- Diagnostics ---------
@@ -36,7 +36,7 @@ help: Remove the debugger statement
 --------------------"
 `;
 
-exports[`LSP multi workspace linting > basic linting > should handle { path: 'different-js-plugin/workspace1/test.js', languageId: 'javascript' } 1`] = `
+exports[`LSP multi workspace linting > basic linting > should handle different-js-plugin 1`] = `
 "--- FILE -----------
 different-js-plugin/workspace1/test.js
 --- Diagnostics ---------
@@ -54,7 +54,7 @@ different-js-plugin/workspace2/test.js
 --------------------"
 `;
 
-exports[`LSP multi workspace linting > basic linting > should handle { path: 'different-severity/workspace1/test.ts', languageId: 'typescript' } 1`] = `
+exports[`LSP multi workspace linting > basic linting > should handle different-severity 1`] = `
 "--- FILE -----------
 different-severity/workspace1/test.ts
 --- Diagnostics ---------

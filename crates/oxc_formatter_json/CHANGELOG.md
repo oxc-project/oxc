@@ -4,6 +4,32 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 8b02e90 formatter_json: Reject invalid JSON instead of dropping them (#27785) (leaysgur)
+- 6fe4c1b formatter: Treat lone CR in JSX text and argument blank lines (#27780) (leaysgur)
+- c78e80e formatter_core: Report parse error positions relative to the BOM-headed source (#27776) (leaysgur)
+- 99077ef formatter_json: Reject unary expressions other than signed numbers (#27728) (leaysgur)
+- 22cd4cd formatter_json: Handle holey array and comments (#27727) (leaysgur)
+
+### ⚡ Performance
+
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+
+## [0.72.0] - 2026-10-05
+
+### 🐛 Bug Fixes
+
+- fd4ddce formatter_json: Flatten block comment only array|object (#27274) (leaysgur)
+
+## [0.68.0] - 2026-09-14
+
+### 🚀 Features
+
+- dc45cc3 formatter_test: Test Prettier dynamic snippet tests (#26469) (leaysgur)
+
 ## [0.63.0] - 2026-08-10
 
 ### 🐛 Bug Fixes

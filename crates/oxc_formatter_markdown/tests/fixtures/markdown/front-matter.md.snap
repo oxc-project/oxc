@@ -1,0 +1,32 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+---
+title:   Home
+---
+
+
+
+#  Heading
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+---
+title:   Home
+---
+
+# Heading
+
+-------------------
+{ printWidth: 100 }
+-------------------
+---
+title:   Home
+---
+
+# Heading
+
+===================== End =====================

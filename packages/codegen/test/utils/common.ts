@@ -25,7 +25,10 @@ export const ROOT_DIR_PATH = pathJoin(import.meta.dirname, "../../../..");
 
 // The fixture suites, all of them git submodules of this repo. `just submodules` clones them.
 export const TEST262_DIR_PATH = pathJoin(ROOT_DIR_PATH, "tasks/coverage/test262/test");
-export const TS_CASES_DIR_PATH = pathJoin(ROOT_DIR_PATH, "tasks/coverage/typescript/tests/cases");
+export const TS_CASES_DIR_PATH = pathJoin(
+  ROOT_DIR_PATH,
+  "tasks/coverage/typescript/tsc/testdata/tests/cases",
+);
 export const JSX_DIR_PATH = pathJoin(
   ROOT_DIR_PATH,
   "tasks/coverage/estree-conformance/tests/acorn-jsx/pass",
@@ -47,6 +50,8 @@ const PRESERVE_PARENS_MODES = [false, true];
 
 /**
  * Split source text on every ECMAScript line terminator and retain each line's UTF-16 start offset.
+ *
+ * @param sourceText - Source text
  */
 export function getEcmaScriptLineTable(sourceText: string): {
   lines: string[];

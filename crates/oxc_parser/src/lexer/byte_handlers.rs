@@ -1,3 +1,4 @@
+use oxc_ast::CommentKind;
 use oxc_data_structures::assert_unchecked;
 
 use crate::{
@@ -304,7 +305,7 @@ ascii_byte_handler!(COM(lexer) {
 // -
 ascii_byte_handler!(MIN(lexer) {
     lexer.consume_char();
-    lexer.read_minus().unwrap_or_else(|| lexer.skip_single_line_comment())
+    lexer.read_minus().unwrap_or_else(|| lexer.skip_single_line_comment(CommentKind::HtmlClose))
 });
 
 // .
@@ -319,7 +320,7 @@ ascii_byte_handler!(SLH(lexer) {
     match lexer.peek_byte() {
         Some(b'/') => {
             lexer.consume_char();
-            lexer.skip_single_line_comment()
+            lexer.skip_single_line_comment(CommentKind::Line)
         }
         Some(b'*') => {
             lexer.consume_char();
@@ -363,7 +364,7 @@ ascii_byte_handler!(SEM(lexer) {
 // <
 ascii_byte_handler!(LSS(lexer) {
     lexer.consume_char();
-    lexer.read_left_angle().unwrap_or_else(|| lexer.skip_single_line_comment())
+    lexer.read_left_angle().unwrap_or_else(|| lexer.skip_single_line_comment(CommentKind::HtmlOpen))
 });
 
 // =

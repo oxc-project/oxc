@@ -331,12 +331,13 @@ impl<'a> TypeScriptEnum {
         for member in members.take_in(ctx) {
             let member_span = member.span;
             let member_name = member.id.static_name();
+            let member_symbol_id = member_name
+                .as_str()
+                .and_then(|name| ctx.scoping().get_binding(enum_scope_id, name.into()));
 
             let init = if let Some(mut initializer) = member.initializer {
                 // Look up the pre-computed constant value from Scoping
-                let constant_value: Option<ConstantValue> = ctx
-                    .scoping()
-                    .get_binding(enum_scope_id, member_name.as_str().into())
+                let constant_value: Option<ConstantValue> = member_symbol_id
                     .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                     .cloned();
 
@@ -390,7 +391,8 @@ impl<'a> TypeScriptEnum {
                 Self::get_number_literal_expression(0.0, ctx)
             };
 
-            let is_str = init.is_string_literal();
+            let is_str = ctx.scoping().is_string_enum_member(enum_scope_id, member_name)
+                || Self::is_syntactically_string(&init);
 
             // Foo["x"] = init
             let member_expr = {
@@ -480,13 +482,40 @@ impl<'a> TypeScriptEnum {
                 .get_binding(scope_id, ident.name.as_str().into())
                 .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                 .is_some(),
-            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => ctx
-                .scoping()
-                .get_binding(scope_id, lit.value.as_str().into())
+            TSEnumMemberName::String(lit) | TSEnumMemberName::ComputedString(lit) => lit
+                .value
+                .as_str()
+                .and_then(|name| ctx.scoping().get_binding(scope_id, name.into()))
                 .and_then(|sym_id| ctx.scoping().get_enum_member_value(sym_id))
                 .is_some(),
             TSEnumMemberName::ComputedTemplateString(_) => false,
         })
+    }
+
+    /// Whether an enum member initializer is a string by syntax alone.
+    ///
+    /// A string member gets no reverse mapping. tsc decides this without type
+    /// information: string literals, template literals, and `+` with a string on
+    /// either side are strings, looking through parentheses and type wrappers.
+    /// Anything else, including `typeof x`, keeps the reverse mapping.
+    ///
+    /// This also covers initializers the constant evaluator declined. Emitting a
+    /// reverse mapping for those wrote a bogus key that could overwrite another
+    /// member.
+    ///
+    /// See `isSyntacticallyString` in TypeScript's checker. TypeScript looks
+    /// through parentheses only, so an `as`, `satisfies`, non-null, or angle
+    /// bracket assertion around a string still gets a reverse mapping.
+    fn is_syntactically_string(expr: &Expression<'a>) -> bool {
+        match expr.without_parentheses() {
+            Expression::StringLiteral(_) | Expression::TemplateLiteral(_) => true,
+            Expression::BinaryExpression(binary) => {
+                binary.operator == BinaryOperator::Addition
+                    && (Self::is_syntactically_string(&binary.left)
+                        || Self::is_syntactically_string(&binary.right))
+            }
+            _ => false,
+        }
     }
 
     fn get_number_literal_expression(value: f64, ctx: &TraverseCtx<'a>) -> Expression<'a> {
@@ -533,7 +562,7 @@ impl<'a> TypeScriptEnum {
     ) -> Option<(ConstantValue, ReferenceId)> {
         let Expression::Identifier(ident) = &expr.object else { return None };
         let Expression::StringLiteral(prop) = &expr.expression else { return None };
-        self.resolve_enum_member(ident, prop.value.as_str(), ctx)
+        self.resolve_enum_member(ident, prop.value.as_str()?, ctx)
     }
 
     /// Resolve an enum member value by identifier and property name.

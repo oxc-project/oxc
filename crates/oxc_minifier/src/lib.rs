@@ -1,6 +1,7 @@
 //! # Oxc Minifier
 //!
-//! High-performance JavaScript/TypeScript minifier focused on maximum compression.
+//! High-performance JavaScript minifier focused on maximum compression.
+//! Transform TypeScript, TSX, and JSX to JavaScript before minification.
 //!
 //! ## Overview
 //!
@@ -11,9 +12,10 @@
 //!
 //! ## Features
 //!
-//! - **Maximum Compression**: Fixed-point iteration ensures all optimization opportunities are found
-//! - **Comprehensive Optimizations**: 17+ transformation passes and growing
-//! - **100% Correct**: Extensive testing with test262, Babel, and TypeScript test suites
+//! - **Compression**: Repeated passes expose further optimization opportunities
+//! - **Comprehensive Optimizations**: Constant folding, dead code removal, and syntax simplification
+//! - **Correctness Testing**: Selected test262/Babel idempotency checks and Node.js runtime tests
+//!   under the [documented assumptions](https://github.com/oxc-project/oxc/blob/main/crates/oxc_minifier/docs/ASSUMPTIONS.md)
 //! - **Fast**: Efficient algorithms and arena allocation for performance
 //!
 //! ## Example
@@ -149,10 +151,10 @@ impl<'a> Minifier {
         // Run property mangling first because compression can change which strings are property
         // keys.
         let property_mangle_cache = mangle_properties.map(|options| {
-            let mut mangler = PropertyMangler::new(options);
+            let mut mangler = PropertyMangler::new_in(options, allocator);
             mangler.collect(program);
             mangler.assign();
-            mangler.rewrite(program, allocator);
+            mangler.rewrite(program);
             mangler.into_cache()
         });
 

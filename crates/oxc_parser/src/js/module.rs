@@ -5,7 +5,7 @@ use rustc_hash::FxHashMap;
 
 use super::FunctionKind;
 use crate::{
-    ParserConfig as Config, ParserImpl, diagnostics,
+    ParserConfig as Config, ParserImpl, StatementContext, diagnostics,
     lexer::Kind,
     modifiers::{Modifier, ModifierKind, Modifiers},
 };
@@ -103,14 +103,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else if self.is_ts && token_after_import.kind() == Kind::Type {
             // `import type ...`
 
-            if token_after_import.escaped() {
-                self.error(diagnostics::escaped_keyword(token_after_import.span()));
-            }
-
             let kind = self.cur_kind();
             if kind == Kind::LCurly || kind == Kind::Star {
                 // `import type { ...`
                 // `import type * ...`
+                if token_after_import.escaped() {
+                    self.error(diagnostics::escaped_keyword(token_after_import.span()));
+                }
                 import_kind = ImportOrExportKind::Type;
                 has_default_specifier = false;
             } else if kind.is_binding_identifier() {
@@ -119,10 +118,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let identifier_after_type = self.parse_binding_identifier();
                 if token.kind() == Kind::From && self.at(Kind::Str) {
                     // `import type from 'source'`
+                    if token.escaped() {
+                        self.error(diagnostics::escaped_keyword(token.span()));
+                    }
                     has_default_specifier = true;
                     import_kind = ImportOrExportKind::Value;
                     should_parse_specifiers = false;
                 } else {
+                    if token_after_import.escaped() {
+                        self.error(diagnostics::escaped_keyword(token_after_import.span()));
+                    }
                     identifier_after_import = Some(identifier_after_type);
                     import_kind = ImportOrExportKind::Type;
 
@@ -169,9 +174,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         } else if token_after_import.kind() == Kind::Source {
             if self.cur_kind().is_binding_identifier() {
                 // `import source something ...`
-                let kind = self.cur_kind();
+                let token = self.cur_token();
                 let identifier_after_source = self.parse_binding_identifier();
-                if kind == Kind::From {
+                if token.kind() == Kind::From {
                     // `import source from ...`
                     if self.at(Kind::From) {
                         // `import source from from ...`
@@ -180,6 +185,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         has_default_specifier = true;
                     } else if self.at(Kind::Str) {
                         // `import source from 'source'`
+                        if token.escaped() {
+                            self.error(diagnostics::escaped_keyword(token.span()));
+                        }
                         has_default_specifier = true;
                         should_parse_specifiers = false;
                     }
@@ -206,6 +214,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 has_default_specifier = false;
             }
             // else: `import source from 'source'` - source is the binding name, no phase
+        }
+
+        // The first identifier is a keyword only after resolving the import phase.
+        if phase.is_some() && token_after_import.escaped() {
+            self.error(diagnostics::escaped_keyword(token_after_import.span()));
         }
 
         let specifiers = if self.at(Kind::Str) {
@@ -307,17 +320,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     _ => return self.unexpected(),
                 }
             }
-
-            // If the default specifiers name was `type`, and it was not a type import
-            // then skip the `from` specifier expect. This is specifically to support an import
-            // like: `import type from 'source'`
-            if self.is_ts
-                && import_kind == ImportOrExportKind::Value
-                && specifiers.len() == 1
-                && specifiers[0].name() == "type"
-            {
-                return specifiers;
-            }
         } else if self.at(Kind::Star) {
             // import * as name from "module-name";
             let specifier = self.parse_import_namespace_specifier();
@@ -386,10 +388,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let mut keys = FxHashMap::default();
         for e in &with_entries {
-            let key = e.key.as_arena_str().as_str();
+            let key = e.key.as_js_str();
             let span = e.key.span();
             if let Some(old_span) = keys.insert(key, span) {
-                self.error(diagnostics::redeclaration(key, old_span, span));
+                let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
+                self.error(diagnostics::redeclaration(name, old_span, span));
             }
         }
 
@@ -439,13 +442,34 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         TSNamespaceExportDeclaration::boxed(self.end_span(start), id, self)
     }
 
+    /// Check the parse goal and placement of the `import` / `export` declaration at the current token.
+    pub(crate) fn check_module_declaration(&mut self, stmt_ctx: StatementContext) {
+        // TypeScript cannot tell script from module by syntax,
+        // and permits module declarations in namespaces and ambient modules.
+        if self.is_ts {
+            return;
+        }
+        let statement = if self.at(Kind::Import) { "import statement" } else { "export statement" };
+        let span = self.cur_token().span();
+        if self.source_type.is_script() || self.source_type.is_commonjs() {
+            self.error(diagnostics::module_code(statement, span));
+        } else if stmt_ctx != StatementContext::Program {
+            self.error(diagnostics::top_level(statement, span));
+        }
+    }
+
     /// [Exports](https://tc39.es/ecma262/#sec-exports)
     pub(crate) fn parse_export_declaration(
         &mut self,
         start: u32,
         mut decorators: ArenaVec<'a, Decorator<'a>>,
+        stmt_ctx: StatementContext,
     ) -> Statement<'a> {
+        self.check_module_declaration(stmt_ctx);
         self.bump_any(); // bump `export`
+        // export /* @__NO_SIDE_EFFECTS__ */ ...
+        let no_side_effects_comments =
+            self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // `export` is unambiguously module syntax (ECMA-262 §16.2.3): commit to the
         // Module goal so the declaration parses under `Await` on the first pass and
         // isn't reparsed. e.g. `@foo export default class C { x = await + 1 }`
@@ -536,7 +560,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 )
             }
         };
-        Statement::from(decl)
+        let mut stmt = Statement::from(decl);
+        if let Some(comments) = no_side_effects_comments {
+            self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
+        }
+        stmt
     }
 
     // export NamedExports ;
@@ -560,7 +588,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             })
         });
         self.expect(Kind::RCurly);
-        let (source, with_clause) = if self.eat(Kind::From) && self.cur_kind().is_literal() {
+        let (source, with_clause) = if self.eat(Kind::From) {
             let source = self.parse_literal_string();
             (Some(source), self.parse_import_attributes())
         } else {
@@ -868,11 +896,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         can_parse_as_keyword = false;
                     } else {
                         // { type as as }
-                        property_name = Some(ModuleExportName::new_identifier_name(
-                            type_or_name_token.span(),
-                            self.ident(self.token_source(&type_or_name_token)),
-                            self,
-                        ));
+                        property_name = Some(name);
                         name = ModuleExportName::new_identifier_name(
                             second_as.span,
                             second_as.name,
@@ -908,7 +932,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             name = self.parse_module_export_name();
         }
 
-        if self.is_ts && type_or_name_token_kind == Kind::Type && type_or_name_token.escaped() {
+        if kind == ImportOrExportKind::Type && type_or_name_token.escaped() {
             self.error(diagnostics::escaped_keyword(type_or_name_token.span()));
         }
 
@@ -930,8 +954,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     ));
                 }
 
-                let local =
-                    BindingIdentifier::new(name.span(), self.ident(name.name().as_str()), self);
+                let local_name = name.name().as_str();
+                let local = BindingIdentifier::new(name.span(), self.ident(local_name), self);
                 let imported = property_name.unwrap_or(name);
                 ImportOrExportSpecifier::Import(ImportSpecifier::new(
                     self.end_span(specifier_start),
@@ -973,8 +997,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 let literal = self.parse_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
+                // The error is fatal so that no AST ever carries an ill-formed export name.
                 if !literal.is_string_well_formed_unicode() {
-                    self.error(diagnostics::export_lone_surrogate(literal.span));
+                    let error = diagnostics::export_lone_surrogate(literal.span);
+                    return self.fatal_error(error);
                 }
                 ModuleExportName::StringLiteral(literal)
             }
@@ -994,13 +1020,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModuleExportName::new_identifier_reference(ident.span, ident.name, self)
             }
             ModuleExportName::StringLiteral(literal) => {
-                ModuleExportName::new_string_literal_with_lone_surrogates(
-                    literal.span,
-                    literal.value,
-                    literal.raw,
-                    literal.lone_surrogates,
-                    self,
-                )
+                ModuleExportName::new_string_literal(literal.span, literal.value, literal.raw, self)
             }
         }
     }

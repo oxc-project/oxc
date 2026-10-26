@@ -1,13 +1,12 @@
-use oxc_allocator::{ArenaStringBuilder, ArenaVec};
+use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    DispatchRequest, DispatchResponse, FormatElement, IndentWidth, InputKind,
-    format_element::{LineMode, TextWidth},
+    FormatElement, dispatch_fragment_ir, map_text_in_ir, push_text_with_literal_lines,
 };
 
 use crate::{
     ast_nodes::AstNode,
-    embed_context::HtmlEmbedMeta,
+    embed_context::HtmlInJsTemplate,
     format_args,
     formatter::prelude::*,
     print::template::{
@@ -30,11 +29,11 @@ const COUNTER: &str = "0";
 ///
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
     is_angular: bool,
 ) -> bool {
-    let embedded_language = if is_angular { "angular" } else { "html" };
+    let embedded_language = if is_angular { "angular-html" } else { "html" };
     let quasis = &quasi.quasis;
     let expressions: Vec<_> = quasi.expressions().iter().collect();
 
@@ -43,7 +42,7 @@ pub(super) fn format_html_doc<'a>(
         let Some(cooked) = quasis[0].value.cooked.as_ref() else {
             return false;
         };
-        let cooked = cooked.as_str();
+        let Some(cooked) = cooked.as_str() else { return false };
 
         if cooked.trim().is_empty() {
             write!(f, ["``"]);
@@ -52,42 +51,19 @@ pub(super) fn format_html_doc<'a>(
 
         let has_leading_ws = cooked.starts_with(|c: char| c.is_ascii_whitespace());
         let has_trailing_ws = cooked.ends_with(|c: char| c.is_ascii_whitespace());
+        let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
 
-        let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
-            language: embedded_language,
-            text: cooked,
-            input_kind: InputKind::Fragment,
-            parent_context: None,
-        }) else {
+        let context = html_in_js_template(has_leading_ws, has_trailing_ws, ws_ignore);
+        let Some(ir) = dispatch_fragment_ir(f, embedded_language, cooked, Some(&context)) else {
             return false;
         };
-        let Some(html_has_multiple_root_elements) = result
-            .child_context
-            .as_ref()
-            .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
-            .map(|meta| meta.has_multiple_root_elements)
-        else {
-            return false;
-        };
-        // Remap is a no-op today (the Prettier Doc path never carries classes),
-        // but the boundary contract is "merge at every embed site".
-        // A Rust HTML formatter collecting `class` attributes will rely on this.
-        let ir = result.into_doc(f.context_mut());
 
         // Re-escape template chars in `Text` runs:
         // the IR is reinserted into a JS template literal built from `.cooked` values.
-        let ir = super::escape_template_chars_in_ir(&ir, f);
+        let ir = super::escape_template_chars_in_ir(ir, f);
 
         let content = format_once(|f| f.write_elements(ir));
-        let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
-        write_html_template(
-            f,
-            &content,
-            has_leading_ws,
-            has_trailing_ws,
-            html_has_multiple_root_elements.unwrap_or(true),
-            ws_ignore,
-        );
+        write_html_template(f, &content, has_leading_ws, has_trailing_ws, ws_ignore);
         return true;
     }
 
@@ -107,34 +83,21 @@ pub(super) fn format_html_doc<'a>(
             let Some(cooked) = quasi_elem.value.cooked.as_ref() else {
                 return false;
             };
-            sb.push_str(cooked.as_str());
+            let Some(cooked) = cooked.as_str() else { return false };
+            sb.push_str(cooked);
         }
         sb.into_str()
     };
 
     let has_leading_ws = joined.starts_with(|c: char| c.is_ascii_whitespace());
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
+    let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
 
     // Phase 2: Format via the dispatcher (IR path)
-    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
-        language: embedded_language,
-        text: joined,
-        input_kind: InputKind::Fragment,
-        parent_context: None,
-    }) else {
+    let context = html_in_js_template(has_leading_ws, has_trailing_ws, ws_ignore);
+    let Some(ir) = dispatch_fragment_ir(f, embedded_language, joined, Some(&context)) else {
         return false;
     };
-
-    let Some(html_has_multiple_root_elements) = result
-        .child_context
-        .as_ref()
-        .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
-        .map(|meta| meta.has_multiple_root_elements)
-    else {
-        return false;
-    };
-    // See the Phase 0 note: remap is no-op today, load-bearing once `oxc_formatter_html` lands
-    let ir = result.into_doc(f.context_mut());
 
     // Validate before formatting any expression.
     // Formatting consumes comment state,
@@ -162,7 +125,7 @@ pub(super) fn format_html_doc<'a>(
     // and substituting placeholders inside every `BestFitting` variant.
     // Escaping cannot alter placeholders: the sentinel is ASCII word characters only.
     let indent_width = f.options().indent_width;
-    let ir = super::map_text_in_ir(&ir, f, &mut |text, out| {
+    let ir = map_text_in_ir(ir, allocator, &mut |text, out| {
         let escaped = super::escape_template_chars(text, allocator);
         let text = escaped.unwrap_or(text);
         if text.contains(PLACEHOLDER_PREFIX) {
@@ -170,7 +133,7 @@ pub(super) fn format_html_doc<'a>(
             if parts.len() > 1 {
                 for (index, part) in parts.iter().enumerate() {
                     if index.is_multiple_of(2) {
-                        push_text_with_line_breaks(out, part, indent_width);
+                        push_text_with_literal_lines(out, part, indent_width);
                     } else {
                         let expression = part
                             .parse::<usize>()
@@ -187,21 +150,21 @@ pub(super) fn format_html_doc<'a>(
         }
         // No placeholder to substitute; push the escaped text if escaping changed it
         let Some(text) = escaped else { return false };
-        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        out.push(FormatElement::text(text, indent_width));
         true
     });
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| f.write_elements(ir));
-
-    let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
-    write_html_template(
-        f,
-        &format_content,
-        has_leading_ws,
-        has_trailing_ws,
-        html_has_multiple_root_elements.unwrap_or(true),
-        ws_ignore,
-    );
+    write_html_template(f, &format_content, has_leading_ws, has_trailing_ws, ws_ignore);
     true
+}
+
+/// The child indents its content only where the backticks hug it (the last case of [`write_html_template`]).
+fn html_in_js_template(
+    has_leading_ws: bool,
+    has_trailing_ws: bool,
+    ws_ignore: bool,
+) -> HtmlInJsTemplate {
+    HtmlInJsTemplate { indent_multiple_roots: !(ws_ignore || has_leading_ws && has_trailing_ws) }
 }
 
 // ---
@@ -217,12 +180,12 @@ pub(super) fn format_html_doc<'a>(
 ///   - Otherwise: `group(["`", leadingWS?, maybeIndent(group(content)), trailingWS?, "`"])`
 ///     → content hugs the backtick directly
 ///     → multiple root elements wraps with `indent`, single does not
+///     → the child does the `indent` on request ([`HtmlInJsTemplate`])
 fn write_html_template<'a>(
     f: &mut JsFormatter<'_, 'a>,
     content: &impl Format<'a, JsFormatContext<'a>>,
     has_leading_ws: bool,
     has_trailing_ws: bool,
-    has_multiple_root_elements: bool,
     ws_ignore: bool,
 ) {
     if ws_ignore {
@@ -252,11 +215,7 @@ fn write_html_template<'a>(
         // group(["`", leadingWS?, maybeIndent(group(content)), trailingWS?, "`"])
         let leading = if has_leading_ws { " " } else { "" };
         let trailing = if has_trailing_ws { " " } else { "" };
-        if has_multiple_root_elements {
-            write!(f, [group(&format_args!("`", leading, indent(&group(content)), trailing, "`"))]);
-        } else {
-            write!(f, [group(&format_args!("`", leading, group(content), trailing, "`"))]);
-        }
+        write!(f, [group(&format_args!("`", leading, group(content), trailing, "`"))]);
     }
 }
 
@@ -306,43 +265,15 @@ fn placeholders_are_sequential(ir: &[FormatElement<'_>], next: &mut usize) -> bo
     true
 }
 
-/// Emit text with newlines converted to literal line breaks (`replaceEndOfLine()` equivalent).
-///
-/// Uses [`LineMode::Literal`] instead of a hard line break to avoid adding indentation:
-/// the returned HTML Doc already carries its indentation in the text content,
-/// so the surrounding `block_indent` must not add more.
-fn push_text_with_line_breaks<'a>(
-    out: &mut ArenaVec<'a, FormatElement<'a>>,
-    text: &'a str,
-    indent_width: IndentWidth,
-) {
-    let mut first = true;
-    // Splitting on `\n` is safe because `Doc` only contains normalized linebreaks
-    for line in text.split('\n') {
-        if !first {
-            out.push(FormatElement::Line(LineMode::Literal));
-        }
-        first = false;
-        if !line.is_empty() {
-            out.push(FormatElement::Text {
-                text: line,
-                width: TextWidth::from_text(line, indent_width),
-            });
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use oxc_allocator::{Allocator, ArenaVec};
-    use oxc_formatter_core::{
-        BestFittingElement, FormatElement, IndentWidth, format_element::TextWidth,
-    };
+    use oxc_formatter_core::{BestFittingElement, FormatElement, IndentWidth};
 
     use super::placeholders_are_sequential;
 
     fn text(text: &'static str) -> FormatElement<'static> {
-        FormatElement::Text { text, width: TextWidth::from_text(text, IndentWidth::default()) }
+        FormatElement::text(text, IndentWidth::default())
     }
 
     fn best_fitting<'a>(

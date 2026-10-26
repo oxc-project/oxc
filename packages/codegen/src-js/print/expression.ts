@@ -10,9 +10,8 @@ import {
   CAT_INT_DIGIT,
   CAT_LT,
   CAT_OP_UN_NOT,
-  CAT_OP_UN_NOT_AFTER_LT,
+  CAT_OP_LT_THEN_UN_NOT,
   CAT_OTHER,
-  CAT_QUESTION,
   CAT_START_OF_ARROW_EXPR,
   CAT_START_OF_STMT,
 } from "./categories.ts";
@@ -56,7 +55,6 @@ import {
   PREC_COMMA,
   PREC_COMPARE,
   PREC_CONDITIONAL,
-  PREC_EQUALS,
   PREC_EXPONENTIATION,
   PREC_LOWEST,
   PREC_NEW,
@@ -72,9 +70,10 @@ import {
   printTypeArguments,
   printTypeParameters,
 } from "./typescript.ts";
+import { throwUnknownNode } from "./types.ts";
 
 import type { State } from "../state.ts";
-import type { UnknownNode } from "./types.ts";
+import type { UnhandledNodes } from "./types.ts";
 import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
 
 /**
@@ -84,13 +83,19 @@ import type * as ESTree from "../../../../npm/oxc-types/types.d.ts";
  * Parens are not preserved from the input - every printer re-derives its own from `precedence`,
  * so a `ParenthesizedExpression` mostly prints straight through.
  *
+ * @param node - Expression
+ * @param state - Printer state
  * @param precedence - Precedence of the position this expression sits in.
  *   A printer compares its own precedence against it and parenthesizes itself when it would otherwise bind too loosely.
  * @param ctx - `CTX_FORBID_IN` / `CTX_FORBID_CALL` flags describing the enclosing position, so that an `in` operator
  *   inside a `for` head, or a call under a `new`, knows to parenthesize itself.
+ *
+ * Also prints a `SpreadElement` in an argument list or array, though it is not an expression.
+ * An argument or array element can be any expression, so reading its `type` is a megamorphic load.
+ * Dispatching spreads here too means the caller doesn't read it a second time to check for a spread.
  */
 export function printExpression(
-  node: ESTree.Expression | UnknownNode,
+  node: ESTree.Expression | ESTree.SpreadElement,
   state: State,
   precedence: number,
   ctx: number,
@@ -112,17 +117,22 @@ export function printExpression(
     case "Literal":
       printLiteral(node, state, precedence, ctx);
       break;
-    case "BinaryExpression":
-      if (node.left.type === "PrivateIdentifier") {
+    case "BinaryExpression": {
+      // `node.left` can be any expression, so reading its `type` is a megamorphic load.
+      // Read it once here, for both the private-in check and `printBinaryish`.
+      const leftType = node.left.type;
+      if (leftType === "PrivateIdentifier") {
         typeAssertIs<ESTree.PrivateInExpression>(node);
         printPrivateInExpression(node, state, precedence);
       } else {
         typeAssertIs<ESTree.BinaryExpression>(node);
-        printBinaryish(node, state, precedence, ctx);
+        printBinaryish(node, state, precedence, ctx, leftType);
       }
       break;
+    }
     case "LogicalExpression":
-      printBinaryish(node, state, precedence, ctx);
+      // The left operand of a logical expression can't be a private name, so no private-in check
+      printBinaryish(node, state, precedence, ctx, node.left.type);
       break;
     case "ObjectExpression":
       printObjectExpression(node, state);
@@ -178,7 +188,7 @@ export function printExpression(
       printAwaitExpression(node, state, precedence, ctx);
       break;
     case "YieldExpression":
-      printYieldExpression(node, state, precedence);
+      printYieldExpression(node, state, precedence, ctx);
       break;
     case "ImportExpression":
       printImportExpression(node, state, precedence, ctx);
@@ -224,6 +234,10 @@ export function printExpression(
     case "JSXFragment":
       printJSXFragment(node, state);
       break;
+    case "SpreadElement":
+      writeWithMap(state, "...", CAT_OTHER, node.start, node.end, node);
+      printExpression(node.argument, state, precedence, ctx);
+      break;
     /* IF TS */
     case "TSAsExpression":
     case "TSSatisfiesExpression":
@@ -233,16 +247,34 @@ export function printExpression(
       printExpression(node.expression, state, PREC_POSTFIX, ctx);
       write(state, "!", CAT_OP_UN_NOT);
       break;
-    case "TSInstantiationExpression":
+    case "TSInstantiationExpression": {
+      const wrap = precedence >= PREC_POSTFIX;
+      if (wrap) write(state, "(", CAT_OTHER);
       printExpression(node.expression, state, PREC_PREFIX, ctx);
       printTypeArguments(node.typeArguments, state);
+      if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
       break;
+    }
     case "TSTypeAssertion":
       printTSTypeAssertion(node, state, precedence, ctx);
       break;
     /* END_IF */
+    case "V8IntrinsicExpression":
+      printV8IntrinsicExpression(node, state, precedence, ctx);
+      break;
     default:
-      throw new Error(`Unknown expression type: ${node.type}`);
+      throwUnknownNode(
+        node as Exclude<
+          UnhandledNodes<typeof node, typeof node.type>,
+          // Declarations, which are never expressions
+          | (ESTree.Function & { type: "FunctionDeclaration" })
+          | (ESTree.Function & { type: "TSDeclareFunction" })
+          | (ESTree.Class & { type: "ClassDeclaration" })
+          // A method's `value` when it has no body, which methods print themselves without coming here
+          | (ESTree.Function & { type: "TSEmptyBodyFunctionExpression" })
+        >,
+        "expression",
+      );
   }
 
   // Rust adds an exclusive-end mapping after a postfix operand which ended in `)` or `]`,
@@ -261,6 +293,10 @@ export function printExpression(
  * Two shapes need more than precedence to stay valid:
  * 1. A bare `let` as the object.
  * 2. Member access straight onto an integer literal.
+ *
+ * @param node - Member expression
+ * @param state - Printer state
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 export function printMemberExpression(
   node: ESTree.MemberExpression,
@@ -269,9 +305,15 @@ export function printMemberExpression(
 ): void {
   const { object } = node;
   if (node.computed) {
-    // `(let)[0]` - a bare `let` object must be wrapped
-    const inner = withoutParens(object);
-    const wrap = inner.type === "Identifier" && inner.name === "let";
+    // `(let)[0]` - a bare `let` object must be wrapped.
+    // `object` can be any expression, so its `type` is a megamorphic load - read it once while unwrapping parens.
+    let inner = object,
+      innerType = inner.type;
+    while (innerType === "ParenthesizedExpression") {
+      inner = (inner as ESTree.ParenthesizedExpression).expression;
+      innerType = inner.type;
+    }
+    const wrap = innerType === "Identifier" && (inner as ESTree.IdentifierReference).name === "let";
 
     if (wrap) write(state, "(", CAT_OTHER);
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
@@ -285,15 +327,17 @@ export function printMemberExpression(
   } else {
     printExpression(object, state, PREC_POSTFIX, ctx & CTX_FORBID_CALL);
 
-    if (node.optional) {
-      write(state, "?", CAT_QUESTION);
-    } else {
-      debugAssertLastFresh(state);
-      // `0.toExponential()` is invalid; `0 .toExponential()` is valid
-      if (state.last === CAT_INT_DIGIT) write(state, " ", CAT_OTHER);
-    }
-
-    write(state, ".", CAT_OTHER);
+    debugAssertLastFresh(state);
+    write(
+      state,
+      node.optional
+        ? "?."
+        : // `0.toExponential()` is invalid. Add a space before the dot -> `0 .toExponential()`.
+          state.last === CAT_INT_DIGIT
+          ? " ."
+          : ".",
+      CAT_OTHER,
+    );
 
     const { property } = node;
     if (property.type === "PrivateIdentifier") {
@@ -310,6 +354,11 @@ export function printMemberExpression(
  *
  * Writing that paren also re-marks the start of a statement or of an `export default`,
  * so the callee inside the parens is still read as the leftmost token of the construct.
+ *
+ * @param node - Call expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printCallExpression(
   node: ESTree.CallExpression,
@@ -348,31 +397,24 @@ function printCallExpression(
  * The argument list shared by `printCallExpression` and `printNewExpression`.
  *
  * Arguments print at `PREC_COMMA`, so a sequence expression parenthesizes itself instead of reading as more arguments.
+ *
+ * @param node - Call, `new` expression or V8 runtime call the arguments belong to, which the closing `)` is mapped to
+ * @param args - Arguments
+ * @param state - Printer state
  */
 function printArguments(
-  node: ESTree.CallExpression | ESTree.NewExpression,
+  node: ESTree.CallExpression | ESTree.NewExpression | ESTree.V8IntrinsicExpression,
   args: ESTree.Argument[],
   state: State,
 ): void {
-  const { length } = args;
-  if (length === 0) {
-    writeNoLast(state, "(");
-    writeWithMapEnd(state, ")", CAT_CLOSE_BRACKET, node.start, node.end, node);
-    return;
-  }
-
   write(state, "(", CAT_OTHER);
 
+  const { length } = args;
   for (let i = 0; i < length; i++) {
     if (i > 0) write(state, ", ", CAT_OTHER);
 
-    const arg = args[i];
-    if (arg.type === "SpreadElement") {
-      writeWithMap(state, "...", CAT_OTHER, arg.start, arg.end, arg);
-      printExpression(arg.argument, state, PREC_COMMA, CTX_NONE);
-    } else {
-      printExpression(arg, state, PREC_COMMA, CTX_NONE);
-    }
+    // `printExpression` prints a spread too
+    printExpression(args[i], state, PREC_COMMA, CTX_NONE);
   }
 
   writeWithMapEnd(state, ")", CAT_CLOSE_BRACKET, node.start, node.end, node);
@@ -382,8 +424,13 @@ function printArguments(
  * `#field in obj`, which arrives as a `BinaryExpression` with a `PrivateIdentifier` on the left
  * rather than as a node type of its own - hence the extra test in `printExpression`.
  *
- * It sits at the `in` operator's own level, so it wraps from `PREC_COMPARE` upwards, and the right
- * operand prints one level tighter with `CTX_FORBID_IN` set.
+ * It sits at the `in` operator's own level, so it wraps from `PREC_COMPARE` upwards. The right
+ * operand also prints at `PREC_COMPARE`, preserving parentheses around relational and
+ * lower-precedence expressions, with `CTX_FORBID_IN` set.
+ *
+ * @param node - Private-in expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
  */
 export function printPrivateInExpression(
   node: ESTree.PrivateInExpression,
@@ -396,7 +443,7 @@ export function printPrivateInExpression(
   markMapStart(state, node.start, node.end, node);
   writeWithMapNamedPrivate(state, node.left.name, node.left.start, node.left.end, node.left);
   write(state, " in ", CAT_OTHER);
-  printExpression(node.right, state, PREC_EQUALS, CTX_FORBID_IN);
+  printExpression(node.right, state, PREC_COMPARE, CTX_FORBID_IN);
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }
@@ -407,6 +454,9 @@ export function printPrivateInExpression(
  *
  * Layout follows the property count alone - two or more break across lines, exactly one prints
  * inside spaces on a single line, and none gives `{}`.
+ *
+ * @param node - Object expression
+ * @param state - Printer state
  */
 function printObjectExpression(node: ESTree.ObjectExpression, state: State): void {
   debugAssertLastFresh(state);
@@ -449,6 +499,9 @@ function printObjectExpression(node: ESTree.ObjectExpression, state: State): voi
  *
  * Shorthand and computed-ness are both worked out here rather than taken from the AST,
  * so the output stays valid however a transform left those flags.
+ *
+ * @param node - Object property or spread element
+ * @param state - Printer state
  */
 function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): void {
   if (node.type === "SpreadElement") {
@@ -458,10 +511,8 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   }
 
   const { key, value } = node;
-  if (
-    value.type === "FunctionExpression"
-    || (TS && value.type === "TSEmptyBodyFunctionExpression")
-  ) {
+  const valueType = value.type;
+  if (valueType === "FunctionExpression" || (TS && valueType === "TSEmptyBodyFunctionExpression")) {
     markMapStart(state, node.start, node.end, node);
 
     const { kind } = node;
@@ -507,27 +558,38 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
   // the expression printer what it is.
   // A `__proto__` shorthand leaves this null, since its flag says nothing about the value it carries.
   let shorthandIdentifier: ESTree.IdentifierReference | null = null;
-  if (!node.computed && key.type === "Identifier") {
-    if (key.name === "__proto__") {
-      shorthand = node.shorthand;
-    } else {
-      const inner = withoutParens(value);
-      if (inner.type === "Identifier" && key.name === inner.name) {
-        shorthand = true;
-        shorthandIdentifier = inner;
-      }
-    }
-  }
-
   let { computed } = node;
-  // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
-  if (
-    !computed
-    && key.type === "Literal"
-    && typeof key.value === "number"
-    && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
-  ) {
-    computed = true;
+  if (!computed) {
+    const keyType = key.type;
+    if (keyType === "Identifier") {
+      const keyName = key.name;
+      if (keyName === "__proto__") {
+        shorthand = node.shorthand === true;
+      } else {
+        // Unwrap any parens, starting from the `type` already read
+        let inner = value,
+          innerType = valueType;
+        while (innerType === "ParenthesizedExpression") {
+          inner = (inner as ESTree.ParenthesizedExpression).expression;
+          innerType = inner.type;
+        }
+
+        if (innerType === "Identifier") {
+          typeAssertIs<ESTree.IdentifierReference>(inner);
+          if (inner.name === keyName) {
+            shorthand = true;
+            shorthandIdentifier = inner;
+          }
+        }
+      }
+    } else if (
+      keyType === "Literal"
+      && typeof key.value === "number"
+      && (key.value < 0 || Object.is(key.value, -0) || !Number.isFinite(key.value))
+    ) {
+      // `{ -1: 0 }` and `{ 1/0: 0 }` must print as `{ [-1]: 0 }` / `{ [1 / 0]: 0 }`
+      computed = true;
+    }
   }
 
   if (shorthand) {
@@ -565,43 +627,55 @@ function printObjectProperty(node: ESTree.ObjectPropertyKind, state: State): voi
  *
  * Holes print as nothing between the commas, and a hole in final position needs one further comma
  * written after it, since `[a,]` holds one element and `[a,,]` holds two.
+ *
+ * @param node - Array expression
+ * @param state - Printer state
  */
 function printArrayExpression(node: ESTree.ArrayExpression, state: State): void {
-  const { elements } = node;
-  const { length } = elements;
-  const isMultiLine = length > 2;
-
   writeWithMap(state, "[", CAT_OTHER, node.start, node.end, node);
 
-  if (isMultiLine) state.indentLevel++;
+  const { elements } = node,
+    { length } = elements;
 
-  for (let i = 0; i < length; i++) {
-    if (isMultiLine) {
-      write(state, i !== 0 ? ",\n" : "\n", CAT_OTHER);
+  if (length > 2) {
+    // 3 or more elements, each on its own line
+    state.indentLevel++;
+    writeNoLast(state, "\n");
+    printIndent(state);
+
+    // `printExpression` prints a spread too
+    const firstElement = elements[0];
+    if (firstElement !== null) printExpression(firstElement, state, PREC_COMMA, CTX_NONE);
+
+    for (let i = 1; i < length; i++) {
+      // Indent level is at least 1, so `printIndent` always writes, which refreshes `last`
+      writeNoLast(state, ",\n");
       printIndent(state);
-    } else if (i !== 0) {
-      write(state, ", ", CAT_OTHER);
+
+      const element = elements[i];
+      if (element !== null) printExpression(element, state, PREC_COMMA, CTX_NONE);
     }
 
-    const element = elements[i];
-    if (element != null) {
-      if (element.type === "SpreadElement") {
-        writeWithMap(state, "...", CAT_OTHER, element.start, element.end, element);
-        printExpression(element.argument, state, PREC_COMMA, CTX_NONE);
-      } else {
-        printExpression(element, state, PREC_COMMA, CTX_NONE);
-      }
-    }
-
-    if (i === length - 1 && element == null) {
-      write(state, ",", CAT_OTHER);
-    }
-  }
-
-  if (isMultiLine) {
-    write(state, "\n", CAT_OTHER);
+    // A trailing hole needs a comma after it.
+    // The last element is read again here, rather than kept from the loop,
+    // because keeping it would spill it to the stack on every turn of the loop.
+    writeNoLast(state, elements[length - 1] === null ? ",\n" : "\n");
     state.indentLevel--;
     printIndent(state);
+  } else if (length !== 0) {
+    // 1 or 2 elements, on one line
+    const firstElement = elements[0];
+    if (firstElement !== null) printExpression(firstElement, state, PREC_COMMA, CTX_NONE);
+
+    if (length === 2) {
+      write(state, ", ", CAT_OTHER);
+
+      const secondElement = elements[1];
+      if (secondElement !== null) printExpression(secondElement, state, PREC_COMMA, CTX_NONE);
+    }
+
+    // A trailing hole needs a comma after it
+    if (elements[length - 1] === null) writeNoLast(state, ",");
   }
 
   writeWithMapEnd(state, "]", CAT_CLOSE_BRACKET, node.start, node.end, node);
@@ -611,6 +685,9 @@ function printArrayExpression(node: ESTree.ArrayExpression, state: State): void 
  * Wraps from `PREC_ASSIGN` upwards. An object destructuring target forces parens as well at the start of
  * a statement or a concise arrow body, where the leading `{` would be read as a block.
  *
+ * @param node - Assignment expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
  * @param ctx - Handed to the right operand unchanged, so a `for` head's `CTX_FORBID_IN`
  *   still reaches an `in` operator there.
  */
@@ -646,6 +723,11 @@ function printAssignmentExpression(
  *
  * The operator's own category is recorded as it is written, which is how an adjacent `+` or `-`
  * knows to leave a space rather than glue into `---x`.
+ *
+ * @param node - Update expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printUpdateExpression(
   node: ESTree.UpdateExpression,
@@ -679,6 +761,11 @@ function printUpdateExpression(
  *
  * A `!` written straight after a `<` records a category of its own, so that a `--`
  * printed next is spaced off it and cannot complete `<!--`.
+ *
+ * @param node - Unary expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printUnaryExpression(
   node: ESTree.UnaryExpression,
@@ -704,7 +791,7 @@ function printUnaryExpression(
     printSpaceBeforeOperator(state, operatorCode);
     debugAssertLastFresh(state);
     if (operatorCode === CAT_OP_UN_NOT && state.last === CAT_LT) {
-      operatorCode = CAT_OP_UN_NOT_AFTER_LT;
+      operatorCode = CAT_OP_LT_THEN_UN_NOT;
     }
     writeWithMap(state, operator, operatorCode, node.start, node.end, node);
   }
@@ -722,6 +809,11 @@ function printUnaryExpression(
  *
  * The consequent is fenced by the `?` and `:` either side of it, so it alone never needs
  * the `in` restriction passed down.
+ *
+ * @param node - Conditional expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printConditionalExpression(
   node: ESTree.ConditionalExpression,
@@ -745,7 +837,13 @@ function printConditionalExpression(
   // round trip: `value as Type ? /x/ : y` re-lexes the `/` as a division.
   let testPrecedence = PREC_CONDITIONAL;
   if (TS) {
-    const testType = withoutParens(node.test).type;
+    let { test } = node;
+    let testType = test.type;
+    while (testType === "ParenthesizedExpression") {
+      test = (test as ESTree.ParenthesizedExpression).expression;
+      testType = test.type;
+    }
+
     if (testType === "TSAsExpression" || testType === "TSSatisfiesExpression") {
       testPrecedence = PREC_COMPARE;
     }
@@ -764,6 +862,11 @@ function printConditionalExpression(
  * Wraps from `PREC_COMMA` upwards.
  * `CTX_FORBID_CALL` is cleared for the elements, since every position which sets that flag
  * also passes a precedence at or above `PREC_COMMA`, so the parens are already written by then.
+ *
+ * @param node - Sequence expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printSequenceExpression(
   node: ESTree.SequenceExpression,
@@ -792,6 +895,11 @@ function printSequenceExpression(
  * A concise body marks `last`, which is how an object literal body knows to parenthesize itself.
  * A TS return type has to sit between the parameters and the arrow, so those are printed separately,
  * instead of through `printParenParamsArrow`.
+ *
+ * @param node - Arrow function expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printArrowFunctionExpression(
   node: ESTree.ArrowFunctionExpression,
@@ -836,6 +944,10 @@ function printArrowFunctionExpression(
  *
  * The callee prints at `PREC_NEW` with `CTX_FORBID_CALL`, so a call inside it parenthesizes itself,
  * rather than being taken for this `new`'s own argument list.
+ *
+ * @param node - New expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
  */
 function printNewExpression(node: ESTree.NewExpression, state: State, precedence: number): void {
   const wrap = precedence >= PREC_CALL;
@@ -855,6 +967,9 @@ function printNewExpression(node: ESTree.NewExpression, state: State, precedence
  * is written before the loop and each iteration ends with the chunk after its substitution.
  *
  * Substitutions print from `PREC_LOWEST` with no context flags, since `${` and `}` fence them from everything around.
+ *
+ * @param node - Template literal
+ * @param state - Printer state
  */
 function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void {
   writeWithMapNoLast(state, "`", node.start, node.end, node);
@@ -885,6 +1000,8 @@ function printTemplateLiteral(node: ESTree.TemplateLiteral, state: State): void 
  *
  * It also runs the `</script` escape, since a template can hold that sequence verbatim
  * and would otherwise close a surrounding script element.
+ *
+ * @param quasi - Template element
  */
 function templateQuasiRaw(quasi: ESTree.TemplateElement): string {
   // Line terminators in template raws are normalized to LF at parse time.
@@ -897,6 +1014,11 @@ function templateQuasiRaw(quasi: ESTree.TemplateElement): string {
 /**
  * Wraps from `PREC_PREFIX` upwards like the other unary operators, and prints its argument
  * at `PREC_EXPONENTIATION` - `await a ** b` does not parse, so the `**` takes parens.
+ *
+ * @param node - Await expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printAwaitExpression(
   node: ESTree.AwaitExpression,
@@ -917,13 +1039,20 @@ function printAwaitExpression(
 /**
  * Wraps from `PREC_ASSIGN` upwards. The argument prints at `PREC_YIELD`, one level below assignment,
  * so a nested `yield` or an assignment stays bare while a comma sequence parenthesizes.
+ *
+ * @param node - Yield expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printYieldExpression(
   node: ESTree.YieldExpression,
   state: State,
   precedence: number,
+  ctx: number,
 ): void {
   const wrap = precedence >= PREC_ASSIGN;
+  const argumentCtx = wrap ? CTX_NONE : ctx & CTX_FORBID_IN;
   if (wrap) write(state, "(", CAT_OTHER);
 
   printSpaceBeforeIdentifier(state);
@@ -933,7 +1062,7 @@ function printYieldExpression(
 
   if (node.argument != null) {
     write(state, " ", CAT_OTHER);
-    printExpression(node.argument, state, PREC_YIELD, CTX_NONE);
+    printExpression(node.argument, state, PREC_YIELD, argumentCtx);
   }
 
   if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
@@ -944,6 +1073,11 @@ function printYieldExpression(
  * attach the argument list to the `new`.
  *
  * A `phase` prints as `import.<phase>(...)`, and import options follow the source as a second argument.
+ *
+ * @param node - Import expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printImportExpression(
   node: ESTree.ImportExpression,
@@ -980,6 +1114,11 @@ function printImportExpression(
  * From `PREC_POSTFIX` upwards, or under `CTX_FORBID_CALL`, the whole chain is parenthesized
  * and printed from `PREC_LOWEST` - the chain has to stop at the paren, instead of running on
  * into the enclosing member access or `new`.
+ *
+ * @param node - Chain expression
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
  */
 function printChainExpression(
   node: ESTree.ChainExpression,
@@ -995,4 +1134,32 @@ function printChainExpression(
   } else {
     printExpression(node.expression, state, precedence, ctx);
   }
+}
+
+/**
+ * A V8 runtime call, e.g. `%DebugPrint(x)`, which the parser only produces with its `allowV8Intrinsics` option.
+ *
+ * Parenthesized wherever a postfix operator follows it - a member access, a call or a tagged template -
+ * and under `new`, as `oxc_codegen` does: `(%DebugPrint(x)).y`.
+ *
+ * @param node - V8 runtime call
+ * @param state - Printer state
+ * @param precedence - Precedence of the position this expression sits in
+ * @param ctx - `CTX_*` flags describing the enclosing position
+ */
+function printV8IntrinsicExpression(
+  node: ESTree.V8IntrinsicExpression,
+  state: State,
+  precedence: number,
+  ctx: number,
+): void {
+  const wrap = precedence >= PREC_POSTFIX || (ctx & CTX_FORBID_CALL) !== 0;
+  if (wrap) write(state, "(", CAT_OTHER);
+
+  writeWithMap(state, "%", CAT_OTHER, node.start, node.end, node);
+  const { name } = node;
+  writeWithMapNamed(state, name.name, name.start, name.end, name);
+  printArguments(node, node.arguments, state);
+
+  if (wrap) write(state, ")", CAT_CLOSE_BRACKET);
 }

@@ -17,18 +17,19 @@ use oxc_allocator::Allocator;
 use oxc_ast::Comment;
 use oxc_ast::ast::*;
 use oxc_diagnostics::OxcDiagnostic;
-use oxc_formatter_core::{FormatSession, Formatted, InputKind};
+use oxc_formatter_core::{EmbeddedIr, FormatSession, Formatted, InputKind};
 use oxc_parser::{ParseOptions, Parser, ParserReturn};
 use oxc_span::SourceType;
 
 // Internal only AST-wrapping IR primitives.
-// External call-sites use the text-in `format`, `format_fragment`,
+// External call-sites use the text-in `format`, `format_with_session`, `format_fragment`, `format_to_ir`,
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
-pub use crate::embed_context::{CssInJsTemplate, HtmlEmbedMeta};
-// `JsFormatContext` is public solely as the type parameter of the `Formatted`
-// returned by `format` / `format_fragment`.
-// Its methods are not part of the public contract.
+pub use crate::embed_context::{
+    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, MarkdownInJsTemplate,
+};
+// `JsFormatContext` is public solely as the type parameter of the returned `Formatted`;
+// its methods are not part of the public contract.
 pub use crate::formatter::JsFormatContext;
 pub use crate::ir_transform::options::*;
 pub use crate::options::*;
@@ -38,9 +39,9 @@ pub use detect_code_removal::detect_code_removal;
 // `crate::write!` / `crate::format_args!` / `crate::best_fitting!`
 // call-sites in `oxc_formatter` continue to work without changes.
 pub(crate) use oxc_formatter_core::{best_fitting, format_args, write};
-// Internal-only re-exports so crate-local `use crate::{Buffer, Format};` continues to work
+// Internal-only re-exports so crate-local `use crate::Format;` continues to work
 // without leaking these IR primitives in the public API.
-pub(crate) use oxc_formatter_core::{Buffer, Format};
+pub(crate) use oxc_formatter_core::Format;
 
 use self::formatter::prelude::tag::Label;
 use crate::print::{FormatFunctionParams, FormatTypeParameters};
@@ -108,6 +109,51 @@ pub fn format_with_session<'a>(
     Ok(format_program_with_session(session, program, options))
 }
 
+/// Parse `source_text` and build the IR for embedding into another formatter's document
+/// (dispatcher path, e.g. a `js` code fence in Markdown).
+///
+/// Unlike [`format_with_session`], this:
+/// - allocates from the session's shared arena and `GroupId` space, so the IR lives as long as the parent's document
+/// - leaves the Tailwind classes unsorted (the parent sorts them in its own batch)
+/// - emits neither a BOM nor the trailing newline
+///
+/// `embedded_in` is what the program is embedded in, for the print rules that depend on it ([`JsEmbeddedIn`]).
+///
+/// # Errors
+/// Same as [`format()`].
+pub fn format_to_ir<'a>(
+    session: &FormatSession<'a>,
+    source_text: &str,
+    source_type: SourceType,
+    options: JsFormatOptions,
+    embedded_in: Option<JsEmbeddedIn>,
+) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
+    let allocator = session.allocator();
+    let program = parse(allocator, allocator.alloc_str(source_text), source_type)?;
+    let node = AstNode::new(program, AstNodes::Dummy());
+    let mut context =
+        JsFormatContext::new(program.source_text, program.source_type, &program.comments, options);
+
+    // Special cases for js-in-xxx:
+    // - Single JSX in Markdown code block: omit the semicolon
+    let embedding_omits_semicolon = embedded_in == Some(JsEmbeddedIn::MarkdownCodeBlock)
+        && program.directives.is_empty()
+        && matches!(
+            program.body.as_slice(),
+            [Statement::ExpressionStatement(statement)] if statement.expression.is_jsx()
+        );
+    context.set_embedding_omits_semicolon(embedding_omits_semicolon);
+
+    let (ir, _) = formatter::build_ir(
+        context,
+        session,
+        oxc_formatter_core::Arguments::new(&[oxc_formatter_core::Argument::new(
+            &print::FormatProgramBody(&node),
+        )]),
+    );
+    Ok(EmbeddedIr { ir })
+}
+
 /// Format a pre-wrapped JS/TS-in-xxx fragment from source text.
 ///
 /// The caller passes source already wrapped per the [`FragmentContext`] input contract
@@ -149,7 +195,7 @@ pub fn format_fragment<'a>(
             // Parens are forced only in the binding-LHS context with multiple params or a rest element.
             let with_parens = matches!(context, FragmentContext::FunctionParamsAsBindingLhs)
                 && (1 < params.items.len() || params.rest.is_some());
-            let node = AstNode::new(params, AstNodes::Dummy(), allocator);
+            let node = AstNode::new(params, AstNodes::Dummy());
             let content = FormatFunctionParams::new(&node, with_parens);
             format_node(
                 &session,
@@ -169,7 +215,7 @@ pub fn format_fragment<'a>(
             let Some(type_params) = decl.type_parameters.as_deref() else {
                 return Err(OxcDiagnostic::error("Expected type parameters in wrapped fragment"));
             };
-            let node = AstNode::new(type_params, AstNodes::Dummy(), allocator);
+            let node = AstNode::new(type_params, AstNodes::Dummy());
             let content = FormatTypeParameters::new(&node);
             format_node(
                 &session,
@@ -181,6 +227,14 @@ pub fn format_fragment<'a>(
             )
         }
     };
+
+    // Losing a comment is worse than leaving the fragment as-is (e.g. `v-slot="/* c */"` has no params to attach to).
+    // Prettier also fails and keeps the source then.
+    // NOTE: Keeping the source (whitespace included) is just the cheapest way to match Prettier.
+    // Printing the comments instead is fine once the Vue formatter moves to Rust.
+    if !formatted.context().comments().unprinted_comments().is_empty() {
+        return Err(OxcDiagnostic::error("Some comments in the fragment were not printed"));
+    }
 
     Ok(formatted)
 }
@@ -212,7 +266,7 @@ fn format_program_with_session<'a>(
     program: &'a Program<'a>,
     options: JsFormatOptions,
 ) -> Formatted<'a, JsFormatContext<'a>> {
-    let node = AstNode::new(program, AstNodes::Dummy(), session.allocator());
+    let node = AstNode::new(program, AstNodes::Dummy());
     format_node(
         session,
         options,
@@ -229,7 +283,7 @@ fn format_program_with_session<'a>(
 /// so a program fed to [`format_program`] matches the text-in path.
 /// Use this when you need to control parse-error handling
 /// or isolate parsing from formatting (perf/allocation measurement, error-tolerant harnesses).
-/// Inspect the returned `ParserReturn` (`errors` / `panicked`) and pass `&ret.program` to [`format_program`].
+/// Inspect the returned `ParserReturn` (`errors` / `fatal_error`) and pass `&ret.program` to [`format_program`].
 pub fn parse_for_format<'a>(
     allocator: &'a Allocator,
     source_text: &'a str,
@@ -253,7 +307,7 @@ pub fn parse_for_format<'a>(
 
 /// Parse `source_text` and promote the `Program` to the arena lifetime.
 ///
-/// NOTE: Reject ANY parse diagnostic, not only `panicked`: we format valid code only, by design.
+/// NOTE: Reject ANY parse diagnostic, not only `fatal_error`: we format valid code only, by design.
 /// A recovered AST may be an unfaithful "fix" of the source
 /// (e.g. invalid modifiers are reported but not all of them are representable),
 /// so formatting it can silently rewrite what the user wrote.
@@ -306,8 +360,8 @@ pub(crate) enum JsLabels {
 }
 
 impl Label for JsLabels {
-    fn id(&self) -> u64 {
-        *self as u64
+    fn id(&self) -> u32 {
+        *self as u32
     }
 
     fn debug_name(&self) -> &'static str {

@@ -6,27 +6,23 @@
 //! * The [`DisplayDocument`] wrapper exposed via [`Document::display`].
 //!
 //! The rendering is language-agnostic and works with any `C: FormatContext`.
-//! Languages that support Tailwind sorting can override
-//! [`FormatContext::get_tailwind_class`] to surface class names; languages
-//! without Tailwind support get the default `None` and an `<UNKNOWN_TAILWIND_CLASS_INDEX<..>>`
-//! marker if a `FormatElement::TailwindClass` ever appears.
-
-#![expect(clippy::mutable_key_type)]
+//! [`DisplayDocument`] surfaces class names through its `SimpleFormatContext`
+//! ([`FormatContext::get_tailwind_class`], fed from the document's sorted classes);
+//! a context returning the default `None` prints an `<UNKNOWN_TAILWIND_CLASS_INDEX<..>>` marker.
 
 use cow_utils::CowUtils;
 
 use oxc_allocator::Allocator;
 
 use crate::{
-    Argument, Arguments, Buffer, BufferExtensions, Document, Format, FormatContext, FormatElement,
-    FormatOptions, FormatState, Formatter, PrintMode, Printer, PrinterOptions, SimpleFormatContext,
-    VecBuffer,
+    Document, Format, FormatContext, FormatElement, FormatState, Formatter, PrintMode, Printer,
+    PrinterOptions, SimpleFormatContext,
     builders::{hard_line_break, soft_line_break_or_space, space, text, token},
     format_element::{
-        LineMode, TextWidth,
+        LineMode,
         tag::{self, DedentMode, GroupMode, Tag},
     },
-    write, write as w,
+    write as w,
 };
 
 impl<'a> Document<'a> {
@@ -62,10 +58,10 @@ impl std::fmt::Display for DisplayDocument<'_, '_> {
 
         let mut state: FormatState<'_, SimpleFormatContext<'_>> =
             FormatState::new(context, &allocator);
-        let mut buffer = VecBuffer::new(&mut state);
+        let mut buffer = Formatter::new(&mut state);
 
         let elements = FormatElementSlice(self.elements);
-        write(&mut buffer, Arguments::new(&[Argument::new(&elements)]));
+        elements.fmt(&mut buffer);
 
         let elements = buffer.into_vec();
         let document = Document::new(elements, Vec::default());
@@ -91,9 +87,10 @@ where
     fn fmt(&self, f: &mut Formatter<'_, 'a, C>) {
         use Tag::{
             EndAlign, EndConditionalContent, EndDedent, EndEntry, EndFill, EndGroup, EndIndent,
-            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, StartAlign,
-            StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup, StartIndent,
-            StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            EndIndentIfGroupBreaks, EndLabelled, EndLineSuffix, EndMarkAsRoot, EndPrefix,
+            StartAlign, StartConditionalContent, StartDedent, StartEntry, StartFill, StartGroup,
+            StartIndent, StartIndentIfGroupBreaks, StartLabelled, StartLineSuffix, StartMarkAsRoot,
+            StartPrefix,
         };
 
         w!(f, [ContentArrayStart]);
@@ -105,7 +102,10 @@ where
         let mut iter = self.0.iter().peekable();
 
         while let Some(element) = iter.next() {
-            if !first_element && !in_text && !element.is_end_tag() {
+            if !first_element
+                && !in_text
+                && !matches!(element, FormatElement::Tag(tag) if tag.is_end())
+            {
                 // Write a separator between every two elements
                 w!(f, [token(","), soft_line_break_or_space()]);
             }
@@ -126,29 +126,24 @@ where
                         FormatElement::Space => {
                             w!(f, [token(" ")]);
                         }
-                        element if element.is_text() => {
-                            // escape quotes
-                            let new_element = match element {
-                                // except for static text because source_position is unknown
-                                FormatElement::Token { .. } => element.clone(),
-                                FormatElement::Text { text, width: _ } => {
-                                    let text = text.cow_replace('"', "\\\"");
-                                    FormatElement::Text {
-                                        text: f.allocator().alloc_str(&text),
-                                        width: TextWidth::from_text(
-                                            &text,
-                                            f.options().indent_width(),
-                                        ),
-                                    }
-                                }
-                                _ => unreachable!(),
-                            };
-                            f.write_element(new_element);
+                        // Tokens are written as is, without escaping quotes
+                        FormatElement::Token { .. } => f.write_element(element.clone()),
+                        // escape quotes
+                        FormatElement::Text { text: content, .. } => {
+                            let escaped = content.cow_replace('"', "\\\"");
+                            w!(f, [text(f.allocator().alloc_str(&escaped))]);
                         }
                         _ => unreachable!(),
                     }
 
-                    let is_next_text = iter.peek().is_some_and(|e| e.is_text() || e.is_space());
+                    let is_next_text = matches!(
+                        iter.peek(),
+                        Some(
+                            FormatElement::Space
+                                | FormatElement::Token { .. }
+                                | FormatElement::Text { .. }
+                        )
+                    );
 
                     if !is_next_text {
                         w!(f, [token("\"")]);
@@ -322,6 +317,23 @@ where
                             );
                         }
 
+                        StartPrefix(prefix) => {
+                            let (name, arg) = if prefix.is_spaces() {
+                                ("space_align(", prefix.text().len().to_string())
+                            } else {
+                                ("prefix_align(", format!("{:?}", prefix.text()))
+                            };
+                            w!(
+                                f,
+                                [
+                                    token(name),
+                                    text(f.allocator().alloc_str(&arg)),
+                                    token(","),
+                                    space(),
+                                ]
+                            );
+                        }
+
                         StartLineSuffix => {
                             w!(f, [token("line_suffix(")]);
                         }
@@ -423,6 +435,7 @@ where
                         | EndConditionalContent
                         | EndIndentIfGroupBreaks(_)
                         | EndAlign
+                        | EndPrefix
                         | EndIndent
                         | EndGroup
                         | EndLineSuffix

@@ -1,4 +1,4 @@
-use oxc_semantic::{Reference, SymbolFlags};
+use oxc_semantic::{Reference, ReferenceFlags, SymbolFlags};
 
 use crate::util::SemanticTester;
 
@@ -23,6 +23,37 @@ fn assert_root_and_single_local_reference_counts(
         assert_eq!(scoping.get_resolved_references(root_symbol).count(), root_count, "{name}");
         assert_eq!(scoping.get_resolved_references(local_symbol).count(), local_count, "{name}");
     }
+}
+
+/// `delete a?.b` and `delete (a.b)` are property writes, same as `delete a.b`.
+/// https://github.com/oxc-project/oxc/issues/27419
+#[test]
+fn test_delete_member_write_target() {
+    for code in [
+        "delete a.b",
+        "delete a.b.c",
+        "delete a?.b",
+        "delete a?.b.c",
+        "delete a.b?.c",
+        "delete (a.b)",
+    ] {
+        let source = format!("const a = {{}}; {code};");
+        let source: &'static str = Box::leak(source.into_boxed_str());
+        let tester = SemanticTester::js(source);
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let symbol = scoping.get_root_binding("a".into()).unwrap();
+        let flags: Vec<_> =
+            scoping.get_resolved_references(symbol).map(oxc_semantic::Reference::flags).collect();
+        assert_eq!(flags, vec![ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget], "{code}");
+    }
+
+    // Bare `delete` is not a property modification.
+    SemanticTester::js("let x; delete x;")
+        .with_script(true)
+        .has_some_symbol("x")
+        .has_number_of_references_where(0, |reference| reference.flags().is_member_write_target())
+        .test();
 }
 
 #[test]
@@ -570,6 +601,16 @@ fn test_function_var_redeclaration_in_module() {
     SemanticTester::js("var a = ''; function a() {}").has_error("already been declared");
 }
 
+#[test]
+fn test_enum_member_redeclaration_with_lone_surrogate() {
+    // Enum member symbols store UTF-8 names, so the checker compares these names itself.
+    SemanticTester::ts(r#"enum A { "\uD800" = 1, "\uD800" = 2 }"#)
+        .has_error("Identifier `\\ud800` has already been declared");
+    SemanticTester::ts(r#"enum B { ["\uDC00"] = 1, [`\uDC00`] = 2 }"#)
+        .has_error("Identifier `\\udc00` has already been declared");
+    SemanticTester::ts(r#"enum C { "\uD800" = 1, "\uDC00" = 2, "\uFFFD" = 3 }"#).build();
+}
+
 // https://github.com/oxc-project/oxc/issues/15961
 #[test]
 fn test_import_value_redeclaration_in_module() {
@@ -592,4 +633,19 @@ fn test_import_value_redeclaration_in_module() {
         .has_error("already been declared");
     // TypeScript should NOT report this error (declaration merging)
     SemanticTester::ts("import { Foo } from './foo.js'; var Foo;").has_root_symbol("Foo").test();
+}
+
+#[test]
+fn test_implicit_arguments_unresolved_references() {
+    let tester = SemanticTester::ts(
+        "const arguments = []; function f(value = arguments) { return () => arguments; }",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let references = scoping.root_unresolved_references().get("arguments").unwrap();
+    assert_eq!(references.len(), 2);
+    assert_ne!(references[0], references[1]);
+    for &reference_id in references {
+        assert!(scoping.get_reference(reference_id).symbol_id().is_none());
+    }
 }

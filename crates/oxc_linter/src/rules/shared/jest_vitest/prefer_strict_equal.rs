@@ -47,7 +47,7 @@ fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>)
     let matcher_name = matcher.name()?;
 
     if matcher_name.eq("toEqual") {
-        ctx.diagnostic_with_fix(use_to_strict_equal(matcher.span), |fixer| {
+        ctx.diagnostic_with_suggestion(use_to_strict_equal(matcher.span), |fixer| {
             let replacement = match fixer.source_range(matcher.span).chars().next().unwrap() {
                 '\'' => "'toStrictEqual'",
                 '"' => "\"toStrictEqual\"",

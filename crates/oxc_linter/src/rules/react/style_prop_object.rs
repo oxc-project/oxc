@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         Argument, Expression, JSXAttribute, JSXAttributeItem, JSXAttributeName, JSXAttributeValue,
-        JSXElementName, ObjectPropertyKind, TSType,
+        ObjectPropertyKind, TSType,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -155,13 +155,11 @@ impl Rule for StylePropObject {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::JSXElement(jsx_elem) => {
-                let name = match &jsx_elem.opening_element.name {
-                    JSXElementName::Identifier(id) => id.name.as_str(),
-                    JSXElementName::IdentifierReference(id) => id.name.as_str(),
-                    _ => return,
+                let Some(name) = jsx_elem.opening_element.name.get_identifier_name() else {
+                    return;
                 };
 
-                if self.allow.iter().any(|s| s == name) {
+                if self.allow.iter().any(|s| s == name.as_str()) {
                     return;
                 }
 
@@ -192,11 +190,11 @@ impl Rule for StylePropObject {
 
                 let name = match expr {
                     Expression::StringLiteral(literal) => literal.value.as_str(),
-                    Expression::Identifier(identifier) => identifier.name.as_str(),
+                    Expression::Identifier(identifier) => Some(identifier.name.as_str()),
                     _ => return,
                 };
 
-                if self.allow.iter().any(|s| s == name) {
+                if name.is_some_and(|name| self.allow.iter().any(|s| s == name)) {
                     return;
                 }
 

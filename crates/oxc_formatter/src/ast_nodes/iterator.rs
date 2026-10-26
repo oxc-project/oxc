@@ -4,21 +4,18 @@
 //! The span getter returns `None` for elements the formatter never prints (dropped empty statements, elision holes),
 //! which are skipped when computing `following_span_start`.
 
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
 use oxc_span::GetSpan;
 
-use crate::utils::{
-    export_declaration_span, export_default_declaration_span, is_dropped_statement,
-};
+use crate::utils::{is_dropped_statement, statement_span};
 
 use super::{AstNode, AstNodes};
 
 /// Iterator for `AstNode<ArenaVec<T>>`.
-pub struct AstNodeIterator<'a, T> {
+pub struct AstNodeIterator<'parent, 'a, T> {
     inner: std::slice::Iter<'a, T>,
-    parent: AstNodes<'a>,
-    allocator: &'a Allocator,
+    parent: AstNodes<'parent, 'a>,
     /// The `following_span_start` for the last element when there's no next element in this iterator.
     ///
     /// This is essential for [`Comments::get_trailing_comments`] to correctly distinguish trailing
@@ -50,13 +47,7 @@ fn get_statement_span(stmt: &Statement<'_>) -> Option<u32> {
     if is_dropped_statement(stmt) {
         return None;
     }
-    Some(match stmt {
-        Statement::ExportDefaultDeclaration(export) => {
-            export_default_declaration_span(export).start
-        }
-        Statement::ExportDeclaration(export) => export_declaration_span(export).start,
-        _ => stmt.span().start,
-    })
+    Some(statement_span(stmt).start)
 }
 
 macro_rules! impl_ast_node_vec {
@@ -70,12 +61,11 @@ macro_rules! impl_ast_node_vec {
         impl_ast_node_vec!($type, true, $get_span);
     };
     ($type:ty, $has_following_span_in_the_last_item:tt, $get_span:expr) => {
-        impl<'a> AstNode<'a, ArenaVec<'a, $type>> {
-            pub fn iter(&self) -> AstNodeIterator<'a, $type> {
+        impl<'parent, 'a> AstNode<'parent, 'a, ArenaVec<'a, $type>> {
+            pub fn iter(&self) -> AstNodeIterator<'parent, 'a, $type> {
                 AstNodeIterator {
                     inner: self.inner.iter(),
                     parent: self.parent,
-                    allocator: self.allocator,
                     following_span_start: if $has_following_span_in_the_last_item {
                         self.following_span_start
                     } else {
@@ -85,74 +75,42 @@ macro_rules! impl_ast_node_vec {
                 }
             }
 
-            pub fn first(&self) -> Option<&'a AstNode<'a, $type>> {
-                let following = if $has_following_span_in_the_last_item {
-                    self.following_span_start
-                } else {
-                    0
-                };
-                let get_span: fn(&$type) -> Option<u32> = $get_span;
-                let mut inner_iter = self.inner.iter();
-                self.allocator
-                    .alloc(inner_iter.next().map(|inner| AstNode {
-                        inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                        following_span_start: inner_iter.find_map(get_span).unwrap_or(following),
-                    }))
-                    .as_ref()
+            pub fn first(&self) -> Option<AstNode<'parent, 'a, $type>> {
+                self.iter().next()
             }
 
-            pub fn last(&self) -> Option<&'a AstNode<'a, $type>> {
+            pub fn last(&self) -> Option<AstNode<'parent, 'a, $type>> {
                 let following = if $has_following_span_in_the_last_item {
                     self.following_span_start
                 } else {
                     0
                 };
-                self.allocator
-                    .alloc(self.inner.last().map(|inner| AstNode {
-                        inner,
-                        parent: self.parent,
-                        allocator: self.allocator,
-                        following_span_start: following,
-                    }))
-                    .as_ref()
+                self.inner.last().map(|inner| AstNode {
+                    inner,
+                    parent: self.parent,
+                    following_span_start: following,
+                })
             }
         }
 
-        impl<'a> Iterator for AstNodeIterator<'a, $type> {
-            type Item = &'a AstNode<'a, $type>;
+        impl<'parent, 'a> Iterator for AstNodeIterator<'parent, 'a, $type> {
+            type Item = AstNode<'parent, 'a, $type>;
             fn next(&mut self) -> Option<Self::Item> {
-                let allocator = self.allocator;
-                let following = self.following_span_start;
-                let get_span = self.get_following_span_start;
-                allocator
-                    .alloc(self.inner.next().map(|inner| AstNode {
-                        parent: self.parent,
-                        inner,
-                        allocator,
-                        following_span_start:
-                            self.inner.clone().find_map(get_span).unwrap_or(following),
-                    }))
-                    .as_ref()
+                let inner = self.inner.next()?;
+                let following_span_start = self
+                    .inner
+                    .clone()
+                    .find_map(self.get_following_span_start)
+                    .unwrap_or(self.following_span_start);
+                Some(AstNode { inner, parent: self.parent, following_span_start })
             }
         }
 
-        impl<'a> IntoIterator for &AstNode<'a, ArenaVec<'a, $type>> {
-            type Item = &'a AstNode<'a, $type>;
-            type IntoIter = AstNodeIterator<'a, $type>;
+        impl<'parent, 'a> IntoIterator for &AstNode<'parent, 'a, ArenaVec<'a, $type>> {
+            type Item = AstNode<'parent, 'a, $type>;
+            type IntoIter = AstNodeIterator<'parent, 'a, $type>;
             fn into_iter(self) -> Self::IntoIter {
-                AstNodeIterator {
-                    inner: self.inner.iter(),
-                    parent: self.parent,
-                    allocator: self.allocator,
-                    following_span_start: if $has_following_span_in_the_last_item {
-                        self.following_span_start
-                    } else {
-                        0
-                    },
-                    get_following_span_start: $get_span,
-                }
+                self.iter()
             }
         }
     };
@@ -188,7 +146,8 @@ impl_ast_node_vec!(Directive<'a>, has_following_span_in_the_last_item);
 impl_ast_node_vec!(FormalParameter<'a>, has_following_span_in_the_last_item);
 impl_ast_node_vec!(BindingProperty<'a>, has_following_span_in_the_last_item);
 impl_ast_node_vec!(AssignmentTargetProperty<'a>, has_following_span_in_the_last_item);
-// A `None` element is an elision hole with no span of its own
+// In these two, a `None` element is an elision hole with no span of its own;
+// `write_array_node` bounds the trailing comments of the element before it at the hole's `,` found in the source
 impl_ast_node_vec!(
     Option<BindingPattern<'a>>,
     has_following_span_in_the_last_item,

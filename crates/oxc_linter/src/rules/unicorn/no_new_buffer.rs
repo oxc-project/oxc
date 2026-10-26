@@ -1,6 +1,8 @@
+use itertools::Itertools;
+
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression},
+    ast::{Argument, Expression, NewExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -41,6 +43,7 @@ declare_oxc_lint!(
     NoNewBuffer,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "0.0.16",
     short_description = "Disallows the deprecated `new Buffer()` constructor.",
@@ -69,12 +72,8 @@ impl Rule for NoNewBuffer {
             };
 
             // Build arguments string
-            let args_text = new_expr
-                .arguments
-                .iter()
-                .map(|arg| ctx.source_range(arg.span()))
-                .collect::<Vec<_>>()
-                .join(", ");
+            let args_text =
+                new_expr.arguments.iter().map(|arg| ctx.source_range(arg.span())).join(", ");
 
             let replacement = format!("Buffer.{method}({args_text})");
             fixer.replace(expr_span, replacement)
@@ -85,7 +84,7 @@ impl Rule for NoNewBuffer {
 /// Determines which Buffer method to use based on the first argument.
 /// Returns `Some("alloc")` for numeric arguments, `Some("from")` for array/string arguments,
 /// or `None` if the type can't be determined (unsafe to fix).
-fn determine_buffer_method(new_expr: &oxc_ast::ast::NewExpression) -> Option<&'static str> {
+fn determine_buffer_method(new_expr: &NewExpression) -> Option<&'static str> {
     // Handle spread arguments - unsafe to fix
     if new_expr.arguments.iter().any(Argument::is_spread) {
         return None;

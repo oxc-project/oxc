@@ -1,4 +1,4 @@
-class C {
-  static #_ = C;
-  static #_2 = x;
-}
+var _staticBlock;
+let C = (class C {
+  static #_ = _staticBlock = () => (C, x, this);
+}, _staticBlock());

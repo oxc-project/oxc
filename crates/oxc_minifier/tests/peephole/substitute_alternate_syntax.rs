@@ -2,7 +2,8 @@ use oxc_span::SourceType;
 
 use crate::{
     CompressOptions, CompressOptionsKeepNames, CompressOptionsUnused, default_options, test,
-    test_options, test_same, test_same_options, test_same_options_source_type, test_target_same,
+    test_options, test_same, test_same_options, test_same_options_source_type, test_smallest,
+    test_target_same,
 };
 
 #[test]
@@ -12,6 +13,9 @@ fn test_fold_return_result() {
     test("function f(){return void 0;}", "function f(){}");
     test("function f(){return void foo();}", "function f(){foo()}");
     test("function f(){return undefined;}", "function f(){}");
+    test("function f(){return a,void 0;}", "function f(){a;}");
+    test("function f(){b;return a,void 0;}", "function f(){b,a;}");
+    test("function f(){b,c;return a,void 0;}", "function f(){b,c,a;}");
     test("function f(){if(a()){return undefined;}}", "function f(){a()}");
     test_same("function a(undefined) { return undefined; }");
     test_same("function f(){return foo()}");
@@ -51,7 +55,7 @@ fn test_undefined() {
     test_same("var [] = void 0");
     // `delete undefined` returns `false`
     // `delete void 0` returns `true`
-    test_same("delete undefined");
+    test("delete undefined", "");
 }
 
 #[test]
@@ -328,9 +332,11 @@ fn test_string_array_splitting() {
 #[test]
 fn test_template_string_to_string() {
     test("x = `abcde`", "x = 'abcde'");
-    // Lone surrogates are stored escaped in the cooked value; converting to a
-    // string literal would materialize the escape encoding as literal text.
-    test_same("x = `\\ud800y`");
+    // A lone surrogate in the cooked value is kept as the same code unit.
+    test("x = `\\ud800y`", "x = '\\ud800y'");
+    test("x = `${'\\ud800'}`", "x = '\\ud800'");
+    test("x = `${'\\ud800'}`.length", "x = 1");
+    test("x = `\\ud83d${'\\ude00'}`", "x = '\u{1F600}'");
     test("x = `ab cd ef`", "x = 'ab cd ef'");
     test_same("x = `hello ${name}`");
     test_same("tag `hello ${name}`");
@@ -719,6 +725,20 @@ fn test_property_key() {
         "class C { static accessor __proto__ = 0 }",
     );
 
+    // A key with a lone surrogate keeps its string form without brackets.
+    test("v = { ['\\uD800']: 2 }", "v = { '\\uD800': 2 }");
+    test("v = ({ ['__proto__\\uD800']: 0 })", "v = ({ '__proto__\\uD800': 0 })");
+    test("({ ['\\uD800']: _ } = {})", "({ '\\uD800': _ } = {})");
+    test("var { ['\\uD800']: _ } = {}", "var { '\\uD800': _ } = {}");
+    test(
+        "class C { ['\\uD800'] = 1; static ['prototype\\uD800']() {} }",
+        "class C { '\\uD800' = 1; static 'prototype\\uD800'() {} }",
+    );
+    test(
+        "class C { accessor ['constructor\\uD800'] = 1 }",
+        "class C { accessor 'constructor\\uD800' = 1 }",
+    );
+
     // Patch KATAKANA MIDDLE DOT and HALFWIDTH KATAKANA MIDDLE DOT
     // <https://github.com/oxc-project/unicode-id-start/pull/3>
     test_same("x = { 'x・': 0 };");
@@ -772,6 +792,10 @@ fn fold_function_spread_args() {
     test("f(a, ...[])", "f(a)");
     test("new F(...[])", "new F()");
     test("new F(...[1])", "new F(1)");
+
+    test("f(...[1], ...a)", "f(1, ...a)");
+    test("f(...[1, , 3], ...a)", "f(1, void 0, 3, ...a)");
+    test("new F(...[1], ...a)", "new F(1, ...a)");
 }
 
 #[test]
@@ -1047,6 +1071,38 @@ fn test_rewrite_arguments_copy_loop() {
     test_same(
         "function _() { for (var e = arguments.length, r = Array(e), a = 0; a < e; a++) r[a] = arguments[a]; console.log(r, a) }",
     );
+
+    // A previous pass may fold sibling `var` declarations into the loop initializer.
+    // Those bindings must survive even when the copy loop looks otherwise rewritable.
+    test(
+        "function _() { for (var r = [], a = 0, keep; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+        "function _() { var r = [...arguments], keep; use(r, keep) }",
+    );
+    test(
+        "function _() { for (var keep, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+        "function _() { var keep, r = [...arguments]; use(r, keep) }",
+    );
+    test(
+        "function _() { for (var first, second, r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, first, second) }",
+        "function _() { var first, second, r = [...arguments]; use(r, first, second) }",
+    );
+    test(
+        "function _() { var items = [], t = 0, i, u, r; for (; t < arguments.length; t++) items[t] = arguments[t]; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
+        "function _() { var items = [...arguments], i, u, r; if (this.list = [], items != null) for (i = 0, u = items; i < u.length; i++) r = u[i], this.list.push(r) }",
+    );
+    test(
+        "function _() { for (var r = [], a = 0, keep; a < arguments.length; a++) r[a] = arguments[a]; use(keep) }",
+        "function _() { var keep; use(keep) }",
+    );
+    test_same(
+        "function _() { for (var r = [], a = 0, keep = side(); a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
+    test_same(
+        "function _() { for (var keep = side(), r = [], a = 0; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
+    test_same(
+        "function _() { for (var keep; a < arguments.length; a++) r[a] = arguments[a]; use(r, keep) }",
+    );
 }
 
 #[test]
@@ -1090,7 +1146,7 @@ fn test_flatten_array_spread_elements() {
 }
 
 #[test]
-fn fold_sequence_expression() {
+fn test_fold_sequence_expression() {
     test("(a(), b) + c", "a(), b + c");
     test("(a(), b, c) + d", "a(), b, c + d");
 
@@ -1112,4 +1168,42 @@ fn fold_sequence_expression() {
         "async function a() { await (c(1), d(2), 3) }",
         "async function a() { c(1), d(2), await 3 }",
     );
+}
+
+#[test]
+fn test_substitute_yield_expression() {
+    test("function* a() { yield 2 }", "function* a() { yield 2; }");
+    test("function* a() { yield void 0; }", "function* a() { yield; }");
+    test("function* a() { yield undefined; }", "function* a() { yield; }");
+    test("function* a() { yield fn(); }", "function* a() { yield fn(); }");
+    test_same("function* a() { yield* void 0; }");
+    test("function* a() { yield* undefined; }", "function* a() { yield* void 0; }");
+    test("function* a() { yield* fn(); }", "function* a() { yield* fn(); }");
+    test_same("function* a(undefined) { yield undefined; }");
+}
+
+#[test]
+fn empty_iife_preserves_rest_destructuring() {
+    test_smallest(
+        "var n = 0; (function (...[v = n++]) {})(); console.log(n);",
+        "var n = 0; (function (...[v = n++]) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...[v = n++]) => {})(); console.log(n);",
+        "var n = 0; ((...[v = n++]) => {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; (function (...{0: v = n++}) {})(); console.log(n);",
+        "var n = 0; (function (...{0: v = n++}) {})(), console.log(n);",
+    );
+    test_smallest(
+        "var n = 0; ((...{0: v = n++}) => {})(); console.log(n);",
+        "var n = 0; ((...{0: v = n++}) => {})(), console.log(n);",
+    );
+    test_same("(function (...[[v]]) {})();");
+    test_same("((...[[v]]) => {})();");
+    test("(function (...args) {})();", "");
+    test("((...args) => {})();", "");
+    test("x = (function (...args) {})();", "x = void 0;");
+    test("x = ((...args) => {})();", "x = void 0;");
 }
