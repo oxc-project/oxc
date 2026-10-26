@@ -69,6 +69,10 @@ fn react_compiler_plugin_options(env_options: &ReactCompilerEnvOptions) -> Plugi
             validate_no_derived_computations_in_effects: true,
             validate_exhaustive_memoization_dependencies: true,
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::All,
+            // The Babel plugin enables this when it detects `react-native-reanimated`, which
+            // Oxlint cannot do without a plugin list or resolver. The type model only applies
+            // to values imported from `react-native-reanimated`, so enabling it is safe.
+            enable_custom_type_definition_for_reanimated: true,
             ..EnvironmentConfig::default()
         },
         lint_skip_reactive_scope_passes: !env_options.report_todo_and_invariant,
