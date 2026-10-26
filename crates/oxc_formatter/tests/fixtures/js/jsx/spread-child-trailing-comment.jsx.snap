@@ -17,13 +17,6 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   }
 </div>;
 
-<div>
-  {
-    a
-    //comment
-  }
-</div>;
-
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -43,13 +36,6 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   }
 </div>;
 
-<div>
-  {
-    a
-    //comment
-  }
-</div>;
-
 -------------------
 { printWidth: 100 }
 -------------------
@@ -65,13 +51,6 @@ source: crates/oxc_formatter/tests/fixtures/mod.rs
   {
     ...a
     /* comment */
-  }
-</div>;
-
-<div>
-  {
-    a
-    //comment
   }
 </div>;
 

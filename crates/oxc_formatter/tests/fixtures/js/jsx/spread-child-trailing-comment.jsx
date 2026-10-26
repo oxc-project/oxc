@@ -12,10 +12,3 @@
     /* comment */
   }
 </div>;
-
-<div>
-  {
-    a
-    //comment
-  }
-</div>;
