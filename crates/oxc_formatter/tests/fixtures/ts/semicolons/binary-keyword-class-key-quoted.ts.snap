@@ -1,0 +1,48 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// DIVERGENCES.md#string-binary-keyword-class-key
+class A {
+  a = 1;
+  "in": number;
+}
+
+==================== Output ====================
+------------------------------
+{ printWidth: 80, semi: true }
+------------------------------
+// DIVERGENCES.md#string-binary-keyword-class-key
+class A {
+  a = 1;
+  "in": number;
+}
+
+-------------------------------
+{ printWidth: 100, semi: true }
+-------------------------------
+// DIVERGENCES.md#string-binary-keyword-class-key
+class A {
+  a = 1;
+  "in": number;
+}
+
+-------------------------------
+{ printWidth: 80, semi: false }
+-------------------------------
+// DIVERGENCES.md#string-binary-keyword-class-key
+class A {
+  a = 1;
+  "in": number
+}
+
+--------------------------------
+{ printWidth: 100, semi: false }
+--------------------------------
+// DIVERGENCES.md#string-binary-keyword-class-key
+class A {
+  a = 1;
+  "in": number
+}
+
+===================== End =====================
