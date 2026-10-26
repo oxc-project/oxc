@@ -10,3 +10,6 @@ value = 2;
 var
 --> destructuring binding
 { a } = object;
+
+foo();
+/* block */ --> after a block comment on the same line

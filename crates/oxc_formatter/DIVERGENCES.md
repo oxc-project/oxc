@@ -981,23 +981,26 @@ Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.
 - Why: semantics
 - Pin: `tests/fixtures/js/comments/html-close-declaration.cjs`
 
-A closing HTML comment must start a line. Keep a line break before `-->` when
-printing a comment inside a variable declaration. Prettier 3.9.10 inlines the
-comment after `const` or `var`, producing code rejected by `node --check`, and
-misparses the `let` case as an expression statement.
-
 ```js
 // input
 const
 --> comment
 value = 2;
+/* block */ --> comment
 
 // ours
 const
   --> comment
   value = 2;
+/* block */
+--> comment
 
 // prettier
 const --> comment
   value = 2;
+/* block */ --> comment
 ```
+
+A closing HTML comment (`-->`, Annex B) is a comment only at the start of a line.
+Prettier inlines it after `const` or `var`, producing code rejected by `node --check`, and misparses the `let` case as an expression statement.
+We always print a line break before `-->`, which also splits a block comment preceding it on the same line, where Prettier's output stays valid.
