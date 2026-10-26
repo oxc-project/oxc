@@ -1883,6 +1883,16 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
                 path: ArenaVec::new_in(&env.allocator),
                 span: dep.span,
             }
+        } else if self.inner_fn_context.is_some()
+            && let Some(index) =
+                dep.path.iter().position(|entry| entry.property.is_string("current"))
+        {
+            // A function reads `x.current` when it runs, not during render, and `x` may
+            // be a ref the compiler could not type. Depend on the path up to `.current`
+            // so that the cache guard does not read the ref during render.
+            let mut dep = dep;
+            dep.path.truncate(index);
+            dep
         } else {
             dep
         };
