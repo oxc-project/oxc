@@ -347,14 +347,18 @@ impl Linter {
         let mut timing_recorder = TIMINGS.then(|| RuleTimingRecorder::with_capacity(rules.len()));
 
         // The shared React Compiler run takes its environment additions from the
-        // `react/capitalized-calls` rule's resolved options.
-        let react_compiler_env_options = rules
+        // `react/capitalized-calls` rule's resolved options, and runs the passes
+        // that only report `Todo` and `Invariant` when their rules are enabled.
+        let mut react_compiler_env_options = rules
             .iter()
             .find_map(|(rule, _)| match rule {
                 RuleEnum::ReactCapitalizedCalls(rule) => Some(rule.react_compiler_env_options()),
                 _ => None,
             })
             .unwrap_or_default();
+        react_compiler_env_options.report_todo_and_invariant = rules
+            .iter()
+            .any(|(rule, _)| matches!(rule, RuleEnum::ReactTodo(_) | RuleEnum::ReactInvariant(_)));
 
         let mut ctx_host = Rc::new(
             ContextHost::new(path, context_sub_hosts, allocator, self.options, config)
