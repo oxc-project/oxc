@@ -52,6 +52,83 @@ fn transform_source<'a>(
 }
 
 #[test]
+fn optional_chain_cache_preserves_throwing_continuations() {
+    let cases = [
+        ("obj?.a.b(getArg())", "[undefined, {}]"),
+        ("obj?.a[getKey()]?.(getArg())", "[undefined, {}]"),
+        ("obj?.a.b?.(getArg()).c", "[undefined, {}]"),
+        ("obj?.a?.b.c(getArg())", "[undefined, {a: {}}]"),
+        ("obj.inner?.a.b(getArg())", "[{inner: undefined}, {inner: {}}]"),
+        ("getArg() ? obj?.a.b(getArg()) : null", "[undefined, {}]"),
+        ("getArg() ? obj?.a?.b.c(getArg()) : null", "[undefined, {a: {}}]"),
+        ("getArg() ? obj?.a.b?.(getArg()).c : null", "[undefined, {}]"),
+        ("getArg() ? obj?.a[getKey()]?.(getArg()) : null", "[undefined, {}]"),
+        ("obj?.a?.b(getArg())", "[undefined, {}]"),
+        ("obj?.a.b(getArg())", "[{a: {b: method, c: 2}}, {a: {b: method, c: 3}}]"),
+    ];
+    let mut script = String::from(
+        r#"import assert from 'node:assert/strict';
+const getKey = () => 'b';
+const method = function(value) { return this.c + value; };
+function outcome(fn, obj, getArg) {
+  try { return ['value', fn({obj, getArg, getKey})]; }
+  catch (error) { return ['error', error.constructor.name]; }
+}
+"#,
+    );
+    for (expression, inputs) in cases {
+        let source =
+            format!("function Component({{obj, getArg, getKey}}) {{ return {expression}; }}");
+        let allocator = Allocator::default();
+        let (mut program, result) = transform_source(
+            &source,
+            SourceType::tsx().with_module(true),
+            &allocator,
+            PluginOptions { compilation_mode: CompilationMode::All, ..options() },
+        );
+        assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+        assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+        program.body.retain(|statement| !matches!(statement, Statement::ImportDeclaration(_)));
+        let output = Codegen::new().build(&program).code;
+        script.push_str(&format!(
+            r#"{{
+  function createComponent() {{
+    let cache;
+    function _c(size) {{
+      return cache ??= Array(size).fill(Symbol.for('react.memo_cache_sentinel'));
+    }}
+    {output}
+    return Component;
+  }}
+  const original = ({{obj, getArg, getKey}}) => {expression};
+  for (const getArg of [() => 0, () => 1]) {{
+    const compiled = createComponent();
+    for (const obj of {inputs}) {{
+      assert.deepEqual(outcome(compiled, obj, getArg),
+        outcome(original, obj, getArg), {expression:?});
+    }}
+  }}
+}}
+"#,
+        ));
+    }
+    let mut child = std::process::Command::new("node")
+        .args(["--input-type=module"])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .expect("Node.js is required to test compiled runtime behavior");
+    std::io::Write::write_all(&mut child.stdin.take().unwrap(), script.as_bytes()).unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "runtime regression failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn memoizes_a_component_end_to_end() {
     let source = "function Component(props) {\n  \
         return <div onClick={() => props.onClick()}>{props.text}</div>;\n}\n";

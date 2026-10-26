@@ -1,0 +1,230 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/optional-chain-cache-guard.jsx
+---
+import { c as _c } from "react/compiler-runtime";
+export function StaticContinuation(t0) {
+	const $ = _c(6);
+	const { obj, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== obj?.a || $[2] !== obj?.a.b) {
+		t1 = obj?.a.b(getArg());
+		$[0] = getArg;
+		$[1] = obj?.a;
+		$[2] = obj?.a.b;
+		$[3] = t1;
+	} else {
+		t1 = $[3];
+	}
+	let t2;
+	if ($[4] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[4] = t1;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	return t2;
+}
+export function ComputedContinuation(t0) {
+	const $ = _c(6);
+	const { obj, getKey, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== getKey || $[2] !== obj) {
+		t1 = obj?.a[getKey()]?.(getArg());
+		$[0] = getArg;
+		$[1] = getKey;
+		$[2] = obj;
+		$[3] = t1;
+	} else {
+		t1 = $[3];
+	}
+	let t2;
+	if ($[4] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[4] = t1;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	return t2;
+}
+export function OptionalCallContinuation(t0) {
+	const $ = _c(6);
+	const { obj, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== obj?.a || $[2] !== obj?.a.b) {
+		t1 = obj?.a.b?.(getArg()).c;
+		$[0] = getArg;
+		$[1] = obj?.a;
+		$[2] = obj?.a.b;
+		$[3] = t1;
+	} else {
+		t1 = $[3];
+	}
+	let t2;
+	if ($[4] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[4] = t1;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	return t2;
+}
+export function NestedContinuation(t0) {
+	const $ = _c(6);
+	const { obj, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== obj.inner?.a || $[2] !== obj.inner?.a.b) {
+		t1 = obj.inner?.a.b(getArg());
+		$[0] = getArg;
+		$[1] = obj.inner?.a;
+		$[2] = obj.inner?.a.b;
+		$[3] = t1;
+	} else {
+		t1 = $[3];
+	}
+	let t2;
+	if ($[4] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[4] = t1;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	return t2;
+}
+export function FullyOptional(t0) {
+	const $ = _c(5);
+	const { obj, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== obj?.a) {
+		t1 = obj?.a?.b(getArg());
+		$[0] = getArg;
+		$[1] = obj?.a;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	let t2;
+	if ($[3] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[3] = t1;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	return t2;
+}
+export function ConditionalContinuation(t0) {
+	const $ = _c(5);
+	const { obj, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== obj) {
+		t1 = getArg() ? obj?.a.b(getArg()) : null;
+		$[0] = getArg;
+		$[1] = obj;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	let t2;
+	if ($[3] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[3] = t1;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	return t2;
+}
+export function ConditionalNestedContinuation(t0) {
+	const $ = _c(5);
+	const { obj, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== obj?.a) {
+		t1 = getArg() ? obj?.a?.b.c(getArg()) : null;
+		$[0] = getArg;
+		$[1] = obj?.a;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	let t2;
+	if ($[3] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[3] = t1;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	return t2;
+}
+export function ConditionalOptionalCall(t0) {
+	const $ = _c(5);
+	const { obj, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== obj) {
+		t1 = getArg() ? obj?.a.b?.(getArg()).c : null;
+		$[0] = getArg;
+		$[1] = obj;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	let t2;
+	if ($[3] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[3] = t1;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	return t2;
+}
+export function ConditionalComputedContinuation(t0) {
+	const $ = _c(6);
+	const { obj, getKey, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== getKey || $[2] !== obj) {
+		t1 = getArg() ? obj?.a[getKey()]?.(getArg()) : null;
+		$[0] = getArg;
+		$[1] = getKey;
+		$[2] = obj;
+		$[3] = t1;
+	} else {
+		t1 = $[3];
+	}
+	let t2;
+	if ($[4] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[4] = t1;
+		$[5] = t2;
+	} else {
+		t2 = $[5];
+	}
+	return t2;
+}
+export function ConditionalFullyOptional(t0) {
+	const $ = _c(5);
+	const { obj, getArg } = t0;
+	let t1;
+	if ($[0] !== getArg || $[1] !== obj?.a) {
+		t1 = getArg() ? obj?.a?.b(getArg()) : null;
+		$[0] = getArg;
+		$[1] = obj?.a;
+		$[2] = t1;
+	} else {
+		t1 = $[2];
+	}
+	let t2;
+	if ($[3] !== t1) {
+		t2 = <span>{t1}</span>;
+		$[3] = t1;
+		$[4] = t2;
+	} else {
+		t2 = $[4];
+	}
+	return t2;
+}
