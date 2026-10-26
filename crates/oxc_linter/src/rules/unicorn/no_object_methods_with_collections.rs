@@ -16,6 +16,7 @@ use crate::{
     ast_util::{get_declaration_of_variable, variable_declaration_kind},
     context::LintContext,
     rule::Rule,
+    utils::pad_fix_with_token_boundary,
 };
 
 fn no_object_methods_with_collections_diagnostic(
@@ -124,11 +125,8 @@ impl Rule for NoObjectMethodsWithCollections {
             );
         let receiver =
             if needs_parens { format!("({argument_text})") } else { argument_text.to_string() };
-        let preceding = &ctx.source_text()[..call.span.start as usize];
-        let needs_space =
-            ["return", "throw", "else", "do"].iter().any(|keyword| preceding.ends_with(keyword));
-        let space = if needs_space { " " } else { "" };
-        let replacement = format!("{space}Array.from({receiver}.{method}())");
+        let mut replacement = format!("Array.from({receiver}.{method}())");
+        pad_fix_with_token_boundary(ctx.source_text(), call.span, &mut replacement);
         ctx.diagnostic_with_suggestion(diagnostic, |fixer| fixer.replace(call.span, replacement));
     }
 }
@@ -409,6 +407,18 @@ fn test() {
         (
             "do(Object).values(new Set(/* keep */));while (flag);",
             "do Array.from(new Set(/* keep */).values());while (flag);",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "const type = typeof(Object).keys(new Map());",
+            "const type = typeof Array.from(new Map().keys());",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "for (const key of(Object).keys(new Map())) {}",
+            "for (const key of Array.from(new Map().keys())) {}",
             None,
             FixKind::Suggestion,
         ),
