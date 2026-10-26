@@ -131,6 +131,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         }
                     }
                     _ => {
+                        // "(" followed by something that is not an identifier, "this" or a modifier
+                        // is definitely not a lambda. Return before reading the next token: in
+                        // `(/<!-- x -->/)` the `/` starts a regular expression, and lexing past it
+                        // as a punctuator would read `<!--` as an HTML-like comment.
+                        if !second.is_binding_identifier()
+                            && second != Kind::This
+                            && !second.is_modifier_kind()
+                        {
+                            return Tristate::False;
+                        }
+
                         self.bump_any();
                         let third = self.cur_kind();
 
