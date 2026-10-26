@@ -1432,6 +1432,15 @@ pub fn local_fbt_variable(span: Option<Span>) -> OxcDiagnostic {
 }
 
 #[cold]
+pub fn todo_member_expression_chain_too_long(span: Span, max_length: usize) -> OxcDiagnostic {
+    diagnostic(
+        ErrorCategory::Todo,
+        format!("Support member expression chains longer than {max_length} members"),
+    )
+    .with_label(span.primary_label("This member expression chain is too long"))
+}
+
+#[cold]
 pub fn blocklisted_import(module: &str, span: Span) -> OxcDiagnostic {
     diagnostic(ErrorCategory::Todo, "Import from a blocklisted module")
         .with_help(format!("Remove the import from blocklisted module `{module}`"))

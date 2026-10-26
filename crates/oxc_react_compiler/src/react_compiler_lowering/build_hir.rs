@@ -947,19 +947,52 @@ fn lower_member_expression<'a>(
     lower_member_expression_impl(builder, member, None)
 }
 
+/// The longest member expression chain the compiler lowers. Each member's
+/// dependency path extends its object's, so later passes take quadratic time
+/// and memory in the chain length. Longer chains come from generated code; the
+/// function is left as written, as Babel does once its stack runs out.
+const MAX_MEMBER_CHAIN_LENGTH: usize = 500;
+
+/// Lower the object of `member` to a temporary. A member chain `a.b.c` is
+/// walked iteratively rather than recursing once per member, so long
+/// generated chains cannot overflow the stack.
+fn lower_member_object<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    member: &oxc::MemberExpression<'a>,
+) -> Result<Place, OxcDiagnostic> {
+    let mut chain = Vec::new();
+    let mut object = member.object();
+    while let Some(inner) = object.as_member_expression() {
+        if chain.len() + 1 == MAX_MEMBER_CHAIN_LENGTH {
+            return Err(diagnostics::todo_member_expression_chain_too_long(
+                member.span(),
+                MAX_MEMBER_CHAIN_LENGTH,
+            ));
+        }
+        chain.push(inner);
+        object = inner.object();
+    }
+    let mut place = lower_expression_to_temporary(builder, object)?;
+    for inner in chain.into_iter().rev() {
+        let lowered = lower_member_expression_impl(builder, inner, Some(place))?;
+        place = lower_value_to_temporary(builder, lowered.value)?;
+    }
+    Ok(place)
+}
+
 fn lower_member_expression_impl<'a>(
     builder: &mut HirBuilder<'a, '_>,
     member: &oxc::MemberExpression<'a>,
     lowered_object: Option<Place>,
 ) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
+    let object = match lowered_object {
+        Some(object) => object,
+        None => lower_member_object(builder, member)?,
+    };
     match member {
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let property_span = Some(m.property.span);
-            let object = match lowered_object {
-                Some(obj) => obj,
-                None => lower_expression_to_temporary(builder, &m.object)?,
-            };
             let prop_literal = PropertyLiteral::String(m.property.name);
             let value = InstructionValue::PropertyLoad {
                 object,
@@ -978,10 +1011,6 @@ fn lower_member_expression_impl<'a>(
         }
         oxc::MemberExpression::ComputedMemberExpression(m) => {
             let span = Some(m.span);
-            let object = match lowered_object {
-                Some(obj) => obj,
-                None => lower_expression_to_temporary(builder, &m.object)?,
-            };
             // A numeric computed index is treated as a PropertyLoad (matches TS).
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
                 let property_span = Some(lit.span);
@@ -1013,10 +1042,6 @@ fn lower_member_expression_impl<'a>(
         }
         oxc::MemberExpression::PrivateFieldExpression(m) => {
             let span = Some(m.span);
-            let object = match lowered_object {
-                Some(obj) => obj,
-                None => lower_expression_to_temporary(builder, &m.object)?,
-            };
             // TODO(stage1a-arms): private field access needs a private-name property
             // load + OriginalNode bail; defer to a later batch.
             builder.record_error(
