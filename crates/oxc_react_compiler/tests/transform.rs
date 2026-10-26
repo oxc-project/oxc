@@ -52,6 +52,87 @@ fn transform_source<'a>(
 }
 
 #[test]
+fn optional_chain_cache_preserves_throwing_continuations() {
+    let cases = [
+        "obj?.a.b(getArg())",
+        "obj?.a[getKey()]?.(getArg())",
+        "obj?.a.b?.(getArg()).c",
+        "obj?.a?.b.c(getArg())",
+        "obj.inner?.a.b(getArg())",
+        "obj?.a?.b(getArg())",
+        "obj?.a(getArg())",
+        "(obj?.a).b(getArg())",
+    ];
+    let mut script = String::from(
+        "import assert from 'node:assert/strict';\n\
+         const getArg = () => 1;\n\
+         const getKey = () => 'b';\n\
+         function outcome(fn, obj) {\n\
+           try { return ['value', fn({obj, getArg, getKey})]; }\n\
+           catch (error) { return ['error', error.constructor.name]; }\n\
+         }\n",
+    );
+    for expression in cases {
+        let source =
+            format!("function Component({{obj, getArg, getKey}}) {{ return {expression}; }}");
+        let allocator = Allocator::default();
+        let (mut program, result) = transform_source(
+            &source,
+            SourceType::tsx().with_module(true),
+            &allocator,
+            PluginOptions { compilation_mode: CompilationMode::All, ..options() },
+        );
+        assert!(result.changed, "component should compile: {:?}", result.diagnostics);
+        assert!(result.diagnostics.is_empty(), "unexpected diagnostics: {:?}", result.diagnostics);
+        program.body.retain(|statement| !matches!(statement, Statement::ImportDeclaration(_)));
+        let output = Codegen::new().build(&program).code;
+        script.push_str(&format!(
+            "{{\n\
+               function createComponent() {{\n\
+                 let cache;\n\
+                 function _c(size) {{\n\
+                   return cache ??= Array(size).fill(Symbol.for('react.memo_cache_sentinel'));\n\
+                 }}\n\
+                 {output}\n\
+                 return Component;\n\
+               }}\n\
+               const original = ({{obj, getArg, getKey}}) => {original};\n\
+               const nested = {nested};\n\
+               const wrap = value => nested ? {{inner: value}} : value;\n\
+               const method = function(value) {{ return {{c: this.c + value}}; }};\n\
+               const values = [undefined, null, {{}}, {{a: undefined}}, {{a: null}},\n\
+                 {{a: {{b: undefined}}}}, {{a: {{b: method, c: 2}}}},\n\
+                 {{a: {{b: method, c: 3}}}}];\n\
+               for (const from of values) {{\n\
+                 for (const to of values) {{\n\
+                   const compiled = createComponent();\n\
+                   outcome(compiled, wrap(from));\n\
+                   assert.deepEqual(outcome(compiled, wrap(to)), outcome(original, wrap(to)),\n\
+                     {expression:?} + ': ' + JSON.stringify([from, to]));\n\
+                 }}\n\
+               }}\n\
+             }}\n",
+            nested = expression.starts_with("obj.inner"),
+            original = expression,
+        ));
+    }
+    let mut child = std::process::Command::new("node")
+        .args(["--input-type=module"])
+        .stdin(std::process::Stdio::piped())
+        .stdout(std::process::Stdio::piped())
+        .stderr(std::process::Stdio::piped())
+        .spawn()
+        .expect("Node.js is required to test compiled runtime behavior");
+    std::io::Write::write_all(&mut child.stdin.take().unwrap(), script.as_bytes()).unwrap();
+    let output = child.wait_with_output().unwrap();
+    assert!(
+        output.status.success(),
+        "runtime regression failed:\n{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+}
+
+#[test]
 fn memoizes_a_component_end_to_end() {
     let source = "function Component(props) {\n  \
         return <div onClick={() => props.onClick()}>{props.text}</div>;\n}\n";
