@@ -169,7 +169,7 @@ export interface ReactCompilerEnvironmentOptions {
   /**
    * Enable exhaustive manual memo dependency validation.
    *
-   * @default false
+   * @default true
    */
   validateExhaustiveMemoizationDependencies?: boolean
   validateExhaustiveEffectDependencies?: 'off' | 'all' | 'missing-only' | 'extra-only'

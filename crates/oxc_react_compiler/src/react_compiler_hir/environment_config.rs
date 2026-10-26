@@ -72,7 +72,7 @@ pub struct EnvironmentConfig {
 
     pub enable_preserve_existing_memoization_guarantees: bool,
     pub validate_preserve_existing_memoization_guarantees: bool,
-    /// Exhaustive manual memo dependency validation, disabled by default.
+    /// Exhaustive manual memo dependency validation, enabled by default.
     pub validate_exhaustive_memoization_dependencies: bool,
     pub validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode,
 
@@ -125,9 +125,9 @@ impl Default for EnvironmentConfig {
             module_type_provider: None,
             enable_preserve_existing_memoization_guarantees: true,
             validate_preserve_existing_memoization_guarantees: true,
-            // Keep public defaults compatible with babel-plugin-react-compiler 1.0;
-            // current React enables this validation by default.
-            validate_exhaustive_memoization_dependencies: false,
+            // Matches current React: skip functions whose manual memo dependencies
+            // cannot be preserved.
+            validate_exhaustive_memoization_dependencies: true,
             validate_exhaustive_effect_dependencies: ExhaustiveEffectDepsMode::Off,
             enable_optional_dependencies: true,
             enable_name_anonymous_functions: false,
