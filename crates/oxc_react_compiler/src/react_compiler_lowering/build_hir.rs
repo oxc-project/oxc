@@ -5635,7 +5635,9 @@ fn lower_object_property_key<'a>(
     computed: bool,
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
-        oxc::PropertyKey::StringLiteral(lit) => {
+        // `{ ["__proto__"]: v }` defines an own property, while the non-computed
+        // `"__proto__": v` sets the prototype, so the key must stay computed.
+        oxc::PropertyKey::StringLiteral(lit) if !(computed && lit.value == "__proto__") => {
             let Some(name) = lit.value.as_str() else {
                 // Record the diagnostic so the compiler discards this function's partial HIR.
                 let error =
