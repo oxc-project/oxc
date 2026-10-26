@@ -1,13 +1,11 @@
 function useFoo() {
-  let counter = 2;
-  const fn = () => {
-    return counter++;
-  };
-
-  return fn();
+  let count = 0;
+  let cb = () => count++;
+  return cb++;
 }
 
 export const FIXTURE_ENTRYPOINT = {
   fn: useFoo,
   params: [],
+  isComponent: false,
 };
