@@ -1,0 +1,25 @@
+crates/oxc_parser/src/lexer/mod.rs
+  s_be800834b6a14b::t_89452ceb43f225 55,98,101-104,209,221-227,231,249-252
+crates/oxc_parser/src/lexer/punctuation.rs
+  s_be800834b6a14b::t_12032723d39948 86
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_be800834b6a14b::t_53c1beab85744d 1,24-26,52-154,163,180-193,236,278-281,293-327,506,508,726-745,748,752-755,757,949-1092
+crates/oxc_parser/src/lib.rs
+  s_be800834b6a14b::t_641a18d7e7c0ef 764,770,774,870-871,873-880,894,896-897,916-933,961-965,1470-1485,1487-1573
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cf1d47be4a2126d614bdf5e6b0c376c22dd21b6b",
+  "prompts": {},
+  "sessions": {
+    "s_be800834b6a14b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d67a7e5c-f624-4a5b-a1a8-93e081fa062c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
