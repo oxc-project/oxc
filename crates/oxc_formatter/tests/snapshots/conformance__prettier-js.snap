@@ -92,6 +92,5 @@ js compatibility: 1033/1123 (91.99%), 23 files skipped
 - js/comments/first-argument/first-argument.js
 - js/for/continue-and-break-comment-without-blocks.js
 - js/function/issue-12967.js
-- js/object-prop-break-in/short-keys.js
 - jsx/comments/in-attributes.js
 - jsx/spread/child.js

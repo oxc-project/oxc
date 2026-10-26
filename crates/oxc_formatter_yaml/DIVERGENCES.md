@@ -27,8 +27,6 @@ Anchor/tag source order is preserved, never reordered, as mapping keys and seque
 - Pin: `tests/fixtures/yaml/block-scalar-trailing-spaces.yaml`, `tests/fixtures/yaml/prose-wrap/trailing-spaces.yaml`
 - Conformance: `yaml/block-folded/block-folded-strip.yml`, the `yaml/block-value` snippets whose scalar ends in a space/tab-only line (64 rows),
   and yaml-test-suite `L24T`, `L24T-2`, `Y79Y-2`, whose JSON keeps that line as content
-- Oxfmt: `externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml`, `externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml`, `externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml`, `externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml`,
-  `externals/aws-cloudformation-templates/RainModules/bucket.yml`, `externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml`
 
 ```yaml
 # input ("␣" marks a real space)

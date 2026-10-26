@@ -45,7 +45,7 @@
     "tinypool": "2.2.0"
   },
   "peerDependencies": {
-    "@astrojs/compiler-rs": "^0.4.0 || ^0.5.0",
+    "@astrojs/compiler-rs": "^0.5.0",
     "svelte": "^5.0.0",
     "vite-plus": "*"
   },

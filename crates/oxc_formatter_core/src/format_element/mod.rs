@@ -489,6 +489,12 @@ impl TextWidth {
     /// NOTE: Uses `UnicodeWidthStr::width()` for accurate emoji sequence handling.
     /// Counting by `char` can lead to incorrect widths for complex Unicode sequences.
     /// e.g. "🗑️" (U+1F5D1 U+FE0F) is a single emoji with width 2, but counting chars gives width 1.
+    ///
+    /// NOTE: Zero-width format characters (U+200B..U+200F, U+FEFF, ...) count as 0 here, Prettier counts them as 1
+    /// (see FORMATTER_POLICY.md "Text width").
+    /// Editors often render them visibly (e.g. VS Code highlights invisible characters),
+    /// so counting them as 1 is a possible alignment.
+    /// It needs a table of them, since `unicode-width` exposes no general category.
     pub(crate) fn from_text(text: &str, indent_width: IndentWidth) -> TextWidth {
         let (width, multiline) = Self::measure_text(text, indent_width);
         Self::encode(width, multiline)

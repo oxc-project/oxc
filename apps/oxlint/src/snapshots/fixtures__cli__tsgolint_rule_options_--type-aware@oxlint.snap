@@ -123,8 +123,28 @@ working directory: fixtures/cli/tsgolint_rule_options
  156 | 
      `----
 
-Found 0 warnings and 14 errors.
-Finished in <variable>ms on 1 file with 16 rules using 1 threads.
+  x typescript(await-thenable): Unexpected iterable of non-Promise (non-"Thenable") values passed to promise aggregator.
+     ,-[test.ts:171:14]
+ 170 | // This SHOULD error because the array contains only synchronous values
+ 171 | Promise.all([1, 2]);
+     :             ^^^|^^|^
+     :                |  `-- This expression is not Promise-like
+     :                `-- Promise aggregator input
+     `----
+  help: Pass an iterable of Promise-like values, or wrap each synchronous value in `Promise.resolve(...)` before calling the aggregator.
+
+  x typescript(await-thenable): Unexpected iterable of non-Promise (non-"Thenable") values passed to promise aggregator.
+     ,-[test.ts:171:17]
+ 170 | // This SHOULD error because the array contains only synchronous values
+ 171 | Promise.all([1, 2]);
+     :             ^^^|^^|^
+     :                |  `-- This expression is not Promise-like
+     :                `-- Promise aggregator input
+     `----
+  help: Pass an iterable of Promise-like values, or wrap each synchronous value in `Promise.resolve(...)` before calling the aggregator.
+
+Found 0 warnings and 16 errors.
+Finished in <variable>ms on 1 file with 17 rules using 1 threads.
 ----------
 CLI result: LintFoundErrors
 ----------

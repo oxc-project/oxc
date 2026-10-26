@@ -1,8 +1,8 @@
 commit: a56fe4a4
 
-node: v26.5.0
+node: v26.12.1
 
-Passed: 319 of 418 (76.32%)
+Passed: 320 of 418 (76.56%)
 
 Failures:
 
@@ -22,14 +22,6 @@ SyntaxError: Unexpected eval or arguments in strict mode
 ./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js
 AssertionError: expected { value: 2, done: true } to deeply equal { value: 4, done: false }
     at test (./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-async-generators-await-in-finally-exec.test.js:28:44)
-    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
-
-./fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-yield-star-throw-method-sync-iterator-exec.test.js
-AssertionError: expected [ Array(3) ] to deeply equal [ 'next', 'throw:TEST', …(1) ]
-    at ./tasks/transform_conformance/fixtures/babel/babel-plugin-transform-async-generator-functions-test-fixtures-yield-star-throw-method-sync-iterator-exec.test.js:57:16
-    at Generator.next (<anonymous>)
-    at asyncGeneratorStep (./npm/runtime/src/helpers/asyncToGenerator.js:3:17)
-    at _next (./npm/runtime/src/helpers/asyncToGenerator.js:17:9)
     at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
 
 ./fixtures/babel/babel-plugin-transform-async-to-generator-test-fixtures-async-to-generator-async-complex-params-exec.test.js

@@ -2,7 +2,7 @@ commit: a56fe4a4
 
 formatter_babel Summary:
 AST Parsed     : 2280/2280 (100.00%)
-Positive Passed: 2274/2280 (99.74%)
+Positive Passed: 2272/2280 (99.65%)
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-method/input.js
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/class-private-method/input.js
@@ -15,3 +15,7 @@ Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basi
 
 Mismatch: tasks/coverage/babel/packages/babel-parser/test/fixtures/comments/basic/sequence-expression/input.js
 
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-properties/escaped-in-after-initializer/input.js
+Cannot assign to this expression
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/class/escaped-in-after-initializer/input.ts
+Cannot assign to this expression

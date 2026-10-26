@@ -26,7 +26,7 @@ use oxc_span::SourceType;
 // or the special-purpose AST-in `format_program`.
 pub(crate) use crate::ast_nodes::{AstNode, AstNodes};
 pub use crate::embed_context::{
-    CssInJsTemplate, HtmlEmbedMeta, JsEmbeddedIn, MarkdownInJsTemplate,
+    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, MarkdownInJsTemplate,
 };
 // `JsFormatContext` is public solely as the type parameter of the returned `Formatted`;
 // its methods are not part of the public contract.

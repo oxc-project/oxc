@@ -219,7 +219,7 @@ impl<'a> PeepholeOptimizations {
 
         // `a ? c : b && c` => `(a || b) && c`
         if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate
-            && logical_expr.operator == LogicalOperator::And
+            && logical_expr.operator.is_and()
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
             let mut new_logical = logical_expr.take_in_box(ctx);
