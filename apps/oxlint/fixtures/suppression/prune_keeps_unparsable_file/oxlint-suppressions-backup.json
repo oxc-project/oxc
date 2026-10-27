@@ -1,0 +1,12 @@
+{
+  "files/fixed.ts": {
+    "no-debugger": {
+      "count": 1
+    }
+  },
+  "files/unparsable.tsx": {
+    "no-debugger": {
+      "count": 1
+    }
+  }
+}

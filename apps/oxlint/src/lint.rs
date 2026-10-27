@@ -2332,6 +2332,20 @@ mod suppression {
     }
 
     #[test]
+    fn test_prune_keeps_entries_of_unparsable_file() {
+        // A file that fails to parse can't be linted, so its entries must survive pruning.
+        // Other files are still pruned as usual.
+        for args in [&["--prune-suppressions"][..], &["--prune-suppressions", "--type-aware"]] {
+            SuppressionTester::new()
+                .with_cwd("prune_keeps_unparsable_file")
+                .with_setup_file(true)
+                .with_expected_file(true)
+                .with_backup_file(true)
+                .test(args);
+        }
+    }
+
+    #[test]
     #[cfg_attr(target_endian = "big", ignore = "disabled on big-endian")]
     fn test_only_non_fixed_diagnostics_are_reported() {
         SuppressionTester::new()
