@@ -712,6 +712,19 @@ fn test_property_key() {
 
     test("class C { ['-1']() {} }", "class C { '-1'() {} }");
 
+    // Negative and non-finite numeric keys keep their brackets.
+    // <https://github.com/oxc-project/oxc/issues/27834>
+    test_same("v = { [-2]: _ }");
+    test_same("v = { [-1]() {} }");
+    test_same("({ [-2]: _ } = {})");
+    test_same("var { [-2]: _ } = {}");
+    test_same("class C { [-2] = _; static [-3]() {} }");
+    test_same("class C { accessor [-2] = _ }");
+    test_same("var { [Infinity]: _ } = {}");
+    test_same("var { [-Infinity]: _ } = {}");
+    test_same("class C { [NaN]() {} }");
+    test_same("v = { [-0]: _ }");
+
     // <https://tc39.es/ecma262/2024/multipage/ecmascript-language-expressions.html#sec-runtime-semantics-propertydefinitionevaluation>
     test_same("v = ({ ['__proto__']: 0 })"); // { __proto__: 0 } will have `isProtoSetter = true`
     test("v = ({ ['__proto__']() {} })", "v = ({ __proto__() {} })");
