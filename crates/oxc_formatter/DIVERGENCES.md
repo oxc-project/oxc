@@ -1167,3 +1167,36 @@ x =
 
 An own-line comment before a member's `.` stays before it, for `.b` and `.#b` alike.
 Prettier moves it before the object for `.b`, and after the `.` for `.#b`; both cross a token.
+
+## computed-member-object-paren-break
+
+- Why: uniform-rule (same construct, same output: `(a + b).c` and `(await a)[c]`)
+- Pin: `tests/fixtures/js/parenthesis/computed-member-object-paren-break.js`
+- Conformance: `js/ternaries/indent-after-paren.js`
+
+```js
+// input (printWidth: 80)
+(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)[c];
+(someCondition ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee : someVeryLongAlternateValueeeeeeeeeee)[c];
+
+// ours: the same as `.c`
+(
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+)[c];
+(someCondition
+  ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee
+  : someVeryLongAlternateValueeeeeeeeeee
+)[c];
+
+// prettier
+(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)[c];
+(someCondition
+  ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee
+  : someVeryLongAlternateValueeeeeeeeeee)[c];
+```
+
+A binary-like or conditional object of a member breaks its parens the same way for `.c`, `[c]` and `?.[c]`.
+Prettier does so for `.c` only, while an `await` / `as` object breaks them for `[c]` too.
+The computed property (`a[b + c]`) keeps its own layout.

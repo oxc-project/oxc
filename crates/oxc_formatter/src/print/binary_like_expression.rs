@@ -224,7 +224,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
         }
 
         // Add a group with a soft block indent in cases where it is necessary to parenthesize the binary expression.
-        // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`.
+        // For example, `(a+b)(call)`, `!(a + b)`, `(a + b).test`, `(a + b)[test]`.
         let is_inside_parenthesis = match parent {
             // The unary's own comment parens already provide the group and indent
             AstNodes::UnaryExpression(unary) if unary_argument_takes_comment_parens(unary, f) => {
@@ -232,7 +232,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
             }
             AstNodes::UnaryExpression(_) => true,
             _ => {
-                parent.is_non_computed_member_expression()
+                parent.is_member_object_span(self.span())
                     || parent.is_call_like_callee_span(self.span())
             }
         };
