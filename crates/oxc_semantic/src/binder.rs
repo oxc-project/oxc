@@ -73,10 +73,11 @@ impl<'a> Binder<'a> for VariableDeclarator<'a> {
                 for &scope_id in &var_scope_ids {
                     // Type-only bindings (type aliases, interfaces) live in a separate
                     // declaration space, so a hoisted `var` must not merge into them.
-                    if let Some(symbol_id) = builder.check_redeclaration(scope_id, span, name, excludes)
+                    if let Some(symbol_id) =
+                        builder.check_redeclaration(scope_id, span, name, excludes)
                         && builder.scoping.symbol_flags(symbol_id).can_be_referenced_by_value()
                         && builder.scoping.symbol_flags(symbol_id).is_value()
-                     {
+                    {
                         builder.add_redeclare_variable(symbol_id, includes, span);
                         declared_symbol_id = Some(symbol_id);
 
