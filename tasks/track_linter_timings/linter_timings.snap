@@ -232,7 +232,6 @@ jest/no-jasmine-globals                                    |  75618
 jest/no-large-snapshots                                    |      7
 jest/no-mocks-import                                       |      7
 jest/no-restricted-jest-methods                            |      0
-jest/no-restricted-matchers                                |      0
 jest/no-standalone-expect                                  |      7
 jest/no-test-prefixes                                      |      0
 jest/no-test-return-statement                              |  14199
@@ -684,7 +683,6 @@ vitest/no-import-node-test                                 |      7
 vitest/no-importing-vitest-globals                         |  31466
 vitest/no-large-snapshots                                  |      7
 vitest/no-mocks-import                                     |      7
-vitest/no-restricted-matchers                              |      0
 vitest/no-restricted-vi-methods                            |      0
 vitest/no-standalone-expect                                |      7
 vitest/no-test-prefixes                                    |      0

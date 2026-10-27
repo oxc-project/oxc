@@ -2376,8 +2376,9 @@ impl RuleRunner for crate::rules::jest::no_restricted_jest_methods::NoRestricted
 }
 
 impl RuleRunner for crate::rules::jest::no_restricted_matchers::NoRestrictedMatchers {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::no_standalone_expect::NoStandaloneExpect {
@@ -4932,8 +4933,9 @@ impl RuleRunner for crate::rules::vitest::no_mocks_import::NoMocksImport {
 }
 
 impl RuleRunner for crate::rules::vitest::no_restricted_matchers::NoRestrictedMatchers {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::no_restricted_vi_methods::NoRestrictedViMethods {
