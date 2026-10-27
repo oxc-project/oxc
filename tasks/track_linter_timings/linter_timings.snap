@@ -215,7 +215,6 @@ import/no-webpack-loader-syntax                            |  62709
 import/prefer-default-export                               |      7
 import/unambiguous                                         |      7
 jest/consistent-test-it                                    |      7
-jest/expect-expect                                         |      0
 jest/max-expects                                           |      7
 jest/max-nested-describe                                   |      7
 jest/no-commented-out-tests                                |      7
@@ -658,7 +657,6 @@ vitest/consistent-each-for                                 |      0
 vitest/consistent-test-filename                            |      7
 vitest/consistent-test-it                                  |      7
 vitest/consistent-vitest-vi                                |  62709
-vitest/expect-expect                                       |      0
 vitest/hoisted-apis-on-top                                 |      0
 vitest/max-expects                                         |      7
 vitest/max-nested-describe                                 |      7

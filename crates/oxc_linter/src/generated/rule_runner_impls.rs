@@ -2256,8 +2256,9 @@ impl RuleRunner for crate::rules::jest::consistent_test_it::ConsistentTestIt {
 }
 
 impl RuleRunner for crate::rules::jest::expect_expect::ExpectExpect {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::max_expects::MaxExpects {
@@ -4834,8 +4835,9 @@ impl RuleRunner for crate::rules::vitest::consistent_vitest_vi::ConsistentVitest
 }
 
 impl RuleRunner for crate::rules::vitest::expect_expect::ExpectExpect {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::hoisted_apis_on_top::HoistedApisOnTop {
