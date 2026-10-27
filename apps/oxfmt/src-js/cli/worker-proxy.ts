@@ -31,8 +31,15 @@ async function getPool(): Promise<Tinypool> {
 
   pool ??= new Tinypool({
     filename: new URL("./cli-worker.js", import.meta.url).href,
-    minThreads: poolSize,
+    // Spawn workers on demand: each one is a full Node.js process,
+    // and most runs delegate only a few files to Prettier.
+    minThreads: 1,
     maxThreads: poolSize,
+    // Keep spawned workers until the pool is destroyed.
+    // Tinypool's default (0) removes workers above `minThreads` as soon as they go idle,
+    // so a run whose tasks arrive in waves would keep respawning them.
+    // `setTimeout` caps the delay at 2^31 - 1 ms; `Infinity` would fire after 1 ms.
+    idleTimeout: 2 ** 31 - 1,
     // XXX: Use `child_process` instead of `worker_threads`.
     // Not sure why, but when using `worker_threads`,
     // calls from NAPI (CLI) -> worker threads -> NAPI (prettier-plugin-oxfmt) causes a hang...
