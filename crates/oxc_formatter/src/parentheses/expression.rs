@@ -1196,9 +1196,6 @@ fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_, '_>) ->
         AstNodes::TSAsExpression(_)
         | AstNodes::TSSatisfiesExpression(_)
         | AstNodes::AwaitExpression(_)
-        | AstNodes::StaticMemberExpression(_)
-        | AstNodes::ComputedMemberExpression(_)
-        | AstNodes::PrivateFieldExpression(_)
         | AstNodes::SequenceExpression(_)
         | AstNodes::UnaryExpression(_)
         | AstNodes::TSNonNullExpression(_)
@@ -1206,8 +1203,7 @@ fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_, '_>) ->
         | AstNodes::TaggedTemplateExpression(_)
         | AstNodes::JSXSpreadAttribute(_)
         | AstNodes::JSXSpreadChild(_) => true,
-        _ if parent.is_call_like_callee_span(span) => true,
-        _ => false,
+        _ => parent.is_member_expression() || parent.is_call_like_callee_span(span),
     }
 }
 

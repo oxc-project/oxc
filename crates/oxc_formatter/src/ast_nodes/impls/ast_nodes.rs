@@ -56,6 +56,21 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
         }
     }
 
+    /// Check if this is a member expression: `a.b`, `a[b]`, or `a.#b`
+    pub fn is_member_expression(&self) -> bool {
+        matches!(
+            self,
+            AstNodes::StaticMemberExpression(_)
+                | AstNodes::ComputedMemberExpression(_)
+                | AstNodes::PrivateFieldExpression(_)
+        )
+    }
+
+    /// Check if this is a non-computed member expression: `a.b` or `a.#b`
+    pub fn is_non_computed_member_expression(&self) -> bool {
+        matches!(self, AstNodes::StaticMemberExpression(_) | AstNodes::PrivateFieldExpression(_))
+    }
+
     /// Check if this is a binary-like expression: `a || b`, `a + b`, or `#x in b`
     pub fn is_binary_like(&self) -> bool {
         matches!(

@@ -1,0 +1,87 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// DIVERGENCES.md#member-property-own-line-comment
+class A {
+  #b;
+  m() {
+    x = a
+      // comment
+      .b;
+    x = a
+      // comment
+      .#b;
+    return a
+      // comment
+      .#b;
+  }
+  n() {
+    return a
+      // comment
+      .b;
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// DIVERGENCES.md#member-property-own-line-comment
+class A {
+  #b;
+  m() {
+    x =
+      a
+        // comment
+        .b;
+    x =
+      a
+        // comment
+        .#b;
+    return (
+      a
+        // comment
+        .#b
+    );
+  }
+  n() {
+    return (
+      a
+        // comment
+        .b
+    );
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// DIVERGENCES.md#member-property-own-line-comment
+class A {
+  #b;
+  m() {
+    x =
+      a
+        // comment
+        .b;
+    x =
+      a
+        // comment
+        .#b;
+    return (
+      a
+        // comment
+        .#b
+    );
+  }
+  n() {
+    return (
+      a
+        // comment
+        .b
+    );
+  }
+}
+
+===================== End =====================

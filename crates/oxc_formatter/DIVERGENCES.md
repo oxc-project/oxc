@@ -1079,3 +1079,91 @@ class A {
 A class member named `in` or `instanceof` would continue the previous property's value as a binary operator, so the `;` before it is kept.
 Prettier checks only an identifier key, but also prints the string key `"in"` unquoted, producing a syntax error.
 We check a string key by its value, which also keeps the `;` before a key that stays quoted (TypeScript, `quoteProps: "preserve"`), where Prettier's output stays valid.
+
+## private-member-like-static
+
+- Why: uniform-rule (same construct, same output: `a.b`)
+- Pin: `tests/fixtures/js/private-fields/private-member-like-static.js`
+
+```js
+// input (printWidth: 80)
+foo(someIdentifierName.#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking);
+this.#Factory.someMethodName(argumentOne).anotherMethodName(argumentTwo).third();
+const a = obj.#decorator(someArgument)((aaaaaaaaaaaa, bbbbbbbbbbbbbbbb, cccccccccccccccc) => {
+  return a;
+});
+@A.#decorator a() {}
+
+// ours: the same as `.b`
+foo(
+  someIdentifierName.#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking,
+);
+this.#Factory.someMethodName(argumentOne)
+  .anotherMethodName(argumentTwo)
+  .third();
+const a = obj.#decorator(someArgument)((
+  aaaaaaaaaaaa,
+  bbbbbbbbbbbbbbbb,
+  cccccccccccccccc,
+) => {
+  return a;
+});
+@A.#decorator a() {}
+
+// prettier
+foo(
+  someIdentifierName
+    .#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking,
+);
+this.#Factory
+  .someMethodName(argumentOne)
+  .anotherMethodName(argumentTwo)
+  .third();
+const a = obj.#decorator(someArgument)(
+  (aaaaaaaaaaaa, bbbbbbbbbbbbbbbb, cccccccccccccccc) => {
+    return a;
+  },
+);
+@(A.#decorator) a() {}
+```
+
+Both are a non-computed member access, so `.#b` follows every rule of `.b`.
+Prettier prints `.b` like ours in all four, only `.#b` differently.
+`@A.#decorator` is valid without parens (`DecoratorMemberExpression` accepts a `PrivateIdentifier`).
+
+## member-property-own-line-comment
+
+- Why: invariant
+- Pin: `tests/fixtures/js/comments/member-property-own-line-comment.js`
+
+```js
+// input
+x = a
+  // comment
+  .b;
+x = a
+  // comment
+  .#b;
+
+// ours
+x =
+  a
+    // comment
+    .b;
+x =
+  a
+    // comment
+    .#b;
+
+// prettier
+x =
+  // comment
+  a.b;
+x =
+  a
+    .// comment
+    #b;
+```
+
+An own-line comment before a member's `.` stays before it, for `.b` and `.#b` alike.
+Prettier moves it before the object for `.b`, and after the `.` for `.#b`; both cross a token.

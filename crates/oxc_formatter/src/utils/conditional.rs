@@ -270,21 +270,9 @@ impl<'a> FormatConditionalLike<'a, '_> {
                         break;
                     }
                 }
-                AstNodes::StaticMemberExpression(member) => {
-                    if member.object.span() == expression_span {
-                        expression_span = member.span();
-                        parent = member.parent();
-                    } else {
-                        break;
-                    }
-                }
-                AstNodes::ComputedMemberExpression(member) => {
-                    if member.object.span() == expression_span {
-                        expression_span = member.span();
-                        parent = member.parent();
-                    } else {
-                        break;
-                    }
+                member if member.is_member_object_span(expression_span) => {
+                    expression_span = member.span();
+                    parent = member.parent();
                 }
                 AstNodes::CallExpression(call) => {
                     if call.callee.span() == expression_span {
@@ -351,12 +339,12 @@ impl<'a> FormatConditionalLike<'a, '_> {
         }
     }
 
-    /// Returns `true` if this is the root conditional expression and the parent is a [`StaticMemberExpression`].
+    /// Returns `true` if this is the root conditional expression and the parent is a non-computed member: `.b` or `.#b`
     #[inline]
     fn is_parent_static_member_expression(&self, layout: ConditionalLayout) -> bool {
         layout.is_root()
             && self.is_conditional_expression()
-            && matches!(self.parent(), AstNodes::StaticMemberExpression(_))
+            && self.parent().is_non_computed_member_expression()
     }
 
     /// Formats the test part of the conditional

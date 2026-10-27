@@ -230,8 +230,11 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLikeExpression<'a, '_> {
             AstNodes::UnaryExpression(unary) if unary_argument_takes_comment_parens(unary, f) => {
                 return format_flattened_logical_expression(*self, false, f);
             }
-            AstNodes::StaticMemberExpression(_) | AstNodes::UnaryExpression(_) => true,
-            _ => parent.is_call_like_callee_span(self.span()),
+            AstNodes::UnaryExpression(_) => true,
+            _ => {
+                parent.is_non_computed_member_expression()
+                    || parent.is_call_like_callee_span(self.span())
+            }
         };
 
         if is_inside_parenthesis {
