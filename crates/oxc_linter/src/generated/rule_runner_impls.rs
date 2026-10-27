@@ -2513,8 +2513,9 @@ impl RuleRunner for crate::rules::jest::prefer_strict_equal::PreferStrictEqual {
 }
 
 impl RuleRunner for crate::rules::jest::prefer_to_be::PreferToBe {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::prefer_to_contain::PreferToContain {
@@ -5099,8 +5100,9 @@ impl RuleRunner for crate::rules::vitest::prefer_strict_equal::PreferStrictEqual
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_to_be::PreferToBe {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_to_be_falsy::PreferToBeFalsy {
