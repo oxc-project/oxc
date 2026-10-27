@@ -363,6 +363,7 @@ pub use crate::rules::nextjs::no_head_element::NoHeadElement as NextjsNoHeadElem
 pub use crate::rules::nextjs::no_head_import_in_document::NoHeadImportInDocument as NextjsNoHeadImportInDocument;
 pub use crate::rules::nextjs::no_html_link_for_pages::NoHtmlLinkForPages as NextjsNoHtmlLinkForPages;
 pub use crate::rules::nextjs::no_img_element::NoImgElement as NextjsNoImgElement;
+pub use crate::rules::nextjs::no_location_assign_relative_destination::NoLocationAssignRelativeDestination as NextjsNoLocationAssignRelativeDestination;
 pub use crate::rules::nextjs::no_page_custom_font::NoPageCustomFont as NextjsNoPageCustomFont;
 pub use crate::rules::nextjs::no_script_component_in_head::NoScriptComponentInHead as NextjsNoScriptComponentInHead;
 pub use crate::rules::nextjs::no_styled_jsx_in_document::NoStyledJsxInDocument as NextjsNoStyledJsxInDocument;
@@ -1597,6 +1598,7 @@ pub enum RuleEnum {
     NextjsNoHeadImportInDocument(NextjsNoHeadImportInDocument),
     NextjsNoHtmlLinkForPages(NextjsNoHtmlLinkForPages),
     NextjsNoImgElement(NextjsNoImgElement),
+    NextjsNoLocationAssignRelativeDestination(NextjsNoLocationAssignRelativeDestination),
     NextjsNoPageCustomFont(NextjsNoPageCustomFont),
     NextjsNoScriptComponentInHead(NextjsNoScriptComponentInHead),
     NextjsNoStyledJsxInDocument(NextjsNoStyledJsxInDocument),
@@ -2472,183 +2474,184 @@ const NEXTJS_NO_HEAD_ELEMENT_ID: usize = 692usize;
 const NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID: usize = 693usize;
 const NEXTJS_NO_HTML_LINK_FOR_PAGES_ID: usize = 694usize;
 const NEXTJS_NO_IMG_ELEMENT_ID: usize = 695usize;
-const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = 696usize;
-const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = 697usize;
-const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = 698usize;
-const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = 699usize;
-const NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID: usize = 700usize;
-const NEXTJS_NO_TYPOS_ID: usize = 701usize;
-const NEXTJS_NO_UNWANTED_POLYFILLIO_ID: usize = 702usize;
-const JSDOC_CHECK_ACCESS_ID: usize = 703usize;
-const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = 704usize;
-const JSDOC_CHECK_TAG_NAMES_ID: usize = 705usize;
-const JSDOC_EMPTY_TAGS_ID: usize = 706usize;
-const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = 707usize;
-const JSDOC_NO_BLANK_BLOCKS_ID: usize = 708usize;
-const JSDOC_NO_DEFAULTS_ID: usize = 709usize;
-const JSDOC_REQUIRE_PARAM_ID: usize = 710usize;
-const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = 711usize;
-const JSDOC_REQUIRE_PARAM_NAME_ID: usize = 712usize;
-const JSDOC_REQUIRE_PARAM_TYPE_ID: usize = 713usize;
-const JSDOC_REQUIRE_PROPERTY_ID: usize = 714usize;
-const JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID: usize = 715usize;
-const JSDOC_REQUIRE_PROPERTY_NAME_ID: usize = 716usize;
-const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = 717usize;
-const JSDOC_REQUIRE_RETURNS_ID: usize = 718usize;
-const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = 719usize;
-const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = 720usize;
-const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 721usize;
-const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 722usize;
-const JSDOC_REQUIRE_YIELDS_ID: usize = 723usize;
-const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 724usize;
-const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 725usize;
-const PROMISE_ALWAYS_RETURN_ID: usize = 726usize;
-const PROMISE_AVOID_NEW_ID: usize = 727usize;
-const PROMISE_CATCH_OR_RETURN_ID: usize = 728usize;
-const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 729usize;
-const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 730usize;
-const PROMISE_NO_NESTING_ID: usize = 731usize;
-const PROMISE_NO_NEW_STATICS_ID: usize = 732usize;
-const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 733usize;
-const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 734usize;
-const PROMISE_NO_RETURN_WRAP_ID: usize = 735usize;
-const PROMISE_PARAM_NAMES_ID: usize = 736usize;
-const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 737usize;
-const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 738usize;
-const PROMISE_PREFER_CATCH_ID: usize = 739usize;
-const PROMISE_SPEC_ONLY_ID: usize = 740usize;
-const PROMISE_VALID_PARAMS_ID: usize = 741usize;
-const VITEST_CONSISTENT_EACH_FOR_ID: usize = 742usize;
-const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 743usize;
-const VITEST_CONSISTENT_TEST_IT_ID: usize = 744usize;
-const VITEST_CONSISTENT_VITEST_VI_ID: usize = 745usize;
-const VITEST_EXPECT_EXPECT_ID: usize = 746usize;
-const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 747usize;
-const VITEST_MAX_EXPECTS_ID: usize = 748usize;
-const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 749usize;
-const VITEST_NO_ALIAS_METHODS_ID: usize = 750usize;
-const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 751usize;
-const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 752usize;
-const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 753usize;
-const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 754usize;
-const VITEST_NO_DISABLED_TESTS_ID: usize = 755usize;
-const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 756usize;
-const VITEST_NO_FOCUSED_TESTS_ID: usize = 757usize;
-const VITEST_NO_HOOKS_ID: usize = 758usize;
-const VITEST_NO_IDENTICAL_TITLE_ID: usize = 759usize;
-const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 760usize;
-const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 761usize;
-const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 762usize;
-const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 763usize;
-const VITEST_NO_MOCKS_IMPORT_ID: usize = 764usize;
-const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 765usize;
-const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 766usize;
-const VITEST_NO_STANDALONE_EXPECT_ID: usize = 767usize;
-const VITEST_NO_TEST_PREFIXES_ID: usize = 768usize;
-const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 769usize;
-const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 770usize;
-const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 771usize;
-const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 772usize;
-const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 773usize;
-const VITEST_PREFER_CALLED_ONCE_ID: usize = 774usize;
-const VITEST_PREFER_CALLED_TIMES_ID: usize = 775usize;
-const VITEST_PREFER_CALLED_WITH_ID: usize = 776usize;
-const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 777usize;
-const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 778usize;
-const VITEST_PREFER_EACH_ID: usize = 779usize;
-const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 780usize;
-const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 781usize;
-const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 782usize;
-const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 783usize;
-const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 784usize;
-const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 785usize;
-const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 786usize;
-const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 787usize;
-const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 788usize;
-const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 789usize;
-const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 790usize;
-const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 791usize;
-const VITEST_PREFER_SPY_ON_ID: usize = 792usize;
-const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 793usize;
-const VITEST_PREFER_STRICT_EQUAL_ID: usize = 794usize;
-const VITEST_PREFER_TO_BE_ID: usize = 795usize;
-const VITEST_PREFER_TO_BE_FALSY_ID: usize = 796usize;
-const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 797usize;
-const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 798usize;
-const VITEST_PREFER_TO_CONTAIN_ID: usize = 799usize;
-const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 800usize;
-const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 801usize;
-const VITEST_PREFER_TODO_ID: usize = 802usize;
-const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 803usize;
-const VITEST_REQUIRE_HOOK_ID: usize = 804usize;
-const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 805usize;
-const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 806usize;
-const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 807usize;
-const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 808usize;
-const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 809usize;
-const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 810usize;
-const VITEST_VALID_EXPECT_ID: usize = 811usize;
-const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 812usize;
-const VITEST_VALID_TITLE_ID: usize = 813usize;
-const VITEST_WARN_TODO_ID: usize = 814usize;
-const NODE_CALLBACK_RETURN_ID: usize = 815usize;
-const NODE_EXPORTS_STYLE_ID: usize = 816usize;
-const NODE_GLOBAL_REQUIRE_ID: usize = 817usize;
-const NODE_HANDLE_CALLBACK_ERR_ID: usize = 818usize;
-const NODE_NO_EXPORTS_ASSIGN_ID: usize = 819usize;
-const NODE_NO_MIXED_REQUIRES_ID: usize = 820usize;
-const NODE_NO_NEW_REQUIRE_ID: usize = 821usize;
-const NODE_NO_PATH_CONCAT_ID: usize = 822usize;
-const NODE_NO_PROCESS_ENV_ID: usize = 823usize;
-const NODE_NO_SYNC_ID: usize = 824usize;
-const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 825usize;
-const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 826usize;
-const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 827usize;
-const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 828usize;
-const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 829usize;
-const VUE_MAX_PROPS_ID: usize = 830usize;
-const VUE_NEXT_TICK_STYLE_ID: usize = 831usize;
-const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 832usize;
-const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 833usize;
-const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 834usize;
-const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 835usize;
-const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 836usize;
-const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 837usize;
-const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 838usize;
-const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 839usize;
-const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 840usize;
-const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 841usize;
-const VUE_NO_DUPE_KEYS_ID: usize = 842usize;
-const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 843usize;
-const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 844usize;
-const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 845usize;
-const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 846usize;
-const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 847usize;
-const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 848usize;
-const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 849usize;
-const VUE_NO_RESERVED_KEYS_ID: usize = 850usize;
-const VUE_NO_RESERVED_PROPS_ID: usize = 851usize;
-const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 852usize;
-const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 853usize;
-const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 854usize;
-const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 855usize;
-const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 856usize;
-const VUE_PROP_NAME_CASING_ID: usize = 857usize;
-const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 858usize;
-const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 859usize;
-const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 860usize;
-const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 861usize;
-const VUE_REQUIRE_PROP_TYPES_ID: usize = 862usize;
-const VUE_REQUIRE_RENDER_RETURN_ID: usize = 863usize;
-const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 864usize;
-const VUE_REQUIRE_TYPED_REF_ID: usize = 865usize;
-const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 866usize;
-const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 867usize;
-const VUE_VALID_DEFINE_EMITS_ID: usize = 868usize;
-const VUE_VALID_DEFINE_OPTIONS_ID: usize = 869usize;
-const VUE_VALID_DEFINE_PROPS_ID: usize = 870usize;
-const VUE_VALID_NEXT_TICK_ID: usize = 871usize;
-static RULE_NAMES: [&str; 872usize] = [
+const NEXTJS_NO_LOCATION_ASSIGN_RELATIVE_DESTINATION_ID: usize = 696usize;
+const NEXTJS_NO_PAGE_CUSTOM_FONT_ID: usize = 697usize;
+const NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID: usize = 698usize;
+const NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID: usize = 699usize;
+const NEXTJS_NO_SYNC_SCRIPTS_ID: usize = 700usize;
+const NEXTJS_NO_TITLE_IN_DOCUMENT_HEAD_ID: usize = 701usize;
+const NEXTJS_NO_TYPOS_ID: usize = 702usize;
+const NEXTJS_NO_UNWANTED_POLYFILLIO_ID: usize = 703usize;
+const JSDOC_CHECK_ACCESS_ID: usize = 704usize;
+const JSDOC_CHECK_PROPERTY_NAMES_ID: usize = 705usize;
+const JSDOC_CHECK_TAG_NAMES_ID: usize = 706usize;
+const JSDOC_EMPTY_TAGS_ID: usize = 707usize;
+const JSDOC_IMPLEMENTS_ON_CLASSES_ID: usize = 708usize;
+const JSDOC_NO_BLANK_BLOCKS_ID: usize = 709usize;
+const JSDOC_NO_DEFAULTS_ID: usize = 710usize;
+const JSDOC_REQUIRE_PARAM_ID: usize = 711usize;
+const JSDOC_REQUIRE_PARAM_DESCRIPTION_ID: usize = 712usize;
+const JSDOC_REQUIRE_PARAM_NAME_ID: usize = 713usize;
+const JSDOC_REQUIRE_PARAM_TYPE_ID: usize = 714usize;
+const JSDOC_REQUIRE_PROPERTY_ID: usize = 715usize;
+const JSDOC_REQUIRE_PROPERTY_DESCRIPTION_ID: usize = 716usize;
+const JSDOC_REQUIRE_PROPERTY_NAME_ID: usize = 717usize;
+const JSDOC_REQUIRE_PROPERTY_TYPE_ID: usize = 718usize;
+const JSDOC_REQUIRE_RETURNS_ID: usize = 719usize;
+const JSDOC_REQUIRE_RETURNS_DESCRIPTION_ID: usize = 720usize;
+const JSDOC_REQUIRE_RETURNS_TYPE_ID: usize = 721usize;
+const JSDOC_REQUIRE_THROWS_DESCRIPTION_ID: usize = 722usize;
+const JSDOC_REQUIRE_THROWS_TYPE_ID: usize = 723usize;
+const JSDOC_REQUIRE_YIELDS_ID: usize = 724usize;
+const JSDOC_REQUIRE_YIELDS_DESCRIPTION_ID: usize = 725usize;
+const JSDOC_REQUIRE_YIELDS_TYPE_ID: usize = 726usize;
+const PROMISE_ALWAYS_RETURN_ID: usize = 727usize;
+const PROMISE_AVOID_NEW_ID: usize = 728usize;
+const PROMISE_CATCH_OR_RETURN_ID: usize = 729usize;
+const PROMISE_NO_CALLBACK_IN_PROMISE_ID: usize = 730usize;
+const PROMISE_NO_MULTIPLE_RESOLVED_ID: usize = 731usize;
+const PROMISE_NO_NESTING_ID: usize = 732usize;
+const PROMISE_NO_NEW_STATICS_ID: usize = 733usize;
+const PROMISE_NO_PROMISE_IN_CALLBACK_ID: usize = 734usize;
+const PROMISE_NO_RETURN_IN_FINALLY_ID: usize = 735usize;
+const PROMISE_NO_RETURN_WRAP_ID: usize = 736usize;
+const PROMISE_PARAM_NAMES_ID: usize = 737usize;
+const PROMISE_PREFER_AWAIT_TO_CALLBACKS_ID: usize = 738usize;
+const PROMISE_PREFER_AWAIT_TO_THEN_ID: usize = 739usize;
+const PROMISE_PREFER_CATCH_ID: usize = 740usize;
+const PROMISE_SPEC_ONLY_ID: usize = 741usize;
+const PROMISE_VALID_PARAMS_ID: usize = 742usize;
+const VITEST_CONSISTENT_EACH_FOR_ID: usize = 743usize;
+const VITEST_CONSISTENT_TEST_FILENAME_ID: usize = 744usize;
+const VITEST_CONSISTENT_TEST_IT_ID: usize = 745usize;
+const VITEST_CONSISTENT_VITEST_VI_ID: usize = 746usize;
+const VITEST_EXPECT_EXPECT_ID: usize = 747usize;
+const VITEST_HOISTED_APIS_ON_TOP_ID: usize = 748usize;
+const VITEST_MAX_EXPECTS_ID: usize = 749usize;
+const VITEST_MAX_NESTED_DESCRIBE_ID: usize = 750usize;
+const VITEST_NO_ALIAS_METHODS_ID: usize = 751usize;
+const VITEST_NO_COMMENTED_OUT_TESTS_ID: usize = 752usize;
+const VITEST_NO_CONDITIONAL_EXPECT_ID: usize = 753usize;
+const VITEST_NO_CONDITIONAL_IN_TEST_ID: usize = 754usize;
+const VITEST_NO_CONDITIONAL_TESTS_ID: usize = 755usize;
+const VITEST_NO_DISABLED_TESTS_ID: usize = 756usize;
+const VITEST_NO_DUPLICATE_HOOKS_ID: usize = 757usize;
+const VITEST_NO_FOCUSED_TESTS_ID: usize = 758usize;
+const VITEST_NO_HOOKS_ID: usize = 759usize;
+const VITEST_NO_IDENTICAL_TITLE_ID: usize = 760usize;
+const VITEST_NO_IMPORT_NODE_TEST_ID: usize = 761usize;
+const VITEST_NO_IMPORTING_VITEST_GLOBALS_ID: usize = 762usize;
+const VITEST_NO_INTERPOLATION_IN_SNAPSHOTS_ID: usize = 763usize;
+const VITEST_NO_LARGE_SNAPSHOTS_ID: usize = 764usize;
+const VITEST_NO_MOCKS_IMPORT_ID: usize = 765usize;
+const VITEST_NO_RESTRICTED_MATCHERS_ID: usize = 766usize;
+const VITEST_NO_RESTRICTED_VI_METHODS_ID: usize = 767usize;
+const VITEST_NO_STANDALONE_EXPECT_ID: usize = 768usize;
+const VITEST_NO_TEST_PREFIXES_ID: usize = 769usize;
+const VITEST_NO_TEST_RETURN_STATEMENT_ID: usize = 770usize;
+const VITEST_NO_UNNEEDED_ASYNC_EXPECT_FUNCTION_ID: usize = 771usize;
+const VITEST_PADDING_AROUND_AFTER_ALL_BLOCKS_ID: usize = 772usize;
+const VITEST_PADDING_AROUND_TEST_BLOCKS_ID: usize = 773usize;
+const VITEST_PREFER_CALLED_EXACTLY_ONCE_WITH_ID: usize = 774usize;
+const VITEST_PREFER_CALLED_ONCE_ID: usize = 775usize;
+const VITEST_PREFER_CALLED_TIMES_ID: usize = 776usize;
+const VITEST_PREFER_CALLED_WITH_ID: usize = 777usize;
+const VITEST_PREFER_COMPARISON_MATCHER_ID: usize = 778usize;
+const VITEST_PREFER_DESCRIBE_FUNCTION_TITLE_ID: usize = 779usize;
+const VITEST_PREFER_EACH_ID: usize = 780usize;
+const VITEST_PREFER_EQUALITY_MATCHER_ID: usize = 781usize;
+const VITEST_PREFER_EXPECT_ASSERTIONS_ID: usize = 782usize;
+const VITEST_PREFER_EXPECT_RESOLVES_ID: usize = 783usize;
+const VITEST_PREFER_EXPECT_TYPE_OF_ID: usize = 784usize;
+const VITEST_PREFER_HOOKS_IN_ORDER_ID: usize = 785usize;
+const VITEST_PREFER_HOOKS_ON_TOP_ID: usize = 786usize;
+const VITEST_PREFER_IMPORT_IN_MOCK_ID: usize = 787usize;
+const VITEST_PREFER_IMPORTING_VITEST_GLOBALS_ID: usize = 788usize;
+const VITEST_PREFER_LOWERCASE_TITLE_ID: usize = 789usize;
+const VITEST_PREFER_MOCK_PROMISE_SHORTHAND_ID: usize = 790usize;
+const VITEST_PREFER_MOCK_RETURN_SHORTHAND_ID: usize = 791usize;
+const VITEST_PREFER_SNAPSHOT_HINT_ID: usize = 792usize;
+const VITEST_PREFER_SPY_ON_ID: usize = 793usize;
+const VITEST_PREFER_STRICT_BOOLEAN_MATCHERS_ID: usize = 794usize;
+const VITEST_PREFER_STRICT_EQUAL_ID: usize = 795usize;
+const VITEST_PREFER_TO_BE_ID: usize = 796usize;
+const VITEST_PREFER_TO_BE_FALSY_ID: usize = 797usize;
+const VITEST_PREFER_TO_BE_OBJECT_ID: usize = 798usize;
+const VITEST_PREFER_TO_BE_TRUTHY_ID: usize = 799usize;
+const VITEST_PREFER_TO_CONTAIN_ID: usize = 800usize;
+const VITEST_PREFER_TO_HAVE_BEEN_CALLED_TIMES_ID: usize = 801usize;
+const VITEST_PREFER_TO_HAVE_LENGTH_ID: usize = 802usize;
+const VITEST_PREFER_TODO_ID: usize = 803usize;
+const VITEST_REQUIRE_AWAITED_EXPECT_POLL_ID: usize = 804usize;
+const VITEST_REQUIRE_HOOK_ID: usize = 805usize;
+const VITEST_REQUIRE_LOCAL_TEST_CONTEXT_FOR_CONCURRENT_SNAPSHOTS_ID: usize = 806usize;
+const VITEST_REQUIRE_MOCK_TYPE_PARAMETERS_ID: usize = 807usize;
+const VITEST_REQUIRE_TEST_TIMEOUT_ID: usize = 808usize;
+const VITEST_REQUIRE_TO_THROW_MESSAGE_ID: usize = 809usize;
+const VITEST_REQUIRE_TOP_LEVEL_DESCRIBE_ID: usize = 810usize;
+const VITEST_VALID_DESCRIBE_CALLBACK_ID: usize = 811usize;
+const VITEST_VALID_EXPECT_ID: usize = 812usize;
+const VITEST_VALID_EXPECT_IN_PROMISE_ID: usize = 813usize;
+const VITEST_VALID_TITLE_ID: usize = 814usize;
+const VITEST_WARN_TODO_ID: usize = 815usize;
+const NODE_CALLBACK_RETURN_ID: usize = 816usize;
+const NODE_EXPORTS_STYLE_ID: usize = 817usize;
+const NODE_GLOBAL_REQUIRE_ID: usize = 818usize;
+const NODE_HANDLE_CALLBACK_ERR_ID: usize = 819usize;
+const NODE_NO_EXPORTS_ASSIGN_ID: usize = 820usize;
+const NODE_NO_MIXED_REQUIRES_ID: usize = 821usize;
+const NODE_NO_NEW_REQUIRE_ID: usize = 822usize;
+const NODE_NO_PATH_CONCAT_ID: usize = 823usize;
+const NODE_NO_PROCESS_ENV_ID: usize = 824usize;
+const NODE_NO_SYNC_ID: usize = 825usize;
+const NODE_NO_TOP_LEVEL_AWAIT_ID: usize = 826usize;
+const VUE_COMPONENT_DEFINITION_NAME_CASING_ID: usize = 827usize;
+const VUE_DEFINE_EMITS_DECLARATION_ID: usize = 828usize;
+const VUE_DEFINE_PROPS_DECLARATION_ID: usize = 829usize;
+const VUE_DEFINE_PROPS_DESTRUCTURING_ID: usize = 830usize;
+const VUE_MAX_PROPS_ID: usize = 831usize;
+const VUE_NEXT_TICK_STYLE_ID: usize = 832usize;
+const VUE_NO_ARROW_FUNCTIONS_IN_WATCH_ID: usize = 833usize;
+const VUE_NO_ASYNC_IN_COMPUTED_PROPERTIES_ID: usize = 834usize;
+const VUE_NO_COMPUTED_PROPERTIES_IN_DATA_ID: usize = 835usize;
+const VUE_NO_DEPRECATED_DATA_OBJECT_DECLARATION_ID: usize = 836usize;
+const VUE_NO_DEPRECATED_DELETE_SET_ID: usize = 837usize;
+const VUE_NO_DEPRECATED_DESTROYED_LIFECYCLE_ID: usize = 838usize;
+const VUE_NO_DEPRECATED_EVENTS_API_ID: usize = 839usize;
+const VUE_NO_DEPRECATED_MODEL_DEFINITION_ID: usize = 840usize;
+const VUE_NO_DEPRECATED_PROPS_DEFAULT_THIS_ID: usize = 841usize;
+const VUE_NO_DEPRECATED_VUE_CONFIG_KEYCODES_ID: usize = 842usize;
+const VUE_NO_DUPE_KEYS_ID: usize = 843usize;
+const VUE_NO_EXPORT_IN_SCRIPT_SETUP_ID: usize = 844usize;
+const VUE_NO_EXPOSE_AFTER_AWAIT_ID: usize = 845usize;
+const VUE_NO_IMPORT_COMPILER_MACROS_ID: usize = 846usize;
+const VUE_NO_LIFECYCLE_AFTER_AWAIT_ID: usize = 847usize;
+const VUE_NO_MULTIPLE_SLOT_ARGS_ID: usize = 848usize;
+const VUE_NO_REQUIRED_PROP_WITH_DEFAULT_ID: usize = 849usize;
+const VUE_NO_RESERVED_COMPONENT_NAMES_ID: usize = 850usize;
+const VUE_NO_RESERVED_KEYS_ID: usize = 851usize;
+const VUE_NO_RESERVED_PROPS_ID: usize = 852usize;
+const VUE_NO_SHARED_COMPONENT_DATA_ID: usize = 853usize;
+const VUE_NO_SIDE_EFFECTS_IN_COMPUTED_PROPERTIES_ID: usize = 854usize;
+const VUE_NO_THIS_IN_BEFORE_ROUTE_ENTER_ID: usize = 855usize;
+const VUE_NO_WATCH_AFTER_AWAIT_ID: usize = 856usize;
+const VUE_PREFER_IMPORT_FROM_VUE_ID: usize = 857usize;
+const VUE_PROP_NAME_CASING_ID: usize = 858usize;
+const VUE_REQUIRE_DEFAULT_EXPORT_ID: usize = 859usize;
+const VUE_REQUIRE_DEFAULT_PROP_ID: usize = 860usize;
+const VUE_REQUIRE_DIRECT_EXPORT_ID: usize = 861usize;
+const VUE_REQUIRE_PROP_TYPE_CONSTRUCTOR_ID: usize = 862usize;
+const VUE_REQUIRE_PROP_TYPES_ID: usize = 863usize;
+const VUE_REQUIRE_RENDER_RETURN_ID: usize = 864usize;
+const VUE_REQUIRE_SLOTS_AS_FUNCTIONS_ID: usize = 865usize;
+const VUE_REQUIRE_TYPED_REF_ID: usize = 866usize;
+const VUE_RETURN_IN_COMPUTED_PROPERTY_ID: usize = 867usize;
+const VUE_RETURN_IN_EMITS_VALIDATOR_ID: usize = 868usize;
+const VUE_VALID_DEFINE_EMITS_ID: usize = 869usize;
+const VUE_VALID_DEFINE_OPTIONS_ID: usize = 870usize;
+const VUE_VALID_DEFINE_PROPS_ID: usize = 871usize;
+const VUE_VALID_NEXT_TICK_ID: usize = 872usize;
+static RULE_NAMES: [&str; 873usize] = [
     ImportConsistentTypeSpecifierStyle::NAME,
     ImportDefault::NAME,
     ImportExport::NAME,
@@ -3345,6 +3348,7 @@ static RULE_NAMES: [&str; 872usize] = [
     NextjsNoHeadImportInDocument::NAME,
     NextjsNoHtmlLinkForPages::NAME,
     NextjsNoImgElement::NAME,
+    NextjsNoLocationAssignRelativeDestination::NAME,
     NextjsNoPageCustomFont::NAME,
     NextjsNoScriptComponentInHead::NAME,
     NextjsNoStyledJsxInDocument::NAME,
@@ -4341,6 +4345,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NEXTJS_NO_HEAD_IMPORT_IN_DOCUMENT_ID,
             Self::NextjsNoHtmlLinkForPages(_) => NEXTJS_NO_HTML_LINK_FOR_PAGES_ID,
             Self::NextjsNoImgElement(_) => NEXTJS_NO_IMG_ELEMENT_ID,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NEXTJS_NO_LOCATION_ASSIGN_RELATIVE_DESTINATION_ID
+            }
             Self::NextjsNoPageCustomFont(_) => NEXTJS_NO_PAGE_CUSTOM_FONT_ID,
             Self::NextjsNoScriptComponentInHead(_) => NEXTJS_NO_SCRIPT_COMPONENT_IN_HEAD_ID,
             Self::NextjsNoStyledJsxInDocument(_) => NEXTJS_NO_STYLED_JSX_IN_DOCUMENT_ID,
@@ -5386,6 +5393,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::CATEGORY,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::CATEGORY,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::CATEGORY,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::CATEGORY
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::CATEGORY,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::CATEGORY,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::CATEGORY,
@@ -6393,6 +6403,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::FIX,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::FIX,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::FIX,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::FIX
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::FIX,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::FIX,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::FIX,
@@ -7604,6 +7617,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::documentation(),
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::documentation(),
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::documentation(),
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::documentation()
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::documentation(),
             Self::NextjsNoScriptComponentInHead(_) => {
                 NextjsNoScriptComponentInHead::documentation()
@@ -9864,6 +9880,10 @@ impl RuleEnum {
                 .or_else(|| NextjsNoHtmlLinkForPages::schema(generator)),
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::config_schema(generator)
                 .or_else(|| NextjsNoImgElement::schema(generator)),
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::config_schema(generator)
+                    .or_else(|| NextjsNoLocationAssignRelativeDestination::schema(generator))
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::config_schema(generator)
                 .or_else(|| NextjsNoPageCustomFont::schema(generator)),
             Self::NextjsNoScriptComponentInHead(_) => {
@@ -11053,6 +11073,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => "nextjs",
             Self::NextjsNoHtmlLinkForPages(_) => "nextjs",
             Self::NextjsNoImgElement(_) => "nextjs",
+            Self::NextjsNoLocationAssignRelativeDestination(_) => "nextjs",
             Self::NextjsNoPageCustomFont(_) => "nextjs",
             Self::NextjsNoScriptComponentInHead(_) => "nextjs",
             Self::NextjsNoStyledJsxInDocument(_) => "nextjs",
@@ -13070,6 +13091,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.run(node, ctx),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.run(node, ctx),
             Self::NextjsNoImgElement(rule) => rule.run(node, ctx),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.run(node, ctx),
             Self::NextjsNoPageCustomFont(rule) => rule.run(node, ctx),
             Self::NextjsNoScriptComponentInHead(rule) => rule.run(node, ctx),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.run(node, ctx),
@@ -13959,6 +13981,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.run_once(ctx),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.run_once(ctx),
             Self::NextjsNoImgElement(rule) => rule.run_once(ctx),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.run_once(ctx),
             Self::NextjsNoPageCustomFont(rule) => rule.run_once(ctx),
             Self::NextjsNoScriptComponentInHead(rule) => rule.run_once(ctx),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.run_once(ctx),
@@ -14959,6 +14982,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsNoImgElement(rule) => rule.run_on_jest_node(jest_node, ctx),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => {
+                rule.run_on_jest_node(jest_node, ctx)
+            }
             Self::NextjsNoPageCustomFont(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsNoScriptComponentInHead(rule) => rule.run_on_jest_node(jest_node, ctx),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.run_on_jest_node(jest_node, ctx),
@@ -15857,6 +15883,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.should_run(ctx),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.should_run(ctx),
             Self::NextjsNoImgElement(rule) => rule.should_run(ctx),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.should_run(ctx),
             Self::NextjsNoPageCustomFont(rule) => rule.should_run(ctx),
             Self::NextjsNoScriptComponentInHead(rule) => rule.should_run(ctx),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.should_run(ctx),
@@ -16860,6 +16887,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::FLAGS,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::FLAGS,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::FLAGS,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::FLAGS
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::FLAGS,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::FLAGS,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::FLAGS,
@@ -17909,6 +17939,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::VERSION,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::VERSION,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::VERSION,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::VERSION
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::VERSION,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::VERSION,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::VERSION,
@@ -18921,6 +18954,9 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(_) => NextjsNoHeadImportInDocument::INFO,
             Self::NextjsNoHtmlLinkForPages(_) => NextjsNoHtmlLinkForPages::INFO,
             Self::NextjsNoImgElement(_) => NextjsNoImgElement::INFO,
+            Self::NextjsNoLocationAssignRelativeDestination(_) => {
+                NextjsNoLocationAssignRelativeDestination::INFO
+            }
             Self::NextjsNoPageCustomFont(_) => NextjsNoPageCustomFont::INFO,
             Self::NextjsNoScriptComponentInHead(_) => NextjsNoScriptComponentInHead::INFO,
             Self::NextjsNoStyledJsxInDocument(_) => NextjsNoStyledJsxInDocument::INFO,
@@ -19810,6 +19846,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.types_info(),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.types_info(),
             Self::NextjsNoImgElement(rule) => rule.types_info(),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.types_info(),
             Self::NextjsNoPageCustomFont(rule) => rule.types_info(),
             Self::NextjsNoScriptComponentInHead(rule) => rule.types_info(),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.types_info(),
@@ -20686,6 +20723,7 @@ impl RuleEnum {
             Self::NextjsNoHeadImportInDocument(rule) => rule.run_info(),
             Self::NextjsNoHtmlLinkForPages(rule) => rule.run_info(),
             Self::NextjsNoImgElement(rule) => rule.run_info(),
+            Self::NextjsNoLocationAssignRelativeDestination(rule) => rule.run_info(),
             Self::NextjsNoPageCustomFont(rule) => rule.run_info(),
             Self::NextjsNoScriptComponentInHead(rule) => rule.run_info(),
             Self::NextjsNoStyledJsxInDocument(rule) => rule.run_info(),
@@ -21692,6 +21730,9 @@ pub static RULES: std::sync::LazyLock<Vec<RuleEnum>> = std::sync::LazyLock::new(
         RuleEnum::NextjsNoHeadImportInDocument(NextjsNoHeadImportInDocument::default()),
         RuleEnum::NextjsNoHtmlLinkForPages(NextjsNoHtmlLinkForPages::default()),
         RuleEnum::NextjsNoImgElement(NextjsNoImgElement::default()),
+        RuleEnum::NextjsNoLocationAssignRelativeDestination(
+            NextjsNoLocationAssignRelativeDestination::default(),
+        ),
         RuleEnum::NextjsNoPageCustomFont(NextjsNoPageCustomFont::default()),
         RuleEnum::NextjsNoScriptComponentInHead(NextjsNoScriptComponentInHead::default()),
         RuleEnum::NextjsNoStyledJsxInDocument(NextjsNoStyledJsxInDocument::default()),
