@@ -139,7 +139,18 @@ fn layout<'a>(
         _ => parent.is_member_expression(),
     };
 
-    if !is_nested && !object_is_cast_target && matches!(object, Expression::Identifier(_)) {
+    // A single-level member is not split when its object is a single word (an identifier, `this` or `super`):
+    // the break would leave the word alone on its line for a single property.
+    // A longer path (`a.b.c`) can break into a list of properties instead.
+    // NOTE: `import.meta` and `new.target` cannot break inside either, so the same reasoning applies to them.
+    // They are not included yet, and break like Prettier (`import.meta` + break + `.resolve(...)`).
+    if !is_nested
+        && !object_is_cast_target
+        && matches!(
+            object,
+            Expression::Identifier(_) | Expression::ThisExpression(_) | Expression::Super(_)
+        )
+    {
         return StaticMemberLayout::NoBreak;
     }
 

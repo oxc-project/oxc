@@ -1200,3 +1200,39 @@ Prettier moves it before the object for `.b`, and after the `.` for `.#b`; both 
 A binary-like or conditional object of a member breaks its parens the same way for `.c`, `[c]` and `?.[c]`.
 Prettier does so for `.c` only, while an `await` / `as` object breaks them for `[c]` too.
 The computed property (`a[b + c]`) keeps its own layout.
+
+## single-level-member-no-break
+
+- Why: uniform-rule (same construct, same output: `foo.b`)
+- Pin: `tests/fixtures/js/member-expression/single-level-member-no-break.mjs`
+
+```js
+// input (printWidth: 80)
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(super.someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX);
+
+// ours: the same as `foo.sql`
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(
+  super.someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX,
+);
+
+// prettier
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this
+  .sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(
+  super
+    .someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX,
+);
+```
+
+A single-level member is not split after its object when the object is a single word: an identifier, `this` or `super`.
+The break would leave the word alone on its line for a single property, which rarely fits either.
+A longer path (`a.b.c`) still breaks into a list of properties.
+
+Prettier keeps it only for an identifier object (prettier/prettier#1036, which has no case for `this` or `super`).
+Elsewhere it groups them with an identifier: all three count as a single word for a simple call argument,
+and `this` stays attached as a member chain head like a short identifier (`this.foo()` + break + `.bar()`, prettier/prettier#782).
