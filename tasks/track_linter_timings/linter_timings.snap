@@ -265,7 +265,6 @@ jest/prefer-to-contain                                     |      0
 jest/prefer-to-have-been-called                            |      0
 jest/prefer-to-have-been-called-times                      |      0
 jest/prefer-to-have-length                                 |      0
-jest/prefer-todo                                           |      0
 jest/require-hook                                          |  62613
 jest/require-to-throw-message                              |      0
 jest/require-top-level-describe                            |      7
@@ -739,7 +738,6 @@ vitest/prefer-to-be-truthy                                 |      0
 vitest/prefer-to-contain                                   |      0
 vitest/prefer-to-have-been-called-times                    |      0
 vitest/prefer-to-have-length                               |      0
-vitest/prefer-todo                                         |      0
 vitest/require-awaited-expect-poll                         |      0
 vitest/require-hook                                        |  62613
 vitest/require-local-test-context-for-concurrent-snapshots |      0
