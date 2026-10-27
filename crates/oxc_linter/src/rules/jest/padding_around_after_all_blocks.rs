@@ -38,11 +38,24 @@ fn test() {
         "const thing = 123;\n\nafterAll(() => {});",
         "describe('foo', () => {\nafterAll(() => {});\n});",
         "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        // Issue: <https://github.com/oxc-project/oxc/issues/25590>
+        "afterAll(() => {});
+
+describe('suite', () => {});",
+        "afterAll(() => {}); // trailing
+
+describe('suite', () => {});",
     ];
 
     let fail = vec![
         "const thing = 123;\nafterAll(() => {});",
         "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
+        // Issue: <https://github.com/oxc-project/oxc/issues/25590>
+        "afterAll(() => {});
+describe('suite', () => {});",
+        "afterAll(() => {});
+/* one */
+describe('suite', () => {});",
     ];
 
     let fix = vec![
@@ -50,6 +63,22 @@ fn test() {
         (
             "const thing = 123;\n/* one */\n/* two */\nafterAll(() => {});",
             "const thing = 123;\n\n/* one */\n/* two */\nafterAll(() => {});",
+        ),
+        (
+            "afterAll(() => {});
+describe('suite', () => {});",
+            "afterAll(() => {});
+
+describe('suite', () => {});",
+        ),
+        (
+            "afterAll(() => {});
+/* one */
+describe('suite', () => {});",
+            "afterAll(() => {});
+
+/* one */
+describe('suite', () => {});",
         ),
     ];
 
