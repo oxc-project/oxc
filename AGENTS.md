@@ -196,6 +196,10 @@ fn test() {
 
 - Read the target crate's `AGENTS.md`; it includes the shared formatter policy plus language-specific rules and verification commands
 
+#### oxc_react_compiler
+
+- Read `crates/oxc_react_compiler/AGENTS.md`; it also covers the React Compiler lint rules in `oxc_linter` and their Oxlint fixtures
+
 #### oxc_minifier
 
 - **Unit tests** in `tests/` subdirectories:
@@ -315,6 +319,7 @@ Tests are TypeScript files in each package's `test/` directory.
 | Formatter             | `tests/fixtures/` in the formatter crate |
 | Minifier              | `tests/` subdirectories                  |
 | Transformer           | `tests/integrations/` or Babel fixtures  |
+| React Compiler        | Crate `fixtures/`; see its `AGENTS.md`   |
 | Codegen               | `tests/integration/`                     |
 | Isolated Declarations | `tests/fixtures/*.ts`                    |
 | Semantic              | `tests/` directory                       |
