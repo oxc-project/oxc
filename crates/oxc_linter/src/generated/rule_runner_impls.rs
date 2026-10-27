@@ -2573,8 +2573,9 @@ impl RuleRunner for crate::rules::jest::require_top_level_describe::RequireTopLe
 }
 
 impl RuleRunner for crate::rules::jest::valid_describe_callback::ValidDescribeCallback {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::valid_expect::ValidExpect {
@@ -5197,8 +5198,9 @@ impl RuleRunner for crate::rules::vitest::require_top_level_describe::RequireTop
 }
 
 impl RuleRunner for crate::rules::vitest::valid_describe_callback::ValidDescribeCallback {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::valid_expect::ValidExpect {
