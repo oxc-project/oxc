@@ -253,7 +253,6 @@ jest/require-hook                                          |  62613
 jest/require-top-level-describe                            |      7
 jest/valid-expect                                          |      7
 jest/valid-expect-in-promise                               |      0
-jest/valid-title                                           |      0
 jsdoc/check-access                                         |      7
 jsdoc/check-property-names                                 |      7
 jsdoc/check-tag-names                                      |      7
@@ -712,7 +711,6 @@ vitest/require-test-timeout                                |      7
 vitest/require-top-level-describe                          |      7
 vitest/valid-expect                                        |      7
 vitest/valid-expect-in-promise                             |      0
-vitest/valid-title                                         |      0
 vitest/warn-todo                                           |      0
 vue/component-definition-name-casing                       |  76731
 vue/no-arrow-functions-in-watch                            |  62608

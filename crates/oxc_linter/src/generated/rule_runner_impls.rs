@@ -2589,8 +2589,9 @@ impl RuleRunner for crate::rules::jest::valid_expect_in_promise::ValidExpectInPr
 }
 
 impl RuleRunner for crate::rules::jest::valid_title::ValidTitle {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::react::button_has_type::ButtonHasType {
@@ -5214,8 +5215,9 @@ impl RuleRunner for crate::rules::vitest::valid_expect_in_promise::ValidExpectIn
 }
 
 impl RuleRunner for crate::rules::vitest::valid_title::ValidTitle {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::warn_todo::WarnTodo {
