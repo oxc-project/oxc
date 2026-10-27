@@ -897,27 +897,36 @@ Prettier also drops the parens around an operand that binds looser than the type
 The type arguments then attach to its last piece only (`c ? a : b<T>`, `a as B<T>`), or the output no longer parses (`y++<T>`).
 Fixed in Prettier `main` by prettier/prettier#20345, which we follow.
 
-## type-assertion-generic-function-parens
+## generic-function-type-after-lt-parens
 
 - Why: semantics (Prettier's output no longer parses)
-- Pin: `tests/fixtures/ts/parenthesis/type-assertion-generic-function-parens.ts`
+- Pin: `tests/fixtures/ts/parenthesis/generic-function-type-after-lt-parens.ts`, `tests/fixtures/ts/parenthesis/generic-function-type-after-lt-parens-jsx.tsx`
 
 ```ts
 // input
 var a = < <T>(x: T) => T>f;
 var b = <(<T>() => void)>f;
+class A extends B< <T>() => T> {}
+type G = typeof g< <T>() => T>;
 
 // ours
 var a = <(<T>(x: T) => T)>f;
 var b = <(<T>() => void)>f;
+class A extends B<(<T>() => T)> {}
+type G = typeof g<(<T>() => T)>;
 
 // prettier
 var a = <<T>(x: T) => T>f;
 var b = <<T>() => void>f;
+class A extends B<<T>() => T> {}
+type G = typeof g<<T>() => T>;
 ```
 
-A generic function type printed right after the `<` of a type assertion starts with `<<`, which is read as a left shift, so tsc rejects Prettier's output ("Expression expected").
-We keep the type in parens there, as Prettier does for a function type in other ambiguous positions (a union member, an arrow function's return type).
+A generic function type printed right after a `<` starts with `<<`, which is read as a left shift.
+tsc splits it back in most type arguments (`Array<<T>() => T>`, `f<<T>() => T>()`),
+but not after the `<` of a type assertion or of the first type argument of a heritage clause (`extends`, `implements`), `typeof` or a JSX element,
+so it rejects Prettier's output there.
+We keep the type in parens in those positions, as Prettier does for a function type in other ambiguous positions (a union member, an arrow function's return type).
 A function type without type parameters, a constructor type (`<new <T>() => T>f`) and a function type nested inside another type don't start with `<` and print as before.
 
 ## export-default-leftmost-parens

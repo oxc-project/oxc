@@ -99,6 +99,9 @@ const IGNORE: &[&str] = &[
     "js/call/invalid",
     // Trailing comma after rest element
     "typescript/trailing-comma/invalid.ts",
+    // `<<` right after a heritage clause's or JSX element's type argument `<`
+    "typescript/type-arguments-bit-shift-left-like/3.ts",
+    "typescript/type-arguments-bit-shift-left-like/5.tsx",
     // Invalid modifier combos (`readonly accessor`, optional accessor, ambient initializer)
     "typescript/decorator-auto-accessors/decorator-auto-accessors-abstract-class.ts",
     "typescript/decorator-auto-accessors/decorator-auto-accessors-declare-class.ts",
