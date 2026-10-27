@@ -254,7 +254,6 @@ jest/prefer-snapshot-hint                                  |      7
 jest/prefer-spy-on                                         |  13005
 jest/prefer-to-have-been-called                            |      0
 jest/require-hook                                          |  62613
-jest/require-to-throw-message                              |      0
 jest/require-top-level-describe                            |      7
 jest/valid-describe-callback                               |      0
 jest/valid-expect                                          |      7
@@ -719,7 +718,6 @@ vitest/require-hook                                        |  62613
 vitest/require-local-test-context-for-concurrent-snapshots |      0
 vitest/require-mock-type-parameters                        |      0
 vitest/require-test-timeout                                |      7
-vitest/require-to-throw-message                            |      0
 vitest/require-top-level-describe                          |      7
 vitest/valid-describe-callback                             |      0
 vitest/valid-expect                                        |      7
