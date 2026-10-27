@@ -2419,8 +2419,9 @@ impl RuleRunner for crate::rules::jest::padding_around_test_blocks::PaddingAroun
 }
 
 impl RuleRunner for crate::rules::jest::prefer_called_with::PreferCalledWith {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::prefer_comparison_matcher::PreferComparisonMatcher {
@@ -4981,8 +4982,9 @@ impl RuleRunner for crate::rules::vitest::prefer_called_times::PreferCalledTimes
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_called_with::PreferCalledWith {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_comparison_matcher::PreferComparisonMatcher {
