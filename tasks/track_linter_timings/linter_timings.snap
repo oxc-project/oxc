@@ -223,7 +223,6 @@ jest/no-conditional-expect                                 |      0
 jest/no-conditional-in-test                                |  30315
 jest/no-confusing-set-timeout                              |      7
 jest/no-deprecated-functions                               |  94090
-jest/no-disabled-tests                                     |      0
 jest/no-done-callback                                      |      0
 jest/no-duplicate-hooks                                    |      7
 jest/no-export                                             |      7
@@ -675,7 +674,6 @@ vitest/no-commented-out-tests                              |      7
 vitest/no-conditional-expect                               |      0
 vitest/no-conditional-in-test                              |  30315
 vitest/no-conditional-tests                                |      0
-vitest/no-disabled-tests                                   |      0
 vitest/no-duplicate-hooks                                  |      7
 vitest/no-identical-title                                  |      7
 vitest/no-import-node-test                                 |      7

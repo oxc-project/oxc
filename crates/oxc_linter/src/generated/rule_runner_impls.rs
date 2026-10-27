@@ -2310,8 +2310,9 @@ impl RuleRunner for crate::rules::jest::no_deprecated_functions::NoDeprecatedFun
 }
 
 impl RuleRunner for crate::rules::jest::no_disabled_tests::NoDisabledTests {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::no_done_callback::NoDoneCallback {
@@ -4876,8 +4877,9 @@ impl RuleRunner for crate::rules::vitest::no_conditional_tests::NoConditionalTes
 }
 
 impl RuleRunner for crate::rules::vitest::no_disabled_tests::NoDisabledTests {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::no_duplicate_hooks::NoDuplicateHooks {
