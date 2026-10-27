@@ -236,7 +236,6 @@ jest/no-restricted-matchers                                |      0
 jest/no-standalone-expect                                  |      7
 jest/no-test-prefixes                                      |      0
 jest/no-test-return-statement                              |  14199
-jest/no-unneeded-async-expect-function                     |      0
 jest/no-untyped-mock-factory                               |      0
 jest/padding-around-after-all-blocks                       |      0
 jest/padding-around-test-blocks                            |      0
@@ -690,7 +689,6 @@ vitest/no-restricted-vi-methods                            |      0
 vitest/no-standalone-expect                                |      7
 vitest/no-test-prefixes                                    |      0
 vitest/no-test-return-statement                            |  14199
-vitest/no-unneeded-async-expect-function                   |      0
 vitest/padding-around-after-all-blocks                     |      0
 vitest/padding-around-test-blocks                          |      0
 vitest/prefer-called-exactly-once-with                     |  14953
