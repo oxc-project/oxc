@@ -162,6 +162,7 @@ fn test_rule_enum_flags() {
         ("eslint", "no-alert", RuleFlags::empty()),
         ("eslint", "no-debugger", RuleFlags::IS_RECOMMENDED),
         ("eslint", "eqeqeq", RuleFlags::HAS_CONFIG),
+        ("unicorn", "prefer-number-is-safe-integer", RuleFlags::empty()),
         (
             "typescript",
             "no-unsafe-assignment",
