@@ -2335,8 +2335,9 @@ impl RuleRunner for crate::rules::jest::no_focused_tests::NoFocusedTests {
 }
 
 impl RuleRunner for crate::rules::jest::no_hooks::NoHooks {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::no_identical_title::NoIdenticalTitle {
@@ -4885,8 +4886,9 @@ impl RuleRunner for crate::rules::vitest::no_focused_tests::NoFocusedTests {
 }
 
 impl RuleRunner for crate::rules::vitest::no_hooks::NoHooks {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::no_identical_title::NoIdenticalTitle {
