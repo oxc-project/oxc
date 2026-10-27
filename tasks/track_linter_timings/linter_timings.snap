@@ -258,7 +258,6 @@ jest/prefer-mock-return-shorthand                          |  62606
 jest/prefer-snapshot-hint                                  |      7
 jest/prefer-spy-on                                         |  13005
 jest/prefer-to-be                                          |      0
-jest/prefer-to-contain                                     |      0
 jest/prefer-to-have-been-called                            |      0
 jest/prefer-to-have-been-called-times                      |      0
 jest/require-hook                                          |  62613
@@ -728,7 +727,6 @@ vitest/prefer-to-be                                        |      0
 vitest/prefer-to-be-falsy                                  |      0
 vitest/prefer-to-be-object                                 |      0
 vitest/prefer-to-be-truthy                                 |      0
-vitest/prefer-to-contain                                   |      0
 vitest/prefer-to-have-been-called-times                    |      0
 vitest/require-awaited-expect-poll                         |      0
 vitest/require-hook                                        |  62613
