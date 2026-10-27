@@ -2452,8 +2452,9 @@ impl RuleRunner for crate::rules::jest::prefer_expect_assertions::PreferExpectAs
 }
 
 impl RuleRunner for crate::rules::jest::prefer_expect_resolves::PreferExpectResolves {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::prefer_hooks_in_order::PreferHooksInOrder {
@@ -5022,8 +5023,9 @@ impl RuleRunner for crate::rules::vitest::prefer_expect_assertions::PreferExpect
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_expect_resolves::PreferExpectResolves {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_expect_type_of::PreferExpectTypeOf {
