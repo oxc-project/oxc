@@ -453,12 +453,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Parse a `{ }` list of elements without separators, e.g. block statements and class elements,
-    /// assigning each element's comments as it is parsed. With `EMPTY_ELEMENTS`, `;` can appear
-    /// between elements, as in a class body.
+    /// Parse a `{ }` list of elements without separators: statements in a block, switch cases or
+    /// class elements. Comments are assigned as each element is parsed. With `SKIP_SEMICOLONS`, `;`
+    /// between elements is skipped, as in a class body, where it is an empty element with no node.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    pub(crate) fn parse_element_list<const EMPTY_ELEMENTS: bool, T: ListElement>(
+    pub(crate) fn parse_braced_list<const SKIP_SEMICOLONS: bool, T: ListElement>(
         &mut self,
         mut parse_element: impl FnMut(&mut Self) -> T,
     ) -> ArenaVec<'a, T> {
@@ -469,7 +469,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // Elements before `;` are not next to the following element.
         let mut siblings = 0;
         while !self.at(Kind::RCurly) && !self.has_fatal_error() {
-            if EMPTY_ELEMENTS && self.eat(Kind::Semicolon) {
+            if SKIP_SEMICOLONS && self.eat(Kind::Semicolon) {
                 while self.eat(Kind::Semicolon) {}
                 list_comments.restart(self.prev_token_end);
                 siblings = list.len();

@@ -230,7 +230,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_class_body(&mut self) -> ArenaBox<'a, ClassBody<'a>> {
         let start = self.cur_start();
-        let class_elements = self.parse_element_list::<true, _>(Self::parse_class_element);
+        let class_elements = self.parse_braced_list::<true, _>(Self::parse_class_element);
         ClassBody::boxed(self.end_span(start), class_elements, self)
     }
 

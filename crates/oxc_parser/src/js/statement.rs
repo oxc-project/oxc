@@ -311,7 +311,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Section 14.2 Block Statement
     pub(crate) fn parse_block(&mut self) -> ArenaBox<'a, BlockStatement<'a>> {
         let start = self.cur_start();
-        let body = self.parse_element_list::<false, _>(|p| {
+        let body = self.parse_braced_list::<false, _>(|p| {
             p.parse_statement_list_item(StatementContext::StatementList)
         });
         BlockStatement::boxed(self.end_span(start), body, self)
@@ -790,7 +790,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // and report only the first duplicate, all in the single parsing pass.
         let mut first_default: Option<Span> = None;
         let mut reported_duplicate = false;
-        let cases = self.parse_element_list::<false, _>(|p| {
+        let cases = self.parse_braced_list::<false, _>(|p| {
             let case = p.parse_switch_case();
             if case.test.is_none() {
                 match first_default {
