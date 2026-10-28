@@ -206,6 +206,9 @@ fn comment_attachment() {
     cases.group("decorators_before_export");
     cases.add("// before\n@dec export class C {}", SourceType::ts());
     cases.add("foo(); // after foo\n@dec export class C {}", SourceType::ts());
+    cases.add("foo();\n/** doc */\n@dec export class C {}", SourceType::ts());
+    cases.add("foo();\n/** doc */\n@dec export default class C {}", SourceType::ts());
+    cases.add("@a /* between */ @b export class C {}", SourceType::ts());
     cases.add("@dec(a /* c */ + b) export class C {}", SourceType::ts());
     cases.add("namespace N {\n  // before\n  @dec export class C {}\n}", SourceType::ts());
 

@@ -623,14 +623,32 @@ switch (x) {
 // before
 @dec export class C {}
 ---
-// before -> Dangling Program `// before
-@dec export class C {}`
+// before -> Leading ExportDeclaration `export class C {}`
 
 === ts (unambiguous) ===
 foo(); // after foo
 @dec export class C {}
 ---
 // after foo -> Trailing ExpressionStatement `foo();`
+
+=== ts (unambiguous) ===
+foo();
+/** doc */
+@dec export class C {}
+---
+/** doc */ -> Leading ExportDeclaration `export class C {}`
+
+=== ts (unambiguous) ===
+foo();
+/** doc */
+@dec export default class C {}
+---
+/** doc */ -> Leading ExportDefaultDeclaration `export default class C {}`
+
+=== ts (unambiguous) ===
+@a /* between */ @b export class C {}
+---
+/* between */ -> Leading ExportDeclaration `export class C {}`
 
 === ts (unambiguous) ===
 @dec(a /* c */ + b) export class C {}
@@ -643,10 +661,7 @@ namespace N {
   @dec export class C {}
 }
 ---
-// before -> Dangling TSModuleBlock `{
-  // before
-  @dec export class C {}
-}`
+// before -> Leading ExportDeclaration `export class C {}`
 
 ##### top_level_await_reparse
 
