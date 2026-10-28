@@ -2449,8 +2449,9 @@ impl RuleRunner for crate::rules::jest::prefer_each::PreferEach {
 }
 
 impl RuleRunner for crate::rules::jest::prefer_ending_with_an_expect::PreferEndingWithAnExpect {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::jest::prefer_equality_matcher::PreferEqualityMatcher {
