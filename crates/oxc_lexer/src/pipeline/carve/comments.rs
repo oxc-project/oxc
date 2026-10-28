@@ -47,7 +47,7 @@ pub(super) unsafe fn lex_line_comment(
         meta_byte_exact(&srcs[..n], s as u32, end as u32, false),
         "LCOM meta fused != exact at {s}"
     );
-    push_comment_record(srcs, n, s as u32, end as u32, false, m, lanes);
+    push_comment_record(srcs, n, s as u32, end as u32, CommentKind::Line, true, m, lanes);
     end
 }
 
@@ -83,7 +83,24 @@ pub(super) unsafe fn lex_block_comment(
         meta_byte_exact(&srcs[..n], s as u32, end as u32, true),
         "BCOM meta fused != exact at {s}"
     );
-    push_comment_record(srcs, n, s as u32, end as u32, true, m, lanes);
+
+    let comment_kind = if m & META_MULTILINE != 0 {
+        CommentKind::MultiLineBlock
+    } else {
+        CommentKind::SingleLineBlock
+    };
+
+    let mut q = end;
+    let mut followed_by_newline = false;
+    while q < n && is_lex_ws(srcs[q]) {
+        if srcs[q] == b'\n' || srcs[q] == b'\r' {
+            followed_by_newline = true;
+            break;
+        }
+        q += 1;
+    }
+
+    push_comment_record(srcs, n, s as u32, end as u32, comment_kind, followed_by_newline, m, lanes);
     end
 }
 
@@ -129,8 +146,7 @@ pub(super) unsafe fn lex_html_open_comment(
     // meta_byte_exact skips a 2-byte delimiter; pass s + 2 so the 4-byte
     // `<!--` is skipped. The record keeps (s, end).
     let m = meta_byte_exact(&srcs[..n], (s + 2) as u32, end as u32, false);
-    push_comment_record(srcs, n, s as u32, end as u32, false, m, lanes);
-    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlOpen;
+    push_comment_record(srcs, n, s as u32, end as u32, CommentKind::HtmlOpen, true, m, lanes);
     end
 }
 
@@ -173,8 +189,7 @@ pub(super) unsafe fn lex_html_close_comment(
     // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
     // body resolves to [s + 1, end).
     let m = meta_byte_exact(&srcs[..n], (start + 1) as u32, end as u32, false);
-    push_comment_record(srcs, n, start as u32, end as u32, false, m, lanes);
-    lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlClose;
+    push_comment_record(srcs, n, start as u32, end as u32, CommentKind::HtmlClose, true, m, lanes);
     end
 }
 
@@ -381,23 +396,16 @@ fn push_comment_record(
     sl: usize,
     start: u32,
     end: u32,
-    blk: bool,
+    kind: CommentKind,
+    followed_by_newline: bool,
     meta: u8,
     lanes: &mut Lanes,
 ) {
-    let kind = if !blk {
-        CommentKind::Line
-    } else if meta & META_MULTILINE != 0 {
-        CommentKind::MultiLineBlock
-    } else {
-        CommentKind::SingleLineBlock
-    };
     let mut c = Comment::new(start, end.min(sl as u32), kind);
     c.content = content_from_ordinal(meta);
 
-    let s_ = (start as usize).min(sl);
-    let mut q = s_;
-    let pre = loop {
+    let mut q = (start as usize).min(sl);
+    let preceded_by_newline = loop {
         if q == 0 {
             break true;
         }
@@ -410,22 +418,9 @@ fn push_comment_record(
         }
         q -= 1;
     };
-    c.set_preceded_by_newline(pre);
+    c.set_preceded_by_newline(preceded_by_newline);
+    c.set_followed_by_newline(followed_by_newline);
 
-    if !blk {
-        c.set_followed_by_newline(true);
-    } else {
-        let mut e = (end as usize).min(sl);
-        let mut post = false;
-        while e < sl && is_lex_ws(src[e]) {
-            if src[e] == b'\n' || src[e] == b'\r' {
-                post = true;
-                break;
-            }
-            e += 1;
-        }
-        c.set_followed_by_newline(post);
-    }
     lanes.comments.push(c);
 }
 
