@@ -163,12 +163,11 @@ impl<'a> ModuleRecordBuilder<'a> {
                                         ImportImportName::Name(name) => {
                                             ExportImportName::Name(name.clone())
                                         }
-                                        // `import d from "mod"`
-                                        // `export { d }`
-                                        //           ^ this is local_name of ie
-                                        ImportImportName::Default(_) => {
-                                            ExportImportName::Name(ie.local_name.clone())
-                                        }
+                                        // The source binding is `default`, not the local alias.
+                                        // Retain the alias's source span for diagnostics.
+                                        ImportImportName::Default(_) => ExportImportName::Name(
+                                            NameSpan::new("default".into(), ie.local_name.span),
+                                        ),
                                         ImportImportName::NamespaceObject => unreachable!(),
                                     },
                                     export_name: ee.export_name.clone(),
