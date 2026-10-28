@@ -1,0 +1,23 @@
+tasks/coverage/snapshots/parser_babel.snap
+  s_b14aa578f43312::t_34a34111b3bd63 9501,9517,9526,9531,9533-9535
+tasks/coverage/snapshots/parser_test262.snap
+  s_b14aa578f43312::t_a55919f95c43dd 25819,25832,25845
+crates/oxc_parser/src/diagnostics.rs
+  s_b14aa578f43312::t_ac0222155477d8 1355,1358
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b29e1065a99823503a1fff1ef6d48eb8ee579164",
+  "prompts": {},
+  "sessions": {
+    "s_b14aa578f43312": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a180ab-f5e6-76a0-90b8-f3ba079de898",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "sapphi-red <green@sapphi.red>"
+    }
+  }
+}
