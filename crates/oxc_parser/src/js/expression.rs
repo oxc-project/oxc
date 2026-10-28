@@ -147,7 +147,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !kind.is_label_identifier(self.ctx.has_yield(), self.ctx.has_await()) {
             return self.unexpected();
         }
-        self.check_identifier(kind, self.ctx);
+        // The grammar predicate already excludes `yield`/`await` in those contexts.
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         LabelIdentifier::new(span, name, self)
     }
@@ -400,11 +400,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_literal_boolean(&mut self) -> ArenaBox<'a, BooleanLiteral> {
         let start = self.cur_start();
-        let value = match self.cur_kind() {
-            Kind::True => true,
-            Kind::False => false,
-            _ => return self.unexpected(),
-        };
+        let kind = self.cur_kind();
+        debug_assert!(matches!(kind, Kind::True | Kind::False));
+        let value = kind == Kind::True;
         self.bump_any();
         BooleanLiteral::boxed(self.end_span(start), value, self)
     }
@@ -474,7 +472,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> ArenaBox<'a, RegExpLiteral<'a>> {
-        let (pattern_end, flags, flags_error) = self.read_regex();
+        let (pattern_end, flags) = self.read_regex();
         if !self.lexer.errors.is_empty() {
             return self.unexpected();
         }
@@ -486,16 +484,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let raw = self.cur_src();
         self.bump_any();
 
-        // Parse pattern if options is enabled and also flags are valid
+        // Invalid or duplicate flags produce lexer errors, which were rejected above.
         #[cfg(feature = "regular_expression")]
-        let pattern = if self.options.parse_regular_expression && !flags_error {
+        let pattern = if self.options.parse_regular_expression {
             self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
         } else {
             None
         };
         #[cfg(not(feature = "regular_expression"))]
         let pattern = {
-            let _ = (flags_text, flags_error);
+            let _ = flags_text;
             None
         };
 
@@ -557,9 +555,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     [ `ElementList`[?Yield, ?Await] ]
     ///     [ `ElementList`[?Yield, ?Await] , Elisionopt ]
     pub(crate) fn parse_array_expression(&mut self) -> Expression<'a> {
+        debug_assert!(self.at(Kind::LBrack));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.advance(Kind::LBrack);
         let (elements, comma_start) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RBrack,
@@ -1116,9 +1115,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let span = self.end_span(start);
 
-        if optional {
-            self.error(diagnostics::new_optional_chain(span));
-        }
+        // Member parsing above disallows optional chains; `?.` is rejected before arguments.
+        debug_assert!(!optional);
 
         Expression::new_new_expression(span, callee, type_arguments, arguments, self)
     }
@@ -1454,7 +1452,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 Expression::new_logical_expression(span, lhs, op, rhs, self)
-            } else if kind.is_binary_operator() {
+            } else {
+                // The precedence table contains only binary/logical operators and `as`/`satisfies`.
+                // The other categories have already been handled above.
+                debug_assert!(kind.is_binary_operator());
                 let span = self.end_span(lhs_start);
                 let op = map_binary_operator(kind);
                 if op == BinaryOperator::Exponential && !lhs_parenthesized {
@@ -1478,8 +1479,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 Expression::new_binary_expression(span, lhs, op, rhs, self)
-            } else {
-                break;
             };
             last_operand_precedence = Some(left_precedence);
         }

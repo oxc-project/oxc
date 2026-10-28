@@ -476,11 +476,6 @@ parser_diagnostics! {
         .with_label(span)
     };
 
-    new_optional_chain(span: Span) => {
-        OxcDiagnostic::error("Optional chaining cannot appear in the callee of new expressions")
-            .with_label(span)
-    };
-
     invalid_new_optional_chain(span: Span) => {
         OxcDiagnostic::error("Invalid optional chain from new expression.").with_label(span)
     };

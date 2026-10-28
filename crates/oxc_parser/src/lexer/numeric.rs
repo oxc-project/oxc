@@ -179,7 +179,10 @@ impl<C: Config> Lexer<'_, C> {
     }
 
     pub(super) fn decimal_literal_after_decimal_point(&mut self) -> Kind {
-        self.read_decimal_digits();
+        // `read_dot` has already established the required first decimal digit.
+        debug_assert!(self.peek_byte().is_some_and(|b| b.is_ascii_digit()));
+        self.consume_char();
+        self.read_decimal_digits_after_first_digit();
         self.optional_exponent();
         self.check_after_numeric_literal(Kind::Float)
     }
