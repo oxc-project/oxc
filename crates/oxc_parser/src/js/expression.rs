@@ -829,6 +829,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         //     super . IdentifierName
         // SuperCall:
         //     super ( Arguments )
+        // Most operands have no member continuation. Keep that check in callers without
+        // inlining the full member parser.
         if !matches!(self.cur_kind(), Kind::Dot | Kind::LBrack | Kind::LParen) {
             self.error(diagnostics::unexpected_super(span));
         }
@@ -859,7 +861,38 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// parse rhs of a member expression, starting from lhs
+    #[inline]
     fn parse_member_expression_rest(
+        &mut self,
+        lhs_start: u32,
+        lhs: Expression<'a>,
+        in_optional_chain: &mut bool,
+        allow_optional_chain: bool,
+    ) -> Expression<'a> {
+        // Most operands have no member continuation. Keep that check in callers without
+        // inlining the full member parser.
+        if !matches!(
+            self.cur_kind(),
+            Kind::Dot
+                | Kind::QuestionDot
+                | Kind::LBrack
+                | Kind::NoSubstitutionTemplate
+                | Kind::TemplateHead
+                | Kind::Bang
+                | Kind::LAngle
+                | Kind::ShiftLeft
+        ) {
+            return lhs;
+        }
+        self.parse_member_expression_rest_impl(
+            lhs_start,
+            lhs,
+            in_optional_chain,
+            allow_optional_chain,
+        )
+    }
+
+    fn parse_member_expression_rest_impl(
         &mut self,
         lhs_start: u32,
         lhs: Expression<'a>,
@@ -1322,7 +1355,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 13.6 - 13.13 Binary Expression
+    #[inline]
     fn parse_binary_expression_rest(
+        &mut self,
+        lhs_start: u32,
+        lhs: Expression<'a>,
+        lhs_parenthesized: bool,
+        min_precedence: Precedence,
+    ) -> Expression<'a> {
+        if kind_to_precedence(self.cur_kind()).is_none() {
+            return lhs;
+        }
+        self.parse_binary_expression_rest_impl(lhs_start, lhs, lhs_parenthesized, min_precedence)
+    }
+
+    fn parse_binary_expression_rest_impl(
         &mut self,
         lhs_start: u32,
         lhs: Expression<'a>,
