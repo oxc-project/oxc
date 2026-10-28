@@ -78,6 +78,14 @@ fn comment_attachment() {
     cases.add("let x = /* before */ 1 + /* mid */ 2;", SourceType::mjs());
     cases.add("`a${/* in */ b}c`", SourceType::mjs());
 
+    cases.group("before_tokens");
+    cases.add("if (/* a */ x /* b */) {} while (y /* c */\n) {}", SourceType::mjs());
+    cases.add("switch (x) { case /* a */ 1 /* b */: case 2 // c\n: }", SourceType::mjs());
+    cases.add("a /* a */ + b * c /* c */ - d;", SourceType::mjs());
+    cases.add("a /* a */ ? b /* b */ : c;", SourceType::mjs());
+    cases.add("x = (/* a */ y /* b */); z = (/* c */ y, w /* d */);", SourceType::mjs());
+    cases.add("f(a, b /* b */); @dec(c /* c */) class C {}", SourceType::ts());
+
     cases.group("empty_containers");
     cases.add("function f(/* params */) { /* body */ }", SourceType::mjs());
     cases.add("const x = [/* empty */]; const y = {/* empty */};", SourceType::mjs());
