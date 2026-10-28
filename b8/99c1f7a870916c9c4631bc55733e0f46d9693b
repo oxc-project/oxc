@@ -1,0 +1,19 @@
+tasks/track_memory_allocations/allocs_parser.yaml
+  s_95eb5bc177a909::t_d6a258d5357812 37,59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b899c1f7a870916c9c4631bc55733e0f46d9693b",
+  "prompts": {},
+  "sessions": {
+    "s_95eb5bc177a909": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18327-00a1-7352-91c2-d17a218f4755",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
