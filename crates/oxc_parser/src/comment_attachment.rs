@@ -33,6 +33,8 @@
 //!   `export`.
 //! * Comments before an empty class element `;`, which is not a node.
 //! * Comments lexed before a rewind.
+//! * Annotation comments after a delimiter which were not applied to the following node, e.g.
+//!   `f(a, /* @__PURE__ */ b)`. Applied annotations lead the node they apply to instead.
 //! * Comments not inside any list element.
 //!
 //! A comment whose owner is [`NodeId::ROOT`] is unassigned until parsing finishes. Program is the
@@ -347,7 +349,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let token_start = self.cur_token().start();
         for index in start as usize..end as usize {
             let comments = &self.lexer.trivia_builder.comments;
-            if comments[index].node_id.get() == NodeId::ROOT
+            let comment = &comments[index];
+            if comment.node_id.get() == NodeId::ROOT
+                && !is_unapplied_annotation(comment)
                 && trails_preceding(comments, index, element_end, token_start)
             {
                 self.assign_comment(index, node_id, CommentPlacement::Trailing);
@@ -417,7 +421,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if comment.span.start < leading.from {
                 break;
             }
-            if comment.node_id.get() == NodeId::ROOT {
+            if comment.node_id.get() == NodeId::ROOT && !is_unapplied_annotation(comment) {
                 self.assign_comment(index, node_id, CommentPlacement::Leading);
             }
         }
@@ -758,6 +762,15 @@ impl<'w> Walker<'w> {
             position = self.comments[index].span.end;
         }
     }
+}
+
+/// Whether the comment is an annotation which has not been applied. Annotations are assigned when
+/// they are applied to the following node, and by a walk if they are not.
+fn is_unapplied_annotation(comment: &Comment) -> bool {
+    matches!(
+        comment.content,
+        CommentContent::PureNotApplied | CommentContent::NoSideEffectsNotApplied
+    )
 }
 
 /// Whether a comment between two nodes trails the first, rather than leading the second.

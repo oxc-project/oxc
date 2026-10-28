@@ -259,6 +259,38 @@ x = /* @__PURE__ */ new Foo();
 ---
 /* @__PURE__ */ -> Leading NewExpression `new Foo()`
 
+##### annotations_after_separators
+
+=== js ===
+f(a, /* @__PURE__ */
+  g());
+---
+/* @__PURE__ */ -> Leading CallExpression `g()`
+
+=== js ===
+[a, /* #__NO_SIDE_EFFECTS__ */
+  () => {}];
+---
+/* #__NO_SIDE_EFFECTS__ */ -> Leading ArrowFunctionExpression `() => {}`
+
+=== js ===
+f(a, /* @__PURE__ */
+  b);
+---
+/* @__PURE__ */ -> Trailing IdentifierReference `a`
+
+=== js ===
+function h(a, /* @__PURE__ */
+  b) {}
+---
+/* @__PURE__ */ -> Trailing FormalParameter `a`
+
+=== js ===
+let a = 1, /* @__PURE__ */
+  b = f();
+---
+/* @__PURE__ */ -> Trailing VariableDeclarator `a = 1`
+
 ##### annotations_among_leading_comments
 
 === js ===
