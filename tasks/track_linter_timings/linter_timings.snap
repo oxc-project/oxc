@@ -671,7 +671,6 @@ vitest/prefer-called-exactly-once-with                     |  14953
 vitest/prefer-describe-function-title                      |      0
 vitest/prefer-each                                         |      6
 vitest/prefer-expect-assertions                            |      7
-vitest/prefer-expect-type-of                               |      0
 vitest/prefer-hooks-in-order                               |      7
 vitest/prefer-hooks-on-top                                 |      7
 vitest/prefer-import-in-mock                               |      0
