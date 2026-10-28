@@ -463,10 +463,10 @@ impl<'a> PeepholeOptimizations {
         let Some(Statement::FunctionDeclaration(function)) = result.last() else { return };
         let Some(id) = &function.id else { return };
         let symbol_id = id.symbol_id();
-        if ctx.scoping().get_reference(reference.reference_id()).symbol_id() != Some(symbol_id)
+        // check if symbol: is referenced once, is implicitly observable, as function is dead, has redeclarations
+        if ctx.scoping().get_resolved_reference_ids(symbol_id) != [reference.reference_id()]
             || ctx.state.symbols.is_implicitly_observable(symbol_id)
             || ctx.state.symbols.function_is_dead(symbol_id)
-            || ctx.scoping().get_resolved_references(symbol_id).count() != 1
             || !ctx.scoping().symbol_redeclarations(symbol_id).is_empty()
         {
             return;
