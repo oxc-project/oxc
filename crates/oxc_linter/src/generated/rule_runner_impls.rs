@@ -3971,7 +3971,7 @@ impl RuleRunner
     for crate::rules::unicorn::prefer_string_starts_ends_with::PreferStringStartsEndsWith
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::RegExpLiteral]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
