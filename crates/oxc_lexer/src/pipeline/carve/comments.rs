@@ -8,18 +8,6 @@ use crate::pipeline::{
     scan::{scan_block_comment, scan_line_comment},
 };
 
-const CONTENT_NONE: u8 = 0;
-const CONTENT_LEGAL: u8 = 1;
-const CONTENT_JSDOC: u8 = 2;
-const CONTENT_JSDOC_LEGAL: u8 = 3;
-const CONTENT_PURE: u8 = 4;
-const CONTENT_NO_SIDE_EFFECTS: u8 = 5;
-const CONTENT_WEBPACK: u8 = 6;
-const CONTENT_VITE: u8 = 7;
-const CONTENT_COVERAGE_IGNORE: u8 = 8;
-const CONTENT_COVERAGE_IGNORE_FILE: u8 = 9;
-const CONTENT_PROPERTY_KEY: u8 = 10;
-
 /// Lex the `//` line comment at `s`. Returns the resume index.
 #[inline(always)]
 pub(super) unsafe fn lex_line_comment(
@@ -236,7 +224,7 @@ fn html_close_at_line_start(src: &[u8], mut q: usize) -> bool {
 }
 
 #[inline]
-fn classify_exact(body: &[u8], is_block: bool) -> u8 {
+fn classify_exact(body: &[u8], is_block: bool) -> CommentContent {
     let lic = contains_license_or_preserve(body);
     classify(body, is_block, lic)
 }
@@ -274,17 +262,17 @@ fn contains_license_or_preserve(hay: &[u8]) -> bool {
 }
 
 #[inline]
-fn classify(bytes: &[u8], is_block: bool, lic: bool) -> u8 {
+fn classify(bytes: &[u8], is_block: bool, lic: bool) -> CommentContent {
     if bytes.is_empty() {
-        return CONTENT_NONE;
+        return CommentContent::None;
     }
     match bytes[0] {
-        b'!' => return CONTENT_LEGAL,
+        b'!' => return CommentContent::Legal,
         b'*' if is_block => {
             if !bytes.iter().all(|&c| c == b'*') {
-                return if lic { CONTENT_JSDOC_LEGAL } else { CONTENT_JSDOC };
+                return if lic { CommentContent::JsdocLegal } else { CommentContent::Jsdoc };
             }
-            return CONTENT_NONE;
+            return CommentContent::None;
         }
         _ => {}
     }
@@ -294,27 +282,27 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool) -> u8 {
         start += 1;
     }
     if start >= bytes.len() {
-        return CONTENT_NONE;
+        return CommentContent::None;
     }
 
     let rest = &bytes[start..];
     if (rest.starts_with(b"@__KEY__") || rest.starts_with(b"#__KEY__") || !rest[0].is_ascii())
         && is_property_key_annotation(bytes)
     {
-        return CONTENT_PROPERTY_KEY;
+        return CommentContent::PropertyKey;
     }
 
     match bytes[start] {
         b'@' => {
             start += 1;
             if start >= bytes.len() {
-                return CONTENT_NONE;
+                return CommentContent::None;
             }
             if bytes[start..].starts_with(b"vite") {
-                return CONTENT_VITE;
+                return CommentContent::Vite;
             }
             if bytes[start..].starts_with(b"license") || bytes[start..].starts_with(b"preserve") {
-                return CONTENT_LEGAL;
+                return CommentContent::Legal;
             }
         }
         b'#' => start += 1,
@@ -323,9 +311,9 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool) -> u8 {
                 && start + 7 < bytes.len()
                 && bytes[start + 7].is_ascii_uppercase()
             {
-                return CONTENT_WEBPACK;
+                return CommentContent::Webpack;
             }
-            return if lic { CONTENT_LEGAL } else { CONTENT_NONE };
+            return if lic { CommentContent::Legal } else { CommentContent::None };
         }
         b'v' | b'c' | b'n' | b'i' => {
             let rest = &bytes[start..];
@@ -335,26 +323,26 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool) -> u8 {
                 || rest.starts_with(b"istanbul ignore")
             {
                 return if is_coverage_ignore_file(rest) {
-                    CONTENT_COVERAGE_IGNORE_FILE
+                    CommentContent::CoverageIgnoreFile
                 } else {
-                    CONTENT_COVERAGE_IGNORE
+                    CommentContent::CoverageIgnore
                 };
             }
-            return if lic { CONTENT_LEGAL } else { CONTENT_NONE };
+            return if lic { CommentContent::Legal } else { CommentContent::None };
         }
-        _ => return if lic { CONTENT_LEGAL } else { CONTENT_NONE },
+        _ => return if lic { CommentContent::Legal } else { CommentContent::None },
     }
 
     if start < bytes.len() && bytes[start..].starts_with(b"__") {
         let rest = &bytes[start + 2..];
         if rest.starts_with(b"PURE__") {
-            return CONTENT_PURE;
+            return CommentContent::Pure;
         } else if rest.starts_with(b"NO_SIDE_EFFECTS__") {
-            return CONTENT_NO_SIDE_EFFECTS;
+            return CommentContent::NoSideEffects;
         }
     }
 
-    if lic { CONTENT_LEGAL } else { CONTENT_NONE }
+    if lic { CommentContent::Legal } else { CommentContent::None }
 }
 
 fn is_property_key_annotation(bytes: &[u8]) -> bool {
@@ -385,11 +373,11 @@ fn push_comment_record(
     end: u32,
     kind: CommentKind,
     followed_by_newline: bool,
-    meta: u8,
+    content: CommentContent,
     lanes: &mut Lanes,
 ) {
     let mut c = Comment::new(start, end.min(sl as u32), kind);
-    c.content = content_from_ordinal(meta);
+    c.content = content;
 
     let mut q = (start as usize).min(sl);
     let preceded_by_newline = loop {
@@ -412,23 +400,6 @@ fn push_comment_record(
 }
 
 #[inline]
-fn content_from_ordinal(o: u8) -> CommentContent {
-    match o {
-        CONTENT_LEGAL => CommentContent::Legal,
-        CONTENT_JSDOC => CommentContent::Jsdoc,
-        CONTENT_JSDOC_LEGAL => CommentContent::JsdocLegal,
-        CONTENT_PURE => CommentContent::Pure,
-        CONTENT_NO_SIDE_EFFECTS => CommentContent::NoSideEffects,
-        CONTENT_WEBPACK => CommentContent::Webpack,
-        CONTENT_VITE => CommentContent::Vite,
-        CONTENT_COVERAGE_IGNORE => CommentContent::CoverageIgnore,
-        CONTENT_COVERAGE_IGNORE_FILE => CommentContent::CoverageIgnoreFile,
-        CONTENT_PROPERTY_KEY => CommentContent::PropertyKey,
-        _ => CommentContent::None,
-    }
-}
-
-#[inline]
 fn is_lex_ws(c: u8) -> bool {
     matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
 }
@@ -437,10 +408,7 @@ fn is_lex_ws(c: u8) -> bool {
 mod tests {
     use oxc_ast::ast::CommentContent;
 
-    use super::{
-        CONTENT_COVERAGE_IGNORE, CONTENT_COVERAGE_IGNORE_FILE, CONTENT_NONE, CONTENT_PROPERTY_KEY,
-        classify, content_from_ordinal,
-    };
+    use super::classify;
 
     #[test]
     fn coverage_ignore_file() {
@@ -451,11 +419,7 @@ mod tests {
             (b"istanbul ignore file".as_slice(), true),
             (b"istanbul ignore file -- generated".as_slice(), false),
         ] {
-            assert_eq!(classify(source, is_block, false), CONTENT_COVERAGE_IGNORE_FILE);
-            assert_eq!(
-                content_from_ordinal(CONTENT_COVERAGE_IGNORE_FILE),
-                CommentContent::CoverageIgnoreFile
-            );
+            assert_eq!(classify(source, is_block, false), CommentContent::CoverageIgnoreFile);
         }
 
         for source in [
@@ -464,7 +428,7 @@ mod tests {
             b"c8 ignore file",
             b"istanbul ignore next",
         ] {
-            assert_eq!(classify(source, true, false), CONTENT_COVERAGE_IGNORE);
+            assert_eq!(classify(source, true, false), CommentContent::CoverageIgnore);
         }
     }
 
@@ -476,14 +440,13 @@ mod tests {
             b"\t@__KEY__\n",
             "\u{a0}@__KEY__\u{a0}".as_bytes(),
         ] {
-            assert_eq!(classify(source, true, false), CONTENT_PROPERTY_KEY);
-            assert_eq!(content_from_ordinal(CONTENT_PROPERTY_KEY), CommentContent::PropertyKey);
+            assert_eq!(classify(source, true, false), CommentContent::PropertyKey);
         }
 
         for source in
             [b"__KEY__".as_slice(), b"@ __KEY__", b"@__key__", b"@__KEY___", b"@__KEY__ extra"]
         {
-            assert_eq!(classify(source, true, false), CONTENT_NONE);
+            assert_eq!(classify(source, true, false), CommentContent::None);
         }
     }
 }
