@@ -5081,8 +5081,9 @@ impl RuleRunner for crate::rules::vitest::prefer_hooks_on_top::PreferHooksOnTop 
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_import_in_mock::PreferImportInMock {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner

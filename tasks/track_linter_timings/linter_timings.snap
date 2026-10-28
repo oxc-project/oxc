@@ -671,7 +671,6 @@ vitest/prefer-each                                         |      6
 vitest/prefer-expect-assertions                            |      7
 vitest/prefer-hooks-in-order                               |      7
 vitest/prefer-hooks-on-top                                 |      7
-vitest/prefer-import-in-mock                               |      0
 vitest/prefer-importing-vitest-globals                     |      7
 vitest/prefer-mock-promise-shorthand                       |  62606
 vitest/prefer-mock-return-shorthand                        |  62606
