@@ -36,7 +36,7 @@ use std::ops::Range;
 use oxc_ast::{
     AstKind, Comment, CommentContent, CommentPlacement,
     ast::{
-        BindingPattern, BindingProperty, ClassElement, Declaration, Directive,
+        BindingPattern, BindingProperty, ClassElement, Declaration, Decorator, Directive,
         ExportDefaultDeclarationKind, Expression, FormalParameters, Function, JSXChild,
         ObjectPropertyKind, Program, Statement, SwitchCase, TSCallSignatureDeclaration,
         TSFunctionType, TSMethodSignature, TSSignature, TSTemplateLiteralType, TSThisParameter,
@@ -475,8 +475,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    /// Unassign comments in initializers of `CoverInitializedName`s which were not converted to
+    /// assignment targets. These are syntax errors, and the initializers are discarded with the
+    /// commas in them.
+    #[cold]
+    #[inline(never)]
+    #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
+    fn unassign_cover_initialized_name_comments(&mut self) {
+        for expr in std::mem::take(&mut self.state.cover_initialized_name).into_values() {
+            self.unassign_comments(expr.span);
+            let trivia = &mut self.lexer.trivia_builder;
+            let len = trivia.comments.len();
+            let start = partition_before(&trivia.comments, len, expr.span.start) as u32;
+            let end = partition_before(&trivia.comments, len, expr.span.end) as u32;
+            trivia.comma_comments.retain(|index| !(start..end).contains(index));
+        }
+    }
+
     /// Assign the remaining comments by walking Program.
     pub(crate) fn attach_remaining_comments(&mut self, program: &Program<'a>) {
+        if !self.state.cover_initialized_name.is_empty() {
+            self.unassign_cover_initialized_name_comments();
+        }
         let len = self.lexer.trivia_builder.comments.len();
         if self.assigned_comments as usize != len {
             self.walk_comments(0..len, |walker| walker.visit_program(program));
@@ -571,6 +591,43 @@ impl<'w> Walker<'w> {
             end,
             preceding: None,
             preceding_end: span.start,
+        });
+        true
+    }
+
+    /// Visit a decorator preceding the span of `statement`, the next child of the innermost
+    /// frame's node, e.g. `@dec export class C {}`. Comments before the decorator are assigned
+    /// as before the statement. Returns whether the decorator contains pending comments.
+    fn decorator_before_statement(
+        &mut self,
+        decorator: &Decorator<'_>,
+        statement: (NodeId, u32),
+    ) -> bool {
+        let mut frame = *self.frames.last().unwrap();
+        while frame.cursor < frame.end {
+            let index = self.pending[frame.cursor as usize];
+            if self.comments[index as usize].span.end > decorator.span.start {
+                break;
+            }
+            self.assign(index, &frame, Some(statement));
+            frame.cursor += 1;
+        }
+        let start = frame.cursor;
+        while frame.cursor < frame.end && self.comment_start(frame.cursor) < decorator.span.end {
+            frame.cursor += 1;
+        }
+        let end = frame.cursor;
+        *self.frames.last_mut().unwrap() = frame;
+        if start == end {
+            return false;
+        }
+        self.frames.push(Frame {
+            node_id: decorator.node_id(),
+            depth: frame.depth + 1,
+            cursor: start,
+            end,
+            preceding: None,
+            preceding_end: decorator.span.start,
         });
         true
     }
@@ -762,19 +819,26 @@ impl ListElement for Statement<'_> {
 
     /// Decorators can precede `export`, e.g. `@dec export class C {}`.
     fn starts_before_span(&self) -> bool {
-        let class = match self {
-            Statement::ExportDeclaration(decl) => match &decl.declaration {
-                Declaration::ClassDeclaration(class) => class,
-                _ => return false,
-            },
-            Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
-                ExportDefaultDeclarationKind::ClassDeclaration(class) => class,
-                _ => return false,
-            },
-            _ => return false,
-        };
-        class.decorators.first().is_some_and(|decorator| decorator.span.start < self.span().start)
+        !decorators_before(self).is_empty()
     }
+}
+
+/// Decorators preceding a statement's span, e.g. `@dec export class C {}`.
+fn decorators_before<'s, 'a>(statement: &'s Statement<'a>) -> &'s [Decorator<'a>] {
+    let class = match statement {
+        Statement::ExportDeclaration(decl) => match &decl.declaration {
+            Declaration::ClassDeclaration(class) => class,
+            _ => return &[],
+        },
+        Statement::ExportDefaultDeclaration(decl) => match &decl.declaration {
+            ExportDefaultDeclarationKind::ClassDeclaration(class) => class,
+            _ => return &[],
+        },
+        _ => return &[],
+    };
+    let start = statement.span().start;
+    let len = class.decorators.partition_point(|decorator| decorator.span.start < start);
+    &class.decorators[..len]
 }
 
 impl ListElement for ClassElement<'_> {
@@ -962,8 +1026,22 @@ impl<'a> Visit<'a> for Walker<'_> {
         self.leave_node(kind);
     }
 
+    // Decorators before `export` precede the statement's span, so they are visited before it.
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        if self.depth == self.frames.last().unwrap().depth {
+            let statement = (it.node_id(), it.span().start);
+            for decorator in decorators_before(it) {
+                if self.decorator_before_statement(decorator, statement) {
+                    self.visit_decorator(decorator);
+                }
+            }
+        }
+        if self.enter_enum(it.node_id(), it.span()) {
+            walk::walk_statement(self, it);
+        }
+    }
+
     prune! {
-        visit_statement, walk_statement, Statement;
         visit_expression, walk_expression, Expression;
         visit_binding_pattern, walk_binding_pattern, BindingPattern;
         visit_object_property_kind, walk_object_property_kind, ObjectPropertyKind;

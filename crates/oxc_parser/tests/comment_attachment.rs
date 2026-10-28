@@ -104,6 +104,8 @@ fn comment_attachment() {
     cases.add("let f = (/* a */ a) => a; let g = (/* p */ b);", SourceType::mjs());
     cases.add("let f = <T,>(/* a */ a: T) => a; x = a < /* b */ b > c;", SourceType::ts());
     cases.add("({ a /* a */ = 1, b: /* b */ c } = d);", SourceType::mjs());
+    cases.add("({a = /* @__PURE__ */ f() });", SourceType::mjs());
+    cases.add("({a = f(x, /* c */ y) });", SourceType::mjs());
     cases.add("[/* x */ x, ...rest /* rest */] = y;", SourceType::mjs());
     cases.add("import /* 1 */ source /* 2 */ x from 'x';", SourceType::mjs());
     cases.add("await /* a */ x; import 'y';", SourceType::unambiguous());
@@ -191,6 +193,7 @@ fn comment_attachment() {
     cases.group("decorators_before_export");
     cases.add("// before\n@dec export class C {}", SourceType::ts());
     cases.add("foo(); // after foo\n@dec export class C {}", SourceType::ts());
+    cases.add("@dec(a /* c */ + b) export class C {}", SourceType::ts());
     cases.add("namespace N {\n  // before\n  @dec export class C {}\n}", SourceType::ts());
 
     cases.group("top_level_await_reparse");
