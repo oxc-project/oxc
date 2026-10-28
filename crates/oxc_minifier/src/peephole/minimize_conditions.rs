@@ -163,7 +163,7 @@ impl<'a> PeepholeOptimizations {
         match expr {
             Expression::Identifier(id) => Some(id),
             Expression::AssignmentExpression(assign_expr) => {
-                if assign_expr.operator == AssignmentOperator::Assign
+                if assign_expr.operator.is_assign()
                     && let AssignmentTarget::AssignmentTargetIdentifier(id) = &assign_expr.left
                 {
                     return Some(id);

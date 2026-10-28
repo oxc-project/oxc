@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::no_conditional_expect::{DOCUMENTATION, run_on_jest_node},
-    utils::PossibleJestNode,
+    rules::shared::no_conditional_expect::{DOCUMENTATION, run},
 };
 
 #[derive(Debug, Default, Clone)]
@@ -20,12 +21,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConditionalExpect {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run_on_jest_node(possible_jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -305,6 +307,10 @@ fn test() {
             });",
             None,
         ),
+        ("it('foo', function () { expect(1).toBe(1); });", None),
+        ("it('foo', function callback() { expect(1).toBe(1); });", None),
+        ("const callback = function () { if (x) { expect(1).toBe(1); } };", None),
+        ("const callback = function named() { if (x) { expect(1).toBe(1); } };", None),
     ];
 
     let fail = vec![
@@ -760,6 +766,12 @@ fn test() {
             ",
             None,
         ),
+        ("it('foo', function () { if (x) { expect(1).toBe(1); } });", None),
+        ("it('foo', function callback() { if (x) { expect(1).toBe(1); } });", None),
+        ("it('foo', async function () { if (x) { expect(1).toBe(1); } });", None),
+        ("test.only('foo', function () { x && expect(1).toBe(1); });", None),
+        ("test.each([1])('foo', function () { x ? expect(1).toBe(1) : noop(); });", None),
+        ("it('foo', function () { promise.catch(function () { expect(1).toBe(1); }); });", None),
     ];
 
     Tester::new(NoConditionalExpect::NAME, NoConditionalExpect::PLUGIN, pass, fail)

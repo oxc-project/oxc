@@ -4,6 +4,14 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.90.0] - 2026-10-27
+
+### 🚀 Features
+
+- 831cdf1 oxlint: Require mininum oxlint-tsgolint version v7.0.2005 (#28118) (camc314)
+- d1b00f4 linter/typescript: Implement no-unsafe-enum-assignment rule (#28117) (camc314)
+- 165c91f linter/typescript/await-thenable: Support `allowMixedPromiseArrays` option (#28116) (camc314)
+
 ## [1.89.0] - 2026-10-19
 
 ### 🐛 Bug Fixes

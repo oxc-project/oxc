@@ -1,13 +1,12 @@
 use oxc_allocator::ArenaStringBuilder;
 use oxc_ast::ast::*;
 use oxc_formatter_core::{
-    DispatchRequest, DispatchResponse, FormatElement, InputKind, format_element::TextWidth,
-    map_text_in_ir, push_text_with_literal_lines,
+    FormatElement, dispatch_fragment_ir, map_text_in_ir, push_text_with_literal_lines,
 };
 
 use crate::{
     ast_nodes::AstNode,
-    embed_context::HtmlEmbedMeta,
+    embed_context::HtmlInJsTemplate,
     format_args,
     formatter::prelude::*,
     print::template::{
@@ -30,7 +29,7 @@ const COUNTER: &str = "0";
 ///
 /// Supports both html-in-js and angular-in-js (`@Component({ template })`).
 pub(super) fn format_html_doc<'a>(
-    quasi: &AstNode<'a, TemplateLiteral<'a>>,
+    quasi: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
     is_angular: bool,
 ) -> bool {
@@ -52,39 +51,19 @@ pub(super) fn format_html_doc<'a>(
 
         let has_leading_ws = cooked.starts_with(|c: char| c.is_ascii_whitespace());
         let has_trailing_ws = cooked.ends_with(|c: char| c.is_ascii_whitespace());
+        let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
 
-        let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
-            language: embedded_language,
-            text: cooked,
-            input_kind: InputKind::Fragment,
-            parent_context: None,
-        }) else {
+        let context = html_in_js_template(has_leading_ws, has_trailing_ws, ws_ignore);
+        let Some(ir) = dispatch_fragment_ir(f, embedded_language, cooked, Some(&context)) else {
             return false;
         };
-        let Some(html_has_multiple_root_elements) = result
-            .child_context
-            .as_ref()
-            .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
-            .map(|meta| meta.has_multiple_root_elements)
-        else {
-            return false;
-        };
-        let ir = result.doc;
 
         // Re-escape template chars in `Text` runs:
         // the IR is reinserted into a JS template literal built from `.cooked` values.
         let ir = super::escape_template_chars_in_ir(ir, f);
 
         let content = format_once(|f| f.write_elements(ir));
-        let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
-        write_html_template(
-            f,
-            &content,
-            has_leading_ws,
-            has_trailing_ws,
-            html_has_multiple_root_elements.unwrap_or(true),
-            ws_ignore,
-        );
+        write_html_template(f, &content, has_leading_ws, has_trailing_ws, ws_ignore);
         return true;
     }
 
@@ -112,26 +91,13 @@ pub(super) fn format_html_doc<'a>(
 
     let has_leading_ws = joined.starts_with(|c: char| c.is_ascii_whitespace());
     let has_trailing_ws = joined.ends_with(|c: char| c.is_ascii_whitespace());
+    let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
 
     // Phase 2: Format via the dispatcher (IR path)
-    let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(DispatchRequest {
-        language: embedded_language,
-        text: joined,
-        input_kind: InputKind::Fragment,
-        parent_context: None,
-    }) else {
+    let context = html_in_js_template(has_leading_ws, has_trailing_ws, ws_ignore);
+    let Some(ir) = dispatch_fragment_ir(f, embedded_language, joined, Some(&context)) else {
         return false;
     };
-
-    let Some(html_has_multiple_root_elements) = result
-        .child_context
-        .as_ref()
-        .and_then(|context| context.downcast_ref::<HtmlEmbedMeta>())
-        .map(|meta| meta.has_multiple_root_elements)
-    else {
-        return false;
-    };
-    let ir = result.doc;
 
     // Validate before formatting any expression.
     // Formatting consumes comment state,
@@ -184,21 +150,21 @@ pub(super) fn format_html_doc<'a>(
         }
         // No placeholder to substitute; push the escaped text if escaping changed it
         let Some(text) = escaped else { return false };
-        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        out.push(FormatElement::text(text, indent_width));
         true
     });
     let format_content = format_once(move |f: &mut JsFormatter<'_, 'a>| f.write_elements(ir));
-
-    let ws_ignore = f.options().html_whitespace_sensitivity_ignore;
-    write_html_template(
-        f,
-        &format_content,
-        has_leading_ws,
-        has_trailing_ws,
-        html_has_multiple_root_elements.unwrap_or(true),
-        ws_ignore,
-    );
+    write_html_template(f, &format_content, has_leading_ws, has_trailing_ws, ws_ignore);
     true
+}
+
+/// The child indents its content only where the backticks hug it (the last case of [`write_html_template`]).
+fn html_in_js_template(
+    has_leading_ws: bool,
+    has_trailing_ws: bool,
+    ws_ignore: bool,
+) -> HtmlInJsTemplate {
+    HtmlInJsTemplate { indent_multiple_roots: !(ws_ignore || has_leading_ws && has_trailing_ws) }
 }
 
 // ---
@@ -214,12 +180,12 @@ pub(super) fn format_html_doc<'a>(
 ///   - Otherwise: `group(["`", leadingWS?, maybeIndent(group(content)), trailingWS?, "`"])`
 ///     → content hugs the backtick directly
 ///     → multiple root elements wraps with `indent`, single does not
+///     → the child does the `indent` on request ([`HtmlInJsTemplate`])
 fn write_html_template<'a>(
     f: &mut JsFormatter<'_, 'a>,
     content: &impl Format<'a, JsFormatContext<'a>>,
     has_leading_ws: bool,
     has_trailing_ws: bool,
-    has_multiple_root_elements: bool,
     ws_ignore: bool,
 ) {
     if ws_ignore {
@@ -249,11 +215,7 @@ fn write_html_template<'a>(
         // group(["`", leadingWS?, maybeIndent(group(content)), trailingWS?, "`"])
         let leading = if has_leading_ws { " " } else { "" };
         let trailing = if has_trailing_ws { " " } else { "" };
-        if has_multiple_root_elements {
-            write!(f, [group(&format_args!("`", leading, indent(&group(content)), trailing, "`"))]);
-        } else {
-            write!(f, [group(&format_args!("`", leading, group(content), trailing, "`"))]);
-        }
+        write!(f, [group(&format_args!("`", leading, group(content), trailing, "`"))]);
     }
 }
 
@@ -306,14 +268,12 @@ fn placeholders_are_sequential(ir: &[FormatElement<'_>], next: &mut usize) -> bo
 #[cfg(test)]
 mod tests {
     use oxc_allocator::{Allocator, ArenaVec};
-    use oxc_formatter_core::{
-        BestFittingElement, FormatElement, IndentWidth, format_element::TextWidth,
-    };
+    use oxc_formatter_core::{BestFittingElement, FormatElement, IndentWidth};
 
     use super::placeholders_are_sequential;
 
     fn text(text: &'static str) -> FormatElement<'static> {
-        FormatElement::Text { text, width: TextWidth::from_text(text, IndentWidth::default()) }
+        FormatElement::text(text, IndentWidth::default())
     }
 
     fn best_fitting<'a>(

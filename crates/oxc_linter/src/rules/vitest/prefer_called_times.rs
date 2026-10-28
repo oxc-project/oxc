@@ -1,9 +1,10 @@
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     fixer::RuleFixer,
     rule::Rule,
     utils::{ParsedExpectFnCall, PossibleJestNode, parse_expect_jest_fn_call},
@@ -62,22 +63,23 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferCalledTimes {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        let node = jest_node.node;
-
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
-        let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, jest_node, ctx) else {
+        let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+            return;
+        };
+        let Some(parsed_expect_call) = parse_expect_jest_fn_call(call_expr, &jest_node, ctx) else {
             return;
         };
 
         Self::check_and_fix(&parsed_expect_call, call_expr, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 

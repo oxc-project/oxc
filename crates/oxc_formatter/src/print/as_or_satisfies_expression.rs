@@ -9,12 +9,12 @@ use crate::{
     write,
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSAsExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
-            self.expression(),
-            self.type_annotation(),
+            &self.expression(),
+            &self.type_annotation(),
             is_callee_or_object,
             "as",
             f,
@@ -22,12 +22,12 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSAsExpression<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSSatisfiesExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let is_callee_or_object = is_callee_or_object_context(self.span(), self.parent());
         format_as_or_satisfies_expression(
-            self.expression(),
-            self.type_annotation(),
+            &self.expression(),
+            &self.type_annotation(),
             is_callee_or_object,
             "satisfies",
             f,
@@ -36,8 +36,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TSSatisfiesExpression<'a>> {
 }
 
 fn format_as_or_satisfies_expression<'a>(
-    expression: &AstNode<'a, Expression>,
-    type_annotation: &AstNode<'a, TSType>,
+    expression: &AstNode<'_, 'a, Expression>,
+    type_annotation: &AstNode<'_, 'a, TSType>,
     is_callee_or_object: bool,
     operation: &'static str,
     f: &mut JsFormatter<'_, 'a>,
@@ -131,16 +131,11 @@ fn format_as_or_satisfies_expression<'a>(
     }
 }
 
-fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_>) -> bool {
-    match parent {
-        // Static member
-        AstNodes::StaticMemberExpression(_) => true,
-        AstNodes::ComputedMemberExpression(member) => member.object.span() == span,
+fn is_callee_or_object_context(span: Span, parent: &AstNodes<'_, '_>) -> bool {
+    parent.is_member_object_span(span)
         // Or CallExpression callee (Not NewExpression, to align with Prettier)
         // https://github.com/prettier/prettier/blob/fdfa6701767f5140a85902ecc9fb6444f5b4e3f8/src/language-js/print/cast-expression.js#L28-L33
         // NOTE: We may revert this if resolved: https://github.com/prettier/prettier/issues/18406
-        // _ => parent.is_call_like_callee_span(span),
-        AstNodes::CallExpression(call) => call.callee.span() == span,
-        _ => false,
-    }
+        // || parent.is_call_like_callee_span(span)
+        || matches!(parent, AstNodes::CallExpression(call) if call.callee.span() == span)
 }

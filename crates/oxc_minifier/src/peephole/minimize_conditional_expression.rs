@@ -219,7 +219,7 @@ impl<'a> PeepholeOptimizations {
 
         // `a ? c : b && c` => `(a || b) && c`
         if let Expression::LogicalExpression(logical_expr) = &mut expr.alternate
-            && logical_expr.operator == LogicalOperator::And
+            && logical_expr.operator.is_and()
             && ctx.expr_eq(&logical_expr.right, &expr.consequent)
         {
             let mut new_logical = logical_expr.take_in_box(ctx);
@@ -574,10 +574,7 @@ impl<'a> PeepholeOptimizations {
                 let result_expr = expr.consequent.take_in(ctx);
                 // "(a ? eval : eval)(x)" => "(0, eval)(x)" — the bare branch
                 // would form a direct eval call / rebind a member call's `this`.
-                if Self::should_keep_indirect_access(&result_expr, ctx) {
-                    return Some(Self::preserve_indirect_access(expr.span, result_expr, ctx));
-                }
-                return Some(result_expr);
+                return Some(Self::preserve_indirect_access_if_needed(expr.span, result_expr, ctx));
             }
 
             // "a ? b : b" => "a, b"

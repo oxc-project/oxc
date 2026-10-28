@@ -381,7 +381,7 @@ fn is_require(expression: &Expression<'_>) -> bool {
 
 fn declaration_scope(node: &AstNode<'_>, ctx: &LintContext<'_>) -> ScopeId {
     if let AstKind::VariableDeclaration(declaration) = node.kind()
-        && declaration.kind == VariableDeclarationKind::Var
+        && declaration.kind.is_var()
     {
         return ctx
             .scoping()
@@ -490,7 +490,7 @@ fn report_join(
             fixes.push(Fix::new(",", Span::empty(previous.span.end)));
         }
         let keyword = declaration.kind.as_str();
-        if declaration.kind == VariableDeclarationKind::AwaitUsing {
+        if declaration.kind.is_await_using() {
             fixes.push(Fix::delete(Span::sized(declaration.span.start, 5)));
             let offset = ctx
                 .find_next_token_within(declaration.span.start, declaration.span.end, "using")

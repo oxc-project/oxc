@@ -1,14 +1,14 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, JSXAttributeItem, JSXAttributeName, JSXChild, ObjectPropertyKind},
+    ast::{Argument, Expression, JSXAttributeItem, JSXAttributeName, ObjectPropertyKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::Ident;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{AstNode, context::LintContext, rule::Rule, utils::is_jsx_multiline_whitespace};
 
 fn no_danger_with_children_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Only set one of `children` or `props.dangerouslySetInnerHTML`")
@@ -59,7 +59,7 @@ impl Rule for NoDangerWithChildren {
             AstKind::JSXElement(jsx) => {
                 // Either children are passed in as a prop like `children={}` or they are nested between the tags.
                 let has_children = has_jsx_prop(ctx, node, "children")
-                    || (!jsx.children.is_empty() && !is_line_break(&jsx.children[0]));
+                    || (!jsx.children.is_empty() && !is_jsx_multiline_whitespace(&jsx.children[0]));
                 if !has_children {
                     return;
                 }
@@ -245,18 +245,6 @@ fn test() {
         .test_and_snapshot();
 }
 
-fn is_whitespace(s: &str) -> bool {
-    s.chars().all(char::is_whitespace)
-}
-
-fn is_line_break(child: &JSXChild) -> bool {
-    let JSXChild::Text(text) = child else {
-        return false;
-    };
-    let is_multi_line = text.value.contains('\n');
-    is_multi_line && is_whitespace(text.value.as_str())
-}
-
 /// Given a JSX element, find the JSXAttributeItem with the given name.
 /// If there are spread props, it will search within those as well.
 fn has_jsx_prop(ctx: &LintContext, node: &AstNode, prop_name: &'static str) -> bool {
@@ -306,7 +294,7 @@ fn does_object_var_have_prop_name(
 
     obj_expr.properties.iter().any(|prop| match prop {
         ObjectPropertyKind::ObjectProperty(obj_prop) => {
-            obj_prop.key.static_name().is_some_and(|key| key == prop_name)
+            obj_prop.key.is_specific_static_name(prop_name)
         }
         ObjectPropertyKind::SpreadProperty(spread_prop) => {
             let Some(ident) = spread_prop.argument.get_identifier_reference() else {
@@ -345,6 +333,6 @@ fn is_object_with_prop_name(
         let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
             return false;
         };
-        obj_prop.key.static_name().is_some_and(|key| key == prop_name)
+        obj_prop.key.is_specific_static_name(prop_name)
     })
 }

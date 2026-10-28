@@ -368,10 +368,9 @@ where
         match ancestor.kind() {
             AstKind::FormalParameter(formal_parameter) => {
                 if let Some(declaration_span) = find_declaration_span(&formal_parameter.pattern)
-                    && formal_parameter
-                        .initializer
-                        .as_ref()
-                        .is_some_and(|init| is_in_range(init.span(), reference_location))
+                    && formal_parameter.initializer.as_ref().is_some_and(|init| {
+                        init.span().contains_inclusive(Span::empty(reference_location))
+                    })
                 {
                     return Some(declaration_span);
                 }
@@ -381,11 +380,9 @@ where
                     continue;
                 };
 
-                if declarator
-                    .init
-                    .as_ref()
-                    .is_some_and(|init| is_in_range(init.span(), reference_location))
-                {
+                if declarator.init.as_ref().is_some_and(|init| {
+                    init.span().contains_inclusive(Span::empty(reference_location))
+                }) {
                     return Some(declaration_span);
                 }
 
@@ -395,11 +392,11 @@ where
                     if matches!(
                         grand_parent.kind(),
                         AstKind::ForInStatement(for_in)
-                            if is_in_range(for_in.right.span(), reference_location)
+                            if for_in.right.span().contains_inclusive(Span::empty(reference_location))
                     ) || matches!(
                         grand_parent.kind(),
                         AstKind::ForOfStatement(for_of)
-                            if is_in_range(for_of.right.span(), reference_location)
+                            if for_of.right.span().contains_inclusive(Span::empty(reference_location))
                     ) {
                         return Some(declaration_span);
                     }
@@ -409,7 +406,10 @@ where
             }
             AstKind::AssignmentPattern(assignment_pattern) => {
                 if let Some(declaration_span) = find_declaration_span(&assignment_pattern.left)
-                    && is_in_range(assignment_pattern.right.span(), reference_location)
+                    && assignment_pattern
+                        .right
+                        .span()
+                        .contains_inclusive(Span::empty(reference_location))
                 {
                     return Some(declaration_span);
                 }
@@ -417,7 +417,7 @@ where
             AstKind::ForInStatement(for_in) => {
                 if let Some(declaration_span) =
                     for_statement_left_declaration_span(&for_in.left, &mut find_declaration_span)
-                    && is_in_range(for_in.right.span(), reference_location)
+                    && for_in.right.span().contains_inclusive(Span::empty(reference_location))
                 {
                     return Some(declaration_span);
                 }
@@ -425,7 +425,7 @@ where
             AstKind::ForOfStatement(for_of) => {
                 if let Some(declaration_span) =
                     for_statement_left_declaration_span(&for_of.left, &mut find_declaration_span)
-                    && is_in_range(for_of.right.span(), reference_location)
+                    && for_of.right.span().contains_inclusive(Span::empty(reference_location))
                 {
                     return Some(declaration_span);
                 }
@@ -495,10 +495,6 @@ fn get_parent_variable_scope(scope_id: ScopeId, ctx: &LintContext<'_>) -> ScopeI
         .scope_ancestors(scope_id)
         .find(|scope_id| ctx.scoping().scope_flags(*scope_id).is_var())
         .unwrap_or_else(|| ctx.scoping().root_scope_id())
-}
-
-fn is_in_range(span: Span, location: u32) -> bool {
-    span.start <= location && location <= span.end
 }
 
 #[test]

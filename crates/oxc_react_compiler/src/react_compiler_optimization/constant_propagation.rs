@@ -131,7 +131,7 @@ fn constant_propagation_impl<'a>(
          * Finally, merge together any blocks that are now guaranteed to execute
          * consecutively
          */
-        merge_consecutive_blocks(func, &mut env.functions, env.allocator);
+        merge_consecutive_blocks(func, &mut env.functions, env.allocator)?;
 
         assert_consistent_identifiers(func, &env.identifiers)?;
         assert_terminal_successors_exist(func)?;

@@ -6,9 +6,8 @@
 
 use oxc_allocator::{Allocator, ArenaVec, StringBuilder};
 use oxc_formatter_core::{
-    TextWidth,
     builders::{group, hard_line_break, if_group_breaks, if_group_fits_on_line},
-    format_args, write,
+    format_args, text_width, write,
 };
 use oxc_markdown_parser::ast::{Table, TableAlign};
 
@@ -35,7 +34,7 @@ pub fn write_table<'a>(table: &'a Table<'a>, f: &mut MarkdownFormatter<'_, 'a>) 
         for (i, cell) in row.children.iter().enumerate() {
             let text =
                 collect_phrasing(&cell.children, InlineParent::default(), f).into_str(allocator);
-            let width = TextWidth::from_text(text, f.options().indent_width).value() as usize;
+            let width = text_width(text, f.options().indent_width) as usize;
             widths[i] = widths[i].max(width);
             cells.push(Cell { text, width });
         }

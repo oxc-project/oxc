@@ -1,0 +1,44 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/optional-chain-non-null-assertion-call.tsx
+---
+import { c as _c } from "react/compiler-runtime";
+type Props = {
+	obj?: {
+		get?: () => {
+			value: number;
+		};
+	};
+};
+export function Value(t0) {
+	const $ = _c(7);
+	const { obj } = t0;
+	let t1;
+	if ($[0] !== obj) {
+		t1 = obj?.get().value;
+		$[0] = obj;
+		$[1] = t1;
+	} else {
+		t1 = $[1];
+	}
+	const a = t1;
+	let t2;
+	if ($[2] !== obj) {
+		t2 = obj?.get?.().value;
+		$[2] = obj;
+		$[3] = t2;
+	} else {
+		t2 = $[3];
+	}
+	const b = t2;
+	let t3;
+	if ($[4] !== a || $[5] !== b) {
+		t3 = <span>{a}{b}</span>;
+		$[4] = a;
+		$[5] = b;
+		$[6] = t3;
+	} else {
+		t3 = $[6];
+	}
+	return t3;
+}

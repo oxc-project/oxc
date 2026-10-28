@@ -419,7 +419,9 @@ fn get_jsx_element_key_value<'a>(
                                 return Some((value, attr.span));
                             }
                             JSXExpression::TemplateLiteral(lit) => {
-                                return lit.single_quasi().map(|value| (value, attr.span));
+                                if let Some(value) = lit.single_quasi() {
+                                    return Some((value, attr.span));
+                                }
                             }
                             _ => {}
                         }
@@ -675,6 +677,17 @@ fn test() {
                       <span key="notunique"/>,
                     ];
                   "#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        // A template key with a substitution leaves the element's later `key` to compare.
+        (
+            r#"const spans = [<span key={`${a}`} key="dup"/>, <span key={`${a}`} key="dup"/>];"#,
+            Some(serde_json::json!([{ "warnOnDuplicates": true }])),
+            None,
+        ),
+        (
+            r#"const div = <div><span key={`${a}`} key="dup"/><span key="dup"/></div>;"#,
             Some(serde_json::json!([{ "warnOnDuplicates": true }])),
             None,
         ),

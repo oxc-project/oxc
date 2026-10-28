@@ -86,9 +86,6 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
             match rule_run_info.iter().next().map(String::as_str) {
                 Some("run") => "RuleRunFunctionsImplemented::Run".to_string(),
                 Some("run_once") => "RuleRunFunctionsImplemented::RunOnce".to_string(),
-                Some("run_on_jest_node") => {
-                    "RuleRunFunctionsImplemented::RunOnJestNode".to_string()
-                }
                 _ => "RuleRunFunctionsImplemented::Unknown".to_string(),
             }
         } else {

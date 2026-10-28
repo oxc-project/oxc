@@ -7,7 +7,7 @@ use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
     ast::{
-        CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        Argument, CallExpression, Expression, ImportDeclaration, ImportDeclarationSpecifier,
         match_member_expression,
     },
 };
@@ -112,6 +112,16 @@ pub fn is_jest_file(ctx: &LintContext) -> bool {
     .any(|ext| file_path.ends_with(ext))
 }
 
+/// Finds the last directly represented function or arrow argument, skipping spreads and wrappers.
+pub fn find_test_callback<'a>(call_expr: &'a CallExpression<'a>) -> Option<&'a Expression<'a>> {
+    call_expr
+        .arguments
+        .iter()
+        .rev()
+        .filter_map(Argument::as_expression)
+        .find(|expr| expr.is_function())
+}
+
 pub fn is_type_of_jest_fn_call<'a>(
     call_expr: &'a CallExpression<'a>,
     possible_jest_node: &PossibleJestNode<'a, '_>,
@@ -158,6 +168,56 @@ pub fn parse_expect_jest_fn_call<'a>(
 pub struct PossibleJestNode<'a, 'b> {
     pub node: &'b AstNode<'a>,
     pub original: Option<&'a str>, // if this node is imported from 'jest/globals', this field will be Some(original_name), otherwise None
+}
+
+impl<'a, 'b> PossibleJestNode<'a, 'b> {
+    /// Resolve a call rooted in a Jest/Vitest global or import, preserving imported aliases.
+    ///
+    /// This does not allocate or scan other calls in the file. Rules using `Rule::run` should
+    /// apply their syntactic checks before resolving a potential test-framework call.
+    pub fn from_call_expression(
+        node: &'b AstNode<'a>,
+        call_expr: &'a CallExpression<'a>,
+        ctx: &LintContext<'a>,
+    ) -> Option<Self> {
+        let mut expr = &call_expr.callee;
+        let ident = loop {
+            expr = match expr {
+                Expression::Identifier(ident) => break ident,
+                Expression::StaticMemberExpression(member) => &member.object,
+                Expression::ComputedMemberExpression(member) => &member.object,
+                Expression::CallExpression(call) => &call.callee,
+                Expression::TaggedTemplateExpression(tagged) => &tagged.tag,
+                _ => return None,
+            };
+        };
+
+        let reference = ctx.scoping().get_reference(ident.reference_id());
+        let original = if let Some(symbol_id) = reference.symbol_id() {
+            if !ctx.scoping().symbol_flags(symbol_id).is_import() {
+                return None;
+            }
+            let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
+            let AstKind::ImportDeclaration(import_decl) = ctx.nodes().parent_kind(declaration_id)
+            else {
+                return None;
+            };
+            if !matches!(
+                import_decl.source.value.as_str(),
+                Some("@jest/globals" | "vitest" | "vite-plus/test" | "@effect/vitest")
+            ) {
+                return None;
+            }
+            find_original_name(import_decl, ident.name.as_str())
+        } else {
+            if !JEST_METHOD_NAMES.contains(&ident.name.as_str()) {
+                return None;
+            }
+            None
+        };
+
+        Some(Self { node, original })
+    }
 }
 
 /// Collect all possible Jest fn Call Expression,

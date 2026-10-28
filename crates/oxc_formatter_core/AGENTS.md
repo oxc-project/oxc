@@ -78,7 +78,7 @@ The core is parameterized over a consumer-supplied context so it stays language-
 
 ### Embedded-language infrastructure (`session/`)
 
-`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `DispatchPayload` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
+`FormatSession` / `FormatDispatcher` / `DispatchRequest` / `EmbeddedIr` let one formatter's IR be built inside another's document (e.g. graphql-in-js):
 
 - The orchestrator (oxfmt) assembles the dispatcher, mapping language names to formatter implementations (or a Prettier fallback)
   - Formatter crates only invoke it via `FormatSession::dispatch`
@@ -86,8 +86,9 @@ The core is parameterized over a consumer-supplied context so it stays language-
   - A child adds classes straight into the parent's index space, so its doc is written as-is (no remap)
   - A root formatter opens a fresh scope (`with_new_tailwind_scope`) and sorts it when finalizing its `Document` (`take_sorted_tailwind_classes`)
 - A language crate's `format_to_ir` entry returns `EmbeddedIr`, one shape for every child language, no per-crate tuples
+  - The dispatcher answers with it as-is (`DispatchResponse::Formatted`): data flows parent→child only, a child reports nothing back
 - Only language-pair specific data crosses as `dyn Any`, core never learns concrete languages:
-  - When the parent picks the child language, it passes the pair's own data (css-in-js's `CssInJsTemplate`, html-in-js's `has_multiple_root_elements`)
+  - When the parent picks the child language, it passes the pair's own data (css-in-js's `CssInJsTemplate`, html-in-js's `HtmlInJsTemplate`)
   - When it cannot (a Markdown code block's name resolves in the host), it passes a fact about itself to every child,
     and the host translates it into the pair's data once the child language is known (`XxxInMarkdownCodeBlock` → `JsEmbeddedIn`)
 - `FormatSession` (`session/mod.rs`) is the execution unit:

@@ -2,7 +2,7 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 1033/1123 (91.99%), 23 files skipped
+js compatibility: 1029/1123 (91.63%), 23 files skipped
 
 # Failed
 
@@ -55,6 +55,7 @@ js compatibility: 1033/1123 (91.99%), 23 files skipped
 | js/switch/comments.js | 💥 | 94.74% |
 | js/template-literals/expression-break.js | 💥 | 80.00% |
 | js/template-literals/expressions.js | 💥 | 97.64% |
+| js/ternaries/indent-after-paren.js | 💥💥💥💥 | 99.14% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
 | js/trailing-comma/trailing_whitespace.js | 💥💥💥 | 96.55% |
 | js/try/try.js | 💥 | 44.44% |
@@ -87,11 +88,8 @@ js compatibility: 1033/1123 (91.99%), 23 files skipped
 
 # Not idempotent
 
-- js/arrays/numbers-negative-comment-after-minus.js
 - js/comments/return-statement.js
 - js/comments/first-argument/first-argument.js
 - js/for/continue-and-break-comment-without-blocks.js
 - js/function/issue-12967.js
-- js/object-prop-break-in/short-keys.js
 - jsx/comments/in-attributes.js
-- jsx/spread/child.js

@@ -201,7 +201,6 @@ impl OxlintRules {
                     if external_plugin_store.is_enabled() {
                         match external_plugin_store.lookup_rule_id(plugin_name, rule_name) {
                             Ok(external_rule_id) => {
-                                // Add options to store and get options ID
                                 let options_id = external_plugin_store
                                     .add_options(external_rule_id, &rule_config.config);
 
@@ -545,15 +544,7 @@ impl JsonSchema for OxlintRules {
                     if r.plugin_name() == "eslint" {
                         (r.name().to_string(), schema)
                     } else {
-                        (
-                            format!(
-                                "{}/{}",
-                                // replace `jsx_a11y` with `jsx-a11y`, `react_perf` with `react-perf`.
-                                r.plugin_name().cow_replace('_', "-"),
-                                r.name()
-                            ),
-                            schema,
-                        )
+                        (format!("{}/{}", r.plugin_name().cow_replace('_', "-"), r.name()), schema)
                     }
                 });
 
@@ -705,7 +696,6 @@ fn parse_rule_value(
                 .into());
             };
 
-            // The first item should be SeverityConf
             let severity = AllowWarnDeny::try_from(&*severity)?;
             let config = match config {
                 // e.g. ["warn"], [0]

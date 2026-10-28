@@ -547,30 +547,36 @@ Prettier 3.9 changed this to first retry the whole union FLAT on the indented ne
 Community pushback on the 3.9 style (users migrated to Oxfmt over it) put following on hold:
 ours deliberately matches Prettier 3.8's output for this construct.
 
-## arrow-chain-exact-fill-signature
+## arrow-exact-fill-signature
 
-- Why: cost
-- Pin: `tests/fixtures/js/arrow-function/chain-exact-fill-signature.js`
+- Why: uniform-rule (same construct, same output: arrow with a non-conditional body)
+- Pin: `tests/fixtures/js/arrow-function/exact-fill-signature.js`
 
 ```js
 /* input (printWidth 80) */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (x) => cond ? longlonglong : shortshort;
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) => cond ? longlonglong : shortshort;
 
 /* ours */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (x) =>
+  cond ? longlonglong : shortshort;
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength = (x) => (y) =>
   cond ? longlonglong : shortshort;
 
 /* prettier */
+const exactlyFillsThePrintWidthEightySignatureLinePaddedToLengthOkOkOkO = (
+  x,
+) => (cond ? longlonglong : shortshort);
 const exactlyFillsThePrintWidthEightySignatureLinePaddedToLength =
   (x) => (y) => (cond ? longlonglong : shortshort);
 ```
 
-An arrow chain with a parens-adding conditional body keeps a signature line that EXACTLY fills the print width (the signature alone is measured; both idempotent).
-Prettier counts the hug layout's literal trailing space, so the exact fill overflows:
-it breaks the assignment and retries the chain flat on the indented next line.
-One char over and the outputs converge;
-a naive port of the literal-space structure regresses `js/arrows/currying-4.js` (Prettier gates the hug on the chain's expand state),
-so matching costs more than this exact-width edge is worth.
+An arrow (single or chain) whose signature line EXACTLY fills the print width keeps it and puts the body on the next line, whatever the body.
+Prettier breaks the signature only for a parens-adding conditional body:
+its hug layout puts a literal space after `=>`, outside the group that may break the body onto the next line,
+so the space is counted although it is trimmed whenever the body breaks.
+As the last call argument, Prettier breaks all the arguments instead of hugging the arrow.
+One char over and the outputs converge.
 
 ## suppressed-for-head-declaration
 
@@ -684,7 +690,6 @@ we reuse the reprint path's split (`write_leading_comments_with_asi_guard`, call
 
 - Why: semantics (Prettier's placement rebinds the cast to the added parens; verified with tsc; prettier/prettier#19645, fixed on main by prettier/prettier#19652)
 - Pin: `tests/fixtures/js/comments/type-cast-comment-inside-added-parens.js`
-- Oxfmt: `externals/svelte/internal/client/dom/css.js`
 
 ```js
 // input
@@ -766,6 +771,44 @@ Prettier's compact test call layout merges and reverses the comments, and is not
 We fall back to the regular argument layout when comments sit around the arguments, following prettier/prettier#20043.
 A same-line block comment also falls back, the same output as the other special call layouts (React hook, `require`).
 
+## vitest-test-call
+
+- Why: uniform-rule (same construct, same output: `it.only(name, callback)`)
+- Pin: `tests/fixtures/js/calls/vitest-test-call.js`
+
+```js
+// input (printWidth: 80)
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+
+// ours: both keep the compact test call layout
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+
+// prettier: `it.only` keeps it, `it.concurrent` breaks the arguments
+it.only("does something really long and descriptive with the formatter output", async () => {
+  expect(1).toBe(1);
+});
+it.concurrent(
+  "does something really long and descriptive with the formatter output",
+  async () => {
+    expect(1).toBe(1);
+  },
+);
+```
+
+Vitest's test calls (`.concurrent`, `.sequential`, `.fails`, `.shuffle`, `bench`) and `Deno.test` take the same `(name, callback)` arguments as `it.only`, and get its compact test call layout.
+Prettier's callee list covers only the Jest / Jasmine / Playwright names, so the others print like any other call.
+The full callee list is `contains_a_test_pattern` in `src/utils/call_expression.rs`.
+
 ## callee-arguments-gap-comment
 
 - Why: invariant
@@ -807,7 +850,7 @@ Before an optional call's `?.`, Prettier moves an own-line comment into the argu
 
 ## instantiation-expression-parens
 
-- Why: semantics (Prettier's output no longer parses; prettier/prettier#20177)
+- Why: semantics (Prettier's output no longer parses or changes structure; prettier/prettier#20177, prettier/prettier#20345)
 - Pin: `tests/fixtures/ts/parenthesis/instantiation-expression-parens.ts`
 
 ```ts
@@ -817,6 +860,9 @@ const a = (make<T>)!;
 x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (a as B)<T>;
 
 // ours
 const a = (make<T>)!;
@@ -824,6 +870,9 @@ const a = (make<T>)!;
 x = (make<T>) + y;
 export default (class {})<string>;
 (class {})<string>;
+x = (c ? a : b)<T>;
+x = (y++)<T>;
+x = (a as B)<T>;
 
 // prettier
 const a = make<T>!;
@@ -831,6 +880,9 @@ make<T><U>();
 x = make<T> + y;
 export default class {}<string>;
 class {}<string>;
+x = c ? a : b<T>;
+x = y++<T>;
+x = a as B<T>;
 ```
 
 Prettier drops the parens around an instantiation expression before `!`,
@@ -840,6 +892,42 @@ Fixed in Prettier `main` by prettier/prettier#20177, which we follow except afte
 Prettier `main` still drops them before type arguments (`make<T><U>()` does not parse)
 and before a binary `+`, `-`, `<` or `>`-led operator, also when `make<T>` only ends the left operand
 (`make<T> + y` and `a + make<T> - y` parse as `make < T > +y`).
+
+Prettier also drops the parens around an operand that binds looser than the type arguments.
+The type arguments then attach to its last piece only (`c ? a : b<T>`, `a as B<T>`), or the output no longer parses (`y++<T>`).
+Fixed in Prettier `main` by prettier/prettier#20345, which we follow.
+
+## generic-function-type-after-lt-parens
+
+- Why: semantics (Prettier's output no longer parses)
+- Pin: `tests/fixtures/ts/parenthesis/generic-function-type-after-lt-parens.ts`, `tests/fixtures/ts/parenthesis/generic-function-type-after-lt-parens-jsx.tsx`
+
+```ts
+// input
+var a = < <T>(x: T) => T>f;
+var b = <(<T>() => void)>f;
+class A extends B< <T>() => T> {}
+type G = typeof g< <T>() => T>;
+
+// ours
+var a = <(<T>(x: T) => T)>f;
+var b = <(<T>() => void)>f;
+class A extends B<(<T>() => T)> {}
+type G = typeof g<(<T>() => T)>;
+
+// prettier
+var a = <<T>(x: T) => T>f;
+var b = <<T>() => void>f;
+class A extends B<<T>() => T> {}
+type G = typeof g<<T>() => T>;
+```
+
+A generic function type printed right after a `<` starts with `<<`, which is read as a left shift.
+tsc splits it back in most type arguments (`Array<<T>() => T>`, `f<<T>() => T>()`),
+but not after the `<` of a type assertion or of the first type argument of a heritage clause (`extends`, `implements`), `typeof` or a JSX element,
+so it rejects Prettier's output there.
+We keep the type in parens in those positions, as Prettier does for a function type in other ambiguous positions (a union member, an arrow function's return type).
+A function type without type parameters, a constructor type (`<new <T>() => T>f`) and a function type nested inside another type don't start with `<` and print as before.
 
 ## export-default-leftmost-parens
 
@@ -931,3 +1019,252 @@ When every right side of a logical chain is an inlined object/array/JSX literal,
 Prettier prints a single-link chain without an indent, but a flattened one indents its tail, which only shifts the last literal.
 A chain with a non-inlined right side breaks at the operators and keeps the indent.
 Prettier `main` drops the indent since #19792; the pin (3.9.10) still indents.
+
+## text-display-width
+
+- Why: uniform-rule (text width is the display width; oxc#23863, prettier/prettier#19538)
+- Pin: `tests/fixtures/js/unicode/text-display-width.js`
+
+```js
+// input (printWidth 80)
+export default moment.defineLocale("bo", {
+  monthsShort: "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+
+// ours
+export default moment.defineLocale("bo", {
+  monthsShort: "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+
+// prettier
+export default moment.defineLocale("bo", {
+  monthsShort:
+    "ཟླ་1_ཟླ་2_ཟླ་3_ཟླ་4_ཟླ་5_ཟླ་6_ཟླ་7_ཟླ་8_ཟླ་9_ཟླ་10_ཟླ་11_ཟླ་12".split("_"),
+});
+```
+
+Zero-width characters count as 0 toward the print width (FORMATTER_POLICY.md "Text width"), so the line above fits.
+Prettier counts the Tibetan subjoined letter `ླ` (`U+0FB3`, a nonspacing mark) as 1 and breaks.
+Fixed in Prettier `main` by prettier/prettier#19538, which we follow.
+
+Format characters (`U+200B..U+200F`, `U+FEFF`) are 1 on Prettier `main` too,
+so a string padded with NBSP / ZWNJ pairs, as in an email preview, breaks in Prettier and stays on one line in ours.
+
+Prettier measures some width heuristics by a JS `.length`, so a wide character counts 1 there and 2 in ours:
+a lone call argument of 14 CJK characters (`translateTheThing(漢字…)`) is short for Prettier's `printWidth * 0.25` and not for ours,
+so ours breaks the call's arguments instead of after the `=`.
+
+## html-close-comment-newline
+
+- Why: semantics
+- Pin: `tests/fixtures/js/comments/html-close-declaration.cjs`
+
+```js
+// input
+const
+--> comment
+value = 2;
+/* block */ --> comment
+
+// ours
+const
+  --> comment
+  value = 2;
+/* block */
+--> comment
+
+// prettier
+const --> comment
+  value = 2;
+/* block */ --> comment
+```
+
+A closing HTML comment (`-->`, Annex B) is a comment only at the start of a line.
+Prettier inlines it after `const` or `var`, producing a syntax error, and misparses the `let` case as an expression statement.
+We always print a line break before `-->`, which also splits a block comment preceding it on the same line, where Prettier's output stays valid.
+
+## string-binary-keyword-class-key
+
+- Why: semantics
+- Pin: `tests/fixtures/js/semicolons/binary-keyword-class-key.js`, `tests/fixtures/ts/semicolons/binary-keyword-class-key-quoted.ts`
+
+```js
+// input (semi: false)
+class A {
+  a = 1;
+  "in";
+}
+
+// ours
+class A {
+  a = 1;
+  in
+}
+
+// prettier
+class A {
+  a = 1
+  in
+}
+```
+
+A class member named `in` or `instanceof` would continue the previous property's value as a binary operator, so the `;` before it is kept.
+Prettier checks only an identifier key, but also prints the string key `"in"` unquoted, producing a syntax error.
+We check a string key by its value, which also keeps the `;` before a key that stays quoted (TypeScript, `quoteProps: "preserve"`), where Prettier's output stays valid.
+
+## private-member-like-static
+
+- Why: uniform-rule (same construct, same output: `a.b`)
+- Pin: `tests/fixtures/js/private-fields/private-member-like-static.js`
+
+```js
+// input (printWidth: 80)
+foo(someIdentifierName.#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking);
+this.#Factory.someMethodName(argumentOne).anotherMethodName(argumentTwo).third();
+const a = obj.#decorator(someArgument)((aaaaaaaaaaaa, bbbbbbbbbbbbbbbb, cccccccccccccccc) => {
+  return a;
+});
+@A.#decorator a() {}
+
+// ours: the same as `.b`
+foo(
+  someIdentifierName.#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking,
+);
+this.#Factory.someMethodName(argumentOne)
+  .anotherMethodName(argumentTwo)
+  .third();
+const a = obj.#decorator(someArgument)((
+  aaaaaaaaaaaa,
+  bbbbbbbbbbbbbbbb,
+  cccccccccccccccc,
+) => {
+  return a;
+});
+@A.#decorator a() {}
+
+// prettier
+foo(
+  someIdentifierName
+    .#privateFieldWithAVeryLongNameThatDoesNotFitOnTheLineEvenAfterBreaking,
+);
+this.#Factory
+  .someMethodName(argumentOne)
+  .anotherMethodName(argumentTwo)
+  .third();
+const a = obj.#decorator(someArgument)(
+  (aaaaaaaaaaaa, bbbbbbbbbbbbbbbb, cccccccccccccccc) => {
+    return a;
+  },
+);
+@(A.#decorator) a() {}
+```
+
+Both are a non-computed member access, so `.#b` follows every rule of `.b`.
+Prettier prints `.b` like ours in all four, only `.#b` differently.
+`@A.#decorator` is valid without parens (`DecoratorMemberExpression` accepts a `PrivateIdentifier`).
+
+## member-property-own-line-comment
+
+- Why: invariant
+- Pin: `tests/fixtures/js/comments/member-property-own-line-comment.js`
+
+```js
+// input
+x = a
+  // comment
+  .b;
+x = a
+  // comment
+  .#b;
+
+// ours
+x =
+  a
+    // comment
+    .b;
+x =
+  a
+    // comment
+    .#b;
+
+// prettier
+x =
+  // comment
+  a.b;
+x =
+  a
+    .// comment
+    #b;
+```
+
+An own-line comment before a member's `.` stays before it, for `.b` and `.#b` alike.
+Prettier moves it before the object for `.b`, and after the `.` for `.#b`; both cross a token.
+
+## computed-member-object-paren-break
+
+- Why: uniform-rule (same construct, same output: `(a + b).c` and `(await a)[c]`)
+- Pin: `tests/fixtures/js/parenthesis/computed-member-object-paren-break.js`
+- Conformance: `js/ternaries/indent-after-paren.js`
+
+```js
+// input (printWidth: 80)
+(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa + bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)[c];
+(someCondition ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee : someVeryLongAlternateValueeeeeeeeeee)[c];
+
+// ours: the same as `.c`
+(
+  aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb
+)[c];
+(someCondition
+  ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee
+  : someVeryLongAlternateValueeeeeeeeeee
+)[c];
+
+// prettier
+(aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa +
+  bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb)[c];
+(someCondition
+  ? someVeryLongConsequentValueeeeeeeeeeeeeeeeeeee
+  : someVeryLongAlternateValueeeeeeeeeee)[c];
+```
+
+A binary-like or conditional object of a member breaks its parens the same way for `.c`, `[c]` and `?.[c]`.
+Prettier does so for `.c` only, while an `await` / `as` object breaks them for `[c]` too.
+The computed property (`a[b + c]`) keeps its own layout.
+
+## single-level-member-no-break
+
+- Why: uniform-rule (same construct, same output: `foo.b`)
+- Pin: `tests/fixtures/js/member-expression/single-level-member-no-break.mjs`
+
+```js
+// input (printWidth: 80)
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(super.someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX);
+
+// ours: the same as `foo.sql`
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(
+  super.someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX,
+);
+
+// prettier
+foo.sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+this
+  .sql`DELETE FROM some_table_with_a_long_name WHERE some_column_name = ${someIdentifierName}`;
+call(
+  super
+    .someVeryLongPropertyNameThatDoesNotFitOnTheLineEvenAfterBreakingXXXXXXXXXXXXXXXXXXXXXXXXX,
+);
+```
+
+A single-level member is not split after its object when the object is a single word: an identifier, `this` or `super`.
+The break would leave the word alone on its line for a single property, which rarely fits either.
+A longer path (`a.b.c`) still breaks into a list of properties.
+
+Prettier keeps it only for an identifier object (prettier/prettier#1036, which has no case for `this` or `super`).
+Elsewhere it groups them with an identifier: all three count as a single word for a simple call argument,
+and `this` stays attached as a member chain head like a short identifier (`this.foo()` + break + `.bar()`, prettier/prettier#782).

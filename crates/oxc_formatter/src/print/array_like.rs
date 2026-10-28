@@ -12,10 +12,10 @@ use crate::{
 /// the counterpart of [`super::object_like::ObjectLike`] for `objectWrap`.
 #[derive(Clone, Copy)]
 pub enum ArrayLike<'a, 'b> {
-    ArrayExpression(&'b AstNode<'a, ArrayExpression<'a>>),
-    ArrayPattern(&'b AstNode<'a, ArrayPattern<'a>>),
-    ArrayAssignmentTarget(&'b AstNode<'a, ArrayAssignmentTarget<'a>>),
-    TSTupleType(&'b AstNode<'a, TSTupleType<'a>>),
+    ArrayExpression(&'b AstNode<'b, 'a, ArrayExpression<'a>>),
+    ArrayPattern(&'b AstNode<'b, 'a, ArrayPattern<'a>>),
+    ArrayAssignmentTarget(&'b AstNode<'b, 'a, ArrayAssignmentTarget<'a>>),
+    TSTupleType(&'b AstNode<'b, 'a, TSTupleType<'a>>),
 }
 
 impl<'a> ArrayLike<'a, '_> {
