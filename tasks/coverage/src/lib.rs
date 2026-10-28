@@ -516,7 +516,11 @@ impl AppArgs {
     /// Loads only test262 (not the other fixture suites), so it works in a checkout
     /// that has only the test262 submodule — load-bearing for monitor-oxc CI.
     pub fn run_runtime(&self) {
-        let files = load::load_test262(self.filter.as_deref());
+        let filter = self.filter.as_deref();
+        if filter.is_none() {
+            load::ensure_submodules(&[TEST262_PATH]);
+        }
+        let files = load::load_test262(filter);
         self.run_tool("runtime", TEST262_PATH, &files, runtime::run);
     }
 
