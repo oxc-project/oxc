@@ -37,8 +37,10 @@ use oxc_ast::{
     AstKind, Comment, CommentContent, CommentPlacement,
     ast::{
         BindingPattern, BindingProperty, ClassElement, Declaration, Directive,
-        ExportDefaultDeclarationKind, Expression, JSXChild, ObjectPropertyKind, Program, Statement,
-        SwitchCase, TSSignature, TSTemplateLiteralType, TSType, TemplateLiteral,
+        ExportDefaultDeclarationKind, Expression, FormalParameters, Function, JSXChild,
+        ObjectPropertyKind, Program, Statement, SwitchCase, TSCallSignatureDeclaration,
+        TSFunctionType, TSMethodSignature, TSSignature, TSTemplateLiteralType, TSThisParameter,
+        TSType, TemplateLiteral,
     },
 };
 use oxc_ast_visit::{Visit, walk};
@@ -47,6 +49,7 @@ use oxc_syntax::{
     identifier::is_white_space,
     line_terminator::is_line_terminator,
     node::{GetNodeId, NodeId},
+    scope::ScopeFlags,
 };
 
 use crate::{ParserConfig as Config, ParserImpl};
@@ -808,6 +811,23 @@ fn is_whitespace(c: char) -> bool {
     is_white_space(c) || is_line_terminator(c)
 }
 
+impl Walker<'_> {
+    fn visit_parameters_with_this<'a>(
+        &mut self,
+        this_param: &TSThisParameter<'a>,
+        params: &FormalParameters<'a>,
+    ) {
+        let kind = AstKind::FormalParameters(self.alloc(params));
+        self.enter_node(kind);
+        self.visit_ts_this_parameter(this_param);
+        self.visit_formal_parameter_list(&params.items);
+        if let Some(rest) = &params.rest {
+            self.visit_formal_parameter_rest(rest);
+        }
+        self.leave_node(kind);
+    }
+}
+
 macro_rules! prune {
     ($($visit:ident, $walk:ident, $ty:ident;)*) => {
         $(
@@ -857,6 +877,77 @@ impl<'a> Visit<'a> for Walker<'_> {
             if let Some(ts_type) = it.types.get(index) {
                 self.visit_ts_type(ts_type);
             }
+        }
+        self.leave_node(kind);
+    }
+
+    // `this_param` is inside `params`, so it is visited as the first parameter in the
+    // FormalParameters frame, rather than before it.
+    fn visit_function(&mut self, it: &Function<'a>, flags: ScopeFlags) {
+        let Some(this_param) = &it.this_param else {
+            return walk::walk_function(self, it, flags);
+        };
+        let kind = AstKind::Function(self.alloc(it));
+        self.enter_node(kind);
+        if let Some(id) = &it.id {
+            self.visit_binding_identifier(id);
+        }
+        if let Some(type_parameters) = &it.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        self.visit_parameters_with_this(this_param, &it.params);
+        if let Some(return_type) = &it.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
+        if let Some(body) = &it.body {
+            self.visit_function_body(body);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_function_type(&mut self, it: &TSFunctionType<'a>) {
+        let Some(this_param) = &it.this_param else {
+            return walk::walk_ts_function_type(self, it);
+        };
+        let kind = AstKind::TSFunctionType(self.alloc(it));
+        self.enter_node(kind);
+        if let Some(type_parameters) = &it.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        self.visit_parameters_with_this(this_param, &it.params);
+        self.visit_ts_type_annotation(&it.return_type);
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_method_signature(&mut self, it: &TSMethodSignature<'a>) {
+        let Some(this_param) = &it.this_param else {
+            return walk::walk_ts_method_signature(self, it);
+        };
+        let kind = AstKind::TSMethodSignature(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_property_key(&it.key);
+        if let Some(type_parameters) = &it.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        self.visit_parameters_with_this(this_param, &it.params);
+        if let Some(return_type) = &it.return_type {
+            self.visit_ts_type_annotation(return_type);
+        }
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_call_signature_declaration(&mut self, it: &TSCallSignatureDeclaration<'a>) {
+        let Some(this_param) = &it.this_param else {
+            return walk::walk_ts_call_signature_declaration(self, it);
+        };
+        let kind = AstKind::TSCallSignatureDeclaration(self.alloc(it));
+        self.enter_node(kind);
+        if let Some(type_parameters) = &it.type_parameters {
+            self.visit_ts_type_parameter_declaration(type_parameters);
+        }
+        self.visit_parameters_with_this(this_param, &it.params);
+        if let Some(return_type) = &it.return_type {
+            self.visit_ts_type_annotation(return_type);
         }
         self.leave_node(kind);
     }
