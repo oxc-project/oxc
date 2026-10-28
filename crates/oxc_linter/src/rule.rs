@@ -757,6 +757,10 @@ mod test {
             &[ImportDeclaration],
         );
         assert_rule_runs_on_node_types(
+            &unicorn::no_await_expression_member::NoAwaitExpressionMember,
+            &[AwaitExpression],
+        );
+        assert_rule_runs_on_node_types(
             &unicorn::prefer_string_replace_all::PreferStringReplaceAll,
             &[CallExpression, VariableDeclarator],
         );
