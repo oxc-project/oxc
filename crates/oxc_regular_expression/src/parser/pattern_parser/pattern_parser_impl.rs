@@ -1926,8 +1926,6 @@ impl<'a> PatternParser<'a> {
     }
 
     fn consume_unicode_property_name(&mut self) -> Option<Str<'a>> {
-        let span_start = self.reader.offset();
-
         let checkpoint = self.reader.checkpoint();
         while character::is_unicode_property_name_character(self.reader.peek()?) {
             self.reader.advance();
@@ -1937,12 +1935,10 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(self.reader.str(span_start, self.reader.offset()))
+        Some(self.unicode_property_text(checkpoint))
     }
 
     fn consume_unicode_property_value(&mut self) -> Option<Str<'a>> {
-        let span_start = self.reader.offset();
-
         let checkpoint = self.reader.checkpoint();
         while character::is_unicode_property_value_character(self.reader.peek()?) {
             self.reader.advance();
@@ -1952,7 +1948,23 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(self.reader.str(span_start, self.reader.offset()))
+        Some(self.unicode_property_text(checkpoint))
+    }
+
+    fn unicode_property_text(&self, checkpoint: (usize, u32)) -> Str<'a> {
+        let raw = self.reader.str(checkpoint.1, self.reader.offset());
+        let units = self.reader.code_points_since(checkpoint);
+        // Property names and values are ASCII. Equal lengths mean no string-source
+        // escapes or line continuations need decoding, so keep borrowing the source.
+        if raw.as_str().len() == units.len() {
+            return raw;
+        }
+
+        let mut decoded = ArenaStringBuilder::with_capacity_in(units.len(), self.allocator);
+        for unit in units {
+            decoded.push(char::from_u32(unit.value).expect("validated Unicode property character"));
+        }
+        Str::from(decoded.into_str())
     }
 
     // ```
