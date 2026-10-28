@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 121/121 (100.00%)
 Positive Passed: 121/121 (100.00%)
-Negative Passed: 261/261 (100.00%)
+Negative Passed: 265/265 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -5108,6 +5108,34 @@ Negative Passed: 261/261 (100.00%)
  1 │ class C { readonly constructor() {} }
    ·           ────────
    ╰────
+
+  × Invalid regular expression: Duplicated capturing group names
+   ╭─[misc/fail/regexp-duplicate-name-in-own-disjunction.js:1:5]
+ 1 │ /(?<x>a|(?<x>b))/u;
+   ·     ─      ─
+   ╰────
+  help: Duplicate names must be in different alternatives
+
+  × Invalid regular expression: Duplicated capturing group names
+   ╭─[misc/fail/regexp-duplicate-names-nested-class-strings.js:1:5]
+ 1 │ /(?<x>a)[[a]\q{b|c}](?<x>d)/v;
+   ·     ─                  ─
+   ╰────
+  help: Duplicate names must be in different alternatives
+
+  × Invalid regular expression: Duplicated capturing group names
+   ╭─[misc/fail/regexp-duplicate-names-separate-disjunctions.js:1:8]
+ 1 │ /(?:(?<x>a)|b)(?:c|(?<x>d))/u;
+   ·        ─              ─
+   ╰────
+  help: Duplicate names must be in different alternatives
+
+  × Invalid regular expression: Invalid indexed reference
+   ╭─[misc/fail/regexp-modifier-group-capture-count.js:1:29]
+ 1 │ /(?i:a)(?m:b)(?s:c)(?-ims:d)\1/u;
+   ·                             ──
+   ╰────
+  help: There are no capturing groups defined in this pattern
 
   × Invalid regular expression: Invalid class atom
    ╭─[misc/fail/regexp-unicode-class-control-digit.js:1:3]
