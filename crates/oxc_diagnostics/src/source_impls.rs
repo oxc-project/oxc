@@ -799,6 +799,21 @@ impl<T: ?Sized + SourceCode> SourceCode for Arc<T> {
     fn name(&self) -> Option<&str> {
         self.as_ref().name()
     }
+
+    fn line_starts(&self) -> Option<&[u32]> {
+        self.as_ref().line_starts()
+    }
+}
+
+/// Byte offsets at which each line of `input` starts, with CRLF counted as one line break.
+/// `None` if `input` is too large for `u32` offsets.
+pub fn line_starts(input: &[u8]) -> Option<Box<[u32]>> {
+    u32::try_from(input.len()).ok()?;
+    #[expect(clippy::cast_possible_truncation, reason = "`input.len()` fits in `u32`")]
+    let starts = std::iter::once(0)
+        .chain(LineBreaks::new(input).map(|line_break| line_break.next_line_start() as u32))
+        .collect();
+    Some(starts)
 }
 
 #[cfg(test)]

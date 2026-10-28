@@ -1,6 +1,6 @@
 //! [Reporters](DiagnosticReporter) for rendering and writing diagnostics.
 
-use crate::{Error, Severity};
+use crate::{Error, Severity, SourceCode};
 
 /// Reporters are responsible for rendering diagnostics to some format and writing them to some
 /// form of output stream.
@@ -140,12 +140,20 @@ pub struct InfoPosition {
     pub column: usize,
 }
 
-fn line_column(data: &[u8], mut offset: usize) -> Option<InfoPosition> {
+fn line_column(source: &dyn SourceCode, mut offset: usize) -> Option<InfoPosition> {
+    let data = source.data();
     if offset > data.len() {
         return None;
     }
     if offset > 0 && offset < data.len() && data[offset - 1] == b'\r' && data[offset] == b'\n' {
         offset -= 1;
+    }
+
+    if let Some(line_starts) = source.line_starts() {
+        // `line_starts[0] == 0`, so at least one line starts at or before `offset`.
+        let line = line_starts.partition_point(|&start| start as usize <= offset);
+        let line_start = line_starts[line - 1] as usize;
+        return Some(InfoPosition { line, column: offset - line_start + 1 });
     }
 
     let mut line = 1;
@@ -183,10 +191,10 @@ impl Info {
                 && let Some(end_offset) = label.offset().checked_add(label.len())
                 && let Ok(end_offset) = usize::try_from(end_offset)
                 && source.data().get(start_offset..end_offset).is_some()
-                && let Some(start_position) = line_column(source.data(), start_offset)
+                && let Some(start_position) = line_column(source, start_offset)
             {
                 start = start_position;
-                if let Some(end_position) = line_column(source.data(), end_offset) {
+                if let Some(end_position) = line_column(source, end_offset) {
                     end = end_position;
                 }
 
@@ -206,7 +214,31 @@ impl Info {
 mod test {
     use crate::{Error, NamedSource, OxcDiagnostic};
 
-    use super::Info;
+    use super::{Info, line_column};
+
+    /// The cached line index on [`NamedSource`] must agree with a direct scan for every
+    /// offset, including offsets inside and around CRLF pairs.
+    #[test]
+    fn line_column_indexed_matches_scan() {
+        const ALPHABET: [u8; 3] = [b'a', b'\r', b'\n'];
+        for len in 0..=7u32 {
+            for mut code in 0..3usize.pow(len) {
+                let mut text = String::new();
+                for _ in 0..len {
+                    text.push(ALPHABET[code % 3] as char);
+                    code /= 3;
+                }
+                let indexed = NamedSource::new("file.js", text.clone());
+                for offset in 0..=text.len() + 1 {
+                    assert_eq!(
+                        line_column(&indexed, offset),
+                        line_column(&text, offset),
+                        "{text:?} at {offset}"
+                    );
+                }
+            }
+        }
+    }
 
     #[test]
     fn includes_source_name_for_unlabelled_diagnostic() {
