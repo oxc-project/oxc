@@ -1,3 +1,5 @@
+#![cfg(not(miri))]
+
 use std::fmt::Write;
 
 use rustc_hash::FxHashMap;
