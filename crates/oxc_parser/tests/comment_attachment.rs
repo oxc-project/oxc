@@ -130,6 +130,13 @@ fn comment_attachment() {
     );
     cases.add("x = /* @__PURE__ */ new Foo();", SourceType::mjs());
 
+    cases.group("annotations_after_separators");
+    cases.add("f(a, /* @__PURE__ */\n  g());", SourceType::mjs());
+    cases.add("[a, /* #__NO_SIDE_EFFECTS__ */\n  () => {}];", SourceType::mjs());
+    cases.add("f(a, /* @__PURE__ */\n  b);", SourceType::mjs());
+    cases.add("function h(a, /* @__PURE__ */\n  b) {}", SourceType::mjs());
+    cases.add("let a = 1, /* @__PURE__ */\n  b = f();", SourceType::mjs());
+
     cases.group("annotations_among_leading_comments");
     cases.add("// c\n/* @__PURE__ */ foo();", SourceType::mjs());
     cases.add(
