@@ -5123,8 +5123,9 @@ impl RuleRunner for crate::rules::vitest::prefer_spy_on::PreferSpyOn {
 impl RuleRunner
     for crate::rules::vitest::prefer_strict_boolean_matchers::PreferStrictBooleanMatchers
 {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::prefer_strict_equal::PreferStrictEqual {
