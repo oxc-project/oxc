@@ -144,11 +144,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     continue;
                 }
                 let element = parse_element(p);
-                p.finish_list_element_comments(&element, &mut list_comments, &[], previous);
+                p.finish_list_element_comments(&element, &list_comments, &[], previous);
                 return Some(element);
             }
         });
-        self.attach_comments_before_close(&list);
+        self.attach_comments_after_last(&list);
         self.expect_closing(Kind::RCurly, opening_span);
         list
     }
@@ -221,6 +221,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             ));
             return ControlFlow::Break(None);
         }
+        self.attach_comments_before_token(element);
         self.advance(separator);
         if self.cur_token().follows_comment() {
             self.attach_comments_after_separator(element);
