@@ -9,7 +9,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
   {
     "description": "Unused eslint-disable directive (no problems were reported).",
     "check_name": "",
-    "fingerprint": "6460b46f54ac436d",
+    "fingerprint": "a96e9030c214757",
     "severity": "major",
     "location": {
       "path": "apps/oxlint/disable-directive.js",
@@ -22,7 +22,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
   {
     "description": "Unused oxlint-disable directive (no problems were reported).",
     "check_name": "",
-    "fingerprint": "2c72baee0104413c",
+    "fingerprint": "e8201dedf4e15d5",
     "severity": "major",
     "location": {
       "path": "apps/oxlint/disable-directive.js",
@@ -35,7 +35,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
   {
     "description": "Unused oxlint-disable directive (no problems were reported).",
     "check_name": "",
-    "fingerprint": "2cc074b70ccb86fd",
+    "fingerprint": "6a6bf4bfe989dd08",
     "severity": "major",
     "location": {
       "path": "apps/oxlint/disable-directive.js",
