@@ -57,8 +57,8 @@ mod generated {
     pub mod rules_enum;
 }
 
-#[cfg(test)]
-mod tester;
+#[cfg(any(test, feature = "tester"))]
+pub mod tester;
 
 mod lint_runner;
 

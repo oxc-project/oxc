@@ -24,6 +24,15 @@ registry. This lets rule crates depend on core without depending on the linter.
 services, and external-linter integration. Its public API re-exports shared types
 from core.
 
+Extracted plugins live in `oxc_linter_rules_<plugin>`. The central registry in
+`src/rules.rs` re-exports each rule module from its owning crate. `cargo lintgen`
+keeps the rule enum in the linter and emits `RuleRunner` implementations into the
+crate that owns each rule. Run `cargo lint-timings` after codegen changes.
+
+Rule crates can use `oxc_linter` with its `tester` feature as a
+dev-dependency to run the same end-to-end `Tester` against the central registry.
+Use `Tester::test_and_snapshot_in` for snapshots owned by a rule crate.
+
 ### Rule System
 
 - **Rule categories**: Correctness, Suspicious, Pedantic, Style, etc.

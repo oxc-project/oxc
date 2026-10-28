@@ -232,22 +232,15 @@ const source = `{}`;{}
 fn rule_source(rule: &RuleTableRow) -> String {
     use project_root::get_project_root;
     use std::sync::OnceLock;
-    const LINT_RULES_DIR: &str = "crates/oxc_linter/src/rules";
     static ROOT: OnceLock<PathBuf> = OnceLock::new();
     let root = ROOT.get_or_init(|| get_project_root().unwrap());
 
     // Some rules are folders with a mod.rs file, others are just a rust file
     let rule_name = rule.name.replace('-', "_");
-    let mut rule_path = format!("{}/{}", rule.plugin, rule_name);
-    if root.join(LINT_RULES_DIR).join(&rule.plugin).join(rule_name).is_dir() {
-        rule_path.push_str("/mod.rs");
-    } else {
-        rule_path.push_str(".rs");
-    }
+    let path = oxc_tasks_common::linter::lint_rule_path(root, &rule.plugin, &rule_name);
+    let rule_path = oxc_tasks_common::normalize_path(path.strip_prefix(root).unwrap());
 
-    format!(
-        "https://github.com/oxc-project/oxc/blob/${{ data }}/crates/oxc_linter/src/rules/{rule_path}"
-    )
+    format!("https://github.com/oxc-project/oxc/blob/${{ data }}/{rule_path}")
 }
 
 /// Returns the URL to the source code of a tsgolint rule.

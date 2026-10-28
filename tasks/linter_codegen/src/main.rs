@@ -12,6 +12,7 @@ use crate::{
 };
 use rustc_hash::FxHashSet;
 use std::{
+    collections::BTreeMap,
     fmt::Write as _,
     fs,
     io::{self, Write as _},
@@ -52,23 +53,25 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
         regex_node_kinds::get_regex_node_kinds().expect("Failed to get regex node kinds");
     let rule_runner_data = RuleRunnerData { member_expression_kinds, regex_node_kinds };
 
-    let mut out = String::new();
-    out.push_str("// Auto-generated code, DO NOT EDIT DIRECTLY!\n");
-    out.push_str("// To regenerate: `cargo run -p oxc_linter_codegen`\n\n");
-    out.push_str("#![allow(clippy::needless_pass_by_value)]\n\n");
-    out.push_str("use oxc_ast::AstType;\n");
-    out.push_str("use oxc_semantic::AstTypesBitset;\n\n");
-    out.push_str("use crate::rule::{RuleRunner, RuleRunFunctionsImplemented};\n\n");
+    let mut outputs = BTreeMap::new();
 
     for rule in &rule_entries {
+        let out = outputs.entry(rule.external_crate).or_insert_with(|| {
+            let mut out = String::new();
+            out.push_str("// Auto-generated code, DO NOT EDIT DIRECTLY!\n");
+            out.push_str("// To regenerate: `cargo run -p oxc_linter_codegen`\n\n");
+            out.push_str("#![allow(clippy::needless_pass_by_value)]\n\n");
+            out.push_str("use oxc_ast::AstType;\n");
+            out.push_str("use oxc_semantic::AstTypesBitset;\n\n");
+            out.push_str("use crate::rule::{RuleRunner, RuleRunFunctionsImplemented};\n\n");
+            out
+        });
         // Try to open the rule source file and use syn to detect node types
         let mut detected_types: NodeTypeSet = NodeTypeSet::new();
         let mut rule_run_info: FxHashSet<String> = FxHashSet::default();
 
-        if let Some(src_path) = find_rule_source_file(&root, rule)
-            && let Ok(src_contents) = fs::read_to_string(&src_path)
-            && let Ok(file) = syn::parse_file(&src_contents)
         {
+            let file = read_rule_source(&root, rule)?;
             if let Some(node_types) = detect_top_level_node_types(&file, rule, &rule_runner_data) {
                 detected_types.extend(node_types);
             }
@@ -92,28 +95,36 @@ pub fn generate_rule_runner_impls() -> io::Result<()> {
             "RuleRunFunctionsImplemented::Unknown".to_string()
         };
 
+        let module_path = if rule.external_crate.is_some() {
+            format!("crate::{}", rule.rule_module_name)
+        } else {
+            format!("crate::rules::{}::{}", rule.plugin_module_name, rule.rule_module_name)
+        };
         write!(
             out,
             r"
-impl RuleRunner for crate::rules::{plugin_module}::{rule_module}::{rule_struct} {{
+impl RuleRunner for {module_path}::{rule_struct} {{
     const NODE_TYPES: Option<&AstTypesBitset> = {node_types_init};
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = {rule_run_info_init};
 }}
             ",
-            plugin_module = rule.plugin_module_name,
-            rule_module = rule.rule_module_name,
             rule_struct = rule.rule_struct_name(),
         )
         .unwrap();
     }
 
-    let formatted_out = rust_fmt(&out);
-
-    let target_path = root.join("crates/oxc_linter/src/generated/rule_runner_impls.rs");
-    if !fs::read(&target_path).is_ok_and(|existing| existing == formatted_out.as_bytes()) {
-        fs::write(&target_path, formatted_out)?;
+    for (owner, out) in outputs {
+        let formatted_out = rust_fmt(&out);
+        let target_path = root
+            .join("crates")
+            .join(owner.unwrap_or("oxc_linter"))
+            .join("src/generated/rule_runner_impls.rs");
+        fs::create_dir_all(target_path.parent().unwrap())?;
+        if !fs::read(&target_path).is_ok_and(|existing| existing == formatted_out.as_bytes()) {
+            fs::write(&target_path, formatted_out)?;
+        }
+        println!("Generated rule runner impls into {}", target_path.display());
     }
-    println!("Generated {} impls into {}", rule_entries.len(), target_path.display());
 
     Ok(())
 }
@@ -130,9 +141,7 @@ pub fn generate_rules_enum_file() -> io::Result<()> {
     let mut rule_entries = get_all_rules(&rules_file_contents);
 
     for rule in &mut rule_entries {
-        let Some(path) = find_rule_source_file(&root, rule) else { continue };
-        let Ok(source) = fs::read_to_string(path) else { continue };
-        let Ok(file) = syn::parse_file(&source) else { continue };
+        let file = read_rule_source(&root, rule)?;
         let Some(rule_impl) = find_rule_impl_block(&file, &rule.rule_struct_name()) else {
             continue;
         };
@@ -156,6 +165,19 @@ pub fn generate_rules_enum_file() -> io::Result<()> {
     );
 
     Ok(())
+}
+
+fn read_rule_source(root: &std::path::Path, rule: &RuleEntry) -> io::Result<File> {
+    let path = find_rule_source_file(root, rule).ok_or_else(|| {
+        io::Error::new(
+            io::ErrorKind::NotFound,
+            format!("missing source for {}/{}", rule.plugin_module_name, rule.rule_module_name),
+        )
+    })?;
+    let source = fs::read_to_string(&path)?;
+    syn::parse_file(&source).map_err(|error| {
+        io::Error::new(io::ErrorKind::InvalidData, format!("{}: {error}", path.display()))
+    })
 }
 
 /// Detect the top-level node types used in a lint rule file by analyzing the Rust AST with `syn`.

@@ -388,7 +388,7 @@ impl ConfigStoreBuilder {
         self.config.options.report_unused_disable_directives
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, feature = "tester"))]
     pub(crate) fn with_rule(mut self, rule: RuleEnum, severity: AllowWarnDeny) -> Self {
         self.rules.insert(rule, severity);
         self
