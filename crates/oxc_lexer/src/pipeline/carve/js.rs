@@ -5,9 +5,11 @@ use crate::pipeline::{
     find::{find_line_terminator, find_opener, find_opener6},
 };
 
-use super::common::{
-    html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
-    lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape,
+use super::{
+    comments::{
+        html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
+    },
+    common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape},
 };
 
 pub(super) unsafe fn carve_js(

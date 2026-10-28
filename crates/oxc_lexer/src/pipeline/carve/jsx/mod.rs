@@ -11,10 +11,12 @@ use crate::pipeline::{
     token_view,
 };
 
-use super::common::{
-    html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
-    lex_html_open_comment, lex_line_comment, lex_slash, lex_string, lex_template_segment,
-    skip_unicode_brace_escape,
+use super::{
+    comments::{
+        html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
+        lex_html_open_comment, lex_line_comment,
+    },
+    common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape},
 };
 
 mod angle_brackets;

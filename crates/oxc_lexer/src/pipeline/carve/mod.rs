@@ -1,5 +1,6 @@
 use crate::lanes::Lanes;
 
+mod comments;
 mod common;
 mod js;
 mod jsx;

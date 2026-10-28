@@ -13,11 +13,10 @@ use std::{ptr, str};
 ))]
 use std::arch::x86_64::*;
 
-use oxc_ast::ast::{Comment, CommentKind, RegExpFlags};
+use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 use crate::{
-    comment_meta,
     error::{DiagCode, DiagSeverity, Diagnostic},
     token::StringSpan,
 };
@@ -427,65 +426,6 @@ impl Lanes {
         }
         self.numbers.push(parse_number(src, s, e));
     }
-
-    #[inline]
-    pub fn push_comment_record(
-        &mut self,
-        src: &[u8],
-        sl: usize,
-        start: u32,
-        end: u32,
-        blk: bool,
-        meta: u8,
-    ) {
-        let kind = if !blk {
-            CommentKind::Line
-        } else if meta & comment_meta::META_MULTILINE != 0 {
-            CommentKind::MultiLineBlock
-        } else {
-            CommentKind::SingleLineBlock
-        };
-        let mut c = Comment::new(start, end.min(sl as u32), kind);
-        c.content = comment_meta::content_from_ordinal(meta);
-
-        let s_ = (start as usize).min(sl);
-        let mut q = s_;
-        let pre = loop {
-            if q == 0 {
-                break true;
-            }
-            let b = src[q - 1];
-            if b == b'\n' || b == b'\r' {
-                break true;
-            }
-            if !is_lex_ws(b) {
-                break false;
-            }
-            q -= 1;
-        };
-        c.set_preceded_by_newline(pre);
-
-        if !blk {
-            c.set_followed_by_newline(true);
-        } else {
-            let mut e = (end as usize).min(sl);
-            let mut post = false;
-            while e < sl && is_lex_ws(src[e]) {
-                if src[e] == b'\n' || src[e] == b'\r' {
-                    post = true;
-                    break;
-                }
-                e += 1;
-            }
-            c.set_followed_by_newline(post);
-        }
-        self.comments.push(c);
-    }
-}
-
-#[inline]
-fn is_lex_ws(c: u8) -> bool {
-    matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
 }
 
 static KEEP: [u64; 9] = [
