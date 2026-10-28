@@ -131,6 +131,20 @@ mod tests {
     use super::*;
     use schemars::{SchemaGenerator, r#gen::SchemaSettings};
 
+    #[test]
+    fn test_extracted_react_perf_rule_pages() {
+        let mut generator = SchemaGenerator::new(SchemaSettings::default());
+        let table = RuleTable::new(Some(&mut generator));
+        let pages: Vec<_> = render_rule_doc_pages(generator, &table)
+            .filter(|(_, _, rule)| rule.plugin == "react_perf")
+            .collect();
+        assert_eq!(pages.len(), 4);
+        for (_, page, _) in pages {
+            assert!(page.contains("/crates/oxc_linter_rules_react_perf/src/jsx_no_"));
+            assert!(page.contains("nativeAllowList"));
+        }
+    }
+
     // Create a snapshot containing all of the generated rule doc pages
     #[test]
     fn test_docs_rule_pages() {
