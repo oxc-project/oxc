@@ -276,8 +276,8 @@ impl<'a> FunctionGraph<'a> {
             return;
         }
         debug_assert!(!self.is_dead(symbol_id));
-        // The expression is no longer a declaration owner; its references must
-        // be treated as unowned by the declaration reachability graph.
+        // The body's references now belong to the enclosing function, which held
+        // `f`'s last live reference, so nothing new becomes dead.
         self.function_by_scope[scope_id.index()] = None;
         self.candidates.unset_bit(symbol_id.index());
     }
