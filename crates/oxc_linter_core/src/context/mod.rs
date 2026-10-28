@@ -1,5 +1,3 @@
-#![expect(rustdoc::private_intra_doc_links)] // useful for intellisense
-
 use std::{ffi::OsStr, ops::Deref, path::Path, rc::Rc};
 
 use javascript_globals::{GLOBALS, GLOBALS_BUILTIN, GLOBALS_ES2026};
@@ -19,7 +17,7 @@ use crate::{
     disable_directives::DisableDirectives,
     fixer::{Fix, FixKind, Message, PossibleFixes, RuleFix, RuleFixer},
     frameworks::FrameworkOptions,
-    utils::{ReactCompilerResults, build_react_compiler_results},
+    react_compiler::{ReactCompilerResults, build_react_compiler_results},
 };
 
 mod host;

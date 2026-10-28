@@ -855,7 +855,6 @@ impl Runtime {
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
                                         no_inline_config,
-                                        ..Default::default()
                                     },
                                 )),
                                 Err(messages) => {
@@ -1001,7 +1000,6 @@ impl Runtime {
                                             parser_tokens: section.parser_tokens,
                                             respect_eslint_disable_directives,
                                             no_inline_config,
-                                            ..Default::default()
                                         },
                                     )),
                                     Err(diagnostics) => {
@@ -1146,7 +1144,6 @@ impl Runtime {
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
                                         no_inline_config,
-                                        ..Default::default()
                                     },
                                 )),
                                 Err(errors) => {

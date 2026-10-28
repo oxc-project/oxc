@@ -1,45 +1,23 @@
-use std::path::PathBuf;
-
 mod categories;
 mod config_builder;
 mod config_store;
-mod env;
 mod external_plugins;
-mod globals;
 mod ignore_matcher;
 mod overrides;
 mod oxlintrc;
-pub mod plugins;
 mod rules;
-mod settings;
 pub use config_builder::{ConfigBuilderError, ConfigStoreBuilder};
 pub use config_store::{Config, ConfigStore, ResolvedLinterState};
-pub use env::OxlintEnv;
-pub use globals::{GlobalValue, OxlintGlobals};
 pub use ignore_matcher::LintIgnoreMatcher;
 pub use overrides::OxlintOverrides;
+pub use oxc_linter_core::config::{GlobalValue, LintConfig, OxlintEnv, OxlintGlobals};
+pub use oxc_linter_core::config::{plugins, settings};
 pub use oxlintrc::Oxlintrc;
 pub use plugins::LintPlugins;
 pub use rules::{ESLintRule, OxlintRules, normalize_rule_name};
 pub use settings::{OxlintSettings, ReactVersion, jsdoc::JSDocPluginSettings};
 
 pub use oxc_config::GlobSet;
-
-use crate::config::oxlintrc::OxlintOptions;
-
-#[derive(Debug, Default, Clone)]
-pub struct LintConfig {
-    pub(crate) plugins: LintPlugins,
-    pub(crate) settings: OxlintSettings,
-    /// Environments enable and disable collections of global variables.
-    pub(crate) env: OxlintEnv,
-    /// Enabled or disabled specific global variables.
-    pub(crate) globals: OxlintGlobals,
-    /// Absolute path to the configuration file (may be `None` if there is no file).
-    pub(crate) path: Option<PathBuf>,
-    /// Options for the linter.
-    pub(crate) options: OxlintOptions,
-}
 
 impl From<Oxlintrc> for LintConfig {
     fn from(config: Oxlintrc) -> Self {

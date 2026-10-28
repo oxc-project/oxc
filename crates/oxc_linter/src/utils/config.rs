@@ -23,10 +23,7 @@ use serde::{Deserialize, Serialize};
 ///     pub bar: bool,
 /// }
 /// ```
-#[inline]
-pub const fn default_true() -> bool {
-    true
-}
+pub use oxc_linter_core::config::settings::default_true;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, Deserialize, Serialize, JsonSchema)]
 #[serde(rename_all = "lowercase")]

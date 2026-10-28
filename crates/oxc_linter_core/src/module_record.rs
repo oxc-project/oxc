@@ -13,7 +13,8 @@ use oxc_span::Span;
 use oxc_str::CompactStr;
 pub use oxc_syntax::module_record::RequestedModule;
 
-type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
+/// Shared snapshot of loaded modules ordered by import specifier.
+pub type SortedLoadedModules = Arc<[(CompactStr, Weak<ModuleRecord>)]>;
 
 /// ESM Module Record
 ///
@@ -531,7 +532,7 @@ impl ModuleRecord {
     /// # Panics
     ///
     /// * If either RwLock is poisoned.
-    pub(crate) fn sorted_loaded_modules(&self) -> SortedLoadedModules {
+    pub fn sorted_loaded_modules(&self) -> SortedLoadedModules {
         if let Some(sorted) = self.sorted_loaded_modules.read().unwrap().as_ref() {
             return Arc::clone(sorted);
         }
@@ -574,9 +575,7 @@ impl ModuleRecord {
         loaded_modules.get(key).map(|weak| Weak::upgrade(weak).unwrap())
     }
 
-    pub(crate) fn exported_bindings_from_star_export(
-        &self,
-    ) -> &FxHashMap<PathBuf, Vec<CompactStr>> {
+    pub fn exported_bindings_from_star_export(&self) -> &FxHashMap<PathBuf, Vec<CompactStr>> {
         self.exported_bindings_from_star_export.get_or_init(|| {
             let mut exported_bindings_from_star_export: FxHashMap<PathBuf, Vec<CompactStr>> =
                 FxHashMap::default();

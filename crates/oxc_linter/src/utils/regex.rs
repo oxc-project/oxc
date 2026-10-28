@@ -276,7 +276,7 @@ mod test {
             LintOptions::default(),
             Arc::default(),
         ))
-        .spawn_for_test();
+        .spawn("", "eslint", crate::RuleFixMeta::None, crate::AllowWarnDeny::Warn);
 
         ctx.nodes().iter().find_map(|node| match node.kind() {
             AstKind::CallExpression(call_expr) => Some(is_regexp_callee(&call_expr.callee, &ctx)),

@@ -3,7 +3,7 @@ use std::{fmt::Write as _, fs, io, path::Path, rc::Rc, sync::Arc};
 use oxc_allocator::Allocator;
 use oxc_linter::{
     ConfigStore, ConfigStoreBuilder, ContextSubHost, ContextSubHostOptions, ExternalPluginStore,
-    LintOptions, ModuleRecord, rules::ContextHost,
+    LintOptions, Linter, ModuleRecord, rules::ContextHost,
 };
 use oxc_parser::Parser;
 use oxc_semantic::SemanticBuilder;
@@ -40,7 +40,7 @@ pub fn run(files: &TestFiles) -> io::Result<()> {
             let rule_name = format!("{}/{}", rule.plugin_name(), rule.name());
             let arena_before = allocator.used_bytes();
             let ((), mut stats) = record_stats_in(&allocator, || {
-                Rc::clone(&host).run_rule_for_allocations(rule, *severity);
+                Linter::run_rule_for_allocations(Rc::clone(&host), rule, *severity);
             });
             stats.arena_used_bytes = allocator.used_bytes().saturating_sub(arena_before);
             entries.push((rule_name, stats));

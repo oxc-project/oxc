@@ -124,7 +124,7 @@ pub struct OxlintOverride {
 
 #[cfg(test)]
 mod test {
-    use crate::config::{globals::GlobalValue, plugins::LintPlugins};
+    use crate::config::{GlobalValue, plugins::LintPlugins};
 
     use super::*;
     use serde_json::{from_value, json};

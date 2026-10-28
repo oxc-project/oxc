@@ -31,15 +31,11 @@ use oxc_span::Span;
 
 mod ast_util;
 mod config;
-mod context;
 mod disable_directives;
 mod external_linter;
 mod external_plugin_store;
-mod fixer;
-mod frameworks;
 mod globals;
 mod module_graph_visitor;
-mod module_record;
 mod options;
 mod rule;
 mod service;
@@ -47,6 +43,8 @@ mod suppression;
 pub(crate) mod timing;
 mod tsgolint;
 mod utils;
+
+use oxc_linter_core::{WEBSITE_BASE_RULES_URL, context, fixer, frameworks, module_record};
 
 pub mod loader;
 pub mod rules;
@@ -255,9 +253,6 @@ fn execute_rules<'a, const TIMINGS: bool>(
     }
 }
 
-/// Base URL for the documentation, used to generate rule documentation URLs when a diagnostic is reported.
-const WEBSITE_BASE_RULES_URL: &str = "https://oxc.rs/docs/guide/usage/linter/rules";
-
 #[derive(Debug)]
 #[expect(clippy::struct_field_names)]
 pub struct Linter {
@@ -268,6 +263,38 @@ pub struct Linter {
 }
 
 impl Linter {
+    /// Run one native rule's callbacks for allocation profiling, without linter setup or teardown.
+    ///
+    /// Uses the same eligibility and AST type filters as the regular rule runner.
+    #[cfg(feature = "track_allocations")]
+    pub fn run_rule_for_allocations(
+        host: Rc<ContextHost<'_>>,
+        rule: &RuleEnum,
+        severity: AllowWarnDeny,
+    ) {
+        let run_info = rule.run_info();
+        let ast_types = rule.types_info();
+        if rule.is_tsgolint_rule()
+            || (run_info == crate::RuleRunFunctionsImplemented::Run
+                && ast_types.is_some_and(|types| !host.semantic().nodes().contains_any(types)))
+            || !rule.should_run(&host)
+        {
+            return;
+        }
+
+        let ctx = host.spawn(rule.name(), rule.plugin_name(), rule.fix(), severity);
+        if run_info.is_run_once_implemented() {
+            rule.run_once::<false>(&ctx, None);
+        }
+        if run_info.is_run_implemented() {
+            for node in ctx.nodes() {
+                if ast_types.is_none_or(|types| types.has(node.kind().ty())) {
+                    rule.run::<false>(node, &ctx, None);
+                }
+            }
+        }
+    }
+
     pub fn new(
         mut options: LintOptions,
         config: ConfigStore,
@@ -425,7 +452,17 @@ impl Linter {
 
                     rule.should_run(&ctx_host)
                 })
-                .map(|(rule, severity)| (rule, Rc::clone(&ctx_host).spawn(rule, *severity)))
+                .map(|(rule, severity)| {
+                    (
+                        rule,
+                        Rc::clone(&ctx_host).spawn(
+                            rule.name(),
+                            rule.plugin_name(),
+                            rule.fix(),
+                            *severity,
+                        ),
+                    )
+                })
                 .collect::<Vec<_>>();
 
             execute_rules::<TIMINGS>(&rules, semantic, true, timing_recorder.as_mut());
@@ -934,7 +971,7 @@ impl Linter {
 
                     // Convert suggestions (only if fix kind allows suggestions), and combine with fix
                     let possible_fixes = if let Some(suggestions) = diagnostic.suggestions
-                        && ctx_host.fix.can_apply(FixKind::Suggestion)
+                        && ctx_host.fix_kind().can_apply(FixKind::Suggestion)
                     {
                         debug_assert!(
                             !suggestions.is_empty(),

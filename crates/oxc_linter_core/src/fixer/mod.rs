@@ -54,7 +54,7 @@ impl<'c, 'a: 'c> RuleFixer<'c, 'a> {
     /// replacement covers a large span.
     const MAX_SNIPPET_LEN: usize = 256;
 
-    pub(super) fn new(kind: FixKind, ctx: &'c LintContext<'a>) -> Self {
+    pub fn new(kind: FixKind, ctx: &'c LintContext<'a>) -> Self {
         Self { kind, auto_message: true, ctx }
     }
 
@@ -340,7 +340,6 @@ impl<'a> Fixer<'a> {
         }
     }
 
-    #[cfg(test)]
     #[must_use]
     pub fn with_fix_index(mut self, fix_index: u8) -> Self {
         self.fix_index = fix_index;

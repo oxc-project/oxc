@@ -2325,6 +2325,7 @@ dependencies = [
  "oxc_ecmascript",
  "oxc_estree_tokens",
  "oxc_index",
+ "oxc_linter_core",
  "oxc_macros",
  "oxc_parser",
  "oxc_react_compiler",
@@ -2337,7 +2338,6 @@ dependencies = [
  "papaya",
  "phf",
  "rayon",
- "rust-lapper",
  "rustc-hash",
  "self_cell",
  "serde",
@@ -2358,6 +2358,33 @@ dependencies = [
  "quote",
  "rustc-hash",
  "syn 3.0.5",
+]
+
+[[package]]
+name = "oxc_linter_core"
+version = "1.93.0"
+dependencies = [
+ "bitflags",
+ "cow-utils",
+ "itertools",
+ "javascript-globals",
+ "lazy-regex",
+ "oxc-schemars",
+ "oxc_allocator",
+ "oxc_ast",
+ "oxc_cfg",
+ "oxc_codegen",
+ "oxc_diagnostics",
+ "oxc_parser",
+ "oxc_react_compiler",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_str",
+ "oxc_syntax",
+ "rust-lapper",
+ "rustc-hash",
+ "serde",
+ "serde_json",
 ]
 
 [[package]]
