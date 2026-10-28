@@ -29,7 +29,6 @@ pub struct Lanes {
     pub atoms: Vec<StringSpan>,
     pub regex_flags: Vec<u8>,
     pub cooked: Vec<u8>,
-    pub comment_meta: Vec<u8>,
     pub comments: Vec<Comment>,
     /// Lexer diagnostics, pushed only on cold error paths; empty for valid input.
     pub diags: Vec<Diagnostic>,
@@ -55,7 +54,6 @@ impl Lanes {
         self.atoms.clear();
         self.regex_flags.clear();
         self.cooked.clear();
-        self.comment_meta.clear();
         self.comments.clear();
         self.diags.clear();
         self.diag_suppress.clear();

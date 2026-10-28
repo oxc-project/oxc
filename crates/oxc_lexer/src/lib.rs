@@ -137,7 +137,6 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         let n_atm = copy_lane(&l.atoms, arena.atoms, arena.atoms_capacity);
         let n_rxf =
             copy_lane(&l.regex_flags, arena.regex_flags.cast::<u8>(), arena.regex_flags_capacity);
-        let n_cm = copy_lane(&l.comment_meta, arena.comment_meta, arena.comment_meta_capacity);
         let n_cr = copy_lane(&l.comments, arena.comments, arena.comments_capacity);
         let n_diag = copy_lane(&l.diags, arena.diags, arena.diags_capacity);
 
@@ -159,7 +158,6 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             strings_count: n_str,
             templates_count: n_tpl,
             regex_flags_count: n_rxf,
-            comment_meta_count: n_cm,
             comments_count: n_cr,
             cooked_bytes_count: n_cb,
         }
@@ -232,7 +230,6 @@ fn empty_result(arena: &Arena) -> LexResult {
         strings_count: 0,
         templates_count: 0,
         regex_flags_count: 0,
-        comment_meta_count: 0,
         comments_count: 0,
         cooked_bytes_count: 0,
     }

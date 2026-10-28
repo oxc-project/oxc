@@ -47,7 +47,6 @@ pub(super) unsafe fn lex_line_comment(
         meta_byte_exact(&srcs[..n], s as u32, end as u32, false),
         "LCOM meta fused != exact at {s}"
     );
-    lanes.comment_meta.push(m);
     push_comment_record(srcs, n, s as u32, end as u32, false, m, lanes);
     end
 }
@@ -84,7 +83,6 @@ pub(super) unsafe fn lex_block_comment(
         meta_byte_exact(&srcs[..n], s as u32, end as u32, true),
         "BCOM meta fused != exact at {s}"
     );
-    lanes.comment_meta.push(m);
     push_comment_record(srcs, n, s as u32, end as u32, true, m, lanes);
     end
 }
@@ -131,7 +129,6 @@ pub(super) unsafe fn lex_html_open_comment(
     // meta_byte_exact skips a 2-byte delimiter; pass s + 2 so the 4-byte
     // `<!--` is skipped. The record keeps (s, end).
     let m = meta_byte_exact(&srcs[..n], (s + 2) as u32, end as u32, false);
-    lanes.comment_meta.push(m);
     push_comment_record(srcs, n, s as u32, end as u32, false, m, lanes);
     lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlOpen;
     end
@@ -176,7 +173,6 @@ pub(super) unsafe fn lex_html_close_comment(
     // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
     // body resolves to [s + 1, end).
     let m = meta_byte_exact(&srcs[..n], (start + 1) as u32, end as u32, false);
-    lanes.comment_meta.push(m);
     push_comment_record(srcs, n, start as u32, end as u32, false, m, lanes);
     lanes.comments.last_mut().unwrap().kind = CommentKind::HtmlClose;
     end
