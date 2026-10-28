@@ -805,7 +805,7 @@ mod lint_options {
     fn suppress_all() {
         let options = get_lint_options("--suppress-all");
         assert!(options.suppression_options.suppress_all);
-        assert!(options.suppression_options.suppress_rule.is_empty());
+        assert_eq!(options.suppression_options.suppress_rule.len(), 0);
         assert!(!options.suppression_options.prune_suppressions);
     }
 
@@ -826,7 +826,7 @@ mod lint_options {
         let options = get_lint_options("--prune-suppressions");
         assert!(options.suppression_options.prune_suppressions);
         assert!(!options.suppression_options.suppress_all);
-        assert!(options.suppression_options.suppress_rule.is_empty());
+        assert_eq!(options.suppression_options.suppress_rule.len(), 0);
     }
 
     #[test]
