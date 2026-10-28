@@ -5205,8 +5205,9 @@ impl RuleRunner for crate::rules::vitest::require_local_test_context_for_concurr
 }
 
 impl RuleRunner for crate::rules::vitest::require_mock_type_parameters::RequireMockTypeParameters {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::require_test_timeout::RequireTestTimeout {
