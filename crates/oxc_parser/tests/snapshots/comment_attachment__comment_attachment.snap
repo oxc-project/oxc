@@ -91,6 +91,20 @@ f(a, b /* b */); @dec(c /* c */) class C {}
 /* b */ -> Trailing IdentifierReference `b`
 /* c */ -> Trailing IdentifierReference `c`
 
+=== js ===
+[a /* a */, , /* e */ , b]; ({ a: 1 /* b */, c });
+---
+/* a */ -> Trailing IdentifierReference `a`
+/* e */ -> Leading Elision `,`
+/* b */ -> Trailing ObjectProperty `a: 1`
+
+=== ts (unambiguous) ===
+[x /* x */, y] = z; ({ x /* x */, y } = z); f<A /* a */, B>(c);
+---
+/* x */ -> Trailing IdentifierReference `x`
+/* x */ -> Trailing AssignmentTargetPropertyIdentifier `x`
+/* a */ -> Trailing TSTypeReference `A`
+
 ##### empty_containers
 
 === js ===
