@@ -843,10 +843,6 @@ parser_diagnostics! {
             .with_label(span)
     };
 
-    private_in_private(span: Span) => {
-        OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
-    };
-
     unexpected_private_identifier(span: Span) => {
         OxcDiagnostic::error("Unexpected private identifier").with_label(span)
     };

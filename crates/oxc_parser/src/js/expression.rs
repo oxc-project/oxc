@@ -209,9 +209,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.expect(Kind::In);
         let right = self.parse_binary_expression_or_higher(Precedence::Compare);
-        if let Expression::PrivateInExpression(private_in_expr) = right {
-            return self.fatal_error(diagnostics::private_in_private(private_in_expr.span));
-        }
+        // The precedence check rejects an unparenthesized private-in on the right.
+        // A parenthesized one is valid, even when its parentheses are omitted from the AST.
         Expression::new_private_in_expression(self.end_span(lhs_start), left, right, self)
     }
 
