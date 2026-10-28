@@ -76,7 +76,11 @@ const readAllPendingFixRuleNames = async () => {
     return files.flat();
   };
 
-  const ruleFiles = await readRustFiles(rulesDir);
+  const cratesDir = resolve("crates");
+  const externalRulesDirs = (await readdir(cratesDir, { withFileTypes: true }))
+    .filter((entry) => entry.isDirectory() && entry.name.startsWith("oxc_linter_rules_"))
+    .map((entry) => join(cratesDir, entry.name, "src"));
+  const ruleFiles = (await Promise.all([rulesDir, ...externalRulesDirs].map(readRustFiles))).flat();
 
   for (const filePath of ruleFiles) {
     // oxlint-disable-next-line no-await-in-loop
