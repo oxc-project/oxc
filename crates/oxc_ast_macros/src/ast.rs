@@ -274,8 +274,12 @@ fn reorder_struct_fields(
     let mut fields = named.clone().into_pairs().zip(field_order).collect::<Vec<_>>();
     fields.sort_unstable_by_key(|(_, index)| **index);
 
+    // `#[allow(rust_analyzer::inactive_code)]` stops rust-analyzer greying out the fields in source.
+    // The `#[cfg(doc)]` copies have the same spans as the source fields, so rust-analyzer maps
+    // the "inactive code" diagnostic for them back onto the source.
     for field in named.iter_mut() {
         field.attrs.insert(0, parse_quote!( #[cfg(doc)]));
+        field.attrs.insert(1, parse_quote!( #[allow(rust_analyzer::inactive_code)]));
     }
 
     named.extend(fields.into_iter().map(|(mut pair, _)| {
