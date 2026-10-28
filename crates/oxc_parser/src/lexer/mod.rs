@@ -48,6 +48,35 @@ pub use token::Token;
 use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
+// Tokens which can bypass the trivia loop. `Ident` selects the existing identifier/keyword
+// handlers; punctuation is complete after one byte. All other bytes use normal dispatch.
+static SIMPLE_TOKEN_KINDS: [Kind; 256] = {
+    let mut kinds = [Kind::Undetermined; 256];
+    kinds[b'(' as usize] = Kind::LParen;
+    kinds[b')' as usize] = Kind::RParen;
+    kinds[b'[' as usize] = Kind::LBrack;
+    kinds[b']' as usize] = Kind::RBrack;
+    kinds[b'{' as usize] = Kind::LCurly;
+    kinds[b'}' as usize] = Kind::RCurly;
+    kinds[b';' as usize] = Kind::Semicolon;
+    kinds[b',' as usize] = Kind::Comma;
+    kinds[b':' as usize] = Kind::Colon;
+    kinds[b'~' as usize] = Kind::Tilde;
+    kinds[b'@' as usize] = Kind::At;
+    let mut byte = 0;
+    while byte < 256 {
+        if (byte >= b'a' as usize && byte <= b'z' as usize)
+            || (byte >= b'A' as usize && byte <= b'Z' as usize)
+            || byte == b'_' as usize
+            || byte == b'$' as usize
+        {
+            kinds[byte] = Kind::Ident;
+        }
+        byte += 1;
+    }
+    kinds
+};
+
 #[derive(Debug)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
@@ -278,7 +307,35 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Read next token in file.
     /// Use `first_token` for first token, and this method for all further tokens.
+    #[inline]
     pub fn next_token(&mut self) -> Token {
+        let pos = self.source.position();
+        // SAFETY: The source cursor is never past the end.
+        if unsafe { self.source.end().offset_from(pos) } >= 2 {
+            // SAFETY: At least two bytes remain, and only an ASCII space is skipped.
+            let start = unsafe { pos.add(usize::from(pos.read() == b' ')) };
+            // SAFETY: Skipping at most one of two remaining bytes cannot reach EOF.
+            let mut kind = SIMPLE_TOKEN_KINDS[unsafe { start.read() } as usize];
+            if kind != Kind::Undetermined {
+                self.trivia_builder.clear_pure_comments();
+                self.trivia_builder.clear_no_side_effects_comments();
+                self.token.set_start(self.source.offset_of(start));
+                if kind == Kind::Ident {
+                    self.source.set_position(start);
+                    // SAFETY: `start` points to an ASCII identifier start before EOF.
+                    kind = unsafe { self.handle_byte(start.read()) };
+                } else {
+                    // SAFETY: This is a one-byte ASCII punctuation token before EOF.
+                    self.source.set_position(unsafe { start.add(1) });
+                }
+                return self.finish_next(kind);
+            }
+        }
+        self.next_token_slow()
+    }
+
+    #[inline(never)]
+    fn next_token_slow(&mut self) -> Token {
         let kind = self.read_next_token();
         self.finish_next(kind)
     }
@@ -289,14 +346,12 @@ impl<'a, C: Config> Lexer<'a, C> {
         self.finish_next(kind)
     }
 
-    // This is a workaround for a problem where `next_token` is not inlined in lexer benchmark.
-    // Must be kept in sync with `next_token` above, and contain exactly the same code.
+    // Ensure the benchmark exercises the same fast path as parser callers.
     #[cfg(feature = "benchmarking")]
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn next_token_for_benchmarks(&mut self) -> Token {
-        let kind = self.read_next_token();
-        self.finish_next(kind)
+        self.next_token()
     }
 
     #[inline]
