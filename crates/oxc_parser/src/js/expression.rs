@@ -76,11 +76,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// `PrimaryExpression`: Identifier Reference
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_identifier_expression(&mut self) -> Expression<'a> {
         let ident = self.parse_identifier_reference();
         Expression::Identifier(self.alloc(ident))
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
         // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
@@ -231,6 +235,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `TemplateLiteral`[?Yield, ?Await, ~Tagged]
     ///     `CoverParenthesizedExpressionAndArrowParameterList`[?Yield, ?Await]
     fn parse_primary_expression(&mut self) -> Expression<'a> {
+        // Ordinary identifiers do not need async-function or contextual-keyword disambiguation.
+        if self.at(Kind::Ident) {
+            return self.parse_identifier_expression();
+        }
         // FunctionExpression, GeneratorExpression
         // AsyncFunctionExpression, AsyncGeneratorExpression
         if self.at_function_with_async() {
