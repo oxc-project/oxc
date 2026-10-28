@@ -1095,7 +1095,7 @@ impl RuleRunner for crate::rules::eslint::no_throw_literal::NoThrowLiteral {
 
 impl RuleRunner for crate::rules::eslint::no_unassigned_vars::NoUnassignedVars {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::VariableDeclarator]));
+        Some(&AstTypesBitset::from_types(&[AstType::VariableDeclaration]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
