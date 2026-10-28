@@ -443,6 +443,10 @@ impl Runtime {
         // This channel is for posting `ModuleProcessOutput` from module threads to the graph thread.
         let (tx_process_output, rx_process_output) = mpsc::channel::<ModuleProcessOutput>();
 
+        // Whether the graph thread is one of rayon's worker threads. It's not when `scope` was created by
+        // `rayon::in_place_scope` outside of the thread pool.
+        let is_worker_thread = rayon::current_thread_index().is_some();
+
         // The cursor of `sorted_paths` that points to the start path of the next group.
         let mut group_start = 0usize;
 
@@ -478,15 +482,21 @@ impl Runtime {
             // Loop until all queued modules in this group are processed.
             // Each iteration adds one module to the module graph.
             while pending_module_count > 0 {
-                let Ok(ModuleProcessOutput { path, mut processed_module }) =
+                let ModuleProcessOutput { path, mut processed_module } = if is_worker_thread {
                     // Most heavy-lifting is done in the module threads. The graph thread would be mostly idle if it
                     // only updates the graph and blocks on awaiting `rx_process_output`.
                     // To avoid this waste, the graph module peeks the `rx_process_output` without blocking, and ...
-                    rx_process_output.try_recv()
-                else {
-                    // yield if `rx_process_output` is empty, giving rayon chances to dispatch module processing or linting to this thread.
-                    rayon::yield_now();
-                    continue;
+                    let Ok(output) = rx_process_output.try_recv() else {
+                        // yield if `rx_process_output` is empty, giving rayon chances to dispatch module processing or linting to this thread.
+                        rayon::yield_now();
+                        continue;
+                    };
+                    output
+                } else {
+                    // The graph thread is not one of rayon's worker threads, so blocking it doesn't take a thread
+                    // away from module processing or linting. Blocking also means that the graph thread picks up
+                    // each output as soon as it arrives, rather than after finishing whatever job it yielded to.
+                    rx_process_output.recv().unwrap()
                 };
                 pending_module_count -= 1;
 
@@ -613,7 +623,9 @@ impl Runtime {
         self.modules_by_path.pin().reserve(paths.len());
         let paths_set: IndexSet<Arc<OsStr>, FxBuildHasher> = paths.into_iter().collect();
 
-        rayon::scope(|scope| {
+        // `in_place_scope` runs the graph loop in `resolve_modules` on this thread rather than on a thread in
+        // the pool, so all of the pool's threads are left for module processing and linting.
+        rayon::in_place_scope(|scope| {
             self.resolve_modules(
                 file_system,
                 &paths_set,
