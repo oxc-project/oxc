@@ -167,6 +167,11 @@ let f = <T,>(/* a */ a: T) => a; x = a < /* b */ b > c;
 /* c */ -> Dangling ObjectProperty `a = f(x, /* c */ y)`
 
 === js ===
+({ a = /* @__PURE__ */ f().x } = x);
+---
+/* @__PURE__ */ -> Leading CallExpression `f()`
+
+=== js ===
 [/* x */ x, ...rest /* rest */] = y;
 ---
 /* x */ -> Leading IdentifierReference `x`
@@ -606,3 +611,13 @@ await /x/u;
 import 'z';
 ---
 // c -> Trailing Directive `'use strict';`
+
+=== js (unambiguous) ===
+await /x/u; y = /* @__PURE__ */ f().x; import 'z';
+---
+/* @__PURE__ */ -> Leading CallExpression `f()`
+
+=== js (unambiguous) ===
+await /* @__PURE__ */ f().x; import 'z';
+---
+/* @__PURE__ */ -> Leading CallExpression `f()`
