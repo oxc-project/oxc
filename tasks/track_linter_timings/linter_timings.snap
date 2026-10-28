@@ -411,7 +411,7 @@ react/jsx-props-no-spread-multi                         |    452
 react/jsx-props-no-spreading                            |      6
 react/memo-dependencies                                 |      7
 react/no-array-index-key                                |  63058
-react/no-children-prop                                  |  63410
+react/no-children-prop                                  |  14929
 react/no-clone-element                                  |  62606
 react/no-danger                                         |   7019
 react/no-danger-with-children                           |  63058
