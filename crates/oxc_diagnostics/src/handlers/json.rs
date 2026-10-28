@@ -76,7 +76,9 @@ impl JSONReportHandler {
             write!(f, r#""filename": "{}","#, escape(source.name().unwrap_or_default()))?;
         }
         f.write_str(r#""labels": ["#)?;
-        let mut scanner = source.map(|source| SpanScanner::new(source.data(), 0, 0));
+        let mut scanner = source.map(|source| {
+            SpanScanner::new(source.data(), 0, 0).with_line_starts(source.line_starts())
+        });
         for (index, label) in diagnostic.labels().iter().enumerate() {
             if index > 0 {
                 f.write_char(',')?;

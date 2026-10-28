@@ -239,6 +239,47 @@ struct PrefixScan {
 
 impl PrefixScan {
     /// Scan the prefix before a span, retaining only its leading context lines.
+    ///
+    /// With `line_starts` (see [`SourceCode::line_starts`]), look the lines up instead of scanning
+    /// the prefix, so that reading many spans in a large source doesn't rescan it from the start each time.
+    fn new_with_line_starts(
+        input: &[u8],
+        end: usize,
+        context_lines_before: usize,
+        line_starts: Option<&[u32]>,
+    ) -> Self {
+        match line_starts {
+            Some(line_starts) => Self::from_line_starts(line_starts, end, context_lines_before),
+            None => Self::new(input, end, context_lines_before),
+        }
+    }
+
+    /// Equivalent to [`PrefixScan::new`], using `line_starts` of the input instead of scanning it.
+    fn from_line_starts(line_starts: &[u32], end: usize, context_lines_before: usize) -> Self {
+        // `line_starts[0] == 0`, so at least one line starts at or before `end`.
+        // `end` never splits a CRLF pair, so each line start at or before `end` other than the first
+        // follows a line break in the prefix.
+        let line_count = line_starts.partition_point(|&start| start as usize <= end) - 1;
+        let current_line_start = line_starts[line_count] as usize;
+        let first_leading_line = line_count.saturating_sub(context_lines_before);
+        let leading_line_starts =
+            line_starts[first_leading_line..line_count].iter().map(|&start| start as usize);
+        let leading = match context_lines_before {
+            0 => LeadingContext { start_line: line_count, ..LeadingContext::new(0) },
+            1 => LeadingContext::one(
+                first_leading_line,
+                line_count.checked_sub(1).map(|line| line_starts[line] as usize),
+            ),
+            limit => LeadingContext {
+                limit,
+                start_line: first_leading_line,
+                line_starts: RetainedLineStarts::Many(leading_line_starts.collect()),
+            },
+        };
+        Self { line_count, leading, current_line_start }
+    }
+
+    /// Scan the prefix before a span, retaining only its leading context lines.
     #[inline]
     fn new(input: &[u8], end: usize, context_lines_before: usize) -> Self {
         let prefix = &input[..end];
@@ -352,10 +393,20 @@ impl<'a> SpanReader<'a> {
         )
     }
 
+    #[cfg(test)]
     fn new(input: &'a [u8], request: SpanRequest, context: ContextLines) -> Self {
+        Self::new_with_line_starts(input, request, context, None)
+    }
+
+    fn new_with_line_starts(
+        input: &'a [u8],
+        request: SpanRequest,
+        context: ContextLines,
+        line_starts: Option<&[u32]>,
+    ) -> Self {
         let offset = request.prefix_end(input);
         let PrefixScan { line_count, leading, current_line_start } =
-            PrefixScan::new(input, offset, context.before);
+            PrefixScan::new_with_line_starts(input, offset, context.before, line_starts);
         Self {
             input,
             request,
@@ -487,6 +538,9 @@ impl SpanContents<'_> {
 /// Lazily built line-start index over a contiguous source buffer.
 struct LineIndex<'a> {
     input: &'a [u8],
+    /// Line starts of the whole `input`, if the source caches them (see [`SourceCode::line_starts`]).
+    /// Used to locate the first query without scanning the prefix before it.
+    known_line_starts: Option<&'a [u32]>,
     /// Starts (byte offsets) of consecutive lines, the first of which is line
     /// number `base_line`; covers every line whose start lies in
     /// `[line_starts[0], frontier]`. Empty until the first query seeds it.
@@ -501,7 +555,7 @@ struct LineIndex<'a> {
 
 impl<'a> LineIndex<'a> {
     fn new(input: &'a [u8]) -> Self {
-        Self { input, line_starts: Vec::new(), base_line: 0, frontier: 0 }
+        Self { input, known_line_starts: None, line_starts: Vec::new(), base_line: 0, frontier: 0 }
     }
 
     fn is_empty(&self) -> bool {
@@ -516,7 +570,12 @@ impl<'a> LineIndex<'a> {
     /// use them as the origin of the reusable index.
     fn init(&mut self, cut: usize, context_lines_before: usize) {
         let PrefixScan { line_count, leading, current_line_start } =
-            PrefixScan::new(self.input, cut, context_lines_before);
+            PrefixScan::new_with_line_starts(
+                self.input,
+                cut,
+                context_lines_before,
+                self.known_line_starts,
+            );
         debug_assert_eq!(leading.start_line + leading.len(), line_count);
         self.base_line = leading.start_line;
         self.line_starts.reserve(leading.len() + 8);
@@ -741,6 +800,16 @@ impl<'a> SpanScanner<'a> {
         }
     }
 
+    /// Use the line starts of the input, as returned by [`SourceCode::line_starts`], to locate spans
+    /// without scanning the source before them.
+    ///
+    /// `line_starts` must be the line starts of the `input` this scanner was created with.
+    #[must_use]
+    pub fn with_line_starts(mut self, line_starts: Option<&'a [u32]>) -> Self {
+        self.index.known_line_starts = line_starts;
+        self
+    }
+
     /// Whether this scanner indexes `input`.
     pub fn is_for(&self, input: &[u8]) -> bool {
         std::ptr::eq(self.index.input, input)
@@ -768,7 +837,13 @@ impl<'a> SpanScanner<'a> {
     }
 
     fn read_unindexed(&self, request: SpanRequest) -> Option<SpanContents<'a>> {
-        SpanReader::new(self.index.input, request, self.context).read()
+        SpanReader::new_with_line_starts(
+            self.index.input,
+            request,
+            self.context,
+            self.index.known_line_starts,
+        )
+        .read()
     }
 }
 
@@ -840,6 +915,42 @@ mod tests {
                 assert_eq!(fast.leading.start_line, fast.line_count, "input={input:?}, cut={cut}");
                 assert_eq!(fast.leading.len(), 0, "input={input:?}, cut={cut}");
                 assert_eq!(fast.leading.starting_offset(cut), cut, "input={input:?}, cut={cut}");
+            }
+        }
+    }
+
+    /// Looking up the prefix in cached line starts must agree with scanning it, for every prefix a
+    /// span read can produce, including ones around CRLF pairs and lone CRs.
+    #[test]
+    fn prefix_from_line_starts_matches_scan() {
+        const ALPHABET: [u8; 3] = [b'a', b'\r', b'\n'];
+        for len in 0..=7u32 {
+            for mut code in 0..3usize.pow(len) {
+                let mut input = Vec::new();
+                for _ in 0..len {
+                    input.push(ALPHABET[code % 3]);
+                    code /= 3;
+                }
+                let starts = line_starts(&input).unwrap();
+                for offset in 0..=input.len() + 2 {
+                    let cut = SpanRequest { offset, len: 0 }.prefix_end(&input);
+                    for before in 0..=3 {
+                        let scanned = PrefixScan::new(&input, cut, before);
+                        let looked_up = PrefixScan::from_line_starts(&starts, cut, before);
+                        let fields = |scan: PrefixScan| {
+                            let PrefixScan { line_count, leading, current_line_start } = scan;
+                            let (limit, start_line) = (leading.limit, leading.start_line);
+                            let mut retained = Vec::new();
+                            leading.append_to(&mut retained);
+                            (line_count, current_line_start, limit, start_line, retained)
+                        };
+                        assert_eq!(
+                            fields(scanned),
+                            fields(looked_up),
+                            "input={input:?}, cut={cut}, before={before}"
+                        );
+                    }
+                }
             }
         }
     }
@@ -1149,6 +1260,7 @@ mod scanner_tests {
                     s.push_str(alpha[rng.below(alpha.len())]);
                 }
                 let input = s.as_bytes();
+                let starts = line_starts(input).unwrap();
                 for (before, after) in [(0, 0), (1, 1), (2, 2), (0, 2), (2, 0)] {
                     let mut spans: Vec<(usize, usize)> = std::iter::repeat_with(|| {
                         (rng.below(input.len() + 3), [0, 1, 2, 5][rng.below(4)])
@@ -1159,8 +1271,11 @@ mod scanner_tests {
                     // Random order: queries may jump backwards past the
                     // index origin.
                     let mut scanner = SpanScanner::new(input, before, after);
+                    let mut indexed_scanner =
+                        SpanScanner::new(input, before, after).with_line_starts(Some(&starts));
                     for i in 0..spans.len() {
                         check(&mut scanner, input, spans[i], before, after, &spans[..i]);
+                        check(&mut indexed_scanner, input, spans[i], before, after, &spans[..i]);
                         checked += 1;
                     }
 
@@ -1172,8 +1287,11 @@ mod scanner_tests {
                     let merged_end = spans.iter().map(|&(o, l)| o + l).max().unwrap();
                     spans.push((first, merged_end - first));
                     let mut scanner = SpanScanner::new(input, before, after);
+                    let mut indexed_scanner =
+                        SpanScanner::new(input, before, after).with_line_starts(Some(&starts));
                     for i in 0..spans.len() {
                         check(&mut scanner, input, spans[i], before, after, &spans[..i]);
+                        check(&mut indexed_scanner, input, spans[i], before, after, &spans[..i]);
                         checked += 1;
                     }
                 }

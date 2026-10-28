@@ -46,7 +46,9 @@ impl GraphicalReportHandler {
         diagnostic: &dyn Diagnostic,
     ) -> fmt::Result {
         let source = diagnostic.source_code();
-        let mut scanner = source.map(|source| SpanScanner::new(source.data(), 1, 1));
+        let mut scanner = source.map(|source| {
+            SpanScanner::new(source.data(), 1, 1).with_line_starts(source.line_starts())
+        });
         let source_name = source.and_then(|source| source.name());
         self.render_report_with_scanner(f, diagnostic, scanner.as_mut(), source_name)
     }
@@ -67,7 +69,12 @@ impl GraphicalReportHandler {
             match source {
                 Some(source)
                     if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
-                Some(source) => scanner = Some(SpanScanner::new(source.data(), 1, 1)),
+                Some(source) => {
+                    scanner = Some(
+                        SpanScanner::new(source.data(), 1, 1)
+                            .with_line_starts(source.line_starts()),
+                    );
+                }
                 None => scanner = None,
             }
             let source_name = source.and_then(|source| source.name());
@@ -93,7 +100,12 @@ impl GraphicalReportHandler {
             match source {
                 Some(source)
                     if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
-                Some(source) => scanner = Some(SpanScanner::new(source.data(), 1, 1)),
+                Some(source) => {
+                    scanner = Some(
+                        SpanScanner::new(source.data(), 1, 1)
+                            .with_line_starts(source.line_starts()),
+                    );
+                }
                 None => scanner = None,
             }
             let source_name = source.and_then(|source| source.name());
