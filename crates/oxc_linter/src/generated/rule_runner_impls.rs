@@ -1178,7 +1178,7 @@ impl RuleRunner for crate::rules::eslint::no_unsafe_finally::NoUnsafeFinally {
 
 impl RuleRunner for crate::rules::eslint::no_unsafe_negation::NoUnsafeNegation {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::UnaryExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

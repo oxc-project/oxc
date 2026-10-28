@@ -131,7 +131,7 @@ eslint/no-unneeded-ternary                              |   4722
 eslint/no-unreachable                                   |      7
 eslint/no-unreachable-loop                              |   1607
 eslint/no-unsafe-finally                                |  15259
-eslint/no-unsafe-negation                               |  20604
+eslint/no-unsafe-negation                               |   9106
 eslint/no-unsafe-optional-chaining                      |    792
 eslint/no-unused-expressions                            |  24802
 eslint/no-unused-labels                                 |      7
