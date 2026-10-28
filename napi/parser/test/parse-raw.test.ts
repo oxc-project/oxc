@@ -274,6 +274,41 @@ describe.concurrent("edge cases", () => {
   });
 });
 
+// Statement lists longer than the maximum number of arguments to a function call.
+// `arr.push(...statements)` would throw a stack overflow error.
+// Not run in a worker, because worker threads have a larger stack.
+describe("long statement lists", () => {
+  const count = 150_000;
+  const statements = "x;".repeat(count);
+  const getProgramBody = (program: any) => program.body;
+  const getFunctionBody = (program: any) => program.body[0].body.body;
+
+  describe.each([
+    ["program", "dummy.js", statements, getProgramBody, count],
+    [
+      "program with directive",
+      "dummy.js",
+      `"use strict"; ${statements}`,
+      getProgramBody,
+      count + 1,
+    ],
+    ["function body", "dummy.js", `function f() { ${statements} }`, getFunctionBody, count],
+    ["namespace", "dummy.ts", `namespace N { ${statements} }`, getFunctionBody, count],
+  ])("%s", (_name, filename, sourceText, getBody, expectedLength) => {
+    it.each([
+      ["default", {}],
+      ["range & parent", { range: true, experimentalParent: true }],
+    ])("%s", (_optionsName, options) => {
+      const { program, errors } = parseSync(filename, sourceText, {
+        ...options,
+        experimentalRawTransfer: true,
+      });
+      expect(errors).toEqual([]);
+      expect(getBody(program).length).toBe(expectedLength);
+    });
+  });
+});
+
 // Test raw transfer output matches standard (via JSON) output for some large files
 describe.concurrent("fixtures", () => {
   // oxlint-disable-next-line jest/expect-expect
