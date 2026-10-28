@@ -51,7 +51,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         in_jsx_child: bool,
     ) -> ArenaBox<'a, JSXFragment<'a>> {
-        self.expect_jsx_child(Kind::RAngle);
+        debug_assert!(self.at(Kind::RAngle));
+        self.advance_for_jsx_child();
         let opening_fragment = JSXOpeningFragment::new(self.end_span(start), self);
         let (children, closing) = self.parse_jsx_children_and_closing(in_jsx_child);
         let closing_fragment = match closing {
@@ -337,9 +338,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(Kind::RAngle) {
             // Closing fragment: </>
             if in_jsx_child {
-                self.expect_jsx_child(Kind::RAngle);
+                self.advance_for_jsx_child();
             } else {
-                self.expect(Kind::RAngle);
+                self.advance(Kind::RAngle);
             }
             JSXClosing::Fragment(JSXClosingFragment::new(self.end_span(open_angle_start), self))
         } else {
@@ -366,9 +367,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> ArenaBox<'a, JSXExpressionContainer<'a>> {
         let expr = if self.at(Kind::RCurly) {
             if in_jsx_child {
-                self.expect_jsx_child(Kind::RCurly);
+                self.advance_for_jsx_child();
             } else {
-                self.expect(Kind::RCurly);
+                self.advance(Kind::RCurly);
             }
             let span = self.end_span(start);
 
