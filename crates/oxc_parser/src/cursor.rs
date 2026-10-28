@@ -644,10 +644,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     break;
                 }
                 self.bump_any();
-                if self.cur_token().follows_comment()
-                    && let Some(element) = list.last()
-                {
-                    self.attach_comments_after_separated_element(element);
+                if self.cur_token().follows_comment() {
+                    if let Some(rest) = rest.as_deref() {
+                        self.attach_comments_after_separator(rest);
+                    } else if let Some(element) = list.last() {
+                        self.attach_comments_after_separated_element(element);
+                    }
                 }
                 let kind = self.cur_kind();
                 if kind == close {

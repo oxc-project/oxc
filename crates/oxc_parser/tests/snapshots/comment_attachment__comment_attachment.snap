@@ -405,6 +405,12 @@ function f(
 /* x */ -> Trailing FormalParameter `a`
 // c -> Trailing FormalParameter `a`
 
+=== ts (unambiguous) ===
+declare function f(a: T, ...b: any[], // trailing b
+) {}
+---
+// trailing b -> Trailing FormalParameterRest `...b: any[]`
+
 === js ===
 const { a = b /* c */ + d } = x;
 ---
