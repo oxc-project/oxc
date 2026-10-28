@@ -1610,7 +1610,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn is_binary_operator(&self) -> bool {
-        if self.ctx.has_in() && self.at(Kind::In) {
+        if !self.ctx.has_in() && self.at(Kind::In) {
             return false;
         }
         self.cur_kind().is_binary_operator()
@@ -1624,7 +1624,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             kind if kind.is_unary_operator() => true,
             kind if kind.is_update_operator() => true,
             Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At => true,
-            kind if kind.is_binary_operator() => true,
+            _ if self.is_binary_operator() => true,
             kind => kind.is_ts_identifier(self.ctx.has_yield(), self.ctx.has_await()),
         }
     }
