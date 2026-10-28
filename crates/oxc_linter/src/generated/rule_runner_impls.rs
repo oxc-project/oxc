@@ -3920,7 +3920,7 @@ impl RuleRunner for crate::rules::unicorn::prefer_set_has::PreferSetHas {
 
 impl RuleRunner for crate::rules::unicorn::prefer_set_size::PreferSetSize {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::StaticMemberExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::SpreadElement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

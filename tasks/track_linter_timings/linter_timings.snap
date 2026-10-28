@@ -627,7 +627,7 @@ unicorn/prefer-reflect-apply                            |  62606
 unicorn/prefer-regexp-test                              |  62606
 unicorn/prefer-response-static-json                     |   1421
 unicorn/prefer-set-has                                  |  37499
-unicorn/prefer-set-size                                 |  76337
+unicorn/prefer-set-size                                 |  63060
 unicorn/prefer-single-call                              |  24802
 unicorn/prefer-spread                                   |  62606
 unicorn/prefer-string-raw                               |  62460
