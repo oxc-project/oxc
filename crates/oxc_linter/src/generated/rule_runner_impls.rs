@@ -2058,11 +2058,8 @@ impl RuleRunner for crate::rules::typescript::parameter_properties::ParameterPro
 }
 
 impl RuleRunner for crate::rules::typescript::prefer_as_const::PreferAsConst {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::PropertyDefinition,
-        AstType::TSAsExpression,
-        AstType::VariableDeclarator,
-    ]));
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::TSLiteralType]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
