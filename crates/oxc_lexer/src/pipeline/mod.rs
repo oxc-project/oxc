@@ -30,7 +30,6 @@ mod misc;
 mod operators;
 mod scan;
 
-pub(crate) use disambiguate::State as DisambiguateState;
 pub(crate) use lanes::{Lanes, decode_char_at};
 
 use carve::carve;

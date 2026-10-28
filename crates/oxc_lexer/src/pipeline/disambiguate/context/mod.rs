@@ -51,14 +51,14 @@ pub(crate) struct Walks {
     spent: usize,
     /// Tests: every question goes to the full walk, with no anchors or shortcuts.
     #[cfg(test)]
-    pub(crate) full_walk_only: bool,
+    pub(super) full_walk_only: bool,
     /// Tests: a > run goes to the walk without the rules that settle it from nearby tokens.
     #[cfg(test)]
-    pub(crate) no_run_rules: bool,
+    pub(super) no_run_rules: bool,
 }
 
 impl Walks {
-    pub(crate) fn new() -> Walks {
+    pub(super) fn new() -> Walks {
         Walks {
             full: Walk::new(),
             local: Walk::new(),
@@ -71,28 +71,28 @@ impl Walks {
     }
 
     #[cfg(test)]
-    pub(crate) fn shortcuts(&self) -> bool {
+    fn shortcuts(&self) -> bool {
         !self.full_walk_only
     }
 
     #[cfg(not(test))]
-    pub(crate) fn shortcuts(&self) -> bool {
+    fn shortcuts(&self) -> bool {
         true
     }
 
     #[cfg(test)]
-    pub(crate) fn run_rules(&self) -> bool {
+    pub(super) fn run_rules(&self) -> bool {
         !self.full_walk_only && !self.no_run_rules
     }
 
     #[cfg(not(test))]
-    pub(crate) fn run_rules(&self) -> bool {
+    pub(super) fn run_rules(&self) -> bool {
         true
     }
 
     /// A new lex, or a new pass over it by a stage that sees other token kinds: the full walk
     /// starts over and the bounded walks get a new budget.
-    pub(crate) fn restart(&mut self, module: bool) {
+    pub(super) fn restart(&mut self, module: bool) {
         self.full.reset(module);
         self.spent = 0;
     }

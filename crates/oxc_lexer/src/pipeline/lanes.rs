@@ -21,7 +21,7 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::DisambiguateState;
+use crate::pipeline::disambiguate::State as DisambiguateState;
 
 #[derive(Default)]
 pub(crate) struct Lanes {

@@ -36,23 +36,23 @@ pub(super) use type_context::{gt_run_split, jsx_over_generic, lt_run_split};
 
 /// Step cap for the scan back to an anchor (tokens plus the groups it jumps over);
 /// past it the walk from the start of the source answers.
-pub(crate) const WALK_SCAN_CAP: u32 = 2048;
+const WALK_SCAN_CAP: u32 = 2048;
 
 /// Scan steps bounded walks may take, plus one per 32 bytes, before the full walk answers the rest.
-pub(crate) const LOCAL_WALK_BUDGET: u32 = 16384;
+const LOCAL_WALK_BUDGET: u32 = 16384;
 
 /// Step cap for the rules which answer without a walk: finding the JSX tag around a keyword,
 /// and settling a `>` run from the tokens around it.
-pub(crate) const RULE_SCAN_CAP: u32 = 256;
+const RULE_SCAN_CAP: u32 = 256;
 
 /// Bracket steps a backward match takes before the per-lex closer-to-opener table answers, so a
 /// group matched again and again (queries after a huge wrapper function) costs a lookup, not a
 /// pass over its brackets each time.
-pub(crate) const BRACKET_STEP_CAP: u32 = 1024;
+const BRACKET_STEP_CAP: u32 = 1024;
 
 /// Byte cap on the forward scans. Past it one pass resolves the opener exactly, and records what
 /// it crosses in [`Closers`].
-pub(crate) const FORWARD_SCAN_CAP: usize = 4096;
+const FORWARD_SCAN_CAP: usize = 4096;
 
 #[cfg(test)]
 mod tests;
@@ -60,10 +60,10 @@ mod tests;
 /// What the questions keep across a lex: the context walks, the bracket bitmap and the closers
 /// the forward scans resolved. Owned by the lexer, begun at each lex, restarted when `coalesce`
 /// starts asking.
-pub(crate) struct State {
-    pub(crate) walks: Walks,
-    pub(crate) brackets: Brackets,
-    pub(crate) closers: Closers,
+pub(super) struct State {
+    pub walks: Walks,
+    pub brackets: Brackets,
+    pub closers: Closers,
 }
 
 impl Default for State {

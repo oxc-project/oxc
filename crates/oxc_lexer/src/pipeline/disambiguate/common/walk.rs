@@ -93,7 +93,7 @@ fn bracket_word(src: &[u8], base: usize, n: usize) -> u64 {
 /// invisible. Past [`BRACKET_STEP_CAP`] bracket steps the answer comes from a per-lex
 /// closer-to-opener table built once, so it stays exact; None if unbalanced.
 #[inline]
-pub(crate) fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Option<usize> {
+pub(super) fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Option<usize> {
     let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
     let mut depth: i32 = 1;
     let mut steps: u32 = 0;
@@ -190,7 +190,7 @@ pub(crate) fn word_len(src: &[u8], w: usize) -> usize {
 /// Does the identifier at `pos` equal exactly `kw`? The following-byte check
 /// rejects longer identifiers (the source pad makes it safe at EOF).
 #[inline]
-pub(crate) fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
+pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
     src[pos..].starts_with(kw) && {
         let after = pos + kw.len();
         !is_word(src[after]) || unicode_ws_len_at(src, after) != 0
