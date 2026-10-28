@@ -37,7 +37,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.at(Kind::Async) && self.is_un_parenthesized_async_arrow_function_worker() {
             let start = self.cur_start();
             self.bump_any(); // bump `async`
-            let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
+            // Lookahead established a single binding identifier followed by `=>`.
+            // An ordinary identifier cannot extend into a member, call, or binary expression here.
+            let expr = if self.at(Kind::Ident) {
+                self.parse_plain_identifier_expression()
+            } else {
+                self.parse_binary_expression_or_higher(Precedence::Comma)
+            };
             let Expression::Identifier(ident) = &expr else {
                 return self.unexpected();
             };

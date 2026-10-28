@@ -481,7 +481,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_jsx_attribute_value(&mut self) -> JSXAttributeValue<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let str_lit = self.parse_literal_string();
+                let str_lit = self.parse_known_literal_string();
                 JSXAttributeValue::StringLiteral(self.alloc(str_lit))
             }
             Kind::LCurly => {

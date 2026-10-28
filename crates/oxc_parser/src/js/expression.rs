@@ -81,6 +81,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         Expression::Identifier(self.alloc(ident))
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) fn parse_plain_identifier_expression(&mut self) -> Expression<'a> {
+        debug_assert!(self.at(Kind::Ident));
+        let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        Expression::Identifier(self.alloc(IdentifierReference::new(span, name, self)))
+    }
+
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
         // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
@@ -111,7 +119,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.unexpected()
             };
         }
-        self.check_identifier(cur, self.ctx);
+        self.parse_known_binding_identifier()
+    }
+
+    /// Parse a token already known to be a `BindingIdentifier`.
+    /// Membership alone does not rule out the `Await` and `Yield` early errors.
+    #[inline]
+    pub(crate) fn parse_known_binding_identifier(&mut self) -> BindingIdentifier<'a> {
+        let kind = self.cur_kind();
+        debug_assert!(kind.is_binding_identifier());
+        self.check_identifier(kind, self.ctx);
+        let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        BindingIdentifier::new(span, name, self)
+    }
+
+    /// Ordinary identifiers cannot trigger the parser's `Await`/`Yield` checks.
+    /// Strict-mode binding restrictions are still checked by semantic analysis.
+    #[inline]
+    pub(crate) fn parse_plain_binding_identifier(&mut self) -> BindingIdentifier<'a> {
+        debug_assert!(self.at(Kind::Ident));
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         BindingIdentifier::new(span, name, self)
     }
@@ -130,6 +156,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.cur_kind().is_identifier_name() {
             return self.unexpected();
         }
+        self.parse_known_identifier_name()
+    }
+
+    /// Parse an `IdentifierName` whose token kind has already been checked.
+    #[inline]
+    pub(crate) fn parse_known_identifier_name(&mut self) -> IdentifierName<'a> {
+        debug_assert!(self.cur_kind().is_identifier_name());
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         IdentifierName::new(span, name, self)
     }
@@ -240,7 +273,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let kind = self.cur_kind();
         match kind {
-            Kind::Ident => self.parse_identifier_expression(), // fast path, keywords are checked at the end
+            // Fast path: `Ident` is already classified as a valid identifier reference.
+            Kind::Ident => self.parse_plain_identifier_expression(),
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
@@ -351,7 +385,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let kind = self.cur_kind();
         match kind {
             Kind::Str => {
-                let lit = self.parse_literal_string();
+                let lit = self.parse_known_literal_string();
                 Expression::StringLiteral(self.alloc(lit))
             }
             Kind::True | Kind::False => Expression::BooleanLiteral(self.parse_literal_boolean()),
@@ -503,6 +537,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at(Kind::Str) {
             return self.unexpected();
         }
+        self.parse_known_literal_string()
+    }
+
+    /// Parse a string literal whose `Str` token kind has already been checked.
+    #[inline]
+    pub(crate) fn parse_known_literal_string(&mut self) -> StringLiteral<'a> {
+        debug_assert!(self.at(Kind::Str));
         let span = self.cur_token().span();
         let raw = Str::from(self.cur_src());
         let value = self.cur_js_string();
