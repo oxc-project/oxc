@@ -231,6 +231,14 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
+        if matches!(member.object, Expression::ArrayExpression(_))
+            && !Self::array_concat_calls_can_merge(
+                collected_arguments.iter().rev().map(|args| &**args),
+                ctx,
+            )
+        {
+            return;
+        }
 
         let new_expr = Expression::new_call_expression(
             original_span,
@@ -403,6 +411,42 @@ impl<'a> PeepholeOptimizations {
             }
             may_coerce_object |=
                 matches!(argument.value_type(ctx), ValueType::Object | ValueType::Undetermined);
+        }
+        true
+    }
+
+    /// Each call in an array `concat` chain reads its arguments' elements before the next call
+    /// evaluates its arguments. Merging the calls delays those reads, so a later argument can
+    /// mutate an earlier one first: `[].concat(arr).concat(arr.pop())`.
+    /// Arguments of the same call are already evaluated together, so only later calls matter.
+    fn array_concat_calls_can_merge<'b>(
+        calls: impl Iterator<Item = &'b Arguments<'a>>,
+        ctx: &TraverseCtx<'a>,
+    ) -> bool
+    where
+        'a: 'b,
+    {
+        // A spread argument both runs an iterator and passes values that are read later.
+        let mut may_read_object = false;
+        for arguments in calls {
+            if may_read_object
+                && arguments.iter().any(|argument| {
+                    argument.as_expression().is_none_or(|e| e.may_have_side_effects(ctx))
+                })
+            {
+                return false;
+            }
+            may_read_object |= arguments.iter().any(|argument| {
+                argument.as_expression().is_none_or(|argument| {
+                    // An array literal is a fresh array that no other argument can reach.
+                    !argument.is_literal()
+                        && !matches!(argument, Expression::ArrayExpression(_))
+                        && matches!(
+                            argument.value_type(ctx),
+                            ValueType::Object | ValueType::Undetermined
+                        )
+                })
+            });
         }
         true
     }
