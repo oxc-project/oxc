@@ -1,0 +1,25 @@
+apps/oxlint/src/output_formatter/gitlab.rs
+  s_f375b7bab4327a::t_d2152b0cc06807 126,128,130,261-290
+"apps/oxlint/src/snapshots/fixtures__cli__output_formatter_diagnostic_--format=gitlab --report-unused-disable-directives disable-directive.js@oxlint.snap"
+  s_f375b7bab4327a::t_2e686e0ca46a9c 12,25,38
+"apps/oxlint/src/snapshots/fixtures__cli__output_formatter_diagnostic_--format=gitlab parser-error.js@oxlint.snap"
+  s_f375b7bab4327a::t_56a64c66d32b80 12
+"apps/oxlint/src/snapshots/fixtures__cli__output_formatter_diagnostic_--format=gitlab test.js@oxlint.snap"
+  s_f375b7bab4327a::t_af5106eca3a7f5 12,25,38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2a115b53affdddbf8a62c0964e62e5955c510175",
+  "prompts": {},
+  "sessions": {
+    "s_f375b7bab4327a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1833e-7023-7d62-bf7e-be7299b6cc18",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
