@@ -80,7 +80,7 @@ eslint/no-inline-comments                               |      7
 eslint/no-inner-declarations                            |  45646
 eslint/no-invalid-regexp                                |  64027
 eslint/no-irregular-whitespace                          |  63961
-eslint/no-iterator                                      |  95297
+eslint/no-iterator                                      |  94090
 eslint/no-label-var                                     |      5
 eslint/no-labels                                        |    841
 eslint/no-lone-blocks                                   |  14946

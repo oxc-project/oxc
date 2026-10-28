@@ -794,7 +794,6 @@ impl RuleRunner for crate::rules::eslint::no_irregular_whitespace::NoIrregularWh
 impl RuleRunner for crate::rules::eslint::no_iterator::NoIterator {
     const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
         AstType::ComputedMemberExpression,
-        AstType::PrivateFieldExpression,
         AstType::StaticMemberExpression,
     ]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
