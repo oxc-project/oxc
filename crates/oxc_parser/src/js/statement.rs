@@ -53,7 +53,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
-        let mut list_comments = self.start_list_comments();
+        let list_comments = self.start_list_comments();
         let statements = self.collect_list_with_previous(|p, previous| {
             while !p.has_fatal_error() && (is_top_level || !p.at(Kind::RCurly)) {
                 // Commit once module syntax is detected (`export` commits eagerly in
@@ -83,12 +83,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     let expression = p.parse_expr();
                     p.asi();
                     let statement = ExpressionStatement::new(p.end_span(start), expression, p);
-                    p.finish_list_element_comments(
-                        &statement,
-                        &mut list_comments,
-                        &directives,
-                        None,
-                    );
+                    p.finish_list_element_comments(&statement, &list_comments, &directives, None);
                     match statement {
                         ExpressionStatement {
                             span,
@@ -111,7 +106,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         statement => Statement::ExpressionStatement(p.alloc(statement)),
                     }
                 } else {
-                    p.parse_statement_in_list(stmt_ctx, &mut list_comments, &directives, previous)
+                    p.parse_statement_in_list(stmt_ctx, &list_comments, &directives, previous)
                 };
 
                 // Don't reparse a module declaration: `export` already committed to the
@@ -145,9 +140,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
 
         if statements.is_empty() {
-            self.attach_comments_before_close(&directives);
+            self.attach_comments_after_last(&directives);
         } else {
-            self.attach_comments_before_close(&statements);
+            self.attach_comments_after_last(&statements);
         }
         (directives, statements)
     }
@@ -158,7 +153,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_statement_in_list(
         &mut self,
         stmt_ctx: StatementContext,
-        list: &mut ListComments,
+        list: &ListComments,
         directives: &[Directive<'a>],
         previous: Option<&Statement<'a>>,
     ) -> Statement<'a> {
@@ -824,7 +819,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Kind::Case => {
                 self.bump_any();
-                let expression = self.parse_expr();
+                let expression = self.parse_after_delimiter(Self::parse_expr);
+                self.attach_comments_before_token(&expression);
                 Some(expression)
             }
             _ => {
@@ -833,7 +829,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         self.expect(Kind::Colon);
-        let mut list_comments = self.start_list_comments();
+        let list_comments = self.start_list_comments();
         let consequent = self.collect_list_with_previous(|p, previous| {
             let kind = p.cur_kind();
             if matches!(
@@ -845,7 +841,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             let stmt = p.parse_statement_in_list(
                 StatementContext::StatementList,
-                &mut list_comments,
+                &list_comments,
                 &[],
                 previous,
             );

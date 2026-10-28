@@ -936,11 +936,11 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
 
             // Parse the statement with await context enabled (TopLevel context is already set)
             let previous = stmt_index.checked_sub(1).and_then(|index| statements.get(index));
-            let mut list_comments = self.start_list_comments();
+            let list_comments = self.start_list_comments();
             let stmt = self.context_add(Context::Await, |p| {
                 p.parse_statement_in_list(
                     StatementContext::Program,
-                    &mut list_comments,
+                    &list_comments,
                     directives,
                     previous,
                 )

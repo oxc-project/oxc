@@ -34,7 +34,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         {
             self.state.trailing_commas.insert(start, self.end_span(comma_start));
         }
-        self.attach_comments_before_close(&object_expression_properties);
+        self.attach_comments_after_last(&object_expression_properties);
         self.expect(Kind::RCurly);
         ObjectExpression::boxed(self.end_span(start), object_expression_properties, self)
     }
