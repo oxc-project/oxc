@@ -263,6 +263,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `TemplateLiteral`[?Yield, ?Await, ~Tagged]
     ///     `CoverParenthesizedExpressionAndArrowParameterList`[?Yield, ?Await]
     fn parse_primary_expression(&mut self) -> Expression<'a> {
+        // Ordinary identifiers do not need async-function or contextual-keyword disambiguation.
+        if self.at(Kind::Ident) {
+            return self.parse_identifier_expression();
+        }
         // FunctionExpression, GeneratorExpression
         // AsyncFunctionExpression, AsyncGeneratorExpression
         if self.at_function_with_async() {
