@@ -215,7 +215,6 @@ constcat = "0.6.1" # Const string concatenation
 convert_case = "0.12.0" # Case conversion
 cow-utils = "0.1.3" # Copy-on-write utilities
 criterion2 = { version = "3.0.4", default-features = false } # Benchmarking
-dragonbox_ecma = "0.1.12" # Fast float formatting
 editorconfig-parser = "0.0.4" # EditorConfig parsing
 encoding_rs = "0.8.35" # Character encoding
 encoding_rs_io = "0.1.7" # Encoding I/O
@@ -281,6 +280,7 @@ ureq = { version = "3.3.0", default-features = false } # HTTP client
 url = { version = "2.5.8" } # URL parsing
 walkdir = "2.5.0" # Directory traversal
 windows-sys = { version = "0.61.2" } # Windows API bindings
+zmij_ecma = "1.0.23" # Fast float formatting
 
 [workspace.metadata.cargo-shear]
 ignored = [

@@ -17,7 +17,6 @@ description.workspace = true
 workspace = true
 
 [dependencies]
-dragonbox_ecma = { workspace = true }
 oxc_allocator = { workspace = true }
 oxc_ast = { workspace = true }
 oxc_diagnostics = { workspace = true }
@@ -26,6 +25,8 @@ oxc_parser = { workspace = true }
 oxc_span = { workspace = true }
 oxc_str = { workspace = true }
 oxc_syntax = { workspace = true }
+
+zmij_ecma = { workspace = true }
 
 [dev-dependencies]
 insta = { workspace = true }
