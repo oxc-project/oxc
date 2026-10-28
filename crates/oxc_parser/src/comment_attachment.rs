@@ -952,6 +952,16 @@ impl<'a> Visit<'a> for Walker<'_> {
         self.leave_node(kind);
     }
 
+    fn visit_binding_property(&mut self, it: &BindingProperty<'a>) {
+        if !it.shorthand {
+            return walk::walk_binding_property(self, it);
+        }
+        let kind = AstKind::BindingProperty(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_binding_pattern(&it.value);
+        self.leave_node(kind);
+    }
+
     prune! {
         visit_statement, walk_statement, Statement;
         visit_expression, walk_expression, Expression;
