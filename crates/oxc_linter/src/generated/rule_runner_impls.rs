@@ -4448,7 +4448,7 @@ impl RuleRunner for crate::rules::oxc::no_this_in_exported_function::NoThisInExp
 
 impl RuleRunner for crate::rules::oxc::number_arg_out_of_range::NumberArgOutOfRange {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::NumericLiteral]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
