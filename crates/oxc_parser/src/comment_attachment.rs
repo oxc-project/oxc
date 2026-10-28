@@ -1,11 +1,17 @@
 //! Assign source comments to AST nodes.
 //!
-//! Each comment is owned by the deepest node containing it, or by a child of that node next to it:
+//! Each comment is owned by the deepest node containing it, or by a child of that node next to it.
+//! A child is next to the comment if only whitespace and comments are between them, or for the
+//! preceding child, also a comma on the comment's line.
 //!
-//! * Leading on the following child.
-//! * Trailing on the preceding child, if the comment is on the same line as the end of that child
-//!   or the comma after it, or if no following child is next to it.
-//! * Otherwise dangling on the containing node.
+//! * If both children are next to it, the comment trails the preceding child if it is on the same
+//!   line as the end of that child or the comma after it, and a line break follows it before the
+//!   following child. Otherwise it leads the following child.
+//! * If only one is, the comment leads or trails that child.
+//! * If neither is, the comment is dangling on the containing node.
+//!
+//! Annotation comments (`@__PURE__` and `#__NO_SIDE_EFFECTS__`) instead lead the call or function
+//! they apply to.
 //!
 //! Most comments are assigned during parsing, where the owner follows from the surrounding tokens:
 //! comments after a token such as `,`, `(`, `:`, `=`, `return`, a binary operator, `?` or `:` in

@@ -174,10 +174,12 @@ pub struct ParserReturn<'a> {
     /// Semantic analysis replaces these with its own dense node IDs.
     ///
     /// Every comment in [`Program::comments`] is assigned an owning node in this AST, with a
-    /// [`CommentPlacement`](oxc_ast::CommentPlacement) relative to it. A comment is leading on the
-    /// child after it, or trailing on the child before it on the same line, of the deepest node
-    /// containing it. Otherwise it is dangling in that node. Comments are dangling in Program
-    /// after a fatal error.
+    /// [`CommentPlacement`](oxc_ast::CommentPlacement) relative to it. Within the deepest node
+    /// containing it, a comment trails the child before it if it is at the end of that child's
+    /// line, and otherwise leads the child after it. If only one of those children is adjacent,
+    /// it is assigned to that one, and if neither is, it is dangling in that node. Annotation
+    /// comments lead the call or function they apply to. Comments are dangling in Program after a
+    /// fatal error.
     ///
     /// ## Validity
     /// It is possible for the AST to be present and semantically invalid. This will happen if
