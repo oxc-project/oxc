@@ -27,6 +27,9 @@ mod context;
 mod operator;
 mod type_context;
 
+#[cfg(test)]
+mod tests;
+
 pub(super) use common::{Brackets, Closers, Tokens, prev_sig};
 pub(super) use context::Walks;
 pub(super) use operator::not_operator_position;
@@ -53,9 +56,6 @@ const BRACKET_STEP_CAP: u32 = 1024;
 /// Byte cap on the forward scans. Past it one pass resolves the opener exactly, and records what
 /// it crosses in [`Closers`].
 const FORWARD_SCAN_CAP: usize = 4096;
-
-#[cfg(test)]
-mod tests;
 
 /// What the questions keep across a lex: the context walks, the bracket bitmap and the closers
 /// the forward scans resolved. Owned by the lexer, begun at each lex, restarted when `coalesce`
