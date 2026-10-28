@@ -1,0 +1,27 @@
+apps/oxlint/test/fixtures/bom/output.snap.md
+  s_eb0b2f9a6a6b73::t_566e8df084cd01 56,58,137,139
+apps/oxlint/test/fixtures/comments/output.snap.md
+  s_eb0b2f9a6a6b73::t_bd75329ea0d08a 286-299
+apps/oxlint/test/fixtures/estree/output.snap.md
+  s_eb0b2f9a6a6b73::t_c1fc393bef8093 36-40,55-62
+apps/oxlint/test/fixtures/getNodeByRangeIndex/output.snap.md
+  s_eb0b2f9a6a6b73::t_4491bd4af796b2 6,13
+tasks/coverage/snapshots/estree_typescript.snap
+  s_eb0b2f9a6a6b73::t_c68f99ed39717b 5,10,12,14-16,18,20,22-24,26,28,30,32,34,36,38,40,42,44,46,48,50,52,54,56,58,60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0ac3b4626a52ea601680e9b9260c62209a52a3c4",
+  "prompts": {},
+  "sessions": {
+    "s_eb0b2f9a6a6b73": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a183c3-d09b-7600-8971-2b64c8ef197e",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
