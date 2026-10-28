@@ -1604,8 +1604,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        let mut expr =
-            self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function);
+        let mut expr = if self.at(Kind::Question) {
+            self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function)
+        } else {
+            lhs
+        };
 
         if let Some(comments) = no_side_effects_comments {
             self.apply_no_side_effects_comments_to_function(comments, &mut expr);
