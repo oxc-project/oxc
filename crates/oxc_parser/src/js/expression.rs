@@ -9,6 +9,7 @@ use oxc_regular_expression::ast::Pattern;
 use oxc_span::{GetSpan, Span};
 use oxc_str::{Ident, JSStr, Str};
 use oxc_syntax::{
+    node::NodeId,
     number::{BigintBase, NumberBase},
     precedence::Precedence,
 };
