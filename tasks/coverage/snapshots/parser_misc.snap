@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 120/120 (100.00%)
-Positive Passed: 120/120 (100.00%)
-Negative Passed: 259/259 (100.00%)
+AST Parsed     : 121/121 (100.00%)
+Positive Passed: 121/121 (100.00%)
+Negative Passed: 261/261 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -5108,6 +5108,20 @@ Negative Passed: 259/259 (100.00%)
  1 │ class C { readonly constructor() {} }
    ·           ────────
    ╰────
+
+  × Invalid regular expression: Invalid class atom
+   ╭─[misc/fail/regexp-unicode-class-control-digit.js:1:3]
+ 1 │ /[\c1]/u;
+   ·   ─
+   ╰────
+  help: This character or escape sequence is not valid inside a character class
+
+  × Invalid regular expression: Could not parse the entire pattern
+   ╭─[misc/fail/regexp-unicode-leading-zero-reference.js:1:5]
+ 1 │ /()\01/u;
+   ·     ▲
+   ╰────
+  help: Check for unbalanced brackets or invalid escape sequences
 
   × Invalid rest element target in destructuring assignment
    ╭─[misc/fail/rest-assignment-target.js:1:6]
