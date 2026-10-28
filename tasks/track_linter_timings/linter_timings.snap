@@ -493,7 +493,7 @@ typescript/no-non-null-asserted-nullish-coalescing      |   7341
 typescript/no-non-null-asserted-optional-chain          |    577
 typescript/no-non-null-assertion                        |    577
 typescript/no-require-imports                           |  62608
-typescript/no-this-alias                                |  13590
+typescript/no-this-alias                                |   4350
 typescript/no-unnecessary-parameter-property-assignment |   1916
 typescript/no-unnecessary-type-constraint               |    362
 typescript/no-unsafe-declaration-merging                |    500
