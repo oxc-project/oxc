@@ -405,6 +405,16 @@ function f(
 /* x */ -> Trailing FormalParameter `a`
 // c -> Trailing FormalParameter `a`
 
+=== js ===
+const { a = b /* c */ + d } = x;
+---
+/* c */ -> Trailing IdentifierReference `b`
+
+=== js ===
+const { a /* c */ = b } = x;
+---
+/* c */ -> Trailing BindingIdentifier `a`
+
 ##### line_comment_trailing_whitespace
 
 === js ===
