@@ -3561,7 +3561,7 @@ impl RuleRunner
     for crate::rules::unicorn::no_useless_fallback_in_spread::NoUselessFallbackInSpread
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::LogicalExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::SpreadElement]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
