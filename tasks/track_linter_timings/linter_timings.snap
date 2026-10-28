@@ -668,7 +668,6 @@ vitest/no-mocks-import                                     |      7
 vitest/no-standalone-expect                                |      7
 vitest/no-test-return-statement                            |  14199
 vitest/prefer-called-exactly-once-with                     |  14953
-vitest/prefer-called-times                                 |      0
 vitest/prefer-describe-function-title                      |      0
 vitest/prefer-each                                         |      6
 vitest/prefer-expect-assertions                            |      7
