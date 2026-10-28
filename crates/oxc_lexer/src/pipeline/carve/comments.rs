@@ -19,7 +19,6 @@ const CONTENT_VITE: u8 = 7;
 const CONTENT_COVERAGE_IGNORE: u8 = 8;
 const CONTENT_COVERAGE_IGNORE_FILE: u8 = 9;
 const CONTENT_PROPERTY_KEY: u8 = 10;
-const META_MULTILINE: u8 = 0x10;
 
 /// Lex the `//` line comment at `s`. Returns the resume index.
 #[inline(always)]
@@ -41,12 +40,9 @@ pub(super) unsafe fn lex_line_comment(
         bm_set(st, end);
     }
     let lic = lic_q >= 0 && (lic_q as usize) + 8 < end;
-    let m = meta_byte_flags(&srcs[..n], s as u32, end as u32, false, false, lic);
-    debug_assert_eq!(
-        m,
-        meta_byte_exact(&srcs[..n], s as u32, end as u32, false),
-        "LCOM meta fused != exact at {s}"
-    );
+    let body = comment_body(&srcs[..n], s as u32, end as u32, false);
+    let m = classify(body, false, lic);
+    debug_assert_eq!(m, classify_exact(body, false), "LCOM content fused != exact at {s}");
     push_comment_record(srcs, n, s as u32, end as u32, CommentKind::Line, true, m, lanes);
     end
 }
@@ -63,7 +59,7 @@ pub(super) unsafe fn lex_block_comment(
     s: usize,
     lanes: &mut Lanes,
 ) -> usize {
-    let (e, saw_nl, lic_q) = scan_block_comment(src, n, s + 2);
+    let (e, mut saw_nl, lic_q) = scan_block_comment(src, n, s + 2);
     let end = if e < n { e + 1 } else { n };
     if e >= n {
         lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedBlockComment);
@@ -72,23 +68,21 @@ pub(super) unsafe fn lex_block_comment(
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
+
+    let body = comment_body(&srcs[..n], s as u32, end as u32, true);
     let m = if e < n {
         let lic = lic_q >= 0 && (lic_q as usize) + 8 < e - 1;
-        meta_byte_flags(&srcs[..n], s as u32, end as u32, true, saw_nl, lic)
+        let m = classify(body, true, lic);
+        debug_assert_eq!(m, classify_exact(body, true), "BCOM content fused != exact at {s}");
+        debug_assert_eq!(saw_nl, has_nl_cr(body), "BCOM saw_nl != exact at {s}");
+        m
     } else {
-        meta_byte_exact(&srcs[..n], s as u32, end as u32, true)
+        saw_nl = has_nl_cr(body);
+        classify_exact(body, true)
     };
-    debug_assert_eq!(
-        m,
-        meta_byte_exact(&srcs[..n], s as u32, end as u32, true),
-        "BCOM meta fused != exact at {s}"
-    );
 
-    let comment_kind = if m & META_MULTILINE != 0 {
-        CommentKind::MultiLineBlock
-    } else {
-        CommentKind::SingleLineBlock
-    };
+    let comment_kind =
+        if saw_nl { CommentKind::MultiLineBlock } else { CommentKind::SingleLineBlock };
 
     let mut q = end;
     let mut followed_by_newline = false;
@@ -143,9 +137,10 @@ pub(super) unsafe fn lex_html_open_comment(
     // `<`, `!`, `-` are opchars: clear the span from `opch` or `coalesce`
     // would re-tokenize `<!--` as operators.
     bm_clear_range(opch, s, end - 1);
-    // meta_byte_exact skips a 2-byte delimiter; pass s + 2 so the 4-byte
+    // `comment_body` skips a 2-byte delimiter; pass s + 2 so the 4-byte
     // `<!--` is skipped. The record keeps (s, end).
-    let m = meta_byte_exact(&srcs[..n], (s + 2) as u32, end as u32, false);
+    let body = comment_body(&srcs[..n], (s + 2) as u32, end as u32, false);
+    let m = classify_exact(body, false);
     push_comment_record(srcs, n, s as u32, end as u32, CommentKind::HtmlOpen, true, m, lanes);
     end
 }
@@ -188,7 +183,8 @@ pub(super) unsafe fn lex_html_close_comment(
     bm_clear_range(opch, start, end - 1);
     // `-->` is a 3-byte delimiter; pass start + 1 so the 2-byte-delimiter
     // body resolves to [s + 1, end).
-    let m = meta_byte_exact(&srcs[..n], (start + 1) as u32, end as u32, false);
+    let body = comment_body(&srcs[..n], (start + 1) as u32, end as u32, false);
+    let m = classify_exact(body, false);
     push_comment_record(srcs, n, start as u32, end as u32, CommentKind::HtmlClose, true, m, lanes);
     end
 }
@@ -240,22 +236,13 @@ fn html_close_at_line_start(src: &[u8], mut q: usize) -> bool {
 }
 
 #[inline]
-fn meta_byte_flags(src: &[u8], start: u32, end: u32, is_block: bool, ml: bool, lic: bool) -> u8 {
-    let ord = classify(body(src, start, end, is_block), is_block, lic) & 0x0F;
-    ord | if ml && is_block { META_MULTILINE } else { 0 }
+fn classify_exact(body: &[u8], is_block: bool) -> u8 {
+    let lic = contains_license_or_preserve(body);
+    classify(body, is_block, lic)
 }
 
 #[inline]
-fn meta_byte_exact(src: &[u8], start: u32, end: u32, is_block: bool) -> u8 {
-    let b = body(src, start, end, is_block);
-    let lic = contains_license_or_preserve(b);
-    let ord = classify(b, is_block, lic) & 0x0F;
-    let ml = is_block && has_nl_cr(b);
-    ord | if ml { META_MULTILINE } else { 0 }
-}
-
-#[inline]
-fn body(src: &[u8], start: u32, end: u32, is_block: bool) -> &[u8] {
+fn comment_body(src: &[u8], start: u32, end: u32, is_block: bool) -> &[u8] {
     let (lo, hi) = if is_block {
         (start as usize + 2, (end as usize).saturating_sub(2))
     } else {
@@ -426,7 +413,7 @@ fn push_comment_record(
 
 #[inline]
 fn content_from_ordinal(o: u8) -> CommentContent {
-    match o & 0x0F {
+    match o {
         CONTENT_LEGAL => CommentContent::Legal,
         CONTENT_JSDOC => CommentContent::Jsdoc,
         CONTENT_JSDOC_LEGAL => CommentContent::JsdocLegal,
