@@ -274,10 +274,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         return None;
                     }
                     p.bump_any();
-                    if p.cur_token().follows_comment()
-                        && let Some(element) = previous
-                    {
-                        p.attach_comments_after_separated_element(element);
+                    if p.cur_token().follows_comment() {
+                        if let Some(rest) = rest.as_deref() {
+                            p.attach_comments_after_separator(rest);
+                        } else if let Some(element) = previous {
+                            p.attach_comments_after_separated_element(element);
+                        }
                     }
                     let kind = p.cur_kind();
                     if kind == close {
