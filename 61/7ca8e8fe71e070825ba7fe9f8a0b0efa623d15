@@ -1,0 +1,29 @@
+crates/oxc_parser/src/comment_attachment.rs
+  s_95eb5bc177a909::t_4cc7f627d093aa 12-14,125,130-131,136,141-142,152,167,286-288,290,294-304,310,372,380-391,394
+crates/oxc_parser/src/cursor.rs
+  s_95eb5bc177a909::t_138cd65bc53a2d 479,482,541
+crates/oxc_parser/src/js/expression.rs
+  s_95eb5bc177a909::t_ef53a108423df8 51-52,286,311-324,1073,1190,1405,1472,1475-1476,1484
+crates/oxc_parser/src/js/object.rs
+  s_95eb5bc177a909::t_e4ec6037b33b3a 36
+crates/oxc_parser/src/js/statement.rs
+  s_95eb5bc177a909::t_09377a0f5ccea1 56,78-79,140,142,153,819-820,830,842
+crates/oxc_parser/src/lib.rs
+  s_95eb5bc177a909::t_c6863de7bb055d 938,942
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "617ca8e8fe71e070825ba7fe9f8a0b0efa623d15",
+  "prompts": {},
+  "sessions": {
+    "s_95eb5bc177a909": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18327-00a1-7352-91c2-d17a218f4755",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

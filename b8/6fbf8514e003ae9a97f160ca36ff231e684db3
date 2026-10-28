@@ -1,0 +1,27 @@
+crates/oxc_parser/src/comment_attachment.rs
+  s_95eb5bc177a909::t_ba693826b12a9b 430-441,448-450
+crates/oxc_parser/src/js/grammar.rs
+  s_95eb5bc177a909::t_249ada311d2a71 100-101,103,182-183,185
+crates/oxc_parser/src/lib.rs
+  s_95eb5bc177a909::t_27c4d1de4ecfe4 98,910-912,914-917,920-921
+crates/oxc_parser/tests/comment_attachment.rs
+  s_95eb5bc177a909::t_e0d2aea96afae9 111,206-207
+crates/oxc_parser/tests/snapshots/comment_attachment__comment_attachment.snap
+  s_95eb5bc177a909::t_162b61e1f44984 169-173,614-623
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b86fbf8514e003ae9a97f160ca36ff231e684db3",
+  "prompts": {},
+  "sessions": {
+    "s_95eb5bc177a909": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18327-00a1-7352-91c2-d17a218f4755",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}

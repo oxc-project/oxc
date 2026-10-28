@@ -1,0 +1,23 @@
+crates/oxc_parser/src/comment_attachment.rs
+  s_95eb5bc177a909::t_ec4e71ac75aac7 39,478-494,497-499,598-634,822,826-843,1029-1043
+crates/oxc_parser/tests/comment_attachment.rs
+  s_95eb5bc177a909::t_41d83744abd195 107-108,196
+crates/oxc_parser/tests/snapshots/comment_attachment__comment_attachment.snap
+  s_95eb5bc177a909::t_5ae2e6e67371ff 159-168,572-576
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6969d28f8e00288336a37bbf1451f0836200b52b",
+  "prompts": {},
+  "sessions": {
+    "s_95eb5bc177a909": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18327-00a1-7352-91c2-d17a218f4755",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
