@@ -646,7 +646,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let cooked = if self.cur_token().escaped() {
             // `cooked = None` when template literal has invalid escape sequence
             let cooked = self.cur_template_string();
-            if cooked.is_some() && raw.contains('\r') {
+            // TRV normalizes line endings even when an invalid escape makes TV undefined.
+            if raw.contains('\r') {
                 raw =
                     Str::from_str_in(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"), self);
             }
