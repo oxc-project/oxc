@@ -934,7 +934,15 @@ fn test_fold_concat_chaining() {
     test_same("x = [].map(a => a + 1).concat(1)");
     // Merging would read `arr` after `arr.pop()` runs.
     test_same("function f(arr) { return [].concat(arr).concat(arr.pop()) }");
-    test_same("function f(arr) { return [1].concat(1, arr).concat(arr.pop()) }");
+    // The innermost call still folds its leading literals into the array it is called on.
+    test(
+        "function f(arr) { return [1].concat(1, [2], arr).concat(arr.pop()) }",
+        "function f(arr) { return [1, 1, 2].concat(arr).concat(arr.pop()) }",
+    );
+    test(
+        "function f(arr) { return [].concat(1, arr).concat(2).concat(arr.pop()) }",
+        "function f(arr) { return [1].concat(arr).concat(2).concat(arr.pop()) }",
+    );
     test_same("x = [].concat(a).concat(b)"); // reading the global `b` may run a getter
     // A spread runs an iterator, and the values it passes are read later.
     test_same("function f(arr) { return [].concat(arr).concat(...arr) }");

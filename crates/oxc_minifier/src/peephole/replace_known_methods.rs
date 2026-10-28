@@ -237,6 +237,7 @@ impl<'a> PeepholeOptimizations {
                 ctx,
             )
         {
+            Self::fold_innermost_array_concat(node, ctx);
             return;
         }
 
@@ -252,6 +253,22 @@ impl<'a> PeepholeOptimizations {
             ctx,
         );
         ctx.replace_expression(node, new_expr);
+    }
+
+    /// When a chain cannot merge, its innermost call can still fold into the array literal it is
+    /// called on: `[1].concat(1, a).concat(b())` -> `[1, 1].concat(a).concat(b())`.
+    /// [`Self::try_fold_concat`] leaves that call to the chain, so fold it here.
+    fn fold_innermost_array_concat(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        let Expression::CallExpression(call) = node else { return };
+        let Expression::StaticMemberExpression(member) = &mut call.callee else { return };
+        if !matches!(member.object, Expression::ArrayExpression(_)) {
+            Self::fold_innermost_array_concat(&mut member.object, ctx);
+            return;
+        }
+        let CallExpression { span, callee, arguments, .. } = call.as_mut();
+        if let Some(replacement) = Self::try_fold_concat(*span, arguments, callee, ctx) {
+            ctx.replace_expression(node, replacement);
+        }
     }
 
     /// `[].concat(1, 2)` -> `[1, 2]`
