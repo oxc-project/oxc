@@ -323,8 +323,7 @@ const LOC_DESCRIPTOR: PropertyDescriptor = {
  */
 export function computeLoc(start: number, end: number): Location {
   // All AST nodes, tokens and comments have `start < end`, with only one exception:
-  // `Program` node can have `start === end` if it has no directives or statements - either 0-length file,
-  // or purely comments and/or whitespace and/or hashbang. But `start > end` is impossible.
+  // `Program` node has `start === end` for a 0-length file. But `start > end` is impossible.
   debugAssert(start <= end, "`start` must be <= `end`");
 
   if (lines.length === 0) initLines();
@@ -418,8 +417,6 @@ export function getNodeByRangeIndex(offset: number): ESTreeNode | null {
   debugAssertIsNonNull(ast);
 
   // If index is outside of `Program`, return `null`
-  // TODO: Once `Program`'s span covers the entire file (as per ESLint v10), `index < ast.start` check can be removed
-  // (or changed to `index < 0` if we want to check for negative indices)
   if (offset < ast.start || offset >= ast.end) return null;
 
   // Search for the node containing the index
