@@ -658,7 +658,6 @@ vitest/max-expects                                         |      7
 vitest/max-nested-describe                                 |      7
 vitest/no-commented-out-tests                              |      7
 vitest/no-conditional-in-test                              |  30315
-vitest/no-conditional-tests                                |      0
 vitest/no-duplicate-hooks                                  |      7
 vitest/no-identical-title                                  |      7
 vitest/no-import-node-test                                 |      7
