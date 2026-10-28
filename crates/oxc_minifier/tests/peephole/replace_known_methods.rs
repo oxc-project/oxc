@@ -939,20 +939,11 @@ fn test_fold_concat_chaining() {
         "function f(arr) { return [1].concat(1, [2], arr).concat(arr.pop()) }",
         "function f(arr) { return [1, 1, 2].concat(arr).concat(arr.pop()) }",
     );
-    test_same("x = [].concat(a).concat(b)"); // reading the global `b` may run a getter
-    // Calls still merge up to the first call that would run after a read.
     test(
         "function f(arr) { return [].concat(1, arr).concat(2).concat(arr.pop()) }",
-        "function f(arr) { return [1].concat(arr, 2).concat(arr.pop()) }",
+        "function f(arr) { return [1].concat(arr).concat(2).concat(arr.pop()) }",
     );
-    test(
-        "function f(r, t, n, item) { return [].concat(r.slice(0, t)).concat(item).concat(r.slice(t, n)) }",
-        "function f(r, t, n, item) { return [].concat(r.slice(0, t), item).concat(r.slice(t, n)) }",
-    );
-    test(
-        "function f(r, a, b, n) { return [].concat(r.slice(0, a)).concat([r[b]]).concat(r.slice(a + 1, b)).concat([r[a]]).concat(r.slice(b + 1, n)) }",
-        "function f(r, a, b, n) { return [].concat(r.slice(0, a)).concat([r[b]], r.slice(a + 1, b)).concat([r[a]], r.slice(b + 1, n)) }",
-    );
+    test_same("x = [].concat(a).concat(b)"); // reading the global `b` may run a getter
     // A spread runs an iterator, and the values it passes are read later.
     test_same("function f(arr) { return [].concat(arr).concat(...arr) }");
     test_same("function f(arr) { return [].concat(...arr).concat(arr.pop()) }");

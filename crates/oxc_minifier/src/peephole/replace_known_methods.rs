@@ -120,7 +120,6 @@ impl<'a> PeepholeOptimizations {
 
     /// `[].concat(a).concat(b)` -> `[].concat(a, b)`
     /// `"".concat(a).concat(b)` -> `"".concat(a, b)`
-    /// `[].concat(a).concat(b).concat(f())` -> `[].concat(a, b).concat(f())`
     pub fn replace_concat_chain(node: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let original_span = if let Expression::CallExpression(root_call_expr) = node {
             root_call_expr.span
@@ -232,38 +231,14 @@ impl<'a> PeepholeOptimizations {
         {
             return;
         }
-        if matches!(member.object, Expression::ArrayExpression(_)) {
-            let group_lengths = Self::array_concat_merge_groups(
+        if matches!(member.object, Expression::ArrayExpression(_))
+            && !Self::array_concat_calls_can_merge(
                 collected_arguments.iter().rev().map(|args| &**args),
                 ctx,
-            );
-            if group_lengths.len() == collected_arguments.len() {
-                Self::fold_innermost_array_concat(node, ctx);
-                return;
-            }
-            if group_lengths.len() > 1 {
-                // Rebuild the chain with one call per group, starting from `[...].concat`.
-                let mut calls = collected_arguments.into_iter().rev();
-                let mut chain = new_root_callee.take_in(ctx);
-                for (index, &length) in group_lengths.iter().enumerate() {
-                    if index > 0 {
-                        let property = IdentifierName::new(SPAN, "concat", ctx);
-                        chain = Expression::new_static_member_expression(
-                            SPAN, chain, property, false, ctx,
-                        );
-                    }
-                    let arguments = ArenaVec::from_iter_in(
-                        calls.by_ref().take(length).flat_map(|args| args.take_in(ctx)),
-                        ctx,
-                    );
-                    let span = if index + 1 == group_lengths.len() { original_span } else { SPAN };
-                    chain =
-                        Expression::new_call_expression(span, chain, None, arguments, false, ctx);
-                }
-                drop(calls);
-                ctx.replace_expression(node, chain);
-                return;
-            }
+            )
+        {
+            Self::fold_innermost_array_concat(node, ctx);
+            return;
         }
 
         let new_expr = Expression::new_call_expression(
@@ -461,33 +436,22 @@ impl<'a> PeepholeOptimizations {
     /// evaluates its arguments. Merging the calls delays those reads, so a later argument can
     /// mutate an earlier one first: `[].concat(arr).concat(arr.pop())`.
     /// Arguments of the same call are already evaluated together, so only later calls matter.
-    ///
-    /// Returns the lengths of the groups of consecutive calls, in evaluation order, that can each
-    /// merge into one call. A group ends before a call with side effects once the group may have
-    /// read an object. Every part of a valid group is valid, so ending groups as late as possible
-    /// gives the fewest calls.
-    fn array_concat_merge_groups<'b>(
+    fn array_concat_calls_can_merge<'b>(
         calls: impl Iterator<Item = &'b Arguments<'a>>,
         ctx: &TraverseCtx<'a>,
-    ) -> ArenaVec<'a, usize>
+    ) -> bool
     where
         'a: 'b,
     {
-        let mut group_lengths = ArenaVec::new_in(ctx);
         // A spread argument both runs an iterator and passes values that are read later.
         let mut may_read_object = false;
         for arguments in calls {
-            if group_lengths.is_empty()
-                || may_read_object
-                    && arguments.iter().any(|argument| {
-                        argument.as_expression().is_none_or(|e| e.may_have_side_effects(ctx))
-                    })
+            if may_read_object
+                && arguments.iter().any(|argument| {
+                    argument.as_expression().is_none_or(|e| e.may_have_side_effects(ctx))
+                })
             {
-                group_lengths.push(0);
-                may_read_object = false;
-            }
-            if let Some(length) = group_lengths.last_mut() {
-                *length += 1;
+                return false;
             }
             may_read_object |= arguments.iter().any(|argument| {
                 argument.as_expression().is_none_or(|argument| {
@@ -501,7 +465,7 @@ impl<'a> PeepholeOptimizations {
                 })
             });
         }
-        group_lengths
+        true
     }
 
     /// `['a','b'].join()` -> `'a,b'`
