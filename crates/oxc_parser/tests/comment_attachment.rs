@@ -85,6 +85,8 @@ fn comment_attachment() {
     cases.add("a /* a */ ? b /* b */ : c;", SourceType::mjs());
     cases.add("x = (/* a */ y /* b */); z = (/* c */ y, w /* d */);", SourceType::mjs());
     cases.add("f(a, b /* b */); @dec(c /* c */) class C {}", SourceType::ts());
+    cases.add("[a /* a */, , /* e */ , b]; ({ a: 1 /* b */, c });", SourceType::mjs());
+    cases.add("[x /* x */, y] = z; ({ x /* x */, y } = z); f<A /* a */, B>(c);", SourceType::ts());
 
     cases.group("empty_containers");
     cases.add("function f(/* params */) { /* body */ }", SourceType::mjs());
