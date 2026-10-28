@@ -1,0 +1,21 @@
+tasks/coverage/src/lib.rs
+  s_eb0b2f9a6a6b73::t_3c892841af4816 519-523
+tasks/coverage/src/load.rs
+  s_eb0b2f9a6a6b73::t_982a2abd5130de 5,17-19,24-27,41-67,120,169,229,289
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "00ee8eeff24c2b6e024048076959b49c5a29d9f4",
+  "prompts": {},
+  "sessions": {
+    "s_eb0b2f9a6a6b73": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a183c3-d09b-7600-8971-2b64c8ef197e",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
