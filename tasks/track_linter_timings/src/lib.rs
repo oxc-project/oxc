@@ -51,6 +51,7 @@ pub fn run() -> Result<(), io::Error> {
             &allocator,
             None,
             Some(&rule_timing_store),
+            Arc::default(),
         );
     }
 

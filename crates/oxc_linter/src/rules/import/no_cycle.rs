@@ -1,7 +1,8 @@
 use std::{
     ffi::OsStr,
     path::{Component, Path, PathBuf},
-    sync::Arc,
+    ptr,
+    sync::{Arc, RwLock},
 };
 
 use cow_utils::CowUtils;
@@ -9,7 +10,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_str::CompactStr;
-use rustc_hash::FxHashSet;
+use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -147,12 +148,26 @@ impl Rule for NoCycle {
     fn run_once(&self, ctx: &LintContext<'_>) {
         let module_record = ctx.module_record();
 
-        // Gated on unbounded `max_depth` (the default), where the walks below explore the whole
-        // reachable subgraph anyway so the prefilter replaces their work. Under a shallow depth cap
-        // they are cheap and an unbounded prefilter could cost more than it saves.
-        if self.max_depth == u32::MAX && !self.can_be_in_cycle(module_record) {
-            return;
+        // Not under `maxDepth`, which bounds the walks, and not for a section of a multi-section
+        // file (`.vue`, `.svelte`, `.astro`): the walks match a file by path, which a sibling
+        // section's record shares.
+        let membership = (self.max_depth == u32::MAX && ctx.other_file_hosts().is_empty())
+            .then(|| ctx.cross_file_cache().get_or_default::<CycleMembership>());
+        let mut scope = None;
+        if let Some(membership) = &membership {
+            let table = &membership.tables[usize::from(self.ignore_types)];
+            let scc = self.component_of(module_record, table);
+            if !scc.cyclic {
+                return;
+            }
+            scope = Some((table.read().unwrap(), scc));
         }
+        // Every cycle through this file stays inside its component, and nothing outside reaches
+        // back in (it would be a member), so pruning the rest of the graph changes neither the
+        // members the walks visit nor the path they find first.
+        let in_component = |module: &ModuleRecord| {
+            scope.as_ref().is_none_or(|(table, scc)| table.get(module) == Some(*scc))
+        };
 
         let needle = &module_record.resolved_absolute_path;
         let mut direct_imports = module_record
@@ -179,7 +194,9 @@ impl Rule for NoCycle {
 
             let visitor_result = ModuleGraphVisitorBuilder::default()
                 .max_depth(self.max_depth.saturating_sub(1))
-                .filter(|(key, val), parent| self.should_traverse_module(key, val, parent))
+                .filter(|(key, val), parent| {
+                    self.should_traverse_module(key, val, parent) && in_component(val)
+                })
                 .event(|event, (key, val), _| match event {
                     ModuleGraphVisitorEvent::Enter => {
                         stack.push((key.clone(), val.resolved_absolute_path.clone()));
@@ -207,54 +224,135 @@ impl Rule for NoCycle {
     }
 }
 
-impl NoCycle {
-    /// Is `root` in a cycle at all? True iff some module reachable from it imports it back — one
-    /// traversal answering for every direct import at once, instead of one walk per import.
-    ///
-    /// This only gates those walks, which still decide what is reported, so it must never miss a
-    /// cycle they would find: it follows the same edges under the same filter, and is unbounded
-    /// where they stop at `max_depth`.
-    fn can_be_in_cycle(&self, root: &ModuleRecord) -> bool {
-        // Pointer identity, to avoid cloning a `PathBuf` per node. `root` is never inserted: an
-        // edge back to it is the answer, not a node to expand.
-        let mut visited = FxHashSet::<usize>::default();
-        let mut stack = Vec::<Arc<ModuleRecord>>::new();
+/// Strongly connected components of every module classified so far in this lint run, shared by
+/// all files through the [`CrossFileCache`](crate::context::CrossFileCache). One table per
+/// `ignoreTypes` value, since that option decides which edges the graph has.
+#[derive(Default)]
+struct CycleMembership {
+    tables: [RwLock<ComponentTable>; 2],
+}
 
-        if self.visit_dependencies(root, root, &mut visited, &mut stack) {
-            return true;
+/// Keyed by path, the identity the walks use.
+#[derive(Default)]
+struct ComponentTable(FxHashMap<PathBuf, Scc>);
+
+impl ComponentTable {
+    fn get(&self, module: &ModuleRecord) -> Option<Scc> {
+        self.0.get(module.resolved_absolute_path.as_path()).copied()
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+struct Scc {
+    id: usize,
+    /// More than one module, or a module that imports itself.
+    cyclic: bool,
+}
+
+impl NoCycle {
+    /// `root`'s strongly connected component, classifying it and everything reachable from it
+    /// that no earlier file classified. `root` is in a cycle iff its component is cyclic.
+    fn component_of(&self, root: &ModuleRecord, table: &RwLock<ComponentTable>) -> Scc {
+        let found = table.read().unwrap().get(root);
+        if let Some(scc) = found {
+            return scc;
         }
-        while let Some(module_record) = stack.pop() {
-            if self.visit_dependencies(&module_record, root, &mut visited, &mut stack) {
-                return true;
-            }
-        }
-        false
+        let mut table = table.write().unwrap();
+        table.get(root).unwrap_or_else(|| self.classify(root, &mut table))
     }
 
-    /// Pushes `module_record`'s unvisited traversable dependencies onto `stack`; `true` if one of
-    /// them is `root`, closing a cycle.
-    fn visit_dependencies(
-        &self,
-        module_record: &ModuleRecord,
-        root: &ModuleRecord,
-        visited: &mut FxHashSet<usize>,
-        stack: &mut Vec<Arc<ModuleRecord>>,
-    ) -> bool {
-        for (specifier, weak_module_record) in module_record.loaded_modules().iter() {
-            let loaded_module_record = weak_module_record.upgrade().unwrap();
-            if !self.should_traverse_module(specifier, &loaded_module_record, module_record) {
+    /// Iterative Tarjan over the modules reachable from `root` through traversable edges,
+    /// recording each finished component in `table`. A child already in `table` was finished by
+    /// an earlier call, which classified everything it could reach, so an edge to it cannot
+    /// close a cycle through the current stack and is skipped like any edge to a finished node.
+    fn classify(&self, root: &ModuleRecord, table: &mut ComponentTable) -> Scc {
+        struct Node {
+            path: PathBuf,
+            lowlink: usize,
+            on_stack: bool,
+            imports_itself: bool,
+        }
+        struct Frame {
+            node: usize,
+            children: std::vec::IntoIter<Arc<ModuleRecord>>,
+        }
+
+        // A node's index in `nodes` is its discovery index.
+        let mut nodes = vec![Node {
+            path: root.resolved_absolute_path.clone(),
+            lowlink: 0,
+            on_stack: true,
+            imports_itself: false,
+        }];
+        let mut node_of = FxHashMap::from_iter([(ptr::from_ref(root), 0)]);
+        let mut scc_stack = vec![0];
+        let mut frames =
+            vec![Frame { node: 0, children: self.traversable_imports(root).into_iter() }];
+
+        while let Some(frame) = frames.last_mut() {
+            let v = frame.node;
+            let Some(child) = frame.children.next() else {
+                frames.pop();
+                let lowlink = nodes[v].lowlink;
+                if let Some(parent) = frames.last() {
+                    let parent = &mut nodes[parent.node];
+                    parent.lowlink = parent.lowlink.min(lowlink);
+                }
+                if lowlink == v {
+                    let singleton = scc_stack.last() == Some(&v);
+                    // `id` is unique: every component adds at least one entry.
+                    let scc =
+                        Scc { id: table.0.len(), cyclic: !singleton || nodes[v].imports_itself };
+                    while let Some(member) = scc_stack.pop() {
+                        nodes[member].on_stack = false;
+                        table.0.insert(std::mem::take(&mut nodes[member].path), scc);
+                        if member == v {
+                            break;
+                        }
+                    }
+                }
+                continue;
+            };
+
+            // By path, as the walks compare.
+            if child.resolved_absolute_path == nodes[v].path {
+                nodes[v].imports_itself = true;
                 continue;
             }
-            // By path, not pointer: that is what the walks report on, and one file can have
-            // several records (one per section).
-            if loaded_module_record.resolved_absolute_path == root.resolved_absolute_path {
-                return true;
+            if table.get(&child).is_some() {
+                continue;
             }
-            if visited.insert(Arc::as_ptr(&loaded_module_record) as usize) {
-                stack.push(loaded_module_record);
+            if let Some(&w) = node_of.get(&Arc::as_ptr(&child)) {
+                if nodes[w].on_stack {
+                    nodes[v].lowlink = nodes[v].lowlink.min(w);
+                }
+                continue;
             }
+
+            let w = nodes.len();
+            node_of.insert(Arc::as_ptr(&child), w);
+            nodes.push(Node {
+                path: child.resolved_absolute_path.clone(),
+                lowlink: w,
+                on_stack: true,
+                imports_itself: false,
+            });
+            scc_stack.push(w);
+            frames.push(Frame { node: w, children: self.traversable_imports(&child).into_iter() });
         }
-        false
+
+        table.get(root).expect("`root` is classified once its traversal finishes")
+    }
+
+    fn traversable_imports(&self, module: &ModuleRecord) -> Vec<Arc<ModuleRecord>> {
+        module
+            .loaded_modules()
+            .iter()
+            .filter_map(|(specifier, weak)| {
+                let loaded = weak.upgrade().unwrap();
+                self.should_traverse_module(specifier, &loaded, module).then_some(loaded)
+            })
+            .collect()
     }
 
     fn should_traverse_module(
