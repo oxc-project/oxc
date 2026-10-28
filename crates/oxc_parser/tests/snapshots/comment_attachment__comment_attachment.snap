@@ -157,6 +157,16 @@ let f = <T,>(/* a */ a: T) => a; x = a < /* b */ b > c;
 /* b */ -> Leading IdentifierReference `c`
 
 === js ===
+({a = /* @__PURE__ */ f() });
+---
+/* @__PURE__ */ -> Dangling ObjectProperty `a = /* @__PURE__ */ f()`
+
+=== js ===
+({a = f(x, /* c */ y) });
+---
+/* c */ -> Dangling ObjectProperty `a = f(x, /* c */ y)`
+
+=== js ===
 [/* x */ x, ...rest /* rest */] = y;
 ---
 /* x */ -> Leading IdentifierReference `x`
@@ -558,6 +568,11 @@ foo(); // after foo
 @dec export class C {}
 ---
 // after foo -> Trailing ExpressionStatement `foo();`
+
+=== ts (unambiguous) ===
+@dec(a /* c */ + b) export class C {}
+---
+/* c */ -> Trailing IdentifierReference `a`
 
 === ts (unambiguous) ===
 namespace N {
