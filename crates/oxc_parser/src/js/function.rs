@@ -126,10 +126,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         return None;
                     }
                     p.bump_any();
-                    if p.cur_token().follows_comment()
-                        && let Some(param) = previous
-                    {
-                        p.attach_comments_after_separator(param);
+                    if p.cur_token().follows_comment() {
+                        if let Some(rest) = rest.as_deref() {
+                            p.attach_comments_after_separator(rest);
+                        } else if let Some(param) = previous {
+                            p.attach_comments_after_separator(param);
+                        }
                     }
                     let kind = p.cur_kind();
                     if kind == Kind::RParen {

@@ -160,6 +160,7 @@ fn comment_attachment() {
     cases.add("const {\n  a, // c\n  b,\n} = x;", SourceType::mjs());
     cases.add("const [\n  a, // c\n  b,\n] = x;", SourceType::mjs());
     cases.add("function f(\n  a, /* x */ // c\n  b,\n) {}", SourceType::mjs());
+    cases.add("declare function f(a: T, ...b: any[], // trailing b\n) {}", SourceType::ts());
     cases.add("const { a = b /* c */ + d } = x;", SourceType::mjs());
     cases.add("const { a /* c */ = b } = x;", SourceType::mjs());
 
