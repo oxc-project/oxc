@@ -155,7 +155,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) {
         self.attach_list_element_leading_comments(element, list, || match elements.last() {
             Some(previous) => Some((previous.span().end, previous.node_id())),
-            None => directives.last().map(|previous| (previous.span.end, previous.node_id.get())),
+            None => directives.last().map(|previous| (previous.span.end, previous.node_id())),
         });
     }
 

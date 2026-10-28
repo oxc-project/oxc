@@ -106,7 +106,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         let directive = Directive::new(span, string, Str::from(src), self);
                         self.replace_statement_comment_owner(
                             node_id.get(),
-                            directive.node_id.get(),
+                            directive.node_id(),
                             span,
                         );
                         directives.push(directive);
@@ -254,24 +254,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         match stmt {
             Statement::FunctionDeclaration(func) => {
                 func.pure = true;
-                Some(func.node_id.get())
+                Some(func.node_id())
             }
             Statement::ExportDefaultDeclaration(decl) => match &mut decl.declaration {
                 ExportDefaultDeclarationKind::FunctionExpression(func)
                 | ExportDefaultDeclarationKind::FunctionDeclaration(func) => {
                     func.pure = true;
-                    Some(func.node_id.get())
+                    Some(func.node_id())
                 }
                 ExportDefaultDeclarationKind::ArrowFunctionExpression(func) => {
                     func.pure = true;
-                    Some(func.node_id.get())
+                    Some(func.node_id())
                 }
                 _ => None,
             },
             Statement::ExportDeclaration(decl) => match &mut decl.declaration {
                 Declaration::FunctionDeclaration(func) => {
                     func.pure = true;
-                    Some(func.node_id.get())
+                    Some(func.node_id())
                 }
                 Declaration::VariableDeclaration(var_decl) if var_decl.kind.is_const() => {
                     if let Some(Some(expr)) = var_decl.declarations.first_mut().map(|d| &mut d.init)
