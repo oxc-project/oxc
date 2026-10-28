@@ -9,8 +9,9 @@
 //!
 //! Most comments are assigned during parsing, where the owner follows from the surrounding tokens:
 //! comments after a token such as `,`, `(`, `:`, `=`, `return`, a binary operator, `?` or `:` in
-//! a conditional lead the following node, and comments before the closing token after the last
-//! element of a list trail that element. These produce the same result as the general rules.
+//! a conditional lead the following node, and comments before a closing token, `,`, a binary
+//! operator, `?` or `:` in a conditional trail the preceding node. These produce the same result as
+//! the general rules.
 //!
 //! Lists without separators (statements, class elements and switch cases) keep a
 //! [`ListComments`]. When an element is complete, comments between the previous element and it
@@ -90,8 +91,6 @@ pub struct DelimitedComments {
 
 /// Comment state of a list without separators: statements, class elements or switch cases.
 pub struct ListComments {
-    /// Number of comments lexed when the list last had no unassigned comments.
-    seen: u32,
     /// Start of the list. Comments after it and before the first element lead that element.
     start: u32,
     /// Number of unassigned comments lexed before the list, which are outside it.
@@ -123,27 +122,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Record comment state before parsing a list, which starts after the previous token.
     #[inline]
     pub(crate) fn start_list_comments(&self) -> ListComments {
-        let outside = self.unassigned_comments();
-        ListComments {
-            seen: outside.wrapping_add(self.assigned_comments),
-            start: self.prev_token_end,
-            outside,
-        }
+        ListComments { start: self.prev_token_end, outside: self.unassigned_comments() }
     }
 
     /// Assign comments preceding and inside a completed list element which are not owned by its
     /// nested statements or list elements. `elements` precede it in its list, after `directives`
-    /// in a statement list.
+    /// in a statement list. There is nothing to do if every comment lexed is assigned, except
+    /// those before the list.
     #[inline]
     pub(crate) fn finish_list_element_comments<T: ListElement>(
         &mut self,
         element: &T,
-        list: &mut ListComments,
+        list: &ListComments,
         directives: &[Directive<'a>],
         elements: &[T],
     ) {
         #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
-        if self.lexer.trivia_builder.comments.len() as u32 != list.seen {
+        let lexed = self.lexer.trivia_builder.comments.len() as u32;
+        if lexed != self.assigned_comments.wrapping_add(list.outside) {
             self.finish_list_element_comments_cold(element, list, directives, elements);
         }
     }
@@ -153,7 +149,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn finish_list_element_comments_cold<T: ListElement>(
         &mut self,
         element: &T,
-        list: &mut ListComments,
+        list: &ListComments,
         directives: &[Directive<'a>],
         elements: &[T],
     ) {
@@ -168,7 +164,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn attach_list_element_leading_comments<T: ListElement>(
         &mut self,
         element: &T,
-        list: &mut ListComments,
+        list: &ListComments,
         previous: impl FnOnce() -> Option<(u32, NodeId)>,
     ) {
         // Comments before the current token are after the element, and lead the next one.
@@ -176,10 +172,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         // comments unless some precede or are inside this element.
         let unassigned = self.unassigned_comments();
         let lexed = unassigned.wrapping_add(self.assigned_comments) as usize;
-        #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
-        {
-            list.seen = lexed as u32;
-        }
         let pending = unassigned.wrapping_sub(list.outside) as usize;
         if pending == 0 {
             return;
@@ -291,21 +283,31 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         walker.finish();
     }
 
-    /// Assign comments after the last element of a list and before the closing token as trailing
-    /// on that element, if no separator follows it.
+    /// Assign comments between the last element of a list and the current token, a separator or
+    /// closing token, as trailing on that element. The token is checked first, as it rarely follows
+    /// a comment and this runs for every separator.
     #[inline]
-    pub(crate) fn attach_comments_before_close<T: GetSpan + GetNodeId>(&mut self, list: &[T]) {
+    pub(crate) fn attach_comments_after_last<T: GetSpan + GetNodeId>(&mut self, list: &[T]) {
         if self.cur_token().follows_comment()
             && let Some(last) = list.last()
-            && last.span().end == self.prev_token_end
         {
-            self.attach_comments_before_close_cold(last.node_id());
+            self.attach_comments_before_token(last);
+        }
+    }
+
+    /// Assign comments between `node` and the current token as trailing on `node`, if `node` ends
+    /// at the previous token. The current token must follow `node` in its parent without starting
+    /// a node, e.g. a closing parenthesis or a binary operator.
+    #[inline]
+    pub(crate) fn attach_comments_before_token<T: GetSpan + GetNodeId>(&mut self, node: &T) {
+        if self.cur_token().follows_comment() && node.span().end == self.prev_token_end {
+            self.attach_comments_before_token_cold(node.node_id());
         }
     }
 
     #[cold]
     #[inline(never)]
-    fn attach_comments_before_close_cold(&mut self, node_id: NodeId) {
+    fn attach_comments_before_token_cold(&mut self, node_id: NodeId) {
         let (start, end) = self.leading_comments();
         for index in start as usize..end as usize {
             if self.lexer.trivia_builder.comments[index].node_id.get() == NodeId::ROOT {
@@ -363,17 +365,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// or a separator. Comments after that token lead the node.
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
     pub(crate) fn parse_after_delimiter<T: GetSpan + GetNodeId>(
         &mut self,
         parse: impl FnOnce(&mut Self) -> T,
     ) -> T {
-        let token = self.cur_token();
-        let leading = token.follows_comment().then(|| DelimitedComments {
-            end: self.lexer.trivia_builder.comments.len() as u32,
-            from: self.prev_token_end,
-            to: token.start(),
-        });
+        let leading = self.delimited_comments();
         let node = parse(self);
         if let Some(leading) = leading {
             self.attach_delimited_leading_comments(leading, node.span().start, node.node_id());
@@ -381,9 +377,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         node
     }
 
+    /// Comments between the previous token, a delimiter, and the current token.
+    #[inline]
+    #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32 offsets")]
+    pub(crate) fn delimited_comments(&self) -> Option<DelimitedComments> {
+        let token = self.cur_token();
+        token.follows_comment().then(|| DelimitedComments {
+            end: self.lexer.trivia_builder.comments.len() as u32,
+            from: self.prev_token_end,
+            to: token.start(),
+        })
+    }
+
     #[cold]
     #[inline(never)]
-    fn attach_delimited_leading_comments(
+    pub(crate) fn attach_delimited_leading_comments(
         &mut self,
         leading: DelimitedComments,
         node_start: u32,

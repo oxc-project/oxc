@@ -53,7 +53,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let track_await_reparse = is_top_level && self.source_type.is_unambiguous();
 
         let mut expecting_directives = true;
-        let mut list_comments = self.start_list_comments();
+        let list_comments = self.start_list_comments();
         while !self.has_fatal_error() {
             if !is_top_level && self.at(Kind::RCurly) {
                 break;
@@ -75,12 +75,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 None
             };
 
-            let stmt = self.parse_statement_in_list(
-                stmt_ctx,
-                &mut list_comments,
-                &directives,
-                &statements,
-            );
+            let stmt =
+                self.parse_statement_in_list(stmt_ctx, &list_comments, &directives, &statements);
 
             // Don't reparse a module declaration: `export` already committed to the
             // Module goal while parsing, so reparsing would record the export twice.
@@ -141,9 +137,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
 
         if statements.is_empty() {
-            self.attach_comments_before_close(&directives);
+            self.attach_comments_after_last(&directives);
         } else {
-            self.attach_comments_before_close(&statements);
+            self.attach_comments_after_last(&statements);
         }
         (directives, statements)
     }
@@ -154,7 +150,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_statement_in_list(
         &mut self,
         stmt_ctx: StatementContext,
-        list: &mut ListComments,
+        list: &ListComments,
         directives: &[Directive<'a>],
         statements: &[Statement<'a>],
     ) -> Statement<'a> {
@@ -820,7 +816,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             Kind::Case => {
                 self.bump_any();
-                let expression = self.parse_expr();
+                let expression = self.parse_after_delimiter(Self::parse_expr);
+                self.attach_comments_before_token(&expression);
                 Some(expression)
             }
             _ => {
@@ -830,7 +827,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
         self.expect(Kind::Colon);
         let mut consequent = ArenaVec::new_in(self);
-        let mut list_comments = self.start_list_comments();
+        let list_comments = self.start_list_comments();
         loop {
             let kind = self.cur_kind();
             if matches!(
@@ -842,7 +839,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             let stmt = self.parse_statement_in_list(
                 StatementContext::StatementList,
-                &mut list_comments,
+                &list_comments,
                 &[],
                 &consequent,
             );

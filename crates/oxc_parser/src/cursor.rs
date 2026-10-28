@@ -476,10 +476,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
             let element = parse_element(self);
-            self.finish_list_element_comments(&element, &mut list_comments, &[], &list[siblings..]);
+            self.finish_list_element_comments(&element, &list_comments, &[], &list[siblings..]);
             list.push(element);
         }
-        self.attach_comments_before_close(&list);
+        self.attach_comments_after_last(&list);
         self.expect_closing(Kind::RCurly, opening_span);
         list
     }
@@ -562,6 +562,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ));
                 return None;
             }
+            self.attach_comments_after_last(list);
             self.advance(separator);
             if self.cur_token().follows_comment() {
                 self.attach_comments_after_separator(list.last().unwrap());

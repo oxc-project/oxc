@@ -48,7 +48,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_paren_expression(&mut self) -> Expression<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LParen);
-        let expression = self.parse_expr();
+        let expression = self.parse_after_delimiter(Self::parse_expr);
+        self.attach_comments_before_token(&expression);
         self.expect_closing(Kind::RParen, opening_span);
         expression
     }
@@ -332,6 +333,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         self.bump_any(); // `bump` `(`
         let expr_start = self.cur_start();
+        let leading_comments = self.delimited_comments();
         let (expression, comma_start) = self.context(Context::In, Context::Decorator, |p| {
             if p.at(Kind::RParen) || p.has_fatal_error() {
                 return (None, None);
@@ -339,6 +341,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let first = p.parse_assignment_expression_or_higher();
             // A single parenthesized expression does not need a temporary arena vector.
             if p.at(Kind::RParen) || p.has_fatal_error() {
+                // Comments before the first or after the last expression of a sequence are next
+                // to the sequence rather than the expression, so only those around a single
+                // expression are assigned here.
+                if let Some(leading) = leading_comments {
+                    p.attach_delimited_leading_comments(
+                        leading,
+                        first.span().start,
+                        first.node_id(),
+                    );
+                }
+                p.attach_comments_before_token(&first);
                 return (Some(first), None);
             }
             let mut expressions = ArenaVec::with_capacity_in(2, p);
@@ -1132,6 +1145,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     p.parse_after_delimiter(Self::parse_call_argument)
                 })
             });
+            self.attach_comments_after_last(&call_arguments);
             self.expect(Kind::RParen);
             call_arguments
         } else {
@@ -1249,6 +1263,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 p.parse_after_delimiter(Self::parse_call_argument)
             })
         });
+        self.attach_comments_after_last(&call_arguments);
         self.expect(Kind::RParen);
         Expression::new_call_expression(
             self.end_span(lhs_start),
@@ -1527,6 +1542,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 continue;
             }
 
+            self.attach_comments_before_token(&lhs);
             self.bump_any(); // bump operator
             let rhs_start = self.cur_start();
             let rhs = self
@@ -1596,9 +1612,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
         let question_span = self.token.span();
-        if !self.eat(Kind::Question) {
+        if !self.at(Kind::Question) {
             return lhs;
         }
+        self.attach_comments_before_token(&lhs);
+        self.bump_any();
         let consequent = self.context_add(Context::In, |p| {
             p.parse_after_delimiter(|p| {
                 p.parse_assignment_expression_or_higher_impl(
@@ -1606,6 +1624,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 )
             })
         });
+        self.attach_comments_before_token(&consequent);
         self.expect_conditional_alternative(question_span);
         let alternate = self.parse_after_delimiter(|p| {
             p.parse_assignment_expression_or_higher_impl(allow_return_type_in_arrow_function)
