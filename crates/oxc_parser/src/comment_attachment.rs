@@ -625,19 +625,16 @@ impl<'w> Walker<'w> {
 
     /// Visit a decorator preceding the span of `statement`, the next child of the innermost
     /// frame's node, e.g. `@dec export class C {}`. Comments before the decorator are assigned
-    /// as before the statement. Returns whether the decorator contains pending comments.
-    fn decorator_before_statement(
-        &mut self,
-        decorator: &Decorator<'_>,
-        statement: (NodeId, u32),
-    ) -> bool {
+    /// as if the statement started at the decorator. Returns whether the decorator contains
+    /// pending comments.
+    fn decorator_before_statement(&mut self, decorator: &Decorator<'_>, statement: NodeId) -> bool {
         let mut frame = *self.frames.last().unwrap();
         while frame.cursor < frame.end {
             let index = self.pending[frame.cursor as usize];
             if self.comments[index as usize].span.end > decorator.span.start {
                 break;
             }
-            self.assign(index, &frame, Some(statement));
+            self.assign(index, &frame, Some((statement, decorator.span.start)));
             frame.cursor += 1;
         }
         let start = frame.cursor;
@@ -1057,7 +1054,7 @@ impl<'a> Visit<'a> for Walker<'_> {
     // Decorators before `export` precede the statement's span, so they are visited before it.
     fn visit_statement(&mut self, it: &Statement<'a>) {
         if self.depth == self.frames.last().unwrap().depth {
-            let statement = (it.node_id(), it.span().start);
+            let statement = it.node_id();
             for decorator in decorators_before(it) {
                 if self.decorator_before_statement(decorator, statement) {
                     self.visit_decorator(decorator);
