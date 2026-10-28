@@ -1,9 +1,10 @@
-use crate::{error::DiagCode, lanes::Lanes, token::tk};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0},
     bytes::hex_val,
     disambiguate::not_operator_position,
+    lanes::Lanes,
     scan::{scan_quoted, scan_regex, scan_tmpl_text},
     token_view,
 };

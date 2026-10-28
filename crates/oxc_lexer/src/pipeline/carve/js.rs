@@ -1,8 +1,9 @@
-use crate::{lanes::Lanes, token::tk};
+use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
     find::{find_line_terminator, find_opener, find_opener6},
+    lanes::Lanes,
 };
 
 use super::{

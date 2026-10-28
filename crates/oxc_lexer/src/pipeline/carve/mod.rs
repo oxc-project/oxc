@@ -1,4 +1,4 @@
-use crate::lanes::Lanes;
+use crate::pipeline::lanes::Lanes;
 
 mod comments;
 mod common;

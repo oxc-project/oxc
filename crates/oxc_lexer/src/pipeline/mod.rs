@@ -9,7 +9,6 @@ use oxc_span::Span;
 
 use crate::{
     PAD,
-    lanes::Lanes,
     options::LexOptions,
     pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
@@ -26,11 +25,13 @@ mod cpu;
 mod disambiguate;
 mod find;
 mod keywords;
+mod lanes;
 mod misc;
 mod operators;
 mod scan;
 
 pub(crate) use disambiguate::State as DisambiguateState;
+pub(crate) use lanes::{Lanes, decode_char_at};
 
 use carve::carve;
 use classify::classify;
