@@ -508,7 +508,7 @@ impl TsGoLintState {
                                     continue;
                                 };
 
-                                let mut message = Message::from_tsgo_lint_diagnostic(
+                                let mut message = message_from_tsgo_lint_diagnostic(
                                     tsgolint_diagnostic,
                                     &source_text_owned,
                                 );
@@ -858,45 +858,45 @@ impl From<TsGoLintInternalDiagnostic> for OxcDiagnostic {
     }
 }
 
-impl Message {
-    /// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
-    fn from_tsgo_lint_diagnostic(mut val: TsGoLintRuleDiagnostic, source_text: &str) -> Self {
-        let fix = if val.fixes.is_empty() {
-            None
-        } else {
-            let fix_vec = mem::take(&mut val.fixes)
-                .into_iter()
-                .map(|fix| crate::fixer::Fix {
-                    content: Cow::Owned(fix.text),
-                    span: Span::new(fix.range.pos, fix.range.end),
-                    message: None,
-                    kind: FixKind::Fix,
-                })
-                .collect();
+/// Converts a `TsGoLintDiagnostic` into a `Message` with possible fixes.
+fn message_from_tsgo_lint_diagnostic(
+    mut val: TsGoLintRuleDiagnostic,
+    source_text: &str,
+) -> Message {
+    let fix = if val.fixes.is_empty() {
+        None
+    } else {
+        let fix_vec = mem::take(&mut val.fixes)
+            .into_iter()
+            .map(|fix| crate::fixer::Fix {
+                content: Cow::Owned(fix.text),
+                span: Span::new(fix.range.pos, fix.range.end),
+                message: None,
+                kind: FixKind::Fix,
+            })
+            .collect();
 
-            Some(CompositeFix::merge_fixes(fix_vec, source_text))
-        };
+        Some(CompositeFix::merge_fixes(fix_vec, source_text))
+    };
 
-        let suggestions = mem::take(&mut val.suggestions).into_iter().map(|suggestion| {
-            let fix_vec = suggestion
-                .fixes
-                .into_iter()
-                .map(|fix| crate::fixer::Fix {
-                    content: Cow::Owned(fix.text),
-                    span: Span::new(fix.range.pos, fix.range.end),
-                    message: None,
-                    kind: FixKind::Suggestion,
-                })
-                .collect();
+    let suggestions = mem::take(&mut val.suggestions).into_iter().map(|suggestion| {
+        let fix_vec = suggestion
+            .fixes
+            .into_iter()
+            .map(|fix| crate::fixer::Fix {
+                content: Cow::Owned(fix.text),
+                span: Span::new(fix.range.pos, fix.range.end),
+                message: None,
+                kind: FixKind::Suggestion,
+            })
+            .collect();
 
-            CompositeFix::merge_fixes(fix_vec, source_text)
-                .with_message(suggestion.message.description)
-        });
+        CompositeFix::merge_fixes(fix_vec, source_text).with_message(suggestion.message.description)
+    });
 
-        let possible_fixes = PossibleFixes::from_iter(iter::chain(fix, suggestions));
+    let possible_fixes = PossibleFixes::from_iter(iter::chain(fix, suggestions));
 
-        Self::new(val.into(), possible_fixes)
-    }
+    Message::new(val.into(), possible_fixes)
 }
 
 // TODO: Should this be removed and replaced with a `Span`?
@@ -1110,7 +1110,7 @@ impl DiagnosticHandler {
         if has_fixes {
             // Collect for later fix application
             let mut message =
-                Message::from_tsgo_lint_diagnostic(diagnostic, self.get_source_text(&path));
+                message_from_tsgo_lint_diagnostic(diagnostic, self.get_source_text(&path));
             message.error.severity =
                 if severity == AllowWarnDeny::Deny { Severity::Error } else { Severity::Warning };
 
@@ -1199,7 +1199,7 @@ impl DiagnosticHandler {
                                 .iter()
                                 .cloned()
                                 .map(|(diagnostic, severity)| {
-                                    let mut message = Message::from_tsgo_lint_diagnostic(
+                                    let mut message = message_from_tsgo_lint_diagnostic(
                                         diagnostic,
                                         source_text.as_str(),
                                     );
@@ -1424,11 +1424,12 @@ pub fn try_find_tsgolint_executable(cwd: &Path) -> Result<PathBuf, String> {
 
 #[cfg(test)]
 mod test {
+    use super::message_from_tsgo_lint_diagnostic;
     use oxc_diagnostics::{LabeledSpan, OxcCode, Severity};
     use oxc_span::Span;
 
     use crate::{
-        fixer::{FixKind, Message, PossibleFixes},
+        fixer::{FixKind, PossibleFixes},
         tsgolint::{Fix, LabeledRange, Range, RuleMessage, Suggestion, TsGoLintRuleDiagnostic},
     };
 
@@ -1448,7 +1449,7 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message = message_from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
 
         assert_eq!(message.error.message, "Some description");
         assert_eq!(message.error.severity, Severity::Warning);
@@ -1483,7 +1484,7 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message = message_from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
 
         assert_eq!(message.fixes.len(), 1);
         assert_eq!(
@@ -1533,7 +1534,7 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message = message_from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
 
         assert_eq!(
             message.fixes,
@@ -1577,7 +1578,7 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message = message_from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
 
         assert_eq!(message.fixes.len(), 2);
         assert_eq!(
@@ -1618,7 +1619,7 @@ mod test {
             file_path: "some/file/path".into(),
         };
 
-        let message = Message::from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
+        let message = message_from_tsgo_lint_diagnostic(diagnostic, "Some text over 10 bytes.");
 
         assert!(!message.error.labels.is_empty());
         let labels = &message.error.labels;

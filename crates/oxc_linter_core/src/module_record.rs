@@ -539,9 +539,7 @@ impl ModuleRecord {
         loaded_modules.get(key).map(|weak| Weak::upgrade(weak).unwrap())
     }
 
-    pub(crate) fn exported_bindings_from_star_export(
-        &self,
-    ) -> &FxHashMap<PathBuf, Vec<CompactStr>> {
+    pub fn exported_bindings_from_star_export(&self) -> &FxHashMap<PathBuf, Vec<CompactStr>> {
         self.exported_bindings_from_star_export.get_or_init(|| {
             let mut exported_bindings_from_star_export: FxHashMap<PathBuf, Vec<CompactStr>> =
                 FxHashMap::default();

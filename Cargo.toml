@@ -160,6 +160,7 @@ oxc_traverse = { version = "0.156.0", path = "crates/oxc_traverse" } # AST trave
 
 # publish = false
 oxc_config = { path = "crates/oxc_config" } # Config discovery
+oxc_linter_core = { path = "crates/oxc_linter_core" } # Shared lint rule infrastructure
 oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_formatter_core = { path = "crates/oxc_formatter_core" } # Language-agnostic formatter core
 oxc_formatter_css = { path = "crates/oxc_formatter_css" } # CSS formatter

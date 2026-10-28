@@ -649,7 +649,6 @@ impl Runtime {
                                         framework_options: section.source.framework_options,
                                         parser_tokens: section.parser_tokens,
                                         respect_eslint_disable_directives,
-                                        ..Default::default()
                                     },
                                 )),
                                 Err(messages) => {
@@ -786,12 +785,7 @@ impl Runtime {
                                         section.semantic.unwrap(),
                                         Arc::clone(&module_record),
                                         section.source.start,
-                                        ContextSubHostOptions {
-                                            framework_options: section.source.framework_options,
-                                            parser_tokens: section.parser_tokens,
-                                            respect_eslint_disable_directives,
-                                            ..Default::default()
-                                        },
+                                        ContextSubHostOptions { framework_options: section.source.framework_options, parser_tokens: section.parser_tokens, respect_eslint_disable_directives },
                                     )),
                                     Err(diagnostics) => {
                                         if !diagnostics.is_empty() {
@@ -929,12 +923,7 @@ impl Runtime {
                                     section.semantic.unwrap(),
                                     Arc::clone(&module_record),
                                     section.source.start,
-                                    ContextSubHostOptions {
-                                        framework_options: section.source.framework_options,
-                                        parser_tokens: section.parser_tokens,
-                                        respect_eslint_disable_directives,
-                                        ..Default::default()
-                                    },
+                                    ContextSubHostOptions { framework_options: section.source.framework_options, parser_tokens: section.parser_tokens, respect_eslint_disable_directives },
                                 )),
                                 Err(errors) => {
                                     if !errors.is_empty() {

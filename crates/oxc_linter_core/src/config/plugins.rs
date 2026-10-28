@@ -20,7 +20,7 @@ use serde::{Deserialize, Serialize, de::Deserializer, ser::Serializer};
 /// # Examples
 ///
 /// ```
-/// use oxc_linter::normalize_plugin_name;
+/// use oxc_linter_core::config::plugins::normalize_plugin_name;
 ///
 /// assert_eq!(normalize_plugin_name("eslint-plugin-react"), "react");
 /// assert_eq!(normalize_plugin_name("oxlint-plugin-react"), "react");

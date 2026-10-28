@@ -24,11 +24,10 @@ use crate::{
     frameworks::FrameworkOptions,
     module_record::ModuleRecord,
     options::LintOptions,
-    rules::RuleEnum,
-    utils::ReactCompilerResults,
+    react_compiler::ReactCompilerResults,
+    rule::RuleFixMeta,
 };
 
-#[cfg(not(test))]
 use crate::frameworks::{has_jest_imports, has_vitest_imports, is_jestlike_file};
 
 use super::LintContext;
@@ -53,7 +52,7 @@ pub struct ContextSubHost<'a> {
 }
 
 impl<'a> ContextSubHost<'a> {
-    pub(crate) fn source_text_offset(&self) -> u32 {
+    pub fn source_text_offset(&self) -> u32 {
         self.source_text_offset
     }
 
@@ -115,7 +114,6 @@ impl<'a> ContextSubHost<'a> {
     }
 }
 
-#[non_exhaustive]
 pub struct ContextSubHostOptions<'a> {
     pub framework_options: FrameworkOptions,
     pub parser_tokens: ArenaBox<'a, [Token]>,
@@ -194,6 +192,11 @@ impl std::fmt::Debug for ContextHost<'_> {
 }
 
 impl<'a> ContextHost<'a> {
+    /// Kinds of fixes enabled for this file.
+    pub fn fix_kind(&self) -> FixKind {
+        self.fix
+    }
+
     /// # Panics
     /// If `sub_hosts` is empty.
     pub fn new<P: AsRef<Path>>(
@@ -226,7 +229,7 @@ impl<'a> ContextHost<'a> {
             with_ignore_fixes: options.with_ignore_fixes,
             react_compiler_results: OnceCell::new(),
         }
-        .sniff_for_frameworks()
+        .sniff_for_frameworks(options)
     }
 
     /// The current [`ContextSubHost`]
@@ -285,7 +288,7 @@ impl<'a> ContextHost<'a> {
 
     /// Path to the file being linted.
     ///
-    /// When created from a [`LintService`](`crate::service::LintService`), this
+    /// When created from a linter service, this
     /// will be an absolute path.
     #[inline]
     pub fn file_path(&self) -> &Path {
@@ -333,7 +336,7 @@ impl<'a> ContextHost<'a> {
     /// Add a diagnostic message to the end of the list of diagnostics. Can be used
     /// by any rule to report issues.
     #[inline]
-    pub(crate) fn push_diagnostic(&self, mut diagnostic: Message) {
+    pub fn push_diagnostic(&self, mut diagnostic: Message) {
         if self.with_ignore_fixes {
             let source_text = self.source_text();
             diagnostic.add_ignore_fix(self.current_sub_host().source_text_offset, source_text);
@@ -484,32 +487,23 @@ impl<'a> ContextHost<'a> {
     }
 
     /// Creates a new [`LintContext`] for a specific rule.
-    pub fn spawn(self: Rc<Self>, rule: &RuleEnum, severity: AllowWarnDeny) -> LintContext<'a> {
-        let rule_name = rule.name();
-        let plugin_name = rule.plugin_name();
-
+    pub fn spawn(
+        self: Rc<Self>,
+        rule_name: &'static str,
+        plugin_name: &'static str,
+        fix: RuleFixMeta,
+        severity: AllowWarnDeny,
+    ) -> LintContext<'a> {
+        #[cfg(not(debug_assertions))]
+        let _ = fix;
         LintContext {
             parent: self,
             current_rule_name: rule_name,
             current_plugin_name: plugin_name,
             current_plugin_display_name: plugin_display_name(plugin_name),
             #[cfg(debug_assertions)]
-            current_rule_fix_capabilities: rule.fix(),
+            current_rule_fix_capabilities: fix,
             severity: severity.into(),
-        }
-    }
-
-    /// Creates a new [`LintContext`] for testing purposes only.
-    #[cfg(test)]
-    pub(crate) fn spawn_for_test(self: Rc<Self>) -> LintContext<'a> {
-        LintContext {
-            parent: Rc::clone(&self),
-            current_rule_name: "",
-            current_plugin_name: "eslint",
-            current_plugin_display_name: "eslint",
-            #[cfg(debug_assertions)]
-            current_rule_fix_capabilities: crate::rule::RuleFixMeta::None,
-            severity: oxc_diagnostics::Severity::Warning,
         }
     }
 
@@ -521,8 +515,14 @@ impl<'a> ContextHost<'a> {
     /// `package.json`` and look for relevant dependencies. This method builds
     /// on top of those hints, providing a more granular understanding of the
     /// frameworks in use.
-    #[cfg(not(test))]
-    fn sniff_for_frameworks(mut self) -> Self {
+    fn sniff_for_frameworks(mut self, options: LintOptions) -> Self {
+        if options.use_plugin_framework_hints {
+            if self.plugins().has_test() {
+                self.frameworks.set(FrameworkFlags::Vitest, self.plugins().has_vitest());
+                self.frameworks.set(FrameworkFlags::Jest, self.plugins().has_jest());
+            }
+            return self;
+        }
         if self.plugins().has_test() {
             let vitest_like = has_vitest_imports(self.module_record());
             let jest_like =
@@ -530,21 +530,6 @@ impl<'a> ContextHost<'a> {
 
             self.frameworks.set(FrameworkFlags::Vitest, vitest_like);
             self.frameworks.set(FrameworkFlags::Jest, jest_like);
-        }
-
-        self
-    }
-
-    /// Currently Oxlint isn't searching if Jest or Vitest is in `package.json`.
-    /// Once the method read the `package.json` we can discard this conditional flag,
-    /// and rely on the tester to create the correct `package.json` to have a reliable
-    /// sniff method.
-    #[cfg(test)]
-    fn sniff_for_frameworks(mut self) -> Self {
-        if self.plugins().has_test() {
-            self.frameworks.set(FrameworkFlags::Vitest, self.plugins().has_vitest());
-
-            self.frameworks.set(FrameworkFlags::Jest, self.plugins().has_jest());
         }
 
         self
@@ -573,5 +558,49 @@ impl<'a> ContextHost<'a> {
 impl<'a> From<ContextHost<'a>> for Vec<Message> {
     fn from(ctx_host: ContextHost<'a>) -> Self {
         ctx_host.diagnostics.into_inner()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use std::{rc::Rc, sync::Arc};
+
+    use oxc_allocator::Allocator;
+    use oxc_parser::Parser;
+    use oxc_semantic::SemanticBuilder;
+    use oxc_span::SourceType;
+
+    use super::{ContextHost, ContextSubHost, ContextSubHostOptions};
+    use crate::{
+        AllowWarnDeny, LintConfig, LintOptions, ModuleRecord, config::LintPlugins,
+        rule::RuleFixMeta,
+    };
+
+    #[test]
+    fn framework_detection_and_explicit_test_hints() {
+        let allocator = Allocator::default();
+        let parsed = Parser::new(&allocator, "", SourceType::default()).parse();
+        for use_plugin_framework_hints in [false, true] {
+            let semantic = SemanticBuilder::new_linter().build(&parsed.program).semantic;
+            let host = Rc::new(ContextHost::new(
+                "component.js",
+                vec![ContextSubHost::new(
+                    semantic,
+                    Arc::new(ModuleRecord::default()),
+                    0,
+                    ContextSubHostOptions::default(),
+                )],
+                &allocator,
+                LintOptions { use_plugin_framework_hints, ..LintOptions::default() },
+                Arc::new(LintConfig {
+                    plugins: LintPlugins::JEST | LintPlugins::VITEST,
+                    ..LintConfig::default()
+                }),
+            ));
+            assert_eq!(host.frameworks().is_jest(), use_plugin_framework_hints);
+            assert_eq!(host.frameworks().is_vitest(), use_plugin_framework_hints);
+            let ctx = host.spawn("example", "react_perf", RuleFixMeta::None, AllowWarnDeny::Warn);
+            ctx.diagnostic(oxc_diagnostics::OxcDiagnostic::warn("example"));
+        }
     }
 }

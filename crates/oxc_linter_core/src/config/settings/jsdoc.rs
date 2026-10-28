@@ -4,7 +4,7 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
-use crate::utils::default_true;
+use super::default_true;
 
 // <https://github.com/gajus/eslint-plugin-jsdoc/blob/v50.5.0/docs/settings.md>
 #[derive(Debug, Clone, Deserialize, Serialize, JsonSchema, PartialEq)]

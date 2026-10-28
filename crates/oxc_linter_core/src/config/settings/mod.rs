@@ -15,6 +15,11 @@ use self::{
 
 pub use self::react::ReactVersion;
 
+/// Serde default for settings which are enabled unless explicitly disabled.
+pub const fn default_true() -> bool {
+    true
+}
+
 /// # Oxlint Plugin Settings
 ///
 /// Configure the behavior of linter plugins.

@@ -11,7 +11,7 @@ enum DisableDirective {
 }
 
 impl Message {
-    pub(crate) fn add_ignore_fix(&mut self, section_offset: u32, section_source_text: &str) {
+    pub fn add_ignore_fix(&mut self, section_offset: u32, section_source_text: &str) {
         // If the error is exactly at the section offset and has 0 span length, it means that the file is the problem
         // and attaching a ignore comment would not ignore the error.
         // This is because the ignore comment would need to be placed before the error offset, which is not possible.

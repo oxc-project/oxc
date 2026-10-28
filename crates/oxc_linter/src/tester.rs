@@ -367,7 +367,10 @@ impl Tester {
             rule_path,
             expect_pass,
             expect_fail,
-            lint_options: LintOptions::default(),
+            lint_options: LintOptions {
+                use_plugin_framework_hints: true,
+                ..LintOptions::default()
+            },
             expect_fix: None,
             snapshot: String::new(),
             snapshot_suffix: None,
