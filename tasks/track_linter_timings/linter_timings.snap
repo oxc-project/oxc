@@ -653,7 +653,6 @@ vitest/consistent-each-for                              |      0
 vitest/consistent-test-filename                         |      7
 vitest/consistent-test-it                               |      7
 vitest/consistent-vitest-vi                             |  62709
-vitest/hoisted-apis-on-top                              |      0
 vitest/max-expects                                      |      7
 vitest/max-nested-describe                              |      7
 vitest/no-commented-out-tests                           |      7

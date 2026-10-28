@@ -4845,8 +4845,9 @@ impl RuleRunner for crate::rules::vitest::expect_expect::ExpectExpect {
 }
 
 impl RuleRunner for crate::rules::vitest::hoisted_apis_on_top::HoistedApisOnTop {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::max_expects::MaxExpects {
