@@ -3,7 +3,7 @@ use oxc_str::{JSChar, JSStrBuilder};
 use oxc_syntax::{
     identifier::{
         FF, TAB, VT, is_identifier_part, is_identifier_start, is_identifier_start_unicode,
-        is_irregular_whitespace,
+        is_white_space,
     },
     line_terminator::{CR, LF, LS, PS, is_irregular_line_terminator},
 };
@@ -41,7 +41,12 @@ impl<'a, C: Config> Lexer<'a, C> {
                 self.identifier_tail_after_unicode(start_pos);
                 Kind::Ident
             }
-            c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(c),
+            // TypeScript additionally treats NEL and ZWSP as whitespace, not line breaks.
+            c if is_white_space(c)
+                || (self.source_type.is_typescript() && matches!(c, '\u{85}' | '\u{200b}')) =>
+            {
+                self.handle_irregular_whitespace(c)
+            }
             c if is_irregular_line_terminator(c) => self.handle_irregular_line_terminator(c),
             _ => self.handle_invalid_unicode_char(c),
         }

@@ -19,6 +19,7 @@ pub unsafe fn misc_pre(
     misc: *const u64,
     kind: *mut u8,
     vutf8: bool,
+    ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
@@ -27,9 +28,9 @@ pub unsafe fn misc_pre(
     }
 
     if vutf8 {
-        misc_pre_impl::<true>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<true>(src, n, st, word, misc, kind, ts, lanes)
     } else {
-        misc_pre_impl::<false>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<false>(src, n, st, word, misc, kind, ts, lanes)
     }
 }
 
@@ -46,6 +47,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
     word: *mut u64,
     misc: *const u64,
     kind: *mut u8,
+    ts: bool,
     lanes: &mut Lanes,
 ) -> usize {
     let mut nesc = 0usize;
@@ -91,7 +93,12 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 }
                 let len = unicode_ws_len(src, p);
                 if len != 0 {
-                    *kind.add(p) = tk!(Whitespace);
+                    // The shared classifier includes TS-only NEL and ZWSP. In JS, keep
+                    // an invalid token; carve removes these starts inside literal/comment text.
+                    let invalid = !ts
+                        && ((c == 0xC2 && *src.add(p + 1) == 0x85)
+                            || (c == 0xE2 && *src.add(p + 1) == 0x80 && *src.add(p + 2) == 0x8B));
+                    *kind.add(p) = if invalid { tk!(Invalid) } else { tk!(Whitespace) };
                     bm_clear_range(word, p, p + len - 1);
                     bm_set(st, p);
                     bm_clear_range(st, p + 1, p + len - 1);

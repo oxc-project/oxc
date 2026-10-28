@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 125/125 (100.00%)
 Positive Passed: 125/125 (100.00%)
-Negative Passed: 265/265 (100.00%)
+Negative Passed: 267/267 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -1345,6 +1345,13 @@ Negative Passed: 265/265 (100.00%)
  1 │ const foo = 1 ? 2
    ·               ┬
    ·               ╰── Conditional starts here
+   ╰────
+
+  × Invalid Character ``
+   ╭─[misc/fail/next-line-not-javascript-whitespace.js:2:15]
+ 1 │ // U+0085 NEXT LINE is not JavaScript WhiteSpace.
+ 2 │ const value = 0;
+   ·               ─
    ╰────
 
   × Invalid characters after number
@@ -5383,4 +5390,11 @@ Negative Passed: 265/265 (100.00%)
    ╭─[misc/fail/type-arguments-in-js.js:1:18]
  1 │ class A extends B<C> {}
    ·                  ───
+   ╰────
+
+  × Invalid Character `​`
+   ╭─[misc/fail/zero-width-space-not-javascript-whitespace.js:2:15]
+ 1 │ // U+200B ZERO WIDTH SPACE is not JavaScript WhiteSpace.
+ 2 │ const value = ​0;
+   ·               ─
    ╰────
