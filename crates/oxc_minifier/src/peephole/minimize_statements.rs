@@ -448,7 +448,10 @@ impl<'a> PeepholeOptimizations {
         result: &mut ArenaVec<'a, Statement<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) {
-        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
+        if ctx.is_tree_shake_only()
+            || Self::is_script_root_scope(ctx)
+            || ctx.current_scope_flags().contains_direct_eval()
+        {
             return;
         }
 
