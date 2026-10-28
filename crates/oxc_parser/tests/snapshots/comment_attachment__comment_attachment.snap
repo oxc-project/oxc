@@ -47,6 +47,50 @@ let x = /* before */ 1 + /* mid */ 2;
 ---
 /* in */ -> Leading IdentifierReference `b`
 
+##### before_tokens
+
+=== js ===
+if (/* a */ x /* b */) {} while (y /* c */
+) {}
+---
+/* a */ -> Leading IdentifierReference `x`
+/* b */ -> Trailing IdentifierReference `x`
+/* c */ -> Trailing IdentifierReference `y`
+
+=== js ===
+switch (x) { case /* a */ 1 /* b */: case 2 // c
+: }
+---
+/* a */ -> Leading NumericLiteral `1`
+/* b */ -> Trailing NumericLiteral `1`
+// c -> Trailing NumericLiteral `2`
+
+=== js ===
+a /* a */ + b * c /* c */ - d;
+---
+/* a */ -> Trailing IdentifierReference `a`
+/* c */ -> Trailing BinaryExpression `a /* a */ + b * c`
+
+=== js ===
+a /* a */ ? b /* b */ : c;
+---
+/* a */ -> Trailing IdentifierReference `a`
+/* b */ -> Trailing IdentifierReference `b`
+
+=== js ===
+x = (/* a */ y /* b */); z = (/* c */ y, w /* d */);
+---
+/* a */ -> Leading IdentifierReference `y`
+/* b */ -> Trailing IdentifierReference `y`
+/* c */ -> Leading SequenceExpression `y, w`
+/* d */ -> Trailing SequenceExpression `y, w`
+
+=== ts (unambiguous) ===
+f(a, b /* b */); @dec(c /* c */) class C {}
+---
+/* b */ -> Trailing IdentifierReference `b`
+/* c */ -> Trailing IdentifierReference `c`
+
 ##### empty_containers
 
 === js ===
