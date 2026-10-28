@@ -395,7 +395,7 @@ impl Lanes {
     }
 
     #[inline]
-    pub(super) fn push_number_swar(&mut self, src: &[u8], s: usize, e: usize) {
+    pub(super) fn push_number(&mut self, src: &[u8], s: usize, e: usize) {
         let len = e - s;
         if len.wrapping_sub(1) <= 7 && !(len > 1 && src[s] == b'0') {
             let keep = KEEP[len];

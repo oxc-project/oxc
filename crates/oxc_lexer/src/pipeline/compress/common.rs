@@ -17,7 +17,7 @@ pub(super) unsafe fn emit_value(
     let e = sp.end as usize;
     let k = *out_kinds.add(j);
     if k < tk!(IdentEscaped) {
-        lanes.push_number_swar(src, s, e);
+        lanes.push_number(src, s, e);
     } else if k == tk!(IdentEscaped) {
         lanes.push_atom(src, s, e);
     } else {
