@@ -19,8 +19,8 @@
 //!   `coalesce` asks this for runs like `>>` and `<<`, and `carve` for some `<` in `.tsx` files.
 //!
 //! Every question reads the lex through a [`Tokens`] view, which the asking stage builds over its
-//! buffers, and keeps what it learns across the lex in a [`State`] the lexer owns. [`common`]
-//! holds the parts both questions need.
+//! buffers, and keeps what it learns across the lex in a [`DisambiguateState`] the lexer owns.
+//! [`common`] holds the parts both questions need.
 
 mod common;
 mod context;
@@ -60,19 +60,19 @@ mod tests;
 /// What the questions keep across a lex: the context walks, the bracket bitmap and the closers
 /// the forward scans resolved. Owned by the lexer, begun at each lex, restarted when `coalesce`
 /// starts asking.
-pub(super) struct State {
+pub(super) struct DisambiguateState {
     pub walks: Walks,
     pub brackets: Brackets,
     pub closers: Closers,
 }
 
-impl Default for State {
+impl Default for DisambiguateState {
     fn default() -> Self {
-        State { walks: Walks::new(), brackets: Brackets::default(), closers: Closers::default() }
+        Self { walks: Walks::new(), brackets: Brackets::default(), closers: Closers::default() }
     }
 }
 
-impl State {
+impl DisambiguateState {
     /// A new lex over `n` bytes of a script or module.
     pub fn begin(&mut self, n: usize, module: bool) {
         self.walks.restart(module);
