@@ -4818,8 +4818,9 @@ impl RuleRunner for crate::rules::promise::valid_params::ValidParams {
 }
 
 impl RuleRunner for crate::rules::vitest::consistent_each_for::ConsistentEachFor {
-    const NODE_TYPES: Option<&AstTypesBitset> = None;
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnJestNode;
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
 impl RuleRunner for crate::rules::vitest::consistent_test_filename::ConsistentTestFilename {
