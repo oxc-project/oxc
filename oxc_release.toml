@@ -24,6 +24,7 @@ versioned_files = [
   "apps/oxlint/package.json",
   "crates/oxc_linter/Cargo.toml",
   "crates/oxc_linter_core/Cargo.toml",
+  "crates/oxc_linter_rules_react_perf/Cargo.toml",
   "npm/oxlint/package.json",
   "npm/oxlint-plugin-eslint/package.json",
   "npm/oxlint-plugins/package.json",

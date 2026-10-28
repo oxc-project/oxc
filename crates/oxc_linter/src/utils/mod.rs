@@ -28,7 +28,6 @@ mod number;
 mod promise;
 mod react;
 mod react_compiler;
-mod react_perf;
 mod regex;
 mod schemars;
 mod static_value;
@@ -42,8 +41,8 @@ pub mod vue_casing;
 
 pub use self::{
     comment::*, config::*, control_flow::*, express::*, jest::*, jsdoc::*, nextjs::*, node::*,
-    number::*, promise::*, react::*, react_compiler::*, react_perf::*, regex::*, schemars::*,
-    static_value::*, this_expression::*, typescript::*, unicorn::*, url::*, vitest::*, vue::*,
+    number::*, promise::*, react::*, react_compiler::*, regex::*, schemars::*, static_value::*,
+    this_expression::*, typescript::*, unicorn::*, url::*, vitest::*, vue::*,
 };
 
 /// List of Eslint rules that have TypeScript equivalents.

@@ -168,5 +168,7 @@ fn test() {
         ),
     ];
 
-    Tester::new(JsxNoJsxAsProp::NAME, JsxNoJsxAsProp::PLUGIN, pass, fail).test_and_snapshot();
+    Tester::new(JsxNoJsxAsProp::NAME, JsxNoJsxAsProp::PLUGIN, pass, fail).test_and_snapshot_in(
+        std::path::Path::new(concat!(env!("CARGO_MANIFEST_DIR"), "/src/snapshots")),
+    );
 }

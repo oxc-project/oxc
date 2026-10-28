@@ -11,6 +11,7 @@ pub mod module_record;
 pub mod options;
 pub mod react_compiler;
 pub mod rule;
+pub mod utils;
 
 pub use config::{LintConfig, OxlintEnv, OxlintGlobals, OxlintSettings};
 pub use context::{ContextHost, ContextSubHost, ContextSubHostOptions, LintContext};

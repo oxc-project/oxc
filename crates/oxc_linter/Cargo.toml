@@ -15,7 +15,11 @@ description.workspace = true
 
 [features]
 default = []
-ruledocs = ["oxc_macros/ruledocs", "oxc_linter_core/ruledocs"] # Enables rule documentation
+ruledocs = [
+  "oxc_macros/ruledocs",
+  "oxc_linter_core/ruledocs",
+  "oxc_linter_rules_react_perf/ruledocs",
+] # Enables rule documentation
 force_test_reporter = []
 tester = ["dep:insta"]
 
@@ -39,6 +43,7 @@ oxc_estree_tokens = { workspace = true }
 oxc_ecmascript = { workspace = true, features = ["side_effects"] }
 oxc_index = { workspace = true }
 oxc_linter_core = { workspace = true }
+oxc_linter_rules_react_perf = { workspace = true }
 oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_react_compiler = { workspace = true }

@@ -33,6 +33,11 @@ Rule crates can use `oxc_linter` with its `tester` feature as a
 dev-dependency to run the same end-to-end `Tester` against the central registry.
 Use `Tester::test_and_snapshot_in` for snapshots owned by a rule crate.
 
+The first extracted plugin is `oxc_linter_rules_react_perf`. Its four rules,
+plugin-specific helpers, inline tests, and snapshots live in that crate.
+Run `cargo test -p oxc_linter_rules_react_perf --all-features` to test them through
+the linter's registry, configuration, dispatch, and diagnostic pipeline.
+
 ### Rule System
 
 - **Rule categories**: Correctness, Suspicious, Pedantic, Style, etc.
