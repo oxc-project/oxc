@@ -2,6 +2,7 @@
 use std::path::{Path, PathBuf};
 
 mod diff;
+pub mod linter;
 mod request;
 mod snapshot;
 mod test_file;

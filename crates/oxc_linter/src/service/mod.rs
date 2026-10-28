@@ -107,7 +107,7 @@ impl LintService {
     }
 
     /// For tests
-    #[cfg(test)]
+    #[cfg(any(test, feature = "tester"))]
     pub(crate) fn run_test_source(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),

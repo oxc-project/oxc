@@ -4,7 +4,7 @@ use std::{
     borrow::Cow,
     fmt::{self, Display, Formatter},
     fs,
-    path::Path,
+    path::PathBuf,
 };
 
 use convert_case::{Case, Casing};
@@ -1769,24 +1769,8 @@ fn update_test_block(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn s
 }
 
 /// Returns the path to the rules directory for a given rule kind.
-fn get_rule_path(rule_kind: RuleKind) -> &'static Path {
-    match rule_kind {
-        RuleKind::ESLint => Path::new("crates/oxc_linter/src/rules/eslint"),
-        RuleKind::Jest => Path::new("crates/oxc_linter/src/rules/jest"),
-        RuleKind::Typescript => Path::new("crates/oxc_linter/src/rules/typescript"),
-        RuleKind::Unicorn => Path::new("crates/oxc_linter/src/rules/unicorn"),
-        RuleKind::Import => Path::new("crates/oxc_linter/src/rules/import"),
-        RuleKind::React => Path::new("crates/oxc_linter/src/rules/react"),
-        RuleKind::ReactPerf => Path::new("crates/oxc_linter/src/rules/react_perf"),
-        RuleKind::JSXA11y => Path::new("crates/oxc_linter/src/rules/jsx_a11y"),
-        RuleKind::Oxc => Path::new("crates/oxc_linter/src/rules/oxc"),
-        RuleKind::NextJS => Path::new("crates/oxc_linter/src/rules/nextjs"),
-        RuleKind::JSDoc => Path::new("crates/oxc_linter/src/rules/jsdoc"),
-        RuleKind::Node => Path::new("crates/oxc_linter/src/rules/node"),
-        RuleKind::Promise => Path::new("crates/oxc_linter/src/rules/promise"),
-        RuleKind::Vitest => Path::new("crates/oxc_linter/src/rules/vitest"),
-        RuleKind::Vue => Path::new("crates/oxc_linter/src/rules/vue"),
-    }
+fn get_rule_path(rule_kind: RuleKind) -> PathBuf {
+    oxc_tasks_common::linter::lint_plugin_path(&project_root(), &get_mod_name(rule_kind))
 }
 
 /// Finds the byte range (start, end) of the `#[test] fn test()` function in the content.
@@ -1981,6 +1965,22 @@ fn add_rules_entry(ctx: &Context, rule_kind: RuleKind) -> Result<(), Box<dyn std
         .find('}')
         .ok_or(format!("failed to find end of '{mod_def}' module in {rules_path}"))?;
     let mod_rules = &rules[mod_start..(*mod_end + mod_start)];
+
+    let plugin_lib = get_rule_path(rule_kind).join("lib.rs");
+    if plugin_lib.is_file() {
+        let declaration = format!("pub use oxc_linter_rules_{mod_name}::{};", ctx.snake_rule_name);
+        if mod_rules.contains(&declaration) {
+            println!("Rule module '{}' already exists in {rules_path}", ctx.snake_rule_name);
+            return Ok(());
+        }
+        let mut plugin = fs::read_to_string(&plugin_lib)?;
+        writeln!(plugin, "pub mod {};", ctx.snake_rule_name)?;
+        rules.insert_str(mod_start + *mod_end, &format!("    {declaration}\n"));
+        fs::write(plugin_lib, plugin)?;
+        fs::write(rules_path, rules)?;
+        println!("Updated {rules_path}");
+        return Ok(());
+    }
 
     // Check if the rule mod def already exists
     let rule_mod_def = format!("pub mod {};", ctx.snake_rule_name);

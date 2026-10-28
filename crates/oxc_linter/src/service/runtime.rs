@@ -884,7 +884,7 @@ impl Runtime {
         });
     }
 
-    #[cfg(test)]
+    #[cfg(any(test, feature = "tester"))]
     pub(super) fn run_test_source(
         &self,
         file_system: &(dyn RuntimeFileSystem + Sync + Send),

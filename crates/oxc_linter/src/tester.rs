@@ -1,5 +1,4 @@
 use std::{
-    env,
     ffi::OsStr,
     fmt::Write,
     path::{Path, PathBuf},
@@ -325,6 +324,7 @@ impl RuntimeFileSystem for TesterFileSystem {
     }
 }
 
+#[must_use]
 pub struct Tester {
     rule_name: &'static str,
     plugin_name: &'static str,
@@ -360,7 +360,7 @@ impl Tester {
         let expect_pass = expect_pass.into_iter().map(Into::into).collect::<Vec<_>>();
         let expect_fail = expect_fail.into_iter().map(Into::into).collect::<Vec<_>>();
         let current_working_directory =
-            env::current_dir().unwrap().join("fixtures/import").into_boxed_path();
+            Path::new(env!("CARGO_MANIFEST_DIR")).join("fixtures/import").into_boxed_path();
         Self {
             rule_name,
             plugin_name,
@@ -453,13 +453,14 @@ impl Tester {
     /// //otherwise its an Option<Value>
     /// let fix = vec![
     ///     // source, expected, rule_config?
-    ///     ("let x = 1", "let x = 1", None)
+    ///     ("var x = 1;", "const x = 1;", None)
     /// ];
     ///
     /// // the first argument is normally `MyRuleStruct::NAME`.
-    /// Tester::new("no-undef", pass, fail).expect_fix(fix).test();
+    /// Tester::new("no-var", "eslint", pass, fail).expect_fix(fix).test();
     /// ```
-    #[must_use]
+    /// # Panics
+    /// Panics if no fix cases are supplied.
     pub fn expect_fix<F: Into<ExpectFixTestCase>>(mut self, expect_fix: Vec<F>) -> Self {
         // prevent `expect_fix` abuse
         assert!(
@@ -476,12 +477,13 @@ impl Tester {
     ///
     /// This should only be used when testing is broken up into multiple
     /// test functions, and only some of them are testing fixes.
-    #[must_use]
     pub fn intentionally_allow_no_fix_tests(mut self) -> Self {
         self.expect_fix = Some(vec![]);
         self
     }
 
+    /// # Panics
+    /// Panics if any case produces an unexpected diagnostic or fix.
     #[expect(clippy::print_stdout)]
     pub fn test(&mut self) {
         let failed = self.test_pass();
@@ -509,6 +511,13 @@ impl Tester {
     pub fn test_and_snapshot(&mut self) {
         self.test();
         self.snapshot();
+    }
+
+    /// Run the rule's cases and store snapshots beside an external rule crate's source.
+    pub fn test_and_snapshot_in(&mut self, snapshot_path: &Path) {
+        let mut settings = insta::Settings::clone_current();
+        settings.set_snapshot_path(snapshot_path);
+        settings.bind(|| self.test_and_snapshot());
     }
 
     fn snapshot(&self) {

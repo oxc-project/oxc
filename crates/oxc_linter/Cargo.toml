@@ -17,6 +17,7 @@ description.workspace = true
 default = []
 ruledocs = ["oxc_macros/ruledocs", "oxc_linter_core/ruledocs"] # Enables rule documentation
 force_test_reporter = []
+tester = ["dep:insta"]
 
 [lints]
 workspace = true
@@ -56,6 +57,7 @@ cow-utils = { workspace = true }
 fast-glob = { workspace = true }
 ignore = { workspace = true }
 indexmap = { workspace = true, features = ["rayon"] }
+insta = { workspace = true, optional = true }
 itertools = { workspace = true }
 javascript-globals = { workspace = true }
 json-strip-comments = { workspace = true }

@@ -5,6 +5,8 @@ use convert_case::{Case, Casing};
 /// Represents a lint rule entry in the `declare_all_lint_rules!` macro.
 #[derive(PartialEq, Eq, PartialOrd, Ord)]
 pub struct RuleEntry<'e> {
+    /// Crate owning an extracted rule, or `None` for rules still in `oxc_linter`.
+    pub external_crate: Option<&'e str>,
     /// The module name of the rule's plugin, like `eslint` in `eslint::no_debugger::NoDebugger`.
     pub plugin_module_name: &'e str,
     /// The rule's module name, like `no_debugger` in `eslint::no_debugger:NoDebugger`.
@@ -45,14 +47,20 @@ pub fn get_all_rules(contents: &str) -> Vec<RuleEntry<'_>> {
             continue;
         }
 
-        // Inside a plugin module, detect rule module: `pub mod no_debugger;`
-        if let Some(plugin) = current_plugin
-            && plugin != "shared"
-            && line.starts_with("pub mod ")
-            && line.ends_with(';')
-            && let Some(rule_name) = line.strip_prefix("pub mod ").and_then(|s| s.strip_suffix(';'))
-        {
+        let Some(plugin) = current_plugin.filter(|plugin| *plugin != "shared") else {
+            continue;
+        };
+        let declaration = line.strip_suffix(';').and_then(|line| {
+            if let Some(rule) = line.strip_prefix("pub mod ") {
+                Some((None, rule))
+            } else {
+                let (owner, rule) = line.strip_prefix("pub use ")?.split_once("::")?;
+                owner.starts_with("oxc_linter_rules_").then_some((Some(owner), rule))
+            }
+        });
+        if let Some((external_crate, rule_name)) = declaration {
             rule_entries.push(RuleEntry {
+                external_crate,
                 plugin_module_name: plugin,
                 rule_module_name: rule_name,
                 // Preserve the existing generated behavior unless codegen confirms that the rule
@@ -72,17 +80,36 @@ pub fn find_rule_source_file(root: &Path, rule: &RuleEntry) -> Option<std::path:
     // A rule path corresponds to:
     // 1) `crates/oxc_linter/src/rules/<plugin>/<rule>.rs`
     // 2) `crates/oxc_linter/src/rules/<plugin>/<rule>/mod.rs`
-    let rules_path = root.join("crates/oxc_linter/src/rules").join(rule.plugin_module_name);
+    let path = oxc_tasks_common::linter::lint_rule_path(
+        root,
+        rule.plugin_module_name,
+        rule.rule_module_name,
+    );
+    path.is_file().then_some(path)
+}
 
-    let direct_path = rules_path.join(format!("{}.rs", rule.rule_module_name));
-    if direct_path.exists() {
-        return Some(direct_path);
+#[cfg(test)]
+mod tests {
+    use super::get_all_rules;
+
+    #[test]
+    fn preserves_registry_order_across_crates() {
+        let rules = get_all_rules(
+            "pub(crate) mod eslint {\n\
+                 pub mod no_debugger;\n\
+             }\n\
+             pub(crate) mod react_perf {\n\
+                 pub use oxc_linter_rules_react_perf::jsx_no_jsx_as_prop;\n\
+             }\n\
+             pub(crate) mod shared {\n\
+                 pub mod jest_vitest;\n\
+             }",
+        );
+        assert_eq!(rules.len(), 2);
+        assert_eq!(rules[0].rule_module_name, "no_debugger");
+        assert_eq!(rules[0].external_crate, None);
+        assert_eq!(rules[1].plugin_module_name, "react_perf");
+        assert_eq!(rules[1].rule_module_name, "jsx_no_jsx_as_prop");
+        assert_eq!(rules[1].external_crate, Some("oxc_linter_rules_react_perf"));
     }
-
-    let mod_path = rules_path.join(rule.rule_module_name).join("mod.rs");
-    if mod_path.exists() {
-        return Some(mod_path);
-    }
-
-    None
 }

@@ -2340,6 +2340,7 @@ name = "oxc_linter_codegen"
 version = "0.0.0"
 dependencies = [
  "convert_case",
+ "oxc_tasks_common",
  "proc-macro2",
  "project-root",
  "quote",
@@ -4352,6 +4353,7 @@ dependencies = [
  "itertools",
  "oxc-schemars",
  "oxc_linter",
+ "oxc_tasks_common",
  "oxlint",
  "pico-args",
  "project-root",
