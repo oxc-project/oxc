@@ -29,7 +29,7 @@ use crate::{
 /// whose queries stay local never has the whole bitmap built. Owned by the lexer and shared with
 /// every [`Tokens`] view of the lex, so the words are cells.
 #[derive(Default)]
-pub(crate) struct Brackets {
+pub struct Brackets {
     /// Bracket bytes of the source. `st` is applied when a word is read, not stored, because
     /// `carve` is still clearing literal interiors while the matches run.
     bits: Vec<Cell<u64>>,
@@ -49,7 +49,7 @@ struct Pairs {
 
 impl Brackets {
     /// A new lex over `n` bytes: size the buffers and forget every word of the previous one.
-    pub(crate) fn begin(&mut self, n: usize) {
+    pub fn begin(&mut self, n: usize) {
         let nwords = n.div_ceil(64) + 1;
         self.bits.resize(nwords, Cell::new(0));
         self.built.clear();
@@ -179,7 +179,7 @@ fn delim_slot(c: u8) -> usize {
 }
 
 #[inline(always)]
-pub(crate) fn word_len(src: &[u8], w: usize) -> usize {
+pub fn word_len(src: &[u8], w: usize) -> usize {
     let mut e = w + 1;
     while is_word(src[e]) {
         e += 1;
@@ -199,7 +199,7 @@ pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
 
 /// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
 #[inline]
-pub(crate) fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
+pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
     let mut q = bits::prev1(st, pos);
     while let Some(p) = q {
         if !is_trivia_byte(kind[p]) {

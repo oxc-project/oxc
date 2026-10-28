@@ -74,14 +74,14 @@ impl Default for State {
 
 impl State {
     /// A new lex over `n` bytes of a script or module.
-    pub(crate) fn begin(&mut self, n: usize, module: bool) {
+    pub fn begin(&mut self, n: usize, module: bool) {
         self.walks.restart(module);
         self.brackets.begin(n);
         self.closers.clear();
     }
 
     /// `coalesce` starts asking: it sees keyword kinds `carve` did not, so the walks start over.
-    pub(crate) fn restart(&mut self, module: bool) {
+    pub fn restart(&mut self, module: bool) {
         self.walks.restart(module);
         // carve has hidden the JSX brackets these were computed over.
         self.closers.clear();

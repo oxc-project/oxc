@@ -13,12 +13,7 @@ use super::bytes::arrow_after_params;
 
 /// Whether the ambiguous < at lt is JSX, and whether it is an unterminated element to report.
 #[inline(never)]
-pub(crate) fn jsx_over_generic(
-    tokens: &Tokens,
-    walks: &mut Walks,
-    lt: usize,
-    lp: usize,
-) -> (bool, bool) {
+pub fn jsx_over_generic(tokens: &Tokens, walks: &mut Walks, lt: usize, lp: usize) -> (bool, bool) {
     let site = context::before(tokens, walks, lt);
     if site.in_type || site.type_params {
         return (false, false);

@@ -44,7 +44,7 @@ pub(super) struct Site {
 
 /// The two walks a lex keeps: the memoized walk from the start of the source, and the bounded
 /// walk started at the anchor nearest the last query.
-pub(crate) struct Walks {
+pub struct Walks {
     full: Walk,
     local: Walk,
     /// Scan steps the bounded walks took since the last restart.

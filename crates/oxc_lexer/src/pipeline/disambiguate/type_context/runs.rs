@@ -18,7 +18,7 @@ use crate::token::{OP_KIND_BASE, matches_tk, tk};
 
 use super::type_list::type_args_at;
 
-pub(crate) use super::bytes::lt_run_split;
+pub use super::bytes::lt_run_split;
 use crate::pipeline::disambiguate::{
     RULE_SCAN_CAP,
     common::{Prev, Tokens},
@@ -28,7 +28,7 @@ use crate::pipeline::disambiguate::{
 /// `coalesce` entry for a `>` run (`>>`, `>>>`, and a `>` glued to `=`): how many leading `>` bytes
 /// to leave unfused (each closes an open `<` list), or 0 to fuse.
 #[inline(never)]
-pub(crate) fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: usize) -> usize {
+pub fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: usize) -> usize {
     let mut g = 0usize;
     while g < run && tokens.src[p + g] == b'>' {
         g += 1;
