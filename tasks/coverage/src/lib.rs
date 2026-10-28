@@ -369,7 +369,7 @@ impl AppArgs {
 
     /// Differential lexer conformance.
     ///
-    /// Compare `oxc_lexer`'s token spans against the parser's token stream over the corpora.
+    /// Compare `oxc_lexer`'s token spans and comments against the parser's over the corpora.
     /// Opt-in (kept out of `run_all`) — requires `lexer` Cargo feature.
     /// Runs against whichever of the lexer's implementations the build selects (see `oxc_lexer::IMPLEMENTATION`).
     /// `oxc_lexer` only supports little endian at present.

@@ -2,4 +2,6 @@ commit: a56fe4a4
 
 lexer_babel Summary:
 AST Parsed     : 4084/4084 (100.00%)
-Positive Passed: 4084/4084 (100.00%)
+Positive Passed: 4083/4084 (99.98%)
+Comments: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-declaration-line-separator/input.js
+
