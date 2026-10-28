@@ -22,7 +22,7 @@ use crate::{
 };
 
 #[derive(Default)]
-pub struct Lanes {
+pub(crate) struct Lanes {
     pub numbers: Vec<f64>,
     pub strings: Vec<StringSpan>,
     pub templates: Vec<StringSpan>,
@@ -390,11 +390,6 @@ impl Lanes {
             self.push_diag(start as u32, (k - start) as u32, DiagCode::InvalidIdentifierEscape);
             i = k;
         }
-    }
-
-    #[inline]
-    pub fn push_number(&mut self, src: &[u8], s: usize, e: usize) {
-        self.numbers.push(parse_number(src, s, e));
     }
 
     #[inline]

@@ -56,7 +56,7 @@ pub struct Lexer {
     sig_kinds: Vec<u8>,
     pub sig_len: usize,
     out_cap: usize,
-    pub lanes: Lanes,
+    pub(crate) lanes: Lanes,
     cpu: DynCpu,
 }
 

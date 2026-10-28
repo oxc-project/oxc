@@ -17,10 +17,11 @@ pub mod token;
 
 pub use arena::{Arena, LexResult, LineEntry};
 pub use error::{DiagCode, DiagSeverity, Diagnostic};
-pub use lanes::Lanes;
 pub use options::LexOptions;
 pub use pipeline::Lexer;
 pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
+
+use lanes::Lanes;
 
 pub const PAD: usize = 64;
 
