@@ -154,7 +154,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_property_name(&mut self) -> (PropertyKey<'a>, bool) {
         let mut computed = false;
         let key = match self.cur_kind() {
-            Kind::Str => PropertyKey::from(self.parse_literal_expression()),
+            Kind::Ident => {
+                let ident = self.parse_known_identifier_name();
+                PropertyKey::StaticIdentifier(self.alloc(ident))
+            }
+            Kind::Str => {
+                let literal = self.parse_known_literal_string();
+                PropertyKey::StringLiteral(self.alloc(literal))
+            }
             kind if kind.is_number() => PropertyKey::from(self.parse_literal_expression()),
             // { [foo]() {} }
             Kind::LBrack => {

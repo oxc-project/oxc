@@ -77,7 +77,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && !(self.at(Kind::Implements)
                 && self.lexer.peek_token().kind().is_identifier_or_keyword())
         {
-            Some(self.parse_binding_identifier())
+            Some(self.parse_known_binding_identifier())
         } else {
             None
         };
@@ -602,14 +602,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_constructor_name(&mut self) -> Option<PropertyKey<'a>> {
         if self.at(Kind::Constructor) {
-            let ident = self.parse_identifier_name();
+            let ident = self.parse_known_identifier_name();
             return Some(PropertyKey::StaticIdentifier(self.alloc(ident)));
         }
         if self.at(Kind::Str)
             && self.cur_js_string() == "constructor"
             && self.lexer.peek_token().kind() == Kind::LParen
         {
-            let string_literal = self.parse_literal_string();
+            let string_literal = self.parse_known_literal_string();
             return Some(PropertyKey::StringLiteral(self.alloc(string_literal)));
         }
         None
