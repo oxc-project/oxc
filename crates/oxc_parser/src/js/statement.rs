@@ -168,6 +168,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Statement<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
+
         let mut stmt = match self.cur_kind() {
             Kind::LCurly => self.parse_block_statement(),
             Kind::Semicolon => self.parse_empty_statement(),
