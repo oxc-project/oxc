@@ -126,7 +126,8 @@
     "wasm": {
       "browser": {
         "fs": false
-      }
+      },
+      "optionalDependency": true
     }
   },
   "engines": {
