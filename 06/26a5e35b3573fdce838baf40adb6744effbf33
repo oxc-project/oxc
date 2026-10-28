@@ -1,0 +1,25 @@
+crates/oxc_parser/src/diagnostics.rs
+  s_b14aa578f43312::t_6b95a861c868cb 1355-1363
+crates/oxc_parser/src/js/module.rs
+  s_b14aa578f43312::t_4a153d730e61de 395
+tasks/coverage/snapshots/parser_test262.snap
+  s_b14aa578f43312::t_f658c960fbf8b1 25814,25819,25822,25825,25827,25832,25835,25838,25840,25845,25848,25851
+tasks/coverage/snapshots/parser_babel.snap
+  s_b14aa578f43312::t_8056534d1017b2 9496,9500-9501,9503,9512,9516-9517,9519,9521,9525-9526,9528,9530-9531,9533-9535,9537
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0626a5e35b3573fdce838baf40adb6744effbf33",
+  "prompts": {},
+  "sessions": {
+    "s_b14aa578f43312": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a180ab-f5e6-76a0-90b8-f3ba079de898",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "sapphi-red <green@sapphi.red>"
+    }
+  }
+}

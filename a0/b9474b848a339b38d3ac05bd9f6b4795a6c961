@@ -1,0 +1,21 @@
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_be800834b6a14b::t_96e86344b69e23 957-972,974-975,978-983,1019-1034,1039,1123-1137,1141-1166
+crates/oxc_parser/src/lib.rs
+  s_be800834b6a14b::t_b6029fc26f2ad8 1488-1507,1509-1580,1583-1608
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a0b9474b848a339b38d3ac05bd9f6b4795a6c961",
+  "prompts": {},
+  "sessions": {
+    "s_be800834b6a14b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d67a7e5c-f624-4a5b-a1a8-93e081fa062c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

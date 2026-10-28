@@ -1,0 +1,57 @@
+crates/oxc_parser/src/error_handler.rs
+  s_be800834b6a14b::t_112412be086501 19-20,88-92
+crates/oxc_parser/src/lexer/mod.rs
+  s_be800834b6a14b::t_3c0e2451c0e5bd 55,98,101-104,209,221-227,231,249-252
+crates/oxc_parser/src/lexer/punctuation.rs
+  s_be800834b6a14b::t_e53900c66d2ce0 86
+crates/oxc_parser/src/lexer/trivia_builder.rs
+  s_be800834b6a14b::t_6476cb15914df5 24-26,52-163,172,189-203,245,288-291,303-336,515,734-753,756,760-763,765,957-1169
+crates/oxc_parser/src/lib.rs
+  s_be800834b6a14b::t_2f7a116f9f13dc 97,764,770,774,870-871,873-880,894,896-897,916-951,979-983,1489,1491-1500,1517,1519-1525,1530-1531
+tasks/coverage/misc/fail/oxc-28158-group-and-await.ts
+  s_be800834b6a14b::t_c2e267b4b3c605 1-4
+tasks/coverage/misc/fail/oxc-28158-reparse-ordering.js
+  s_be800834b6a14b::t_2af7d644be672d 1-6
+tasks/coverage/misc/fail/oxc-28158-replay-fatal-html.js
+  s_be800834b6a14b::t_b95d197ccd00b1 1-3
+tasks/coverage/misc/fail/oxc-28158-replay-fatal-html.tsx
+  s_be800834b6a14b::t_c2f2bcf0b8b401 1-2
+tasks/coverage/misc/fail/oxc-28158-replay-fatal-nested.js
+  s_be800834b6a14b::t_07d8557479d46b 1-3
+tasks/coverage/misc/fail/oxc-28158-replay-fatal.js
+  s_be800834b6a14b::t_441a7f9239fa44 1-4
+tasks/coverage/misc/fail/oxc-28158-same-line.js
+  s_be800834b6a14b::t_791938ab1480bd 1-2
+tasks/coverage/misc/pass/oxc-28158.ts
+  s_be800834b6a14b::t_1b7ab7b6e6c355 1-3
+tasks/coverage/snapshots/codegen_misc.snap
+  s_be800834b6a14b::t_7975ae517de273 2-3
+tasks/coverage/snapshots/formatter_misc.snap
+  s_be800834b6a14b::t_af11d5bd0cda24 2-3
+tasks/coverage/snapshots/lexer_misc.snap
+  s_be800834b6a14b::t_e29a1b6b8b7ea7 2-3
+tasks/coverage/snapshots/parser_misc.snap
+  s_be800834b6a14b::t_528d4ef025a7ec 2-4,4835-4923
+tasks/coverage/snapshots/semantic_misc.snap
+  s_be800834b6a14b::t_71ae7a1231c213 2-3
+tasks/coverage/snapshots/transformer_misc.snap
+  s_be800834b6a14b::t_6832b7067b6177 2-3
+tasks/coverage/src/lexer_diff.rs
+  s_be800834b6a14b::t_7c1de5df30229d 84,86-93
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "b6467d59698d7fade67711e30f918d7f1eda72a8",
+  "prompts": {},
+  "sessions": {
+    "s_be800834b6a14b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d67a7e5c-f624-4a5b-a1a8-93e081fa062c",
+        "model": "claude-opus-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
