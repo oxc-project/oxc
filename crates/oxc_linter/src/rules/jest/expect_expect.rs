@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig},
-    utils::PossibleJestNode,
+    rules::shared::expect_expect::{DOCUMENTATION, ExpectExpectConfig, SHORT_DESCRIPTION},
 };
 
 #[derive(Debug, Default, Clone)]
@@ -14,9 +15,11 @@ declare_oxc_lint!(
     ExpectExpect,
     jest,
     correctness,
+    recommended,
     config = ExpectExpectConfig,
     docs = DOCUMENTATION,
     version = "0.0.12",
+    short_description = SHORT_DESCRIPTION,
 );
 
 impl Rule for ExpectExpect {
@@ -24,12 +27,13 @@ impl Rule for ExpectExpect {
         ExpectExpectConfig::from_configuration(&value).map(|config| Self(Box::new(config)))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        self.0.run_on_jest_node(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        self.0.run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
@@ -45,6 +49,15 @@ fn test() {
         ("test('should pass', () => expect(true).toBeDefined())", None),
         ("it('should pass', () => somePromise().then(() => expect(true).toBeDefined()))", None),
         ("it('should pass', myTest); function myTest() { expect(true).toBeDefined() }", None),
+        (
+            "test('via function declaration', async () => {
+                async function check() {
+                    expect(1 + 1).toBe(2);
+                }
+                await check();
+            });",
+            None,
+        ),
         (
             "
             test('should pass', () => {
@@ -299,4 +312,10 @@ fn test() {
     Tester::new(ExpectExpect::NAME, ExpectExpect::PLUGIN, pass, fail)
         .with_jest_plugin(true)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_assert_function_pattern_errors_in_from_configuration() {
+    let invalid = serde_json::json!([{ "assertFunctionNames": ["["] }]);
+    assert!(ExpectExpect::from_configuration(invalid).is_err());
 }

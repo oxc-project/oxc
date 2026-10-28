@@ -4,6 +4,6 @@ input_file: crates/oxc_react_compiler/fixtures/error.todo-pattern2_type_to_objec
 ---
 Parse errors:
 
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "Expected a semicolon or an implicit semicolon after a statement, but found none", labels: One([LabeledSpan { label: None, span: SourceSpan { offset: SourceOffset(336), length: 0 }, primary: false }]), help: Some("Try inserting a semicolon here"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
+OxcDiagnostic { inner: OxcDiagnosticInner { message: "Expected a semicolon or an implicit semicolon after a statement, but found none", labels: [LabeledSpan { label: None, span: Span { start: 336, end: 336 }, primary: false }], help: Some("Try inserting a semicolon here"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
 
 No changes.

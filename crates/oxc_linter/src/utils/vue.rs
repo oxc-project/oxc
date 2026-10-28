@@ -4,14 +4,15 @@ use oxc_ast::{
     AstKind,
     ast::{
         CallExpression, ExportDefaultDeclarationKind, Expression, IdentifierReference,
-        ObjectExpression, ObjectProperty, ObjectPropertyKind, TSSignature, TSType, TSTypeName,
+        ObjectPropertyKind, TSSignature, TSType, TSTypeName,
     },
 };
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{
     AstNode, ContextSubHost, LintContext, ast_util::get_declaration_from_reference_id,
-    frameworks::FrameworkOptions, module_record::ImportImportName,
+    frameworks::FrameworkOptions, module_record::ImportImportName, utils::is_import_symbol,
 };
 
 // These sets mirror eslint-plugin-vue's `vue/no-reserved-component-names`.
@@ -209,7 +210,7 @@ pub fn is_in_vue_component_instance_method(node: &AstNode<'_>, ctx: &LintContext
         return false;
     };
 
-    matches!(container_name.as_ref(), "computed" | "methods" | "watch")
+    matches!(container_name.as_str(), Some("computed" | "methods" | "watch"))
         && is_vue_component_options_object(
             ctx.nodes().parent_node(container_property_node.id()),
             ctx,
@@ -318,7 +319,7 @@ pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
     let Some(member_expr) = call_expr.callee.get_member_expr() else {
         return false;
     };
-    let Some(prop_name) = member_expr.static_property_name() else {
+    let Some(prop_name) = member_expr.static_property_name().and_then(JSStr::as_str) else {
         return false;
     };
 
@@ -333,37 +334,7 @@ pub fn is_vue_component_options_call(call_expr: &CallExpression<'_>) -> bool {
 
 /// Check whether the identifier is imported as `nextTick` or aliased from `'vue'`.
 pub fn is_vue_next_tick_import(ident: &IdentifierReference, ctx: &LintContext<'_>) -> bool {
-    let scoping = ctx.scoping();
-    let Some(symbol_id) = scoping.get_reference(ident.reference_id()).symbol_id() else {
-        return false;
-    };
-    for entry in &ctx.module_record().import_entries {
-        if entry.module_request.name() != "vue" {
-            continue;
-        }
-        let ImportImportName::Name(name_span) = &entry.import_name else {
-            continue;
-        };
-        if name_span.name() != "nextTick" {
-            continue;
-        }
-        if scoping.get_root_binding(entry.local_name.name().into()) == Some(symbol_id) {
-            return true;
-        }
-    }
-    false
-}
-
-/// Finds the first `ObjectProperty` whose static key matches `name` in the given object.
-/// `SpreadElement` entries are skipped.
-pub fn find_property<'a, 'b>(
-    obj: &'b ObjectExpression<'a>,
-    name: &str,
-) -> Option<&'b ObjectProperty<'a>> {
-    obj.properties.iter().find_map(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else { return None };
-        obj_prop.key.is_specific_static_name(name).then_some(obj_prop.as_ref())
-    })
+    is_import_symbol(ident, "vue", "nextTick", ctx)
 }
 
 /// Walks a `defineProps<T>()` type argument and invokes `f` for every member
@@ -487,7 +458,7 @@ pub fn get_computed_getter_context(
                 {
                     let vue_options = nodes.parent_node(great.id());
                     if is_vue_component_options_object(vue_options, ctx) {
-                        let key = prop.key.static_name().map(|s| s.to_string());
+                        let key = prop.key.static_name().map(|s| s.display().to_string());
                         return Some(ComputedContext::OptionsApi(key));
                     }
                 }
@@ -505,7 +476,7 @@ pub fn get_computed_getter_context(
                     {
                         let vue_options = nodes.parent_node(computed_prop_node.id());
                         if is_vue_component_options_object(vue_options, ctx) {
-                            let key = key_prop.key.static_name().map(|s| s.to_string());
+                            let key = key_prop.key.static_name().map(|s| s.display().to_string());
                             return Some(ComputedContext::OptionsApi(key));
                         }
                     }

@@ -21,12 +21,6 @@ inputs:
     type: boolean
     description: Whether to clone typescript submodule
 
-  prettier:
-    default: true
-    required: false
-    type: boolean
-    description: Whether to clone prettier submodule
-
   estree-conformance:
     default: true
     required: false
@@ -49,7 +43,6 @@ runs:
         TEST_262: ${{ inputs.test262 }}
         BABEL: ${{ inputs.babel }}
         TYPESCRIPT: ${{ inputs.typescript }}
-        PRETTIER: ${{ inputs.prettier }}
         ESTREE_CONFORMANCE: ${{ inputs.estree-conformance }}
         NODE_COMPAT_TABLE: ${{ inputs.node-compat-table }}
       run: |
@@ -57,6 +50,5 @@ runs:
           "${TEST_262}" \
           "${BABEL}" \
           "${TYPESCRIPT}" \
-          "${PRETTIER}" \
           "${ESTREE_CONFORMANCE}" \
           "${NODE_COMPAT_TABLE}"

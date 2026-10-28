@@ -4,6 +4,8 @@ use oxc_config::GlobSet;
 
 use crate::core::oxfmtrc::{FormatConfig, OxfmtOverrideConfig};
 
+use super::relative_path;
+
 /// Resolved overrides for file-specific matching.
 /// Similar to `EditorConfig`, this also handles `FormatConfig` override resolution.
 #[derive(Debug)]
@@ -27,31 +29,16 @@ impl OxfmtrcOverrides {
         }
     }
 
-    /// Check if any overrides exist that match the given path.
-    pub fn has_match(&self, path: &Path) -> bool {
-        let relative = self.relative_path(path);
-        self.entries.iter().any(|e| Self::is_entry_match(e, &relative))
-    }
+    /// Collect the options of every override matching `path`, in config order.
+    /// Empty when nothing matches, so callers can gate on `is_empty()` without a separate probe.
+    pub fn matching(&self, path: &Path) -> Vec<&FormatConfig> {
+        let relative = relative_path(self.base_dir.as_deref(), path);
 
-    /// Get all matching override options for a given path.
-    pub fn get_matching(&self, path: &Path) -> impl Iterator<Item = &FormatConfig> + '_ {
-        let relative = self.relative_path(path);
-        self.entries.iter().filter(move |e| Self::is_entry_match(e, &relative)).map(|e| &e.options)
-    }
-
-    /// NOTE: On Windows, `to_string_lossy()` produces `\`-separated paths.
-    /// This is OK since `fast_glob::glob_match()` supports both `/` and `\` via `std::path::is_separator`.
-    fn relative_path(&self, path: &Path) -> String {
-        self.base_dir
-            .as_ref()
-            .and_then(|dir| path.strip_prefix(dir).ok())
-            .unwrap_or(path)
-            .to_string_lossy()
-            .into_owned()
-    }
-
-    fn is_entry_match(entry: &OverrideEntry, relative: &str) -> bool {
-        entry.files.is_match(relative) && !entry.exclude_files.is_match(relative)
+        self.entries
+            .iter()
+            .filter(|e| e.files.is_match(&relative) && !e.exclude_files.is_match(&relative))
+            .map(|e| &e.options)
+            .collect()
     }
 }
 

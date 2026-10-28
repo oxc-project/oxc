@@ -1,0 +1,82 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// Comments around dropped empty statements must stay in place.
+() => {
+  n;
+  // trailing own-line, before a dropped `;`
+  ;
+};
+(() => {
+  (p ? (() => {
+    n;
+    // inside conditional consequent (issue #25705)
+    ;
+  }) : []);
+});
+{
+  a;
+  // between statements, before a dropped `;`
+  ;
+  b;
+}
+{
+  a; /* same-line */ ;
+  b;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// Comments around dropped empty statements must stay in place.
+() => {
+  n;
+  // trailing own-line, before a dropped `;`
+};
+() => {
+  p
+    ? () => {
+        n;
+        // inside conditional consequent (issue #25705)
+      }
+    : [];
+};
+{
+  a;
+  // between statements, before a dropped `;`
+  b;
+}
+{
+  a; /* same-line */
+  b;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// Comments around dropped empty statements must stay in place.
+() => {
+  n;
+  // trailing own-line, before a dropped `;`
+};
+() => {
+  p
+    ? () => {
+        n;
+        // inside conditional consequent (issue #25705)
+      }
+    : [];
+};
+{
+  a;
+  // between statements, before a dropped `;`
+  b;
+}
+{
+  a; /* same-line */
+  b;
+}
+
+===================== End =====================

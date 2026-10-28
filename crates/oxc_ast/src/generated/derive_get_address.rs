@@ -22,7 +22,6 @@ impl GetAddress for Expression<'_> {
             Self::StringLiteral(it) => GetAddress::address(it),
             Self::TemplateLiteral(it) => GetAddress::address(it),
             Self::Identifier(it) => GetAddress::address(it),
-            Self::MetaProperty(it) => GetAddress::address(it),
             Self::Super(it) => GetAddress::address(it),
             Self::ArrayExpression(it) => GetAddress::address(it),
             Self::ArrowFunctionExpression(it) => GetAddress::address(it),
@@ -46,6 +45,8 @@ impl GetAddress for Expression<'_> {
             Self::UpdateExpression(it) => GetAddress::address(it),
             Self::YieldExpression(it) => GetAddress::address(it),
             Self::PrivateInExpression(it) => GetAddress::address(it),
+            Self::ImportMeta(it) => GetAddress::address(it),
+            Self::NewTarget(it) => GetAddress::address(it),
             Self::JSXElement(it) => GetAddress::address(it),
             Self::JSXFragment(it) => GetAddress::address(it),
             Self::TSAsExpression(it) => GetAddress::address(it),
@@ -87,7 +88,6 @@ impl GetAddress for PropertyKey<'_> {
             Self::StringLiteral(it) => GetAddress::address(it),
             Self::TemplateLiteral(it) => GetAddress::address(it),
             Self::Identifier(it) => GetAddress::address(it),
-            Self::MetaProperty(it) => GetAddress::address(it),
             Self::Super(it) => GetAddress::address(it),
             Self::ArrayExpression(it) => GetAddress::address(it),
             Self::ArrowFunctionExpression(it) => GetAddress::address(it),
@@ -111,6 +111,8 @@ impl GetAddress for PropertyKey<'_> {
             Self::UpdateExpression(it) => GetAddress::address(it),
             Self::YieldExpression(it) => GetAddress::address(it),
             Self::PrivateInExpression(it) => GetAddress::address(it),
+            Self::ImportMeta(it) => GetAddress::address(it),
+            Self::NewTarget(it) => GetAddress::address(it),
             Self::JSXElement(it) => GetAddress::address(it),
             Self::JSXFragment(it) => GetAddress::address(it),
             Self::TSAsExpression(it) => GetAddress::address(it),
@@ -152,7 +154,6 @@ impl GetAddress for Argument<'_> {
             Self::StringLiteral(it) => GetAddress::address(it),
             Self::TemplateLiteral(it) => GetAddress::address(it),
             Self::Identifier(it) => GetAddress::address(it),
-            Self::MetaProperty(it) => GetAddress::address(it),
             Self::Super(it) => GetAddress::address(it),
             Self::ArrayExpression(it) => GetAddress::address(it),
             Self::ArrowFunctionExpression(it) => GetAddress::address(it),
@@ -176,6 +177,8 @@ impl GetAddress for Argument<'_> {
             Self::UpdateExpression(it) => GetAddress::address(it),
             Self::YieldExpression(it) => GetAddress::address(it),
             Self::PrivateInExpression(it) => GetAddress::address(it),
+            Self::ImportMeta(it) => GetAddress::address(it),
+            Self::NewTarget(it) => GetAddress::address(it),
             Self::JSXElement(it) => GetAddress::address(it),
             Self::JSXFragment(it) => GetAddress::address(it),
             Self::TSAsExpression(it) => GetAddress::address(it),
@@ -312,13 +315,16 @@ impl GetAddress for Statement<'_> {
             Self::TSTypeAliasDeclaration(it) => GetAddress::address(it),
             Self::TSInterfaceDeclaration(it) => GetAddress::address(it),
             Self::TSEnumDeclaration(it) => GetAddress::address(it),
-            Self::TSModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSExternalModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSNamespaceDeclaration(it) => GetAddress::address(it),
             Self::TSGlobalDeclaration(it) => GetAddress::address(it),
             Self::TSImportEqualsDeclaration(it) => GetAddress::address(it),
             Self::ImportDeclaration(it) => GetAddress::address(it),
             Self::ExportAllDeclaration(it) => GetAddress::address(it),
             Self::ExportDefaultDeclaration(it) => GetAddress::address(it),
+            Self::ExportDeclaration(it) => GetAddress::address(it),
             Self::ExportNamedDeclaration(it) => GetAddress::address(it),
+            Self::ExportFromDeclaration(it) => GetAddress::address(it),
             Self::TSExportAssignment(it) => GetAddress::address(it),
             Self::TSNamespaceExportDeclaration(it) => GetAddress::address(it),
         }
@@ -336,7 +342,8 @@ impl GetAddress for Declaration<'_> {
             Self::TSTypeAliasDeclaration(it) => GetAddress::address(it),
             Self::TSInterfaceDeclaration(it) => GetAddress::address(it),
             Self::TSEnumDeclaration(it) => GetAddress::address(it),
-            Self::TSModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSExternalModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSNamespaceDeclaration(it) => GetAddress::address(it),
             Self::TSGlobalDeclaration(it) => GetAddress::address(it),
             Self::TSImportEqualsDeclaration(it) => GetAddress::address(it),
         }
@@ -357,7 +364,6 @@ impl GetAddress for ForStatementInit<'_> {
             Self::StringLiteral(it) => GetAddress::address(it),
             Self::TemplateLiteral(it) => GetAddress::address(it),
             Self::Identifier(it) => GetAddress::address(it),
-            Self::MetaProperty(it) => GetAddress::address(it),
             Self::Super(it) => GetAddress::address(it),
             Self::ArrayExpression(it) => GetAddress::address(it),
             Self::ArrowFunctionExpression(it) => GetAddress::address(it),
@@ -381,6 +387,8 @@ impl GetAddress for ForStatementInit<'_> {
             Self::UpdateExpression(it) => GetAddress::address(it),
             Self::YieldExpression(it) => GetAddress::address(it),
             Self::PrivateInExpression(it) => GetAddress::address(it),
+            Self::ImportMeta(it) => GetAddress::address(it),
+            Self::NewTarget(it) => GetAddress::address(it),
             Self::JSXElement(it) => GetAddress::address(it),
             Self::JSXFragment(it) => GetAddress::address(it),
             Self::TSAsExpression(it) => GetAddress::address(it),
@@ -429,6 +437,60 @@ impl GetAddress for BindingPattern<'_> {
     }
 }
 
+impl GetAddress for ArrowFunctionBody<'_> {
+    // `#[inline]` because compiler should boil this down to a single assembly instruction
+    #[inline]
+    fn address(&self) -> Address {
+        match self {
+            Self::FunctionBody(it) => GetAddress::address(it),
+            Self::BooleanLiteral(it) => GetAddress::address(it),
+            Self::NullLiteral(it) => GetAddress::address(it),
+            Self::NumericLiteral(it) => GetAddress::address(it),
+            Self::BigIntLiteral(it) => GetAddress::address(it),
+            Self::RegExpLiteral(it) => GetAddress::address(it),
+            Self::StringLiteral(it) => GetAddress::address(it),
+            Self::TemplateLiteral(it) => GetAddress::address(it),
+            Self::Identifier(it) => GetAddress::address(it),
+            Self::Super(it) => GetAddress::address(it),
+            Self::ArrayExpression(it) => GetAddress::address(it),
+            Self::ArrowFunctionExpression(it) => GetAddress::address(it),
+            Self::AssignmentExpression(it) => GetAddress::address(it),
+            Self::AwaitExpression(it) => GetAddress::address(it),
+            Self::BinaryExpression(it) => GetAddress::address(it),
+            Self::CallExpression(it) => GetAddress::address(it),
+            Self::ChainExpression(it) => GetAddress::address(it),
+            Self::ClassExpression(it) => GetAddress::address(it),
+            Self::ConditionalExpression(it) => GetAddress::address(it),
+            Self::FunctionExpression(it) => GetAddress::address(it),
+            Self::ImportExpression(it) => GetAddress::address(it),
+            Self::LogicalExpression(it) => GetAddress::address(it),
+            Self::NewExpression(it) => GetAddress::address(it),
+            Self::ObjectExpression(it) => GetAddress::address(it),
+            Self::ParenthesizedExpression(it) => GetAddress::address(it),
+            Self::SequenceExpression(it) => GetAddress::address(it),
+            Self::TaggedTemplateExpression(it) => GetAddress::address(it),
+            Self::ThisExpression(it) => GetAddress::address(it),
+            Self::UnaryExpression(it) => GetAddress::address(it),
+            Self::UpdateExpression(it) => GetAddress::address(it),
+            Self::YieldExpression(it) => GetAddress::address(it),
+            Self::PrivateInExpression(it) => GetAddress::address(it),
+            Self::ImportMeta(it) => GetAddress::address(it),
+            Self::NewTarget(it) => GetAddress::address(it),
+            Self::JSXElement(it) => GetAddress::address(it),
+            Self::JSXFragment(it) => GetAddress::address(it),
+            Self::TSAsExpression(it) => GetAddress::address(it),
+            Self::TSSatisfiesExpression(it) => GetAddress::address(it),
+            Self::TSTypeAssertion(it) => GetAddress::address(it),
+            Self::TSNonNullExpression(it) => GetAddress::address(it),
+            Self::TSInstantiationExpression(it) => GetAddress::address(it),
+            Self::V8IntrinsicExpression(it) => GetAddress::address(it),
+            Self::ComputedMemberExpression(it) => GetAddress::address(it),
+            Self::StaticMemberExpression(it) => GetAddress::address(it),
+            Self::PrivateFieldExpression(it) => GetAddress::address(it),
+        }
+    }
+}
+
 impl GetAddress for ClassElement<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
@@ -451,7 +513,9 @@ impl GetAddress for ModuleDeclaration<'_> {
             Self::ImportDeclaration(it) => GetAddress::address(it),
             Self::ExportAllDeclaration(it) => GetAddress::address(it),
             Self::ExportDefaultDeclaration(it) => GetAddress::address(it),
+            Self::ExportDeclaration(it) => GetAddress::address(it),
             Self::ExportNamedDeclaration(it) => GetAddress::address(it),
+            Self::ExportFromDeclaration(it) => GetAddress::address(it),
             Self::TSExportAssignment(it) => GetAddress::address(it),
             Self::TSNamespaceExportDeclaration(it) => GetAddress::address(it),
         }
@@ -486,7 +550,6 @@ impl GetAddress for ExportDefaultDeclarationKind<'_> {
             Self::StringLiteral(it) => GetAddress::address(it),
             Self::TemplateLiteral(it) => GetAddress::address(it),
             Self::Identifier(it) => GetAddress::address(it),
-            Self::MetaProperty(it) => GetAddress::address(it),
             Self::Super(it) => GetAddress::address(it),
             Self::ArrayExpression(it) => GetAddress::address(it),
             Self::ArrowFunctionExpression(it) => GetAddress::address(it),
@@ -510,6 +573,8 @@ impl GetAddress for ExportDefaultDeclarationKind<'_> {
             Self::UpdateExpression(it) => GetAddress::address(it),
             Self::YieldExpression(it) => GetAddress::address(it),
             Self::PrivateInExpression(it) => GetAddress::address(it),
+            Self::ImportMeta(it) => GetAddress::address(it),
+            Self::NewTarget(it) => GetAddress::address(it),
             Self::JSXElement(it) => GetAddress::address(it),
             Self::JSXFragment(it) => GetAddress::address(it),
             Self::TSAsExpression(it) => GetAddress::address(it),
@@ -748,12 +813,12 @@ impl GetAddress for TSSignature<'_> {
     }
 }
 
-impl GetAddress for TSModuleDeclarationBody<'_> {
+impl GetAddress for TSNamespaceDeclarationBody<'_> {
     // `#[inline]` because compiler should boil this down to a single assembly instruction
     #[inline]
     fn address(&self) -> Address {
         match self {
-            Self::TSModuleDeclaration(it) => GetAddress::address(it),
+            Self::TSNamespaceDeclaration(it) => GetAddress::address(it),
             Self::TSModuleBlock(it) => GetAddress::address(it),
         }
     }

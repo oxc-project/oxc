@@ -27,18 +27,18 @@ const rule: Rule = {
 
         context.report({
           message:
-            "[1] mark `unusedTopLevel` from Program:\n" +
-            `before: ${beforeUnused}\n` +
-            `result: ${markUnused}\n` +
-            `after: ${afterUnused}`,
+            "[1] mark `unusedTopLevel` from Program:\n"
+            + `before: ${beforeUnused}\n`
+            + `result: ${markUnused}\n`
+            + `after: ${afterUnused}`,
           node: SPAN,
         });
 
         // 2. Non-existent variable returns `false`.
         context.report({
           message:
-            "[2] mark `nonExistent` from Program:\n" +
-            `result: ${sourceCode.markVariableAsUsed("nonExistent", node)}`,
+            "[2] mark `nonExistent` from Program:\n"
+            + `result: ${sourceCode.markVariableAsUsed("nonExistent", node)}`,
           node: SPAN,
         });
 
@@ -50,10 +50,10 @@ const rule: Rule = {
 
         context.report({
           message:
-            "[3] mark `shadowedName` (no refNode):\n" +
-            `before: ${beforeShadowed}\n` +
-            `result: ${markShadowed}\n` +
-            `after: ${afterShadowed}`,
+            "[3] mark `shadowedName` (no refNode):\n"
+            + `before: ${beforeShadowed}\n`
+            + `result: ${markShadowed}\n`
+            + `after: ${afterShadowed}`,
           node: SPAN,
         });
       },
@@ -68,10 +68,10 @@ const rule: Rule = {
 
         context.report({
           message:
-            "[4] mark `nestedVar` from outer:\n" +
-            `before: ${beforeNested}\n` +
-            `result: ${markNested}\n` +
-            `after: ${afterNested}`,
+            "[4] mark `nestedVar` from outer:\n"
+            + `before: ${beforeNested}\n`
+            + `result: ${markNested}\n`
+            + `after: ${afterNested}`,
           node: SPAN,
         });
 
@@ -83,10 +83,10 @@ const rule: Rule = {
 
         context.report({
           message:
-            "[5] mark `unusedTopLevel2` from outer:\n" +
-            `before: ${beforeTop2}\n` +
-            `result: ${markTop2}\n` +
-            `after: ${afterTop2}`,
+            "[5] mark `unusedTopLevel2` from outer:\n"
+            + `before: ${beforeTop2}\n`
+            + `result: ${markTop2}\n`
+            + `after: ${afterTop2}`,
           node: SPAN,
         });
       },
@@ -102,18 +102,18 @@ const rule: Rule = {
 
         context.report({
           message:
-            "[6] mark `nestedVar2` from inner:\n" +
-            `before: ${beforeNested}\n` +
-            `result: ${markNested}\n` +
-            `after: ${afterNested}`,
+            "[6] mark `nestedVar2` from inner:\n"
+            + `before: ${beforeNested}\n`
+            + `result: ${markNested}\n`
+            + `after: ${afterNested}`,
           node: SPAN,
         });
 
         // 7. Non-existent variable from nested scope returns `false`.
         context.report({
           message:
-            "[7] mark `doesNotExist` from inner:\n" +
-            `result: ${sourceCode.markVariableAsUsed("doesNotExist", node)}`,
+            "[7] mark `doesNotExist` from inner:\n"
+            + `result: ${sourceCode.markVariableAsUsed("doesNotExist", node)}`,
           node: SPAN,
         });
       },

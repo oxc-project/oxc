@@ -12,10 +12,9 @@ pub struct ParserState<'a> {
     /// Keyed by `ObjectProperty`'s span.start.
     pub cover_initialized_name: FxHashMap<u32, AssignmentExpression<'a>>,
 
-    /// Trailing comma spans for `ArrayExpression` and `ObjectExpression`.
-    /// Used for error reporting.
-    /// Keyed by start span of `ArrayExpression` / `ObjectExpression`.
-    /// Valued by position of the trailing_comma.
+    /// Trailing comma spans for `ArrayExpression` and `ObjectExpression` ending in a spread.
+    /// Used for error reporting when covering a rest assignment target.
+    /// Keyed by the expression start and consumed when checked.
     pub trailing_commas: FxHashMap<u32, Span>,
 
     /// Statements that may need reparsing when `sourceType` is `unambiguous`.

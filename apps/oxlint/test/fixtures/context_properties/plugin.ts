@@ -14,16 +14,16 @@ const rule: Rule = {
   create(context) {
     context.report({
       message:
-        "\n" +
-        `this === rule: ${this === rule}\n` +
-        `id: ${context.id}\n` +
-        `filename: ${context.filename}\n` +
-        `getFilename(): ${context.getFilename()}\n` +
-        `physicalFilename: ${context.physicalFilename}\n` +
-        `getPhysicalFilename(): ${context.getPhysicalFilename()}\n` +
-        `cwd: ${context.cwd}\n` +
-        `getCwd(): ${context.getCwd()}\n` +
-        `parserPath: ${context.parserPath}`,
+        "\n"
+        + `this === rule: ${this === rule}\n`
+        + `id: ${context.id}\n`
+        + `filename: ${context.filename}\n`
+        + `getFilename(): ${context.getFilename()}\n`
+        + `physicalFilename: ${context.physicalFilename}\n`
+        + `getPhysicalFilename(): ${context.getPhysicalFilename()}\n`
+        + `cwd: ${context.cwd}\n`
+        + `getCwd(): ${context.getCwd()}\n`
+        + `parserPath: ${context.parserPath}`,
       node: SPAN,
     });
 

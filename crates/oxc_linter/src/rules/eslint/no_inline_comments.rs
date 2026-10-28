@@ -4,7 +4,7 @@ use lazy_regex::Regex;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, Comment};
+use oxc_ast::{AstKind, AstType, Comment};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -86,13 +86,16 @@ declare_oxc_lint!(
 
 impl Rule for NoInlineComments {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
         let source_text = ctx.source_text();
 
         let jsx_empty_expr_spans = LazyCell::new(|| {
+            if !ctx.nodes().contains(AstType::JSXEmptyExpression) {
+                return Vec::new();
+            }
             ctx.nodes()
                 .iter()
                 .filter_map(|node| {

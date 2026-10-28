@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(void-use-memo): useMemo() callbacks must return a value
+   ╭─[void_use_memo.tsx:4:25]
+ 3 │ function Component() {
+ 4 │   const value = useMemo(() => {}, []);
+   ·                         ───┬───
+   ·                            ╰── useMemo() callbacks must return a value
+ 5 │   return <div>{value}</div>;
+   ╰────
+  help: This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/use-memo

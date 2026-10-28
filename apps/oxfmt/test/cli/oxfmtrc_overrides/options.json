@@ -6,5 +6,6 @@
   { "cwd": "multiple_overrides", "args": ["--check", "."] },
   { "cwd": "prettier_overrides", "args": ["--check", "."] },
   { "cwd": "bool_reset_override", "args": ["--check", "."] },
-  { "cwd": "tailwindcss_options", "args": ["--check", "."] }
+  { "cwd": "tailwindcss_options", "args": ["--check", "."] },
+  { "cwd": "editorconfig_per_file", "args": ["test.js", "test.ts"] }
 ]

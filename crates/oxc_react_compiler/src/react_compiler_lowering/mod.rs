@@ -3,7 +3,8 @@ pub mod find_context_identifiers;
 pub mod hir_builder;
 pub mod identifier_loc_index;
 
-use oxc_ast::ast as oxc;
+use oxc_ast::ast::*;
+use oxc_span::{GetSpan, Span};
 
 use crate::react_compiler_hir::BindingKind;
 
@@ -25,19 +26,51 @@ pub fn convert_binding_kind(kind: &crate::scope::BindingKind) -> BindingKind {
 /// Analogous to TS's `NodePath<t.Function>` / `BabelFn`.
 ///
 /// oxc collapses Babel's `FunctionDeclaration`/`FunctionExpression` into one
-/// [`oxc::Function`] (discriminated by `r#type`); arrows are separate.
+/// [`Function`] (discriminated by `r#type`); arrows are separate.
 #[derive(Clone, Copy)]
-pub enum FunctionNode<'a> {
-    Function(&'a oxc::Function<'a>),
-    Arrow(&'a oxc::ArrowFunctionExpression<'a>),
+pub enum FunctionNode<'b, 'a> {
+    Function(&'b Function<'a>),
+    Arrow(&'b ArrowFunctionExpression<'a>),
 }
 
-impl<'a> FunctionNode<'a> {
+impl FunctionNode<'_, '_> {
     /// The scope the function node creates (its semantic `scope_id` cell).
     pub fn scope_id(&self) -> Option<oxc_syntax::scope::ScopeId> {
         match self {
             FunctionNode::Function(f) => f.scope_id.get(),
             FunctionNode::Arrow(a) => a.scope_id.get(),
+        }
+    }
+
+    /// A compact source location for diagnostics that do not have a more
+    /// specific span of their own.
+    ///
+    /// Prefer a declared function's name. Anonymous functions and arrows use
+    /// only their header, stopping before the body, so a fallback diagnostic
+    /// never highlights the entire function.
+    pub fn diagnostic_span(&self) -> Span {
+        match self {
+            FunctionNode::Function(function) => {
+                if let Some(id) = &function.id {
+                    return id.span;
+                }
+                let end = function
+                    .body
+                    .as_ref()
+                    .map_or(function.params.span.end, |body| body.span.start.saturating_add(1));
+                Span::new(function.span.start, end.min(function.span.end))
+            }
+            FunctionNode::Arrow(arrow) => {
+                let end = arrow.get_expression().map_or_else(
+                    || {
+                        arrow
+                            .get_function_body()
+                            .map_or(arrow.params.span.end, |body| body.span.start.saturating_add(1))
+                    },
+                    |expression| expression.span().start,
+                );
+                Span::new(arrow.span.start, end.min(arrow.span.end))
+            }
         }
     }
 }

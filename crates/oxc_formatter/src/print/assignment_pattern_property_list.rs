@@ -1,16 +1,17 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
+use oxc_formatter_core::Format;
 use oxc_span::GetSpan;
 
 use crate::{
     ast_nodes::{AstNode, AstNodeIterator},
-    formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _},
+    formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _},
     options::{FormatTrailingCommas, TrailingSeparator},
 };
 
 enum AssignmentTargetPropertyListNode<'a, 'b> {
-    Property(&'b AstNode<'a, AssignmentTargetProperty<'a>>),
-    Rest(&'b AstNode<'a, AssignmentTargetRest<'a>>),
+    Property(AstNode<'b, 'a, AssignmentTargetProperty<'a>>),
+    Rest(AstNode<'b, 'a, AssignmentTargetRest<'a>>),
 }
 
 impl GetSpan for AssignmentTargetPropertyListNode<'_, '_> {
@@ -32,8 +33,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AssignmentTargetPropertyListNode<'a
 }
 
 struct AssignmentTargetPropertyListIter<'a, 'b> {
-    properties: AstNodeIterator<'a, AssignmentTargetProperty<'a>>,
-    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+    properties: AstNodeIterator<'b, 'a, AssignmentTargetProperty<'a>>,
+    rest: Option<AstNode<'b, 'a, AssignmentTargetRest<'a>>>,
 }
 
 impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
@@ -49,14 +50,14 @@ impl<'a, 'b> Iterator for AssignmentTargetPropertyListIter<'a, 'b> {
 }
 
 pub struct AssignmentTargetPropertyList<'a, 'b> {
-    properties: &'b AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-    rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+    properties: AstNode<'b, 'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+    rest: Option<AstNode<'b, 'a, AssignmentTargetRest<'a>>>,
 }
 
 impl<'a, 'b> AssignmentTargetPropertyList<'a, 'b> {
     pub fn new(
-        properties: &'b AstNode<'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
-        rest: Option<&'b AstNode<'a, AssignmentTargetRest<'a>>>,
+        properties: AstNode<'b, 'a, ArenaVec<'a, AssignmentTargetProperty<'a>>>,
+        rest: Option<AstNode<'b, 'a, AssignmentTargetRest<'a>>>,
     ) -> Self {
         Self { properties, rest }
     }

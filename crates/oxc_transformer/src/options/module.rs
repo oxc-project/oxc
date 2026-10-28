@@ -1,4 +1,4 @@
-use oxc_diagnostics::Error;
+use oxc_diagnostics::{Error, OxcDiagnostic};
 use serde::Deserialize;
 
 use super::babel::BabelPlugins;
@@ -42,7 +42,7 @@ impl TryFrom<BabelModule> for Module {
         match value {
             BabelModule::Commonjs => Ok(Self::CommonJS),
             BabelModule::Auto | BabelModule::Boolean(false) => Ok(Self::Preserve),
-            _ => Err(Error::msg(format!("{value:?} module is not implemented."))),
+            _ => Err(OxcDiagnostic::error(format!("{value:?} module is not implemented.")).into()),
         }
     }
 }
@@ -54,7 +54,7 @@ impl TryFrom<&BabelPlugins> for Module {
         if value.modules_commonjs {
             Ok(Self::CommonJS)
         } else {
-            Err(Error::msg("Doesn't find any transform-modules-* plugin."))
+            Err(OxcDiagnostic::error("Doesn't find any transform-modules-* plugin.").into())
         }
     }
 }

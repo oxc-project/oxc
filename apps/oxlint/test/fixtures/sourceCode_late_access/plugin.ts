@@ -32,9 +32,9 @@ const createRule: Rule = {
 
         context.report({
           message:
-            "program:\n" +
-            `text: ${JSON.stringify(context.sourceCode.text)}\n` +
-            `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
+            "program:\n"
+            + `text: ${JSON.stringify(context.sourceCode.text)}\n`
+            + `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
         });
       },
@@ -51,11 +51,11 @@ const createRule: Rule = {
 
         context.report({
           message:
-            `ident "${node.name}":\n` +
-            `source: "${context.sourceCode.getText(node)}"\n` +
-            `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
-            `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
-            `source with both: "${context.sourceCode.getText(node, 2, 1)}"`,
+            `ident "${node.name}":\n`
+            + `source: "${context.sourceCode.getText(node)}"\n`
+            + `source with before: "${context.sourceCode.getText(node, 2)}"\n`
+            + `source with after: "${context.sourceCode.getText(node, null, 1)}"\n`
+            + `source with both: "${context.sourceCode.getText(node, 2, 1)}"`,
           node,
         });
       },
@@ -74,9 +74,9 @@ const createOnceRule: Rule = {
 
         context.report({
           message:
-            "program:\n" +
-            `text: ${JSON.stringify(context.sourceCode.text)}\n` +
-            `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
+            "program:\n"
+            + `text: ${JSON.stringify(context.sourceCode.text)}\n`
+            + `getText(): ${JSON.stringify(context.sourceCode.getText())}`,
           node: SPAN,
         });
       },
@@ -93,11 +93,11 @@ const createOnceRule: Rule = {
 
         context.report({
           message:
-            `ident "${node.name}":\n` +
-            `source: "${context.sourceCode.getText(node)}"\n` +
-            `source with before: "${context.sourceCode.getText(node, 2)}"\n` +
-            `source with after: "${context.sourceCode.getText(node, null, 1)}"\n` +
-            `source with both: "${context.sourceCode.getText(node, 2, 1)}"`,
+            `ident "${node.name}":\n`
+            + `source: "${context.sourceCode.getText(node)}"\n`
+            + `source with before: "${context.sourceCode.getText(node, 2)}"\n`
+            + `source with after: "${context.sourceCode.getText(node, null, 1)}"\n`
+            + `source with both: "${context.sourceCode.getText(node, 2, 1)}"`,
           node,
         });
       },

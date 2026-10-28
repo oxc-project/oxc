@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ClassElement, PropertyKey, TSSignature, TSType, TSTypeName},
+    ast::{ClassElement, IdentifierReference, TSSignature, TSType, TSTypeAnnotation, TSTypeName},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -18,6 +18,19 @@ fn no_misused_new_class_diagnostic(span: Span) -> OxcDiagnostic {
     OxcDiagnostic::warn("Class cannot have method named `new`.")
         .with_help("This method name is confusing, consider renaming the method to `constructor`")
         .with_label(span)
+}
+
+fn get_return_type_identifier<'a, 'b>(
+    return_type: Option<&'b TSTypeAnnotation<'a>>,
+) -> Option<&'b IdentifierReference<'a>> {
+    if let Some(return_type) = return_type
+        && let TSType::TSTypeReference(type_ref) = &return_type.type_annotation
+        && let TSTypeName::IdentifierReference(id) = &type_ref.type_name
+    {
+        Some(id)
+    } else {
+        None
+    }
 }
 
 #[derive(Debug, Default, Clone)]
@@ -80,6 +93,7 @@ declare_oxc_lint!(
     NoMisusedNew,
     typescript,
     correctness,
+    recommended,
     version = "0.0.7",
     short_description = "Enforce valid definitions of `new` and `constructor` in TypeScript.",
 );
@@ -94,13 +108,7 @@ impl Rule for NoMisusedNew {
                     let TSSignature::TSConstructSignatureDeclaration(sig) = signature else {
                         continue;
                     };
-                    let Some(return_type) = &sig.return_type else {
-                        continue;
-                    };
-                    let TSType::TSTypeReference(type_ref) = &return_type.type_annotation else {
-                        continue;
-                    };
-                    if let TSTypeName::IdentifierReference(id) = &type_ref.type_name
+                    if let Some(id) = get_return_type_identifier(sig.return_type.as_deref())
                         && id.name == decl_name
                     {
                         ctx.diagnostic(no_misused_new_interface_diagnostic(Span::sized(
@@ -111,9 +119,7 @@ impl Rule for NoMisusedNew {
                 }
             }
             AstKind::TSMethodSignature(method_sig) => {
-                if let PropertyKey::StaticIdentifier(id) = &method_sig.key
-                    && id.name == "constructor"
-                {
+                if method_sig.key.is_specific_id("constructor") {
                     ctx.diagnostic(no_misused_new_interface_diagnostic(method_sig.key.span()));
                 }
             }
@@ -127,18 +133,13 @@ impl Rule for NoMisusedNew {
                     let ClassElement::MethodDefinition(method) = element else {
                         continue;
                     };
-                    if method.key.is_specific_id("new") && method.value.body.is_none() {
-                        let Some(return_type) = &method.value.return_type else {
-                            continue;
-                        };
-                        let TSType::TSTypeReference(type_ref) = &return_type.type_annotation else {
-                            continue;
-                        };
-                        if let TSTypeName::IdentifierReference(current_id) = &type_ref.type_name
-                            && current_id.name == cls_name
-                        {
-                            ctx.diagnostic(no_misused_new_class_diagnostic(method.key.span()));
-                        }
+                    if method.key.is_specific_id("new")
+                        && method.value.body.is_none()
+                        && let Some(current_id) =
+                            get_return_type_identifier(method.value.return_type.as_deref())
+                        && current_id.name == cls_name
+                    {
+                        ctx.diagnostic(no_misused_new_class_diagnostic(method.key.span()));
                     }
                 }
             }

@@ -110,7 +110,7 @@ declare_oxc_lint!(
 
 impl Rule for StateInConstructor {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -145,12 +145,13 @@ fn has_parent_es6_component<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bo
 
 /// Checks if a node is inside a constructor method.
 pub fn is_in_constructor(ctx: &LintContext, node_id: NodeId) -> bool {
-    for ancestor_id in ctx.nodes().ancestor_ids(node_id) {
-        if let AstKind::MethodDefinition(method) = ctx.nodes().kind(ancestor_id) {
-            return method.kind.is_constructor();
-        }
-    }
-    false
+    ctx.nodes()
+        .ancestor_kinds(node_id)
+        .find_map(|kind| match kind {
+            AstKind::MethodDefinition(method) => Some(method),
+            _ => None,
+        })
+        .is_some_and(|method| method.kind.is_constructor())
 }
 
 #[test]
@@ -295,6 +296,20 @@ fn test() {
             "
                     function Foo () {
                       return <div>Foo</div>
+                    }
+                  ",
+            Some(serde_json::json!(["never"])),
+        ),
+        (
+            "
+                    class Foo extends React.Component {
+                      constructor(props) {
+                        class Bar {
+                          method() {
+                            this.state = { bar: 0 }
+                          }
+                        }
+                      }
                     }
                   ",
             Some(serde_json::json!(["never"])),

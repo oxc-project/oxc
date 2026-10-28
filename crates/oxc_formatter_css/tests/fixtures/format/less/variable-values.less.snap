@@ -7,8 +7,6 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @short: 1px solid red;
 .picker {
   @padding-top: max(((@input-height - @font-height) / 2), 0);
-  width: calc((100% - 10px) / 2);
-  height: calc((100% - 10px));
   margin: min(((@a)), @b);
 }
 @input-wrapper-cls: @input-prefix-cls, ~'@{input-prefix-cls}-affix-wrapper';
@@ -28,8 +26,6 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @short: 1px solid red;
 .picker {
   @padding-top: max(((@input-height - @font-height) / 2), 0);
-  width: calc((100% - 10px) / 2);
-  height: calc((100% - 10px));
   margin: min(((@a)), @b);
 }
 @input-wrapper-cls:
@@ -52,8 +48,6 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 @short: 1px solid red;
 .picker {
   @padding-top: max(((@input-height - @font-height) / 2), 0);
-  width: calc((100% - 10px) / 2);
-  height: calc((100% - 10px));
   margin: min(((@a)), @b);
 }
 @input-wrapper-cls:

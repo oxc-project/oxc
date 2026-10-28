@@ -1,10 +1,10 @@
 use std::borrow::Cow;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, StaticPropertyName,
     ast::{
         AssignmentTarget, AssignmentTargetProperty, BindingPattern, Expression, Function,
-        FunctionType, ObjectAssignmentTarget, PropertyKind,
+        FunctionType, ObjectAssignmentTarget,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -326,9 +326,7 @@ fn is_valid_identifier_name(name: &str) -> bool {
 fn is_object_or_class_method(parent_node: &AstNode) -> bool {
     match parent_node.kind() {
         AstKind::MethodDefinition(_) => true,
-        AstKind::ObjectProperty(property) => {
-            property.method || matches!(property.kind, PropertyKind::Get | PropertyKind::Set)
-        }
+        AstKind::ObjectProperty(property) => property.method || property.kind.is_accessor(),
         _ => false,
     }
 }
@@ -407,7 +405,7 @@ fn is_invalid_function(
 
     match config_type {
         FuncNamesConfigType::Never => {
-            func_name.is_some() && func.r#type != FunctionType::FunctionDeclaration
+            func_name.is_some() && func.r#type == FunctionType::FunctionExpression
         }
         FuncNamesConfigType::AsNeeded => {
             func_name.is_none() && !has_inferred_name(func, parent_node)
@@ -462,11 +460,19 @@ fn guess_function_name<'a>(ctx: &LintContext<'a>, node_id: NodeId) -> Option<Cow
             }
             AstKind::ObjectProperty(prop) => {
                 // Stop here - we found the direct property context
-                return prop.key.static_name().filter(|name| is_valid_identifier_name(name));
+                return prop
+                    .key
+                    .static_name()
+                    .and_then(StaticPropertyName::into_cow_str)
+                    .filter(|name| is_valid_identifier_name(name));
             }
             AstKind::PropertyDefinition(prop_def) => {
                 // Stop here - we found the direct class property context
-                return prop_def.key.static_name().filter(|name| is_valid_identifier_name(name));
+                return prop_def
+                    .key
+                    .static_name()
+                    .and_then(StaticPropertyName::into_cow_str)
+                    .filter(|name| is_valid_identifier_name(name));
             }
             _ => {}
         }
@@ -508,6 +514,11 @@ fn test() {
         ("[foo = function(){}] = [];", as_needed.clone()),   // { "ecmaVersion": 6 },
         ("function fn(foo = function(){}) {}", as_needed.clone()), // { "ecmaVersion": 6 },
         ("function foo() {}", never.clone()),
+        ("declare function foo(a: string): string;", never.clone()),
+        (
+            "export function foo(a: string): string; export function foo(a: number): number; export function foo(a: string | number): string | number { return a; }",
+            never.clone(),
+        ),
         ("var a = function() {};", never.clone()),
         ("var a = function foo() { foo(); };", never.clone()),
         (
@@ -594,6 +605,8 @@ fn test() {
         ("var a = new Date(function() {});", None),
         ("var test = function(d, e, f) {};", None),
         ("new function() {}", None),
+        // A regex key is named like `String(/a/ig)`, which orders the flags.
+        ("({ [/a/ig]: function() {} })", None),
         ("Foo.prototype.bar = function() {};", as_needed.clone()),
         ("(function(){}())", as_needed.clone()),
         ("f(function(){})", as_needed.clone()),

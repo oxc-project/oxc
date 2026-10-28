@@ -4,6 +4,125 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 💥 BREAKING CHANGES
+
+- cf8296f ecmascript: [**BREAKING**] Fold surrogate strings with JSStr constants (#27098) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- bd70a9b ecmascript: Use ECMAScript whitespace when folding `parseFloat`/`parseInt`/`trim` (#27719) (Dunqing)
+
+### ⚡ Performance
+
+- 3493ce3 minifier: Reuse is_error_constructor and simplify substitute_global_new_expression (#28149) (Armano)
+
+## [0.155.0] - 2026-10-19
+
+### 💥 BREAKING CHANGES
+
+- a0a987c ast: [**BREAKING**] Preserve lone surrogates in static member names (#26677) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- bd37e78 ecmascript: Look through sequence expressions in `to_primitive` (#27837) (baltasarblanco)
+- 863b359 ecmascript: Correct parseFloat decimal prefix scanning (#27695) (camc314)
+- 3543672 ecmascript: Do not fold Number.isInteger / isSafeInteger of tiny non-integers to true (#27622) (Baltasar Blanco)
+- 6987a61 ecmascript: BigInt loose equality folding (unknown operands and `StringToBigInt`) (#27656) (Baltasar Blanco)
+- 022306f ecmascript: Do not fold `Math.cbrt` of a negative number to `NaN` (#27621) (Baltasar Blanco)
+
+### ⚡ Performance
+
+- 88b5c35 minifier: Reduce code branches when evaluating roots (#27906) (Armano)
+
+## [0.154.0] - 2026-10-13
+
+### ⚡ Performance
+
+- 19c227d minifier: Use ident when checking specific id names (#27208) (Armano)
+
+## [0.150.0] - 2026-09-14
+
+### 🚀 Features
+
+- ca649e0 ecma: Define math constants as known globals and resolve their types (#26585) (Armano)
+
+### ⚡ Performance
+
+- 53f006e ecmascript: Format small integer literals with itoa (#26446) (camc314)
+
+## [0.149.0] - 2026-09-07
+
+### 🐛 Bug Fixes
+
+- 853ffab ecmascript: Avoid `charAt` panic on 32-bit (#26244) (camc314)
+
+## [0.148.0] - 2026-08-31
+
+### 🐛 Bug Fixes
+
+- b874f48 ecmascript: `Math.round` only exact half ties (#26150) (camc314)
+- a625378 minifier: Coerce omitted `indexOf` search argument (#26149) (camc314)
+- dc7398b ecmascript: Trim trailing whitespace in string to number (#26148) (camc314)
+
+## [0.145.0] - 2026-08-18
+
+### 🐛 Bug Fixes
+
+- f6000ac ecmascript: Fold `**` with `Number::exponentiate`, not IEEE `pow` (#25644) (Kotaro Chikuba)
+- e82495b ecmascript: Derive `ToNumber` of `!x` from `ToBoolean` (#25595) (Kotaro Chikuba)
+- 88b34f2 clippy: Remove unneeded `unsafe` (#25551) (camc314)
+
+### ⚡ Performance
+
+- 568203e ecmascript: Use binary search for known globals (#25817) (Boshen)
+
+## [0.144.0] - 2026-08-10
+
+### 💥 BREAKING CHANGES
+
+- a33788e ast: [**BREAKING**] Group class heritage into `ClassHeritage` (#25360) (camc314)
+- 44fd320 ast: [**BREAKING**] Split TS external modules & Namespace Declarations (#25284) (camc314)
+
+## [0.143.0] - 2026-08-03
+
+### 💥 BREAKING CHANGES
+
+- 1bdedd1 ast: [**BREAKING**] Introduce `ExportDeclaration`, `ExportFromDeclaration` (#25095) (camc314)
+- c917f20 ast: [**BREAKING**] Introduce `ArrowFunctionBody` enum (#24987) (camc314)
+
+### 🚀 Features
+
+- 5acdae2 ecmascript: Skip transparent TS expressions (#25072) (camc314)
+
+### 🐛 Bug Fixes
+
+- 8a47ff3 ecmascript: Do not treat lone-surrogate strings as constants (#25084) (Dunqing)
+- fbe8d31 minifier: Respect targets when folding RegExp source (#24790) (Dunqing)
+
+## [0.142.0] - 2026-07-27
+
+### 🐛 Bug Fixes
+
+- 07e9acc ecmascript: Keep side effects in parent of `toString` calls (#24846) (sapphi-red)
+- 16a40ad ecmascript: Detect side effects in unused arguments to `charCodeAt` (#24845) (sapphi-red)
+- 133bb35 ecmascript: Detect side effects of `foo().#bar` correctly when PropertyReadSideEffects::None (#24769) (sapphi-red)
+
+### ⚡ Performance
+
+- a086d91 ecmascript: Avoid number literal allocations (#24889) (Dunqing)
+
+## [0.141.0] - 2026-07-20
+
+### 💥 BREAKING CHANGES
+
+- 54cc121 ast: [**BREAKING**] Split `MetaProperty` into `ImportMeta` and `NewTarget` (#24557) (camc314)
+
+### 🐛 Bug Fixes
+
+- e750a82 ecmascript: Fix false negative for may_have_side_effects on dynamic property access (#24709) (sapphi-red)
+
 ## [0.139.0] - 2026-07-06
 
 ### 🚀 Features

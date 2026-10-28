@@ -1,12 +1,23 @@
 //! Generator for `oxc_formatter`.
 //!
+//! Boundary with the handwritten side:
+//!
+//! - The node lists here decide which fragments of the `fmt` skeleton are EMITTED (comment-printing ownership, parentheses frames)
+//!   - they change the shape of the generated code, nothing else
+//! - Behavior the skeleton queries per node lives on `FormatWrite` (`write`, `leading_comments_start`)
+//!   - defaults cover the common case, overrides sit next to the node's `write` and need no regeneration
+//!   - EXCEPT: expression-shaped nodes bypass the suppressed hooks entirely (their suppressed path goes to `write_suppressed_expression`, see below),
+//!     so an override on such a node would silently never be called
+//!
+//! Add a new list only for a variation the emitted shape must express;
+//! for anything a node merely answers, add a trait method with a total default.
 
 use proc_macro2::TokenStream;
 use quote::{format_ident, quote};
 
 use crate::{
     Codegen, Generator,
-    generators::{define_generator, formatter::ast_nodes::get_node_type},
+    generators::define_generator,
     output::Output,
     schema::{Def, EnumDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
 };
@@ -22,7 +33,9 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
     "CatchParameter",
     "CatchClause",
     // Manually prints it because class's decorators can be appears before `export class Cls {}`.
+    "ExportDeclaration",
     "ExportNamedDeclaration",
+    "ExportFromDeclaration",
     "ExportDefaultDeclaration",
     //
     "JSXElement",
@@ -36,19 +49,6 @@ const AST_NODE_WITHOUT_PRINTING_COMMENTS_LIST: &[&str] = &[
 const AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST: &[&str] =
     &["TSUnionType", "ExpressionStatement"];
 
-// Statements whose suppressed (`oxfmt-ignore`d) range must exclude the trailing semicolon,
-// so the formatter prints its own terminator like Prettier's ignored range.
-// Every node listed here MUST implement `FormatWrite::write_suppressed`
-// (the default implementation panics at runtime).
-//
-// Other semicolon-terminated statements have the same issue in principle,
-// (`ExpressionStatement`, `VariableDeclaration`, ...)
-// but only these three have a confirmed divergence against Prettier 3.9.
-// (return/throw already handle their suppression in their own `write`)
-// Extend the list one statement at a time, verifying each against Prettier first.
-const AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING: &[&str] =
-    &["BreakStatement", "ContinueStatement", "DoWhileStatement"];
-
 const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSTypeAssertion",
     "TSInferType",
@@ -60,11 +60,6 @@ const AST_NODE_NEEDS_PARENTHESES: &[&str] = &[
     "TSFunctionType",
     "TSTypeOperator",
 ];
-
-const NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS: phf::Map<&'static str, &'static str> = phf::phf_map! {
-    "ArrowFunctionExpression" => "FormatJsArrowFunctionExpressionOptions",
-    "Function" => "FormatFunctionOptions",
-};
 
 pub struct FormatterFormatGenerator;
 
@@ -89,23 +84,19 @@ impl Generator for FormatterFormatGenerator {
             })
             .collect::<TokenStream>();
 
-        let options = NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.values().map(|o| {
-            let ident = format_ident!("{}", o);
-            quote! { , #ident }
-        });
-
         let output = quote! {
             #![expect(clippy::match_same_arms)]
             use oxc_ast::ast::*;
+            use oxc_formatter_core::Format;
             use oxc_span::GetSpan;
 
             ///@@line_break
             use crate::{
-                formatter::{Format, JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
+                formatter::{JsFormatContext, JsFormatter, JsFormatterExt as _, trivia::{format_leading_comments, format_trailing_comments}},
                 parentheses::NeedsParentheses,
                 ast_nodes::AstNode,
-                utils::{suppressed::FormatSuppressedNode, typecast::format_type_cast_comment_node},
-                print::{FormatWrite #(#options)*},
+                utils::{suppressed::{FormatSuppressedNode, write_suppressed_expression}, typecast::{TypeCast, classify_type_cast, format_type_cast_comment_node, format_leading_comments_and_open_paren, format_outer_leading_comments_and_open_paren}},
+                print::{FormatWrite, semicolon::write_suppressed_statement},
             };
 
             #impls
@@ -122,7 +113,7 @@ fn generate_struct_implementation(
 ) -> TokenStream {
     let type_ty = struct_def.ty(schema);
     let type_ty = quote! {
-        AstNode::<'a, #type_ty>
+        AstNode::<'_, 'a, #type_ty>
     };
 
     let struct_name = struct_def.name();
@@ -130,7 +121,12 @@ fn generate_struct_implementation(
     let do_not_print_leading_comment = do_not_print_comment
         || AST_NODE_WITHOUT_PRINTING_LEADING_COMMENTS_LIST.contains(&struct_name);
 
-    let leading_comments = (!do_not_print_leading_comment).then(|| {
+    let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
+
+    // For nodes that may get formatter-added parentheses,
+    // leading comments are printed by the parentheses block below (ordering depends on the comments),
+    // not as a standalone step.
+    let leading_comments = (!do_not_print_leading_comment && !needs_parentheses).then(|| {
         quote! {
             self.format_leading_comments(f);
         }
@@ -141,13 +137,32 @@ fn generate_struct_implementation(
         }
     });
 
-    let needs_parentheses = parenthesis_type_ids.contains(&struct_def.id);
-
+    let bare_open_paren = quote! {
+        let needs_parentheses = self.needs_parentheses(f);
+        if needs_parentheses {
+            "(".fmt(f);
+        }
+    };
     let needs_parentheses_before = if needs_parentheses {
-        quote! {
-            let needs_parentheses = self.needs_parentheses(f);
-            if needs_parentheses {
-                "(".fmt(f);
+        if do_not_print_comment {
+            // The node owns ALL its comment printing (leading and trailing) in `write`;
+            // keep the added paren bare and leave every comment to it.
+            bare_open_paren.clone()
+        } else if do_not_print_leading_comment {
+            // The node prints its own leading comments in `write`,
+            // but the ones that belong outside the formatter-added paren (source side / own-line) must
+            // print first (`X & /* c */ (A | B)` keeps `c` outside).
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                format_outer_leading_comments_and_open_paren(self.span(), needs_parentheses, f);
+            }
+        } else {
+            // A leading type cast comment must stay adjacent to the `(` of its cast target inside this node;
+            // the helper prints the comments inside the added parentheses in that case,
+            // or the cast would rebind to them.
+            quote! {
+                let needs_parentheses = self.needs_parentheses(f);
+                format_leading_comments_and_open_paren(self.span(), self.leading_comments_start(), needs_parentheses, f);
             }
         }
     } else {
@@ -164,59 +179,77 @@ fn generate_struct_implementation(
         quote! {}
     };
 
-    let generate_fmt_implementation = |has_options: bool| {
-        let write_call = if has_options {
-            quote! {
-                self.write_with_options(options, f);
-            }
-        } else {
-            quote! {
-                self.write(f);
-            }
+    let fmt_implementation = {
+        let write_call = quote! {
+            self.write(f);
         };
 
         // `Program` can't be suppressed.
-        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic
-        let suppressed_check = (!matches!(struct_name, "Program" | "JSXElement" | "JSXFragment"))
-            .then(|| {
+        // `JSXElement` and `JSXFragment` implement suppression formatting in their formatting logic.
+        // Statements are decided before their own `fmt`
+        // (the `Statement` fmt below hands them to `write_suppressed_statement` first, which owns their terminator);
+        // the two export kinds are skipped here as well because their ignored range starts at a pre-`export` decorator,
+        // which only `write_suppressed_statement` (via `statement_span`) knows.
+        let suppressed_check = (!matches!(
+            struct_name,
+            "Program"
+                | "JSXElement"
+                | "JSXFragment"
+                | "ExportDeclaration"
+                | "ExportDefaultDeclaration"
+        ))
+        .then(|| quote! { let is_suppressed = f.comments().is_span_suppressed(self.span()); });
+
+        // Expression-shaped nodes (formatter parens + own comment printing) hand the whole suppressed sequence to one owner,
+        // so the cast-target decision is made once while every comment is still unprinted (see `write_suppressed_expression`).
+        // A node that prints its own leading comments never runs its `write` when suppressed, so it takes the same path.
+        let suppressed_expression_return =
+            (suppressed_check.is_some() && needs_parentheses).then(|| {
                 quote! {
-                    let is_suppressed = f.comments().is_suppressed(self.span().start);
+                    if is_suppressed {
+                        write_suppressed_expression(
+                            self.span(),
+                            self.leading_comments_start(),
+                            self.needs_parentheses(f),
+                            f,
+                        );
+                        self.format_trailing_comments(f);
+                        return;
+                    }
                 }
             });
 
-        let write_implementation = if suppressed_check.is_none() {
-            write_call
-        } else {
-            let suppressed_write =
-                if AST_NODE_WITH_CUSTOM_SUPPRESSED_FORMATTING.contains(&struct_name) {
-                    quote! { self.write_suppressed(f); }
+        let write_implementation =
+            if suppressed_check.is_none() || suppressed_expression_return.is_some() {
+                write_call
+            } else {
+                // When `fmt` doesn't print leading comments itself, the suppressed path prints them here.
+                let suppressed_write_call = if do_not_print_leading_comment {
+                    quote! {
+                        format_leading_comments(self.span()).fmt(f);
+                        FormatSuppressedNode(self.span()).fmt(f);
+                    }
                 } else {
-                    quote! { FormatSuppressedNode(self.span()).fmt(f); }
+                    quote! {
+                        FormatSuppressedNode(self.span()).fmt(f);
+                    }
                 };
-            // When `fmt` doesn't print leading/trailing comments itself,
-            // the suppressed path still has to print them, or the suppression comment would be lost.
-            let suppressed_leading_comments = do_not_print_leading_comment.then(|| {
+                let suppressed_trailing_comments = do_not_print_comment.then(|| {
+                    quote! {
+                        self.format_trailing_comments(f);
+                    }
+                });
                 quote! {
-                    self.format_leading_comments(f);
+                    if is_suppressed {
+                        #suppressed_write_call
+                        #suppressed_trailing_comments
+                    } else {
+                        #write_call
+                    }
                 }
-            });
-            let suppressed_trailing_comments = do_not_print_comment.then(|| {
-                quote! {
-                    self.format_trailing_comments(f);
-                }
-            });
-            quote! {
-                if is_suppressed {
-                    #suppressed_leading_comments
-                    #suppressed_write
-                    #suppressed_trailing_comments
-                } else {
-                    #write_call
-                }
-            }
-        };
+            };
 
-        let type_cast_comment_formatting = parenthesis_type_ids.contains(&struct_def.id).then(|| {
+        let type_cast_comment_formatting = needs_parentheses.then(|| {
             let is_object_or_array_argument =
                 if matches!(struct_def.name.as_str(), "ObjectExpression" | "ArrayExpression") {
                     quote! {
@@ -226,20 +259,39 @@ fn generate_struct_implementation(
                     quote! { false }
                 };
 
-            let suppressed_check_for_typecast = suppressed_check.is_some().then(|| {
-                quote! {
-                    !is_suppressed &&
-                }
-            });
-
+            // A suppressed node returned above, so no guard is needed here
             quote! {
-                if #suppressed_check_for_typecast format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
+                if format_type_cast_comment_node(self, #is_object_or_array_argument, f) {
                     return;
                 }
             }
         });
 
-        if needs_parentheses_before.is_empty() && trailing_comments.is_none() {
+        // Most nodes have no comment near them: skip all of the comment handling below.
+        // Only nodes that may get parentheses can be a cast target
+        let quiet = (suppressed_check.is_some() && !do_not_print_leading_comment).then(|| {
+            let open_paren = needs_parentheses.then_some(&bare_open_paren);
+            // The type cast handling it skips (`format_type_cast_comment_node`, `format_leading_comments_and_open_paren`)
+            let no_type_cast = needs_parentheses.then(|| {
+                quote! {
+                    debug_assert!(
+                        matches!(classify_type_cast(self.span(), f), TypeCast::None),
+                        "a quiet node is in a type cast"
+                    );
+                }
+            });
+            quote! {
+                if f.comments().is_quiet(self.span(), || self.parent.span(), self.following_span_start, #needs_parentheses) {
+                    #no_type_cast
+                    #open_paren
+                    self.write(f);
+                    #needs_parentheses_after
+                    return;
+                }
+            }
+        });
+
+        if !needs_parentheses && trailing_comments.is_none() {
             quote! {
                 #suppressed_check
                 #type_cast_comment_formatting
@@ -247,7 +299,9 @@ fn generate_struct_implementation(
             }
         } else {
             quote! {
+                #quiet
                 #suppressed_check
+                #suppressed_expression_return
                 #type_cast_comment_formatting
                 #leading_comments
                 #needs_parentheses_before
@@ -258,23 +312,6 @@ fn generate_struct_implementation(
         }
     };
 
-    let fmt_implementation = generate_fmt_implementation(false);
-    let fmt_options =
-        NEEDS_IMPLEMENTING_FMT_WITH_OPTIONS.get(struct_name).map(|str| format_ident!("{}", str));
-    let fmt_with_options_inherent = if let Some(ref fmt_options) = fmt_options {
-        let implementation = generate_fmt_implementation(true);
-        quote! {
-            ///@@line_break
-            impl<'a> #type_ty {
-                pub fn fmt_with_options(&self, options: #fmt_options, f: &mut JsFormatter<'_, 'a>) {
-                    #implementation
-                }
-            }
-        }
-    } else {
-        quote! {}
-    };
-
     quote! {
         ///@@line_break
         impl<'a> Format<'a, JsFormatContext<'a>> for #type_ty {
@@ -282,8 +319,6 @@ fn generate_struct_implementation(
                 #fmt_implementation
             }
         }
-
-        #fmt_with_options_inherent
     }
 }
 
@@ -299,12 +334,11 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
 
         Some(quote! {
             #enum_ident::#variant_name(inner) => {
-                allocator.alloc(AstNode::<#node_type> {
+                AstNode::<#node_type> {
                     inner,
                     parent,
-                    allocator,
                     following_span_start: self.following_span_start,
-                }).fmt(f);
+                }.fmt(f);
             },
         })
     });
@@ -318,41 +352,25 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         let match_arm = quote! {
             it @ #match_ident!(#enum_ident) => {
                 let inner = it.#to_fn_ident();
-                allocator.alloc(AstNode::<'a, #inherits_ident> {
+                AstNode::<#inherits_ident> {
                     inner,
                     parent,
-                    allocator,
                     following_span_start: self.following_span_start,
-                }).fmt(f);
+                }.fmt(f);
             },
         };
 
         match_arm
     });
 
-    let node_type = get_node_type(&enum_ty);
+    let node_type = quote! { AstNode<'_, 'a, #enum_ty> };
 
     let inline_trailing_suppression = match enum_def.name() {
         "Statement" => {
-            // Expression statements need specialized ASI-safe suppression handling in
-            // `AstNode<ExpressionStatement>::write`.
+            // A suppressed statement (leading or trailing comment) prints its content verbatim
+            // and hands its terminator back to the formatter, decided once per statement here.
             quote! {
-                if !matches!(self.inner, Statement::ExpressionStatement(_))
-                    && f.comments().has_trailing_suppression_comment(self.span().end)
-                {
-                    format_leading_comments(self.span()).fmt(f);
-                    FormatSuppressedNode(self.span()).fmt(f);
-                    format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
-                        .fmt(f);
-                    return;
-                }
-            }
-        }
-        "Expression" => {
-            quote! {
-                if f.comments().has_trailing_suppression_comment(self.span().end) {
-                    format_leading_comments(self.span()).fmt(f);
-                    FormatSuppressedNode(self.span()).fmt(f);
+                if write_suppressed_statement(self, f) {
                     format_trailing_comments(self.parent.span(), self.inner.span(), self.following_span_start)
                         .fmt(f);
                     return;
@@ -362,17 +380,51 @@ fn generate_enum_implementation(enum_def: &EnumDef, schema: &Schema) -> TokenStr
         _ => quote! {},
     };
 
+    // Every variant of `Expression` implements `NeedsParentheses`, see `get_needs_parentheses_type_ids`
+    let needs_parentheses_impl =
+        (enum_def.name() == "Expression").then(|| generate_needs_parentheses(enum_def, schema));
+
     quote! {
         ///@@line_break
         impl<'a> Format<'a, JsFormatContext<'a>> for #node_type {
             #[inline]
             fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
                 #inline_trailing_suppression
-                let allocator = self.allocator;
                 let parent = self.parent;
                 match self.inner {
                     #(#variant_match_arms)*
                     #(#inherits_match_arms)*
+                }
+            }
+        }
+
+        #needs_parentheses_impl
+    }
+}
+
+/// Dispatches `needs_parentheses` to the variant in a single match.
+fn generate_needs_parentheses(enum_def: &EnumDef, schema: &Schema) -> TokenStream {
+    let enum_ident = enum_def.ident();
+    let enum_ty = enum_def.ty(schema);
+
+    let match_arms = enum_def.all_variants(schema).map(|variant| {
+        let variant_name = variant.ident();
+        let node_type = variant.field_type(schema).unwrap().innermost_type(schema).ident();
+        quote! {
+            #enum_ident::#variant_name(inner) => AstNode::<#node_type> {
+                inner,
+                parent: self.parent,
+                following_span_start: self.following_span_start,
+            }.needs_parentheses(f),
+        }
+    });
+
+    quote! {
+        ///@@line_break
+        impl<'a> NeedsParentheses<'a> for AstNode<'_, 'a, #enum_ty> {
+            fn needs_parentheses(&self, f: &JsFormatter<'_, 'a>) -> bool {
+                match self.inner {
+                    #(#match_arms)*
                 }
             }
         }

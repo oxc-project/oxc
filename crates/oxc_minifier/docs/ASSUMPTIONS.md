@@ -2,7 +2,7 @@
 
 The Oxc minifier makes certain assumptions about JavaScript code to achieve optimal compression. These assumptions are standard for typical JavaScript but may not hold for unusual code patterns.
 
-These assumptions are validated using ECMAScript operations from [`oxc_ecmascript`](../oxc_ecmascript), which implements spec-compliant behavior for type conversions, side effect analysis, and constant evaluation.
+These assumptions are validated using ECMAScript operations from [`oxc_ecmascript`](../../oxc_ecmascript), which implements spec-compliant behavior for type conversions, side effect analysis, and constant evaluation.
 
 ## Core Assumptions
 
@@ -187,9 +187,55 @@ serialize((x) => {
 
 ## Optional Assumptions
 
-### No Reliance on Function.prototype.name
+### Property names selected for mangling are not accessed dynamically
 
-Code doesn't depend on function names being preserved. This assumption is held by default. This can be changed by settings `keepNames` option.
+When property-name mangling is enabled, code does not access selected properties through an
+arbitrary runtime string. Quoted syntax is handled per occurrence: it remains unchanged unless
+`mangle_quoted` is enabled, while an unquoted occurrence of the same spelling may be renamed.
+No-substitution template keys follow the same quoted rule; interpolated templates are not
+rewritten.
+
+```javascript
+obj._field; // eligible when `include` matches
+obj["_field"]; // kept unless quoted mangling is enabled
+obj[`_field`]; // also kept unless quoted mangling is enabled
+obj[keyFromNetwork]; // cannot be updated safely
+```
+
+Use `exclude`, `reserved`, or a `false` cache entry for public/reflected names. Properties owned by
+unminified code, imported module namespaces, globals, DOM objects, or other host APIs must also be
+excluded or reserved. A leading `/* @__KEY__ */` or `/* #__KEY__ */` annotation marks a string or
+no-substitution template as a property name. Numeric spellings, `__proto__`, `constructor`, and
+`prototype` are never mangled.
+
+Property mangling does not inspect source strings evaluated by direct `eval` or the `Function`
+constructor, and it does not bail out inside a `with` statement. Matching names reached through
+these dynamic mechanisms must be excluded or reserved explicitly.
+
+Property rewriting runs before compression. Computed keys that compression later materializes,
+such as `['f' + 'oo_']`, are not revisited and can diverge from an eligible `obj.foo_` occurrence.
+Exclude or reserve property names that are constructed this way.
+
+### No Reliance on Function or Class Names
+
+Code does not depend on function or class names being preserved by default.
+In the Rust API, set `CompressOptions::keep_names` and, when identifier mangling
+is enabled, `MangleOptions::keep_names` for the names you need to preserve.
+When both stages are enabled in the Node.js API, configure both options:
+
+- `compress.keepNames` takes an object with Boolean `function` and `class` fields.
+- `mangle.keepNames` takes a Boolean (for both kinds of names) or an object with
+  Boolean `function` and `class` fields.
+
+For example, to preserve both function and class names during compression and
+identifier mangling:
+
+```javascript
+const options = {
+  compress: { keepNames: { function: true, class: true } },
+  mangle: { keepNames: true },
+};
+```
 
 ```javascript
 // The minifier assumes this never happens:
@@ -202,6 +248,7 @@ if (myFunc.name !== "myFunc") throw Error();
 Optional assumptions can be configured in the minifier options if your code requires different behavior.
 
 ```rust
+// Selected fields; see src/options.rs for the complete definitions.
 pub struct CompressOptions {
     // Control optimization behavior
     pub drop_console: bool,
@@ -232,14 +279,10 @@ pub struct TreeShakeOptions {
 To ensure your code works with these assumptions:
 
 1. **Test thoroughly**: Run your test suite on minified code
-2. **Use conformance tests**: `cargo coverage` runs test262, Babel, TypeScript tests
-3. **Node.js compatibility**: The minifier is validated against Node.js compatibility tables
+2. **Check idempotency**: `cargo coverage minifier` checks selected test262 and Babel cases
+3. **Check runtime behavior**: `cargo coverage runtime` executes eligible test262 cases with Node.js
 4. **Try real-world code**: Test with your actual application
 5. **Report issues**: If valid code breaks, file an issue
-
-### Node.js Compatibility Testing
-
-The minifier includes comprehensive validation against Node.js compatibility tables to ensure optimizations work correctly across different Node.js versions and environments.
 
 ## When Assumptions Don't Hold
 

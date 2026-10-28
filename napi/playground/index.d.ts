@@ -108,6 +108,8 @@ export interface OxcFormatterOptions {
   objectWrap?: string
   /** Put each attribute on its own line (default: false) */
   singleAttributePerLine?: boolean
+  /** Where to print operators when binary expressions wrap lines: "start" | "end" (default: "end") */
+  experimentalOperatorPosition?: string
   /** Sort imports configuration (default: None) */
   sortImports?: OxcSortImportsOptions
 }
@@ -130,6 +132,19 @@ export interface OxcMangleOptions {
   keepNames: boolean
 }
 
+export interface OxcManglePropertiesOptions {
+  /** Property names to mangle, using Rust regex syntax (for example, "_$"). */
+  include: string
+  /** Exclude matching property names, using Rust regex syntax. */
+  exclude?: string
+  /** Exact property names to preserve. */
+  reserved?: Array<string>
+  /** Also mangle quoted property occurrences (default: false). */
+  quoted?: boolean
+  /** Generate readable property names (default: false). */
+  debug?: boolean
+}
+
 export interface OxcNewlinesBetweenMarker {
   newlinesBetween?: boolean
 }
@@ -144,6 +159,7 @@ export interface OxcOptions {
   codegen?: OxcCodegenOptions
   compress?: OxcCompressOptions
   mangle?: OxcMangleOptions
+  mangleProps?: OxcManglePropertiesOptions
   controlFlow?: OxcControlFlowOptions
   inject?: OxcInjectOptions
   define?: OxcDefineOptions
@@ -165,6 +181,7 @@ export interface OxcRunOptions {
   whitespace: boolean
   compress: boolean
   mangle: boolean
+  mangleProps?: boolean
   scope: boolean
   symbol: boolean
   cfg: boolean

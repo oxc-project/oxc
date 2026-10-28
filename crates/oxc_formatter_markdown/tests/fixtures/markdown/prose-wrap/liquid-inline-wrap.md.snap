@@ -1,0 +1,103 @@
+---
+source: crates/oxc_formatter_markdown/tests/fixtures/mod.rs
+---
+==================== Input ====================
+Actions policies let you govern how {% data variables.product.prodname_actions %} workflows run. You can configure them in the **Policies** section of your {% data variables.product.prodname_actions %} settings.
+
+A tag at the end of the paragraph never ends a line on its own, so it stays glued {% data variables.product.prodname_actions %}
+
+The {{jsxref("a")}} statement creates (including
+{{jsxref("Array")}}, {{jsxref("Map")}},
+{{jsxref("Functions/arguments", "arguments")}} object and so on), invoking.
+
+> [!NOTE]
+> {% data reusables.x %} For more information.
+
+==================== Output ====================
+---------------------------------------
+{ printWidth: 80, proseWrap: "always" }
+---------------------------------------
+Actions policies let you govern
+how {% data variables.product.prodname_actions %} workflows run. You can
+configure them in the **Policies** section of
+your {% data variables.product.prodname_actions %} settings.
+
+A tag at the end of the paragraph never ends a line on its own, so it stays
+glued {% data variables.product.prodname_actions %}
+
+The {{jsxref("a")}} statement creates (including {{jsxref("Array")}},
+{{jsxref("Map")}}, {{jsxref("Functions/arguments", "arguments")}} object and so
+on), invoking.
+
+> [!NOTE]
+> {% data reusables.x %} For more information.
+
+----------------------------------------
+{ printWidth: 100, proseWrap: "always" }
+----------------------------------------
+Actions policies let you govern how {% data variables.product.prodname_actions %} workflows run. You
+can configure them in the **Policies** section of
+your {% data variables.product.prodname_actions %} settings.
+
+A tag at the end of the paragraph never ends a line on its own, so it stays
+glued {% data variables.product.prodname_actions %}
+
+The {{jsxref("a")}} statement creates (including {{jsxref("Array")}},
+{{jsxref("Map")}}, {{jsxref("Functions/arguments", "arguments")}} object and so on), invoking.
+
+> [!NOTE]
+> {% data reusables.x %} For more information.
+
+--------------------------------------
+{ printWidth: 80, proseWrap: "never" }
+--------------------------------------
+Actions policies let you govern how {% data variables.product.prodname_actions %} workflows run. You can configure them in the **Policies** section of your {% data variables.product.prodname_actions %} settings.
+
+A tag at the end of the paragraph never ends a line on its own, so it stays glued {% data variables.product.prodname_actions %}
+
+The {{jsxref("a")}} statement creates (including {{jsxref("Array")}}, {{jsxref("Map")}}, {{jsxref("Functions/arguments", "arguments")}} object and so on), invoking.
+
+> [!NOTE]
+> {% data reusables.x %} For more information.
+
+---------------------------------------
+{ printWidth: 100, proseWrap: "never" }
+---------------------------------------
+Actions policies let you govern how {% data variables.product.prodname_actions %} workflows run. You can configure them in the **Policies** section of your {% data variables.product.prodname_actions %} settings.
+
+A tag at the end of the paragraph never ends a line on its own, so it stays glued {% data variables.product.prodname_actions %}
+
+The {{jsxref("a")}} statement creates (including {{jsxref("Array")}}, {{jsxref("Map")}}, {{jsxref("Functions/arguments", "arguments")}} object and so on), invoking.
+
+> [!NOTE]
+> {% data reusables.x %} For more information.
+
+-----------------------------------------
+{ printWidth: 80, proseWrap: "preserve" }
+-----------------------------------------
+Actions policies let you govern how {% data variables.product.prodname_actions %} workflows run. You can configure them in the **Policies** section of your {% data variables.product.prodname_actions %} settings.
+
+A tag at the end of the paragraph never ends a line on its own, so it stays glued {% data variables.product.prodname_actions %}
+
+The {{jsxref("a")}} statement creates (including
+{{jsxref("Array")}}, {{jsxref("Map")}},
+{{jsxref("Functions/arguments", "arguments")}} object and so on), invoking.
+
+> [!NOTE]
+> {% data reusables.x %} For more information.
+
+------------------------------------------
+{ printWidth: 100, proseWrap: "preserve" }
+------------------------------------------
+Actions policies let you govern how {% data variables.product.prodname_actions %} workflows run. You can configure them in the **Policies** section of your {% data variables.product.prodname_actions %} settings.
+
+A tag at the end of the paragraph never ends a line on its own, so it stays glued {% data variables.product.prodname_actions %}
+
+The {{jsxref("a")}} statement creates (including
+{{jsxref("Array")}}, {{jsxref("Map")}},
+{{jsxref("Functions/arguments", "arguments")}} object and so on), invoking.
+
+> [!NOTE]
+> {% data reusables.x %} For more information.
+
+===================== End =====================

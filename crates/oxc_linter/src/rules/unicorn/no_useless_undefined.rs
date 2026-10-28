@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, CallExpression, Expression, VariableDeclarationKind},
+    ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -76,6 +76,7 @@ declare_oxc_lint!(
     NoUselessUndefined,
     unicorn,
     pedantic,
+    recommended,
     fix,
     config = NoUselessUndefined,
     version = "0.6.1",
@@ -113,6 +114,8 @@ static FUNCTION_NAMES: &[&str] = &[
     "toEqual",
     "toHaveBeenCalledWith",
     "unshift",
+    // `React.useRef(undefined)`
+    "useRef",
 ];
 
 fn is_match_ignore_func_name(name: &str) -> bool {
@@ -140,39 +143,25 @@ fn is_function_bind_call(call_expr: &CallExpression) -> bool {
     !call_expr.optional && is_method_call(call_expr, None, Some(&["bind"]), None, None)
 }
 
-fn is_undefined(arg: &Argument) -> bool {
-    if !arg.is_expression() {
-        return false;
-    }
-    let expr: &Expression = arg.to_expression();
-    if let Expression::Identifier(_) = expr {
-        return expr.is_undefined();
-    }
-    false
-}
-
 fn is_has_function_return_type(node: &AstNode, ctx: &LintContext<'_>) -> bool {
-    let parent_node = ctx.nodes().parent_node(node.id());
-    match parent_node.kind() {
+    match node.kind() {
         AstKind::Program(_) => false,
         AstKind::ArrowFunctionExpression(arrow_func_express) => {
             arrow_func_express.return_type.is_some()
         }
         AstKind::Function(func) => func.return_type.is_some(),
-        _ => is_has_function_return_type(parent_node, ctx),
+        _ => is_has_function_return_type(ctx.nodes().parent_node(node.id()), ctx),
     }
 }
 
 impl Rule for NoUselessUndefined {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
-            AstKind::IdentifierReference(undefined_literal)
-                if undefined_literal.name == "undefined" =>
-            {
+            AstKind::IdentifierReference(undefined_literal) if undefined_literal.is_undefined() => {
                 let Some(parent_node) = outermost_paren_parent(node, ctx) else {
                     return;
                 };
@@ -210,22 +199,10 @@ impl Rule for NoUselessUndefined {
                         );
                     }
                     // `() => undefined`
-                    AstKind::ExpressionStatement(_) => {
+                    AstKind::ArrowFunctionExpression(arrow) if arrow.is_expression() => {
                         if !self.check_arrow_function_body {
                             return;
                         }
-                        let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
-                        let grand_parent_node_kind = grand_parent_node.kind();
-                        let AstKind::FunctionBody(func_body) = grand_parent_node_kind else {
-                            return;
-                        };
-                        let grand_grand_parent_node =
-                            ctx.nodes().parent_node(grand_parent_node.id());
-                        let grand_grand_parent_node_kind = grand_grand_parent_node.kind();
-                        let AstKind::ArrowFunctionExpression(_) = grand_grand_parent_node_kind
-                        else {
-                            return;
-                        };
 
                         if is_has_function_return_type(parent_node, ctx) {
                             return;
@@ -233,17 +210,18 @@ impl Rule for NoUselessUndefined {
 
                         ctx.diagnostic_with_fix(
                             no_useless_undefined_diagnostic(undefined_literal.span),
-                            |fixer| fixer.replace(func_body.span, "{}"),
+                            |fixer| fixer.replace(arrow.body.span(), "{}"),
                         );
                     }
                     // `let foo = undefined` / `var foo = undefined`
                     AstKind::VariableDeclarator(variable_declarator) => {
                         let grand_parent_node = ctx.nodes().parent_node(parent_node.id());
                         let grand_parent_node_kind = grand_parent_node.kind();
-                        let AstKind::VariableDeclaration(_) = grand_parent_node_kind else {
+                        let AstKind::VariableDeclaration(declaration) = grand_parent_node_kind
+                        else {
                             return;
                         };
-                        if variable_declarator.kind == VariableDeclarationKind::Const {
+                        if declaration.kind.is_const() {
                             return;
                         }
                         if is_has_function_return_type(parent_node, ctx) {
@@ -276,6 +254,25 @@ impl Rule for NoUselessUndefined {
                         if let Some(initializer) = &assign_pattern.initializer
                             && initializer.span() == undefined_literal.span
                         {
+                            let formal_parameters = ctx.nodes().parent_node(parent_node.id());
+                            let AstKind::FormalParameters(formal_parameters) =
+                                formal_parameters.kind()
+                            else {
+                                return;
+                            };
+
+                            // Removing the default initializer makes this parameter required. Do
+                            // not produce a TypeScript-invalid signature by placing it after an
+                            // optional parameter.
+                            let has_preceding_optional_parameter = formal_parameters
+                                .items
+                                .iter()
+                                .take_while(|parameter| parameter.span != assign_pattern.span)
+                                .any(|parameter| parameter.optional);
+                            if has_preceding_optional_parameter {
+                                return;
+                            }
+
                             let left = &assign_pattern
                                 .type_annotation
                                 .as_ref()
@@ -300,11 +297,18 @@ impl Rule for NoUselessUndefined {
                     return;
                 }
 
-                if should_ignore(&call_expr.callee) {
+                let arguments = &call_expr.arguments;
+                if !arguments
+                    .last()
+                    .and_then(Argument::as_expression)
+                    .is_some_and(Expression::is_undefined)
+                {
                     return;
                 }
 
-                let arguments = &call_expr.arguments;
+                if should_ignore(&call_expr.callee) {
+                    return;
+                }
 
                 // Ignore arguments in `Function#bind()`, but not `this` argument
                 if is_function_bind_call(call_expr) && arguments.len() != 1 {
@@ -313,9 +317,9 @@ impl Rule for NoUselessUndefined {
                 let mut undefined_args_spans = Vec::new();
                 for i in (0..arguments.len()).rev() {
                     let arg = &arguments[i];
-                    if is_undefined(arg) {
+                    if arg.as_expression().is_some_and(Expression::is_undefined) {
                         let span = arg.span();
-                        undefined_args_spans.insert(0, span);
+                        undefined_args_spans.push(span);
                     } else {
                         break;
                     }
@@ -324,6 +328,7 @@ impl Rule for NoUselessUndefined {
                 if undefined_args_spans.is_empty() {
                     return;
                 }
+                undefined_args_spans.reverse();
                 let first_undefined_span = undefined_args_spans[0];
                 let last_undefined_span = undefined_args_spans[undefined_args_spans.len() - 1];
                 let mut start = first_undefined_span.start;
@@ -399,6 +404,8 @@ fn test() {
         ("array.unshift(undefined);", None),
         ("createContext(undefined);", None),
         ("React.createContext(undefined);", None),
+        ("useRef(undefined);", None),
+        ("React.useRef(undefined);", None),
         ("setState(undefined)", None),
         ("setState?.(undefined)", None),
         ("props.setState(undefined)", None),
@@ -537,6 +544,8 @@ fn test() {
         ),
         ("createContext<T>(undefined);", None),
         ("React.createContext<T>(undefined);", None),
+        ("useRef<T>(undefined);", None),
+        ("React.useRef<T>(undefined);", None),
         (
             "
             const y: any = {}
@@ -550,6 +559,11 @@ fn test() {
                 public x: number | undefined = undefined
             }
         ",
+            None,
+        ),
+        ("function foo(optional?: string, required: string = undefined) {}", None),
+        (
+            "function getBackLinks(subject: string, limit = 16, cursor?: string, reverse = false, ttl: number | undefined = undefined) {}",
             None,
         ),
     ];
@@ -767,6 +781,28 @@ fn test_issue_14368() {
         Some(serde_json::json!([{ "checkArguments": true }])),
     )];
 
+    Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .test();
+}
+
+#[test]
+fn test_trailing_arguments() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        "call(undefined, ...values);",
+        "call(...values);",
+        "call?.(value);",
+        "call.bind(receiver);",
+        "call.bind(receiver, undefined);",
+    ];
+    let fail =
+        vec!["call(...values, undefined, undefined);", "call?.(value, undefined, undefined);"];
+    let fix = vec![
+        ("call(...values, undefined, undefined);", "call(...values);", None),
+        ("call?.(value, undefined, undefined);", "call?.(value);", None),
+    ];
     Tester::new(NoUselessUndefined::NAME, NoUselessUndefined::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test();

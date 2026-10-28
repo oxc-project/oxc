@@ -24,6 +24,14 @@ source: crates/oxc_linter/src/tester.rs
   help: Forbid named default exports.
 
   ⚠ import(no-named-default): Replace default import with named import.
+   ╭─[no_named_default.tsx:1:15]
+ 1 │ import type { default as Quill, Delta } from "quill";
+   ·               ───────
+ 2 │ export type T = Quill | Delta;
+   ╰────
+  help: Forbid named default exports.
+
+  ⚠ import(no-named-default): Replace default import with named import.
    ╭─[no_named_default.tsx:1:9]
  1 │ import {default as named} from "foo";
    ·         ───────

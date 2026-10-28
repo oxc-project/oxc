@@ -1,0 +1,735 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:1]
+ 1 │ foo = "bar"
+   · ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:1]
+ 1 │ bar = "bar"
+   · ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:1]
+ 1 │ foo = "bar"
+   · ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ function foo(){}
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:8]
+ 1 │ import foo from 'mod'
+   ·        ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ import * as foo from 'mod'
+   ·             ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ export * as foo from 'mod'
+   ·             ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ import { foo } from 'mod'
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ import { foo as bar } from 'mod'
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ import { foo as bar } from 'mod'
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ import { foo as foo } from 'mod'
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ import { foo, foo as bar } from 'mod'
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:22]
+ 1 │ import { foo as bar, foo } from 'mod'
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:8]
+ 1 │ import foo, { foo as bar } from 'mod'
+   ·        ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:26]
+ 1 │ var foo; export { foo as bar };
+   ·                          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ var foo; export { foo };
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:19]
+ 1 │ var foo; export { foo };
+   ·                   ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ var foo; export { foo as bar };
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:19]
+ 1 │ var foo; export { foo as bar };
+   ·                   ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ var foo; export { foo as foo };
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:19]
+ 1 │ var foo; export { foo as foo };
+   ·                   ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:26]
+ 1 │ var foo; export { foo as foo };
+   ·                          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ var foo; export { foo as bar };
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:19]
+ 1 │ var foo; export { foo as bar };
+   ·                   ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:26]
+ 1 │ var foo; export { foo as bar };
+   ·                          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ export { foo } from 'mod'
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ export { foo as bar } from 'mod'
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ export { foo as bar } from 'mod'
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ export { foo as foo } from 'mod'
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ export { foo, foo as bar } from 'mod'
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:22]
+ 1 │ export { foo as bar, foo } from 'mod'
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:1]
+ 1 │ foo.bar()
+   · ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ foo[bar] = baz;
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:11]
+ 1 │ baz = foo[bar];
+   ·           ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ var foo = bar.baz;
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:11]
+ 1 │ var foo = bar.baz;
+   ·           ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ if (foo.bar) {}
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'obj' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ var obj = { key: foo.bar };
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'key' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ var obj = { key: foo.bar };
+   ·             ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:18]
+ 1 │ var obj = { key: foo.bar };
+   ·                  ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'arr' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ var arr = [foo.bar];
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:12]
+ 1 │ var arr = [foo.bar];
+   ·            ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:2]
+ 1 │ [foo.bar]
+   ·  ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ if (foo.bar === bar.baz) { [bing.baz] }
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ if (foo.bar === bar.baz) { [foo.bar] }
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'myDate' is restricted.
+   ╭─[id_denylist.tsx:1:32]
+ 1 │ var myArray = new Array(); var myDate = new Date();
+   ·                                ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'myArray' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ var myArray = new Array(); var myDate = new Date();
+   ·     ───────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ foo.bar = 1
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'baz' is restricted.
+   ╭─[id_denylist.tsx:1:9]
+ 1 │ foo.bar.baz = 1
+   ·         ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:8]
+ 1 │ const {foo} = baz
+   ·        ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ const {foo: bar} = baz
+   ·             ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:9]
+ 1 │ const {[foo]: bar} = baz
+   ·         ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:15]
+ 1 │ const {[foo]: bar} = baz
+   ·               ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'baz' is restricted.
+   ╭─[id_denylist.tsx:1:19]
+ 1 │ const {foo: {bar: baz}} = qux
+   ·                   ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:15]
+ 1 │ const {foo: {[bar]: baz}} = qux
+   ·               ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'baz' is restricted.
+   ╭─[id_denylist.tsx:1:21]
+ 1 │ const {foo: {[bar]: baz}} = qux
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:9]
+ 1 │ const {[foo]: {[bar]: baz}} = qux
+   ·         ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ const {[foo]: {[bar]: baz}} = qux
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'baz' is restricted.
+   ╭─[id_denylist.tsx:1:23]
+ 1 │ const {[foo]: {[bar]: baz}} = qux
+   ·                       ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'baz' is restricted.
+   ╭─[id_denylist.tsx:1:21]
+ 1 │ function foo({ bar: baz }) {}
+   ·                     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'qux' is restricted.
+   ╭─[id_denylist.tsx:1:27]
+ 1 │ function foo({ bar: {baz: qux} }) {}
+   ·                           ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:12]
+ 1 │ ({foo: obj.bar} = baz);
+   ·            ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'baz' is restricted.
+   ╭─[id_denylist.tsx:1:24]
+ 1 │ ({foo: obj.bar.bar.bar.baz} = {});
+   ·                        ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:4]
+ 1 │ ({[foo]: obj.bar} = baz);
+   ·    ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:14]
+ 1 │ ({[foo]: obj.bar} = baz);
+   ·              ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ ({foo: { a: obj.bar }} = baz);
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ ({a: obj.bar = baz} = qux);
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'baz' is restricted.
+   ╭─[id_denylist.tsx:1:18]
+ 1 │ ({a: obj.bar.bar.baz = obj.qux} = obj.qux);
+   ·                  ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ ({a: obj[bar] = obj.qux} = obj.qux);
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:11]
+ 1 │ ({a: [obj.bar] = baz} = qux);
+   ·           ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:17]
+ 1 │ ({foo: { a: obj.bar = baz}} = qux);
+   ·                 ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:19]
+ 1 │ ({foo: { [a]: obj.bar }} = baz);
+   ·                   ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ ({...obj.bar} = baz);
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:7]
+ 1 │ ([obj.bar] = baz);
+   ·       ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'bar' is restricted.
+   ╭─[id_denylist.tsx:1:8]
+ 1 │ const [bar] = baz;
+   ·        ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ foo.undefined = 1;
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ var foo = { undefined: 1 };
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ var foo = { undefined: undefined };
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ var foo = { Number() {} };
+   ·             ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ class Foo { Number() {} }
+   ·             ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'myGlobal' is restricted.
+   ╭─[id_denylist.tsx:1:1]
+ 1 │ myGlobal: while(foo) { break myGlobal; } 
+   · ────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'myGlobal' is restricted.
+   ╭─[id_denylist.tsx:1:30]
+ 1 │ myGlobal: while(foo) { break myGlobal; } 
+   ·                              ────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:7]
+ 1 │ const foo = 1; bar = foo;
+   ·       ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:22]
+ 1 │ const foo = 1; bar = foo;
+   ·                      ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ let foo; foo = bar;
+   ·     ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ let foo; foo = bar;
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:7]
+ 1 │ bar = foo; var foo;
+   ·       ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:16]
+ 1 │ bar = foo; var foo;
+   ·                ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ function foo() {} var bar = foo;
+   ·          ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'foo' is restricted.
+   ╭─[id_denylist.tsx:1:29]
+ 1 │ function foo() {} var bar = foo;
+   ·                             ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Foo' is restricted.
+   ╭─[id_denylist.tsx:1:7]
+ 1 │ class Foo {} var bar = Foo;
+   ·       ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Foo' is restricted.
+   ╭─[id_denylist.tsx:1:24]
+ 1 │ class Foo {} var bar = Foo;
+   ·                        ───
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:5]
+ 1 │ let undefined; undefined = 1;
+   ·     ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:16]
+ 1 │ let undefined; undefined = 1;
+   ·                ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:7]
+ 1 │ foo = undefined; var undefined;
+   ·       ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:22]
+ 1 │ foo = undefined; var undefined;
+   ·                      ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:10]
+ 1 │ function undefined(){} x = undefined;
+   ·          ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:28]
+ 1 │ function undefined(){} x = undefined;
+   ·                            ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:7]
+ 1 │ class Number {} x = Number.NaN;
+   ·       ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:21]
+ 1 │ class Number {} x = Number.NaN;
+   ·                     ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:16]
+ 1 │ if (foo) { let undefined; bar = undefined; }
+   ·                ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:33]
+ 1 │ if (foo) { let undefined; bar = undefined; }
+   ·                                 ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:14]
+ 1 │ function foo(Number) { var x = Number.NaN; }
+   ·              ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:32]
+ 1 │ function foo(Number) { var x = Number.NaN; }
+   ·                                ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'myGlobal' is restricted.
+   ╭─[id_denylist.tsx:1:22]
+ 1 │ function foo() { var myGlobal; x = myGlobal; }
+   ·                      ────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'myGlobal' is restricted.
+   ╭─[id_denylist.tsx:1:36]
+ 1 │ function foo() { var myGlobal; x = myGlobal; }
+   ·                                    ────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:28]
+ 1 │ function foo(bar) { return Number.parseInt(bar); } const Number = 1;
+   ·                            ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:58]
+ 1 │ function foo(bar) { return Number.parseInt(bar); } const Number = 1;
+   ·                                                          ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:8]
+ 1 │ import Number from 'myNumber'; const foo = Number.parseInt(bar);
+   ·        ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:44]
+ 1 │ import Number from 'myNumber'; const foo = Number.parseInt(bar);
+   ·                                            ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:20]
+ 1 │ var foo = function undefined() {};
+   ·                    ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:13]
+ 1 │ var foo = { undefined }
+   ·             ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'camelCase' is restricted.
+   ╭─[id_denylist.tsx:1:11]
+ 1 │ class C { camelCase; #camelCase; #camelCase2() {} }
+   ·           ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier '#camelCase' is restricted.
+   ╭─[id_denylist.tsx:1:22]
+ 1 │ class C { camelCase; #camelCase; #camelCase2() {} }
+   ·                      ──────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'snake_case' is restricted.
+   ╭─[id_denylist.tsx:1:11]
+ 1 │ class C { snake_case; #snake_case() {}; #snake_case2() {} }
+   ·           ──────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier '#snake_case' is restricted.
+   ╭─[id_denylist.tsx:1:23]
+ 1 │ class C { snake_case; #snake_case() {}; #snake_case2() {} }
+   ·                       ───────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'type' is restricted.
+   ╭─[id_denylist.tsx:1:31]
+ 1 │ import('foo.json', { with: { [type]: 'json' } })
+   ·                               ────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'json' is restricted.
+   ╭─[id_denylist.tsx:1:36]
+ 1 │ import('foo.json', { with: { type: json } })
+   ·                                    ────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'myGlobal' is restricted.
+   ╭─[id_denylist.tsx:1:8]
+ 1 │ window.myGlobal = 5; foo = myGlobal;
+   ·        ────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'undefined' is restricted.
+   ╭─[id_denylist.tsx:1:11]
+ 1 │ var foo = undefined;
+   ·           ─────────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Number' is restricted.
+   ╭─[id_denylist.tsx:1:1]
+ 1 │ Number.parseInt()
+   · ──────
+   ╰────
+
+  ⚠ eslint(id-denylist): Identifier 'Map' is restricted.
+   ╭─[id_denylist.tsx:1:12]
+ 1 │ var foo = [Map];
+   ·            ───
+   ╰────

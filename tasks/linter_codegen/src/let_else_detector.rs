@@ -3,7 +3,7 @@ use syn::{Expr, Pat, Stmt};
 use crate::{
     CollectionResult, RuleRunnerData,
     node_type_set::NodeTypeSet,
-    utils::{astkind_variant_from_path, is_node_kind_call},
+    utils::{astkind_variant_from_path, executable_stmts, is_node_kind_call},
 };
 
 /// Detects top-level `let AstKind::... = node.kind() else { return; }` patterns in the `run` method.
@@ -19,8 +19,8 @@ impl<'a> LetElseDetector<'a> {
     ) -> Option<NodeTypeSet> {
         // Only consider when the body's first statement is `let AstKind::... = node.kind() else { ... }`,
         // and the body of the `else` is just `return`.
-        let block = &run_func.block;
-        let first_stmt = block.stmts.first()?;
+        let stmts = executable_stmts(&run_func.block);
+        let first_stmt = *stmts.first()?;
         // Must be a local `let` statement
         let Stmt::Local(local) = first_stmt else { return None };
         // Must have an initializer that is a `node.kind()` call

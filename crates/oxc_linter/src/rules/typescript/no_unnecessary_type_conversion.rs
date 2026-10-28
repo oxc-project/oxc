@@ -29,6 +29,7 @@ declare_oxc_lint!(
     NoUnnecessaryTypeConversion(tsgolint),
     typescript,
     suspicious,
+    suggestion,
     version = "1.49.0",
     short_description = "Disallow unnecessary type conversion expressions.",
 );

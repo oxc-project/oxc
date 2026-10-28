@@ -68,6 +68,7 @@ declare_oxc_lint!(
     HeadingHasContent,
     jsx_a11y,
     correctness,
+    recommended,
     config = HeadingHasContentConfig,
     version = "0.0.19",
     short_description = "Enforce that heading elements have content that is accessible to screen readers.",
@@ -78,7 +79,7 @@ const DEFAULT_COMPONENTS: [&str; 6] = ["h1", "h2", "h3", "h4", "h5", "h6"];
 
 impl Rule for HeadingHasContent {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

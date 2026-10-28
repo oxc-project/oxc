@@ -74,6 +74,9 @@ impl Display for BoundaryAssertionKind {
             Self::End => "$",
             Self::Boundary => r"\b",
             Self::NegativeBoundary => r"\B",
+            Self::StartBuffer => r"\A",
+            Self::EndBuffer => r"\z",
+            Self::EndBufferOptionalNewline => r"\Z",
         };
         f.write_str(s)
     }
@@ -244,7 +247,7 @@ impl Display for CapturingGroup<'_> {
         if let Some(name) = &self.name {
             write!(f, "?<{name}>")?;
         }
-        write!(f, "{})", &self.body)
+        write!(f, "{})", self.body)
     }
 }
 
@@ -533,6 +536,10 @@ mod test {
         (r"/(?im-s:.)/u", None),
         (r"/(?m-is:.)/v", None),
         (r"/(?smi:.)/v", Some(r"/(?ims:.)/v")),
+        // Buffer boundaries
+        (r"/\A\z\Z/", None),
+        (r"/\A\z\Z/u", None),
+        (r"/\A\z\Z/v", None),
     ];
 
     #[test]

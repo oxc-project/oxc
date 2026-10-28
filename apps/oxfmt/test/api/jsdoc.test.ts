@@ -54,11 +54,7 @@ describe("JSDoc", () => {
     );
   });
 
-  it("should format fenced scss, less and graphql through the Rust standalone path", async () => {
-    // Since plan Step 5-1, these languages format via `oxc_formatter_css` /
-    // `oxc_formatter_graphql` (string-in/string-out) instead of Prettier.
-    // scss/less use their own variant (the old Prettier path parsed all of
-    // css/scss/less as scss).
+  it("should format fenced scss and less through the native dispatch registry, keeping graphql verbatim", async () => {
     const source = `
 /**
  * \`\`\`scss
@@ -95,20 +91,180 @@ describe("JSDoc", () => {
  * \`\`\`
  *
  * \`\`\`graphql
- * query Q {
- *   user {
- *     id
- *     name
- *   }
- * }
+ * query Q  { user { id   name } }
  * \`\`\`
  */
 `.trimStart(),
     );
   });
 
+  it("should format fenced json and yaml via the native registry, keeping json5 verbatim", async () => {
+    const source = `
+/**
+ * \`\`\`json
+ * {"a":1,   "b":[2,3]}
+ * \`\`\`
+ *
+ * \`\`\`json5
+ * {a:1,}
+ * \`\`\`
+ *
+ * \`\`\`yaml
+ * key:   value
+ * list:
+ *   -   1
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.js", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`json
+ * { "a": 1, "b": [2, 3] }
+ * \`\`\`
+ *
+ * \`\`\`json5
+ * {a:1,}
+ * \`\`\`
+ *
+ * \`\`\`yaml
+ * key: value
+ * list:
+ *   - 1
+ * \`\`\`
+ */
+`.trimStart(),
+    );
+  });
+
+  it("should print native fences at the fence's effective width, not the full printWidth", async () => {
+    // Effective width at top level = printWidth(100) - " * "(3) - 4 = 93,
+    // the same width JS/TS snippets in the same position already use.
+    // The 94-char line must break; the 93-char one must not.
+    // (Upstream `prettier-plugin-jsdoc` uses a flat printWidth - 4, which overflows `printWidth` for indented comments;
+    // see crates/oxc_formatter/tests/jsdoc/upstream-jsdoc-bugs.md)
+    const source = `
+/**
+ * \`\`\`json
+ * { "argOne": "value1", "argTwo": "value2", "argThree": "value3", "four": 4444, "five": 555555 }
+ * \`\`\`
+ *
+ * \`\`\`json
+ * { "argOne": "value1", "argTwo": "value2", "argThree": "value3", "four": 4444, "five": 55555 }
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`json
+ * {
+ *   "argOne": "value1",
+ *   "argTwo": "value2",
+ *   "argThree": "value3",
+ *   "four": 4444,
+ *   "five": 555555
+ * }
+ * \`\`\`
+ *
+ * \`\`\`json
+ * { "argOne": "value1", "argTwo": "value2", "argThree": "value3", "four": 4444, "five": 55555 }
+ * \`\`\`
+ */
+`.trimStart(),
+    );
+  });
+
+  it("should pass the fence's effective width to the Prettier string path too", async () => {
+    // Same 93-char boundary as the native case, exercised through the Prettier
+    // branch (html fences go to Prettier with `printWidth` injected):
+    // the 96-char element must break, the 93-char one must not.
+    const source = `
+/**
+ * \`\`\`html
+ * <section class="wrapper-xl" data-role="banner" id="hero"><span>hello world text</span></section>
+ * \`\`\`
+ *
+ * \`\`\`html
+ * <section class="wrapper" data-role="banner" id="hero"><span>hello world text</span></section>
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`html
+ * <section class="wrapper-xl" data-role="banner" id="hero">
+ *   <span>hello world text</span>
+ * </section>
+ * \`\`\`
+ *
+ * \`\`\`html
+ * <section class="wrapper" data-role="banner" id="hero"><span>hello world text</span></section>
+ * \`\`\`
+ */
+`.trimStart(),
+    );
+  });
+
+  it("should format embedded languages inside a fenced js block", async () => {
+    // The JS snippet formats on the parent session, so xxx-in-js inside the fence dispatch like anywhere else
+    // (upstream formats these too: formatCode runs prettier.format, whose embed pass applies).
+    const source = `
+/**
+ * \`\`\`js
+ * const s = css\`a{color:  red}\`;
+ * \`\`\`
+ */
+export const a = 1;
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(
+      `
+/**
+ * \`\`\`js
+ * const s = css\`
+ *   a {
+ *     color: red;
+ *   }
+ * \`;
+ * \`\`\`
+ */
+export const a = 1;
+`.trimStart(),
+    );
+  });
+
+  it("should keep fenced code verbatim for languages outside the registry", async () => {
+    const source = `
+/**
+ * \`\`\`ruby
+ * var =   1
+ * \`\`\`
+ *
+ * \`\`\`python
+ * x   =   1
+ * \`\`\`
+ */
+`.trim();
+
+    const result = await format("a.ts", source, { jsdoc: {} });
+    expect(result.errors).toStrictEqual([]);
+    expect(result.code).toBe(`${source}\n`);
+  });
+
   it("should keep fenced code verbatim when the Rust formatter cannot parse it", async () => {
-    // Parse errors inside comments are NOT diagnostics and stays as-is.
     const source = `
 /**
  * \`\`\`css

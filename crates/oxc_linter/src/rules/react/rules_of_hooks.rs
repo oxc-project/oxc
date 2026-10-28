@@ -4,10 +4,10 @@ use lazy_regex::Regex;
 use rustc_hash::{FxBuildHasher, FxHashSet};
 
 use oxc_ast::{
-    AstKind,
-    ast::{ArrowFunctionExpression, CallExpression, Function},
+    AstKind, FunctionKind,
+    ast::{ArrowFunctionExpression, CallExpression, Function, NewExpression},
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_cfg::{ControlFlowGraph, EdgeType, ErrorEdgeKind, InstructionKind, graph::visit::EdgeRef};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNodes, NodeId, SymbolId};
@@ -254,6 +254,7 @@ declare_oxc_lint!(
     RulesOfHooks,
     react,
     pedantic,
+    recommended,
     version = "0.3.3",
     short_description = "Enforces the Rules of Hooks, ensuring that React Hooks are only called in valid contexts and in the correct order.",
 );
@@ -283,7 +284,7 @@ impl Rule for RulesOfHooks {
 
         let is_use = is_react_function_call(call, "use");
 
-        let Some(parent_func) = parent_func(nodes, node) else {
+        let Some((parent_func, function)) = parent_func(nodes, node) else {
             return ctx.diagnostic(diagnostics::top_level_hook(span, hook_name));
         };
 
@@ -372,7 +373,7 @@ impl Rule for RulesOfHooks {
                 r#async: true,
                 ..
             }) => {
-                if is_directly_inside_component_or_hook(nodes, parent_func.id()) {
+                if is_directly_inside_component_or_hook(nodes, function) {
                     return ctx.diagnostic(diagnostics::async_component(
                         span,
                         async_keyword_span(ctx, *async_span),
@@ -412,18 +413,23 @@ impl Rule for RulesOfHooks {
             return;
         }
 
-        if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
-            if !is_inside_try_catch(nodes, node.id(), parent_func.id()) {
-                return;
-            }
-
-            if has_conditional_path_accept_throw(ctx.nodes(), cfg, parent_func, node) {
-                return ctx.diagnostic(diagnostics::conditional_hook(
+        if is_inside_try_catch(nodes, node.id(), parent_func.id()) {
+            if cfg.is_cyclic(node_cfg_id) {
+                return ctx.diagnostic(diagnostics::loop_hook(
                     span,
+                    loop_keyword_span(ctx, ctx.nodes(), node.id(), parent_func.id()),
                     hook_name,
-                    conditional_context(ctx, node.id(), span, parent_func.id()),
                 ));
             }
+
+            return ctx.diagnostic(diagnostics::conditional_hook(
+                span,
+                hook_name,
+                conditional_context(ctx, node.id(), span, parent_func.id()),
+            ));
+        }
+
+        if !cfg.is_reachable(func_cfg_id, node_cfg_id) {
             return;
         }
 
@@ -718,7 +724,7 @@ impl<'a> MayThrowBeforeHook {
     }
 }
 
-impl<'a> Visit<'a> for MayThrowBeforeHook {
+impl<'a> VisitJs<'a> for MayThrowBeforeHook {
     fn enter_node(&mut self, kind: AstKind<'a>) {
         if self.found {
             return;
@@ -747,23 +753,30 @@ impl<'a> Visit<'a> for MayThrowBeforeHook {
 
     fn visit_arrow_function_expression(&mut self, _expr: &ArrowFunctionExpression<'a>) {}
 
-    fn visit_call_expression(&mut self, expr: &oxc_ast::ast::CallExpression<'a>) {
+    fn visit_call_expression(&mut self, expr: &CallExpression<'a>) {
         self.enter_node(AstKind::CallExpression(expr));
         if !self.found {
-            walk::walk_call_expression(self, expr);
+            walk_js::walk_call_expression(self, expr);
         }
     }
 
-    fn visit_new_expression(&mut self, expr: &oxc_ast::ast::NewExpression<'a>) {
+    fn visit_new_expression(&mut self, expr: &NewExpression<'a>) {
         self.enter_node(AstKind::NewExpression(expr));
         if !self.found {
-            walk::walk_new_expression(self, expr);
+            walk_js::walk_new_expression(self, expr);
         }
     }
 }
 
-fn parent_func<'a>(nodes: &'a AstNodes<'a>, node: &AstNode) -> Option<&'a AstNode<'a>> {
-    nodes.ancestors(node.id()).find(|node| node.kind().is_function_like())
+fn parent_func<'a>(
+    nodes: &'a AstNodes<'a>,
+    node: &AstNode,
+) -> Option<(&'a AstNode<'a>, FunctionKind<'a, 'a>)> {
+    nodes.ancestors(node.id()).find_map(|node| match node.kind() {
+        AstKind::Function(function) => Some((node, FunctionKind::Function(function))),
+        AstKind::ArrowFunctionExpression(arrow) => Some((node, FunctionKind::Arrow(arrow))),
+        _ => None,
+    })
 }
 
 fn is_inside_try_catch(
@@ -865,7 +878,7 @@ fn is_reference_call_callee(nodes: &AstNodes<'_>, node_id: NodeId, span: Span) -
     })
 }
 
-/// Checks if the `node_id` is a callback argument (including JSX render props),
+/// Checks if the `node_id` is a callback argument (including constructor and JSX render props),
 /// And that function isn't a `React.memo` or `React.forwardRef`.
 /// Returns `true` if this node is a function argument/render prop and that isn't a React special function.
 /// Otherwise it would return `false`.
@@ -877,46 +890,33 @@ fn is_non_react_func_arg(nodes: &AstNodes, node_id: NodeId) -> bool {
         AstKind::CallExpression(call) => {
             !(is_react_function_call(call, "forwardRef") || is_react_function_call(call, "memo"))
         }
-        // Callback passed as JSX expression: <Foo>{() => { ... }}</Foo> or <Foo render={() => { ... }} />
-        AstKind::JSXExpressionContainer(_) => true,
+        // Callback passed as an argument to a constructor or JSX render prop.
+        AstKind::NewExpression(_) | AstKind::JSXExpressionContainer(_) => true,
         _ => false,
     }
 }
 
 fn is_somewhere_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
     nodes
-        .ancestors(node_id)
-        .filter(|node| node.kind().is_function_like())
-        .map(|node| {
-            (
-                node.id(),
-                match node.kind() {
-                    AstKind::Function(func) => func.name().map(Cow::from),
-                    AstKind::ArrowFunctionExpression(_) => {
-                        get_declaration_identifier(nodes, node.id())
-                    }
-                    _ => unreachable!(),
-                },
-            )
+        .ancestor_kinds(node_id)
+        .filter_map(|kind| match kind {
+            AstKind::Function(function) => Some(FunctionKind::Function(function)),
+            AstKind::ArrowFunctionExpression(arrow) => Some(FunctionKind::Arrow(arrow)),
+            _ => None,
         })
-        .any(|(id, ident)| {
-            ident.is_some_and(|name| is_react_component_or_hook_name(&name))
-                || is_memo_or_forward_ref_callback(nodes, id)
-        })
+        .any(|function| is_directly_inside_component_or_hook(nodes, function))
 }
 
-fn is_directly_inside_component_or_hook(nodes: &AstNodes, node_id: NodeId) -> bool {
-    let node = nodes.get_node(node_id);
-    let directly_named = match node.kind() {
-        AstKind::Function(func) => {
-            func.name().is_some_and(|name| is_react_component_or_hook_name(name.as_str()))
+fn is_directly_inside_component_or_hook(nodes: &AstNodes, function: FunctionKind<'_, '_>) -> bool {
+    let (node_id, ident) = match function {
+        FunctionKind::Function(func) => (func.node_id(), func.name().map(Cow::from)),
+        FunctionKind::Arrow(arrow) => {
+            (arrow.node_id(), get_declaration_identifier(nodes, arrow.node_id()))
         }
-        AstKind::ArrowFunctionExpression(_) => get_declaration_identifier(nodes, node_id)
-            .is_some_and(|name| is_react_component_or_hook_name(&name)),
-        _ => unreachable!(),
     };
 
-    directly_named || is_memo_or_forward_ref_callback(nodes, node_id)
+    ident.is_some_and(|name| is_react_component_or_hook_name(&name))
+        || is_memo_or_forward_ref_callback(nodes, node_id)
 }
 
 fn get_declaration_identifier<'a>(
@@ -952,7 +952,18 @@ fn get_declaration_identifier<'a>(
                 }
                 // { useHook: () => {} }
                 // { useHook() {} }
-                AstKind::ObjectProperty(prop) => prop.key.name(),
+                AstKind::ObjectProperty(prop) => {
+                    let name = prop.key.name()?;
+                    // The name is only classified as a component or hook name. A lone surrogate
+                    // is neither an uppercase letter nor a digit, and neither is U+FFFD.
+                    let replaced = name.as_str().is_none().then(|| {
+                        name.as_js_str()
+                            .chars()
+                            .map(|c| c.to_char().unwrap_or(char::REPLACEMENT_CHARACTER))
+                            .collect::<String>()
+                    });
+                    replaced.map(Cow::Owned).or_else(|| name.into_cow_str())
+                }
                 _ => None,
             }
         }
@@ -980,6 +991,8 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Valid because a key that starts with `useX` is a hook name, even with a lone surrogate.
+        r#"({"useX\uDC00": () => { useState(); }});"#,
         // Valid because components can use hooks.
         "
             function ComponentWithHook() {
@@ -1578,26 +1591,9 @@ fn test() {
     "
         function Foo() {
           try {
-            useCustomHook();
-          } catch (error) {
-            console.error(error);
-          }
-        }
-    ",
-    "
-        function Foo() {
-          try {
             f();
           } catch {}
           useState();
-        }
-    ",
-    "
-        function Foo() {
-          try {
-            const value = 1;
-            useState(value);
-          } catch {}
         }
     ",
         r"
@@ -1712,6 +1708,14 @@ fn test() {
                 return () => clearInterval(onClick);
               }, []);
               return null;
+            }
+        ",
+        // This matches eslint-plugin-react-hooks: callbacks in non-components are not reported.
+        r"
+            function notAComponent() {
+                return new Promise.then(() => {
+                    useState();
+                });
             }
         ",
     ];
@@ -2132,6 +2136,8 @@ fn test() {
             const {j = () => { useState(); }} = {};
             ({k = () => { useState(); }} = {});
         ",
+        // A key with a lone surrogate is neither a component nor a hook name.
+        r#"({"f\uDC00": () => { useState(); }});"#,
         // Invalid because it's dangerous and might not warn otherwise.
         // This *must* be invalid.
         // errors: [conditionalError('useState', true)],
@@ -2189,6 +2195,35 @@ fn test() {
                     try {
                         f();
                         useState();
+                    } catch {}
+                }
+        ",
+        // https://github.com/oxc-project/oxc/issues/25631
+        "
+                function TestChild() {
+                    let captured = null;
+                    try {
+                        captured = useTooltipContext();
+                        return null;
+                    } catch (error) {
+                        return null;
+                    }
+                }
+        ",
+        "
+                function ComponentWithHookInsideLoop() {
+                    try {
+                        while (cond) {
+                            useState();
+                        }
+                    } catch {}
+                }
+        ",
+        "
+                function Foo() {
+                    try {
+                        const value = 1;
+                        useState(value);
                     } catch {}
                 }
         ",
@@ -2459,16 +2494,14 @@ fn test() {
                 }
             }
         ",
-        // TODO: This should error but doesn't.
-        // Original rule also fails to raise this error.
-        // errors: [genericError('useState')],
-        // "
-        //     function notAComponent() {
-        //         return new Promise.then(() => {
-        //             useState();
-        //         });
-        //     }
-        // " ,
+        // Invalid because hooks cannot be called inside constructor callbacks.
+        r"
+            function Component() {
+                return new Promise.then(() => {
+                    useState();
+                });
+            }
+        ",
         // https://github.com/oxc-project/oxc/issues/6651
         r"const MyComponent3 = makeComponent(function foo () { useHook(); });",
         // https://github.com/oxc-project/oxc/issues/17961

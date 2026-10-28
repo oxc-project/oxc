@@ -1,0 +1,10 @@
+# oxfmt-ignore
+kept:   verbatim
+block: |
+  literal
+
+  after blank
+plain: multi
+  line scalar
+seq:
+  - a

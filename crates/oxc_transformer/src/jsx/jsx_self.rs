@@ -70,7 +70,7 @@ impl<'a> JsxSelf {
     fn has_no_super_class(ctx: &TraverseCtx<'a>) -> bool {
         for ancestor in ctx.ancestors() {
             if let Ancestor::ClassBody(class) = ancestor {
-                return class.super_class().is_none();
+                return class.heritage().is_none();
             }
         }
         true

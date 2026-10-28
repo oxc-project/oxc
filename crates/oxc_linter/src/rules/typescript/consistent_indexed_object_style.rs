@@ -5,7 +5,10 @@ use serde::{Deserialize, Serialize};
 
 use oxc_ast::{
     AstKind,
-    ast::{TSMappedType, TSSignature, TSType, TSTypeName},
+    ast::{
+        TSMappedType, TSMappedTypeModifierOperator, TSSignature, TSType, TSTypeName,
+        TSTypeOperatorOperator,
+    },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -115,7 +118,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentIndexedObjectStyle {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -178,9 +181,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                                 return fixer.noop();
                             }
 
-                            let key_type = sig.parameters.first().map_or("string", |p| {
-                                fixer.source_range(p.type_annotation.type_annotation.span())
-                            });
+                            let key_type = fixer
+                                .source_range(sig.parameter.type_annotation.type_annotation.span());
                             let value_type =
                                 fixer.source_range(sig.type_annotation.type_annotation.span());
                             let type_params = inf
@@ -294,9 +296,8 @@ impl Rule for ConsistentIndexedObjectStyle {
                             sig.span,
                         ),
                         |fixer| {
-                            let key_type = sig.parameters.first().map_or("string", |p| {
-                                fixer.source_range(p.type_annotation.type_annotation.span())
-                            });
+                            let key_type = fixer
+                                .source_range(sig.parameter.type_annotation.type_annotation.span());
                             let value_type =
                                 fixer.source_range(sig.type_annotation.type_annotation.span());
 
@@ -367,13 +368,13 @@ impl Rule for ConsistentIndexedObjectStyle {
                         let is_optional = mapped.optional.is_some_and(|o| {
                             matches!(
                                 o,
-                                oxc_ast::ast::TSMappedTypeModifierOperator::True
-                                    | oxc_ast::ast::TSMappedTypeModifierOperator::Plus
+                                TSMappedTypeModifierOperator::True
+                                    | TSMappedTypeModifierOperator::Plus
                             )
                         });
-                        let is_required = mapped.optional.is_some_and(|o| {
-                            matches!(o, oxc_ast::ast::TSMappedTypeModifierOperator::Minus)
-                        });
+                        let is_required = mapped
+                            .optional
+                            .is_some_and(|o| matches!(o, TSMappedTypeModifierOperator::Minus));
 
                         let mut record = format!("Record<{key_type}, {value_type}>");
                         if is_required {
@@ -482,7 +483,7 @@ fn contains_convertible_index_signature(r#type: &TSType) -> bool {
 
 fn is_bare_keyof(r#type: &TSType) -> bool {
     matches!(r#type, TSType::TSTypeOperatorType(op)
-        if matches!(op.operator, oxc_ast::ast::TSTypeOperatorOperator::Keyof))
+        if matches!(op.operator, TSTypeOperatorOperator::Keyof))
 }
 
 fn mapped_type_value_references_key(

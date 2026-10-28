@@ -98,8 +98,8 @@ impl<'de> Deserialize<'de> for OxlintSettings {
     {
         let raw_value = serde_json::Value::deserialize(deserializer)?;
 
-        let well_known_settings: WellKnownOxlintSettings =
-            serde_json::from_value(raw_value.clone()).map_err(serde::de::Error::custom)?;
+        let well_known_settings =
+            WellKnownOxlintSettings::deserialize(&raw_value).map_err(serde::de::Error::custom)?;
 
         let arbitrary_settings =
             if let serde_json::Value::Object(json) = raw_value { Some(json) } else { None };

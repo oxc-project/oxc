@@ -1,20 +1,22 @@
-use std::{iter, ops::ControlFlow};
+use std::iter;
 
-use crate::generated::ancestor::Ancestor;
 use oxc_allocator::{ArenaBox, ArenaVec, TakeIn};
 use oxc_ast::ast::*;
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_ecmascript::{
-    constant_evaluation::{DetermineValueType, IsLiteralValue, ValueType},
+    constant_evaluation::{ConstantEvaluation, DetermineValueType, IsLiteralValue, ValueType},
     side_effects::MayHaveSideEffects,
 };
 use oxc_semantic::ScopeFlags;
-use oxc_span::{ContentEq, GetSpan, GetSpanMut};
-use oxc_syntax::symbol::SymbolId;
+use oxc_span::{ContentEq, GetSpan, GetSpanMut, SPAN};
 
-use crate::{TraverseCtx, keep_var::KeepVar};
+use crate::{
+    TraverseCtx, generated::ancestor::Ancestor, is_terminated::IsTerminated, keep_var::KeepVar,
+};
 
 use super::PeepholeOptimizations;
+
+type StatementIter<'a> = <ArenaVec<'a, Statement<'a>> as IntoIterator>::IntoIter;
 
 /// `false` when dropping `stmt` produces a byte-identical AST — a `var`
 /// with no initializers, which `KeepVar` re-emits unchanged at the end of
@@ -49,12 +51,12 @@ impl<'a> PeepholeOptimizations {
     /// ## MinimizeExitPoints:
     /// <https://github.com/google/closure-compiler/blob/v20240609/src/com/google/javascript/jscomp/MinimizeExitPoints.java>
     pub fn minimize_statements(stmts: &mut ArenaVec<'a, Statement<'a>>, ctx: &mut TraverseCtx<'a>) {
-        let mut old_stmts = stmts.take_in(ctx);
+        let mut new_stmts = ArenaVec::with_capacity_in(stmts.len(), ctx);
+        let mut old_stmts = stmts.take_in(ctx).into_iter();
         let mut is_control_flow_dead = false;
         let mut keep_var = KeepVar::new();
         let mut identity_drops = 0u32;
-        for i in 0..old_stmts.len() {
-            let stmt = old_stmts[i].take_in(ctx);
+        while let Some(stmt) = old_stmts.next() {
             if is_control_flow_dead
                 && !stmt.is_module_declaration()
                 && !matches!(stmt.as_declaration(), Some(Declaration::FunctionDeclaration(_)))
@@ -72,19 +74,18 @@ impl<'a> PeepholeOptimizations {
                 } else {
                     identity_drops += 1;
                 }
-                continue; // drop: `stmt` is intentionally not pushed into `stmts`.
+                continue; // drop: `stmt` is intentionally not pushed into `new_stmts`.
             }
-            if Self::minimize_statement(
-                stmt,
-                i,
-                &mut old_stmts,
-                stmts,
-                &mut is_control_flow_dead,
-                ctx,
-            )
-            .is_break()
+            Self::minimize_statement(stmt, &mut old_stmts, &mut new_stmts, ctx);
+            // A statement that never completes normally — a direct jump, a
+            // kept block ending in a jump, an if/else or try/catch where
+            // every branch jumps — makes the rest of the list unreachable.
+            // https://github.com/rolldown/rolldown/issues/10184
+            if !is_control_flow_dead
+                && !old_stmts.as_slice().is_empty()
+                && new_stmts.last().is_some_and(Statement::is_terminated)
             {
-                break;
+                is_control_flow_dead = true;
             }
         }
         if let Some(stmt) = keep_var.get_variable_declaration_statement(&ctx.ast) {
@@ -94,7 +95,7 @@ impl<'a> PeepholeOptimizations {
                 // the combined re-emit is a real AST change — re-flag so the
                 // fixed-point loop doesn't terminate one iteration early.
                 Some(stmt) => {
-                    stmts.push(stmt);
+                    new_stmts.push(stmt);
                     if identity_drops > 1 {
                         ctx.notice_change();
                     }
@@ -107,241 +108,13 @@ impl<'a> PeepholeOptimizations {
         }
 
         // Drop a trailing unconditional jump statement if applicable
-        if let Some(last_stmt) = stmts.last() {
-            match last_stmt {
-                // "while (x) { y(); continue; }" => "while (x) { y(); }"
-                Statement::ContinueStatement(s) if s.label.is_none() => {
-                    if matches!(
-                        ctx.ancestors().nth(1),
-                        Some(
-                            Ancestor::ForStatementBody(_)
-                                | Ancestor::ForInStatementBody(_)
-                                | Ancestor::ForOfStatementBody(_),
-                        )
-                    ) {
-                        let dropped = stmts.pop().unwrap();
-                        ctx.drop_statement(&dropped);
-                    }
-                }
-                // "function f() { x(); return; }" => "function f() { x(); }"
-                Statement::ReturnStatement(s) if s.argument.is_none() => {
-                    if let Ancestor::FunctionBodyStatements(_) = ctx.parent() {
-                        let dropped = stmts.pop().unwrap();
-                        ctx.drop_statement(&dropped);
-                    }
-                }
-                _ => {}
-            }
+        if let Some(last_stmt) = new_stmts.last()
+            && Self::can_remove_termination_statement(last_stmt, ctx)
+        {
+            let dropped = new_stmts.pop().unwrap();
+            ctx.drop_statement(&dropped);
         }
-
-        // Merge certain statements in reverse order
-        if stmts.len() >= 2 && ctx.options().sequences {
-            if let Some(Statement::ReturnStatement(_)) = stmts.last() {
-                'return_loop: while stmts.len() >= 2 {
-                    let prev_index = stmts.len() - 2;
-                    let prev_stmt = &stmts[prev_index];
-                    match prev_stmt {
-                        Statement::ExpressionStatement(_) => {
-                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
-                                && last_return.argument.is_none()
-                            {
-                                break 'return_loop;
-                            }
-                            ctx.notice_change();
-                            // "a(); return b;" => "return a(), b;"
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ReturnStatement(mut last_return) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
-                                unreachable!()
-                            };
-                            let b = last_return.argument.as_mut().unwrap();
-                            let argument = Self::join_sequence(&mut expr_stmt.expression, b, ctx);
-                            let right_span = last_return.span;
-                            let last_return_stmt =
-                                Statement::new_return_statement(right_span, Some(argument), ctx);
-                            stmts.push(last_return_stmt);
-                        }
-                        // Merge the last two statements
-                        Statement::IfStatement(if_stmt) => {
-                            // The previous statement must be an if statement with no else clause
-                            if if_stmt.alternate.is_some() {
-                                break 'return_loop;
-                            }
-                            // The then clause must be a return
-                            let Statement::ReturnStatement(_) = &if_stmt.consequent else {
-                                break 'return_loop;
-                            };
-                            if let Some(Statement::ReturnStatement(last_return)) = stmts.last()
-                                && let Some(arg) = &last_return.argument
-                                && Self::conditional_expression_count_exceeded(arg)
-                            {
-                                break 'return_loop;
-                            }
-
-                            ctx.notice_change();
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ReturnStatement(last_return) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                            let mut prev_if = prev_if.unbox();
-                            let Statement::ReturnStatement(prev_return) = prev_if.consequent else {
-                                unreachable!()
-                            };
-
-                            let left_span = prev_return.span;
-                            let right_span = last_return.span;
-                            // "if (a) return; return b;" => "return a ? void 0 : b;"
-                            let mut left = prev_return
-                                .unbox()
-                                .argument
-                                .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
-                            // "if (a) return a; return;" => "return a ? b : void 0;"
-                            let mut right = last_return
-                                .unbox()
-                                .argument
-                                .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
-
-                            // "if (!a) return b; return c;" => "return a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
-                                && unary_expr.operator.is_not()
-                            {
-                                prev_if.test = unary_expr.argument.take_in(ctx);
-                                std::mem::swap(&mut left, &mut right);
-                            }
-
-                            let argument = if let Expression::SequenceExpression(sequence_expr) =
-                                &mut prev_if.test
-                            {
-                                // "if (a, b) return c; return d;" => "return a, b ? c : d;"
-                                let test = sequence_expr.expressions.pop().unwrap();
-                                let mut b = Self::minimize_conditional(
-                                    prev_if.span,
-                                    test,
-                                    left,
-                                    right,
-                                    ctx,
-                                );
-                                Self::join_sequence(&mut prev_if.test, &mut b, ctx)
-                            } else {
-                                // "if (a) return b; return c;" => "return a ? b : c;"
-                                Self::minimize_conditional(
-                                    prev_if.span,
-                                    prev_if.test.take_in(ctx),
-                                    left,
-                                    right,
-                                    ctx,
-                                )
-                            };
-                            let last_return_stmt =
-                                Statement::new_return_statement(right_span, Some(argument), ctx);
-                            stmts.push(last_return_stmt);
-                        }
-                        _ => break 'return_loop,
-                    }
-                }
-            } else if let Some(Statement::ThrowStatement(_)) = stmts.last() {
-                'throw_loop: while stmts.len() >= 2 {
-                    let prev_index = stmts.len() - 2;
-                    let prev_stmt = &stmts[prev_index];
-                    match prev_stmt {
-                        Statement::ExpressionStatement(_) => {
-                            ctx.notice_change();
-                            // "a(); throw b;" => "throw a(), b;"
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ThrowStatement(mut last_throw) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::ExpressionStatement(mut expr_stmt) = prev_stmt else {
-                                unreachable!()
-                            };
-                            let argument = Self::join_sequence(
-                                &mut expr_stmt.expression,
-                                &mut last_throw.argument,
-                                ctx,
-                            );
-                            let right_span = last_throw.span;
-                            let last_throw_stmt =
-                                Statement::new_throw_statement(right_span, argument, ctx);
-                            stmts.push(last_throw_stmt);
-                        }
-                        // Merge the last two statements
-                        Statement::IfStatement(if_stmt) => {
-                            // The previous statement must be an if statement with no else clause
-                            if if_stmt.alternate.is_some() {
-                                break 'throw_loop;
-                            }
-                            // The then clause must be a throw
-                            let Statement::ThrowStatement(_) = &if_stmt.consequent else {
-                                break 'throw_loop;
-                            };
-                            if let Some(Statement::ThrowStatement(last_throw)) = stmts.last()
-                                && Self::conditional_expression_count_exceeded(&last_throw.argument)
-                            {
-                                break 'throw_loop;
-                            }
-
-                            ctx.notice_change();
-                            let last_stmt = stmts.pop().unwrap();
-                            let Statement::ThrowStatement(last_throw) = last_stmt else {
-                                unreachable!()
-                            };
-                            let prev_stmt = stmts.pop().unwrap();
-                            let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
-                            let mut prev_if = prev_if.unbox();
-                            let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
-                                unreachable!()
-                            };
-
-                            let right_span = last_throw.span;
-                            let mut left = prev_throw.unbox().argument;
-                            let mut right = last_throw.unbox().argument;
-
-                            // "if (!a) throw b; throw c;" => "throw a ? c : b;"
-                            if let Expression::UnaryExpression(unary_expr) = &mut prev_if.test
-                                && unary_expr.operator.is_not()
-                            {
-                                prev_if.test = unary_expr.argument.take_in(ctx);
-                                std::mem::swap(&mut left, &mut right);
-                            }
-
-                            let argument = if let Expression::SequenceExpression(sequence_expr) =
-                                &mut prev_if.test
-                            {
-                                // "if (a, b) throw c; throw d;" => "throw a, b ? c : d;"
-                                let test = sequence_expr.expressions.pop().unwrap();
-                                let mut b = Self::minimize_conditional(
-                                    prev_if.span,
-                                    test,
-                                    left,
-                                    right,
-                                    ctx,
-                                );
-                                Self::join_sequence(&mut prev_if.test, &mut b, ctx)
-                            } else {
-                                // "if (a) throw b; throw c;" => "throw a ? b : c;"
-                                Self::minimize_conditional(
-                                    prev_if.span,
-                                    prev_if.test.take_in(ctx),
-                                    left,
-                                    right,
-                                    ctx,
-                                )
-                            };
-                            let last_throw_stmt =
-                                Statement::new_throw_statement(right_span, argument, ctx);
-                            stmts.push(last_throw_stmt);
-                        }
-                        _ => break 'throw_loop,
-                    }
-                }
-            }
-        }
+        *stmts = new_stmts;
     }
 
     /// Some parsers cannot parse long conditional expressions.
@@ -361,25 +134,12 @@ impl<'a> PeepholeOptimizations {
 
     fn minimize_statement(
         stmt: Statement<'a>,
-        i: usize,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut StatementIter<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
-
         ctx: &mut TraverseCtx<'a>,
-    ) -> ControlFlow<()> {
+    ) {
         match stmt {
             Statement::EmptyStatement(_) => (),
-            Statement::BreakStatement(s) => {
-                // Local `&mut bool` flag, not an AST slot.
-                *is_control_flow_dead = true;
-                result.push(Statement::BreakStatement(s));
-            }
-            Statement::ContinueStatement(s) => {
-                // Local `&mut bool` flag, not an AST slot.
-                *is_control_flow_dead = true;
-                result.push(Statement::ContinueStatement(s));
-            }
             Statement::VariableDeclaration(var_decl) => {
                 Self::handle_variable_declaration(var_decl, result, ctx);
             }
@@ -390,15 +150,13 @@ impl<'a> PeepholeOptimizations {
                 Self::handle_switch_statement(switch_stmt, result, ctx);
             }
             Statement::IfStatement(if_stmt) => {
-                if Self::handle_if_statement(i, stmts, if_stmt, result, ctx).is_break() {
-                    return ControlFlow::Break(());
-                }
+                Self::handle_if_statement(stmts, if_stmt, result, ctx);
             }
             Statement::ReturnStatement(ret_stmt) => {
-                Self::handle_return_statement(ret_stmt, result, is_control_flow_dead, ctx);
+                Self::handle_return_statement(ret_stmt, result, ctx);
             }
             Statement::ThrowStatement(throw_stmt) => {
-                Self::handle_throw_statement(throw_stmt, result, is_control_flow_dead, ctx);
+                Self::handle_throw_statement(throw_stmt, result, ctx);
             }
             Statement::ForStatement(for_stmt) => {
                 Self::handle_for_statement(for_stmt, result, ctx);
@@ -412,37 +170,43 @@ impl<'a> PeepholeOptimizations {
             Statement::BlockStatement(block_stmt) => Self::handle_block(result, block_stmt, ctx),
             stmt => result.push(stmt),
         }
-        ControlFlow::Continue(())
     }
 
-    fn join_sequence(
-        a: &mut Expression<'a>,
-        b: &mut Expression<'a>,
-        ctx: &TraverseCtx<'a>,
-    ) -> Expression<'a> {
-        let a = a.take_in(ctx);
-        let b = b.take_in(ctx);
-        if let Expression::SequenceExpression(mut sequence_expr) = a {
-            // `(a, b); c`
-            sequence_expr.expressions.push(b);
-            return Expression::SequenceExpression(sequence_expr);
-        }
-        let span = a.span();
-        let exprs = if let Expression::SequenceExpression(sequence_expr) = b {
-            // `a; (b, c)`
-            ArenaVec::from_iter_in(std::iter::once(a).chain(sequence_expr.unbox().expressions), ctx)
+    /// Merge `expr` expression with the previous expression statement or emit as a new one.
+    fn push_new_expression_stmt_to_result(
+        expr: Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if ctx.options().sequences
+            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
+        {
+            let span = prev_expr_stmt.span;
+            ctx.replace_expression_with(&mut prev_expr_stmt.expression, |a, ctx| {
+                Self::join_sequence(span, a, expr, ctx)
+            });
         } else {
-            // `a; b`
-            ArenaVec::from_array_in([a, b], ctx)
-        };
-        Expression::new_sequence_expression(span, exprs, ctx)
+            result.push(Statement::new_expression_statement(expr.span(), expr, ctx));
+            ctx.notice_change();
+        }
     }
 
-    fn jump_stmts_look_the_same(left: &Statement<'a>, right: &Statement<'a>) -> bool {
-        if left.is_jump_statement() && right.is_jump_statement() {
-            return left.content_eq(right);
+    /// Fold `target` expression into previous expression as sequence
+    /// `a; b` -> `a, b`.
+    fn merge_last_expression_into_sequence(
+        target: &mut Expression<'a>,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        if !ctx.options().sequences
+            || !matches!(result.last(), Some(Statement::ExpressionStatement(_)))
+        {
+            return;
         }
-        false
+        let last_epr = result.pop().unwrap();
+        let Statement::ExpressionStatement(prev_expr_stmt) = last_epr else { unreachable!() };
+        let ExpressionStatement { span, expression: a, .. } = prev_expr_stmt.unbox();
+        ctx.replace_expression_with(target, |b, ctx| Self::join_sequence(span, a, b, ctx));
     }
 
     /// For variable declarations:
@@ -452,13 +216,14 @@ impl<'a> PeepholeOptimizations {
     fn handle_variable_declaration(
         mut var_decl: ArenaBox<'a, VariableDeclaration<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(first_decl) = var_decl.declarations.first_mut()
             && let Some(first_decl_init) = first_decl.init.as_mut()
         {
             Self::substitute_single_use_symbol_in_statement(first_decl_init, result, ctx, false);
+            // "var a; var b = (a = 1, c);" => "var a = 1; var b = c;"
+            Self::merge_leading_assignments_to_declaration(first_decl_init, false, result, ctx);
         }
         Self::substitute_single_use_symbol_within_declaration(
             var_decl.kind,
@@ -468,7 +233,10 @@ impl<'a> PeepholeOptimizations {
 
         // If `join_vars` is off, but there are unused declarators ... just join them to make our code simpler.
         if !ctx.options().join_vars
-            && var_decl.declarations.iter().all(|d| !Self::should_remove_unused_declarator(d, ctx))
+            && var_decl
+                .declarations
+                .iter()
+                .all(|d| !Self::should_remove_unused_declarator(d, var_decl.kind, ctx))
         {
             result.push(Statement::VariableDeclaration(var_decl));
             return;
@@ -481,7 +249,7 @@ impl<'a> PeepholeOptimizations {
         }
         let VariableDeclaration { span, kind, declarations, declare, .. } = var_decl.unbox();
         for mut decl in declarations {
-            if Self::should_remove_unused_declarator(&decl, ctx) {
+            if Self::should_remove_unused_declarator(&decl, kind, ctx) {
                 // `init` is `mut` because `remove_unused_expression` rewrites
                 // it in place (peeling pure-call wrappers, etc). It is taken
                 // out first because it may survive as an expression statement
@@ -490,7 +258,7 @@ impl<'a> PeepholeOptimizations {
                     if Self::remove_unused_expression(&mut init, ctx) {
                         ctx.drop_expression(&init);
                     } else {
-                        result.push(Statement::new_expression_statement(init.span(), init, ctx));
+                        Self::push_new_expression_stmt_to_result(init, result, ctx);
                     }
                 }
                 // Walk the rest of the dropped declarator (binding pattern +
@@ -504,22 +272,10 @@ impl<'a> PeepholeOptimizations {
                     prev_var_decl.declarations.push(decl);
                     continue;
                 }
-                let decls = ArenaVec::from_value_in(decl, ctx);
-                let new_decl = VariableDeclaration::boxed(span, kind, decls, declare, ctx);
-                result.push(Statement::VariableDeclaration(new_decl));
+                let new_decl =
+                    Statement::new_variable_declaration(span, kind, [decl], declare, ctx);
+                result.push(new_decl);
             }
-        }
-    }
-
-    /// Whether an expression is or contains a `super()` call at the top level
-    /// (i.e., in a sequence expression, but not nested inside conditionals/functions).
-    fn expression_contains_super_call(expr: &Expression<'a>) -> bool {
-        match expr {
-            _ if expr.is_super_call_expression() => true,
-            Expression::SequenceExpression(seq) => {
-                seq.expressions.iter().any(Expression::is_super_call_expression)
-            }
-            _ => false,
         }
     }
 
@@ -541,7 +297,7 @@ impl<'a> PeepholeOptimizations {
         // Only consider top-level expression statements — `super()` inside `if`/loops
         // is conditional and doesn't guarantee `this` is initialized.
         if matches!(expr_stmt.expression, Expression::ThisExpression(_))
-            && Self::this_is_inside_derived_constructor(ctx)
+            && Self::derived_constructor_this_scope(ctx).is_some()
             && result.iter().rev().any(|stmt| {
                 matches!(
                     stmt,
@@ -555,74 +311,26 @@ impl<'a> PeepholeOptimizations {
             return;
         }
 
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-        {
-            let a = &mut prev_expr_stmt.expression;
-            let b = &mut expr_stmt.expression;
-            expr_stmt.expression = Self::join_sequence(a, b, ctx);
-            let dropped = result.pop().unwrap();
+        // `a; b;` => `a, b;`
+        Self::merge_last_expression_into_sequence(&mut expr_stmt.expression, result, ctx);
+
+        // `var a; a = b();` => `var a = b();`
+        if Self::merge_leading_assignments_to_declaration(
+            &mut expr_stmt.expression,
+            true,
+            result,
+            ctx,
+        ) {
+            let dropped = Statement::ExpressionStatement(expr_stmt);
             ctx.drop_statement(&dropped);
-        }
-        // "var a; a = b();" => "var a = b();"
-        match &mut expr_stmt.expression {
-            Expression::AssignmentExpression(assign_expr) => {
-                let merged = Self::merge_assignment_to_declaration(assign_expr, result, ctx);
-                if merged {
-                    let dropped = Statement::ExpressionStatement(expr_stmt);
-                    ctx.drop_statement(&dropped);
-                    return;
-                }
-            }
-            Expression::SequenceExpression(sequence_expr)
-                if result
-                    .last()
-                    .is_some_and(|stmt| matches!(stmt, Statement::VariableDeclaration(_))) =>
-            {
-                let first_non_merged_index =
-                    sequence_expr.expressions.iter_mut().position(|expr| {
-                        if let Expression::AssignmentExpression(assign_expr) = expr {
-                            !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
-                        } else {
-                            true
-                        }
-                    });
-                let sequence_len = sequence_expr.expressions.len();
-                match first_non_merged_index {
-                    None => {
-                        // all elements are merged
-                        let dropped = Statement::ExpressionStatement(expr_stmt);
-                        ctx.drop_statement(&dropped);
-                        return;
-                    }
-                    Some(val) if val == sequence_len - 1 => {
-                        // all elements are merged except for the last expression
-                        let last_expr = sequence_expr.expressions.pop().unwrap();
-                        result.push(Statement::new_expression_statement(
-                            last_expr.span(),
-                            last_expr,
-                            ctx,
-                        ));
-                        let dropped = Statement::ExpressionStatement(expr_stmt);
-                        ctx.drop_statement(&dropped);
-                        return;
-                    }
-                    Some(0) => {
-                        // no elements are merged
-                    }
-                    Some(val) => {
-                        for dropped in sequence_expr.expressions.drain(0..val) {
-                            ctx.drop_expression(&dropped);
-                        }
-                    }
-                }
-            }
-            _ => {}
+            return;
         }
 
         result.push(Statement::ExpressionStatement(expr_stmt));
     }
 
+    /// Merge a single assignment into a matching uninitialized declarator of the
+    /// variable declaration that immediately precedes it in `result`.
     fn merge_assignment_to_declaration(
         assign_expr: &mut AssignmentExpression<'a>,
         result: &mut ArenaVec<'a, Statement<'a>>,
@@ -640,14 +348,14 @@ impl<'a> PeepholeOptimizations {
         if !matches!(&var_decl.kind, VariableDeclarationKind::Var | VariableDeclarationKind::Let) {
             return false;
         }
+        let declaration_kind = var_decl.kind;
         for decl in var_decl.declarations.iter_mut().rev() {
             let BindingPattern::BindingIdentifier(kind) = &decl.id else {
                 break;
             };
             if kind.name == id.name {
                 if decl.init.is_none()
-                    && (decl.kind == VariableDeclarationKind::Var
-                        || assign_expr.right.is_literal_value(true, ctx))
+                    && (declaration_kind.is_var() || assign_expr.right.is_literal_value(true, ctx))
                 {
                     // "var a; a = b();" => "var a = b();"
                     decl.init = Some(assign_expr.right.take_in(ctx));
@@ -668,11 +376,76 @@ impl<'a> PeepholeOptimizations {
             }
             // should not move assignment above other variables for let
             // this could cause TDZ errors (e.g. `let a, b; b = a;`)
-            if decl.kind == VariableDeclarationKind::Let {
+            if declaration_kind == VariableDeclarationKind::Let {
                 break;
             }
         }
         false
+    }
+
+    /// Fold leading assignments in `expr` into the variable declaration.
+    fn merge_leading_assignments_to_declaration(
+        expr: &mut Expression<'a>,
+        value_is_discarded: bool,
+        result: &mut ArenaVec<'a, Statement<'a>>,
+        ctx: &mut TraverseCtx<'a>,
+    ) -> bool {
+        let Some(Statement::VariableDeclaration(_)) = result.last() else {
+            return false;
+        };
+
+        match expr {
+            // "var a; a = b();" => "var a = b();"
+            Expression::AssignmentExpression(assign_expr) if value_is_discarded => {
+                Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+            }
+            // "var a; return a = b(), c;" => "var a = b(); return c;"
+            Expression::SequenceExpression(sequence_expr) => {
+                // The value of the last expression is observed unless discarded.
+                let limit = sequence_expr.expressions.len() - usize::from(!value_is_discarded);
+                let first_non_merged_index =
+                    sequence_expr.expressions.iter_mut().take(limit).position(|expr| match expr {
+                        Expression::AssignmentExpression(assign_expr) => {
+                            !Self::merge_assignment_to_declaration(assign_expr, result, ctx)
+                        }
+                        _ => true,
+                    });
+                // `None` means every candidate merged, so the whole prefix is taken.
+                let taken = first_non_merged_index.unwrap_or(limit);
+                if taken == 0 {
+                    return false;
+                }
+                match sequence_expr.expressions.len() - taken {
+                    // all elements are merged
+                    0 => true,
+                    // all elements are merged except for the last expression
+                    1 => {
+                        let only_expr = sequence_expr.expressions.pop().unwrap();
+                        ctx.replace_expression(expr, only_expr);
+                        false
+                    }
+                    // The sequence stays in the AST, so remove the targets here.
+                    _ => {
+                        for dropped in sequence_expr.expressions.drain(0..taken) {
+                            ctx.drop_expression(&dropped);
+                        }
+                        false
+                    }
+                }
+            }
+            _ => false,
+        }
+    }
+
+    /// Check if a switch case can be inlined by verifying:
+    /// - The test expression has no side effects
+    /// - All statements can be safely inlined (no unlabeled breaks)
+    pub fn can_switch_case_be_inlined(case: &SwitchCase<'a>) -> bool {
+        if !case.test.as_ref().is_none_or(Expression::is_literal) {
+            return false;
+        }
+
+        case.consequent.is_empty() || !FindNestedBreak::has_unlabelled_break_in_switch_case(case)
     }
 
     fn handle_switch_statement(
@@ -688,257 +461,298 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-        {
-            let a = &mut prev_expr_stmt.expression;
-            let b = &mut switch_stmt.discriminant;
-            switch_stmt.discriminant = Self::join_sequence(a, b, ctx);
-            let dropped = result.pop().unwrap();
-            ctx.drop_statement(&dropped);
-        }
+        // `a; switch(b){}` => `switch(a, b){}`
+        Self::merge_last_expression_into_sequence(&mut switch_stmt.discriminant, result, ctx);
 
-        // Prune empty case clauses before a trailing default
-        // e.g., `switch (x) { case 0: foo(); break; case 1: default: bar() }`
-        // => `switch (x) { case 0: foo(); break; default: bar() }`
-        // https://github.com/evanw/esbuild/commit/add452ed51333953dd38a26f28a775bb220ea2e9
-        if let Some(last_case) = switch_stmt.cases.last()
-            && last_case.test.is_none()
+        // `var a; switch (a = b(), c) {}` => `var a = b(); switch (c) {}`
+        Self::merge_leading_assignments_to_declaration(
+            &mut switch_stmt.discriminant,
+            false,
+            result,
+            ctx,
+        );
+
+        if !ctx.is_tree_shake_only()
+            && switch_stmt.cases.len() == 1
+            && Self::can_switch_case_be_inlined(&switch_stmt.cases[0])
+            && let Some(case) = switch_stmt.cases.pop()
         {
-            let default_idx = switch_stmt.cases.len() - 1;
-            let mut first_empty_idx = default_idx;
-            // Iterate backward through preceding cases
-            while first_empty_idx > 0 {
-                let case = &switch_stmt.cases[first_empty_idx - 1];
-                // Only remove empty cases with primitive literal tests
-                if case.consequent.is_empty()
-                    && case.test.as_ref().is_some_and(Expression::is_literal)
-                {
-                    first_empty_idx -= 1;
+            ctx.notice_change();
+            let switch_scope_id = switch_stmt.scope_id();
+            let SwitchStatement { span: switch_span, discriminant, .. } = switch_stmt.unbox();
+            let SwitchCase { span: case_span, test, mut consequent, .. } = case;
+
+            let block_stmt =
+                if consequent.len() == 1 && matches!(consequent[0], Statement::BlockStatement(_)) {
+                    consequent.pop().unwrap()
                 } else {
-                    break;
-                }
+                    Statement::new_block_statement_with_scope_id(
+                        case_span,
+                        consequent,
+                        switch_scope_id,
+                        ctx,
+                    )
+                };
+
+            if let Some(test) = test {
+                result.push(Statement::new_if_statement(
+                    switch_span,
+                    Expression::new_binary_expression(
+                        SPAN,
+                        discriminant,
+                        BinaryOperator::StrictEquality,
+                        test,
+                        ctx,
+                    ),
+                    block_stmt,
+                    None,
+                    ctx,
+                ));
+                return;
             }
-            // If we found cases to remove, keep cases [0..first_empty_idx] + [default]
-            if first_empty_idx < default_idx {
-                let default_case = switch_stmt.cases.pop().unwrap();
-                switch_stmt.cases.truncate(first_empty_idx);
-                switch_stmt.cases.push(default_case);
-                ctx.notice_change();
+
+            if !discriminant.is_literal() {
+                Self::push_new_expression_stmt_to_result(discriminant, result, ctx);
             }
+
+            result.push(block_stmt);
+            return;
         }
 
         result.push(Statement::SwitchStatement(switch_stmt));
     }
 
     fn handle_if_statement(
-        i: usize,
-        stmts: &mut ArenaVec<'a, Statement<'a>>,
+        stmts: &mut StatementIter<'a>,
         mut if_stmt: ArenaBox<'a, IfStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
 
         ctx: &mut TraverseCtx<'a>,
-    ) -> ControlFlow<()> {
+    ) {
         Self::substitute_single_use_symbol_in_statement(&mut if_stmt.test, result, ctx, false);
 
-        // Absorb a previous expression statement
+        // `var a; if (a = b(), c) d;` => `var a = b(); if (c) d;`
+        Self::merge_leading_assignments_to_declaration(&mut if_stmt.test, false, result, ctx);
+
+        // `a; if (b) c;` => `if (a, b) c;`
+        Self::merge_last_expression_into_sequence(&mut if_stmt.test, result, ctx);
+
         if ctx.options().sequences {
-            if let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut() {
-                let a = &mut prev_expr_stmt.expression;
-                let b = &mut if_stmt.test;
-                if_stmt.test = Self::join_sequence(a, b, ctx);
-                let dropped = result.pop().unwrap();
-                ctx.drop_statement(&dropped);
+            if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
+                && prev_if_stmt.alternate.is_none()
+                && if_stmt.consequent.is_terminated()
+                && prev_if_stmt.consequent.content_eq(&if_stmt.consequent)
+            {
+                // Merge previous stmt if its terminated and both have same content
+                // `if (a) JUMP; if (b) JUMP;` => `if (a || b) JUMP;`
+                // `if (a) { b; JUMP }; if (b) { b; JUMP };` => `if (a || b) { b; JUMP };`
+                let previous = result.pop().unwrap();
+                let Statement::IfStatement(previous) = previous else { unreachable!() };
+                let previous = previous.unbox();
+                let span = if_stmt.test.span();
+                ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                    Self::join_with_left_associative_op(
+                        span,
+                        LogicalOperator::Or,
+                        previous.test,
+                        test,
+                        ctx,
+                    )
+                });
+                ctx.drop_statement(&previous.consequent);
             }
 
-            if if_stmt.consequent.is_jump_statement() {
-                // Absorb a previous if statement
-                if let Some(Statement::IfStatement(prev_if_stmt)) = result.last_mut()
-                    && prev_if_stmt.alternate.is_none()
-                    && Self::jump_stmts_look_the_same(&prev_if_stmt.consequent, &if_stmt.consequent)
-                {
-                    // "if (a) break c; if (b) break c;" => "if (a || b) break c;"
-                    // "if (a) continue c; if (b) continue c;" => "if (a || b) continue c;"
-                    // "if (a) return c; if (b) return c;" => "if (a || b) return c;"
-                    // "if (a) throw c; if (b) throw c;" => "if (a || b) throw c;"
-                    if_stmt.test = Self::join_with_left_associative_op(
-                        if_stmt.test.span(),
-                        LogicalOperator::Or,
-                        prev_if_stmt.test.take_in(ctx),
-                        if_stmt.test.take_in(ctx),
-                        ctx,
-                    );
-                    let dropped = result.pop().unwrap();
-                    ctx.drop_statement(&dropped);
-                }
+            let can_merge_with_alternate = match &if_stmt.consequent {
+                Statement::BlockStatement(block) => block.body.last().is_some_and(|last_stmt| {
+                    Self::can_remove_termination_statement(last_stmt, ctx)
+                }),
+                stmt => Self::can_remove_termination_statement(stmt, ctx),
+            };
+            if can_merge_with_alternate {
+                // Don't do this transformation if the branch condition could
+                // potentially access symbols declared later on on this scope below.
+                // If so, inverting the branch condition and nesting statements after
+                // this in a block would break that access which is a behavior change.
+                //
+                //   // This transformation is incorrect
+                //   if (a()) return; function a() {}
+                //   if (!a()) { function a() {} }
+                //
+                //   // This transformation is incorrect
+                //   if (a(() => b)) return; let b;
+                //   if (a(() => b)) { let b; }
+                //
+                let can_move_branch_condition_outside_scope =
+                    !if_stmt.alternate.as_ref().is_some_and(Self::statement_cares_about_scope)
+                        && !stmts.as_slice().iter().any(Self::statement_cares_about_scope);
 
-                let mut optimize_implicit_jump = false;
-                // "while (x) { if (y) continue; z(); }" => "while (x) { if (!y) z(); }"
-                // "while (x) { if (y) continue; else z(); w(); }" => "while (x) { if (!y) { z(); w(); } }" => "for (; x;) !y && (z(), w());"
-                if ctx.ancestors().nth(1).is_some_and(|v| {
-                    v.is_for_statement() || v.is_for_in_statement() || v.is_for_of_statement()
-                }) && let Statement::ContinueStatement(continue_stmt) = &if_stmt.consequent
-                    && continue_stmt.label.is_none()
-                {
-                    optimize_implicit_jump = true;
-                }
+                if can_move_branch_condition_outside_scope {
+                    let drained_stmts = stmts.by_ref();
+                    let mut body = if let Some(alternate) = if_stmt.alternate.take() {
+                        ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
+                    } else {
+                        ArenaVec::from_iter_in(drained_stmts, ctx)
+                    };
+                    let span = if body.is_empty() { SPAN } else { body[0].span() };
+                    Self::minimize_statements(&mut body, ctx);
+                    let alternate = if body.len() == 1 {
+                        body.remove(0)
+                    } else {
+                        let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
+                        Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
+                    };
 
-                // "let x = () => { if (y) return; z(); };" => "let x = () => { if (!y) z(); };"
-                // "let x = () => { if (y) return; else z(); w(); };" => "let x = () => { if (!y) { z(); w(); } };" => "let x = () => { !y && (z(), w()); };"
-                if ctx.parent().is_function_body()
-                    && let Statement::ReturnStatement(return_stmt) = &if_stmt.consequent
-                    && return_stmt.argument.is_none()
-                {
-                    optimize_implicit_jump = true;
-                }
-                if optimize_implicit_jump {
-                    // Don't do this transformation if the branch condition could
-                    // potentially access symbols declared later on on this scope below.
-                    // If so, inverting the branch condition and nesting statements after
-                    // this in a block would break that access which is a behavior change.
-                    //
-                    //   // This transformation is incorrect
-                    //   if (a()) return; function a() {}
-                    //   if (!a()) { function a() {} }
-                    //
-                    //   // This transformation is incorrect
-                    //   if (a(() => b)) return; let b;
-                    //   if (a(() => b)) { let b; }
-                    //
-                    let mut can_move_branch_condition_outside_scope = true;
-                    if let Some(alternate) = &if_stmt.alternate
-                        && Self::statement_cares_about_scope(alternate)
-                    {
-                        can_move_branch_condition_outside_scope = false;
-                    }
-                    if let Some(stmts) = stmts.get(i + 1..) {
-                        for stmt in stmts {
-                            if Self::statement_cares_about_scope(stmt) {
-                                can_move_branch_condition_outside_scope = false;
-                                break;
-                            }
-                        }
-                    }
-
-                    if can_move_branch_condition_outside_scope {
-                        let drained_stmts = stmts.drain(i + 1..);
-                        let mut body = if let Some(alternate) = if_stmt.alternate.take() {
-                            ArenaVec::from_iter_in(iter::once(alternate).chain(drained_stmts), ctx)
-                        } else {
-                            ArenaVec::from_iter_in(drained_stmts, ctx)
-                        };
-
-                        Self::minimize_statements(&mut body, ctx);
-                        let span = if body.is_empty() {
-                            if_stmt.consequent.span()
-                        } else {
-                            body[0].span()
-                        };
-                        let test = if_stmt.test.take_in(ctx);
-                        let mut test = Self::minimize_not(test.span(), test, ctx);
-                        Self::minimize_expression_in_boolean_context(&mut test, ctx);
-                        let consequent = if body.len() == 1 {
-                            body.remove(0)
-                        } else {
-                            let scope_id = ctx.create_child_scope_of_current(ScopeFlags::empty());
-                            Statement::new_block_statement_with_scope_id(span, body, scope_id, ctx)
-                        };
-                        let mut if_stmt =
-                            IfStatement::new(test.span(), test, consequent, None, ctx);
-                        let if_stmt =
-                            Self::try_minimize_if(&mut if_stmt, ctx).unwrap_or_else(|| {
-                                Statement::IfStatement(ArenaBox::new_in(if_stmt, ctx))
-                            });
-                        result.push(if_stmt);
-                        ctx.notice_change();
-                        return ControlFlow::Break(());
-                    }
-                }
-
-                if if_stmt.alternate.is_some() {
-                    // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
-                    result.push(Statement::IfStatement(if_stmt));
-                    loop {
-                        if let Some(Statement::IfStatement(if_stmt)) = result.last_mut()
-                            && if_stmt.consequent.is_jump_statement()
-                            && let Some(stmt) = if_stmt.alternate.take()
+                    if let Statement::BlockStatement(block) = &mut if_stmt.consequent {
+                        ctx.drop_statement(&block.body.pop().unwrap());
+                        // after removal check if there is one remaining stmt and if it requires block
+                        // IfStatement is excluded as we would add it afterward in `try_minimize_if`
+                        if block.body.len() == 1
+                            && !matches!(&block.body[0], Statement::IfStatement(_))
+                            && !Self::statement_cares_about_scope(&block.body[0])
                         {
-                            if let Statement::BlockStatement(block_stmt) = stmt {
-                                Self::handle_block(result, block_stmt, ctx);
-                            } else {
-                                result.push(stmt);
-                                ctx.notice_change();
-                            }
-                            continue;
+                            let new_stmt = block.body.remove(0);
+                            ctx.replace_statement(&mut if_stmt.consequent, new_stmt);
                         }
-                        break;
+                        if_stmt.alternate = Some(alternate);
+                    } else {
+                        ctx.replace_expression_with(&mut if_stmt.test, |test, ctx| {
+                            Self::minimize_not(test.span(), test, ctx, true)
+                        });
+                        ctx.replace_statement(&mut if_stmt.consequent, alternate);
                     }
-                    return ControlFlow::Continue(());
+
+                    let mut if_stmt = Statement::IfStatement(if_stmt);
+                    Self::try_minimize_if(&mut if_stmt, ctx);
+                    ctx.notice_change();
+                    Self::minimize_statement(if_stmt, stmts, result, ctx);
+                    return;
                 }
+            }
+
+            if !if_stmt.alternate.as_ref().is_none_or(Self::statement_cares_about_scope)
+                && if_stmt.consequent.is_terminated()
+                && let Some(stmt) = if_stmt.alternate.take()
+            {
+                // "if (a) return b; else if (c) return d; else return e;" => "if (a) return b; if (c) return d; return e;"
+                ctx.notice_change();
+                result.push(Statement::IfStatement(if_stmt));
+                Self::minimize_statement(stmt, stmts, result, ctx);
+                return;
             }
         }
 
         result.push(Statement::IfStatement(if_stmt));
-        ControlFlow::Continue(())
     }
 
     fn handle_return_statement(
         mut ret_stmt: ArenaBox<'a, ReturnStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
         if let Some(ret_argument_expr) = &mut ret_stmt.argument {
             Self::substitute_single_use_symbol_in_statement(ret_argument_expr, result, ctx, false);
+            // `var a; return a = b(), c;` => `var a = b(); return c;`
+            Self::merge_leading_assignments_to_declaration(ret_argument_expr, false, result, ctx);
         }
 
-        if let Some(argument) = &mut ret_stmt.argument
+        if let Some(argument) = &ret_stmt.argument
             && argument.value_type(ctx) == ValueType::Undefined
             // `return undefined` has a different semantic in async generator function.
             && !ctx.is_closest_function_scope_an_async_generator()
         {
+            let argument = ret_stmt.argument.take().unwrap();
             if argument.may_have_side_effects(ctx) {
-                if ctx.options().sequences
-                    && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-                {
-                    let a = &mut prev_expr_stmt.expression;
-                    prev_expr_stmt.expression = Self::join_sequence(a, argument, ctx);
-                } else {
-                    result.push(Statement::new_expression_statement(
-                        argument.span(),
-                        argument.take_in(ctx),
-                        ctx,
-                    ));
-                }
+                // `x; return a,void 0;` -> `x,a,void 0; return;`
+                // `return a,void 0;` -> `a,void 0; return;`
+                Self::push_new_expression_stmt_to_result(argument, result, ctx);
+            } else {
+                // `return void 0;` -> `return;`
+                ctx.drop_expression(&argument);
             }
-            if let Some(old) = ret_stmt.argument.take() {
-                ctx.drop_expression(&old);
-            }
-            result.push(Statement::ReturnStatement(ret_stmt));
-            // Local `&mut bool` flag, not an AST slot.
-            *is_control_flow_dead = true;
-            return;
+        } else if let Some(argument) = &mut ret_stmt.argument {
+            // `a; return b;` => `return b, c;`
+            Self::merge_last_expression_into_sequence(argument, result, ctx);
         }
 
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-            && let Some(argument) = &mut ret_stmt.argument
-        {
-            let a = &mut prev_expr_stmt.expression;
-            let new_arg = Self::join_sequence(a, argument, ctx);
-            ctx.replace_expression(argument, new_arg);
-            result.pop();
+        // `if (a) return b; return c;` => `return a ? b : c;`
+        // `if (a) return; return;` => `a; return;`
+        if ctx.options().sequences {
+            'return_loop: while !result.is_empty() {
+                if let Some(Statement::IfStatement(if_stmt)) = result.last()
+                    && if_stmt.alternate.is_none()
+                    && let Statement::ReturnStatement(prev_return) = &if_stmt.consequent
+                {
+                    let prev_has_arg = prev_return.argument.is_some();
+                    let ret_has_arg = ret_stmt.argument.is_some();
+
+                    if !prev_has_arg && !ret_has_arg {
+                        // `if (a) return; return;` => `a; return;`
+                        ctx.notice_change();
+                        let prev_stmt = result.pop().unwrap();
+                        let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
+                        let test_expr = prev_if.unbox().test;
+
+                        Self::push_new_expression_stmt_to_result(test_expr, result, ctx);
+                        break 'return_loop;
+                    }
+
+                    // do not collapse if conditional count exceeded
+                    if ret_stmt
+                        .argument
+                        .as_ref()
+                        .is_some_and(Self::conditional_expression_count_exceeded)
+                    {
+                        break 'return_loop;
+                    }
+                    // do not collapse if return could be removed
+                    if !ret_has_arg && ctx.parent().is_function_body() {
+                        break 'return_loop;
+                    }
+                    // do not collapse if parent is async generator and any of arguments is empty
+                    if (!prev_has_arg || !ret_has_arg)
+                        && ctx.is_closest_function_scope_an_async_generator()
+                    {
+                        break 'return_loop;
+                    }
+
+                    // `if (a) return b; return c;` => `return a ? b : c;`
+                    ctx.notice_change();
+                    let prev_stmt = result.pop().unwrap();
+                    let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
+                    let prev_if = prev_if.unbox();
+                    let Statement::ReturnStatement(mut prev_return) = prev_if.consequent else {
+                        unreachable!()
+                    };
+
+                    let left_span = prev_return.span();
+                    let right_span = ret_stmt.span();
+                    // "if (a) return; return b;" => "return a ? void 0 : b;"
+                    let left = prev_return
+                        .argument
+                        .take()
+                        .unwrap_or_else(|| Expression::new_void_0(left_span, ctx));
+                    // "if (a) return a; return;" => "return a ? b : void 0;"
+                    let right = ret_stmt
+                        .argument
+                        .take()
+                        .unwrap_or_else(|| Expression::new_void_0(right_span, ctx));
+
+                    let argument =
+                        Self::minimize_conditional(prev_if.span, prev_if.test, left, right, ctx);
+                    ret_stmt.argument = Some(argument);
+                } else {
+                    break 'return_loop;
+                }
+            }
         }
+
         result.push(Statement::ReturnStatement(ret_stmt));
-        // Local `&mut bool` flag, not an AST slot.
-        *is_control_flow_dead = true;
     }
 
     fn handle_throw_statement(
         mut throw_stmt: ArenaBox<'a, ThrowStatement<'a>>,
         result: &mut ArenaVec<'a, Statement<'a>>,
-        is_control_flow_dead: &mut bool,
 
         ctx: &mut TraverseCtx<'a>,
     ) {
@@ -949,18 +763,49 @@ impl<'a> PeepholeOptimizations {
             false,
         );
 
-        if ctx.options().sequences
-            && let Some(Statement::ExpressionStatement(prev_expr_stmt)) = result.last_mut()
-        {
-            let a = &mut prev_expr_stmt.expression;
-            let b = &mut throw_stmt.argument;
-            throw_stmt.argument = Self::join_sequence(a, b, ctx);
-            let dropped = result.pop().unwrap();
-            ctx.drop_statement(&dropped);
+        // `a; throw b;` => `throw a, b;`
+        Self::merge_last_expression_into_sequence(&mut throw_stmt.argument, result, ctx);
+
+        // `var a; throw a = b(), c;` => `var a = b(); throw c;`
+        Self::merge_leading_assignments_to_declaration(
+            &mut throw_stmt.argument,
+            false,
+            result,
+            ctx,
+        );
+
+        // `if (a) throw b; throw c;` => `throw a ? b : c;`
+        if ctx.options().sequences {
+            'Loop: while !result.is_empty() {
+                if let Some(Statement::IfStatement(if_stmt)) = result.last()
+                    && if_stmt.alternate.is_none()
+                    && matches!(&if_stmt.consequent, Statement::ThrowStatement(_))
+                    && !Self::conditional_expression_count_exceeded(&throw_stmt.argument)
+                {
+                    ctx.notice_change();
+                    let prev_stmt = result.pop().unwrap();
+                    let Statement::IfStatement(prev_if) = prev_stmt else { unreachable!() };
+                    let prev_if = prev_if.unbox();
+                    let Statement::ThrowStatement(prev_throw) = prev_if.consequent else {
+                        unreachable!()
+                    };
+
+                    ctx.replace_expression_with(&mut throw_stmt.argument, |expr, ctx| {
+                        Self::minimize_conditional(
+                            prev_if.span,
+                            prev_if.test,
+                            prev_throw.unbox().argument,
+                            expr,
+                            ctx,
+                        )
+                    });
+                } else {
+                    break 'Loop;
+                }
+            }
         }
+
         result.push(Statement::ThrowStatement(throw_stmt));
-        // Local `&mut bool` flag, not an AST slot.
-        *is_control_flow_dead = true;
     }
 
     fn handle_for_statement(
@@ -972,10 +817,11 @@ impl<'a> PeepholeOptimizations {
         if let Some(init) = &mut for_stmt.init {
             match init {
                 ForStatementInit::VariableDeclaration(var_decl) => {
+                    let declaration_kind = var_decl.kind;
                     if let Some(first_decl) = var_decl.declarations.first_mut()
                         && let Some(first_decl_init) = first_decl.init.as_mut()
                     {
-                        let is_block_scoped_decl = !first_decl.kind.is_var();
+                        let is_block_scoped_decl = !declaration_kind.is_var();
                         Self::substitute_single_use_symbol_in_statement(
                             first_decl_init,
                             result,
@@ -992,23 +838,30 @@ impl<'a> PeepholeOptimizations {
                 match_expression!(ForStatementInit) => {
                     let init = init.to_expression_mut();
                     Self::substitute_single_use_symbol_in_statement(init, result, ctx, false);
+                    // "var a; for (a = b(), c; ;) d;" => "var a = b(); for (c; ;) d;"
+                    if Self::merge_leading_assignments_to_declaration(init, true, result, ctx)
+                        && let Some(old_init) = for_stmt.init.take()
+                    {
+                        ctx.drop_expression(old_init.to_expression());
+                    }
                 }
             }
         }
 
         if let Some(ForStatementInit::VariableDeclaration(var_decl)) = &mut for_stmt.init {
+            let declaration_kind = var_decl.kind;
             let old_len = var_decl.declarations.len();
             var_decl.declarations.retain_mut(|decl| {
-                let should_keep = !Self::should_remove_unused_declarator(decl, ctx)
-                    || decl
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| Self::has_side_effects_or_preserved_iife(init, ctx));
+                let should_keep =
+                    !Self::should_remove_unused_declarator(decl, declaration_kind, ctx)
+                        || decl.init.as_ref().is_some_and(|init| {
+                            Self::has_side_effects_or_preserved_iife(init, ctx)
+                        });
                 if !should_keep {
                     // Same leak hazard as `remove_unused_variable_declaration`:
                     // the `retain` silently drops the declarator, so its refs
                     // (init and TS type annotation) need an explicit walk to
-                    // reach `PassDirty`.
+                    // reach `PassChanges`.
                     ctx.drop_variable_declarator(decl);
                 }
                 should_keep
@@ -1023,20 +876,19 @@ impl<'a> PeepholeOptimizations {
 
         if ctx.options().sequences {
             match result.last_mut() {
-                Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
+                Some(Statement::ExpressionStatement(_)) => {
                     if let Some(init) = &mut for_stmt.init {
                         if let Some(init) = init.as_expression_mut() {
-                            let a = &mut prev_expr_stmt.expression;
-                            let new_init = Self::join_sequence(a, init, ctx);
-                            ctx.replace_expression(init, new_init);
-                            let dropped = result.pop().unwrap();
-                            ctx.drop_statement(&dropped);
+                            // `a; for (b;;) c;` => `for (a, b;;) c;`
+                            Self::merge_last_expression_into_sequence(init, result, ctx);
                         }
                     } else {
-                        for_stmt.init =
-                            Some(ForStatementInit::from(prev_expr_stmt.expression.take_in(ctx)));
-                        let dropped = result.pop().unwrap();
-                        ctx.drop_statement(&dropped);
+                        let previous = result.pop().unwrap();
+                        let Statement::ExpressionStatement(previous) = previous else {
+                            unreachable!()
+                        };
+                        for_stmt.init = Some(ForStatementInit::from(previous.unbox().expression));
+                        ctx.notice_change();
                     }
                 }
                 Some(Statement::VariableDeclaration(prev_var_decl)) => {
@@ -1084,44 +936,52 @@ impl<'a> PeepholeOptimizations {
                 ctx,
                 is_block_scoped_decl,
             );
+            // "var a; for (b in a = c(), d) e;" => "var a = c(); for (b in d) e;"
+            if !for_in_stmt.left.is_lexical_declaration() {
+                Self::merge_leading_assignments_to_declaration(
+                    &mut for_in_stmt.right,
+                    false,
+                    result,
+                    ctx,
+                );
+            }
         }
 
         if ctx.options().sequences {
             match result.last_mut() {
                 // "a; for (var b in c) d" => "for (var b in a, c) d"
-                Some(Statement::ExpressionStatement(prev_expr_stmt)) => {
+                Some(Statement::ExpressionStatement(_)) => {
                     // Annex B.3.5 allows initializers in non-strict mode
                     // <https://tc39.es/ecma262/multipage/additional-ecmascript-features-for-web-browsers.html#sec-initializers-in-forin-statement-heads>
-                    // If there's a side-effectful initializer, we should not move the previous statement inside.
-                    let has_side_effectful_initializer = {
-                        if let ForStatementLeft::VariableDeclaration(var_decl) = &for_in_stmt.left {
-                            if var_decl.declarations.len() == 1 {
-                                // only var can have a initializer
-                                var_decl.kind.is_var()
-                                    && var_decl.declarations[0]
-                                        .init
-                                        .as_ref()
-                                        .is_some_and(|init| init.may_have_side_effects(ctx))
-                            } else {
-                                // the spec does not allow multiple declarations though
-                                true
-                            }
-                        } else {
-                            false
-                        }
-                    };
-                    // Only allow inlining when the for-in variable is declared with `var`.
+                    // Only allow inlining when the for-in variable is declared with `var` and
+                    // there's not a side-effectful initializer.
                     // Block-scoped declarations (let/const) can cause variable shadowing issues
                     // where the inlined expression might reference a variable with the same name
                     // as the for-in variable, but after inlining, it would incorrectly refer to
                     // the shadowed for-in variable instead.
-                    // See: https://github.com/oxc-project/oxc/issues/18650
-                    let is_block_scoped = matches!(&for_in_stmt.left, ForStatementLeft::VariableDeclaration(var_decl) if !var_decl.kind.is_var());
-                    if !has_side_effectful_initializer && !is_block_scoped {
-                        let a = &mut prev_expr_stmt.expression;
-                        for_in_stmt.right = Self::join_sequence(a, &mut for_in_stmt.right, ctx);
-                        let dropped = result.pop().unwrap();
-                        ctx.drop_statement(&dropped);
+                    // <https://github.com/oxc-project/oxc/issues/18650>
+                    let can_inline = if let ForStatementLeft::VariableDeclaration(var_decl) =
+                        &for_in_stmt.left
+                    {
+                        match var_decl.declarations.as_slice() {
+                            [decl] => {
+                                var_decl.kind.is_var()
+                                    && !decl
+                                        .init
+                                        .as_ref()
+                                        .is_some_and(|init| init.may_have_side_effects(ctx))
+                            }
+                            _ => false,
+                        }
+                    } else {
+                        true
+                    };
+                    if can_inline {
+                        Self::merge_last_expression_into_sequence(
+                            &mut for_in_stmt.right,
+                            result,
+                            ctx,
+                        );
                     }
                 }
                 // "var a; for (a in b) c" => "for (var a in b) c"
@@ -1170,6 +1030,16 @@ impl<'a> PeepholeOptimizations {
             is_block_scoped_decl,
         );
 
+        if !for_of_stmt.left.is_lexical_declaration() {
+            // "var a; for (b of a = c(), d) e;" => "var a = c(); for (b of d) e;"
+            Self::merge_leading_assignments_to_declaration(
+                &mut for_of_stmt.right,
+                false,
+                result,
+                ctx,
+            );
+        }
+
         // "var a; for (a of b) c" => "for (var a of b) c"
         if let Some(Statement::VariableDeclaration(prev_var_decl)) = result.last_mut()
             && let ForStatementLeft::AssignmentTargetIdentifier(id) = &for_of_stmt.left
@@ -1198,7 +1068,7 @@ impl<'a> PeepholeOptimizations {
         result.push(Statement::ForOfStatement(for_of_stmt));
     }
 
-    /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9852>
+    /// `appendIfOrLabelBodyPreservingScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9839>
     fn handle_block(
         result: &mut ArenaVec<'a, Statement<'a>>,
         block_stmt: ArenaBox<'a, BlockStatement<'a>>,
@@ -1213,7 +1083,7 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_ast/js_parser.go#L9767>
+    /// `statementCaresAboutScope`: <https://github.com/evanw/esbuild/blob/v0.24.2/internal/js_parser/js_parser.go#L9754-L9768>
     pub fn statement_cares_about_scope(stmt: &Statement<'a>) -> bool {
         match stmt {
             Statement::BlockStatement(_)
@@ -1232,8 +1102,8 @@ impl<'a> PeepholeOptimizations {
             | Statement::ReturnStatement(_)
             | Statement::ThrowStatement(_)
             | Statement::BreakStatement(_)
-            | Statement::ContinueStatement(_)
-            | Statement::LabeledStatement(_) => false,
+            | Statement::ContinueStatement(_) => false,
+            Statement::LabeledStatement(label) => Self::statement_cares_about_scope(&label.body),
             Statement::VariableDeclaration(decl) => !decl.kind.is_var(),
             _ => true,
         }
@@ -1257,9 +1127,7 @@ impl<'a> PeepholeOptimizations {
         ctx: &mut TraverseCtx<'a>,
         non_scoped_literal_only: bool,
     ) -> bool {
-        if Self::keep_top_level_var_in_script_mode(ctx)
-            || ctx.current_scope_flags().contains_direct_eval()
-        {
+        if Self::is_script_root_scope(ctx) || ctx.current_scope_flags().contains_direct_eval() {
             return false;
         }
 
@@ -1301,7 +1169,7 @@ impl<'a> PeepholeOptimizations {
         declarations: &mut ArenaVec<'a, VariableDeclarator<'a>>,
         ctx: &mut TraverseCtx<'a>,
     ) -> bool {
-        if Self::keep_top_level_var_in_script_mode(ctx)
+        if Self::is_script_root_scope(ctx)
             || ctx.current_scope_flags().contains_direct_eval()
             || kind.is_using()
         {
@@ -1366,16 +1234,17 @@ impl<'a> PeepholeOptimizations {
             if ctx.is_expression_whose_name_needs_to_be_kept(prev_decl_init) {
                 return true;
             }
-            let Some(symbol_value) =
-                ctx.state.symbol_values.get_symbol_value(prev_decl_id.symbol_id())
-            else {
+            let Some(symbol_value) = ctx.state.symbols.value(prev_decl_id.symbol_id()) else {
                 return true;
             };
-            // we should check whether it's exported by `symbol_value.exported`
-            // because the variable might be exported with `export { foo }` rather than `export var foo`
-            if symbol_value.exported
-                || symbol_value.read_references_count > 1
-                || symbol_value.write_references_count > 0
+            // Implicitly observable bindings remain live independently of
+            // their resolved-reference count.
+            // An `export { foo }` specifier also contributes a reference, but
+            // consult the shared metadata explicitly for consistency with the
+            // other count-based consumers.
+            if ctx.state.symbols.is_implicitly_observable(prev_decl_id.symbol_id())
+                || symbol_value.references.has_multiple_reads()
+                || symbol_value.references.has_writes()
             {
                 return true;
             }
@@ -1384,7 +1253,7 @@ impl<'a> PeepholeOptimizations {
             }
             let replaced = Self::substitute_single_use_symbol_in_expression(
                 target_expr,
-                &prev_decl_id.name,
+                prev_decl_id.name,
                 prev_decl_init,
                 prev_decl_init.may_have_side_effects(ctx),
                 ctx,
@@ -1400,40 +1269,6 @@ impl<'a> PeepholeOptimizations {
         }
     }
 
-    /// Whether reordering this read before a side-effecting replacement could
-    /// observe `symbol_id` in its Temporal Dead Zone.
-    ///
-    /// The hazard is a block-scoped binding (`let`/`const`/`using`/`class`/`enum`)
-    /// closed over from an enclosing function: the function can suspend at an
-    /// `await`/`yield` while outer code initializes the binding, so the earlier
-    /// (reordered) read hits the TDZ where the original would not. A same-function
-    /// binding can't be initialized mid-suspension, so it stays inlinable.
-    ///
-    /// <https://github.com/rolldown/rolldown/issues/9959>
-    fn is_tdz_closed_over_read(symbol_id: SymbolId, ctx: &TraverseCtx<'a>) -> bool {
-        ctx.scoping().symbol_flags(symbol_id).is_block_scoped()
-            && Self::read_crosses_function_boundary(
-                ctx.current_scope_id(),
-                ctx.scoping().symbol_scope_id(symbol_id),
-                ctx,
-            )
-    }
-
-    /// Whether reordering a side-effecting replacement past this member
-    /// assignment-target object is unsafe. The object is evaluated before the
-    /// replacement, so it is unsafe if its reference may change, or if it reads
-    /// a closed-over lexical that could be in its TDZ (e.g. `v.x = await f()`
-    /// reading `v` before the await). See [`Self::is_tdz_closed_over_read`].
-    fn member_object_blocks_reorder(object: &Expression<'a>, ctx: &TraverseCtx<'a>) -> bool {
-        Self::is_expression_that_reference_may_change(object, ctx)
-            || matches!(object, Expression::Identifier(id)
-                if ctx
-                    .scoping()
-                    .get_reference(id.reference_id())
-                    .symbol_id()
-                    .is_some_and(|symbol_id| Self::is_tdz_closed_over_read(symbol_id, ctx)))
-    }
-
     /// Returns Some(true) when the expression is successfully replaced.
     /// Returns Some(false) when the expression is not replaced, and cannot try the subsequent expressions.
     /// Return None when the expression is not replaced, and can try the subsequent expressions.
@@ -1441,7 +1276,7 @@ impl<'a> PeepholeOptimizations {
     /// `substituteSingleUseSymbolInExpr`: <https://github.com/evanw/esbuild/blob/v0.25.9/internal/js_parser/js_parser.go#L9642>
     fn substitute_single_use_symbol_in_expression(
         target_expr: &mut Expression<'a>,
-        search_for: &str,
+        search_for: Ident<'a>,
         replacement: &mut Expression<'a>,
         replacement_has_side_effect: bool,
         ctx: &mut TraverseCtx<'a>,
@@ -1462,6 +1297,8 @@ impl<'a> PeepholeOptimizations {
                 }
                 // If the identifier is not a getter and the identifier is read-only,
                 // we know that the value is same even if we reordered the expression.
+                // Imported names are live bindings, so local read-only status is
+                // insufficient for them.
                 //
                 // But a lexical binding that is closed over from an enclosing
                 // function/module scope may still be in its Temporal Dead Zone
@@ -1470,10 +1307,7 @@ impl<'a> PeepholeOptimizations {
                 // in particular before a side-effecting replacement such as an
                 // `await` — can surface a `ReferenceError` that the original order
                 // avoids. https://github.com/rolldown/rolldown/issues/9959
-                if let Some(symbol_id) = ctx.scoping().get_reference(id.reference_id()).symbol_id()
-                    && !Self::is_symbol_mutated(symbol_id, ctx)
-                    && !Self::is_tdz_closed_over_read(symbol_id, ctx)
-                {
+                if !Self::identifier_read_blocks_reorder(id, ctx) {
                     return None;
                 }
             }
@@ -1521,7 +1355,7 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::UnaryExpression(unary_expr) => {
-                if unary_expr.operator != UnaryOperator::Delete
+                if !unary_expr.operator.is_delete()
                     && let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                         &mut unary_expr.argument,
                         search_for,
@@ -1599,13 +1433,17 @@ impl<'a> PeepholeOptimizations {
                     let may_depend_on_side_effect = match &assign_expr.left {
                         AssignmentTarget::AssignmentTargetIdentifier(_) => false,
                         AssignmentTarget::ComputedMemberExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
+                            Self::member_part_blocks_reorder(&member_expr.object, ctx)
+                                || Self::computed_key_blocks_reorder(
+                                    &member_expr.expression,
+                                    ctx,
+                                )
                         }
                         AssignmentTarget::PrivateFieldExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
+                            Self::member_part_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::StaticMemberExpression(member_expr) => {
-                            Self::member_object_blocks_reorder(&member_expr.object, ctx)
+                            Self::member_part_blocks_reorder(&member_expr.object, ctx)
                         }
                         AssignmentTarget::ArrayAssignmentTarget(_)
                         | AssignmentTarget::ObjectAssignmentTarget(_)
@@ -1932,6 +1770,15 @@ impl<'a> PeepholeOptimizations {
                 }
             }
             Expression::TaggedTemplateExpression(tagged_expr) => {
+                // A member tag would change `this`: `let c = a.b; c``` => `(0, a.b)```
+                let keep_indirect = tagged_expr.tag.is_specific_id(search_for)
+                    && match &*replacement {
+                        match_member_expression!(Expression) => true,
+                        Expression::ChainExpression(chain) => {
+                            matches!(&chain.expression, match_member_expression!(ChainElement))
+                        }
+                        _ => false,
+                    };
                 if let Some(changed) = Self::substitute_single_use_symbol_in_expression(
                     &mut tagged_expr.tag,
                     search_for,
@@ -1939,6 +1786,11 @@ impl<'a> PeepholeOptimizations {
                     replacement_has_side_effect,
                     ctx,
                 ) {
+                    if changed && keep_indirect {
+                        ctx.replace_expression_with(&mut tagged_expr.tag, |tag, ctx| {
+                            Self::preserve_indirect_access(tag.span(), tag, ctx)
+                        });
+                    }
                     return Some(changed);
                 }
                 for elem in &mut tagged_expr.quasi.expressions {
@@ -2021,5 +1873,73 @@ impl<'a> PeepholeOptimizations {
 
         // Otherwise we should stop trying to substitute past this point
         Some(false)
+    }
+
+    /// Returns `true` if the statement is an unconditional termination that can be
+    /// safely removed:
+    /// - Unlabeled `continue` statements that terminate a loop body
+    /// - Bare `return` statements that terminate a function body
+    fn can_remove_termination_statement(stmt: &Statement<'a>, ctx: &TraverseCtx<'a>) -> bool {
+        match stmt {
+            // unlabeled `continue;` that terminates a `for`, `for...in`, `for...of`, `while`, `do...while` body.
+            Statement::ContinueStatement(stmt) if stmt.label.is_none() => {
+                matches!(
+                    ctx.ancestor(1),
+                    Ancestor::ForStatementBody(_)
+                        | Ancestor::ForInStatementBody(_)
+                        | Ancestor::ForOfStatementBody(_)
+                        | Ancestor::WhileStatementBody(_)
+                        | Ancestor::DoWhileStatementBody(_)
+                )
+            }
+            // unlabeled `break;` that terminates a `do...while` body if test is false.
+            Statement::BreakStatement(stmt) if stmt.label.is_none() => match ctx.ancestor(1) {
+                Ancestor::DoWhileStatementBody(do_while) => {
+                    do_while.test().get_side_free_boolean_value(ctx) == Some(false)
+                }
+                _ => false,
+            },
+            // bare `return;` in function-body scope.
+            Statement::ReturnStatement(stmt) if stmt.argument.is_none() => {
+                ctx.parent().is_function_body()
+            }
+            _ => false,
+        }
+    }
+}
+
+#[derive(Default)]
+struct FindNestedBreak {
+    found_unlabelled_break: bool,
+}
+
+impl FindNestedBreak {
+    fn has_unlabelled_break_in_switch_case(node: &SwitchCase) -> bool {
+        let mut visitor = Self::default();
+        visitor.visit_switch_case(node);
+        visitor.found_unlabelled_break
+    }
+}
+
+impl<'a> VisitJs<'a> for FindNestedBreak {
+    fn visit_expression(&mut self, _it: &Expression<'a>) {
+        // do nothing
+    }
+
+    fn visit_statement(&mut self, it: &Statement<'a>) {
+        if self.found_unlabelled_break || it.is_declaration() || it.is_iteration_statement() {
+            return;
+        }
+        match it {
+            Statement::ThrowStatement(_)
+            | Statement::SwitchStatement(_)
+            | Statement::ContinueStatement(_)
+            | Statement::ReturnStatement(_)
+            | Statement::ExpressionStatement(_) => {}
+            Statement::BreakStatement(it) if it.label.is_none() => {
+                self.found_unlabelled_break = true;
+            }
+            _ => walk_js::walk_statement(self, it),
+        }
     }
 }

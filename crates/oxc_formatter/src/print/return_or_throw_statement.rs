@@ -5,21 +5,28 @@ use crate::{
     Format,
     ast_nodes::{AstNode, AstNodes},
     format_args,
-    formatter::prelude::*,
-    print::{ExpressionLeftSide, semicolon::OptionalSemicolon},
-    utils::format_node_without_trailing_comments::format_content_without_comments_after,
+    formatter::{
+        prelude::*,
+        trivia::{DanglingIndentMode, FormatDanglingComments},
+    },
+    print::semicolon::{OptionalSemicolon, assignment_chain_leaf_end},
+    utils::{
+        expression::LeftSide,
+        format_node_without_trailing_comments::format_content_without_comments_after,
+        typecast::format_leading_comments_and_open_paren,
+    },
     write,
 };
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ReturnStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ReturnStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         ReturnAndThrowStatement::ReturnStatement(self).fmt(f);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ThrowStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         ReturnAndThrowStatement::ThrowStatement(self).fmt(f);
     }
@@ -27,8 +34,8 @@ impl<'a> FormatWrite<'a> for AstNode<'a, ThrowStatement<'a>> {
 
 /// Unified enum for statements that have an optional argument (return/throw)
 pub enum ReturnAndThrowStatement<'a, 'b> {
-    ReturnStatement(&'b AstNode<'a, ReturnStatement<'a>>),
-    ThrowStatement(&'b AstNode<'a, ThrowStatement<'a>>),
+    ReturnStatement(&'b AstNode<'b, 'a, ReturnStatement<'a>>),
+    ThrowStatement(&'b AstNode<'b, 'a, ThrowStatement<'a>>),
 }
 
 impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
@@ -41,7 +48,7 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
     }
 
     /// Get the argument expression if present
-    fn argument(&self) -> Option<&'b AstNode<'a, Expression<'a>>> {
+    fn argument(&self) -> Option<AstNode<'b, 'a, Expression<'a>>> {
         match self {
             Self::ReturnStatement(node) => node.argument(),
             Self::ThrowStatement(node) => Some(node.argument()),
@@ -62,23 +69,29 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
 
         if let Some(argument) = self.argument() {
             write!(f, space());
-            if f.comments().has_comment_in_range(argument.span().end, self.span().end) {
+            let argument_leaf_end = assignment_chain_leaf_end(argument.as_ref(), f);
+            if f.comments().has_comment_in_range(argument_leaf_end, self.span().end) {
                 // Comments inside the argument's source parentheses belong to the argument
                 // and stay in place (`return (\n  a && b // c\n);` keeps the comment inside, like Prettier);
                 // only comments after the closing paren are dangling comments.
                 // Unlike `FormatContentWithSemicolon` they move even without a source `;` (ASI),
                 // matching Prettier's dangling-comment handling for return/throw.
-                let argument_end =
-                    f.comments().end_including_source_parens(argument.span().end, self.span().end);
+                // ... except when the chain-leaf walk descended into the argument:
+                // the chain's inner parens are dropped, so comments inside them move too
+                let argument_end = if argument_leaf_end < argument.span().end {
+                    argument_leaf_end
+                } else {
+                    f.comments().end_including_source_parens(argument.span().end, self.span().end)
+                };
                 if f.comments().has_trailing_suppression_comment(argument_end) {
                     // Keep a trailing suppression comment visible to the argument,
                     // so it preserves its original text.
-                    write!(f, FormatAdjacentArgument(argument));
+                    write!(f, FormatAdjacentArgument(&argument));
                 } else {
                     // Hide the argument's dangling comments so they are printed
                     // after the semicolon by the dangling comments logic below.
                     format_content_without_comments_after(
-                        &FormatAdjacentArgument(argument),
+                        &FormatAdjacentArgument(&argument),
                         argument_end,
                         f,
                     );
@@ -86,23 +99,38 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
             } else {
                 // The common case:
                 // no comment between the argument and the end of the statement, nothing to relocate.
-                write!(f, FormatAdjacentArgument(argument));
+                write!(f, FormatAdjacentArgument(&argument));
             }
         }
 
         // The semicolon goes before the dangling comments, like Prettier:
         // `return foo /* comment */;` -> `return foo; /* comment */`
+        // Own-line comments stay own-line:
+        // from the first one on, comments are left for a later pass (the next node's leading comments),
+        // also like Prettier, whose statement `locEnd` excludes the trailing `;`.
         let dangling_comments = f.context().comments().comments_before(self.span().end);
+        let same_line_count =
+            dangling_comments.iter().take_while(|c| !c.preceded_by_newline()).count();
+        let dangling_comments = &dangling_comments[..same_line_count];
 
         write!(f, OptionalSemicolon);
 
         if !dangling_comments.is_empty() {
-            write!(f, [space(), format_dangling_comments(self.span())]);
+            write!(
+                f,
+                [
+                    space(),
+                    FormatDanglingComments::Comments {
+                        comments: dangling_comments,
+                        indent: DanglingIndentMode::None
+                    }
+                ]
+            );
         }
     }
 }
 
-pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'a, Expression<'a>>);
+pub struct FormatAdjacentArgument<'a, 'b>(pub &'b AstNode<'b, 'a, Expression<'a>>);
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -113,15 +141,12 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatAdjacentArgument<'a, '_> {
             // e.g. `return ( // comment\n a, b )` -> `return (\n  // comment\n  (a, b)\n)`
             let inner = format_with(|f| {
                 if matches!(argument.as_ref(), Expression::SequenceExpression(_)) {
-                    write!(
-                        f,
-                        [
-                            format_leading_comments(argument.span()),
-                            token("("),
-                            argument,
-                            token(")")
-                        ]
-                    );
+                    // The argument's parentheses survive here,
+                    // so even a comment inside the first element's source parens stays inside:
+                    // bound at the span start.
+                    let span = argument.span();
+                    format_leading_comments_and_open_paren(span, span.start, true, f);
+                    write!(f, [argument, token(")")]);
                 } else {
                     write!(f, argument);
                 }
@@ -159,7 +184,7 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &JsFormatter
         .get_type_cast_comment_index(argument.span())
         .map(|idx| comments.unprinted_comments()[idx].span.end);
 
-    for left_side in ExpressionLeftSide::from(argument).iter() {
+    for left_side in LeftSide::Expression(argument.inner()).iter() {
         let start = left_side.span().start;
         let leading_comments = comments.comments_before(start);
 
@@ -184,26 +209,19 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &JsFormatter
 
         // This check is based on
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>
-        if let ExpressionLeftSide::Expression(left_side) = left_side {
-            let has_leading_own_line_comment = match left_side.as_ref() {
-                Expression::ChainExpression(chain) => {
-                    if let ChainElement::StaticMemberExpression(member) = &chain.expression {
-                        let comments = f
-                            .comments()
-                            .comments_in_range(member.object.span().end, member.property.span.end);
-                        is_own_line_comment_or_multi_line_comment(comments)
-                    } else {
-                        false
-                    }
-                }
-                Expression::StaticMemberExpression(member) => {
-                    let comments = f
-                        .comments()
-                        .comments_in_range(member.object.span().end, member.property.span.end);
-                    is_own_line_comment_or_multi_line_comment(comments)
-                }
-                _ => false,
+        if let LeftSide::Expression(left_side) = left_side {
+            let member = match left_side {
+                Expression::ChainExpression(chain) => chain.expression.as_member_expression(),
+                _ => left_side.as_member_expression(),
             };
+            // `a.b` and `a.#b`, the comments after the object
+            let has_leading_own_line_comment = member.is_some_and(|member| {
+                !member.is_computed()
+                    && is_own_line_comment_or_multi_line_comment(
+                        f.comments()
+                            .comments_in_range(member.object().span().end, member.span().end),
+                    )
+            });
 
             if has_leading_own_line_comment {
                 return true;

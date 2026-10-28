@@ -7,15 +7,11 @@
 
 use std::path::Path;
 
-use oxc_allocator::{Allocator, ArenaVec, ReplaceWith};
+use oxc_allocator::{Allocator, ArenaVec};
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_diagnostics::Diagnostics;
-#[cfg(feature = "react_compiler")]
-use oxc_react_compiler::{PluginOptions, transform as react_compiler_transform};
 use oxc_semantic::Scoping;
-#[cfg(feature = "react_compiler")]
-use oxc_semantic::SemanticBuilder;
-use oxc_span::{GetSpan, SPAN};
+use oxc_span::GetSpan;
 use oxc_traverse::{ReusableTraverseCtx, Traverse, traverse_mut_with_ctx};
 
 // Core
@@ -107,8 +103,6 @@ pub struct Transformer<'a> {
     allocator: &'a Allocator,
 
     // Options, in evaluation order.
-    #[cfg(feature = "react_compiler")]
-    react_compiler: Option<PluginOptions>,
     typescript: TypeScriptOptions,
     decorator: DecoratorOptions,
     plugins: PluginsOptions,
@@ -125,8 +119,6 @@ impl<'a> Transformer<'a> {
         Self {
             state,
             allocator,
-            #[cfg(feature = "react_compiler")]
-            react_compiler: options.react_compiler.clone(),
             typescript: options.typescript.clone(),
             decorator: options.decorator,
             plugins: options.plugins.clone(),
@@ -143,21 +135,6 @@ impl<'a> Transformer<'a> {
         program: &mut Program<'a>,
     ) -> TransformerReturn {
         let allocator = self.allocator;
-
-        #[cfg(feature = "react_compiler")]
-        let (scoping, react_compiler_diagnostics) = self.run_react_compiler(scoping, program);
-        #[cfg(not(feature = "react_compiler"))]
-        let react_compiler_diagnostics = Diagnostics::new();
-
-        // A React Compiler error is fatal: stop before the rest of the transform runs.
-        if react_compiler_diagnostics.has_errors() {
-            #[expect(deprecated)]
-            return TransformerReturn {
-                diagnostics: react_compiler_diagnostics,
-                scoping,
-                helpers_used: FxHashMap::default(),
-            };
-        }
 
         let ast_builder = AstBuilder::new(allocator);
 
@@ -212,33 +189,10 @@ impl<'a> Transformer<'a> {
         let mut reusable_ctx = ReusableTraverseCtx::new(self.state, scoping, allocator);
         traverse_mut_with_ctx(&mut transformer, program, &mut reusable_ctx);
         let (mut state, scoping) = reusable_ctx.into_state_and_scoping();
-        let helpers_used = state.helper_loader.used_helpers.drain().collect();
-        let mut diagnostics = react_compiler_diagnostics;
-        diagnostics.extend(state.take_errors());
+        let helpers_used = std::mem::take(&mut state.helper_loader.used_helpers);
+        let diagnostics = state.take_errors().into();
         #[expect(deprecated)]
         TransformerReturn { diagnostics, scoping, helpers_used }
-    }
-
-    #[cfg(feature = "react_compiler")]
-    fn run_react_compiler(
-        &mut self,
-        scoping: Scoping,
-        program: &mut Program<'a>,
-    ) -> (Scoping, Diagnostics) {
-        let Some(options) = self.react_compiler.take() else {
-            return (scoping, Diagnostics::new());
-        };
-        let mut result = {
-            let semantic = SemanticBuilder::new().with_build_nodes(true).build(program).semantic;
-            react_compiler_transform(program, &semantic, self.allocator, options)
-        };
-        if !result.changed {
-            return (scoping, result.diagnostics);
-        }
-        *program = result.program.take().expect("changed result should include a program");
-        let scoping =
-            SemanticBuilder::new().with_enum_eval(true).build(program).semantic.into_scoping();
-        (scoping, result.diagnostics)
     }
 }
 
@@ -428,12 +382,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.x4_regexp.enter_expression(expr, ctx);
     }
 
+    #[inline]
     fn exit_expression(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
-        self.common.exit_expression(expr, ctx);
-        self.x1_jsx.exit_expression(expr, ctx);
-        self.x2_es2022.exit_expression(expr, ctx);
-        self.x2_es2018.exit_expression(expr, ctx);
-        self.x2_es2017.exit_expression(expr, ctx);
+        // The exit plugins only act on these expression kinds. Keep the no-op path in the walker.
+        if matches!(
+            expr,
+            Expression::ArrowFunctionExpression(_)
+                | Expression::AwaitExpression(_)
+                | Expression::CallExpression(_)
+                | Expression::ClassExpression(_)
+                | Expression::FunctionExpression(_)
+                | Expression::JSXElement(_)
+                | Expression::JSXFragment(_)
+                | Expression::YieldExpression(_)
+        ) {
+            self.exit_expression_impl(expr, ctx);
+        }
     }
 
     fn enter_simple_assignment_target(
@@ -505,6 +469,22 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
 
     fn exit_function_body(&mut self, body: &mut FunctionBody<'a>, ctx: &mut TraverseCtx<'a>) {
         self.common.exit_function_body(body, ctx);
+    }
+
+    fn enter_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.common.enter_arrow_function_body(body, ctx);
+    }
+
+    fn exit_arrow_function_body(
+        &mut self,
+        body: &mut ArrowFunctionBody<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        self.common.exit_arrow_function_body(body, ctx);
     }
 
     fn enter_jsx_element(&mut self, node: &mut JSXElement<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -624,38 +604,6 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         ctx: &mut TraverseCtx<'a>,
     ) {
         self.common.exit_arrow_function_expression(arrow, ctx);
-
-        // Some plugins may add new statements to the ArrowFunctionExpression's body,
-        // which can cause issues with the `() => x;` case, as it only allows a single statement.
-        // To address this, we wrap the last statement in a return statement and set the expression to false.
-        // This transforms the arrow function into the form `() => { return x; };`.
-        let statements = &mut arrow.body.statements;
-        if arrow.expression && statements.len() > 1 {
-            arrow.expression = false;
-
-            // Reverse looping to find the expression statement, because other plugins could
-            // insert new statements after the expression statement.
-            // `() => x;`
-            // ->
-            // ```
-            // () => {
-            //    var new_insert_variable;
-            //    return x;
-            //    function new_insert_function() {}
-            // };
-            // ```
-            for stmt in statements.iter_mut().rev() {
-                if !matches!(stmt, Statement::ExpressionStatement(_)) {
-                    continue;
-                }
-                stmt.replace_with(|stmt| {
-                    let Statement::ExpressionStatement(expr_stmt) = stmt else { unreachable!() };
-                    Statement::new_return_statement(SPAN, Some(expr_stmt.unbox().expression), ctx)
-                });
-                return;
-            }
-            unreachable!("At least one statement should be expression statement")
-        }
     }
 
     fn exit_statements(
@@ -695,6 +643,7 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         }
         self.x2_es2018.enter_statement(stmt, ctx);
         self.x2_es2026.enter_statement(stmt, ctx);
+        self.x2_es2022.enter_statement(stmt, ctx);
     }
 
     fn enter_declaration(&mut self, decl: &mut Declaration<'a>, ctx: &mut TraverseCtx<'a>) {
@@ -786,6 +735,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         self.x2_es2020.enter_export_all_declaration(node, ctx);
     }
 
+    fn enter_export_from_declaration(
+        &mut self,
+        node: &mut ExportFromDeclaration<'a>,
+        ctx: &mut oxc_traverse::TraverseCtx<'a, TransformState<'a>>,
+    ) {
+        if let Some(typescript) = self.x0_typescript.as_mut() {
+            typescript.enter_export_from_declaration(node, ctx);
+        }
+    }
+
     fn enter_export_named_declaration(
         &mut self,
         node: &mut ExportNamedDeclaration<'a>,
@@ -828,5 +787,16 @@ impl<'a> Traverse<'a, TransformState<'a>> for TransformerImpl<'a> {
         if let Some(typescript) = self.x0_typescript.as_mut() {
             typescript.enter_catch_parameter(node, ctx);
         }
+    }
+}
+
+impl<'a> TransformerImpl<'a> {
+    #[inline(never)]
+    fn exit_expression_impl(&mut self, expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
+        self.common.exit_expression(expr, ctx);
+        self.x1_jsx.exit_expression(expr, ctx);
+        self.x2_es2022.exit_expression(expr, ctx);
+        self.x2_es2018.exit_expression(expr, ctx);
+        self.x2_es2017.exit_expression(expr, ctx);
     }
 }

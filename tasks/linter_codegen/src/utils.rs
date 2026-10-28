@@ -1,4 +1,16 @@
-use syn::{Expr, File};
+use syn::{Expr, File, Item, Stmt};
+
+/// Return top-level statements which can affect rule execution.
+///
+/// Local enum and struct declarations are type declarations, so they must not prevent the node
+/// type detectors from recognizing an otherwise top-level narrowing check.
+pub fn executable_stmts(block: &syn::Block) -> Vec<&Stmt> {
+    block
+        .stmts
+        .iter()
+        .filter(|stmt| !matches!(stmt, Stmt::Item(Item::Enum(_) | Item::Struct(_))))
+        .collect()
+}
 
 pub fn is_node_kind_call(expr: &Expr) -> bool {
     if let Expr::MethodCall(mc) = expr
@@ -34,7 +46,7 @@ pub fn find_rule_impl_block<'a>(
             _ => None,
         };
         if ident.is_some_and(|id| id == rule_struct_name)
-            && imp.trait_.as_ref().is_some_and(|(_, path, _)| path.is_ident("Rule"))
+            && imp.trait_.as_ref().is_some_and(|(path, _)| path.is_ident("Rule"))
         {
             return Some(imp);
         }

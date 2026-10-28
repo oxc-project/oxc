@@ -30,94 +30,6 @@
    @watch("size")
    handleSizeChange() {
      warnDeprecatedSize(this.localName, this.size);
-@@ -965,9 +972,11 @@
-               activation="manual"
-               dir=${this.localize.dir()}
-             >
-               <span aria-hidden="true">
--                ${typeof this.valueFormatter === "function" ? this.valueFormatter(value) : this.localize.number(value)}
-+                ${typeof this.valueFormatter === "function"
-+                  ? this.valueFormatter(value)
-+                  : this.localize.number(value)}
-               </span>
-             </wa-tooltip>
-           `
-         : "";
-@@ -1008,15 +1017,15 @@
-               style=${styleMap({ "--position": `${minThumbPosition}%` })}
-               role="slider"
-               aria-valuemin=${this.min}
-               aria-valuenow=${this.minValue}
--              aria-valuetext=${
--                typeof this.valueFormatter === "function"
--                  ? this.valueFormatter(this.minValue)
--                  : this.localize.number(this.minValue)
--              }
-+              aria-valuetext=${typeof this.valueFormatter === "function"
-+                ? this.valueFormatter(this.minValue)
-+                : this.localize.number(this.minValue)}
-               aria-valuemax=${this.max}
--              aria-label="${this.label ? `${this.label} (minimum value)` : "Minimum value"}"
-+              aria-label="${this.label
-+                ? `${this.label} (minimum value)`
-+                : "Minimum value"}"
-               aria-orientation=${this.orientation}
-               aria-disabled=${this.disabled ? "true" : "false"}
-               aria-readonly=${this.readonly ? "true" : "false"}
-               tabindex=${this.disabled ? -1 : 0}
-@@ -1031,15 +1040,15 @@
-               style=${styleMap({ "--position": `${maxThumbPosition}%` })}
-               role="slider"
-               aria-valuemin=${this.min}
-               aria-valuenow=${this.maxValue}
--              aria-valuetext=${
--                typeof this.valueFormatter === "function"
--                  ? this.valueFormatter(this.maxValue)
--                  : this.localize.number(this.maxValue)
--              }
-+              aria-valuetext=${typeof this.valueFormatter === "function"
-+                ? this.valueFormatter(this.maxValue)
-+                : this.localize.number(this.maxValue)}
-               aria-valuemax=${this.max}
--              aria-label="${this.label ? `${this.label} (maximum value)` : "Maximum value"}"
-+              aria-label="${this.label
-+                ? `${this.label} (maximum value)`
-+                : "Maximum value"}"
-               aria-orientation=${this.orientation}
-               aria-disabled=${this.disabled ? "true" : "false"}
-               aria-readonly=${this.readonly ? "true" : "false"}
-               tabindex=${this.disabled ? -1 : 0}
-@@ -1084,13 +1093,11 @@
-           aria-readonly=${this.disabled ? "true" : "false"}
-           aria-orientation=${this.orientation}
-           aria-valuemin=${this.min}
-           aria-valuenow=${this.value}
--          aria-valuetext=${
--            typeof this.valueFormatter === "function"
--              ? this.valueFormatter(this.value)
--              : this.localize.number(this.value)
--          }
-+          aria-valuetext=${typeof this.valueFormatter === "function"
-+            ? this.valueFormatter(this.value)
-+            : this.localize.number(this.value)}
-           aria-valuemax=${this.max}
-           aria-labelledby="label"
-           aria-describedby="hint"
-           tabindex=${this.disabled ? -1 : 0}
-@@ -1101,9 +1108,12 @@
-           <div id="track" part="track">
-             <div
-               id="indicator"
-               part="indicator"
--              style=${styleMap({ "--start": `${indicatorOffsetPosition}%`, "--end": `${thumbPosition}%` })}
-+              style=${styleMap({
-+                "--start": `${indicatorOffsetPosition}%`,
-+                "--end": `${thumbPosition}%`,
-+              })}
-             ></div>
- 
-             ${markersTemplate}
-             <span
 
 `````
 
@@ -1099,9 +1011,7 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
               dir=${this.localize.dir()}
             >
               <span aria-hidden="true">
-                ${typeof this.valueFormatter === "function"
-                  ? this.valueFormatter(value)
-                  : this.localize.number(value)}
+                ${typeof this.valueFormatter === "function" ? this.valueFormatter(value) : this.localize.number(value)}
               </span>
             </wa-tooltip>
           `
@@ -1144,13 +1054,13 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
               role="slider"
               aria-valuemin=${this.min}
               aria-valuenow=${this.minValue}
-              aria-valuetext=${typeof this.valueFormatter === "function"
-                ? this.valueFormatter(this.minValue)
-                : this.localize.number(this.minValue)}
+              aria-valuetext=${
+                typeof this.valueFormatter === "function"
+                  ? this.valueFormatter(this.minValue)
+                  : this.localize.number(this.minValue)
+              }
               aria-valuemax=${this.max}
-              aria-label="${this.label
-                ? `${this.label} (minimum value)`
-                : "Minimum value"}"
+              aria-label="${this.label ? `${this.label} (minimum value)` : "Minimum value"}"
               aria-orientation=${this.orientation}
               aria-disabled=${this.disabled ? "true" : "false"}
               aria-readonly=${this.readonly ? "true" : "false"}
@@ -1167,13 +1077,13 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
               role="slider"
               aria-valuemin=${this.min}
               aria-valuenow=${this.maxValue}
-              aria-valuetext=${typeof this.valueFormatter === "function"
-                ? this.valueFormatter(this.maxValue)
-                : this.localize.number(this.maxValue)}
+              aria-valuetext=${
+                typeof this.valueFormatter === "function"
+                  ? this.valueFormatter(this.maxValue)
+                  : this.localize.number(this.maxValue)
+              }
               aria-valuemax=${this.max}
-              aria-label="${this.label
-                ? `${this.label} (maximum value)`
-                : "Maximum value"}"
+              aria-label="${this.label ? `${this.label} (maximum value)` : "Maximum value"}"
               aria-orientation=${this.orientation}
               aria-disabled=${this.disabled ? "true" : "false"}
               aria-readonly=${this.readonly ? "true" : "false"}
@@ -1220,9 +1130,11 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
           aria-orientation=${this.orientation}
           aria-valuemin=${this.min}
           aria-valuenow=${this.value}
-          aria-valuetext=${typeof this.valueFormatter === "function"
-            ? this.valueFormatter(this.value)
-            : this.localize.number(this.value)}
+          aria-valuetext=${
+            typeof this.valueFormatter === "function"
+              ? this.valueFormatter(this.value)
+              : this.localize.number(this.value)
+          }
           aria-valuemax=${this.max}
           aria-labelledby="label"
           aria-describedby="hint"
@@ -1235,10 +1147,7 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
             <div
               id="indicator"
               part="indicator"
-              style=${styleMap({
-                "--start": `${indicatorOffsetPosition}%`,
-                "--end": `${thumbPosition}%`,
-              })}
+              style=${styleMap({ "--start": `${indicatorOffsetPosition}%`, "--end": `${thumbPosition}%` })}
             ></div>
 
             ${markersTemplate}
@@ -2427,84 +2336,6 @@ declare global {
    /** Draws markers at each step along the slider. */
    @property({ attribute: "with-markers", type: Boolean }) withMarkers = false;
  
-@@ -901,9 +904,11 @@
-               activation="manual"
-               dir=${this.localize.dir()}
-             >
-               <span aria-hidden="true">
--                ${typeof this.valueFormatter === "function" ? this.valueFormatter(value) : this.localize.number(value)}
-+                ${typeof this.valueFormatter === "function"
-+                  ? this.valueFormatter(value)
-+                  : this.localize.number(value)}
-               </span>
-             </wa-tooltip>
-           `
-         : "";
-@@ -936,13 +941,11 @@
-               style=${styleMap({ "--position": `${minThumbPosition}%` })}
-               role="slider"
-               aria-valuemin=${this.min}
-               aria-valuenow=${this.minValue}
--              aria-valuetext=${
--                typeof this.valueFormatter === "function"
--                  ? this.valueFormatter(this.minValue)
--                  : this.localize.number(this.minValue)
--              }
-+              aria-valuetext=${typeof this.valueFormatter === "function"
-+                ? this.valueFormatter(this.minValue)
-+                : this.localize.number(this.minValue)}
-               aria-valuemax=${this.max}
-               aria-label="${this.label ? `${this.label} (minimum value)` : "Minimum value"}"
-               aria-orientation=${this.orientation}
-               aria-disabled=${this.disabled ? "true" : "false"}
-@@ -959,13 +962,11 @@
-               style=${styleMap({ "--position": `${maxThumbPosition}%` })}
-               role="slider"
-               aria-valuemin=${this.min}
-               aria-valuenow=${this.maxValue}
--              aria-valuetext=${
--                typeof this.valueFormatter === "function"
--                  ? this.valueFormatter(this.maxValue)
--                  : this.localize.number(this.maxValue)
--              }
-+              aria-valuetext=${typeof this.valueFormatter === "function"
-+                ? this.valueFormatter(this.maxValue)
-+                : this.localize.number(this.maxValue)}
-               aria-valuemax=${this.max}
-               aria-label="${this.label ? `${this.label} (maximum value)` : "Maximum value"}"
-               aria-orientation=${this.orientation}
-               aria-disabled=${this.disabled ? "true" : "false"}
-@@ -1005,13 +1006,11 @@
-           aria-readonly=${this.disabled ? "true" : "false"}
-           aria-orientation=${this.orientation}
-           aria-valuemin=${this.min}
-           aria-valuenow=${this.value}
--          aria-valuetext=${
--            typeof this.valueFormatter === "function"
--              ? this.valueFormatter(this.value)
--              : this.localize.number(this.value)
--          }
-+          aria-valuetext=${typeof this.valueFormatter === "function"
-+            ? this.valueFormatter(this.value)
-+            : this.localize.number(this.value)}
-           aria-valuemax=${this.max}
-           aria-labelledby="label"
-           aria-describedby="hint"
-           tabindex=${this.disabled ? -1 : 0}
-@@ -1022,9 +1021,12 @@
-           <div id="track" part="track">
-             <div
-               id="indicator"
-               part="indicator"
--              style=${styleMap({ "--start": `${indicatorOffsetPosition}%`, "--end": `${thumbPosition}%` })}
-+              style=${styleMap({
-+                "--start": `${indicatorOffsetPosition}%`,
-+                "--end": `${thumbPosition}%`,
-+              })}
-             ></div>
- 
-             ${markersTemplate}
-             <span
 
 `````
 
@@ -3418,9 +3249,7 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
               dir=${this.localize.dir()}
             >
               <span aria-hidden="true">
-                ${typeof this.valueFormatter === "function"
-                  ? this.valueFormatter(value)
-                  : this.localize.number(value)}
+                ${typeof this.valueFormatter === "function" ? this.valueFormatter(value) : this.localize.number(value)}
               </span>
             </wa-tooltip>
           `
@@ -3455,9 +3284,11 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
               role="slider"
               aria-valuemin=${this.min}
               aria-valuenow=${this.minValue}
-              aria-valuetext=${typeof this.valueFormatter === "function"
-                ? this.valueFormatter(this.minValue)
-                : this.localize.number(this.minValue)}
+              aria-valuetext=${
+                typeof this.valueFormatter === "function"
+                  ? this.valueFormatter(this.minValue)
+                  : this.localize.number(this.minValue)
+              }
               aria-valuemax=${this.max}
               aria-label="${this.label ? `${this.label} (minimum value)` : "Minimum value"}"
               aria-orientation=${this.orientation}
@@ -3476,9 +3307,11 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
               role="slider"
               aria-valuemin=${this.min}
               aria-valuenow=${this.maxValue}
-              aria-valuetext=${typeof this.valueFormatter === "function"
-                ? this.valueFormatter(this.maxValue)
-                : this.localize.number(this.maxValue)}
+              aria-valuetext=${
+                typeof this.valueFormatter === "function"
+                  ? this.valueFormatter(this.maxValue)
+                  : this.localize.number(this.maxValue)
+              }
               aria-valuemax=${this.max}
               aria-label="${this.label ? `${this.label} (maximum value)` : "Maximum value"}"
               aria-orientation=${this.orientation}
@@ -3520,9 +3353,11 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
           aria-orientation=${this.orientation}
           aria-valuemin=${this.min}
           aria-valuenow=${this.value}
-          aria-valuetext=${typeof this.valueFormatter === "function"
-            ? this.valueFormatter(this.value)
-            : this.localize.number(this.value)}
+          aria-valuetext=${
+            typeof this.valueFormatter === "function"
+              ? this.valueFormatter(this.value)
+              : this.localize.number(this.value)
+          }
           aria-valuemax=${this.max}
           aria-labelledby="label"
           aria-describedby="hint"
@@ -3535,10 +3370,7 @@ export default class WaSlider extends WebAwesomeFormAssociatedElement {
             <div
               id="indicator"
               part="indicator"
-              style=${styleMap({
-                "--start": `${indicatorOffsetPosition}%`,
-                "--end": `${thumbPosition}%`,
-              })}
+              style=${styleMap({ "--start": `${indicatorOffsetPosition}%`, "--end": `${thumbPosition}%` })}
             ></div>
 
             ${markersTemplate}

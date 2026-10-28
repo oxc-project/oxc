@@ -9,7 +9,7 @@ use oxc_ast::{
     },
     match_expression,
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::ScopeFlags;
@@ -95,7 +95,7 @@ declare_oxc_lint!(
 
 impl Rule for RequireDirectExport {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -154,7 +154,6 @@ fn check_expression<'a>(
                 ctx.diagnostic(require_direct_export_diagnostic(span));
             }
         }
-        // Check for CallExpression (Vue.extend, defineComponent)
         Expression::CallExpression(call_expr) => {
             check_call_expression(call_expr, span, ctx);
         }
@@ -163,7 +162,6 @@ fn check_expression<'a>(
 }
 
 fn check_call_expression<'a>(call_expr: &CallExpression<'a>, span: Span, ctx: &LintContext<'a>) {
-    // Check for defineComponent
     if let Some(callee_ident) = call_expr.callee.get_identifier_reference()
         && callee_ident.name == "defineComponent"
     {
@@ -196,10 +194,10 @@ fn has_function_return_value(func: &Function) -> bool {
 
 fn has_arrow_function_return_value(arrow_func: &ArrowFunctionExpression) -> bool {
     // If expression is true, it's an expression body (() => expr), which always returns a value
-    if arrow_func.expression {
+    if arrow_func.is_expression() {
         return true;
     }
-    find_return_value(&arrow_func.body)
+    find_return_value(arrow_func.get_function_body().unwrap())
 }
 
 fn find_return_value(body: &FunctionBody) -> bool {
@@ -218,7 +216,7 @@ impl ReturnFinder {
     }
 }
 
-impl<'a> Visit<'a> for ReturnFinder {
+impl<'a> VisitJs<'a> for ReturnFinder {
     fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
         if self.found {
             return;

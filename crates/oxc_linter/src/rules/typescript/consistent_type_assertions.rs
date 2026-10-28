@@ -2,7 +2,7 @@ use std::ops::Deref;
 
 use oxc_ast::{
     AstKind,
-    ast::{Expression, TSType, TSTypeName},
+    ast::{Expression, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -264,7 +264,7 @@ declare_oxc_lint!(
 
 impl Rule for ConsistentTypeAssertions {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -291,7 +291,7 @@ impl Rule for ConsistentTypeAssertions {
                     ctx.diagnostic(use_angle_bracket_diagnostic(cast, as_expression.span));
                 }
                 AssertionStyle::Never => {
-                    if is_const(&as_expression.type_annotation) {
+                    if as_expression.type_annotation.is_const_type_reference() {
                         return;
                     }
                     ctx.diagnostic(never_diagnostic(as_expression.span));
@@ -349,7 +349,7 @@ impl Rule for ConsistentTypeAssertions {
                     );
                 }
                 AssertionStyle::Never => {
-                    if is_const(&type_assertion.type_annotation) {
+                    if type_assertion.type_annotation.is_const_type_reference() {
                         return;
                     }
                     ctx.diagnostic(never_diagnostic(type_assertion.span));
@@ -364,25 +364,10 @@ impl Rule for ConsistentTypeAssertions {
     }
 }
 
-fn is_const(type_annotation: &TSType) -> bool {
-    if let TSType::TSTypeReference(type_reference) = type_annotation
-        && let TSTypeName::IdentifierReference(ident) = &type_reference.type_name
-    {
-        return ident.name.as_str() == "const";
-    }
-
-    false
-}
-
 fn check_type(type_annotation: &TSType) -> bool {
     match type_annotation {
         TSType::TSAnyKeyword(_) | TSType::TSUnknownKeyword(_) => false,
-        TSType::TSTypeReference(type_reference) => {
-            if let TSTypeName::IdentifierReference(ident) = &type_reference.type_name {
-                return ident.name.as_str() != "const";
-            }
-            true
-        }
+        TSType::TSTypeReference(type_reference) => !type_reference.type_name.is_const(),
         _ => true,
     }
 }

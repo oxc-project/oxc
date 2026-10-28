@@ -1,10 +1,11 @@
+use unicode_width::UnicodeWidthStr;
+
 use oxc_ast::ast::*;
-use oxc_span::GetSpan;
 use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
-    Buffer, Format,
-    ast_nodes::{AstNode, AstNodes},
+    Format,
+    ast_nodes::{AstNode, AstNodeKind, AstNodes},
     formatter::{JsFormatter, JsFormatterExt as _},
     utils::{
         string::{FormatLiteralStringToken, StringLiteralParentKind},
@@ -14,7 +15,7 @@ use crate::{
 };
 
 pub fn format_property_key<'a>(
-    key: &AstNode<'a, PropertyKey<'a>>,
+    key: &AstNode<'_, 'a, PropertyKey<'a>>,
     computed: bool,
     f: &mut JsFormatter<'_, 'a>,
 ) {
@@ -24,18 +25,21 @@ pub fn format_property_key<'a>(
     }
 
     // Check if we're in a Tailwind context and the key is a string literal with multiple classes
-    if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
+    if let AstNodeKind::StringLiteral(string) = &key.as_kind() {
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
             // Reuse the existing Tailwind string literal writer
             write_tailwind_string_literal(string, ctx, f);
             return;
         }
 
-        // For TypeScript class property declarations, quotes should always be preserved.
-        // https://github.com/prettier/prettier/issues/4516
-        let kind = if matches!(key.parent(), AstNodes::PropertyDefinition(_))
-            && f.context().source_type().is_typescript()
-        {
+        let preserve_quotes = match key.parent() {
+            // For TypeScript class property declarations, quotes should always be preserved.
+            // https://github.com/prettier/prettier/issues/4516
+            AstNodes::PropertyDefinition(_) => f.context().source_type().is_typescript(),
+            AstNodes::TSMethodSignature(method) => is_quoted_new_method_signature(method),
+            _ => false,
+        };
+        let kind = if preserve_quotes {
             StringLiteralParentKind::Expression
         } else {
             StringLiteralParentKind::Member
@@ -49,10 +53,10 @@ pub fn format_property_key<'a>(
 }
 
 pub fn write_member_name<'a>(
-    key: &AstNode<'a, PropertyKey<'a>>,
+    key: &AstNode<'_, 'a, PropertyKey<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> usize {
-    if let AstNodes::StringLiteral(string) = key.as_ast_nodes() {
+    if let AstNodeKind::StringLiteral(string) = &key.as_kind() {
         if let Some(ctx) = tailwind_context_for_string_literal(string, f) {
             // Reuse the existing Tailwind string literal writer
             string.format_leading_comments(f);
@@ -84,8 +88,17 @@ pub fn write_member_name<'a>(
     } else {
         write!(f, key);
 
-        f.source_text().span_width(key.span())
+        f.source_text().text_for(key).width()
     }
+}
+
+/// Determine if this is a method signature named `"new"` via a quoted key, which must keep its quotes.
+/// Unquoting `new(...)` in an interface or type literal would turn it into a construct signature.
+/// Optional (`new?()`) and getter/setter forms would stay a member named `new` even unquoted,
+/// but Prettier keeps the quotes for every method-signature form; only the property form is unquoted.
+pub fn is_quoted_new_method_signature(method: &TSMethodSignature<'_>) -> bool {
+    !method.computed
+        && matches!(&method.key, PropertyKey::StringLiteral(string) if string.value == "new")
 }
 
 /// Determine if the string literal key should preserve its quotes,
@@ -95,9 +108,15 @@ pub fn should_preserve_string_quote(string: &StringLiteral<'_>, f: &JsFormatter<
     !is_identifier_name_patched(quote_less_content)
 }
 
-/// Determine if the property key string literal should preserve its quotes
-pub fn should_preserve_quote(key: &PropertyKey<'_>, f: &JsFormatter<'_, '_>) -> bool {
-    matches!(&key, PropertyKey::StringLiteral(string) if should_preserve_string_quote(string, f))
+/// Determine if the property key string literal should preserve its quotes.
+/// Computed keys are ignored.
+pub fn should_preserve_quote(
+    key: &PropertyKey<'_>,
+    computed: bool,
+    f: &JsFormatter<'_, '_>,
+) -> bool {
+    !computed
+        && matches!(&key, PropertyKey::StringLiteral(string) if should_preserve_string_quote(string, f))
 }
 
 /// Determine if the enum member name string literal should preserve its quotes.

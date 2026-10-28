@@ -1025,3 +1025,15 @@ source: crates/oxc_linter/src/tester.rs
    ·          ───
    ╰────
   help: Please use Bar and Baz from /import-bar/baz/ instead.
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used.
+   ╭─[no_restricted_imports.tsx:1:32]
+ 1 │ import { allowed } from 'foo'; import 'foo'; import {} from 'foo';
+   ·                                ─────────────
+   ╰────
+
+  ⚠ eslint(no-restricted-imports): 'foo' import is restricted from being used by a pattern.
+   ╭─[no_restricted_imports.tsx:1:1]
+ 1 │ import 'foo'; import { allowed } from 'foo'; import {} from 'foo';
+   · ─────────────
+   ╰────

@@ -56,15 +56,13 @@ fn main() -> Result<(), String> {
     let allocator = Allocator::new();
 
     // Parse + format the source code
-    let formatted =
-        match oxc_formatter::format(&allocator, &source_text, source_type, options, None) {
-            Ok(formatted) => formatted,
-            Err(error) => {
-                let error = error.with_source_code(source_text.clone());
-                println!("{error:?}");
-                return Err("Parsed with Errors.".to_string());
-            }
-        };
+    let formatted = match oxc_formatter::format(&allocator, &source_text, source_type, options) {
+        Ok(formatted) => formatted,
+        Err(error) => {
+            println!("{}", error.render_with_source_code(source_text.clone()));
+            return Err("Parsed with Errors.".to_string());
+        }
+    };
 
     if show_ir {
         println!("--- IR ---");

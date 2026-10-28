@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(unsupported-syntax): The 'eval' function is not supported
+   ╭─[unsupported_syntax.tsx:3:3]
+ 2 │ function Component(props) {
+ 3 │   eval('props.x = true');
+   ·   ──┬─
+   ·     ╰── `eval` cannot be analyzed by React Compiler
+ 4 │   return <div />;
+   ╰────
+  help: Eval is an anti-pattern in JavaScript, and the code executed cannot be evaluated by React Compiler
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/unsupported-syntax

@@ -90,3 +90,17 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 }
    ╰────
   help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `value` is never reassigned.
+   ╭─[prefer_const.tsx:1:19]
+ 1 │ namespace N { let value; value = 1; use(value); }
+   ·                   ─────
+   ╰────
+  help: Use `const` instead.
+
+  ⚠ eslint(prefer-const): `value` is never reassigned.
+   ╭─[prefer_const.tsx:1:16]
+ 1 │ module N { let value; (value = 1); use(value); }
+   ·                ─────
+   ╰────
+  help: Use `const` instead.

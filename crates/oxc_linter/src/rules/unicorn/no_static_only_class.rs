@@ -1,4 +1,6 @@
-use oxc_ast::{AstKind, ast::ClassElement};
+use std::borrow::Cow;
+
+use oxc_ast::{AstKind, StaticPropertyName, ast::ClassElement};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -55,6 +57,7 @@ declare_oxc_lint!(
     NoStaticOnlyClass,
     unicorn,
     pedantic,
+    recommended,
     fix_dangerous,
     version = "0.0.16",
     short_description = "Disallow `class` declarations that exclusively contain `static` members.",
@@ -66,7 +69,7 @@ impl Rule for NoStaticOnlyClass {
             return;
         };
 
-        if class.super_class.is_some() {
+        if class.heritage.is_some() {
             return;
         }
         if !class.decorators.is_empty() {
@@ -111,7 +114,6 @@ impl Rule for NoStaticOnlyClass {
         }) {
             return;
         }
-        #[expect(clippy::cast_possible_truncation)]
         ctx.diagnostic_with_dangerous_fix(no_static_only_class_diagnostic(class.span), |fixer| {
             if with_type_annotation
                 || class.is_typescript_syntax()
@@ -140,7 +142,14 @@ impl Rule for NoStaticOnlyClass {
                         let name = if v.computed {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
-                            key.static_name().unwrap().to_string()
+                            let name = key
+                                .static_name()
+                                .and_then(StaticPropertyName::into_cow_str)
+                                .map(Cow::into_owned);
+                            let Some(name) = name else {
+                                return fixer.noop();
+                            };
+                            name
                         };
 
                         // we need to check is there have a trailing semicolon
@@ -154,31 +163,9 @@ impl Rule for NoStaticOnlyClass {
                         } else {
                             class.body.span.end
                         };
-                        let mut search_start = item.span().end;
-                        let mut target_semicolon_pos = None;
-                        while search_start < next_start {
-                            if let Some(pos) = ctx
-                                .source_range(Span::new(search_start, next_start))
-                                .find(';')
-                                .map(|p| search_start + (p as u32))
-                            {
-                                let comments = ctx.comments_range(item.span().end..next_start);
-                                let mut is_in_comment = false;
-                                for comment in comments {
-                                    if comment.span.start < pos && comment.span.end > pos {
-                                        is_in_comment = true;
-                                        break;
-                                    }
-                                }
-                                if !is_in_comment {
-                                    target_semicolon_pos = Some(pos);
-                                    break;
-                                }
-                                search_start = pos + 1;
-                            } else {
-                                break;
-                            }
-                        }
+                        let target_semicolon_pos = ctx
+                            .find_next_token_within(item.span().end, next_start, ";")
+                            .map(|offset| item.span().end + offset);
                         if let Some(pos) = target_semicolon_pos {
                             rule_fixes.push(fixer.delete_range(Span::sized(pos, 1)));
                         }
@@ -193,7 +180,14 @@ impl Rule for NoStaticOnlyClass {
                         let name = if v.computed {
                             format!("[{}]", ctx.source_range(key.span()))
                         } else {
-                            key.static_name().unwrap().to_string()
+                            let name = key
+                                .static_name()
+                                .and_then(StaticPropertyName::into_cow_str)
+                                .map(Cow::into_owned);
+                            let Some(name) = name else {
+                                return fixer.noop();
+                            };
+                            name
                         };
                         let value_str = if value.is_none() {
                             "undefined"
@@ -261,6 +255,9 @@ fn test() {
     ];
 
     let fail = vec![
+        r#"class A { static "\uD800"() {} }"#,
+        r#"class A { static "\uDC00" = 1; }"#,
+        r#"class A { static a() {}; static "\uD800"() {} }"#,
         "class A { static a() {}; }",
         "class A { static a() {} }",
         "const A = class A { static a() {}; }",
@@ -324,6 +321,12 @@ fn test() {
     ];
 
     let fix = vec![
+        (r#"class A { static "\uD800"() {} }"#, r#"class A { static "\uD800"() {} }"#),
+        (r#"class A { static "\uDC00" = 1; }"#, r#"class A { static "\uDC00" = 1; }"#),
+        (
+            r#"class A { static a() {}; static "\uD800"() {} }"#,
+            r#"class A { static a() {}; static "\uD800"() {} }"#,
+        ),
         ("class A { static a() {}; }", "const A = { a() {}, }"),
         ("class A { static a() {} }", "const A = { a() {}, }"),
         ("const a = class { static bar = 2; static baz() {} }", "const a =  { bar: 2, baz() {}, }"),

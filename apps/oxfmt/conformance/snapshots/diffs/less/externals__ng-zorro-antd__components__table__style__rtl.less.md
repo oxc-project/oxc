@@ -1,8 +1,5 @@
 # externals/ng-zorro-antd/components/table/style/rtl.less
 
-> Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)
-> Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md
-
 ## Option 1
 
 `````json
@@ -15,19 +12,6 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -32,10 +32,10 @@
-           }
-         }
- 
-         &:not(:last-child):not(.@{table-prefix-cls}-selection-column):not(
--            .@{table-prefix-cls}-row-expand-icon-cell
--          ):not([colspan])::before {
-+          .@{table-prefix-cls}-row-expand-icon-cell
-+        ):not([colspan])::before {
-           .@{table-wrapepr-rtl-cls} & {
-             right: auto;
-             left: 0;
-           }
 @@ -54,11 +54,10 @@
        // ========================= Nest Table ===========================
        .@{table-prefix-cls}-wrapper:only-child {
@@ -83,8 +67,8 @@
         }
 
         &:not(:last-child):not(.@{table-prefix-cls}-selection-column):not(
-          .@{table-prefix-cls}-row-expand-icon-cell
-        ):not([colspan])::before {
+            .@{table-prefix-cls}-row-expand-icon-cell
+          ):not([colspan])::before {
           .@{table-wrapepr-rtl-cls} & {
             right: auto;
             left: 0;
@@ -416,19 +400,6 @@
 ===================================================================
 --- prettier
 +++ oxfmt
-@@ -32,10 +32,10 @@
-           }
-         }
- 
-         &:not(:last-child):not(.@{table-prefix-cls}-selection-column):not(
--            .@{table-prefix-cls}-row-expand-icon-cell
--          ):not([colspan])::before {
-+          .@{table-prefix-cls}-row-expand-icon-cell
-+        ):not([colspan])::before {
-           .@{table-wrapepr-rtl-cls} & {
-             right: auto;
-             left: 0;
-           }
 @@ -53,12 +53,10 @@
      > tr {
        // ========================= Nest Table ===========================
@@ -485,8 +456,8 @@
         }
 
         &:not(:last-child):not(.@{table-prefix-cls}-selection-column):not(
-          .@{table-prefix-cls}-row-expand-icon-cell
-        ):not([colspan])::before {
+            .@{table-prefix-cls}-row-expand-icon-cell
+          ):not([colspan])::before {
           .@{table-wrapepr-rtl-cls} & {
             right: auto;
             left: 0;

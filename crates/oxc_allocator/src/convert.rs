@@ -1,6 +1,6 @@
 #![expect(clippy::inline_always)]
 
-use crate::{Allocator, Box};
+use crate::{Allocator, Box, Vec};
 
 /// This trait works similarly to the standard library [`From`] trait.
 ///
@@ -59,5 +59,12 @@ impl<'a, T> FromIn<'a, Option<T>> for Option<Box<'a, T>> {
     #[expect(clippy::single_option_map)]
     fn from_in(value: Option<T>, allocator: &'a Allocator) -> Self {
         value.map(|it| Box::new_in(it, &allocator))
+    }
+}
+
+impl<'a, T, const N: usize> FromIn<'a, [T; N]> for Vec<'a, T> {
+    #[inline(always)]
+    fn from_in(array: [T; N], allocator: &'a Allocator) -> Self {
+        Vec::from_array_in(array, &allocator)
     }
 }

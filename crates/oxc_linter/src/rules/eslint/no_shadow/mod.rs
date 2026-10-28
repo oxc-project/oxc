@@ -9,7 +9,7 @@ use javascript_globals::GLOBALS;
 use oxc_allocator::GetAddress;
 use oxc_ast::{
     AstKind,
-    ast::{BindingPattern, Expression, FunctionType, TSModuleDeclarationName},
+    ast::{BindingPattern, Expression, FunctionType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -107,7 +107,7 @@ declare_oxc_lint!(
 
 impl Rule for NoShadow {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<NoShadowConfig>>(value)
+        DefaultRuleConfig::<NoShadowConfig>::from_value(value)
             .map(|c| Self(Box::new(c.into_inner())))
     }
 
@@ -386,7 +386,10 @@ impl NoShadow {
                 }
                 AstKind::Class(class) if class.declare => return true,
                 AstKind::TSEnumDeclaration(declaration) if declaration.declare => return true,
-                AstKind::TSModuleDeclaration(declaration) if declaration.declare => return true,
+                AstKind::TSExternalModuleDeclaration(declaration) if declaration.declare => {
+                    return true;
+                }
+                AstKind::TSNamespaceDeclaration(declaration) if declaration.declare => return true,
                 AstKind::TSInterfaceDeclaration(declaration) if declaration.declare => return true,
                 AstKind::TSTypeAliasDeclaration(declaration) if declaration.declare => return true,
                 AstKind::Program(_) => break,
@@ -401,13 +404,8 @@ impl NoShadow {
         let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
         ctx.nodes().ancestor_kinds(declaration_id).any(|ancestor_kind| match ancestor_kind {
             AstKind::TSGlobalDeclaration(_) => true,
-            AstKind::TSModuleDeclaration(module) => {
-                module.declare
-                    && matches!(
-                        &module.id,
-                        TSModuleDeclarationName::Identifier(identifier)
-                            if identifier.name.as_str() == "global"
-                    )
+            AstKind::TSNamespaceDeclaration(module) => {
+                module.declare && module.id.name.as_str() == "global"
             }
             _ => false,
         })
@@ -471,15 +469,10 @@ impl NoShadow {
 
         let declaration_id = ctx.scoping().symbol_declaration(symbol_id);
         let module_name = ctx.nodes().ancestor_kinds(declaration_id).find_map(|kind| {
-            if let AstKind::TSModuleDeclaration(module_decl) = kind
+            if let AstKind::TSExternalModuleDeclaration(module_decl) = kind
                 && module_decl.declare
             {
-                match &module_decl.id {
-                    TSModuleDeclarationName::StringLiteral(string_literal) => {
-                        Some(string_literal.value.as_str())
-                    }
-                    TSModuleDeclarationName::Identifier(_) => None,
-                }
+                Some(module_decl.id.value.as_str())
             } else {
                 None
             }
@@ -580,11 +573,9 @@ impl NoShadow {
         {
             match ctx.nodes().kind(node_id) {
                 AstKind::VariableDeclarator(declarator) => {
-                    if declarator
-                        .init
-                        .as_ref()
-                        .is_some_and(|init| is_in_range(init.span(), call_expression_end))
-                    {
+                    if declarator.init.as_ref().is_some_and(|init| {
+                        init.span().contains_inclusive(Span::empty(call_expression_end))
+                    }) {
                         return true;
                     }
 
@@ -599,12 +590,18 @@ impl NoShadow {
                     let variable_declaration_id = ctx.nodes().parent_id(node_id);
                     match ctx.nodes().parent_kind(variable_declaration_id) {
                         AstKind::ForInStatement(statement)
-                            if is_in_range(statement.right.span(), call_expression_end) =>
+                            if statement
+                                .right
+                                .span()
+                                .contains_inclusive(Span::empty(call_expression_end)) =>
                         {
                             return true;
                         }
                         AstKind::ForOfStatement(statement)
-                            if is_in_range(statement.right.span(), call_expression_end) =>
+                            if statement
+                                .right
+                                .span()
+                                .contains_inclusive(Span::empty(call_expression_end)) =>
                         {
                             return true;
                         }
@@ -617,16 +614,18 @@ impl NoShadow {
                     if binding_pattern_contains_symbol(
                         &parameter.pattern,
                         shadowed_symbol_span,
-                    ) && parameter
-                        .initializer
-                        .as_ref()
-                        .is_some_and(|init| is_in_range(init.span(), call_expression_end)) =>
+                    ) && parameter.initializer.as_ref().is_some_and(|init| {
+                        init.span().contains_inclusive(Span::empty(call_expression_end))
+                    }) =>
                 {
                     return true;
                 }
                 AstKind::AssignmentPattern(pattern)
                     if binding_pattern_contains_symbol(&pattern.left, shadowed_symbol_span)
-                        && is_in_range(pattern.right.span(), call_expression_end) =>
+                        && pattern
+                            .right
+                            .span()
+                            .contains_inclusive(Span::empty(call_expression_end)) =>
                 {
                     return true;
                 }
@@ -737,10 +736,6 @@ fn is_definition_file(path: &Path) -> bool {
     path.ends_with(".d.ts") || path.ends_with(".d.cts") || path.ends_with(".d.mts")
 }
 
-fn is_in_range(span: Span, location: u32) -> bool {
-    span.start <= location && location <= span.end
-}
-
 fn is_initializer_sentinel(kind: AstKind) -> bool {
     matches!(
         kind,
@@ -749,7 +744,7 @@ fn is_initializer_sentinel(kind: AstKind) -> bool {
             | AstKind::ArrowFunctionExpression(_)
             | AstKind::CatchClause(_)
             | AstKind::ImportDeclaration(_)
-            | AstKind::ExportNamedDeclaration(_)
+            | AstKind::ExportDeclaration(_)
     )
 }
 
@@ -798,7 +793,7 @@ fn pattern_initializer_contains_location(
         BindingPattern::BindingIdentifier(_) => false,
         BindingPattern::AssignmentPattern(pattern) => {
             (binding_pattern_contains_symbol(&pattern.left, symbol_span)
-                && is_in_range(pattern.right.span(), location))
+                && pattern.right.span().contains_inclusive(Span::empty(location)))
                 || pattern_initializer_contains_location(&pattern.left, symbol_span, location)
         }
         BindingPattern::ObjectPattern(pattern) => {

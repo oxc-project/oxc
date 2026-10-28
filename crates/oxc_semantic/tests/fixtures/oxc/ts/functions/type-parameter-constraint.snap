@@ -1,0 +1,134 @@
+---
+source: crates/oxc_semantic/tests/main.rs
+input_file: crates/oxc_semantic/tests/fixtures/oxc/ts/functions/type-parameter-constraint.ts
+---
+[
+  {
+    "children": [
+      {
+        "children": [],
+        "flags": "ScopeFlags(StrictMode)",
+        "id": 1,
+        "node": "TSTypeAliasDeclaration",
+        "symbols": []
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 3,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode | Function)",
+        "id": 2,
+        "node": "Function(Foo)",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 2,
+            "name": "U",
+            "node": "TSTypeParameter(U)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 1,
+                "name": "U",
+                "node_id": 22,
+                "scope_id": 2
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 3,
+            "name": "T",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      },
+      {
+        "children": [
+          {
+            "children": [],
+            "flags": "ScopeFlags(StrictMode)",
+            "id": 5,
+            "node": "TSTypeAliasDeclaration",
+            "symbols": []
+          }
+        ],
+        "flags": "ScopeFlags(StrictMode | Function | Arrow)",
+        "id": 4,
+        "node": "ArrowFunctionExpression",
+        "symbols": [
+          {
+            "flags": "SymbolFlags(TypeParameter)",
+            "id": 5,
+            "name": "U",
+            "node": "TSTypeParameter(U)",
+            "references": [
+              {
+                "flags": "ReferenceFlags(Type)",
+                "id": 3,
+                "name": "U",
+                "node_id": 42,
+                "scope_id": 4
+              }
+            ]
+          },
+          {
+            "flags": "SymbolFlags(TypeAlias)",
+            "id": 6,
+            "name": "T",
+            "node": "TSTypeAliasDeclaration",
+            "references": []
+          }
+        ]
+      }
+    ],
+    "flags": "ScopeFlags(StrictMode | Top)",
+    "id": 0,
+    "node": "Program",
+    "symbols": [
+      {
+        "flags": "SymbolFlags(TypeAlias)",
+        "id": 0,
+        "name": "T",
+        "node": "TSTypeAliasDeclaration",
+        "references": [
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 0,
+            "name": "T",
+            "node_id": 11,
+            "scope_id": 2
+          },
+          {
+            "flags": "ReferenceFlags(Type)",
+            "id": 2,
+            "name": "T",
+            "node_id": 31,
+            "scope_id": 4
+          }
+        ]
+      },
+      {
+        "flags": "SymbolFlags(Function)",
+        "id": 1,
+        "name": "Foo",
+        "node": "Function(Foo)",
+        "references": []
+      },
+      {
+        "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",
+        "id": 4,
+        "name": "Bar",
+        "node": "VariableDeclarator(Bar)",
+        "references": []
+      }
+    ]
+  }
+]

@@ -1,0 +1,16 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/fbt/fbs-tag-in-switch-discriminant.js
+---
+import { fbs } from "fbt";
+function Component(value) {
+	switch (<fbs desc="Greeting">Hello</fbs>) {
+		case 0: {
+			const fbs = value;
+			return fbs;
+		}
+		default: {
+			return null;
+		}
+	}
+}

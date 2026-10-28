@@ -1,7 +1,16 @@
+use oxc_str::JSStr;
 use oxc_syntax::{identifier::is_white_space, line_terminator::is_line_terminator};
 
 pub trait StringToNumber {
     fn string_to_number(&self) -> f64;
+}
+
+impl StringToNumber for JSStr<'_> {
+    fn string_to_number(&self) -> f64 {
+        // A string containing a lone surrogate can never be a StringNumericLiteral,
+        // so it converts to NaN.
+        self.as_str().map_or(f64::NAN, |value| value.string_to_number())
+    }
 }
 
 /// `StringToNumber`
@@ -9,7 +18,7 @@ pub trait StringToNumber {
 /// <https://tc39.es/ecma262/#sec-stringtonumber>
 impl StringToNumber for &str {
     fn string_to_number(&self) -> f64 {
-        let s = self.trim_start_matches(is_str_white_space_char);
+        let s = self.trim_matches(is_str_white_space_char);
         match s {
             "" => return 0.0,
             "-Infinity" => return f64::NEG_INFINITY,
@@ -73,4 +82,37 @@ impl StringToNumber for &str {
 /// <https://tc39.es/ecma262/#sec-tonumber-applied-to-the-string-type>
 fn is_str_white_space_char(c: char) -> bool {
     is_white_space(c) || is_line_terminator(c)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::StringToNumber;
+
+    #[test]
+    fn trims_ecmascript_whitespace_from_both_ends() {
+        const WHITESPACE: &str = "\u{0009}\u{000B}\u{000C}\u{0020}\u{00A0}\u{1680}\u{2000}\u{2001}\u{2002}\u{2003}\u{2004}\u{2005}\u{2006}\u{2007}\u{2008}\u{2009}\u{200A}\u{202F}\u{205F}\u{3000}\u{FEFF}\u{000A}\u{000D}\u{2028}\u{2029}";
+
+        assert_eq!(format!("{WHITESPACE}1{WHITESPACE}").as_str().string_to_number(), 1.0);
+        assert_eq!(format!("{WHITESPACE}0x10{WHITESPACE}").as_str().string_to_number(), 16.0);
+        assert_eq!(
+            format!("{WHITESPACE}Infinity{WHITESPACE}").as_str().string_to_number(),
+            f64::INFINITY
+        );
+        assert_eq!(format!("{WHITESPACE}{WHITESPACE}").as_str().string_to_number(), 0.0);
+    }
+
+    #[test]
+    fn does_not_trim_non_ecmascript_whitespace() {
+        assert!("1\u{0085}".string_to_number().is_nan());
+    }
+
+    #[test]
+    fn js_str_converts_like_str_unless_it_has_a_lone_surrogate() {
+        let allocator = oxc_allocator::Allocator::new();
+        assert_eq!(oxc_str::JSStr::from(" 12 ").string_to_number(), 12.0);
+        let mut builder = oxc_str::JSStrBuilder::new_in(&&allocator);
+        builder.push_str("1");
+        builder.push_code_unit(0xD800);
+        assert!(builder.into_js_str().string_to_number().is_nan());
+    }
 }

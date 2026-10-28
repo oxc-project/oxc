@@ -1,0 +1,9 @@
+// A custom property value runs to the top-level `;` (css-syntax §5.5.6);
+// dart-sass reads it as text, so a `;`-less `{...}` block followed by more
+// text is ONE declaration and prints verbatim, like Prettier.
+// Splitting it would make `--another-prop` resolvable where the source has none.
+:root {
+  --like-a-apply-rule: {
+  color:red;} /* no semi here*/
+  --another-prop: blue;
+}

@@ -70,7 +70,7 @@ declare_oxc_lint!(
 
 impl Rule for NoInferrableTypes {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -227,10 +227,8 @@ fn is_inferrable_type(type_annotation: &TSTypeAnnotation, init: &Expression) -> 
             false
         }
         TSType::TSUndefinedKeyword(_) => match init.get_inner_expression() {
-            Expression::Identifier(id) => id.name == "undefined",
-            Expression::UnaryExpression(unary_expr) => {
-                matches!(unary_expr.operator, UnaryOperator::Void)
-            }
+            Expression::Identifier(id) => id.is_undefined(),
+            Expression::UnaryExpression(unary_expr) => unary_expr.operator.is_void(),
             _ => false,
         },
         _ => false,
@@ -293,8 +291,7 @@ fn is_init_boolean(init: &Expression) -> bool {
 }
 
 fn is_init_null(init: &Expression) -> bool {
-    let init = init.get_inner_expression();
-    matches!(init, Expression::NullLiteral(_))
+    init.get_inner_expression().is_null()
 }
 
 fn is_init_number(init: &Expression) -> bool {

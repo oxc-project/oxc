@@ -8,10 +8,10 @@ use oxc_ast::{
     AstKind,
     ast::{
         ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
-        ReturnStatement, Statement,
+        ReturnStatement,
     },
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -117,7 +117,7 @@ declare_oxc_lint!(
     /// myPromise().then(() => 4)
     /// myPromise().then(function() { return 4 })
     ///
-    /// myPromise().then(() => throw "err")
+    /// myPromise().then(() => { throw "err" })
     /// myPromise().then(function() { throw "err" })
     /// ```
     ///
@@ -134,6 +134,7 @@ declare_oxc_lint!(
     NoReturnWrap,
     promise,
     style,
+    recommended,
     pending,
     config = NoReturnWrap,
     version = "0.15.14",
@@ -142,7 +143,7 @@ declare_oxc_lint!(
 
 impl Rule for NoReturnWrap {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -222,14 +223,12 @@ fn check_arrow_cb_arg<'a>(
     allow_reject: bool,
     arrow_expr: &ArrowFunctionExpression<'a>,
 ) {
-    if arrow_expr.expression {
-        if let Some(Statement::ExpressionStatement(expr_stmt)) = arrow_expr.body.statements.first()
-            && let Expression::CallExpression(call_expr) = &expr_stmt.expression
-        {
+    if arrow_expr.is_expression() {
+        if let Some(Expression::CallExpression(call_expr)) = arrow_expr.get_expression() {
             check_for_resolve_reject(ctx, allow_reject, call_expr);
         }
     } else {
-        check_function_body(ctx, allow_reject, &arrow_expr.body);
+        check_function_body(ctx, allow_reject, arrow_expr.get_function_body().unwrap());
     }
 }
 
@@ -258,7 +257,7 @@ struct ReturnWrapFinder<'a, 'b> {
     allow_reject: bool,
 }
 
-impl<'a> Visit<'a> for ReturnWrapFinder<'a, '_> {
+impl<'a> VisitJs<'a> for ReturnWrapFinder<'a, '_> {
     fn visit_return_statement(&mut self, it: &ReturnStatement<'a>) {
         if let Some(Expression::CallExpression(call_expr)) = &it.argument {
             check_for_resolve_reject(self.ctx, self.allow_reject, call_expr);

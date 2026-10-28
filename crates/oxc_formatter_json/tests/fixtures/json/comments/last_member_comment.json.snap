@@ -1,0 +1,68 @@
+---
+source: crates/oxc_formatter_json/tests/fixtures/mod.rs
+---
+==================== Input ====================
+{
+  "block_comment_stays_inline": [1, 2 /* keep inline */],
+  "line_comment_breaks": [1, 2 // trailing line comment
+  ],
+  "string_elements": ["a", "b" // last element
+  ],
+  "disables_concise": [1, 2, 3, 4 // disables concise
+  ],
+  "object_trailing": { "a": 1, "b": 2 // trailing
+  }
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+{
+  "block_comment_stays_inline": [1, 2 /* keep inline */],
+  "line_comment_breaks": [
+    1,
+    2 // trailing line comment
+  ],
+  "string_elements": [
+    "a",
+    "b" // last element
+  ],
+  "disables_concise": [
+    1,
+    2,
+    3,
+    4 // disables concise
+  ],
+  "object_trailing": {
+    "a": 1,
+    "b": 2 // trailing
+  }
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+{
+  "block_comment_stays_inline": [1, 2 /* keep inline */],
+  "line_comment_breaks": [
+    1,
+    2 // trailing line comment
+  ],
+  "string_elements": [
+    "a",
+    "b" // last element
+  ],
+  "disables_concise": [
+    1,
+    2,
+    3,
+    4 // disables concise
+  ],
+  "object_trailing": {
+    "a": 1,
+    "b": 2 // trailing
+  }
+}
+
+===================== End =====================

@@ -333,3 +333,19 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
   note: `Object.assign` mutates the first argument. Disable this rule if copy-on-write behavior is required.
+
+  ⚠ oxc(no-map-spread): Spreading to modify object properties in `map` calls is inefficient
+   ╭─[no_map_spread.tsx:1:20]
+ 1 │ const ids = result.map(obj => {
+   ·                    ─┬─
+   ·                     ╰── This map call spreads an object
+ 2 │                 const { a = { ...obj }, b = a } = obj;
+   ·                               ───┬──
+   ·                                  ╰── This spread allocates a new value on each iteration
+ 3 │                 return b;
+   ·                        ┬
+   ·                        ╰── Map returns the spread here
+ 4 │             });
+   ╰────
+  help: If in-place mutation is acceptable, use `Object.assign` or direct property assignment instead of spreading
+  note: `Object.assign` mutates the first argument. Disable this rule if copy-on-write behavior is required.

@@ -3,6 +3,20 @@ source: crates/oxc_linter/src/tester.rs
 ---
 
   ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:38]
+ 1 │ try { doSomething(); } catch (err) { throw new Error/* ( */(); }
+   ·                                      ─────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:38]
+ 1 │ try { doSomething(); } catch (err) { throw new Error<() => void>(); }
+   ·                                      ──────────────────────────────
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
    ╭─[preserve_caught_error.tsx:4:16]
  3 │                     } catch (err) {
  4 │                         throw new Error("Something failed");
@@ -254,5 +268,12 @@ source: crates/oxc_linter/src/tester.rs
  4 │ │                       set cause(value) { error = value; },
  5 │ ╰─▶                 });
  6 │                 }
+   ╰────
+  help: Preserve the original error by using the `cause` property when re-throwing errors.
+
+  ⚠ eslint(preserve-caught-error): There is no cause error attached to this new thrown error.
+   ╭─[preserve_caught_error.tsx:1:40]
+ 1 │ try { doSomething(); } catch (error) { throw new AggregateError([error], "aggregate", { cause: unrelated }); }
+   ·                                        ─────────────────────────────────────────────────────────────────────
    ╰────
   help: Preserve the original error by using the `cause` property when re-throwing errors.

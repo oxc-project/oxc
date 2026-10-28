@@ -1,4 +1,4 @@
-//! Generator for `ChildScopeCollector` visitor.
+//! Generator for the `ChildScopeCollector` visitors used by traverse and minifier.
 
 use std::iter;
 
@@ -8,7 +8,7 @@ use quote::quote;
 use oxc_index::IndexVec;
 
 use crate::{
-    Codegen, Generator, TRAVERSE_CRATE_PATH,
+    Codegen, Generator, MINIFIER_CRATE_PATH, TRAVERSE_CRATE_PATH,
     output::{Output, output_path},
     schema::{Def, EnumDef, FieldDef, Schema, StructDef, StructOrEnum, TypeDef, TypeId},
     utils::{create_ident, create_ident_tokens},
@@ -29,11 +29,18 @@ impl Generator for ScopesCollectorGenerator {
         ScopesCalculator::new(schema).calculate_all();
     }
 
-    fn generate(&self, schema: &Schema, _codegen: &Codegen) -> Output {
-        Output::Rust {
-            path: output_path(TRAVERSE_CRATE_PATH, "scopes_collector.rs"),
-            tokens: generate(schema),
-        }
+    fn generate_many(&self, schema: &Schema, _codegen: &Codegen) -> Vec<Output> {
+        let tokens = generate(schema);
+        vec![
+            Output::Rust {
+                path: output_path(TRAVERSE_CRATE_PATH, "scopes_collector.rs"),
+                tokens: tokens.clone(),
+            },
+            Output::Rust {
+                path: format!("{MINIFIER_CRATE_PATH}/src/traverse_context/scopes_collector.rs"),
+                tokens,
+            },
+        ]
     }
 }
 

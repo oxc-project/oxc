@@ -104,7 +104,7 @@ pub fn get_function_nearest_jsdoc_node<'a, 'b>(
                 // export const foo = () => {}
                 let parent_node = semantic.nodes().parent_node(current_node.id());
                 match parent_node.kind() {
-                    AstKind::ExportDefaultDeclaration(_) | AstKind::ExportNamedDeclaration(_) => return Some(parent_node),
+                    AstKind::ExportDefaultDeclaration(_) | AstKind::ExportDeclaration(_) => return Some(parent_node),
                     _ => return None
                 }
             },
@@ -212,18 +212,18 @@ pub fn collect_params(
 
                     match get_param_name(&prop.value, false, use_default_object_properties) {
                         ParamKind::Single(param) => {
-                            collected.push(Param { name: format!("{name}"), ..param });
+                            collected.push(Param { name: name.display().to_string(), ..param });
                         }
                         ParamKind::Nested(params) => {
                             collected.push(Param {
                                 span: prop.span,
-                                name: format!("{name}"),
+                                name: name.display().to_string(),
                                 is_rest: false,
                             });
 
                             for param in params {
                                 collected.push(Param {
-                                    name: format!("{name}.{}", param.name),
+                                    name: format!("{}.{}", name.display(), param.name),
                                     ..param
                                 });
                             }

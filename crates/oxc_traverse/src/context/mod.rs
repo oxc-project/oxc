@@ -428,7 +428,6 @@ impl<'a, State> TraverseCtx<'a, State> {
         scope_id: ScopeId,
         flags: SymbolFlags,
     ) -> BoundIdentifier<'a> {
-        // Get name for UID
         let name = self.generate_uid_name(name);
         let symbol_id = self.scoping.add_binding(name, scope_id, flags);
         BoundIdentifier::new(name, symbol_id)

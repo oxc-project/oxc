@@ -4,10 +4,12 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use schemars::JsonSchema;
+use serde::Deserialize;
 
 use crate::{
     context::{ContextHost, LintContext},
-    rule::Rule,
+    rule::{DefaultRuleConfig, Rule},
+    utils::deserialize_required_regex_option,
 };
 
 fn comment(ts_comment_name: &str, span: Span) -> OxcDiagnostic {
@@ -45,10 +47,10 @@ fn comment_description_not_match_pattern(
     .with_label(span)
 }
 
-#[derive(Debug, Default, Clone)]
+#[derive(Debug, Default, Clone, Deserialize)]
 pub struct BanTsComment(Box<BanTsCommentConfig>);
 
-#[derive(Debug, Clone, JsonSchema)]
+#[derive(Debug, Clone, Deserialize, JsonSchema)]
 #[serde(rename_all = "kebab-case", default, deny_unknown_fields)]
 /// This rule allows you to specify how different TypeScript directive comments
 /// should be handled.
@@ -122,10 +124,7 @@ pub enum DirectiveConfig {
 enum DirectiveConfigSchema {
     Boolean(bool),
     RequireDescription(RequireDescription),
-    DescriptionFormat {
-        #[serde(rename = "descriptionFormat")]
-        description_format: Option<Regex>,
-    },
+    DescriptionFormat(DescriptionFormatConfig),
 }
 
 #[derive(Debug, JsonSchema)]
@@ -135,25 +134,35 @@ enum RequireDescription {
     AllowWithDescription,
 }
 
-impl DirectiveConfig {
-    fn from_json(value: &serde_json::Value) -> Option<Self> {
-        match value {
-            serde_json::Value::Bool(b) => Some(Self::Boolean(*b)),
-            serde_json::Value::String(s) => {
-                if s == "allow-with-description" {
-                    Some(Self::RequireDescription)
-                } else {
-                    None
-                }
+#[derive(Debug, Deserialize, JsonSchema)]
+#[serde(deny_unknown_fields)]
+struct DescriptionFormatConfig {
+    #[serde(
+        default,
+        rename = "descriptionFormat",
+        deserialize_with = "deserialize_required_regex_option"
+    )]
+    description_format: Option<Regex>,
+}
+
+impl<'de> Deserialize<'de> for DirectiveConfig {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use serde::de::Error;
+
+        match serde_json::Value::deserialize(deserializer)? {
+            serde_json::Value::Bool(value) => Ok(Self::Boolean(value)),
+            serde_json::Value::String(value) if value == "allow-with-description" => {
+                Ok(Self::RequireDescription)
             }
-            serde_json::Value::Object(o) => {
-                let re = o
-                    .get("descriptionFormat")
-                    .and_then(serde_json::Value::as_str)
-                    .and_then(|pattern| Regex::new(pattern).ok());
-                Some(Self::DescriptionFormat(re))
-            }
-            _ => None,
+            value @ serde_json::Value::Object(_) => DescriptionFormatConfig::deserialize(value)
+                .map(|config| Self::DescriptionFormat(config.description_format))
+                .map_err(D::Error::custom),
+            _ => Err(D::Error::custom(
+                "expected a boolean, `allow-with-description`, or a descriptionFormat object",
+            )),
         }
     }
 }
@@ -180,6 +189,7 @@ declare_oxc_lint!(
     BanTsComment,
     typescript,
     pedantic,
+    recommended,
     conditional_fix,
     config = BanTsCommentConfig,
     version = "0.0.8",
@@ -188,53 +198,28 @@ declare_oxc_lint!(
 
 impl Rule for BanTsComment {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        let config = value.get(0).unwrap_or_default();
-
-        Ok(Self(Box::new(BanTsCommentConfig {
-            ts_expect_error: config
-                .get("ts-expect-error")
-                .and_then(DirectiveConfig::from_json)
-                .unwrap_or(DirectiveConfig::RequireDescription),
-            ts_ignore: config
-                .get("ts-ignore")
-                .and_then(DirectiveConfig::from_json)
-                .unwrap_or(DirectiveConfig::Boolean(true)),
-            ts_nocheck: config
-                .get("ts-nocheck")
-                .and_then(DirectiveConfig::from_json)
-                .unwrap_or(DirectiveConfig::Boolean(true)),
-            ts_check: config
-                .get("ts-check")
-                .and_then(DirectiveConfig::from_json)
-                .unwrap_or(DirectiveConfig::Boolean(false)),
-            minimum_description_length: config
-                .get("minimumDescriptionLength")
-                .and_then(serde_json::Value::as_u64)
-                .unwrap_or(3),
-        })))
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run_once(&self, ctx: &LintContext) {
         let comments = ctx.comments();
         for comm in comments {
             let raw = ctx.source_range(comm.content_span());
-            if let Some(captures) = find_ts_comment_directive(raw, comm.is_line()) {
-                // safe to unwrap, if capture success, it can always capture one of the four directives
-                let (directive, description) = (captures.0, captures.1);
-                if comm.is_block() && (directive == "check" || directive == "nocheck") {
+            if let Some((directive, description)) = find_ts_comment_directive(raw, comm.is_line()) {
+                let is_file_directive =
+                    matches!(directive, TsCommentDirective::Check | TsCommentDirective::NoCheck);
+                if comm.is_block() && is_file_directive {
                     continue;
                 }
 
-                if raw.trim_start().starts_with('/')
-                    && (directive == "check" || directive == "nocheck")
-                {
+                if raw.trim_start().starts_with('/') && is_file_directive {
                     continue;
                 }
 
                 match self.option(directive) {
                     DirectiveConfig::Boolean(on) => {
                         if *on {
-                            if directive == "ignore" {
+                            if directive == TsCommentDirective::Ignore {
                                 ctx.diagnostic_with_fix(
                                     ignore_instead_of_expect_error(comm.content_span()),
                                     |fixer| {
@@ -246,7 +231,7 @@ impl Rule for BanTsComment {
                                     },
                                 );
                             } else {
-                                ctx.diagnostic(comment(directive, comm.content_span()));
+                                ctx.diagnostic(comment(directive.as_str(), comm.content_span()));
                             }
                         }
                     }
@@ -254,7 +239,7 @@ impl Rule for BanTsComment {
                         let description_len = description.trim().len();
                         if (description_len as u64) < self.minimum_description_length {
                             ctx.diagnostic(comment_requires_description(
-                                directive,
+                                directive.as_str(),
                                 self.minimum_description_length,
                                 comm.content_span(),
                             ));
@@ -264,7 +249,7 @@ impl Rule for BanTsComment {
                             && !re.is_match(description)
                         {
                             ctx.diagnostic(comment_description_not_match_pattern(
-                                directive,
+                                directive.as_str(),
                                 re.as_str(),
                                 comm.content_span(),
                             ));
@@ -280,37 +265,55 @@ impl Rule for BanTsComment {
     }
 }
 
-impl BanTsComment {
-    /// get the option for a given directive, caller should guarantee
-    /// the directive should be one of the ignore/check/nocheck/expect-error
-    fn option(&self, directive: &str) -> &DirectiveConfig {
-        match directive {
-            "ignore" => &self.ts_ignore,
-            "check" => &self.ts_check,
-            "nocheck" => &self.ts_nocheck,
-            "expect-error" => &self.ts_expect_error,
-            _ => {
-                unreachable!(
-                    "Expected one of ignore/check/nocheck/expect-error, got {}.",
-                    directive,
-                );
-            }
+/// A recognized TypeScript comment directive.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TsCommentDirective {
+    /// An `@ts-ignore` directive.
+    Ignore,
+    /// An `@ts-check` directive.
+    Check,
+    /// An `@ts-nocheck` directive.
+    NoCheck,
+    /// An `@ts-expect-error` directive.
+    ExpectError,
+}
+
+impl TsCommentDirective {
+    /// Returns the directive name without the `@ts-` prefix.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Ignore => "ignore",
+            Self::Check => "check",
+            Self::NoCheck => "nocheck",
+            Self::ExpectError => "expect-error",
         }
     }
 }
 
-pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, &str)> {
-    let prefix = "@ts-";
-
-    let mut last_line_start = None;
-    let mut char_indices = raw.char_indices().peekable();
-    while let Some((_, c)) = char_indices.next() {
-        if c == '\n' {
-            last_line_start = char_indices.peek().map(|(i, _)| *i);
+impl BanTsComment {
+    /// Returns the configured behavior for a directive.
+    fn option(&self, directive: TsCommentDirective) -> &DirectiveConfig {
+        match directive {
+            TsCommentDirective::Ignore => &self.ts_ignore,
+            TsCommentDirective::Check => &self.ts_check,
+            TsCommentDirective::NoCheck => &self.ts_nocheck,
+            TsCommentDirective::ExpectError => &self.ts_expect_error,
         }
     }
+}
 
-    let multi_len = last_line_start.unwrap_or(0);
+/// Finds a TypeScript directive and its following description.
+pub fn find_ts_comment_directive(
+    raw: &str,
+    single_line: bool,
+) -> Option<(TsCommentDirective, &str)> {
+    let prefix = "@ts-";
+
+    if !raw.contains(prefix) {
+        return None;
+    }
+
+    let multi_len = if single_line { 0 } else { raw.rfind('\n').map_or(0, |i| i + 1) };
     let line = &raw[multi_len..];
 
     // Check the content before the prefix
@@ -323,18 +326,17 @@ pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, 
     }
 
     let start = index + prefix.len();
-    for directive in ["expect-error", "ignore", "nocheck", "check"] {
-        if line.get(start..start + directive.len()) == Some(directive) {
+    for directive in [
+        TsCommentDirective::ExpectError,
+        TsCommentDirective::Ignore,
+        TsCommentDirective::NoCheck,
+        TsCommentDirective::Check,
+    ] {
+        let name = directive.as_str();
+        if line.get(start..start + name.len()) == Some(name) {
             let start = multi_len + index + prefix.len();
-            let end = start + directive.len();
-            let (directive, description) = (&raw[start..end], &raw[end..]);
-
-            debug_assert!(
-                matches!(directive, "expect-error" | "ignore" | "nocheck" | "check"),
-                "Expected one of ignore/check/nocheck/expect-error, got {directive}",
-            );
-
-            return Some((directive, description));
+            let end = start + name.len();
+            return Some((directive, &raw[end..]));
         }
     }
     None
@@ -1050,4 +1052,16 @@ if (false) {
     Tester::new(BanTsComment::NAME, BanTsComment::PLUGIN, pass, fail)
         .expect_fix(fix)
         .test_and_snapshot();
+}
+
+#[test]
+fn invalid_description_format_is_rejected() {
+    let result = BanTsComment::from_configuration(serde_json::json!([{
+        "ts-expect-error": {
+            "descriptionFormat": "^(unclosed",
+        },
+    }]));
+
+    let error = result.expect_err("invalid descriptionFormat should be rejected");
+    assert!(error.to_string().contains("regex parse error"), "unexpected error: {error}");
 }

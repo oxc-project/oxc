@@ -1,6 +1,7 @@
 use std::{alloc::Layout, fmt::Debug, mem, ptr};
 
 use oxc_allocator::arena::Arena;
+use oxc_data_structures::types::implements;
 
 #[test]
 fn can_iterate_over_allocated_things() {
@@ -229,10 +230,11 @@ fn test_chunk_capacity() {
     assert!(b.chunk_capacity() < orig_capacity);
 }
 
+// `Arena` uses `Cell`s internally, so sharing one between threads would be undefined behavior
 #[test]
-fn arena_is_send() {
-    fn assert_send(_: impl Send) {}
-    assert_send(Arena::new());
+fn arena_is_send_but_not_sync() {
+    assert!(implements!(Arena: Send));
+    assert!(implements!(Arena: !Sync));
 }
 
 #[test]

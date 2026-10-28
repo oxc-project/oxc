@@ -101,6 +101,7 @@ declare_oxc_lint!(
     NoSelfAssign,
     eslint,
     correctness,
+    recommended,
     config = NoSelfAssign,
     version = "0.0.5",
     short_description = "Disallow assignments where both sides are exactly the same.",
@@ -108,7 +109,7 @@ declare_oxc_lint!(
 
 impl Rule for NoSelfAssign {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -296,7 +297,7 @@ impl NoSelfAssign {
                 else {
                     return;
                 };
-                if key.static_name().is_some_and(|name| name == id1.binding.name)
+                if key.is_specific_static_name(id1.binding.name.as_str())
                     && let Expression::Identifier(id2) = expr.without_parentheses()
                     && id1.binding.name == id2.name
                 {
@@ -333,6 +334,12 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        (r#"obj["\uD800"] = obj["\uDC00"]"#, None),
+        (r#"obj["\uD800"] = obj["\uD801"]"#, None),
+        (r#"obj["\uD800"] = obj["\uFFFD"]"#, None),
+        (r#"obj["\uD800"] = obj[key]"#, None),
+        (r#"obj["\uD800"] = other["\uD800"]"#, None),
+        (r#"obj["\uDC00\uD800"] = obj["𐀀"]"#, None),
         ("var a = a", None),
         ("a = b", None),
         ("a += a", None),
@@ -387,6 +394,10 @@ fn test() {
     ];
 
     let fail = vec![
+        (r#"obj["\uD800"] = obj["\uD800"]"#, None),
+        (r#"obj["\uDC00"] = obj[`\uDC00`]"#, None),
+        (r#"obj[`a\uD800b`] = obj["a\uD800b"]"#, None),
+        (r#"obj["\uD800\uDC00"] = obj["𐀀"]"#, None),
         ("a = a", None),
         ("[a] = [a]", None),
         ("[a, b] = [a, b]", None),

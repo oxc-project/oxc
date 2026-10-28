@@ -1,0 +1,15 @@
+// Less merge markers glue to the property name, leaving only `:`
+// (Prettier 3.9.5, prettier#19517)
+a {
+  box-shadow  +  : 0 0 1px #000;
+  box-shadow+: inset 0 0 10px #555;
+  background+_: url(two.png);
+  // SPACED space-merge: valid Less, but postcss-less cannot parse it,
+  // so this line has no Prettier oracle; it follows the same rule
+  background  +_  : url(three.png);
+}
+.merge {
+  @prefix: pre;
+  @{prefix}-property-ish+       :high;
+  pre-property-ish    +: middle;
+}

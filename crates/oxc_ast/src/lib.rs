@@ -46,7 +46,9 @@ mod ast_impl;
 mod ast_kind_impl;
 pub mod builder;
 pub mod precedence;
+mod static_property_name;
 mod trivia;
+pub use static_property_name::StaticPropertyName;
 
 #[cfg(feature = "serialize")]
 mod serialize;
@@ -56,15 +58,14 @@ mod generated {
 
     #[cfg(debug_assertions)]
     mod assert_layouts;
-    #[cfg(not(feature = "disable_old_builder"))]
     mod ast_builder;
-    mod builder_methods;
     mod derive_clone_in;
     mod derive_content_eq;
     mod derive_dummy;
     #[cfg(feature = "serialize")]
     mod derive_estree;
     mod derive_get_address;
+    mod derive_get_node_id;
     mod derive_get_span;
     mod derive_get_span_mut;
     mod derive_replace_with;
@@ -75,11 +76,9 @@ mod generated {
 }
 pub use generated::ast_kind;
 
-pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPosition};
+pub use ast::comment::{Comment, CommentContent, CommentKind, CommentPlacement, CommentPosition};
 pub use ast_kind::{AstKind, AstType};
-pub use ast_kind_impl::{MemberExpressionKind, ModuleDeclarationKind};
-#[cfg(not(feature = "disable_old_builder"))]
-pub use builder::{AstBuilder, NONE};
+pub use ast_kind_impl::{FunctionKind, MemberExpressionKind, ModuleDeclarationKind};
 pub use trivia::{
     CommentsRange, comments_range, get_comment_at, has_comments_between, is_inside_comment,
 };

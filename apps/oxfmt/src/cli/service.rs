@@ -2,19 +2,21 @@ use std::{
     fs,
     path::Path,
     sync::{Arc, mpsc},
-    time::Instant,
+    time::{Duration, Instant},
 };
 
 use cow_utils::CowUtils;
 use rayon::prelude::*;
+use tracing::debug_span;
 
 use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
 
 use super::command::OutputMode;
-use crate::core::{FormatResult, FormatStrategy, SourceFormatter, utils};
+use crate::core::{FormatPlan, FormatResult, SourceFormatter, utils};
 
 pub enum SuccessResult {
-    Changed(String),
+    /// Path with elapsed time, only measured in check mode
+    Changed(String, Option<Duration>),
     Unchanged,
 }
 
@@ -35,15 +37,17 @@ impl FormatService {
     /// Process entries as they are received from the channel
     pub fn run_streaming(
         &self,
-        rx_entry: mpsc::Receiver<FormatStrategy>,
+        rx_entry: mpsc::Receiver<FormatPlan>,
         tx_error: &DiagnosticSender,
         tx_success: &mpsc::Sender<SuccessResult>,
     ) {
-        rx_entry.into_iter().par_bridge().for_each(|strategy| {
+        rx_entry.into_iter().par_bridge().for_each(|plan| {
             let start_time = matches!(self.format_mode, OutputMode::Check).then(Instant::now);
 
-            let path: Arc<Path> = Arc::clone(strategy.path());
-            let Ok(source_text) = utils::read_to_string(&path) else {
+            let path = Arc::clone(&plan.path);
+            let Ok(source_text) = debug_span!("oxfmt::read", path = %path.display())
+                .in_scope(|| utils::read_to_string(&path))
+            else {
                 // This happens if binary file is attempted to be formatted
                 // e.g. `.ts` for MPEG-TS video file
                 let diagnostics = DiagnosticService::wrap_diagnostics(
@@ -62,7 +66,7 @@ impl FormatService {
                 return;
             };
 
-            let (code, is_changed) = match self.formatter.format(&source_text, strategy) {
+            let (code, is_changed) = match self.formatter.format(&source_text, plan) {
                 FormatResult::Success { code, is_changed } => (code, is_changed),
                 FormatResult::Error(diagnostics) => {
                     let errors = DiagnosticService::wrap_diagnostics(
@@ -108,12 +112,8 @@ impl FormatService {
                         .cow_replace('\\', "/")
                         .to_string();
 
-                    if matches!(self.format_mode, OutputMode::Check) {
-                        let elapsed = start_time.unwrap().elapsed().as_millis();
-                        SuccessResult::Changed(format!("{display_path} ({elapsed}ms)"))
-                    } else {
-                        SuccessResult::Changed(display_path)
-                    }
+                    let elapsed = start_time.map(|start| start.elapsed());
+                    SuccessResult::Changed(display_path, elapsed)
                 }
                 _ => SuccessResult::Unchanged,
             };

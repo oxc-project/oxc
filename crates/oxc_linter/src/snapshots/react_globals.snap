@@ -1,0 +1,14 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ react(globals): Cannot reassign variables declared outside of the component/hook
+   ╭─[globals.tsx:5:5]
+ 4 │   const setGlobal = () => {
+ 5 │     someGlobal = true;
+   ·     ─────┬────
+   ·          ╰── `someGlobal` cannot be reassigned
+ 6 │   };
+   ╰────
+  help: Variable `someGlobal` is declared outside of the component/hook. Reassigning this value during render is a side effect which can cause unpredictable behavior. If this variable is used in rendering, use useState instead. Otherwise, update it in an effect
+  note: React Compiler skipped optimizing this component or hook. Additional guidance: https://react.dev/reference/eslint-plugin-react-hooks/lints/globals

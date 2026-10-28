@@ -173,9 +173,9 @@ enum A {
 }
 
 ########## 26
-module 'a'
+module a {}
 ----------
-module 'a';
+module a {}
 
 ########## 27
 declare module 'a'
@@ -309,7 +309,7 @@ import { 'string name' as alias } from 'module-name';
 import defaultExport, { export1 } from 'module-name';
 import defaultExport, * as name from 'module-name';
 import 'module-name';
-import {} from "mod";
+import {} from 'mod';
 export let name1, name2;
 export const name3 = 1, name4 = 2;
 export function functionName() {/* … */}

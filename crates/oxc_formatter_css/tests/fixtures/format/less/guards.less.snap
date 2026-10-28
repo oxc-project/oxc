@@ -23,6 +23,19 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 .guarded(@color) when (@theme = dark) and not (@compat = ie9) {
   color: @color;
 }
+// detached ruleset + typed lookup in a guard
+@config: {
+  option1: true;
+  option2: false;
+}
+.mixin() when (@config[option1] = true) {
+  selected: value;
+}
+.box {
+  .mixin();
+  // whitespace inside a lookup collapses (matching Prettier)
+  v: @config   [   option2];
+}
 
 ==================== Output ====================
 ------------------
@@ -49,6 +62,19 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 .guarded(@color) when (@theme = dark) and not (@compat = ie9) {
   color: @color;
 }
+// detached ruleset + typed lookup in a guard
+@config: {
+  option1: true;
+  option2: false;
+};
+.mixin() when (@config[option1] = true) {
+  selected: value;
+}
+.box {
+  .mixin();
+  // whitespace inside a lookup collapses (matching Prettier)
+  v: @config[option2];
+}
 
 -------------------
 { printWidth: 100 }
@@ -73,6 +99,19 @@ source: crates/oxc_formatter_css/tests/fixtures/mod.rs
 }
 .guarded(@color) when (@theme = dark) and not (@compat = ie9) {
   color: @color;
+}
+// detached ruleset + typed lookup in a guard
+@config: {
+  option1: true;
+  option2: false;
+};
+.mixin() when (@config[option1] = true) {
+  selected: value;
+}
+.box {
+  .mixin();
+  // whitespace inside a lookup collapses (matching Prettier)
+  v: @config[option2];
 }
 
 ===================== End =====================

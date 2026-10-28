@@ -1,7 +1,5 @@
 # externals/webawesome/page/page.styles.ts
 
-> Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md
-
 ## Option 1
 
 `````json
@@ -23,13 +21,29 @@
 -      *
 -    ) {
 +  slot[name]:not(
-+    [name="skip-to-content"],
-+    [name="navigation-toggle"]
-+  )::slotted(*) {
++      [name="skip-to-content"],
++      [name="navigation-toggle"]
++    )::slotted(*) {
      display: flex;
      background-color: var(--wa-color-surface-default);
    }
  
+@@ -188,11 +189,12 @@
+   [part~="body"] {
+     display: grid;
+     min-height: 100%;
+     align-items: flex-start;
+-    grid-template-columns:
+-      minmax(0, var(--menu-width)) minmax(0, var(--main-width))
+-      minmax(0, var(--aside-width));
++    grid-template-columns: minmax(0, var(--menu-width)) minmax(
++        0,
++        var(--main-width)
++      ) minmax(0, var(--aside-width));
+     grid-template-rows: minmax(0, 1fr);
+     grid-template-areas: "menu main aside";
+   }
+   [part~="main"] {
 
 `````
 
@@ -60,9 +74,9 @@ export default css`
   }
 
   slot[name]:not(
-    [name="skip-to-content"],
-    [name="navigation-toggle"]
-  )::slotted(*) {
+      [name="skip-to-content"],
+      [name="navigation-toggle"]
+    )::slotted(*) {
     display: flex;
     background-color: var(--wa-color-surface-default);
   }
@@ -516,10 +530,9 @@ export default css`
     display: grid;
     min-height: 100%;
     align-items: flex-start;
-    grid-template-columns: minmax(0, var(--menu-width)) minmax(
-        0,
-        var(--main-width)
-      ) minmax(0, var(--aside-width));
+    grid-template-columns:
+      minmax(0, var(--menu-width)) minmax(0, var(--main-width))
+      minmax(0, var(--aside-width));
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: "menu main aside";
   }

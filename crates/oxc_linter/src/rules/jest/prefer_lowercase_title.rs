@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::shared::prefer_lowercase_title::{DOCUMENTATION, PreferLowercaseTitleConfig},
-    utils::PossibleJestNode,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -25,12 +26,50 @@ impl Rule for PreferLowercaseTitle {
         PreferLowercaseTitleConfig::from_configuration(value).map(|config| Self(Box::new(config)))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        self.0.run_on_jest_node(possible_jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        self.0.run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
+    }
+}
+
+#[test]
+fn test_escaped_titles() {
+    use crate::tester::Tester;
+
+    let escaped_first_characters = [
+        r"it('\u0046oo\uD800', () => {})",
+        r"it('\x46oo\uD800', () => {})",
+        r"it(`\u{46}oo\uDC00`, () => {})",
+        r"it('\u0046oo', () => {})",
+        r"it('\
+Foo\uD800', () => {})",
+    ];
+    for plugin in ["jest", "vitest"] {
+        for first_only in [true, false] {
+            let config = Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": first_only }]));
+            let mut fix: Vec<_> = escaped_first_characters
+                .iter()
+                .map(|&source| (source, source, config.clone()))
+                .collect();
+            if first_only {
+                fix.push((r"it('Foo\nBar', () => {})", r"it('foo\nBar', () => {})", config));
+            } else {
+                for source in [
+                    r"it('Foo\nBar', () => {})",
+                    r"it(`Foo\${Bar}`, () => {})",
+                    r"it('Foo \uD800', () => {})",
+                ] {
+                    fix.push((source, source, config.clone()));
+                }
+            }
+            Tester::new("prefer-lowercase-title", plugin, Vec::<&str>::new(), vec![])
+                .expect_fix(fix)
+                .test();
+        }
     }
 }
 
@@ -42,6 +81,13 @@ fn test() {
         ("it.each()", None),
         ("it.each()(1)", None),
         ("randomFunction()", None),
+        (r"it('\uD800', function () {})", None),
+        (r"it('\uD800 Foo', function () {})", None),
+        (r"it('foo \uD800 Bar', function () {})", None),
+        (
+            r"it('GET \uD800', function () {})",
+            Some(serde_json::json!([{ "allowedPrefixes": ["GET"] }])),
+        ),
         ("foo.bar()", None),
         ("it()", None),
         ("it(' ', function () {})", None),
@@ -52,6 +98,10 @@ fn test() {
         ("it('foo', function () {})", None),
         ("it(\"foo\", function () {})", None),
         ("it(`foo`, function () {})", None),
+        (
+            "it('some longer description', function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
         ("it(\"<Foo/>\", function () {})", None),
         ("it(\"123 foo\", function () {})", None),
         ("it(42, function () {})", None),
@@ -164,6 +214,14 @@ fn test() {
 
     let fail = vec![
         ("it('Foo', function () {})", None),
+        ("it(\"Foo's bar\", function () {})", None),
+        ("it('Foo \"bar\"', function () {})", None),
+        (r"it('Foo \uD800', function () {})", None),
+        (r"it(`Foo \uDC00`, function () {})", None),
+        (
+            r"it('\uD800 Foo', function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
         ("xit('Foo', function () {})", None),
         ("it(\"Foo\", function () {})", None),
         ("it(`Foo`, function () {})", None),
@@ -182,6 +240,10 @@ fn test() {
             None,
         ),
         ("describe(`Some longer description`, function () {})", None),
+        (
+            "describe(`some longer Description`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
+        ),
         ("fdescribe(`Some longer description`, function () {})", None),
         ("it.each(['green', 'black'])('Should return %', () => {})", None),
         ("describe.each(['green', 'black'])('Should return %', () => {})", None),
@@ -238,6 +300,8 @@ fn test() {
 
     let fix = vec![
         ("it('Foo', function () {})", "it('foo', function () {})", None),
+        (r"it('Foo \uD800', function () {})", r"it('foo \uD800', function () {})", None),
+        (r"it(`Foo \uDC00`, function () {})", r"it(`foo \uDC00`, function () {})", None),
         ("xit('Foo', function () {})", "xit('foo', function () {})", None),
         ("it(\"Foo\", function () {})", "it(\"foo\", function () {})", None),
         ("it(`Foo`, function () {})", "it(`foo`, function () {})", None),
@@ -263,6 +327,11 @@ fn test() {
             "describe(`Some longer description`, function () {})",
             "describe(`some longer description`, function () {})",
             None,
+        ),
+        (
+            "describe(`some longer Description`, function () {})",
+            "describe(`some longer description`, function () {})",
+            Some(serde_json::json!([{ "lowercaseFirstCharacterOnly": false }])),
         ),
         (
             "fdescribe(`Some longer description`, function () {})",

@@ -1,0 +1,103 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* oxc-project/oxc#25223: Tailwind v4 theme() paths in grid track lists */
+.tracks {
+  grid-template-rows: theme(spacing.4) auto theme(spacing.5);
+  grid-template-columns: theme(colors.red.500) 1fr;
+}
+
+/* glued plugin words at the TOP level of a grid value stay one word */
+.top-level {
+  grid-template-rows: sandstone.10 auto;
+}
+
+/* glued solidus is one word; spaced solidus keeps its space */
+.template {
+  grid-template: 1fr/2fr;
+  grid-template: "a" 1fr / auto;
+}
+
+/* multi-line grid values still preserve source line structure */
+.lines {
+  grid-template-columns:
+    [full-start] minmax(1em, 1fr)
+    [main-end] theme(spacing.4)
+    [full-end];
+}
+
+/* ...but INSIDE function arguments the line structure is NOT preserved: re-wrap */
+.args {
+  grid-template-columns: repeat(2, minmax(0, 1fr)
+    minmax(0, 2fr));
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* oxc-project/oxc#25223: Tailwind v4 theme() paths in grid track lists */
+.tracks {
+  grid-template-rows: theme(spacing.4) auto theme(spacing.5);
+  grid-template-columns: theme(colors.red.500) 1fr;
+}
+
+/* glued plugin words at the TOP level of a grid value stay one word */
+.top-level {
+  grid-template-rows: sandstone.10 auto;
+}
+
+/* glued solidus is one word; spaced solidus keeps its space */
+.template {
+  grid-template: 1fr/2fr;
+  grid-template: "a" 1fr / auto;
+}
+
+/* multi-line grid values still preserve source line structure */
+.lines {
+  grid-template-columns:
+    [full-start] minmax(1em, 1fr)
+    [main-end] theme(spacing.4)
+    [full-end];
+}
+
+/* ...but INSIDE function arguments the line structure is NOT preserved: re-wrap */
+.args {
+  grid-template-columns: repeat(2, minmax(0, 1fr) minmax(0, 2fr));
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* oxc-project/oxc#25223: Tailwind v4 theme() paths in grid track lists */
+.tracks {
+  grid-template-rows: theme(spacing.4) auto theme(spacing.5);
+  grid-template-columns: theme(colors.red.500) 1fr;
+}
+
+/* glued plugin words at the TOP level of a grid value stay one word */
+.top-level {
+  grid-template-rows: sandstone.10 auto;
+}
+
+/* glued solidus is one word; spaced solidus keeps its space */
+.template {
+  grid-template: 1fr/2fr;
+  grid-template: "a" 1fr / auto;
+}
+
+/* multi-line grid values still preserve source line structure */
+.lines {
+  grid-template-columns:
+    [full-start] minmax(1em, 1fr)
+    [main-end] theme(spacing.4)
+    [full-end];
+}
+
+/* ...but INSIDE function arguments the line structure is NOT preserved: re-wrap */
+.args {
+  grid-template-columns: repeat(2, minmax(0, 1fr) minmax(0, 2fr));
+}
+
+===================== End =====================

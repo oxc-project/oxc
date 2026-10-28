@@ -96,3 +96,39 @@ source: crates/oxc_linter/src/tester.rs
  7 │                     }
    ╰────
   help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:4:38]
+ 3 │                       const handlers = {
+ 4 │                         click: () => this.props.click(),
+   ·                                      ────
+ 5 │                       };
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:4:35]
+ 3 │                       class C {
+ 4 │                         accessor [this.props.name] = 0;
+   ·                                   ────
+ 5 │                       }
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+   ╭─[no_this_in_sfc.tsx:7:31]
+ 6 │                             ref={ref => {
+ 7 │                               this.itemRef = ref;
+   ·                               ────
+ 8 │                             }}
+   ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`
+
+  ⚠ react(no-this-in-sfc): Stateless functional components should not use `this`
+    ╭─[no_this_in_sfc.tsx:9:33]
+  8 │                             }}
+  9 │                             {...this.getBasicProps()}
+    ·                                 ────
+ 10 │                           >
+    ╰────
+  help: Use props and context directly as function parameters instead of accessing them through `this`

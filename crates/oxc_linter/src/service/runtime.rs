@@ -340,10 +340,11 @@ impl Runtime {
         }
 
         let file_result = file_system.read_to_arena_str(path, allocator).map_err(|e| {
-            Error::new(OxcDiagnostic::error(format!(
+            OxcDiagnostic::error(format!(
                 "Failed to open file {} with error \"{e}\"",
                 path.display()
-            )))
+            ))
+            .into()
         });
         Some(match file_result {
             Ok(source_text) => Ok((source_type, source_text)),
@@ -729,10 +730,13 @@ impl Runtime {
                             && let Err(error) = file_system.write_file(path, new_source_text)
                         {
                             tx_error
-                                .send(vec![Error::new(OxcDiagnostic::error(format!(
-                                    "Failed to write file {} with error \"{error}\"",
-                                    path.display()
-                                )))])
+                                .send(vec![
+                                    OxcDiagnostic::error(format!(
+                                        "Failed to write file {} with error \"{error}\"",
+                                        path.display()
+                                    ))
+                                    .into(),
+                                ])
                                 .unwrap();
                         }
                     });

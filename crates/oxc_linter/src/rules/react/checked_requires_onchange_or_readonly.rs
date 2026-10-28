@@ -155,27 +155,23 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
                     obj_expr.properties.iter().fold(
                         (None, None, true),
                         |(checked_span, default_checked_span, is_missing_property), prop| {
-                            if let ObjectPropertyKind::ObjectProperty(object_prop) = prop {
-                                if let Some(name) = object_prop.key.static_name() {
-                                    (
-                                        if checked_span.is_none() && name == "checked" {
-                                            Some(object_prop.span)
-                                        } else {
-                                            checked_span
-                                        },
-                                        if default_checked_span.is_none()
-                                            && name == "defaultChecked"
-                                        {
-                                            Some(object_prop.span)
-                                        } else {
-                                            default_checked_span
-                                        },
-                                        is_missing_property
-                                            && !(name == "onChange" || name == "readOnly"),
-                                    )
-                                } else {
-                                    (checked_span, default_checked_span, is_missing_property)
-                                }
+                            if let ObjectPropertyKind::ObjectProperty(object_prop) = prop
+                                && let Some(name) = object_prop.key.static_name()
+                            {
+                                (
+                                    if checked_span.is_none() && name == "checked" {
+                                        Some(object_prop.span)
+                                    } else {
+                                        checked_span
+                                    },
+                                    if default_checked_span.is_none() && name == "defaultChecked" {
+                                        Some(object_prop.span)
+                                    } else {
+                                        default_checked_span
+                                    },
+                                    is_missing_property
+                                        && !(name == "onChange" || name == "readOnly"),
+                                )
                             } else {
                                 (checked_span, default_checked_span, is_missing_property)
                             }
@@ -202,7 +198,7 @@ impl Rule for CheckedRequiresOnchangeOrReadonly {
     }
 
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 }
 

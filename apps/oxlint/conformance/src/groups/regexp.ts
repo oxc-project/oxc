@@ -60,8 +60,8 @@ const group: TestGroup = {
 
     // Skip stand-alone tests that don't use `RuleTester` in test file for `no-useless-flag` rule
     if (
-      ruleName === "Don't conflict even if using the rules together." &&
-      err.message === "Test case was not run with `RuleTester`"
+      ruleName === "Don't conflict even if using the rules together."
+      && err.message === "Test case was not run with `RuleTester`"
     ) {
       return true;
     }
@@ -193,9 +193,9 @@ function parseSnapshot(ruleName: string): SnapshotCase[] {
     const firstLineExpected = `Test: ${ruleName} >> invalid`;
     const firstLine = lines[0];
     assert(
-      firstLine === firstLineExpected ||
-        (firstLine.startsWith(firstLineExpected) &&
-          firstLine.slice(firstLineExpected.length).startsWith(" >>> ")),
+      firstLine === firstLineExpected
+        || (firstLine.startsWith(firstLineExpected)
+          && firstLine.slice(firstLineExpected.length).startsWith(" >>> ")),
       "Invalid header",
     );
 

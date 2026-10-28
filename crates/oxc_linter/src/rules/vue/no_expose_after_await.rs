@@ -1,12 +1,11 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, FunctionKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, BindingPattern, CallExpression, ChainElement,
-        ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, ObjectPropertyKind,
-        Program, Statement,
+        ExportDefaultDeclarationKind, Expression, Function, ObjectExpression, Program, Statement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
@@ -58,6 +57,7 @@ declare_oxc_lint!(
     NoExposeAfterAwait,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Disallow asynchronously registered `expose`.",
 );
@@ -97,22 +97,14 @@ impl Rule for NoExposeAfterAwait {
 }
 
 fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(setup_prop) = obj_expr.properties.iter().find_map(|prop| {
-        let ObjectPropertyKind::ObjectProperty(obj_prop) = prop else {
-            return None;
-        };
-        obj_prop.key.static_name().is_some_and(|name| name == "setup").then_some(obj_prop)
-    }) else {
+    let Some(setup_prop) = obj_expr.find_property("setup") else {
         return;
     };
 
-    let (params, body) = match &setup_prop.value {
-        Expression::FunctionExpression(func) => (&func.params, func.body.as_ref()),
-        Expression::ArrowFunctionExpression(arrow) => (&arrow.params, Some(&arrow.body)),
+    let (params, function) = match &setup_prop.value {
+        Expression::FunctionExpression(func) => (&func.params, FunctionKind::Function(func)),
+        Expression::ArrowFunctionExpression(arrow) => (&arrow.params, FunctionKind::Arrow(arrow)),
         _ => return,
-    };
-    let Some(body) = body else {
-        return;
     };
 
     let Some(second_param) = params.items.get(1) else {
@@ -142,7 +134,13 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
 
     let scoping = ctx.scoping();
     let mut visitor = ExposeAfterAwaitVisitor::new(scoping, binding);
-    visitor.visit_function_body(body);
+    match function {
+        FunctionKind::Function(func) => {
+            let Some(body) = func.body.as_deref() else { return };
+            visitor.visit_function_body(body);
+        }
+        FunctionKind::Arrow(arrow) => visitor.visit_arrow_function_body(&arrow.body),
+    }
 
     visitor.errors.iter().for_each(|(span, name)| {
         ctx.diagnostic(no_expose_after_await_diagnostic(*span, name));
@@ -187,7 +185,7 @@ struct AwaitDetector {
     found: bool,
 }
 
-impl<'a> Visit<'a> for AwaitDetector {
+impl<'a> VisitJs<'a> for AwaitDetector {
     fn visit_await_expression(&mut self, _: &AwaitExpression) {
         self.found = true;
     }
@@ -246,14 +244,14 @@ impl<'a> ExposeAfterAwaitVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for ExposeAfterAwaitVisitor<'a> {
+impl<'a> VisitJs<'a> for ExposeAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         self.found = true;
     }
 
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         if !self.found {
-            walk::walk_call_expression(self, call_expr);
+            walk_js::walk_call_expression(self, call_expr);
             return;
         }
 
@@ -261,7 +259,7 @@ impl<'a> Visit<'a> for ExposeAfterAwaitVisitor<'a> {
             self.errors.push((call_expr.span, "expose".to_string()));
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}

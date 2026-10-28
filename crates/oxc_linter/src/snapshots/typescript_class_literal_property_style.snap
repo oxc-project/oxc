@@ -39,6 +39,15 @@ source: crates/oxc_linter/src/tester.rs
   help: Replace this getter with a readonly field initialized to the returned literal.
 
   ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
+   ╭─[class_literal_property_style.tsx:3:19]
+ 2 │             class Mx {
+ 3 │               get foo(): string {
+   ·                   ───
+ 4 │                 return 'x';
+   ╰────
+  help: Replace this getter with a readonly field initialized to the returned literal.
+
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using readonly fields.
    ╭─[class_literal_property_style.tsx:3:27]
  2 │             class Mx {
  3 │               public get [myValue]() {
@@ -70,6 +79,15 @@ source: crates/oxc_linter/src/tester.rs
  2 │             class Mx {
  3 │               readonly p1 = 'hello world';
    ·                        ──
+ 4 │             }
+   ╰────
+  help: Replace this readonly literal field with a getter.
+
+  ⚠ typescript(class-literal-property-style): Literals should be exposed using getters.
+   ╭─[class_literal_property_style.tsx:3:24]
+ 2 │             class Mx {
+ 3 │               readonly n: 1 | 2 = 1;
+   ·                        ─
  4 │             }
    ╰────
   help: Replace this readonly literal field with a getter.

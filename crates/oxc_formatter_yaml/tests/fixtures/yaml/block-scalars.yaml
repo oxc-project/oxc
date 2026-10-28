@@ -1,0 +1,14 @@
+clip: |
+  one
+
+  two
+
+
+strip: >-
+  folded
+  text
+keep: |+
+  kept
+
+indented: |2
+    explicit indent

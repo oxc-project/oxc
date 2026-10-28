@@ -54,6 +54,7 @@ declare_oxc_lint!(
     PreferMathTrunc,
     unicorn,
     pedantic,
+    recommended,
     suggestion,
     version = "0.0.18",
     short_description = "Enforce the use of `Math.trunc` instead of bitwise operators.",
@@ -93,7 +94,6 @@ impl Rule for PreferMathTrunc {
                     bin_expr.operator,
                     BinaryOperator::BitwiseOR
                         | BinaryOperator::ShiftRight
-                        | BinaryOperator::ShiftRightZeroFill
                         | BinaryOperator::ShiftLeft
                         | BinaryOperator::BitwiseXOR
                 ) {
@@ -115,7 +115,6 @@ impl Rule for PreferMathTrunc {
                     assignment_expr.operator,
                     AssignmentOperator::BitwiseOR
                         | AssignmentOperator::ShiftRight
-                        | AssignmentOperator::ShiftRightZeroFill
                         | AssignmentOperator::ShiftLeft
                         | AssignmentOperator::BitwiseXOR
                 ) {
@@ -199,9 +198,12 @@ fn test() {
         "const foo = 1.4 & 0",
         "const foo = ~3.9;",
         "const foo = 1.1 >> 1",
+        "const foo = 1.1 >>> 0",
         "const foo = 0 << 1",
         "let foo = 0;
             foo |= 1;",
+        "let foo = 1.1;
+            foo >>>= 0;",
         "let foo = 1.2; // comment 1
             foo |= 1; // comment 2 and 1.2 | 0",
     ];

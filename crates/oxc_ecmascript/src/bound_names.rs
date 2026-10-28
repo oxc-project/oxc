@@ -1,8 +1,7 @@
 use oxc_ast::ast::{
     ArrayPattern, AssignmentPattern, BindingIdentifier, BindingPattern, BindingRestElement, Class,
-    Declaration, ExportNamedDeclaration, FormalParameter, FormalParameters, Function,
-    ImportDeclaration, ImportDeclarationSpecifier, ModuleDeclaration, ObjectPattern,
-    VariableDeclaration,
+    Declaration, ExportDeclaration, FormalParameter, FormalParameters, Function, ImportDeclaration,
+    ImportDeclarationSpecifier, ModuleDeclaration, ObjectPattern, VariableDeclaration,
 };
 
 /// [`BoundName`](https://tc39.es/ecma262/#sec-static-semantics-boundnames)
@@ -133,7 +132,7 @@ impl<'a> BoundNames<'a> for ModuleDeclaration<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
         match self {
             ModuleDeclaration::ImportDeclaration(decl) => decl.bound_names(f),
-            ModuleDeclaration::ExportNamedDeclaration(decl) => decl.bound_names(f),
+            ModuleDeclaration::ExportDeclaration(decl) => decl.bound_names(f),
             _ => {}
         }
     }
@@ -159,10 +158,8 @@ impl<'a> BoundNames<'a> for ImportDeclaration<'a> {
     }
 }
 
-impl<'a> BoundNames<'a> for ExportNamedDeclaration<'a> {
+impl<'a> BoundNames<'a> for ExportDeclaration<'a> {
     fn bound_names<F: FnMut(&BindingIdentifier<'a>)>(&self, f: &mut F) {
-        if let Some(decl) = &self.declaration {
-            decl.bound_names(f);
-        }
+        self.declaration.bound_names(f);
     }
 }

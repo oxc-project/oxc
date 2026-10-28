@@ -13,18 +13,20 @@ just submodules
 ```bash
 # full run
 cargo coverage
-cargo coverage js # for test262
-cargo coverage babel # for babel
-cargo coverage ts # for typescript
+
+# run a single tool against its supported conformance suites
+cargo coverage parser
+cargo coverage transformer
+cargo coverage minifier
 
 # run in watch
-cargo watch -x 'coverage js'
+cargo watch -x 'coverage minifier'
 
 # filter for a file path
-cargo watch -x 'coverage js --filter filter-file-path'
+cargo watch -x 'coverage minifier --filter filter-file-path'
 
 # find crash scene by turning off rayon and print out the test cases in serial
-cargo coverage -- --debug
+cargo coverage --debug
 
 # Run after submodules are updated
 UPDATE_SNAPSHOT=1 just c

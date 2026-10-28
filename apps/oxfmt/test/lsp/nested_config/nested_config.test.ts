@@ -60,6 +60,29 @@ describe("LSP nested config", () => {
     ).toMatchSnapshot();
   });
 
+  it("should ignore nested config when disableNestedConfig is set", async () => {
+    const rootDir = join(FIXTURES_DIR, "nested-config");
+    const rootUri = pathToFileURL(rootDir).href;
+    await using client = createLspConnection();
+    await client.initialize([{ uri: rootUri, name: "test" }], {}, [
+      { workspaceUri: rootUri, options: { "fmt.disableNestedConfig": true } },
+    ]);
+
+    // sub/test.ts: root config applies (semi: true, singleQuote: true), nested config is ignored
+    expect(
+      await formatFixture(FIXTURES_DIR, "nested-config/sub/test.ts", "typescript", client),
+    ).toMatchSnapshot();
+    // sub/ignored.generated.ts: nested ignorePatterns no longer applies, formatted with root config
+    expect(
+      await formatFixture(
+        FIXTURES_DIR,
+        "nested-config/sub/ignored.generated.ts",
+        "typescript",
+        client,
+      ),
+    ).toMatchSnapshot();
+  });
+
   it("should ignore nested config when explicit configPath is set", async () => {
     const rootDir = join(FIXTURES_DIR, "nested-config-explicit");
     const rootUri = pathToFileURL(rootDir).href;

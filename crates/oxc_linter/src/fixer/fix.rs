@@ -35,6 +35,11 @@ bitflags! {
         ///   rule category.
         const Dangerous = 1 << 2;
 
+        /// Mark a fix or suggestion as an "ignore this section / line" fix. These are
+        /// used to automatically add `// oxc-disable` comments to the source code.
+        /// Only used by `--lsp`.
+        const IgnoreFix = 1 << 3;
+
         const SafeFix = Self::Fix.bits();
         const SafeFixOrSuggestion = Self::Fix.bits() | Self::Suggestion.bits();
         const DangerousFix = Self::Dangerous.bits() | Self::Fix.bits();
@@ -384,6 +389,22 @@ impl PossibleFixes {
             PossibleFixes::Single(fix) => fix.span,
             PossibleFixes::Multiple(fixes) => {
                 fixes.iter().map(|fix| fix.span).reduce(Span::merge).unwrap_or(SPAN)
+            }
+        }
+    }
+
+    pub(crate) fn extend_fix(&mut self, fix: Vec<Fix>) {
+        match self {
+            PossibleFixes::None => {
+                *self = PossibleFixes::Multiple(fix);
+            }
+            PossibleFixes::Single(fix1) => {
+                let mut fixes = vec![std::mem::take(fix1)];
+                fixes.extend(fix);
+                *self = PossibleFixes::Multiple(fixes);
+            }
+            PossibleFixes::Multiple(fixes1) => {
+                fixes1.extend(fix);
             }
         }
     }

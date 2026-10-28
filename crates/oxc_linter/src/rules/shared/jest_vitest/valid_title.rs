@@ -9,8 +9,9 @@ use oxc_ast::{
     ast::{Argument, BinaryExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSChar, JSStr};
 
 use crate::{
     context::LintContext,
@@ -120,8 +121,9 @@ pub struct ValidTitleConfig {
     ignore_type_of_describe_name: bool,
     /// Whether to allow arguments as titles.
     allow_arguments: bool,
-    /// A list of disallowed words, which will not be allowed in titles.
-    disallowed_words: Vec<CompactStr>,
+    /// Matcher for disallowed words, which will not be allowed in titles.
+    /// `None` when no disallowed words are configured.
+    disallowed_words_reg: Option<Regex>,
     /// Whether to ignore leading and trailing spaces in titles.
     ignore_spaces: bool,
     /// Patterns for titles that must not match.
@@ -147,11 +149,17 @@ impl ValidTitleConfig {
         let ignore_type_of_describe_name = get_as_bool("ignoreTypeOfDescribeName");
         let allow_arguments = get_as_bool("allowArguments");
         let ignore_spaces = get_as_bool("ignoreSpaces");
-        let disallowed_words = config
+        let disallowed_words: Vec<&str> = config
             .and_then(|v| v.get("disallowedWords"))
             .and_then(|v| v.as_array())
-            .map(|v| v.iter().filter_map(|v| v.as_str().map(CompactStr::from)).collect())
+            .map(|v| v.iter().filter_map(|v| v.as_str()).collect())
             .unwrap_or_default();
+        let disallowed_words_reg = (!disallowed_words.is_empty()).then(|| {
+            let disallowed_words_pattern =
+                disallowed_words.iter().map(|word| regex::escape(word)).join("|");
+            Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
+                .expect("escaped disallowed words should form a valid regex")
+        });
         let must_not_match_patterns = config
             .and_then(|v| v.get("mustNotMatch"))
             .and_then(compile_matcher_patterns)
@@ -165,33 +173,34 @@ impl ValidTitleConfig {
             ignore_type_of_test_name,
             ignore_type_of_describe_name,
             allow_arguments,
-            disallowed_words,
+            disallowed_words_reg,
             ignore_spaces,
             must_not_match_patterns,
             must_match_patterns,
         })
     }
 
-    pub fn run_rule<'a>(
-        config: &ValidTitleConfig,
-        possible_jest_fn_node: &PossibleJestNode<'a, '_>,
-        ctx: &LintContext<'a>,
-    ) {
-        let node = possible_jest_fn_node.node;
+    pub fn run_rule<'a>(config: &ValidTitleConfig, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_fn_node, ctx)
+        let Some(possible_jest_fn_node) =
+            PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &possible_jest_fn_node, ctx)
         else {
             return;
         };
 
-        if !matches!(
-            jest_fn_call.kind,
-            JestFnKind::General(JestGeneralFnKind::Describe | JestGeneralFnKind::Test)
-        ) {
-            return;
-        }
+        let need_report_name = match jest_fn_call.kind {
+            JestFnKind::General(JestGeneralFnKind::Test) => !config.ignore_type_of_test_name,
+            JestFnKind::General(JestGeneralFnKind::Describe) => {
+                !config.ignore_type_of_describe_name
+            }
+            _ => return,
+        };
 
         // Check if extend keyword has been used (vitest feature)
         if let Some(member) = jest_fn_call.members.first()
@@ -216,18 +225,10 @@ impl ValidTitleConfig {
             return;
         }
 
-        let need_report_name = match jest_fn_call.kind {
-            JestFnKind::General(JestGeneralFnKind::Test) => !config.ignore_type_of_test_name,
-            JestFnKind::General(JestGeneralFnKind::Describe) => {
-                !config.ignore_type_of_describe_name
-            }
-            _ => unreachable!(),
-        };
-
         match arg {
             Argument::StringLiteral(string_literal) => {
                 validate_title(
-                    &string_literal.value,
+                    string_literal.value,
                     string_literal.span,
                     config,
                     &jest_fn_call.name,
@@ -243,10 +244,10 @@ impl ValidTitleConfig {
                     return;
                 }
 
-                if let Some(quasi) = tagged_template.quasi.single_quasi() {
+                if tagged_template.quasi.is_no_substitution_template() {
                     validate_title(
-                        quasi.as_str(),
-                        tagged_template.span,
+                        tagged_template.quasi.quasis[0].value.raw.into(),
+                        tagged_template.quasi.span,
                         config,
                         &jest_fn_call.name,
                         ctx,
@@ -255,13 +256,7 @@ impl ValidTitleConfig {
             }
             Argument::TemplateLiteral(template_literal) => {
                 if let Some(quasi) = template_literal.single_quasi() {
-                    validate_title(
-                        quasi.as_str(),
-                        template_literal.span,
-                        config,
-                        &jest_fn_call.name,
-                        ctx,
-                    );
+                    validate_title(quasi, template_literal.span, config, &jest_fn_call.name, ctx);
                 }
             }
             Argument::BinaryExpression(binary_expr) => {
@@ -395,8 +390,30 @@ fn compile_matcher_pattern(pattern: MatcherPattern) -> Option<CompiledMatcherAnd
     }
 }
 
+fn can_trim_raw_title(cooked: impl Iterator<Item = JSChar>, raw: &str) -> bool {
+    whitespace_lens(cooked) == whitespace_lens(raw.chars().map(JSChar::from))
+}
+
+/// Return the byte lengths of the leading and trailing whitespace.
+/// A lone surrogate is not whitespace.
+fn whitespace_lens(chars: impl Iterator<Item = JSChar>) -> (usize, usize) {
+    let (mut leading, mut trailing, mut seen_other) = (0, 0, false);
+    for c in chars {
+        if c.to_char().is_some_and(char::is_whitespace) {
+            trailing += c.len_bytes();
+            if !seen_other {
+                leading += c.len_bytes();
+            }
+        } else {
+            seen_other = true;
+            trailing = 0;
+        }
+    }
+    (leading, trailing)
+}
+
 fn validate_title(
-    title: &str,
+    title: JSStr<'_>,
     span: Span,
     config: &ValidTitleConfig,
     name: &str,
@@ -407,44 +424,52 @@ fn validate_title(
         return;
     }
 
-    if !config.disallowed_words.is_empty() {
-        let disallowed_words_pattern =
-            config.disallowed_words.iter().map(|word| regex::escape(word)).join("|");
-        let disallowed_words_reg = Regex::new(&format!(r"(?iu)\b(?:{disallowed_words_pattern})\b"))
-            .expect("escaped disallowed words should form a valid regex");
-
-        if let Some(matched) = disallowed_words_reg.find(title) {
-            ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
-        }
+    // A title with a lone surrogate matches no disallowed word.
+    if let Some(disallowed_words_reg) = &config.disallowed_words_reg
+        && let Some(utf8_title) = title.as_str()
+        && let Some(matched) = disallowed_words_reg.find(utf8_title)
+    {
+        ctx.diagnostic(disallowed_word_diagnostic(matched.as_str(), span));
         return;
     }
 
-    let trimmed_title = title.trim();
-    if !config.ignore_spaces && trimmed_title != title {
-        ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
-            let inner_span = span.shrink(1);
-            let raw_text = fixer.source_range(inner_span);
-            let trimmed_raw = raw_text.trim().to_string();
-            fixer.replace(inner_span, trimmed_raw)
-        });
+    if !config.ignore_spaces
+        && (title.starts_with(char::is_whitespace) || title.ends_with(char::is_whitespace))
+    {
+        let inner_span = span.shrink(1);
+        let raw_text = ctx.source_range(inner_span);
+        if can_trim_raw_title(title.chars(), raw_text) {
+            ctx.diagnostic_with_fix(accidental_space_diagnostic(span), |fixer| {
+                fixer.replace(inner_span, raw_text.trim().to_string())
+            });
+        } else {
+            // Escaped whitespace cannot be removed by trimming the raw source text.
+            ctx.diagnostic(accidental_space_diagnostic(span));
+        }
     }
 
     let un_prefixed_name = name.trim_start_matches(['f', 'x']);
-    let Some(first_word) = title.split(' ').next() else {
-        return;
-    };
+    // The first word is the text before the first space, or the whole title.
+    let first_word_len = title.find(' ').unwrap_or(title.len());
 
-    if first_word == un_prefixed_name {
-        ctx.diagnostic_with_fix(duplicate_prefix_diagnostic(span), |fixer| {
-            // Use raw source text to preserve escape sequences
-            let inner_span = span.shrink(1);
-            let raw_text = fixer.source_range(inner_span);
-            // Find the first space in raw text to avoid byte offset issues
-            // if the prefix word ever contains escapable characters
-            let space_pos = raw_text.find(' ').unwrap_or(raw_text.len());
-            let replaced_raw = raw_text[space_pos..].trim().to_string();
-            fixer.replace(inner_span, replaced_raw)
-        });
+    if first_word_len == un_prefixed_name.len() && title.starts_with(un_prefixed_name) {
+        let inner_span = span.shrink(1);
+        let raw_text = ctx.source_range(inner_span);
+        if let Some(unprefixed_raw) =
+            raw_text.strip_prefix(un_prefixed_name).and_then(|rest| rest.strip_prefix(' '))
+            && first_word_len < title.len()
+            && can_trim_raw_title(
+                title.chars().skip(un_prefixed_name.chars().count() + 1),
+                unprefixed_raw,
+            )
+        {
+            ctx.diagnostic_with_fix(duplicate_prefix_diagnostic(span), |fixer| {
+                fixer.replace(inner_span, unprefixed_raw.trim().to_string())
+            });
+        } else {
+            // Escapes in the prefix or whitespace can make trimming the raw source unsafe.
+            ctx.diagnostic(duplicate_prefix_diagnostic(span));
+        }
         return;
     }
 
@@ -452,8 +477,11 @@ fn validate_title(
         return;
     };
 
+    // A title with a lone surrogate matches no configured pattern.
+    let title = title.as_str();
+
     if let Some((regex, message)) = config.must_match_patterns.get(&jest_fn_name)
-        && !regex.is_match(title)
+        && !title.is_some_and(|title| regex.is_match(title))
     {
         let raw_pattern = regex.as_str();
         let message = match message.as_ref() {
@@ -464,7 +492,7 @@ fn validate_title(
     }
 
     if let Some((regex, message)) = config.must_not_match_patterns.get(&jest_fn_name)
-        && regex.is_match(title)
+        && title.is_some_and(|title| regex.is_match(title))
     {
         let raw_pattern = regex.as_str();
         let message = match message.as_ref() {

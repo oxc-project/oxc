@@ -2,6 +2,7 @@ import "./a.ts";
 import "./a.mts";
 import "./a.cts";
 import "./react.tsx";
+export { x } from "./a.mts";
 // .mtsx and .ctsx are not valid and should not be transformed.
 import "./react.mtsx";
 import "./react.ctsx";

@@ -1,11 +1,11 @@
-use oxc_allocator::{Allocator, ArenaVec};
+use oxc_allocator::Allocator;
 use oxc_ast::{ast::*, builder::AstBuilder};
 use oxc_codegen::{Codegen, CodegenOptions, IndentChar};
 use oxc_span::SPAN;
 
 use crate::tester::{
-    test, test_minify, test_minify_same, test_options, test_same, test_same_ignore_parse_errors,
-    test_unambiguous, test_with_parse_options,
+    test, test_ascii, test_minify, test_minify_same, test_options, test_same,
+    test_same_ignore_parse_errors, test_unambiguous, test_with_parse_options,
 };
 
 #[test]
@@ -18,6 +18,13 @@ fn cases() {
 #[test]
 fn decl() {
     test_same("const [foo, ...bar] = qux;\n");
+    test_same("const [...bar] = qux;\n");
+    test_same("const [, ...bar] = qux;\n");
+    test_same("const [, , , ...bar] = qux;\n");
+    test_same("function foo([bar, ...qux]) {}\n");
+    test_same("function foo([...bar]) {}\n");
+    test_same("function foo([, ...bar]) {}\n");
+    test_same("function foo([, , , ...bar]) {}\n");
     test_same("const { foo, ...bar } = qux;\n");
     test_minify("const [foo] = bar", "const[foo]=bar;");
     test_minify("const {foo} = bar", "const{foo}=bar;");
@@ -29,6 +36,8 @@ fn module_decl() {
     test("export * as foo from 'foo'", "export * as foo from \"foo\";\n");
     test("import x from './foo.js' with {}", "import x from \"./foo.js\" with {};\n");
     test("import {} from './foo.js' with {}", "import {} from \"./foo.js\" with {};\n");
+    test("import {} from './a\"b.mjs';", "import {} from \"./a\\\"b.mjs\";\n");
+    test("import {} from './a\\nb.mjs';", "import {} from \"./a\\nb.mjs\";\n");
     test("export * from './foo.js' with {}", "export * from \"./foo.js\" with {};\n");
     test(
         "export { default } from './foo.js' with { type: 'json' }",
@@ -41,6 +50,7 @@ fn module_decl() {
         "import x from './foo.custom' with { 'type': 'json' }",
         "import x from\"./foo.custom\"with{\"type\":\"json\"};",
     );
+    test_minify("import {} from './a\"b.mjs';", "import{}from'./a\"b.mjs';");
     test_minify(
         "export { default } from './foo.js' with { type: 'json' }",
         "export{default}from\"./foo.js\"with{type:\"json\"};",
@@ -58,6 +68,28 @@ fn module_decl() {
     test_minify("import { \"y\" as z } from \"m\"", "import{\"y\"as z}from\"m\";");
     test_minify("export * as \"ns\" from \"m\"", "export*as\"ns\" from\"m\";");
     test_minify("export { foo as bar }", "export{foo as bar};");
+}
+
+#[test]
+fn quoted_import_names() {
+    test(r#"import { "foo" as foo } from "m";"#, "import { foo } from \"m\";\n");
+    test(r#"import { "a\u0062" as ab } from "m";"#, "import { ab } from \"m\";\n");
+    test(r#"import { "π" as π } from "m";"#, "import { π } from \"m\";\n");
+    test(r#"import { "type" as type } from "m";"#, "import { type } from \"m\";\n");
+
+    test_same("import { \"foo-bar\" as foo } from \"m\";\n");
+    test_same("import { \"\" as foo } from \"m\";\n");
+    test_same("import { \"default\" as foo } from \"m\";\n");
+    test_same("import { \"foo\" as bar } from \"m\";\n");
+    test(
+        r#"import { "foo" as foo, "bar" as bar, baz } from "m";"#,
+        "import { foo, bar, baz } from \"m\";\n",
+    );
+    test(r#"import { foo as foo, bar } from "m";"#, "import { foo, bar } from \"m\";\n");
+
+    test_minify(r#"import { "foo" as foo } from "m";"#, r#"import{foo}from"m";"#);
+    test_minify(r#"import { "a\u0062" as ab } from "m";"#, r#"import{ab}from"m";"#);
+    test_minify(r#"import { foo as foo, bar } from "m";"#, r#"import{foo,bar}from"m";"#);
 }
 
 #[test]
@@ -140,6 +172,100 @@ fn private_in() {
 }
 
 #[test]
+fn private_in_binary_right() {
+    fn wrap_case_equal_lower_precedence(op: &str) -> (String, String, String) {
+        let minified_op =
+            if matches!(op, "in" | "instanceof") { format!(" {op} ") } else { op.to_string() };
+        (
+            format!("class C {{ #x; test(a, b) {{ return #x in (a {op} b); }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in (a {op} b);\n\t}}\n}}\n"),
+            format!("class C{{#x;test(a,b){{return#x in (a{minified_op}b)}}}}"),
+        )
+    }
+    fn wrap_case_higher_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(a, b) {{ return #x in (a {op} b); }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in a {op} b;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(a,b){{return#x in a{op}b}}}}"),
+        )
+    }
+
+    for (source, expected, expected_minified) in [
+        "instanceof",
+        "in",
+        "<",
+        "<=",
+        ">",
+        ">=",
+        "==",
+        "!=",
+        "===",
+        "!==",
+        "&",
+        "^",
+        "|",
+        "&&",
+        "||",
+        "??",
+        "=",
+    ]
+    .map(wrap_case_equal_lower_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (source, expected, expected_minified) in
+        ["<<", ">>", ">>>", "+", "-", "*", "/", "%", "**"].map(wrap_case_higher_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (rhs, minified_rhs) in [("#x in a", "#x in a"), ("a ? a : b", "a?a:b"), ("a, b", "a,b")] {
+        let source = format!("class C {{ #x; test(a, b) {{ return #x in ({rhs}); }} }}");
+        test(
+            &source,
+            &format!("class C {{\n\t#x;\n\ttest(a, b) {{\n\t\treturn #x in ({rhs});\n\t}}\n}}\n"),
+        );
+        test_minify(&source, &format!("class C{{#x;test(a,b){{return#x in ({minified_rhs})}}}}"));
+    }
+}
+
+#[test]
+fn private_in_binary_left() {
+    fn wrap_case_equal_higher_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(o) {{ return (#x in o) {op} 1; }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(o) {{\n\t\treturn (#x in o) {op} 1;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(o){{return(#x in o){op}1}}}}"),
+        )
+    }
+    fn wrap_case_equal_lower_precedence(op: &str) -> (String, String, String) {
+        (
+            format!("class C {{ #x; test(o) {{ return (#x in o) {op} 1; }} }}"),
+            format!("class C {{\n\t#x;\n\ttest(o) {{\n\t\treturn #x in o {op} 1;\n\t}}\n}}\n"),
+            format!("class C{{#x;test(o){{return#x in o{op}1}}}}"),
+        )
+    }
+
+    for (source, expected, expected_minified) in
+        ["+", "-", "*", "/", "%", "**", "<<", ">>", ">>>"].map(wrap_case_equal_higher_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+
+    for (source, expected, expected_minified) in
+        ["<", "<=", ">", ">=", "==", "!=", "===", "!==", "&", "^", "|", "&&", "||", "??"]
+            .map(wrap_case_equal_lower_precedence)
+    {
+        test(&source, &expected);
+        test_minify(&source, &expected_minified);
+    }
+}
+
+#[test]
 fn class() {
     test(
         "export default class Foo { @x @y accessor #aDef = 1 }",
@@ -201,7 +327,9 @@ fn for_stmt() {
 #[test]
 fn do_while_stmt() {
     test("do ; while (true)", "do;\nwhile (true);\n");
+    test("function f() { do; while (test()); }", "function f() {\n\tdo;\n\twhile (test());\n}\n");
     test_minify("do ; while (true)", "do;while(true);");
+    test_minify("function f() { do; while (test()); }", "function f(){do;while(test())}");
     test_minify("do break; while (true)", "do break;while(true);");
     test_minify("do continue; while (true)", "do continue;while(true);");
     test_minify("do debugger; while (true)", "do debugger;while(true);");
@@ -354,6 +482,10 @@ fn r#yield() {
 
 #[test]
 fn arrow() {
+    test_same("([bar, ...qux]) => {};\n");
+    test_same("([...bar]) => {};\n");
+    test_same("([, ...bar]) => {};\n");
+    test_same("([, , , ...bar]) => {};\n");
     test_minify("x => a, b", "x=>a,b;");
     test_minify("x => (a, b)", "x=>(a,b);");
     test_minify("x => (a => b)", "x=>(a=>b);");
@@ -505,17 +637,7 @@ fn pure_comment() {
     test_same(
         "/* #__PURE__ -- @preserve */ pureOperation();\n", // rolldown#9408
     );
-    // A `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
-    // must not be emitted in place of the pure-call annotation. Without the
-    // kind filter, `FxHashMap` last-write-wins would print the wrong
-    // annotation kind in front of a CallExpression.
-    test(
-        "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
-        "/* @__PURE__ */ pureOperation();\n",
-    );
     test("const foo /* #__PURE__ */ = pureOperation();", "const foo = pureOperation();\n"); // INVALID: "=" not allowed after annotation
-
-    test_same("/* #__PURE__ */ function foo() {}\n"); // INVALID: not before a call/new expression
 
     test("/* @__PURE__ */ (foo());", "/* @__PURE__ */ foo();\n");
     test("/* @__PURE__ */ (new Foo());\n", "/* @__PURE__ */ new Foo();\n");
@@ -535,6 +657,20 @@ fn pure_comment() {
     test_same("/* @__PURE__ */ a?.b();\n");
     test_same("true && /* @__PURE__ */ noEffect();\n");
     test_same("false || /* @__PURE__ */ noEffect();\n");
+}
+
+#[test]
+fn unapplied_annotation_comments() {
+    test_same("/* #__PURE__ */ function foo() {}\n");
+    test_same("/* #__NO_SIDE_EFFECTS__ */ value;\n");
+
+    // A misplaced `@__NO_SIDE_EFFECTS__` comment sharing the call site's `attached_to`
+    // must be preserved for downstream consumers to warn about, without replacing the
+    // valid pure-call annotation.
+    test(
+        "/* @__PURE__ */ /* @__NO_SIDE_EFFECTS__ */ pureOperation();\n",
+        "/* @__NO_SIDE_EFFECTS__ */ /* @__PURE__ */ pureOperation();\n",
+    );
 }
 
 #[test]
@@ -561,6 +697,53 @@ fn in_expr_in_sequence_in_for_loop_init() {
         "for (('hidden' in a) && (m = a.hidden), r = 0; s > r; r++) {}",
         "for ((\"hidden\" in a) && (m = a.hidden), r = 0; s > r; r++) {}\n",
     );
+}
+
+#[test]
+fn in_expr_in_yield_expression() {
+    for (keyword, prefix) in [("yield", "yield "), ("yield*", "yield*")] {
+        for (init, expected, minified) in [
+            (
+                format!("{keyword} (1 in o)"),
+                format!("{keyword} (1 in o)"),
+                format!("{keyword}(1 in o)"),
+            ),
+            (
+                format!("x = {keyword} (1 in o)"),
+                format!("x = {keyword} (1 in o)"),
+                format!("x={keyword}(1 in o)"),
+            ),
+            (
+                format!("{keyword} yield (1 in o)"),
+                format!("{keyword} yield (1 in o)"),
+                format!("{prefix}yield(1 in o)"),
+            ),
+            (
+                format!("{keyword} (x = (1 in o))"),
+                format!("{keyword} x = (1 in o)"),
+                format!("{prefix}x=(1 in o)"),
+            ),
+            // Parentheses around the yield expression allow `in` in its argument.
+            (
+                format!("({keyword} (1 in o)) + 1"),
+                format!("({keyword} 1 in o) + 1"),
+                format!("({prefix}1 in o)+1"),
+            ),
+        ] {
+            let source = format!("function *g(o) {{ for ({init}; false;); }}");
+            test(&source, &format!("function* g(o) {{\n\tfor ({expected}; false;);\n}}\n"));
+            test_minify(&source, &format!("function*g(o){{for({minified};false;);}}"));
+            crate::test_idempotency(&source);
+            crate::test_idempotency_options(
+                &source,
+                &CodegenOptions { minify: true, ..CodegenOptions::default() },
+            );
+        }
+
+        let source = format!("function *g(o) {{ {keyword} (1 in o); }}");
+        test(&source, &format!("function* g(o) {{\n\t{keyword} 1 in o;\n}}\n"));
+        test_minify(&source, &format!("function*g(o){{{prefix}1 in o}}"));
+    }
 }
 
 #[test]
@@ -610,6 +793,93 @@ fn big_int() {
     test_minify("function a() { return 1n }", "function a(){return 1n}");
 }
 
+/// A negative `BigIntLiteral` never comes from the parser (`-1n` parses as a unary minus around `1n`),
+/// but the minifier creates one when it folds e.g. `~0n` to `-1n`.
+/// Its `-` must not run into a `-` printed before it, which would make `--`.
+/// After a keyword it needs no space, whether it starts with `-` or is wrapped in `(...)`,
+/// as neither can continue the keyword.
+#[test]
+fn negative_big_int_literal() {
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+
+    let negative_one =
+        || Expression::new_big_int_literal(SPAN, "-1", None, BigintBase::Decimal, &ast);
+    let expr_stmt = |expr| Statement::new_expression_statement(SPAN, expr, &ast);
+    let cases = [
+        // `-(-1n)`
+        (
+            expr_stmt(Expression::new_unary_expression(
+                SPAN,
+                UnaryOperator::UnaryNegation,
+                negative_one(),
+                &ast,
+            )),
+            "- -1n;\n",
+            "- -1n;",
+        ),
+        // `+(-1n)` needs no space
+        (
+            expr_stmt(Expression::new_unary_expression(
+                SPAN,
+                UnaryOperator::UnaryPlus,
+                negative_one(),
+                &ast,
+            )),
+            "+-1n;\n",
+            "+-1n;",
+        ),
+        // `y - (-1n)`
+        (
+            expr_stmt(Expression::new_binary_expression(
+                SPAN,
+                Expression::new_identifier(SPAN, "y", &ast),
+                BinaryOperator::Subtraction,
+                negative_one(),
+                &ast,
+            )),
+            "y - -1n;\n",
+            "y- -1n;",
+        ),
+        // `return -1n` needs no space when minified
+        (
+            Statement::new_return_statement(SPAN, Some(negative_one()), &ast),
+            "return -1n;\n",
+            "return-1n;",
+        ),
+        // `return (-1n).x` needs no space when minified either
+        (
+            Statement::new_return_statement(
+                SPAN,
+                Some(Expression::new_static_member_expression(
+                    SPAN,
+                    negative_one(),
+                    IdentifierName::new(SPAN, "x", &ast),
+                    false,
+                    &ast,
+                )),
+                &ast,
+            ),
+            "return (-1n).x;\n",
+            "return(-1n).x;",
+        ),
+    ];
+
+    for (stmt, expected, expected_minified) in cases {
+        let program =
+            Program::new(SPAN, oxc_span::SourceType::mjs(), "", [], None, [], [stmt], &ast);
+
+        let result = Codegen::new().build(&program).code;
+        assert_eq!(result, expected);
+
+        let result = Codegen::new()
+            .with_options(CodegenOptions { minify: true, ..CodegenOptions::default() })
+            .build(&program)
+            .code;
+        assert_eq!(result, expected_minified);
+    }
+}
+
 #[test]
 #[ignore = "Minify bigint is not implemented."]
 fn big_int_minify() {
@@ -652,6 +922,52 @@ fn directive() {
     test_options("\"'\"", "\"'\";\n", double_quote.clone());
     test_options("'\"'", "'\"';\n", double_quote.clone());
     test_options(r#""'\"""#, "\"'\\\"\";\n", double_quote);
+}
+
+#[test]
+fn directive_prologue_boundary() {
+    // A parenthesized string expression statement has to keep its parentheses while it sits at the
+    // end of the directive prologue, or it re-parses as a directive.
+
+    // No directives before it
+    test_same("(\"use strict\");\nfoo();\n");
+    // After real directives - printed bare, this would switch the program to strict mode
+    test_same("\"use asm\";\n(\"use strict\");\nfoo();\n");
+    // Indented, in a function body
+    test_same("function f() {\n\t(\"x\");\n}\n");
+    test_same("function f() {\n\t\"use strict\";\n\t(\"x\");\n}\n");
+    // A TS module block has a directive prologue too
+    test_same("module Foo {\n\t(\"x\");\n}\n");
+    // A class static block does not, so there is nothing to protect against there
+    test(
+        "class C {\n\tstatic {\n\t\t(\"x\");\n\t}\n}\n",
+        "class C {\n\tstatic {\n\t\t\"x\";\n\t}\n}\n",
+    );
+
+    // Only the statement which closes the prologue needs the parentheses - a string statement
+    // after it cannot be a directive
+    test_same("(\"a\");\n\"b\";\n");
+    test("foo();\n(\"a\");\n", "foo();\n\"a\";\n");
+    test("\"use strict\";\nfoo();\n(\"a\");\n", "\"use strict\";\nfoo();\n\"a\";\n");
+}
+
+#[test]
+fn directive_prologue_boundary_minify() {
+    // Minified output has the same hazard. A string usually prints as a template literal, which
+    // cannot be a directive, but only where that is the shortest form - one backtick in the string
+    // is enough to make quotes shorter, and then nothing else would stop it printing as a
+    // directive. So the template literal is printed whatever the contents.
+    test_minify("(\"`\");", "`\\``;");
+    // `${` costs a backtick the same as a backtick does
+    test_minify("(\"${}\");", "`\\${}`;");
+    // Strings which would have chosen a template literal anyway are unaffected
+    test_minify("(\"use strict\");", "`use strict`;");
+    // After real directives
+    test_minify("\"use asm\"; (\"`\");", "\"use asm\";`\\``;");
+    // A newline pays for a backtick, so quotes were never shorter for this one
+    test_minify("(\"\\n`\");", "`\n\\``;");
+    // Only the statement which closes the prologue is at risk
+    test_minify("foo(); (\"`\");", "foo();\"`\";");
 }
 
 #[test]
@@ -857,11 +1173,10 @@ fn template_literal_escape_when_building_ast() {
     let cooked = "hello`world${foo}\\bar";
     let value = TemplateElementValue {
         raw: Str::from_str_in(cooked, &ast),
-        cooked: Some(Str::from_str_in(cooked, &ast)),
+        cooked: Some(Str::from_str_in(cooked, &ast).into()),
     };
     let element = TemplateElement::new_escape_raw(SPAN, value, true, &ast);
-    let quasis = ArenaVec::from_value_in(element, &ast);
-    let template_literal = TemplateLiteral::new(SPAN, quasis, ArenaVec::new_in(&ast), &ast);
+    let template_literal = TemplateLiteral::new(SPAN, [element], [], &ast);
 
     let expr = Expression::new_template_literal(
         SPAN,
@@ -870,16 +1185,7 @@ fn template_literal_escape_when_building_ast() {
         &ast,
     );
     let stmt = Statement::new_expression_statement(SPAN, expr, &ast);
-    let program = Program::new(
-        SPAN,
-        oxc_span::SourceType::mjs(),
-        "",
-        ArenaVec::new_in(&ast),
-        None,
-        ArenaVec::new_in(&ast),
-        ArenaVec::from_value_in(stmt, &ast),
-        &ast,
-    );
+    let program = Program::new(SPAN, oxc_span::SourceType::mjs(), "", [], None, [], [stmt], &ast);
 
     let result = Codegen::new().build(&program).code;
     // The raw value should have been escaped by template_element with escape_raw: true
@@ -926,4 +1232,228 @@ fn html_comments() {
         "const x = 1;\n--> comment\nconst y = 2;\n",
         "const x = 1;\n--> comment\nconst y = 2;\n",
     );
+}
+
+#[test]
+fn template_literal_dollar_escapes() {
+    for (source, expected) in [
+        (r"`\$`;", r"`$`;"),
+        (r"`^${pattern}\$`;", r"`^${pattern}$`;"),
+        (r"`\$a\$${value}\$`;", r"`$a$${value}$`;"),
+        (r"`\${value}`;", r"`\${value}`;"),
+        (r"`\$\{value}`;", r"`$\{value}`;"),
+        (r"`\$\u007bvalue}`;", r"`$\u007bvalue}`;"),
+        (r"`\\$`;", r"`\\$`;"),
+        (r"`\\\$`;", r"`\\$`;"),
+        (r"`\\\\$`;", r"`\\\\$`;"),
+        (r"`\\\\\$`;", r"`\\\\$`;"),
+        (r"`\\\${value}`;", r"`\\\${value}`;"),
+        (r"`\\${value}\$`;", r"`\\${value}$`;"),
+        (r"`\$${{value}}\$`;", r"`$${{value}}$`;"),
+        (r"tag`\$${value}\$`;", r"tag`\$${value}\$`;"),
+        (r"String.raw`\$${value}\$`;", r"String.raw`\$${value}\$`;"),
+        (r"tag`\$${`\$`}\$`;", r"tag`\$${`$`}\$`;"),
+    ] {
+        test_minify(source, expected);
+        test_minify_same(expected);
+    }
+    test_same("`^${pattern}\\$`;\n");
+    test_same("tag`\\$`;\n");
+
+    for ascii_only in [false, true] {
+        test_options(
+            r"`é\$</script>${value}\$é`;",
+            if ascii_only {
+                r"`\u00E9$<\/script>${value}$\u00E9`;"
+            } else {
+                r"`é$<\/script>${value}$é`;"
+            },
+            CodegenOptions { minify: true, ascii_only, ..CodegenOptions::default() },
+        );
+        test_options(
+            r"String.raw`é\$`;",
+            r"String.raw`é\$`;",
+            CodegenOptions { minify: true, ascii_only, ..CodegenOptions::default() },
+        );
+    }
+}
+
+#[test]
+fn surrogate_lead_byte_characters() {
+    // U+D000..U+D7FF share the 0xED lead byte with lone surrogates.
+    test("x = '퀀힣';", "x = \"퀀힣\";\n");
+    test("x = '퀀\\uD800힣';", "x = \"퀀\\ud800힣\";\n");
+    test_ascii("x = '퀀힣';", "x = \"\\uD000\\uD7A3\";\n");
+    test_ascii("x = '퀀\\uD800힣';", "x = \"\\uD000\\ud800\\uD7A3\";\n");
+    test_minify("x = '퀀\\uD800힣';", "x=`퀀\\ud800힣`;");
+}
+
+#[test]
+fn module_export_name_with_lone_surrogate() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::JSStrBuilder;
+
+    // The parser rejects such a name, but a built AST can contain one.
+    let allocator = Allocator::new();
+    let mut parsed = Parser::new(&allocator, "export { x as 'a' };", SourceType::mjs()).parse();
+    let Statement::ExportNamedDeclaration(decl) = &mut parsed.program.body[0] else {
+        panic!("expected export declaration");
+    };
+    let ModuleExportName::StringLiteral(literal) = &mut decl.specifiers[0].exported else {
+        panic!("expected string export name");
+    };
+    let mut builder = JSStrBuilder::new_in(&&allocator);
+    builder.push_code_unit(0xD800);
+    literal.value = builder.into_js_str();
+    literal.raw = None;
+    assert_eq!(decl.specifiers[0].exported.to_string(), r#""\ud800""#);
+
+    let output = Codegen::new().build(&parsed.program).code;
+    assert_eq!(output, "export { x as \"\\ud800\" };\n");
+}
+
+#[test]
+fn js_str_round_trip() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::JSStrBuilder;
+
+    let allocator = Allocator::new();
+    let source_type = SourceType::mjs();
+    let cases: &[&[u16]] = &[
+        &[0xD800],
+        &[0xDC00],
+        &[0xD800, 0xDC00],
+        &[0x61, 0xD800, 0x62, 0xDC00, 0x63],
+        &[0xFFFD, 0x64, 0x38, 0x30, 0x30],
+        &[0xD800, 0xFFFD, 0xD83D, 0xDE0E, 0x6F22],
+        &[0xA0, 0xD800, 0xA0],
+        &[0x22, 0x27, 0x5C, 0xD800, 0, 0x31, 0x0A, 0x2028, 0x2029],
+        &[0xD000, 0xD7FF],
+        &[0xD7FF, 0xD800, 0xD000],
+    ];
+    for &units in cases {
+        for (minify, ascii_only) in [(false, false), (false, true), (true, false), (true, true)] {
+            let mut parsed = Parser::new(&allocator, "consume('');", source_type).parse();
+            assert!(parsed.diagnostics.is_empty());
+            let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
+                panic!("expected expression statement");
+            };
+            let Expression::CallExpression(call) = &mut statement.expression else {
+                panic!("expected call expression");
+            };
+            let Argument::StringLiteral(literal) = &mut call.arguments[0] else {
+                panic!("expected string literal");
+            };
+            let mut builder = JSStrBuilder::new_in(&&allocator);
+            builder.push_utf16(units);
+            literal.value = builder.into_js_str();
+            literal.raw = None;
+
+            let output = Codegen::new()
+                .with_options(CodegenOptions { minify, ascii_only, ..CodegenOptions::default() })
+                .build(&parsed.program)
+                .code;
+            let reparsed = Parser::new(&allocator, &output, source_type).parse();
+            assert!(reparsed.diagnostics.is_empty(), "{output}");
+            assert!(!ascii_only || output.is_ascii(), "{output}");
+            let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
+                panic!("expected expression statement: {output}");
+            };
+            let Expression::CallExpression(call) = &statement.expression else {
+                panic!("expected call expression: {output}");
+            };
+            let value = match &call.arguments[0] {
+                Argument::StringLiteral(literal) => literal.value,
+                Argument::TemplateLiteral(literal) => literal.single_quasi().unwrap(),
+                _ => panic!("expected string value: {output}"),
+            };
+            assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+    }
+}
+
+#[test]
+fn jsx_attribute_with_lone_surrogate_value() {
+    use oxc_parser::Parser;
+    use oxc_span::SourceType;
+    use oxc_str::{JSStr, JSStrBuilder};
+    use oxc_syntax::xml_entities::decode_entities;
+
+    // Generated attributes must preserve their JavaScript value after JSX entity decoding,
+    // including literal entity text next to a lone surrogate.
+    let allocator = Allocator::new();
+    let source_type = SourceType::jsx();
+    let mut parsed = Parser::new(
+        &allocator,
+        "<div a=\"x\" b=\"y\" c=\"z\" d=\"w\" e=\"x\" f=\"y\" />;",
+        source_type,
+    )
+    .parse();
+    assert!(parsed.diagnostics.is_empty());
+    let Statement::ExpressionStatement(statement) = &mut parsed.program.body[0] else {
+        panic!("expected expression statement");
+    };
+    let Expression::JSXElement(element) = &mut statement.expression else {
+        panic!("expected JSX element");
+    };
+    let values: [&[u16]; 6] = [
+        &[0x61, 0xD800, 0x62],
+        &[0x61, 0xD83D, 0xDE00, 0x22],
+        &[0xD800, 0x22, 0x27],
+        &[0x22, 0x27],
+        &[0xD800, 0x26, 0x61, 0x6D, 0x70, 0x3B], // Lone lead surrogate + literal &amp;
+        &[0xDC00, 0x26, 0x23, 0x78, 0x34, 0x31, 0x3B], // Lone trail surrogate + literal &#x41;
+    ];
+    for (attribute, units) in element.opening_element.attributes.iter_mut().zip(values) {
+        let JSXAttributeItem::Attribute(attribute) = attribute else {
+            panic!("expected attribute");
+        };
+        let Some(JSXAttributeValue::StringLiteral(literal)) = &mut attribute.value else {
+            panic!("expected string attribute value");
+        };
+        let mut builder = JSStrBuilder::new_in(&&allocator);
+        builder.push_utf16(units);
+        literal.value = builder.into_js_str();
+        literal.raw = None;
+    }
+
+    for minify in [false, true] {
+        let options = CodegenOptions { minify, ..CodegenOptions::default() };
+        let output = Codegen::new().with_options(options.clone()).build(&parsed.program).code;
+        let reparsed = Parser::new(&allocator, &output, source_type).parse();
+        assert!(reparsed.diagnostics.is_empty(), "{output}");
+        let Statement::ExpressionStatement(statement) = &reparsed.program.body[0] else {
+            panic!("expected expression statement: {output}");
+        };
+        let Expression::JSXElement(element) = &statement.expression else {
+            panic!("expected JSX element: {output}");
+        };
+        assert_eq!(element.opening_element.attributes.len(), values.len());
+        for (attribute, units) in element.opening_element.attributes.iter().zip(values) {
+            let JSXAttributeItem::Attribute(attribute) = attribute else {
+                panic!("expected attribute: {output}");
+            };
+            let value = match attribute.value.as_ref().unwrap() {
+                JSXAttributeValue::StringLiteral(literal) => {
+                    let raw = literal.value.as_str().unwrap();
+                    let mut decoded = None;
+                    decode_entities(raw, &mut decoded, raw.len(), &allocator);
+                    decoded.map_or_else(|| JSStr::from(raw), JSStrBuilder::into_js_str)
+                }
+                JSXAttributeValue::ExpressionContainer(container) => {
+                    let JSXExpression::StringLiteral(literal) = &container.expression else {
+                        panic!("expected string expression: {output}");
+                    };
+                    literal.value
+                }
+                _ => panic!("expected string attribute value: {output}"),
+            };
+            assert_eq!(value.encode_utf16().collect::<Vec<_>>(), units, "{output}");
+        }
+        if !minify {
+            assert_eq!(Codegen::new().with_options(options).build(&reparsed.program).code, output);
+        }
+    }
 }

@@ -50,3 +50,24 @@ source: crates/oxc_linter/src/tester.rs
    ·        ─────────
    ╰────
   help: Using default import as "userEvent" can be confusing. Use another name for default import to avoid confusion.
+
+  ⚠ import(no-named-as-default): Module "./portal-paywall" has named export "PortalPaywall"
+   ╭─[index.js:1:8]
+ 1 │ import PortalPaywall from "./portal-paywall"
+   ·        ─────────────
+   ╰────
+  help: Using default import as "PortalPaywall" can be confusing. Use another name for default import to avoid confusion.
+
+  ⚠ import(no-named-as-default): Module "hls-default-class" has named export "Hls"
+   ╭─[index.js:1:8]
+ 1 │ import Hls, { CMCDController } from "hls-default-class"
+   ·        ───
+   ╰────
+  help: Using default import as "Hls" can be confusing. Use another name for default import to avoid confusion.
+
+  ⚠ import(no-named-as-default): Module "./local-default-class-and-named" has named export "LocalHls"
+   ╭─[index.js:1:8]
+ 1 │ import LocalHls from "./local-default-class-and-named"
+   ·        ────────
+   ╰────
+  help: Using default import as "LocalHls" can be confusing. Use another name for default import to avoid confusion.

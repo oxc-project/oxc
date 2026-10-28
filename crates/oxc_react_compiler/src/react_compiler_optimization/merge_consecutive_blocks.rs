@@ -15,31 +15,37 @@
 
 use std::mem::replace;
 
+use oxc_allocator::{Allocator, CloneIn, Vec as ArenaVec};
+use oxc_diagnostics::OxcDiagnostic;
+use oxc_index::IndexSlice;
 use rustc_hash::{FxHashMap, FxHashSet};
 
+use crate::diagnostics;
 use crate::react_compiler_hir::visitors;
 use crate::react_compiler_hir::{
-    AliasingEffect, BlockId, BlockKind, Effect, GENERATED_SOURCE, HirFunction, Instruction,
-    InstructionId, InstructionValue, Place, Terminal,
+    AliasingEffect, BlockId, BlockKind, Effect, FunctionId, GENERATED_SOURCE, HirFunction,
+    Instruction, InstructionId, InstructionValue, Place, Terminal,
 };
 use crate::react_compiler_lowering::mark_predecessors;
 use crate::react_compiler_ssa::enter_ssa::placeholder_function;
 
 /// Merge consecutive blocks in the function's CFG, including inner functions.
-pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunction]) {
+pub fn merge_consecutive_blocks<'a>(
+    func: &mut HirFunction<'a>,
+    functions: &mut IndexSlice<FunctionId, [HirFunction<'a>]>,
+    alloc: &'a Allocator,
+) -> Result<(), OxcDiagnostic> {
     // Collect inner function IDs for recursive processing
-    let inner_func_ids: Vec<usize> = func
+    let inner_func_ids: Vec<FunctionId> = func
         .body
         .blocks
         .values()
         .flat_map(|block| block.instructions.iter())
         .filter_map(|instr_id| {
-            let instr = &func.instructions[instr_id.0 as usize];
+            let instr = &func.instructions[instr_id.index()];
             match &instr.value {
                 InstructionValue::FunctionExpression { lowered_func, .. }
-                | InstructionValue::ObjectMethod { lowered_func, .. } => {
-                    Some(lowered_func.func.0 as usize)
-                }
+                | InstructionValue::ObjectMethod { lowered_func, .. } => Some(lowered_func.func),
                 _ => None,
             }
         })
@@ -49,9 +55,10 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
     for func_id in inner_func_ids {
         // Use std::mem::replace to temporarily take the inner function out,
         // process it, then put it back (standard borrow checker workaround)
-        let mut inner_func = replace(&mut functions[func_id], placeholder_function());
-        merge_consecutive_blocks(&mut inner_func, functions);
+        let mut inner_func = replace(&mut functions[func_id], placeholder_function(alloc));
+        let result = merge_consecutive_blocks(&mut inner_func, functions, alloc);
         functions[func_id] = inner_func;
+        result?;
     }
 
     // Build fallthrough set
@@ -99,22 +106,23 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
         let eval_order = func.body.blocks[&pred_id].terminal.evaluation_order();
 
         // Collect phi data from the block being merged
-        let phis: Vec<_> = block
+        let phis = block
             .phis
             .iter()
             .map(|phi| {
-                assert_eq!(
-                    phi.operands.len(),
-                    1,
-                    "Found a block with a single predecessor but where a phi has multiple ({}) operands",
-                    phi.operands.len()
-                );
-                let operand = phi.operands.values().next().unwrap().clone();
-                (phi.place.identifier, operand)
+                if phi.operands.len() != 1 {
+                    return Err(
+                        diagnostics::invariant_single_predecessor_phi_has_multiple_operands(
+                            phi.operands.len(),
+                        ),
+                    );
+                }
+                let operand = *phi.operands.values().next().unwrap();
+                Ok((phi.place.identifier, operand))
             })
-            .collect();
-        let block_instr_ids = block.instructions.clone();
-        let block_terminal = block.terminal.clone();
+            .collect::<Result<Vec<_>, _>>()?;
+        let block_instr_ids = block.instructions.clone_in(alloc);
+        let block_terminal = block.terminal.clone_in(alloc);
 
         // Create phi instructions and add to instruction table
         let mut new_instr_ids = Vec::new();
@@ -127,15 +135,15 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
             };
             let instr = Instruction {
                 id: eval_order,
-                lvalue: lvalue.clone(),
-                value: InstructionValue::LoadLocal {
-                    place: operand.clone(),
-                    span: GENERATED_SOURCE,
-                },
+                lvalue,
+                value: InstructionValue::LoadLocal { place: operand, span: GENERATED_SOURCE },
                 span: GENERATED_SOURCE,
-                effects: Some(vec![AliasingEffect::Alias { from: operand, into: lvalue }]),
+                effects: Some(ArenaVec::from_array_in(
+                    [AliasingEffect::Alias { from: operand, into: lvalue }],
+                    &alloc,
+                )),
             };
-            let instr_id = InstructionId(func.instructions.len() as u32);
+            let instr_id = InstructionId::from_usize(func.instructions.len());
             func.instructions.push(instr);
             new_instr_ids.push(instr_id);
         }
@@ -159,11 +167,7 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
                 .iter()
                 .filter_map(|(pred_id, operand)| {
                     let mapped = merged.get(*pred_id);
-                    if mapped != *pred_id {
-                        Some((*pred_id, mapped, operand.clone()))
-                    } else {
-                        None
-                    }
+                    if mapped != *pred_id { Some((*pred_id, mapped, *operand)) } else { None }
                 })
                 .collect();
             for (old_id, new_id, operand) in updates {
@@ -181,6 +185,8 @@ pub fn merge_consecutive_blocks(func: &mut HirFunction, functions: &mut [HirFunc
             merged.get(block_id)
         });
     }
+
+    Ok(())
 }
 
 /// Tracks which blocks have been merged and into which target.

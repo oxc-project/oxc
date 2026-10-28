@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 use oxc_ast::{
     AstKind,
     ast::{Argument, Expression},
@@ -15,7 +17,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_commonjs_diagnostic(span: Span, name: &str, actual: &str) -> OxcDiagnostic {
+fn no_commonjs_diagnostic(span: Span, name: &str, actual: impl Display) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Expected {name} instead of {actual}"))
         .with_help("Do not use CommonJS `require` calls and `module.exports` or `exports.*`")
         .with_label(span)
@@ -133,7 +135,7 @@ fn is_conditional(parent_node: &AstNode, ctx: &LintContext) -> bool {
 /// <https://github.com/import-js/eslint-plugin-import/blob/v2.29.1/docs/rules/no-commonjs.md>
 impl Rule for NoCommonjs {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -143,9 +145,7 @@ impl Rule for NoCommonjs {
                 let Some(member_expr_kind) = member_expr.as_member_expression_kind() else {
                     return;
                 };
-                let Some(property_name) =
-                    member_expr_kind.static_property_name().map(|s| s.as_str())
-                else {
+                let Some(property_name) = member_expr_kind.static_property_name() else {
                     return;
                 };
 
@@ -160,7 +160,7 @@ impl Rule for NoCommonjs {
                         ctx.diagnostic(no_commonjs_diagnostic(
                             member_expr_kind.span(),
                             "export",
-                            property_name,
+                            property_name.display(),
                         ));
                     }
 
@@ -179,7 +179,7 @@ impl Rule for NoCommonjs {
                                         ctx.diagnostic(no_commonjs_diagnostic(
                                             member_expr_kind.span(),
                                             "export",
-                                            property_name,
+                                            property_name.display(),
                                         ));
                                     }
 
@@ -195,7 +195,7 @@ impl Rule for NoCommonjs {
                                 ctx.diagnostic(no_commonjs_diagnostic(
                                     member_expr_kind.span(),
                                     "export",
-                                    property_name,
+                                    property_name.display(),
                                 ));
                             } else {
                                 return;
@@ -205,7 +205,7 @@ impl Rule for NoCommonjs {
                             ctx.diagnostic(no_commonjs_diagnostic(
                                 member_expr_kind.span(),
                                 "export",
-                                property_name,
+                                property_name.display(),
                             ));
                             return;
                         }
@@ -221,7 +221,7 @@ impl Rule for NoCommonjs {
                     ctx.diagnostic(no_commonjs_diagnostic(
                         member_expr_kind.span(),
                         "export",
-                        property_name,
+                        property_name.display(),
                     ));
                 }
             }
@@ -362,6 +362,7 @@ fn test() {
         ),
         // exports
         (r#"exports.face = "palm""#, None),
+        (r#"exports["\uD800"] = "palm""#, None),
         (r#"module.exports.face = "palm""#, None),
         (r"module.exports = face", None),
         (r"exports = module.exports = {}", None),

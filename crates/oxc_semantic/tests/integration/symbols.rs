@@ -1,6 +1,60 @@
-use oxc_semantic::{Reference, SymbolFlags};
+use oxc_semantic::{Reference, ReferenceFlags, SymbolFlags};
 
 use crate::util::SemanticTester;
+
+fn assert_root_and_single_local_reference_counts(
+    tester: &SemanticTester<'_>,
+    expected: &[(&str, usize, usize)],
+) {
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let root_scope_id = scoping.root_scope_id();
+
+    for &(name, root_count, local_count) in expected {
+        let root_symbol = scoping.get_binding(root_scope_id, name.into()).unwrap();
+        let local_symbol = scoping
+            .symbol_ids()
+            .find(|&symbol_id| {
+                scoping.symbol_name(symbol_id) == name
+                    && scoping.symbol_scope_id(symbol_id) != root_scope_id
+            })
+            .unwrap();
+
+        assert_eq!(scoping.get_resolved_references(root_symbol).count(), root_count, "{name}");
+        assert_eq!(scoping.get_resolved_references(local_symbol).count(), local_count, "{name}");
+    }
+}
+
+/// `delete a?.b` and `delete (a.b)` are property writes, same as `delete a.b`.
+/// https://github.com/oxc-project/oxc/issues/27419
+#[test]
+fn test_delete_member_write_target() {
+    for code in [
+        "delete a.b",
+        "delete a.b.c",
+        "delete a?.b",
+        "delete a?.b.c",
+        "delete a.b?.c",
+        "delete (a.b)",
+    ] {
+        let source = format!("const a = {{}}; {code};");
+        let source: &'static str = Box::leak(source.into_boxed_str());
+        let tester = SemanticTester::js(source);
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let symbol = scoping.get_root_binding("a".into()).unwrap();
+        let flags: Vec<_> =
+            scoping.get_resolved_references(symbol).map(oxc_semantic::Reference::flags).collect();
+        assert_eq!(flags, vec![ReferenceFlags::Read | ReferenceFlags::MemberWriteTarget], "{code}");
+    }
+
+    // Bare `delete` is not a property modification.
+    SemanticTester::js("let x; delete x;")
+        .with_script(true)
+        .has_some_symbol("x")
+        .has_number_of_references_where(0, |reference| reference.flags().is_member_write_target())
+        .test();
+}
 
 #[test]
 fn test_class_simple() {
@@ -46,6 +100,36 @@ fn test_var_simple() {
 }
 
 #[test]
+fn test_hoisted_var_does_not_reuse_block_type_binding() {
+    for source in [
+        "function f() { { type X = string; var X = 1; type Y = X; X; } X; }",
+        "function f() { { interface X {} var X = 1; type Y = X; X; } X; }",
+        "function f() { { type X = string; { var X = 1; } type Y = X; X; } X; }",
+    ] {
+        let tester = SemanticTester::ts(source);
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let symbols = scoping
+            .symbol_ids()
+            .filter(|&symbol| scoping.symbol_name(symbol) == "X")
+            .collect::<Vec<_>>();
+        assert_eq!(symbols.len(), 2, "{source}");
+        let value_symbol = symbols
+            .iter()
+            .copied()
+            .find(|&symbol| scoping.symbol_flags(symbol).is_function_scoped_declaration())
+            .unwrap();
+        let type_symbol = symbols.into_iter().find(|&symbol| symbol != value_symbol).unwrap();
+        assert_ne!(scoping.symbol_scope_id(value_symbol), scoping.symbol_scope_id(type_symbol));
+        assert_eq!(scoping.get_resolved_references(value_symbol).count(), 2);
+        assert_eq!(scoping.get_resolved_references(type_symbol).count(), 1);
+        assert!(scoping.get_resolved_references(value_symbol).all(Reference::is_read));
+        assert!(scoping.get_resolved_references(type_symbol).all(Reference::is_type));
+        assert!(!scoping.root_unresolved_references().contains_key("X"));
+    }
+}
+
+#[test]
 fn test_var_read_write() {
     SemanticTester::js("let x; x += 1")
         .has_root_symbol("x")
@@ -83,6 +167,100 @@ fn test_var_read_write() {
     .has_number_of_reads(1)
     .has_number_of_writes(0)
     .test();
+}
+
+// https://github.com/rolldown/rolldown/issues/10722
+#[test]
+fn test_forward_outer_binding_in_nested_default_parameter() {
+    let tester = SemanticTester::js(
+        "let var_n = 0, let_n = 0, fn_n = 0;
+        function outer() {
+            const read_var = function(a = var_n) { return a };
+            const read_let = function(a = let_n) { return a };
+            const read_fn = function(a = fn_n) { return a };
+            var var_n = 1;
+            let let_n = 1;
+            function fn_n() {}
+            return [read_var, read_let, read_fn];
+        }
+        use(var_n, let_n, fn_n, outer);",
+    );
+    assert_root_and_single_local_reference_counts(
+        &tester,
+        &[("var_n", 1, 1), ("let_n", 1, 1), ("fn_n", 1, 1)],
+    );
+}
+
+#[test]
+fn test_nested_default_parameter_does_not_see_own_function_body() {
+    let tester = SemanticTester::js(
+        "let n = 0;
+        function outer() {
+            const read = function(a = n) {
+                var n = 1;
+                return a;
+            };
+            return read;
+        }
+        use(n, outer);",
+    );
+    assert_root_and_single_local_reference_counts(&tester, &[("n", 2, 0)]);
+}
+
+#[test]
+fn test_nested_default_parameter_in_outer_parameter_skips_outer_function_body() {
+    let tester = SemanticTester::js(
+        "let n = 0;
+        function outer(read = function(a = n) { return a }) {
+            var n = 1;
+            return read;
+        }
+        use(n, outer);",
+    );
+    assert_root_and_single_local_reference_counts(&tester, &[("n", 2, 0)]);
+}
+
+#[test]
+fn test_nested_default_parameter_sees_later_outer_parameter() {
+    SemanticTester::js(
+        "function outer(read = function(a = n) { return a }, n) {
+            return read;
+        }
+        use(outer);",
+    )
+    .has_some_symbol("n")
+    .has_number_of_references(1)
+    .test();
+}
+
+// https://github.com/oxc-project/oxc/issues/20427
+// https://github.com/oxc-project/oxc/issues/22783
+#[test]
+fn test_function_signature_does_not_see_function_body_bindings() {
+    let tester = SemanticTester::ts(
+        "type T = number;
+        let value = 0;
+        function f(a: T): typeof value {
+            type T = string;
+            var value = 1;
+            return value;
+        }
+        use(value, f);",
+    );
+    assert_root_and_single_local_reference_counts(&tester, &[("T", 1, 0), ("value", 2, 1)]);
+}
+
+#[test]
+fn test_arrow_parameter_does_not_see_arrow_body_binding() {
+    let tester = SemanticTester::js(
+        "let n = 0;
+        const read = (a = n) => {
+            let n = 1;
+            return a;
+        };
+        use(n, read);",
+    );
+    assert_root_and_single_local_reference_counts(&tester, &[("n", 2, 0)]);
 }
 
 #[test]
@@ -453,6 +631,16 @@ fn test_function_var_redeclaration_in_module() {
     SemanticTester::js("var a = ''; function a() {}").has_error("already been declared");
 }
 
+#[test]
+fn test_enum_member_redeclaration_with_lone_surrogate() {
+    // Enum member symbols store UTF-8 names, so the checker compares these names itself.
+    SemanticTester::ts(r#"enum A { "\uD800" = 1, "\uD800" = 2 }"#)
+        .has_error("Identifier `\\ud800` has already been declared");
+    SemanticTester::ts(r#"enum B { ["\uDC00"] = 1, [`\uDC00`] = 2 }"#)
+        .has_error("Identifier `\\udc00` has already been declared");
+    SemanticTester::ts(r#"enum C { "\uD800" = 1, "\uDC00" = 2, "\uFFFD" = 3 }"#).build();
+}
+
 // https://github.com/oxc-project/oxc/issues/15961
 #[test]
 fn test_import_value_redeclaration_in_module() {
@@ -475,4 +663,19 @@ fn test_import_value_redeclaration_in_module() {
         .has_error("already been declared");
     // TypeScript should NOT report this error (declaration merging)
     SemanticTester::ts("import { Foo } from './foo.js'; var Foo;").has_root_symbol("Foo").test();
+}
+
+#[test]
+fn test_implicit_arguments_unresolved_references() {
+    let tester = SemanticTester::ts(
+        "const arguments = []; function f(value = arguments) { return () => arguments; }",
+    );
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let references = scoping.root_unresolved_references().get("arguments").unwrap();
+    assert_eq!(references.len(), 2);
+    assert_ne!(references[0], references[1]);
+    for &reference_id in references {
+        assert!(scoping.get_reference(reference_id).symbol_id().is_none());
+    }
 }

@@ -1,0 +1,51 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A trailing suppression comment suppresses an enum member like a leading one;
+// the `,` is a separator the list prints.
+enum E {
+  A   = 1, // prettier-ignore
+  B   = 2 // prettier-ignore
+}
+
+enum F {
+  // prettier-ignore
+  A   = 1,
+  B   = 2, // prettier-ignore
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A trailing suppression comment suppresses an enum member like a leading one;
+// the `,` is a separator the list prints.
+enum E {
+  A   = 1, // prettier-ignore
+  B   = 2, // prettier-ignore
+}
+
+enum F {
+  // prettier-ignore
+  A   = 1,
+  B   = 2, // prettier-ignore
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A trailing suppression comment suppresses an enum member like a leading one;
+// the `,` is a separator the list prints.
+enum E {
+  A   = 1, // prettier-ignore
+  B   = 2, // prettier-ignore
+}
+
+enum F {
+  // prettier-ignore
+  A   = 1,
+  B   = 2, // prettier-ignore
+}
+
+===================== End =====================

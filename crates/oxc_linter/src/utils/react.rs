@@ -1,17 +1,25 @@
 use std::borrow::Cow;
 
+use rustc_hash::FxHashSet;
+
 use oxc_ast::{
     AstKind,
     ast::{
-        ArrowFunctionExpression, CallExpression, Expression, Function, FunctionBody,
-        JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
+        ArrowFunctionBody, ArrowFunctionExpression, CallExpression, Class, Expression, Function,
+        FunctionBody, JSXAttributeItem, JSXAttributeName, JSXAttributeValue, JSXChild, JSXElement,
         JSXElementName, JSXExpression, JSXFragment, JSXMemberExpression, JSXMemberExpressionObject,
         JSXOpeningElement, Statement, StaticMemberExpression,
     },
+    match_expression,
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
+use oxc_cfg::{
+    EdgeType, InstructionKind, ReturnInstructionKind,
+    graph::{Direction, visit::EdgeRef},
+};
 use oxc_ecmascript::{ToBoolean, WithoutGlobalReferenceInformation};
-use oxc_semantic::AstNode;
+use oxc_semantic::{AstNode, SymbolId};
+use oxc_syntax::node::NodeId;
 use oxc_syntax::operator::UnaryOperator;
 use oxc_syntax::scope::ScopeFlags;
 
@@ -47,6 +55,11 @@ pub fn is_create_element_call(call_expr: &CallExpression) -> bool {
     }
 }
 
+/// Checks whether a JSX child is whitespace-only text containing a line feed.
+pub fn is_jsx_multiline_whitespace(child: &JSXChild<'_>) -> bool {
+    matches!(child, JSXChild::Text(text) if text.value.contains('\n') && text.value.trim().is_empty())
+}
+
 pub fn has_jsx_prop<'a, 'b>(
     node: &'b JSXOpeningElement<'a>,
     target_prop: &'b str,
@@ -69,6 +82,16 @@ pub fn get_prop_value<'a, 'b>(item: &'b JSXAttributeItem<'a>) -> Option<&'b JSXA
     item.as_attribute().and_then(|item| item.value.as_ref())
 }
 
+/// Checks for a JSX attribute expression containing direct `null` or syntactic `undefined`.
+pub fn is_nullish_jsx_attribute_value(value: &JSXAttributeValue<'_>) -> bool {
+    matches!(
+        value,
+        JSXAttributeValue::ExpressionContainer(container)
+            if matches!(container.expression, JSXExpression::NullLiteral(_))
+                || container.expression.is_undefined()
+    )
+}
+
 pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
     match attr {
         JSXAttributeName::NamespacedName(name) => {
@@ -79,7 +102,9 @@ pub fn get_jsx_attribute_name<'a>(attr: &JSXAttributeName<'a>) -> Cow<'a, str> {
 }
 
 pub fn get_string_literal_prop_value<'a>(item: &'a JSXAttributeItem<'_>) -> Option<&'a str> {
-    get_prop_value(item).and_then(JSXAttributeValue::as_string_literal).map(|s| s.value.as_str())
+    get_prop_value(item)
+        .and_then(JSXAttributeValue::as_string_literal)
+        .and_then(|s| s.value.as_str())
 }
 
 // TODO: Move the a11y methods to their own util for jsx-a11y?
@@ -553,7 +578,8 @@ pub fn is_es5_component(node: &AstNode) -> bool {
     if let Some(member_expr) = call_expr.callee.as_member_expression()
         && let Expression::Identifier(ident) = member_expr.object()
     {
-        return ident.name == PRAGMA && member_expr.static_property_name() == Some(CREATE_CLASS);
+        return ident.name == PRAGMA
+            && member_expr.static_property_name().is_some_and(|name| name == CREATE_CLASS);
     }
 
     if let Some(ident_reference) = call_expr.callee.get_identifier_reference() {
@@ -570,7 +596,12 @@ pub fn is_es6_component(node: &AstNode) -> bool {
     let AstKind::Class(class_expr) = node.kind() else {
         return false;
     };
-    if let Some(super_class) = &class_expr.super_class {
+    is_es6_component_class(class_expr)
+}
+
+/// Checks whether a class extends `Component` or `PureComponent`, optionally on `React`.
+pub fn is_es6_component_class(class: &Class<'_>) -> bool {
+    if let Some(super_class) = class.heritage_expression() {
         if let Some(member_expr) = super_class.as_member_expression()
             && let Expression::Identifier(ident) = member_expr.object()
         {
@@ -625,14 +656,12 @@ pub fn function_count_before_lifecycle_component(
 
 fn is_lifecycle_component_method(node: &AstNode, lifecycle_method_name: &str) -> bool {
     match node.kind() {
-        AstKind::ObjectProperty(prop) => {
-            prop.key.static_name().is_some_and(|key| key == lifecycle_method_name)
-        }
+        AstKind::ObjectProperty(prop) => prop.key.is_specific_static_name(lifecycle_method_name),
         AstKind::MethodDefinition(method) => {
-            method.key.static_name().is_some_and(|name| name == lifecycle_method_name)
+            method.key.is_specific_static_name(lifecycle_method_name)
         }
         AstKind::PropertyDefinition(prop) => {
-            prop.key.static_name().is_some_and(|name| name == lifecycle_method_name)
+            prop.key.is_specific_static_name(lifecycle_method_name)
         }
         _ => false,
     }
@@ -685,7 +714,7 @@ pub fn get_element_type<'c, 'a>(
         })
         .and_then(get_prop_value)
         .and_then(JSXAttributeValue::as_string_literal)
-        .map(|s| s.value.as_str());
+        .and_then(|s| s.value.as_str());
 
     let raw_type = polymorphic_prop.map_or(name, Cow::Borrowed);
     match jsx_a11y.components.get(raw_type.as_ref()) {
@@ -696,7 +725,7 @@ pub fn get_element_type<'c, 'a>(
 
 pub fn parse_jsx_value(value: &JSXAttributeValue) -> Result<f64, ()> {
     match value {
-        JSXAttributeValue::StringLiteral(str) => str.value.parse().or(Err(())),
+        JSXAttributeValue::StringLiteral(str) => str.value.as_str().ok_or(())?.parse().or(Err(())),
         JSXAttributeValue::ExpressionContainer(container) => {
             parse_jsx_expression(&container.expression)
         }
@@ -714,7 +743,7 @@ fn parse_jsx_expression(expression: &JSXExpression) -> Result<f64, ()> {
 
 fn parse_expression(expression: &Expression) -> Result<f64, ()> {
     match expression {
-        Expression::StringLiteral(str) => str.value.parse().or(Err(())),
+        Expression::StringLiteral(str) => str.value.as_str().ok_or(())?.parse().or(Err(())),
         Expression::TemplateLiteral(tmpl) => {
             tmpl.quasis.first().unwrap().value.raw.parse().or(Err(()))
         }
@@ -839,12 +868,132 @@ pub fn is_hoc_call(callee_name: &str, ctx: &LintContext) -> bool {
     ctx.settings().react.is_component_wrapper_function(callee_name)
 }
 
+#[derive(Debug, Default, Clone, Copy)]
+pub struct FunctionReturns {
+    jsx: bool,
+    null: bool,
+}
+
+impl FunctionReturns {
+    pub fn has_jsx(self) -> bool {
+        self.jsx
+    }
+
+    pub fn has_jsx_or_null(self) -> bool {
+        self.jsx || self.null
+    }
+
+    fn add_expression(
+        &mut self,
+        expression: &Expression<'_>,
+        ctx: &LintContext<'_>,
+        visited: &mut FxHashSet<SymbolId>,
+    ) {
+        match expression.get_inner_expression() {
+            Expression::JSXElement(_) | Expression::JSXFragment(_) => self.jsx = true,
+            Expression::CallExpression(call) if is_create_element_call(call) => self.jsx = true,
+            Expression::NullLiteral(_) => self.null = true,
+            Expression::ConditionalExpression(expression) => {
+                self.add_expression(&expression.consequent, ctx, visited);
+                self.add_expression(&expression.alternate, ctx, visited);
+            }
+            Expression::LogicalExpression(expression) => {
+                self.add_expression(&expression.left, ctx, visited);
+                self.add_expression(&expression.right, ctx, visited);
+            }
+            Expression::SequenceExpression(expression) => {
+                if let Some(last) = expression.expressions.last() {
+                    self.add_expression(last, ctx, visited);
+                }
+            }
+            Expression::Identifier(identifier) => {
+                let Some(symbol_id) =
+                    ctx.scoping().get_reference(identifier.reference_id()).symbol_id()
+                else {
+                    return;
+                };
+                if !visited.insert(symbol_id) {
+                    return;
+                }
+                let declaration = ctx.nodes().get_node(ctx.scoping().symbol_declaration(symbol_id));
+                if let AstKind::VariableDeclarator(declaration) = declaration.kind()
+                    && let Some(initializer) = &declaration.init
+                {
+                    self.add_expression(initializer, ctx, visited);
+                }
+            }
+            _ => {}
+        }
+    }
+}
+
+pub fn function_returns(function: &Function<'_>, ctx: &LintContext<'_>) -> FunctionReturns {
+    cfg_returns(function.node_id(), ctx)
+}
+
+pub fn arrow_function_returns(
+    arrow: &ArrowFunctionExpression<'_>,
+    ctx: &LintContext<'_>,
+) -> FunctionReturns {
+    if let Some(expression) = arrow.get_expression() {
+        let mut returns = FunctionReturns::default();
+        returns.add_expression(expression, ctx, &mut FxHashSet::default());
+        returns
+    } else {
+        cfg_returns(arrow.node_id(), ctx)
+    }
+}
+
+pub fn expression_returns(expression: &Expression<'_>, ctx: &LintContext<'_>) -> FunctionReturns {
+    match expression {
+        Expression::FunctionExpression(function) => function_returns(function, ctx),
+        Expression::ArrowFunctionExpression(arrow) => arrow_function_returns(arrow, ctx),
+        _ => FunctionReturns::default(),
+    }
+}
+
+fn cfg_returns(node_id: NodeId, ctx: &LintContext<'_>) -> FunctionReturns {
+    let cfg = ctx.cfg();
+    let mut returns = FunctionReturns::default();
+    let mut visited_symbols = FxHashSet::default();
+    let mut stack = vec![ctx.nodes().cfg_id(node_id)];
+    let mut seen = FxHashSet::default();
+
+    while let Some(block_id) = stack.pop() {
+        if !seen.insert(block_id) || cfg.basic_block(block_id).is_unreachable() {
+            continue;
+        }
+
+        for instruction in cfg.basic_block(block_id).instructions() {
+            if instruction.kind
+                == InstructionKind::Return(ReturnInstructionKind::NotImplicitUndefined)
+                && let Some(return_node_id) = instruction.node_id
+                && let AstKind::ReturnStatement(statement) =
+                    ctx.nodes().get_node(return_node_id).kind()
+                && let Some(argument) = &statement.argument
+            {
+                returns.add_expression(argument, ctx, &mut visited_symbols);
+            }
+        }
+
+        stack.extend(
+            cfg.graph()
+                .edges_directed(block_id, Direction::Outgoing)
+                .filter(|edge| {
+                    !matches!(edge.weight(), EdgeType::NewFunction | EdgeType::Unreachable)
+                })
+                .map(|edge| edge.target()),
+        );
+    }
+
+    returns
+}
+
 /// Finds the innermost function with JSX in a chain of HOC calls
 #[derive(Debug)]
 pub enum InnermostFunction<'a> {
     Function(&'a Function<'a>),
-    /// Arrow functions never have an id, so we don't need to store the reference
-    ArrowFunction,
+    ArrowFunction(&'a ArrowFunctionExpression<'a>),
 }
 
 pub fn find_innermost_function_with_jsx<'a>(
@@ -867,31 +1016,29 @@ pub fn find_innermost_function_with_jsx<'a>(
             None
         }
         Expression::FunctionExpression(func) => {
-            // Check if this function contains JSX
-            if function_contains_jsx(func) { Some(InnermostFunction::Function(func)) } else { None }
+            if function_returns(func, ctx).has_jsx() {
+                Some(InnermostFunction::Function(func))
+            } else {
+                None
+            }
         }
         Expression::ArrowFunctionExpression(arrow_func) => {
-            // Check if this arrow function contains JSX
-            if expression_contains_jsx(expr) {
-                Some(InnermostFunction::ArrowFunction)
+            if arrow_function_returns(arrow_func, ctx).has_jsx() {
+                Some(InnermostFunction::ArrowFunction(arrow_func))
             } else {
-                // Check if this arrow function returns another function that contains JSX
-                if arrow_func.expression {
-                    // Expression-bodied arrow function: () => () => <div />
-                    if arrow_func.body.statements.len() == 1
-                        && let Statement::ExpressionStatement(expr_stmt) =
-                            &arrow_func.body.statements[0]
-                    {
-                        return find_innermost_function_with_jsx(&expr_stmt.expression, ctx);
-                    }
-                } else {
-                    // Block-bodied arrow function: () => { return () => <div /> }
-                    for stmt in &arrow_func.body.statements {
-                        if let Statement::ReturnStatement(ret_stmt) = stmt
-                            && let Some(expr) = &ret_stmt.argument
-                        {
-                            return find_innermost_function_with_jsx(expr, ctx);
+                match &arrow_func.body {
+                    ArrowFunctionBody::FunctionBody(body) => {
+                        for stmt in &body.statements {
+                            if let Statement::ReturnStatement(ret_stmt) = stmt
+                                && let Some(expr) = &ret_stmt.argument
+                            {
+                                return find_innermost_function_with_jsx(expr, ctx);
+                            }
                         }
+                    }
+                    expression @ match_expression!(ArrowFunctionBody) => {
+                        let expression = expression.to_expression();
+                        return find_innermost_function_with_jsx(expression, ctx);
                     }
                 }
                 None
@@ -913,7 +1060,7 @@ impl JsxFinder {
     }
 }
 
-impl<'a> Visit<'a> for JsxFinder {
+impl<'a> VisitJs<'a> for JsxFinder {
     fn visit_jsx_element(&mut self, _elem: &JSXElement<'a>) {
         self.found = true;
         // Don't walk children - we found what we need
@@ -928,7 +1075,7 @@ impl<'a> Visit<'a> for JsxFinder {
             self.found = true;
         }
         if !self.found {
-            walk::walk_call_expression(self, call);
+            walk_js::walk_call_expression(self, call);
         }
     }
 
@@ -954,12 +1101,19 @@ pub fn function_body_contains_jsx(body: &FunctionBody) -> bool {
     finder.found
 }
 
+/// Checks if an arrow function body contains JSX anywhere.
+pub fn arrow_function_body_contains_jsx(body: &ArrowFunctionBody) -> bool {
+    let mut finder = JsxFinder::new();
+    finder.visit_arrow_function_body(body);
+    finder.found
+}
+
 /// Checks if a function-like expression (function or arrow function) contains JSX
 pub fn expression_contains_jsx(expr: &Expression) -> bool {
     match expr {
         Expression::FunctionExpression(func) => function_contains_jsx(func),
         Expression::ArrowFunctionExpression(arrow_func) => {
-            function_body_contains_jsx(&arrow_func.body)
+            arrow_function_body_contains_jsx(&arrow_func.body)
         }
         _ => false,
     }

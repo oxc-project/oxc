@@ -5,13 +5,14 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::{DefaultRuleConfig, Rule},
     rules::PossibleJestNode,
     utils::{
@@ -175,17 +176,11 @@ declare_oxc_lint!(
 
 impl Rule for PreferEndingWithAnExpect {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<PreferEndingWithAnExpectConfig>>(value)
+        DefaultRuleConfig::<PreferEndingWithAnExpectConfig>::from_value(value)
             .map(|config| Self(Box::new(config.into_inner())))
     }
 
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        let node = possible_jest_node.node;
-
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -200,7 +195,11 @@ impl Rule for PreferEndingWithAnExpect {
             return;
         };
 
-        let Some(parsed_jest_fn) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
+        let Some(parsed_jest_fn) = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };
@@ -223,24 +222,27 @@ impl Rule for PreferEndingWithAnExpect {
 
         ctx.diagnostic(prefer_ending_with_an_expect_diagnostic(call_expr.callee.span()));
     }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
+    }
 }
 
 impl PreferEndingWithAnExpect {
     fn is_valid_last_statement<'a>(
         &self,
-        function_body: &'a FunctionBody<'a>,
+        function_body: FunctionArgument<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        let Some(statement) = function_body.statements.last() else {
-            return false;
-        };
-
-        let statement_expression = match statement {
-            Statement::ExpressionStatement(expression_statement) => {
+        let statement_expression = match function_body {
+            FunctionArgument::Expression(expression) => expression,
+            FunctionArgument::Body(function_body) => {
+                let Some(Statement::ExpressionStatement(expression_statement)) =
+                    function_body.statements.last()
+                else {
+                    return false;
+                };
                 &expression_statement.expression
-            }
-            _ => {
-                return false;
             }
         };
 
@@ -274,10 +276,21 @@ impl PreferEndingWithAnExpect {
     }
 }
 
-fn function_argument<'a>(argument: &'a Argument<'a>) -> Option<&'a FunctionBody<'a>> {
+#[derive(Clone, Copy)]
+enum FunctionArgument<'a> {
+    Body(&'a FunctionBody<'a>),
+    Expression(&'a Expression<'a>),
+}
+
+fn function_argument<'a>(argument: &'a Argument<'a>) -> Option<FunctionArgument<'a>> {
     match argument {
-        Argument::ArrowFunctionExpression(array_fn) => Some(&array_fn.body),
-        Argument::FunctionExpression(function) => function.body.as_ref().map(AsRef::as_ref),
+        Argument::ArrowFunctionExpression(array_fn) => array_fn
+            .get_expression()
+            .map(FunctionArgument::Expression)
+            .or_else(|| array_fn.get_function_body().map(FunctionArgument::Body)),
+        Argument::FunctionExpression(function) => {
+            function.body.as_deref().map(FunctionArgument::Body)
+        }
         _ => None,
     }
 }

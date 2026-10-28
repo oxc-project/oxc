@@ -33,7 +33,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         ],
         "flags": "ScopeFlags(TsModuleBlock)",
         "id": 1,
-        "node": "TSModuleDeclaration(Database)",
+        "node": "TSNamespaceDeclaration(Database)",
         "symbols": [
           {
             "flags": "SymbolFlags(TypeAlias)",
@@ -76,7 +76,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/type-declaratio
         "flags": "SymbolFlags(NamespaceModule)",
         "id": 0,
         "name": "Database",
-        "node": "TSModuleDeclaration(Database)",
+        "node": "TSNamespaceDeclaration(Database)",
         "references": [
           {
             "flags": "ReferenceFlags(Type)",

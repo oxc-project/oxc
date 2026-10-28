@@ -59,6 +59,13 @@ pub(super) fn abstract_equality_comparison<'a>(
             if let (Some(l_big), Some(r_big)) = (left_bigint, right_bigint) {
                 return Some(l_big.eq(&r_big));
             }
+            // A BigInt can be loosely equal to a String or a Number with the same mathematical
+            // value. If one side could not be converted to a BigInt, the result is unknown.
+            if matches!(left, ValueType::String | ValueType::Number)
+                || matches!(right, ValueType::String | ValueType::Number)
+            {
+                return None;
+            }
         }
 
         if matches!(left, ValueType::String | ValueType::Number | ValueType::BigInt)

@@ -132,8 +132,7 @@ impl Rule for MaxNestedCallbacks {
         {
             Ok(Self { max })
         } else {
-            serde_json::from_value::<DefaultRuleConfig<Self>>(value)
-                .map(DefaultRuleConfig::into_inner)
+            DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
         }
     }
 }

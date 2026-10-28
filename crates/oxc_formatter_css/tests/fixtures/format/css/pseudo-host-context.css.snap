@@ -1,0 +1,84 @@
+---
+source: crates/oxc_formatter_css/tests/fixtures/mod.rs
+---
+==================== Input ====================
+/* :host / :host-context formally take a single compound selector, but
+   Angular's ShadowCss supports combinators and lists (oxc issue #24726) */
+:host {
+  color: red;
+}
+:host(.a.b) {
+  color: red;
+}
+:host(.a .b) {
+  color: red;
+}
+:host-context(.parent .child) {
+  color: red;
+}
+:host-context(app-render pl-part) {
+  color: red;
+}
+:host-context(.a,.b) {
+  color: red;
+}
+:host-context(   .spaced   >   .child   ) {
+  color: red;
+}
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+/* :host / :host-context formally take a single compound selector, but
+   Angular's ShadowCss supports combinators and lists (oxc issue #24726) */
+:host {
+  color: red;
+}
+:host(.a.b) {
+  color: red;
+}
+:host(.a .b) {
+  color: red;
+}
+:host-context(.parent .child) {
+  color: red;
+}
+:host-context(app-render pl-part) {
+  color: red;
+}
+:host-context(.a, .b) {
+  color: red;
+}
+:host-context(.spaced > .child) {
+  color: red;
+}
+
+-------------------
+{ printWidth: 100 }
+-------------------
+/* :host / :host-context formally take a single compound selector, but
+   Angular's ShadowCss supports combinators and lists (oxc issue #24726) */
+:host {
+  color: red;
+}
+:host(.a.b) {
+  color: red;
+}
+:host(.a .b) {
+  color: red;
+}
+:host-context(.parent .child) {
+  color: red;
+}
+:host-context(app-render pl-part) {
+  color: red;
+}
+:host-context(.a, .b) {
+  color: red;
+}
+:host-context(.spaced > .child) {
+  color: red;
+}
+
+===================== End =====================

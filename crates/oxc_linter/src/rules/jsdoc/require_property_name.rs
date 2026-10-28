@@ -46,6 +46,7 @@ declare_oxc_lint!(
     RequirePropertyName,
     jsdoc,
     correctness,
+    recommended,
     version = "0.2.18",
     short_description = "Requires that all `@property` tags have names.",
 );

@@ -33,9 +33,14 @@ pub fn load_editorconfig(editorconfig_path: Option<&Path>) -> Result<Option<Edit
     }
 }
 
-/// Check if `.editorconfig` has per-file overrides for this path.
-///
-/// Returns `true` if the resolved properties differ from the root `[*]` section.
+/// The root `[*]` section's properties, if the file has one.
+pub fn root_properties(editorconfig: &EditorConfig) -> Option<&EditorConfigProperties> {
+    editorconfig.sections().iter().find(|s| s.name == "*").map(|s| &s.properties)
+}
+
+/// Resolve `.editorconfig` for `path`,
+/// returning the properties only when a per-file section changes them against the root `[*]` section.
+/// `None` when nothing changes, so callers can gate on `is_some()` without a separate probe.
 ///
 /// Currently, only the following properties are considered for overrides:
 /// - max_line_length
@@ -45,53 +50,48 @@ pub fn load_editorconfig(editorconfig_path: Option<&Path>) -> Result<Option<Edit
 /// - tab_width
 /// - insert_final_newline
 /// - quote_type
-pub fn has_editorconfig_overrides(editorconfig: &EditorConfig, path: &Path) -> bool {
+pub fn resolve_editorconfig_overrides(
+    editorconfig: &EditorConfig,
+    path: &Path,
+) -> Option<EditorConfigProperties> {
     let sections = editorconfig.sections();
 
     // No sections, or only root `[*]` section → no overrides
     if sections.is_empty() || matches!(sections, [s] if s.name == "*") {
-        return false;
+        return None;
     }
 
     let resolved = editorconfig.resolve(path);
 
-    // Get the root `[*]` section properties
-    let root_props = sections.iter().find(|s| s.name == "*").map(|s| &s.properties);
+    // Without `[*]`, the baseline is "nothing set": `resolve` starts from `default()` too.
+    let default_props = EditorConfigProperties::default();
+    let root = root_properties(editorconfig).unwrap_or(&default_props);
 
-    // Compare only the properties we care about
-    match root_props {
-        Some(root) => {
-            resolved.max_line_length != root.max_line_length
-                || resolved.end_of_line != root.end_of_line
-                || resolved.indent_style != root.indent_style
-                || resolved.indent_size != root.indent_size
-                || resolved.tab_width != root.tab_width
-                || resolved.insert_final_newline != root.insert_final_newline
-                || resolved.quote_type != root.quote_type
-        }
-        // No `[*]` section means any resolved property is an override
-        None => {
-            resolved.max_line_length != EditorConfigProperty::Unset
-                || resolved.end_of_line != EditorConfigProperty::Unset
-                || resolved.indent_style != EditorConfigProperty::Unset
-                || resolved.indent_size != EditorConfigProperty::Unset
-                || resolved.tab_width != EditorConfigProperty::Unset
-                || resolved.insert_final_newline != EditorConfigProperty::Unset
-                || resolved.quote_type != EditorConfigProperty::Unset
-        }
-    }
+    // Compare only the properties `apply_editorconfig` reads,
+    // so a whole-struct `!=` (which would also see `charset` etc.) is deliberately not used.
+    // NOTE: `resolve` normalizes `Unset` to `None` while `root` is the raw section,
+    // so `[*] xxx = unset` reads as a difference and takes the slow path.
+    // Harmless (both apply as "not set") and rare, so left unnormalized.
+    let differs = resolved.max_line_length != root.max_line_length
+        || resolved.end_of_line != root.end_of_line
+        || resolved.indent_style != root.indent_style
+        || resolved.indent_size != root.indent_size
+        || resolved.tab_width != root.tab_width
+        || resolved.insert_final_newline != root.insert_final_newline
+        || resolved.quote_type != root.quote_type;
+    differs.then_some(resolved)
 }
 
 /// Apply `.editorconfig` properties to `FormatConfig`.
 ///
 /// Only applies values that are not already set in the user's config.
-/// NOTE: Only properties checked by [`has_editorconfig_overrides`] are applied here.
+/// NOTE: Only properties checked by [`resolve_editorconfig_overrides`] are applied here.
 pub fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigProperties) {
-    #[expect(clippy::cast_possible_truncation)]
     if config.print_width.is_none()
         && let EditorConfigProperty::Value(MaxLineLength::Number(v)) = props.max_line_length
     {
-        config.print_width = Some(v as u16);
+        // Saturate an overflow, so validation rejects it as it does in `.oxfmtrc`
+        config.print_width = Some(u16::try_from(v).unwrap_or(u16::MAX));
     }
 
     if config.end_of_line.is_none()
@@ -114,16 +114,21 @@ pub fn apply_editorconfig(config: &mut FormatConfig, props: &EditorConfigPropert
     }
 
     if config.tab_width.is_none() {
-        // Match Prettier's behavior: Only use `indent_size` when `useTabs: false`.
+        let value = |p: &EditorConfigProperty<usize>| match p {
+            // Same saturation as `print_width`
+            EditorConfigProperty::Value(v) => Some(u8::try_from(*v).unwrap_or(u8::MAX)),
+            _ => None,
+        };
+        let indent_size = value(&props.indent_size);
+        let tab_width = value(&props.tab_width);
+        // Match Prettier's behavior: Only prefer `indent_size` when `useTabs: false`.
         // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/config/editorconfig/editorconfig-to-prettier.js#L25-L30
-        #[expect(clippy::cast_possible_truncation)]
-        if config.use_tabs == Some(false)
-            && let EditorConfigProperty::Value(size) = props.indent_size
-        {
-            config.tab_width = Some(size as u8);
-        } else if let EditorConfigProperty::Value(size) = props.tab_width {
-            config.tab_width = Some(size as u8);
-        }
+        // Otherwise `tab_width`, which defaults to `indent_size` per the EditorConfig spec.
+        config.tab_width = if config.use_tabs == Some(false) {
+            indent_size.or(tab_width)
+        } else {
+            tab_width.or(indent_size)
+        };
     }
 
     if config.insert_final_newline.is_none()

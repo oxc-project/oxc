@@ -1,0 +1,3 @@
+# A root block scalar with indentation indicator 1 puts its content in column 0:
+# the printer asks for a zero-width `align`, which used to panic.
+--- |1-

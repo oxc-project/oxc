@@ -4,6 +4,46 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.73.0] - 2026-10-13
+
+### 🚀 Features
+
+- a495e82 oxfmt: Support `associations` config to specify language over filepath (#27437) (leaysgur)
+- 5db28fa oxfmt: Support Astro via `prettier-plugin-astro@1.x` (#27386) (leaysgur)
+
+### 📚 Documentation
+
+- 408d87f oxfmt: Simplify oxfmtrc docs (#27432) (leaysgur)
+- 902e188 oxfmt: Update how `embeddedLanguageFormatting` option works (#27362) (leaysgur)
+
+## [0.67.0] - 2026-09-07
+
+### 🛡️ Security
+
+- 9a612d5 deps: Update npm packages (#26178) (renovate[bot])
+
+## [0.64.0] - 2026-08-18
+
+### 🚀 Features
+
+- c07fe7c oxfmt: Support `experimentalOperatorPosition` (#25643) (leaysgur)
+
+### 📚 Documentation
+
+- fed6681 oxfmt: Skip expanding overrides options (#25572) (leaysgur)
+
+## [0.62.0] - 2026-08-03
+
+### 🐛 Bug Fixes
+
+- e6e584b oxfmt: Type jsdoc. enum options (#25008) (leaysgur)
+
+## [0.59.0] - 2026-07-13
+
+### 🐛 Bug Fixes
+
+- 415fe1e oxfmt: Error on ignorePatterns that cannot match files outside the config directory (#24286) (leaysgur)
+
 ## [0.55.0] - 2026-06-15
 
 ### 🚀 Features

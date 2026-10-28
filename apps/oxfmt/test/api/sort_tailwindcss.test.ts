@@ -493,6 +493,25 @@ const A = (
     expect(result.errors).toStrictEqual([]);
   });
 
+  // Regression test for https://github.com/oxc-project/oxc/issues/24464
+  it("should not split a class glued to an expression when preserveWhitespace is true", async () => {
+    let input = "const A = <div className={`text-white flex bg-${color}`}>Hello</div>;";
+    let result = await format("test.tsx", input, { sortTailwindcss: { preserveWhitespace: true } });
+
+    // `bg-` touches ${color} and must stay glued to it; other classes are still sorted
+    expect(result.code).toContain("`flex text-white bg-${color}`");
+    expect(result.errors).toStrictEqual([]);
+
+    input =
+      "const A = <div className={`mb-4 flex items-center rounded-full bg-${color}/10`}>Hello</div>;";
+    result = await format("test.tsx", input, { sortTailwindcss: { preserveWhitespace: true } });
+
+    // `bg-` and the `/10` modifier must stay glued to ${color}
+    expect(result.code).toContain("bg-${color}/10`");
+    expect(result.code).not.toContain("bg- ");
+    expect(result.errors).toStrictEqual([]);
+  });
+
   it("should collapse newlines to single space when preserveWhitespace is false (default)", async () => {
     const input = `<div className={\`flex
 items-center
@@ -1306,6 +1325,59 @@ describe("Tailwind CSS Sorting in CSS (@apply)", () => {
     const result = await format("test.ts", input, { sortTailwindcss: {}, jsdoc: {} });
 
     expect(result.code).toContain("@apply flex p-4;");
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  it("should sort css-in-js @apply and JSX className in the same file", async () => {
+    const input = [
+      'const A = <div className="p-4 flex" />;',
+      "const B = styled.div`",
+      "  @apply p-4 flex;",
+      "`;",
+      'const C = <div className="text-sm grid" />;',
+    ].join("\n");
+
+    const result = await format("test.tsx", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain('className="flex p-4"');
+    expect(result.code).toContain("@apply flex p-4;");
+    expect(result.code).toContain('className="grid text-sm"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // The table cell prints standalone, it keeps the classes but unsorted for now
+  it("should keep JSX className in a jest each table", async () => {
+    const input = [
+      "test.each`",
+      "  a | b",
+      '  ${<div className="p-4 flex" />} | ${1}',
+      "`('x', () => {});",
+    ].join("\n");
+
+    const result = await format("test.tsx", input, { sortTailwindcss: {} });
+
+    expect(result.code).toContain('className="p-4 flex"');
+    expect(result.errors).toStrictEqual([]);
+  });
+
+  // A JSDoc js fence formats as a nested root on the host's session,
+  // it must not take the host's classes.
+  it("should keep JSX className sorted next to a JSDoc js fence", async () => {
+    const input = [
+      'const A = <div className="p-4 flex" />;',
+      "/**",
+      " * ```js",
+      " * foo( 1 )",
+      " * ```",
+      " */",
+      'export const B = <div className="text-sm grid" />;',
+    ].join("\n");
+
+    const result = await format("test.tsx", input, { sortTailwindcss: {}, jsdoc: {} });
+
+    expect(result.code).toContain('className="flex p-4"');
+    expect(result.code).toContain("foo(1);");
+    expect(result.code).toContain('className="grid text-sm"');
     expect(result.errors).toStrictEqual([]);
   });
 });

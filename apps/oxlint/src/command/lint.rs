@@ -147,7 +147,7 @@ pub struct BasicOptions {
     ///  * you can use comments in configuration files.
     ///  * tries to be compatible with ESLint v8's format
     ///
-    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, or `oxlint.config.ts` file in the current working directory.
+    /// If not provided, Oxlint will look for a `.oxlintrc.json`, `.oxlintrc.jsonc`, `oxlint.config.ts`, or `oxlint.config.mts` file in the current working directory.
     #[bpaf(long, short, argument("./.oxlintrc.json"))]
     pub config: Option<PathBuf>,
 
@@ -195,7 +195,7 @@ pub enum LintFilter {
         String,
     ),
     Warn(
-        /// Deny the rule or category (emit a warning)
+        /// Warn on the rule or category (emit a warning)
         #[bpaf(short('W'), long("warn"), argument("NAME"))]
         String,
     ),
@@ -373,7 +373,7 @@ fn default_output_format() -> Result<OutputFormat, std::convert::Infallible> {
         Ok(OutputFormat::Default)
     } else if !cfg!(test) && crate::agent_detection::is_agent() {
         Ok(OutputFormat::Agent)
-    } else if std::env::var("GITHUB_ACTIONS").ok().is_some_and(|value| value == "true") {
+    } else if std::env::var("GITHUB_ACTIONS").is_ok_and(|value| value == "true") {
         Ok(OutputFormat::Github)
     } else {
         Ok(OutputFormat::Default)
@@ -711,7 +711,7 @@ mod lint_options {
     fn format() {
         let options = get_lint_options("-f json");
         assert_eq!(options.output_options.format, OutputFormat::Json);
-        assert!(options.paths.is_empty());
+        assert_eq!(options.paths.len(), 0);
 
         let options = get_lint_options("-f agent");
         assert_eq!(options.output_options.format, OutputFormat::Agent);

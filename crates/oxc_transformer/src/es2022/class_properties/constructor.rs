@@ -104,8 +104,8 @@ use std::iter;
 use oxc_allocator::{ArenaVec, ReplaceWith};
 use rustc_hash::FxHashMap;
 
-use oxc_ast::{ast::*, builder::NONE};
-use oxc_ast_visit::{VisitMut, walk_mut};
+use oxc_ast::ast::*;
+use oxc_ast_visit::{VisitJsMut, VisitMut, walk_js_mut};
 use oxc_span::SPAN;
 use oxc_str::Ident;
 use oxc_syntax::{
@@ -237,13 +237,7 @@ impl<'a> ClassProperties<'a> {
                 ctx.generate_uid("args", constructor_scope_id, SymbolFlags::FunctionScopedVariable);
             let rest_element =
                 BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
-            params_rest = Some(FormalParameterRest::boxed(
-                SPAN,
-                ArenaVec::new_in(ctx),
-                rest_element,
-                NONE,
-                ctx,
-            ));
+            params_rest = Some(FormalParameterRest::boxed(SPAN, [], rest_element, None, ctx));
             stmts.push(Statement::new_expression_statement(
                 SPAN,
                 create_super_call(&args_binding, ctx),
@@ -256,7 +250,7 @@ impl<'a> ClassProperties<'a> {
         let params = FormalParameters::boxed(
             SPAN,
             FormalParameterKind::FormalParameter,
-            ArenaVec::new_in(ctx),
+            [],
             params_rest,
             ctx,
         );
@@ -316,37 +310,25 @@ impl<'a> ClassProperties<'a> {
             ),
             ctx,
         );
-        let body = ArenaVec::from_value_in(
-            Statement::new_expression_statement(SPAN, body_exprs, ctx),
-            ctx,
-        );
-
         // `(..._args) => (super(..._args), <inits>, this)`
         let super_func = Expression::new_arrow_function_expression_with_scope_id_and_pure_and_pife(
             SPAN,
-            true,
             false,
-            NONE,
+            None,
             {
                 let rest_element =
                     BindingRestElement::new(SPAN, args_binding.create_binding_pattern(ctx), ctx);
-                let rest = FormalParameterRest::boxed(
-                    SPAN,
-                    ArenaVec::new_in(ctx),
-                    rest_element,
-                    NONE,
-                    ctx,
-                );
+                let rest = FormalParameterRest::boxed(SPAN, [], rest_element, None, ctx);
                 FormalParameters::boxed(
                     SPAN,
                     FormalParameterKind::ArrowFormalParameters,
-                    ArenaVec::new_in(ctx),
+                    [],
                     Some(rest),
                     ctx,
                 )
             },
-            NONE,
-            FunctionBody::boxed(SPAN, ArenaVec::new_in(ctx), body, ctx),
+            None,
+            ArrowFunctionBody::from(body_exprs),
             super_func_scope_id,
             false,
             false,
@@ -357,18 +339,14 @@ impl<'a> ClassProperties<'a> {
         let super_func_decl = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(
-                VariableDeclarator::new(
-                    SPAN,
-                    VariableDeclarationKind::Var,
-                    super_binding.create_binding_pattern(ctx),
-                    NONE,
-                    Some(super_func),
-                    false,
-                    ctx,
-                ),
+            [VariableDeclarator::new(
+                SPAN,
+                super_binding.create_binding_pattern(ctx),
+                None,
+                Some(super_func),
+                false,
                 ctx,
-            ),
+            )],
             false,
             ctx,
         );
@@ -414,16 +392,10 @@ impl<'a> ClassProperties<'a> {
             false,
             false,
             false,
-            NONE,
-            NONE,
-            FormalParameters::boxed(
-                SPAN,
-                FormalParameterKind::FormalParameter,
-                ArenaVec::new_in(ctx),
-                NONE,
-                ctx,
-            ),
-            NONE,
+            None,
+            None,
+            FormalParameters::boxed(SPAN, FormalParameterKind::FormalParameter, [], None, ctx),
+            None,
             Some(FunctionBody::boxed(SPAN, directives, body_stmts, ctx)),
             super_func_scope_id,
             false,
@@ -536,7 +508,7 @@ impl<'a, 'ctx> ConstructorParamsSuperReplacer<'a, 'ctx> {
     }
 }
 
-impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
+impl<'a> VisitJsMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
     /// Replace `super()` with `_super.call(super())`.
     // `#[inline]` to make hot path for all other expressions as cheap as possible.
     #[inline]
@@ -553,7 +525,7 @@ impl<'a> VisitMut<'a> for ConstructorParamsSuperReplacer<'a, '_> {
             return;
         }
 
-        walk_mut::walk_expression(self, expr);
+        walk_js_mut::walk_expression(self, expr);
     }
 
     // Stop traversing where scope of current `super` ends
@@ -622,8 +594,8 @@ impl<'a> ConstructorParamsSuperReplacer<'a, '_> {
                     false,
                     ctx,
                 ),
-                NONE,
-                ArenaVec::from_value_in(Argument::from(super_call), ctx),
+                None,
+                [Argument::from(super_call)],
                 false,
                 ctx,
             )
@@ -729,7 +701,7 @@ impl<'a, 'ctx> ConstructorBodySuperReplacer<'a, 'ctx> {
     }
 }
 
-impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
+impl<'a> VisitJsMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
     /// Replace `super()` with `_super()`.
     // `#[inline]` to make hot path for all other function calls as cheap as possible.
     #[inline]
@@ -739,7 +711,7 @@ impl<'a> VisitMut<'a> for ConstructorBodySuperReplacer<'a, '_> {
             self.replace_super(call_expr, span);
         }
 
-        walk_mut::walk_call_expression(self, call_expr);
+        walk_js_mut::walk_call_expression(self, call_expr);
     }
 
     // Stop traversing where scope of current `super` ends

@@ -1,22 +1,20 @@
 use rustc_hash::FxHashMap;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, FunctionKind,
     ast::{
         ArrowFunctionExpression, AwaitExpression, ChainElement, ExportDefaultDeclarationKind,
         Expression, ExpressionStatement, Function, ObjectExpression,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ScopeFlags, Scoping, SymbolId};
 use oxc_span::Span;
 
 use crate::module_record::{ImportEntry, ImportImportName};
-use crate::{
-    AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule, utils::find_property,
-};
+use crate::{AstNode, context::LintContext, frameworks::FrameworkOptions, rule::Rule};
 
 fn no_watch_after_await_diagnostic(span: Span, name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("`{name}` is forbidden after an `await` expression."))
@@ -68,6 +66,7 @@ declare_oxc_lint!(
     NoWatchAfterAwait,
     vue,
     correctness,
+    recommended,
     version = "1.67.0",
     short_description = "Disallow asynchronously-registered `watch`.",
 );
@@ -106,17 +105,14 @@ impl Rule for NoWatchAfterAwait {
 }
 
 fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<'a>) {
-    let Some(setup_prop) = find_property(obj_expr, "setup") else {
+    let Some(setup_prop) = obj_expr.find_property("setup") else {
         return;
     };
 
-    let function_body_opt = match &setup_prop.value {
-        Expression::FunctionExpression(func_expr) => func_expr.body.as_ref(),
-        Expression::ArrowFunctionExpression(arrow_func_expr) => Some(&arrow_func_expr.body),
-        _ => None,
-    };
-    let Some(function_body) = function_body_opt else {
-        return;
+    let function = match &setup_prop.value {
+        Expression::FunctionExpression(func) => FunctionKind::Function(func),
+        Expression::ArrowFunctionExpression(arrow) => FunctionKind::Arrow(arrow),
+        _ => return,
     };
 
     let module_record = ctx.module_record();
@@ -141,7 +137,13 @@ fn check_setup_in_object<'a>(obj_expr: &ObjectExpression<'a>, ctx: &LintContext<
     }
 
     let mut visitor = WatchAfterAwaitVisitor::new(scoping, symbol_to_import_entry);
-    visitor.visit_function_body(function_body);
+    match function {
+        FunctionKind::Function(func) => {
+            let Some(body) = func.body.as_deref() else { return };
+            visitor.visit_function_body(body);
+        }
+        FunctionKind::Arrow(arrow) => visitor.visit_arrow_function_body(&arrow.body),
+    }
 
     visitor.errors.iter().for_each(|(span, name)| {
         ctx.diagnostic(no_watch_after_await_diagnostic(*span, name));
@@ -164,7 +166,7 @@ impl<'a> WatchAfterAwaitVisitor<'a> {
     }
 }
 
-impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
+impl<'a> VisitJs<'a> for WatchAfterAwaitVisitor<'a> {
     fn visit_await_expression(&mut self, _expr: &AwaitExpression) {
         self.found = true;
     }
@@ -174,7 +176,7 @@ impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
     // `[watch()]` are wrapped in another expression and are intentionally ignored.
     fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
         if !self.found {
-            walk::walk_expression_statement(self, stmt);
+            walk_js::walk_expression_statement(self, stmt);
             return;
         }
 
@@ -183,25 +185,25 @@ impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
             Expression::CallExpression(c) => c,
             Expression::ChainExpression(chain) => {
                 let ChainElement::CallExpression(c) = &chain.expression else {
-                    walk::walk_expression_statement(self, stmt);
+                    walk_js::walk_expression_statement(self, stmt);
                     return;
                 };
                 c
             }
             _ => {
-                walk::walk_expression_statement(self, stmt);
+                walk_js::walk_expression_statement(self, stmt);
                 return;
             }
         };
 
         let Some(ident) = call_expr.callee.get_inner_expression().get_identifier_reference() else {
-            walk::walk_expression_statement(self, stmt);
+            walk_js::walk_expression_statement(self, stmt);
             return;
         };
 
         let reference = self.scoping.get_reference(ident.reference_id());
         let Some(symbol_id) = reference.symbol_id() else {
-            walk::walk_expression_statement(self, stmt);
+            walk_js::walk_expression_statement(self, stmt);
             return;
         };
 
@@ -210,7 +212,7 @@ impl<'a> Visit<'a> for WatchAfterAwaitVisitor<'a> {
         {
             self.errors.push((call_expr.span, name_span.name().to_string()));
         }
-        walk::walk_expression_statement(self, stmt);
+        walk_js::walk_expression_statement(self, stmt);
     }
 
     fn visit_function(&mut self, _func: &Function<'a>, _flags: ScopeFlags) {}

@@ -3,6 +3,7 @@ use oxc_ast::{
     ast::{Argument, CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -38,27 +39,31 @@ test.todo('i need to write this test');
 ```
 ";
 
-pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     if let AstKind::CallExpression(call_expr) = node.kind() {
         let counts = call_expr.arguments.len();
 
-        if counts < 1
-            || should_filter_case(call_expr)
-            || !is_string_type(&call_expr.arguments[0])
-            || !is_type_of_jest_fn_call(
-                call_expr,
-                possible_jest_node,
-                ctx,
-                &[JestFnKind::General(JestGeneralFnKind::Test)],
-            )
-        {
+        if counts < 1 || should_filter_case(call_expr) || !is_string_type(&call_expr.arguments[0]) {
             return;
         }
 
         if (counts == 1 && !filter_todo_case(call_expr))
             || (counts > 1 && is_empty_function(call_expr))
         {
+            let Some(possible_jest_node) =
+                PossibleJestNode::from_call_expression(node, call_expr, ctx)
+            else {
+                return;
+            };
+            if !is_type_of_jest_fn_call(
+                call_expr,
+                &possible_jest_node,
+                ctx,
+                &[JestFnKind::General(JestGeneralFnKind::Test)],
+            ) {
+                return;
+            }
+
             let span = call_expr.callee.span();
             ctx.diagnostic_with_fix(prefer_todo_diagnostic(span), |fixer| {
                 let fix = if let Expression::Identifier(ident) = &call_expr.callee {

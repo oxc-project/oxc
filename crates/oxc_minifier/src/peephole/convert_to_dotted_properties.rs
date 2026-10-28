@@ -1,4 +1,4 @@
-use oxc_allocator::TakeIn;
+use oxc_allocator::ReplaceWith;
 use oxc_ast::ast::*;
 use oxc_syntax::identifier::is_identifier_name_patched;
 
@@ -20,21 +20,20 @@ impl<'a> PeepholeOptimizations {
     ) {
         let MemberExpression::ComputedMemberExpression(e) = expr else { return };
         let Expression::StringLiteral(s) = &e.expression else { return };
-        if is_identifier_name_patched(&s.value) {
-            let property = IdentifierName::new(s.span, s.value, ctx);
-            let new_member = StaticMemberExpression::boxed(
-                e.span,
-                e.object.take_in(ctx),
-                property,
-                e.optional,
-                ctx,
-            );
-            // Direct slot write: no typed helper for the `MemberExpression` enum slot; the sibling `notice_change()` preserves the mutation signal.
-            *expr = MemberExpression::StaticMemberExpression(new_member);
+        let Some(value) = s.value.as_str() else { return };
+        if is_identifier_name_patched(value) {
+            let property = IdentifierName::new(s.span, value, ctx);
+            expr.replace_with(|expr| {
+                let MemberExpression::ComputedMemberExpression(e) = expr else { unreachable!() };
+                let ComputedMemberExpression { span, object, optional, .. } = e.unbox();
+                MemberExpression::new_static_member_expression(
+                    span, object, property, optional, ctx,
+                )
+            });
             ctx.notice_change();
             return;
         }
-        let v = s.value.as_str();
+        let v = value;
         if e.optional {
             return;
         }

@@ -2,10 +2,6 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/preserve-memo-validation/maybe-invalid-useMemo-no-memoblock-sideeffect.ts
 ---
-Diagnostics:
-
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] VoidUseMemo: useMemo() callbacks must return a value", labels: One([LabeledSpan { label: Some("useMemo() callbacks must return a value"), span: SourceSpan { offset: SourceOffset(363), length: 77 }, primary: false }]), help: Some("This useMemo() callback doesn't return a value. useMemo() is for computing and caching values, not for arbitrary side effects"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
-
 // @validatePreserveExistingMemoizationGuarantees
 import { useMemo } from "react";
 // This is currently considered valid because we don't ensure that every

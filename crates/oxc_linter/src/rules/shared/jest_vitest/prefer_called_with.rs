@@ -1,5 +1,6 @@
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
@@ -48,21 +49,20 @@ expect(uncalledFunction).not.toBeCalled();
 ```
 ";
 
-pub fn run_on_jest_node<'a, 'c>(
-    possible_jest_node: &PossibleJestNode<'a, 'c>,
-    ctx: &'c LintContext<'a>,
-) {
-    let node = possible_jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
 
-    let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(jest_fn_call) = parse_expect_jest_fn_call(call_expr, &possible_jest_node, ctx) else {
         return;
     };
 
-    let has_not_modifier =
-        jest_fn_call.modifiers().iter().any(|modifier| modifier.is_name_equal("not"));
+    let has_not_modifier = jest_fn_call.modifiers().any(|modifier| modifier.is_name_equal("not"));
 
     if has_not_modifier {
         return;

@@ -1,8 +1,10 @@
 mod comment;
 mod error;
+mod js_reg_exp;
 
 pub use comment::*;
 pub use error::*;
+pub use js_reg_exp::*;
 
 use oxc_ast::{CommentKind, ast::Program};
 use oxc_ast_visit::utf8_to_utf16::Utf8ToUtf16;
@@ -32,7 +34,9 @@ pub fn convert_utf8_to_utf16(
             }
             Comment {
                 r#type: match comment.kind {
-                    CommentKind::Line => String::from("Line"),
+                    CommentKind::Line | CommentKind::HtmlOpen | CommentKind::HtmlClose => {
+                        String::from("Line")
+                    }
                     CommentKind::SingleLineBlock | CommentKind::MultiLineBlock => {
                         String::from("Block")
                     }

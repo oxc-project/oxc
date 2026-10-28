@@ -3,13 +3,13 @@ import {useMemo} from 'react';
 import {Stringify} from 'shared-runtime';
 
 function Component(props) {
-  let Component = Stringify;
+  let _Component = Stringify;
 
-  Component = useMemo(() => {
-    return Component;
-  }, [Component]);
+  _Component = useMemo(() => {
+    return _Component;
+  }, [_Component]);
 
-  return <Component {...props} />;
+  return <_Component {...props} />;
 }
 
 export const FIXTURE_ENTRYPOINT = {

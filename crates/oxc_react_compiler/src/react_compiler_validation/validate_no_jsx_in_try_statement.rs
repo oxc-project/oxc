@@ -15,12 +15,14 @@
 //!
 //! Port of ValidateNoJSXInTryStatement.ts.
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
+use oxc_diagnostics::Diagnostics;
+
+use crate::diagnostics;
 use crate::react_compiler_hir::{BlockId, HirFunction, InstructionValue, Terminal};
 
-pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> CompilerError {
+pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> Diagnostics {
     let mut active_try_blocks: Vec<BlockId> = Vec::new();
-    let mut error = CompilerError::new();
+    let mut error = Diagnostics::new();
 
     for (_block_id, block) in &func.body.blocks {
         // Remove completed try blocks (retainWhere equivalent)
@@ -28,20 +30,13 @@ pub fn validate_no_jsx_in_try_statement(func: &HirFunction) -> CompilerError {
 
         if !active_try_blocks.is_empty() {
             for &instr_id in &block.instructions {
-                let instr = &func.instructions[instr_id.0 as usize];
+                let instr = &func.instructions[instr_id.index()];
                 match &instr.value {
-                    InstructionValue::JsxExpression { span, .. }
-                    | InstructionValue::JsxFragment { span, .. } => {
-                        error.push(
-                            ErrorCategory::ErrorBoundaries
-                                .diagnostic("Avoid constructing JSX within try/catch")
-                                .with_help(
-                                    "React does not immediately render components when JSX is rendered, so any errors from this component will not be caught by the try/catch. To catch errors in rendering a given component, wrap that component in an error boundary. (https://react.dev/reference/react/Component#catching-rendering-errors-with-an-error-boundary)",
-                                )
-                                .with_labels(
-                                    span.map(|s| s.label("Avoid constructing JSX within try/catch")),
-                                ),
-                        );
+                    InstructionValue::JsxExpression { opening_name_span, span, .. } => {
+                        error.push(diagnostics::jsx_in_try(opening_name_span.or(*span)));
+                    }
+                    InstructionValue::JsxFragment { opening_span, span, .. } => {
+                        error.push(diagnostics::jsx_in_try(opening_span.or(*span)));
                     }
                     _ => {}
                 }

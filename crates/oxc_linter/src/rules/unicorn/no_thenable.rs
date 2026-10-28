@@ -74,6 +74,7 @@ declare_oxc_lint!(
     NoThenable,
     unicorn,
     correctness,
+    recommended,
     version = "0.0.13",
     short_description = "Disallow defining a `then` property.",
 );
@@ -100,33 +101,41 @@ impl Rule for NoThenable {
                     ctx.diagnostic(class(span));
                 }
             }
-            AstKind::ExportNamedDeclaration(decl) => {
+            AstKind::ExportDeclaration(decl) => {
                 // check declaration
-                if let Some(decl) = &decl.declaration {
-                    match decl {
-                        Declaration::VariableDeclaration(decl) => {
-                            for decl in &decl.declarations {
-                                check_binding_pattern(&decl.id, ctx);
-                            }
+                let decl = &decl.declaration;
+                match decl {
+                    Declaration::VariableDeclaration(decl) => {
+                        for decl in &decl.declarations {
+                            check_binding_pattern(&decl.id, ctx);
                         }
-                        Declaration::FunctionDeclaration(decl) => {
-                            if let Some(bind) = decl.id.as_ref()
-                                && bind.name == "then"
-                            {
-                                ctx.diagnostic(export(bind.span));
-                            }
+                    }
+                    Declaration::FunctionDeclaration(decl) => {
+                        if let Some(bind) = decl.id.as_ref()
+                            && bind.name == "then"
+                        {
+                            ctx.diagnostic(export(bind.span));
                         }
-                        Declaration::ClassDeclaration(decl) => {
-                            if let Some(bind) = decl.id.as_ref()
-                                && bind.name == "then"
-                            {
-                                ctx.diagnostic(export(bind.span));
-                            }
+                    }
+                    Declaration::ClassDeclaration(decl) => {
+                        if let Some(bind) = decl.id.as_ref()
+                            && bind.name == "then"
+                        {
+                            ctx.diagnostic(export(bind.span));
                         }
-                        _ => {}
+                    }
+                    _ => {}
+                }
+            }
+            AstKind::ExportNamedDeclaration(decl) => {
+                // check specifier
+                for spec in &decl.specifiers {
+                    if spec.exported.name() == "then" {
+                        ctx.diagnostic(export(spec.exported.span()));
                     }
                 }
-                // check specifier
+            }
+            AstKind::ExportFromDeclaration(decl) => {
                 for spec in &decl.specifiers {
                     if spec.exported.name() == "then" {
                         ctx.diagnostic(export(spec.exported.span()));
@@ -162,7 +171,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                 Some(me) => {
                     me.object().get_identifier_reference().is_some_and(|ident_ref| {
                         ident_ref.name == "Reflect" || ident_ref.name == "Object"
-                    }) && me.static_property_name() == Some("defineProperty")
+                    }) && me.static_property_name().is_some_and(|name| name == "defineProperty")
                         && !me.optional()
                 }
                 _ => false,
@@ -184,7 +193,7 @@ fn check_call_expression(expr: &CallExpression, ctx: &LintContext) {
                     me.object()
                         .get_identifier_reference()
                         .is_some_and(|ident_ref| ident_ref.name == "Object")
-                        && me.static_property_name() == Some("fromEntries")
+                        && me.static_property_name().is_some_and(|name| name == "fromEntries")
                         && !me.optional()
                 }
                 _ => false,

@@ -1,12 +1,11 @@
-use crate::{
-    formatter::format_element::LineMode,
-    ir_transform::sort_imports::{
-        compute_metadata::compute_import_metadata,
-        group_matcher::GroupMatcher,
-        options::SortImportsOptions,
-        sortable_imports::{SortSortableImports, SortableImport},
-        source_line::SourceLine,
-    },
+use oxc_formatter_core::format_element::LineMode;
+
+use crate::ir_transform::sort_imports::{
+    compute_metadata::compute_import_metadata,
+    group_matcher::GroupMatcher,
+    options::SortImportsOptions,
+    sortable_imports::{SortSortableImports, SortableImport},
+    source_line::SourceLine,
 };
 
 /// Orphan content (comments/empty lines separated by empty line from the next import).

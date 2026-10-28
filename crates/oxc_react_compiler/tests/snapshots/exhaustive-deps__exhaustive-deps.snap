@@ -2,10 +2,6 @@
 source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/exhaustive-deps/exhaustive-deps.js
 ---
-Diagnostics:
-
-OxcDiagnostic { inner: OxcDiagnosticInner { message: "[ReactCompiler] VoidUseMemo: useMemo() result is unused", labels: One([LabeledSpan { label: Some("useMemo() result is unused"), span: SourceSpan { offset: SourceOffset(272), length: 7 }, primary: false }]), help: Some("This useMemo() value is unused. useMemo() is for computing and caching values, not for arbitrary side effects"), note: None, severity: Error, code: OxcCode { scope: None, number: None }, url: None } }
-
 import { c as _c } from "react/compiler-runtime";
 // @validateExhaustiveMemoizationDependencies
 import { useCallback, useMemo } from "react";

@@ -70,6 +70,7 @@ pub fn run<'a>(node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
     let Some((property_span, property_name)) = mem_expr.static_property_info() else {
         return;
     };
+    let Some(property_name) = property_name.as_str() else { return };
     let Some(expr) = call_expr.arguments.first().and_then(Argument::as_expression) else {
         return;
     };
@@ -83,13 +84,11 @@ pub fn run<'a>(node: &oxc_semantic::AstNode<'a>, ctx: &LintContext<'a>) {
                 if !arrow_func.params.is_empty() {
                     return;
                 }
-                let Some(stmt) = arrow_func.body.statements.first() else {
-                    return;
-                };
-
                 if let Some(expr) = arrow_func.get_expression() {
                     report(is_once, property_span, Some(arrow_func.span), expr, ctx);
-                } else if let Statement::ReturnStatement(return_stmt) = stmt {
+                } else if let Some(Statement::ReturnStatement(return_stmt)) =
+                    arrow_func.get_function_body().unwrap().statements.first()
+                {
                     let Some(arg_expr) = &return_stmt.argument else {
                         return;
                     };

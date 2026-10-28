@@ -29,26 +29,26 @@ const group: TestGroup = {
   shouldSkipTest(ruleName: string, test: TestCase, code: string, err: Error): boolean {
     // Cannot lint JSON files
     if (
-      err.message === "Parsing failed" &&
-      ((ruleName === "ban-dependencies" && test.filename === "package.json") ||
-        (ruleName === "ban-dependencies (JSON)" && (test as any).language === "json/json"))
+      err.message === "Parsing failed"
+      && ((ruleName === "ban-dependencies" && test.filename === "package.json")
+        || (ruleName === "ban-dependencies (JSON)" && (test as any).language === "json/json"))
     ) {
       return true;
     }
 
     // Type-aware rules are not supported
     if (
-      ((ruleName === "prefer-array-at (typed)" &&
-        err.message.startsWith("Should have no errors but had 1:")) ||
-        (ruleName === "prefer-regex-test (typed)" &&
-          err.message.startsWith("Should have 1 error but had 0:")) ||
-        (ruleName === "no-indexof-equality" &&
-          err.message.startsWith(
-            "You have used a rule which requires type information. " +
-              "Please ensure you have typescript-eslint setup alongside this plugin " +
-              "and configured to enable type-aware linting.",
-          ))) &&
-      (test.languageOptions?.parserOptions as any)?.projectService != null
+      ((ruleName === "prefer-array-at (typed)"
+        && err.message.startsWith("Should have no errors but had 1:"))
+        || (ruleName === "prefer-regex-test (typed)"
+          && err.message.startsWith("Should have 1 error but had 0:"))
+        || (ruleName === "no-indexof-equality"
+          && err.message.startsWith(
+            "You have used a rule which requires type information. "
+              + "Please ensure you have typescript-eslint setup alongside this plugin "
+              + "and configured to enable type-aware linting.",
+          )))
+      && (test.languageOptions?.parserOptions as any)?.projectService != null
     ) {
       return true;
     }

@@ -1,0 +1,345 @@
+---
+source: crates/oxc_formatter/tests/fixtures/mod.rs
+---
+==================== Input ====================
+// A suppression comment before a union covers the whole union, like before any other node;
+// one after a `|` covers that member (AGENTS.md "Suppression").
+// Prettier gives an own-line one before the union to the first member (DIVERGENCES.md#union-suppression-whole).
+// statement-level: the whole alias, the usual way to keep a union's layout
+// oxfmt-ignore
+type Statement =
+  | 1
+    | 2;
+// alias, inline
+type A1 = /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// annotation, inline
+let a2: /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// inline before a hand-aligned union: the whole layout is kept
+type Aligned = /* prettier-ignore */ 'aaa'   | 'b'
+             | 'ccccc' | 'dd';
+// as, inline
+const a3 = 1 as /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// alias, own-line (before leading pipe): the whole union
+type A4 =
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// annotation, own-line: hoisted onto the `:` line, then column 0 (both AGENTS.md "Open debts")
+let a5:
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// alias, own-line, no leading pipe
+type A6 =
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>;
+// single member alias
+type A9 = /* prettier-ignore */ Aaaa<X,Y>;
+// operator line's line comment: the whole union under the operator
+// (`let :` prints it from column 0 like any suppressed type there, Prettier too; AGENTS.md "Open debts")
+let a10: // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+type A10 = // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+const a10b = 1 as // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// alias, block comment ending its line
+type A11 = /* prettier-ignore */
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// own-line before a hand-aligned union: the whole layout is kept (Prettier: only the first member)
+type A12 =
+  // prettier-ignore
+  | 'aaa'   | 'b'
+  | 'ccccc' | 'dd';
+// After a list opener, same rule
+type L1 = Foo< // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>>;
+type L2 = [
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>];
+// A previous sibling's trailing comment is not the union's (Prettier too)
+type S1 = Foo<X, // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>>;
+type S2 = [X, // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>];
+type S3 = X extends // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y> ? 1 : 2;
+// Under a formatter paren the comment prints outside the `(` before the union decides; the rule is unchanged
+type P1 = keyof /* prettier-ignore */ (Aaaa<X,Y> | Bbbb<X,Y>);
+type P2 = Aaaa & /* prettier-ignore */ (Bbbb<X,Y> | Cccc<X,Y>);
+type P3 = Aaaa & (
+  // prettier-ignore
+  Bbbb<X,Y> | Cccc<X,Y>
+);
+type P4 = keyof (
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>
+);
+let p5: /* prettier-ignore */ (Aaaa<X,Y> | Bbbb<X,Y>)[];
+type P6 = // prettier-ignore
+  (Aaaa<X,Y> | Bbbb<X,Y>)[];
+// Members: a comment after a `|` covers that member, own-line before a `|` the member after it,
+// a member's trailing one that member alone.
+// The last member's trailing one ends the union too, so the whole union claims it (outermost node ending there);
+// inside a surviving paren it stays inside, forcing the `)` onto the next line (Prettier: the member alone)
+type M1 = | /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+type M2 = Aaaa<X,Y> | /* prettier-ignore */ Bbbb<X,Y> | Cccc<X,Y>;
+type M3 =
+  | Aaaa<X,Y>
+  // prettier-ignore
+  | Bbbb<X,Y>
+  | Cccc<X,Y>;
+type M4 =
+  | // prettier-ignore
+  Aaaa<X,Y>
+  | Bbbb<X,Y>;
+type M5 =
+  | Aaaa<X,Y> // prettier-ignore
+  | Bbbb<X,Y>
+  | Cccc<X,Y>;
+type M6 = Aaaa<X,Y> /* prettier-ignore */ | Bbbb<X,Y> | Cccc<X,Y>;
+let m7: Aaaa<X,Y> | /* prettier-ignore */ Bbbb<X,Y>;
+type M8 = { p: Aaaa<X,Y> | /* prettier-ignore */ Bbbb<X,Y> };
+type M9 = (
+  | Aaaa<X,Y>
+  | Bbbb<X,Y> // prettier-ignore
+) & Cccc<X,Y>;
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+// A suppression comment before a union covers the whole union, like before any other node;
+// one after a `|` covers that member (AGENTS.md "Suppression").
+// Prettier gives an own-line one before the union to the first member (DIVERGENCES.md#union-suppression-whole).
+// statement-level: the whole alias, the usual way to keep a union's layout
+// oxfmt-ignore
+type Statement =
+  | 1
+    | 2;
+// alias, inline
+type A1 = /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// annotation, inline
+let a2: /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// inline before a hand-aligned union: the whole layout is kept
+type Aligned = /* prettier-ignore */ 'aaa'   | 'b'
+             | 'ccccc' | 'dd';
+// as, inline
+const a3 = 1 as /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// alias, own-line (before leading pipe): the whole union
+type A4 =
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// annotation, own-line: hoisted onto the `:` line, then column 0 (both AGENTS.md "Open debts")
+let a5: // prettier-ignore
+| Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// alias, own-line, no leading pipe
+type A6 =
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>;
+// single member alias
+type A9 = /* prettier-ignore */ Aaaa<X,Y>;
+// operator line's line comment: the whole union under the operator
+// (`let :` prints it from column 0 like any suppressed type there, Prettier too; AGENTS.md "Open debts")
+let a10: // prettier-ignore
+| Aaaa<X,Y>
+  | Bbbb<X,Y>;
+type A10 = // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+const a10b = 1 as
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// alias, block comment ending its line
+type A11 =
+  /* prettier-ignore */
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// own-line before a hand-aligned union: the whole layout is kept (Prettier: only the first member)
+type A12 =
+  // prettier-ignore
+  | 'aaa'   | 'b'
+  | 'ccccc' | 'dd';
+// After a list opener, same rule
+type L1 = Foo<
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>
+>;
+type L2 = [
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>,
+];
+// A previous sibling's trailing comment is not the union's (Prettier too)
+type S1 = Foo<
+  X, // prettier-ignore
+  Aaaa<X, Y> | Bbbb<X, Y>
+>;
+type S2 = [
+  X, // prettier-ignore
+  Aaaa<X, Y> | Bbbb<X, Y>,
+];
+type S3 = X extends Aaaa<X, Y> | Bbbb<X, Y> // prettier-ignore
+  ? 1
+  : 2;
+// Under a formatter paren the comment prints outside the `(` before the union decides; the rule is unchanged
+type P1 = keyof /* prettier-ignore */ (Aaaa<X,Y> | Bbbb<X,Y>);
+type P2 = Aaaa & /* prettier-ignore */ (Bbbb<X,Y> | Cccc<X,Y>);
+type P3 = Aaaa &
+  // prettier-ignore
+  (Bbbb<X,Y> | Cccc<X,Y>);
+type P4 = keyof // prettier-ignore
+(Aaaa<X,Y> | Bbbb<X,Y>);
+let p5: /* prettier-ignore */ (Aaaa<X,Y> | Bbbb<X,Y>)[];
+type P6 = // prettier-ignore
+  (Aaaa<X,Y> | Bbbb<X,Y>)[];
+// Members: a comment after a `|` covers that member, own-line before a `|` the member after it,
+// a member's trailing one that member alone.
+// The last member's trailing one ends the union too, so the whole union claims it (outermost node ending there);
+// inside a surviving paren it stays inside, forcing the `)` onto the next line (Prettier: the member alone)
+type M1 = /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X, Y>;
+type M2 = Aaaa<X, Y> | /* prettier-ignore */ Bbbb<X,Y> | Cccc<X, Y>;
+type M3 =
+  | Aaaa<X, Y>
+  // prettier-ignore
+  | Bbbb<X,Y>
+  | Cccc<X, Y>;
+type M4 =
+  | // prettier-ignore
+    Aaaa<X,Y>
+  | Bbbb<X, Y>;
+type M5 =
+  | Aaaa<X,Y> // prettier-ignore
+  | Bbbb<X, Y>
+  | Cccc<X, Y>;
+type M6 = Aaaa<X, Y> /* prettier-ignore */ | Bbbb<X, Y> | Cccc<X, Y>;
+let m7: Aaaa<X, Y> | /* prettier-ignore */ Bbbb<X,Y>;
+type M8 = { p: Aaaa<X, Y> | /* prettier-ignore */ Bbbb<X,Y> };
+type M9 = (| Aaaa<X,Y>
+  | Bbbb<X,Y> // prettier-ignore
+) &
+  Cccc<X, Y>;
+
+-------------------
+{ printWidth: 100 }
+-------------------
+// A suppression comment before a union covers the whole union, like before any other node;
+// one after a `|` covers that member (AGENTS.md "Suppression").
+// Prettier gives an own-line one before the union to the first member (DIVERGENCES.md#union-suppression-whole).
+// statement-level: the whole alias, the usual way to keep a union's layout
+// oxfmt-ignore
+type Statement =
+  | 1
+    | 2;
+// alias, inline
+type A1 = /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// annotation, inline
+let a2: /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// inline before a hand-aligned union: the whole layout is kept
+type Aligned = /* prettier-ignore */ 'aaa'   | 'b'
+             | 'ccccc' | 'dd';
+// as, inline
+const a3 = 1 as /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X,Y>;
+// alias, own-line (before leading pipe): the whole union
+type A4 =
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// annotation, own-line: hoisted onto the `:` line, then column 0 (both AGENTS.md "Open debts")
+let a5: // prettier-ignore
+| Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// alias, own-line, no leading pipe
+type A6 =
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>;
+// single member alias
+type A9 = /* prettier-ignore */ Aaaa<X,Y>;
+// operator line's line comment: the whole union under the operator
+// (`let :` prints it from column 0 like any suppressed type there, Prettier too; AGENTS.md "Open debts")
+let a10: // prettier-ignore
+| Aaaa<X,Y>
+  | Bbbb<X,Y>;
+type A10 = // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+const a10b = 1 as
+  // prettier-ignore
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// alias, block comment ending its line
+type A11 =
+  /* prettier-ignore */
+  | Aaaa<X,Y>
+  | Bbbb<X,Y>;
+// own-line before a hand-aligned union: the whole layout is kept (Prettier: only the first member)
+type A12 =
+  // prettier-ignore
+  | 'aaa'   | 'b'
+  | 'ccccc' | 'dd';
+// After a list opener, same rule
+type L1 = Foo<
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>
+>;
+type L2 = [
+  // prettier-ignore
+  Aaaa<X,Y> | Bbbb<X,Y>,
+];
+// A previous sibling's trailing comment is not the union's (Prettier too)
+type S1 = Foo<
+  X, // prettier-ignore
+  Aaaa<X, Y> | Bbbb<X, Y>
+>;
+type S2 = [
+  X, // prettier-ignore
+  Aaaa<X, Y> | Bbbb<X, Y>,
+];
+type S3 = X extends Aaaa<X, Y> | Bbbb<X, Y> // prettier-ignore
+  ? 1
+  : 2;
+// Under a formatter paren the comment prints outside the `(` before the union decides; the rule is unchanged
+type P1 = keyof /* prettier-ignore */ (Aaaa<X,Y> | Bbbb<X,Y>);
+type P2 = Aaaa & /* prettier-ignore */ (Bbbb<X,Y> | Cccc<X,Y>);
+type P3 = Aaaa &
+  // prettier-ignore
+  (Bbbb<X,Y> | Cccc<X,Y>);
+type P4 = keyof // prettier-ignore
+(Aaaa<X,Y> | Bbbb<X,Y>);
+let p5: /* prettier-ignore */ (Aaaa<X,Y> | Bbbb<X,Y>)[];
+type P6 = // prettier-ignore
+  (Aaaa<X,Y> | Bbbb<X,Y>)[];
+// Members: a comment after a `|` covers that member, own-line before a `|` the member after it,
+// a member's trailing one that member alone.
+// The last member's trailing one ends the union too, so the whole union claims it (outermost node ending there);
+// inside a surviving paren it stays inside, forcing the `)` onto the next line (Prettier: the member alone)
+type M1 = /* prettier-ignore */ Aaaa<X,Y> | Bbbb<X, Y>;
+type M2 = Aaaa<X, Y> | /* prettier-ignore */ Bbbb<X,Y> | Cccc<X, Y>;
+type M3 =
+  | Aaaa<X, Y>
+  // prettier-ignore
+  | Bbbb<X,Y>
+  | Cccc<X, Y>;
+type M4 =
+  | // prettier-ignore
+    Aaaa<X,Y>
+  | Bbbb<X, Y>;
+type M5 =
+  | Aaaa<X,Y> // prettier-ignore
+  | Bbbb<X, Y>
+  | Cccc<X, Y>;
+type M6 = Aaaa<X, Y> /* prettier-ignore */ | Bbbb<X, Y> | Cccc<X, Y>;
+let m7: Aaaa<X, Y> | /* prettier-ignore */ Bbbb<X,Y>;
+type M8 = { p: Aaaa<X, Y> | /* prettier-ignore */ Bbbb<X,Y> };
+type M9 = (| Aaaa<X,Y>
+  | Bbbb<X,Y> // prettier-ignore
+) &
+  Cccc<X, Y>;
+
+===================== End =====================

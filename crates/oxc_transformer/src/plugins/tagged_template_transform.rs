@@ -41,7 +41,7 @@
 use std::iter;
 
 use oxc_allocator::{ArenaVec, ReplaceWith};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_semantic::SymbolFlags;
 use oxc_span::SPAN;
 use oxc_traverse::{BoundIdentifier, Traverse};
@@ -157,7 +157,7 @@ impl<'a> TaggedTemplateTransform {
         let cooked_elements = ArenaVec::from_iter_in(
             template_lit.quasis.iter().map(|quasi| {
                 let expr = if let Some(cooked) = &quasi.value.cooked {
-                    if cooked.as_str() != quasi.value.raw.as_str() {
+                    if *cooked != quasi.value.raw.as_str() {
                         needs_raw_array = true;
                     }
                     Expression::new_string_literal(SPAN, *cooked, None, ctx)
@@ -231,9 +231,8 @@ impl<'a> TaggedTemplateTransform {
 
         let variable = VariableDeclarator::new(
             SPAN,
-            VariableDeclarationKind::Var,
             binding.create_binding_pattern(ctx),
-            NONE,
+            None,
             None,
             false,
             ctx,
@@ -242,7 +241,7 @@ impl<'a> TaggedTemplateTransform {
         let stmt = Statement::new_variable_declaration(
             SPAN,
             VariableDeclarationKind::Var,
-            ArenaVec::from_value_in(variable, ctx),
+            [variable],
             false,
             ctx,
         );

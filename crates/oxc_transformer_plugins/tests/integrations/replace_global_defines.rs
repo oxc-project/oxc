@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_ast_visit::Visit;
 use oxc_codegen::{Codegen, CodegenOptions};
 use oxc_minifier::{CompressOptions, Compressor};
-use oxc_parser::Parser;
+use oxc_parser::{ParseOptions, Parser};
 use oxc_semantic::SemanticBuilder;
 use oxc_span::SourceType;
 use oxc_transformer_plugins::{ReplaceGlobalDefines, ReplaceGlobalDefinesConfig};
@@ -116,6 +116,17 @@ fn typeof_define() {
     );
 }
 
+// https://github.com/rolldown/rolldown/issues/10779
+#[test]
+fn typeof_define_in_default_parameter_is_not_shadowed_by_function_body_var() {
+    let config = config(&[("typeof window", "'undefined'")]);
+    test_define_only(
+        "export function load(value = typeof window !== 'undefined' ? import('browser') : null) { var window; return value; }",
+        "export function load(value = 'undefined' !== 'undefined' ? import('browser') : null) { var window; return value; }",
+        &config,
+    );
+}
+
 #[test]
 fn typeof_define_is_exact() {
     let config = config(&[("typeof window", "'undefined'"), ("typeof process.env", "'object'")]);
@@ -200,6 +211,13 @@ fn invalid_typeof_define_key() {
 }
 
 #[test]
+fn invalid_define_value() {
+    for value in ["console.log foo", "1 2", "foo;"] {
+        assert!(ReplaceGlobalDefinesConfig::new(&[("foo", value)]).is_err(), "{value}");
+    }
+}
+
+#[test]
 fn dot() {
     let config = config(&[("process.env.NODE_ENV", "production")]);
     test("foo(process.env.NODE_ENV)", "foo(production)", &config);
@@ -278,6 +296,116 @@ fn dot_with_postfix_mixed() {
     test("foo(import.meta.somethingelse)", "foo(metaProperty)", &config);
     test("foo(import.meta.somethingelse.nested.one)", "foo(metaProperty.nested.one)", &config);
     test("foo(import.meta)", "foo(1)", &config);
+}
+
+#[test]
+fn meta_property_not_new_target() {
+    // An `import.meta.*` define must not match the distinct `new.target` expression.
+    let config = config(&[("import.meta.env", "__foo__"), ("import.meta.env.*", "undefined")]);
+    test(
+        "export function f() { return new.target.env; }",
+        "export function f() { return new.target.env; }",
+        &config,
+    );
+    test(
+        "export function f() { return new.target.env.FOO; }",
+        "export function f() { return new.target.env.FOO; }",
+        &config,
+    );
+    // sanity: the same config still rewrites the real `import.meta`
+    test("const _ = import.meta.env", "__foo__", &config);
+}
+
+// ---- adversarial: cases exercising the trailing-name buckets (this PR's data structure) ----
+
+#[test]
+fn bucket_multiple_dot_defines() {
+    // Two distinct chains share the trailing name `X` -> one bucket, len > 1.
+    // `find` must pick the entry whose full chain matches, not just the first in the bucket.
+    let c = config(&[("a.b.X", "1"), ("c.d.X", "2")]);
+    test("foo(a.b.X)", "foo(1)", &c);
+    test("foo(c.d.X)", "foo(2)", &c);
+    test_same("foo(e.f.X)", &c);
+
+    // Shorter vs longer chain in the same bucket.
+    let c = config(&[("b.X", "10"), ("a.b.X", "20")]);
+    test("foo(b.X)", "foo(10)", &c);
+    test("foo(a.b.X)", "foo(20)", &c);
+}
+
+#[test]
+fn bucket_multiple_meta_defines() {
+    // Two meta defines share the trailing name `X`.
+    let config = config(&[("import.meta.a.X", "1"), ("import.meta.b.X", "2")]);
+    test("foo(import.meta.a.X)", "foo(1)", &config);
+    test("foo(import.meta.b.X)", "foo(2)", &config);
+    test_same("foo(import.meta.c.X)", &config);
+}
+
+#[test]
+fn dot_and_meta_share_trailing_name() {
+    // A dot define and a meta define bucket under the same name `env`.
+    // The dot map is consulted first, then the meta map; neither must steal the other's match.
+    let config = config(&[("app.env", "1"), ("import.meta.env", "2")]);
+    test("foo(app.env)", "foo(1)", &config);
+    test("foo(import.meta.env)", "foo(2)", &config);
+    test_same("foo(other.env)", &config);
+}
+
+#[test]
+fn duplicate_keys_keep_first() {
+    // Identifier duplicate.
+    let c = config(&[("DUP", "1"), ("DUP", "2")]);
+    test("foo(DUP)", "foo(1)", &c);
+    // Dot duplicate (same chain twice -> two entries in one bucket).
+    let c = config(&[("a.b.DUP", "1"), ("a.b.DUP", "2")]);
+    test("foo(a.b.DUP)", "foo(1)", &c);
+}
+
+#[test]
+fn specific_meta_beats_wildcard_regardless_of_config_order() {
+    // Wildcard listed BEFORE the specific define; the specific must still win, because the
+    // keyed map is always consulted before the wildcard list (the old sort is gone).
+    let config = config(&[("import.meta.env.*", "0"), ("import.meta.env.MODE", "1")]);
+    test("foo(import.meta.env.MODE)", "foo(1)", &config);
+    test("foo(import.meta.env.OTHER)", "foo(0)", &config);
+}
+
+#[test]
+fn computed_key_dispatches_to_bucket() {
+    let config = config(&[("a.b.C", "1")]);
+    test("foo(a.b['C'])", "foo(1)", &config);
+    test("foo(a['b'].C)", "foo(1)", &config);
+    // Single-quasi template literal key resolves to a static name too.
+    test("foo(a.b[`C`])", "foo(1)", &config);
+    // Dynamic key can never match a define.
+    test_same("foo(a.b[C])", &config);
+}
+
+#[test]
+fn global_meta_dot_define_does_not_match_import_meta() {
+    // A dot define rooted at a global `meta` shares the bucket key `X` with nothing else, but its
+    // chain walks onto `import.meta`. The root guard must keep `import.meta.X` from
+    // matching a `meta.X` define meant for a global identifier named `meta`.
+    let c = config(&[("meta.X", "1")]);
+    test("foo(meta.X)", "foo(1)", &c);
+    test_same("foo(import.meta.X)", &c);
+}
+
+#[test]
+fn optional_chain_dispatches_to_bucket() {
+    // Optional chaining must still resolve to the right bucket entry.
+    let c = config(&[("a.b.X", "1"), ("c.d.X", "2")]);
+    test("foo(a?.b.X)", "foo(1)", &c);
+    test("foo(c.d?.X)", "foo(2)", &c);
+}
+
+#[test]
+fn assignment_target_dispatches_to_bucket() {
+    // The no-optimize assignment path shares the same bucket lookup.
+    let c = config(&[("a.b.X", "lhs1"), ("c.d.X", "lhs2")]);
+    test("a.b.X = 0", "lhs1 = 0", &c);
+    test("c.d.X = 0", "lhs2 = 0", &c);
 }
 
 #[test]
@@ -505,7 +633,14 @@ fn test_define_then_transform(
     expected: &str,
     define_config: &ReplaceGlobalDefinesConfig,
 ) {
-    test_define_then_transform_impl(source_text, expected, define_config, SourceType::mjs());
+    test_define_then_transform_impl(
+        source_text,
+        expected,
+        define_config,
+        SourceType::mjs(),
+        true,
+        "es2019",
+    );
 }
 
 #[track_caller]
@@ -519,6 +654,8 @@ fn test_define_then_transform_ts(
         expected,
         define_config,
         SourceType::ts().with_module(true),
+        true,
+        "es2019",
     );
 }
 
@@ -528,12 +665,16 @@ fn test_define_then_transform_impl(
     expected: &str,
     define_config: &ReplaceGlobalDefinesConfig,
     source_type: SourceType,
+    preserve_parens: bool,
+    target: &str,
 ) {
     use oxc_transformer::{TransformOptions, Transformer};
     use std::path::Path;
 
     let allocator = Allocator::default();
-    let ret = Parser::new(&allocator, source_text, source_type).parse();
+    let ret = Parser::new(&allocator, source_text, source_type)
+        .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+        .parse();
     assert!(ret.diagnostics.is_empty());
     let mut program = ret.program;
 
@@ -546,8 +687,8 @@ fn test_define_then_transform_impl(
     let scoping =
         SemanticBuilder::new().with_excess_capacity(2.0).build(&program).semantic.into_scoping();
 
-    // Step 3: Run transformer with ES2019 target (lowers optional chaining)
-    let options = TransformOptions::from_target("es2019").unwrap();
+    // Step 3: Run transformer with a target that lowers optional chaining.
+    let options = TransformOptions::from_target(target).unwrap();
     let filename = if source_type.is_typescript() { "test.ts" } else { "test.mjs" };
     let ret = Transformer::new(&allocator, Path::new(filename), &options)
         .build_with_scoping(scoping, &mut program);
@@ -558,7 +699,10 @@ fn test_define_then_transform_impl(
         .build(&program)
         .code;
     let expected = codegen(expected, source_type);
-    assert_eq!(result, expected, "for source {source_text}");
+    assert_eq!(
+        result, expected,
+        "for source {source_text}, {target}, preserve_parens={preserve_parens}"
+    );
 }
 
 #[test]
@@ -583,4 +727,36 @@ fn define_then_transform_optional_chain() {
         "var _replaced; (_replaced = 'replaced') === null || _replaced === void 0 ? void 0 : _replaced.c",
         &c2,
     );
+}
+
+// https://github.com/rolldown/rolldown/issues/11172
+#[test]
+fn define_then_transform_optional_chain_with_non_null_assertion() {
+    // An unrelated define must not remove the chain wrapper when `!` hides an optional member.
+    let c = config(&[("process.env.NODE_ENV", "'production'")]);
+    for (source, expected) in [
+        ("c?.a!.b", "c === null || c === void 0 ? void 0 : c.a.b"),
+        ("c?.[a]!.b", "c === null || c === void 0 ? void 0 : c[a].b"),
+        ("c?.a!['b']", "c === null || c === void 0 ? void 0 : c.a['b']"),
+        ("c?.a!()", "c === null || c === void 0 ? void 0 : c.a()"),
+        ("c?.()!.b", "c === null || c === void 0 ? void 0 : c().b"),
+        ("c?.a!!.b!", "c === null || c === void 0 ? void 0 : c.a.b"),
+        ("delete c?.a!.b", "c === null || c === void 0 ? true : delete c.a.b"),
+        ("c?.a.b", "c === null || c === void 0 ? void 0 : c.a.b"),
+        ("(c?.a)!.b", "(c === null || c === void 0 ? void 0 : c.a).b"),
+        ("c!?.a.b", "c === null || c === void 0 ? void 0 : c.a.b"),
+    ] {
+        for preserve_parens in [true, false] {
+            for target in ["es2015", "es2017", "es2019"] {
+                test_define_then_transform_impl(
+                    &format!("declare const c: any; {source}"),
+                    expected,
+                    &c,
+                    SourceType::ts().with_module(true),
+                    preserve_parens,
+                    target,
+                );
+            }
+        }
+    }
 }

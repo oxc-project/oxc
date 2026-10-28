@@ -6,7 +6,7 @@ use oxc::{
     CompilerInterface,
     allocator::Allocator,
     ast::{
-        Comment,
+        AstKind, Comment,
         ast::{Program, RegExpLiteral},
     },
     ast_visit::{Visit, walk},
@@ -17,6 +17,7 @@ use oxc::{
     regular_expression::{LiteralParser, Options},
     semantic::SemanticBuilderReturn,
     span::{ContentEq, SourceType, Span},
+    syntax::node::NodeId,
     transformer::{TransformOptions, TransformerReturn},
 };
 use oxc_tasks_transform_checker::{check_semantic_after_transform, check_semantic_ids};
@@ -35,7 +36,7 @@ pub struct Driver {
     pub check_semantic: bool,
     pub allow_return_outside_function: bool,
     // results
-    pub panicked: bool,
+    pub fatal_error: bool,
     pub errors: Diagnostics,
     pub printed: String,
     pub source_type: Option<SourceType>,
@@ -78,14 +79,14 @@ impl CompilerInterface for Driver {
     }
 
     fn after_parse(&mut self, parser_return: &mut ParserReturn) -> ControlFlow<()> {
-        let ParserReturn { program, panicked, diagnostics, .. } = parser_return;
-        self.panicked = *panicked;
+        let ParserReturn { program, fatal_error, diagnostics, .. } = parser_return;
+        self.fatal_error = *fatal_error;
         self.source_type = Some(program.source_type);
         self.check_ast_nodes(program);
         if self.check_comments(&program.comments) {
             return ControlFlow::Break(());
         }
-        if (diagnostics.is_empty() || !*panicked) && program.source_type.is_unambiguous() {
+        if (diagnostics.is_empty() || !*fatal_error) && program.source_type.is_unambiguous() {
             self.errors.push(OxcDiagnostic::error("SourceType must not be unambiguous."));
         }
         // Make sure serialization doesn't crash; also for code coverage.
@@ -173,11 +174,17 @@ struct CheckASTNodes<'a> {
     driver: &'a mut Driver,
     source_text: &'a str,
     allocator: Allocator,
+    node_ids: FxHashSet<NodeId>,
 }
 
 impl<'a> CheckASTNodes<'a> {
     fn new(driver: &'a mut Driver, source_text: &'a str) -> Self {
-        Self { driver, source_text, allocator: Allocator::default() }
+        Self {
+            driver,
+            source_text,
+            allocator: Allocator::default(),
+            node_ids: FxHashSet::default(),
+        }
     }
 
     fn check(&mut self, program: &Program<'a>) {
@@ -186,6 +193,18 @@ impl<'a> CheckASTNodes<'a> {
 }
 
 impl<'a> Visit<'a> for CheckASTNodes<'a> {
+    fn enter_node(&mut self, kind: AstKind<'a>) {
+        let id = kind.node_id();
+        // These are AST invariants, including for recovered syntax errors.
+        // Reporting them as diagnostics would let negative fixtures hide a failure.
+        assert_eq!(
+            id == NodeId::ROOT,
+            matches!(kind, AstKind::Program(_)),
+            "Only Program may have parser node ID zero: {kind:?}"
+        );
+        assert!(self.node_ids.insert(id), "Duplicate parser node ID: {kind:?}");
+    }
+
     // TODO: This is too slow
     // fn visit_span(&mut self, span: &Span) {
     // let Span { start, end, .. } = span;

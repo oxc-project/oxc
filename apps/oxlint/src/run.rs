@@ -10,11 +10,7 @@ use napi::{
 };
 use napi_derive::napi;
 
-use crate::{
-    init::{init_miette, init_tracing},
-    lint::CliRunner,
-    result::CliRunResult,
-};
+use crate::{init::init_tracing, lint::CliRunner, result::CliRunResult};
 
 /// JS callback to load a JS plugin.
 #[napi]
@@ -54,12 +50,23 @@ pub type JsLintFileCb = ThreadsafeFunction<
         Vec<u32>,           // Array of options IDs
         String,             // Settings for the file, as JSON string
         String,             // Globals for the file, as JSON string
+        bool,               // Whether to collect per-rule timing information
         Option<String>,     // Workspace URI (`None` in CLI mode, `Some` in LSP mode)
     )>,
     // Return value
-    Option<String>, // `Vec<LintFileResult>`, serialized to JSON, or `None` if no diagnostics
+    Option<String>, // Success or failure payload serialized to JSON, or `None` if no output
     // Arguments (repeated)
-    FnArgs<(String, u32, Option<Uint8Array>, Vec<u32>, Vec<u32>, String, String, Option<String>)>,
+    FnArgs<(
+        String,
+        u32,
+        Option<Uint8Array>,
+        Vec<u32>,
+        Vec<u32>,
+        String,
+        String,
+        bool,
+        Option<String>,
+    )>,
     // Error status
     Status,
     // CalleeHandled
@@ -226,8 +233,6 @@ async fn lint_impl(
         crate::lsp::run_lsp(external_linter, js_config_loader).await;
         return CliRunResult::LintSucceeded;
     }
-
-    init_miette();
 
     command.handle_threads();
 

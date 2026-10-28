@@ -8,76 +8,18 @@
 // This file may not be copied, modified, or distributed except according to those terms.
 
 #![expect(clippy::undocumented_unsafe_blocks)]
-#![allow(unstable_name_collisions)]
 #![allow(dead_code)]
 
 use std::{
-    alloc::{Layout, LayoutError},
+    alloc::Layout,
     cmp, fmt, mem,
     ptr::{self, NonNull},
 };
 
 #[cold]
-fn new_layout_err() -> LayoutError {
-    Layout::from_size_align(1, 3).unwrap_err()
-}
-
-#[cold]
 #[inline(never)]
 pub fn handle_alloc_error(layout: Layout) -> ! {
     panic!("encountered allocation error: {layout:?}")
-}
-
-// TODO: `Layout::repeat` was stabilized in Rust 1.95. Remove this trait and use the
-// standard library method directly once MSRV reaches 1.95.
-pub trait UnstableLayoutMethods {
-    fn padding_needed_for(&self, align: usize) -> usize;
-    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutError>;
-    fn array<T>(n: usize) -> Result<Layout, LayoutError>;
-}
-
-impl UnstableLayoutMethods for Layout {
-    fn padding_needed_for(&self, align: usize) -> usize {
-        let len = self.size();
-
-        // Rounded up value is:
-        //   len_rounded_up = (len + align - 1) & !(align - 1);
-        // and then we return the padding difference: `len_rounded_up - len`.
-        //
-        // We use modular arithmetic throughout:
-        //
-        // 1. align is guaranteed to be > 0, so align - 1 is always valid
-        //
-        // 2. `len + align - 1` can overflow by at most `align - 1`, so the &-mask with `!(align - 1)` will
-        //    ensure that in the case of overflow, `len_rounded_up` will itself be 0. Thus the returned
-        //    padding, when added to `len`, yields 0, which trivially satisfies the alignment `align`.
-        //
-        // (Of course, attempts to allocate blocks of memory whose size and padding overflow in the above
-        // manner should cause the allocator to yield an error anyway.)
-
-        let len_rounded_up = len.wrapping_add(align).wrapping_sub(1) & !align.wrapping_sub(1);
-        len_rounded_up.wrapping_sub(len)
-    }
-
-    fn repeat(&self, n: usize) -> Result<(Layout, usize), LayoutError> {
-        let padded_size = self
-            .size()
-            .checked_add(self.padding_needed_for(self.align()))
-            .ok_or_else(new_layout_err)?;
-        let alloc_size = padded_size.checked_mul(n).ok_or_else(new_layout_err)?;
-
-        unsafe {
-            // self.align is already known to be valid and alloc_size has been padded already
-            Ok((Layout::from_size_align_unchecked(alloc_size, self.align()), padded_size))
-        }
-    }
-
-    fn array<T>(n: usize) -> Result<Layout, LayoutError> {
-        UnstableLayoutMethods::repeat(&Layout::new::<T>(), n).map(|(k, offs)| {
-            debug_assert!(offs == mem::size_of::<T>());
-            k
-        })
-    }
 }
 
 /// Represents the combination of a starting address and a total capacity of the returned block.
@@ -642,7 +584,7 @@ pub unsafe trait Alloc {
     {
         match (Layout::array::<T>(n_old), Layout::array::<T>(n_new)) {
             (Ok(ref k_old), Ok(ref k_new)) if k_old.size() > 0 && k_new.size() > 0 => {
-                debug_assert!(k_old.align() == k_new.align());
+                debug_assert_eq!(k_old.align(), k_new.align());
                 unsafe { self.realloc(ptr.cast(), *k_old, k_new.size()) }.map(NonNull::cast)
             }
             _ => Err(AllocErr),

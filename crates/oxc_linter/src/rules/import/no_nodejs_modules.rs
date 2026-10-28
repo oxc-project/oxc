@@ -17,7 +17,7 @@ use crate::{
     rule::{DefaultRuleConfig, Rule},
 };
 
-fn no_nodejs_modules_diagnostic(span: Span, module_name: &str) -> OxcDiagnostic {
+fn no_nodejs_modules_diagnostic(span: Span, module_name: impl std::fmt::Display) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Do not import Node.js builtin module `{module_name}`"))
         .with_help("Use a browser-compatible alternative or add this module to the `allow` list if Node.js usage is intentional.")
         .with_label(span)
@@ -85,7 +85,7 @@ declare_oxc_lint!(
 
 impl Rule for NoNodejsModules {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -107,9 +107,7 @@ impl Rule for NoNodejsModules {
                 call.common_js_require().map(|s| s.value)
             }
             AstKind::ImportDeclaration(import) => Some(import.source.value),
-            AstKind::ExportNamedDeclaration(export) => {
-                export.source.as_ref().map(|item| item.value)
-            }
+            AstKind::ExportFromDeclaration(export) => Some(export.source.value),
             AstKind::ExportAllDeclaration(export_all) => Some(export_all.source.value),
             _ => return,
         };
@@ -118,12 +116,21 @@ impl Rule for NoNodejsModules {
             return;
         };
 
-        if self.allow.contains(module_name.as_str()) {
+        let Some(name) = module_name.as_str() else {
+            // A name with a lone surrogate matches neither the `allow` list nor a builtin,
+            // but the `node:` scheme still marks a Node.js module.
+            if module_name.starts_with("node:") {
+                ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), module_name.display()));
+            }
+            return;
+        };
+
+        if self.allow.contains(name) {
             return;
         }
 
-        if module_name.starts_with("node:") || is_nodejs_builtin_module(&module_name) {
-            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), &module_name));
+        if name.starts_with("node:") || is_nodejs_builtin_module(name) {
+            ctx.diagnostic(no_nodejs_modules_diagnostic(node.span(), name));
         }
     }
 }
@@ -133,6 +140,10 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r#"import x from "\uD800""#, None),
+        (r#"var x = require("\uDC00")"#, None),
         // Non Node.js modules
         (r#"import _ from "lodash""#, None),
         (r#"import find from "lodash.find""#, None),
@@ -186,6 +197,11 @@ fn test() {
     ];
 
     let fail = vec![
+        // Lone surrogates are part of the value.
+        // A search or prefix check must still see the rest.
+        (r#"import x from "node:\uD800""#, None),
+        (r#"var x = require("node:\uDC00")"#, None),
+        (r#"import x from "node:\uD83D\uDE00""#, None),
         // Node.js builtin modules
         (r#"import path from "path""#, None),
         (r#"import fs from "fs""#, None),

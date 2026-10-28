@@ -1,13 +1,13 @@
-use oxc_syntax::node::{NodeFlags, NodeId};
+use oxc_syntax::node::NodeId;
 
 use super::{Ancestry, AncestryStack, AstNodes};
 
 /// The node-related state the builder keeps while traversing.
 ///
 /// Bundles the three independent pieces of traversal state — the standalone
-/// `NodeId` counter, the cursor/flags of the node currently being visited, and
-/// the actual node storage — so the [`SemanticBuilder`] doesn't have to track
-/// them as separate fields.
+/// `NodeId` counter, the cursor of the node currently being visited, and the
+/// actual node storage — so the [`SemanticBuilder`] doesn't have to track them
+/// as separate fields.
 ///
 /// [`SemanticBuilder`]: crate::SemanticBuilder
 pub struct AstNodeStore<'a> {
@@ -16,8 +16,6 @@ pub struct AstNodeStore<'a> {
     node_count: u32,
     /// `NodeId` of the node currently being visited.
     pub current_node_id: NodeId,
-    /// Flags for the node currently being visited.
-    pub current_node_flags: NodeFlags,
     /// The actual node storage. See [`AstNodeStoreKind`].
     pub kind: AstNodeStoreKind<'a>,
 }
@@ -42,7 +40,6 @@ impl Default for AstNodeStore<'_> {
         Self {
             node_count: 0,
             current_node_id: NodeId::new(0),
-            current_node_flags: NodeFlags::empty(),
             // Default to the compiler pipeline (ancestry stack, no full store).
             kind: AstNodeStoreKind::Ancestry(AncestryStack::default()),
         }

@@ -38,7 +38,7 @@ declare_oxc_lint!(
     NoEmptyNamedBlocks,
     import,
     suspicious,
-    fix,
+    fix_suggestion,
     version = "0.16.1",
     short_description = "Enforces that named import blocks are not empty.",
 );
@@ -55,9 +55,11 @@ impl Rule for NoEmptyNamedBlocks {
 
         if specifiers.is_empty() {
             // import {} from 'mod'
-            ctx.diagnostic_with_fix(no_empty_named_blocks_diagnostic(import_decl.span), |fixer| {
-                fixer.delete_range(import_decl.span)
-            });
+            ctx.diagnostic_with_fix_of_kind(
+                no_empty_named_blocks_diagnostic(import_decl.span),
+                if import_decl.import_kind.is_type() { FixKind::Fix } else { FixKind::Suggestion },
+                |fixer| fixer.delete_range(import_decl.span),
+            );
             return;
         }
 

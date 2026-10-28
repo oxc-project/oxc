@@ -6,10 +6,10 @@
 //! Based on Babel's [plugin-rewrite-ts-imports](https://github.com/babel/babel/blob/3bcfee232506a4cebe410f02042fb0f0adeeb0b1/packages/babel-preset-typescript/src/plugin-rewrite-ts-imports.ts)
 
 use oxc_ast::ast::{
-    ExportAllDeclaration, ExportNamedDeclaration, Expression, ImportDeclaration, ImportExpression,
+    ExportAllDeclaration, ExportFromDeclaration, Expression, ImportDeclaration, ImportExpression,
     StringLiteral, TemplateLiteral,
 };
-use oxc_str::Str;
+use oxc_str::{JSStr, JSStrBuilder, Str};
 use oxc_traverse::Traverse;
 
 use crate::{TypeScriptOptions, context::TraverseCtx, state::TransformState};
@@ -32,13 +32,7 @@ fn rewritten_specifier<'a>(
     }
 
     let (without_extension, extension) = value.rsplit_once('.')?;
-
-    let replace = match extension {
-        "mts" => ".mjs",
-        "cts" => ".cjs",
-        "ts" | "tsx" => ".js",
-        _ => return None,
-    };
+    let replace = replacement_extension(extension)?;
 
     Some(if mode.is_remove() {
         Str::from(without_extension)
@@ -47,13 +41,57 @@ fn rewritten_specifier<'a>(
     })
 }
 
+fn replacement_extension(extension: &str) -> Option<&'static str> {
+    match extension {
+        "mts" => Some(".mjs"),
+        "cts" => Some(".cjs"),
+        "ts" | "tsx" => Some(".js"),
+        _ => None,
+    }
+}
+
+/// Like [`rewritten_specifier`], for a value that may contain lone surrogates.
+/// The part before the extension is copied unchanged.
+fn rewritten_js_specifier<'a>(
+    value: JSStr<'a>,
+    mode: RewriteExtensionsMode,
+    ctx: &TraverseCtx<'a>,
+) -> Option<JSStr<'a>> {
+    if let Some(value) = value.as_str() {
+        return rewritten_specifier(value, mode, ctx).map(JSStr::from);
+    }
+
+    if !value.contains(|c| c == '/' || c == '\\') {
+        return None;
+    }
+
+    let dot = value.rfind('.')?;
+    // An extension with a lone surrogate is not valid UTF-8 and matches no rewrite.
+    let extension = str::from_utf8(&value.as_bytes()[dot + 1..]).ok()?;
+    let replace = replacement_extension(extension)?;
+
+    let mut builder = JSStrBuilder::with_capacity_in(dot + replace.len(), ctx);
+    let mut len = 0;
+    for ch in value.chars() {
+        if len == dot {
+            break;
+        }
+        len += ch.len_bytes();
+        builder.push_js_char(ch);
+    }
+    if !mode.is_remove() {
+        builder.push_str(replace);
+    }
+    Some(builder.into_js_str())
+}
+
 impl TypeScriptRewriteExtensions {
     pub fn new(options: &TypeScriptOptions) -> Option<Self> {
         options.rewrite_import_extensions.map(|mode| Self { mode })
     }
 
     pub fn rewrite_extensions<'a>(&self, source: &mut StringLiteral<'a>, ctx: &TraverseCtx<'a>) {
-        if let Some(rewritten) = rewritten_specifier(source.value.as_str(), self.mode, ctx) {
+        if let Some(rewritten) = rewritten_js_specifier(source.value, self.mode, ctx) {
             source.value = rewritten;
             source.raw = None;
         }
@@ -74,7 +112,7 @@ impl TypeScriptRewriteExtensions {
         // specifiers never do.
         if let Some(rewritten) = rewritten_specifier(quasi.value.raw.as_str(), self.mode, ctx) {
             quasi.value.raw = rewritten;
-            quasi.value.cooked = Some(rewritten);
+            quasi.value.cooked = Some(rewritten.into());
         }
     }
 }
@@ -91,17 +129,15 @@ impl<'a> Traverse<'a, TransformState<'a>> for TypeScriptRewriteExtensions {
         self.rewrite_extensions(&mut node.source, ctx);
     }
 
-    fn enter_export_named_declaration(
+    fn enter_export_from_declaration(
         &mut self,
-        node: &mut ExportNamedDeclaration<'a>,
+        node: &mut ExportFromDeclaration<'a>,
         ctx: &mut TraverseCtx<'a>,
     ) {
         if node.export_kind.is_type() {
             return;
         }
-        if let Some(source) = node.source.as_mut() {
-            self.rewrite_extensions(source, ctx);
-        }
+        self.rewrite_extensions(&mut node.source, ctx);
     }
 
     fn enter_export_all_declaration(

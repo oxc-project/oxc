@@ -92,7 +92,7 @@ declare_oxc_lint!(
 
 impl Rule for JsxMaxDepth {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -151,10 +151,10 @@ fn calculate_expression_jsx_depth(
     match expr {
         Expression::JSXElement(elem) => calculate_jsx_children_depth(&elem.children, ctx, visited),
         Expression::JSXFragment(frag) => calculate_jsx_children_depth(&frag.children, ctx, visited),
-        Expression::Identifier(ident) => ident
-            .reference_id
-            .get()
-            .and_then(|ref_id| ctx.semantic().scoping().get_reference(ref_id).symbol_id())
+        Expression::Identifier(ident) => ctx
+            .scoping()
+            .get_reference(ident.reference_id())
+            .symbol_id()
             .map_or(0, |symbol_id| calculate_variable_jsx_depth(symbol_id, ctx, visited)),
         Expression::ParenthesizedExpression(paren) => {
             calculate_expression_jsx_depth(&paren.expression, ctx, visited)
@@ -197,12 +197,10 @@ fn calculate_jsx_children_depth(
             }
             JSXChild::ExpressionContainer(container) => {
                 if let Some(Expression::Identifier(ident)) = container.expression.as_expression() {
-                    let depth = ident
-                        .reference_id
-                        .get()
-                        .and_then(|ref_id| {
-                            ctx.semantic().scoping().get_reference(ref_id).symbol_id()
-                        })
+                    let depth = ctx
+                        .scoping()
+                        .get_reference(ident.reference_id())
+                        .symbol_id()
                         .map_or(0, |symbol_id| {
                             calculate_variable_jsx_depth(symbol_id, ctx, visited_symbols)
                         });

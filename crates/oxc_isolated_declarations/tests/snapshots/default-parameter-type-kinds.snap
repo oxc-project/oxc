@@ -1,0 +1,50 @@
+---
+source: crates/oxc_isolated_declarations/tests/mod.rs
+input_file: crates/oxc_isolated_declarations/tests/fixtures/default-parameter-type-kinds.ts
+---
+```
+==================== .D.TS ====================
+
+interface Source {
+	value: string;
+}
+export declare function mapped(value: { [K in keyof Source]: Source[K] }, required: string): void;
+export declare function keyOf(value: keyof Source | undefined, required: string): void;
+export declare function readonlyTuple(value: readonly [string] | undefined, required: string): void;
+export declare function intersection(value: {
+	optional?: string;
+} & number[] | undefined, required: string): void;
+export declare function operatorIntersection(value: (keyof Source) & string | undefined, required: string): void;
+export declare function unknownOperatorIntersection(value: unknown & keyof Source | undefined, required: string): void;
+export declare function unresolvedIntersection<T>(value: T & string, required: string): void;
+export declare function allUnknownIntersection(value: unknown & unknown | undefined, required: string): void;
+export declare function unresolvedUndefinedUnionIntersection<T>(value: (T | undefined) & string, required: string): void;
+export declare function unknownUndefinedUnionOperatorIntersection(value: (unknown | undefined) & keyof Source | undefined, required: string): void;
+export declare function anyUndefinedUnionOperatorIntersection(value: (any | undefined) & keyof Source | undefined, required: string): void;
+export declare function unresolvedNeverOperatorIntersection<T>(value: T & never & keyof Source, required: string): void;
+export declare function voidUnionUndefinedIntersection(value: (void | string) & undefined, required: string): void;
+export {};
+
+
+==================== Errors ====================
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+   ,-[6:3]
+ 5 | export function mapped(
+ 6 |   value: { [K in keyof Source]: Source[K] } = { value: "" },
+   :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 7 |   required: string,
+   `----
+
+  x TS9025: Declaration emit for this parameter requires implicitly adding
+  | undefined to it's type. This is not supported with --isolatedDeclarations.
+    ,-[61:3]
+ 60 | export function unresolvedNeverOperatorIntersection<T>(
+ 61 |   value: T & never & keyof Source = undefined as never,
+    :   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+ 62 |   required: string,
+    `----
+
+
+```

@@ -7,8 +7,9 @@ use crate::{
 };
 use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -69,19 +70,21 @@ pub struct NoRestrictedTestMethodsConfig {
 
 impl NoRestrictedTestMethodsConfig {
     pub fn from_configuration(value: &serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value.clone())
-            .map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value.clone()).map(DefaultRuleConfig::into_inner)
     }
 
-    pub fn run<'a>(&self, possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         if !is_type_of_jest_fn_call(
             call_expr,
-            possible_jest_node,
+            &possible_jest_node,
             ctx,
             &[
                 JestFnKind::General(JestGeneralFnKind::Jest),
@@ -94,7 +97,7 @@ impl NoRestrictedTestMethodsConfig {
         let Some(mem_expr) = call_expr.callee.as_member_expression() else {
             return;
         };
-        let Some(property_name) = mem_expr.static_property_name() else {
+        let Some(property_name) = mem_expr.static_property_name().and_then(JSStr::as_str) else {
             return;
         };
         let Some((span, _)) = mem_expr.static_property_info() else {

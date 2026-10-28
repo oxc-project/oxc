@@ -2,14 +2,15 @@ use oxc_allocator::ArenaVec;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, CallExpression, Expression, FunctionBody, MemberExpression,
-        SimpleAssignmentTarget, Statement,
+        Argument, AwaitExpression, CallExpression, Expression, FunctionBody, IdentifierReference,
+        MemberExpression, SimpleAssignmentTarget, Statement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
-use oxc_str::CompactStr;
+use oxc_str::{CompactStr, JSStr};
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::{
@@ -84,9 +85,7 @@ test('promises test', () => {
 ```
 ";
 
-pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-    let node = possible_jest_node.node;
-
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
@@ -95,7 +94,11 @@ pub fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<
         return;
     }
 
-    let Some(parsed_jest_fn) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx)
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(parsed_jest_fn) = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx)
     else {
         return;
     };
@@ -259,8 +262,8 @@ struct IdentifierFinder<'b> {
     found: bool,
 }
 
-impl<'a> Visit<'a> for IdentifierFinder<'_> {
-    fn visit_identifier_reference(&mut self, ident: &oxc_ast::ast::IdentifierReference<'a>) {
+impl<'a> VisitJs<'a> for IdentifierFinder<'_> {
+    fn visit_identifier_reference(&mut self, ident: &IdentifierReference<'a>) {
         if ident.name == self.name {
             self.found = true;
         }
@@ -291,10 +294,10 @@ fn is_top_level_promise_chain(expr: &Expression) -> bool {
 fn get_checkable_callback_body<'a>(callback: &'a Argument<'a>) -> Option<&'a FunctionBody<'a>> {
     match callback {
         Argument::ArrowFunctionExpression(arrow) => {
-            if arrow.expression || !arrow.params.items.is_empty() {
+            if arrow.is_expression() || !arrow.params.items.is_empty() {
                 return None;
             }
-            Some(&arrow.body)
+            arrow.get_function_body()
         }
         Argument::FunctionExpression(func) => {
             if !func.params.items.is_empty() {
@@ -343,7 +346,7 @@ impl PromiseExpectScanner {
 
         let first_arg = call_expr.arguments.first().and_then(|a| a.as_expression());
 
-        match member.static_property_name() {
+        match member.static_property_name().and_then(JSStr::as_str) {
             Some("all" | "allSettled" | "race" | "any") => {
                 if let Some(Expression::ArrayExpression(arr)) = first_arg {
                     for elem in &arr.elements {
@@ -368,10 +371,11 @@ fn is_promise_call_expression(call_expr: &CallExpression<'_>) -> bool {
         .callee
         .as_member_expression()
         .and_then(MemberExpression::static_property_name)
+        .and_then(JSStr::as_str)
         .is_some_and(|prop| matches!(prop, "then" | "catch" | "finally"))
 }
 
-impl<'a> Visit<'a> for PromiseExpectScanner {
+impl<'a> VisitJs<'a> for PromiseExpectScanner {
     fn visit_call_expression(&mut self, call_expr: &CallExpression<'a>) {
         // Check for `expect(promise).resolves/rejects` — resolves the promise variable
         let callee_name = get_node_name_vec(&call_expr.callee);
@@ -411,14 +415,14 @@ impl<'a> Visit<'a> for PromiseExpectScanner {
             return;
         }
 
-        walk::walk_call_expression(self, call_expr);
+        walk_js::walk_call_expression(self, call_expr);
     }
 
-    fn visit_await_expression(&mut self, await_expr: &oxc_ast::ast::AwaitExpression<'a>) {
+    fn visit_await_expression(&mut self, await_expr: &AwaitExpression<'a>) {
         self.resolve_ident(&await_expr.argument);
         let was_in_await = self.in_await;
         self.in_await = true;
-        walk::walk_await_expression(self, await_expr);
+        walk_js::walk_await_expression(self, await_expr);
         self.in_await = was_in_await;
     }
 }

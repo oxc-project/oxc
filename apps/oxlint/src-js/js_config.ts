@@ -26,9 +26,9 @@ function validateConfigExtends(root: object): void {
         : [...stackPaths.slice(idx), cycleStart].join(" -> ");
 
     return (
-      "`extends` contains a circular reference.\n\n" +
-      `${refPath} points back to ${cycleStart}\n` +
-      `Cycle: ${cycle}`
+      "`extends` contains a circular reference.\n\n"
+      + `${refPath} points back to ${cycleStart}\n`
+      + `Cycle: ${cycle}`
     );
   };
 

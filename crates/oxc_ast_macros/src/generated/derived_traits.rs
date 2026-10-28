@@ -12,6 +12,7 @@ pub fn get_trait_crate_and_generics(trait_name: &str) -> Option<(TokenStream, To
         "ReplaceWith" => (quote!(::oxc_allocator::ReplaceWith), quote!(< 'static >)),
         "GetAddress" => (quote!(::oxc_allocator::GetAddress), TokenStream::new()),
         "UnstableAddress" => (quote!(::oxc_allocator::UnstableAddress), TokenStream::new()),
+        "GetNodeId" => (quote!(::oxc_syntax::GetNodeId), TokenStream::new()),
         "GetSpan" => (quote!(::oxc_span::GetSpan), TokenStream::new()),
         "GetSpanMut" => (quote!(::oxc_span::GetSpanMut), TokenStream::new()),
         "ContentEq" => (quote!(::oxc_span::ContentEq), TokenStream::new()),

@@ -43,6 +43,7 @@ declare_oxc_lint!(
     PreferNodeProtocol,
     unicorn,
     restriction,
+    recommended,
     fix,
     version = "0.0.19",
     short_description = "Prefer using the `node:` protocol when importing Node.js built-in modules.",
@@ -65,37 +66,31 @@ impl Rule for PreferNodeProtocol {
                 call.common_js_require().map(|s| (s.value, s.span))
             }
             AstKind::ImportDeclaration(import) => Some((import.source.value, import.source.span)),
-            AstKind::ExportNamedDeclaration(export) => {
-                export.source.as_ref().map(|item| (item.value, item.span))
+            AstKind::ExportFromDeclaration(export) => {
+                Some((export.source.value, export.source.span))
             }
             _ => return,
         };
         let Some((string_lit_value, span)) = string_lit_value_with_span else {
             return;
         };
-        let module_name = if let Some((prefix, postfix)) = string_lit_value.split_once('/') {
-            // `e.g. ignore "assert/"`
-            if postfix.is_empty() { string_lit_value.as_str() } else { prefix }
-        } else {
-            string_lit_value.as_str()
+        let Some(module_name) = string_lit_value.as_str() else {
+            return;
         };
         if module_name.starts_with("node:") || !is_nodejs_builtin_module(module_name) {
             return;
         }
 
-        ctx.diagnostic_with_fix(
-            prefer_node_protocol_diagnostic(span, &string_lit_value),
-            |fixer| {
-                // Smallest module name is 2 chars, plus 2 for quotes = 4.
-                debug_assert!(
-                    span.size() >= 4,
-                    "node stdlib module name should be at least 4 chars long"
-                );
-                // We're replacing inside the string literal, shift to account for quotes.
-                let span = span.shrink_left(1).shrink_right(1);
-                fixer.replace(span, format!("node:{string_lit_value}"))
-            },
-        );
+        ctx.diagnostic_with_fix(prefer_node_protocol_diagnostic(span, module_name), |fixer| {
+            // Smallest module name is 2 chars, plus 2 for quotes = 4.
+            debug_assert!(
+                span.size() >= 4,
+                "node stdlib module name should be at least 4 chars long"
+            );
+            // We're replacing inside the string literal, shift to account for quotes.
+            let span = span.shrink_left(1).shrink_right(1);
+            fixer.replace(span, format!("node:{module_name}"))
+        });
     }
 }
 
@@ -107,6 +102,7 @@ fn test() {
         r#"import unicorn from "unicorn";"#,
         r#"import fs from "./fs";"#,
         r#"import fs from "unknown-builtin-module";"#,
+        r#"import { ADMIN_PATH } from "constants/url";"#,
         r#"import fs from "node:fs";"#,
         r#"import * as fs from "node:fs";"#,
         r#"import "punycode / ";"#,

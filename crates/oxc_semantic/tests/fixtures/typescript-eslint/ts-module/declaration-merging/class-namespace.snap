@@ -16,7 +16,7 @@ input_file: crates/oxc_semantic/tests/fixtures/typescript-eslint/ts-module/decla
         "children": [],
         "flags": "ScopeFlags(TsModuleBlock)",
         "id": 2,
-        "node": "TSModuleDeclaration(Foo)",
+        "node": "TSNamespaceDeclaration(Foo)",
         "symbols": [
           {
             "flags": "SymbolFlags(BlockScopedVariable | ConstVariable)",

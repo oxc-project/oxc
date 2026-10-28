@@ -1,30 +1,39 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
-    rules::shared::prefer_strict_equal::{DOCUMENTATION, run_on_jest_node},
-    utils::PossibleJestNode,
+    rules::shared::prefer_strict_equal::{DOCUMENTATION, run},
 };
 
 #[derive(Debug, Default, Clone)]
 pub struct PreferStrictEqual;
 
-declare_oxc_lint!(PreferStrictEqual, jest, style, fix, docs = DOCUMENTATION, version = "0.2.13",);
+declare_oxc_lint!(
+    PreferStrictEqual,
+    jest,
+    style,
+    suggestion,
+    docs = DOCUMENTATION,
+    version = "0.2.13",
+);
 
 impl Rule for PreferStrictEqual {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run_on_jest_node(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        let _ = run(node, ctx);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     // Note: Both Jest and Vitest share the same unit tests
 
@@ -57,6 +66,25 @@ fn test() {
             None,
         ),
     ];
+
+    let mut fix = fix
+        .into_iter()
+        .map(|(source, expected, config)| (source, expected, config, FixKind::Suggestion))
+        .collect::<Vec<_>>();
+    fix.extend([
+        (
+            "expect({ a: undefined }).toEqual({});",
+            "expect({ a: undefined }).toEqual({});",
+            None,
+            FixKind::Fix,
+        ),
+        (
+            "expect({ a: undefined }).toEqual({});",
+            "expect({ a: undefined }).toStrictEqual({});",
+            None,
+            FixKind::Suggestion,
+        ),
+    ]);
 
     Tester::new(PreferStrictEqual::NAME, PreferStrictEqual::PLUGIN, pass, fail)
         .with_jest_plugin(true)

@@ -2,7 +2,7 @@
 //! Transform of class property declarations (instance or static properties).
 
 use oxc_allocator::{ArenaBox, ArenaVec};
-use oxc_ast::{ast::*, builder::NONE};
+use oxc_ast::ast::*;
 use oxc_span::{SPAN, Span};
 use oxc_str::static_ident;
 use oxc_syntax::reference::ReferenceFlags;
@@ -219,8 +219,7 @@ impl<'a> ClassProperties<'a> {
             false,
             ctx,
         );
-        let obj =
-            Expression::new_object_expression(SPAN, ArenaVec::from_value_in(property, ctx), ctx);
+        let obj = Expression::new_object_expression(SPAN, [property], ctx);
 
         // Insert after class
         let class_details = self.current_class();
@@ -288,7 +287,9 @@ impl<'a> ClassProperties<'a> {
                     ctx,
                 )
             }
-            PropertyKey::StringLiteral(str_lit) if needs_define(&str_lit.value) => {
+            PropertyKey::StringLiteral(str_lit)
+                if str_lit.value.as_str().is_some_and(needs_define) =>
+            {
                 return self
                     .create_init_assignment_not_loose(prop, value, assignee, is_static, ctx);
             }
@@ -370,31 +371,28 @@ impl<'a> ClassProperties<'a> {
         // `{writable: true, value: <value>}`
         let prop_def = Expression::new_object_expression(
             SPAN,
-            ArenaVec::from_array_in(
-                [
-                    ObjectPropertyKind::new_object_property(
-                        SPAN,
-                        PropertyKind::Init,
-                        PropertyKey::new_static_identifier(SPAN, "writable", ctx),
-                        Expression::new_boolean_literal(SPAN, true, ctx),
-                        false,
-                        false,
-                        false,
-                        ctx,
-                    ),
-                    ObjectPropertyKind::new_object_property(
-                        SPAN,
-                        PropertyKind::Init,
-                        PropertyKey::new_static_identifier(SPAN, "value", ctx),
-                        value,
-                        false,
-                        false,
-                        false,
-                        ctx,
-                    ),
-                ],
-                ctx,
-            ),
+            [
+                ObjectPropertyKind::new_object_property(
+                    SPAN,
+                    PropertyKind::Init,
+                    PropertyKey::new_static_identifier(SPAN, "writable", ctx),
+                    Expression::new_boolean_literal(SPAN, true, ctx),
+                    false,
+                    false,
+                    false,
+                    ctx,
+                ),
+                ObjectPropertyKind::new_object_property(
+                    SPAN,
+                    PropertyKind::Init,
+                    PropertyKey::new_static_identifier(SPAN, "value", ctx),
+                    value,
+                    false,
+                    false,
+                    false,
+                    ctx,
+                ),
+            ],
             ctx,
         );
 
@@ -408,6 +406,6 @@ impl<'a> ClassProperties<'a> {
             ],
             ctx,
         );
-        Expression::new_call_expression(span, callee, NONE, arguments, false, ctx)
+        Expression::new_call_expression(span, callee, None, arguments, false, ctx)
     }
 }

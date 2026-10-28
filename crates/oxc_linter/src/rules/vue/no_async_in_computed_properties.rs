@@ -113,6 +113,7 @@ declare_oxc_lint!(
     NoAsyncInComputedProperties,
     vue,
     correctness,
+    recommended,
     none,
     config = NoAsyncInComputedProperties,
     version = "1.71.0",
@@ -121,7 +122,7 @@ declare_oxc_lint!(
 
 impl Rule for NoAsyncInComputedProperties {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {

@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 
-use crate::constant_evaluation::DetermineValueType;
+use crate::DetermineValueType;
 
 use super::{MayHaveSideEffects, PropertyReadSideEffects, context::MayHaveSideEffectsContext};
 
@@ -92,7 +92,8 @@ impl<'a> MayHaveSideEffects<'a> for Declaration<'a> {
             Declaration::ClassDeclaration(class_decl) => class_decl.may_have_side_effects(ctx),
             Declaration::TSEnumDeclaration(_)
             | Declaration::TSImportEqualsDeclaration(_)
-            | Declaration::TSModuleDeclaration(_)
+            | Declaration::TSExternalModuleDeclaration(_)
+            | Declaration::TSNamespaceDeclaration(_)
             | Declaration::TSGlobalDeclaration(_)
             | Declaration::TSInterfaceDeclaration(_)
             | Declaration::TSTypeAliasDeclaration(_) => unreachable!(),

@@ -57,6 +57,7 @@ declare_oxc_lint!(
     PreferArrayFind,
     unicorn,
     perf, // Encourages more efficient use of built-in methods
+    recommended,
     pending,
     version = "0.16.12",
     short_description = "Encourages using `Array.prototype.find` and `Array.prototype.findLast` instead of taking the first or last matching element from `filter(...)`.",
@@ -151,10 +152,7 @@ impl Rule for PreferArrayFind {
                     && is_filter_call(call_expr)
                     && !matches!(
                         ctx.nodes().ancestor_kinds(node.id()).nth(1),
-                        Some(
-                            AstKind::ExportDefaultDeclaration(_)
-                                | AstKind::ExportNamedDeclaration(_)
-                        )
+                        Some(AstKind::ExportDefaultDeclaration(_) | AstKind::ExportDeclaration(_))
                     )
                     && let Some(ident) = var_decl.id.get_binding_identifier()
                 {

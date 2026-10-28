@@ -1,0 +1,48 @@
+// A suppressed class member, by a leading or a trailing comment, prints its content verbatim;
+// its `;` stays the formatter's and follows `semi`, like a statement
+// (Prettier prints the member whole, DIVERGENCES.md#suppressed-terminator-per-semi).
+// A method with a body and a static block have no terminator: whole span.
+
+abstract class C {
+  m(  ) {} // prettier-ignore
+  p   = 1; // prettier-ignore
+  q   = 2 // prettier-ignore
+  accessor a   = 1; // prettier-ignore
+  static s   = 2 // prettier-ignore
+  abstract n(  ): void; // prettier-ignore
+  abstract o(  ): void // prettier-ignore
+  [k: string]:   any; // prettier-ignore
+  static {  } // prettier-ignore
+  /* leading */ r   = 3; // prettier-ignore
+  // prettier-ignore
+  t   = 4;
+  // prettier-ignore
+  u   = 5
+  z() {}
+}
+
+// A source `;` on the next line (`;[k] = 2`, the `semi: false` style) is outside the content too;
+// under `semi: false` the member's own rule decides whether the next member needs one
+class D {
+  p   = 1 // prettier-ignore
+  ;[k] = 2
+  // prettier-ignore
+  q   = 3
+  ;[j] = 4
+}
+
+// An interface member's `;` is a separator, not a terminator: the member prints whole,
+// leading comment included
+interface I {
+  /* leading */ p:   1; // prettier-ignore
+  m(  ): void // prettier-ignore
+  z: 0;
+}
+
+// The verbatim range keeps the value's source parens
+class E {
+  p   = (q = 1) // prettier-ignore
+  r   = (s = 2); // prettier-ignore
+  // prettier-ignore
+  t   = (u = 3)
+}

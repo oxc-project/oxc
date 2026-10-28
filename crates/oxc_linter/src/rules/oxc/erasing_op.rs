@@ -63,7 +63,7 @@ impl Rule for ErasingOp {
                 check_op(binary_expression, &binary_expression.right, ctx);
             }
             BinaryOperator::Division => {
-                if is_number_value(&binary_expression.right, 0.0) {
+                if binary_expression.right.get_inner_expression().is_number_0() {
                     return;
                 }
                 check_op(binary_expression, &binary_expression.left, ctx);
@@ -73,20 +73,12 @@ impl Rule for ErasingOp {
     }
 }
 
-fn is_number_value(expr: &Expression, value: f64) -> bool {
-    if let Expression::NumericLiteral(number_literal) = expr.without_parentheses() {
-        (number_literal.value - value).abs() < f64::EPSILON
-    } else {
-        false
-    }
-}
-
 fn check_op<'a, 'b>(
     binary_expression: &'b BinaryExpression<'a>,
     op: &'b Expression<'a>,
     ctx: &LintContext<'a>,
 ) {
-    if is_number_value(op, 0.0) {
+    if op.get_inner_expression().is_number_0() {
         ctx.diagnostic_with_dangerous_fix(erasing_op_diagnostic(binary_expression.span), |fixer| {
             fixer.replace(binary_expression.span, "0")
         });
@@ -97,11 +89,49 @@ fn check_op<'a, 'b>(
 fn test() {
     use crate::tester::Tester;
 
-    let pass = vec!["x * 1;", "1 * x;", "5 & x;", "x / 1;", "1 / x;", "0 / 0"];
+    let pass = vec![
+        "x * 1;",
+        "x * 1e-320;",
+        "1 * x;",
+        "5 & x;",
+        "x / 1;",
+        "1 / x;",
+        "x / 0;",
+        "0 / 0;", // The result of division by zero is `NaN`, not zero.
+        "0n & x;",
+        "x * 0n;",
+        "x | 0;",
+        "x ^ 0;",
+        "x % 0;",
+        "x ** 0;",
+        "x / (0 as number);",
+    ];
 
-    let fail = vec!["x * 0;", "0 * x;", "0 & x;", "0 / x;"];
+    let fail = vec![
+        "x * 0;",
+        "0 * x;",
+        "0 & x;",
+        "x & 0;",
+        "0 / x;",
+        "0.0 * x;",
+        "x + y * 0;",
+        "(x + y) * 0;",
+        "foo() * 0;",
+        "-3 * 0;",
+        "0 / -3;",
+        "(x as string) * 0;",
+        "x! & 0;",
+        "x! & (0 as number);",
+        "(0 as number) / x;",
+    ];
 
-    let fix = vec![("x * 0;", "0;"), ("0 * x;", "0;"), ("0 & x;", "0;"), ("0 / x;", "0;")];
+    let fix = vec![
+        ("x * 0;", "0;"),
+        ("0 * x;", "0;"),
+        ("x & 0;", "0;"),
+        ("0 & x;", "0;"),
+        ("0 / 5;", "0;"),
+    ];
 
     Tester::new(ErasingOp::NAME, ErasingOp::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();
 }

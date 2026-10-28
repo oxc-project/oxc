@@ -3,6 +3,7 @@ use oxc_ast::{
     ast::{Argument, Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -32,16 +33,15 @@ impl ValidDescribeCallbackOptions {
         Self { allow_async_describe_callback: true, allow_describe_options_argument: true };
 }
 
-pub fn run<'a>(
-    possible_jest_node: &PossibleJestNode<'a, '_>,
-    ctx: &LintContext<'a>,
-    options: ValidDescribeCallbackOptions,
-) {
-    let node = possible_jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>, options: ValidDescribeCallbackOptions) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
-    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx) else {
         return;
     };
     if !matches!(jest_fn_call.kind, JestFnKind::General(JestGeneralFnKind::Describe)) {
@@ -116,17 +116,14 @@ pub fn run<'a>(
                 diagnostic(ctx, arrow_expr.span, Message::UnexpectedDescribeArgument);
             }
 
-            if arrow_expr.expression && !arrow_expr.body.statements.is_empty() {
-                let stmt = &arrow_expr.body.statements[0];
-                let Statement::ExpressionStatement(expr_stmt) = stmt else {
-                    return;
-                };
-                if let Expression::CallExpression(call_expr) = &expr_stmt.expression {
-                    diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
-                }
+            if arrow_expr.is_expression()
+                && let Some(Expression::CallExpression(call_expr)) = arrow_expr.get_expression()
+            {
+                diagnostic(ctx, call_expr.span, Message::UnexpectedReturnInDescribe);
             }
 
-            if let Some(span) = find_first_return_stmt_span(&arrow_expr.body) {
+            if let Some(span) = arrow_expr.get_function_body().and_then(find_first_return_stmt_span)
+            {
                 diagnostic(ctx, span, Message::UnexpectedReturnInDescribe);
             }
         }

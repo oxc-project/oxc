@@ -36,8 +36,7 @@ fn main() -> std::io::Result<()> {
 
     // Report any parsing errors
     for error in ret.diagnostics {
-        let error = error.with_source_code(source_text.clone());
-        println!("{error:?}");
+        println!("{}", error.render_with_source_code(source_text.clone()));
     }
 
     let program = ret.program;

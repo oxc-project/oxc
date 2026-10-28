@@ -46,6 +46,7 @@ declare_oxc_lint!(
     ThrowNewError,
     unicorn,
     style,
+    recommended,
     fix,
     version = "0.0.14",
     short_description = "This rule makes sure you always use `new` when throwing an error.",
@@ -88,11 +89,7 @@ impl Rule for ThrowNewError {
 }
 
 fn is_data_tagged_error(callee: &Expression<'_>) -> bool {
-    let Expression::StaticMemberExpression(member) = callee else {
-        return false;
-    };
-
-    member.property.name == "TaggedError" && member.object.is_specific_id("Data")
+    callee.is_specific_member_access("Data", "TaggedError")
 }
 
 #[test]

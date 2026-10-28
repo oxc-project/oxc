@@ -8,11 +8,17 @@
 //! Analogous to TS `Pipeline.ts` (`compileFn` → `run` → `runWithEnvironment`).
 //! Currently runs BuildHIR (lowering) and PruneMaybeThrows.
 
-use crate::diagnostics::{CompilerError, ErrorCategory};
-use crate::react_compiler_hir::ReactFunctionType;
+use oxc_allocator::GetAllocator;
+use oxc_diagnostics::Diagnostics;
+
+use crate::diagnostics;
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::environment::OutputMode;
-use crate::react_compiler_hir::environment_config::EnvironmentConfig;
+use crate::react_compiler_hir::environment_config::{EnvironmentConfig, ExhaustiveEffectDepsMode};
+use crate::react_compiler_hir::{
+    ReactFunctionType, assert_consistent_identifiers, assert_terminal_preds_exist,
+    assert_terminal_successors_exist, assert_valid_block_nesting,
+};
 use crate::react_compiler_inference::align_method_call_scopes;
 use crate::react_compiler_inference::align_object_method_scopes;
 use crate::react_compiler_inference::align_reactive_scopes_to_block_scopes_hir;
@@ -80,38 +86,34 @@ use crate::react_compiler_validation::validate_use_memo;
 use crate::scope::*;
 
 use super::compile_result::CodegenFunction;
-use super::compile_result::OutlinedFunction;
 use super::imports::ProgramContext;
 use crate::options::CompilerOutputMode;
 
 /// Run the compilation pipeline on a single function.
 ///
-/// Currently: creates an Environment, runs BuildHIR (lowering), and produces
-/// debug output via the context. Returns a CodegenFunction with zeroed memo
-/// stats on success (codegen is not yet implemented).
+/// On failure, returns the diagnostics of the failed compilation attempt.
 #[allow(clippy::too_many_arguments)]
-pub fn compile_fn<'a>(
+pub fn compile_fn<'a, const EMIT: bool>(
     ast: &oxc_ast::builder::AstBuilder<'a>,
-    func: &FunctionNode<'_>,
-    scope: &ScopeResolver<'_, '_>,
+    func: &FunctionNode<'_, 'a>,
+    scope: &ScopeResolver<'_, 'a>,
     fn_type: ReactFunctionType,
     mode: CompilerOutputMode,
     env_config: &EnvironmentConfig,
-    context: &mut ProgramContext,
-) -> Result<Option<CodegenFunction<'a>>, CompilerError> {
-    let mut env = Environment::with_config(env_config.clone());
+    context: &mut ProgramContext<'a>,
+) -> Result<Option<CodegenFunction<'a>>, Diagnostics> {
+    let mut env = Environment::with_config(ast.allocator(), env_config.clone());
     env.fn_type = fn_type;
     env.output_mode = match mode {
         CompilerOutputMode::Ssr => OutputMode::Ssr,
         CompilerOutputMode::Client => OutputMode::Client,
         CompilerOutputMode::Lint => OutputMode::Lint,
     };
-    env.instrument_fn_name = context.instrument_fn_name.clone();
-    env.instrument_gating_name = context.instrument_gating_name.clone();
-    env.hook_guard_name = context.hook_guard_name.clone();
+    env.instrument_fn_name = context.instrument_fn_name;
+    env.instrument_gating_name = context.instrument_gating_name;
+    env.hook_guard_name = context.hook_guard_name;
+    env.memo_cache_name = context.memo_cache_name;
     env.seed_uid_known_names(context.known_referenced_names());
-
-    env.reference_node_ids = scope.all_reference_positions().clone();
 
     let mut hir = lower(func, scope, &mut env)?;
 
@@ -130,7 +132,7 @@ pub fn compile_fn<'a>(
         return Ok(None);
     }
 
-    prune_maybe_throws(&mut hir, &mut env.functions)?;
+    prune_maybe_throws(&mut hir, &mut env)?;
 
     validate_context_variable_lvalues(&hir, &mut env)?;
 
@@ -139,20 +141,20 @@ pub fn compile_fn<'a>(
 
     drop_manual_memoization(&mut hir, &mut env)?;
 
-    inline_immediately_invoked_function_expressions(&mut hir, &mut env);
+    inline_immediately_invoked_function_expressions(&mut hir, &mut env)?;
 
-    merge_consecutive_blocks(&mut hir, &mut env.functions);
+    merge_consecutive_blocks(&mut hir, &mut env.functions, env.allocator)?;
 
-    // TODO: port assertConsistentIdentifiers
-    // TODO: port assertTerminalSuccessorsExist
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
+    assert_terminal_successors_exist(&hir)?;
 
     enter_ssa(&mut hir, &mut env)?;
 
     eliminate_redundant_phi(&mut hir, &mut env);
 
-    // TODO: port assertConsistentIdentifiers
+    assert_consistent_identifiers(&hir, &env.identifiers)?;
 
-    constant_propagation(&mut hir, &mut env);
+    constant_propagation(&mut hir, &mut env)?;
 
     infer_types(&mut hir, &mut env)?;
 
@@ -182,7 +184,7 @@ pub fn compile_fn<'a>(
 
     dead_code_elimination(&mut hir, &env);
 
-    prune_maybe_throws(&mut hir, &mut env.functions)?;
+    prune_maybe_throws(&mut hir, &mut env)?;
 
     infer_mutation_aliasing_ranges(&mut hir, &mut env, false)?;
 
@@ -221,7 +223,10 @@ pub fn compile_fn<'a>(
 
     infer_reactive_places(&mut hir, &mut env)?;
 
-    if env.enable_validations() {
+    if env.enable_validations()
+        && (env.config.validate_exhaustive_memoization_dependencies
+            || env.config.validate_exhaustive_effect_dependencies != ExhaustiveEffectDepsMode::Off)
+    {
         validate_exhaustive_dependencies(&mut hir, &mut env)?;
     }
 
@@ -231,7 +236,7 @@ pub fn compile_fn<'a>(
         && env.config.validate_static_components
         && env.output_mode == OutputMode::Lint
     {
-        let errors = validate_static_components(&hir);
+        let errors = validate_static_components(&hir, &env.functions);
         log_errors_as_events(&errors, context);
     }
 
@@ -263,18 +268,18 @@ pub fn compile_fn<'a>(
 
     merge_overlapping_reactive_scopes_hir(&mut hir, &mut env);
 
-    // TODO: port assertValidBlockNesting
+    assert_valid_block_nesting(&hir, &env)?;
 
-    build_reactive_scope_terminals_hir(&mut hir, &mut env);
+    build_reactive_scope_terminals_hir(&mut hir, &mut env)?;
 
-    // TODO: port assertValidBlockNesting
+    assert_valid_block_nesting(&hir, &env)?;
 
     flatten_reactive_loops_hir(&mut hir);
 
     flatten_scopes_with_hooks_or_use_hir(&mut hir, &env)?;
 
-    // TODO: port assertTerminalSuccessorsExist
-    // TODO: port assertTerminalPredsExist
+    assert_terminal_successors_exist(&hir)?;
+    assert_terminal_preds_exist(&hir)?;
 
     propagate_scope_dependencies_hir(&mut hir, &mut env);
 
@@ -309,7 +314,7 @@ pub fn compile_fn<'a>(
     let unique_identifiers = rename_variables(&mut reactive_fn, &mut env);
 
     for name in &unique_identifiers {
-        context.add_new_reference(name.clone());
+        context.add_new_reference(*name);
     }
 
     prune_hoisted_contexts(&mut reactive_fn, &env)?;
@@ -320,27 +325,31 @@ pub fn compile_fn<'a>(
         validate_preserved_manual_memoization(&reactive_fn, &mut env);
     }
 
-    let codegen_result =
-        codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)?;
-
     // NOTE: we intentionally do NOT register the memo cache import here.
-    // The import is registered in apply_compiled_functions() only for functions
-    // that are actually applied to the output. Registering it here would cause
-    // a spurious `import { c as _c }` when a function compiles with memo slots
-    // but is later discarded (e.g., due to "use no memo" opt-out or errors),
-    // while other functions in the same file compile to 0 memo slots.
+    // The local name is reserved up front by `ProgramContext::reserve_memo_cache_name`,
+    // and the import itself is registered in `ox_transform_program` only when an applied
+    // function uses memo slots. Registering it here would cause a spurious
+    // `import { c as _c }` when a function compiles with memo slots but is later
+    // discarded (e.g., due to "use no memo" opt-out or errors), while other functions
+    // in the same file compile to 0 memo slots.
 
     // Stage 2 Phase 1: `validate_source_locations` operated on the Babel-shaped
     // codegen result and is disabled while the oxc emission is stubbed. It will be
     // reinstated (or dropped) once the oxc back-end emits real function bodies.
 
-    // Simulate unexpected exception for testing (matches TS Pipeline.ts)
+    let output = if EMIT {
+        Some(
+            codegen_function(ast, &reactive_fn, &mut env, unique_identifiers, fbt_operands)
+                .map_err(Diagnostics::from)?,
+        )
+    } else {
+        None
+    };
+
     if env.config.throw_unknown_exception_testonly {
-        return Err(CompilerError::from(ErrorCategory::Invariant.diagnostic("unexpected error")));
+        return Err(Diagnostics::from(diagnostics::invariant_unexpected_error()));
     }
 
-    // Check for accumulated errors at the end of the pipeline
-    // (matches TS Pipeline.ts: env.hasErrors() → Err at the end)
     if env.has_errors() {
         // Merge UIDs even on error: in TS, Babel's scope.generateUid() permanently
         // registers names in the scope's `uids` map regardless of whether the function
@@ -353,76 +362,15 @@ pub fn compile_fn<'a>(
         return Err(env.take_errors());
     }
 
-    // Re-compile outlined functions through the full pipeline.
-    // This mirrors TS behavior where outlined functions from JSX outlining
-    // are pushed back onto the compilation queue and compiled as components.
-    let mut compiled_outlined: Vec<OutlinedFunction<'a>> = Vec::new();
-    for o in codegen_result.outlined {
-        let outlined_codegen = CodegenFunction {
-            span: o.func.span,
-            id: o.func.id,
-            name_hint: o.func.name_hint,
-            params: o.func.params,
-            body: o.func.body,
-            generator: o.func.generator,
-            is_async: o.func.is_async,
-            memo_slots_used: o.func.memo_slots_used,
-            memo_blocks: o.func.memo_blocks,
-            memo_values: o.func.memo_values,
-            pruned_memo_blocks: o.func.pruned_memo_blocks,
-            pruned_memo_values: o.func.pruned_memo_values,
-            outlined: Vec::new(),
-        };
-        if let Some(fn_type) = o.fn_type {
-            match compile_outlined_fn(outlined_codegen) {
-                Ok(compiled) => {
-                    compiled_outlined
-                        .push(OutlinedFunction { func: compiled, fn_type: Some(fn_type) });
-                }
-                Err(_err) => {
-                    // If re-compilation fails, skip the outlined function
-                }
-            }
-        } else {
-            compiled_outlined.push(OutlinedFunction { func: outlined_codegen, fn_type: o.fn_type });
-        }
-    }
-
     if let Some(uid_names) = env.take_uid_known_names() {
         context.merge_uid_known_names(&uid_names);
     }
 
-    Ok(Some(CodegenFunction {
-        span: codegen_result.span,
-        id: codegen_result.id,
-        name_hint: codegen_result.name_hint,
-        params: codegen_result.params,
-        body: codegen_result.body,
-        generator: codegen_result.generator,
-        is_async: codegen_result.is_async,
-        memo_slots_used: codegen_result.memo_slots_used,
-        memo_blocks: codegen_result.memo_blocks,
-        memo_values: codegen_result.memo_values,
-        pruned_memo_blocks: codegen_result.pruned_memo_blocks,
-        pruned_memo_values: codegen_result.pruned_memo_values,
-        outlined: compiled_outlined,
-    }))
+    Ok(output)
 }
 
-/// Compile an outlined function's codegen AST through the full pipeline.
-///
-/// Creates a fresh Environment, builds a synthetic ScopeInfo with unique fake
-/// positions for identifier resolution, lowers from AST to HIR, then runs
-/// the full compilation pipeline. This mirrors the TS behavior where outlined
-/// functions are inserted into the program AST and re-compiled from scratch.
-pub fn compile_outlined_fn<'a>(
-    codegen_fn: CodegenFunction<'a>,
-) -> Result<CodegenFunction<'a>, CompilerError> {
-    Ok(codegen_fn)
-}
-
-/// Push a compiler error's diagnostics (validation / lint / telemetry path),
+/// Push a pass's diagnostics (validation / lint / telemetry path),
 /// matching TS `env.logErrors()`. No enclosing-function fallback label.
-fn log_errors_as_events(errors: &CompilerError, context: &mut ProgramContext) {
-    context.diagnostics.extend(errors.diagnostics.iter().cloned());
+fn log_errors_as_events(errors: &Diagnostics, context: &mut ProgramContext) {
+    context.diagnostics.extend(errors.iter().cloned());
 }

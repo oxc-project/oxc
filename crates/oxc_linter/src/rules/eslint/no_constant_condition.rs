@@ -5,7 +5,7 @@ use oxc_ast::{
     AstKind,
     ast::{ArrowFunctionExpression, Expression, Function, YieldExpression},
 };
-use oxc_ast_visit::Visit;
+use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -134,6 +134,7 @@ declare_oxc_lint!(
     NoConstantCondition,
     eslint,
     correctness,
+    recommended,
     config = NoConstantCondition,
     version = "0.0.3",
     short_description = "Disallow constant expressions in conditions.",
@@ -141,7 +142,7 @@ declare_oxc_lint!(
 
 impl Rule for NoConstantCondition {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -246,7 +247,7 @@ struct YieldBeforeLoopExitFinder {
     after_span: Option<Span>,
 }
 
-impl<'a> Visit<'a> for YieldBeforeLoopExitFinder {
+impl<'a> VisitJs<'a> for YieldBeforeLoopExitFinder {
     fn visit_yield_expression(&mut self, expr: &YieldExpression<'a>) {
         if self.after_span.is_none_or(|after_span| expr.span.start > after_span.start) {
             self.found = true;

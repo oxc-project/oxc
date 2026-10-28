@@ -4,10 +4,11 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{PossibleJestNode, is_equality_matcher, parse_expect_and_typeof_vitest_fn_call},
 };
@@ -52,7 +53,7 @@ pub fn prefer_to_be_simply_bool<'a>(
 
         let call_name = if value { "toBeTruthy" } else { "toBeFalsy" };
 
-        ctx.diagnostic_with_fix(
+        ctx.diagnostic_with_suggestion(
             OxcDiagnostic::warn(format!("Use `{call_name}` instead.")).with_label(span),
             |fixer| {
                 let new_matcher = if is_cmp_mem_expr {
@@ -73,13 +74,14 @@ declare_oxc_lint!(
     /// ### What it does
     ///
     /// This rule warns when `toBe(true)` is used with `expect` or `expectTypeOf`.
-    /// With `--fix`, it will be replaced with `toBeTruthy()`.
+    /// With `--fix-suggestions`, it will be replaced with `toBeTruthy()`.
     ///
     /// ### Why is this bad?
     ///
-    /// Using `toBe(true)` is less flexible and may not account for other truthy
-    /// values like non-empty strings or objects. `toBeTruthy()` checks for any
-    /// truthy value, which makes the tests more comprehensive and robust.
+    /// When testing for truthiness, `toBeTruthy()` expresses that intent directly.
+    /// Unlike `toBe(true)`, it also accepts non-boolean truthy values such as
+    /// non-empty strings and objects. The replacement is a suggestion because
+    /// it changes which values pass the assertion.
     ///
     /// ### Examples
     ///
@@ -97,24 +99,28 @@ declare_oxc_lint!(
     PreferToBeTruthy,
     vitest,
     style,
-    fix,
+    suggestion,
     version = "0.7.1",
     short_description = "Prefer `toBeTruthy()` over `toBe(true)`.",
 );
 
 impl Rule for PreferToBeTruthy {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        prefer_to_be_simply_bool(jest_node, ctx, true);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else { return };
+        let Some(jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx) else {
+            return;
+        };
+        prefer_to_be_simply_bool(&jest_node, ctx, true);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 
 #[test]
 fn test() {
-    use crate::tester::Tester;
+    use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
         "[].push(true)",
@@ -163,6 +169,15 @@ fn test() {
             r#"expectTypeOf("a string").not.toBeTruthy();"#,
         ),
     ];
+
+    let mut fix = fix
+        .into_iter()
+        .map(|(source, expected)| (source, expected, None, FixKind::Suggestion))
+        .collect::<Vec<_>>();
+    fix.extend([
+        ("expect(1).toBe(true);", "expect(1).toBe(true);", None, FixKind::Fix),
+        ("expect(1).toBe(true);", "expect(1).toBeTruthy();", None, FixKind::Suggestion),
+    ]);
 
     Tester::new(PreferToBeTruthy::NAME, PreferToBeTruthy::PLUGIN, pass, fail)
         .expect_fix(fix)

@@ -318,7 +318,6 @@ rebuilt        : {value_rebuilt}
 impl PostTransformChecker<'_, '_> {
     fn check_scopes(&mut self) {
         for scope_ids in self.scope_ids_map.pairs() {
-            // Check bindings are the same
             fn get_sorted_binding_names(scoping: &Scoping, scope_id: ScopeId) -> Vec<CompactStr> {
                 let mut binding_names = scoping
                     .get_bindings(scope_id)
@@ -343,13 +342,11 @@ impl PostTransformChecker<'_, '_> {
                 }
             }
 
-            // Check flags match
             let flags = self.get_pair(scope_ids, Scoping::scope_flags);
             if flags.is_mismatch() {
                 self.errors.push_mismatch("Scope flags mismatch", scope_ids, flags);
             }
 
-            // Check parents match
             let parent_ids = self.get_pair(scope_ids, Scoping::scope_parent_id);
             let is_match = match parent_ids.into_parts() {
                 (Some(parent_id_after_transform), Some(parent_id_rebuilt)) => {
@@ -369,7 +366,6 @@ impl PostTransformChecker<'_, '_> {
 
     fn check_symbols(&mut self) {
         for symbol_ids in self.symbol_ids_map.pairs() {
-            // Check names match
             let names = self.get_pair(symbol_ids, |scoping, symbol_id| {
                 scoping.symbol_name(symbol_id).to_string()
             });
@@ -379,19 +375,16 @@ impl PostTransformChecker<'_, '_> {
             let symbol_name = names.rebuilt;
             let mismatch_title = |field| format!("Symbol {field} mismatch for {symbol_name:?}");
 
-            // Check flags match
             let flags = self.get_pair(symbol_ids, Scoping::symbol_flags);
             if flags.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("flags"), symbol_ids, flags);
             }
 
-            // Check spans match
             let spans = self.get_pair(symbol_ids, Scoping::symbol_span);
             if spans.is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("span"), symbol_ids, spans);
             }
 
-            // Check scope IDs match
             let scope_ids = self.get_pair(symbol_ids, Scoping::symbol_scope_id);
             if self.remap_scope_ids(scope_ids).is_mismatch() {
                 self.errors.push_mismatch(&mismatch_title("scope ID"), symbol_ids, scope_ids);
@@ -399,7 +392,6 @@ impl PostTransformChecker<'_, '_> {
 
             // NB: Skip checking declarations match - transformer does not set `NodeId`s
 
-            // Check resolved references match
             let reference_ids = self.get_pair(symbol_ids, |scoping, symbol_id| {
                 scoping.get_resolved_reference_ids(symbol_id).to_vec()
             });
@@ -411,7 +403,6 @@ impl PostTransformChecker<'_, '_> {
                 );
             }
 
-            // Check redeclarations match
             let redeclaration_spans = self.get_pair(symbol_ids, |scoping, symbol_id| {
                 let mut spans = scoping
                     .symbol_redeclarations(symbol_id)
@@ -433,7 +424,6 @@ impl PostTransformChecker<'_, '_> {
 
     fn check_references(&mut self) {
         for (reference_ids, name) in self.reference_ids_map.pairs().zip(&self.reference_names) {
-            // Check symbol IDs match
             let symbol_ids = self.get_pair(reference_ids, |scoping, reference_id| {
                 scoping.get_reference(reference_id).symbol_id()
             });
@@ -457,7 +447,6 @@ impl PostTransformChecker<'_, '_> {
                 );
             }
 
-            // Check flags match.
             // Ignore `MemberWriteTarget` flag - it's set by `SemanticBuilder` but not by the transformer.
             let flags = self.get_pair(reference_ids, |scoping, reference_id| {
                 scoping.get_reference(reference_id).flags() - ReferenceFlags::MemberWriteTarget

@@ -56,10 +56,10 @@ function createRuleUsingCache(): Rule {
 
           context.report({
             message:
-              "Rules which have accessed this file:\n" +
-              `filename: ${data.filename}\n` +
-              `ident names: ${data.identNames.join(", ")}\n` +
-              `rule names: ${data.ruleNames.sort().join(", ")}`,
+              "Rules which have accessed this file:\n"
+              + `filename: ${data.filename}\n`
+              + `ident names: ${data.identNames.join(", ")}\n`
+              + `rule names: ${data.ruleNames.sort().join(", ")}`,
             node,
           });
         },

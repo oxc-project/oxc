@@ -4,7 +4,8 @@ use serde::{Deserialize, Serialize};
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Function, FunctionType, IdentifierReference, MetaProperty, Super, ThisExpression,
+        Argument, Class, Function, FunctionType, IdentifierReference, NewTarget, StaticBlock,
+        Super, ThisExpression,
     },
 };
 use oxc_ast_visit::Visit;
@@ -85,7 +86,7 @@ declare_oxc_lint!(
 
 impl Rule for PreferArrowCallback {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -175,6 +176,9 @@ fn get_callback_info<'a>(
                 just_passed_bind = false;
             }
             AstKind::ConditionalExpression(c) => {
+                if c.test.span() == current_span {
+                    return info;
+                }
                 current_span = c.span;
                 just_passed_bind = false;
             }
@@ -194,7 +198,7 @@ fn get_callback_info<'a>(
             }
             AstKind::ComputedMemberExpression(m) => {
                 if m.object.span() != current_span
-                    || m.static_property_name().is_none_or(|name| name.as_str() != "bind")
+                    || m.static_property_name().is_none_or(|name| name != "bind")
                 {
                     return info;
                 }
@@ -377,10 +381,8 @@ impl<'a> Visit<'a> for ScopeScanner {
         self.sup = true;
     }
 
-    fn visit_meta_property(&mut self, it: &MetaProperty<'a>) {
-        if it.meta.name == "new" && it.property.name == "target" {
-            self.meta = true;
-        }
+    fn visit_new_target(&mut self, _it: &NewTarget) {
+        self.meta = true;
     }
 
     fn visit_identifier_reference(&mut self, it: &IdentifierReference<'a>) {
@@ -389,9 +391,9 @@ impl<'a> Visit<'a> for ScopeScanner {
         }
     }
 
-    fn visit_class(&mut self, _it: &oxc_ast::ast::Class<'a>) {}
+    fn visit_class(&mut self, _it: &Class<'a>) {}
 
-    fn visit_static_block(&mut self, _it: &oxc_ast::ast::StaticBlock<'a>) {}
+    fn visit_static_block(&mut self, _it: &StaticBlock<'a>) {}
 }
 
 #[test]
@@ -402,6 +404,7 @@ fn test() {
         ("foo(a => a);", None),
         ("foo(function*() {});", None),
         ("foo(function() { this; });", None),
+        ("foo(function() { let x: typeof this.foo; });", None),
         ("foo(function bar() {});", Some(serde_json::json!([{ "allowNamedFunctions": true }]))),
         ("foo(function() { (() => this); });", None),
         ("foo(function() { this; }.bind(obj));", None),
@@ -424,6 +427,14 @@ fn test() {
         ),
         ("test('clean', function (this: any) { this.foo = 'Cleaned!';});", None),
         ("obj.test('clean', function (foo) { this.foo = 'Cleaned!'; });", None),
+        ("foo(function() {} ? a : b);", None),
+        ("foo((function() {}) ? a : b);", None),
+        ("foo(function() { this; }.bind(this) ? a : b);", None),
+        ("foo(function() { this; }?.bind(this) ? a : b);", None),
+        ("foo(bar ? function() {} ? a : b : c);", None),
+        ("foo(function() {} || a ? b : c);", None),
+        ("new Foo(function() {} ? a : b);", None),
+        ("foo(async function() {} ? a : b);", None),
     ];
 
     let fail = vec![

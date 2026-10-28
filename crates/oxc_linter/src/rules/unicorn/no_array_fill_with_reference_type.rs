@@ -8,6 +8,7 @@ use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode,
+    ast_util::variable_declaration_kind,
     ast_util::{get_declaration_of_variable, is_method_call},
     context::LintContext,
     rule::Rule,
@@ -50,6 +51,7 @@ declare_oxc_lint!(
     NoArrayFillWithReferenceType,
     unicorn,
     suspicious,
+    recommended,
     version = "1.70.0",
     short_description = "Disallows using reference values as `Array#fill()` values."
 );
@@ -133,7 +135,9 @@ fn get_const_variable_initializer<'a>(
         return None;
     };
 
-    if !decl.kind.is_const() || !is_same_binding_identifier(&decl.id, ident) {
+    if !variable_declaration_kind(decl, ctx.nodes())?.is_const()
+        || !is_same_binding_identifier(&decl.id, ident)
+    {
         return None;
     }
 

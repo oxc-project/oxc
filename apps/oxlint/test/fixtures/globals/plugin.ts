@@ -20,8 +20,8 @@ const plugin: Plugin = {
         const { languageOptions } = context;
         context.report({
           message:
-            `\nglobals: ${JSON.stringify(languageOptions.globals, null, 2)}\n` +
-            `env: ${JSON.stringify(languageOptions.env, null, 2)}`,
+            `\nglobals: ${JSON.stringify(languageOptions.globals, null, 2)}\n`
+            + `env: ${JSON.stringify(languageOptions.env, null, 2)}`,
           node: SPAN,
         });
         return {};

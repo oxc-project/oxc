@@ -1,9 +1,18 @@
 // oxlint-disable no-console, no-await-in-loop
 
 import { createTwoFilesPatch } from "diff";
-import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  existsSync,
+  globSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { join, relative } from "node:path";
 import prettier from "prettier";
+import * as astroPlugin from "prettier-plugin-astro";
 import * as sveltePlugin from "prettier-plugin-svelte";
 import { format } from "../dist/index.js";
 
@@ -11,13 +20,18 @@ const CONFORMANCE_DIR = import.meta.dirname;
 const FIXTURES_DIR = join(CONFORMANCE_DIR, "fixtures");
 const EXTERNALS_DIR = join(FIXTURES_DIR, "externals");
 const SNAPSHOTS_DIR = join(CONFORMANCE_DIR, "snapshots");
+const REPO_ROOT = join(CONFORMANCE_DIR, "..", "..", "..");
+const DIVERGENCES_FILES = globSync("{apps/oxfmt,crates/oxc_formatter*}/DIVERGENCES.md", {
+  cwd: REPO_ROOT,
+});
 
 type Category = {
   name: string;
-  sources: Source[];
+  /** Test suites (Prettier's own, the plugins', `edge-cases/`): compared as written. */
+  fixtures: Source[];
+  /** Real-world projects: compared on Prettier's output of the file, as written when it has no stable one. */
+  projects: Source[];
   optionSets: Record<string, unknown>[];
-  /** Notes for known failures, keyed by fixture name (exact match) */
-  notes?: Record<string, string>;
 };
 
 type Source = {
@@ -29,35 +43,27 @@ type Source = {
   resolveFilePath?: (name: string) => string;
 };
 
-// Shared note strings for deliberate Prettier divergences (deduped).
-const NOTE_NOT_INDENT =
-  "Allowed (layout-only): wrapped :not() selector-arg indent (prettier/prettier#16165)";
-const NOTE_LESS_MATH_FILL =
-  "Allowed (layout-only): nested Less math — Prettier's fill fit-check breaks inside the wide chunk, ours breaks the separator (biome fill). See crates/oxc_formatter_css/AGENTS.md";
-const NOTE_MQ_OP_SPACING =
-  "Allowed: media-query operator spacing; Prettier can't space arithmetic ops (prettier/prettier#1811)";
-
 const categories: Category[] = [
   {
     name: "js-in-vue",
-    sources: [
-      { dir: join(EXTERNALS_DIR, "prettier"), ext: ".vue" },
-      { dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".vue" },
+    fixtures: [
+      {
+        dir: join(EXTERNALS_DIR, "prettier"),
+        ext: ".vue",
+        // Parser error messages and range formatting are not formatter concerns
+        excludes: ["/_errors_/", "vue/range/"],
+      },
       { dir: join(FIXTURES_DIR, "edge-cases", "js-in-vue") },
     ],
+    projects: [{ dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".vue" }],
     optionSets: [
       { printWidth: 80 },
       { printWidth: 100, vueIndentScriptAndStyle: true, singleQuote: true },
     ],
-    notes: {
-      "externals/prettier/vue/multiparser/lang-tsx.vue": "`lang=tsx` is not supported",
-      "externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue":
-        "`<T = any,>() => {}` comma in generic param is removed even in .ts(x) file",
-    },
   },
   {
     name: "gql-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-graphql"),
         ext: ".js",
@@ -65,12 +71,12 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {},
   },
   {
     name: "css-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-css"),
         ext: ".js",
@@ -83,51 +89,42 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "css-in-js") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {
-      "externals/prettier/js/multiparser-css/styled-components.js":
-        "`Xxx.extend` not recognized as tag",
-    },
   },
   {
     name: "html-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-html"),
         ext: ".js",
         excludes: ["format.test.js"],
       },
       {
-        dir: join(EXTERNALS_DIR, "webawesome"),
-        ext: ".ts",
+        dir: join(EXTERNALS_DIR, "prettier", "js/embeded"),
+        ext: ".js",
+        excludes: ["format.test.js"],
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "html-in-js") },
     ],
+    projects: [{ dir: join(EXTERNALS_DIR, "webawesome"), ext: ".ts" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
-    notes: {
-      "externals/prettier/js/multiparser-html/issue-10691.js":
-        "js-in-html(`<script>`)-in-js needs lot more work; Please see oxc_formatter/src/print/template/embed/html.rs",
-      "externals/webawesome/number-input/number-input.styles.ts":
-        "Layout-only: Prettier's fill fit-check breaks inside `var()` args in a long `calc()`; ours breaks after the operator. See crates/oxc_formatter_css/AGENTS.md",
-      "externals/webawesome/page/page.styles.ts":
-        "Layout-only: Prettier's fill fit-check breaks inside `::slotted()` after a long `:not(...)`; ours breaks inside `:not(...)`. See crates/oxc_formatter_css/AGENTS.md",
-    },
   },
   {
     name: "angular-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "typescript/angular-component-examples"),
         ext: ".ts",
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "angular-in-js") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
-    notes: {},
   },
   {
     name: "md-in-js",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-markdown"),
         ext: ".js",
@@ -135,12 +132,12 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "md-in-js") },
     ],
+    projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
-    notes: {},
   },
   {
     name: "xxx-in-js-comment",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-html/language-comment"),
         ext: ".js",
@@ -153,12 +150,12 @@ const categories: Category[] = [
       },
       { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") },
     ],
-    optionSets: [{ printWidth: 80 }, { printWith: 100 }],
-    notes: {},
+    projects: [],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
     name: "svelte",
-    sources: [
+    fixtures: [
       {
         dir: join(EXTERNALS_DIR, "plugin-svelte"),
         ext: "input.html",
@@ -166,6 +163,7 @@ const categories: Category[] = [
         resolveFilePath: (name) => name.replace("/input.html", ".svelte"),
       },
     ],
+    projects: [],
     optionSets: [
       { printWidth: 80, svelte: {} },
       {
@@ -183,89 +181,118 @@ const categories: Category[] = [
         },
       },
     ],
-    notes: {},
+  },
+  {
+    name: "astro",
+    fixtures: [
+      { dir: join(EXTERNALS_DIR, "plugin-astro"), ext: "input.astro" },
+      { dir: join(FIXTURES_DIR, "edge-cases", "astro") },
+    ],
+    projects: [],
+    optionSets: [
+      { printWidth: 80, astro: {} },
+      {
+        printWidth: 120,
+        singleQuote: true,
+        semi: false,
+        // For prettier
+        astroAllowShorthand: true,
+        astroCompressHTML: "html",
+        // For oxfmt
+        astro: { allowShorthand: true, compressHTML: "html" },
+      },
+    ],
+  },
+  {
+    name: "markdown",
+    fixtures: [
+      {
+        dir: join(EXTERNALS_DIR, "prettier", "markdown"),
+        ext: ".md",
+        // Cursor offsets and plugin loading are not formatter concerns
+        excludes: ["markdown/cursor/", "markdown/broken-plugins/"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-md") },
+    ],
+    projects: [],
+    optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
+  },
+  {
+    // Real-world documents, dense with fenced code (css / html / js)
+    name: "markdown-mdn",
+    fixtures: [],
+    projects: [
+      { dir: join(EXTERNALS_DIR, "mdn-learn"), ext: ".md" },
+      { dir: join(EXTERNALS_DIR, "mdn-css-guides"), ext: ".md" },
+    ],
+    // mdn's own `.prettierrc` first: the documents are already formatted by it.
+    // `proseWrap: always` is left to the `markdown` category,
+    // mdn's GitHub alerts and macros would fail on known divergences (`line-shapes`) in bulk.
+    optionSets: [{ printWidth: 80, bracketSameLine: true }, { printWidth: 100 }],
   },
   {
     name: "graphql",
-    sources: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
+    fixtures: [],
+    projects: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {},
   },
   {
     name: "less",
-    sources: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
+    fixtures: [],
+    projects: [{ dir: join(EXTERNALS_DIR, "ng-zorro-antd"), ext: ".less" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {
-      // Wrapped :not() selector-arg indent (Prettier +4 arg / +2 paren).
-      "externals/ng-zorro-antd/components/button/style/space-compact.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/date-picker/style/panel.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/date-picker/style/rtl.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/form/style/index.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/input/style/mixin.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/mention/style/patch.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/radio/style/rtl.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/select/style/status.less": NOTE_NOT_INDENT,
-      "externals/ng-zorro-antd/components/style/mixins/customize.less": NOTE_NOT_INDENT,
-      // Nested Less math: core fill fit-check semantics (biome vs Prettier).
-      "externals/ng-zorro-antd/components/style/themes/compact.less": NOTE_LESS_MATH_FILL,
-      "externals/ng-zorro-antd/components/style/themes/default.less": NOTE_LESS_MATH_FILL,
-      "externals/ng-zorro-antd/components/style/themes/variable.less": NOTE_LESS_MATH_FILL,
-      // Both divergences above.
-      "externals/ng-zorro-antd/components/table/style/index.less": [
-        NOTE_NOT_INDENT,
-        NOTE_LESS_MATH_FILL,
-      ].join("\n"),
-      "externals/ng-zorro-antd/components/table/style/rtl.less": [
-        NOTE_NOT_INDENT,
-        NOTE_LESS_MATH_FILL,
-      ].join("\n"),
-    },
   },
   {
     name: "css",
-    sources: [
+    fixtures: [],
+    projects: [
       { dir: join(EXTERNALS_DIR, "mantine"), ext: ".css" },
       { dir: join(EXTERNALS_DIR, "docusaurus"), ext: ".css" },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {},
+  },
+  {
+    name: "yaml",
+    fixtures: [],
+    projects: [
+      { dir: join(EXTERNALS_DIR, "aws-cloudformation-templates"), ext: ".yaml" },
+      { dir: join(EXTERNALS_DIR, "aws-cloudformation-templates"), ext: ".yml" },
+      { dir: join(EXTERNALS_DIR, "gitlab-ci-templates"), ext: ".yml" },
+      { dir: join(EXTERNALS_DIR, "gitlab"), ext: ".yml" },
+    ],
+    optionSets: [
+      { printWidth: 80 },
+      { printWidth: 100, tabWidth: 4, proseWrap: "always" },
+      { printWidth: 120, singleQuote: true, bracketSpacing: false, trailingComma: "none" },
+    ],
   },
   {
     name: "scss",
-    sources: [
+    fixtures: [],
+    projects: [
       { dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".scss" },
       { dir: join(EXTERNALS_DIR, "gitlab"), ext: ".scss" },
     ],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
-    notes: {
-      "externals/gitlab/stylesheets/framework/diffs.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/page_bundles/editor.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/page_bundles/issuable_list.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/page_bundles/labels.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/page_bundles/environments.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/page_bundles/merge_requests.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/page_bundles/settings.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/pages/settings.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/page_bundles/projects.scss": NOTE_MQ_OP_SPACING,
-      "externals/gitlab/stylesheets/highlight/conflict_colors.scss":
-        "Allowed: Prettier drops blank lines in SCSS maps with paren values; ours preserves (prettier/prettier#16824)",
-      "externals/gitlab/stylesheets/highlight/white_base.scss": NOTE_NOT_INDENT,
-      "externals/gitlab/stylesheets/framework/sidebar.scss": [
-        NOTE_NOT_INDENT,
-        "logn-expr line-break position",
-      ].join("\n"),
-      "externals/gitlab/stylesheets/framework/variables_overrides.scss":
-        "Allowed (semantics): Prettier adds a trailing comma to non-comma-list map-item parens (`1: ($spacer * 0.5)` → 1-element list); we keep them inline. See crates/oxc_formatter_css/AGENTS.md",
-    },
+  },
+  {
+    name: "jsdoc",
+    fixtures: [],
+    projects: [{ dir: join(EXTERNALS_DIR, "svelte"), ext: ".js" }],
+    optionSets: [{ printWidth: 100 }],
   },
 ];
 
 // ---
 
+const divergences = collectDivergences();
 const results: CategoryResult[] = [];
 
 for (const category of categories) {
-  const fixtures = collectFixtures(category.sources);
+  const fixtures = [
+    ...collectFixtures(category.fixtures ?? [], false),
+    ...collectFixtures(category.projects ?? [], true),
+  ].sort((a, b) => a.name.localeCompare(b.name));
 
   if (fixtures.length === 0) {
     console.log(`[${category.name}] No fixtures found, skipping.`);
@@ -282,15 +309,45 @@ for (const category of categories) {
   }
 }
 
-writeReport(results);
+writeReport(results, divergences);
+
+const failedNames = new Set(
+  results.flatMap((r) => r.optionSetResults.flatMap((o) => o.failures.map((f) => f.name))),
+);
+for (const name of failedNames) {
+  if (!divergences.has(name)) {
+    console.warn(`WARNING: "${name}" fails and no DIVERGENCES.md entry lists it (unclassified)`);
+  }
+}
+for (const [name, refs] of divergences) {
+  if (!failedNames.has(name)) {
+    console.warn(`WARNING: "${name}" passes but ${refs.join(", ")} lists it, remove it?`);
+  }
+}
 
 // ---
 
-type Fixture = { name: string; fullPath: string };
+/** Fixture name -> `<file>#<slug>` for every backticked `externals/` / `edge-cases/` path in a DIVERGENCES.md entry. */
+function collectDivergences(): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const file of DIVERGENCES_FILES) {
+    let slug = "";
+    for (const line of readFileSync(join(REPO_ROOT, file), "utf8").split("\n")) {
+      if (line.startsWith("## ")) slug = line.slice(3).trim();
+      for (const [, name] of line.matchAll(
+        /`(?:conformance\/fixtures\/)?((?:externals|edge-cases)\/[^`]+)`/g,
+      )) {
+        map.set(name, [...(map.get(name) ?? []), `${file}#${slug}`]);
+      }
+    }
+  }
+  return map;
+}
+
+type Fixture = { name: string; fullPath: string; isProject: boolean };
 
 type Failure = {
   name: string;
-  note?: string;
   oxfmt: string;
   prettier: string;
 };
@@ -307,13 +364,16 @@ type CategoryResult = {
   optionSetResults: OptionSetResult[];
 };
 
-function collectFixtures(sources: Source[]): Fixture[] {
+function collectFixtures(sources: Source[], isProject: boolean): Fixture[] {
   const results: Fixture[] = [];
 
   for (const source of sources) {
     if (!existsSync(source.dir)) continue;
 
-    for (const entry of readdirSync(source.dir, { withFileTypes: true, recursive: true })) {
+    for (const entry of readdirSync(source.dir, {
+      withFileTypes: true,
+      recursive: true,
+    })) {
       if (!entry.isFile()) continue;
       if (source.ext && !entry.name.endsWith(source.ext)) continue;
 
@@ -322,11 +382,11 @@ function collectFixtures(sources: Source[]): Fixture[] {
       if (source.excludes?.some((s) => relPath.includes(s))) continue;
 
       const name = source.resolveFilePath?.(relPath) ?? relPath;
-      results.push({ name, fullPath });
+      results.push({ name, fullPath, isProject });
     }
   }
 
-  return results.sort((a, b) => a.name.localeCompare(b.name));
+  return results;
 }
 
 async function runCategory(category: Category, fixtures: Fixture[]): Promise<CategoryResult> {
@@ -337,59 +397,66 @@ async function runCategory(category: Category, fixtures: Fixture[]): Promise<Cat
     const failures: Failure[] = [];
 
     for (const fixture of fixtures) {
-      const content = readFileSync(fixture.fullPath, "utf8");
-      const [oxfmtResult, prettierResult] = await compareWithPrettier(
-        fixture.name,
-        content,
-        options,
-      );
+      let input = readFileSync(fixture.fullPath, "utf8");
+      let expected = await formatWithPrettier(fixture.name, input, options);
+      // A project hands over Prettier's output, unless Prettier cannot read it back either
+      if (fixture.isProject && expected !== null) {
+        const again = await formatWithPrettier(fixture.name, expected, options);
+        if (again !== null) [input, expected] = [expected, again];
+      }
+      const prettierResult = expected ?? "ERROR";
+      const oxfmtResult = await formatWithOxfmt(fixture.name, input, options);
 
-      if (oxfmtResult === prettierResult) {
+      // Both failing to parse is not a pass, the fixture exercised nothing
+      if (oxfmtResult === prettierResult && oxfmtResult !== "ERROR") {
         passed++;
       } else {
         failures.push({
           name: fixture.name,
-          note: category.notes?.[fixture.name],
           oxfmt: oxfmtResult,
           prettier: prettierResult,
         });
       }
     }
 
-    optionSetResults.push({ options, passed, total: fixtures.length, failures });
+    optionSetResults.push({
+      options,
+      passed,
+      total: fixtures.length,
+      failures,
+    });
   }
 
   return { name: category.name, optionSetResults };
 }
 
-async function compareWithPrettier(
+/** `null` when Prettier fails. */
+async function formatWithPrettier(
   fileName: string,
   content: string,
-  options: Record<string, unknown> = {},
-): Promise<[string, string]> {
-  let prettierResult: string;
+  options: Record<string, unknown>,
+): Promise<string | null> {
   try {
-    prettierResult = await prettier.format(content, {
+    return await prettier.format(content, {
       ...options,
       filepath: fileName,
-      plugins: [sveltePlugin],
+      plugins: [sveltePlugin, astroPlugin],
     });
   } catch {
-    prettierResult = "ERROR";
+    return null;
   }
-
-  let oxfmtResult: string;
-  const res = await format(fileName, content, options);
-  if (res.errors.length !== 0) {
-    oxfmtResult = "ERROR";
-  } else {
-    oxfmtResult = res.code;
-  }
-
-  return [oxfmtResult, prettierResult];
 }
 
-function writeReport(results: CategoryResult[]) {
+async function formatWithOxfmt(
+  fileName: string,
+  content: string,
+  options: Record<string, unknown>,
+): Promise<string> {
+  const res = await format(fileName, content, options);
+  return res.errors.length === 0 ? res.code : "ERROR";
+}
+
+function writeReport(results: CategoryResult[], divergences: Map<string, string[]>) {
   const lines: string[] = [];
   const diffsDir = join(SNAPSHOTS_DIR, "diffs");
 
@@ -403,7 +470,11 @@ function writeReport(results: CategoryResult[]) {
     // Collect all failures per fixture across option sets
     const failuresByFixture = new Map<
       string,
-      { optionIndex: number; options: Record<string, unknown>; failure: Failure }[]
+      {
+        optionIndex: number;
+        options: Record<string, unknown>;
+        failure: Failure;
+      }[]
     >();
     for (let i = 0; i < result.optionSetResults.length; i++) {
       for (const failure of result.optionSetResults[i].failures) {
@@ -412,7 +483,11 @@ function writeReport(results: CategoryResult[]) {
           entries = [];
           failuresByFixture.set(failure.name, entries);
         }
-        entries.push({ optionIndex: i + 1, options: result.optionSetResults[i].options, failure });
+        entries.push({
+          optionIndex: i + 1,
+          options: result.optionSetResults[i].options,
+          failure,
+        });
       }
     }
 
@@ -432,15 +507,12 @@ function writeReport(results: CategoryResult[]) {
       lines.push("");
 
       if (r.failures.length > 0) {
-        lines.push("| File | Note |");
-        lines.push("| :--- | :--- |");
         for (const failure of r.failures) {
           const safeName = failure.name.replaceAll("/", "__");
           const diffRelPath = `diffs/${result.name}/${safeName}.md`;
-          const diffLink = `[${failure.name}](${diffRelPath})`;
-          // Notes may be multi-line (joined constants); `<br>` keeps the table cell intact.
-          const noteCell = (failure.note ?? "").replaceAll("\n", "<br>");
-          lines.push(`| ${diffLink} | ${noteCell} |`);
+          const refs = divergences.get(failure.name)?.join(", ") ?? "unclassified";
+          lines.push(`- [${failure.name}](${diffRelPath})`);
+          lines.push(`  - ${refs}`);
         }
         lines.push("");
       }
@@ -458,7 +530,11 @@ function writeDiffFile(
   diffsDir: string,
   categoryName: string,
   fixtureName: string,
-  entries: { optionIndex: number; options: Record<string, unknown>; failure: Failure }[],
+  entries: {
+    optionIndex: number;
+    options: Record<string, unknown>;
+    failure: Failure;
+  }[],
 ) {
   const safeName = fixtureName.replaceAll("/", "__");
   const dir = join(diffsDir, categoryName);
@@ -467,15 +543,6 @@ function writeDiffFile(
   const lines: string[] = [];
   lines.push(`# ${fixtureName}`);
   lines.push("");
-
-  const {
-    failure: { note },
-  } = entries[0];
-  if (note) {
-    // Multi-line notes keep the blockquote prefix on every line.
-    lines.push(`> ${note.replaceAll("\n", "\n> ")}`);
-    lines.push("");
-  }
 
   for (const entry of entries) {
     lines.push(`## Option ${entry.optionIndex}`);

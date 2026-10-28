@@ -1,0 +1,103 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:4]
+ 1 │ "".matchAll(/a/);
+   ·    ────┬─── ─┬─
+   ·        │     ╰── RegExp supplied here
+   ·        ╰── `matchAll` called here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:4]
+ 1 │ "".matchAll(/a/u);
+   ·    ────┬─── ──┬─
+   ·        │      ╰── RegExp supplied here
+   ·        ╰── `matchAll` called here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:4]
+ 1 │ "".matchAll(new RegExp("a"));
+   ·    ────┬─── ───────┬───────
+   ·        │           ╰── RegExp supplied here
+   ·        ╰── `matchAll` called here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:4]
+ 1 │ "".matchAll(new RegExp("a", "i"));
+   ·    ────┬─── ──────────┬─────────
+   ·        │              ╰── RegExp supplied here
+   ·        ╰── `matchAll` called here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:4]
+ 1 │ "".matchAll(RegExp("a"));
+   ·    ────┬─── ─────┬─────
+   ·        │         ╰── RegExp supplied here
+   ·        ╰── `matchAll` called here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:4]
+ 1 │ "".matchAll(globalThis.RegExp("a", "i"));
+   ·    ────┬─── ─────────────┬─────────────
+   ·        │                 ╰── RegExp supplied here
+   ·        ╰── `matchAll` called here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:4]
+ 1 │ ""["matchAll"](/a/);
+   ·    ─────┬────  ─┬─
+   ·         │       ╰── RegExp supplied here
+   ·         ╰── `matchAll` called here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:17]
+ 1 │ const pattern = /a/; "".matchAll(pattern);
+   ·                 ─┬─     ────┬───
+   ·                  │          ╰── `matchAll` called here
+   ·                  ╰── RegExp supplied here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:17]
+ 1 │ const pattern = /a/i; "".matchAll(pattern);
+   ·                 ──┬─     ────┬───
+   ·                   │          ╰── `matchAll` called here
+   ·                   ╰── RegExp supplied here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.
+
+  ⚠ oxc(bad-match-all-arg): Global flag (g) is missing in the regular expression supplied to the `matchAll` method.
+   ╭─[bad_match_all_arg.tsx:1:17]
+ 1 │ const pattern = new RegExp("a"); "".matchAll(pattern);
+   ·                 ───────┬───────     ────┬───
+   ·                        │                ╰── `matchAll` called here
+   ·                        ╰── RegExp supplied here
+   ╰────
+  help: Add the global flag (g) to the regular expression.
+  note: `matchAll` throws a `TypeError` when passed a non-global regular expression.

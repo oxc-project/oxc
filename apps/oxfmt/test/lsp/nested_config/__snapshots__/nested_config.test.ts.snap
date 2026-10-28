@@ -36,6 +36,30 @@ const x = '1';
 --------------------"
 `;
 
+exports[`LSP nested config > should ignore nested config when disableNestedConfig is set 1`] = `
+"--- URI -----------
+file://<fixture>/nested-config/sub/test.ts
+--- BEFORE ---------
+const x = "1";
+
+--- AFTER ----------
+const x = '1';
+
+--------------------"
+`;
+
+exports[`LSP nested config > should ignore nested config when disableNestedConfig is set 2`] = `
+"--- URI -----------
+file://<fixture>/nested-config/sub/ignored.generated.ts
+--- BEFORE ---------
+const   x   =   "1";
+
+--- AFTER ----------
+const x = '1';
+
+--------------------"
+`;
+
 exports[`LSP nested config > should ignore nested config when explicit configPath is set 1`] = `
 "--- URI -----------
 file://<fixture>/nested-config-explicit/sub/test.ts

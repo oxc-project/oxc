@@ -1,21 +1,23 @@
 use std::ops::Deref;
 
+use itertools::Either;
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
-    AstKind,
+    AstKind, FunctionKind,
     ast::{
         ArrayExpression, ArrayExpressionElement, CallExpression, Expression, ObjectExpression,
         ObjectPropertyKind, ReturnStatement,
     },
 };
-use oxc_ast_visit::{Visit, walk};
+use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{ReferenceId, ScopeId, SymbolId};
 use oxc_span::{GetSpan, Span};
+use oxc_syntax::node::NodeId;
 
 use crate::{
     AstNode,
@@ -30,15 +32,14 @@ fn no_map_spread_diagnostic(
     spread: &Spread<'_, '_>,
     returned_span: Option<Span>,
 ) -> OxcDiagnostic {
-    let spans = spread.spread_spans();
-    assert!(!spans.is_empty());
-    let mut spread_labels = spread.spread_spans().into_iter();
-    let first_message = if spans.len() == 1 {
+    let mut spread_labels = spread.spread_spans().peekable();
+    let first_span = spread_labels.next().expect("at least one spread");
+    let first_message = if spread_labels.peek().is_none() {
         "This spread allocates a new value on each iteration"
     } else {
         "These spreads allocate new values on each iteration"
     };
-    let first = spread_labels.next().unwrap().label(first_message);
+    let first = first_span.label(first_message);
     let others = spread_labels.map(LabeledSpan::from);
 
     let returned_label = returned_span
@@ -324,7 +325,7 @@ const MAP_FN_NAMES: [&str; 2] = ["map", "flatMap"];
 
 impl Rule for NoMapSpread {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -450,14 +451,15 @@ fn has_reads_after(
         .any(|node| node.span().end > span.end)
 }
 
-fn get_map_callback<'a, 'b>(call_expr: &'b CallExpression<'a>) -> Option<&'b Expression<'a>> {
+fn get_map_callback<'a, 'b>(call_expr: &'b CallExpression<'a>) -> Option<FunctionKind<'a, 'b>> {
     if !is_method_call(call_expr, None, Some(&MAP_FN_NAMES), Some(1), Some(1)) {
         return None;
     }
 
     let arg = call_expr.arguments.first()?.as_expression()?.get_inner_expression();
     match arg {
-        Expression::ArrowFunctionExpression(_) | Expression::FunctionExpression(_) => Some(arg),
+        Expression::ArrowFunctionExpression(arrow) => Some(FunctionKind::Arrow(arrow)),
+        Expression::FunctionExpression(function) => Some(FunctionKind::Function(function)),
         _ => None,
     }
 }
@@ -542,24 +544,20 @@ impl<'a, 'b> Spread<'a, 'b> {
         }
     }
 
-    fn spread_spans(&self) -> Vec<Span> {
+    fn spread_spans(&self) -> impl Iterator<Item = Span> + '_ {
         match self {
-            Spread::Object(obj) => obj
-                .properties
-                .iter()
-                .filter_map(|prop| match prop {
+            Spread::Object(obj) => {
+                Either::Left(obj.properties.iter().filter_map(|prop| match prop {
                     ObjectPropertyKind::SpreadProperty(spread) => Some(spread.span()),
                     ObjectPropertyKind::ObjectProperty(_) => None,
-                })
-                .collect(),
-            Spread::Array(arr) => arr
-                .elements
-                .iter()
-                .filter_map(|elem| match elem {
+                }))
+            }
+            Spread::Array(arr) => {
+                Either::Right(arr.elements.iter().filter_map(|elem| match elem {
                     ArrayExpressionElement::SpreadElement(spread) => Some(spread.span()),
                     _ => None,
-                })
-                .collect(),
+                }))
+            }
         }
     }
 }
@@ -578,6 +576,9 @@ struct SpreadInReturnVisitor<'a, 'ctx, F> {
     cb: F,
     cb_scope_id: ScopeId,
     is_in_return: bool,
+    /// Declarations currently being visited while following identifiers
+    /// returned from the map callback.
+    visiting_declarations: Vec<NodeId>,
     /// Span covering returned expression. [`None`] when not in a return
     /// statement or no value is being returned (e.g. `return;`, but not `return
     /// undefined;`).
@@ -588,30 +589,38 @@ impl<'a, 'ctx, F> SpreadInReturnVisitor<'a, 'ctx, F>
 where
     F: FnMut(Spread<'a, '_>),
 {
-    fn iter_spreads(ctx: &'ctx LintContext<'a>, map_cb: &Expression<'a>, cb: F) -> Option<Self> {
+    fn iter_spreads(
+        ctx: &'ctx LintContext<'a>,
+        map_cb: FunctionKind<'a, '_>,
+        cb: F,
+    ) -> Option<Self> {
         let (mut visitor, body) = match map_cb {
-            Expression::ArrowFunctionExpression(f) => {
-                let v = Self {
+            FunctionKind::Arrow(f) => {
+                let mut visitor = Self {
                     ctx,
                     cb,
                     cb_scope_id: f.scope_id(),
-                    is_in_return: f.expression,
-                    return_span: f.expression.then(|| f.body.span()),
+                    is_in_return: f.is_expression(),
+                    visiting_declarations: Vec::new(),
+                    return_span: f.is_expression().then(|| f.body.span()),
                 };
-                (v, f.body.as_ref())
+                visitor.visit_arrow_function_body(&f.body);
+                return Some(visitor);
             }
-            Expression::FunctionExpression(f) => {
-                let v = Self {
-                    ctx,
-                    cb,
-                    cb_scope_id: f.scope_id(),
-                    is_in_return: false,
-                    return_span: None,
-                };
-                let body = f.body.as_ref().map(AsRef::as_ref)?;
-                (v, body)
+            FunctionKind::Function(f) => {
+                let body = f.body.as_deref()?;
+                (
+                    Self {
+                        ctx,
+                        cb,
+                        cb_scope_id: f.scope_id(),
+                        is_in_return: false,
+                        visiting_declarations: Vec::new(),
+                        return_span: None,
+                    },
+                    body,
+                )
             }
-            _ => unreachable!(),
         };
 
         visitor.visit_function_body(body);
@@ -627,7 +636,7 @@ where
     }
 }
 
-impl<'a, F> Visit<'a> for SpreadInReturnVisitor<'a, '_, F>
+impl<'a, F> VisitJs<'a> for SpreadInReturnVisitor<'a, '_, F>
 where
     F: FnMut(Spread<'a, '_>),
 {
@@ -635,7 +644,7 @@ where
         self.is_in_return = true;
         self.return_span = stmt.argument.as_ref().map(GetSpan::span);
 
-        walk::walk_return_statement(self, stmt);
+        walk_js::walk_return_statement(self, stmt);
 
         self.is_in_return = false;
         // NOTE: do not clear `return_span` here. We want to keep the last
@@ -682,10 +691,20 @@ where
                     return;
                 }
 
+                // Multiple bindings in the same declaration can reference
+                // one another in default values. Avoid recursively revisiting
+                // their declaration (and self-referential declarations).
+                let declaration_id = self.ctx.scoping().symbol_declaration(symbol_id);
+                if self.visiting_declarations.contains(&declaration_id) {
+                    return;
+                }
+                self.visiting_declarations.push(declaration_id);
+
                 // walk the declaration
-                let declaration_node =
-                    self.ctx.nodes().get_node(self.ctx.scoping().symbol_declaration(symbol_id));
+                let declaration_node = self.ctx.nodes().get_node(declaration_id);
                 self.visit_kind(declaration_node.kind());
+                let popped = self.visiting_declarations.pop();
+                debug_assert_eq!(popped, Some(declaration_id));
             }
             _ => {}
         }
@@ -752,6 +771,13 @@ fn test() {
         // ignoreArgs
         ("function foo(a) { return a.map(x => ({ ...(x ?? y) })) }", None),
         ("const foo = a => a.map(x => ({ ...(x ?? y) }))", None),
+        (
+            "const ids = result.map(obj => {
+                const { item: { id, alias = id } = {} } = obj;
+                return alias;
+            });",
+            None,
+        ),
     ];
 
     let fail = vec![
@@ -812,6 +838,13 @@ fn test() {
             Some(json!([{ "ignoreArgs": false }])),
         ),
         ("const foo = a => a.map(x => ({ ...(x ?? y) }))", Some(json!([{ "ignoreArgs": false }]))),
+        (
+            "const ids = result.map(obj => {
+                const { a = { ...obj }, b = a } = obj;
+                return b;
+            });",
+            None,
+        ),
     ];
 
     let fix: Vec<ExpectFixTestCase> = vec![

@@ -9,6 +9,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::{ToBigInt, WithoutGlobalReferenceInformation};
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
@@ -281,25 +282,13 @@ fn do_diagnostic_with_fix(expr: &BinaryExpression, ctx: &LintContext, never: boo
         let right_span = expr.right.span();
 
         let operator_str = expr.operator.as_str();
-        let str_between_left_and_right = ctx.source_range(
-            Span::new(left_span.end, right_span.start)
-        );
-
-        let (operator_start, operator_end) = str_between_left_and_right
-            .as_bytes()
-            .windows(operator_str.len())
-            .enumerate()
-            .find_map(|(index, chunk)| {
-                if chunk == operator_str.as_bytes() {
-                    let pos_start = index as u32 + left_span.end;
-                    let pos_end = pos_start + operator_str.len() as u32;
-                    if !ctx.comments().iter().any(|comment| comment.span.start <= pos_start && pos_end <= comment.span.end) {
-                        return Some((pos_start, pos_end));
-                    }
-                }
-                None
-            })
-            .unwrap();
+        let Some(operator_offset) =
+            ctx.find_next_token_within(left_span.end, right_span.start, operator_str)
+        else {
+            return fix.noop();
+        };
+        let operator_start = left_span.end + operator_offset;
+        let operator_end = operator_start + operator_str.len() as u32;
 
         let str_between_left_and_operator = ctx.source_range(Span::new(left_span.end, operator_start));
         let str_between_operator_and_right = ctx.source_range(Span::new(operator_end, right_span.start));
@@ -416,7 +405,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
         if let (Some(left_left), Some(right_right)) =
             (get_string_literal(left_left), get_string_literal(right_right))
         {
-            return left_left <= right_right;
+            return is_string_le(left_left, right_right);
         }
 
         if let (Some(left_left), Some(right_right)) =
@@ -450,7 +439,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
         if let (Some(left_right), Some(right_left)) =
             (get_string_literal(left_right), get_string_literal(right_left))
         {
-            return left_right <= right_left;
+            return is_string_le(left_right, right_left);
         }
 
         if let (Some(left_right), Some(right_left)) =
@@ -467,7 +456,7 @@ fn is_range(expr: &LogicalExpression, ctx: &LintContext) -> bool {
 
 fn is_simple_template_literal(expr: &Expression) -> bool {
     match expr {
-        Expression::TemplateLiteral(template) => template.quasis.len() == 1,
+        Expression::TemplateLiteral(template) => template.is_no_substitution_template(),
         _ => false,
     }
 }
@@ -480,15 +469,25 @@ fn is_target_literal(expr: &Expression) -> bool {
     get_string_literal(expr).is_some() || is_number(expr)
 }
 
-fn get_string_literal<'a>(expr: &'a Expression) -> Option<&'a str> {
+/// Compares strings by bytes.
+/// A string with a lone surrogate has no UTF-8 form, so it is compared by UTF-16 code unit.
+fn is_string_le(left: JSStr, right: JSStr) -> bool {
+    if left.has_lone_surrogate() || right.has_lone_surrogate() {
+        left.encode_utf16().le(right.encode_utf16())
+    } else {
+        left.as_bytes() <= right.as_bytes()
+    }
+}
+
+fn get_string_literal<'a>(expr: &Expression<'a>) -> Option<JSStr<'a>> {
     match expr {
-        Expression::StringLiteral(string) => Some(&string.value),
+        Expression::StringLiteral(string) => Some(string.value),
         Expression::TemplateLiteral(template) => {
             if template.quasis.len() != 1 {
                 return None;
             }
 
-            template.quasis.first().map(|e| e.value.raw.as_str())
+            template.quasis.first().map(|e| JSStr::from(e.value.raw))
         }
         _ => None,
     }
@@ -535,6 +534,19 @@ fn test() {
     use crate::tester::Tester;
 
     let pass = vec![
+        // A lone surrogate orders by its UTF-16 code unit.
+        (
+            r#"if ("\uD800" <= x && x <= "\uDBFF") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
+        (
+            r#"if ("\uDC00" <= x && x <= "\uDFFF") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
+        (
+            r#"if ("a\uD800" <= x && x <= "b") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
         (r#"if (value === "red") {}"#, Some(serde_json::json!(["never"]))),
         ("if (value === value) {}", Some(serde_json::json!(["never"]))),
         ("if (value != 5) {}", Some(serde_json::json!(["never"]))),
@@ -711,6 +723,11 @@ fn test() {
     ];
 
     let fail = vec![
+        // A lone surrogate orders by its UTF-16 code unit.
+        (
+            r#"if ("\uDBFF" <= x && x <= "\uD800") {}"#,
+            Some(serde_json::json!(["never", { "exceptRange": true }])),
+        ),
         (
             "if (x <= 'foo' || 'bar' < x) {}",
             Some(serde_json::json!(["always", { "exceptRange": true }])),

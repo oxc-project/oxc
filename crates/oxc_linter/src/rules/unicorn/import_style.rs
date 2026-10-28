@@ -11,8 +11,8 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        BinaryOperator, BindingPattern, CallExpression, ExportAllDeclaration,
-        ExportNamedDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
+        Argument, BinaryOperator, BindingPattern, CallExpression, ExportAllDeclaration,
+        ExportFromDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
         ModuleExportName, VariableDeclarator,
     },
 };
@@ -293,6 +293,7 @@ declare_oxc_lint!(
     ImportStyle,
     unicorn,
     restriction,
+    recommended,
     none,
     config = ImportStyleConfig,
     version = "1.67.0",
@@ -301,7 +302,7 @@ declare_oxc_lint!(
 
 impl Rule for ImportStyle {
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -325,7 +326,7 @@ impl Rule for ImportStyle {
             AstKind::ExportAllDeclaration(export_decl) if self.check_export_from => {
                 self.check_export_all_declaration(export_decl, ctx);
             }
-            AstKind::ExportNamedDeclaration(export_decl) if self.check_export_from => {
+            AstKind::ExportFromDeclaration(export_decl) if self.check_export_from => {
                 self.check_export_named_declaration(export_decl, ctx);
             }
             AstKind::ExpressionStatement(statement) if self.check_require => {
@@ -349,10 +350,13 @@ impl Rule for ImportStyle {
 
 impl ImportStyle {
     fn check_import_declaration(&self, import_decl: &ImportDeclaration<'_>, ctx: &LintContext<'_>) {
+        let Some(source) = import_decl.source.value.as_str() else {
+            return;
+        };
         let actual_styles = get_actual_import_declaration_styles(import_decl);
         self.report_if_needed(
             import_decl.span,
-            import_decl.source.value.as_str(),
+            source,
             actual_styles,
             SourceKind::ModuleSyntax,
             ctx,
@@ -364,9 +368,12 @@ impl ImportStyle {
         export_decl: &ExportAllDeclaration<'_>,
         ctx: &LintContext<'_>,
     ) {
+        let Some(source) = export_decl.source.value.as_str() else {
+            return;
+        };
         self.report_if_needed(
             export_decl.span,
-            export_decl.source.value.as_str(),
+            source,
             StyleSet::namespace(),
             SourceKind::ModuleSyntax,
             ctx,
@@ -375,14 +382,16 @@ impl ImportStyle {
 
     fn check_export_named_declaration(
         &self,
-        export_decl: &ExportNamedDeclaration<'_>,
+        export_decl: &ExportFromDeclaration<'_>,
         ctx: &LintContext<'_>,
     ) {
-        let Some(source) = &export_decl.source else { return };
         let actual_styles = get_actual_export_declaration_styles(export_decl);
+        let Some(source) = export_decl.source.value.as_str() else {
+            return;
+        };
         self.report_if_needed(
             export_decl.span,
-            source.value.as_str(),
+            source,
             actual_styles,
             SourceKind::ModuleSyntax,
             ctx,
@@ -494,7 +503,7 @@ fn get_actual_import_declaration_styles(import_decl: &ImportDeclaration<'_>) -> 
     styles
 }
 
-fn get_actual_export_declaration_styles(export_decl: &ExportNamedDeclaration<'_>) -> StyleSet {
+fn get_actual_export_declaration_styles(export_decl: &ExportFromDeclaration<'_>) -> StyleSet {
     if export_decl.specifiers.is_empty() {
         return StyleSet::unassigned();
     }
@@ -520,7 +529,7 @@ fn get_actual_assignment_target_styles(pattern: &BindingPattern<'_>) -> StyleSet
         }
         BindingPattern::ObjectPattern(pattern) => {
             let mut styles = StyleSet::default();
-            if pattern.properties.is_empty() && pattern.rest.is_none() {
+            if pattern.is_empty() {
                 styles.unassigned = true;
                 return styles;
             }
@@ -565,11 +574,7 @@ fn get_require_module_name<'a>(call_expr: &'a CallExpression<'a>) -> Option<Cow<
     if call_expr.arguments.len() != 1 || !call_expr.callee.is_specific_id("require") {
         return None;
     }
-    call_expr
-        .arguments
-        .first()
-        .and_then(oxc_ast::ast::Argument::as_expression)
-        .and_then(get_module_name)
+    call_expr.arguments.first().and_then(Argument::as_expression).and_then(get_module_name)
 }
 
 fn is_assigned_dynamic_import(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {

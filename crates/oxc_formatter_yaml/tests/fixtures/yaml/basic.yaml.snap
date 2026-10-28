@@ -1,0 +1,36 @@
+---
+source: crates/oxc_formatter_yaml/tests/fixtures/mod.rs
+---
+==================== Input ====================
+# Minimal smoke test: map nesting and seq markers, no edge shapes.
+key: value
+map:
+  nested: 1
+  seq:
+    - a
+    - b
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+# Minimal smoke test: map nesting and seq markers, no edge shapes.
+key: value
+map:
+  nested: 1
+  seq:
+    - a
+    - b
+
+-------------------
+{ printWidth: 100 }
+-------------------
+# Minimal smoke test: map nesting and seq markers, no edge shapes.
+key: value
+map:
+  nested: 1
+  seq:
+    - a
+    - b
+
+===================== End =====================

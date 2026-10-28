@@ -1,11 +1,12 @@
 use oxc_ast::{
     AstKind,
-    ast::{Argument, Expression, FormalParameters, FunctionBody, Statement, TSType},
+    ast::{Argument, Expression, FormalParameters, FunctionBody, PropertyKind, Statement, TSType},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
 use oxc_span::{GetSpan, Span};
+use oxc_str::JSStr;
 
 use crate::{AstNode, context::LintContext, rule::Rule, utils::get_first_parameter_name};
 
@@ -53,6 +54,7 @@ declare_oxc_lint!(
     PreferNativeCoercionFunctions,
     unicorn,
     pedantic,
+    recommended,
     pending,
     version = "0.0.19",
     short_description = "Prefers built-in functions over custom ones with the same functionality.",
@@ -71,19 +73,36 @@ impl Rule for PreferNativeCoercionFunctions {
                     return;
                 }
 
-                if let Some(call_expr_ident) =
-                    check_function(&arrow_expr.params, &arrow_expr.body, true)
-                {
+                let call_expr_ident = arrow_expr
+                    .get_expression()
+                    .and_then(|expression| {
+                        let first_parameter_name = get_first_parameter_name(&arrow_expr.params)?;
+                        is_matching_native_coercion_function_call(expression, first_parameter_name)
+                    })
+                    .or_else(|| {
+                        check_function(&arrow_expr.params, arrow_expr.get_function_body()?)
+                    });
+                if let Some(call_expr_ident) = call_expr_ident {
                     ctx.diagnostic(function(arrow_expr.span, call_expr_ident));
                 }
 
-                if check_array_callback_methods(
-                    node.id(),
-                    &arrow_expr.params,
-                    &arrow_expr.body,
-                    true,
-                    ctx,
-                ) {
+                let returned_ident = arrow_expr
+                    .get_expression()
+                    .and_then(|expression| {
+                        expression
+                            .without_parentheses()
+                            .get_identifier_reference()
+                            .map(|ident| ident.name.as_str())
+                    })
+                    .or_else(|| {
+                        arrow_expr
+                            .get_function_body()?
+                            .statements
+                            .first()
+                            .and_then(|statement| get_returned_ident(statement, false))
+                    });
+                if check_array_callback_methods(node.id(), &arrow_expr.params, returned_ident, ctx)
+                {
                     ctx.diagnostic(array_callback(arrow_expr.span));
                 }
             }
@@ -94,13 +113,13 @@ impl Rule for PreferNativeCoercionFunctions {
                     || func.return_type.as_ref().is_some_and(|ret| {
                         matches!(ret.type_annotation, TSType::TSTypePredicate(_))
                     })
-                    || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(_))
+                    || matches!(ctx.nodes().parent_kind(node.id()), AstKind::ObjectProperty(property)
+                        if property.kind == PropertyKind::Set && property.value.span() == func.span)
                 {
                     return;
                 }
                 if let Some(function_body) = &func.body
-                    && let Some(call_expr_ident) =
-                        check_function(&func.params, function_body, false)
+                    && let Some(call_expr_ident) = check_function(&func.params, function_body)
                 {
                     ctx.diagnostic(function(func.span, call_expr_ident));
                 }
@@ -113,19 +132,11 @@ impl Rule for PreferNativeCoercionFunctions {
 fn check_function<'a>(
     arg: &'a FormalParameters,
     function_body: &'a FunctionBody,
-    is_arrow: bool,
 ) -> Option<&'a str> {
     let first_parameter_name = get_first_parameter_name(arg)?;
 
     if function_body.statements.len() != 1 {
         return None;
-    }
-
-    if is_arrow && let Statement::ExpressionStatement(expr_stmt) = &function_body.statements[0] {
-        return is_matching_native_coercion_function_call(
-            &expr_stmt.expression,
-            first_parameter_name,
-        );
     }
 
     if let Statement::ReturnStatement(return_statement) = &function_body.statements[0]
@@ -199,8 +210,7 @@ fn is_matching_native_coercion_function_call<'a>(
 fn check_array_callback_methods(
     node_id: NodeId,
     arg: &FormalParameters,
-    function_body: &FunctionBody,
-    is_arrow: bool,
+    returned_ident: Option<&str>,
     ctx: &LintContext,
 ) -> bool {
     let parent = ctx.nodes().parent_node(node_id);
@@ -225,7 +235,8 @@ fn check_array_callback_methods(
     if callee_member_expr.optional() {
         return false;
     }
-    let Some(method_name) = callee_member_expr.static_property_name() else {
+    let Some(method_name) = callee_member_expr.static_property_name().and_then(JSStr::as_str)
+    else {
         return false;
     };
     if !ARRAY_METHODS_WITH_BOOLEAN_CALLBACK.contains(&method_name) {
@@ -236,11 +247,7 @@ fn check_array_callback_methods(
         return false;
     };
 
-    let Some(first_stmt) = function_body.statements.first() else {
-        return false;
-    };
-
-    let Some(returned_ident) = get_returned_ident(first_stmt, is_arrow) else {
+    let Some(returned_ident) = returned_ident else {
         return false;
     };
 
@@ -332,6 +339,9 @@ fn test() {
                 return value;
             })", // {"parser": parsers.typescript},
         "array.some((value): value is string => value)",   // {"parser": parsers.typescript}
+        "object = {async foo(v) {return String(v);}}",
+        "object = {*foo(v) {return String(v);}}",
+        "object = {async *foo(v) {return String(v);}}",
     ];
 
     let fail = vec![
@@ -373,22 +383,6 @@ fn test() {
                 }
                 bar() {}
             }",
-        // TODO: Get these passing.
-        // "object = {
-        //         foo(v) {
-        //             return String(v);
-        //         },
-        //         bar
-        //     }",
-        // "object = {
-        //         foo: function(v) {
-        //             return String(v);
-        //         },
-        //         bar
-        //     }",
-        // "object = {
-        //         [function(v) {return String(v);}]: 1,
-        //     }",
         "const foo = (v, extra) => String(v)",
         "const foo = (v, ) => String(v, extra)",
         "const foo = (v, ) => /* comment */ String(v)",
@@ -410,6 +404,15 @@ fn test() {
         "array.some((v, extra) => v)",
         "array.some((v, ) => /* comment */ v)",
         "array.filter((value): boolean => value)", // {"parser": parsers.typescript}
+        "export const o = {
+            p: function (v) { return String(v); },
+            m(v) { return String(v); },
+            a: (v) => String(v),
+        };",
+        "object = {foo(v) {return String(v);}, bar}",
+        "object = {foo: function(v) {return String(v);}, bar}",
+        "object = {[function(v) {return String(v);}]: 1}",
+        "object = {set [function(v) {return String(v);}](value) {}}",
     ];
 
     Tester::new(

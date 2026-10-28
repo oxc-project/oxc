@@ -13,7 +13,7 @@ pub trait TakeIn<'a>: Dummy<'a> {
     ///
     /// [`replace_with`]: crate::ReplaceWith::replace_with
     #[must_use]
-    fn take_in<A: GetAllocator<'a>>(&mut self, allocator_accessor: &A) -> Self {
+    fn take_in(&mut self, allocator_accessor: &impl GetAllocator<'a>) -> Self {
         let allocator = allocator_accessor.allocator();
         let dummy = Dummy::dummy(allocator);
         mem::replace(self, dummy)
@@ -29,7 +29,7 @@ pub trait TakeIn<'a>: Dummy<'a> {
     ///
     /// [`replace_with`]: crate::ReplaceWith::replace_with
     #[must_use]
-    fn take_in_box<A: GetAllocator<'a>>(&mut self, allocator_accessor: &A) -> Box<'a, Self> {
+    fn take_in_box(&mut self, allocator_accessor: &impl GetAllocator<'a>) -> Box<'a, Self> {
         let allocator = allocator_accessor.allocator();
         let dummy = Dummy::dummy(allocator);
         Box::new_in(mem::replace(self, dummy), &allocator)

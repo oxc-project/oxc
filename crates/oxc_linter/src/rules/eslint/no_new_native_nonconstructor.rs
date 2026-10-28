@@ -48,6 +48,7 @@ declare_oxc_lint!(
     NoNewNativeNonconstructor,
     eslint,
     correctness,
+    recommended,
     version = "0.3.3",
     short_description = "Disallow `new` operators with global non-constructor functions.",
 );
@@ -61,7 +62,7 @@ impl Rule for NoNewNativeNonconstructor {
             return;
         };
         if matches!(ident.name.as_str(), "Symbol" | "BigInt")
-            && ctx.scoping().root_unresolved_references().contains_key(&ident.name)
+            && ctx.is_reference_to_global_variable(ident)
         {
             let start = expr.span.start;
             let end = start + 3;
@@ -88,6 +89,7 @@ fn test() {
         "function BigInt() {} new BigInt();",
         "new foo(BigInt);",
         "new foo(bar, BigInt);",
+        "function f(FakeSymbol) { const Symbol = FakeSymbol; new Symbol(); }; Symbol('foo');",
     ];
 
     let fail = vec![

@@ -2,7 +2,10 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::JSXAttributeValue};
+use oxc_ast::{
+    AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -75,6 +78,7 @@ declare_oxc_lint!(
     NoInteractiveElementToNoninteractiveRole,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoInteractiveElementToNoninteractiveRoleConfig,
     version = "1.65.0",
     short_description = "Disallow using a non-interactive WAI-ARIA role on an interactive HTML element.",
@@ -82,7 +86,7 @@ declare_oxc_lint!(
 
 impl Rule for NoInteractiveElementToNoninteractiveRole {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
@@ -108,7 +112,7 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
             return;
         };
 
-        let oxc_ast::ast::JSXAttributeItem::Attribute(role_attr) = role_attr_item else {
+        let JSXAttributeItem::Attribute(role_attr) = role_attr_item else {
             return;
         };
 
@@ -117,7 +121,9 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
             return;
         };
 
-        let role_str = role_value.value.as_str().trim();
+        let Some(role_str) = role_value.value.as_str().map(str::trim) else {
+            return;
+        };
         let Some(first_role) = role_str.split_whitespace().next() else {
             return;
         };

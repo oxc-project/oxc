@@ -247,6 +247,7 @@ declare_oxc_lint!(
     NoFallthrough,
     eslint,
     pedantic, // Fall through code are still incorrect.
+    recommended,
     pending, // TODO: add a dangerous suggestion for this rule.
     config = NoFallthroughConfig,
     version = "0.0.14",
@@ -255,7 +256,7 @@ declare_oxc_lint!(
 
 impl Rule for NoFallthrough {
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
-        serde_json::from_value::<DefaultRuleConfig<Self>>(value).map(DefaultRuleConfig::into_inner)
+        DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {

@@ -1103,7 +1103,9 @@ impl Target {
 /// Generate code for `enter_node` and `leave_node`.
 ///
 /// If the type has no `AstKind`, returns a comment for enter, and empty token stream for exit.
-fn generate_enter_and_leave_node(
+///
+/// Also used by generator for `VisitJs` trait.
+pub fn generate_enter_and_leave_node(
     type_ident: &Ident,
     has_kind: bool,
     is_mut: bool,
