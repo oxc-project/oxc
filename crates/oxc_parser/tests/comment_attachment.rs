@@ -90,6 +90,16 @@ fn comment_attachment() {
     cases.add("new Foo /* a */ <T> /* b */ ();", SourceType::ts());
     cases.add("class A extends B/* a */<T>/* b */ {}", SourceType::ts());
 
+    cases.group("this_parameter");
+    cases.add("function f(this: /* t */ P, /* b */ a: /* c */ T) {}", SourceType::ts());
+    cases.add("function f(this: P,\n// a\na) {}", SourceType::ts());
+    cases.add("function f(this: P, // t\n a, // a\n ...b) {}", SourceType::ts());
+    cases.add("type F = (this: P, a: /* c */ T) => void;", SourceType::ts());
+    cases.add(
+        "interface I { m(this: P, a: /* m */ T): void; (this: P, a: /* c */ T): void }",
+        SourceType::ts(),
+    );
+
     cases.group("speculation_and_cover_grammar");
     cases.add("let f = (/* a */ a) => a; let g = (/* p */ b);", SourceType::mjs());
     cases.add("let f = <T,>(/* a */ a: T) => a; x = a < /* b */ b > c;", SourceType::ts());

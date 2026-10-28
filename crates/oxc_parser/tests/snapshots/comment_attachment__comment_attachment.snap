@@ -101,6 +101,41 @@ class A extends B/* a */<T>/* b */ {}
 /* a */ -> Leading TSTypeParameterInstantiation `<T>`
 /* b */ -> Leading ClassBody `{}`
 
+##### this_parameter
+
+=== ts (unambiguous) ===
+function f(this: /* t */ P, /* b */ a: /* c */ T) {}
+---
+/* t */ -> Leading TSTypeReference `P`
+/* b */ -> Leading FormalParameter `a: /* c */ T`
+/* c */ -> Leading TSTypeReference `T`
+
+=== ts (unambiguous) ===
+function f(this: P,
+// a
+a) {}
+---
+// a -> Leading FormalParameter `a`
+
+=== ts (unambiguous) ===
+function f(this: P, // t
+ a, // a
+ ...b) {}
+---
+// t -> Trailing TSThisParameter `this: P`
+// a -> Trailing FormalParameter `a`
+
+=== ts (unambiguous) ===
+type F = (this: P, a: /* c */ T) => void;
+---
+/* c */ -> Leading TSTypeReference `T`
+
+=== ts (unambiguous) ===
+interface I { m(this: P, a: /* m */ T): void; (this: P, a: /* c */ T): void }
+---
+/* m */ -> Leading TSTypeReference `T`
+/* c */ -> Leading TSTypeReference `T`
+
 ##### speculation_and_cover_grammar
 
 === js ===
