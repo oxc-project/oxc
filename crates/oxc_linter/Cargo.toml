@@ -15,7 +15,7 @@ description.workspace = true
 
 [features]
 default = []
-ruledocs = ["oxc_macros/ruledocs"] # Enables the `ruledocs` feature for conditional compilation
+ruledocs = ["oxc_macros/ruledocs", "oxc_linter_core/ruledocs"] # Enables rule documentation
 force_test_reporter = []
 
 [lints]
@@ -37,6 +37,7 @@ oxc_diagnostics = { workspace = true }
 oxc_estree_tokens = { workspace = true }
 oxc_ecmascript = { workspace = true, features = ["side_effects"] }
 oxc_index = { workspace = true }
+oxc_linter_core = { workspace = true }
 oxc_macros = { workspace = true, features = ["ruledocs"] }
 oxc_parser = { workspace = true }
 oxc_react_compiler = { workspace = true }
@@ -65,7 +66,6 @@ nodejs-built-in-modules = { workspace = true }
 papaya = { workspace = true }
 phf = { workspace = true, features = ["macros"] }
 rayon = { workspace = true }
-rust-lapper = { workspace = true }
 rustc-hash = { workspace = true }
 schemars = { workspace = true, features = ["indexmap2", "regex"] }
 self_cell = { workspace = true }
@@ -81,4 +81,3 @@ url = { workspace = true }
 [dev-dependencies]
 insta = { workspace = true }
 markdown = { workspace = true }
-

@@ -84,7 +84,7 @@ impl OxlintEnv {
         self.0.iter().filter_map(|(k, v)| (*v).then_some(k.as_str()))
     }
 
-    pub(crate) fn override_envs(&self, envs_to_override: &mut OxlintEnv) {
+    pub fn override_envs(&self, envs_to_override: &mut OxlintEnv) {
         for (env, supported) in self.0.clone() {
             envs_to_override.0.insert(env, supported);
         }

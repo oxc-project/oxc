@@ -451,7 +451,7 @@ mod test {
                 LintOptions::default(),
                 Arc::default(),
             ))
-            .spawn_for_test()
+            .spawn("", "eslint", crate::RuleFixMeta::None, crate::AllowWarnDeny::Warn)
         };
 
         let ctx = build_ctx("foo.js");

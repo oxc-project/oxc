@@ -358,7 +358,7 @@ mod test {
             LintOptions::default(),
             Arc::default(),
         ))
-        .spawn_for_test();
+        .spawn("", "eslint", crate::RuleFixMeta::None, crate::AllowWarnDeny::Warn);
 
         // A snapshot name with a lone surrogate matches no allowed pattern.
         for (allowed, foo_allowed, bar_allowed) in [

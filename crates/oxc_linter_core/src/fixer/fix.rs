@@ -85,7 +85,7 @@ impl FixKind {
     ///
     /// # Example
     /// ```
-    /// use oxc_linter::FixKind;
+    /// use oxc_linter_core::FixKind;
     ///
     /// // `none` means no fixes will be applied at all
     /// assert!(!FixKind::None.can_apply(FixKind::SafeFix));
@@ -317,7 +317,6 @@ impl Deref for RuleFix {
 ///
 /// Used internally by this module. Lint rules should use `RuleFix`.
 #[derive(Debug, Clone, PartialEq, Eq)]
-#[non_exhaustive]
 pub struct Fix {
     pub content: Cow<'static, str>,
     /// A brief suggestion message describing the fix. Will be shown in
@@ -393,7 +392,7 @@ impl PossibleFixes {
         }
     }
 
-    pub(crate) fn extend_fix(&mut self, fix: Vec<Fix>) {
+    pub fn extend_fix(&mut self, fix: Vec<Fix>) {
         match self {
             PossibleFixes::None => {
                 *self = PossibleFixes::Multiple(fix);
@@ -410,7 +409,7 @@ impl PossibleFixes {
     }
 
     #[cfg(debug_assertions)]
-    pub(crate) fn cmp_fix_sequence(&self, other: &Self) -> std::cmp::Ordering {
+    pub fn cmp_fix_sequence(&self, other: &Self) -> std::cmp::Ordering {
         fn fix_sort_key(fix: &Fix) -> (&str, Option<&str>, FixKind, Span) {
             (fix.content.as_ref(), fix.message.as_deref(), fix.kind, fix.span)
         }
@@ -636,6 +635,10 @@ impl CompositeFix {
     /// * Overlapped ranges.
     /// * Negative ranges (`span.start` > `span.end`).
     /// * Ranges are out of bounds of `source_text`.
+    #[expect(
+        clippy::missing_panics_doc,
+        reason = "unwrap and indexing are guarded by length checks"
+    )]
     pub fn merge_fixes_fallible(
         fixes: Vec<Fix>,
         source_text: &str,

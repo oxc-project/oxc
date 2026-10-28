@@ -16,6 +16,14 @@ This crate provides a fast, ESLint-compatible linting engine with comprehensive 
 
 ## Architecture
 
+`oxc_linter_core` owns the shared rule traits, contexts, settings, module records,
+and diagnostic/fix support. It does not depend on concrete rules or the rule
+registry. This lets rule crates depend on core without depending on the linter.
+
+`oxc_linter` owns configuration resolution, rule registration and dispatch,
+services, and external-linter integration. Its public API re-exports shared types
+from core.
+
 ### Rule System
 
 - **Rule categories**: Correctness, Suspicious, Pedantic, Style, etc.
