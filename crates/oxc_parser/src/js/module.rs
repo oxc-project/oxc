@@ -392,7 +392,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = e.key.span();
             if let Some(old_span) = keys.insert(key, span) {
                 let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
-                self.error(diagnostics::redeclaration(name, old_span, span));
+                self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
             }
         }
 

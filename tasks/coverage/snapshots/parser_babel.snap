@@ -9493,13 +9493,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                      ───
    ╰────
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-export-with-repeated-type/input.js:1:50]
  1 │ export { default as foo } from "foo.json" with { type: "json", type: "html" };
    ·                                                  ──┬─          ──┬─
-   ·                                                    │             ╰── It can not be redeclared here
-   ·                                                    ╰── `type` has already been declared here
+   ·                                                    │             ╰── This key is repeated
+   ·                                                    ╰── `type` was already specified here
    ╰────
+  help: Each import attribute key must be unique
 
   × Expected `{` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-export-without-attributes-identifier/input.js:1:29]
@@ -9508,29 +9509,32 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                             ╰── `{` expected
    ╰────
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-with-repeated-type/input.js:1:35]
  1 │ import foo from "foo.json" with { type: "json", type: "html" };
    ·                                   ──┬─          ──┬─
-   ·                                     │             ╰── It can not be redeclared here
-   ·                                     ╰── `type` has already been declared here
+   ·                                     │             ╰── This key is repeated
+   ·                                     ╰── `type` was already specified here
    ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-with-repeated-type-string/input.js:1:35]
  1 │ import foo from "foo.json" with { "type": "json", type: "html", "type": "js" };
    ·                                   ───┬──          ──┬─
-   ·                                      │              ╰── It can not be redeclared here
-   ·                                      ╰── `type` has already been declared here
+   ·                                      │              ╰── This key is repeated
+   ·                                      ╰── `type` was already specified here
    ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-with-repeated-type-string/input.js:1:51]
  1 │ import foo from "foo.json" with { "type": "json", type: "html", "type": "js" };
    ·                                                   ──┬─          ───┬──
-   ·                                                     │              ╰── It can not be redeclared here
-   ·                                                     ╰── `type` has already been declared here
+   ·                                                     │              ╰── This key is repeated
+   ·                                                     ╰── `type` was already specified here
    ╰────
+  help: Each import attribute key must be unique
 
   × Expected `{` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-without-attributes-identifier/input.js:1:16]

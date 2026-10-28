@@ -87,13 +87,6 @@ macro_rules! parser_diagnostics {
 }
 
 parser_diagnostics! {
-    redeclaration(name: &'a str, declare_span: Span, redeclare_span: Span) => {
-        OxcDiagnostic::error(format!("Identifier `{name}` has already been declared")).with_labels([
-            declare_span.label(format!("`{name}` has already been declared here")),
-            redeclare_span.label("It can not be redeclared here"),
-        ])
-    };
-
     overlong_source() => {
         OxcDiagnostic::error("Source length exceeds 4 GiB limit")
     };
@@ -1357,6 +1350,15 @@ parser_diagnostics! {
         OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
             .with_label(span)
             .with_help("Wrap this with quotes")
+    };
+
+    duplicate_import_attribute_key(name: &'a str, previous_span: Span, duplicate_span: Span) => {
+        OxcDiagnostic::error(format!("Duplicate import attribute key `{name}`"))
+            .with_labels([
+                previous_span.label(format!("`{name}` was already specified here")),
+                duplicate_span.label("This key is repeated"),
+            ])
+            .with_help("Each import attribute key must be unique")
     };
 
     // TS18058
