@@ -82,8 +82,6 @@ node -e 'const p=require("./apps/oxfmt/node_modules/prettier");p.__debug.printTo
 
 Every failing file is accounted for by a DIVERGENCES.md entry's `Conformance:` line; there are no unclassified failures.
 
-Pin fixtures are named after their entry's slug (a comment would be an HTML block and change the document).
-
 ### Fixture fingerprint
 
 `tests/fixtures/fingerprint.rs` serializes the AST's meaning (structure, decoded text, destinations, labels) and ignores what formatting may change

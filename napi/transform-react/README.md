@@ -160,7 +160,7 @@ Unset environment properties retain the compiler defaults shown here.
 | `enableResetCacheOnSourceFileChanges`           | `boolean`  | Unsupported | Accepted for upstream option compatibility but currently has no effect.                                         |
 | `enablePreserveExistingMemoizationGuarantees`   | `boolean`  | `true`      | Use existing `useMemo` and `useCallback` information to preserve referential-equality behavior.                 |
 | `validatePreserveExistingMemoizationGuarantees` | `boolean`  | `true`      | Validate that compilation preserves existing manual memoization guarantees.                                     |
-| `validateExhaustiveMemoizationDependencies`     | `boolean`  | `false`     | Validate that manual memoization dependency arrays are exhaustive.                                              |
+| `validateExhaustiveMemoizationDependencies`     | `boolean`  | `true`      | Validate that manual memoization dependency arrays are exhaustive.                                              |
 | `validateExhaustiveEffectDependencies`          | `string`   | `"off"`     | Validate effect dependencies with `"off"`, `"all"`, `"missing-only"`, or `"extra-only"`.                        |
 | `enableOptionalDependencies`                    | `boolean`  | Unsupported | Accepted for upstream option compatibility but currently has no effect.                                         |
 | `enableNameAnonymousFunctions`                  | `boolean`  | `false`     | Give generated or outlined anonymous functions inferred names.                                                  |

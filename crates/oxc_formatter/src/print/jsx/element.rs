@@ -95,25 +95,11 @@ impl<'a> AnyJsxTagWithChildren<'a, '_> {
             | AstNodes::JSXExpressionContainer(_)
             | AstNodes::ConditionalExpression(_)
             | AstNodes::ExpressionStatement(_) => WrapState::NoWrap,
-            AstNodes::StaticMemberExpression(member) => {
-                if member.optional {
-                    WrapState::NoWrap
-                } else {
-                    WrapState::WrapOnBreak
-                }
-            }
             // It is a argument of a call expression
             AstNodes::CallExpression(call) if call.is_argument_span(self.span()) => {
                 WrapState::NoWrap
             }
             AstNodes::NewExpression(new) if new.is_argument_span(self.span()) => WrapState::NoWrap,
-            AstNodes::ComputedMemberExpression(member) => {
-                if member.optional {
-                    WrapState::NoWrap
-                } else {
-                    WrapState::WrapOnBreak
-                }
-            }
             // Concise arrow body: `() => <div></div>`
             #[expect(clippy::match_same_arms)]
             AstNodes::ArrowFunctionExpression(_) => WrapState::WrapOnBreak,

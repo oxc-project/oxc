@@ -1,5 +1,6 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -73,15 +74,15 @@ impl Message {
     }
 }
 
-pub fn run_on_jest_node<'a, 'c>(
-    possible_jest_node: &PossibleJestNode<'a, 'c>,
-    ctx: &'c LintContext<'a>,
-) {
-    let node = possible_jest_node.node;
+pub fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
     let AstKind::CallExpression(call_expr) = node.kind() else {
         return;
     };
-    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, possible_jest_node, ctx) else {
+    let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+    else {
+        return;
+    };
+    let Some(jest_fn_call) = parse_general_jest_fn_call(call_expr, &possible_jest_node, ctx) else {
         if let Expression::Identifier(ident) = &call_expr.callee
             && ident.name.as_str() == "pending"
             && ctx.is_reference_to_global_variable(ident)

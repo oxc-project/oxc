@@ -3,6 +3,11 @@ source: crates/oxc_react_compiler/tests/snapshot.rs
 input_file: crates/oxc_react_compiler/fixtures/optional-chain-cache-guard.jsx
 ---
 import { c as _c } from "react/compiler-runtime";
+// A memo block guarded only by a short-circuited optional prefix can hide a `TypeError`: for
+// `obj?.a.b(getArg())`, rendering with `obj = undefined` caches `undefined`, and rendering again
+// with `obj = {}` would reuse it because `obj?.a` is still `undefined`, while the original throws
+// reading `.b`. The guard must re-evaluate the chain far enough to throw at the same point.
+// `.b` is read whenever `obj` is not nullish, so `obj?.a.b` is guarded too.
 export function StaticContinuation(t0) {
 	const $ = _c(6);
 	const { obj, getArg } = t0;
@@ -26,6 +31,7 @@ export function StaticContinuation(t0) {
 	}
 	return t2;
 }
+// A computed continuation is not a property path, so the guard keeps the whole object.
 export function ComputedContinuation(t0) {
 	const $ = _c(6);
 	const { obj, getKey, getArg } = t0;
@@ -95,6 +101,7 @@ export function NestedContinuation(t0) {
 	}
 	return t2;
 }
+// A fully optional chain never throws on a short-circuit, so the prefix `obj?.a` is enough.
 export function FullyOptional(t0) {
 	const $ = _c(5);
 	const { obj, getArg } = t0;
@@ -117,6 +124,8 @@ export function FullyOptional(t0) {
 	}
 	return t2;
 }
+// Conditionally evaluated chains cannot hoist a throwing read above the condition, so the
+// dependency is truncated before its last optional link.
 export function ConditionalContinuation(t0) {
 	const $ = _c(5);
 	const { obj, getArg } = t0;

@@ -58,6 +58,29 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, TSFunctionType<'_>> {
             return true;
         }
 
+        // A generic function type after these `<`s would print `<<`, which TypeScript reads as a left shift;
+        // only these owners' type arguments are parsed without splitting it back (`tryParseTypeArguments`).
+        // Containment, since `parent` looks through a single-member union.
+        // (DIVERGENCES.md#generic-function-type-after-lt-parens)
+        if self.type_parameters.is_some()
+            && match parent {
+                AstNodes::TSTypeAssertion(_) => true,
+                AstNodes::TSTypeParameterInstantiation(args) => {
+                    matches!(
+                        args.parent(),
+                        AstNodes::Class(_)
+                            | AstNodes::TSClassImplements(_)
+                            | AstNodes::TSInterfaceHeritage(_)
+                            | AstNodes::TSTypeQuery(_)
+                            | AstNodes::JSXOpeningElement(_)
+                    ) && args.params[0].span().contains_inclusive(self.span)
+                }
+                _ => false,
+            }
+        {
+            return true;
+        }
+
         function_like_type_needs_parentheses(self.span(), parent, Some(&self.return_type))
     }
 }

@@ -46,6 +46,23 @@ class C {
   }
 }
 
+// The object of `a.#x` keeps the same parens as `a.x` and `a[x]`
+class D {
+  #x;
+  m(a, b) {
+    x = (a ?? b).#x;
+    x = (a || b).#x;
+    x = (a + b).#x;
+    x = (a in b).#x;
+    x = (#x in b).#x;
+    x = (a ?? b)?.#x;
+    x = (a?.b).#x;
+    x = (1).#x;
+    x = (1)[0];
+    x = (<div />).#x;
+  }
+}
+
 ==================== Output ====================
 ------------------
 { printWidth: 80 }
@@ -94,6 +111,23 @@ class C {
   }
 }
 
+// The object of `a.#x` keeps the same parens as `a.x` and `a[x]`
+class D {
+  #x;
+  m(a, b) {
+    x = (a ?? b).#x;
+    x = (a || b).#x;
+    x = (a + b).#x;
+    x = (a in b).#x;
+    x = (#x in b).#x;
+    x = (a ?? b)?.#x;
+    x = (a?.b).#x;
+    x = (1).#x;
+    x = (1)[0];
+    x = (<div />).#x;
+  }
+}
+
 -------------------
 { printWidth: 100 }
 -------------------
@@ -138,6 +172,23 @@ class C {
   }
   async n(b) {
     x = await (#x in b);
+  }
+}
+
+// The object of `a.#x` keeps the same parens as `a.x` and `a[x]`
+class D {
+  #x;
+  m(a, b) {
+    x = (a ?? b).#x;
+    x = (a || b).#x;
+    x = (a + b).#x;
+    x = (a in b).#x;
+    x = (#x in b).#x;
+    x = (a ?? b)?.#x;
+    x = (a?.b).#x;
+    x = (1).#x;
+    x = (1)[0];
+    x = (<div />).#x;
   }
 }
 

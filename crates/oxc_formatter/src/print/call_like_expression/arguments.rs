@@ -1122,12 +1122,16 @@ fn is_decorated_function(argument: &AstNode<'_, '_, Argument<'_>>) -> bool {
 
     // Check if the decorator (callee.callee) is a simple identifier or member expression
     let decorator = &callee_call.callee;
-    let is_valid_decorator = matches!(decorator, Expression::Identifier(_))
-        || matches!(
-            decorator,
-            Expression::StaticMemberExpression(member)
-            if matches!(&member.object, Expression::Identifier(_))
-        );
+    let is_valid_decorator = match decorator {
+        Expression::Identifier(_) => true,
+        Expression::StaticMemberExpression(member) => {
+            matches!(&member.object, Expression::Identifier(_))
+        }
+        Expression::PrivateFieldExpression(member) => {
+            matches!(&member.object, Expression::Identifier(_))
+        }
+        _ => false,
+    };
 
     if !is_valid_decorator {
         return false;
