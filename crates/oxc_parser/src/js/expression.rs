@@ -1349,6 +1349,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.parse_unary_expression_or_higher(lhs_start)
         };
 
+        if kind_to_precedence(self.cur_kind()).is_none() {
+            return lhs;
+        }
         self.parse_binary_expression_rest(lhs_start, lhs, lhs_parenthesized, lhs_precedence)
     }
 
@@ -1535,8 +1538,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.parse_yield_expression();
         }
         // `() => {}`, `(x) => {}`
-        if let Some(mut arrow_expr) = self
-            .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
+        if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Async)
+            && let Some(mut arrow_expr) = self.try_parse_parenthesized_arrow_function_expression(
+                allow_return_type_in_arrow_function,
+            )
         {
             if let Some(comments) = no_side_effects_comments
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
@@ -1547,8 +1552,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return arrow_expr;
         }
         // `async x => {}`
-        if let Some(mut arrow_expr) = self
-            .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
+        if self.at(Kind::Async)
+            && let Some(mut arrow_expr) = self.try_parse_async_simple_arrow_function_expression(
+                allow_return_type_in_arrow_function,
+            )
         {
             if let Some(comments) = no_side_effects_comments
                 && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
