@@ -427,13 +427,27 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     #[cold]
     #[inline(never)]
     pub(crate) fn unassign_comments(&mut self, span: Span) {
+        self.unassign_comments_in(span, false);
+    }
+
+    /// Unassign comments in a node which is discarded, except applied annotation comments, when
+    /// the calls and functions which own them are kept.
+    #[cold]
+    #[inline(never)]
+    pub(crate) fn unassign_comments_keeping_annotations(&mut self, span: Span) {
+        self.unassign_comments_in(span, true);
+    }
+
+    fn unassign_comments_in(&mut self, span: Span, keep_annotations: bool) {
         let comments = &mut self.lexer.trivia_builder.comments;
         let start = partition_before(comments, comments.len(), span.start);
         for comment in &mut comments[start..] {
             if comment.span.start >= span.end {
                 break;
             }
-            if comment.node_id.get() != NodeId::ROOT {
+            if comment.node_id.get() != NodeId::ROOT
+                && !(keep_annotations && (comment.is_pure() || comment.is_no_side_effects()))
+            {
                 comment.node_id.set(NodeId::ROOT);
                 self.assigned_comments -= 1;
             }

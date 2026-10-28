@@ -108,6 +108,7 @@ fn comment_attachment() {
     cases.add("({ a /* a */ = 1, b: /* b */ c } = d);", SourceType::mjs());
     cases.add("({a = /* @__PURE__ */ f() });", SourceType::mjs());
     cases.add("({a = f(x, /* c */ y) });", SourceType::mjs());
+    cases.add("({ a = /* @__PURE__ */ f().x } = x);", SourceType::mjs());
     cases.add("[/* x */ x, ...rest /* rest */] = y;", SourceType::mjs());
     cases.add("import /* 1 */ source /* 2 */ x from 'x';", SourceType::mjs());
     cases.add("await /* a */ x; import 'y';", SourceType::unambiguous());
@@ -202,5 +203,7 @@ fn comment_attachment() {
     let line = "await /x/u; f(a, /* c */ b); // t\n";
     cases.add(&format!("{line}{line}{line}export {{}};"), SourceType::unambiguous());
     cases.add("'use strict'; // c\nawait /x/u;\nimport 'z';", SourceType::unambiguous());
+    cases.add("await /x/u; y = /* @__PURE__ */ f().x; import 'z';", SourceType::unambiguous());
+    cases.add("await /* @__PURE__ */ f().x; import 'z';", SourceType::unambiguous());
     insta::assert_snapshot!(cases.0);
 }
