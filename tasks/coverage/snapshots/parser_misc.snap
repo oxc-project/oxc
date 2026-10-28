@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 119/119 (100.00%)
-Positive Passed: 119/119 (100.00%)
-Negative Passed: 257/257 (100.00%)
+AST Parsed     : 120/120 (100.00%)
+Positive Passed: 120/120 (100.00%)
+Negative Passed: 259/259 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -1345,6 +1345,18 @@ Negative Passed: 257/257 (100.00%)
  1 │ const foo = 1 ? 2
    ·               ┬
    ·               ╰── Conditional starts here
+   ╰────
+
+  × Invalid characters after number
+   ╭─[misc/fail/numeric-exponent-legacy-follow.cjs:1:5]
+ 1 │ 08e1in {};
+   ·     ──
+   ╰────
+
+  × Invalid characters after number
+   ╭─[misc/fail/numeric-exponent-zero-follow.js:1:4]
+ 1 │ 0e1in {};
+   ·    ──
    ╰────
 
   × Identifier `b` has already been declared

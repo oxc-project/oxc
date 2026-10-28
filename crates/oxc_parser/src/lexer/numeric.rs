@@ -13,7 +13,8 @@ impl<C: Config> Lexer<'_, C> {
             Some(b'x' | b'X') => self.read_non_decimal(Kind::Hex),
             Some(b'e' | b'E') => {
                 self.consume_char();
-                self.read_decimal_exponent()
+                let kind = self.read_decimal_exponent();
+                self.check_after_numeric_literal(kind)
             }
             Some(b'.') => {
                 self.consume_char();
@@ -117,10 +118,11 @@ impl<C: Config> Lexer<'_, C> {
                 self.consume_char();
                 self.decimal_literal_after_decimal_point_after_digits()
             }
-            // allow 08e1 and 09e1
-            Some(b'e') if kind == Kind::Decimal => {
+            // allow 08e1, 09e1, and their uppercase exponent forms
+            Some(b'e' | b'E') if kind == Kind::Decimal => {
                 self.consume_char();
-                self.read_decimal_exponent()
+                let kind = self.read_decimal_exponent();
+                self.check_after_numeric_literal(kind)
             }
             _ => self.check_after_numeric_literal(kind),
         }

@@ -92,8 +92,7 @@ fn numeric_separator_and_empty_radix() {
 #[test]
 fn legacy_octal_like_decimal() {
     // Leading `0` + digit: no separators in the integer part, no bigint suffix,
-    // and an exponent only as lowercase `e` after an 8/9
-    // (oxc_parser's `read_legacy_octal` quirk).
+    // and an exponent only after an 8/9.
     assert_eq!(codes("x = 0_0;"), [DiagCode::InvalidNumericSeparator]);
     assert_eq!(codes("x = 00_0;"), [DiagCode::InvalidNumericSeparator]);
     assert_eq!(codes("x = 08_0;"), [DiagCode::InvalidNumericSeparator]);
@@ -101,7 +100,7 @@ fn legacy_octal_like_decimal() {
     assert_eq!(codes("x = 08n;"), [DiagCode::InvalidBigint]);
     assert_eq!(codes("x = 0008n;"), [DiagCode::InvalidBigint]);
     assert_eq!(codes("x = 00e1;"), [DiagCode::InvalidNumericLiteral]);
-    assert_eq!(codes("x = 08E1;"), [DiagCode::InvalidNumericLiteral]);
+    assert_eq!(codes("x = 08E1;"), []);
 }
 
 #[test]
