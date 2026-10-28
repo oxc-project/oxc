@@ -800,11 +800,7 @@ pub fn is_react_hook(expr: &Expression) -> bool {
     }
 }
 
-/// Checks if the node is a React component name. React component names must
-/// always start with an uppercase letter.
-pub fn is_react_component_name(name: &str) -> bool {
-    name.chars().next().is_some_and(|c| c.is_ascii_uppercase())
-}
+pub use oxc_linter_core::utils::is_react_component_name;
 
 /// Checks if the node is a React component name or React hook,
 /// `is_react_component_name`, `is_react_hook_name`

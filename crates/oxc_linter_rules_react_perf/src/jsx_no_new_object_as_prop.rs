@@ -229,5 +229,8 @@ fn test() {
     ];
 
     Tester::new(JsxNoNewObjectAsProp::NAME, JsxNoNewObjectAsProp::PLUGIN, pass, fail)
-        .test_and_snapshot();
+        .test_and_snapshot_in(std::path::Path::new(concat!(
+            env!("CARGO_MANIFEST_DIR"),
+            "/src/snapshots"
+        )));
 }

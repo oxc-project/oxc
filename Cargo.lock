@@ -2313,6 +2313,7 @@ dependencies = [
  "oxc_estree_tokens",
  "oxc_index",
  "oxc_linter_core",
+ "oxc_linter_rules_react_perf",
  "oxc_macros",
  "oxc_parser",
  "oxc_react_compiler",
@@ -2371,6 +2372,24 @@ dependencies = [
  "oxc_syntax",
  "rust-lapper",
  "rustc-hash",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "oxc_linter_rules_react_perf"
+version = "1.90.0"
+dependencies = [
+ "oxc-schemars",
+ "oxc_ast",
+ "oxc_diagnostics",
+ "oxc_linter",
+ "oxc_linter_core",
+ "oxc_macros",
+ "oxc_semantic",
+ "oxc_span",
+ "oxc_str",
+ "oxc_syntax",
  "serde",
  "serde_json",
 ]

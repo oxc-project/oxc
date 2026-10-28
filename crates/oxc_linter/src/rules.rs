@@ -553,10 +553,10 @@ pub(crate) mod react {
 
 /// <https://github.com/cvazac/eslint-plugin-react-perf>
 pub(crate) mod react_perf {
-    pub mod jsx_no_jsx_as_prop;
-    pub mod jsx_no_new_array_as_prop;
-    pub mod jsx_no_new_function_as_prop;
-    pub mod jsx_no_new_object_as_prop;
+    pub use oxc_linter_rules_react_perf::jsx_no_jsx_as_prop;
+    pub use oxc_linter_rules_react_perf::jsx_no_new_array_as_prop;
+    pub use oxc_linter_rules_react_perf::jsx_no_new_function_as_prop;
+    pub use oxc_linter_rules_react_perf::jsx_no_new_object_as_prop;
 }
 
 /// <https://github.com/sindresorhus/eslint-plugin-unicorn>

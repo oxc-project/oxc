@@ -10,7 +10,7 @@ use oxc_syntax::scope::ScopeId;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use crate::{
+use oxc_linter_core::{
     LintContext, context::ContextHost, rule::DefaultRuleConfig, utils::is_react_component_name,
 };
 
