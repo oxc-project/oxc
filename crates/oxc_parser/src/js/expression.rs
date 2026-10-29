@@ -1626,6 +1626,21 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
+        // A leaf immediately followed by a delimiter cannot have an expression continuation.
+        let kind = self.cur_kind();
+        if (matches!(kind, Kind::Ident | Kind::This) || kind.is_literal())
+            && matches!(
+                self.lexer.remaining().as_bytes().first(),
+                Some(b',' | b')' | b']' | b'}' | b';' | b':')
+            )
+        {
+            return match kind {
+                Kind::Ident => self.parse_plain_identifier_expression(),
+                Kind::This => self.parse_this_expression(),
+                _ => self.parse_literal_expression(),
+            };
+        }
+
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         // [+Yield] YieldExpression
