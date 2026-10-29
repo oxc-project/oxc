@@ -7,7 +7,7 @@ use oxc_formatter_core::{
     write, write_front_matter,
 };
 use oxc_htmlish_parser::{
-    Dialect, Parser,
+    Dialect, Parser, ParserOptions,
     ast::{NodeId, Root},
 };
 
@@ -95,10 +95,11 @@ pub fn parse_for_format<'a>(
     options: &HtmlishFormatOptions,
 ) -> Result<ParsedHtmlish<'a>, OxcDiagnostic> {
     let (has_bom, stripped) = split_bom(source_text);
-    parse_root(allocator, stripped, has_bom, options.variant.to_dialect()).map_err(|mut err| {
-        oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
-        err
-    })
+    parse_root(allocator, stripped, has_bom, options.variant.to_dialect(), ParserOptions::default())
+        .map_err(|mut err| {
+            oxc_formatter_core::rebase_labels(&mut err.labels, source_text, stripped);
+            err
+        })
 }
 
 /// Parse `source_text` and build the formatter IR for embedding into another
@@ -117,8 +118,11 @@ pub fn format_to_ir<'a>(
     embedded_in: Option<HtmlishEmbeddedIn>,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
+    let template_placeholder = embedded_in.and_then(|e| e.placeholder).map(|(_, is)| is);
+    let parser_options = ParserOptions { template_placeholder };
     // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part
-    let parsed = parse_root(allocator, source_text, false, options.variant.to_dialect())?;
+    let parsed =
+        parse_root(allocator, source_text, false, options.variant.to_dialect(), parser_options)?;
     if parsed.front_matter.is_some() && !session.input_kind().owns_front_matter() {
         // A fragment never acquires file envelope semantics
         return Err(OxcDiagnostic::error(
@@ -147,7 +151,8 @@ pub struct HtmlishEmbeddedIn {
     pub indent_multiple_roots: bool,
     /// The parent's placeholder for an expression (html-in-js's `${}`):
     /// a value that is one stays unquoted (`attr=${value}` passes a value, not a string),
-    /// and a value holding one is no class list to sort.
+    /// a value holding one is no class list to sort,
+    /// and a tag named by one is a component (`<${Tag} />`, `<${Tag}>…</${Tag}>`).
     pub placeholder: Option<Placeholder>,
 }
 
@@ -175,6 +180,7 @@ fn parse_root<'a>(
     source_text: &str,
     has_bom: bool,
     dialect: Dialect,
+    options: ParserOptions,
 ) -> Result<ParsedHtmlish<'a>, OxcDiagnostic> {
     // The printer slices verbatim text from the source, and the IR forbids `\r`.
     let unblanked: &'a str =
@@ -185,7 +191,8 @@ fn parse_root<'a>(
         Some(fm) => allocator.alloc_str(&blank_front_matter(unblanked, fm.raw.len())),
         None => unblanked,
     };
-    let root = Parser::new(allocator, source, dialect).parse().map_err(|diagnostic| {
+    let root = Parser::new(allocator, source, dialect).with_options(options).parse();
+    let root = root.map_err(|diagnostic| {
         let mut err = OxcDiagnostic::error(format!("Syntax error: {diagnostic}"))
             .with_label(oxc_span::Span::new(diagnostic.span.start, diagnostic.span.end));
         oxc_formatter_core::restore_crlf_labels(&mut err.labels, source_text);

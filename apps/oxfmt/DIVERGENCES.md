@@ -415,3 +415,28 @@ one on the line of an element before it (`<pre><b>x</b>${`) indents from that li
 Prettier 3.9.6 aligned an expression starting its line so; since 3.9.7 (prettier/prettier#19725, for idempotency) it indents it by the elements around the content instead,
 which leaves `})` right of the `${` it closes.
 Reformatting the expression changes no content: its source is code, not text in the element.
+
+## dynamic-tag-name-end-tag
+
+- Why: uniform-rule (same construct, same output: an element htm's `<//>` closes, which Prettier formats; prettier/prettier#17849)
+- Pin: `conformance/fixtures/edge-cases/html-in-js/dynamic-tag-name.js`
+- Conformance: `externals/webawesome/button/button.ts`
+
+```js
+// input
+html`<${For} each=${() => items}><li class="item">${() => content}</li><li class="item">more items</li></${For}>`;
+
+// ours
+html`<${For} each=${() => items}
+  ><li class="item">${() => content}</li>
+  <li class="item">more items</li></${For}
+>`;
+
+// prettier
+html`<${For} each=${() => items}><li class="item">${() => content}</li><li class="item">more items</li></${For}>`;
+```
+
+An element whose tag name is a `${}` expression (lit's static `html`, Solid, htm) closes at an end tag named by one, as at htm's `<//>`, and is formatted the same.
+Prettier gives each `${}` its own placeholder, so the end tag names another element than the start tag: its parser stops ("Unexpected closing tag") and the template stays as written.
+The parser is told the placeholders, not the expressions (`oxc-htmlish-parser`'s `ParserOptions::template_placeholder`):
+an end tag named by one closes the innermost element named by one, and such an element written `/>` closes there.

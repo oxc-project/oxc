@@ -15,7 +15,7 @@
 @@ -1,7 +1,7 @@
  const a = html`<style>
    a {
--    prettier_html_placeholder_0_13_in_js: ${c};
+-    prettier_html_placeholder_0_15_in_js: ${c};
 +    ${b}: ${c};
    }
  </style>`;
@@ -46,7 +46,7 @@ const d = html`<style>
 `````js
 const a = html`<style>
   a {
-    prettier_html_placeholder_0_13_in_js: ${c};
+    prettier_html_placeholder_0_15_in_js: ${c};
   }
 </style>`;
 const d = html`<style>
@@ -74,7 +74,7 @@ const d = html`<style>
  const a = html`
    <style>
      a {
--      prettier_html_placeholder_0_2992_in_js: ${c};
+-      prettier_html_placeholder_0_2996_in_js: ${c};
 +      ${b}: ${c};
      }
    </style>
@@ -110,7 +110,7 @@ const d = html`
 const a = html`
   <style>
     a {
-      prettier_html_placeholder_0_2992_in_js: ${c};
+      prettier_html_placeholder_0_2996_in_js: ${c};
     }
   </style>
 `;
