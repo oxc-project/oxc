@@ -792,9 +792,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_lhs_expression_or_higher_impl(&mut self) -> Expression<'a> {
         let start = self.cur_start();
-        let mut in_optional_chain = false;
         // `MemberExpression`
         let primary = self.parse_primary_expression();
+        self.parse_lhs_expression_rest(start, primary)
+    }
+
+    #[inline]
+    fn parse_lhs_expression_rest(&mut self, start: u32, primary: Expression<'a>) -> Expression<'a> {
+        let mut in_optional_chain = false;
         let member_expression = self.parse_member_expression_rest(
             start,
             primary,
@@ -1264,6 +1269,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let start = self.cur_start();
         let lhs = self.parse_lhs_expression_or_higher();
+        self.parse_postfix_update_expression(start, lhs)
+    }
+
+    #[inline]
+    fn parse_postfix_update_expression(
+        &mut self,
+        start: u32,
+        lhs: Expression<'a>,
+    ) -> Expression<'a> {
         // ++ -- postfix update expressions
         let post_kind = self.cur_kind();
         if post_kind.is_update_operator() && !self.cur_token().is_on_new_line() {
@@ -1346,8 +1360,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs_start = self.cur_start();
 
         let lhs_parenthesized = self.at(Kind::LParen);
-        // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
-        let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
+        let lhs = if self.at(Kind::Ident) {
+            // Identifiers cannot start a unary or prefix-update expression. Parse their
+            // suffixes directly, keeping pure annotations inside the postfix update.
+            let lhs = self.with_pure_comments(|p| {
+                let primary = p.parse_identifier_expression();
+                p.parse_lhs_expression_rest(lhs_start, primary)
+            });
+            self.parse_postfix_update_expression(lhs_start, lhs)
+        } else if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
+            // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
             self.parse_private_in_expression(lhs_start, lhs_precedence)
         } else {
             self.parse_unary_expression_or_higher(lhs_start)
