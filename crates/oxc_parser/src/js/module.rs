@@ -349,8 +349,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         specifiers: &mut ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
         import_kind: ImportOrExportKind,
     ) {
+        debug_assert!(self.at(Kind::LCurly));
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         self.context_remove(self.ctx, |p| {
             let _ = p.parse_delimited_list_into(
                 specifiers,
@@ -419,7 +420,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
     ) -> ArenaBox<'a, TSExportAssignment<'a>> {
-        self.expect(Kind::Eq);
+        debug_assert!(self.at(Kind::Eq));
+        self.advance(Kind::Eq);
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
         if self.ctx.has_top_level() {
@@ -432,7 +434,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
     ) -> ArenaBox<'a, TSNamespaceExportDeclaration<'a>> {
-        self.expect(Kind::As);
+        debug_assert!(self.at(Kind::As));
+        self.advance(Kind::As);
         self.expect(Kind::Namespace);
         let id = self.parse_identifier_name();
         self.asi();
@@ -868,7 +871,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut property_name: Option<ModuleExportName<'a>> = None;
         let mut name = self.parse_module_export_name();
 
-        if self.is_ts && name.is_identifier() && type_or_name_token_kind == Kind::Type {
+        if self.is_ts && type_or_name_token_kind == Kind::Type {
             // If the first token of an import/export specifier is 'type', there are a lot of possibilities,
             // especially if we see 'as' afterwards:
             //

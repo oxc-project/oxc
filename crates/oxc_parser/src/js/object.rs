@@ -17,9 +17,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         let (object_expression_properties, comma_start) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,

@@ -175,7 +175,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LAngle);
+        self.advance(Kind::LAngle);
         let (params, trailing_comma) =
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, |p| {
                 p.parse_ts_type_parameter(allow_variance)
@@ -636,8 +636,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_mapped_type(&mut self) -> TSType<'a> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         let mut readonly = None;
         if self.eat(Kind::Readonly) {
             readonly = Some(TSMappedTypeModifierOperator::True);
@@ -862,7 +863,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.re_lex_ts_l_angle() {
             let start = self.cur_start();
             let opening_span = self.cur_token().span();
-            self.expect(Kind::LAngle);
+            debug_assert!(self.at(Kind::LAngle));
+            self.advance(Kind::LAngle);
             let (params, _) = self.parse_delimited_list(
                 Kind::RAngle,
                 Kind::Comma,
@@ -888,7 +890,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
             let start = self.cur_start();
             let opening_span = self.cur_token().span();
-            self.expect(Kind::LAngle);
+            debug_assert!(self.at(Kind::LAngle));
+            self.advance(Kind::LAngle);
             let (params, _) = self.parse_delimited_list(
                 Kind::RAngle,
                 Kind::Comma,
@@ -929,7 +932,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LAngle);
+        debug_assert!(self.at(Kind::LAngle));
+        self.advance(Kind::LAngle);
         let (params, _) =
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
         // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
@@ -963,9 +967,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_tuple_type(&mut self) -> TSType<'a> {
+        debug_assert!(self.at(Kind::LBrack));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.advance(Kind::LBrack);
 
         let mut seen_optional_span: Option<Span> = None;
         let (elements, _) =
@@ -1201,8 +1206,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse TypeScript import type attributes object: `{ type: "json" }`
     /// Only allows static key-value pairs (no computed keys, no spread elements).
     fn parse_ts_import_type_attributes(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
 
         let mut properties = ArenaVec::new_in(self);
         let mut first = true;
