@@ -2,7 +2,10 @@ use std::fmt::Write;
 
 use oxc_span::SourceType;
 
-use crate::{default_options, test, test_options_source_type, test_same};
+use crate::{
+    CompressOptions, default_options, test, test_options_source_type, test_same,
+    test_same_options_source_type, test_smallest,
+};
 
 #[test]
 fn test_for_variable_declaration() {
@@ -386,4 +389,46 @@ fn test_handle_switch_statement() {
         "function f(){ switch (0) { case x: } let x = 1; }",
     ); // TDZ; function f() { x; let x = 1; }
     test_same("function f(){ switch (0) { case x: case y: } let x = 1; }"); // TDZ; function f() { x, y; let x = 1; }
+}
+
+#[test]
+fn test_inline_single_use_function_declaration() {
+    test(
+        "function o() { function filter() {} r.filter = (filter); }",
+        "function o() { r.filter = function() {}; }",
+    );
+    test(
+        "function c() { function b() { return 1; } function e() { return b(); } r.e = e; }",
+        "function c() { function b() { return 1; } r.e = function() { return b(); }; }",
+    );
+    test(
+        "function c() { function f() {} r.a = f; r.b = f; }",
+        "function c() { function f() {} r.a = f, r.b = f; }",
+    );
+    test_same("function c() { function f() {} function n() { eval('f'); } r.f = f; }");
+    test("function c() { { function f() {} r.f = f; } }", "function c() { r.f = function() {}; }");
+    test("function f() {} r.f = f;", "r.f = function() {};");
+    test_smallest(
+        "(function(a) { var b = function() { return 1; }; function moved() { return b(); } a.moved = moved; })(a);",
+        "(function(a) { var b = function() { return 1; }; a.moved = function() { return b(); }; })(a);",
+    );
+    // regression test for symbol liveliness
+    test_options_source_type(
+        "(function (f) { function a(p) { return {}; } function b(p) { return c(p); } f['a'] = b; })(); (function() { function r() { return r(); } })()",
+        "(function(f) { f.a = function(p) { return c(p); }; })();",
+        SourceType::cjs(),
+        &CompressOptions::smallest(),
+    );
+    // regression test script mode
+    test_same_options_source_type(
+        "function f() {} r.f = f;",
+        SourceType::script(),
+        &CompressOptions::default(),
+    );
+    test_options_source_type(
+        "function c() { { function f() {} r.f = f; } }",
+        "function c() { r.f = function() {}; }",
+        SourceType::script(),
+        &CompressOptions::default(),
+    );
 }
