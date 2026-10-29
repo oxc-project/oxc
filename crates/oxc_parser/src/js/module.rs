@@ -387,13 +387,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         });
         self.expect(Kind::RCurly);
 
-        let mut keys = FxHashMap::default();
-        for e in &with_entries {
-            let key = e.key.as_js_str();
-            let span = e.key.span();
-            if let Some(old_span) = keys.insert(key, span) {
-                let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
-                self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
+        if with_entries.len() > 1 {
+            let mut keys = FxHashMap::default();
+            for e in &with_entries {
+                let key = e.key.as_js_str();
+                let span = e.key.span();
+                if let Some(old_span) = keys.insert(key, span) {
+                    let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
+                    self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
+                }
             }
         }
 
