@@ -801,7 +801,7 @@ describe("UTF-16 span", () => {
                 "importName": {
                   "end": 13,
                   "kind": "Name",
-                  "name": "x",
+                  "name": "default",
                   "start": 12,
                 },
                 "isType": false,

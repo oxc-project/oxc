@@ -163,12 +163,9 @@ impl<'a> ModuleRecordBuilder<'a> {
                                         ImportImportName::Name(name) => {
                                             ExportImportName::Name(name.clone())
                                         }
-                                        // `import d from "mod"`
-                                        // `export { d }`
-                                        //           ^ this is local_name of ie
-                                        ImportImportName::Default(_) => {
-                                            ExportImportName::Name(ie.local_name.clone())
-                                        }
+                                        ImportImportName::Default(span) => ExportImportName::Name(
+                                            NameSpan::new("default".into(), *span),
+                                        ),
                                         ImportImportName::NamespaceObject => unreachable!(),
                                     },
                                     export_name: ee.export_name.clone(),
@@ -712,6 +709,34 @@ mod module_record_tests {
         };
         assert_eq!(module_record.indirect_export_entries.len(), 1);
         assert_eq!(module_record.indirect_export_entries[0], export_entry);
+    }
+
+    #[test]
+    fn reexport_imported_default() {
+        for (source, exported) in [
+            ("import d from 'mod'; export { d };", "d"),
+            ("export { d as renamed }; import d from 'mod';", "renamed"),
+            ("import d from 'mod'; export { d as default };", "default"),
+        ] {
+            let allocator = Allocator::default();
+            let ret = Parser::new(&allocator, source, SourceType::mjs()).parse();
+            assert!(ret.diagnostics.is_empty());
+            assert!(ret.module_record.local_export_entries.is_empty());
+            assert_eq!(ret.module_record.indirect_export_entries.len(), 1);
+            let entry = &ret.module_record.indirect_export_entries[0];
+            let import_start = u32::try_from(source.find("import d").unwrap()).unwrap() + 7;
+            assert_eq!(
+                entry.import_name,
+                ExportImportName::Name(NameSpan::new(
+                    "default".into(),
+                    Span::sized(import_start, 1),
+                ))
+            );
+            let ExportExportName::Name(name) = &entry.export_name else { panic!() };
+            assert_eq!(name.name, exported);
+            assert_eq!(entry.module_request.as_ref().unwrap().name, "mod");
+            assert!(matches!(entry.local_name, ExportLocalName::Null));
+        }
     }
 
     #[test]
