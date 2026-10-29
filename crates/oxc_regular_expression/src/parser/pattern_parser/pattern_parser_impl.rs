@@ -1697,10 +1697,7 @@ impl<'a> PatternParser<'a> {
                 self.span_factory.create(span_start, self.reader.offset()),
             ));
         }
-        if [ast::Modifier::I, ast::Modifier::M, ast::Modifier::S]
-            .iter()
-            .any(|&modifier| enabling.contains(modifier) && disabling.contains(modifier))
-        {
+        if enabling.intersects(disabling) {
             return Err(diagnostics::invalid_modifiers(
                 self.span_factory.create(span_start, self.reader.offset()),
             ));
