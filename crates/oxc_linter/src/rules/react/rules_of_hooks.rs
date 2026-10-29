@@ -617,7 +617,6 @@ fn has_conditional_path_accept_throw(
     let from_graph_id = nodes.cfg_id(from.id());
     let to_graph_id = nodes.cfg_id(to.id());
     let graph = cfg.graph();
-    // Grow with the explored states, not the entire file's CFG.
     let mut stack = SmallVec::<[_; 8]>::new();
     stack.push((from_graph_id, false));
     let mut visited = FxHashSet::default();
