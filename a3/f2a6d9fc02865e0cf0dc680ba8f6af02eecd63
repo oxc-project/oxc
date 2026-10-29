@@ -1,0 +1,37 @@
+crates/oxc_parser/src/error_handler.rs
+  s_aa2b8ec570ef89::t_a2bddf32a9dd35 82-83,85-95
+crates/oxc_parser/src/js/expression.rs
+  s_aa2b8ec570ef89::t_02fc3d71c279af 445-446
+crates/oxc_parser/src/lexer/mod.rs
+  s_aa2b8ec570ef89::t_2e05c581a2b414 380-381
+crates/oxc_parser/src/lexer/token.rs
+  s_aa2b8ec570ef89::t_ff7d2bd8e28af6 16-17,25,52,69,84,279-292,549-558
+tasks/coverage/misc/fail/syntax-error-after-prior-lexer-error.js
+  s_aa2b8ec570ef89::t_a0130e3e9b24e3 1-2
+tasks/coverage/snapshots/lexer_misc.snap
+  s_aa2b8ec570ef89::t_8986860bf7cfd4 2-3
+tasks/coverage/snapshots/parser_misc.snap
+  s_aa2b8ec570ef89::t_9116e0b607a21d 4,768-772,5176-5181,5195-5208
+tasks/coverage/snapshots/parser_test262.snap
+  s_aa2b8ec570ef89::t_cea6a43e691cae 2869-2876,2884-2891,2899-2906,2914-2921
+tasks/coverage/snapshots/parser_typescript.snap
+  s_aa2b8ec570ef89::t_08ba23103f6e4c 28717-28721,28767-28772
+crates/oxc_parser/src/lib.rs
+  s_aa2b8ec570ef89::t_23c4556f51cc97 720-721
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "a3f2a6d9fc02865e0cf0dc680ba8f6af02eecd63",
+  "prompts": {},
+  "sessions": {
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
