@@ -6,7 +6,11 @@ use crate::pipeline::{
 };
 
 /// Regex-body scan. LF, CR and the 0xE2 lead are watched so line terminators in the body can be diagnosed.
-const REGEX_BYTES: [u8; 7] = [b'/', b'\\', b'[', b']', b'\n', b'\r', 0xE2];
+///
+/// Ordered for speed, pairing `\` with `]` (see `any_of` in `find/avx2.rs`).
+/// `[` is kept out of the first half, away from `\` and `]`, otherwise LLVM turns `[`, `\` and `]` (0x5B-0x5D)
+/// into a range check, which is 1 op shorter but makes the chain to the exit branch 1 op longer.
+const REGEX_BYTES: [u8; 7] = [b'\\', b']', b'\n', b'\r', b'/', b'[', 0xE2];
 
 #[inline]
 pub unsafe fn scan_quoted(

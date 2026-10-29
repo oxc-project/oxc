@@ -27,10 +27,17 @@ use angle_brackets::jsx_over_type_params;
 use hyphens::jsx_glue_hyphens;
 use names::{jsx_name_end, jsx_names_equal_fast, jsx_skip_trivia, jsx_skip_trivia_fast};
 
-const OPENER_JSX5_BYTES: [u8; 5] = [b'"', b'\'', b'`', b'/', b'<'];
-const OPENER_JSX7_BYTES: [u8; 7] = [b'"', b'\'', b'`', b'/', b'{', b'}', b'<'];
-const JSX_TAG_BYTES: [u8; 6] = [b'"', b'\'', b'{', b'/', b'>', b'<'];
-const JSX_TEXT_BYTES: [u8; 4] = [b'<', b'{', b'>', b'}'];
+/// Ordered for speed, pairing `'` with `/` (see `any_of` in `find/avx2.rs`).
+const OPENER_JSX5_BYTES: [u8; 5] = [b'"', b'`', b'\'', b'/', b'<'];
+
+/// Ordered for speed, pairing `'` with `/` (see `any_of` in `find/avx2.rs`).
+const OPENER_JSX7_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<'];
+
+/// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
+const JSX_TAG_BYTES: [u8; 6] = [b'"', b'{', b'\'', b'/', b'<', b'>'];
+
+/// Ordered for speed, pairing `<` with `>` (see `any_of` in `find/avx2.rs`).
+const JSX_TEXT_BYTES: [u8; 4] = [b'<', b'>', b'{', b'}'];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum JMode {
