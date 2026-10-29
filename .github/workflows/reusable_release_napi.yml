@@ -205,12 +205,6 @@ jobs:
           name: pgo-corpus
           path: target/pgo/corpus
 
-      - uses: $/.github/actions/clone-submodules
-        if: matrix.pgo && inputs.name == 'parser'
-        with:
-          babel: false
-          node-compat-table: false
-
       - name: Build and validate PGO binding
         if: matrix.pgo && contains(fromJSON('["parser", "transform", "minify"]'), inputs.name)
         run: |
