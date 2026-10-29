@@ -274,6 +274,36 @@ whitespace between them is kept or omitted as written, as between HTML inline el
 Prettier lays out every SVG element but `<svg>` as a block (prettier/prettier#17713, prettier/prettier#10121).
 With `htmlWhitespaceSensitivity: "ignore"` they stay blocks, as HTML inline elements do.
 
+## svg-xml-space-preserve
+
+- Why: semantics (whitespace in an SVG `<text>` under `xml:space="preserve"` renders as written; prettier/prettier#10121)
+- Pin: `tests/fixtures/html/svg-xml-space-preserve.html`
+
+```html
+<!-- input -->
+<svg><text x="0" y="10" xml:space="preserve">  a  <tspan>b</tspan>  c</text></svg>
+
+<!-- ours -->
+<svg>
+  <text x="0" y="10" xml:space="preserve">  a  <tspan>b</tspan>  c</text>
+</svg>
+
+<!-- prettier -->
+<svg>
+  <text x="0" y="10" xml:space="preserve">
+    a
+    <tspan>b</tspan>
+    c
+  </text>
+</svg>
+```
+
+An SVG `<text>` (or an element in one) under `xml:space="preserve"`, on it or an SVG ancestor, keeps its content as written, as a `pre` does.
+Browsers render every space of it, and a line break with its indentation as spaces.
+They differ beyond the element itself: Gecko applies an ancestor's `preserve` and keeps it under a `xml:space="default"`, Blink does neither,
+so any `preserve` above counts.
+Prettier lays the content out as blocks, adding and removing whitespace that renders.
+
 ## dialog-out-of-flow
 
 - Why: semantics (whitespace added on both sides of a `dialog` renders between its inline neighbors)

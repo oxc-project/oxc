@@ -38,7 +38,8 @@ pub struct Facts {
     /// No children and no end tag: the start tag closes the node (Prettier's `isSelfClosing`).
     /// Text-like nodes count too.
     pub self_closing: bool,
-    /// CSS `white-space: pre*`: `pre`, `textarea`, `listing`, `plaintext`, `xmp`, outside SVG.
+    /// CSS `white-space: pre*`: `pre`, `textarea`, `listing`, `plaintext`, `xmp`, outside SVG;
+    /// an SVG `<text>`, or an element in one, under `xml:space="preserve"` (DIVERGENCES.md#svg-xml-space-preserve).
     /// Children keep their whitespace and indentation.
     pub pre_like: bool,
     /// `script` / `style`: children keep their whitespace.
@@ -46,7 +47,7 @@ pub struct Facts {
     /// The deepest last descendant is text-like, or the node itself is
     /// (an interpolation ends in its text).
     pub ends_in_text_like: bool,
-    /// The node is a `pre` without an end tag, or ends in one through its last children without end tags:
+    /// The node is pre-like without an end tag, or ends in one through its last children without end tags:
     /// what follows it up to the end tag that closes them is `pre` content.
     pub ends_in_pre: bool,
     /// A CDATA section, or a text that merged one: its sections are never re-wrapped.
