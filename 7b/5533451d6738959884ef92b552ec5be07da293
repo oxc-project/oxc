@@ -2,6 +2,7 @@ crates/oxc_parser/src/jsx/mod.rs
   s_aa2b8ec570ef89::t_2372e313e9645b 535-537
 tasks/coverage/snapshots/parser_typescript.snap
   s_aa2b8ec570ef89::t_56c8401246936d 5207,5210
+  s_aa2b8ec570ef89::t_fd42833c478e07 5207,5210
 ---
 {
   "schema_version": "authorship/3.0.0",
