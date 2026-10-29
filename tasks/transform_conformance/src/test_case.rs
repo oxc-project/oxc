@@ -40,6 +40,17 @@ pub enum TestCaseKind {
 }
 
 impl TestCase {
+    pub fn write_pgo(&self, writer: &mut impl std::io::Write, suite: &str) -> std::io::Result<()> {
+        oxc_tasks_common::write_pgo_case(
+            writer,
+            suite,
+            self.path.strip_prefix(project_root()).unwrap(),
+            &fs::read_to_string(&self.path)?,
+            self.source_type,
+            self.options.throws.is_some(),
+        )
+    }
+
     pub fn new(cwd: &Path, path: &Path) -> Option<Self> {
         let mut options_directory_path = path.parent().unwrap().to_path_buf();
         // Try to find the override options.json

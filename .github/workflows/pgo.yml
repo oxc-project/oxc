@@ -1,0 +1,41 @@
+name: NAPI PGO tooling
+
+permissions: {}
+
+on:
+  pull_request:
+    paths:
+      - tasks/pgo/**
+      - .github/workflows/pgo.yml
+      - .github/workflows/adhoc_napi_pgo.yml
+      - .github/workflows/reusable_release_napi.yml
+      - rust-toolchain.toml
+      - tasks/common/src/pgo.rs
+      - tasks/coverage/src/pgo.rs
+      - tasks/transform_conformance/src/**
+  push:
+    branches: [main]
+    paths:
+      - tasks/pgo/**
+      - .github/workflows/pgo.yml
+      - .github/workflows/adhoc_napi_pgo.yml
+      - .github/workflows/reusable_release_napi.yml
+      - rust-toolchain.toml
+      - tasks/common/src/pgo.rs
+      - tasks/coverage/src/pgo.rs
+      - tasks/transform_conformance/src/**
+
+jobs:
+  tooling:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+      - run: node --test tasks/pgo/pgo.test.mjs
+      - run: node --test tasks/pgo/pack.test.mjs
+      - run: node --test tasks/pgo/expand.test.mjs
+      - run: rustup component add llvm-tools-preview
+      - run: node --test tasks/pgo/compiler.test.mjs

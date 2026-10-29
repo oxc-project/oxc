@@ -38,6 +38,10 @@ fn main() {
 
     let task = command.as_deref().unwrap_or("default");
     match task {
+        "pgo-corpus" => {
+            let output: std::path::PathBuf = args.value_from_str("--output").unwrap();
+            load().export_pgo(&output).expect("export PGO corpus");
+        }
         "parser" => app_args.run_parser(&load()),
         "lexer" => app_args.run_lexer(&load()),
         "semantic" => app_args.run_semantic(&load()),
