@@ -1364,7 +1364,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs_start = self.cur_start();
 
         let lhs_parenthesized = self.at(Kind::LParen);
-        let lhs = if self.at(Kind::Ident) {
+        let kind = self.cur_kind();
+        let lhs = if kind == Kind::Ident {
             // Identifiers cannot start a unary or prefix-update expression. Parse their
             // suffixes directly, keeping pure annotations inside the postfix update.
             let lhs = self.with_pure_comments(|p| {
@@ -1372,11 +1373,39 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 p.parse_lhs_expression_rest(lhs_start, primary)
             });
             self.parse_postfix_update_expression(lhs_start, lhs)
-        } else if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
+        } else if self.ctx.has_in() && kind == Kind::PrivateIdentifier {
             // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
             self.parse_private_in_expression(lhs_start, lhs_precedence)
-        } else {
+        } else if kind.is_unary_operator()
+            || kind.is_update_operator()
+            || matches!(kind, Kind::Await | Kind::LAngle)
+        {
             self.parse_unary_expression_or_higher(lhs_start)
+        } else {
+            // Most operands start with a primary expression. Skip unary/update dispatch, and
+            // only enter member/call parsing when the following token can extend the primary.
+            let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+            let primary = self.parse_primary_expression();
+            let mut lhs = if matches!(
+                self.cur_kind(),
+                Kind::Dot
+                    | Kind::LBrack
+                    | Kind::LParen
+                    | Kind::QuestionDot
+                    | Kind::NoSubstitutionTemplate
+                    | Kind::TemplateHead
+                    | Kind::Bang
+                    | Kind::LAngle
+                    | Kind::ShiftLeft
+            ) {
+                self.parse_lhs_expression_rest(lhs_start, primary)
+            } else {
+                primary
+            };
+            if let Some(comments) = pure_comments {
+                self.apply_pure_comments_to_call(comments, &mut lhs);
+            }
+            self.parse_postfix_update_expression(lhs_start, lhs)
         };
 
         if kind_to_precedence(self.cur_kind()).is_none() {
