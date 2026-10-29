@@ -42,8 +42,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// cases, but those paths are marked `#[cold]` to keep the ASCII fast path as fast as possible.
     ///
     /// The fast path uses pointers and unsafe code to minimize bounds checks etc.
-    /// The functions it delegates to for uncommon cases are both more complex, and less critical,
-    /// so they stick to safe code only.
+    /// The functions it delegates to for uncommon cases iterate over characters.
     ///
     /// # SAFETY
     /// * `self.source` must not be exhausted (at least 1 char remaining).
@@ -98,35 +97,39 @@ impl<'a, C: Config> Lexer<'a, C> {
     fn identifier_tail_unicode(&mut self, start_pos: SourcePosition<'a>) -> &'a str {
         let c = self.peek_char().unwrap();
         if is_identifier_part_unicode(c) {
-            self.consume_char();
-            self.identifier_tail_after_unicode(start_pos)
+            self.identifier_tail_after_unicode(start_pos, c)
         } else {
             // Reached end of identifier. Return identifier.
             self.source.str_from_pos_to_current(start_pos)
         }
     }
 
-    /// Handle identifier after first char (which was Unicode) is dealt with.
+    /// Handle identifier after a Unicode character has been validated.
     ///
-    /// First char should have been consumed from `self.source` prior to calling this.
-    /// `start_pos` should be position of the start of the identifier (before first char was consumed).
+    /// `first_char` must be the next character in `self.source` and a valid identifier character.
+    /// `start_pos` must be the position of the start of the identifier.
     pub(super) fn identifier_tail_after_unicode(
         &mut self,
         start_pos: SourcePosition<'a>,
+        first_char: char,
     ) -> &'a str {
-        // Identifier contains a Unicode chars, so probably contains more.
-        // So just iterate over chars now, instead of bytes.
-        while let Some(c) = self.peek_char() {
+        let start = self.source.position();
+        let first_char_len = first_char.len_utf8();
+        for (offset, c) in self.source.remaining()[first_char_len..].char_indices() {
             if is_identifier_part(c) {
-                self.consume_char();
-            } else if c == '\\' {
-                // This branch marked cold as escapes are uncommon
+                continue;
+            }
+
+            // SAFETY: `first_char` was the next character in `source`, and `char_indices` yields
+            // in-bounds UTF-8 character boundaries relative to the end of that character.
+            self.source.set_position(unsafe { start.add(first_char_len + offset) });
+            if c == '\\' {
                 cold_path();
                 return self.identifier_backslash(start_pos, false);
-            } else {
-                break;
             }
+            return self.source.str_from_pos_to_current(start_pos);
         }
+        self.source.advance_to_end();
 
         // Return identifier
         self.source.str_from_pos_to_current(start_pos)
@@ -279,8 +282,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             let c = self.peek_char().unwrap();
             if is_identifier_start_unicode(c) {
                 let start_pos = self.source.position();
-                self.consume_char();
-                self.identifier_tail_after_unicode(start_pos);
+                self.identifier_tail_after_unicode(start_pos, c);
                 return Kind::PrivateIdentifier;
             }
         } else if b == b'\\' {
