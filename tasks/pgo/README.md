@@ -61,12 +61,13 @@ Preparation and training use a worker with a 512 MiB stack reservation so deeply
 nested generated inputs remain part of the corpus. Stack pages are committed on
 demand. Async NAPI calls use small inputs because libuv uses fixed-size stacks.
 
-The optimized binding must pass its existing Node suite before being retained in
-the package's normal artifact location. Any previous binding is restored if
-validation fails. Raw-token parser groups stay disabled, matching the release
-feature set. Windows keeps lazy validation disabled, matching compiler CI.
-Staged bindings, raw profiles, merged data, and provenance are stored
-in `target/pgo/<package>/<target>/`. There are no benchmarks or performance gates.
+The optimized binding is packed with pnpm, installed offline into an isolated
+consumer, and checked through its native binding and public API before replacing
+the package's normal artifact. Parser packages also verify their bundled types.
+Existing project CI owns the full binding suites; release builds do not rerun them.
+Staged bindings, raw profiles, merged data, provenance, and installable tarballs are
+stored in `target/pgo/<package>/<target>/`. There are no benchmarks or performance
+gates.
 
 ## Download installable packages from CI
 

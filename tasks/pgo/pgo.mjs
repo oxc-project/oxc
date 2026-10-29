@@ -3,6 +3,7 @@ import { copyFile, mkdir, readdir, rm, stat, writeFile } from "node:fs/promises"
 import { join, resolve } from "node:path";
 import { parseArgs } from "node:util";
 import { verifyCorpus } from "./corpus.mjs";
+import { packPackage } from "./pack.mjs";
 import {
   git,
   largeStackWorker,
@@ -168,51 +169,6 @@ for (const name of command === "all" ? packages : [command]) {
   const profileInput = join(work, `profile-${await sha256(profile)}.profdata`);
   await copyFile(profile, profileInput);
   const optimized = await build("optimized", `-Cprofile-use=${profileInput}`);
-  const validationEnv = {
-    ...process.env,
-    NAPI_RS_FORCE_WASI: "false",
-    RUN_RAW_RANGE_TESTS: "true",
-    // Match compiler CI on Windows, where lazy buffers exhaust commit limits.
-    RUN_LAZY_TESTS: process.platform === "win32" ? "false" : "true",
-    RUN_RAW_TOKENS_TESTS: "false",
-  };
-  delete validationEnv.LLVM_PROFILE_FILE;
-  // A global native-library override also redirects unrelated NAPI consumers
-  // such as Vitest's rolldown dependency. Validate through the normal package
-  // path instead, restoring any previous binding on failure.
-  delete validationEnv.NAPI_RS_NATIVE_LIBRARY_PATH;
-  const backup = join(work, "previous.node");
-  let hadPrevious = false;
-  try {
-    await copyFile(destination, backup);
-    hadPrevious = true;
-  } catch (error) {
-    if (error.code !== "ENOENT") throw error;
-  }
-  await copyFile(optimized, destination);
-  try {
-    await run(
-      process.execPath,
-      [
-        join(packageDir, "node_modules/vitest/vitest.mjs"),
-        "run",
-        "--dir",
-        "test",
-        "--testTimeout",
-        "30000",
-      ],
-      {
-        cwd: packageDir,
-        env: validationEnv,
-      },
-    );
-  } catch (error) {
-    if (hadPrevious) await copyFile(backup, destination);
-    else await rm(destination, { force: true });
-    throw error;
-  } finally {
-    await rm(backup, { force: true });
-  }
   await writeFile(
     join(work, "profile.json"),
     JSON.stringify(
@@ -235,5 +191,7 @@ for (const name of command === "all" ? packages : [command]) {
       2,
     ) + "\n",
   );
-  console.log(`Validated PGO binding: ${destination}`);
+  await packPackage(name, target);
+  await copyFile(optimized, destination);
+  console.log(`Validated PGO package and binding: ${destination}`);
 }
