@@ -2,8 +2,11 @@ use std::slice;
 
 use crate::pipeline::{
     bytes::{hex_val, is_digit, is_word},
-    find::{REGEX, TMPL, find},
+    find::find,
 };
+
+/// Regex-body scan. LF, CR and the 0xE2 lead are watched so line terminators in the body can be diagnosed.
+const REGEX_BYTES: [u8; 7] = [b'/', b'\\', b'[', b']', b'\n', b'\r', 0xE2];
 
 #[inline]
 pub unsafe fn scan_quoted(
@@ -41,7 +44,7 @@ pub unsafe fn scan_quoted(
 pub unsafe fn scan_regex(src: *const u8, n: usize, mut i: usize, nl_at: &mut usize) -> usize {
     let mut incl = false;
     loop {
-        let p = find(src, n, i, REGEX);
+        let p = find(src, n, i, REGEX_BYTES);
         if p >= n {
             return n;
         }
@@ -114,7 +117,7 @@ pub unsafe fn scan_regex(src: *const u8, n: usize, mut i: usize, nl_at: &mut usi
 #[inline]
 pub unsafe fn scan_tmpl_text(src: *const u8, n: usize, mut i: usize, term: &mut i32) -> usize {
     loop {
-        let p = find(src, n, i, TMPL);
+        let p = find(src, n, i, [b'`', b'\\', b'$']);
         if p >= n {
             *term = 0;
             return n;

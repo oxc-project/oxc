@@ -29,7 +29,4 @@ mod generic;
 pub(super) use generic::{bracket_bits_generic as bracket_bits, find_generic as find};
 
 mod common;
-pub(super) use common::{
-    JSX_TAG, JSX_TEXT, OPENER, OPENER_JSX5, OPENER_JSX7, OPENER8, REGEX, TMPL,
-    find_line_terminator, unicode_ws_len,
-};
+pub(super) use common::{find_line_terminator, unicode_ws_len};

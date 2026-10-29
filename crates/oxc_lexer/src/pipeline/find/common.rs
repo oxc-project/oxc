@@ -2,17 +2,6 @@ use super::find;
 
 use crate::pipeline::bytes;
 
-pub const OPENER: [u8; 6] = [b'"', b'\'', b'`', b'/', b'<', b'>'];
-pub const OPENER8: [u8; 8] = [b'"', b'\'', b'`', b'/', b'{', b'}', b'<', b'>'];
-pub const OPENER_JSX5: [u8; 5] = [b'"', b'\'', b'`', b'/', b'<'];
-pub const OPENER_JSX7: [u8; 7] = [b'"', b'\'', b'`', b'/', b'{', b'}', b'<'];
-pub const JSX_TAG: [u8; 6] = [b'"', b'\'', b'{', b'/', b'>', b'<'];
-pub const JSX_TEXT: [u8; 4] = [b'<', b'{', b'>', b'}'];
-pub const TMPL: [u8; 3] = [b'`', b'\\', b'$'];
-
-/// Regex-body scan. LF, CR and the 0xE2 lead are watched so line terminators in the body can be diagnosed.
-pub const REGEX: [u8; 7] = [b'/', b'\\', b'[', b']', b'\n', b'\r', 0xE2];
-
 /// First ECMAScript LineTerminator at/after `i`: LF, CR, or the 3-byte LS/PS
 /// (U+2028/U+2029). Stops at LS/PS too, so the hashbang scan cannot run
 /// through one. A 0xE2 that isn't LS/PS keeps scanning; the 2-byte confirm

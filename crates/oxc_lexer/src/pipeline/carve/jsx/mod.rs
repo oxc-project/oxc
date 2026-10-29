@@ -4,9 +4,7 @@ use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
     bytes::{is_digit, is_id_start, is_word},
     disambiguate::{not_operator_position, prev_sig},
-    find::{
-        JSX_TAG, JSX_TEXT, OPENER, OPENER_JSX5, OPENER_JSX7, OPENER8, find, find_line_terminator,
-    },
+    find::{find, find_line_terminator},
     lanes::Lanes,
     token_view,
 };
@@ -16,7 +14,10 @@ use super::{
         html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
         lex_html_open_comment, lex_line_comment,
     },
-    common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape},
+    common::{
+        OPENER_BYTES, OPENER8_BYTES, lex_slash, lex_string, lex_template_segment,
+        skip_unicode_brace_escape,
+    },
 };
 
 mod angle_brackets;
@@ -25,6 +26,11 @@ mod names;
 use angle_brackets::jsx_over_type_params;
 use hyphens::jsx_glue_hyphens;
 use names::{jsx_name_end, jsx_names_equal_fast, jsx_skip_trivia, jsx_skip_trivia_fast};
+
+const OPENER_JSX5_BYTES: [u8; 5] = [b'"', b'\'', b'`', b'/', b'<'];
+const OPENER_JSX7_BYTES: [u8; 7] = [b'"', b'\'', b'`', b'/', b'{', b'}', b'<'];
+const JSX_TAG_BYTES: [u8; 6] = [b'"', b'\'', b'{', b'/', b'>', b'<'];
+const JSX_TEXT_BYTES: [u8; 4] = [b'<', b'{', b'>', b'}'];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum JMode {
@@ -105,10 +111,10 @@ pub(super) unsafe fn carve_jsx(
                 // The finders that also stop at `>` are only switched on by a `<!--` in a
                 // script (see `html_close`).
                 let s = match (in_brace, html_close) {
-                    (true, false) => find(src, n, i, OPENER_JSX7),
-                    (true, true) => find(src, n, i, OPENER8),
-                    (false, false) => find(src, n, i, OPENER_JSX5),
-                    (false, true) => find(src, n, i, OPENER),
+                    (true, false) => find(src, n, i, OPENER_JSX7_BYTES),
+                    (true, true) => find(src, n, i, OPENER8_BYTES),
+                    (false, false) => find(src, n, i, OPENER_JSX5_BYTES),
+                    (false, true) => find(src, n, i, OPENER_BYTES),
                 };
                 if s >= n {
                     break;
@@ -280,7 +286,7 @@ pub(super) unsafe fn carve_jsx(
                 }
             }
             JMode::Tag => {
-                let s = find(src, n, i, JSX_TAG);
+                let s = find(src, n, i, JSX_TAG_BYTES);
                 if s >= n {
                     break;
                 }
@@ -336,9 +342,9 @@ pub(super) unsafe fn carve_jsx(
                     let mut sub: Vec<u32> = Vec::new();
                     while p < n && depth != 0 {
                         let q = if !sub.is_empty() {
-                            find(src, n, p, OPENER8)
+                            find(src, n, p, OPENER8_BYTES)
                         } else {
-                            find(src, n, p, OPENER)
+                            find(src, n, p, OPENER_BYTES)
                         };
                         if q >= n {
                             p = n;
@@ -377,7 +383,7 @@ pub(super) unsafe fn carve_jsx(
                                     sub.push(0);
                                 }
                             }
-                            // Braces only reach here through the OPENER8 search,
+                            // Braces only reach here through the OPENER8_BYTES search,
                             // which is only selected while a substitution is
                             // open - the guards say so rather than leaving it
                             // to the finder choice.
@@ -527,7 +533,7 @@ pub(super) unsafe fn carve_jsx(
                 }
             }
             JMode::Text => {
-                let s = find(src, n, i, JSX_TEXT);
+                let s = find(src, n, i, JSX_TEXT_BYTES);
                 let runend = if s < n { s } else { n };
                 if runend > text_start {
                     // One JTEXT token for the run; neutralize its start byte

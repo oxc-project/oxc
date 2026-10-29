@@ -2,7 +2,7 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
-    find::{OPENER, OPENER8, find, find_line_terminator},
+    find::{find, find_line_terminator},
     lanes::Lanes,
 };
 
@@ -10,7 +10,10 @@ use super::{
     comments::{
         html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
     },
-    common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape},
+    common::{
+        OPENER_BYTES, OPENER8_BYTES, lex_slash, lex_string, lex_template_segment,
+        skip_unicode_brace_escape,
+    },
 };
 
 pub(super) unsafe fn carve_js(
@@ -37,7 +40,8 @@ pub(super) unsafe fn carve_js(
     }
     loop {
         let nsub = depth.len();
-        let s = if nsub != 0 { find(src, n, i, OPENER8) } else { find(src, n, i, OPENER) };
+        let s =
+            if nsub != 0 { find(src, n, i, OPENER8_BYTES) } else { find(src, n, i, OPENER_BYTES) };
         if s >= n {
             break;
         }
