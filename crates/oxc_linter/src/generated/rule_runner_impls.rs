@@ -3321,11 +3321,8 @@ impl RuleRunner for crate::rules::unicorn::no_array_sort::NoArraySort {
 }
 
 impl RuleRunner for crate::rules::unicorn::no_await_expression_member::NoAwaitExpressionMember {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::ComputedMemberExpression,
-        AstType::PrivateFieldExpression,
-        AstType::StaticMemberExpression,
-    ]));
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::AwaitExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
