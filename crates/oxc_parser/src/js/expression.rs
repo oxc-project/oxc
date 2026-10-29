@@ -393,6 +393,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.options.preserve_parens {
             Expression::new_parenthesized_expression(self.end_span(start), expression, self)
         } else {
+            if matches!(
+                expression,
+                Expression::ArrayExpression(_)
+                    | Expression::ObjectExpression(_)
+                    | Expression::AssignmentExpression(_)
+            ) {
+                self.state.parenthesized_destructuring.insert(expression.node_id());
+            }
             expression
         }
     }
@@ -1669,6 +1677,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         // `x => {}`
         if kind == Kind::Arrow
+            && !lhs_parenthesized
             && let Expression::Identifier(ident) = &lhs
         {
             let mut arrow_expr = self.parse_simple_arrow_function_expression(

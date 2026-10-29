@@ -14,10 +14,20 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTarget<'a>
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         match expr {
             Expression::ArrayExpression(array_expr) => {
+                if !p.options.preserve_parens
+                    && p.state.parenthesized_destructuring.contains(&array_expr.node_id())
+                {
+                    return p.fatal_error(diagnostics::invalid_assignment(array_expr.span));
+                }
                 let pat = ArrayAssignmentTarget::cover(array_expr.unbox(), p);
                 AssignmentTarget::ArrayAssignmentTarget(p.alloc(pat))
             }
             Expression::ObjectExpression(object_expr) => {
+                if !p.options.preserve_parens
+                    && p.state.parenthesized_destructuring.contains(&object_expr.node_id())
+                {
+                    return p.fatal_error(diagnostics::invalid_assignment(object_expr.span));
+                }
                 let pat = ObjectAssignmentTarget::cover(object_expr.unbox(), p);
                 AssignmentTarget::ObjectAssignmentTarget(p.alloc(pat))
             }
@@ -145,6 +155,11 @@ impl<'a, C: Config> CoverGrammar<'a, Expression<'a>, C> for AssignmentTargetMayb
     fn cover(expr: Expression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
         match expr {
             Expression::AssignmentExpression(assignment_expr) => {
+                if !p.options.preserve_parens
+                    && p.state.parenthesized_destructuring.contains(&assignment_expr.node_id())
+                {
+                    return p.fatal_error(diagnostics::invalid_assignment(assignment_expr.span));
+                }
                 if assignment_expr.operator != AssignmentOperator::Assign {
                     p.error(diagnostics::invalid_assignment_target_default_value_operator(
                         assignment_expr.span,

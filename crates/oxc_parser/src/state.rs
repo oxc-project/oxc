@@ -2,6 +2,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_ast::ast::AssignmentExpression;
 use oxc_span::Span;
+use oxc_syntax::node::NodeId;
 
 use crate::cursor::ParserCheckpoint;
 
@@ -16,6 +17,11 @@ pub struct ParserState<'a> {
     /// Used for error reporting when covering a rest assignment target.
     /// Keyed by the expression start and consumed when checked.
     pub trailing_commas: FxHashMap<u32, Span>,
+
+    /// Parenthesized expressions that cannot become destructuring targets or defaults.
+    /// Only populated when `preserve_parens` is disabled. Node IDs remain unique
+    /// across speculative parsing, so discarded expressions cannot affect later ones.
+    pub parenthesized_destructuring: FxHashSet<NodeId>,
 
     /// Statements that may need reparsing when `sourceType` is `unambiguous`.
     ///
@@ -38,6 +44,7 @@ impl ParserState<'_> {
             not_parenthesized_arrow: FxHashSet::default(),
             cover_initialized_name: FxHashMap::default(),
             trailing_commas: FxHashMap::default(),
+            parenthesized_destructuring: FxHashSet::default(),
             potential_await_reparse: Vec::new(),
             encountered_await_identifier: false,
         }

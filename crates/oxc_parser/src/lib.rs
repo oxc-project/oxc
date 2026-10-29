@@ -1048,6 +1048,38 @@ mod test {
     use super::*;
 
     #[test]
+    fn preserve_parens_does_not_change_assignment_or_arrow_validity() {
+        for preserve_parens in [true, false] {
+            for (source, valid) in [
+                ("((x)) => x", false),
+                ("([({})] = x)", false),
+                ("([([])] = x)", false),
+                ("({a: ({})} = x)", false),
+                ("([(x = 0)] = [])", false),
+                ("([...({})] = [])", false),
+                ("x => x", true),
+                ("(x) => x", true),
+                ("([{}] = x)", true),
+                ("([[]] = x)", true),
+                ("([(x)] = [])", true),
+                ("([x = ({})] = [])", true),
+                ("([...(x)] = [])", true),
+                ("((x)).y = 0", true),
+            ] {
+                let allocator = Allocator::default();
+                let ret = Parser::new(&allocator, source, SourceType::mjs())
+                    .with_options(ParseOptions { preserve_parens, ..ParseOptions::default() })
+                    .parse();
+                assert_eq!(
+                    ret.diagnostics.is_empty(),
+                    valid,
+                    "preserve_parens={preserve_parens}: {source}"
+                );
+            }
+        }
+    }
+
+    #[test]
     fn parse_program_smoke_test() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();
