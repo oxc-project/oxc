@@ -3,7 +3,11 @@ use oxc_formatter_core::{FormatElement, SourceText};
 use oxc_span::{GetSpan, SourceType, Span};
 use rustc_hash::FxHashMap;
 
-use crate::{JsEmbeddedIn, options::JsFormatOptions, utils::assignment_like::AssignmentLikeLayout};
+use crate::{
+    JsEmbeddedIn,
+    options::{JsFormatOptions, QuoteStyle},
+    utils::assignment_like::AssignmentLikeLayout,
+};
 
 use super::Comments;
 
@@ -252,6 +256,13 @@ impl<'ast> JsFormatContext<'ast> {
     /// strings print in `'`, whatever they hold, as the attribute's quote is `"`.
     pub(crate) fn in_html_attribute(&self) -> bool {
         self.embedded_in == Some(JsEmbeddedIn::HtmlEventHandler)
+    }
+
+    /// The quote a string prints in (Prettier's `printString`), the formatter's own too (a quoted property key):
+    /// the configured one, but `'` in an HTML attribute.
+    /// A JSX attribute and a directive have their own (`FormatLiteralStringToken`).
+    pub(crate) fn string_quote_style(&self) -> QuoteStyle {
+        if self.in_html_attribute() { QuoteStyle::Single } else { self.options.quote_style }
     }
 
     /// Push a Tailwind context entry onto the stack.

@@ -183,6 +183,9 @@ pub fn format_fragment<'a>(
     // NOTE: Since this options is just the preferred quote (not a forced),
     // this may not be enough for all cases.
     // But it seems fine for almost all cases, so leave it for now.
+    // TODO: When Vue formats natively, share the HTML event handler's rule instead
+    // (`JsFormatContext::string_quote_style`, forced `'` as Prettier's `__isInHtmlAttribute`):
+    // a string holding more `'` than `"` prints `"` here, which the attribute escapes as `&quot;`.
     let options = JsFormatOptions { quote_style: QuoteStyle::Single, ..options };
 
     // A js-in-xxx fragment never owns file envelopes (BOM / front matter)

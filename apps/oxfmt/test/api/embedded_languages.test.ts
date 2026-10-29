@@ -269,6 +269,21 @@ describe("Embedded languages", () => {
       expect(result.code).toMatchSnapshot();
     });
 
+    // js-in-html: a quote the formatter adds (a key under `quoteProps: consistent`) is `'`, as every string there,
+    // so the attribute's `"` needs no `&quot;`
+    it("should add single quotes to keys in an event handler attribute", async () => {
+      const input = `\
+<button onclick="f({a: 1, 'b-c': 2})">x</button>
+<button onclick="f({1: 1, 'b-c': 2})">x</button>
+`;
+      const result = await format("index.html", input, { quoteProps: "consistent" });
+      expect(result.errors).toStrictEqual([]);
+      expect(result.code).toBe(`\
+<button onclick="f({ 'a': 1, 'b-c': 2 })">x</button>
+<button onclick="f({ '1': 1, 'b-c': 2 })">x</button>
+`);
+    });
+
     // (css-in-html)-in-js: For now, HTML is handled by Prettier, so CSS is also handled by Prettier too.
     // The CSS `Doc` carries a trailing space after `prop: ` that only materializes when the value fits flat;
     // when the value breaks, it must not leak (the Doc→IR conversion maps it to a pending space, dropped at the break).
