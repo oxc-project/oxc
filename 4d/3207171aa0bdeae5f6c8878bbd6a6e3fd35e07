@@ -1,0 +1,19 @@
+tasks/coverage/snapshots/parser_typescript.snap
+  s_aa2b8ec570ef89::t_fd42833c478e07 5207,5210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "4d3207171aa0bdeae5f6c8878bbd6a6e3fd35e07",
+  "prompts": {},
+  "sessions": {
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
