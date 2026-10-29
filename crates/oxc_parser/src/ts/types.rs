@@ -1102,7 +1102,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    /// Continue a tuple element type after consuming its leading identifier.
+    /// Continue a type after consuming its leading identifier.
+    #[inline]
     fn parse_ts_type_from_identifier(&mut self, ident: &IdentifierName<'a>) -> TSType<'a> {
         let start = ident.span.start;
         let ty = self.context_remove(Context::DisallowConditionalTypes, |p| {
@@ -1375,7 +1376,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {
         let start = self.cur_start();
-        let type_predicate_variable = self.parse_type_predicate_prefix();
+        let type_predicate_variable = if self.at(Kind::Ident) {
+            // A plain identifier begins either a predicate parameter or a type reference.
+            // Consume their shared prefix once instead of lexing the next token twice.
+            let ident = self.parse_known_identifier_name();
+            if !self.at(Kind::Is) || self.cur_token().is_on_new_line() {
+                return self.parse_ts_type_from_identifier(&ident);
+            }
+            let parameter_name = TSTypePredicateName::Identifier(self.alloc(ident));
+            self.bump_any(); // bump `is`
+            Some(parameter_name)
+        } else {
+            self.parse_type_predicate_prefix()
+        };
 
         let ty = self.parse_ts_type();
         if let Some(parameter_name) = type_predicate_variable {
