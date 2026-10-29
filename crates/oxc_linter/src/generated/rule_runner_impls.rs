@@ -1881,10 +1881,8 @@ impl RuleRunner for crate::rules::typescript::no_restricted_types::NoRestrictedT
 }
 
 impl RuleRunner for crate::rules::typescript::no_this_alias::NoThisAlias {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::AssignmentExpression,
-        AstType::VariableDeclarator,
-    ]));
+    const NODE_TYPES: Option<&AstTypesBitset> =
+        Some(&AstTypesBitset::from_types(&[AstType::ThisExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
