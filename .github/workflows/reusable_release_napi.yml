@@ -10,6 +10,10 @@ on:
         type: choice
         description: "Build and package without publishing"
         options: [parser, transform, minify]
+      dry-run:
+        type: boolean
+        default: true
+        description: "Manual runs never publish"
   workflow_call:
     inputs:
       name:
