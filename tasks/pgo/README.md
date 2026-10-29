@@ -46,8 +46,7 @@ C/C++ dependencies keep their normal compilation settings with PGO explicitly
 disabled, avoiding incompatible profiling runtimes between Rust LLVM and the
 system C compiler.
 Select-instruction instrumentation is disabled to avoid the LLVM 23 counter
-corruption regression; the tooling CI checks profile generation and use with a
-compiler regression fixture on Linux, macOS, and Windows.
+corruption regression.
 
 Training loads the exact instrumented `.node` through the published JS wrapper,
 exercises synchronous/asynchronous APIs and parser raw transfer, and waits for each
@@ -65,19 +64,16 @@ validation fails. Raw-token parser groups stay disabled, matching the release
 feature set. Staged bindings, raw profiles, merged data, and provenance are stored
 in `target/pgo/<package>/<target>/`. There are no benchmarks or performance gates.
 
-Check the tooling with `node --test tasks/pgo/*.test.mjs`.
-
 ## Download installable packages from CI
 
-The ad hoc workflow defaults to the original corpus. It can select an expanded
-corpus or build both (`compare`) with the same commit and compiler settings. Expanded
-preparation preserves every original shard and adds lockfile-pinned npm package
+Releases use the original corpus. Optional expanded preparation preserves every
+original shard and adds pnpm-lockfile-pinned npm package
 files (including generated SDK/protobuf code), Vue scripts and client/server render
 modules, Svelte RealWorld client/server modules, and development/production,
 formatted/minified bundles built from real React and Preact application entries.
 The framework and bundler outputs are training inputs; their application code is
 never executed. Duplicate added inputs are removed by source and parser options.
-The manifest records package integrity, source revisions, compiler lockfile hash,
+The manifest records package versions, source revisions, compiler lockfile hash,
 generated source hashes, and category counts. Framework compilation failures fail
 preparation. Input, output, and preparation directories must not overlap. Existing
 unrelated output directories are preserved.
@@ -85,7 +81,7 @@ unrelated output directories are preserved.
 Prepare these additions locally after preparing the original corpus:
 
 ```sh
-node tasks/pgo/expand.mjs --original target/pgo/corpus --output target/pgo/corpus-expanded
+pnpm node tasks/pgo/expand.mjs --original target/pgo/corpus --output target/pgo/corpus-expanded
 just pgo parser --corpus target/pgo/corpus-expanded
 ```
 
@@ -94,12 +90,12 @@ Added inputs primarily use the default parser AST settings. A subset also trains
 are explicit option variants, not captured production request frequencies. Existing
 source/conformance collection and release workflows keep their original behavior.
 
-Run **Ad hoc NAPI PGO** in GitHub Actions, select the branch/tag, and choose a
-package and target. Both choices default to `all`, producing 15 native builds.
-Each run prepares the corpus once and validates every selected optimized binding
-before packaging it. It does not publish to npm or require a version bump.
+Run **Release NAPI** in GitHub Actions, select the branch/tag, and choose a
+package. Manual runs build the complete release matrix, assemble the normal
+platform packages, and pack them with pnpm without publishing or requiring a
+version bump. Automatic releases retain their version check and trusted publishing.
 
-Download the `napi-pgo-<package>-<target>-<original|expanded>` artifact for your machine and extract it.
+Download the `napi-pgo-<package>-<target>` artifact for your machine and extract it.
 It contains a `.tgz` npm package and the build's `profile.json`. Install the tarball:
 
 ```sh
@@ -125,7 +121,7 @@ overrides:
 To package an existing local PGO build without regenerating its profile:
 
 ```sh
-node tasks/pgo/pack.mjs --package parser --target aarch64-apple-darwin
+pnpm node tasks/pgo/pack.mjs --package parser --target aarch64-apple-darwin
 ```
 
 The tarball is written under `target/pgo/<package>/<target>/npm/`. Packaging uses

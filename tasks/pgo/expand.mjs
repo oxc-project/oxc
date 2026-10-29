@@ -8,16 +8,7 @@ import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { isMainThread, workerData } from "node:worker_threads";
 import { CorpusWriter, readShard, sourceFiles, verifyCorpus } from "./corpus.mjs";
-import {
-  git,
-  language,
-  largeStackWorker,
-  npmCli,
-  root,
-  run,
-  sha256,
-  sourceType,
-} from "./utils.mjs";
+import { git, language, largeStackWorker, pnpm, root, sha256, sourceType } from "./utils.mjs";
 
 const sourceExtension = /\.(?:[cm]?[jt]s|[jt]sx)$/i;
 const svelteRevision = "df796708040f5200ec572b28ab7f88ecee5794dd";
@@ -106,19 +97,20 @@ async function expand(original, directory) {
   assert.equal(manifest.workloads, undefined, "Expand the original corpus only");
   const tools = join(work, "tools");
   await mkdir(tools, { recursive: true });
-  for (const file of ["package.json", "package-lock.json"]) {
+  for (const file of ["package.json", "pnpm-lock.yaml"]) {
     await cp(join(root, "tasks/pgo/workloads", file), join(tools, file));
   }
-  await run(process.execPath, [
-    await npmCli(),
-    "ci",
-    "--prefix",
+  // Keep this tool installation independent of the repository workspace.
+  await rm(join(tools, "node_modules"), { recursive: true, force: true });
+  await pnpm([
+    "install",
+    "--dir",
     tools,
-    "--cache",
-    join(work, "npm-cache"),
+    "--ignore-workspace",
+    "--frozen-lockfile",
+    "--store-dir",
+    join(work, "pnpm-store"),
     "--ignore-scripts",
-    "--no-audit",
-    "--no-fund",
   ]);
   const require = createRequire(join(tools, "package.json"));
   const esbuild = require("esbuild");
@@ -139,7 +131,7 @@ async function expand(original, directory) {
     for await (const record of readShard(original, shard)) seen.add(recordKey(record));
   }
   const workloads = {
-    lockfileSha256: await sha256(join(tools, "package-lock.json")),
+    lockfileSha256: await sha256(join(tools, "pnpm-lock.yaml")),
     inputs: [],
     duplicates: 0,
     frameworkFailures: [],
@@ -178,28 +170,43 @@ async function expand(original, directory) {
       ...provenance,
     });
   }
-  const lock = JSON.parse(await readFile(join(tools, "package-lock.json"), "utf8"));
-  for (const [location, pkg] of Object.entries(lock.packages)) {
-    if (!location || !location.startsWith("node_modules/")) continue;
-    const packageDirectory = join(tools, location);
-    // Optional packages for other operating systems are absent from npm ci.
-    try {
-      await readFile(join(packageDirectory, "package.json"));
-    } catch (error) {
-      if (error.code === "ENOENT") continue;
-      throw error;
+  const [installation] = JSON.parse(
+    await pnpm(["list", "--dir", tools, "--ignore-workspace", "--depth", "Infinity", "--json"], {
+      capture: true,
+    }),
+  );
+  const installedPackages = new Map();
+  async function collectPackages(dependencies) {
+    for (const [name, pkg] of Object.entries(dependencies ?? {})) {
+      // pnpm list also reports lockfile entries for optional binaries omitted on
+      // this host. Collect installed files only.
+      const path = await realpath(pkg.path).catch((error) => {
+        if (error.code === "ENOENT") return undefined;
+        throw error;
+      });
+      if (!path) continue;
+      if (installedPackages.has(path)) continue;
+      installedPackages.set(path, { name, version: pkg.version });
+      await collectPackages(pkg.dependencies);
+      await collectPackages(pkg.optionalDependencies);
     }
-    workloads.npmPackages.push({ location, version: pkg.version, integrity: pkg.integrity });
+  }
+  await collectPackages(installation.dependencies);
+  for (const [packageDirectory, pkg] of [...installedPackages].sort(([a], [b]) =>
+    a.localeCompare(b, "en"),
+  )) {
+    const location = `${pkg.name}@${pkg.version}`;
+    workloads.npmPackages.push({ name: pkg.name, version: pkg.version });
     for await (const path of files(packageDirectory)) {
       const name = relative(packageDirectory, path).replaceAll("\\", "/");
       if (name.startsWith("node_modules/") || !sourceExtension.test(name)) continue;
-      const suite = /(?:@aws-sdk|@smithy|google-protobuf)/.test(location) ? "generated-sdk" : "npm";
+      const suite = /(?:@aws-sdk|@smithy|google-protobuf)/.test(pkg.name) ? "generated-sdk" : "npm";
       await add(
         suite,
         `${location}/${name}`,
         await readFile(path, "utf8"),
         {},
-        { package: location, version: pkg.version },
+        { package: pkg.name, version: pkg.version },
       );
     }
   }

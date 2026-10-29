@@ -6,31 +6,7 @@ import { dirname, isAbsolute, join, resolve, win32 } from "node:path";
 import { pathToFileURL } from "node:url";
 import { parseArgs } from "node:util";
 import { parseTriple } from "@napi-rs/cli";
-import { git, npmCli, packages, root, run, sha256, targets } from "./utils.mjs";
-
-const runners = {
-  "x86_64-unknown-linux-gnu": "ubuntu-latest",
-  "aarch64-unknown-linux-gnu": "ubuntu-24.04-arm",
-  "x86_64-apple-darwin": "macos-15-intel",
-  "aarch64-apple-darwin": "macos-latest",
-  "x86_64-pc-windows-msvc": "windows-latest",
-};
-
-export function selectMatrix(packageChoice = "all", targetChoice = "all") {
-  if (packageChoice !== "all" && !packages.includes(packageChoice)) {
-    throw new Error(`Unsupported package: ${packageChoice}`);
-  }
-  if (targetChoice !== "all" && !targets.includes(targetChoice)) {
-    throw new Error(`Unsupported target: ${targetChoice}`);
-  }
-  return (packageChoice === "all" ? packages : [packageChoice]).flatMap((name) =>
-    (targetChoice === "all" ? targets : [targetChoice]).map((target) => ({
-      package: name,
-      target,
-      os: runners[target],
-    })),
-  );
-}
+import { git, pnpm, packages, root, run, sha256, targets } from "./utils.mjs";
 
 export function ciVersion(base, runId, attempt, revision) {
   if (
@@ -76,8 +52,6 @@ async function copyPublicFiles(source, destination, manifest, licenseRoot) {
   }
 }
 
-// Kept separate from packing so manifest and file selection can be checked
-// without compiling a native addon on every tooling CI run.
 export async function stagePackage({
   source,
   typesSource,
@@ -131,17 +105,12 @@ export async function packArchive(directory, output, temporary) {
   await mkdir(output, { recursive: true });
   const blankConfig = join(temporary, "npmrc");
   await writeFile(blankConfig, "");
-  const [packed] = JSON.parse(
-    await run(
-      process.execPath,
+  const packed = JSON.parse(
+    await pnpm(
       [
-        await npmCli(),
         "pack",
-        "--ignore-scripts",
-        "--offline",
+        "--ignore-workspace",
         "--json",
-        "--cache",
-        join(temporary, "cache"),
         "--userconfig",
         blankConfig,
         "--pack-destination",
@@ -150,7 +119,7 @@ export async function packArchive(directory, output, temporary) {
       { cwd: directory, capture: true },
     ),
   );
-  return { tarball: join(output, packed.filename), files: packed.files.map((file) => file.path) };
+  return { tarball: packed.filename, files: packed.files.map((file) => file.path) };
 }
 
 export async function installArchive(tarball, temporary) {
@@ -159,18 +128,17 @@ export async function installArchive(tarball, temporary) {
   await writeJson(join(consumer, "package.json"), { private: true, type: "module" });
   const blankConfig = join(temporary, "npmrc");
   await writeFile(blankConfig, "");
-  await run(
-    process.execPath,
+  await pnpm(
     [
-      await npmCli(),
-      "install",
+      "add",
       tarball,
+      "--ignore-workspace",
       "--offline",
       "--ignore-scripts",
-      "--no-audit",
-      "--no-fund",
-      "--cache",
-      join(temporary, "install-cache"),
+      "--store-dir",
+      join(temporary, "store"),
+      "--state-dir",
+      join(temporary, "state"),
       "--userconfig",
       blankConfig,
     ],

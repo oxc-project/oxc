@@ -105,7 +105,7 @@ benchmark:
 
 # Build parser, transform, or minify with profile-guided optimization (or use `all`)
 pgo *args:
-  node tasks/pgo/pgo.mjs {{args}}
+  pnpm node tasks/pgo/pgo.mjs {{args}}
 
 # Run benchmarks for a single component
 benchmark-one *args:
