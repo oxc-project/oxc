@@ -4,7 +4,7 @@ use crate::pipeline::chunk::{load256, mm, veq};
 
 /// First byte at or after i that is one of needles, or n.
 #[inline]
-pub unsafe fn find<const K: usize>(
+pub unsafe fn find_avx2<const K: usize>(
     src: *const u8,
     n: usize,
     mut i: usize,
@@ -46,7 +46,7 @@ unsafe fn any_of<const K: usize>(v: __m256i, needles: [u8; K]) -> __m256i {
 
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
 #[inline]
-pub fn bracket_bits(src: &[u8], base: usize) -> u64 {
+pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
     let block = &src[base..base + 64];
     let mut out = 0u64;
     for half in 0..2 {
