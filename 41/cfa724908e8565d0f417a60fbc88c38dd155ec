@@ -1,0 +1,53 @@
+tasks/coverage/misc/fail/unambiguous-await-in-class-field-initializer-with-export.js
+  s_aa2b8ec570ef89::t_9d2f5cd3395379 1-7
+tasks/coverage/misc/fail/unambiguous-await-in-class-field-initializer.js
+  s_aa2b8ec570ef89::t_6c57de8d1af520 1-6
+tasks/coverage/misc/fail/unambiguous-await-in-function-parameter.js
+  s_aa2b8ec570ef89::t_706d69258a64d8 1-3
+tasks/coverage/misc/pass/unambiguous-await-identifier-in-class-field-and-parameter.js
+  s_aa2b8ec570ef89::t_4910c71b541168 1-5
+tasks/coverage/misc/pass/unambiguous-await-in-class-computed-key.js
+  s_aa2b8ec570ef89::t_cf329e44f637de 1-5
+tasks/coverage/snapshots/parser_misc.snap
+  s_aa2b8ec570ef89::t_53e8fed650e11e 2-4,5333-5411
+crates/oxc_parser/src/context.rs
+  s_df695876789e9f::t_672ddf0b5df723 51-52,165-169
+crates/oxc_parser/src/js/class.rs
+  s_df695876789e9f::t_9283af8a74f3c0 447,759,763
+crates/oxc_parser/src/js/expression.rs
+  s_df695876789e9f::t_61d42399f48780 1746-1747
+crates/oxc_parser/src/js/function.rs
+  s_df695876789e9f::t_5ff5c6fd6896fd 282-283,289-290,304-305
+tasks/coverage/snapshots/codegen_misc.snap
+  s_aa2b8ec570ef89::t_736c9e7b2c79bd 2-3
+tasks/coverage/snapshots/formatter_misc.snap
+  s_aa2b8ec570ef89::t_dceee1c39bd532 2-3
+tasks/coverage/snapshots/semantic_misc.snap
+  s_aa2b8ec570ef89::t_7a667c55f9ceec 2-3
+tasks/coverage/snapshots/transformer_misc.snap
+  s_df695876789e9f::t_155b45524f359e 2-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "41cfa724908e8565d0f417a60fbc88c38dd155ec",
+  "prompts": {},
+  "sessions": {
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    },
+    "s_df695876789e9f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a040f879251f31e63",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
