@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{CallExpression, Expression},
-};
+use oxc_ast::{AstKind, ast::CallExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::NodeId;
@@ -63,27 +60,31 @@ declare_oxc_lint!(
 
 impl Rule for NoSinglePromiseInPromiseMethods {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::ArrayExpression(array_expr) = node.kind() else {
+            return;
+        };
+        if array_expr.elements.len() != 1 {
+            return;
+        }
+        let first = &array_expr.elements[0];
+        if !first.is_expression() {
+            return;
+        }
+        let Some(node) =
+            ctx.nodes().ancestors(node.id()).find(|parent| !is_ignorable_kind(&parent.kind()))
+        else {
+            return;
+        };
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
-
         if !is_promise_method_with_single_argument(call_expr) {
             return;
         }
         let Some(first_argument) = call_expr.arguments[0].as_expression() else {
             return;
         };
-        let first_argument = first_argument.get_inner_expression();
-        let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
-            return;
-        };
-
-        if first_argument_array_expr.elements.len() != 1 {
-            return;
-        }
-
-        let first = &first_argument_array_expr.elements[0];
-        if !first.is_expression() {
+        if first_argument.get_inner_expression().span() != array_expr.span {
             return;
         }
 
@@ -224,6 +225,8 @@ fn test() {
         "Promise.race?.([promise])",
         "Promise.race(...[promise])",
         "Promise.race([promise], extraArguments)",
+        "Promise.race([promise, anotherPromise], [other])",
+        "Promise.race([promise, anotherPromise].concat([]))",
         "Promise.race()",
         "new Promise.race([promise])",
         // We are not checking these cases
@@ -327,6 +330,9 @@ fn test() {
     ];
 
     let fix = vec![
+        ("Promise.race([[promise]])", "Promise.resolve([promise])", None),
+        ("Promise.race((([promise])))", "Promise.resolve(promise)", None),
+        ("Promise.race(([promise] as const))", "Promise.resolve(promise)", None),
         ("Promise.race([null]).then()", "Promise.resolve(null).then()", None),
         // Promise.all returns an array, so we preserve the array structure
         // when the result is used, but avoid creating an unread array when

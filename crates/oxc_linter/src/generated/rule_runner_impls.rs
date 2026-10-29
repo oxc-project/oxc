@@ -3470,7 +3470,7 @@ impl RuleRunner
     for crate::rules::unicorn::no_single_promise_in_promise_methods::NoSinglePromiseInPromiseMethods
 {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::ArrayExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
