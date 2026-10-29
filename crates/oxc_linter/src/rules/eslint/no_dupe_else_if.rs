@@ -6,6 +6,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{ContentEq, GetSpan, Span};
 use oxc_syntax::operator::LogicalOperator;
+use smallvec::{SmallVec, smallvec};
 
 use crate::{AstNode, context::LintContext, rule::Rule};
 
@@ -330,4 +331,3 @@ fn test() {
 
     Tester::new(NoDupeElseIf::NAME, NoDupeElseIf::PLUGIN, pass, fail).test_and_snapshot();
 }
-use smallvec::{SmallVec, smallvec};
