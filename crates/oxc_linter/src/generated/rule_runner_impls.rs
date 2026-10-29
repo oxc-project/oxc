@@ -2031,12 +2031,8 @@ impl RuleRunner for crate::rules::typescript::no_var_requires::NoVarRequires {
 }
 
 impl RuleRunner for crate::rules::typescript::no_wrapper_object_types::NoWrapperObjectTypes {
-    const NODE_TYPES: Option<&AstTypesBitset> = Some(&AstTypesBitset::from_types(&[
-        AstType::TSClassImplements,
-        AstType::TSInterfaceHeritage,
-        AstType::TSTypeReference,
-    ]));
-    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
+    const NODE_TYPES: Option<&AstTypesBitset> = None;
+    const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::RunOnce;
 }
 
 impl RuleRunner
