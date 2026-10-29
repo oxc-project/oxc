@@ -121,7 +121,7 @@ eslint/no-template-curly-in-string                      |  62460
 eslint/no-ternary                                       |   4722
 eslint/no-this-before-super                             |      4
 eslint/no-throw-literal                                 |    224
-eslint/no-unassigned-vars                               |  37499
+eslint/no-unassigned-vars                               |  31363
 eslint/no-undef                                         |      7
 eslint/no-undefined                                     | 282877
 eslint/no-underscore-dangle                             | 200305
