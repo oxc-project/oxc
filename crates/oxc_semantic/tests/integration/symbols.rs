@@ -679,3 +679,65 @@ fn test_implicit_arguments_unresolved_references() {
         assert!(scoping.get_reference(reference_id).symbol_id().is_none());
     }
 }
+
+#[test]
+fn test_many_references_through_empty_scopes() {
+    // Exercise final resolution with a large reference list and no bindings anywhere
+    // in the scope tree, including the root.
+    let source = "{ { missing; } }".repeat(1100);
+    let tester = SemanticTester::new(&source, oxc_span::SourceType::mjs());
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    assert!(scoping.symbols_is_empty());
+    let references = scoping.root_unresolved_references().get("missing").unwrap();
+    assert_eq!(references.len(), 1100);
+    for &reference_id in references {
+        let reference = scoping.get_reference(reference_id);
+        assert!(reference.symbol_id().is_none());
+        assert_ne!(reference.scope_id(), scoping.root_scope_id());
+    }
+}
+
+#[test]
+fn test_many_references_preserve_resolution_boundaries() {
+    // Keep enough references pending to exercise filtering during final resolution.
+    let source = format!(
+        "{}
+        let item = 0;
+        const arguments = [];
+        function outer(parameter = item) {{
+            {{ {{ item; }} }}
+            let item = 1;
+            function inner() {{ {{ {{ item; arguments; }} }} }}
+        }}
+        function typeOnlyShadow() {{
+            type item = string;
+            {{ {{ item; }} }}
+        }}
+        try {{}} catch (caught) {{ {{ {{ caught; }} }} }}",
+        "missing;".repeat(1100)
+    );
+    let tester = SemanticTester::new(&source, oxc_span::SourceType::ts());
+    let semantic = tester.build();
+    let scoping = semantic.scoping();
+    let root_item = scoping.get_root_binding("item".into()).unwrap();
+    // The parameter must not see its own function body, and a type-only declaration
+    // must not hide an outer value binding.
+    assert_eq!(scoping.get_resolved_reference_ids(root_item).len(), 2);
+    let local_item = scoping
+        .symbol_ids()
+        .find(|&id| {
+            id != root_item
+                && scoping.symbol_name(id) == "item"
+                && scoping.symbol_flags(id).is_value()
+        })
+        .unwrap();
+    assert_eq!(scoping.get_resolved_reference_ids(local_item).len(), 2);
+    let caught = scoping.symbol_ids().find(|&id| scoping.symbol_name(id) == "caught").unwrap();
+    assert_eq!(scoping.get_resolved_reference_ids(caught).len(), 1);
+    // Skipping empty scopes must still stop at the inner function's implicit arguments.
+    let outer_arguments = scoping.get_root_binding("arguments".into()).unwrap();
+    assert_eq!(scoping.get_resolved_reference_ids(outer_arguments).len(), 0);
+    assert_eq!(scoping.root_unresolved_references().get("arguments").unwrap().len(), 1);
+    assert_eq!(scoping.root_unresolved_references().get("missing").unwrap().len(), 1100);
+}

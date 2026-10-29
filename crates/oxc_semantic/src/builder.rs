@@ -2,6 +2,7 @@
 
 use std::{
     cell::{Cell, RefCell},
+    hash::BuildHasher,
     mem,
 };
 
@@ -18,7 +19,7 @@ use oxc_cfg::{
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
 use oxc_span::{SourceType, Span};
-use oxc_str::Ident;
+use oxc_str::{Ident, IdentBuildHasher};
 use oxc_syntax::{
     node::{NodeFlags, NodeId},
     reference::{Reference, ReferenceFlags, ReferenceId},
@@ -57,6 +58,23 @@ macro_rules! control_flow {
             ()
         }
     }};
+}
+
+#[inline]
+fn ident_bloom_mask(name: Ident<'_>) -> u64 {
+    // `IdentBuildHasher` places the cached identifier hash in the upper 32 bits.
+    // Use two six-bit slices without hashing the identifier's bytes again.
+    let hash = IdentBuildHasher.hash_one(name);
+    (1u64 << (hash >> 58)) | (1u64 << ((hash >> 52) & 63))
+}
+
+/// Temporary lookup entry for final reference resolution. Empty scopes copy their
+/// nearest nonempty ancestor's entry, preserving the actual scope tree.
+#[derive(Clone, Copy)]
+struct ScopeLookup {
+    bloom: u64,
+    scope_id: ScopeId,
+    parent_id: Option<ScopeId>,
 }
 
 /// Semantic Builder
@@ -643,11 +661,52 @@ impl<'a> SemanticBuilder<'a> {
     fn resolve_all_references(&mut self) {
         let root_scope_id = self.scoping.root_scope_id();
         let refs = self.unresolved_references.take();
-        for unresolved in refs {
-            if !self.resolve_reference(unresolved, root_scope_id) {
-                self.scoping
-                    .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
+        if refs.is_empty() {
+            return;
+        }
+
+        // Bindings are complete now. Keep filtering local to this pass so early
+        // parameter resolution and subsequent transformations need no cache maintenance.
+        let mut scopes: Vec<ScopeLookup> = Vec::with_capacity(self.scoping.scopes_len());
+        for (scope_id, bindings) in self.scoping.iter_bindings() {
+            debug_assert_eq!(scope_id.index(), scopes.len());
+            let parent_id = self.scoping.scope_parent_id(scope_id);
+            let entry = if bindings.is_empty() {
+                // Parents are created before children during semantic construction.
+                parent_id.map_or(ScopeLookup { bloom: 0, scope_id, parent_id: None }, |parent| {
+                    scopes[parent.index()]
+                })
+            } else {
+                let bloom = bindings.keys().fold(0, |mask, name| mask | ident_bloom_mask(*name));
+                ScopeLookup { bloom, scope_id, parent_id }
+            };
+            scopes.push(entry);
+        }
+
+        'references: for unresolved in refs {
+            // Even an empty ordinary function scope introduces implicit `arguments`.
+            // Its lookup must retain function boundaries instead of using the shortcuts.
+            if unresolved.name == "arguments" {
+                if !self.resolve_reference(unresolved, root_scope_id) {
+                    self.scoping
+                        .add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
+                }
+                continue;
             }
+
+            let mask = ident_bloom_mask(unresolved.name);
+            let mut current_scope_id = Some(unresolved.lookup_scope_id);
+            while let Some(lookup_scope_id) = current_scope_id {
+                let ScopeLookup { bloom, scope_id, parent_id } = scopes[lookup_scope_id.index()];
+                if bloom & mask == mask
+                    && let Some(symbol_id) = self.scoping.get_binding(scope_id, unresolved.name)
+                    && self.try_resolve_reference(unresolved.reference_id, symbol_id)
+                {
+                    continue 'references;
+                }
+                current_scope_id = parent_id;
+            }
+            self.scoping.add_root_unresolved_reference(unresolved.name, unresolved.reference_id);
         }
     }
 
