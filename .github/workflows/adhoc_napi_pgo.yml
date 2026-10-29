@@ -1,0 +1,127 @@
+name: Ad hoc NAPI PGO
+
+permissions: {}
+
+on:
+  push:
+    branches: [pgo/expanded-workloads]
+  workflow_dispatch:
+    inputs:
+      package:
+        description: Package to build
+        type: choice
+        default: all
+        options: [all, parser, transform, minify]
+      target:
+        description: Native target to build
+        type: choice
+        default: all
+        options:
+          - all
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-apple-darwin
+          - aarch64-apple-darwin
+          - x86_64-pc-windows-msvc
+      corpus:
+        description: Training corpus (compare builds both from the same commit)
+        type: choice
+        default: expanded
+        options: [original, expanded, compare]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ inputs.package }}-${{ inputs.target }}-${{ inputs.corpus }}
+  cancel-in-progress: true
+
+jobs:
+  prepare:
+    name: Prepare PGO corpus
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+    steps:
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+      - name: Select build matrix
+        id: matrix
+        env:
+          PACKAGE: ${{ inputs.package || 'parser' }}
+          TARGET: ${{ inputs.target || 'aarch64-apple-darwin' }}
+          CORPUS: ${{ inputs.corpus || 'compare' }}
+        run: |
+          node --input-type=module <<'JS'
+          import { appendFile } from 'node:fs/promises';
+          import { selectMatrix } from './tasks/pgo/pack.mjs';
+          const corpora = process.env.CORPUS === 'compare' ? ['original', 'expanded'] : [process.env.CORPUS];
+          const matrix = selectMatrix(process.env.PACKAGE, process.env.TARGET)
+            .flatMap(entry => corpora.map(corpus => ({ ...entry, corpus })));
+          await appendFile(process.env.GITHUB_OUTPUT, `matrix=${JSON.stringify(matrix)}\n`);
+          JS
+      - uses: $/.github/actions/clone-submodules
+        with:
+          node-compat-table: false
+      - name: Prepare full ecosystem and conformance corpus
+        run: |
+          node tasks/transform_conformance/update_fixtures.ts
+          node tasks/pgo/pgo.mjs prepare --fetch
+      - name: Add published dependencies, framework output, and application bundles
+        if: inputs.corpus != 'original'
+        run: node tasks/pgo/expand.mjs
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: pgo-corpus-original
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          path: target/pgo/corpus
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        if: inputs.corpus != 'original'
+        with:
+          name: pgo-corpus-expanded
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          path: target/pgo/corpus-expanded
+
+  build:
+    name: ${{ matrix.package }} (${{ matrix.target }}, ${{ matrix.corpus }})
+    needs: prepare
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    env:
+      PACKAGE: ${{ matrix.package }}
+      TARGET: ${{ matrix.target }}
+    steps:
+      - if: runner.os == 'Windows'
+        run: git config --system core.longpaths true
+      - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
+      - parallel:
+          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+          - run: rustup component add llvm-tools-preview
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: pgo-corpus-${{ matrix.corpus }}
+          path: target/pgo/corpus
+      - uses: $/.github/actions/clone-submodules
+        if: matrix.package == 'parser'
+        with:
+          babel: false
+          node-compat-table: false
+      - name: Build and validate PGO binding
+        run: node tasks/pgo/pgo.mjs "$PACKAGE" --target "$TARGET" --corpus target/pgo/corpus
+        env:
+          TARGET_CC: ${{ runner.os != 'Windows' && 'clang' || '' }}
+      - name: Pack and verify offline installation
+        run: node tasks/pgo/pack.mjs --package "$PACKAGE" --target "$TARGET" --output "$RUNNER_TEMP/napi-pgo"
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: napi-pgo-${{ matrix.package }}-${{ matrix.target }}-${{ matrix.corpus }}
+          if-no-files-found: error
+          retention-days: 7
+          path: ${{ runner.temp }}/napi-pgo

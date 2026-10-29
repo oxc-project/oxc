@@ -4,6 +4,12 @@ use pico_args::Arguments;
 fn main() {
     let mut args = Arguments::from_env();
 
+    if let Some(output) = args.opt_value_from_str::<_, std::path::PathBuf>("--export-pgo").unwrap()
+    {
+        oxc_transform_conformance::export_pgo(&output).expect("export PGO corpus");
+        return;
+    }
+
     let options = TestRunnerOptions {
         debug: args.contains("--debug"),
         filter: args.opt_value_from_str("--filter").unwrap(),
