@@ -22,6 +22,9 @@ reports inputs with diagnostics or no runtime output; those still train parser a
 transformer. Training never executes ecosystem source code.
 Native diagnostics from conformance inputs, such as duplicate exports, are counted
 in training provenance. They do not fail profile collection; crashes still do.
+Transformer training uses `esnext` and `es2015`. Inputs containing `accessor` train
+only `esnext`, because class-field lowering does not yet support private
+auto-accessors. The provenance records how many inputs omit downlevel training.
 
 To prepare CI inputs from HTTPS checkouts, without installing ecosystem projects:
 

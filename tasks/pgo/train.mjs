@@ -40,7 +40,11 @@ export async function trainRecord(name, binding, record, index) {
   if (name === "transform") {
     const transform = asynchronous ? binding.transform : binding.transformSync;
     let diagnostics = false;
-    for (const target of ["esnext", "es2015"]) {
+    // Private auto-accessors are not supported by class-field lowering yet.
+    // Conservatively keep accessor-containing inputs on esnext; every source
+    // still trains TS/JSX lowering, parsing, diagnostics, and code generation.
+    const targets = /\baccessor\b/.test(code) ? ["esnext"] : ["esnext", "es2015"];
+    for (const target of targets) {
       const result = await transform(filename, code, {
         ...options,
         target,
@@ -90,10 +94,12 @@ async function trainShard() {
   if (!shard) throw new Error(`Unknown shard: ${shardFile}`);
   let processed = 0,
     skipped = 0,
-    diagnostics = 0;
+    diagnostics = 0,
+    downlevelSkipped = 0;
   for await (const record of readShard(directory, shard)) {
     try {
       const result = await trainRecord(name, binding, record, processed + skipped);
+      if (name === "transform" && /\baccessor\b/.test(record.code)) downlevelSkipped++;
       if (result === "skipped") skipped++;
       else {
         processed++;
@@ -103,7 +109,7 @@ async function trainShard() {
       throw new Error(`${name}: ${record.filename}`, { cause: error });
     }
   }
-  console.log(JSON.stringify({ processed, skipped, diagnostics }));
+  console.log(JSON.stringify({ processed, skipped, diagnostics, downlevelSkipped }));
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

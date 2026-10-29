@@ -132,7 +132,8 @@ for (const name of command === "all" ? packages : [command]) {
   const instrumented = await build("instrumented", `-Cprofile-generate=${raw}`);
   let trained = 0,
     skipped = 0,
-    diagnostics = 0;
+    diagnostics = 0,
+    downlevelSkipped = 0;
   for (const shard of manifest.shards) {
     const result = JSON.parse(
       await run(
@@ -147,6 +148,7 @@ for (const name of command === "all" ? packages : [command]) {
     trained += result.processed;
     skipped += result.skipped;
     diagnostics += result.diagnostics;
+    downlevelSkipped += result.downlevelSkipped;
     console.log(
       `${name}: ${shard.file}: ${result.processed} trained (${result.diagnostics} diagnostics), ${result.skipped} skipped`,
     );
@@ -218,6 +220,7 @@ for (const name of command === "all" ? packages : [command]) {
         trained,
         skipped,
         diagnostics,
+        downlevelSkipped,
         summary,
       },
       null,
