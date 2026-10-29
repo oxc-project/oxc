@@ -633,7 +633,7 @@ unicorn/prefer-spread                                   |  62606
 unicorn/prefer-string-raw                               |  62460
 unicorn/prefer-string-replace-all                       | 100105
 unicorn/prefer-string-slice                             |  62606
-unicorn/prefer-string-starts-ends-with                  |  62606
+unicorn/prefer-string-starts-ends-with                  |    209
 unicorn/prefer-string-trim-start-end                    |  62606
 unicorn/prefer-structured-clone                         |  62606
 unicorn/prefer-ternary                                  |  13190
