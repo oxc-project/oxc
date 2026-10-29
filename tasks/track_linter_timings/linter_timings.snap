@@ -428,7 +428,7 @@ react/no-react-children                                 |  62606
 react/no-redundant-should-component-update              |    300
 react/no-render-return-value                            |   6567
 react/no-set-state                                      |   6567
-react/no-string-refs                                    |  15882
+react/no-string-refs                                    |   5112
 react/no-this-in-sfc                                    |   4308
 react/no-unescaped-entities                             |    672
 react/no-unknown-property                               |    452
