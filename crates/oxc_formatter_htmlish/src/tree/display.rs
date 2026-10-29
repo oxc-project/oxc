@@ -1,4 +1,4 @@
-/// The CSS `display` an element gets from the UA stylesheet (Prettier's table, `constants.evaluate.js`).
+/// The CSS `display` an element gets from the UA stylesheet, as Prettier tabulates it.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub enum Display {
     #[default]
@@ -30,7 +30,7 @@ impl Display {
     }
 }
 
-/// `<!-- display: block -->` (Prettier's `/^\s*display:\s*([a-z]+)\s*$/`).
+/// `<!-- display: block -->`: `display:` and a lowercase word, whitespace around them.
 pub fn display_comment(content: &str) -> Option<Display> {
     let value = content.trim().strip_prefix("display:")?.trim_start();
     if value.is_empty() || !value.bytes().all(|b| b.is_ascii_lowercase()) {

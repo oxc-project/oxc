@@ -218,7 +218,7 @@ impl Builder<'_> {
     }
 
     /// `<!--[if IE]><!--><html><!--<![endif]-->`: for the start comment, the element whose start tag absorbs it
-    /// together with the end comment, its first child (Prettier's `mergeIfConditionalStartEndCommentIntoElementOpeningTag`).
+    /// together with the end comment, its first child.
     fn absorbing_element(&self, id: NodeId) -> Option<NodeId> {
         let root = self.tree.root;
         let start = &root[id];
@@ -250,8 +250,8 @@ impl Builder<'_> {
             }
             _ => {}
         }
-        // CDATA is text to Prettier (`mergeCdataIntoText`),
-        // printed as written here (DIVERGENCES.md#cdata-as-written).
+        // CDATA reads as text, merged with the texts around it,
+        // and prints as written (DIVERGENCES.md#cdata-as-written).
         let text_like =
             matches!(node.kind, NodeKind::Text(_) | NodeKind::Comment(_) | NodeKind::Cdata);
         let display = self.display(id);

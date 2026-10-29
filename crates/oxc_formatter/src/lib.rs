@@ -184,7 +184,7 @@ pub fn format_fragment<'a>(
     // this may not be enough for all cases.
     // But it seems fine for almost all cases, so leave it for now.
     // TODO: When Vue formats natively, share the HTML event handler's rule instead
-    // (`JsFormatContext::string_quote_style`, forced `'` as Prettier's `__isInHtmlAttribute`):
+    // (`JsFormatContext::string_quote_style`, `'` whatever the string holds):
     // a string holding more `'` than `"` prints `"` here, which the attribute escapes as `&quot;`.
     let options = JsFormatOptions { quote_style: QuoteStyle::Single, ..options };
 

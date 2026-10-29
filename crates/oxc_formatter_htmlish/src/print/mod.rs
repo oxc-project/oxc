@@ -73,7 +73,7 @@ fn write_child<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>
     write!(f, [opening_tag_prefix(t, id), text(raw), closing_tag_suffix(t, id)]);
 }
 
-/// Prettier's `getEndLocation`: an unclosed element extends to its last child.
+/// Where an ignored node's source ends: an unclosed element extends to its last child.
 fn ignored_end(t: &Tree<'_>, id: NodeId) -> u32 {
     let end = t.source_end(id);
     match t.kind(id) {
