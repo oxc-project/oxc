@@ -77,6 +77,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// `PrimaryExpression`: Identifier Reference
     pub(crate) fn parse_identifier_expression(&mut self) -> Expression<'a> {
+        if self.at(Kind::Ident) {
+            let (span, name) = self.parse_identifier_kind(Kind::Ident);
+            return Expression::Identifier(IdentifierReference::boxed(span, name, self));
+        }
         let ident = self.parse_identifier_reference();
         Expression::Identifier(self.alloc(ident))
     }
