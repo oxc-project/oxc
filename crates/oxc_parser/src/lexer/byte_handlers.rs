@@ -144,14 +144,31 @@ macro_rules! ascii_byte_handler {
 /// fn L_G<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
 ///     // SAFETY: This macro is only used for ASCII characters
 ///     let id_without_first_char = unsafe { lexer.identifier_name_handler() };
-///     match id_without_first_char {
-///         "et" => Kind::Get,
-///         "lobal" => Kind::Global,
-///         _ => Kind::Ident,
+///     if keyword_equals(id_without_first_char, b"et") {
+///         Kind::Get
+///     } else if keyword_equals(id_without_first_char, b"lobal") {
+///         Kind::Global
+///     } else {
+///         Kind::Ident
 ///     }
 /// }
 /// ```
 macro_rules! ascii_identifier_handler {
+    ($id:ident($str:ident) match $matched:ident {
+        $($keyword:literal => $kind:path,)*
+        _ => $default:path,
+    }) => {
+        ascii_identifier_handler!($id($str) {
+            $({
+                #[expect(clippy::string_lit_as_bytes, reason = "Keywords are string patterns in the macro input")]
+                const KEYWORD: &[u8; $keyword.len()] = $keyword.as_bytes().first_chunk().unwrap();
+                if keyword_equals($matched, KEYWORD) {
+                    return $kind;
+                }
+            })*
+            $default
+        });
+    };
     ($id:ident($str:ident) $body:expr) => {
         #[expect(non_snake_case)]
         fn $id<C: Config>(lexer: &mut Lexer<'_, C>) -> Kind {
@@ -160,6 +177,20 @@ macro_rules! ascii_identifier_handler {
             $body
         }
     };
+}
+
+// Compare fixed-size byte arrays without short-circuiting. This allows LLVM to inline
+// short keyword comparisons instead of emitting calls to `memcmp`.
+#[inline]
+#[expect(
+    clippy::needless_bitwise_bool,
+    reason = "Evaluate every byte comparison to enable vectorization"
+)]
+fn keyword_equals<const N: usize>(text: &str, keyword: &[u8; N]) -> bool {
+    let Ok(bytes): Result<&[u8; N], _> = text.as_bytes().try_into() else {
+        return false;
+    };
+    bytes.iter().zip(keyword).fold(true, |equal, (a, b)| equal & (a == b))
 }
 
 // `\0` `\1` etc
