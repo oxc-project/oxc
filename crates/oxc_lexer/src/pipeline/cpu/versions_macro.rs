@@ -62,6 +62,8 @@
 /// and can't be called `__impl`, `__avx2`, etc.
 /// `mut` only goes on `__impl`'s parameters. The other functions just pass the values on.
 ///
+/// The function can be a `const fn`, `unsafe fn` or `const unsafe fn`.
+///
 /// The function can have const generic parameters (e.g. `<const IS_TS: bool>`), but no other generics.
 /// A nested function can't use its parent's generic parameters, so each nested function declares them again,
 /// and calls pass them on (`__impl::<IS_TS>(..)`).
@@ -92,7 +94,7 @@
 ///                 __impl(src, n, cpu)
 ///             }
 ///
-///             match Cpu::to_dyn(cpu) {
+///             match to_dyn(cpu) {
 ///                 // SAFETY: `Avx2` type guarantees the CPU supports the features `__avx2` uses
 ///                 DynCpu::Avx2(cpu) => unsafe { __avx2(src, n, cpu) },
 ///                 DynCpu::Generic(cpu) => __generic(src, n, cpu),
@@ -105,14 +107,14 @@
 ///                 __impl(src, n, cpu)
 ///             }
 ///
-///             match Cpu::to_dyn(cpu) {
+///             match to_dyn(cpu) {
 ///                 // SAFETY: `Neon` type guarantees the CPU supports the features `__neon` uses
 ///                 DynCpu::Neon(cpu) => unsafe { __neon(src, n, cpu) },
 ///                 DynCpu::Generic(cpu) => __generic(src, n, cpu),
 ///             }
 ///         }
 ///         _ => {
-///             match Cpu::to_dyn(cpu) {
+///             match to_dyn(cpu) {
 ///                 DynCpu::Generic(cpu) => __generic(src, n, cpu),
 ///             }
 ///         }
@@ -166,10 +168,13 @@ pub(crate) use cpu_versions;
 /// the attribute where the macro is used, not at this macro.
 /// e.g. `#[inline(always)]`, which can't be combined with `#[target_feature]`.
 ///
-/// When no attributes are left, the rest of the function goes into `func`,
+/// When no attributes are left, a rule for each of `fn`, `unsafe fn`, `const fn` and `const unsafe fn`
+/// records the keywords, and passes the rest of the function on in `signature`.
+/// The rule which matches `signature` puts the function into `func`,
 /// which bundles everything about the function except its parameters:
 ///
-/// * `unsafe_kw` is `[ unsafe ]` or `[]`, and is copied onto every function.
+/// * `fn_qualifiers` is `[]`, `[ unsafe ]`, `[ const ]` or `[ const unsafe ]`.
+///   It's copied onto every function.
 /// * Const generic parameters are recorded twice:
 ///   * `generic_params` is the declaration `<const N: Type, ..>`, which goes on every function.
 ///   * `turbofish` is the arguments `::<N, ..>` for calls.
@@ -237,42 +242,79 @@ macro_rules! attrs {
         );
     };
 
-    // No attributes left, safe `fn`
+    // No attributes left, `fn`
     (
         rest_to_match = $_rest_to_match:tt
-        rest_to_capture = [
-            $vis:vis fn $fn_name:ident
-            $(<$(const $const_name:ident: $const_ty:ty),* $(,)?>)?
-            ($($params:tt)*) $(-> $ret_ty:ty)? $fn_body:block
-        ]
+        rest_to_capture = [ $vis:vis fn $($rest:tt)* ]
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
     ) => {
-        crate::pipeline::cpu::__cpu_versions::receiver!(
-            params = [ $($params)* ]
-            func = {
-                fn_name = $fn_name
-                outer_attrs = $outer_attrs
-                inline_attrs = $inline_attrs
-                vis = $vis
-                unsafe_kw = []
-                // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
-                generic_params = [( $(<$(const $const_name: $const_ty),*>)? )]
-                turbofish = [ $(::<$($const_name),*>)? ]
-                ret_ty = [ $($ret_ty)? ]
-                fn_body = $fn_body
-            }
+        crate::pipeline::cpu::__cpu_versions::attrs!(
+            signature = [ $($rest)* ]
+            vis = $vis
+            fn_qualifiers = []
+            outer_attrs = $outer_attrs
+            inline_attrs = $inline_attrs
         );
     };
 
     // No attributes left, `unsafe fn`
     (
         rest_to_match = $_rest_to_match:tt
-        rest_to_capture = [
-            $vis:vis unsafe fn $fn_name:ident
+        rest_to_capture = [ $vis:vis unsafe fn $($rest:tt)* ]
+        outer_attrs = $outer_attrs:tt
+        inline_attrs = $inline_attrs:tt
+    ) => {
+        crate::pipeline::cpu::__cpu_versions::attrs!(
+            signature = [ $($rest)* ]
+            vis = $vis
+            fn_qualifiers = [ unsafe ]
+            outer_attrs = $outer_attrs
+            inline_attrs = $inline_attrs
+        );
+    };
+
+    // No attributes left, `const fn`
+    (
+        rest_to_match = $_rest_to_match:tt
+        rest_to_capture = [ $vis:vis const fn $($rest:tt)* ]
+        outer_attrs = $outer_attrs:tt
+        inline_attrs = $inline_attrs:tt
+    ) => {
+        crate::pipeline::cpu::__cpu_versions::attrs!(
+            signature = [ $($rest)* ]
+            vis = $vis
+            fn_qualifiers = [ const ]
+            outer_attrs = $outer_attrs
+            inline_attrs = $inline_attrs
+        );
+    };
+
+    // No attributes left, `const unsafe fn`
+    (
+        rest_to_match = $_rest_to_match:tt
+        rest_to_capture = [ $vis:vis const unsafe fn $($rest:tt)* ]
+        outer_attrs = $outer_attrs:tt
+        inline_attrs = $inline_attrs:tt
+    ) => {
+        crate::pipeline::cpu::__cpu_versions::attrs!(
+            signature = [ $($rest)* ]
+            vis = $vis
+            fn_qualifiers = [ const unsafe ]
+            outer_attrs = $outer_attrs
+            inline_attrs = $inline_attrs
+        );
+    };
+
+    // The rest of the function, after `fn`
+    (
+        signature = [
+            $fn_name:ident
             $(<$(const $const_name:ident: $const_ty:ty),* $(,)?>)?
             ($($params:tt)*) $(-> $ret_ty:ty)? $fn_body:block
         ]
+        vis = $vis:vis
+        fn_qualifiers = $fn_qualifiers:tt
         outer_attrs = $outer_attrs:tt
         inline_attrs = $inline_attrs:tt
     ) => {
@@ -283,7 +325,7 @@ macro_rules! attrs {
                 outer_attrs = $outer_attrs
                 inline_attrs = $inline_attrs
                 vis = $vis
-                unsafe_kw = [ unsafe ]
+                fn_qualifiers = $fn_qualifiers
                 // Extra `(...)` parens to prevent `pastey` matching `[<...>]`
                 generic_params = [( $(<$(const $const_name: $const_ty),*>)? )]
                 turbofish = [ $(::<$($const_name),*>)? ]
@@ -571,7 +613,7 @@ macro_rules! expand_func {
         outer_attrs = [ $($outer_attrs:tt)* ]
         inline_attrs = [ $($inline_attrs:tt)* ]
         vis = $vis:vis
-        unsafe_kw = [ $($unsafe_kw:tt)? ]
+        fn_qualifiers = [ $($fn_qualifiers:tt)* ]
         generic_params = [( $($generic_params:tt)* )]
         turbofish = [ $($turbofish:tt)* ]
         ret_ty = [ $($ret_ty:ty)? ]
@@ -588,17 +630,17 @@ macro_rules! expand_func {
     ) => {
         $($outer_attrs)*
         #[inline(always)]
-        $vis $($unsafe_kw)? fn $fn_name $($generic_params)* (
+        $vis $($fn_qualifiers)* fn $fn_name $($generic_params)* (
             $($arg_name: $arg_ty,)* $cpu_name: impl $cpu_trait
         ) $(-> $ret_ty)? {
             #[inline(always)]
-            $($unsafe_kw)? fn __impl $($generic_params)* (
+            $($fn_qualifiers)* fn __impl $($generic_params)* (
                 $($($mut_kw)? $arg_name: $arg_ty,)* $cpu_name: impl $cpu_trait
             ) $(-> $ret_ty)?
             $fn_body
 
             $($inline_attrs)*
-            $($unsafe_kw)? fn __generic $($generic_params)* (
+            $($fn_qualifiers)* fn __generic $($generic_params)* (
                 $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Generic
             ) $(-> $ret_ty)? {
                 __impl $($turbofish)* ($($arg_name,)* $cpu_name)
@@ -608,13 +650,13 @@ macro_rules! expand_func {
                 target_arch = "x86_64" => {
                     $($inline_attrs)*
                     #[target_feature(enable = "avx2,bmi2,popcnt")]
-                    $($unsafe_kw)? fn __avx2 $($generic_params)* (
+                    $($fn_qualifiers)* fn __avx2 $($generic_params)* (
                         $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Avx2
                     ) $(-> $ret_ty)? {
                         __impl $($turbofish)* ($($arg_name,)* $cpu_name)
                     }
 
-                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                    match crate::pipeline::cpu::to_dyn($cpu_name) {
                         // SAFETY: `Avx2` type guarantees the CPU supports the features `__avx2` uses
                         crate::pipeline::cpu::DynCpu::Avx2($cpu_name) => unsafe {
                             __avx2 $($turbofish)* ($($arg_name,)* $cpu_name)
@@ -627,13 +669,13 @@ macro_rules! expand_func {
                 target_arch = "aarch64" => {
                     $($inline_attrs)*
                     #[target_feature(enable = "neon")]
-                    $($unsafe_kw)? fn __neon $($generic_params)* (
+                    $($fn_qualifiers)* fn __neon $($generic_params)* (
                         $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Neon
                     ) $(-> $ret_ty)? {
                         __impl $($turbofish)* ($($arg_name,)* $cpu_name)
                     }
 
-                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                    match crate::pipeline::cpu::to_dyn($cpu_name) {
                         // SAFETY: `Neon` type guarantees the CPU supports the features `__neon` uses
                         crate::pipeline::cpu::DynCpu::Neon($cpu_name) => unsafe {
                             __neon $($turbofish)* ($($arg_name,)* $cpu_name)
@@ -644,7 +686,7 @@ macro_rules! expand_func {
                     }
                 }
                 _ => {
-                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                    match crate::pipeline::cpu::to_dyn($cpu_name) {
                         crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
                             __generic $($turbofish)* ($($arg_name,)* $cpu_name)
                         }
@@ -697,7 +739,7 @@ macro_rules! expand_method {
         outer_attrs = [ $($outer_attrs:tt)* ]
         inline_attrs = [ $($inline_attrs:tt)* ]
         vis = $vis:vis
-        unsafe_kw = [ $($unsafe_kw:tt)? ]
+        fn_qualifiers = [ $($fn_qualifiers:tt)* ]
         generic_params = [( $($generic_params:tt)* )]
         turbofish = [ $($turbofish:tt)* ]
         ret_ty = [ $($ret_ty:ty)? ]
@@ -719,12 +761,12 @@ macro_rules! expand_method {
     ) => {
         $($outer_attrs)*
         #[inline(always)]
-        $vis $($unsafe_kw)? fn $fn_name $($generic_params)* (
+        $vis $($fn_qualifiers)* fn $fn_name $($generic_params)* (
             $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: impl $cpu_trait
         ) $(-> $ret_ty)? {
             cfg_select! {
                 target_arch = "x86_64" => {
-                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                    match crate::pipeline::cpu::to_dyn($cpu_name) {
                         // SAFETY: `Avx2` type guarantees the CPU supports the features `__*_avx2` uses
                         crate::pipeline::cpu::DynCpu::Avx2($cpu_name) => unsafe {
                             Self::$avx2_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
@@ -735,7 +777,7 @@ macro_rules! expand_method {
                     }
                 }
                 target_arch = "aarch64" => {
-                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                    match crate::pipeline::cpu::to_dyn($cpu_name) {
                         // SAFETY: `Neon` type guarantees the CPU supports the features `__*_neon` uses
                         crate::pipeline::cpu::DynCpu::Neon($cpu_name) => unsafe {
                             Self::$neon_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
@@ -746,7 +788,7 @@ macro_rules! expand_method {
                     }
                 }
                 _ => {
-                    match crate::pipeline::cpu::Cpu::to_dyn($cpu_name) {
+                    match crate::pipeline::cpu::to_dyn($cpu_name) {
                         crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
                             Self::$generic_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
                         }
@@ -756,7 +798,7 @@ macro_rules! expand_method {
         }
 
         #[inline(always)]
-        $($unsafe_kw)? fn $impl_fn $($generic_params)* (
+        $($fn_qualifiers)* fn $impl_fn $($generic_params)* (
             $($self_mut_kw)? $($self_param)*,
             $($($mut_kw)? $arg_name: $arg_ty,)*
             $cpu_name: impl $cpu_trait
@@ -764,7 +806,7 @@ macro_rules! expand_method {
         $fn_body
 
         $($inline_attrs)*
-        $($unsafe_kw)? fn $generic_fn $($generic_params)* (
+        $($fn_qualifiers)* fn $generic_fn $($generic_params)* (
             $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Generic
         ) $(-> $ret_ty)? {
             Self::$impl_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
@@ -774,7 +816,7 @@ macro_rules! expand_method {
             target_arch = "x86_64" => {
                 $($inline_attrs)*
                 #[target_feature(enable = "avx2,bmi2,popcnt")]
-                $($unsafe_kw)? fn $avx2_fn $($generic_params)* (
+                $($fn_qualifiers)* fn $avx2_fn $($generic_params)* (
                     $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Avx2
                 ) $(-> $ret_ty)? {
                     Self::$impl_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
@@ -783,7 +825,7 @@ macro_rules! expand_method {
             target_arch = "aarch64" => {
                 $($inline_attrs)*
                 #[target_feature(enable = "neon")]
-                $($unsafe_kw)? fn $neon_fn $($generic_params)* (
+                $($fn_qualifiers)* fn $neon_fn $($generic_params)* (
                     $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Neon
                 ) $(-> $ret_ty)? {
                     Self::$impl_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
