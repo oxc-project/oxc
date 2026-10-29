@@ -2,6 +2,8 @@ crates/oxc_parser/src/js/expression.rs
   s_aa2b8ec570ef89::t_6c2361636aeb4c 444-445,447
 crates/oxc_parser/src/ts/types.rs
   s_aa2b8ec570ef89::t_c272afc286199b 925-928
+  s_aa2b8ec570ef89::t_fdf76dae5d13b7 925-928
+  s_aa2b8ec570ef89::t_bca39f1f6cab21 925-928
 tasks/coverage/misc/fail/regexp-after-html-comment-in-module.mjs
   s_aa2b8ec570ef89::t_ca09f38d0a5e33 1-2
 tasks/coverage/misc/fail/regexp-after-prior-lexer-error.js
