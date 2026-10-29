@@ -296,29 +296,6 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Read next token in file.
     /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
-        // Avoid the indirect byte-handler call for punctuation, including a preceding space.
-        let mut pos = self.source.position();
-        // SAFETY: The source cursor is never beyond the end.
-        if unsafe { self.source.end().offset_from(pos) } >= 2 {
-            // SAFETY: At least two bytes remain, so skipping one space leaves a readable byte.
-            let byte = unsafe {
-                pos = pos.add(usize::from(pos.read() == b' '));
-                pos.read()
-            };
-            let kind = SIMPLE_KINDS[byte as usize];
-            if kind != Kind::Eof {
-                self.trivia_builder.clear_pure_comments();
-                self.trivia_builder.clear_no_side_effects_comments();
-                self.token.set_start(self.source.offset_of(pos));
-                // SAFETY: All entries in the table are single ASCII characters.
-                self.source.set_position(unsafe { pos.add(1) });
-                return self.finish_next(kind);
-            }
-        }
-        self.next_token_slow()
-    }
-
-    fn next_token_slow(&mut self) -> Token {
         let kind = self.read_next_token();
         self.finish_next(kind)
     }
@@ -574,6 +551,13 @@ impl<'a, C: Config> Lexer<'a, C> {
                 let offset = self.source.offset_of(pos);
                 self.token.set_start(offset);
 
+                let kind = SIMPLE_KINDS[byte as usize];
+                if kind != Kind::Eof {
+                    // SAFETY: Every non-Eof entry is a single ASCII character.
+                    self.source.set_position(unsafe { pos.add(1) });
+                    return kind;
+                }
+
                 // SAFETY: `byte` is byte value at current position in source
                 let kind = unsafe { self.handle_byte(byte) };
                 if kind != Kind::Skip {
@@ -695,7 +679,26 @@ mod tests {
     use super::*;
     use crate::config::{NoTokensLexerConfig, RuntimeLexerConfig, TokensLexerConfig};
 
-    fn lex<C: Config>(source: &str, config: C, fast: bool) -> (Vec<Token>, Vec<Token>) {
+    type AnnotationRange = Option<(u32, NonZeroU32)>;
+    type LexedToken = (Token, AnnotationRange, AnnotationRange);
+
+    fn read_with_byte_handlers<C: Config>(lexer: &mut Lexer<'_, C>) -> Token {
+        lexer.trivia_builder.clear_pure_comments();
+        lexer.trivia_builder.clear_no_side_effects_comments();
+        loop {
+            lexer.token.set_start(lexer.offset());
+            let Some(byte) = lexer.peek_byte() else {
+                return lexer.finish_next(Kind::Eof);
+            };
+            // SAFETY: `peek_byte` returned the byte at the current source position.
+            let kind = unsafe { lexer.handle_byte(byte) };
+            if kind != Kind::Skip {
+                return lexer.finish_next(kind);
+            }
+        }
+    }
+
+    fn lex<C: Config>(source: &str, config: C, fast: bool) -> (Vec<LexedToken>, Vec<Token>) {
         let allocator = Allocator::default();
         let mut lexer = Lexer::new(
             &allocator,
@@ -706,13 +709,12 @@ mod tests {
         );
         let mut tokens = Vec::new();
         loop {
-            let token = if fast {
-                lexer.next_token()
-            } else {
-                let kind = lexer.read_next_token();
-                lexer.finish_next(kind)
-            };
-            tokens.push(token);
+            let token = if fast { lexer.next_token() } else { read_with_byte_handlers(&mut lexer) };
+            tokens.push((
+                token,
+                lexer.trivia_builder.previous_token_pure_comments(),
+                lexer.trivia_builder.previous_token_no_side_effects_comments(),
+            ));
             if token.kind() == Kind::Eof {
                 break;
             }
@@ -728,9 +730,21 @@ mod tests {
     #[test]
     fn punctuation_fast_path() {
         for punctuation in "()[]{};,:~@".chars() {
-            for prefix in
-                ["", " ", "a", "a ", "a  ", "a\n", "a\r\n\t", "a/*c*/", "a//c\n", "a\u{2028}"]
-            {
+            for prefix in [
+                "",
+                " ",
+                "a",
+                "a ",
+                "a  ",
+                "a\n",
+                "a\r\n\t",
+                "a/*c*/",
+                "a//c\n",
+                "a\u{2028}",
+                "/*#__PURE__*/",
+                "a/*\ncomment*/ ",
+                "/*#__NO_SIDE_EFFECTS__*/\n\t",
+            ] {
                 for suffix in ["", " ", "\n", "α"] {
                     let source = format!("{prefix}{punctuation}{suffix}");
                     check(&source, NoTokensLexerConfig);
