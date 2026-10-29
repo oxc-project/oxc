@@ -408,7 +408,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_normal_list_into<F, T>(
+    pub(crate) fn parse_normal_list_into<F, T>(
         &mut self,
         list: &mut ArenaVec<'a, T>,
         close: Kind,
