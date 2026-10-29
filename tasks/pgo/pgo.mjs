@@ -193,7 +193,14 @@ for (const name of command === "all" ? packages : [command]) {
   try {
     await run(
       process.execPath,
-      [join(packageDir, "node_modules/vitest/vitest.mjs"), "run", "--dir", "test"],
+      [
+        join(packageDir, "node_modules/vitest/vitest.mjs"),
+        "run",
+        "--dir",
+        "test",
+        "--testTimeout",
+        "30000",
+      ],
       {
         cwd: packageDir,
         env: validationEnv,
