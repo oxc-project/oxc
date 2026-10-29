@@ -1,0 +1,4 @@
+// tests if a json configuration can extend a JavaScript configuration
+{
+  "extends": ["./extended.js"]
+}
