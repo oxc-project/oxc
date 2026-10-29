@@ -2,8 +2,8 @@
 import {useEffect, useState} from 'react';
 
 // `last` is declared inside the effect, so reassigning it from the interval
-// callback never crosses a render. Oxlint enables this validation, and with it
-// the old code reported `last`.
+// callback never crosses a render. The pragma matches Oxlint, which enables this
+// validation.
 function useTicker(isPlaying) {
   const [total, setTotal] = useState(0);
   useEffect(() => {
