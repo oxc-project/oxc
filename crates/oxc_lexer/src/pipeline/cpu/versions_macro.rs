@@ -57,6 +57,36 @@
 /// Without it, they can be inlined into their callers in builds which enable AVX2 globally.
 /// `#[inline(always)]` isn't allowed, because it can't be combined with `#[target_feature]`.
 ///
+/// When SSE2 is enabled for the whole crate, `__generic` also gets `#[target_feature(enable = "sse2")]`.
+/// That's the case on nearly all x86_64 and x86 targets. It doesn't change the code `__generic` compiles to,
+/// because SSE2 is enabled anyway. It stops rustc's MIR inliner from inlining `__generic` into `compress`.
+///
+/// Without it, an `#[inline]` function would act as if it was `#[inline(always)]` in its generic version.
+/// `__generic` only contains a call to `__impl`, so it's small enough for the MIR inliner to inline it.
+/// `compress` and `__impl` are both `#[inline(always)]`, so the whole body would then be inlined
+/// into every caller, which bloats the generic version of the callers.
+///
+/// The MIR inliner doesn't inline a function with target features which its caller doesn't have,
+/// and it ignores features which are enabled for the whole crate. `__avx2` and `__neon` are protected
+/// by their own target features in the same way.
+///
+/// Only `#[inline]` functions need this. The MIR inliner never inlines `#[inline(never)]` functions,
+/// and only inlines functions without an inline attribute if they don't call any other function.
+///
+/// The only x86_64 targets which don't enable SSE2 are these 2, and Oxc can't or won't run on either:
+///
+/// - `x86_64-unknown-none`: Bare metal, e.g. operating system kernels. It has no `std`, which Oxc requires.
+/// - `x86_64-unknown-uefi`: UEFI firmware programs, which run before an operating system starts.
+///   `std` only partly supports it.
+///
+/// SSE2 can also be disabled with `-C target-feature=-sse2`, but rustc warns that the x86_64 ABI needs it,
+/// and that this will become a hard error.
+///
+/// Most 32-bit x86 targets enable SSE2 too. The exceptions are the `i586` targets, for CPUs from the 1990s,
+/// and `i686-unknown-uefi`. 32-bit x86 has no AVX2 version, so there's only one version of the code there.
+///
+/// Where SSE2 isn't enabled, `__generic` doesn't get the attribute. The code is still correct, only bigger.
+///
 /// The last parameter must be `cpu: impl Cpu` (any name instead of `cpu` is fine).
 /// The other parameters must be `name: Type` or `mut name: Type` (no other patterns),
 /// and can't be called `__impl`, `__avx2`, etc.
@@ -82,6 +112,8 @@
 ///     }
 ///
 ///     #[inline(never)]
+///     // Stops the MIR inliner inlining `__generic` into this function. See the docs above.
+///     #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
 ///     unsafe fn __generic(src: &[u8], n: usize, cpu: Generic) -> usize {
 ///         __impl(src, n, cpu)
 ///     }
@@ -97,7 +129,10 @@
 ///             match to_dyn(cpu) {
 ///                 // SAFETY: `Avx2` type guarantees the CPU supports the features `__avx2` uses
 ///                 DynCpu::Avx2(cpu) => unsafe { __avx2(src, n, cpu) },
-///                 DynCpu::Generic(cpu) => __generic(src, n, cpu),
+///                 // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
+///                 // when SSE2 is enabled for the whole crate, so the CPU supports it
+///                 #[allow(unused_unsafe, clippy::allow_attributes)]
+///                 DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
 ///             }
 ///         }
 ///         target_arch = "aarch64" => {
@@ -115,7 +150,10 @@
 ///         }
 ///         _ => {
 ///             match to_dyn(cpu) {
-///                 DynCpu::Generic(cpu) => __generic(src, n, cpu),
+///                 // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
+///                 // when SSE2 is enabled for the whole crate, so the CPU supports it
+///                 #[allow(unused_unsafe, clippy::allow_attributes)]
+///                 DynCpu::Generic(cpu) => unsafe { __generic(src, n, cpu) },
 ///             }
 ///         }
 ///     }
@@ -640,6 +678,8 @@ macro_rules! expand_func {
             $fn_body
 
             $($inline_attrs)*
+            // Stops the MIR inliner inlining `__generic` into this function. See the docs above.
+            #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
             $($fn_qualifiers)* fn __generic $($generic_params)* (
                 $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Generic
             ) $(-> $ret_ty)? {
@@ -661,9 +701,12 @@ macro_rules! expand_func {
                         crate::pipeline::cpu::DynCpu::Avx2($cpu_name) => unsafe {
                             __avx2 $($turbofish)* ($($arg_name,)* $cpu_name)
                         },
-                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
+                        // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
+                        // when SSE2 is enabled for the whole crate, so the CPU supports it
+                        #[allow(unused_unsafe, clippy::allow_attributes)]
+                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => unsafe {
                             __generic $($turbofish)* ($($arg_name,)* $cpu_name)
-                        }
+                        },
                     }
                 }
                 target_arch = "aarch64" => {
@@ -687,9 +730,12 @@ macro_rules! expand_func {
                 }
                 _ => {
                     match crate::pipeline::cpu::to_dyn($cpu_name) {
-                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
+                        // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
+                        // when SSE2 is enabled for the whole crate, so the CPU supports it
+                        #[allow(unused_unsafe, clippy::allow_attributes)]
+                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => unsafe {
                             __generic $($turbofish)* ($($arg_name,)* $cpu_name)
-                        }
+                        },
                     }
                 }
             }
@@ -771,9 +817,12 @@ macro_rules! expand_method {
                         crate::pipeline::cpu::DynCpu::Avx2($cpu_name) => unsafe {
                             Self::$avx2_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
                         },
-                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
+                        // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
+                        // when SSE2 is enabled for the whole crate, so the CPU supports it
+                        #[allow(unused_unsafe, clippy::allow_attributes)]
+                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => unsafe {
                             Self::$generic_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
-                        }
+                        },
                     }
                 }
                 target_arch = "aarch64" => {
@@ -789,9 +838,12 @@ macro_rules! expand_method {
                 }
                 _ => {
                     match crate::pipeline::cpu::to_dyn($cpu_name) {
-                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => {
+                        // SAFETY: `__generic` only has `#[target_feature(enable = "sse2")]`
+                        // when SSE2 is enabled for the whole crate, so the CPU supports it
+                        #[allow(unused_unsafe, clippy::allow_attributes)]
+                        crate::pipeline::cpu::DynCpu::Generic($cpu_name) => unsafe {
                             Self::$generic_fn $($turbofish)* ($self_kw, $($arg_name,)* $cpu_name)
-                        }
+                        },
                     }
                 }
             }
@@ -806,6 +858,8 @@ macro_rules! expand_method {
         $fn_body
 
         $($inline_attrs)*
+        // Stops the MIR inliner inlining this method into the outer method. See the docs above.
+        #[cfg_attr(target_feature = "sse2", target_feature(enable = "sse2"))]
         $($fn_qualifiers)* fn $generic_fn $($generic_params)* (
             $($self_param)*, $($arg_name: $arg_ty,)* $cpu_name: crate::pipeline::cpu::Generic
         ) $(-> $ret_ty)? {
