@@ -15,54 +15,39 @@ struct ArrowFunctionHead<'a> {
 }
 
 impl<'a, C: Config> ParserImpl<'a, C> {
-    pub(super) fn try_parse_parenthesized_arrow_function_expression(
+    pub(super) fn try_parse_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
     ) -> Option<Expression<'a>> {
-        match self.is_parenthesized_arrow_function_expression() {
-            Tristate::False => None,
-            Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            )),
-            Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            ),
-        }
-    }
-
-    pub(super) fn try_parse_async_simple_arrow_function_expression(
-        &mut self,
-        allow_return_type_in_arrow_function: bool,
-    ) -> Option<Expression<'a>> {
-        if self.at(Kind::Async) && self.is_un_parenthesized_async_arrow_function_worker() {
-            let start = self.cur_start();
-            self.bump_any(); // bump `async`
-            // Lookahead established a single binding identifier followed by `=>`.
-            // An ordinary identifier cannot extend into a member, call, or binary expression here.
-            let expr = if self.at(Kind::Ident) {
-                self.parse_plain_identifier_expression()
-            } else {
-                self.parse_binary_expression_or_higher(Precedence::Comma)
-            };
-            let Expression::Identifier(ident) = &expr else {
-                return self.unexpected();
-            };
-            // It is a Syntax Error if ArrowParameters Contains AwaitExpression is true.
-            if ident.name == "await" {
-                self.error(diagnostics::identifier_async("await", ident.span));
+        let kind = match self.cur_kind() {
+            Kind::Async => {
+                // Both async arrow forms share the token after `async`. Classify them under
+                // one checkpoint instead of restarting lookahead for a single parameter.
+                let checkpoint = self.checkpoint();
+                self.bump_any(); // bump `async`
+                if self.cur_token().is_on_new_line() {
+                    self.rewind(checkpoint);
+                    return None;
+                }
+                let kind = match self.cur_kind() {
+                    Kind::LParen | Kind::LAngle => {
+                        self.is_parenthesized_arrow_function_expression_worker(true)
+                    }
+                    kind if kind.is_binding_identifier() => {
+                        self.bump_any();
+                        let is_arrow = self.at(Kind::Arrow);
+                        self.rewind(checkpoint);
+                        return is_arrow.then(|| {
+                            self.parse_async_simple_arrow_function_expression(
+                                allow_return_type_in_arrow_function,
+                            )
+                        });
+                    }
+                    _ => Tristate::False,
+                };
+                self.rewind(checkpoint);
+                kind
             }
-            return Some(self.parse_simple_arrow_function_expression(
-                start,
-                ident,
-                /* async */ true,
-                allow_return_type_in_arrow_function,
-            ));
-        }
-        None
-    }
-
-    fn is_parenthesized_arrow_function_expression(&mut self) -> Tristate {
-        match self.cur_kind() {
             Kind::LParen => {
                 // This check only reads lexer tokens. Keep one checkpoint for both the
                 // literal fast path and the remaining lookahead, so the first token is read once.
@@ -76,11 +61,48 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.lexer.rewind(checkpoint);
                 result
             }
-            Kind::LAngle | Kind::Async => {
-                self.lookahead(Self::is_parenthesized_arrow_function_expression_worker)
+            Kind::LAngle => {
+                self.lookahead(|p| p.is_parenthesized_arrow_function_expression_worker(false))
             }
             _ => Tristate::False,
+        };
+        match kind {
+            Tristate::False => None,
+            Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
+                allow_return_type_in_arrow_function,
+            )),
+            Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
+                allow_return_type_in_arrow_function,
+            ),
         }
+    }
+
+    fn parse_async_simple_arrow_function_expression(
+        &mut self,
+        allow_return_type_in_arrow_function: bool,
+    ) -> Expression<'a> {
+        let start = self.cur_start();
+        self.bump_any(); // bump `async`
+        // Lookahead established a single binding identifier followed by `=>`.
+        // An ordinary identifier cannot extend into a member, call, or binary expression here.
+        let expr = if self.at(Kind::Ident) {
+            self.parse_plain_identifier_expression()
+        } else {
+            self.parse_binary_expression_or_higher(Precedence::Comma)
+        };
+        let Expression::Identifier(ident) = &expr else {
+            return self.unexpected();
+        };
+        // It is a Syntax Error if ArrowParameters Contains AwaitExpression is true.
+        if ident.name == "await" {
+            self.error(diagnostics::identifier_async("await", ident.span));
+        }
+        self.parse_simple_arrow_function_expression(
+            start,
+            ident,
+            /* async */ true,
+            allow_return_type_in_arrow_function,
+        )
     }
 
     // `second` follows `(` and the lexer is positioned after it. Only lexer state changes;
@@ -170,18 +192,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn is_parenthesized_arrow_function_expression_worker(&mut self) -> Tristate {
-        let is_async = self.eat(Kind::Async);
-        if is_async {
-            if self.cur_token().is_on_new_line() {
-                return Tristate::False;
-            }
-            let kind = self.cur_kind();
-            if kind != Kind::LParen && kind != Kind::LAngle {
-                return Tristate::False;
-            }
-        }
-
+    fn is_parenthesized_arrow_function_expression_worker(&mut self, is_async: bool) -> Tristate {
         let first = self.cur_kind();
         self.bump_any();
         let second = self.cur_kind();
@@ -224,22 +235,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
             _ => unreachable!(),
         }
-    }
-
-    fn is_un_parenthesized_async_arrow_function_worker(&mut self) -> bool {
-        // Use lookahead to avoid checkpoint/rewind
-        self.lookahead(|parser| {
-            parser.bump(Kind::Async);
-            // If the "async" is followed by "=>" token then it is not a beginning of an async arrow-function
-            // but instead a simple arrow-function which will be parsed inside "parseAssignmentExpressionOrHigher"
-            if !parser.cur_token().is_on_new_line() && parser.cur_kind().is_binding_identifier() {
-                // Arrow before newline is checked in `parse_simple_arrow_function_expression`
-                parser.bump_any();
-                parser.at(Kind::Arrow)
-            } else {
-                false
-            }
-        })
     }
 
     pub(crate) fn parse_simple_arrow_function_expression(
