@@ -5,8 +5,7 @@ use crate::pipeline::{
     bytes::{is_digit, is_id_start, is_word},
     disambiguate::{not_operator_position, prev_sig},
     find::{
-        find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
-        find_opener_jsx7, find_opener6, find1, find2,
+        JSX_TAG, JSX_TEXT, OPENER, OPENER_JSX5, OPENER_JSX7, OPENER6, find, find_line_terminator,
     },
     lanes::Lanes,
     token_view,
@@ -106,10 +105,10 @@ pub(super) unsafe fn carve_jsx(
                 // The finders that also stop at `>` are only switched on by a `<!--` in a
                 // script (see `html_close`).
                 let s = match (in_brace, html_close) {
-                    (true, false) => find_opener_jsx7(src, n, i),
-                    (true, true) => find_opener6(src, n, i),
-                    (false, false) => find_opener_jsx5(src, n, i),
-                    (false, true) => find_opener(src, n, i),
+                    (true, false) => find(src, n, i, OPENER_JSX7),
+                    (true, true) => find(src, n, i, OPENER6),
+                    (false, false) => find(src, n, i, OPENER_JSX5),
+                    (false, true) => find(src, n, i, OPENER),
                 };
                 if s >= n {
                     break;
@@ -281,7 +280,7 @@ pub(super) unsafe fn carve_jsx(
                 }
             }
             JMode::Tag => {
-                let s = find_jsx_tag(src, n, i);
+                let s = find(src, n, i, JSX_TAG);
                 if s >= n {
                     break;
                 }
@@ -337,9 +336,9 @@ pub(super) unsafe fn carve_jsx(
                     let mut sub: Vec<u32> = Vec::new();
                     while p < n && depth != 0 {
                         let q = if !sub.is_empty() {
-                            find_opener6(src, n, p)
+                            find(src, n, p, OPENER6)
                         } else {
-                            find_opener(src, n, p)
+                            find(src, n, p, OPENER)
                         };
                         if q >= n {
                             p = n;
@@ -378,7 +377,7 @@ pub(super) unsafe fn carve_jsx(
                                     sub.push(0);
                                 }
                             }
-                            // Braces only reach here through `find_opener6`,
+                            // Braces only reach here through the OPENER6 search,
                             // which is only selected while a substitution is
                             // open - the guards say so rather than leaving it
                             // to the finder choice.
@@ -436,7 +435,7 @@ pub(super) unsafe fn carve_jsx(
                 match c {
                     b'"' | b'\'' => {
                         // JSX attribute string: no escapes, ends at next quote.
-                        let e = find1(src, n, s + 1, c);
+                        let e = find(src, n, s + 1, [c]);
                         if e >= n {
                             lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedString);
                         }
@@ -528,7 +527,7 @@ pub(super) unsafe fn carve_jsx(
                 }
             }
             JMode::Text => {
-                let s = find_jsx_text(src, n, i);
+                let s = find(src, n, i, JSX_TEXT);
                 let runend = if s < n { s } else { n };
                 if runend > text_start {
                     // One JTEXT token for the run; neutralize its start byte
@@ -588,7 +587,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                         let mut gp = tpos + 1;
                         loop {
-                            gp = find2(src, n, gp, b'>', b'/');
+                            gp = find(src, n, gp, [b'>', b'/']);
                             if gp >= n || *src.add(gp) == b'>' {
                                 break;
                             }
