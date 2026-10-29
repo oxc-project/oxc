@@ -1,8 +1,7 @@
 import { spawn } from "node:child_process";
 import { createHash } from "node:crypto";
 import { createReadStream } from "node:fs";
-import { stat } from "node:fs/promises";
-import { basename, dirname, join, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Worker } from "node:worker_threads";
 
@@ -23,25 +22,16 @@ export const targets = [
   "x86_64-pc-windows-msvc",
 ];
 
-export async function npmCli() {
-  // Invoke npm's JS entry point directly; spawning npm.cmd without a shell is
-  // unsupported on Windows. These are the official Node layouts on each OS.
-  const candidates = [
-    join(dirname(process.execPath), "node_modules/npm/bin/npm-cli.js"),
-    resolve(dirname(process.execPath), "../lib/node_modules/npm/bin/npm-cli.js"),
-  ];
-  if (process.env.npm_execpath && basename(process.env.npm_execpath) === "npm-cli.js") {
-    candidates.unshift(process.env.npm_execpath);
+export function pnpm(args, options) {
+  // `pnpm node` supplies the actual executable or JS entry point, including on
+  // Windows where spawning the pnpm.cmd shim without a shell is unsupported.
+  const executable = process.env.npm_execpath;
+  if (!executable || !basename(executable).startsWith("pnpm")) {
+    throw new Error("Run PGO tooling with pnpm node (or just pgo)");
   }
-  const results = await Promise.allSettled(candidates.map((path) => stat(path)));
-  for (const [index, result] of results.entries()) {
-    if (result.status === "fulfilled") {
-      if (result.value.isFile()) return candidates[index];
-    } else if (result.reason.code !== "ENOENT") {
-      throw result.reason;
-    }
-  }
-  throw new Error("Cannot locate npm beside the Node runtime");
+  return /\.[cm]?js$/.test(executable)
+    ? run(process.execPath, [executable, ...args], options)
+    : run(executable, args, options);
 }
 
 export function largeStackWorker(url, options = {}) {
