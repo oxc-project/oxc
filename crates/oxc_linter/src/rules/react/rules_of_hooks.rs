@@ -1,7 +1,8 @@
 use std::borrow::Cow;
 
 use lazy_regex::Regex;
-use rustc_hash::{FxBuildHasher, FxHashSet};
+use rustc_hash::FxHashSet;
+use smallvec::SmallVec;
 
 use oxc_ast::{
     AstKind, FunctionKind,
@@ -616,11 +617,10 @@ fn has_conditional_path_accept_throw(
     let from_graph_id = nodes.cfg_id(from.id());
     let to_graph_id = nodes.cfg_id(to.id());
     let graph = cfg.graph();
-    let block_count = graph.node_count();
-    let mut stack = Vec::with_capacity(block_count);
+    // Grow with the explored states, not the entire file's CFG.
+    let mut stack = SmallVec::<[_; 8]>::new();
     stack.push((from_graph_id, false));
-    let mut visited =
-        FxHashSet::with_capacity_and_hasher(block_count.saturating_mul(2), FxBuildHasher);
+    let mut visited = FxHashSet::default();
 
     while let Some((block_id, passed_hook)) = stack.pop() {
         if !visited.insert((block_id, passed_hook)) {
