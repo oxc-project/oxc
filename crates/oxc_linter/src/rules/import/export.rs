@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 use rustc_hash::{FxHashMap, FxHashSet};
 
 use oxc_diagnostics::{LabeledSpan, OxcDiagnostic};
@@ -65,14 +63,10 @@ impl Rule for Export {
         diagnose_duplicate_named_exports(ctx, module_record);
 
         let mut all_export_names = FxHashMap::default();
-        let mut visited = FxHashSet::default();
-
         module_record.star_export_entries.iter().for_each(|star_export_entry| {
             if star_export_entry.is_type {
                 return;
             }
-            let mut export_names = FxHashSet::default();
-
             let Some(module_request) = &star_export_entry.module_request else {
                 return;
             };
@@ -81,7 +75,16 @@ impl Rule for Export {
                 return;
             };
 
-            walk_exported_recursive(&remote_module_record, &mut export_names, &mut visited);
+            // Include direct exports as well as names forwarded through `export *`.
+            // The shared module-record traversal handles cycles and caches the result.
+            let export_names: FxHashSet<_> = remote_module_record
+                .exported_bindings
+                .keys()
+                .chain(remote_module_record.exported_bindings_from_star_export().values().flatten())
+                // `export *` never forwards the default export, including named aliases.
+                .filter(|name| name.as_str() != "default")
+                .cloned()
+                .collect();
 
             if export_names.is_empty() {
                 ctx.diagnostic(no_named_export(module_request.name(), module_request.span));
@@ -168,36 +171,6 @@ fn is_named_export_specifier(ctx: &LintContext<'_>, export_entry: &ExportEntry) 
 
     ctx.find_next_token_within(export_entry.statement_span.start, export_entry.span.start, "{")
         .is_some()
-}
-
-fn walk_exported_recursive(
-    module_record: &ModuleRecord,
-    result: &mut FxHashSet<CompactStr>,
-    visited: &mut FxHashSet<PathBuf>,
-) {
-    let path = &module_record.resolved_absolute_path;
-    if path.components().any(|c| match c {
-        std::path::Component::Normal(p) => p == std::ffi::OsStr::new("node_modules"),
-        _ => false,
-    }) {
-        return;
-    }
-    if !visited.insert(path.clone()) {
-        return;
-    }
-    for name in module_record.exported_bindings.keys() {
-        result.insert(name.clone());
-    }
-    for export_entry in &module_record.star_export_entries {
-        let Some(module_request) = &export_entry.module_request else {
-            continue;
-        };
-        let Some(remote_module_record) = module_record.get_loaded_module(module_request.name())
-        else {
-            continue;
-        };
-        walk_exported_recursive(&remote_module_record, result, visited);
-    }
 }
 
 #[test]
@@ -430,4 +403,39 @@ fn test() {
             .change_rule_path("export-star-4/index.js")
             .test();
     }
+}
+
+#[test]
+fn test_external_star_exports() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        // Named exports in dependencies must be collected, not skipped.
+        "export * from 'export-star-regression';",
+        // Repeated and overlapping paths must not produce an empty export set.
+        "export * from 'export-star-regression'; export * from 'export-star-regression';",
+        "export * from 'export-star-regression'; export * from 'export-star-regression/nested.js';",
+        // A dependency's default alias is not forwarded by `export *`.
+        "export * from 'export-star-regression'; const own = 1; export { own as default };",
+        // Preserve both explicit type-only and ordinary TypeScript re-exports.
+        "export type * from 'export-star-regression/types.ts';",
+        "export * from 'export-star-regression/types.ts';",
+        // Cyclic graphs terminate and remain valid through multiple entry points.
+        "export * from 'export-star-regression/cycle-a.js';",
+        "export * from 'export-star-regression/cycle-a.js'; export * from 'export-star-regression/cycle-b.js';",
+    ];
+    let fail = vec![
+        // Verify names found directly and through transitive star exports.
+        "export * from 'export-star-regression'; export const value = 2;",
+        "export * from 'export-star-regression'; export const nested = 3;",
+        // A default-only module has no names that `export *` can forward.
+        "export * from 'export-star-regression/default-only.js';",
+        // The traversal must find names across the cycle, not merely terminate.
+        "export * from 'export-star-regression/cycle-a.js'; export const b = 3;",
+    ];
+    Tester::new(Export::NAME, Export::PLUGIN, pass, fail)
+        .with_import_plugin(true)
+        .change_rule_path("index.ts")
+        .with_snapshot_suffix("external_star_exports")
+        .test_and_snapshot();
 }
