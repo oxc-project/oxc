@@ -317,6 +317,15 @@ fn classify(bytes: &[u8], is_block: bool, lic: bool) -> CommentContent {
             }
             return if lic { CommentContent::Legal } else { CommentContent::None };
         }
+        b't' => {
+            if bytes[start..].starts_with(b"turbopack")
+                && start + 9 < bytes.len()
+                && bytes[start + 9].is_ascii_uppercase()
+            {
+                return CommentContent::Turbopack;
+            }
+            return if lic { CommentContent::Legal } else { CommentContent::None };
+        }
         b'v' | b'c' | b'n' | b'i' => {
             let rest = &bytes[start..];
             if rest.starts_with(b"v8 ignore")
@@ -450,5 +459,24 @@ mod tests {
         {
             assert_eq!(classify(source, true, false), CommentContent::None);
         }
+    }
+
+    #[test]
+    fn turbopack() {
+        for (source, is_block) in [
+            (b" turbopackChunkName: \"x\" ".as_slice(), true),
+            (b"turbopackOptional: true".as_slice(), true),
+            (b"\tturbopackIgnore: true\n".as_slice(), true),
+            (b" turbopackIgnore: true".as_slice(), false),
+        ] {
+            assert_eq!(classify(source, is_block, false), CommentContent::Turbopack);
+        }
+
+        for source in [b" turbopack ".as_slice(), b" turbopack", b" turbopackignore: true"] {
+            assert_eq!(classify(source, true, false), CommentContent::None);
+        }
+
+        // Without a magic comment, `@license` or `@preserve` still makes it legal
+        assert_eq!(classify(b" turbopack @license ", true, true), CommentContent::Legal);
     }
 }
