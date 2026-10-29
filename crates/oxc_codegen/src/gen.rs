@@ -1840,17 +1840,28 @@ impl Gen for ObjectProperty<'_> {
         }
 
         let mut shorthand = false;
+        let mut computed = self.computed;
+        let mut proto_shorthand = false;
         if let PropertyKey::StaticIdentifier(key) = &self.key {
             if key.name == "__proto__" {
-                shorthand = self.shorthand;
+                if self.shorthand
+                    && let Expression::Identifier(ident) = self.value.without_parentheses()
+                    && p.get_identifier_reference_name(ident) == "__proto__"
+                {
+                    shorthand = true;
+                } else if self.shorthand {
+                    // A shorthand `__proto__` property creates an own data property. If
+                    // compression or mangling changes its value, preserve that key rather
+                    // than emitting a proto setter or an invalid shorthand property.
+                    computed = true;
+                    proto_shorthand = true;
+                }
             } else if let Expression::Identifier(ident) = self.value.without_parentheses()
                 && key.name == p.get_identifier_reference_name(ident)
             {
                 shorthand = true;
             }
         }
-
-        let mut computed = self.computed;
 
         // "{ -1: 0 }" must be printed as "{ [-1]: 0 }"
         // "{ 1/0: 0 }" must be printed as "{ [1/0]: 0 }"
@@ -1865,7 +1876,11 @@ impl Gen for ObjectProperty<'_> {
             if computed {
                 p.print_ascii_byte(b'[');
             }
-            self.key.print(p, ctx);
+            if proto_shorthand {
+                p.print_string("__proto__");
+            } else {
+                self.key.print(p, ctx);
+            }
             if computed {
                 p.print_ascii_byte(b']');
             }
