@@ -26,6 +26,7 @@ use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
 use oxc_formatter_toml::TomlFormatOptions;
 use oxc_formatter_yaml::YamlFormatOptions;
 
+use super::jsdoc_fence::XxxInJsdocFence;
 use crate::core::{
     language::{Route, route_embedded},
     options::{
@@ -341,20 +342,19 @@ pub fn build_dispatcher(
                         dispatch_config.toml_options(),
                     ),
                     NativeLanguage::Html(variant) => {
-                        // Embedded in a JS template literal or a Markdown code block;
-                        // `None` is a part formatted on its own (a JSDoc code block).
-                        // An HTML parent added later needs its marker here, or reads as standalone.
-                        let embedded_in = request
-                            .parent_context_as::<HtmlInJsTemplate>()
-                            .map(|c| HtmlishEmbeddedIn {
-                                indent_multiple_roots: c.indent_multiple_roots,
-                                placeholder: Some(c.placeholder),
-                            })
-                            .or_else(|| {
-                                request
-                                    .parent_context_as::<XxxInMarkdownCodeBlock>()
-                                    .map(|_| HtmlishEmbeddedIn::default())
-                            });
+                        // Every part is embedded in its parent (Prettier's `parentParser`),
+                        // but a JSDoc code block, formatted on its own
+                        let embedded_in =
+                            if let Some(c) = request.parent_context_as::<HtmlInJsTemplate>() {
+                                Some(HtmlishEmbeddedIn {
+                                    indent_multiple_roots: c.indent_multiple_roots,
+                                    placeholder: Some(c.placeholder),
+                                })
+                            } else if request.parent_context_as::<XxxInJsdocFence>().is_some() {
+                                None
+                            } else {
+                                Some(HtmlishEmbeddedIn::default())
+                            };
                         oxc_formatter_htmlish::format_to_ir(
                             session,
                             text,
