@@ -66,6 +66,19 @@ fn unterminated_block_comment() {
 }
 
 #[test]
+fn unterminated_block_comment_is_not_recorded() {
+    for source in ["/*\n\n", "/*\n\n\n", "/*!a", "x /* abc", "/* a */ /* b"] {
+        let mut buf = source.as_bytes().to_vec();
+        buf.resize(buf.len() + PAD, 0);
+        let (res, arena) = lex_utf8(&buf, source.len() as u32, LexOptions::default());
+        let codes: Vec<_> = res.diagnostics().iter().map(|d| d.code).collect();
+        assert_eq!(codes, [DiagCode::UnterminatedBlockComment], "{source:?}");
+        let recorded = usize::from(source.starts_with("/* a */"));
+        assert_eq!(res.comments(&arena).len(), recorded, "{source:?}");
+    }
+}
+
+#[test]
 fn unterminated_regex() {
     assert_eq!(codes("x = /abc"), [DiagCode::UnterminatedRegexp]);
 }
