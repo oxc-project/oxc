@@ -53,11 +53,12 @@ impl<'a, 'b> LiteralParser<'a, 'b> {
     }
 }
 
-/// Regular expression parser for `new RegExp("constrocutor")` usage.
-/// - `pattern_text`: the string literal text as 1st argument of `RegExp` constructor
-/// - `flags_text`: the string literal text as 2nd argument of `RegExp` constructor
+/// Regular expression parser for `RegExp` constructor arguments.
+/// - `pattern_text`: the source text of the first argument
+/// - `flags_text`: the source text of the second argument
 ///
-/// String literal text should be in the form of `'...'` or `"..."` and may contain escape sequences.
+/// Arguments must be quoted strings (`'...'` or `"..."`) or no-substitution
+/// templates with a defined cooked value. Escape sequences are decoded.
 pub struct ConstructorParser<'a> {
     allocator: &'a Allocator,
     pattern_text: &'a str,
