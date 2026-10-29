@@ -5,7 +5,7 @@ mod markdown;
 
 use oxc_allocator::{Allocator, ArenaStringBuilder, ArenaVec};
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, format_element::TextWidth, map_text_in_ir};
+use oxc_formatter_core::{FormatElement, map_text_in_ir};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -62,7 +62,7 @@ fn template_comment_language(
 /// Try to format a template literal with the embedded formatter if supported.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 pub(super) fn try_format_template_literal<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
+    template: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     // Without a dispatcher (`embeddedLanguageFormatting: off`), embeds print verbatim
@@ -82,16 +82,16 @@ pub(super) fn try_format_template_literal<'a>(
 /// Try to format a tagged template with the embedded formatter if supported.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 pub(super) fn try_format_embedded_template<'a>(
-    tagged: &AstNode<'a, TaggedTemplateExpression<'a>>,
+    tagged: &AstNode<'_, 'a, TaggedTemplateExpression<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if !f.session().has_dispatcher() {
         return false;
     }
     match tagged_template_language(tagged) {
-        Some(EmbedLanguage::Css) => css::format_css_doc(tagged.quasi(), f),
-        Some(EmbedLanguage::Graphql) => graphql::format_graphql_doc(tagged.quasi(), f),
-        Some(EmbedLanguage::Html) => html::format_html_doc(tagged.quasi(), f, false),
+        Some(EmbedLanguage::Css) => css::format_css_doc(&tagged.quasi(), f),
+        Some(EmbedLanguage::Graphql) => graphql::format_graphql_doc(&tagged.quasi(), f),
+        Some(EmbedLanguage::Html) => html::format_html_doc(&tagged.quasi(), f, false),
         Some(EmbedLanguage::Markdown) => markdown::try_embed_markdown(tagged, f),
         None => false,
     }
@@ -170,7 +170,7 @@ pub fn embed_hug(
 /// Try to format a template literal inside a `graphql()` function call.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 fn try_format_graphql_call<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
+    template: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     let AstNodes::CallExpression(call) = template.parent() else { return false };
@@ -187,7 +187,7 @@ fn try_format_graphql_call<'a>(
 /// - HTML
 /// - GraphQL
 fn try_format_comment_embedded<'a>(
-    template: &AstNode<'a, TemplateLiteral<'a>>,
+    template: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     match template_comment_language(template, f) {
@@ -200,7 +200,7 @@ fn try_format_comment_embedded<'a>(
 /// Try to format a template literal inside css prop or styled-jsx with the embedded formatter.
 /// Returns `true` if formatting was attempted, `false` if not applicable.
 fn try_format_css_template<'a>(
-    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+    template_literal: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     if !is_in_css_jsx(template_literal) {
@@ -210,7 +210,7 @@ fn try_format_css_template<'a>(
 }
 
 /// Check if the template literal is inside a `css` prop or `<style jsx>` element.
-fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
+fn is_in_css_jsx<'a>(node: &AstNode<'_, 'a, TemplateLiteral<'a>>) -> bool {
     let AstNodes::JSXExpressionContainer(container) = node.parent() else {
         return false;
     };
@@ -241,7 +241,7 @@ fn is_in_css_jsx<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> bool {
 /// Try to format a template literal inside Angular @Component's template/styles property.
 /// Returns `true` if formatting was performed, `false` if not applicable.
 fn try_format_angular_component<'a>(
-    template_literal: &AstNode<'a, TemplateLiteral<'a>>,
+    template_literal: &AstNode<'_, 'a, TemplateLiteral<'a>>,
     f: &mut JsFormatter<'_, 'a>,
 ) -> bool {
     match get_angular_component_property(template_literal) {
@@ -252,7 +252,9 @@ fn try_format_angular_component<'a>(
 }
 
 /// Detect Angular `@Component({ template: \`...\`, styles: \`...\` })`.
-fn get_angular_component_property<'a>(node: &AstNode<'a, TemplateLiteral<'a>>) -> Option<&'a str> {
+fn get_angular_component_property<'a>(
+    node: &AstNode<'_, 'a, TemplateLiteral<'a>>,
+) -> Option<&'a str> {
     let prop = match node.parent() {
         AstNodes::ObjectProperty(prop) => prop,
         AstNodes::ArrayExpression(arr) => {
@@ -371,6 +373,11 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
 /// Re-escape template-literal characters (`` ` ``, `${`, `\`) in every `Text` element of an embedded IR.
 /// The IR is re-inserted into a JS template literal built from `.cooked` values,
 /// so these characters need escaping.
+///
+/// NOTE: This round-trip is lossy for any other JS escape in `.raw`, same as Prettier.
+/// e.g. `\uD83D\uDE00` is printed as `😀`, `\u200B` as an invisible character.
+/// The cooked value stays the same, but `.raw` and the author's intent do not.
+/// Embedding only quasis whose `.raw` equals the re-escaped `.cooked` would keep them as-is.
 fn escape_template_chars_in_ir<'a>(
     ir: ArenaVec<'a, FormatElement<'a>>,
     f: &JsFormatter<'_, 'a>,
@@ -396,7 +403,7 @@ fn escape_text_in_ir<'a>(
     let indent_width = f.options().indent_width;
     map_text_in_ir(ir, allocator, &mut |text, out| {
         let Some(text) = escape(text, allocator) else { return false };
-        out.push(FormatElement::Text { text, width: TextWidth::from_text(text, indent_width) });
+        out.push(FormatElement::text(text, indent_width));
         true
     })
 }

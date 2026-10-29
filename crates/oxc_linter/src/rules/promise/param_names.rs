@@ -80,6 +80,7 @@ declare_oxc_lint!(
     ParamNames,
     promise,
     style,
+    recommended,
     config = ParamNamesConfig,
     version = "0.6.1",
     short_description = "Enforce standard parameter names for Promise constructors.",

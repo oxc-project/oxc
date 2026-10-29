@@ -84,18 +84,14 @@ impl Rule for NoCaseDeclarations {
             for stmt in consequent {
                 match stmt {
                     Statement::FunctionDeclaration(d) => {
-                        let start = d.span.start;
-                        let end = start + 8;
-                        let span = Span::new(start, end);
+                        let span = Span::sized(d.span.start, 8);
                         report_with_add_braces_suggestion(ctx, span, switch_case);
                     }
                     Statement::ClassDeclaration(d) => {
-                        let start = d.span.start;
-                        let end = start + 5;
-                        let span = Span::new(start, end);
+                        let span = Span::sized(d.span.start, 5);
                         report_with_add_braces_suggestion(ctx, span, switch_case);
                     }
-                    Statement::VariableDeclaration(var) if var.kind.is_lexical() => {
+                    Statement::VariableDeclaration(var) => {
                         let start = var.span.start;
                         let len = match var.kind {
                             VariableDeclarationKind::Const | VariableDeclarationKind::Using => 5,
@@ -106,10 +102,9 @@ impl Rule for NoCaseDeclarations {
                                     .trim_end()
                                     .len() as u32
                             }
-                            VariableDeclarationKind::Var => unreachable!(),
+                            VariableDeclarationKind::Var => continue,
                         };
-                        let end = start + len;
-                        let span = Span::new(start, end);
+                        let span = Span::sized(start, len);
                         report_with_add_braces_suggestion(ctx, span, switch_case);
                     }
                     _ => {}

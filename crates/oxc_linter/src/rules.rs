@@ -299,6 +299,7 @@ pub(crate) mod typescript {
     pub mod no_unsafe_assignment;
     pub mod no_unsafe_call;
     pub mod no_unsafe_declaration_merging;
+    pub mod no_unsafe_enum_assignment;
     pub mod no_unsafe_enum_comparison;
     pub mod no_unsafe_function_type;
     pub mod no_unsafe_member_access;

@@ -12,6 +12,7 @@ declare_oxc_lint!(
     NoStandaloneExpect,
     vitest,
     correctness,
+    recommended,
     config = SharedNoStandaloneExpect::NoStandaloneExpectConfig,
     docs = SharedNoStandaloneExpect::DOCUMENTATION,
     version = "0.0.13",

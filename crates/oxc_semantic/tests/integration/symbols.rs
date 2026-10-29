@@ -100,6 +100,36 @@ fn test_var_simple() {
 }
 
 #[test]
+fn test_hoisted_var_does_not_reuse_block_type_binding() {
+    for source in [
+        "function f() { { type X = string; var X = 1; type Y = X; X; } X; }",
+        "function f() { { interface X {} var X = 1; type Y = X; X; } X; }",
+        "function f() { { type X = string; { var X = 1; } type Y = X; X; } X; }",
+    ] {
+        let tester = SemanticTester::ts(source);
+        let semantic = tester.build();
+        let scoping = semantic.scoping();
+        let symbols = scoping
+            .symbol_ids()
+            .filter(|&symbol| scoping.symbol_name(symbol) == "X")
+            .collect::<Vec<_>>();
+        assert_eq!(symbols.len(), 2, "{source}");
+        let value_symbol = symbols
+            .iter()
+            .copied()
+            .find(|&symbol| scoping.symbol_flags(symbol).is_function_scoped_declaration())
+            .unwrap();
+        let type_symbol = symbols.into_iter().find(|&symbol| symbol != value_symbol).unwrap();
+        assert_ne!(scoping.symbol_scope_id(value_symbol), scoping.symbol_scope_id(type_symbol));
+        assert_eq!(scoping.get_resolved_references(value_symbol).count(), 2);
+        assert_eq!(scoping.get_resolved_references(type_symbol).count(), 1);
+        assert!(scoping.get_resolved_references(value_symbol).all(Reference::is_read));
+        assert!(scoping.get_resolved_references(type_symbol).all(Reference::is_type));
+        assert!(!scoping.root_unresolved_references().contains_key("X"));
+    }
+}
+
+#[test]
 fn test_var_read_write() {
     SemanticTester::js("let x; x += 1")
         .has_root_symbol("x")
@@ -599,6 +629,16 @@ fn test_function_var_redeclaration_in_module() {
     // Both orderings should produce a redeclaration error in module mode
     SemanticTester::js("function a() {} var a = ''").has_error("already been declared");
     SemanticTester::js("var a = ''; function a() {}").has_error("already been declared");
+}
+
+#[test]
+fn test_enum_member_redeclaration_with_lone_surrogate() {
+    // Enum member symbols store UTF-8 names, so the checker compares these names itself.
+    SemanticTester::ts(r#"enum A { "\uD800" = 1, "\uD800" = 2 }"#)
+        .has_error("Identifier `\\ud800` has already been declared");
+    SemanticTester::ts(r#"enum B { ["\uDC00"] = 1, [`\uDC00`] = 2 }"#)
+        .has_error("Identifier `\\udc00` has already been declared");
+    SemanticTester::ts(r#"enum C { "\uD800" = 1, "\uDC00" = 2, "\uFFFD" = 3 }"#).build();
 }
 
 // https://github.com/oxc-project/oxc/issues/15961

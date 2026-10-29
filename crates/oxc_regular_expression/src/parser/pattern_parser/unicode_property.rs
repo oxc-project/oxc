@@ -5,11 +5,8 @@ pub fn is_valid_unicode_property(name: &str, value: &str) -> bool {
     if matches!(name, "General_Category" | "gc") {
         return GC_PROPERTY_VALUES.contains(value);
     }
-    if matches!(name, "Script" | "sc") {
+    if matches!(name, "Script" | "sc" | "Script_Extensions" | "scx") {
         return SC_PROPERTY_VALUES.contains(value);
-    }
-    if matches!(name, "Script_Extensions" | "scx") {
-        return SC_PROPERTY_VALUES.contains(value) || SCX_PROPERTY_VALUES.contains(value);
     }
     false
 }
@@ -243,10 +240,6 @@ static SC_PROPERTY_VALUES: Set<&'static str> = phf_set! {
     "Zinh", "Inherited", "Qaai",
     "Zyyy", "Common",
     "Zzzz", "Unknown",
-};
-
-static SCX_PROPERTY_VALUES: Set<&'static str> = phf_set! {
-    // Empty
 };
 
 // Table 66: Binary Unicode property aliases

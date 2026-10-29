@@ -989,6 +989,18 @@
       },
       "additionalProperties": false
     },
+    "AwaitThenableConfig": {
+      "type": "object",
+      "properties": {
+        "allowMixedPromiseArrays": {
+          "description": "Allow Promise aggregators such as `Promise.all` to receive mixed arrays or\niterables containing at least one potentially Promise-like value.\nInputs containing only synchronous values are still reported.",
+          "default": false,
+          "type": "boolean",
+          "markdownDescription": "Allow Promise aggregators such as `Promise.all` to receive mixed arrays or\niterables containing at least one potentially Promise-like value.\nInputs containing only synchronous values are still reported."
+        }
+      },
+      "additionalProperties": false
+    },
     "BanConfigValue": {
       "description": "Represents the different ways a ban config can be specified in JSON.\nCan be:\n- `true` - ban with default message\n- A string - ban with custom message\n- An object with `message` and optional `fixWith` and `suggest`",
       "anyOf": [
@@ -1160,6 +1172,26 @@
         "type": "string"
       },
       "markdownDescription": "The rule takes a single option - an array of possible callback names - which may include object methods. The default callback names are `callback`, `cb`, `next`."
+    },
+    "CapitalizedCallsConfig": {
+      "type": "object",
+      "properties": {
+        "allow": {
+          "description": "Exact names of capitalized functions that may be called directly.\nForwarded to the React Compiler's `validateNoCapitalizedCalls`\nenvironment option.",
+          "default": [],
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "markdownDescription": "Exact names of capitalized functions that may be called directly.\nForwarded to the React Compiler's `validateNoCapitalizedCalls`\nenvironment option."
+        },
+        "allowPattern": {
+          "description": "A regex pattern; capitalized functions whose name matches may be called\ndirectly, checked alongside `allow`. Useful when a codebase has a\nnaming convention for capitalized non-component factories, such as\ngenerated event or schema builders (e.g. `\"Event$\"`).",
+          "type": "string",
+          "markdownDescription": "A regex pattern; capitalized functions whose name matches may be called\ndirectly, checked alongside `allow`. Useful when a codebase has a\nnaming convention for capitalized non-component factories, such as\ngenerated event or schema builders (e.g. `\"Event$\"`)."
+        }
+      },
+      "additionalProperties": false
     },
     "CapitalizedCommentsOptions": {
       "description": "Configuration for the capitalized-comments rule.\n\nThe first element specifies whether comments should `\"always\"` or `\"never\"`\nbegin with a capital letter. The second element is an optional object\ncontaining additional options.",
@@ -6568,7 +6600,24 @@
           ]
         },
         "react/capitalized-calls": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/CapitalizedCallsConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "react/checked-requires-onchange-or-readonly": {
           "anyOf": [
@@ -7556,7 +7605,24 @@
           ]
         },
         "typescript/await-thenable": {
-          "$ref": "#/definitions/RuleNoConfig"
+          "anyOf": [
+            {
+              "$ref": "#/definitions/RuleNoConfig"
+            },
+            {
+              "type": "array",
+              "items": [
+                {
+                  "$ref": "#/definitions/AllowWarnDeny"
+                },
+                {
+                  "$ref": "#/definitions/AwaitThenableConfig"
+                }
+              ],
+              "maxItems": 2,
+              "minItems": 2
+            }
+          ]
         },
         "typescript/ban-ts-comment": {
           "anyOf": [
@@ -8340,6 +8406,9 @@
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-unsafe-declaration-merging": {
+          "$ref": "#/definitions/RuleNoConfig"
+        },
+        "typescript/no-unsafe-enum-assignment": {
           "$ref": "#/definitions/RuleNoConfig"
         },
         "typescript/no-unsafe-enum-comparison": {

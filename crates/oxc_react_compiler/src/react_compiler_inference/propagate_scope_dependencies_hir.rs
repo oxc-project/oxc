@@ -18,16 +18,15 @@ use oxc_index::IndexVec;
 use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 use std::collections::BTreeSet;
-use std::ptr::eq;
 
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::visitors::{ScopeBlockInfo, ScopeBlockTraversal};
 use crate::react_compiler_hir::{
     BasicBlock, BlockId, DeclarationId, DependencyPathEntry, EvaluationOrder, FunctionId,
     GotoVariant, HirFunction, IdentifierId, Instruction, InstructionId, InstructionKind,
-    InstructionValue, JsxAttribute, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place,
-    PlaceOrSpread, PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration,
-    ReactiveScopeDependency, ScopeId, Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
+    InstructionValue, ManualMemoDependencyRoot, MutableRange, ParamPattern, Place, PlaceOrSpread,
+    PropertyLiteral, ReactFunctionType, ReactiveScopeDeclaration, ReactiveScopeDependency, ScopeId,
+    Terminal, Type, is_ref_value_type, is_use_ref_type, visitors,
 };
 use crate::react_compiler_optimization::dead_code_elimination::find_semantic_only_caught_instructions;
 use oxc_span::Span;
@@ -568,7 +567,7 @@ fn traverse_optional_block<'a>(
     func: &HirFunction<'a>,
     ctx: &mut OptionalTraversalContext<'a>,
     outer_alternate: Option<BlockId>,
-) -> Option<IdentifierId> {
+) -> Option<(IdentifierId, BlockId)> {
     ctx.seen_optionals.insert(optional_block.id);
 
     let (test_block_id, is_optional, fallthrough_block_id) = match &optional_block.terminal {
@@ -577,8 +576,9 @@ fn traverse_optional_block<'a>(
     };
 
     let maybe_test_block = func.body.blocks.get(&test_block_id)?;
+    let mut inner_guard = None;
 
-    let (test_terminal, base_object) = match &maybe_test_block.terminal {
+    let (test_block, base_object) = match &maybe_test_block.terminal {
         Terminal::Branch { .. } => {
             // Base case: optional must be true
             if !is_optional {
@@ -638,7 +638,7 @@ fn traverse_optional_block<'a>(
                 path,
                 span: first_place.span,
             };
-            (&maybe_test_block.terminal, base)
+            (maybe_test_block, base)
         }
         Terminal::Optional {
             fallthrough: inner_fallthrough, optional: _inner_optional, ..
@@ -655,7 +655,14 @@ fn traverse_optional_block<'a>(
             };
             let inner_optional_result =
                 traverse_optional_block(maybe_test_block, func, ctx, inner_alternate);
-            let inner_optional_id = inner_optional_result?;
+            let (inner_optional_id, inner_guard_block_id) = inner_optional_result?;
+            if !is_optional {
+                // Keep the guard unless the continuation can be represented as
+                // a property path. This also covers independently lowered TS wrappers.
+                ctx.processed_instrs_in_optional
+                    .remove(&ProcessedInstr::Terminal(inner_guard_block_id));
+                inner_guard = Some(inner_guard_block_id);
+            }
 
             // Check that inner optional is part of the same chain
             let test_ident = match &test_block.terminal {
@@ -677,10 +684,11 @@ fn traverse_optional_block<'a>(
             let base = ctx.temporaries_read_in_optional[inner_optional_id]
                 .as_ref()
                 .map(|d| d.clone_in(ctx.alloc))?;
-            (&test_block.terminal, base)
+            (test_block, base)
         }
         _ => return None,
     };
+    let test_terminal = &test_block.terminal;
 
     // Verify alternate matches outer_alternate if present
     if let Some(outer_alt) = outer_alternate {
@@ -719,56 +727,16 @@ fn traverse_optional_block<'a>(
         span: match_result.property_load_span,
     };
 
+    if let Some(inner_guard) = inner_guard {
+        ctx.processed_instrs_in_optional.insert(ProcessedInstr::Terminal(inner_guard));
+    }
     ctx.processed_instrs_in_optional
         .insert(ProcessedInstr::Instruction(match_result.store_local_lvalue_id));
-    ctx.processed_instrs_in_optional.insert(ProcessedInstr::Terminal(match &test_terminal {
-        Terminal::Branch { .. } => {
-            // Find the block ID for this terminal
-            // The terminal belongs to either maybe_test_block or the fallthrough block of inner optional
-            // We need to identify which block this terminal belongs to.
-            // For the base case, it's test_block_id.
-            // For nested optional, it's the fallthrough block.
-            // We'll use the block_id approach based on what we know.
-            // Actually, we tracked the terminal by its block, so we need to find which block
-            // contains this terminal. Let's use a pragmatic approach:
-            // The test terminal we matched was from maybe_test_block or from the inner fallthrough block.
-            // We'll search for it.
-
-            // For the base case (Branch terminal at maybe_test_block), block_id = test_block_id
-            // For the nested case, the test terminal is at the fallthrough block of inner optional
-            // In either case, we stored the terminal as test_terminal which comes from a known block.
-            // We need to find the block that owns this terminal.
-
-            // Let's take a simpler approach: find the block whose terminal matches
-            // This is the block we got test_terminal from.
-            // In the first branch of the match, test_terminal = &maybe_test_block.terminal
-            //   and maybe_test_block.id = test_block_id
-            // In the second branch, test_terminal = &test_block.terminal
-            //   and test_block = func.body.blocks.get(inner_fallthrough)
-            // We can't easily tell which case we're in here since we're past the match.
-
-            // Actually, since test_terminal is a reference to a terminal in a block,
-            // we can just look up which block it belongs to by finding blocks whose terminal
-            // pointer matches. But that's expensive. Instead, let's use the block approach
-            // and find the block from the terminal's properties.
-
-            // For simplicity, use a sentinel approach: just check all blocks.
-            // This is O(n) but only happens for optional chains.
-            let mut found_block = BlockId::from_usize(0);
-            for (bid, blk) in &func.body.blocks {
-                if eq(&blk.terminal, test_terminal) {
-                    found_block = *bid;
-                    break;
-                }
-            }
-            found_block
-        }
-        _ => BlockId::from_usize(0),
-    }));
+    ctx.processed_instrs_in_optional.insert(ProcessedInstr::Terminal(test_block.id));
     ctx.temporaries_read_in_optional[match_result.consequent_id] = Some(load.clone_in(ctx.alloc));
     ctx.temporaries_read_in_optional[match_result.property_id] = Some(load);
 
-    Some(match_result.consequent_id)
+    Some((match_result.consequent_id, test_block.id))
 }
 
 // =============================================================================
@@ -1098,30 +1066,9 @@ fn get_assumed_invoked_functions_impl(
                         }
                     }
                 }
-                InstructionValue::JsxExpression { props, children, .. } => {
-                    // Assume JSX attributes and children are safe to invoke
-                    for prop in props {
-                        if let JsxAttribute::Attribute { place, .. } = prop
-                            && let Some(entry) = temporaries.get(&place.identifier)
-                        {
-                            hoistable.insert(entry.0);
-                        }
-                    }
-                    if let Some(children) = children {
-                        for child in children {
-                            if let Some(entry) = temporaries.get(&child.identifier) {
-                                hoistable.insert(entry.0);
-                            }
-                        }
-                    }
-                }
-                InstructionValue::JsxFragment { children, .. } => {
-                    for child in children {
-                        if let Some(entry) = temporaries.get(&child.identifier) {
-                            hoistable.insert(entry.0);
-                        }
-                    }
-                }
+                // Unlike the TS implementation, functions passed to JSX are not assumed
+                // invoked: event handlers run after render, if at all, so their property
+                // reads must not become cache guards that run during render.
                 InstructionValue::FunctionExpression { lowered_func, .. } => {
                     // Recursively traverse into other function expressions
                     // TS passes the shared temporaries map to the recursive call
@@ -1607,6 +1554,25 @@ impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
     }
 
     fn add_dependency(&mut self, dep: ReactiveScopeDependency<'a>) {
+        let mut hoistable_ptr = self.hoistable_roots.get(&dep.identifier).map(|(node, _)| node);
+        let mut path_len = dep.path.len();
+        for (index, entry) in dep.path.iter().enumerate() {
+            if !matches!(
+                hoistable_ptr.map(|node| node.access_type),
+                Some(HoistableAccessType::NonNull)
+            ) && !entry.optional
+            {
+                // A conditionally evaluated continuation cannot be hoisted. Track
+                // the last optional guard rather than its possibly undefined result,
+                // so a cached short circuit cannot hide a later throwing access.
+                path_len =
+                    dep.path[..index].iter().rposition(|entry| entry.optional).unwrap_or(index);
+                break;
+            }
+            hoistable_ptr = hoistable_ptr
+                .and_then(|node| node.properties.get(&entry.property).map(|entry| &entry.node));
+        }
+
         let root = self.dep_roots.entry(dep.identifier).or_insert_with(|| {
             (
                 DependencyNode {
@@ -1623,7 +1589,7 @@ impl<'a> ReactiveScopeDependencyTreeHIR<'a> {
         let hoistable_cursor_root = self.hoistable_roots.get(&dep.identifier);
         let mut hoistable_ptr: Option<&HoistableNode> = hoistable_cursor_root.map(|(n, _)| n);
 
-        for entry in &dep.path {
+        for entry in &dep.path[..path_len] {
             let next_hoistable =
                 hoistable_ptr.and_then(|h| h.properties.get(&entry.property).map(|e| &e.node));
             let access_type = match hoistable_ptr.map(|h| h.access_type) {
@@ -1692,8 +1658,18 @@ fn collect_minimal_deps_in_subtree<'a>(
             path: ArenaVec::from_iter_in(path.iter().copied(), &alloc),
             span: node.span,
         });
-    } else {
+    }
+    // An optional prefix can be undefined either because its guard short-circuited
+    // or because the property itself was undefined. A nonoptional descendant can
+    // throw only in the latter case, so the prefix cannot subsume that dependency.
+    let preserve_continuations = path.iter().any(|entry| entry.optional);
+    if !is_dependency_access(node.access_type) || preserve_continuations {
         for (child_name, child_entry) in &node.properties {
+            if is_dependency_access(node.access_type)
+                && is_optional_access(child_entry.node.access_type)
+            {
+                continue;
+            }
             let mut new_path = path.to_vec();
             new_path.push(DependencyPathEntry {
                 property: *child_name,
@@ -1803,6 +1779,16 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
     }
 
     fn check_valid_dependency(&self, dep: &ReactiveScopeDependency, env: &Environment) -> bool {
+        self.current_scope()
+            .is_some_and(|scope| self.check_valid_dependency_in_scope(dep, scope, env))
+    }
+
+    fn check_valid_dependency_in_scope(
+        &self,
+        dep: &ReactiveScopeDependency,
+        scope: ScopeId,
+        env: &Environment,
+    ) -> bool {
         // Ref value is not a valid dep
         let ty = &env.types[env.identifiers[dep.identifier].type_];
         if is_ref_value_type(ty) {
@@ -1818,13 +1804,7 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
             .as_ref()
             .or(self.declarations[ident.declaration_id].as_ref());
 
-        if let Some(current_scope) = self.current_scope()
-            && let Some(decl) = current_declaration
-        {
-            let scope_range_start = env.scopes[current_scope].range.start;
-            return decl.id < scope_range_start;
-        }
-        false
+        current_declaration.is_some_and(|decl| decl.id < env.scopes[scope].range.start)
     }
 
     fn visit_operand(&mut self, place: &Place, env: &mut Environment<'a>) {
@@ -1907,6 +1887,16 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
                 path: ArenaVec::new_in(&env.allocator),
                 span: dep.span,
             }
+        } else if self.inner_fn_context.is_some()
+            && let Some(index) =
+                dep.path.iter().position(|entry| entry.property.is_string("current"))
+        {
+            // A function reads `x.current` when it runs, not during render, and `x` may
+            // be a ref the compiler could not type. Depend on the path up to `.current`
+            // so that the cache guard does not read the ref during render.
+            let mut dep = dep;
+            dep.path.truncate(index);
+            dep
         } else {
             dep
         };
@@ -1919,24 +1909,23 @@ impl<'a, 'e> DependencyCollectionContext<'a, 'e> {
     }
 
     fn visit_reassignment(&mut self, place: &Place, env: &mut Environment<'a>) {
-        if let Some(current_scope) = self.current_scope() {
-            let scope = &env.scopes[current_scope];
-            let already = scope.reassignments.iter().any(|id| {
-                env.identifiers[*id].declaration_id
-                    == env.identifiers[place.identifier].declaration_id
-            });
-            if !already
-                && self.check_valid_dependency(
-                    &ReactiveScopeDependency {
-                        identifier: place.identifier,
-                        reactive: place.reactive,
-                        path: ArenaVec::new_in(&env.allocator),
-                        span: place.span,
-                    },
-                    env,
-                )
-            {
-                env.scopes[current_scope].reassignments.push(place.identifier);
+        let dep = ReactiveScopeDependency {
+            identifier: place.identifier,
+            reactive: place.reactive,
+            path: ArenaVec::new_in(&env.allocator),
+            span: place.span,
+        };
+        let declaration_id = env.identifiers[place.identifier].declaration_id;
+        // Every enclosing scope that starts after the declaration must restore the
+        // variable when it is skipped, not only the innermost one, which may be
+        // pruned (for example inside a loop).
+        for &scope in &self.scope_stack {
+            let already = env.scopes[scope]
+                .reassignments
+                .iter()
+                .any(|id| env.identifiers[*id].declaration_id == declaration_id);
+            if !already && self.check_valid_dependency_in_scope(&dep, scope, env) {
+                env.scopes[scope].reassignments.push(place.identifier);
             }
         }
     }

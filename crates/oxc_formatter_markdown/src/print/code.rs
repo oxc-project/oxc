@@ -5,8 +5,7 @@ use cow_utils::CowUtils;
 
 use oxc_allocator::ArenaVec;
 use oxc_formatter_core::{
-    Buffer, BufferExtensions, DispatchRequest, Document, FormatElement, FormatOptions, InputKind,
-    PrintWidth, arena_cow_str,
+    DispatchRequest, Document, FormatElement, FormatOptions, InputKind, PrintWidth, arena_cow_str,
     builders::{
         FormatOnce, exact_line_breaks, hard_line_break, mark_as_root, space_align, text, token,
     },

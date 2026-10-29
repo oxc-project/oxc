@@ -11,6 +11,7 @@ describe("BOM handling", () => {
     ["a.yaml", "\uFEFFkey:   value", "\uFEFFkey: value\n"],
     ["a.graphql", "\uFEFF{ a }", "\uFEFF{\n  a\n}\n"],
     ["a.json", '\uFEFF{"a":1}', '\uFEFF{ "a": 1 }\n'],
+    ["a.toml", "\uFEFFa   =   1", "\uFEFFa = 1\n"],
   ];
 
   it.each(cases)("preserves a leading BOM in %s", async (filename, source, expected) => {
@@ -23,6 +24,25 @@ describe("BOM handling", () => {
     const result = await format(filename, "\uFEFF" + source);
     expect(result.errors).toStrictEqual([]);
     expect(result.code).toBe(expected);
+  });
+
+  // Entries parse the BOM-stripped text, but error labels must point into the original source
+  it.each([
+    ["a.js", "let = ;"],
+    ["a.css", "a {"],
+    ["a.yaml", "a: ["],
+    ["a.graphql", "{ a"],
+    ["a.json", '{"a": }'],
+    ["a.json", '{"a": 1 + 2}'],
+    ["a.toml", "a = "],
+  ])("shifts error labels in %s past the BOM", async (filename, source) => {
+    const plain = await format(filename, source);
+    const withBom = await format(filename, "\uFEFF" + source);
+    // Labels are UTF-8 byte offsets, a BOM is 3 bytes
+    expect(withBom.errors[0].labels).toStrictEqual(
+      // oxlint-disable no-map-spread
+      plain.errors[0].labels.map((l) => ({ ...l, start: l.start + 3, end: l.end + 3 })),
+    );
   });
 
   it("keeps a BOM-only file as-is", async () => {

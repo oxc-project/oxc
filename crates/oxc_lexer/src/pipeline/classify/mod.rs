@@ -1,82 +1,26 @@
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+use super::cpu::{Cpu, cpu_select};
+
+#[cfg(target_arch = "x86_64")]
 mod avx2;
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-use avx2::classify_avx2 as classify_impl;
+#[cfg(target_arch = "x86_64")]
+use avx2::classify_avx2;
 
-#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
+#[cfg(target_arch = "aarch64")]
 mod neon;
-#[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
-use neon::classify_neon as classify_impl;
+#[cfg(target_arch = "aarch64")]
+use neon::classify_neon;
 
-#[cfg(not(any(
-    all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ),
-    all(target_arch = "aarch64", target_feature = "neon")
-)))]
 mod generic;
-#[cfg(not(any(
-    all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ),
-    all(target_arch = "aarch64", target_feature = "neon")
-)))]
-use generic::classify_generic as classify_impl;
+use generic::classify_generic;
 
-#[cfg(any(
-    test,
-    all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ),
-    all(target_arch = "aarch64", target_feature = "neon")
-))]
+#[cfg(any(test, target_arch = "x86_64", target_arch = "aarch64"))]
 mod luts;
-#[cfg(any(
-    test,
-    all(
-        target_arch = "x86_64",
-        target_feature = "avx2",
-        target_feature = "bmi2",
-        target_feature = "popcnt"
-    ),
-    all(target_arch = "aarch64", target_feature = "neon")
-))]
+#[cfg(any(test, target_arch = "x86_64", target_arch = "aarch64"))]
 mod punct1_luts;
 
-#[cfg(any(
-    test,
-    not(any(
-        all(
-            target_arch = "x86_64",
-            target_feature = "avx2",
-            target_feature = "bmi2",
-            target_feature = "popcnt"
-        ),
-        all(target_arch = "aarch64", target_feature = "neon")
-    ))
-))]
 mod punct1;
 
-#[inline(never)]
+#[inline(always)]
 pub(super) unsafe fn classify(
     ts: bool,
     src: *const u8,
@@ -90,8 +34,13 @@ pub(super) unsafe fn classify(
     dot: *mut u64,
     misc: *mut u64,
     kind: *mut u8,
+    cpu: impl Cpu,
 ) {
-    classify_impl(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind);
+    cpu_select!(cpu, {
+        Avx2(cpu) => classify_avx2(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu),
+        Neon(cpu) => classify_neon(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind, cpu),
+        Generic(_) => classify_generic(ts, src, n, word, st, kwinit, opch, digit, dot, misc, kind),
+    });
 
     *word.add(nb) = 0;
     *st.add(nb) = 0;

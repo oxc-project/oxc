@@ -6,6 +6,8 @@ use std::{
     sync::OnceLock,
 };
 
+use crate::pipeline::cpu::Avx2;
+
 /// Single copy of [`PairLuts`], shared across all threads.
 ///
 /// `Box<PairLuts>` not `PairLuts`, to avoid uninitialized `PairLuts` being stored
@@ -47,7 +49,14 @@ impl PairLuts {
     /// to zero both arrays, then all the data being copied twice - first from
     /// 2 stack temporaries for `lut0z` and `lutpad` arrays into another stack temporary
     /// for `PairLuts`, then a second copy of `PairLuts` from the stack to the heap.
-    fn new() -> Box<Self> {
+    ///
+    /// # SAFETY
+    ///
+    /// No safety preconditions.
+    /// Calling this function requires an `unsafe { ... }` block, because of `#[target_feature]`,
+    /// but it's always sound, because the `Avx2` parameter guarantees the CPU supports those features.
+    #[target_feature(enable = "avx2,bmi2,popcnt")]
+    fn new(_cpu: Avx2) -> Box<Self> {
         // Allocate space for `PairLuts` on the heap, uninitialized
         let mut luts = Box::<PairLuts>::new_uninit();
 
@@ -95,9 +104,12 @@ impl PairLuts {
 
 /// Initialize the global [`PairLuts`] instance.
 ///
-/// This method must be called before calling [`get_pair_luts`].
-pub fn init_pair_luts_avx2() {
-    PAIR_LUTS.get_or_init(PairLuts::new);
+/// This function must be called before calling [`get_pair_luts`].
+pub fn init_pair_luts_avx2(cpu: Avx2) {
+    PAIR_LUTS.get_or_init(|| {
+        // SAFETY: `PairLuts::new` has no safety preconditions
+        unsafe { PairLuts::new(cpu) }
+    });
 }
 
 /// Get reference to [`PairLuts`].

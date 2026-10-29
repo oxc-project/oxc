@@ -369,7 +369,7 @@ impl AppArgs {
 
     /// Differential lexer conformance.
     ///
-    /// Compare `oxc_lexer`'s token spans against the parser's token stream over the corpora.
+    /// Compare `oxc_lexer`'s token spans and comments against the parser's over the corpora.
     /// Opt-in (kept out of `run_all`) — requires `lexer` Cargo feature.
     /// Runs against whichever of the lexer's implementations the build selects (see `oxc_lexer::IMPLEMENTATION`).
     /// `oxc_lexer` only supports little endian at present.
@@ -516,7 +516,11 @@ impl AppArgs {
     /// Loads only test262 (not the other fixture suites), so it works in a checkout
     /// that has only the test262 submodule — load-bearing for monitor-oxc CI.
     pub fn run_runtime(&self) {
-        let files = load::load_test262(self.filter.as_deref());
+        let filter = self.filter.as_deref();
+        if filter.is_none() {
+            load::ensure_submodules(&[TEST262_PATH]);
+        }
+        let files = load::load_test262(filter);
         self.run_tool("runtime", TEST262_PATH, &files, runtime::run);
     }
 

@@ -205,23 +205,21 @@ impl Rule for BanTsComment {
         let comments = ctx.comments();
         for comm in comments {
             let raw = ctx.source_range(comm.content_span());
-            if let Some(captures) = find_ts_comment_directive(raw, comm.is_line()) {
-                // safe to unwrap, if capture success, it can always capture one of the four directives
-                let (directive, description) = (captures.0, captures.1);
-                if comm.is_block() && (directive == "check" || directive == "nocheck") {
+            if let Some((directive, description)) = find_ts_comment_directive(raw, comm.is_line()) {
+                let is_file_directive =
+                    matches!(directive, TsCommentDirective::Check | TsCommentDirective::NoCheck);
+                if comm.is_block() && is_file_directive {
                     continue;
                 }
 
-                if raw.trim_start().starts_with('/')
-                    && (directive == "check" || directive == "nocheck")
-                {
+                if raw.trim_start().starts_with('/') && is_file_directive {
                     continue;
                 }
 
                 match self.option(directive) {
                     DirectiveConfig::Boolean(on) => {
                         if *on {
-                            if directive == "ignore" {
+                            if directive == TsCommentDirective::Ignore {
                                 ctx.diagnostic_with_fix(
                                     ignore_instead_of_expect_error(comm.content_span()),
                                     |fixer| {
@@ -233,7 +231,7 @@ impl Rule for BanTsComment {
                                     },
                                 );
                             } else {
-                                ctx.diagnostic(comment(directive, comm.content_span()));
+                                ctx.diagnostic(comment(directive.as_str(), comm.content_span()));
                             }
                         }
                     }
@@ -241,7 +239,7 @@ impl Rule for BanTsComment {
                         let description_len = description.trim().len();
                         if (description_len as u64) < self.minimum_description_length {
                             ctx.diagnostic(comment_requires_description(
-                                directive,
+                                directive.as_str(),
                                 self.minimum_description_length,
                                 comm.content_span(),
                             ));
@@ -251,7 +249,7 @@ impl Rule for BanTsComment {
                             && !re.is_match(description)
                         {
                             ctx.diagnostic(comment_description_not_match_pattern(
-                                directive,
+                                directive.as_str(),
                                 re.as_str(),
                                 comm.content_span(),
                             ));
@@ -267,26 +265,48 @@ impl Rule for BanTsComment {
     }
 }
 
-impl BanTsComment {
-    /// get the option for a given directive, caller should guarantee
-    /// the directive should be one of the ignore/check/nocheck/expect-error
-    fn option(&self, directive: &str) -> &DirectiveConfig {
-        match directive {
-            "ignore" => &self.ts_ignore,
-            "check" => &self.ts_check,
-            "nocheck" => &self.ts_nocheck,
-            "expect-error" => &self.ts_expect_error,
-            _ => {
-                unreachable!(
-                    "Expected one of ignore/check/nocheck/expect-error, got {}.",
-                    directive,
-                );
-            }
+/// A recognized TypeScript comment directive.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum TsCommentDirective {
+    /// An `@ts-ignore` directive.
+    Ignore,
+    /// An `@ts-check` directive.
+    Check,
+    /// An `@ts-nocheck` directive.
+    NoCheck,
+    /// An `@ts-expect-error` directive.
+    ExpectError,
+}
+
+impl TsCommentDirective {
+    /// Returns the directive name without the `@ts-` prefix.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Ignore => "ignore",
+            Self::Check => "check",
+            Self::NoCheck => "nocheck",
+            Self::ExpectError => "expect-error",
         }
     }
 }
 
-pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, &str)> {
+impl BanTsComment {
+    /// Returns the configured behavior for a directive.
+    fn option(&self, directive: TsCommentDirective) -> &DirectiveConfig {
+        match directive {
+            TsCommentDirective::Ignore => &self.ts_ignore,
+            TsCommentDirective::Check => &self.ts_check,
+            TsCommentDirective::NoCheck => &self.ts_nocheck,
+            TsCommentDirective::ExpectError => &self.ts_expect_error,
+        }
+    }
+}
+
+/// Finds a TypeScript directive and its following description.
+pub fn find_ts_comment_directive(
+    raw: &str,
+    single_line: bool,
+) -> Option<(TsCommentDirective, &str)> {
     let prefix = "@ts-";
 
     if !raw.contains(prefix) {
@@ -306,18 +326,17 @@ pub fn find_ts_comment_directive(raw: &str, single_line: bool) -> Option<(&str, 
     }
 
     let start = index + prefix.len();
-    for directive in ["expect-error", "ignore", "nocheck", "check"] {
-        if line.get(start..start + directive.len()) == Some(directive) {
+    for directive in [
+        TsCommentDirective::ExpectError,
+        TsCommentDirective::Ignore,
+        TsCommentDirective::NoCheck,
+        TsCommentDirective::Check,
+    ] {
+        let name = directive.as_str();
+        if line.get(start..start + name.len()) == Some(name) {
             let start = multi_len + index + prefix.len();
-            let end = start + directive.len();
-            let (directive, description) = (&raw[start..end], &raw[end..]);
-
-            debug_assert!(
-                matches!(directive, "expect-error" | "ignore" | "nocheck" | "check"),
-                "Expected one of ignore/check/nocheck/expect-error, got {directive}",
-            );
-
-            return Some((directive, description));
+            let end = start + name.len();
+            return Some((directive, &raw[end..]));
         }
     }
     None

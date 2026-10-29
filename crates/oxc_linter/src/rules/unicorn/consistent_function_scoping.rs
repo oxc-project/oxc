@@ -203,6 +203,7 @@ impl ConsistentFunctionScoping {
         let (
             function_declaration_symbol_id,
             function_name,
+            function_params,
             function_body,
             reporter_span,
             function_scope_id,
@@ -235,6 +236,7 @@ impl ConsistentFunctionScoping {
                         (
                             binding_ident.symbol_id(),
                             Some(binding_ident.name.as_str()),
+                            &function.params,
                             FunctionLikeBody::Function(function_body),
                             function.id.as_ref().map_or(
                                 Span::sized(function.span.start, 8),
@@ -246,6 +248,7 @@ impl ConsistentFunctionScoping {
                         (
                             function_id.symbol_id(),
                             Some(function_id.name.as_str()),
+                            &function.params,
                             FunctionLikeBody::Function(function_body),
                             function_id.span(),
                             func_scope_id,
@@ -262,6 +265,7 @@ impl ConsistentFunctionScoping {
                     (
                         binding_ident.symbol_id(),
                         Some(binding_ident.name.as_str()),
+                        &arrow_function.params,
                         FunctionLikeBody::Arrow(&arrow_function.body),
                         binding_ident.span(),
                         arrow_function.scope_id(),
@@ -293,13 +297,7 @@ impl ConsistentFunctionScoping {
         // Collect parameter defaults as well as body references: either can capture the parent.
         let (function_var_references, private_references, has_lexical_capture) = {
             let mut rf = ReferencesFinder::default();
-            match node.kind() {
-                AstKind::Function(function) => rf.visit_formal_parameters(&function.params),
-                AstKind::ArrowFunctionExpression(arrow) => {
-                    rf.visit_formal_parameters(&arrow.params);
-                }
-                _ => unreachable!(),
-            }
+            rf.visit_formal_parameters(function_params);
             match function_body {
                 FunctionLikeBody::Function(body) => rf.visit_function_body(body),
                 FunctionLikeBody::Arrow(body) => rf.visit_arrow_function_body(body),
@@ -332,7 +330,8 @@ impl ConsistentFunctionScoping {
             }
             let scope_id = ctx.scoping().symbol_scope_id(symbol_id);
             if ctx.scoping().scope_is_descendant_of(function_scope_id, scope_id)
-                && symbol_id != function_declaration_symbol_id
+                && (symbol_id != function_declaration_symbol_id
+                    || !ctx.scoping().symbol_flags(symbol_id).is_function())
             {
                 // Both class declarations and expressions have an internal self binding.
                 // Moving past the class body would lose that binding.
@@ -1165,6 +1164,22 @@ fn test() {
             "class Box { #value; method() { const inner = () => class { field = box.#value; }; return inner; } }",
             None,
         ),
+        (
+            "const make = (self) => {
+                const builder = (...args) => builder.apply(null, args);
+                builder.self = self;
+                return builder;
+            };
+            module.exports = make;",
+            None,
+        ),
+        ("function outer() { const inner = function () { return inner(); }; return inner; }", None),
+        (
+            "function outer() { const inner = function recur() { return inner(); }; return inner; }",
+            None,
+        ),
+        ("function outer() { const inner = (value = inner) => value; return inner; }", None),
+        ("function outer() { var inner = () => inner(); return inner; }", None),
     ];
 
     let fail = vec![
@@ -1575,6 +1590,11 @@ fn test() {
             "class External { method() { function outer() { function inner() { return External; } return inner; } return outer; } }",
             None,
         ),
+        (
+            "function outer() { const inner = function recur() { return recur(); }; return inner; }",
+            None,
+        ),
+        ("function outer() { const inner = (inner) => inner(); return inner; }", None),
     ];
 
     Tester::new(ConsistentFunctionScoping::NAME, ConsistentFunctionScoping::PLUGIN, pass, fail)

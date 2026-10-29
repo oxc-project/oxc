@@ -17,7 +17,7 @@ use crate::utils::{
     statement_body::{write_comments_between_blocks, write_head_body_separator},
 };
 
-impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TryStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let block = self.block();
         let handler = self.handler();
@@ -25,11 +25,11 @@ impl<'a> FormatWrite<'a> for AstNode<'a, TryStatement<'a>> {
 
         write!(f, "try");
         write_head_body_separator(block.span.start, f);
-        write_block_before_keyword(block, handler.is_some() || finalizer.is_some(), f);
+        write_block_before_keyword(&block, handler.is_some() || finalizer.is_some(), f);
 
         if let Some(handler) = handler {
             write!(f, space());
-            write_block_before_keyword(handler, finalizer.is_some(), f);
+            write_block_before_keyword(&handler, finalizer.is_some(), f);
         }
         if let Some(finalizer) = finalizer {
             // Lexical scan for the keyword's first byte: the gap holds only trivia and `finally`.
@@ -58,7 +58,7 @@ where
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CatchClause<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let leading_comments = f.context().comments().comments_before(self.span.start);
         if write_comments_between_blocks(leading_comments, f) {
@@ -73,7 +73,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, CatchClause<'a>> {
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, CatchParameter<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CatchParameter<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         write!(f, "(");
 

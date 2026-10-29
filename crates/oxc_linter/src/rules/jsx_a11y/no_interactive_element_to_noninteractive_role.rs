@@ -2,7 +2,10 @@ use rustc_hash::FxHashMap;
 use schemars::JsonSchema;
 use serde::Deserialize;
 
-use oxc_ast::{AstKind, ast::JSXAttributeValue};
+use oxc_ast::{
+    AstKind,
+    ast::{JSXAttributeItem, JSXAttributeValue},
+};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -75,6 +78,7 @@ declare_oxc_lint!(
     NoInteractiveElementToNoninteractiveRole,
     jsx_a11y,
     correctness,
+    recommended,
     config = NoInteractiveElementToNoninteractiveRoleConfig,
     version = "1.65.0",
     short_description = "Disallow using a non-interactive WAI-ARIA role on an interactive HTML element.",
@@ -108,7 +112,7 @@ impl Rule for NoInteractiveElementToNoninteractiveRole {
             return;
         };
 
-        let oxc_ast::ast::JSXAttributeItem::Attribute(role_attr) = role_attr_item else {
+        let JSXAttributeItem::Attribute(role_attr) = role_attr_item else {
             return;
         };
 

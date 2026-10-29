@@ -11,7 +11,7 @@ use serde_json::Value;
 use oxc_ast::{
     AstKind,
     ast::{
-        BinaryOperator, BindingPattern, CallExpression, ExportAllDeclaration,
+        Argument, BinaryOperator, BindingPattern, CallExpression, ExportAllDeclaration,
         ExportFromDeclaration, Expression, ImportDeclaration, ImportDeclarationSpecifier,
         ModuleExportName, VariableDeclarator,
     },
@@ -529,7 +529,7 @@ fn get_actual_assignment_target_styles(pattern: &BindingPattern<'_>) -> StyleSet
         }
         BindingPattern::ObjectPattern(pattern) => {
             let mut styles = StyleSet::default();
-            if pattern.properties.is_empty() && pattern.rest.is_none() {
+            if pattern.is_empty() {
                 styles.unassigned = true;
                 return styles;
             }
@@ -574,11 +574,7 @@ fn get_require_module_name<'a>(call_expr: &'a CallExpression<'a>) -> Option<Cow<
     if call_expr.arguments.len() != 1 || !call_expr.callee.is_specific_id("require") {
         return None;
     }
-    call_expr
-        .arguments
-        .first()
-        .and_then(oxc_ast::ast::Argument::as_expression)
-        .and_then(get_module_name)
+    call_expr.arguments.first().and_then(Argument::as_expression).and_then(get_module_name)
 }
 
 fn is_assigned_dynamic_import(node: &AstNode<'_>, ctx: &LintContext<'_>) -> bool {

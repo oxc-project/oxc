@@ -17,9 +17,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     { `PropertyDefinitionList`[?Yield, ?Await] }
     ///     { `PropertyDefinitionList`[?Yield, ?Await] , }
     pub(crate) fn parse_object_expression(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         let (object_expression_properties, comma_start) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RCurly,
@@ -100,45 +101,43 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             diagnostics::modifier_cannot_be_used_here,
         );
 
-        let is_shorthand_property_assignment = token_is_identifier && !self.at(Kind::Colon);
-
-        if is_shorthand_property_assignment {
-            if let PropertyKey::StaticIdentifier(identifier_name) = key {
-                // CoverInitializedName ({ foo = bar })
-                if self.eat(Kind::Eq) {
-                    let right = self.parse_assignment_expression_or_higher();
-                    let left = AssignmentTarget::new_assignment_target_identifier(
-                        identifier_name.span,
-                        identifier_name.name,
-                        self,
-                    );
-                    let expr = AssignmentExpression::new(
-                        self.end_span(start),
-                        AssignmentOperator::Assign,
-                        left,
-                        right,
-                        self,
-                    );
-                    self.state.cover_initialized_name.insert(start, expr);
-                }
-                let value =
-                    Expression::new_identifier(identifier_name.span, identifier_name.name, self);
-                ObjectProperty::boxed(
-                    self.end_span(start),
-                    PropertyKind::Init,
-                    PropertyKey::StaticIdentifier(identifier_name),
-                    value,
-                    /* method */ false,
-                    /* shorthand */ true,
-                    computed,
+        let shorthand = token_is_identifier && !self.at(Kind::Colon);
+        let value = if shorthand {
+            let PropertyKey::StaticIdentifier(identifier_name) = &key else {
+                return self.unexpected();
+            };
+            // CoverInitializedName ({ foo = bar })
+            if self.eat(Kind::Eq) {
+                let right = self.parse_assignment_expression_or_higher();
+                let left = AssignmentTarget::new_assignment_target_identifier(
+                    identifier_name.span,
+                    identifier_name.name,
                     self,
-                )
-            } else {
-                self.unexpected()
+                );
+                let expr = AssignmentExpression::new(
+                    self.end_span(start),
+                    AssignmentOperator::Assign,
+                    left,
+                    right,
+                    self,
+                );
+                self.state.cover_initialized_name.insert(start, expr);
             }
+            Expression::new_identifier(identifier_name.span, identifier_name.name, self)
         } else {
-            self.parse_property_definition_assignment(start, key, computed)
-        }
+            self.expect(Kind::Colon);
+            self.parse_assignment_expression_or_higher()
+        };
+        ObjectProperty::boxed(
+            self.end_span(start),
+            PropertyKind::Init,
+            key,
+            value,
+            /* method */ false,
+            shorthand,
+            computed,
+            self,
+        )
     }
 
     /// `PropertyDefinition`[Yield, Await] :
@@ -150,35 +149,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         SpreadElement::boxed(self.end_span(start), argument, self)
     }
 
-    /// `PropertyDefinition`[Yield, Await] :
-    ///   `PropertyName`[?Yield, ?Await] : `AssignmentExpression`[+In, ?Yield, ?Await]
-    fn parse_property_definition_assignment(
-        &mut self,
-        start: u32,
-        key: PropertyKey<'a>,
-        computed: bool,
-    ) -> ArenaBox<'a, ObjectProperty<'a>> {
-        self.expect(Kind::Colon);
-        let value = self.parse_assignment_expression_or_higher();
-        ObjectProperty::boxed(
-            self.end_span(start),
-            PropertyKind::Init,
-            key,
-            value,
-            /* method */ false,
-            /* shorthand */ false,
-            /* computed */ computed,
-            self,
-        )
-    }
-
     /// `PropertyName`[Yield, Await] :
     ///    `LiteralPropertyName`
     ///    `ComputedPropertyName`[?Yield, ?Await]
     pub(crate) fn parse_property_name(&mut self) -> (PropertyKey<'a>, bool) {
         let mut computed = false;
         let key = match self.cur_kind() {
-            Kind::Str => PropertyKey::from(self.parse_literal_expression()),
+            Kind::Ident => {
+                let ident = self.parse_known_identifier_name();
+                PropertyKey::StaticIdentifier(self.alloc(ident))
+            }
+            Kind::Str => {
+                let literal = self.parse_known_literal_string();
+                PropertyKey::StringLiteral(self.alloc(literal))
+            }
             kind if kind.is_number() => PropertyKey::from(self.parse_literal_expression()),
             // { [foo]() {} }
             Kind::LBrack => {

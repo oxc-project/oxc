@@ -517,7 +517,6 @@ impl CliRunner {
 
         let cwd = options.cwd().to_path_buf();
 
-        // Create the LintRunner
         // TODO: Add a warning message if `tsgolint` cannot be found, but type-aware rules are enabled
         let lint_runner = match LintRunner::builder(options, linter)
             .with_type_aware(type_aware)
@@ -1939,6 +1938,17 @@ mod test {
         // See: https://github.com/oxc-project/oxc/issues/16182
         let args = &["--type-aware"];
         Tester::new().with_cwd("fixtures/cli/tsgolint_rule_options".into()).test_and_snapshot(args);
+    }
+
+    #[test]
+    #[cfg(all(not(target_os = "windows"), not(target_endian = "big")))]
+    fn test_tsgolint_same_name_rule_severity_with_overrides() {
+        // `unicorn/prefer-string-starts-ends-with` must not change the severity of the typescript rule
+        // See: https://github.com/oxc-project/oxc/issues/28136
+        let args = &["a.ts", "b.tsx"];
+        Tester::new()
+            .with_cwd("fixtures/cli/tsgolint_same_name_overrides".into())
+            .test_and_snapshot(args);
     }
 
     #[test]

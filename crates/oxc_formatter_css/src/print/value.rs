@@ -25,7 +25,7 @@ use oxc_css_parser::{
     token::Token,
 };
 use oxc_formatter_core::{
-    Buffer, SourceText, arena_cow_str,
+    SourceText, arena_cow_str,
     builders::{
         empty_line, group, hard_line_break, if_group_breaks, indent, soft_block_indent,
         soft_line_break, soft_line_break_or_space, space, text, token,

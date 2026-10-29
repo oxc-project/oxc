@@ -2,7 +2,7 @@ use oxc_ast::ast::{
     NumericLiteral, ObjectExpression, ObjectPropertyKind, PropertyKey, StringLiteral,
 };
 use oxc_formatter_core::{
-    Buffer, Format, FormatContext, arena_cow_str,
+    Format, FormatContext, arena_cow_str,
     builders::{group, soft_block_indent_with_maybe_space, space, text},
     spec::{format_trimmed_number, is_simple_number, normalize_string},
     write,

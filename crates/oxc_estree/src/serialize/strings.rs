@@ -289,7 +289,7 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
         unsafe {
             let len = current_ptr.offset_from_unsigned(chunk_start_ptr);
             let chunk = slice::from_raw_parts(chunk_start_ptr, len);
-            buffer.print_bytes_unchecked(chunk);
+            buffer.print_bytes_short_unchecked(chunk);
         }
 
         write_char_escape(escape, byte, buffer);
@@ -310,7 +310,7 @@ fn write_str<T: EscapeTable>(s: &str, buffer: &mut CodeBuffer) {
     unsafe {
         let len = iter.end_ptr().offset_from_unsigned(chunk_start_ptr);
         let chunk = slice::from_raw_parts(chunk_start_ptr, len);
-        buffer.print_bytes_unchecked(chunk);
+        buffer.print_bytes_short_unchecked(chunk);
     }
 
     buffer.print_ascii_byte(b'"');

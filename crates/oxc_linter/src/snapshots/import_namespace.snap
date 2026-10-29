@@ -65,6 +65,12 @@ source: crates/oxc_linter/src/tester.rs
    ·                                                   ─
    ╰────
 
+  ⚠ import(namespace): "\ud800" not found in imported namespace "./named-exports".
+   ╭─[index.js:1:51]
+ 1 │ import * as names from "./named-exports"; const { "\uD800": d } = names
+   ·                                                   ────────
+   ╰────
+
   ⚠ import(namespace): "c" not found in imported namespace "./named-exports".
    ╭─[index.js:1:19]
  1 │ console.log(names.c); import * as names from './named-exports';

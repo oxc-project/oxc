@@ -25,7 +25,9 @@ oxc_data_structures = { workspace = true, features = ["assert_unchecked", "branc
 oxc_span = { workspace = true }
 oxc_syntax = { workspace = true }
 constcat = { workspace = true }
+macro_rules_attr = { workspace = true }
 memchr = { workspace = true }
+pastey = { workspace = true }
 rustc-hash = { workspace = true }
 
 oxc_diagnostics = { workspace = true, optional = true }

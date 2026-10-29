@@ -2,8 +2,15 @@ use std::slice;
 
 use crate::pipeline::{
     bytes::{hex_val, is_digit, is_word},
-    find::{find_regex, find_tmpl, find4},
+    find::find,
 };
+
+/// Regex-body scan. LF, CR and the 0xE2 lead are watched so line terminators in the body can be diagnosed.
+///
+/// Ordered for speed, pairing `\` with `]` (see `any_of` in `find/avx2.rs`).
+/// `[` is kept out of the first half, away from `\` and `]`, otherwise LLVM turns `[`, `\` and `]` (0x5B-0x5D)
+/// into a range check, which is 1 op shorter but makes the chain to the exit branch 1 op longer.
+const REGEX_BYTES: [u8; 7] = [b'\\', b']', b'\n', b'\r', b'/', b'[', 0xE2];
 
 #[inline]
 pub unsafe fn scan_quoted(
@@ -15,7 +22,7 @@ pub unsafe fn scan_quoted(
 ) -> usize {
     loop {
         // LF/CR are watched too: raw line terminators in strings are diagnosed.
-        let p = find4(src, n, i, q, b'\\', b'\n', b'\r');
+        let p = find(src, n, i, [q, b'\\', b'\n', b'\r']);
         if p >= n {
             return n;
         }
@@ -41,7 +48,7 @@ pub unsafe fn scan_quoted(
 pub unsafe fn scan_regex(src: *const u8, n: usize, mut i: usize, nl_at: &mut usize) -> usize {
     let mut incl = false;
     loop {
-        let p = find_regex(src, n, i);
+        let p = find(src, n, i, REGEX_BYTES);
         if p >= n {
             return n;
         }
@@ -114,7 +121,7 @@ pub unsafe fn scan_regex(src: *const u8, n: usize, mut i: usize, nl_at: &mut usi
 #[inline]
 pub unsafe fn scan_tmpl_text(src: *const u8, n: usize, mut i: usize, term: &mut i32) -> usize {
     loop {
-        let p = find_tmpl(src, n, i);
+        let p = find(src, n, i, [b'`', b'\\', b'$']);
         if p >= n {
             *term = 0;
             return n;

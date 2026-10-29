@@ -1,8 +1,8 @@
-commit: 7ab7fafa
+commit: d53ebc8b
 
 runtime Summary:
-AST Parsed     : 18281/18281 (100.00%)
-Positive Passed: 17306/18281 (94.67%)
+AST Parsed     : 18277/18277 (100.00%)
+Positive Passed: 17314/18277 (94.73%)
 minify Error: tasks/coverage/test262/test/language/computed-property-names/class/static/generator-prototype.js
 Test262Error: Expected a TypeError to be thrown but no exception was thrown at all
 
@@ -87,9 +87,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-evaluation.js
-Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
-
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -98,12 +95,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-let.js
-Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/expressions/assignment/dstr/obj-prop-elem-init-yield-expr.js
-Test262Error: Expected SameValue(«true», «false») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/assignment/fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -1074,17 +1065,8 @@ Test262Error: The expression should evaluate to the result Expected SameValue(«
 transform Error: tasks/coverage/test262/test/language/expressions/compound-assignment/left-hand-side-private-reference-accessor-property-sub.js
 Test262Error: The expression should evaluate to the result Expected SameValue(«undefined», «1») to be true
 
-codegen Error: tasks/coverage/test262/test/language/expressions/delete/super-property-uninitialized-this.js
-Test262Error: Expected a ReferenceError but got a Test262Error
-
 minify Error: tasks/coverage/test262/test/language/expressions/does-not-equals/S11.9.2_A7.8.js
 Test262Error: #7: (1 != {valueOf: function() {throw "error"}, toString: function() {return 1}}) throw "error"
-
-minify Error: tasks/coverage/test262/test/language/expressions/does-not-equals/bigint-and-number-extremes.js
-Test262Error: The result of (0xfffffffffffff800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n != Number.MAX_VALUE) is false Expected SameValue(«true», «false») to be true
-
-minify Error: tasks/coverage/test262/test/language/expressions/equals/bigint-and-number-extremes.js
-Test262Error: The result of (0xfffffffffffff800000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000n == Number.MAX_VALUE) is true Expected SameValue(«false», «true») to be true
 
 minify Error: tasks/coverage/test262/test/language/expressions/equals/coerce-symbol-to-prim-err.js
 Test262Error: Expected a Test262Error to be thrown but no exception was thrown at all
@@ -1376,9 +1358,6 @@ TypeError: Cannot read properties of undefined (reading 'enumerable')
 
 minify Error: tasks/coverage/test262/test/language/expressions/optional-chaining/member-expression.js
 Test262Error: Expected SameValue(«"a"», «""») to be true
-
-transform Error: tasks/coverage/test262/test/language/expressions/typeof/symbol.js
-timeout: global
 
 minify Error: tasks/coverage/test262/test/language/function-code/block-decl-onlystrict.js
 TypeError: Cannot read properties of undefined (reading 'constructor')
@@ -1697,6 +1676,9 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-obj-ptrn-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
+
+transform Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-arrow.js
+timeout: global
 
 minify Error: tasks/coverage/test262/test/language/statements/class/dstr/async-private-gen-meth-static-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -2424,9 +2406,6 @@ Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 transform Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-id-init-yield-ident-valid.js
 Test262Error: Expected SameValue(«undefined», «3») to be true
 
-minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-evaluation.js
-Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
-
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-func-decl-dstr-obj-prop-elem-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -2574,9 +2553,6 @@ Test262Error: Expected SameValue(«"xFnexp"», «"xFnexp"») to be false
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-evaluation.js
-Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
-
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -2585,9 +2561,6 @@ Test262Error: Expected SameValue(«"xFnexp"», «"xFnexp"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-decl-dstr-obj-prop-elem-init-yield-expr.js
-Timed out.
 
 minify Error: tasks/coverage/test262/test/language/statements/for-await-of/async-gen-dstr-const-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
@@ -2769,9 +2742,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-id-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
 
-minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-evaluation.js
-Test262Error: value of `x` Expected SameValue(«undefined», «true») to be true
-
 minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false
 
@@ -2780,12 +2750,6 @@ Test262Error: Expected SameValue(«"xFn"», «"xFn"») to be false
 
 minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-fn-name-gen.js
 Test262Error: Expected SameValue(«"xGen"», «"xGen"») to be false
-
-minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-let.js
-Test262Error: Expected a ReferenceError to be thrown but no exception was thrown at all
-
-minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/obj-prop-elem-init-yield-expr.js
-Test262Error: Expected SameValue(«true», «false») to be true
 
 minify Error: tasks/coverage/test262/test/language/statements/for-of/dstr/var-ary-ptrn-elem-id-init-fn-name-class.js
 Test262Error: Expected SameValue(«"xCls"», «"xCls"») to be false

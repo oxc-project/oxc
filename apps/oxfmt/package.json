@@ -1,6 +1,6 @@
 {
   "name": "oxfmt-app",
-  "version": "0.73.0",
+  "version": "0.75.0",
   "private": true,
   "description": "Internal development package for oxfmt. For the published package.json template, see `npm/oxfmt/package.json`.",
   "license": "MIT",
@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "prettier": "3.9.10",
-    "prettier-plugin-astro": "1.1.1",
+    "prettier-plugin-astro": "1.1.2",
     "prettier-plugin-svelte": "4.1.1",
     "prettier-plugin-tailwindcss": "0.0.0-insiders.5b27f94",
     "tinypool": "2.2.0"

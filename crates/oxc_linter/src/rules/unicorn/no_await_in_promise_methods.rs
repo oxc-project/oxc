@@ -1,10 +1,15 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
-use crate::{AstNode, ast_util::is_method_call, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    ast_util::{is_method_call, outermost_paren_parent},
+    context::LintContext,
+    rule::Rule,
+};
 
 fn no_await_in_promise_methods_diagnostic(span: Span, method_name: &str) -> OxcDiagnostic {
     OxcDiagnostic::warn(format!("Promise in `Promise.{method_name}()` should not be awaited."))
@@ -58,7 +63,19 @@ declare_oxc_lint!(
 
 impl Rule for NoAwaitInPromiseMethods {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::CallExpression(call_expr) = node.kind() else {
+        let AstKind::AwaitExpression(await_expr) = node.kind() else {
+            return;
+        };
+        let Some(array_node) = outermost_paren_parent(node, ctx) else {
+            return;
+        };
+        let AstKind::ArrayExpression(array_expr) = array_node.kind() else {
+            return;
+        };
+        let Some(call_node) = outermost_paren_parent(array_node, ctx) else {
+            return;
+        };
+        let AstKind::CallExpression(call_expr) = call_node.kind() else {
             return;
         };
 
@@ -87,41 +104,33 @@ impl Rule for NoAwaitInPromiseMethods {
         let Some(first_argument) = call_expr.arguments[0].as_expression() else {
             return;
         };
-        let first_argument = first_argument.without_parentheses();
-        let Expression::ArrayExpression(first_argument_array_expr) = first_argument else {
+        if first_argument.without_parentheses().span() != array_expr.span {
             return;
-        };
-
-        for element in &first_argument_array_expr.elements {
-            if let Some(element_expr) = element.as_expression()
-                && let Expression::AwaitExpression(await_expr) = element_expr.without_parentheses()
-            {
-                let property_name = member_expr
-                    .static_property_name()
-                    .and_then(JSStr::as_str)
-                    .expect("callee is a static property");
-                let await_keyword_span = Span::sized(await_expr.span.start, 5);
-
-                ctx.diagnostic_with_suggestion(
-                    no_await_in_promise_methods_diagnostic(await_keyword_span, property_name),
-                    |fixer| {
-                        let source = fixer.source_text();
-                        let after_await = &source[(await_keyword_span.end as usize)..];
-
-                        let trailing_spaces = after_await
-                            .chars()
-                            .take_while(|c| c.is_whitespace())
-                            .map(|c| {
-                                u32::try_from(c.len_utf8())
-                                    .expect("Failed to convert char len usize to u32")
-                            })
-                            .sum();
-
-                        fixer.delete_range(await_keyword_span.expand_right(trailing_spaces))
-                    },
-                );
-            }
         }
+        let property_name = member_expr
+            .static_property_name()
+            .and_then(JSStr::as_str)
+            .expect("callee is a static property");
+        let await_keyword_span = Span::sized(await_expr.span.start, 5);
+
+        ctx.diagnostic_with_suggestion(
+            no_await_in_promise_methods_diagnostic(await_keyword_span, property_name),
+            |fixer| {
+                let source = fixer.source_text();
+                let after_await = &source[(await_keyword_span.end as usize)..];
+
+                let trailing_spaces = after_await
+                    .chars()
+                    .take_while(|c| c.is_whitespace())
+                    .map(|c| {
+                        u32::try_from(c.len_utf8())
+                            .expect("Failed to convert char len usize to u32")
+                    })
+                    .sum();
+
+                fixer.delete_range(await_keyword_span.expand_right(trailing_spaces))
+            },
+        );
     }
 }
 
@@ -145,6 +154,9 @@ fn test() {
         "Promise.notListedMethod([await promise])",
         "NotPromise.all([await promise])",
         "Promise.all([(await promise, 0)])",
+        "Promise.all([...await promise])",
+        "Promise.all([[await promise]])",
+        "Promise.all([fn(await promise)])",
         "new Promise.all([await promise])",
         "globalThis.Promise.all([await promise])",
         r#"Promise["all"]([await promise])"#,
@@ -181,6 +193,7 @@ fn test() {
             "Promise.all([...foo, promise1, promise2])",
         ),
         ("Promise.all([await /* comment*/ promise])", "Promise.all([/* comment*/ promise])"),
+        ("Promise.all(([(await promise)]))", "Promise.all(([(promise)]))"),
     ];
 
     Tester::new(NoAwaitInPromiseMethods::NAME, NoAwaitInPromiseMethods::PLUGIN, pass, fail)

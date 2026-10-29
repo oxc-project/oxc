@@ -1,7 +1,7 @@
 use std::{fmt, str::FromStr};
 
 use oxc_formatter_core::{
-    Buffer, CoreFormatOptions, Format, IndentStyle, IndentWidth, LineEnding, LineWidth,
+    CoreFormatOptions, Format, IndentStyle, IndentWidth, LineEnding, LineWidth,
 };
 
 use crate::{

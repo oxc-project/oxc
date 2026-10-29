@@ -509,7 +509,7 @@ fn is_null_literal(expression: &Expression) -> bool {
 /// `const undefined = 0; if (a == undefined) a = b`
 fn is_undefined(expression: &Expression, ctx: &LintContext) -> bool {
     match expression.get_inner_expression() {
-        Expression::Identifier(identifier) if identifier.name == "undefined" => {
+        Expression::Identifier(identifier) if identifier.is_undefined() => {
             ctx.is_reference_to_global_variable(identifier)
         }
         Expression::UnaryExpression(unary) if unary.operator.is_void() => {

@@ -878,6 +878,8 @@ fn test() {
     use serde_json::json;
 
     let pass = vec![
+        // A `require()` specifier with a lone surrogate is not checked.
+        (r#"const foo = require("./foo\uD800");"#, Some(json!(["always"]))),
         // Default config: no extension requirements, unconfigured extensions are ignored
         (r#"import a from "@/a""#, None),
         (r#"import a from "a""#, None),

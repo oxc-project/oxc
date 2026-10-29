@@ -11,7 +11,7 @@ impl<C: Config> Lexer<'_, C> {
     ///   where a `RegularExpressionLiteral` is permitted
     /// Which means the parser needs to re-tokenize on `PrimaryExpression`,
     /// `RegularExpressionLiteral` only appear on the right hand side of `PrimaryExpression`
-    pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags, bool) {
+    pub(crate) fn next_regex(&mut self, kind: Kind) -> (Token, u32, RegExpFlags) {
         self.token.set_start(
             self.offset()
                 - match kind {
@@ -20,13 +20,13 @@ impl<C: Config> Lexer<'_, C> {
                     _ => unreachable!(),
                 },
         );
-        let (pattern_end, flags, flags_error) = self.read_regex();
+        let (pattern_end, flags) = self.read_regex();
         let token = self.finish_next_retokenized(Kind::RegExp);
-        (token, pattern_end, flags, flags_error)
+        (token, pattern_end, flags)
     }
 
     /// 12.9.5 Regular Expression Literals
-    fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
+    fn read_regex(&mut self) -> (u32, RegExpFlags) {
         let mut in_escape = false;
         let mut in_character_class = false;
         loop {
@@ -59,8 +59,6 @@ impl<C: Config> Lexer<'_, C> {
 
         let pattern_end = self.offset() - 1; // -1 to exclude `/`
         let mut flags = RegExpFlags::empty();
-        // To prevent parsing `oxc_regular_expression` with invalid flags in the parser
-        let mut flags_error = false;
 
         while let Some(b @ (b'$' | b'_' | b'a'..=b'z' | b'A'..=b'Z' | b'0'..=b'9')) =
             self.peek_byte()
@@ -71,7 +69,6 @@ impl<C: Config> Lexer<'_, C> {
                     b as char,
                     self.current_offset().expand_left(1),
                 ));
-                flags_error = true;
                 continue;
             };
             if flags.contains(flag) {
@@ -79,12 +76,11 @@ impl<C: Config> Lexer<'_, C> {
                     b as char,
                     self.current_offset().expand_left(1),
                 ));
-                flags_error = true;
                 continue;
             }
             flags |= flag;
         }
 
-        (pattern_end, flags, flags_error)
+        (pattern_end, flags)
     }
 }

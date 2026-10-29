@@ -3,7 +3,7 @@
 //! `StringValue` cooking and re-encoding lives in the sibling [`super::string`] module.
 
 use oxc_formatter_core::{
-    Buffer, FormatContext,
+    FormatContext,
     builders::{group, soft_block_indent, soft_block_indent_with_maybe_space, text},
     write,
 };

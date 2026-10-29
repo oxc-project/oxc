@@ -3,6 +3,7 @@ use std::path::PathBuf;
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::Span;
+use oxc_str::JSStr;
 
 use crate::context::LintContext;
 
@@ -65,10 +66,22 @@ pub fn run_once(ctx: &LintContext) {
             return;
         };
 
-        if string_literal.value.as_str().is_some_and(contains_mocks_dir) {
+        if js_str_contains_mocks_dir(string_literal.value) {
             ctx.diagnostic(no_mocks_import_diagnostic(string_literal.span));
         }
     }
+}
+
+fn js_str_contains_mocks_dir(value: JSStr<'_>) -> bool {
+    if let Some(value) = value.as_str() {
+        return contains_mocks_dir(value);
+    }
+    // Separators are ASCII, so splitting the WTF-8 bytes finds the same segments.
+    // A segment with a lone surrogate never equals `__mocks__`.
+    value
+        .as_bytes()
+        .split(|&byte| std::path::is_separator(char::from(byte)))
+        .any(|segment| segment == b"__mocks__")
 }
 
 fn contains_mocks_dir(value: &str) -> bool {

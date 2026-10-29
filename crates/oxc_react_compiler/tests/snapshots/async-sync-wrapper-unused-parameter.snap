@@ -1,0 +1,20 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-sync-wrapper-unused-parameter.js
+---
+function Component() {
+	let count = 0;
+	const cb = () => count++;
+	const run = _temp;
+	const start = _temp3;
+	start(run, cb);
+	return null;
+}
+function _temp3(fn_0, unused) {
+	return fn_0(_temp2);
+}
+function _temp2() {}
+async function _temp(fn) {
+	await 0;
+	fn();
+}

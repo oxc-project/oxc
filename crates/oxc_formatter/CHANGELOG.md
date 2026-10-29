@@ -4,6 +4,67 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 5042019 formatter: Keep fill layout for array with comment after [ (#28170) (leaysgur)
+- 9d37ff6 formatter: Use position-based comment checks for concise arrays (#28169) (leaysgur)
+- 016c4a2 formatter: Keep a comment before `}` inside a JSX spread child (#28103) (vidigoat)
+- 190bb1e formatter: Keep parens around an instantiation expression ending an operand through any tight parent (#28168) (leaysgur)
+- a5314a1 formatter: Keep `;` before `in` and `instanceof` class members (#28166) (leaysgur)
+- 3a56e7c formatter: Keep closing HTML comments at the start of a line (#28064) (Cameron)
+- 5f1fd3d formatter: Measure width heuristics by display width (#28098) (leaysgur)
+- a5a52cf formatter: Keep parens around private `in` expressions (#28096) (leaysgur)
+- 999496e formatter: Measure a short key by its display width (#28026) (vidigoat)
+- 7e9aa44 formatter: Keep parens around a looser operand of an instantiation expression (#28025) (vidigoat)
+- 6912d1f formatter: Keep an arrow signature that exactly fills the line for any body (#27989) (leaysgur)
+
+### ⚡ Performance
+
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+- 788af22 formatter: Keep `AstNode`s on the stack, and only chain links in the arena (#27963) (leaysgur)
+
+### 📚 Documentation
+
+- 068a8ea formatter: Fix up wording (#28167) (leaysgur)
+- db55461 formatter_core: Document text width divergence (#28095) (leaysgur)
+- 880d229 formatter: Add vitest-test-call to known divergences (#28006) (leaysgur)
+
+## [0.74.0] - 2026-10-19
+
+### 🐛 Bug Fixes
+
+- 782ab6e linter: Search string values without UTF-8 conversion (#26716) (Dunqing)
+- a5d8184 jsdoc: Parse code spans after quotes in descriptions (#27955) (leaysgur)
+- c22a9b2 formatter: Treat static block with only empty statements as empty (#27945) (leaysgur)
+- d3ff3f6 formatter/jsdoc: Write descriptions as written to not close the comment (#27823) (leaysgur)
+- c4c1727 formatter/sort_imports: Keep comments after the last import (#27822) (leaysgur)
+- a64677e formatter: Print JSDoc embedded snippets with LF (#27821) (leaysgur)
+- 2c1cc20 formatter: Keep comment only Vue bindings as-is (#27820) (leaysgur)
+- 1bf236d formatter/sort_imports: Do not use comments as import source (#27819) (leaysgur)
+- a1ef7f4 formatter: Keep typecast parens in same-operator binary and arrow chain (#27812) (leaysgur)
+- de110ce formatter: Keep more parens around `TSInstantiationExpression` (#27811) (leaysgur)
+- 6fe4c1b formatter: Treat lone CR in JSX text and argument blank lines (#27780) (leaysgur)
+- d2bea21 formatter: Glue comments to an opener in empty for-head slots and array holes (#27737) (leaysgur)
+- 6a95ec1 formatter: Keep comment position on holey array (#27730) (leaysgur)
+- 54769da formatter: Break after dangling line comment in holey array (#27729) (leaysgur)
+- 644ca1c formatter: Do not indent logical chains whose right sides all inline (#27667) (leaysgur)
+- a07a0fb formatter: Wrap comment-only JSX expression container in a group (#27666) (leaysgur)
+
+### ⚡ Performance
+
+- e220293 formatter: Check only the operator suppression mark in `is_quiet` (#27952) (leaysgur)
+- e5fdc9c formatter_core: Write into one element stack through a concrete `Formatter` (#27559) (leaysgur)
+- a342f7e formatter: Skip comment handling for nodes with no comment near them (#27557) (leaysgur)
+- d8ce750 formatter: Write string literals with swapped quotes into the arena (#27558) (Yuji Sugiura)
+- 1d3ef10 formatter_core: Keep the embedded IR when nothing in it is rewritten (#27673) (leaysgur)
+
+### 📚 Documentation
+
+- d0dd140 formatter: Note lossy cooked round-trip in template embeds (#27944) (leaysgur)
+- 8a3a6c8 oxfmt: Update stale notes on the JSDoc string-out channel and fixture origins (#27824) (leaysgur)
+
 ## [0.73.0] - 2026-10-13
 
 ### 🐛 Bug Fixes

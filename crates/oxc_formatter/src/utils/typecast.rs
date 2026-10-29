@@ -28,7 +28,7 @@ use oxc_ast::Comment;
 use oxc_span::{GetSpan, Span};
 
 use crate::{
-    Buffer, Format, format_args,
+    Format, format_args,
     formatter::{
         JsFormatter,
         comments::gap_segments,
@@ -128,10 +128,7 @@ pub fn is_cast_target(span: Span, f: &JsFormatter<'_, '_>) -> bool {
     // A target is preceded by its `(` or by the `/` closing a comment:
     // one byte peek rejects most nodes before the `)` peek (true for every last argument and parenthesized test)
     // and the comment lookup.
-    if !matches!(
-        source.bytes_to(span.start).find(|byte| !byte.is_ascii_whitespace()),
-        Some(b'(' | b'/')
-    ) {
+    if !matches!(source.previous_non_whitespace_byte(span.start), Some(b'(' | b'/')) {
         return false;
     }
     let comments = f.context().comments();

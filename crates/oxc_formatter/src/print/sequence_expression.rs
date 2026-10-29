@@ -25,7 +25,7 @@ pub fn sequence_leading_comments_start(sequence: &SequenceExpression<'_>) -> u32
     sequence.expressions.first().map_or(sequence.span.start, |e| e.span().start)
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SequenceExpression<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, SequenceExpression<'a>> {
     fn leading_comments_start(&self) -> u32 {
         sequence_leading_comments_start(self)
     }

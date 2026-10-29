@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -59,7 +59,7 @@ impl Rule for NoUnnecessaryArrayFlatDepth {
             let diagnostic_span = call_expr
                 .callee
                 .as_member_expression()
-                .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+                .and_then(MemberExpression::static_property_info)
                 .map_or(call_expr.span, |(span, _)| span);
 
             ctx.diagnostic_with_suggestion(

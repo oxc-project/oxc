@@ -1,6 +1,6 @@
 ## js-in-vue
 
-### Option 1: 423/426 (99.30%)
+### Option 1: 421/424 (99.29%)
 
 ```json
 {"printWidth":80}
@@ -13,7 +13,7 @@
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 
-### Option 2: 424/426 (99.53%)
+### Option 2: 422/424 (99.53%)
 
 ```json
 {"printWidth":100,"vueIndentScriptAndStyle":true,"singleQuote":true}
@@ -107,7 +107,7 @@
 - [externals/webawesome/number-input/number-input.ts](diffs/html-in-js/externals__webawesome__number-input__number-input.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/page/page.styles.ts](diffs/html-in-js/externals__webawesome__page__page.styles.ts.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
+  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position, crates/oxc_formatter_css/DIVERGENCES.md#grid-value-broken-in-function
 - [externals/webawesome/popup/popup.ts](diffs/html-in-js/externals__webawesome__popup__popup.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/qr-code/qr-code.ts](diffs/html-in-js/externals__webawesome__qr-code__qr-code.ts.md)
@@ -254,12 +254,14 @@
 
 ## markdown
 
-### Option 1: 273/282 (96.81%)
+### Option 1: 273/283 (96.47%)
 
 ```json
 {"printWidth":80}
 ```
 
+- [edge-cases/xxx-in-md/front-matter-indented-delimiter.md](diffs/markdown/edge-cases__xxx-in-md__front-matter-indented-delimiter.md.md)
+  - apps/oxfmt/DIVERGENCES.md#front-matter-indented-delimiter
 - [edge-cases/xxx-in-md/line-ranged-code-block.md](diffs/markdown/edge-cases__xxx-in-md__line-ranged-code-block.md.md)
   - apps/oxfmt/DIVERGENCES.md#line-ranged-code-block
 - [edge-cases/xxx-in-md/lwc-code-block.md](diffs/markdown/edge-cases__xxx-in-md__lwc-code-block.md.md)
@@ -279,12 +281,14 @@
 - [externals/prettier/markdown/thematicBreak/simple.md](diffs/markdown/externals__prettier__markdown__thematicBreak__simple.md.md)
   - crates/oxc_formatter_markdown/DIVERGENCES.md#leading-thematic-break
 
-### Option 2: 269/282 (95.39%)
+### Option 2: 269/283 (95.05%)
 
 ```json
 {"printWidth":100,"proseWrap":"always"}
 ```
 
+- [edge-cases/xxx-in-md/front-matter-indented-delimiter.md](diffs/markdown/edge-cases__xxx-in-md__front-matter-indented-delimiter.md.md)
+  - apps/oxfmt/DIVERGENCES.md#front-matter-indented-delimiter
 - [edge-cases/xxx-in-md/line-ranged-code-block.md](diffs/markdown/edge-cases__xxx-in-md__line-ranged-code-block.md.md)
   - apps/oxfmt/DIVERGENCES.md#line-ranged-code-block
 - [edge-cases/xxx-in-md/lwc-code-block.md](diffs/markdown/edge-cases__xxx-in-md__lwc-code-block.md.md)
@@ -402,72 +406,36 @@
 
 ## yaml
 
-### Option 1: 295/302 (97.68%)
+### Option 1: 301/302 (99.67%)
 
 ```json
 {"printWidth":80}
 ```
 
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELB_Access_Logs_And_Connection_Draining.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBGuidedAutoScalingRollingUpgrade.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBStickinessSample.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBWithLockedDownAutoScaledInstances.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/RainModules/bucket.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__bucket.yml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 - [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
-- [externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml](diffs/yaml/externals__aws-cloudformation-templates__Solutions__OperatingSystems__ubuntu20.04_cfn-hup.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 
-### Option 2: 295/302 (97.68%)
+### Option 2: 301/302 (99.67%)
 
 ```json
 {"printWidth":100,"tabWidth":4,"proseWrap":"always"}
 ```
 
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELB_Access_Logs_And_Connection_Draining.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBGuidedAutoScalingRollingUpgrade.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBStickinessSample.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBWithLockedDownAutoScaledInstances.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/RainModules/bucket.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__bucket.yml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 - [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
-- [externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml](diffs/yaml/externals__aws-cloudformation-templates__Solutions__OperatingSystems__ubuntu20.04_cfn-hup.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 
-### Option 3: 295/302 (97.68%)
+### Option 3: 301/302 (99.67%)
 
 ```json
 {"printWidth":120,"singleQuote":true,"bracketSpacing":false,"trailingComma":"none"}
 ```
 
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELB_Access_Logs_And_Connection_Draining.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELB_Access_Logs_And_Connection_Draining.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBGuidedAutoScalingRollingUpgrade.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBGuidedAutoScalingRollingUpgrade.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBStickinessSample.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBStickinessSample.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/ElasticLoadBalancing/ELBWithLockedDownAutoScaledInstances.yaml](diffs/yaml/externals__aws-cloudformation-templates__ElasticLoadBalancing__ELBWithLockedDownAutoScaledInstances.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
-- [externals/aws-cloudformation-templates/RainModules/bucket.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__bucket.yml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 - [externals/aws-cloudformation-templates/RainModules/load-balancer.yml](diffs/yaml/externals__aws-cloudformation-templates__RainModules__load-balancer.yml.md)
   - crates/oxc_formatter_yaml/DIVERGENCES.md#comment-over-indented
-- [externals/aws-cloudformation-templates/Solutions/OperatingSystems/ubuntu20.04_cfn-hup.yaml](diffs/yaml/externals__aws-cloudformation-templates__Solutions__OperatingSystems__ubuntu20.04_cfn-hup.yaml.md)
-  - crates/oxc_formatter_yaml/DIVERGENCES.md#block-scalar-trailing-whitespace
 
 ## scss
 
-### Option 1: 202/217 (93.09%)
+### Option 1: 203/217 (93.55%)
 
 ```json
 {"printWidth":80}
@@ -477,12 +445,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/gitlab/stylesheets/framework/diffs.scss](diffs/scss/externals__gitlab__stylesheets__framework__diffs.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
-- [externals/gitlab/stylesheets/framework/variables_overrides.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables_overrides.scss.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#map-item-break-comma-lists-only
 - [externals/gitlab/stylesheets/framework/variables.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
-- [externals/gitlab/stylesheets/highlight/conflict_colors.scss](diffs/scss/externals__gitlab__stylesheets__highlight__conflict_colors.scss.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#map-paren-value-blank-lines
 - [externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles___ide_theme_overrides.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/gitlab/stylesheets/page_bundles/editor.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__editor.scss.md)
@@ -499,12 +463,14 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
 - [externals/gitlab/stylesheets/page_bundles/settings.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__settings.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
+- [externals/gitlab/stylesheets/page_bundles/work_items.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__work_items.scss.md)
+  - crates/oxc_formatter_css/DIVERGENCES.md#grid-value-broken-in-function
 - [externals/gitlab/stylesheets/pages/profile.scss](diffs/scss/externals__gitlab__stylesheets__pages__profile.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
 - [externals/gitlab/stylesheets/pages/settings.scss](diffs/scss/externals__gitlab__stylesheets__pages__settings.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
 
-### Option 2: 203/217 (93.55%)
+### Option 2: 205/217 (94.47%)
 
 ```json
 {"printWidth":100}
@@ -514,12 +480,8 @@
   - crates/oxc_formatter_css/DIVERGENCES.md#media-query-operator-spacing
 - [externals/gitlab/stylesheets/framework/sidebar.scss](diffs/scss/externals__gitlab__stylesheets__framework__sidebar.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
-- [externals/gitlab/stylesheets/framework/variables_overrides.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables_overrides.scss.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#map-item-break-comma-lists-only
 - [externals/gitlab/stylesheets/framework/variables.scss](diffs/scss/externals__gitlab__stylesheets__framework__variables.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
-- [externals/gitlab/stylesheets/highlight/conflict_colors.scss](diffs/scss/externals__gitlab__stylesheets__highlight__conflict_colors.scss.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#map-paren-value-blank-lines
 - [externals/gitlab/stylesheets/page_bundles/_ide_theme_overrides.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles___ide_theme_overrides.scss.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/gitlab/stylesheets/page_bundles/editor.scss](diffs/scss/externals__gitlab__stylesheets__page_bundles__editor.scss.md)
@@ -541,7 +503,7 @@
 
 ## jsdoc
 
-### Option 1: 368/370 (99.46%)
+### Option 1: 369/370 (99.73%)
 
 ```json
 {"printWidth":100}
@@ -549,5 +511,3 @@
 
 - [externals/svelte/compiler/print/index.js](diffs/jsdoc/externals__svelte__compiler__print__index.js.md)
   - unclassified
-- [externals/svelte/internal/client/dom/css.js](diffs/jsdoc/externals__svelte__internal__client__dom__css.js.md)
-  - crates/oxc_formatter/DIVERGENCES.md#cast-comment-inside-added-parens

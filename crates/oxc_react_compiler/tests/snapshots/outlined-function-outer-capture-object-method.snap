@@ -1,0 +1,36 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/outlined-function-outer-capture-object-method.js
+---
+import { c as _c } from "react/compiler-runtime";
+// @compilationMode:"infer"
+import { useEffect } from "react";
+function createBridge(options) {
+	const useBridge = () => {
+		const $ = _c(3);
+		let t0;
+		if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+			t0 = { subscribe() {
+				return () => options?.onReady?.();
+			} };
+			$[0] = t0;
+		} else {
+			t0 = $[0];
+		}
+		const bridge = t0;
+		let t1;
+		let t2;
+		if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
+			t1 = () => bridge.subscribe()();
+			t2 = [];
+			$[1] = t1;
+			$[2] = t2;
+		} else {
+			t1 = $[1];
+			t2 = $[2];
+		}
+		useEffect(t1, t2);
+		return bridge;
+	};
+	return useBridge;
+}

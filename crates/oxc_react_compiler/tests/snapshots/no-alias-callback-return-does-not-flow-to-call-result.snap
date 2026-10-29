@@ -1,0 +1,19 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/no-alias-callback-return-does-not-flow-to-call-result.js
+---
+import { c as _c } from "react/compiler-runtime";
+import { applyCallbackAndReturnPrimitive } from "ReactCompilerNoAliasTest";
+function Component() {
+	const $ = _c(1);
+	let t0;
+	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
+		let count = 0;
+		t0 = applyCallbackAndReturnPrimitive(() => () => count++);
+		$[0] = t0;
+	} else {
+		t0 = $[0];
+	}
+	const result = t0;
+	return result;
+}

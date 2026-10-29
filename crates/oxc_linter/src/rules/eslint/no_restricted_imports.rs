@@ -692,11 +692,10 @@ enum NameSpanAllowedResult {
 }
 
 #[derive(PartialEq, Debug)]
-enum ImportNameResult {
-    Allowed,
-    GeneralDisallowed,
-    DefaultDisallowed,
-    NameDisallowed(NameSpan),
+enum ImportNameViolation {
+    General,
+    Default,
+    Name(NameSpan),
 }
 
 #[derive(Hash, Eq, PartialEq)]
@@ -737,51 +736,59 @@ impl RestrictedPath {
         NameSpanAllowedResult::Allowed
     }
 
-    fn get_import_name_result(&self, name: &ImportImportName, is_type: bool) -> ImportNameResult {
+    fn get_import_name_result(
+        &self,
+        name: &ImportImportName,
+        is_type: bool,
+    ) -> Option<ImportNameViolation> {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
-            return ImportNameResult::Allowed;
+            return None;
         }
 
         match &name {
             ImportImportName::Name(import) => match self.is_name_span_allowed(&import.name) {
                 NameSpanAllowedResult::NameDisallowed => {
-                    ImportNameResult::NameDisallowed(import.clone())
+                    Some(ImportNameViolation::Name(import.clone()))
                 }
-                NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
+                NameSpanAllowedResult::Allowed => None,
             },
             ImportImportName::Default(span) => {
                 let name = CompactStr::new("default");
 
                 match self.is_name_span_allowed(&name) {
                     NameSpanAllowedResult::NameDisallowed => {
-                        ImportNameResult::NameDisallowed(NameSpan::new(name, *span))
+                        Some(ImportNameViolation::Name(NameSpan::new(name, *span)))
                     }
-                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                    NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
+                    NameSpanAllowedResult::Allowed => None,
                 }
             }
-            ImportImportName::NamespaceObject => ImportNameResult::DefaultDisallowed,
+            ImportImportName::NamespaceObject => Some(ImportNameViolation::Default),
         }
     }
 
-    fn get_export_name_result(&self, name: &ExportImportName, is_type: bool) -> ImportNameResult {
+    fn get_export_name_result(
+        &self,
+        name: &ExportImportName,
+        is_type: bool,
+    ) -> Option<ImportNameViolation> {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
-            return ImportNameResult::Allowed;
+            return None;
         }
 
         match &name {
             ExportImportName::Name(import) => match self.is_name_span_allowed(&import.name) {
                 NameSpanAllowedResult::NameDisallowed => {
-                    ImportNameResult::NameDisallowed(import.clone())
+                    Some(ImportNameViolation::Name(import.clone()))
                 }
-                NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
+                NameSpanAllowedResult::Allowed => None,
             },
             ExportImportName::All | ExportImportName::AllButDefault => {
-                ImportNameResult::DefaultDisallowed
+                Some(ImportNameViolation::Default)
             }
-            ExportImportName::Null => ImportNameResult::Allowed,
+            ExportImportName::Null => None,
         }
     }
 
@@ -789,23 +796,23 @@ impl RestrictedPath {
         &self,
         literal: &StringLiteral,
         is_type: bool,
-    ) -> ImportNameResult {
+    ) -> Option<ImportNameViolation> {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
-            return ImportNameResult::Allowed;
+            return None;
         }
 
         let Some(name) = literal.value.as_str() else {
-            return ImportNameResult::Allowed;
+            return None;
         };
         let name = CompactStr::from(name);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
             NameSpanAllowedResult::NameDisallowed => {
-                ImportNameResult::NameDisallowed(NameSpan::new(name, literal.span))
+                Some(ImportNameViolation::Name(NameSpan::new(name, literal.span)))
             }
-            NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-            NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
+            NameSpanAllowedResult::Allowed => None,
         }
     }
 }
@@ -845,50 +852,58 @@ impl RestrictedPattern {
         NameSpanAllowedResult::Allowed
     }
 
-    fn get_import_name_result(&self, name: &ImportImportName, is_type: bool) -> ImportNameResult {
+    fn get_import_name_result(
+        &self,
+        name: &ImportImportName,
+        is_type: bool,
+    ) -> Option<ImportNameViolation> {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
-            return ImportNameResult::Allowed;
+            return None;
         }
 
         match &name {
             ImportImportName::Name(import) => match self.is_name_span_allowed(&import.name) {
                 NameSpanAllowedResult::NameDisallowed => {
-                    ImportNameResult::NameDisallowed(import.clone())
+                    Some(ImportNameViolation::Name(import.clone()))
                 }
-                NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
+                NameSpanAllowedResult::Allowed => None,
             },
             ImportImportName::Default(span) => {
                 let name: CompactStr = CompactStr::new("default");
                 match self.is_name_span_allowed(&name) {
                     NameSpanAllowedResult::NameDisallowed => {
-                        ImportNameResult::NameDisallowed(NameSpan::new(name, *span))
+                        Some(ImportNameViolation::Name(NameSpan::new(name, *span)))
                     }
-                    NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                    NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                    NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
+                    NameSpanAllowedResult::Allowed => None,
                 }
             }
-            ImportImportName::NamespaceObject => ImportNameResult::DefaultDisallowed,
+            ImportImportName::NamespaceObject => Some(ImportNameViolation::Default),
         }
     }
 
-    fn get_export_name_result(&self, name: &ExportImportName, is_type: bool) -> ImportNameResult {
+    fn get_export_name_result(
+        &self,
+        name: &ExportImportName,
+        is_type: bool,
+    ) -> Option<ImportNameViolation> {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
-            return ImportNameResult::Allowed;
+            return None;
         }
 
         match &name {
             ExportImportName::Name(import) => match self.is_name_span_allowed(&import.name) {
                 NameSpanAllowedResult::NameDisallowed => {
-                    ImportNameResult::NameDisallowed(import.clone())
+                    Some(ImportNameViolation::Name(import.clone()))
                 }
-                NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-                NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+                NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
+                NameSpanAllowedResult::Allowed => None,
             },
             ExportImportName::All | ExportImportName::AllButDefault => {
-                ImportNameResult::DefaultDisallowed
+                Some(ImportNameViolation::Default)
             }
-            ExportImportName::Null => ImportNameResult::Allowed,
+            ExportImportName::Null => None,
         }
     }
 
@@ -896,23 +911,23 @@ impl RestrictedPattern {
         &self,
         literal: &StringLiteral,
         is_type: bool,
-    ) -> ImportNameResult {
+    ) -> Option<ImportNameViolation> {
         if is_type && self.allow_type_imports.is_some_and(|x| x) {
-            return ImportNameResult::Allowed;
+            return None;
         }
 
         let Some(name) = literal.value.as_str() else {
-            return ImportNameResult::Allowed;
+            return None;
         };
         let name = CompactStr::from(name);
         let unused_name = &CompactStr::from("__<>import_name_that_cant_be_used<>__");
 
         match self.is_name_span_allowed(unused_name) {
             NameSpanAllowedResult::NameDisallowed => {
-                ImportNameResult::NameDisallowed(NameSpan::new(name, literal.span))
+                Some(ImportNameViolation::Name(NameSpan::new(name, literal.span)))
             }
-            NameSpanAllowedResult::GeneralDisallowed => ImportNameResult::GeneralDisallowed,
-            NameSpanAllowedResult::Allowed => ImportNameResult::Allowed,
+            NameSpanAllowedResult::GeneralDisallowed => Some(ImportNameViolation::General),
+            NameSpanAllowedResult::Allowed => None,
         }
     }
 
@@ -1133,7 +1148,7 @@ impl NoRestrictedImports {
                         err = Some(get_diagnostic_from_import_name_result_pattern(
                             spans[0],
                             source,
-                            &ImportNameResult::GeneralDisallowed,
+                            &ImportNameViolation::General,
                             pattern,
                         ));
                     }
@@ -1144,7 +1159,7 @@ impl NoRestrictedImports {
                     ctx.diagnostic(get_diagnostic_from_import_name_result_pattern(
                         spans[0],
                         source,
-                        &ImportNameResult::GeneralDisallowed,
+                        &ImportNameViolation::General,
                         pattern,
                     ));
                 }
@@ -1169,13 +1184,12 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let result = &path.get_import_name_result(&entry.import_name, entry.is_type);
-
-            if *result == ImportNameResult::Allowed {
+            let Some(result) = &path.get_import_name_result(&entry.import_name, entry.is_type)
+            else {
                 continue;
-            }
+            };
 
-            if *result == ImportNameResult::GeneralDisallowed
+            if *result == ImportNameViolation::General
                 && !reported_general_paths
                     .insert(ReportedGeneralImport::new(path_index, entry.statement_span))
             {
@@ -1196,11 +1210,10 @@ impl NoRestrictedImports {
         let mut found_errors = vec![];
 
         for (pattern_index, pattern) in self.patterns.iter().enumerate() {
-            let result = &pattern.get_import_name_result(&entry.import_name, entry.is_type);
-
-            if *result == ImportNameResult::Allowed {
+            let Some(result) = &pattern.get_import_name_result(&entry.import_name, entry.is_type)
+            else {
                 continue;
-            }
+            };
 
             match pattern.get_group_glob_result(entry.module_request.name()) {
                 GlobResult::Whitelist => {
@@ -1208,7 +1221,7 @@ impl NoRestrictedImports {
                     break;
                 }
                 GlobResult::Found => {
-                    if *result == ImportNameResult::GeneralDisallowed
+                    if *result == ImportNameViolation::General
                         && !reported_general_patterns
                             .insert(ReportedGeneralImport::new(pattern_index, entry.statement_span))
                     {
@@ -1228,7 +1241,7 @@ impl NoRestrictedImports {
             }
 
             if pattern.get_regex_result(entry.module_request.name()) {
-                if *result == ImportNameResult::GeneralDisallowed
+                if *result == ImportNameViolation::General
                     && !reported_general_patterns
                         .insert(ReportedGeneralImport::new(pattern_index, entry.statement_span))
                 {
@@ -1311,11 +1324,9 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let result = &path.get_string_literal_result(source_literal, is_type);
-
-            if *result == ImportNameResult::Allowed {
+            let Some(result) = &path.get_string_literal_result(source_literal, is_type) else {
                 continue;
-            }
+            };
 
             let diagnostic =
                 get_diagnostic_from_import_name_result_path(span, source, result, path);
@@ -1336,11 +1347,9 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let result = &pattern.get_string_literal_result(source_literal, is_type);
-
-            if *result == ImportNameResult::Allowed {
+            let Some(result) = &pattern.get_string_literal_result(source_literal, is_type) else {
                 continue;
-            }
+            };
 
             match pattern.get_group_glob_result(source) {
                 GlobResult::Whitelist => {
@@ -1388,13 +1397,12 @@ impl NoRestrictedImports {
                 continue;
             }
 
-            let result = &path.get_export_name_result(&entry.import_name, entry.is_type);
-
-            if *result == ImportNameResult::Allowed {
+            let Some(result) = &path.get_export_name_result(&entry.import_name, entry.is_type)
+            else {
                 continue;
-            }
+            };
 
-            if *result == ImportNameResult::GeneralDisallowed
+            if *result == ImportNameViolation::General
                 && !reported_general_paths
                     .insert(ReportedGeneralImport::new(path_index, entry.statement_span))
             {
@@ -1415,11 +1423,10 @@ impl NoRestrictedImports {
         let mut found_errors = vec![];
 
         for (pattern_index, pattern) in self.patterns.iter().enumerate() {
-            let result = &pattern.get_export_name_result(&entry.import_name, entry.is_type);
-
-            if *result == ImportNameResult::Allowed {
+            let Some(result) = &pattern.get_export_name_result(&entry.import_name, entry.is_type)
+            else {
                 continue;
-            }
+            };
 
             let Some(module_request) = &entry.module_request else {
                 continue;
@@ -1431,7 +1438,7 @@ impl NoRestrictedImports {
                     break;
                 }
                 GlobResult::Found => {
-                    if *result == ImportNameResult::GeneralDisallowed
+                    if *result == ImportNameViolation::General
                         && !reported_general_patterns
                             .insert(ReportedGeneralImport::new(pattern_index, entry.statement_span))
                     {
@@ -1451,7 +1458,7 @@ impl NoRestrictedImports {
             }
 
             if pattern.get_regex_result(module_request.name()) {
-                if *result == ImportNameResult::GeneralDisallowed
+                if *result == ImportNameViolation::General
                     && !reported_general_patterns
                         .insert(ReportedGeneralImport::new(pattern_index, entry.statement_span))
                 {
@@ -1478,12 +1485,12 @@ impl NoRestrictedImports {
 fn get_diagnostic_from_import_name_result_path(
     span: Span,
     source: &str,
-    result: &ImportNameResult,
+    result: &ImportNameViolation,
     path: &RestrictedPath,
 ) -> OxcDiagnostic {
     match result {
-        ImportNameResult::GeneralDisallowed => diagnostic_path(span, path.message.clone(), source),
-        ImportNameResult::DefaultDisallowed => match &path.import_names {
+        ImportNameViolation::General => diagnostic_path(span, path.message.clone(), source),
+        ImportNameViolation::Default => match &path.import_names {
             Some(import_names) => diagnostic_everything(
                 span,
                 path.message.clone(),
@@ -1500,7 +1507,7 @@ fn get_diagnostic_from_import_name_result_path(
                 _ => diagnostic_path(span, path.message.clone(), source),
             },
         },
-        ImportNameResult::NameDisallowed(name_span) => match &path.allow_import_names {
+        ImportNameViolation::Name(name_span) => match &path.allow_import_names {
             Some(allow_import_names) => diagnostic_allowed_import_name(
                 name_span.span,
                 path.message.clone(),
@@ -1515,21 +1522,18 @@ fn get_diagnostic_from_import_name_result_path(
                 source,
             ),
         },
-        ImportNameResult::Allowed => unreachable!("should be filtered out by the parent function"),
     }
 }
 
 fn get_diagnostic_from_import_name_result_pattern(
     span: Span,
     source: &str,
-    result: &ImportNameResult,
+    result: &ImportNameViolation,
     pattern: &RestrictedPattern,
 ) -> OxcDiagnostic {
     match result {
-        ImportNameResult::GeneralDisallowed => {
-            diagnostic_pattern(span, pattern.message.clone(), source)
-        }
-        ImportNameResult::DefaultDisallowed => {
+        ImportNameViolation::General => diagnostic_pattern(span, pattern.message.clone(), source),
+        ImportNameViolation::Default => {
             if let Some(import_names) = &pattern.import_names {
                 return diagnostic_pattern_and_everything(
                     span,
@@ -1568,7 +1572,7 @@ fn get_diagnostic_from_import_name_result_pattern(
 
             diagnostic_pattern(span, pattern.message.clone(), source)
         }
-        ImportNameResult::NameDisallowed(name_span) => match &pattern.allow_import_names {
+        ImportNameViolation::Name(name_span) => match &pattern.allow_import_names {
             Some(allow_import_names) => diagnostic_allowed_import_name(
                 name_span.span,
                 pattern.message.clone(),
@@ -1592,7 +1596,6 @@ fn get_diagnostic_from_import_name_result_pattern(
                 ),
             },
         },
-        ImportNameResult::Allowed => unreachable!("should be filtered out by parent function"),
     }
 }
 
@@ -2033,6 +2036,13 @@ fn test() {
         ),
         // dynamic `import()` with a string-literal source
         ("import('os');", Some(serde_json::json!(["fs"]))),
+        // A source with a lone surrogate matches no configured name or pattern.
+        (r"import('a\uD800');", Some(serde_json::json!(["a\u{FFFD}"]))),
+        (r"import('a\uD800');", Some(serde_json::json!([{ "patterns": [{ "regex": "^a.$" }] }]))),
+        (
+            r"import('a\uD800/b');",
+            Some(serde_json::json!([{ "patterns": [{ "group": ["a*/b"] }] }])),
+        ),
         ("import('foo/bar');", Some(serde_json::json!([{ "patterns": ["foo/baz"] }]))),
         // non-literal dynamic import sources are ignored
         ("import(foo);", Some(serde_json::json!(["foo"]))),

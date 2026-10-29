@@ -3,7 +3,7 @@ use crate::{
     context::{ContextHost, LintContext},
     fixer::{RuleFix, RuleFixer},
     rule::{DefaultRuleConfig, Rule},
-    utils::is_jsx_fragment,
+    utils::{is_jsx_fragment, is_jsx_multiline_whitespace},
 };
 use oxc_allocator::ArenaVec;
 use oxc_ast::{
@@ -294,18 +294,11 @@ fn jsx_elem_has_key_or_ref_attr(elem: &JSXElement) -> bool {
 }
 
 fn is_fragment_with_single_expression(children: &ArenaVec<'_, JSXChild<'_>>) -> bool {
-    let mut non_padding_children = children.iter().filter(|child| is_padding_spaces(child));
+    let mut non_padding_children =
+        children.iter().filter(|child| !is_jsx_multiline_whitespace(child));
 
     matches!(non_padding_children.next(), Some(JSXChild::ExpressionContainer(_)))
         && non_padding_children.next().is_none()
-}
-
-fn is_padding_spaces(v: &JSXChild<'_>) -> bool {
-    if let JSXChild::Text(v) = v {
-        return !(v.value.trim().is_empty() && v.value.contains('\n'));
-    }
-
-    true
 }
 
 fn is_child_of_html_element(node: &AstNode, ctx: &LintContext) -> bool {
@@ -330,7 +323,7 @@ fn has_less_than_two_children(children: &ArenaVec<'_, JSXChild<'_>>) -> bool {
     let mut non_padding_child_count = 0;
     let mut has_call_expression_child = false;
 
-    for child in children.iter().filter(|child| is_padding_spaces(child)) {
+    for child in children.iter().filter(|child| !is_jsx_multiline_whitespace(child)) {
         non_padding_child_count += 1;
         if non_padding_child_count >= 2 {
             return false;

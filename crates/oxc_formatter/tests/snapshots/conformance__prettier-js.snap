@@ -2,16 +2,17 @@
 source: crates/oxc_formatter/tests/conformance.rs
 expression: report
 ---
-js compatibility: 762/811 (93.96%), 23 files skipped
+js compatibility: 1029/1123 (91.63%), 23 files skipped
 
 # Failed
 
 | Spec path | Failed or Passed | Match ratio |
 | :-------- | :--------------: | :---------: |
+| js/arrays/numbers-with-holes.js | 💥 | 92.86% |
 | js/arrows/arrow-chain-with-trailing-comments.js | 💥💥 | 93.75% |
 | js/arrows/issue-17421.js | 💥💥 | 88.70% |
 | js/assignment-comments/string.js | 💥 | 96.59% |
-| js/binary-expressions/mutiple-comments/17192.js | 💥✨ | 45.83% |
+| js/binary-expressions/mutiple-comments/17192.js | 💥✨ | 95.83% |
 | js/call/no-argument/no-arguments.js | 💥 | 79.49% |
 | js/class-comment/misc.js | 💥 | 66.67% |
 | js/class-comment/superclass.js | 💥 | 70.33% |
@@ -54,6 +55,7 @@ js compatibility: 762/811 (93.96%), 23 files skipped
 | js/switch/comments.js | 💥 | 94.74% |
 | js/template-literals/expression-break.js | 💥 | 80.00% |
 | js/template-literals/expressions.js | 💥 | 97.64% |
+| js/ternaries/indent-after-paren.js | 💥💥💥💥 | 99.14% |
 | js/test-declarations/jest-each.js | 💥💥 | 95.71% |
 | js/trailing-comma/trailing_whitespace.js | 💥💥💥 | 96.55% |
 | js/try/try.js | 💥 | 44.44% |
@@ -86,12 +88,8 @@ js compatibility: 762/811 (93.96%), 23 files skipped
 
 # Not idempotent
 
-- js/arrays/numbers-negative-comment-after-minus.js
-- js/arrays/numbers-with-holes.js
 - js/comments/return-statement.js
 - js/comments/first-argument/first-argument.js
 - js/for/continue-and-break-comment-without-blocks.js
 - js/function/issue-12967.js
-- js/object-prop-break-in/short-keys.js
 - jsx/comments/in-attributes.js
-- jsx/spread/child.js

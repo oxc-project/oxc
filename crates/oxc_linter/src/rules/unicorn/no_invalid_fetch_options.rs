@@ -2,18 +2,17 @@ use std::borrow::Cow;
 
 use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
-use oxc_allocator::ArenaBox;
 use oxc_ast::{
     AstKind,
     ast::{
-        Argument, Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey,
-        TSLiteral, TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
+        Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey, TSLiteral,
+        TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::AstNode;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 
 fn no_invalid_fetch_options_diagnostic(span: Span, method: &str) -> OxcDiagnostic {
@@ -62,30 +61,25 @@ declare_oxc_lint!(
 
 impl Rule for NoInvalidFetchOptions {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
-            AstKind::CallExpression(call_expr) => {
-                if !call_expr.callee.is_specific_id("fetch") || call_expr.arguments.len() < 2 {
-                    return;
-                }
-
-                if let Argument::ObjectExpression(expr) = &call_expr.arguments[1]
-                    && let Some((method_name, body_span)) = is_invalid_fetch_options(expr, ctx)
-                {
-                    ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
-                }
+        let AstKind::ObjectExpression(expr) = node.kind() else {
+            return;
+        };
+        let arguments = match ctx.nodes().parent_kind(node.id()) {
+            AstKind::CallExpression(call_expr) if call_expr.callee.is_specific_id("fetch") => {
+                &call_expr.arguments
             }
-            AstKind::NewExpression(new_expr) => {
-                if !is_new_expression(new_expr, &["Request"], Some(2), None) {
-                    return;
-                }
-
-                if let Argument::ObjectExpression(expr) = &new_expr.arguments[1]
-                    && let Some((method_name, body_span)) = is_invalid_fetch_options(expr, ctx)
-                {
-                    ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
-                }
+            AstKind::NewExpression(new_expr)
+                if is_new_expression(new_expr, &["Request"], Some(2), None) =>
+            {
+                &new_expr.arguments
             }
-            _ => {}
+            _ => return,
+        };
+        if arguments.get(1).is_none_or(|argument| argument.span() != expr.span) {
+            return;
+        }
+        if let Some((method_name, body_span)) = is_invalid_fetch_options(expr, ctx) {
+            ctx.diagnostic(no_invalid_fetch_options_diagnostic(body_span, &method_name));
         }
     }
 }
@@ -94,7 +88,7 @@ impl Rule for NoInvalidFetchOptions {
 const UNKNOWN_METHOD_NAME: Cow<'static, str> = Cow::Borrowed("UNKNOWN");
 
 fn is_invalid_fetch_options<'a>(
-    obj_expr: &'a ArenaBox<'_, ObjectExpression<'_>>,
+    obj_expr: &'a ObjectExpression<'_>,
     ctx: &'a LintContext<'_>,
 ) -> Option<(Cow<'a, str>, Span)> {
     // fetch and Request method defaults to "GET"
@@ -145,7 +139,13 @@ fn is_invalid_fetch_options<'a>(
                                         if let Some(Expression::StringLiteral(str_lit)) =
                                             &m.initializer
                                         {
-                                            str_lit.value.as_str().map(CompactStr::from)
+                                            // A value with a lone surrogate is not a known method.
+                                            Some(CompactStr::from(
+                                                str_lit
+                                                    .value
+                                                    .as_str()
+                                                    .unwrap_or(&UNKNOWN_METHOD_NAME),
+                                            ))
                                         } else {
                                             None
                                         }
@@ -293,6 +293,12 @@ fn test() {
         "new not_Request(url, {body})",
         "fetch({body}, url)",
         "new Request({body}, url)",
+        "fetch(url, {}, {body})",
+        "new Request(url, {}, {body})",
+        "fetch(url, ({body}))",
+        "new Request(url, ({body}))",
+        "fetch(url, {body} as RequestInit)",
+        "fetch(url, {options: {body}})",
         r#"fetch(url, {[body]: "foo=bar"})"#,
         r#"new Request(url, {[body]: "foo=bar"})"#,
         r#"fetch(url, {body: "foo=bar", body: undefined});"#,
@@ -329,6 +335,8 @@ fn test() {
         (r#"new Request("/url", { method: getOptions().method, body: "some body" });"#),
         (r#"fetch("/url", { method: (options).method, body: "some body" });"#),
         (r#"new Request("/url", { method: (options).method, body: "some body" });"#),
+        r#"enum M { A = "\uD800" } fetch(u, {method: M.A, body: "x"})"#,
+        r#"enum M { A = "\uD800", B = "GET" } fetch(u, {method: M.A, body: "x"})"#,
     ];
 
     let fail = vec![

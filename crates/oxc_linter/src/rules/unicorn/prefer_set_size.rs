@@ -1,6 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{ArrayExpressionElement, CallExpression, Expression},
+    ast::{ArrayExpressionElement, CallExpression, Expression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -10,7 +10,7 @@ use oxc_span::{GetSpan, Span};
 use crate::{
     AstNode,
     ast_util::variable_declaration_kind,
-    ast_util::{get_declaration_of_variable, is_method_call},
+    ast_util::{get_declaration_of_variable, is_method_call, outermost_paren_parent},
     context::LintContext,
     fixer::Fix,
     rule::Rule,
@@ -57,7 +57,21 @@ declare_oxc_lint!(
 
 impl Rule for PreferSetSize {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::StaticMemberExpression(member_expr) = node.kind() else {
+        let conversion_node = match node.kind() {
+            AstKind::SpreadElement(_) => {
+                let parent = ctx.nodes().parent_node(node.id());
+                if !matches!(parent.kind(), AstKind::ArrayExpression(_)) {
+                    return;
+                }
+                parent
+            }
+            AstKind::CallExpression(_) => node,
+            _ => return,
+        };
+        let Some(parent) = outermost_paren_parent(conversion_node, ctx) else {
+            return;
+        };
+        let AstKind::StaticMemberExpression(member_expr) = parent.kind() else {
             return;
         };
 
@@ -140,7 +154,8 @@ fn is_set<'a>(maybe_set: &Expression<'a>, ctx: &LintContext<'a>) -> bool {
     if let Expression::Identifier(ident) = maybe_set
         && let Some(maybe_decl) = get_declaration_of_variable(ident, ctx)
         && let AstKind::VariableDeclarator(var_decl) = maybe_decl.kind()
-        && variable_declaration_kind(var_decl, ctx).is_const()
+        && variable_declaration_kind(var_decl, ctx.nodes())
+            .is_some_and(VariableDeclarationKind::is_const)
         && var_decl.id.is_binding_identifier()
         && let Some(init) = &var_decl.init
     {
@@ -164,6 +179,10 @@ fn test() {
 
     let pass = vec![
         "new Set(foo).size",
+        "[...new Set(array), ...new Set(other)].length",
+        "foo(...new Set(array)).length",
+        "({...new Set(array)}).length",
+        "[...[...new Set(array)]].length",
         "for (const foo of bar) console.log([...foo].length)",
         "[...new Set(array), foo].length",
         "[foo, ...new Set(array), ].length",

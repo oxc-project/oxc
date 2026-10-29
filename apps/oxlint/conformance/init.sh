@@ -5,6 +5,10 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 REPOS_JSON="$SCRIPT_DIR/repos.json"
 
+# Don't fail `pnpm install` when dependencies' build scripts are skipped.
+# pnpm v12 ignores `--config.strict-dep-builds=false` on the command line, but respects the env var.
+export pnpm_config_strict_dep_builds=false
+
 # Read a field from repos.json for a given repo key.
 # Usage: repo_field <key> <field>
 # e.g. `repo_field eslint commitSha`
@@ -39,8 +43,16 @@ cd submodules
 # Clone ESLint repo into `submodules/eslint`
 clone_repo eslint
 
+# ESLint depends on itself via `"eslint": "file:."`. pnpm v12 fails to install that
+# ("Empty path after `file:` scheme"), so convert it to a `link:` dependency.
+if [[ "$OSTYPE" == darwin* ]]; then
+  sed -i '' 's/"eslint": "file:\."/"eslint": "link:."/' package.json
+else
+  sed -i 's/"eslint": "file:\."/"eslint": "link:."/' package.json
+fi
+
 # Install dependencies
-pnpm install --ignore-workspace --config.strict-dep-builds=false
+pnpm install --ignore-workspace
 
 # Return to `submodules` directory
 cd ..
@@ -86,7 +98,7 @@ clone_repo stylistic
 
 # Install dependencies.
 # No `--ignore-workspace` because `eslint-stylistic` has its own `pnpm-workspace.yaml`.
-pnpm install --config.strict-dep-builds=false
+pnpm install
 
 # Patch `package.json` files to add Node.js subpath imports.
 # ESLint Stylistic uses TypeScript `paths` in `tsconfig.base.json` (e.g. `#test`),
@@ -144,7 +156,7 @@ cd ..
 clone_repo sonarjs
 
 # Install dependencies
-pnpm install --ignore-workspace --config.strict-dep-builds=false
+pnpm install --ignore-workspace
 
 # Build
 # (ignore errors, it's just typecheck fail)
@@ -190,7 +202,7 @@ cd ..
 clone_repo e18e
 
 # Install dependencies
-pnpm install --ignore-workspace --config.strict-dep-builds=false
+pnpm install --ignore-workspace
 
 # Return to `submodules` directory
 cd ..
@@ -203,7 +215,7 @@ cd ..
 clone_repo testing_library
 
 # Install dependencies
-pnpm install --ignore-workspace --config.strict-dep-builds=false
+pnpm install --ignore-workspace
 
 # Return to `submodules` directory
 cd ..

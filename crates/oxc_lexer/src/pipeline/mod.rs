@@ -5,11 +5,12 @@
 #![allow(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
 
+use std::slice;
+
 use oxc_span::Span;
 
 use crate::{
     PAD,
-    lanes::Lanes,
     options::LexOptions,
     pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
@@ -22,19 +23,23 @@ mod chunk;
 mod classify;
 mod coalesce;
 mod compress;
+mod cpu;
 mod disambiguate;
 mod find;
 mod keywords;
+mod lanes;
 mod misc;
 mod operators;
 mod scan;
 
-pub(crate) use disambiguate::State as DisambiguateState;
+pub(crate) use lanes::{Lanes, decode_char_at};
 
 use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
+use cpu::{Cpu, DynCpu, apply, cpu_versions};
+use disambiguate::{Brackets, Closers, Tokens};
 use misc::{misc_post, misc_pre};
 
 pub struct Lexer {
@@ -54,12 +59,15 @@ pub struct Lexer {
     sig_kinds: Vec<u8>,
     pub sig_len: usize,
     out_cap: usize,
-    pub lanes: Lanes,
+    pub(crate) lanes: Lanes,
+    cpu: DynCpu,
 }
 
 impl Lexer {
     pub fn new() -> Lexer {
-        init_pair_luts();
+        let cpu = DynCpu::detect();
+
+        init_pair_luts(cpu);
 
         Lexer {
             word: Vec::new(),
@@ -79,6 +87,7 @@ impl Lexer {
             sig_len: 0,
             out_cap: 0,
             lanes: Lanes::default(),
+            cpu,
         }
     }
 
@@ -138,6 +147,22 @@ impl Lexer {
         module: bool,
         vutf8: bool,
     ) -> usize {
+        self.lex_raw_impl(src, n, out_kinds, out_spans, jsx, ts, module, vutf8, self.cpu)
+    }
+
+    #[apply(cpu_versions)]
+    unsafe fn lex_raw_impl(
+        &mut self,
+        src: &[u8],
+        n: usize,
+        out_kinds: *mut u8,
+        out_spans: *mut Span,
+        jsx: bool,
+        ts: bool,
+        module: bool,
+        vutf8: bool,
+        cpu: impl Cpu,
+    ) -> usize {
         debug_assert!(src.len() >= n + PAD, "source must extend PAD zeroed bytes past n");
         self.ensure(n);
         self.lanes.clear();
@@ -149,21 +174,6 @@ impl Lexer {
             return 0;
         }
 
-        let w = self.pipeline(src, n, out_kinds, out_spans, jsx, ts, vutf8);
-        self.sig_len = w;
-        w
-    }
-
-    unsafe fn pipeline(
-        &mut self,
-        src: &[u8],
-        n: usize,
-        out_kinds: *mut u8,
-        out_spans: *mut Span,
-        jsx: bool,
-        ts: bool,
-        vutf8: bool,
-    ) -> usize {
         let nb = n.div_ceil(64);
         let sp = src.as_ptr();
         let word = self.word.as_mut_ptr();
@@ -179,12 +189,12 @@ impl Lexer {
         // Keyword recognition is mode-scoped: the TS set (and its wider
         // kwinit letter class) only ever sees TS input, so JS lexing is
         // byte-identical to a build without it.
-        classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind);
-        let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes);
+        classify(ts, sp, n, nb, word, st, kwinit, opch, digit, dot, misc, kind, cpu);
+        let nesc = misc_pre(sp, n, nb, st, word, misc, kind, vutf8, &mut self.lanes, cpu);
         carve(src, n, st, kind, opch, word, digit, dot, kwinit, jsx, ts, &mut self.lanes);
-        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes);
-        misc_post(sp, n, st, word, misc, kind, nesc);
-        compress(
+        coalesce(sp, n, st, opch, word, digit, dot, kwinit, kind, kwpos, ts, &mut self.lanes, cpu);
+        misc_post(sp, n, st, word, misc, kind, nesc, cpu);
+        let sig_len = compress(
             src,
             n,
             nb,
@@ -195,7 +205,10 @@ impl Lexer {
             out_kinds,
             out_spans,
             &mut self.lanes,
-        )
+            cpu,
+        );
+        self.sig_len = sig_len;
+        sig_len
     }
 
     fn ensure(&mut self, n: usize) {
@@ -259,15 +272,15 @@ unsafe fn token_view<'a>(
     ts: bool,
     kw_final: usize,
     module: bool,
-    brackets: &'a disambiguate::Brackets,
-    closers: &'a disambiguate::Closers,
-) -> disambiguate::Tokens<'a> {
+    brackets: &'a Brackets,
+    closers: &'a Closers,
+) -> Tokens<'a> {
     let nb = n.div_ceil(64) + 1;
-    disambiguate::Tokens {
-        src: std::slice::from_raw_parts(src, n + PAD),
-        st: std::slice::from_raw_parts(st, nb),
-        opch: std::slice::from_raw_parts(opch, nb),
-        kind: std::slice::from_raw_parts(kind, nb * 64),
+    Tokens {
+        src: slice::from_raw_parts(src, n + PAD),
+        st: slice::from_raw_parts(st, nb),
+        opch: slice::from_raw_parts(opch, nb),
+        kind: slice::from_raw_parts(kind, nb * 64),
         n,
         ts,
         module,
