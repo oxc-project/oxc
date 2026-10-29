@@ -799,7 +799,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let parameter_name = if self.at(Kind::This) {
             TSTypePredicateName::This(self.parse_this_type_node())
         } else {
-            let ident_name = self.parse_identifier_name();
+            let ident_name = self.parse_known_identifier_name();
             TSTypePredicateName::Identifier(self.alloc(ident_name))
         };
         let mut type_annotation = None;
@@ -1005,7 +1005,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             && self.lookahead(Self::is_next_token_colon_or_question_colon)
         {
             let member_start = self.cur_start();
-            let label = self.parse_identifier_name();
+            let label = self.parse_known_identifier_name();
             let optional = self.eat(Kind::Question);
             self.expect(Kind::Colon);
             let type_start = self.cur_start();
@@ -1106,7 +1106,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::LParen);
 
         let source = if self.at(Kind::Str) {
-            self.parse_literal_string()
+            self.parse_known_literal_string()
         } else {
             // `StringLiteral` is the only valid type for `TSImportType`'s `source` field. So this is an error.
             // Fallback to parsing a `TSType`, to obtain a good span for the diagnostic.
@@ -1241,7 +1241,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 (key, value, true)
             } else {
                 let key = if self.at(Kind::Str) {
-                    let string_literal = self.parse_literal_string();
+                    let string_literal = self.parse_known_literal_string();
                     PropertyKey::StringLiteral(self.alloc(string_literal))
                 } else {
                     let ident = self.parse_identifier_name();
@@ -1317,7 +1317,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let parameter_name = if self.at(Kind::This) {
             TSTypePredicateName::This(self.parse_this_type_node())
         } else {
-            let ident_name = self.parse_identifier_name();
+            let ident_name = self.parse_known_identifier_name();
             TSTypePredicateName::Identifier(self.alloc(ident_name))
         };
         self.bump_any(); // bump `is`

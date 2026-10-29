@@ -79,7 +79,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut identifier_after_import: Option<BindingIdentifier<'_>> =
             if self.cur_kind().is_binding_identifier() {
                 // `import something ...`
-                Some(self.parse_binding_identifier())
+                Some(self.parse_known_binding_identifier())
             } else {
                 // `import ...`
                 None
@@ -115,7 +115,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else if kind.is_binding_identifier() {
                 // `import type something ...`
                 let token = self.cur_token();
-                let identifier_after_type = self.parse_binding_identifier();
+                let identifier_after_type = self.parse_known_binding_identifier();
                 if token.kind() == Kind::From && self.at(Kind::Str) {
                     // `import type from 'source'`
                     if token.escaped() {
@@ -167,7 +167,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     token_after_import.span(),
                 ));
                 // Parse the identifier as the default specifier to continue recovery
-                identifier_after_import = Some(self.parse_binding_identifier());
+                identifier_after_import = Some(self.parse_known_binding_identifier());
                 phase = Some(ImportPhase::Defer);
             }
             // else: `import defer from 'source'` - defer is the binding name, no phase
@@ -175,7 +175,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.cur_kind().is_binding_identifier() {
                 // `import source something ...`
                 let token = self.cur_token();
-                let identifier_after_source = self.parse_binding_identifier();
+                let identifier_after_source = self.parse_known_binding_identifier();
                 if token.kind() == Kind::From {
                     // `import source from ...`
                     if self.at(Kind::From) {
@@ -402,7 +402,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_import_attribute(&mut self) -> ImportAttribute<'a> {
         let start = self.cur_start();
         let key = match self.cur_kind() {
-            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
+            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_known_literal_string()),
             _ => ImportAttributeKey::Identifier(self.parse_identifier_name()),
         };
         self.expect(Kind::Colon);
@@ -411,7 +411,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.cur_token().span(),
             ));
         }
-        let value = self.parse_literal_string();
+        let value = self.parse_known_literal_string();
         ImportAttribute::new(self.end_span(start), key, value, self)
     }
 
@@ -878,10 +878,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // import { type as as as } from "mod"; - isTypeOnly: true,    name: as,    propertyName: as
             if self.at(Kind::As) {
                 // { type as ...? }
-                let first_as = self.parse_identifier_name();
+                let first_as = self.parse_known_identifier_name();
                 if self.at(Kind::As) {
                     // { type as as ...? }
-                    let second_as = self.parse_identifier_name();
+                    let second_as = self.parse_known_identifier_name();
                     if self.can_parse_module_export_name() {
                         // { type as as something }
                         // { type as as "something" }
@@ -994,7 +994,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_module_export_name(&mut self) -> ModuleExportName<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let literal = self.parse_literal_string();
+                let literal = self.parse_known_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 // The error is fatal so that no AST ever carries an ill-formed export name.

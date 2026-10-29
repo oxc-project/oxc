@@ -24,6 +24,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_binding_pattern(&mut self) -> BindingPattern<'a> {
         match self.cur_kind() {
+            Kind::Ident => {
+                let ident = self.parse_plain_binding_identifier();
+                BindingPattern::BindingIdentifier(self.alloc(ident))
+            }
             Kind::LCurly => self.parse_object_binding_pattern(),
             Kind::LBrack => self.parse_array_binding_pattern(),
             _ => self.parse_binding_pattern_identifier(),
