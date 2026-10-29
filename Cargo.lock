@@ -2741,6 +2741,7 @@ dependencies = [
  "console",
  "oxc_span",
  "project-root",
+ "serde_json",
  "similar 3.2.0",
  "ureq",
 ]

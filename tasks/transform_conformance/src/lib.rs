@@ -17,6 +17,45 @@ use oxc_tasks_common::{Snapshot, normalize_path, project_root};
 use test_case::{TestCase, TestCaseKind};
 use walkdir::WalkDir;
 
+/// Export transformation fixtures, including exec inputs, without executing them or saving snapshots.
+///
+/// # Errors
+/// Returns an error if a fixture cannot be read or the output cannot be written.
+///
+/// # Panics
+/// Panics if a fixture contains invalid Babel options.
+pub fn export_pgo(output: &Path) -> std::io::Result<()> {
+    use std::io::{BufWriter, Write};
+
+    let mut writer = BufWriter::new(fs::File::create(output)?);
+    for (root, suite) in [(packages_root(), "babel-transform"), (oxc_test_root(), "oxc-transform")]
+    {
+        let cwd = root.parent().unwrap();
+        let mut paths = Vec::new();
+        for plugin in PLUGINS {
+            let directory = root.join(plugin).join("test/fixtures");
+            if !directory.exists() {
+                continue;
+            }
+            for entry in WalkDir::new(directory) {
+                let entry = entry?;
+                if !entry.file_type().is_dir() {
+                    paths.push(entry.into_path());
+                }
+            }
+        }
+        paths.sort_unstable();
+        for path in paths {
+            let Some(case) = TestCase::new(cwd, &path) else { continue };
+            if case.skip_test_case() {
+                continue;
+            }
+            case.write_pgo(&mut writer, suite)?;
+        }
+    }
+    writer.flush()
+}
+
 #[test]
 #[cfg(any(coverage, coverage_nightly))]
 fn test() {
