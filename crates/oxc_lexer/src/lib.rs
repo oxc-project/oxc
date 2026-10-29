@@ -138,7 +138,15 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         let n_rxf =
             copy_lane(&l.regex_flags, arena.regex_flags.cast::<u8>(), arena.regex_flags_capacity);
         let n_cr = copy_lane(&l.comments, arena.comments, arena.comments_capacity);
-        let n_diag = copy_lane(&l.diags, arena.diags, arena.diags_capacity);
+        // Diagnostics past `max_diagnostic_count` (or the arena's capacity) are dropped and
+        // reported through `hit_resource_limit`, not left to overflow the arena's buffer.
+        let diag_limit = match options.max_diagnostic_count {
+            0 => arena.diags_capacity,
+            max => max.min(arena.diags_capacity),
+        };
+        let diags_kept = l.diags.len().min(diag_limit as usize);
+        let n_diag = copy_lane(&l.diags[..diags_kept], arena.diags, arena.diags_capacity);
+        let hit_resource_limit = l.diags.len() > diags_kept;
 
         #[expect(
             clippy::cast_possible_truncation,
@@ -151,7 +159,7 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             diagnostic_count: n_diag,
             lines: arena.lines,
             line_count: 0,
-            hit_resource_limit: false,
+            hit_resource_limit,
             token_count,
             numbers_count: n_num,
             atoms_count: n_atm,
