@@ -1,7 +1,9 @@
 crates/oxc_parser/src/js/class.rs
   s_aa2b8ec570ef89::t_8f9c05cf0b2320 759,763
+  s_aa2b8ec570ef89::t_5be750eb415217 759,763
 crates/oxc_parser/src/js/function.rs
   s_aa2b8ec570ef89::t_c9be108032b13a 62-70
+  s_aa2b8ec570ef89::t_1e6bbd52f0eebe 62-70
 ---
 {
   "schema_version": "authorship/3.0.0",
