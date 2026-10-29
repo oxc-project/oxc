@@ -4,6 +4,7 @@ use oxc_diagnostics::OxcDiagnostic;
 use oxc_ecmascript::BoundNames;
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::module_record::*;
+use rustc_hash::{FxBuildHasher, FxHashMap};
 
 use crate::diagnostics;
 
@@ -122,16 +123,35 @@ impl<'a> ModuleRecordBuilder<'a> {
         // let export_entries = self.export_entries.drain(..).collect::<Vec<_>>();
         let export_entries =
             std::mem::replace(&mut self.export_entries, ArenaVec::new_in(&self.allocator));
+        // Keep lookups in small modules allocation-free. For larger modules, build an index lazily
+        // when a local export needs it, avoiding a scan of all imports for every export.
+        let use_import_index =
+            self.module_record.import_entries.len() > 8 && export_entries.len() > 8;
+        let mut import_indices = None;
         // 10. For each ExportEntry Record ee of exportEntries, do
         for ee in export_entries {
             // a. If ee.[[ModuleRequest]] is null, then
             if ee.module_request.is_none() {
                 let found_import_entry = match &ee.local_name {
-                    ExportLocalName::Name(name) => self
-                        .module_record
-                        .import_entries
-                        .iter()
-                        .find(|entry| entry.local_name.name == name.name),
+                    ExportLocalName::Name(name) => {
+                        let imports = &self.module_record.import_entries;
+                        if use_import_index {
+                            let indices = import_indices.get_or_insert_with(|| {
+                                let mut indices = FxHashMap::with_capacity_and_hasher(
+                                    imports.len(),
+                                    FxBuildHasher,
+                                );
+                                for (index, entry) in imports.iter().enumerate() {
+                                    // Preserve the first match even for invalid duplicate bindings.
+                                    indices.entry(entry.local_name.name).or_insert(index);
+                                }
+                                indices
+                            });
+                            indices.get(&name.name).map(|&index| &imports[index])
+                        } else {
+                            imports.iter().find(|entry| entry.local_name.name == name.name)
+                        }
+                    }
                     _ => None,
                 };
                 match found_import_entry {
@@ -736,6 +756,41 @@ mod module_record_tests {
             assert_eq!(name.name, exported);
             assert_eq!(entry.module_request.as_ref().unwrap().name, "mod");
             assert!(matches!(entry.local_name, ExportLocalName::Null));
+        }
+    }
+
+    #[test]
+    fn resolve_many_imported_exports() {
+        use std::fmt::Write;
+
+        let allocator = Allocator::default();
+        let mut source = String::from(
+            "import d from 'defaults'; import * as ns from 'namespace'; const local = 0;",
+        );
+        for index in 0..16 {
+            write!(source, "import {{ value as v{index} }} from 'm{index}';").unwrap();
+        }
+        source.push_str("export { ns, local, d");
+        for index in (0..16).rev() {
+            write!(source, ", v{index}").unwrap();
+        }
+        source.push_str("};");
+
+        let module_record = build(&allocator, &source);
+        assert_eq!(module_record.local_export_entries.len(), 2);
+        assert_eq!(module_record.indirect_export_entries.len(), 17);
+        let ExportImportName::Name(default_import) =
+            &module_record.indirect_export_entries[0].import_name
+        else {
+            panic!()
+        };
+        assert_eq!(default_import.name, "default");
+        for (entry, index) in module_record.indirect_export_entries[1..].iter().zip((0..16).rev()) {
+            let ExportImportName::Name(imported) = &entry.import_name else { panic!() };
+            assert_eq!(imported.name, "value");
+            assert_eq!(entry.module_request.as_ref().unwrap().name, format!("m{index}"));
+            let ExportExportName::Name(exported) = &entry.export_name else { panic!() };
+            assert_eq!(exported.name, format!("v{index}"));
         }
     }
 
