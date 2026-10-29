@@ -263,7 +263,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
-    fn parse_expression_or_labeled_statement(&mut self) -> Statement<'a> {
+    pub(super) fn parse_expression_or_labeled_statement(&mut self) -> Statement<'a> {
         let start = self.cur_start();
         let expr = self.parse_expr();
         if let Expression::Identifier(ident) = &expr {
