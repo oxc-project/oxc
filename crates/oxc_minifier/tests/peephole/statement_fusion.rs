@@ -74,6 +74,24 @@ fn fuse_into_vanilla_for2() {
 }
 
 #[test]
+fn no_fuse_arrow_body_with_in_into_for() {
+    // JavaScriptCore rejects `in` in a block-bodied arrow function inside a `for` initializer.
+    // <https://github.com/oxc-project/oxc/issues/27463>
+    test_same("x = () => { if ('a' in y) return 1 }; for (;;) z();");
+    test_same("x = () => { if ('a' in y) return 1 }; for (z();;) z();");
+    test_same("x = () => () => { if ('a' in y) return 1 }; for (;;) z();");
+    test_same("var x = () => { if ('a' in y) return 1 }; for (var i = 0; i < 1; i++) z();");
+    test_same("class A { #a; static m() { x = () => { if (#a in y) return 1 }; for (;;) z(); } }");
+    test_same("const x = () => { if ('a' in y) return 1 }; for (z = x;;) z();");
+    test_same("const x = () => { if ('a' in y) return 1 }; for (var w = x;;) z();");
+
+    // `in` in a concise body or outside an arrow function is printed in parentheses.
+    test("x = () => 'a' in y; for (;;) z();", "for (x = () => ('a' in y);;) z();");
+    test("x = 'a' in y; for (;;) z();", "for (x = ('a' in y);;) z();");
+    test("x = () => { y() }; for (;;) z();", "for (x = () => { y() };;) z();");
+}
+
+#[test]
 #[ignore = "TODO: Label statement fusion optimization not yet implemented"]
 fn fuse_into_label() {
     test("a;b;c;label:for(x in y){}", "label:for(x in a,b,c,y);");
