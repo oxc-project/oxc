@@ -26,47 +26,65 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ComputedMemberExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, StaticMemberExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        // Before the recording: printing the object consumes its cast comment
-        let object_is_cast_target = is_cast_target(self.object.span(), f);
-        let is_member_chain = {
-            let start = f.elements().len();
-            write!(f, [self.object()]);
-            f.elements()[start..].has_label(LabelId::of(JsLabels::MemberChain))
-        };
+        write_non_computed_member(self.object(), self.optional(), self.property(), f);
+    }
+}
 
-        match layout(self, is_member_chain, object_is_cast_target, f) {
-            StaticMemberLayout::NoBreak => {
-                let format_no_break =
-                    format_with(|f| write!(f, [operator_token(self.optional()), self.property()]));
+/// `a.#b` is laid out the same as `a.b`.
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, PrivateFieldExpression<'a>> {
+    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        write_non_computed_member(self.object(), self.optional(), self.field(), f);
+    }
+}
 
-                if is_member_chain {
-                    write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_no_break)]);
-                } else {
-                    write!(f, [format_no_break]);
-                }
+/// Writes `a.b` or `a.#b`.
+fn write_non_computed_member<'b, 'a, P: GetSpan>(
+    object: AstNode<'b, 'a, Expression<'a>>,
+    optional: bool,
+    property: AstNode<'b, 'a, P>,
+    f: &mut JsFormatter<'_, 'a>,
+) where
+    AstNode<'b, 'a, P>: Format<'a, JsFormatContext<'a>>,
+{
+    // Before the recording: printing the object consumes its cast comment
+    let object_is_cast_target = is_cast_target(object.span(), f);
+    let is_member_chain = {
+        let start = f.elements().len();
+        write!(f, [object]);
+        f.elements()[start..].has_label(LabelId::of(JsLabels::MemberChain))
+    };
+    let property_start = property.span().start;
+    // The member expression itself
+    let member = property.parent();
+
+    match layout(&object, property_start, member, is_member_chain, object_is_cast_target, f) {
+        StaticMemberLayout::NoBreak => {
+            let format_no_break = format_with(|f| write!(f, [operator_token(optional), property]));
+
+            if is_member_chain {
+                write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_no_break)]);
+            } else {
+                write!(f, [format_no_break]);
             }
-            StaticMemberLayout::BreakAfterObject => {
-                write!(
-                    f,
-                    [group(&indent(&format_args!(
-                        soft_line_break(),
-                        &format_with(|f| {
-                            if f.comments().has_leading_own_line_comment(self.property.span.start) {
-                                let comments = f
-                                    .context()
-                                    .comments()
-                                    .comments_before(self.property.span.start);
-                                write!(
-                                    f,
-                                    [FormatLeadingComments::Comments(comments), soft_line_break()]
-                                );
-                            }
-                        }),
-                        operator_token(self.optional()),
-                        self.property(),
-                    )))]
-                );
-            }
+        }
+        StaticMemberLayout::BreakAfterObject => {
+            write!(
+                f,
+                [group(&indent(&format_args!(
+                    soft_line_break(),
+                    &format_with(|f| {
+                        if f.comments().has_leading_own_line_comment(property_start) {
+                            let comments = f.context().comments().comments_before(property_start);
+                            write!(
+                                f,
+                                [FormatLeadingComments::Comments(comments), soft_line_break()]
+                            );
+                        }
+                    }),
+                    operator_token(optional),
+                    property,
+                )))]
+            );
         }
     }
 }
@@ -87,23 +105,24 @@ fn operator_token(optional: bool) -> &'static str {
 /// `object_is_cast_target`:
 /// a cast-target object is neither a call nor an identifier to the rules below (see `is_cast_target`).
 fn layout<'a>(
-    node: &AstNode<'_, 'a, StaticMemberExpression<'a>>,
+    object: &Expression<'a>,
+    property_start: u32,
+    member: &AstNodes<'_, 'a>,
     is_member_chain: bool,
     object_is_cast_target: bool,
     f: &JsFormatter<'_, 'a>,
 ) -> StaticMemberLayout {
-    if f.comments().has_leading_own_line_comment(node.property.span.start) {
+    if f.comments().has_leading_own_line_comment(property_start) {
         return StaticMemberLayout::BreakAfterObject;
     }
 
     // `a.b.c!` and `a.b?.c`
     // `TSNonNullExpression` is a wrapper node for `!`, and `ChainExpression` is a wrapper node for `?.`,
     // so we need to skip them to find the real parent node.
-    let mut parent = node.parent();
+    let mut parent = member.parent();
     while matches!(parent, AstNodes::TSNonNullExpression(_) | AstNodes::ChainExpression(_)) {
         parent = parent.parent();
     }
-    let object = &node.object;
 
     let is_nested = match parent {
         AstNodes::AssignmentExpression(_) | AstNodes::VariableDeclarator(_) => {
@@ -117,27 +136,36 @@ fn layout<'a>(
 
             false
         }
-        AstNodes::StaticMemberExpression(_) | AstNodes::ComputedMemberExpression(_) => true,
-        _ => false,
+        _ => parent.is_member_expression(),
     };
 
-    if !is_nested && !object_is_cast_target && matches!(object, Expression::Identifier(_)) {
+    // A single-level member is not split when its object is a single word (an identifier, `this` or `super`):
+    // the break would leave the word alone on its line for a single property.
+    // A longer path (`a.b.c`) can break into a list of properties instead.
+    // NOTE: `import.meta` and `new.target` cannot break inside either, so the same reasoning applies to them.
+    // They are not included yet, and break like Prettier (`import.meta` + break + `.resolve(...)`).
+    if !is_nested
+        && !object_is_cast_target
+        && matches!(
+            object,
+            Expression::Identifier(_) | Expression::ThisExpression(_) | Expression::Super(_)
+        )
+    {
         return StaticMemberLayout::NoBreak;
     }
 
     let mut first_non_static_member_ancestor = parent;
-    while matches!(
-        first_non_static_member_ancestor,
-        AstNodes::StaticMemberExpression(_)
-            | AstNodes::ComputedMemberExpression(_)
-            | AstNodes::ChainExpression(_)
-            | AstNodes::TSNonNullExpression(_)
-    ) {
+    while first_non_static_member_ancestor.is_member_expression()
+        || matches!(
+            first_non_static_member_ancestor,
+            AstNodes::ChainExpression(_) | AstNodes::TSNonNullExpression(_)
+        )
+    {
         first_non_static_member_ancestor = first_non_static_member_ancestor.parent();
     }
 
     match first_non_static_member_ancestor {
-        AstNodes::NewExpression(expr) if expr.callee.span().contains_inclusive(node.span()) => {
+        AstNodes::NewExpression(expr) if expr.callee.span().contains_inclusive(member.span()) => {
             StaticMemberLayout::NoBreak
         }
         AstNodes::AssignmentExpression(assignment) => {
@@ -148,11 +176,5 @@ fn layout<'a>(
             }
         }
         _ => StaticMemberLayout::BreakAfterObject,
-    }
-}
-
-impl<'a> FormatWrite<'a> for AstNode<'_, 'a, PrivateFieldExpression<'a>> {
-    fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [self.object(), self.optional().then_some("?"), ".", self.field()]);
     }
 }

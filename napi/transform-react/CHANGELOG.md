@@ -4,6 +4,12 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- def47b8 react-compiler: Keep manual memoization as written when its dependencies can't be honoured (#28101) (Dunqing)
+
 ## [0.152.0] - 2026-09-28
 
 ### 🚀 Features

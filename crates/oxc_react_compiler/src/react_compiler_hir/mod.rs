@@ -13,6 +13,7 @@ pub mod type_config;
 pub mod visitors;
 
 use std::fmt;
+use std::sync::Arc;
 
 use crate::react_compiler_utils::OrderedMap;
 use crate::react_compiler_utils::ordered_map::{ArenaOrderedMap, ArenaOrderedSet};
@@ -26,7 +27,7 @@ use oxc_allocator::{Allocator, CloneIn, CloneInSemanticIds, Vec as ArenaVec};
 use oxc_ast::ast::*;
 use oxc_index::define_nonmax_u32_index_type;
 use oxc_str::{Ident, JSStr, Str};
-use oxc_syntax::number::ToJsString;
+use oxc_syntax::number::{BigintBase, ToJsString};
 pub use raw::RawTypeCategory;
 pub use reactive::*;
 
@@ -196,6 +197,9 @@ pub struct HirFunction<'a> {
     pub params: ArenaVec<'a, ParamPattern>,
     pub returns: Place,
     pub context: ArenaVec<'a, Place>,
+    /// Whether this function references a binding in an enclosing function
+    /// outside the compiled-function boundary.
+    pub has_outer_lexical_reference: bool,
     pub body: HIR<'a>,
     pub instructions: ArenaVec<'a, Instruction<'a>>,
     pub generator: bool,
@@ -853,13 +857,25 @@ pub enum InstructionValue<'a> {
         value: Place,
         span: Option<Span>,
     },
-    PrefixUpdate {
+    PrefixUpdateLocal {
         lvalue: Place,
         operation: UpdateOperator,
         value: Place,
         span: Option<Span>,
     },
-    PostfixUpdate {
+    PrefixUpdateContext {
+        lvalue: Place,
+        operation: UpdateOperator,
+        value: Place,
+        span: Option<Span>,
+    },
+    PostfixUpdateLocal {
+        lvalue: Place,
+        operation: UpdateOperator,
+        value: Place,
+        span: Option<Span>,
+    },
+    PostfixUpdateContext {
         lvalue: Place,
         operation: UpdateOperator,
         value: Place,
@@ -944,8 +960,10 @@ impl<'a> InstructionValue<'a> {
             | InstructionValue::GetIterator { span, .. }
             | InstructionValue::IteratorNext { span, .. }
             | InstructionValue::NextPropertyOf { span, .. }
-            | InstructionValue::PrefixUpdate { span, .. }
-            | InstructionValue::PostfixUpdate { span, .. }
+            | InstructionValue::PrefixUpdateLocal { span, .. }
+            | InstructionValue::PrefixUpdateContext { span, .. }
+            | InstructionValue::PostfixUpdateLocal { span, .. }
+            | InstructionValue::PostfixUpdateContext { span, .. }
             | InstructionValue::Debugger { span, .. }
             | InstructionValue::TSEnumDeclaration { span, .. }
             | InstructionValue::StartMemoize { span, .. }
@@ -965,6 +983,7 @@ pub enum PrimitiveValue<'a> {
     Boolean(bool),
     Number(FloatValue),
     String(JSStr<'a>),
+    BigInt { value: Str<'a>, raw: Option<Str<'a>>, base: BigintBase },
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1324,7 +1343,9 @@ pub enum Type<'a> {
     },
     Poly,
     Phi {
-        operands: Vec<Type<'a>>,
+        /// Shared so resolving a phi whose operands reach the same types along
+        /// many paths builds each of them once.
+        operands: Arc<[Type<'a>]>,
     },
     Property {
         object_type: Box<Type<'a>>,
@@ -1560,6 +1581,7 @@ impl<'a> CloneIn<'a> for HirFunction<'a> {
             params: self.params.clone_in_impl(sem, alloc),
             returns: self.returns,
             context: self.context.clone_in_impl(sem, alloc),
+            has_outer_lexical_reference: self.has_outer_lexical_reference,
             body: self.body.clone_in_impl(sem, alloc),
             instructions: self.instructions.clone_in_impl(sem, alloc),
             generator: self.generator,
@@ -1981,16 +2003,32 @@ impl<'a> CloneIn<'a> for InstructionValue<'a> {
             InstructionValue::NextPropertyOf { value, span } => {
                 InstructionValue::NextPropertyOf { value: *value, span: *span }
             }
-            InstructionValue::PrefixUpdate { lvalue, operation, value, span } => {
-                InstructionValue::PrefixUpdate {
+            InstructionValue::PrefixUpdateLocal { lvalue, operation, value, span } => {
+                InstructionValue::PrefixUpdateLocal {
                     lvalue: *lvalue,
                     operation: *operation,
                     value: *value,
                     span: *span,
                 }
             }
-            InstructionValue::PostfixUpdate { lvalue, operation, value, span } => {
-                InstructionValue::PostfixUpdate {
+            InstructionValue::PrefixUpdateContext { lvalue, operation, value, span } => {
+                InstructionValue::PrefixUpdateContext {
+                    lvalue: *lvalue,
+                    operation: *operation,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::PostfixUpdateLocal { lvalue, operation, value, span } => {
+                InstructionValue::PostfixUpdateLocal {
+                    lvalue: *lvalue,
+                    operation: *operation,
+                    value: *value,
+                    span: *span,
+                }
+            }
+            InstructionValue::PostfixUpdateContext { lvalue, operation, value, span } => {
+                InstructionValue::PostfixUpdateContext {
                     lvalue: *lvalue,
                     operation: *operation,
                     value: *value,

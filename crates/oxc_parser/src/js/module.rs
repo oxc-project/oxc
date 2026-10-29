@@ -79,7 +79,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut identifier_after_import: Option<BindingIdentifier<'_>> =
             if self.cur_kind().is_binding_identifier() {
                 // `import something ...`
-                Some(self.parse_binding_identifier())
+                Some(self.parse_known_binding_identifier())
             } else {
                 // `import ...`
                 None
@@ -115,7 +115,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             } else if kind.is_binding_identifier() {
                 // `import type something ...`
                 let token = self.cur_token();
-                let identifier_after_type = self.parse_binding_identifier();
+                let identifier_after_type = self.parse_known_binding_identifier();
                 if token.kind() == Kind::From && self.at(Kind::Str) {
                     // `import type from 'source'`
                     if token.escaped() {
@@ -167,7 +167,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     token_after_import.span(),
                 ));
                 // Parse the identifier as the default specifier to continue recovery
-                identifier_after_import = Some(self.parse_binding_identifier());
+                identifier_after_import = Some(self.parse_known_binding_identifier());
                 phase = Some(ImportPhase::Defer);
             }
             // else: `import defer from 'source'` - defer is the binding name, no phase
@@ -175,7 +175,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.cur_kind().is_binding_identifier() {
                 // `import source something ...`
                 let token = self.cur_token();
-                let identifier_after_source = self.parse_binding_identifier();
+                let identifier_after_source = self.parse_known_binding_identifier();
                 if token.kind() == Kind::From {
                     // `import source from ...`
                     if self.at(Kind::From) {
@@ -349,8 +349,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         specifiers: &mut ArenaVec<'a, ImportDeclarationSpecifier<'a>>,
         import_kind: ImportOrExportKind,
     ) {
+        debug_assert!(self.at(Kind::LCurly));
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         self.context_remove(self.ctx, |p| {
             let _ = p.parse_delimited_list_into(
                 specifiers,
@@ -392,7 +393,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = e.key.span();
             if let Some(old_span) = keys.insert(key, span) {
                 let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
-                self.error(diagnostics::redeclaration(name, old_span, span));
+                self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
             }
         }
 
@@ -402,7 +403,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_import_attribute(&mut self) -> ImportAttribute<'a> {
         let start = self.cur_start();
         let key = match self.cur_kind() {
-            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_literal_string()),
+            Kind::Str => ImportAttributeKey::StringLiteral(self.parse_known_literal_string()),
             _ => ImportAttributeKey::Identifier(self.parse_identifier_name()),
         };
         self.expect(Kind::Colon);
@@ -411,7 +412,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.cur_token().span(),
             ));
         }
-        let value = self.parse_literal_string();
+        let value = self.parse_known_literal_string();
         ImportAttribute::new(self.end_span(start), key, value, self)
     }
 
@@ -419,7 +420,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
     ) -> ArenaBox<'a, TSExportAssignment<'a>> {
-        self.expect(Kind::Eq);
+        debug_assert!(self.at(Kind::Eq));
+        self.advance(Kind::Eq);
         let expression = self.parse_assignment_expression_or_higher();
         self.asi();
         if self.ctx.has_top_level() {
@@ -432,7 +434,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         &mut self,
         start: u32,
     ) -> ArenaBox<'a, TSNamespaceExportDeclaration<'a>> {
-        self.expect(Kind::As);
+        debug_assert!(self.at(Kind::As));
+        self.advance(Kind::As);
         self.expect(Kind::Namespace);
         let id = self.parse_identifier_name();
         self.asi();
@@ -868,7 +871,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let mut property_name: Option<ModuleExportName<'a>> = None;
         let mut name = self.parse_module_export_name();
 
-        if self.is_ts && name.is_identifier() && type_or_name_token_kind == Kind::Type {
+        if self.is_ts && type_or_name_token_kind == Kind::Type {
             // If the first token of an import/export specifier is 'type', there are a lot of possibilities,
             // especially if we see 'as' afterwards:
             //
@@ -878,10 +881,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // import { type as as as } from "mod"; - isTypeOnly: true,    name: as,    propertyName: as
             if self.at(Kind::As) {
                 // { type as ...? }
-                let first_as = self.parse_identifier_name();
+                let first_as = self.parse_known_identifier_name();
                 if self.at(Kind::As) {
                     // { type as as ...? }
-                    let second_as = self.parse_identifier_name();
+                    let second_as = self.parse_known_identifier_name();
                     if self.can_parse_module_export_name() {
                         // { type as as something }
                         // { type as as "something" }
@@ -994,7 +997,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_module_export_name(&mut self) -> ModuleExportName<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let literal = self.parse_literal_string();
+                let literal = self.parse_known_literal_string();
                 // ModuleExportName : StringLiteral
                 // It is a Syntax Error if IsStringWellFormedUnicode(the SV of StringLiteral) is false.
                 // The error is fatal so that no AST ever carries an ill-formed export name.

@@ -1,8 +1,11 @@
-use proc_macro2::{TokenStream, TokenTree};
+use proc_macro2::{Delimiter, Group, Punct, Spacing, Span, TokenStream, TokenTree};
 use quote::{quote, quote_spanned};
 use syn::{
-    Attribute, Fields, FieldsNamed, Ident, Item, ItemEnum, ItemStruct, PathArguments, PathSegment,
-    Type, Variant, parse_quote, punctuated::Punctuated, spanned::Spanned, token::Comma,
+    AttrStyle, Attribute, Fields, FieldsNamed, Ident, Item, ItemEnum, ItemStruct, MacroDelimiter,
+    Meta, MetaList, Path, PathArguments, PathSegment, Type, Variant,
+    punctuated::Punctuated,
+    spanned::Spanned,
+    token::{self, Comma},
 };
 
 use crate::{
@@ -274,16 +277,72 @@ fn reorder_struct_fields(
     let mut fields = named.clone().into_pairs().zip(field_order).collect::<Vec<_>>();
     fields.sort_unstable_by_key(|(_, index)| **index);
 
+    // `#[allow(rust_analyzer::inactive_code)]` stops rust-analyzer greying out the fields in source.
+    // The `#[cfg(doc)]` copies have the same spans as the source fields, so rust-analyzer maps
+    // the "inactive code" diagnostic for them back onto the source.
+    let cfg_doc = cfg_doc_attr();
+    let allow_inactive_code = allow_inactive_code_attr();
     for field in named.iter_mut() {
-        field.attrs.insert(0, parse_quote!( #[cfg(doc)]));
+        field.attrs.insert(0, cfg_doc.clone());
+        field.attrs.insert(1, allow_inactive_code.clone());
     }
 
+    let cfg_not_doc = cfg_not_doc_attr();
     named.extend(fields.into_iter().map(|(mut pair, _)| {
-        pair.value_mut().attrs.insert(0, parse_quote!( #[cfg(not(doc))]));
+        pair.value_mut().attrs.insert(0, cfg_not_doc.clone());
         pair
     }));
 
     Ok(())
+}
+
+// Attributes for `reorder_struct_fields`.
+//
+// These are built by hand, rather than with `parse_quote!`, to avoid the cost of lexing + parsing.
+// All spans are `Span::call_site()`, same as `quote!` produces.
+
+/// `#[cfg(doc)]`
+fn cfg_doc_attr() -> Attribute {
+    list_attr("cfg", TokenStream::from(ident("doc")))
+}
+
+/// `#[allow(rust_analyzer::inactive_code)]`
+fn allow_inactive_code_attr() -> Attribute {
+    let tokens = [
+        ident("rust_analyzer"),
+        TokenTree::Punct(Punct::new(':', Spacing::Joint)),
+        TokenTree::Punct(Punct::new(':', Spacing::Alone)),
+        ident("inactive_code"),
+    ];
+    list_attr("allow", TokenStream::from_iter(tokens))
+}
+
+/// `#[cfg(not(doc))]`
+fn cfg_not_doc_attr() -> Attribute {
+    let tokens = [
+        ident("not"),
+        TokenTree::Group(Group::new(Delimiter::Parenthesis, TokenStream::from(ident("doc")))),
+    ];
+    list_attr("cfg", TokenStream::from_iter(tokens))
+}
+
+/// `#[<name>(<tokens>)]`
+fn list_attr(name: &str, tokens: TokenStream) -> Attribute {
+    Attribute {
+        pound_token: token::Pound::default(),
+        style: AttrStyle::Outer,
+        bracket_token: token::Bracket::default(),
+        meta: Meta::List(MetaList {
+            path: Path::from(Ident::new(name, Span::call_site())),
+            delimiter: MacroDelimiter::Paren(token::Paren::default()),
+            tokens,
+        }),
+    }
+}
+
+/// Identifier token with call-site span.
+fn ident(name: &str) -> TokenTree {
+    TokenTree::Ident(Ident::new(name, Span::call_site()))
 }
 
 /// Generate assertions that traits used in `#[generate_derive]` are in scope.

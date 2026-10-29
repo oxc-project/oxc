@@ -19,6 +19,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let start = self.cur_start();
         let ty = self.parse_union_type_or_higher();
+        self.parse_conditional_type(start, ty)
+    }
+
+    fn parse_conditional_type(&mut self, start: u32, ty: TSType<'a>) -> TSType<'a> {
         if !self.ctx.has_disallow_conditional_types()
             && !self.cur_token().is_on_new_line()
             && self.eat(Kind::Extends)
@@ -175,7 +179,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LAngle);
+        self.advance(Kind::LAngle);
         let (params, trailing_comma) =
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, |p| {
                 p.parse_ts_type_parameter(allow_variance)
@@ -264,6 +268,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at(kind) && !has_leading_operator {
             return ty;
         }
+        self.parse_union_type_or_intersection_type_rest(start, ty, kind, parse_constituent_type)
+    }
+
+    fn parse_union_type_or_intersection_type_rest<F>(
+        &mut self,
+        start: u32,
+        ty: TSType<'a>,
+        kind: Kind,
+        parse_constituent_type: F,
+    ) -> TSType<'a>
+    where
+        F: Fn(&mut Self) -> TSType<'a>,
+    {
         let mut types = ArenaVec::from_value_in(ty, self);
         while self.eat(kind) {
             let ty = parse_constituent_type(self);
@@ -355,8 +372,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_postfix_type_or_higher(&mut self) -> TSType<'a> {
         let start = self.cur_start();
-        let mut ty = self.parse_non_array_type();
+        let ty = self.parse_non_array_type();
+        self.parse_postfix_type_rest(start, ty)
+    }
 
+    fn parse_postfix_type_rest(&mut self, start: u32, mut ty: TSType<'a>) -> TSType<'a> {
         while !self.cur_token().is_on_new_line() {
             match self.cur_kind() {
                 Kind::Bang => {
@@ -636,8 +656,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_mapped_type(&mut self) -> TSType<'a> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
         let mut readonly = None;
         if self.eat(Kind::Readonly) {
             readonly = Some(TSMappedTypeModifierOperator::True);
@@ -799,7 +820,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let parameter_name = if self.at(Kind::This) {
             TSTypePredicateName::This(self.parse_this_type_node())
         } else {
-            let ident_name = self.parse_identifier_name();
+            let ident_name = self.parse_known_identifier_name();
             TSTypePredicateName::Identifier(self.alloc(ident_name))
         };
         let mut type_annotation = None;
@@ -820,6 +841,14 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_type_reference(&mut self) -> TSType<'a> {
         let start = self.cur_start();
         let type_name = self.parse_ts_type_name();
+        self.parse_type_reference_with_name(start, type_name)
+    }
+
+    fn parse_type_reference_with_name(
+        &mut self,
+        start: u32,
+        type_name: TSTypeName<'a>,
+    ) -> TSType<'a> {
         let type_parameters = self.parse_type_arguments_of_type_reference();
         TSType::new_ts_type_reference(self.end_span(start), type_name, type_parameters, self)
     }
@@ -862,7 +891,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if self.re_lex_ts_l_angle() {
             let start = self.cur_start();
             let opening_span = self.cur_token().span();
-            self.expect(Kind::LAngle);
+            debug_assert!(self.at(Kind::LAngle));
+            self.advance(Kind::LAngle);
             let (params, _) = self.parse_delimited_list(
                 Kind::RAngle,
                 Kind::Comma,
@@ -888,7 +918,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.cur_token().is_on_new_line() && self.re_lex_ts_l_angle() {
             let start = self.cur_start();
             let opening_span = self.cur_token().span();
-            self.expect(Kind::LAngle);
+            debug_assert!(self.at(Kind::LAngle));
+            self.advance(Kind::LAngle);
             let (params, _) = self.parse_delimited_list(
                 Kind::RAngle,
                 Kind::Comma,
@@ -929,7 +960,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return None;
         }
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LAngle);
+        debug_assert!(self.at(Kind::LAngle));
+        self.advance(Kind::LAngle);
         let (params, _) =
             self.parse_delimited_list(Kind::RAngle, Kind::Comma, opening_span, Self::parse_ts_type);
         // `a < b> = c` is valid but `a < b >= c` is BinaryExpression
@@ -963,9 +995,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn parse_tuple_type(&mut self) -> TSType<'a> {
+        debug_assert!(self.at(Kind::LBrack));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.advance(Kind::LBrack);
 
         let mut seen_optional_span: Option<Span> = None;
         let (elements, _) =
@@ -1001,11 +1034,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let start = self.cur_start();
         let is_rest_type = self.eat(Kind::Dot3);
 
-        if self.cur_kind().is_identifier_name()
+        // A plain identifier begins either a label or a type reference. Consume the
+        // shared prefix once and continue with the appropriate grammar.
+        let label = if self.at(Kind::Ident) {
+            let ident = self.parse_known_identifier_name();
+            if self.at(Kind::Colon)
+                || (self.at(Kind::Question) && self.lexer.peek_token().kind() == Kind::Colon)
+            {
+                Some(ident)
+            } else {
+                let ty = self.parse_ts_type_from_identifier(&ident);
+                return if is_rest_type {
+                    TSTupleElement::new_ts_rest_type(self.end_span(start), ty, self)
+                } else {
+                    self.convert_type_to_tuple_element(ty)
+                };
+            }
+        } else if self.cur_kind().is_identifier_name()
             && self.lookahead(Self::is_next_token_colon_or_question_colon)
         {
-            let member_start = self.cur_start();
-            let label = self.parse_identifier_name();
+            Some(self.parse_known_identifier_name())
+        } else {
+            None
+        };
+
+        if let Some(label) = label {
+            let member_start = label.span.start;
             let optional = self.eat(Kind::Question);
             self.expect(Kind::Colon);
             let type_start = self.cur_start();
@@ -1046,6 +1100,40 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.convert_type_to_tuple_element(ty)
             }
         }
+    }
+
+    /// Continue a type after consuming its leading identifier.
+    #[inline]
+    fn parse_ts_type_from_identifier(&mut self, ident: &IdentifierName<'a>) -> TSType<'a> {
+        let start = ident.span.start;
+        let ty = self.context_remove(Context::DisallowConditionalTypes, |p| {
+            let name = TSTypeName::new_identifier_reference(ident.span, ident.name, p);
+            let name =
+                if p.at(Kind::Dot) { p.parse_ts_qualified_type_name(start, name) } else { name };
+            let ty = p.parse_type_reference_with_name(start, name);
+            p.parse_postfix_type_rest(start, ty)
+        });
+        let ty = if self.at(Kind::Amp) {
+            self.parse_union_type_or_intersection_type_rest(
+                start,
+                ty,
+                Kind::Amp,
+                Self::parse_type_operator_or_higher,
+            )
+        } else {
+            ty
+        };
+        let ty = if self.at(Kind::Pipe) {
+            self.parse_union_type_or_intersection_type_rest(
+                start,
+                ty,
+                Kind::Pipe,
+                Self::parse_intersection_type_or_higher,
+            )
+        } else {
+            ty
+        };
+        self.parse_conditional_type(start, ty)
     }
 
     fn is_next_token_colon_or_question_colon(&mut self) -> bool {
@@ -1106,7 +1194,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.expect(Kind::LParen);
 
         let source = if self.at(Kind::Str) {
-            self.parse_literal_string()
+            self.parse_known_literal_string()
         } else {
             // `StringLiteral` is the only valid type for `TSImportType`'s `source` field. So this is an error.
             // Fallback to parsing a `TSType`, to obtain a good span for the diagnostic.
@@ -1201,8 +1289,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// Parse TypeScript import type attributes object: `{ type: "json" }`
     /// Only allows static key-value pairs (no computed keys, no spread elements).
     fn parse_ts_import_type_attributes(&mut self) -> ArenaBox<'a, ObjectExpression<'a>> {
+        debug_assert!(self.at(Kind::LCurly));
         let start = self.cur_start();
-        self.expect(Kind::LCurly);
+        self.advance(Kind::LCurly);
 
         let mut properties = ArenaVec::new_in(self);
         let mut first = true;
@@ -1241,7 +1330,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 (key, value, true)
             } else {
                 let key = if self.at(Kind::Str) {
-                    let string_literal = self.parse_literal_string();
+                    let string_literal = self.parse_known_literal_string();
                     PropertyKey::StringLiteral(self.alloc(string_literal))
                 } else {
                     let ident = self.parse_identifier_name();
@@ -1287,7 +1376,19 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_type_or_type_predicate(&mut self) -> TSType<'a> {
         let start = self.cur_start();
-        let type_predicate_variable = self.parse_type_predicate_prefix();
+        let type_predicate_variable = if self.at(Kind::Ident) {
+            // A plain identifier begins either a predicate parameter or a type reference.
+            // Consume their shared prefix once instead of lexing the next token twice.
+            let ident = self.parse_known_identifier_name();
+            if !self.at(Kind::Is) || self.cur_token().is_on_new_line() {
+                return self.parse_ts_type_from_identifier(&ident);
+            }
+            let parameter_name = TSTypePredicateName::Identifier(self.alloc(ident));
+            self.bump_any(); // bump `is`
+            Some(parameter_name)
+        } else {
+            self.parse_type_predicate_prefix()
+        };
 
         let ty = self.parse_ts_type();
         if let Some(parameter_name) = type_predicate_variable {
@@ -1317,7 +1418,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let parameter_name = if self.at(Kind::This) {
             TSTypePredicateName::This(self.parse_this_type_node())
         } else {
-            let ident_name = self.parse_identifier_name();
+            let ident_name = self.parse_known_identifier_name();
             TSTypePredicateName::Identifier(self.alloc(ident_name))
         };
         self.bump_any(); // bump `is`
@@ -1604,7 +1705,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     fn is_binary_operator(&self) -> bool {
-        if self.ctx.has_in() && self.at(Kind::In) {
+        if !self.ctx.has_in() && self.at(Kind::In) {
             return false;
         }
         self.cur_kind().is_binary_operator()
@@ -1618,7 +1719,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             kind if kind.is_unary_operator() => true,
             kind if kind.is_update_operator() => true,
             Kind::LAngle | Kind::Await | Kind::Yield | Kind::Private | Kind::At => true,
-            kind if kind.is_binary_operator() => true,
+            _ if self.is_binary_operator() => true,
             kind => kind.is_ts_identifier(self.ctx.has_yield(), self.ctx.has_await()),
         }
     }

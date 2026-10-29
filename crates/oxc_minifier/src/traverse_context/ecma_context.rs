@@ -479,6 +479,19 @@ impl<'a> TraverseCtx<'a, MinifierState<'a>> {
         self.state.record_ast_change();
     }
 
+    /// Replace a statement slot without requesting another pass.
+    ///
+    /// Only for rewrites the rest of the current pass fully consumes: every
+    /// node that could react to the new shape has not exited yet, and the
+    /// rewrite changes no fact that already-visited nodes read (resolved
+    /// references, symbol values, side effects). Dropped-subtree bookkeeping
+    /// still runs, so the caller must not drop any references.
+    #[inline]
+    pub fn replace_statement_settled(&mut self, slot: &mut Statement<'a>, new: Statement<'a>) {
+        self.dropped_subtree_collector().visit_statement(slot);
+        *slot = new;
+    }
+
     /// Replace a statement slot with a value built from the owned old statement.
     ///
     /// Prefer this over `take_in` followed by [`Self::replace_statement`]. It avoids

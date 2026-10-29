@@ -33,9 +33,11 @@
   | * TSUnionType:exit: (types: TSStringKeyword, TSNumberKeyword)
   | * TSTypeAliasDeclaration:exit: (typeAnnotation: TSUnionType)
   | * Program:exit
-    ,-[files/index.ts:4:1]
-  3 |     // All `Identifier`s
-  4 | ,-> let a = { x: y };
+    ,-[files/index.ts:1:1]
+  1 | ,-> // @ts-nocheck
+  2 | |   
+  3 | |   // All `Identifier`s
+  4 | |   let a = { x: y };
   5 | |   
   6 | |   // No `ParenthesizedExpression`s in AST
   7 | |   // prettier-ignore
@@ -50,12 +52,14 @@
     `----
 
   x estree-check(check): program:
-  | start/end: [37,281]
-  | range: [37,281]
-  | loc: [{"start":{"line":4,"column":0},"end":{"line":16,"column":0}}]
-    ,-[files/index.ts:4:1]
-  3 |     // All `Identifier`s
-  4 | ,-> let a = { x: y };
+  | start/end: [0,281]
+  | range: [0,281]
+  | loc: [{"start":{"line":1,"column":0},"end":{"line":16,"column":0}}]
+    ,-[files/index.ts:1:1]
+  1 | ,-> // @ts-nocheck
+  2 | |   
+  3 | |   // All `Identifier`s
+  4 | |   let a = { x: y };
   5 | |   
   6 | |   // No `ParenthesizedExpression`s in AST
   7 | |   // prettier-ignore

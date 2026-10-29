@@ -3,14 +3,14 @@
 
 # stdout
 ```
-  x getNode-plugin(getNode): type: null
+  x getNode-plugin(getNode): type: Program
    ,-[files/index.ts:1:1]
  1 | // Comment
    : ^
  2 | 
    `----
 
-  x getNode-plugin(getNode): type: null
+  x getNode-plugin(getNode): type: Program
    ,-[files/index.ts:2:1]
  1 | // Comment
  2 | 
