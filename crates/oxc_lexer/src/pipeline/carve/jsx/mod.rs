@@ -5,7 +5,7 @@ use crate::pipeline::{
     bytes::{is_digit, is_id_start, is_word},
     disambiguate::{not_operator_position, prev_sig},
     find::{
-        JSX_TAG, JSX_TEXT, OPENER, OPENER_JSX5, OPENER_JSX7, OPENER6, find, find_line_terminator,
+        JSX_TAG, JSX_TEXT, OPENER, OPENER_JSX5, OPENER_JSX7, OPENER8, find, find_line_terminator,
     },
     lanes::Lanes,
     token_view,
@@ -106,7 +106,7 @@ pub(super) unsafe fn carve_jsx(
                 // script (see `html_close`).
                 let s = match (in_brace, html_close) {
                     (true, false) => find(src, n, i, OPENER_JSX7),
-                    (true, true) => find(src, n, i, OPENER6),
+                    (true, true) => find(src, n, i, OPENER8),
                     (false, false) => find(src, n, i, OPENER_JSX5),
                     (false, true) => find(src, n, i, OPENER),
                 };
@@ -336,7 +336,7 @@ pub(super) unsafe fn carve_jsx(
                     let mut sub: Vec<u32> = Vec::new();
                     while p < n && depth != 0 {
                         let q = if !sub.is_empty() {
-                            find(src, n, p, OPENER6)
+                            find(src, n, p, OPENER8)
                         } else {
                             find(src, n, p, OPENER)
                         };
@@ -377,7 +377,7 @@ pub(super) unsafe fn carve_jsx(
                                     sub.push(0);
                                 }
                             }
-                            // Braces only reach here through the OPENER6 search,
+                            // Braces only reach here through the OPENER8 search,
                             // which is only selected while a substitution is
                             // open - the guards say so rather than leaving it
                             // to the finder choice.

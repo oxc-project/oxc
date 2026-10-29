@@ -3,7 +3,7 @@ use super::find;
 use crate::pipeline::bytes;
 
 pub const OPENER: [u8; 6] = [b'"', b'\'', b'`', b'/', b'<', b'>'];
-pub const OPENER6: [u8; 8] = [b'"', b'\'', b'`', b'/', b'{', b'}', b'<', b'>'];
+pub const OPENER8: [u8; 8] = [b'"', b'\'', b'`', b'/', b'{', b'}', b'<', b'>'];
 pub const OPENER_JSX5: [u8; 5] = [b'"', b'\'', b'`', b'/', b'<'];
 pub const OPENER_JSX7: [u8; 7] = [b'"', b'\'', b'`', b'/', b'{', b'}', b'<'];
 pub const JSX_TAG: [u8; 6] = [b'"', b'\'', b'{', b'/', b'>', b'<'];

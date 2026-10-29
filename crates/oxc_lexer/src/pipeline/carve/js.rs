@@ -2,7 +2,7 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
-    find::{OPENER, OPENER6, find, find_line_terminator},
+    find::{OPENER, OPENER8, find, find_line_terminator},
     lanes::Lanes,
 };
 
@@ -37,7 +37,7 @@ pub(super) unsafe fn carve_js(
     }
     loop {
         let nsub = depth.len();
-        let s = if nsub != 0 { find(src, n, i, OPENER6) } else { find(src, n, i, OPENER) };
+        let s = if nsub != 0 { find(src, n, i, OPENER8) } else { find(src, n, i, OPENER) };
         if s >= n {
             break;
         }
