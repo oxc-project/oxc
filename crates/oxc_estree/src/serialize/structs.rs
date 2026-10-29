@@ -93,16 +93,31 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
         }
 
         let (buffer, formatter) = self.serializer.buffer_and_formatter_mut();
-        if self.state == StructState::Empty {
-            self.state = StructState::HasFields;
-            formatter.before_first_element(buffer);
+        if F::IS_COMPACT {
+            // In compact mode, `before_first_element`, `before_later_element` and
+            // `before_field_value` are all no-ops. So write the whole field key prefix
+            // (including the leading comma separator for non-first fields) in a single
+            // `print_strs_array` call. This performs only one capacity reservation /
+            // bounds check per field, instead of a separate `print_ascii_byte` for the
+            // comma followed by `print_strs_array` for the key.
+            if self.state == StructState::Empty {
+                self.state = StructState::HasFields;
+                buffer.print_strs_array(["\"", key, "\":"]);
+            } else {
+                buffer.print_strs_array([",\"", key, "\":"]);
+            }
         } else {
-            buffer.print_ascii_byte(b',');
-            formatter.before_later_element(buffer);
-        }
+            if self.state == StructState::Empty {
+                self.state = StructState::HasFields;
+                formatter.before_first_element(buffer);
+            } else {
+                buffer.print_ascii_byte(b',');
+                formatter.before_later_element(buffer);
+            }
 
-        buffer.print_strs_array(["\"", key, "\":"]);
-        formatter.before_field_value(buffer);
+            buffer.print_strs_array(["\"", key, "\":"]);
+            formatter.before_field_value(buffer);
+        }
         value.serialize(&mut *self.serializer);
     }
 
@@ -143,11 +158,44 @@ impl<C: Config, F: Formatter> StructSerializer for ESTreeStructSerializer<'_, C,
     /// * If `serializer.ranges() == true`, outputs `start`, `end`, and `range` fields.
     /// * Otherwise, outputs only `start` and `end`.
     fn serialize_span<S: ESTreeSpan>(&mut self, span: S) {
+        if !F::IS_COMPACT {
+            let range = span.range();
+            self.serialize_field("start", &range[0]);
+            self.serialize_field("end", &range[1]);
+            if self.serializer.ranges() {
+                self.serialize_field("range", &range);
+            }
+            return;
+        }
+
+        // Fast path for compact output.
+        //
+        // `start`, `end` (and `range`) are leaf number fields whose key prefixes are
+        // statically known here. Write each prefix as a single `print_str` (one memcpy)
+        // rather than going through `serialize_field`'s generic 3-element `print_strs_array`.
+        //
+        // The `trace_path` bookkeeping that `serialize_field` performs when `C::FIXES` is
+        // enabled is also skipped: these number values never record a fix path, and the
+        // next field's `serialize_field` overwrites `trace_path` before it is read, so
+        // leaving it stale here produces identical output.
         let range = span.range();
-        self.serialize_field("start", &range[0]);
-        self.serialize_field("end", &range[1]);
+
+        let buffer = self.serializer.buffer_mut();
+        if self.state == StructState::Empty {
+            self.state = StructState::HasFields;
+            buffer.print_str("\"start\":");
+        } else {
+            buffer.print_str(",\"start\":");
+        }
+        range[0].serialize(&mut *self.serializer);
+
+        // `end` always follows `start`, so the separator comma is unconditional.
+        self.serializer.buffer_mut().print_str(",\"end\":");
+        range[1].serialize(&mut *self.serializer);
+
         if self.serializer.ranges() {
-            self.serialize_field("range", &range);
+            self.serializer.buffer_mut().print_str(",\"range\":");
+            range.serialize(&mut *self.serializer);
         }
     }
 
@@ -525,6 +573,68 @@ mod tests {
   "inner2": "in2",
   "outer2": "out2"
 }"#
+        );
+    }
+
+    #[test]
+    fn serialize_span() {
+        #[derive(Clone, Copy)]
+        struct TestSpan {
+            start: u32,
+            end: u32,
+        }
+
+        impl ESTreeSpan for TestSpan {
+            fn range(self) -> [u32; 2] {
+                [self.start, self.end]
+            }
+        }
+
+        // `span` as the first field, plus a later field.
+        struct SpanFirst {
+            span: TestSpan,
+            extra: u32,
+        }
+
+        impl ESTree for SpanFirst {
+            fn serialize<S: Serializer>(&self, serializer: S) {
+                let mut state = serializer.serialize_struct();
+                state.serialize_span(self.span);
+                state.serialize_field("extra", &self.extra);
+                state.end();
+            }
+        }
+
+        // `span` after an earlier field (the common AST case: `type` first).
+        struct TypeThenSpan {
+            span: TestSpan,
+        }
+
+        impl ESTree for TypeThenSpan {
+            fn serialize<S: Serializer>(&self, serializer: S) {
+                let mut state = serializer.serialize_struct();
+                state.serialize_field("type", &"Thing");
+                state.serialize_span(self.span);
+                state.end();
+            }
+        }
+
+        let span_first = SpanFirst { span: TestSpan { start: 3, end: 12 }, extra: 7 };
+        let type_then_span = TypeThenSpan { span: TestSpan { start: 0, end: 42 } };
+
+        let mut serializer = CompactSerializer::default();
+        span_first.serialize(&mut serializer);
+        assert_eq!(&serializer.into_string(), r#"{"start":3,"end":12,"extra":7}"#);
+
+        let mut serializer = CompactSerializer::default();
+        type_then_span.serialize(&mut serializer);
+        assert_eq!(&serializer.into_string(), r#"{"type":"Thing","start":0,"end":42}"#);
+
+        let mut serializer = PrettySerializer::default();
+        type_then_span.serialize(&mut serializer);
+        assert_eq!(
+            &serializer.into_string(),
+            "{\n  \"type\": \"Thing\",\n  \"start\": 0,\n  \"end\": 42\n}"
         );
     }
 
