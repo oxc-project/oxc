@@ -3384,7 +3384,7 @@ impl RuleRunner for crate::rules::unicorn::no_instanceof_builtins::NoInstanceofB
 
 impl RuleRunner for crate::rules::unicorn::no_invalid_fetch_options::NoInvalidFetchOptions {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::ObjectExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
