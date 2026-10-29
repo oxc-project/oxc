@@ -2,6 +2,7 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
+    cpu::{Cpu, apply, cpu_versions},
     find::find,
     lanes::Lanes,
 };
@@ -16,6 +17,7 @@ use super::{
     },
 };
 
+#[apply(cpu_versions)]
 pub(super) unsafe fn carve_js(
     srcs: &[u8],
     n: usize,
@@ -25,6 +27,7 @@ pub(super) unsafe fn carve_js(
     word: *const u64,
     ts: bool,
     lanes: &mut Lanes,
+    _cpu: impl Cpu,
 ) {
     let src = srcs.as_ptr();
     let mut depth: Vec<u32> = Vec::with_capacity(64);

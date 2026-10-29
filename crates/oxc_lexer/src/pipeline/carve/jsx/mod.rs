@@ -3,6 +3,7 @@ use crate::{error::DiagCode, token::tk};
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
     bytes::{is_digit, is_id_start, is_word},
+    cpu::{Cpu, apply, cpu_versions},
     disambiguate::{not_operator_position, prev_sig},
     find::find,
     lanes::Lanes,
@@ -77,6 +78,7 @@ enum JFrameKind {
 /// start byte keeps its `st` bit yet may be a digit/keyword/operator char,
 /// so those bits are cleared there to keep `coalesce` and `keywords` from
 /// re-interpreting it.
+#[apply(cpu_versions)]
 pub(super) unsafe fn carve_jsx(
     srcs: &[u8],
     n: usize,
@@ -89,6 +91,7 @@ pub(super) unsafe fn carve_jsx(
     kwinit: *mut u64,
     ts: bool,
     lanes: &mut Lanes,
+    _cpu: impl Cpu,
 ) {
     let src = srcs.as_ptr();
     // Annex B B.1.3 (`-->` at line start) needs JS mode to stop at `>`, which JSX is full of.

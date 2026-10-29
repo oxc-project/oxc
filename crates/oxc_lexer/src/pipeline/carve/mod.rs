@@ -1,4 +1,7 @@
-use crate::pipeline::lanes::Lanes;
+use crate::pipeline::{
+    cpu::{Cpu, apply, cpu_versions},
+    lanes::Lanes,
+};
 
 mod comments;
 mod common;
@@ -8,6 +11,7 @@ mod jsx;
 use js::carve_js;
 use jsx::carve_jsx;
 
+#[apply(cpu_versions)]
 #[inline(never)]
 pub unsafe fn carve(
     srcs: &[u8],
@@ -22,10 +26,11 @@ pub unsafe fn carve(
     jsx: bool,
     ts: bool,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) {
     if jsx {
-        carve_jsx(srcs, n, st, kind, opch, word, digit, dot, kwinit, ts, lanes);
+        carve_jsx(srcs, n, st, kind, opch, word, digit, dot, kwinit, ts, lanes, cpu);
     } else {
-        carve_js(srcs, n, st, kind, opch, word, ts, lanes);
+        carve_js(srcs, n, st, kind, opch, word, ts, lanes, cpu);
     }
 }
