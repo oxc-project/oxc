@@ -407,99 +407,29 @@ impl<'a> SourcemapBuilder<'a> {
             });
 
             let remaining = &content.as_bytes()[line_byte_offset as usize..];
-            for (byte_offset_from_line_start, b) in remaining.iter().enumerate() {
+
+            // Fast-scan for the next line break (`\n` or `\r`), using SIMD-accelerated search.
+            // `memchr2` is dramatically faster than a scalar byte-by-byte loop on the common
+            // case of long ASCII lines.
+            let line_break_pos = memchr::memchr2(b'\n', b'\r', remaining);
+            let line_end = line_break_pos.unwrap_or(remaining.len());
+
+            // If the line (up to the line break, or to EOF) is entirely ASCII, then no column
+            // offset table is needed - UTF-8 and UTF-16 columns are identical. This is the
+            // common case. `<[u8]>::is_ascii` is also SIMD-accelerated.
+            if remaining[..line_end].is_ascii() {
+                let Some(line_break_pos) = line_break_pos else {
+                    // EOF reached, and remainder of file is plain ASCII.
+                    break;
+                };
+
                 #[expect(clippy::cast_possible_truncation)]
-                let mut byte_offset_from_line_start = byte_offset_from_line_start as u32;
-                match b {
-                    b'\n' => {
-                        byte_offset_from_line_start += 1;
-                    }
-                    b'\r' => {
-                        byte_offset_from_line_start += 1;
-                        // Handle Windows-specific "\r\n" newlines
-                        if remaining.get(byte_offset_from_line_start as usize) == Some(&b'\n') {
-                            byte_offset_from_line_start += 1;
-                        }
-                    }
-                    _ if b.is_ascii() => {
-                        continue;
-                    }
-                    _ => {
-                        // Unicode char found.
-                        // Set `column_offsets_id` for line and create `columns` Vec.
-                        let line = lines.iter_mut().last().unwrap();
-                        line.column_offsets_id =
-                            Some(ColumnOffsetsId::from_usize(column_offsets.len()));
-
-                        // Loop through rest of line char-by-char.
-                        // `chunk_byte_offset` in this loop is byte offset from start of this 1st
-                        // Unicode char.
-                        let mut column = byte_offset_from_line_start;
-                        line_byte_offset += byte_offset_from_line_start;
-                        let remaining = &content[line_byte_offset as usize..];
-                        for (chunk_byte_offset, ch) in remaining.char_indices() {
-                            #[expect(clippy::cast_possible_truncation)]
-                            let mut chunk_byte_offset = chunk_byte_offset as u32;
-                            columns.extend(std::iter::repeat_n(column, ch.len_utf8()));
-
-                            match ch {
-                                '\r' => {
-                                    // Handle Windows-specific "\r\n" newlines
-                                    chunk_byte_offset += 1;
-                                    if remaining.as_bytes().get(chunk_byte_offset as usize)
-                                        == Some(&b'\n')
-                                    {
-                                        chunk_byte_offset += 1;
-                                        columns.push(column + 1);
-                                    }
-                                }
-                                '\n' => {
-                                    chunk_byte_offset += 1;
-                                }
-                                LS | PS => {
-                                    chunk_byte_offset += 3;
-                                }
-                                #[expect(clippy::cast_possible_truncation)]
-                                _ => {
-                                    // Mozilla's "source-map" library counts columns using UTF-16 code units
-                                    column += ch.len_utf16() as u32;
-                                    continue;
-                                }
-                            }
-
-                            // Line break found.
-                            // `chunk_byte_offset` is now the offset of *end* of the line break.
-                            line_byte_offset += chunk_byte_offset;
-
-                            // Record column offsets.
-                            // `columns.clone().into_boxed_slice()` does perform an allocation,
-                            // but only one - `Vec::clone` produces a `Vec` with `capacity == len`,
-                            // so `Vec::into_boxed_slice` just drops the `capacity` field,
-                            // and does not need to reallocate again.
-                            // `columns` is reused for next line, and will grow adaptively depending on
-                            // how heavily the file uses unicode chars.
-                            column_offsets.push(ColumnOffsets {
-                                byte_offset_to_first: byte_offset_from_line_start,
-                                columns: columns.clone().into_boxed_slice(),
-                            });
-                            columns.clear();
-
-                            // Revert back to outer loop for next line
-                            continue 'lines;
-                        }
-
-                        // EOF.
-                        // One last column entry for EOF position.
-                        columns.push(column);
-
-                        // Record column offsets
-                        column_offsets.push(ColumnOffsets {
-                            byte_offset_to_first: byte_offset_from_line_start,
-                            columns: columns.into_boxed_slice(),
-                        });
-
-                        break 'lines;
-                    }
+                let mut byte_offset_from_line_start = line_break_pos as u32 + 1;
+                // Handle Windows-specific "\r\n" newlines
+                if remaining[line_break_pos] == b'\r'
+                    && remaining.get(byte_offset_from_line_start as usize) == Some(&b'\n')
+                {
+                    byte_offset_from_line_start += 1;
                 }
 
                 // Line break found.
@@ -508,8 +438,83 @@ impl<'a> SourcemapBuilder<'a> {
                 continue 'lines;
             }
 
-            // EOF
-            break;
+            // Slow path: the line contains a non-ASCII character (which may itself be a Unicode
+            // line break such as LS/PS). Find the first non-ASCII byte and process the rest of
+            // the line char-by-char, building the column offsets table.
+            #[expect(clippy::cast_possible_truncation)]
+            let byte_offset_from_line_start =
+                remaining[..line_end].iter().position(|b| !b.is_ascii()).unwrap() as u32;
+
+            // Set `column_offsets_id` for line and create `columns` Vec.
+            let line = lines.iter_mut().last().unwrap();
+            line.column_offsets_id = Some(ColumnOffsetsId::from_usize(column_offsets.len()));
+
+            // Loop through rest of line char-by-char.
+            // `chunk_byte_offset` in this loop is byte offset from start of this 1st
+            // Unicode char.
+            let mut column = byte_offset_from_line_start;
+            line_byte_offset += byte_offset_from_line_start;
+            let remaining = &content[line_byte_offset as usize..];
+            for (chunk_byte_offset, ch) in remaining.char_indices() {
+                #[expect(clippy::cast_possible_truncation)]
+                let mut chunk_byte_offset = chunk_byte_offset as u32;
+                columns.extend(std::iter::repeat_n(column, ch.len_utf8()));
+
+                match ch {
+                    '\r' => {
+                        // Handle Windows-specific "\r\n" newlines
+                        chunk_byte_offset += 1;
+                        if remaining.as_bytes().get(chunk_byte_offset as usize) == Some(&b'\n') {
+                            chunk_byte_offset += 1;
+                            columns.push(column + 1);
+                        }
+                    }
+                    '\n' => {
+                        chunk_byte_offset += 1;
+                    }
+                    LS | PS => {
+                        chunk_byte_offset += 3;
+                    }
+                    #[expect(clippy::cast_possible_truncation)]
+                    _ => {
+                        // Mozilla's "source-map" library counts columns using UTF-16 code units
+                        column += ch.len_utf16() as u32;
+                        continue;
+                    }
+                }
+
+                // Line break found.
+                // `chunk_byte_offset` is now the offset of *end* of the line break.
+                line_byte_offset += chunk_byte_offset;
+
+                // Record column offsets.
+                // `columns.clone().into_boxed_slice()` does perform an allocation,
+                // but only one - `Vec::clone` produces a `Vec` with `capacity == len`,
+                // so `Vec::into_boxed_slice` just drops the `capacity` field,
+                // and does not need to reallocate again.
+                // `columns` is reused for next line, and will grow adaptively depending on
+                // how heavily the file uses unicode chars.
+                column_offsets.push(ColumnOffsets {
+                    byte_offset_to_first: byte_offset_from_line_start,
+                    columns: columns.clone().into_boxed_slice(),
+                });
+                columns.clear();
+
+                // Revert back to outer loop for next line
+                continue 'lines;
+            }
+
+            // EOF.
+            // One last column entry for EOF position.
+            columns.push(column);
+
+            // Record column offsets
+            column_offsets.push(ColumnOffsets {
+                byte_offset_to_first: byte_offset_from_line_start,
+                columns: columns.into_boxed_slice(),
+            });
+
+            break 'lines;
         }
 
         LineOffsetTables { lines, column_offsets }

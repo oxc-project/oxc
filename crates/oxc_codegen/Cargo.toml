@@ -37,6 +37,7 @@ oxc_syntax = { workspace = true }
 
 bitflags = { workspace = true }
 cow-utils = { workspace = true }
+memchr = { workspace = true }
 rustc-hash = { workspace = true }
 smallvec = { workspace = true }
 
