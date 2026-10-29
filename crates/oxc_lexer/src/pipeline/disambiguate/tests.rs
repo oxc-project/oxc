@@ -153,25 +153,50 @@ fn jsx_tag_name_after_comment() {
 }
 
 #[test]
-fn unicode_zero_width_space_is_whitespace() {
-    let ks = kinds_of("x\u{200b}\ny", ScriptJS);
-    assert_eq!(
-        ks.iter().filter(|&&k| k == TokenKind::Ident).count(),
-        2,
-        "U+200B must separate tokens: {ks:?}"
-    );
-    division("let a = 1;\u{200b}let b = 2 / 3;", ScriptJS);
-}
+fn unicode_whitespace_boundaries() {
+    let diagnostics = |code: &str, file_type: FileType| {
+        let mut source = code.as_bytes().to_vec();
+        source.resize(source.len() + PAD, 0);
+        let (result, _arena) = crate::lex_utf8(&source, code.len() as u32, file_type.options());
+        result.diagnostics().iter().map(|diagnostic| diagnostic.code).collect::<Vec<_>>()
+    };
+    for ch in ['\u{85}', '\u{200b}'] {
+        for (code, spaced) in [
+            (format!("let{ch}x = 1;"), "let x = 1;"),
+            (format!("{ch}x;"), " x;"),
+            (format!("x{ch}"), "x "),
+        ] {
+            assert_eq!(diagnostics(&code, ScriptJS), [DiagCode::UnexpectedCharacter], "{code:?}");
+            assert!(diagnostics(&code, ScriptTS).is_empty(), "{code:?}");
+            assert_eq!(kinds_of(&code, ScriptTS), kinds_of(spaced, ScriptTS));
+        }
+        for (code, spaced) in [
+            (format!("const x = <A{ch}></{ch}A>;"), "const x = <A ></ A>;"),
+            (
+                format!("const x = <T{ch}extends U>(x: T) => x;"),
+                "const x = <T extends U>(x: T) => x;",
+            ),
+            (
+                format!("const x: Array<{ch}<T>(x: T) => T> = y;"),
+                "const x: Array< <T>(x: T) => T> = y;",
+            ),
+        ] {
+            assert!(diagnostics(&code, ScriptTSX).is_empty(), "{code:?}");
+            assert_eq!(kinds_of(&code, ScriptTSX), kinds_of(spaced, ScriptTSX));
+        }
+        for code in [format!("'{ch}';"), format!("/*{ch}*/ x;"), format!("`{ch}`;")] {
+            assert!(diagnostics(&code, ScriptJS).is_empty(), "{code:?}");
+        }
+    }
 
-#[test]
-fn unicode_next_line_is_whitespace() {
-    division("var a = 1;\u{85}var b = 2 / 3;", ScriptJS);
-    let ks = kinds_of("var a = 1;\u{85}var b = 2;", ScriptJS);
-    assert_eq!(
-        ks.iter().filter(|&&k| k == TokenKind::KwVar).count(),
-        2,
-        "U+0085 must separate tokens: {ks:?}"
-    );
+    for ch in [
+        '\u{a0}', '\u{1680}', '\u{2000}', '\u{200a}', '\u{202f}', '\u{205f}', '\u{3000}',
+        '\u{feff}',
+    ] {
+        let code = format!("let{ch}x = 1;");
+        assert!(diagnostics(&code, ScriptJS).is_empty(), "{code:?}");
+        assert!(kinds_of(&code, ScriptJS).contains(&TokenKind::KwLet), "{code:?}");
+    }
 }
 
 #[test]

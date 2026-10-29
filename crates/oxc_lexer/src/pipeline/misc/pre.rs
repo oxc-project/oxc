@@ -19,6 +19,7 @@ pub unsafe fn misc_pre(
     misc: *const u64,
     kind: *mut u8,
     vutf8: bool,
+    ts: bool,
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
@@ -27,9 +28,9 @@ pub unsafe fn misc_pre(
     }
 
     if vutf8 {
-        misc_pre_impl::<true>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<true>(src, n, st, word, misc, kind, ts, lanes)
     } else {
-        misc_pre_impl::<false>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<false>(src, n, st, word, misc, kind, ts, lanes)
     }
 }
 
@@ -46,6 +47,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
     word: *mut u64,
     misc: *const u64,
     kind: *mut u8,
+    ts: bool,
     lanes: &mut Lanes,
 ) -> usize {
     let mut nesc = 0usize;
@@ -89,7 +91,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                         continue;
                     }
                 }
-                let len = unicode_ws_len_at_unchecked(src, p);
+                let len = unicode_ws_len_at_unchecked(src, p, ts);
                 if len != 0 {
                     *kind.add(p) = tk!(Whitespace);
                     bm_clear_range(word, p, p + len - 1);

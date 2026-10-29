@@ -119,9 +119,9 @@ pub(super) fn skip_trivia_nl(src: &[u8], n: usize, mut i: usize) -> (usize, bool
             }
             broke |= line_break_in(src, i + 2, e);
             i = e + 1;
-        } else if c >= 0x80 && unicode_ws_len_at(src, i) != 0 {
+        } else if c >= 0x80 && unicode_ws_len_at(src, i, true) != 0 {
             broke |= line_break_in(src, i, i + 3);
-            i += unicode_ws_len_at(src, i);
+            i += unicode_ws_len_at(src, i, true);
         } else {
             break;
         }

@@ -190,10 +190,10 @@ pub fn word_len(src: &[u8], w: usize) -> usize {
 /// Does the identifier at `pos` equal exactly `kw`? The following-byte check
 /// rejects longer identifiers (the source pad makes it safe at EOF).
 #[inline]
-pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
+pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], ts: bool) -> bool {
     src[pos..].starts_with(kw) && {
         let after = pos + kw.len();
-        !is_word(src[after]) || unicode_ws_len_at(src, after) != 0
+        !is_word(src[after]) || unicode_ws_len_at(src, after, ts) != 0
     }
 }
 

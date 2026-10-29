@@ -245,7 +245,7 @@ impl Tokens<'_> {
     /// Does the identifier at `pos` equal exactly `kw`?
     #[inline]
     pub fn ident_is(&self, pos: usize, kw: &[u8]) -> bool {
-        walk::ident_is(self.src, pos, kw)
+        walk::ident_is(self.src, pos, kw, self.ts)
     }
 
     /// The opener of the `)`, `]` or `}` at `from`, or `None` if unbalanced

@@ -19,14 +19,19 @@ pub(super) const fn is_digit(c: u8) -> bool {
 }
 
 /// Byte length (2 or 3) of the multi-byte WhiteSpace or LineTerminator starting at c0, or 0.
+/// TypeScript additionally accepts U+0085 and U+200B as whitespace.
 #[inline(always)]
-pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8) -> usize {
+pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8, ts: bool) -> usize {
     match c0 {
-        0xC2 => (c1 == 0xA0 || c1 == 0x85) as usize * 2,
+        0xC2 => (c1 == 0xA0 || (ts && c1 == 0x85)) as usize * 2,
         0xE1 => (c1 == 0x9A && c2 == 0x80) as usize * 3,
         0xE2 => {
             let ws = (c1 == 0x80
-                && ((c2 >= 0x80 && c2 <= 0x8B) || c2 == 0xA8 || c2 == 0xA9 || c2 == 0xAF))
+                && ((c2 >= 0x80 && c2 <= 0x8A)
+                    || (ts && c2 == 0x8B)
+                    || c2 == 0xA8
+                    || c2 == 0xA9
+                    || c2 == 0xAF))
                 || (c1 == 0x81 && c2 == 0x9F);
             ws as usize * 3
         }
@@ -39,23 +44,25 @@ pub(super) const fn unicode_ws_len(c0: u8, c1: u8, c2: u8) -> usize {
 /// Byte length (2 or 3) of the multi-byte ECMAScript WhiteSpace / LineTerminator at `p`, or 0.
 ///
 /// The non-ASCII set:
-/// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
+/// U+00A0, U+1680, U+2000..=U+200A, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
+/// TypeScript additionally accepts U+0085 and U+200B.
 ///
 /// Safe version of [`unicode_ws_len_at_unchecked`].
 #[inline]
-pub(super) fn unicode_ws_len_at(src: &[u8], p: usize) -> usize {
-    unicode_ws_len(src[p], src[p + 1], src[p + 2])
+pub(super) fn unicode_ws_len_at(src: &[u8], p: usize, ts: bool) -> usize {
+    unicode_ws_len(src[p], src[p + 1], src[p + 2], ts)
 }
 
 /// Byte length (2 or 3) of the multi-byte ECMAScript WhiteSpace / LineTerminator at `p`, or 0.
 ///
 /// The non-ASCII set:
-/// U+0085, U+00A0, U+1680, U+2000..=U+200B, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
+/// U+00A0, U+1680, U+2000..=U+200A, U+2028, U+2029, U+202F, U+205F, U+3000, U+FEFF.
+/// TypeScript additionally accepts U+0085 and U+200B.
 ///
 /// Unsafe version of [`unicode_ws_len_at`].
 #[inline]
-pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize) -> usize {
-    unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2))
+pub(super) unsafe fn unicode_ws_len_at_unchecked(src: *const u8, p: usize, ts: bool) -> usize {
+    unicode_ws_len(*src.add(p), *src.add(p + 1), *src.add(p + 2), ts)
 }
 
 /// The first line terminator (LF, CR, LS or PS) at or after i, or n.
