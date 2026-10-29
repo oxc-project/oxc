@@ -1,7 +1,7 @@
 //! Whitespace sensitivity: which gaps between nodes render, from CSS display and the options,
 //! past hidden elements and Angular blocks.
 
-use oxc_htmlish_parser::ast::{Element, Namespace, NodeId};
+use oxc_htmlish_parser::ast::{Element, Namespace, NodeId, NodeKind};
 
 use super::{Builder, is_pre_like, is_whitespace_text};
 use crate::{
@@ -14,6 +14,10 @@ impl Builder<'_> {
     /// a `<!-- display: -->` comment overrides it in `children`.
     pub(super) fn display(&self, id: NodeId) -> Display {
         let Some(el) = self.tree.element(id) else {
+            // An omitted element's end tag (`</body>`): no whitespace around it renders
+            if matches!(self.tree.kind(id), NodeKind::EndTag(_)) {
+                return Display::Block;
+            }
             // Text, comments and the document: only the option applies
             return match self.sensitivity {
                 WhitespaceSensitivity::Ignore => Display::Block,
