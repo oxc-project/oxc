@@ -74,7 +74,7 @@ const d = html`<style>
  const a = html`
    <style>
      a {
--      prettier_html_placeholder_0_2989_in_js: ${c};
+-      prettier_html_placeholder_0_2992_in_js: ${c};
 +      ${b}: ${c};
      }
    </style>
@@ -110,7 +110,7 @@ const d = html`
 const a = html`
   <style>
     a {
-      prettier_html_placeholder_0_2989_in_js: ${c};
+      prettier_html_placeholder_0_2992_in_js: ${c};
     }
   </style>
 `;
