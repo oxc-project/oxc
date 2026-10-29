@@ -2,7 +2,12 @@ use std::arch::x86_64::*;
 
 use crate::pipeline::chunk::{load256, mm, veq};
 
+/// Ordered for speed, pairing `(` with `)`, `[` with `{` and `]` with `}` (see [`any_of`]).
+const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
+
 /// First byte at or after i that is one of needles, or n.
+///
+/// Needle order matters for speed. See comment on [`any_of`] below.
 #[inline]
 pub unsafe fn find_avx2<const K: usize>(
     src: *const u8,
@@ -36,7 +41,7 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
         // the OR-fold touches no memory and needs only `avx2`, which this module's `#[cfg]`
         // guarantees.
         let v = unsafe { load256(block.as_ptr(), half * 32) };
-        let m = unsafe { any_of(v, [b'(', b')', b'[', b']', b'{', b'}']) };
+        let m = unsafe { any_of(v, BRACKET_BYTES) };
         // SAFETY: This module is only compiled on platforms that support AVX2
         let mask = unsafe { mm(m) };
         out |= u64::from(mask) << (half * 32);
@@ -45,6 +50,19 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
 }
 
 // The compares are OR-folded pairwise, level by level, so the tree stays shallow for 7 needles.
+//
+// Needle order matters for speed. When 2 bytes differ in only 1 bit, LLVM folds their 2 compares
+// and the OR into 1 AND and 1 compare, saving an op.
+//
+// For example, `<` is 0x3C (0b0011_1100) and `>` is 0x3E (0b0011_1110). They differ only in bit 1,
+// so clearing that bit with `& 0xFD` turns both of them into 0x3C:
+//
+//     (v == 0x3C) | (v == 0x3E)    2 compares + 1 OR
+//     (v & 0xFD) == 0x3C           1 AND + 1 compare
+//
+// LLVM only does this when the 2 compares are OR-ed together directly,
+// i.e. when the bytes are at indexes `2 * j` and `2 * j + 1` in `needles`.
+// The byte sets passed to `find` are ordered to make such pairs.
 #[inline(always)]
 unsafe fn any_of<const N: usize>(v: __m256i, needles: [u8; N]) -> __m256i {
     let mut m = needles.map(|c| veq(v, c));
