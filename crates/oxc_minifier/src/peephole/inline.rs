@@ -1,7 +1,6 @@
 use crate::generated::ancestor::Ancestor;
 use oxc_ast::ast::*;
 use oxc_ecmascript::constant_evaluation::{ConstantEvaluation, ConstantValue};
-use oxc_span::GetSpan;
 use oxc_syntax::symbol::SymbolId;
 
 use crate::TraverseCtx;
@@ -332,15 +331,20 @@ impl<'a> PeepholeOptimizations {
     pub fn inline_identifier_reference(expr: &mut Expression<'a>, ctx: &mut TraverseCtx<'a>) {
         let Expression::Identifier(ident) = expr else { return };
         let reference_id = ident.reference_id();
+        let span = ident.span;
         let Some(symbol_id) = ctx.scoping().get_reference(reference_id).symbol_id() else { return };
         let Some(symbol_value) = ctx.state.symbols.value(symbol_id) else {
             return;
         };
+        if symbol_value.boolean_falsy && ctx.in_boolean_context() {
+            ctx.replace_expression(expr, Expression::new_number_0(span, ctx));
+            return;
+        }
         if !symbol_value.can_inline_initialized_constant() {
             return;
         }
         let constant = symbol_value.initialized_constant.as_ref().unwrap();
-        let new_expr = ctx.value_to_expr(expr.span(), constant.clone());
+        let new_expr = ctx.value_to_expr(span, constant.clone());
         ctx.replace_expression(expr, new_expr);
     }
 }

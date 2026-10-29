@@ -418,13 +418,16 @@ impl<'a> PeepholeOptimizations {
         ) {
             (Some(true), Some(false)) => {
                 let test = expr.test.take_in(ctx);
-                let test = Self::minimize_not(expr.span, test, ctx, false);
+                if ctx.in_boolean_context() {
+                    return Some(test);
+                }
+                let test = Self::minimize_not(expr.span, test, ctx, true);
                 let test = Self::minimize_not(expr.span, test, ctx, false);
                 return Some(test);
             }
             (Some(false), Some(true)) => {
                 let test = expr.test.take_in(ctx);
-                let test = Self::minimize_not(expr.span, test, ctx, false);
+                let test = Self::minimize_not(expr.span, test, ctx, ctx.in_boolean_context());
                 return Some(test);
             }
             // "c ? false : x" => "!c && x" (exact for any `c`)
@@ -437,7 +440,7 @@ impl<'a> PeepholeOptimizations {
                     ) =>
             {
                 let test = expr.test.take_in(ctx);
-                let test = Self::minimize_not(expr.span, test, ctx, false);
+                let test = Self::minimize_not(expr.span, test, ctx, ctx.in_boolean_context());
                 let right = expr.alternate.take_in(ctx);
                 return Some(Self::join_with_left_associative_op(
                     expr.span,
@@ -457,7 +460,7 @@ impl<'a> PeepholeOptimizations {
                     ) =>
             {
                 let test = expr.test.take_in(ctx);
-                let test = Self::minimize_not(expr.span, test, ctx, false);
+                let test = Self::minimize_not(expr.span, test, ctx, ctx.in_boolean_context());
                 let right = expr.consequent.take_in(ctx);
                 return Some(Self::join_with_left_associative_op(
                     expr.span,
@@ -547,7 +550,7 @@ impl<'a> PeepholeOptimizations {
                 // But skip if parens would be needed (e.g., "a+b?1:0" => "+!!(a+b)" is longer)
                 if !needs_parens {
                     let test = expr.test.take_in(ctx);
-                    let test = Self::minimize_not(expr.span, test, ctx, false);
+                    let test = Self::minimize_not(expr.span, test, ctx, true);
                     let test = Self::minimize_not(expr.span, test, ctx, false);
                     return Some(Expression::new_unary_expression(expr.span,
                     UnaryOperator::UnaryPlus,
@@ -584,6 +587,60 @@ impl<'a> PeepholeOptimizations {
         }
 
         None
+    }
+
+    pub fn minimize_conditional_expression_in_boolean_context(
+        expr: &mut Expression<'a>,
+        ctx: &mut TraverseCtx<'a>,
+    ) {
+        let Expression::ConditionalExpression(cond_expr) = expr else {
+            return;
+        };
+        if !ctx.in_boolean_context() {
+            return;
+        }
+        if let Some(value) = cond_expr.consequent.get_side_free_boolean_value(ctx) {
+            // if parent is void statement and we can rotate test do it
+            let value = if ctx.parent().is_expression_statement() {
+                !Self::has_negated_result(&cond_expr.test)
+            } else {
+                value
+            };
+            ctx.drop_expression(&cond_expr.consequent);
+            ctx.replace_expression_with(expr, |e, ctx| {
+                let Expression::ConditionalExpression(e) = e else { unreachable!() };
+                let ConditionalExpression { test, alternate, span, .. } = e.unbox();
+                let (op, left) = if value {
+                    // "if (anything1 ? truthyNoSideEffects : anything2)" => "if (anything1 || anything2)"
+                    (LogicalOperator::Or, test)
+                } else {
+                    // "if (anything1 ? falsyNoSideEffects : anything2)" => "if (!anything1 && anything2)"
+                    (LogicalOperator::And, Self::minimize_not(test.span(), test, ctx, true))
+                };
+                Self::join_with_left_associative_op(span, op, left, alternate, ctx)
+            });
+            return;
+        }
+        if let Some(value) = cond_expr.alternate.get_side_free_boolean_value(ctx) {
+            let value = if ctx.parent().is_expression_statement() {
+                Self::has_negated_result(&cond_expr.test)
+            } else {
+                value
+            };
+            ctx.drop_expression(&cond_expr.alternate);
+            ctx.replace_expression_with(expr, |e, ctx| {
+                let Expression::ConditionalExpression(e) = e else { unreachable!() };
+                let ConditionalExpression { test, consequent, span, .. } = e.unbox();
+                let (op, left) = if value {
+                    // "if (anything1 ? anything2 : truthyNoSideEffects)" => "if (!anything1 || anything2)"
+                    (LogicalOperator::Or, Self::minimize_not(test.span(), test, ctx, true))
+                } else {
+                    // "if (anything1 ? anything2 : falsyNoSideEffects)" => "if (anything1 && anything2)"
+                    (LogicalOperator::And, test)
+                };
+                Self::join_with_left_associative_op(span, op, left, consequent, ctx)
+            });
+        }
     }
 
     /// Merge `consequent` and `alternate` of `ConditionalExpression` inside.
