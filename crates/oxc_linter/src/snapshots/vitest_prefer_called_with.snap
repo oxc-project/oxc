@@ -23,6 +23,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Prefer toHaveBeenCalledWith(/* expected args */)
 
+  ⚠ vitest(prefer-called-with): Suggest using `toHaveBeenCalledExactlyOnceWith()`.
+   ╭─[prefer_called_with.tsx:1:12]
+ 1 │ expect(fn).toHaveBeenCalledOnce();
+   ·            ────────────────────
+   ╰────
+  help: Prefer toHaveBeenCalledExactlyOnceWith(/* expected args */)
+
   ⚠ vitest(prefer-called-with): Suggest using `toBeCalledWith()` or `toHaveBeenCalledWith()`.
    ╭─[prefer_called_with.tsx:1:12]
  1 │ expect(fn).toBeCalled();
@@ -43,3 +50,10 @@ source: crates/oxc_linter/src/tester.rs
    ·            ────────────────
    ╰────
   help: Prefer toHaveBeenCalledWith(/* expected args */)
+
+  ⚠ vitest(prefer-called-with): Suggest using `toHaveBeenCalledExactlyOnceWith()`.
+   ╭─[prefer_called_with.tsx:1:12]
+ 1 │ expect(fn).toHaveBeenCalledOnce();
+   ·            ────────────────────
+   ╰────
+  help: Prefer toHaveBeenCalledExactlyOnceWith(/* expected args */)
