@@ -531,20 +531,26 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             Kind::Default => ModuleDeclaration::ExportDefaultDeclaration(
                 self.parse_export_default_declaration(start, decorators),
             ),
-            Kind::Star => {
-                ModuleDeclaration::ExportAllDeclaration(self.parse_export_all_declaration(start))
-            }
-            Kind::LCurly => self.parse_export_named_specifiers(start),
+            Kind::Star => ModuleDeclaration::ExportAllDeclaration(
+                self.parse_export_all_declaration(start, ImportOrExportKind::Value),
+            ),
+            Kind::LCurly => self.parse_export_named_specifiers(start, ImportOrExportKind::Value),
             Kind::Type if self.is_ts => {
                 let next_kind = self.lexer.peek_token().kind();
 
                 match next_kind {
                     // `export type { ...`
-                    Kind::LCurly => self.parse_export_named_specifiers(start),
+                    Kind::LCurly => {
+                        self.bump_any(); // bump `type`
+                        self.parse_export_named_specifiers(start, ImportOrExportKind::Type)
+                    }
                     // `export type * as ...`
-                    Kind::Star => ModuleDeclaration::ExportAllDeclaration(
-                        self.parse_export_all_declaration(start),
-                    ),
+                    Kind::Star => {
+                        self.bump_any(); // bump `type`
+                        ModuleDeclaration::ExportAllDeclaration(
+                            self.parse_export_all_declaration(start, ImportOrExportKind::Type),
+                        )
+                    }
                     _ => ModuleDeclaration::ExportDeclaration(
                         self.parse_exported_declaration(start, decorators),
                     ),
@@ -581,8 +587,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     // ExportSpecifier :
     //   ModuleExportName
     //   ModuleExportName as ModuleExportName
-    fn parse_export_named_specifiers(&mut self, start: u32) -> ModuleDeclaration<'a> {
-        let export_kind = self.parse_import_or_export_kind();
+    fn parse_export_named_specifiers(
+        &mut self,
+        start: u32,
+        export_kind: ImportOrExportKind,
+    ) -> ModuleDeclaration<'a> {
         let opening_span = self.cur_token().span();
         self.expect(Kind::LCurly);
         let (mut specifiers, _) = self.context_remove(self.ctx, |p| {
@@ -824,8 +833,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_export_all_declaration(
         &mut self,
         start: u32,
+        export_kind: ImportOrExportKind,
     ) -> ArenaBox<'a, ExportAllDeclaration<'a>> {
-        let export_kind = self.parse_import_or_export_kind();
         self.bump_any(); // bump `star`
         let exported = self.eat(Kind::As).then(|| self.parse_module_export_name());
         self.expect(Kind::From);
@@ -1026,50 +1035,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 ModuleExportName::new_string_literal(literal.span, literal.value, literal.raw, self)
             }
         }
-    }
-
-    fn parse_import_or_export_kind(&mut self) -> ImportOrExportKind {
-        if !self.is_ts {
-            return ImportOrExportKind::Value;
-        }
-        // OK
-        // import type { bar } from 'foo';
-        // import type * as React from 'react';
-        // import type ident from 'foo';
-        // export type { bar } from 'foo';
-
-        // NO
-        // import type from 'foo';
-
-        // OK
-        // import type from from 'foo';
-        if !self.at(Kind::Type) {
-            return ImportOrExportKind::Value;
-        }
-
-        let next_kind = self.lexer.peek_token().kind();
-
-        if matches!(next_kind, Kind::LCurly | Kind::Star) {
-            self.bump_any();
-            return ImportOrExportKind::Type;
-        }
-
-        if !(next_kind == Kind::Ident) && !next_kind.is_contextual_keyword() {
-            return ImportOrExportKind::Value;
-        }
-
-        if next_kind != Kind::From
-            || self.lookahead(|p| {
-                p.bump_any();
-                p.bump_any();
-                p.at(Kind::From)
-            })
-        {
-            self.bump_any();
-            return ImportOrExportKind::Type;
-        }
-
-        ImportOrExportKind::Value
     }
 
     fn parse_export_specifier(
