@@ -4,6 +4,35 @@ This task keeps track of the number of system allocations as well as arena alloc
 
 Update the snapshots with `cargo allocs`.
 
+## Optional per-rule linter tracking
+
+Run `cargo run -p oxc_track_memory_allocations --profile coverage --features linter`
+to write only `tasks/track_memory_allocations/allocs_linter.yaml`, grouped by file
+and plugin/rule name. This is opt-in: normal `cargo allocs` runs and CI do not run
+it, including CI builds using `--all-features`.
+
+Linter-enabled builds do not measure or rewrite the normal stage snapshots:
+the linter enables additional semantic-analysis features that change their
+allocation counts. Use `cargo allocs` without the feature for those snapshots.
+
+The generated report is gitignored. Within each file, rules are sorted by
+`sys alloc bytes` descending, then `sys allocs` descending, then rule name.
+Values reflect the current run without snapshot tolerances. File size is omitted
+from the per-rule metrics.
+
+Only native rule callbacks (`should_run`, `run_once`, and `run`) are measured,
+with the regular eligibility and AST type filters. Parsing, semantic analysis,
+configuration, context construction, and context teardown are excluded. Type-aware
+rules implemented by tsgolint are omitted. Skipped native rules have zero activity
+unless their `should_run` callback allocates.
+
+Rules run individually in rule-ID order, rather than interleaving their node
+callbacks as the production runner does. They share a fresh per-file context.
+Diagnostic storage growth is charged to the rule that triggers it, and lazy shared
+work (such as React Compiler analysis) is charged to its first consumer. Diagnostics
+remain alive until all rules finish. For these measurements, `arena size` is the
+arena growth during that rule rather than the cumulative arena size.
+
 ## Metrics
 
 Recorded per file and per stage (parser, semantic, transformer, minifier, formatter):

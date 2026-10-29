@@ -516,6 +516,34 @@ impl<'a> ContextHost<'a> {
         }
     }
 
+    /// Run one native rule's callbacks for allocation profiling, without linter setup or teardown.
+    ///
+    /// Uses the same eligibility and AST type filters as the regular rule runner.
+    #[cfg(feature = "track_allocations")]
+    pub fn run_rule_for_allocations(self: Rc<Self>, rule: &RuleEnum, severity: AllowWarnDeny) {
+        let run_info = rule.run_info();
+        let ast_types = rule.types_info();
+        if rule.is_tsgolint_rule()
+            || (run_info == crate::RuleRunFunctionsImplemented::Run
+                && ast_types.is_some_and(|types| !self.semantic().nodes().contains_any(types)))
+            || !rule.should_run(&self)
+        {
+            return;
+        }
+
+        let ctx = self.spawn(rule, severity);
+        if run_info.is_run_once_implemented() {
+            rule.run_once::<false>(&ctx, None);
+        }
+        if run_info.is_run_implemented() {
+            for node in ctx.nodes() {
+                if ast_types.is_none_or(|types| types.has(node.kind().ty())) {
+                    rule.run::<false>(node, &ctx, None);
+                }
+            }
+        }
+    }
+
     /// Creates a new [`LintContext`] for testing purposes only.
     #[cfg(test)]
     pub(crate) fn spawn_for_test(self: Rc<Self>) -> LintContext<'a> {

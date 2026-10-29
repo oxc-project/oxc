@@ -2763,11 +2763,13 @@ dependencies = [
  "mimalloc-safe",
  "oxc_allocator",
  "oxc_formatter",
+ "oxc_linter",
  "oxc_minifier",
  "oxc_parser",
  "oxc_semantic",
  "oxc_tasks_common",
  "oxc_transformer",
+ "rustc-hash",
  "saphyr",
 ]
 
