@@ -523,7 +523,7 @@ impl RuleRunner for crate::rules::eslint::no_class_assign::NoClassAssign {
 
 impl RuleRunner for crate::rules::eslint::no_compare_neg_zero::NoCompareNegZero {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::BinaryExpression]));
+        Some(&AstTypesBitset::from_types(&[AstType::UnaryExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 

@@ -39,7 +39,7 @@ eslint/no-bitwise                                       |  42715
 eslint/no-caller                                        |  76337
 eslint/no-case-declarations                             |   2320
 eslint/no-class-assign                                  |    300
-eslint/no-compare-neg-zero                              |  20604
+eslint/no-compare-neg-zero                              |   9106
 eslint/no-cond-assign                                   |  31699
 eslint/no-console                                       |  95297
 eslint/no-const-assign                                  |  37499
