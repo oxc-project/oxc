@@ -2,9 +2,8 @@ use std::ptr;
 
 use crate::pipeline::{
     bitmap::bm_next0,
-    bytes::{is_word, is_ws},
+    bytes::{is_word, is_ws, unicode_ws_len_at_unchecked},
     carve::common::find_line_terminator,
-    find::unicode_ws_len,
     scan::scan_block_comment,
 };
 
@@ -44,7 +43,7 @@ pub(super) unsafe fn jsx_names_equal_fast(
 #[inline]
 unsafe fn is_jsx_name_byte_at(src: *const u8, i: usize) -> bool {
     let c = *src.add(i);
-    is_jsx_name_byte(c) && (c < 0x80 || unicode_ws_len(src, i) == 0)
+    is_jsx_name_byte(c) && (c < 0x80 || unicode_ws_len_at_unchecked(src, i) == 0)
 }
 
 unsafe fn jsx_name_continues_after(src: *const u8, lim: usize, i: usize) -> bool {
@@ -92,7 +91,7 @@ pub(super) unsafe fn jsx_skip_trivia(src: *const u8, n: usize, mut i: usize) -> 
             }
         }
         if c >= 0x80 {
-            let w = unicode_ws_len(src, i);
+            let w = unicode_ws_len_at_unchecked(src, i);
             if w != 0 {
                 i += w;
                 continue;
@@ -130,7 +129,7 @@ unsafe fn jsx_name_next(src: *const u8, i: usize, lim: usize, after_sep: bool) -
         return lim;
     }
     let c = *src.add(i);
-    let trivia = is_ws(c) || c == b'/' || (c >= 0x80 && unicode_ws_len(src, i) != 0);
+    let trivia = is_ws(c) || c == b'/' || (c >= 0x80 && unicode_ws_len_at_unchecked(src, i) != 0);
     if !trivia {
         return i;
     }
