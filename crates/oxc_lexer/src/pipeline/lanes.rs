@@ -758,8 +758,8 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
 
         // Legacy-octal-like decimal (leading `0` + digit/`_`): oxc_parser
         // consumes only `[0-9]` for the integer part - no separators, no bigint suffix -
-        // and accepts an exponent only as lowercase `e` after an `8`/`9` flipped
-        // the run to NonOctalDecimal (`08e1` valid; `00e1` and `08E1` not).
+        // and accepts an exponent after an `8`/`9` flipped the run to
+        // NonOctalDecimal (`08e1` and `08E1` valid; `00e1` not).
         // Bare `00`/`08` are valid sloppy-mode Annex B, and `.` never flags.
         if matches!(body[1], b'0'..=b'9' | b'_') {
             // Only the integer part is checked here. A fraction or exponent after an `8`/`9`
@@ -773,9 +773,9 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
             }
             let run = bytes.iter().take_while(|c| c.is_ascii_digit()).count();
             match bytes.get(run) {
-                // `08e1`: valid NonOctalDecimal exponent; its digits are
+                // `08e1` / `08E1`: valid NonOctalDecimal exponent; its digits are
                 // still checked below (`08e` stays flagged).
-                Some(&b'e') if bytes[..run].iter().any(|&c| c >= b'8') => {}
+                Some(&b'e' | &b'E') if bytes[..run].iter().any(|&c| c >= b'8') => {}
                 Some(&b'e' | &b'E') => return DiagCode::InvalidNumericLiteral,
                 _ => {}
             }

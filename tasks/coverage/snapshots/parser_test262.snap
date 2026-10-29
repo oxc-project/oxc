@@ -22809,13 +22809,12 @@ Negative Passed: 4653/4653 (100.00%)
     ·   ▲
     ╰────
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Invalid characters after number
     ╭─[test262/test/language/literals/bigint/exponent-part.js:17:4]
  16 │ 
  17 │ 0e0n;
-    ·    ▲
+    ·    ─
     ╰────
-  help: Try inserting a semicolon here
 
   × Invalid Character `g`
     ╭─[test262/test/language/literals/bigint/hexadecimal-invalid-digit.js:27:3]
