@@ -230,10 +230,6 @@ jobs:
             target/pgo/${{ inputs.name }}/${{ matrix.target }}/merged.profdata
             target/pgo/${{ inputs.name }}/${{ matrix.target }}/profile.json
 
-      - name: Package validated PGO binding
-        if: matrix.pgo && contains(fromJSON('["parser", "transform", "minify"]'), inputs.name)
-        run: pnpm node tasks/pgo/pack.mjs --package "$name" --target ${{ matrix.target }}
-
       - name: Upload installable PGO package
         if: matrix.pgo && contains(fromJSON('["parser", "transform", "minify"]'), inputs.name)
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
