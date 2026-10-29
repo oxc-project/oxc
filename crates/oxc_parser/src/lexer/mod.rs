@@ -506,28 +506,24 @@ impl<'a, C: Config> Lexer<'a, C> {
         let end_pos = self.source.end();
         loop {
             // Single spaces between tokens are common, so consume a space before processing the next token.
-            // Do this without a branch. This produces more instructions, but avoids an unpredictable branch.
             // Can only do this if there are at least 2 bytes left in source.
             // If there aren't 2 bytes left, delegate to `read_next_token_at_end` (cold branch).
             let mut pos = self.source.position();
             // SAFETY: `source.end()` is always equal to or after `source.position()`
             let remaining_bytes = unsafe { end_pos.offset_from(pos) };
             if remaining_bytes >= 2 {
-                // Read next byte.
                 // SAFETY: There are at least 2 bytes remaining in source.
-                let byte = unsafe { pos.read() };
+                let mut byte = unsafe { pos.read() };
 
-                // If next byte is a space, advance by 1 byte.
-                // Do this with maths, instead of a branch.
-                let is_space = byte == b' ';
-                // SAFETY: There are at least 2 bytes remaining in source, so advancing 1 byte cannot be out of bounds
-                pos = unsafe { pos.add(usize::from(is_space)) };
-                self.source.set_position(pos);
-
-                // Read next byte again, in case we skipped a space.
-                // SAFETY: We checked above that there were at least 2 bytes to read,
-                // and we skipped a maximum of 1 byte, so there's still at least 1 byte left to read.
-                let byte = unsafe { pos.read() };
+                // Only update the cursor and read again when consuming a space.
+                if byte == b' ' {
+                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
+                    // leaves at least one byte to read.
+                    pos = unsafe { pos.add(1) };
+                    self.source.set_position(pos);
+                    // SAFETY: At least one byte remains after the space.
+                    byte = unsafe { pos.read() };
+                }
 
                 // Set token start
                 let offset = self.source.offset_of(pos);
@@ -578,16 +574,17 @@ impl<'a, C: Config> Lexer<'a, C> {
             let remaining_bytes = unsafe { end_pos.offset_from(pos) };
             if remaining_bytes >= 2 {
                 // SAFETY: There are at least 2 bytes remaining in source.
-                let byte = unsafe { pos.read() };
+                let mut byte = unsafe { pos.read() };
 
-                let is_space = byte == b' ';
-                // SAFETY: There are at least 2 bytes remaining in source, so advancing 1 byte cannot be out of bounds
-                pos = unsafe { pos.add(usize::from(is_space)) };
-                self.source.set_position(pos);
-
-                // SAFETY: We checked above that there were at least 2 bytes to read,
-                // and we skipped a maximum of 1 byte, so there's still at least 1 byte left to read.
-                let byte = unsafe { pos.read() };
+                // Only update the cursor and read again when consuming a space.
+                if byte == b' ' {
+                    // SAFETY: At least 2 bytes remain, so advancing past one ASCII space
+                    // leaves at least one byte to read.
+                    pos = unsafe { pos.add(1) };
+                    self.source.set_position(pos);
+                    // SAFETY: At least one byte remains after the space.
+                    byte = unsafe { pos.read() };
+                }
 
                 let offset = self.source.offset_of(pos);
                 self.token.set_start(offset);
