@@ -114,15 +114,15 @@ impl Rule for NoObjectMethodsWithCollections {
         }
 
         let argument_text = ctx.source_range(argument.span());
-        let needs_parens = !argument_text.starts_with('(')
-            && matches!(
-                argument.without_parentheses(),
-                Expression::TSAsExpression(_)
-                    | Expression::TSSatisfiesExpression(_)
-                    | Expression::TSTypeAssertion(_)
-                    | Expression::ConditionalExpression(_)
-                    | Expression::SequenceExpression(_)
-            );
+        let needs_parens = match argument {
+            Expression::TSAsExpression(_)
+            | Expression::TSSatisfiesExpression(_)
+            | Expression::TSTypeAssertion(_)
+            | Expression::ConditionalExpression(_) => true,
+            // `new Map.keys()` would parse as `new (Map.keys)()`.
+            Expression::NewExpression(_) => !argument_text.ends_with(')'),
+            _ => false,
+        };
         let receiver =
             if needs_parens { format!("({argument_text})") } else { argument_text.to_string() };
         let mut replacement = format!("Array.from({receiver}.{method}())");
@@ -158,7 +158,9 @@ fn collection_type<'a>(
         Expression::Identifier(ident) => {
             let declaration = get_declaration_of_variable(ident, ctx)?;
             match declaration.kind() {
-                AstKind::VariableDeclarator(var) => {
+                // A type annotation on a destructuring pattern describes the whole pattern,
+                // not the identifier bound from it.
+                AstKind::VariableDeclarator(var) if var.id.is_binding_identifier() => {
                     if let Some(annotation) = &var.type_annotation {
                         return collection_type_annotation(
                             &annotation.type_annotation,
@@ -168,14 +170,13 @@ fn collection_type<'a>(
                     }
                     if variable_declaration_kind(var, ctx.nodes())
                         .is_some_and(VariableDeclarationKind::is_const)
-                        && var.id.is_binding_identifier()
                     {
                         var.init.as_ref().and_then(|init| collection_type(init, ctx, depth + 1))
                     } else {
                         None
                     }
                 }
-                AstKind::FormalParameter(param) => {
+                AstKind::FormalParameter(param) if param.pattern.is_binding_identifier() => {
                     param.type_annotation.as_ref().and_then(|annotation| {
                         collection_type_annotation(&annotation.type_annotation, ctx, depth + 1)
                     })
@@ -248,6 +249,8 @@ fn test() {
     use crate::{fixer::FixKind, tester::Tester};
 
     let pass = vec![
+        "function f({ size }: Set<string>) { Object.keys(size) }",
+        "declare const x: any; const { a }: Map<string, number> = x; Object.keys(a)",
         "Object.keys({a: 1})",
         "Object.values({a: 1})",
         "Object.entries({a: 1})",
@@ -341,6 +344,19 @@ fn test() {
     ];
 
     let fix = vec![
+        ("Object.keys(new Map)", "Array.from((new Map).keys())", None, FixKind::Suggestion),
+        (
+            "Object.keys((flag) ? new Map() : new Map())",
+            "Array.from(((flag) ? new Map() : new Map()).keys())",
+            None,
+            FixKind::Suggestion,
+        ),
+        (
+            "Object.entries((value) as Map<string, number>)",
+            "Array.from(((value) as Map<string, number>).entries())",
+            None,
+            FixKind::Suggestion,
+        ),
         ("Object.keys(new Map())", "Array.from(new Map().keys())", None, FixKind::Suggestion),
         ("Object.values(new Set())", "Array.from(new Set().values())", None, FixKind::Suggestion),
         ("Object.entries(new Map())", "Array.from(new Map().entries())", None, FixKind::Suggestion),
