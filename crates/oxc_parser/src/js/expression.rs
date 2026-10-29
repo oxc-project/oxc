@@ -1305,7 +1305,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.parse_postfix_update_expression(start, lhs)
     }
 
-    #[inline]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_postfix_update_expression(
         &mut self,
         start: u32,
