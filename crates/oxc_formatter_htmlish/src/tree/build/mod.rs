@@ -252,8 +252,10 @@ impl Builder<'_> {
         }
         // CDATA reads as text, merged with the texts around it,
         // and prints as written (DIVERGENCES.md#cdata-as-written).
-        let text_like =
-            matches!(node.kind, NodeKind::Text(_) | NodeKind::Comment(_) | NodeKind::Cdata);
+        let text_like = matches!(
+            node.kind,
+            NodeKind::Text(_) | NodeKind::Comment(_) | NodeKind::Cdata | NodeKind::EndTag(_)
+        );
         let display = self.display(id);
         let facts = self.facts(id);
         facts.self_closing = self_closing;

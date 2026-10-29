@@ -33,7 +33,7 @@ pub struct Facts {
     pub first_child: Option<NodeId>,
     pub last_child: Option<NodeId>,
     pub display: Display,
-    /// Text and comments: printed without tags whose markers could be borrowed.
+    /// Text, comments and an omitted element's end tag: printed without tags whose markers could be borrowed.
     pub text_like: bool,
     /// No children and no end tag: the start tag closes the node.
     /// Text-like nodes count too.
