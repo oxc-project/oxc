@@ -19,6 +19,10 @@ pub struct JsonOutputFormatter {
 }
 
 impl InternalFormatter for JsonOutputFormatter {
+    fn is_machine_readable(&self) -> bool {
+        true
+    }
+
     fn all_rules(&self, _enabled_rules: FxHashSet<(&str, &str)>) -> Option<String> {
         #[derive(Debug, Serialize)]
         struct RuleInfoJson<'a> {
