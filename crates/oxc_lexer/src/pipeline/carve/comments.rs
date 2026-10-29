@@ -103,6 +103,7 @@ pub(super) fn html_open_comment_at(srcs: &[u8], n: usize, s: usize, module: bool
 /// Lex the `<!--` comment opening at `s` (see [`html_open_comment_at`]). Returns the resume
 /// index. Cold: a literal `<!--`.
 #[cold]
+#[inline(never)]
 pub(super) unsafe fn lex_html_open_comment(
     src: *const u8,
     srcs: &[u8],
@@ -149,6 +150,7 @@ pub(super) fn html_close_comment_at(srcs: &[u8], s: usize, module: bool) -> bool
 /// Lex the `-->` comment whose `>` is at `s` (see [`html_close_comment_at`]). Returns the
 /// resume index. Cold: a literal `-->` at line start.
 #[cold]
+#[inline(never)]
 pub(super) unsafe fn lex_html_close_comment(
     src: *const u8,
     srcs: &[u8],

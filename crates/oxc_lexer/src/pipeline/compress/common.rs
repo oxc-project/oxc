@@ -26,6 +26,7 @@ pub(super) unsafe fn emit_value(
 }
 
 #[cold]
+#[inline(never)]
 pub(super) unsafe fn invalid_diags(
     src: &[u8],
     out_kinds: *const u8,
