@@ -4,7 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
-use oxc_span::Span;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     AstNode, ast_util::outermost_paren_parent, context::LintContext, fixer::RuleFixer, rule::Rule,
@@ -68,6 +68,12 @@ declare_oxc_lint!(
 
 impl Rule for ForwardRefUsesRef {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let function_span = match node.kind() {
+            AstKind::Function(function) => function.span,
+            AstKind::ArrowFunctionExpression(arrow) => arrow.span,
+            _ => return,
+        };
+        let node = ctx.nodes().parent_node(node.id());
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -81,6 +87,9 @@ impl Rule for ForwardRefUsesRef {
         let Some(first_arg_as_exp) = first_arg.as_expression() else {
             return; // SpreadElement like forwardRef(...x)
         };
+        if first_arg_as_exp.span() != function_span {
+            return;
+        }
 
         check_forward_ref_inner(first_arg_as_exp, call_expr, node, ctx);
     }
@@ -201,9 +210,15 @@ fn test() {
         "forwardRef(() => {})",
         "forwardRef(function () {})",
         "forwardRef(function (a, b, c) {})",
+        "forwardRef(null, props => null)",
+        "forwardRef((props, ref) => null, props => null)",
+        "forwardRef((props => null))",
+        "forwardRef(...[props => null])",
+        "forwardRef((props => null) as Component)",
     ];
 
     let fail = vec![
+        "forwardRef(props => null, unused => null)",
         "
 			        import { forwardRef } from 'react'
 			        forwardRef((props) => {
