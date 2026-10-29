@@ -17,7 +17,7 @@ It turns a parsed AST into an IR ("Document") of `FormatElement`s, then prints t
 ### Public API
 
 Call-sites use text-in entry points;
-The AST-wrapping IR primitives (`AstNode`, `Format`, `Buffer`, …) are `pub(crate)` and not part of the contract.
+The AST-wrapping IR primitives (`AstNode`, `Format`, …) are `pub(crate)` and not part of the contract.
 
 - `format`: Format a whole file (text-in)
 - `format_fragment`: Format a JS/TSX fragment for js-in-xxx embedding, parameterized by `FragmentContext`
@@ -81,7 +81,7 @@ js-in-xxx works with `prettier-plugin-oxfmt` which uses `format_fragment`. See `
 
 Comments (and parentheses) are where a local fix has side effects; keep the rules below in view.
 The invariants and the invariants-vs-compat-tables split live in FORMATTER_POLICY.md "Comment placement invariants"; this section is their JS/TSX translation.
-Prettier's attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (DIVERGENCES.md#array-hole-trailing-comment, DIVERGENCES.md#type-alias-trailing-comment-move).
+Prettier's attachment artifacts that relocate a comment across tokens are divergences to pin, never rules to emulate (DIVERGENCES.md#array-hole-comments, DIVERGENCES.md#type-alias-trailing-comment-move).
 
 ### Vocabulary
 

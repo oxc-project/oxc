@@ -5,10 +5,14 @@ use serde::de::Error;
 
 use oxc_ast::{
     AstKind,
-    ast::{CallExpression, Expression, FormalParameter, Function, Statement},
+    ast::{
+        BlockStatement, CallExpression, Expression, ExpressionStatement, FormalParameter, Function,
+        IdentifierReference, IfStatement, Statement,
+    },
 };
 use oxc_ast_visit::{VisitJs, walk_js};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::{GetSpan, Span};
 use oxc_str::CompactStr;
 use oxc_syntax::scope::ScopeFlags;
@@ -180,35 +184,30 @@ impl ExpectExpectConfig {
         })
     }
 
-    pub fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(self, jest_node, ctx, ctx.frameworks().is_vitest());
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        run(self, node, ctx, ctx.frameworks().is_vitest());
     }
 
-    pub fn run_on_vitest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(self, jest_node, ctx, true);
+    pub fn run_vitest<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        run(self, node, ctx, true);
     }
 }
 
 fn run<'a>(
     rule: &ExpectExpectConfig,
-    possible_jest_node: &PossibleJestNode<'a, '_>,
+    node: &AstNode<'a>,
     ctx: &LintContext<'a>,
     use_vitest_assertions: bool,
 ) {
-    let node = possible_jest_node.node;
     if let AstKind::CallExpression(call_expr) = node.kind() {
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         let name = get_node_name(&call_expr.callee);
         if is_type_of_jest_fn_call(
             call_expr,
-            possible_jest_node,
+            &possible_jest_node,
             ctx,
             &[JestFnKind::General(JestGeneralFnKind::Test)],
         ) || rule.additional_test_block_functions.contains(&name)
@@ -308,7 +307,7 @@ impl<'a, 'b> AssertionVisitor<'a, 'b> {
         }
     }
 
-    fn check_identifier(&mut self, ident: &oxc_ast::ast::IdentifierReference<'a>) {
+    fn check_identifier(&mut self, ident: &IdentifierReference<'a>) {
         let Some(node) = get_declaration_of_variable(ident, self.ctx) else {
             return;
         };
@@ -341,14 +340,14 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         walk_js::walk_call_expression(self, call_expr);
     }
 
-    fn visit_expression_statement(&mut self, stmt: &oxc_ast::ast::ExpressionStatement<'a>) {
+    fn visit_expression_statement(&mut self, stmt: &ExpressionStatement<'a>) {
         self.check_expression(&stmt.expression);
         if !self.found_assertion {
             walk_js::walk_expression_statement(self, stmt);
         }
     }
 
-    fn visit_block_statement(&mut self, block: &oxc_ast::ast::BlockStatement<'a>) {
+    fn visit_block_statement(&mut self, block: &BlockStatement<'a>) {
         for stmt in &block.body {
             self.visit_statement(stmt);
             if self.found_assertion {
@@ -357,7 +356,7 @@ impl<'a> VisitJs<'a> for AssertionVisitor<'a, '_> {
         }
     }
 
-    fn visit_if_statement(&mut self, if_stmt: &oxc_ast::ast::IfStatement<'a>) {
+    fn visit_if_statement(&mut self, if_stmt: &IfStatement<'a>) {
         if let Statement::BlockStatement(block_stmt) = &if_stmt.consequent {
             self.visit_block_statement(block_stmt);
         }

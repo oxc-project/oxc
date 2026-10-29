@@ -168,8 +168,10 @@ impl NoUnusedVars {
         decl: &VariableDeclarator<'a>,
         ctx: &LintContext<'a>,
     ) -> bool {
-        if variable_declaration_kind(decl, ctx).is_var() && self.vars.is_local() && symbol.is_root()
-        {
+        let Some(kind) = variable_declaration_kind(decl, ctx.nodes()) else {
+            return false;
+        };
+        if kind.is_var() && self.vars.is_local() && symbol.is_root() {
             return true;
         }
 
@@ -178,7 +180,7 @@ impl NoUnusedVars {
             return true;
         }
 
-        if self.ignore_using_declarations && variable_declaration_kind(decl, ctx).is_using() {
+        if self.ignore_using_declarations && kind.is_using() {
             return true;
         }
 

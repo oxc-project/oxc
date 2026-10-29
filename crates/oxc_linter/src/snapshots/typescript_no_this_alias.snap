@@ -9,6 +9,13 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
 
+  ⚠ typescript(no-this-alias): Unexpected aliasing of 'this' to local variable.
+   ╭─[no_this_alias.tsx:1:11]
+ 1 │ let self; self ||= this;
+   ·           ────
+   ╰────
+  help: Assigning a variable to this instead of properly using arrow lambdas may be a symptom of pre-ES2015 practices or not managing scope well.
+
   ⚠ typescript(no-this-alias): Unexpected aliasing of members of 'this' to local variables.
    ╭─[no_this_alias.tsx:1:7]
  1 │ const { props, state } = this;

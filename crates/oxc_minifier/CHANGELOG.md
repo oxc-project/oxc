@@ -4,6 +4,53 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 💥 BREAKING CHANGES
+
+- cf8296f ecmascript: [**BREAKING**] Fold surrogate strings with JSStr constants (#27098) (Dunqing)
+
+### 🚀 Features
+
+- dd6cb2b minifier: Fold out-of-bounds string indices to `void 0` (#28004) (Dunqing)
+
+### 🐛 Bug Fixes
+
+- 9ec6617 minifier: Keep brackets on negative and non-finite numeric keys (#27855) (Yunus Ozen)
+- 520a26e minifier: Keep the default in shorthand assignment targets (#28183) (waltu)
+- 6d7b372 minifier: Handle sequence exprs when folding if to expr statement (#27939) (Armano)
+- 09bdb80 minifier: Allow argument rewrite with with leading var assignments (#28056) (Armano)
+- ebcdcd9 minifier: Preserve rest destructuring side effects (#27981) (camc314)
+- bd70a9b ecmascript: Use ECMAScript whitespace when folding `parseFloat`/`parseInt`/`trim` (#27719) (Dunqing)
+- 4c0fa90 minifier,linter: Keep `delete` of constant members and later JSX keys (#27990) (Dunqing)
+
+### ⚡ Performance
+
+- 3493ce3 minifier: Reuse is_error_constructor and simplify substitute_global_new_expression (#28149) (Armano)
+
+## [0.155.0] - 2026-10-19
+
+### 🚀 Features
+
+- 7bb2697 minifier: Minimize array join expression (#27905) (Armano)
+- 6b5057b minifier: Add de morgan optimization for void expressions (#27375) (Armano)
+
+### 🐛 Bug Fixes
+
+- ce6a088 minifier: Fold string indices by UTF-16 code unit (#27096) (Dunqing)
+- bd37e78 ecmascript: Look through sequence expressions in `to_primitive` (#27837) (baltasarblanco)
+- d92789d minifier: Drop debugger statements in unbraced bodies (#27867) (camc314)
+- 863b359 ecmascript: Correct parseFloat decimal prefix scanning (#27695) (camc314)
+- a2534c6 minifier: Preserve lexical initializers in dead for loops (#27676) (camc314)
+- 3543672 ecmascript: Do not fold Number.isInteger / isSafeInteger of tiny non-integers to true (#27622) (Baltasar Blanco)
+- 6987a61 ecmascript: BigInt loose equality folding (unknown operands and `StringToBigInt`) (#27656) (Baltasar Blanco)
+- 40e5644 minifier: Preserve indirect access when folding into call targets (#27082) (waltu)
+- 022306f ecmascript: Do not fold `Math.cbrt` of a negative number to `NaN` (#27621) (Baltasar Blanco)
+
+### ⚡ Performance
+
+- 88b5c35 minifier: Reduce code branches when evaluating roots (#27906) (Armano)
+
 ## [0.154.0] - 2026-10-13
 
 ### 🚀 Features

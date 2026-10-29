@@ -19,6 +19,7 @@ declare_oxc_lint!(
     ValidExpect,
     vitest,
     correctness,
+    recommended,
     suggestion,
     config = ValidExpectConfig,
     docs = DOCUMENTATION,

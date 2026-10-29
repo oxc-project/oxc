@@ -92,12 +92,14 @@ impl Rule for NoParamReassign {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::FormalParameter(param) = node.kind() else {
-            return;
+        let pattern = match node.kind() {
+            AstKind::FormalParameter(param) => &param.pattern,
+            AstKind::FormalParameterRest(param) => &param.rest.argument,
+            _ => return,
         };
 
         let symbol_table = ctx.scoping();
-        param.pattern.bound_names(&mut |ident| {
+        pattern.bound_names(&mut |ident| {
             let symbol_id = ident.symbol_id();
 
             let declaration_id = symbol_table.symbol_declaration(symbol_id);
@@ -256,6 +258,25 @@ fn test() {
             "function foo<T>(this: Record<PropertyKey, T>, key: PropertyKey, value: T) { this[key] = value; }",
             Some(serde_json::json!([{ "props": true }])),
         ),
+        ("function f(...args) { return args.reverse(); }", None),
+        ("function f(...args) { args[0] = 1; }", None),
+        (
+            "function f(...args) { args[0] = 1; }",
+            Some(
+                serde_json::json!([{ "props": true, "ignorePropertyModificationsFor": ["args"] }]),
+            ),
+        ),
+        (
+            "function f(...args) { delete args[0]; }",
+            Some(
+                serde_json::json!([{ "props": true, "ignorePropertyModificationsForRegex": ["^arg"] }]),
+            ),
+        ),
+        (
+            "function f(...args) { function g() { let args; args = []; } return args; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
+        ("const [...args] = []; args = [];", Some(serde_json::json!([{ "props": true }]))),
     ];
 
     let fail = vec![
@@ -333,6 +354,29 @@ fn test() {
         ("function foo(a) { a.b &&= c; }", Some(serde_json::json!([{ "props": true }]))), // { "ecmaVersion": 2021 },
         ("function foo(a) { a.b.c ||= d; }", Some(serde_json::json!([{ "props": true }]))), // { "ecmaVersion": 2021 },
         ("function foo(a) { a[b] ??= c; }", Some(serde_json::json!([{ "props": true }]))), // { "ecmaVersion": 2021 }
+        (
+            "export function f(...args) { args = args.reverse(); return args; }
+             export function g(x) { x = 1; return x; }",
+            None,
+        ),
+        ("const f = (...args) => args = [];", None),
+        ("const f = function(...args) { args++; };", None),
+        ("const obj = { f(...args) { args = []; } };", None),
+        ("class C { f(...args) { args = []; } }", None),
+        ("function f(...[arg]) { arg = 1; }", None),
+        ("function f(...{length}) { length = 0; }", None),
+        (
+            "function f(...args) { args[0] = 1; delete args[1]; }",
+            Some(serde_json::json!([{ "props": true }])),
+        ),
+        (
+            "function f(...args) { args = []; }",
+            Some(
+                serde_json::json!([{ "props": true, "ignorePropertyModificationsFor": ["args"] }]),
+            ),
+        ),
+        ("function f({a, ...args}) { args = {}; }", None),
+        ("function f(...args) { function g() { args = []; } }", None),
     ];
 
     Tester::new(NoParamReassign::NAME, NoParamReassign::PLUGIN, pass, fail).test_and_snapshot();

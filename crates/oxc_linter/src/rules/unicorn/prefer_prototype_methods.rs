@@ -5,11 +5,8 @@ use oxc_span::{GetSpan, Span};
 use oxc_str::JSStr;
 
 use crate::{
-    AstNode,
-    ast_util::is_method_call,
-    context::LintContext,
-    rule::Rule,
-    utils::{is_empty_array_expression, is_empty_object_expression, pad_fix_with_token_boundary},
+    AstNode, ast_util::is_method_call, context::LintContext, rule::Rule,
+    utils::pad_fix_with_token_boundary,
 };
 
 fn known_method(span: Span, obj_name: &str, method_name: &str) -> OxcDiagnostic {
@@ -100,14 +97,10 @@ impl Rule for PreferPrototypeMethods {
         };
         let object_expr = method_expr.object().without_parentheses();
 
-        if !is_empty_array_expression(object_expr) && !is_empty_object_expression(object_expr) {
-            return;
-        }
-
         let constructor_name = match object_expr {
-            Expression::ArrayExpression(_) => "Array",
-            Expression::ObjectExpression(_) => "Object",
-            _ => unreachable!(),
+            Expression::ArrayExpression(array) if array.elements.is_empty() => "Array",
+            Expression::ObjectExpression(object) if object.properties.is_empty() => "Object",
+            _ => return,
         };
         // TODO: Replace `static_property_name` with a function similar to `getPropertyName`
         // in @eslint-community/eslint-utils to generate better error messages for some cases.

@@ -13,6 +13,7 @@ Each fixture consists of:
 ## Origin
 
 Expected outputs were generated using **prettier-plugin-jsdoc** at commit [`1bbf9ee`](https://github.com/hosseinmd/prettier-plugin-jsdoc/tree/1bbf9ee43e31f054cc27b7355b4dc53a90b31302) with default options unless an `options.json` is present.
+Fixtures pinning an entry of [`../upstream-jsdoc-bugs.md`](../upstream-jsdoc-bugs.md) hold oxfmt's output instead; the entry names its fixture.
 
 Default options: `jsdocCapitalizeDescription: true`, `jsdocSingleLineComment: true`, `printWidth: 80`.
 

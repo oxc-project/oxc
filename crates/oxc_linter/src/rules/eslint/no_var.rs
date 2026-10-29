@@ -1,7 +1,4 @@
-use oxc_ast::{
-    AstKind,
-    ast::{BindingPattern, VariableDeclarationKind},
-};
+use oxc_ast::{AstKind, ast::BindingPattern};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -57,7 +54,7 @@ declare_oxc_lint!(
 impl Rule for NoVar {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         if let AstKind::VariableDeclaration(dec) = node.kind()
-            && dec.kind == VariableDeclarationKind::Var
+            && dec.kind.is_var()
         {
             // Skip TypeScript ambient declarations (declare global/module/namespace)
             if has_ambient_typescript_ancestor(node.id(), ctx.nodes()) {
@@ -73,10 +70,11 @@ impl Rule for NoVar {
                 let parent_span = ctx.nodes().parent_kind(node.id()).span();
                 if dec.declarations.iter().any(|decl| {
                     decl.id.get_binding_identifiers().iter().any(|ident| {
-                        ctx.symbol_references(ident.symbol_id()).any(|id| {
-                            !parent_span
-                                .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
-                        })
+                        !ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
+                            || ctx.symbol_references(ident.symbol_id()).any(|id| {
+                                !parent_span
+                                    .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
+                            })
                     })
                 }) {
                     return fixer.noop();
@@ -221,6 +219,24 @@ fn test() {
             "function play(index: number) { if (index > 1) { var a = undefined } else { var a = undefined } console.log(a) }",
         ),
         ("declare var foo: 2;", "declare let foo: 2;"),
+        ("var x = 1; var x = 2; console.log(x);", "var x = 1; var x = 2; console.log(x);"),
+        ("var x; var x;", "var x; var x;"),
+        ("var x = 1, x = 2;", "var x = 1, x = 2;"),
+        (
+            "function f() { var x = 1; var x = 2; return x; }",
+            "function f() { var x = 1; var x = 2; return x; }",
+        ),
+        ("var x = 1; var { x, y } = obj;", "var x = 1; var { x, y } = obj;"),
+        ("var [x, ...rest] = arr; var rest = [];", "var [x, ...rest] = arr; var rest = [];"),
+        ("function f(x) { var x = 1; }", "function f(x) { var x = 1; }"),
+        (
+            "function f() { var x = 1; function x() {} }",
+            "function f() { var x = 1; function x() {} }",
+        ),
+        (
+            "var x = 1; function f() { var x = 2; return x; }",
+            "const x = 1; function f() { const x = 2; return x; }",
+        ),
     ];
 
     Tester::new(NoVar::NAME, NoVar::PLUGIN, pass, fail).expect_fix(fix).test_and_snapshot();

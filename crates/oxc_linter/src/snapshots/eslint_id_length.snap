@@ -577,3 +577,93 @@ source: crates/oxc_linter/src/tester.rs
  1 │ type Foo = { a(): void };
    ·              ─
    ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:2]
+ 1 │ [q] = foo;
+   ·  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:11]
+ 1 │ for ([ix, s] of foo) {}
+   ·           ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ ({ a: q } = foo);
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:4]
+ 1 │ ({ q } = foo);
+   ·    ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:4]
+ 1 │ ({ q = rr } = foo);
+   ·    ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:4]
+ 1 │ ({ q = rr } = foo);
+   ·    ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:5]
+ 1 │ [...q] = foo;
+   ·     ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:2]
+ 1 │ [q = rr] = foo;
+   ·  ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:8]
+ 1 │ ({ k: [q] } = foo);
+   ·        ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:3]
+ 1 │ ({q: q} = foo);
+   ·   ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:4]
+ 1 │ ({[q]: q} = foo);
+   ·    ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:6]
+ 1 │ ({[((q))]: q} = foo);
+   ·      ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:6]
+ 1 │ ({q: q = q} = foo);
+   ·      ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:7]
+ 1 │ for ([q] in foo) {}
+   ·       ─
+   ╰────
+
+  ⚠ eslint(id-length): Identifier name is too short (< 2).
+   ╭─[id_length.tsx:1:6]
+ 1 │ ({...q} = foo);
+   ·      ─
+   ╰────

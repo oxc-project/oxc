@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 114/114 (100.00%)
 Positive Passed: 114/114 (100.00%)
-Negative Passed: 255/255 (100.00%)
+Negative Passed: 257/257 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -571,6 +571,20 @@ Negative Passed: 255/255 (100.00%)
  3 │ import source fr\u006fm "m";
  4 │ import s\u006furce from from "m";
    ·        ───────────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-in-after-newline.js:2:1]
+ 1 │ a
+ 2 │ \u{69}n b;
+   · ───────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[misc/fail/escaped-instanceof-after-newline.js:2:1]
+ 1 │ a
+ 2 │ \u{69}nstanceof b;
+   · ───────────────
    ╰────
 
   × Keywords cannot contain escape characters

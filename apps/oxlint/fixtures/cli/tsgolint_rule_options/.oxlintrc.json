@@ -3,6 +3,12 @@
     "correctness": "off"
   },
   "rules": {
+    "typescript/await-thenable": [
+      "error",
+      {
+        "allowMixedPromiseArrays": true
+      }
+    ],
     "typescript/switch-exhaustiveness-check": [
       "error",
       {

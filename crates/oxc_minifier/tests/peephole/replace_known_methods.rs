@@ -53,88 +53,120 @@ fn test_string_index_of() {
     test("x = `abcdef`.indexOf('b')", "x = 1");
     test_same("x = `Hello ${name}`.indexOf('a')");
     test_same("x = tag `Hello ${name}`.indexOf('a')");
+
+    // Indices count UTF-16 code units, and positions are not wrapped to 32 bits.
+    test("x = 'éx'.indexOf('x')", "x = 1");
+    test("x = '😀x'.indexOf('x', 1)", "x = 2");
+    test("x = 'abc'.indexOf('a', 4294967296)", "x = -1");
+    test("x = 'éb'.lastIndexOf('b')", "x = 1");
+    test("x = 'abab'.lastIndexOf('b', NaN)", "x = 3");
 }
 
 #[test]
-#[ignore = "TODO: Array.join optimization with sparse arrays not yet implemented"]
-fn test_string_join_add_sparse() {
-    test("x = [,,'a'].join(',')", "x = ',,a'");
-}
+fn test_try_fold_array_join() {
+    test_value("[].join()", "''");
+    test_value("[].join(',')", "''");
+    test_value("['a'].join('')", "'a'");
+    test_value("['a'].join(',')", "'a'");
+    test_value("['a', 'b', 'c'].join()", "'a,b,c'");
+    test_value("['a', 'b', 'c'].join('')", "'abc'");
+    test_value("['a', 'b', 'c'].join(',')", "'a,b,c'");
+    test_value("['a', 'b'].join(undefined)", "'a,b'");
+    test_value("['a', 'b'].join(null)", "'anullb'");
 
-#[test]
-#[ignore = "TODO: Array.join optimization edge cases not yet implemented"]
-fn test_no_string_join() {
-    test_same("x = [].join(',',2)");
-    test_same("x = [].join(f)");
+    // Works with numbers
+    test_value("['a=', 5].join('')", "'a=5'");
+    test_value("['a', '5'].join(7)", "'a75'");
+    test_value("[1, 2, 3].join('-')", "'1-2-3'");
+    test_value("[1,2,3].join('abcdef')", "'1abcdef2abcdef3'");
+    test_value("[1,2].join()", "'1,2'");
+    test_value("[[1, 2], [3, 4]].join()", "'1,2,3,4'");
+
+    // Works on boolean
+    test_value("['a=', false].join('')", "'a=false'");
+    test_value("['a', '5'].join(true)", "'atrue5'");
+    test_value("['a', '5'].join(false)", "'afalse5'");
+
+    // Template strings
+    test_value("[`a`, `b`, `c`].join(``)", "'abc'");
+    test_value("[`a`, `b`, `c`].join('')", "'abc'");
+
+    // Works on sparse
+    test_value("[,,'a'].join(',')", "',,a'");
+
+    // Works on nullish
+    test_value("[null].join('')", "''");
+    test_value("[null,undefined,''].join(',')", "',,'");
+    test_value("[null,undefined,0].join(',')", "',,0'");
+
+    // Only optimize if it's a size win.
+    test_value("['a'].join('a very very very long chain')", "'a'");
+    test_value(
+        "['a', '5', 'c'].join('a very very very long chain')",
+        "['a','5','c'].join('a very very very long chain')",
+    );
+
+    // Unsupported syntax or side effects
+    test_same_value("[].join(',',2)");
+    test_same_value("[].join(f)");
+    test_same_value("[foo()].join(',')");
+    test_same_value("[void foo()].join(',')");
+    test_same_value("[1].join(void foo())");
+    test_same_value("[1].join(f)");
+    test_same_value("[foo()].join('')");
+    test_same("[foo()].join('')");
+    test_same_value("[x].join();");
+    test_same_value("[x,y].join();");
+    test_same_value("[x,y,z].join();");
 }
 
 #[test]
 #[ignore = "TODO: Array.join to string concatenation optimization not yet implemented"]
 fn test_string_join_add() {
-    test("x = ['a', 'b', 'c'].join('')", "x = \"abc\"");
-    test("x = [].join(',')", "x = \"\"");
-    test("x = ['a'].join(',')", "x = \"a\"");
-    test("x = ['a', 'b', 'c'].join(',')", "x = \"a,b,c\"");
-    test("x = ['a', foo, 'b', 'c'].join(',')", "x = [\"a\",foo,\"b,c\"].join()");
-    test("x = [foo, 'a', 'b', 'c'].join(',')", "x = [foo,\"a,b,c\"].join()");
-    test("x = ['a', 'b', 'c', foo].join(',')", "x = [\"a,b,c\",foo].join()");
-
-    // Works with numbers
-    test("x = ['a=', 5].join('')", "x = \"a=5\"");
-    test("x = ['a', '5'].join(7)", "x = \"a75\"");
-
-    // Works on boolean
-    test("x = ['a=', false].join('')", "x = \"a=false\"");
-    test("x = ['a', '5'].join(true)", "x = \"atrue5\"");
-    test("x = ['a', '5'].join(false)", "x = \"afalse5\"");
-
-    // Only optimize if it's a size win.
-    test(
-        "x = ['a', '5', 'c'].join('a very very very long chain')",
-        "x = [\"a\",\"5\",\"c\"].join(\"a very very very long chain\")",
-    );
-
-    // Template strings
-    test("x = [`a`, `b`, `c`].join(``)", "x = 'abc'");
-    test("x = [`a`, `b`, `c`].join('')", "x = 'abc'");
+    test_value("['a', foo, 'b', 'c'].join(',')", "['a',foo,'b,c'].join()");
+    test_value("[foo, 'a', 'b', 'c'].join(',')", "[foo,'a,b,c'].join()");
+    test_value("['a', 'b', 'c', foo].join(',')", "['a,b,c',foo].join()");
 
     // TODO(user): Its possible to fold this better.
-    test_same("x = ['', foo].join('-')");
-    test_same("x = ['', foo, ''].join()");
+    test_same_value("['', foo].join('-')");
+    test_same_value("['', foo, ''].join()");
 
-    test(
-        "x = ['', '', foo, ''].join(',')", //
-        "x = [ ','  , foo, ''].join()",
+    test_value(
+        "['', '', foo, ''].join(',')", //
+        "[ ','  , foo, ''].join()",
     );
-    test(
-        "x = ['', '', foo, '', ''].join(',')", //
-        "x = [ ',',   foo,  ','].join()",
-    );
-
-    test(
-        "x = ['', '', foo, '', '', bar].join(',')", //
-        "x = [ ',',   foo,  ',',   bar].join()",
+    test_value(
+        "['', '', foo, '', ''].join(',')", //
+        "[ ',',   foo,  ','].join()",
     );
 
-    test(
-        "x = [1,2,3].join('abcdef')", //
-        "x = '1abcdef2abcdef3'",
+    test_value(
+        "['', '', foo, '', '', bar].join(',')", //
+        "[ ',',   foo,  ',',   bar].join()",
     );
-
-    test("x = [1,2].join()", "x = '1,2'");
-    test("x = [null,undefined,''].join(',')", "x = ',,'");
-    test("x = [null,undefined,0].join(',')", "x = ',,0'");
-    // This can be folded but we don't currently.
-    test_same("x = [[1,2],[3,4]].join()"); // would like: "x = '1,2,3,4'"
 }
 
 #[test]
-#[ignore = "TODO: Array.join single element optimization not yet implemented"]
-fn test_string_join_add_b1992789() {
-    test("x = ['a'].join('')", "x = \"a\"");
-    test_same("x = [foo()].join('')");
-    test_same("[foo()].join('')");
-    test("[null].join('')", "''");
+fn test_join_spread1() {
+    test_same_value("[...foo].join('')");
+    test_same_value("[...someMap.keys()].join('')");
+    test_same_value("[foo, ...bar].join('')");
+    test_same_value("[...foo, bar].join('')");
+    test_same_value("[...foo, 'bar'].join('')");
+    test_same_value("['1', ...'2', '3'].join('')");
+    test_value("['1', ...['2'], '3'].join('')", "'123'");
+}
+
+#[test]
+#[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
+fn test_join_spread2() {
+    test_value("[...foo].join(',')", "[...foo].join()");
+    test_value("[...someMap.keys()].join(',')", "[...someMap.keys()].join()");
+    test_value("[foo, ...bar].join(',')", "[foo, ...bar].join()");
+    test_value("[...foo, bar].join(',')", "[...foo, bar].join()");
+    test_value("[...foo, 'bar'].join(',')", "[...foo, 'bar'].join()");
+    test_value("['1', ...'2', '3'].join(',')", "['1', ...'2', '3'].join()");
+    test_value("['1', ...['2'], '3'].join(',')", "['1', ...['2'], '3'].join()");
 }
 
 #[test]
@@ -214,6 +246,14 @@ fn test_fold_string_substring() {
     // Template strings
     test("x = `abcdef`.substring(0,2)", "x = 'ab'");
     test_same("x = `abcdef ${abc}`.substring(0,2)");
+
+    // Positions count UTF-16 code units, so a boundary may split a surrogate pair.
+    test("x = 'a😀b'.substring(1, 2)", "x = '\\ud83d'");
+    test("x = 'é😀b'.substring(1)", "x = '😀b'");
+    // An `undefined` end is not folded: its number value NaN would mean index 0.
+    test_same("x = 'abc'.substring(1, void 0)");
+    // A NaN start is index 0.
+    test("x = 'abc'.substring(NaN, 2)", "x = 'ab'");
 }
 
 #[test]
@@ -221,6 +261,8 @@ fn test_fold_string_slice() {
     test("x = 'abcde'.slice(0,2)", "x = 'ab'");
     test("x = 'abcde'.slice(1,2)", "x = 'b'");
     test("x = 'abcde'.slice(2)", "x = 'cde'");
+    // Positions count UTF-16 code units, so a boundary may split a surrogate pair.
+    test("x = '😀a'.slice(1)", "x = '\\ude00a'");
 
     // we should be leaving negative, out-of-bound, and inverted indices alone for now
     test_same("x = 'abcde'.slice(-1)");
@@ -228,6 +270,10 @@ fn test_fold_string_slice() {
     test_same("x = 'abcde'.slice(1, 2, 3)");
     test_same("x = 'abcde'.slice(2, 0)");
     test_same("x = 'a'.slice(0, 2)");
+    // A NaN or `undefined` end is not folded, and a NaN or `undefined` start is index 0.
+    test_same("x = 'abc'.slice(1, void 0)");
+    test_same("x = 'abc'.slice(0, NaN)");
+    test("x = 'abc'.slice(void 0, 1)", "x = 'a'");
 
     // Template strings
     test("x = `abcdef`.slice(0, 2)", "x = 'ab'");
@@ -251,8 +297,8 @@ fn test_fold_string_char_at() {
     test_same("x = 'abcde'.charAt(y)");
     test("x = 'abcde'.charAt(null)", "x = 'a'");
     test("x = 'abcde'.charAt(!0)", "x = 'b'");
-    test_same("x = '\\ud834\\udd1e'.charAt(0)"); // or x = '\\ud834'
-    test_same("x = '\\ud834\\udd1e'.charAt(1)"); // or x = '\\udd1e'
+    test("x = '\\ud834\\udd1e'.charAt(0)", "x = '\\ud834'");
+    test("x = '\\ud834\\udd1e'.charAt(1)", "x = '\\udd1e'");
 
     // Template strings
     test("x = `abcdef`.charAt(0)", "x = 'a'");
@@ -318,50 +364,6 @@ fn test_fold_string_split() {
 
     // late = true;
     // test_same("x = 'a b c d e'.split(' ')");
-}
-
-#[test]
-#[ignore = "TODO: Array.join edge case optimization not yet implemented"]
-fn test_join_bug() {
-    test("var x = [].join();", "var x = '';");
-    test_same("var x = [x].join();");
-    test_same("var x = [x,y].join();");
-    test_same("var x = [x,y,z].join();");
-
-    // test_same(
-    // lines(
-    // "shape['matrix'] = [",
-    // "    Number(headingCos2).toFixed(4),",
-    // "    Number(-headingSin2).toFixed(4),",
-    // "    Number(headingSin2 * yScale).toFixed(4),",
-    // "    Number(headingCos2 * yScale).toFixed(4),",
-    // "    0,",
-    // "    0",
-    // "  ].join()"));
-}
-
-#[test]
-#[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
-fn test_join_spread1() {
-    test_same("var x = [...foo].join('');");
-    test_same("var x = [...someMap.keys()].join('');");
-    test_same("var x = [foo, ...bar].join('');");
-    test_same("var x = [...foo, bar].join('');");
-    test_same("var x = [...foo, 'bar'].join('');");
-    test_same("var x = ['1', ...'2', '3'].join('');");
-    test_same("var x = ['1', ...['2'], '3'].join('');");
-}
-
-#[test]
-#[ignore = "TODO: Array.join with spread syntax optimization not yet implemented"]
-fn test_join_spread2() {
-    test("var x = [...foo].join(',');", "var x = [...foo].join();");
-    test("var x = [...someMap.keys()].join(',');", "var x = [...someMap.keys()].join();");
-    test("var x = [foo, ...bar].join(',');", "var x = [foo, ...bar].join();");
-    test("var x = [...foo, bar].join(',');", "var x = [...foo, bar].join();");
-    test("var x = [...foo, 'bar'].join(',');", "var x = [...foo, 'bar'].join();");
-    test("var x = ['1', ...'2', '3'].join(',');", "var x = ['1', ...'2', '3'].join();");
-    test("var x = ['1', ...['2'], '3'].join(',');", "var x = ['1', ...['2'], '3'].join();");
 }
 
 #[test]
@@ -442,6 +444,12 @@ fn test_fold_string_trim() {
     test("x = '  abc  '.trimEnd()", "x = '  abc'");
     test("x = 'abc'.trimEnd()", "x = 'abc'");
     test_same("x = 'abc'.trimEnd(1)");
+
+    // `TrimString` removes `WhiteSpace` and `LineTerminator`: U+FEFF is one, U+0085 is not
+    test("x = '\\u{FEFF}a\\u{FEFF}'.trim()", "x = 'a'");
+    test("x = '\\u{FEFF}a'.trimStart()", "x = 'a'");
+    test("x = 'a\\u{FEFF}'.trimEnd()", "x = 'a'");
+    test("x = '\\u0085a\\u0085'.trim()", "x = '\\u0085a\\u0085'");
 }
 
 #[test]
@@ -640,7 +648,7 @@ fn test_fold_math_functions_pow() {
 
 #[test]
 fn test_fold_math_functions_sqrt() {
-    test_same_value("Math.sqrt()");
+    test_same_value("Math.sqrt()"); // NaN
     test_same_value("Math.sqrt(1, 2)");
     test_same_value("Math.sqrt(...a)");
     test_same_value("Math.sqrt(a)"); // a maybe -0
@@ -659,6 +667,11 @@ fn test_fold_math_functions_sqrt() {
 
 #[test]
 fn test_fold_math_functions_cbrt() {
+    test_same_value("Math.cbrt()"); // NaN
+    test_same_value("Math.cbrt(1, 2)");
+    test_same_value("Math.cbrt(...a)");
+    test_same_value("Math.cbrt(a)");
+    test_value("Math.cbrt(0)", "0");
     test_value("Math.cbrt(1)", "1");
     test_value("Math.cbrt(8)", "2");
     test_same_value("Math.cbrt(2)");
@@ -667,6 +680,8 @@ fn test_fold_math_functions_cbrt() {
     test_value("Math.cbrt(-1)", "-1");
     test_value("Math.cbrt(-8)", "-2");
     test_value("Math.cbrt(-Infinity)", "-Infinity");
+    test_value("Math.cbrt(NaN)", "NaN");
+    test_value("Math.cbrt(Infinity)", "Infinity");
     test_same_value("Math.cbrt(-2)");
 }
 
@@ -678,6 +693,9 @@ fn test_fold_number_functions_is_safe_integer() {
     test_value("Number.isSafeInteger(9007199254740992)", "!1");
     test_value("Number.isSafeInteger(-9007199254740991)", "!0");
     test_value("Number.isSafeInteger(-9007199254740992)", "!1");
+    test_value("Number.isSafeInteger(-Infinity)", "!1");
+    test_value("Number.isSafeInteger(Infinity)", "!1");
+    test_value("Number.isSafeInteger(NaN)", "!1");
     // a fractional part smaller than `f64::EPSILON` is still not an integer
     test_value("Number.isSafeInteger(5e-324)", "!1");
     test_value("Number.isSafeInteger(-1e-20)", "!1");
@@ -690,6 +708,7 @@ fn test_fold_number_functions_is_integer() {
     test_value("Number.isInteger(1e300)", "!0");
     test_value("Number.isInteger(5e-324)", "!1");
     test_value("Number.isInteger(1e-300)", "!1");
+    test_value("Number.isInteger(-Infinity)", "!1");
     test_value("Number.isInteger(Infinity)", "!1");
     test_value("Number.isInteger(NaN)", "!1");
 }
@@ -709,6 +728,8 @@ fn test_fold_number_functions_is_nan() {
     test_value("Number.isNaN(1)", "!1");
     test_value("Number.isNaN(1.5)", "!1");
     test_value("Number.isNaN(NaN)", "!0");
+    test_value("Number.isNaN(Infinity)", "!1");
+    test_value("Number.isNaN(-Infinity)", "!1");
     test_same_value("Number.isNaN('a')");
     // unknown function may have side effects
     test_same_value("Number.isNaN(+(void unknown()))");
@@ -837,6 +858,11 @@ fn test_fold_parse_numbers_additional() {
     test_value("parseFloat('abc')", "NaN");
     test_value("parseFloat('Infinity')", "Infinity");
     test_value("parseFloat('-Infinity')", "-Infinity");
+    // `TrimString` removes `WhiteSpace` and `LineTerminator`: U+FEFF is one, U+0085 is not
+    test_value("parseFloat('\\u{FEFF}7')", "7");
+    test_value("parseInt('\\u{FEFF}7')", "7");
+    test_value("parseFloat('\\u00857')", "NaN");
+    test_value("parseInt('\\u00857')", "NaN");
     test_value("parseFloat('+Infinity')", "Infinity");
     test_same_value("parseInt(unknown)");
     test_same_value("parseInt((foo, '0'))"); // foo may have side effects
@@ -900,7 +926,7 @@ fn test_fold_concat_chaining() {
     // array
     test("x = [1,2].concat(1).concat(2,['abc']).concat('abc')", "x = [1,2,1,2,'abc','abc']");
     test("x = [].concat(['abc']).concat(1).concat([2,3])", "x = ['abc',1,2,3]");
-    test("x = [].concat(1).concat(2).join(',')", "x = [1,2].join(',')");
+    test("x = [].concat(1).concat(2).join(',')", "x = '1,2'");
 
     test("var x, y; [1].concat(x).concat(y)", "var x, y; [1].concat(x, y)");
     test("var y; [1].concat(x).concat(y)", "var y; [1].concat(x, y)"); // x might have a getter that updates y, but that side effect is preserved correctly
@@ -1009,7 +1035,8 @@ fn test_fold_string_from_char_code() {
     test("x = String.fromCharCode(0)", "x = '\\0'");
     test("x = String.fromCharCode(120)", "x = 'x'");
     test("x = String.fromCharCode(120, 121)", "x = 'xy'");
-    test_same("x = String.fromCharCode(55358, 56768)");
+    test("x = String.fromCharCode(55358, 56768)", "x = '\u{1F9C0}'");
+    test("x = String.fromCharCode(55296)", "x = '\\ud800'");
     test("x = String.fromCharCode(0x10000)", "x = '\\0'");
     test("x = String.fromCharCode(0x10078, 0x10079)", "x = 'xy'");
     test("x = String.fromCharCode(0x1_0000_FFFF)", "x = '\u{ffff}'");
@@ -1027,11 +1054,57 @@ fn test_fold_string_from_char_code() {
 }
 
 #[test]
+fn string_concat_preserves_coercion_order() {
+    test_same(r#"x = "\uD800".concat(a, b())"#);
+    test_same(r#"x = "\uD800".concat(a, b()).concat("tail")"#);
+    // A primitive cannot observe a later argument's mutation through coercion.
+    test(r#"x = "\uD800".concat(1, b())"#, r"x = `\ud8001${b()}`");
+    // A local parameter read can cross an earlier coercion.
+    test(
+        r#"function f(a) { return "\uD800".concat(b(), a) }"#,
+        r"function f(a) { return `\ud800${b()}${a}` }",
+    );
+    test(
+        r#"function f(a, b) { return "\uD800".concat(a, b) }"#,
+        r"function f(a, b) { return `\ud800${a}${b}` }",
+    );
+}
+
+#[test]
+fn string_concat_chains_preserve_call_boundaries() {
+    test(
+        r#"x = "translate(".concat(origin.x, ", ").concat(origin.y, ")")"#,
+        "x = `translate(${origin.x}, ${origin.y})`",
+    );
+    test(r#"x = "\uD800".concat(a).concat(b())"#, r"x = `\ud800${a}${b()}`");
+    // A template must preserve the argument/coercion order within every call too.
+    test_same(r#"x = "\uD800".concat(a, b()).concat(c)"#);
+    test_same(r#"x = "\uD800".concat(a).concat(b, c())"#);
+    test_same(r#"x = "\uD800".concat(...a).concat(b())"#);
+    // When flattening is unsafe, compare against the cost of the whole chain.
+    test(
+        "function f(a,b,c,d,e) { return ''.concat(a).concat(b()).concat(c).concat(d).concat(e) }",
+        "function f(a,b,c,d,e) { return `${a}${b()}${c}${d}${e}` }",
+    );
+    // A single flattened call is still shorter when all arguments are local reads.
+    test(
+        "function f(a,b,c,d,e) { return ''.concat(a).concat(b).concat(c).concat(d).concat(e) }",
+        "function f(a,b,c,d,e) { return ''.concat(a,b,c,d,e) }",
+    );
+    test_target("x = ''.concat(a).concat(b())", "x = ''.concat(a).concat(b())", "chrome40");
+}
+
+#[test]
 fn test_fold_string_concat() {
+    // A lone surrogate is kept as an escape in the template's raw text.
+    test_same(r#"x = "\uD800".concat(a, b)"#);
+    test(r#"x = "\uD83D".concat(a, "\uDE00")"#, "x = `\\ud83d${a}\\ude00`");
+    test(r#"x = "\uD83D".concat("\uDE00", a)"#, "x = `\u{1F600}${a}`");
     test_same("x = ''.concat()");
-    test("x = ''.concat(a, b)", "x = `${a}${b}`");
-    test("x = ''.concat(a, b, c)", "x = `${a}${b}${c}`");
-    test("x = ''.concat(a, b, c, d)", "x = `${a}${b}${c}${d}`");
+    // Unresolved reads can invoke a global getter or throw, so they cannot cross coercion.
+    test_same("x = ''.concat(a, b)");
+    test_same("x = ''.concat(a, b, c)");
+    test_same("x = ''.concat(a, b, c, d)");
     test_same("x = ''.concat(a, b, c, d, e)");
     test("x = ''.concat('a')", "x = 'a'");
     test("x = ''.concat('a', 'b')", "x = 'ab'");
@@ -1040,11 +1113,10 @@ fn test_fold_string_concat() {
     test("x = ''.concat('a', 'b', 'c', 'd', 'e')", "x = 'abcde'");
     test("x = ''.concat(a, 'b')", "x = `${a}b`");
     test("x = ''.concat('a', b)", "x = `a${b}`");
-    test("x = ''.concat(a, 'b', c)", "x = `${a}b${c}`");
+    test_same("x = ''.concat(a, 'b', c)");
     test("x = ''.concat('a', b, 'c')", "x = `a${b}c`");
-    test(
+    test_same(
         "x = ''.concat('a', b, 'c', d, 'e', f, 'g', h, 'i', j, 'k', l, 'm', n, 'o', p, 'q', r, 's', t)",
-        "x = `a${b}c${d}e${f}g${h}i${j}k${l}m${n}o${p}q${r}s${t}`",
     );
     test("x = ''.concat(a, 1)", "x = `${a}1`");
 
@@ -1121,16 +1193,33 @@ fn test_number_constants() {
 
 #[test]
 fn test_fold_integer_index_access() {
-    test_same("v = ''[0]");
+    // An index past the end reads `String.prototype`, which has no index properties.
+    test("v = ''[0]", "v = void 0");
     test_same("v = 'a'[-1]");
     test_same("v = 'a'[0.3]");
     test("v = 'a'[0]", "v = 'a'");
-    test_same("v = 'a'[1]");
+    test("v = 'a'[1]", "v = void 0");
+    test("v = 'a'['1']", "v = void 0");
+    test_same("v = 'a'['01']");
     test("v = 'あ'[0]", "v = 'あ'");
-    test_same("v = 'あ'[1]");
-    test_same("v = '😀'[0]"); // surrogate pairs cannot be represented by rust string
-    test_same("v = '😀'[1]"); // surrogate pairs cannot be represented by rust string
-    test_same("v = '😀'[2]");
+    test("v = 'あ'[1]", "v = void 0");
+    test("v = 'é'[1]", "v = void 0");
+    test("v = '😀'[0]", "v = '\\uD83D'");
+    test("v = '😀'[1]", "v = '\\uDE00'");
+    test("v = '😀'[2]", "v = void 0");
+    test("v = '😀x'[2]", "v = 'x'");
+    test_same("v = '😀'[0.5]");
+    test_same("v = '😀'['01']");
+    test_value("'😀'[1n]", "'\\uDE00'");
+    test("v = 'a\\uD800b'[0]", "v = 'a'");
+    test("v = 'b1$\\uD800'[1]", "v = '1'");
+    test("v = 'a\\uD800b'[1]", "v = '\\uD800'");
+    test("v = '\\uD800😀'[1]", "v = '\\uD83D'");
+    test("v = '\\uD800😀'[2]", "v = '\\uDE00'");
+    test("v = '😀\\uD800'[2]", "v = '\\uD800'");
+    test("v = '\\uDC00'[0]", "v = '\\uDC00'");
+    test("v = 'a\\uD800b'[3]", "v = void 0");
+    test_same("v = 'a'[1]()");
     test_same("v = (foo(), 'a')[1]"); // can be fold into `v = (foo(), 'a')`
 
     test_same("v = [][0]");
@@ -1151,6 +1240,16 @@ fn test_fold_integer_index_access() {
     test_value("['a', 'b'][1n]", "'b'");
     test_same_value("'abc'[-1n]");
     test_same_value("'abc'[9007199254740992n]");
+
+    // `delete` of a non-configurable property is false, or a TypeError in strict mode
+    test_same("v = delete 'a'[0]");
+    test_same("v = delete '😀'[0]");
+    test_same("v = delete 'abc'.length");
+    test("v = delete 'abc'['length']", "v = delete 'abc'.length");
+    test_same("v = delete [1, 2].length");
+    test_same("v = delete Number.MAX_SAFE_INTEGER");
+    test_same("v = delete Number.NaN");
+    test("v = delete Number['NaN']", "v = delete Number.NaN");
 
     // property access should be kept to keep `this` value
     test_same(

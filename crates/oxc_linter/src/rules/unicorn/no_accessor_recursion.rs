@@ -1,8 +1,8 @@
 use oxc_ast::{
-    AstKind, MemberExpressionKind,
+    AstKind, MemberExpressionKind, StaticPropertyName,
     ast::{
-        BindingPattern, MethodDefinition, MethodDefinitionKind, ObjectProperty, PropertyKey,
-        PropertyKind, UpdateExpression,
+        BindingPattern, MethodDefinition, ObjectProperty, PropertyKey, PropertyKind,
+        SimpleAssignmentTarget, UpdateExpression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -176,16 +176,14 @@ impl Rule for NoAccessorRecursion {
                         if !is_same_key {
                             return;
                         }
-                        if method_def.kind == MethodDefinitionKind::Get {
+                        if method_def.kind.is_get() {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
                                 "getters",
                             ));
                         }
 
-                        if method_def.kind == MethodDefinitionKind::Set
-                            && is_property_write(target, ctx)
-                        {
+                        if method_def.kind.is_set() && is_property_write(target, ctx) {
                             ctx.diagnostic(no_accessor_recursion_diagnostic(
                                 member_expr.span(),
                                 "setters",
@@ -244,15 +242,15 @@ fn is_property_write<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) -> bool {
             AstKind::AssignmentExpression(assign_expr) => {
                 if let Some(simple_target) = assign_expr.left.as_simple_assignment_target() {
                     let is_target = match simple_target {
-                        oxc_ast::ast::SimpleAssignmentTarget::ComputedMemberExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
-                        oxc_ast::ast::SimpleAssignmentTarget::StaticMemberExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
-                        oxc_ast::ast::SimpleAssignmentTarget::PrivateFieldExpression(
-                            member_expr,
-                        ) => member_expr.span == node.span(),
+                        SimpleAssignmentTarget::ComputedMemberExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
+                        SimpleAssignmentTarget::StaticMemberExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
+                        SimpleAssignmentTarget::PrivateFieldExpression(member_expr) => {
+                            member_expr.span == node.span()
+                        }
                         _ => false,
                     };
                     if is_target {
@@ -276,12 +274,9 @@ fn get_member_expr_key_name<'a>(expr: &MemberExpressionKind<'a>) -> Option<JSStr
 
 fn is_property_or_method_def<'a>(parent: &'a AstNode<'a>) -> bool {
     match parent.kind() {
-        AstKind::ObjectProperty(obj_prop) => {
-            !obj_prop.computed && matches!(obj_prop.kind, PropertyKind::Get | PropertyKind::Set)
-        }
+        AstKind::ObjectProperty(obj_prop) => !obj_prop.computed && obj_prop.kind.is_accessor(),
         AstKind::MethodDefinition(method_def) => {
-            !method_def.computed
-                && matches!(method_def.kind, MethodDefinitionKind::Get | MethodDefinitionKind::Set)
+            !method_def.computed && method_def.kind.is_accessor()
         }
         _ => false,
     }
@@ -305,9 +300,7 @@ fn get_nearest_function<'a>(node: &AstNode, ctx: &'a LintContext) -> Option<&'a 
     if matches!(parent.kind(), AstKind::Function(_)) { Some(parent) } else { None }
 }
 
-fn get_property_or_method_def_name<'a>(
-    parent: &'a AstNode<'a>,
-) -> Option<oxc_ast::StaticPropertyName<'a>> {
+fn get_property_or_method_def_name<'a>(parent: &'a AstNode<'a>) -> Option<StaticPropertyName<'a>> {
     match parent.kind() {
         AstKind::ObjectProperty(ObjectProperty { key, .. })
         | AstKind::MethodDefinition(MethodDefinition { key, .. }) => key.name(),

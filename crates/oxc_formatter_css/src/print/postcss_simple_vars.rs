@@ -7,7 +7,6 @@
 
 use oxc_css_parser::ast::{PostcssSimpleVar, PostcssSimpleVarDeclaration};
 use oxc_formatter_core::{
-    Buffer,
     builders::{space, text},
     write,
 };

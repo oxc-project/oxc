@@ -1,10 +1,15 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
 use oxc_syntax::operator::BinaryOperator;
 
-use crate::{AstNode, context::LintContext, rule::Rule};
+use crate::{
+    AstNode,
+    context::LintContext,
+    rule::Rule,
+    utils::{is_empty_array_expression, is_empty_object_expression},
+};
 
 fn object_comparison(span: Span, const_result: bool) -> OxcDiagnostic {
     OxcDiagnostic::warn("Unexpected object literal comparison.")
@@ -84,14 +89,6 @@ impl Rule for BadObjectLiteralComparison {
             }
         }
     }
-}
-
-fn is_empty_object_expression(maybe_empty_obj_expr: &Expression) -> bool {
-    matches!(maybe_empty_obj_expr, Expression::ObjectExpression(array_expression) if array_expression.properties.is_empty())
-}
-
-fn is_empty_array_expression(maybe_empty_array_expr: &Expression) -> bool {
-    matches!(maybe_empty_array_expr, Expression::ArrayExpression(array_expression) if array_expression.elements.is_empty())
 }
 
 #[test]

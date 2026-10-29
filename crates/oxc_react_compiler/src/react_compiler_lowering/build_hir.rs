@@ -1,6 +1,3 @@
-use std::borrow::Cow;
-
-use cow_utils::CowUtils;
 use rustc_hash::FxHashSet;
 
 use crate::diagnostics;
@@ -14,6 +11,7 @@ use crate::scope::ScopeKind;
 use crate::scope::ScopeResolver;
 use crate::scope::SymbolId;
 
+use oxc_allocator::Allocator;
 use oxc_allocator::CloneIn;
 use oxc_allocator::Vec as ArenaVec;
 use oxc_ast::ast as oxc;
@@ -21,7 +19,8 @@ use oxc_ast::ast::BinaryOperator;
 use oxc_ast_visit::Visit;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_span::{GetSpan, Span};
-use oxc_str::{Ident, JSStr, Str, format_ident, static_ident};
+use oxc_str::{Ident, JSChar, JSStr, JSStrBuilder, Str, format_ident, static_ident};
+use oxc_syntax::xml_entities::{decode_entities, decode_entity};
 
 use crate::react_compiler_lowering::FunctionNode;
 use crate::react_compiler_lowering::find_context_identifiers::find_context_identifiers;
@@ -2744,6 +2743,9 @@ fn expr_contains_optional(expr: &oxc::Expression) -> bool {
         oxc::Expression::PrivateFieldExpression(p) => {
             p.optional || expr_contains_optional(&p.object)
         }
+        // A non-null assertion does not end the chain: `a?.b!()` is still an
+        // optional call in Babel's AST.
+        oxc::Expression::TSNonNullExpression(t) => expr_contains_optional(&t.expression),
         _ => false,
     }
 }
@@ -2873,6 +2875,12 @@ fn lower_optional_member_expression_impl<'a>(
                 let value_place = lower_value_to_temporary(builder, value)?;
                 object = Some(value_place);
             }
+            // `a?.b!.c`: the non-null assertion keeps the chain going, so the
+            // optional link inside it must still be lowered as optional.
+            oxc::Expression::TSNonNullExpression(_) => {
+                let value = lower_chain_subexpr(builder, object_expr)?;
+                object = Some(lower_value_to_temporary(builder, value)?);
+            }
             other => {
                 object = Some(lower_expression_to_temporary(builder, other)?);
             }
@@ -2998,6 +3006,37 @@ fn lower_optional_call_expression_impl<'a>(
                     receiver: lowered.object,
                     property: property_place,
                 });
+            }
+            // `a?.b!()`: as above, lower the optional link inside the assertion.
+            // When the assertion wraps a member, keep it a method call so the
+            // receiver stays the `this` value and a dependency of the call.
+            oxc::Expression::TSNonNullExpression(_) => {
+                let mut inner = &call.callee;
+                while let oxc::Expression::TSNonNullExpression(t) = inner {
+                    inner = &t.expression;
+                }
+                if let Some(member) = inner.as_member_expression() {
+                    if expr_contains_optional(inner) {
+                        let (obj, value) = lower_optional_member_expression_impl(
+                            builder,
+                            member,
+                            Some(alternate),
+                        )?;
+                        callee_info =
+                            Some(CalleeInfo::MethodCall { receiver: obj, property: value });
+                    } else {
+                        let lowered = lower_member_expression(builder, member)?;
+                        let property_place = lower_value_to_temporary(builder, lowered.value)?;
+                        callee_info = Some(CalleeInfo::MethodCall {
+                            receiver: lowered.object,
+                            property: property_place,
+                        });
+                    }
+                } else {
+                    let value = lower_chain_subexpr(builder, &call.callee)?;
+                    let callee_place = lower_value_to_temporary(builder, value)?;
+                    callee_info = Some(CalleeInfo::CallExpression { callee: callee_place });
+                }
             }
             other => {
                 let callee_place = lower_expression_to_temporary(builder, other)?;
@@ -4652,15 +4691,13 @@ fn lower_jsx_element_expr<'a>(
                 let value = match &attr.value {
                     Some(oxc::JSXAttributeValue::StringLiteral(s)) => {
                         let str_span = Some(s.span);
-                        let decoded = if let Some(value) = s.value.as_str() {
-                            match decode_jsx_entities(value) {
-                                Cow::Borrowed(text) => JSStr::from(text),
-                                Cow::Owned(text) => {
-                                    JSStr::from_str_in(&text, &builder.environment().allocator)
-                                }
+                        let decoded = match s.value.as_str() {
+                            Some(value) => {
+                                decode_jsx_entities(value, builder.environment().allocator)
                             }
-                        } else {
-                            s.value
+                            // The value already holds lone surrogates.
+                            // JSX source text cannot, so it did not come from entity syntax.
+                            None => s.value,
                         };
                         lower_value_to_temporary(
                             builder,
@@ -4977,25 +5014,16 @@ fn lower_jsx_element<'a>(
     match child {
         oxc::JSXChild::Text(text) => {
             // oxc keeps JSX text raw; decode entities first so the value matches
-            // Babel's `JSXText.value` (the Babel bridge decoded in convert_ast).
-            let decoded = decode_jsx_entities(text.value.as_str());
+            // Babel's `JSXText.value`.
+            let allocator = builder.environment().allocator;
+            let decoded = decode_jsx_entities(text.value.as_str(), allocator);
             // FBT whitespace normalization differs from standard JSX.
             // Since the fbt transform runs after, preserve all whitespace
             // in FBT subtrees as is.
             let value = if builder.fbt_depth > 0 {
-                Some((
-                    match decoded {
-                        Cow::Borrowed(text) => Str::from(text),
-                        Cow::Owned(ref text) => {
-                            Str::from_str_in(text, &builder.environment().allocator)
-                        }
-                    },
-                    0,
-                ))
+                Some((decoded, 0))
             } else {
-                trim_jsx_text(&decoded).map(|(text, start)| {
-                    (Str::from_str_in(&text, &builder.environment().allocator), start)
-                })
+                trim_jsx_text(decoded, allocator)
             };
             match value {
                 None => Ok(None),
@@ -5286,95 +5314,100 @@ fn collect_fbt_sub_tags_from_stmts(
     }
 }
 
-/// Split a string on line endings, handling \r\n, \n, and \r.
-fn split_line_endings(s: &str) -> Vec<&str> {
+/// Split JSX text on line endings, handling `\r\n`, `\n`, and `\r`.
+///
+/// Each line is returned with the byte length of its line terminator,
+/// so callers can track byte offsets into the original text.
+fn split_line_endings(chars: &[JSChar]) -> Vec<(&[JSChar], usize)> {
     let mut lines = Vec::new();
     let mut start = 0;
-    let bytes = s.as_bytes();
     let mut i = 0;
-    while i < bytes.len() {
-        if bytes[i] == b'\r' {
-            lines.push(&s[start..i]);
-            if i + 1 < bytes.len() && bytes[i + 1] == b'\n' {
-                i += 2;
-            } else {
-                i += 1;
-            }
+    while i < chars.len() {
+        if chars[i] == '\r' {
+            let terminator_len = if chars.get(i + 1).is_some_and(|&c| c == '\n') { 2 } else { 1 };
+            lines.push((&chars[start..i], terminator_len));
+            i += terminator_len;
             start = i;
-        } else if bytes[i] == b'\n' {
-            lines.push(&s[start..i]);
+        } else if chars[i] == '\n' {
+            lines.push((&chars[start..i], 1));
             i += 1;
             start = i;
         } else {
             i += 1;
         }
     }
-    lines.push(&s[start..]);
+    lines.push((&chars[start..], 0));
     lines
 }
 
 /// Trims whitespace according to the JSX spec.
 /// Implementation ported from Babel's cleanJSXElementLiteralChild.
-fn trim_jsx_text(original: &str) -> Option<(String, usize)> {
+///
+/// Operates on JavaScript code points so decoded lone surrogates are retained.
+/// Returns the trimmed text and the byte offset of its first retained character within `original`.
+fn trim_jsx_text<'a>(original: JSStr<'a>, allocator: &'a Allocator) -> Option<(JSStr<'a>, usize)> {
+    let is_blank = |c: JSChar| c == ' ' || c == '\t';
+
     // Split on \r\n, \n, or \r to handle all line ending styles (matching TS split(/\r\n|\n|\r/))
-    let lines: Vec<&str> = split_line_endings(original);
+    let chars: Vec<JSChar> = original.chars().collect();
+    let lines = split_line_endings(&chars);
 
     // NOTE: when builder.fbt_depth > 0, the TS skips whitespace trimming entirely.
     // That check is handled by the caller (lower_jsx_element) before calling this function.
 
     let mut last_non_empty_line = 0;
-    for (i, line) in lines.iter().enumerate() {
-        if line.contains(|c: char| c != ' ' && c != '\t') {
+    for (i, (line, _)) in lines.iter().enumerate() {
+        if line.iter().any(|&c| !is_blank(c)) {
             last_non_empty_line = i;
         }
     }
 
-    let mut str = String::new();
-    let mut first_retained_offset = None;
+    // The builder and the offset of the first retained character, created on the first retained
+    // line, so whitespace-only text reserves no arena memory.
+    let mut retained: Option<(JSStrBuilder<'a>, usize)> = None;
     let mut line_offset = 0;
 
-    for (i, line) in lines.iter().enumerate() {
+    for (i, (line, terminator_len)) in lines.iter().enumerate() {
         let is_first_line = i == 0;
         let is_last_line = i == lines.len() - 1;
         let is_last_non_empty_line = i == last_non_empty_line;
 
-        // Replace rendered whitespace tabs with spaces
-        let mut trimmed_line = line.cow_replace('\t', " ").into_owned();
-        let mut leading_trimmed = 0;
+        // Rendered whitespace tabs count as spaces below.
+        let mut start = 0;
+        let mut end = line.len();
 
         // Trim whitespace touching a newline (leading whitespace on non-first lines)
         if !is_first_line {
-            let original_len = trimmed_line.len();
-            trimmed_line = trimmed_line.trim_start_matches(' ').to_string();
-            leading_trimmed = original_len - trimmed_line.len();
+            while start < end && is_blank(line[start]) {
+                start += 1;
+            }
         }
 
         // Trim whitespace touching an endline (trailing whitespace on non-last lines)
         if !is_last_line {
-            trimmed_line = trimmed_line.trim_end_matches(' ').to_string();
-        }
-
-        if !trimmed_line.is_empty() {
-            first_retained_offset.get_or_insert(line_offset + leading_trimmed);
-            if !is_last_non_empty_line {
-                trimmed_line.push(' ');
+            while end > start && is_blank(line[end - 1]) {
+                end -= 1;
             }
-            str.push_str(&trimmed_line);
         }
 
-        line_offset += line.len();
-        if !is_last_line {
-            line_offset += if original.as_bytes().get(line_offset) == Some(&b'\r')
-                && original.as_bytes().get(line_offset + 1) == Some(&b'\n')
-            {
-                2
-            } else {
-                1
-            };
+        if start < end {
+            // Trimmed characters are spaces and tabs, one byte each.
+            let (str, _) = retained.get_or_insert_with(|| {
+                (JSStrBuilder::with_capacity_in(original.len(), &allocator), line_offset + start)
+            });
+            for &c in &line[start..end] {
+                // Replace rendered whitespace tabs with spaces
+                str.push_js_char(if c == '\t' { JSChar::from(' ') } else { c });
+            }
+            if !is_last_non_empty_line {
+                str.push(' ');
+            }
         }
+
+        line_offset += line.iter().copied().map(JSChar::len_bytes).sum::<usize>() + terminator_len;
     }
 
-    first_retained_offset.map(|offset| (str, offset))
+    retained.map(|(str, offset)| (str.into_js_str(), offset))
 }
 
 fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usize {
@@ -5386,6 +5419,9 @@ fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usi
 
     let mut source_offset = 0;
     let mut decoded_offset = 0;
+    // Whether the previous decoded entity was a leading surrogate that a directly following
+    // trailing surrogate would complete into one supplementary character.
+    let mut pending_lead = false;
 
     while decoded_offset < target_offset && source_offset < source.len() {
         let remaining = &source[source_offset..];
@@ -5394,9 +5430,13 @@ fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usi
         {
             let word = &entity[..end];
             if !word.contains('&')
-                && let Some(decoded) = decode_jsx_entity(word)
+                && let Some(decoded) = decode_entity(word)
             {
-                let decoded_len = decoded.len_utf8();
+                let point = decoded.to_u32();
+                let is_trail = (0xDC00..=0xDFFF).contains(&point);
+                // A completed pair is four bytes, of which three were counted for the lead.
+                let decoded_len = if pending_lead && is_trail { 1 } else { decoded.len_bytes() };
+                pending_lead = (0xD800..=0xDBFF).contains(&point);
                 if decoded_offset + decoded_len > target_offset {
                     return source_offset;
                 }
@@ -5406,6 +5446,7 @@ fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usi
             }
         }
 
+        pending_lead = false;
         let char_len = remaining.chars().next().unwrap().len_utf8();
         decoded_offset += char_len;
         source_offset += char_len;
@@ -5416,58 +5457,15 @@ fn source_offset_for_decoded_jsx_text(source: &str, target_offset: usize) -> usi
 
 /// Decode XML/HTML entities in JSX text (`&amp;` → `&`, `&gt;` → `>`, `&#123;`
 /// → `{`, `&#x1F600;` → emoji, …) so the lowered JSX text/attribute value matches
-/// Babel's decoded text. oxc keeps JSX text raw in the AST. Mirrors the
-/// `decode_jsx_entities` helper in `convert_ast.rs`. Unrecognized `&…;` sequences
-/// are kept verbatim.
-fn decode_jsx_entities(s: &str) -> Cow<'_, str> {
-    if !s.contains('&') {
-        return Cow::Borrowed(s);
-    }
-    let mut out = String::with_capacity(s.len());
-    let mut chars = s.char_indices();
-    let mut prev = 0;
-    while let Some((i, c)) = chars.next() {
-        if c != '&' {
-            continue;
-        }
-        let mut start = i;
-        let mut end = None;
-        for (j, c) in chars.by_ref() {
-            if c == ';' {
-                end = Some(j);
-                break;
-            } else if c == '&' {
-                start = j;
-            }
-        }
-        let Some(end) = end else { break };
-        out.push_str(&s[prev..start]);
-        prev = end + 1;
-        let word = &s[start + 1..end];
-        match decode_jsx_entity(word) {
-            Some(c) => out.push(c),
-            // Not a recognized entity — keep the `&…;` literal.
-            None => {
-                out.push('&');
-                out.push_str(word);
-                out.push(';');
-            }
-        }
-    }
-    out.push_str(&s[prev..]);
-    Cow::Owned(out)
-}
-
-fn decode_jsx_entity(word: &str) -> Option<char> {
-    if let Some(num) = word.strip_prefix('#') {
-        if let Some(hex) = num.strip_prefix(['x', 'X']) {
-            u32::from_str_radix(hex, 16).ok().and_then(char::from_u32)
-        } else {
-            num.parse::<u32>().ok().and_then(char::from_u32)
-        }
-    } else {
-        oxc_syntax::xml_entities::XML_ENTITIES.get(word).copied()
-    }
+/// Babel's decoded text. oxc keeps JSX text raw in the AST.
+/// Unrecognized `&…;` sequences are kept verbatim.
+/// Only lowercase `&#x` selects hexadecimal, matching Babel.
+/// Numeric references can name lone surrogates, so the result is a [`JSStr`].
+/// Text without entities is borrowed without copying.
+fn decode_jsx_entities<'a>(s: &'a str, allocator: &'a Allocator) -> JSStr<'a> {
+    let mut decoded = None;
+    decode_entities(s, &mut decoded, s.len(), allocator);
+    decoded.map_or_else(|| JSStr::from(s), JSStrBuilder::into_js_str)
 }
 
 /// Get the Babel-style type name of an oxc `Expression` node. Mirrors the

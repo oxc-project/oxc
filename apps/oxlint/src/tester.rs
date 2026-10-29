@@ -84,7 +84,6 @@ impl Tester {
         let modified_after = fs::metadata(&path).unwrap().modified().unwrap();
         assert_eq!(modified_before, modified_after);
 
-        // Write the file back.
         fs::write(&path, before).unwrap();
     }
 

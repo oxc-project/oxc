@@ -1,7 +1,9 @@
-use oxc_ast::AstKind;
-use oxc_ast::ast::{
-    Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
-    ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
+use oxc_ast::{
+    AstKind,
+    ast::{
+        Argument, BindingPattern, CatchClause, Expression, Function, IdentifierReference,
+        ObjectExpression, ObjectPropertyKind, PropertyKey, ThrowStatement, TryStatement,
+    },
 };
 use oxc_ast_visit::VisitJs;
 use oxc_diagnostics::OxcDiagnostic;
@@ -251,7 +253,7 @@ fn has_cause_property(
 }
 
 fn is_catch_parameter(expr: &Expression, catch_param: &BindingPattern, ctx: &LintContext) -> bool {
-    let oxc_ast::ast::BindingPattern::BindingIdentifier(binding) = &catch_param else {
+    let BindingPattern::BindingIdentifier(binding) = &catch_param else {
         return false;
     };
 

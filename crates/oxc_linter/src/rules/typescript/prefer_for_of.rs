@@ -2,7 +2,7 @@ use oxc_ast::{
     AstKind,
     ast::{
         AssignmentTarget, BindingPattern, Expression, ForStatementInit, SimpleAssignmentTarget,
-        VariableDeclarationKind, match_member_expression,
+        match_member_expression,
     },
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -116,9 +116,7 @@ impl Rule for PreferForOf {
             return;
         };
 
-        if for_stmt_init.declarations.len() != 1
-            || for_stmt_init.kind == VariableDeclarationKind::Const
-        {
+        if for_stmt_init.declarations.len() != 1 || for_stmt_init.kind.is_const() {
             return;
         }
 

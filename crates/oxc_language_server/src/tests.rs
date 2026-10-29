@@ -2076,6 +2076,37 @@ mod test_suite {
     }
 
     #[tokio::test]
+    async fn test_diagnostics_push_mode_request() {
+        let mut server = TestServer::new_initialized(
+            |client| {
+                Backend::new(
+                    client,
+                    server_info(),
+                    create_workspace_manager_with_builder(FakeToolBuilder::new(
+                        DiagnosticMode::Push,
+                    )),
+                )
+            },
+            initialize_request(InitializeRequestOptions::default()),
+        )
+        .await;
+
+        let file = format!("{WORKSPACE}/diagnostics.config");
+        server.send_request(diagnostic(3, &file)).await;
+
+        let diagnostic_response = server.recv_response().await;
+        assert!(diagnostic_response.is_ok());
+        assert_eq!(diagnostic_response.id(), &Id::Number(3));
+
+        let report: serde_json::Value =
+            serde_json::from_value(diagnostic_response.result().unwrap().clone()).unwrap();
+        assert_eq!(report["kind"], "full");
+        assert_eq!(report["items"].as_array().unwrap(), &[] as &[Value]);
+
+        server.shutdown(4).await;
+    }
+
+    #[tokio::test]
     async fn test_diagnostics_pull_mode() {
         let init_options = InitializeRequestOptions { pull_mode: true, ..Default::default() };
 
@@ -2464,7 +2495,9 @@ mod test_suite {
                     Backend::new(
                         client,
                         server_info(),
-                        create_dynamic_workspace_manager(FakeToolBuilder::default()),
+                        create_dynamic_workspace_manager(FakeToolBuilder::new(
+                            DiagnosticMode::Pull,
+                        )),
                     )
                 },
                 initialize_request(init_options),

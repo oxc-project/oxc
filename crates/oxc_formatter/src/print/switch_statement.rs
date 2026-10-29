@@ -19,7 +19,7 @@ use crate::{
 
 use super::FormatWrite;
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, SwitchStatement<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let discriminant = self.discriminant();
         let cases = self.cases();
@@ -53,13 +53,13 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchStatement<'a>> {
     }
 }
 
-impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'a, ArenaVec<'a, SwitchCase<'a>>> {
+impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, SwitchCase<'a>>> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         f.join_nodes_with_hardline().entries(self);
     }
 }
 
-impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
+impl<'a> FormatWrite<'a> for AstNode<'_, 'a, SwitchCase<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // Whether the first statement in the clause is a `BlockStatement`
         // and there are no other non-empty statements.
@@ -74,7 +74,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
                 // For non-block consequents the generic pass's `line_suffix` flush lands
                 // before their line break, keeping the comment on the clause line,
                 // so the bound is only needed before a block's `{`.
-                write_node_with_terminator(test, ":", f);
+                write_node_with_terminator(&test, ":", f);
             } else {
                 write!(f, [test, ":"]);
             }
@@ -123,7 +123,7 @@ impl<'a> FormatWrite<'a> for AstNode<'a, SwitchCase<'a>> {
         let consequent = self.consequent();
         if is_single_block_statement {
             // `unwrap` is safe: the empty consequent returned above.
-            write!(f, FormatStatementBody::new(consequent.first().unwrap()));
+            write!(f, FormatStatementBody::new(&consequent.first().unwrap()));
             return;
         }
 

@@ -10,7 +10,7 @@ use cow_utils::CowUtils;
 use oxc_formatter_core::arena_cow_str;
 use oxc_markdown_parser::{
     Constructs, Span,
-    ast::{CodeSpan, Emphasis, HardBreakKind, Inline, LinkKind, Strong},
+    ast::{CodeSpan, Emphasis, HardBreakKind, Inline, LinkKind, ReferenceKind, Strong},
     escapes_next, lexical, unicode,
 };
 
@@ -106,7 +106,7 @@ pub fn collect_phrasing<'a>(
 
 /// For every code span, the backtick run lengths (bit `n - 1` for a run of `n`) that occur
 /// before it in the content as literal text
-/// (outside code spans, HTML, autolinks, math, liquid, whose backticks never delimit):
+/// (outside the spans of `collect_opaque_spans`, whose backticks never delimit):
 /// a printed fence of such a length would pair with the run and move the span.
 fn code_span_literal_runs<'a>(
     children: &'a [Inline<'a>],
@@ -144,11 +144,13 @@ fn collect_opaque_spans<'a>(children: &'a [Inline<'a>], out: &mut Vec<(Span, boo
             | Inline::AutolinkLiteral(_)
             | Inline::MathSpan(_)
             | Inline::Liquid(_)
-            | Inline::WikiLink(_) => out.push((child.span(), false)),
+            | Inline::WikiLink(_)
+            | Inline::FootnoteReference(_) => out.push((child.span(), false)),
             Inline::Emphasis(e) => collect_opaque_spans(&e.children, out),
             Inline::Strong(s) => collect_opaque_spans(&s.children, out),
             Inline::Strikethrough(s) => collect_opaque_spans(&s.children, out),
-            // Link text is inline content; a reference label or a title is not
+            // Link text is inline content; a destination, a title or a full reference's label is not
+            // (a collapsed / shortcut one is the text itself)
             Inline::Link(l) => {
                 collect_opaque_spans(&l.children, out);
                 collect_link_kind_spans(&l.kind, out);
@@ -163,12 +165,16 @@ fn collect_opaque_spans<'a>(children: &'a [Inline<'a>], out: &mut Vec<(Span, boo
 }
 
 fn collect_link_kind_spans(kind: &LinkKind<'_>, out: &mut Vec<(Span, bool)>) {
-    let pieces = match kind {
-        LinkKind::Reference { label, .. } => label,
-        LinkKind::Inline { title: Some(title), .. } => title,
-        LinkKind::Inline { title: None, .. } => return,
-    };
-    out.extend(pieces.iter().map(|piece| (piece.span, false)));
+    match kind {
+        LinkKind::Reference { kind: ReferenceKind::Full, label } => {
+            out.extend(label.iter().map(|piece| (piece.span, false)));
+        }
+        LinkKind::Reference { .. } => {}
+        LinkKind::Inline { destination, title } => {
+            out.push((destination.span, false));
+            out.extend(title.iter().flatten().map(|piece| (piece.span, false)));
+        }
+    }
 }
 
 /// The emphasis marker as printed: `_` unless a word touches it (`1*2*3` is emphasis, `1_2_3` is not),

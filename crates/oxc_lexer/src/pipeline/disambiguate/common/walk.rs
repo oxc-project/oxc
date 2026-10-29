@@ -29,7 +29,7 @@ use crate::{
 /// whose queries stay local never has the whole bitmap built. Owned by the lexer and shared with
 /// every [`Tokens`] view of the lex, so the words are cells.
 #[derive(Default)]
-pub(crate) struct Brackets {
+pub struct Brackets {
     /// Bracket bytes of the source. `st` is applied when a word is read, not stored, because
     /// `carve` is still clearing literal interiors while the matches run.
     bits: Vec<Cell<u64>>,
@@ -49,7 +49,7 @@ struct Pairs {
 
 impl Brackets {
     /// A new lex over `n` bytes: size the buffers and forget every word of the previous one.
-    pub(crate) fn begin(&mut self, n: usize) {
+    pub fn begin(&mut self, n: usize) {
         let nwords = n.div_ceil(64) + 1;
         self.bits.resize(nwords, Cell::new(0));
         self.built.clear();
@@ -93,7 +93,7 @@ fn bracket_word(src: &[u8], base: usize, n: usize) -> u64 {
 /// invisible. Past [`BRACKET_STEP_CAP`] bracket steps the answer comes from a per-lex
 /// closer-to-opener table built once, so it stays exact; None if unbalanced.
 #[inline]
-pub(crate) fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Option<usize> {
+pub(super) fn match_delim_back(tokens: &Tokens, from: usize, open: u8, close: u8) -> Option<usize> {
     let (src, st, kind, n, b) = (tokens.src, tokens.st, tokens.kind, tokens.n, tokens.brackets);
     let mut depth: i32 = 1;
     let mut steps: u32 = 0;
@@ -179,7 +179,7 @@ fn delim_slot(c: u8) -> usize {
 }
 
 #[inline(always)]
-pub(crate) fn word_len(src: &[u8], w: usize) -> usize {
+pub fn word_len(src: &[u8], w: usize) -> usize {
     let mut e = w + 1;
     while is_word(src[e]) {
         e += 1;
@@ -190,7 +190,7 @@ pub(crate) fn word_len(src: &[u8], w: usize) -> usize {
 /// Does the identifier at `pos` equal exactly `kw`? The following-byte check
 /// rejects longer identifiers (the source pad makes it safe at EOF).
 #[inline]
-pub(crate) fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
+pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
     src[pos..].starts_with(kw) && {
         let after = pos + kw.len();
         !is_word(src[after]) || unicode_ws_len_at(src, after) != 0
@@ -199,7 +199,7 @@ pub(crate) fn ident_is(src: &[u8], pos: usize, kw: &[u8]) -> bool {
 
 /// Previous significant token start before `pos` (skipping trivia), or `None` at start of input.
 #[inline]
-pub(crate) fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
+pub fn prev_sig(st: &[u64], kind: &[u8], pos: usize) -> Option<usize> {
     let mut q = bits::prev1(st, pos);
     while let Some(p) = q {
         if !is_trivia_byte(kind[p]) {

@@ -445,6 +445,17 @@ impl<'a> From<Argument<'a>> for ArrayExpressionElement<'a> {
     }
 }
 
+impl<'a> ObjectExpression<'a> {
+    /// Finds the first [`ObjectProperty`] whose static key matches `name`.
+    /// Spread properties are skipped.
+    pub fn find_property(&self, name: &str) -> Option<&ObjectProperty<'a>> {
+        self.properties.iter().find_map(|prop| {
+            let ObjectPropertyKind::ObjectProperty(prop) = prop else { return None };
+            prop.key.is_specific_static_name(name).then_some(prop.as_ref())
+        })
+    }
+}
+
 impl<'a> ObjectPropertyKind<'a> {
     /// Returns `true` if this object property is a [spread](SpreadElement).
     #[inline]
@@ -1195,7 +1206,7 @@ impl VariableDeclarationKind {
     }
 
     /// Returns `true` if declared using `await using` (such as `await using x`)
-    pub fn is_await(self) -> bool {
+    pub fn is_await_using(self) -> bool {
         self == Self::AwaitUsing
     }
 

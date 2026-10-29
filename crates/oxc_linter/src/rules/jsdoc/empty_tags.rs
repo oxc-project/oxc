@@ -63,6 +63,7 @@ declare_oxc_lint!(
     EmptyTags,
     jsdoc,
     restriction,
+    recommended,
     pending,
     config = EmptyTagsConfig,
     version = "0.2.16",

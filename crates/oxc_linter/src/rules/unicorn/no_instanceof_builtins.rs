@@ -18,8 +18,6 @@ fn no_instanceof_builtins_diagnostic(span: Span) -> OxcDiagnostic {
         .with_label(span)
 }
 
-const PRIMITIVE_WRAPPERS: &[&str] = &["String", "Number", "Boolean", "BigInt", "Symbol"];
-
 const STRICT_STRATEGY_CONSTRUCTORS: &[&str] = &[
     // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Error
     "Error",
@@ -216,15 +214,15 @@ impl Rule for NoInstanceofBuiltins {
         }
 
         // typeof x === 'string' / 'number' / 'boolean' / 'bigint' / 'symbol'
-        if PRIMITIVE_WRAPPERS.contains(&ctor_name) {
-            let typeof_type = match ctor_name {
-                "String" => "string",
-                "Number" => "number",
-                "Boolean" => "boolean",
-                "BigInt" => "bigint",
-                "Symbol" => "symbol",
-                _ => unreachable!(),
-            };
+        let typeof_type = match ctor_name {
+            "String" => Some("string"),
+            "Number" => Some("number"),
+            "Boolean" => Some("boolean"),
+            "BigInt" => Some("bigint"),
+            "Symbol" => Some("symbol"),
+            _ => None,
+        };
+        if let Some(typeof_type) = typeof_type {
             let replacement = format!("typeof ({left_text}) === '{typeof_type}'");
             ctx.diagnostic_with_suggestion(no_instanceof_builtins_diagnostic(bin.span), |fixer| {
                 fixer.replace(bin.span, replacement)

@@ -1,9 +1,6 @@
 use oxc_ast::{
     AstKind,
-    ast::{
-        AssignmentTarget, Expression, IdentifierReference, MemberExpression,
-        VariableDeclarationKind,
-    },
+    ast::{AssignmentTarget, Expression, IdentifierReference, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
@@ -71,6 +68,7 @@ declare_oxc_lint!(
     NoMultipleSlotArgs,
     vue,
     restriction,
+    recommended,
     pending,  // TODO: Remove second argument, Spread argument is possible not supported
     version = "1.15.0",
     short_description = "Disallow passing multiple arguments to scoped slots.",
@@ -168,7 +166,7 @@ fn get_identifier_resolved_reference<'a>(
     };
 
     // `const` variable can not be overridden
-    if variable_declaration_kind(declarator, ctx) == VariableDeclarationKind::Const {
+    if variable_declaration_kind(declarator, ctx.nodes())?.is_const() {
         return declarator.init.as_ref();
     }
 

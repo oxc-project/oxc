@@ -1,4 +1,4 @@
-use crate::{error::DiagCode, lanes::Lanes, token::tk};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
@@ -8,13 +8,16 @@ use crate::pipeline::{
         find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
         find_opener_jsx7, find_opener6, find1, find2,
     },
+    lanes::Lanes,
     token_view,
 };
 
-use super::common::{
-    html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
-    lex_html_open_comment, lex_line_comment, lex_slash, lex_string, lex_template_segment,
-    skip_unicode_brace_escape,
+use super::{
+    comments::{
+        html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
+        lex_html_open_comment, lex_line_comment,
+    },
+    common::{lex_slash, lex_string, lex_template_segment, skip_unicode_brace_escape},
 };
 
 mod angle_brackets;

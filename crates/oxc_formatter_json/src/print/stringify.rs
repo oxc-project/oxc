@@ -12,7 +12,7 @@ use oxc_ast::ast::{
     ObjectPropertyKind, PropertyKey, StringLiteral, TemplateLiteral,
 };
 use oxc_formatter_core::{
-    Buffer, Format, arena_cow_str,
+    Format, arena_cow_str,
     builders::{block_indent, hard_line_break, space, text},
     write,
 };
@@ -22,7 +22,7 @@ use oxc_syntax::operator::UnaryOperator;
 use crate::context::JsonFormatContext;
 
 use super::{
-    FormatInvalidJson, JsonFormatter, format_with, literal::FmtJsonString,
+    FormatInvalidJson, JsonFormatter, format_with, is_signed_number, literal::FmtJsonString,
     number_string_round_trips, write_quoted_str,
 };
 
@@ -43,17 +43,13 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonStringifyValue<'a, '_> {
             Expression::StringLiteral(lit) => write_string(lit, f),
             Expression::ArrayExpression(array) => write_array(array, f),
             Expression::ObjectExpression(object) => write_object(object, f),
-            Expression::UnaryExpression(unary) => match unary.operator {
+            Expression::UnaryExpression(unary) if is_signed_number(unary) => {
                 // `JSON.parse` rejects a leading `+`, so Prettier drops it.
-                UnaryOperator::UnaryPlus => {
-                    Self { expression: &unary.argument }.fmt(f);
-                }
-                UnaryOperator::UnaryNegation => {
+                if unary.operator == UnaryOperator::UnaryNegation {
                     write!(f, "-");
-                    Self { expression: &unary.argument }.fmt(f);
                 }
-                _ => write!(f, FormatInvalidJson(unary.span)),
-            },
+                Self { expression: &unary.argument }.fmt(f);
+            }
             // JSON5 `Infinity` / `NaN`, JSON6 `undefined`; anything else is invalid
             // (Prettier rejects other identifiers at parse time, we report at format time).
             Expression::Identifier(ident)

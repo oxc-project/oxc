@@ -7,7 +7,7 @@ use oxc_css_parser::ast::{
 use oxc_span::Span;
 
 use oxc_formatter_core::{
-    Buffer, arena_cow_str,
+    arena_cow_str,
     builders::{block_indent, dedent, empty_line, hard_line_break, indent, space, text},
     write,
 };
@@ -110,12 +110,13 @@ pub(super) fn write_statement_sequence_bounded<'a>(
             let next_start =
                 f.context().comments().peek().map_or(start, |c| c.span.start.min(start));
             let gap = classify_gap(source.bytes_range(prev_end, next_start));
-            // A `;`-less css-in-js placeholder preserves the source whitespace that
-            // follows it: Prettier keeps `${a} ${b}` on one line and `${a}\n${b}` on two
-            // (postcss swallows the run as a verbatim prelude).
+            // A `;`-less css-in-js placeholder keeps whether whitespace follows it (none / space / newline):
+            // its content is unknown, so `${a}${b}` may be one token (as Prettier does).
             // Other statements always start on a new line.
             if matches!(statements[i - 1], Statement::Placeholder(_)) && gap == Gap::None {
-                write!(f, space());
+                if prev_end < next_start {
+                    write!(f, space());
+                }
             } else {
                 write!(f, hard_line_break());
                 if gap == Gap::Blank {

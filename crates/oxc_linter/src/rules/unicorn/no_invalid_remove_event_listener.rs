@@ -82,40 +82,33 @@ impl Rule for NoInvalidRemoveEventListener {
             return;
         };
 
-        if !matches!(
-            listener,
-            Argument::FunctionExpression(_)
-                | Argument::ArrowFunctionExpression(_)
-                | Argument::CallExpression(_)
-        ) {
-            return;
-        }
-
-        if let Argument::CallExpression(call_expr) = listener {
-            match call_expr.callee.get_member_expr() {
-                Some(MemberExpression::StaticMemberExpression(v)) => {
-                    if v.property.name != "bind" {
-                        return;
-                    }
-                }
-                _ => return,
-            }
-        }
-
-        let listener_span = listener.span();
-        let listener_span = if listener_span.size() > 20 {
-            match listener {
-                Argument::FunctionExpression(func_expr) => {
+        let listener_span = match listener {
+            Argument::FunctionExpression(func_expr) => {
+                if func_expr.span.size() > 20 {
                     Span::new(func_expr.span.start, func_expr.params.span.end)
+                } else {
+                    func_expr.span
                 }
-                Argument::ArrowFunctionExpression(arrow_expr) => {
-                    Span::new(arrow_expr.span.start, arrow_expr.body.span().start)
-                }
-                Argument::CallExpression(_) => listener_span,
-                _ => unreachable!(),
             }
-        } else {
-            listener_span
+            Argument::ArrowFunctionExpression(arrow_expr) => {
+                if arrow_expr.span.size() > 20 {
+                    Span::new(arrow_expr.span.start, arrow_expr.body.span().start)
+                } else {
+                    arrow_expr.span
+                }
+            }
+            Argument::CallExpression(call_expr) => {
+                let Some(MemberExpression::StaticMemberExpression(member)) =
+                    call_expr.callee.get_member_expr()
+                else {
+                    return;
+                };
+                if member.property.name != "bind" {
+                    return;
+                }
+                call_expr.span
+            }
+            _ => return,
         };
 
         ctx.diagnostic(no_invalid_remove_event_listener_diagnostic(

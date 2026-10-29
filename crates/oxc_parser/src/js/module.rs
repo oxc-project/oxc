@@ -320,17 +320,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     _ => return self.unexpected(),
                 }
             }
-
-            // If the default specifiers name was `type`, and it was not a type import
-            // then skip the `from` specifier expect. This is specifically to support an import
-            // like: `import type from 'source'`
-            if self.is_ts
-                && import_kind == ImportOrExportKind::Value
-                && specifiers.len() == 1
-                && specifiers[0].name() == "type"
-            {
-                return specifiers;
-            }
         } else if self.at(Kind::Star) {
             // import * as name from "module-name";
             let specifier = self.parse_import_namespace_specifier();
@@ -403,7 +392,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let span = e.key.span();
             if let Some(old_span) = keys.insert(key, span) {
                 let name = key.as_str().unwrap_or_else(|| span.source_text(self.source_text));
-                self.error(diagnostics::redeclaration(name, old_span, span));
+                self.error(diagnostics::duplicate_import_attribute_key(name, old_span, span));
             }
         }
 
@@ -572,10 +561,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             }
         };
         let mut stmt = Statement::from(decl);
-        if let Some(comments) = no_side_effects_comments
-            && Self::set_pure_on_function_stmt(&mut stmt)
-        {
-            self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+        if let Some(comments) = no_side_effects_comments {
+            self.apply_no_side_effects_comments_to_statement(comments, &mut stmt);
         }
         stmt
     }

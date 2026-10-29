@@ -19,9 +19,11 @@ import type * as ESTree from "../../../npm/oxc-types/types.d.ts";
 
 // Parse options for the cases which give source rather than an AST.
 //
-// `preserveParens: false` because this printer deliberately does not support the redundant
-// `ParenthesizedExpression` node. `experimentalRawTransfer` is how the printer is meant to be used,
-// so the ASTs are the shape it really sees.
+// `preserveParens: false`, so every paren in the output is one the printer decided on itself.
+// The printer does support `ParenthesizedExpression` nodes - hand-built ASTs below test them,
+// and the fixture and conformance suites check both `preserveParens` modes against Rust.
+//
+// `experimentalRawTransfer` is how the printer is meant to be used, so the ASTs are the shape it really sees.
 //
 // `experimentalRawTransfer` is not in the published `ParserOptions` type - it is experimental and
 // untyped. Declaring the object here rather than inline at the call site keeps TypeScript's excess

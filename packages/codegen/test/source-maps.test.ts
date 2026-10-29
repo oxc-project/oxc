@@ -23,9 +23,11 @@ import type * as ESTree from "../../../npm/oxc-types/types.d.ts";
 // The inline fixtures below always run.
 const CACHE_DIR_PATH = pathJoin(import.meta.dirname, "../../../target");
 
-// `preserveParens: false` because this printer deliberately does not support the redundant
-// `ParenthesizedExpression` / `TSParenthesizedType` nodes. `experimentalRawTransfer` is how the
-// printer is meant to be used, so the ASTs here are the shape it really sees.
+// One `preserveParens` mode is enough for these checks, so `false`. The printer supports
+// `ParenthesizedExpression` / `TSParenthesizedType` nodes, and the fixture and conformance suites
+// check both modes against Rust.
+//
+// `experimentalRawTransfer` is how the printer is meant to be used, so the ASTs here are the shape it really sees.
 const PARSE_OPTIONS = {
   preserveParens: false,
   experimentalRawTransfer: true,
@@ -92,6 +94,26 @@ describe("Rust conformance", () => {
       lang: "js" as const,
     },
     { name: "astral-new.js", code: "new 𐐀;", lang: "js" as const },
+    {
+      name: "escaped-default-import.js",
+      code: 'import s\\u006furce from "./a.js";',
+      lang: "js" as const,
+    },
+    {
+      name: "escaped-default-import.ts",
+      code: 'import type s\\u006furce from "./a.js";',
+      lang: "ts" as const,
+    },
+    {
+      name: "escaped-default-and-named-import.js",
+      code: 'import s\\u006furce, { value } from "./a.js";',
+      lang: "js" as const,
+    },
+    {
+      name: "escaped-default-and-namespace-import.js",
+      code: 'import s\\u006furce, * as ns from "./a.js";',
+      lang: "js" as const,
+    },
     {
       name: "large-line-gap.js",
       code: `\`${"\n".repeat(200)}\`;\nvalue;`,

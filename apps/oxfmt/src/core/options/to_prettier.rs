@@ -172,9 +172,13 @@ pub fn inject_parser(opts: &mut Value, parser_name: &str) {
     as_object_mut(opts).insert("parser".to_string(), Value::String(parser_name.to_string()));
 }
 
-/// Inject `printWidth` key, overriding the configured one.
-pub fn inject_print_width(opts: &mut Value, print_width: usize) {
-    as_object_mut(opts).insert("printWidth".to_string(), Value::from(print_width));
+/// Inject the keys for a string re-embedded into the parent's IR, overriding the configured ones:
+/// - `printWidth`: the effective width at the embedding position
+/// - `endOfLine`: `lf`, since the IR only takes `\n`
+pub fn inject_string_embed_options(opts: &mut Value, print_width: usize) {
+    let opts = as_object_mut(opts);
+    opts.insert("printWidth".to_string(), Value::from(print_width));
+    opts.insert("endOfLine".to_string(), Value::from("lf"));
 }
 
 /// Inject `filepath` key.

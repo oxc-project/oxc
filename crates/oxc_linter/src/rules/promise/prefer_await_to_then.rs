@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, ast::MemberExpression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -108,7 +108,7 @@ impl Rule for PreferAwaitToThen {
         let span = call_expr
             .callee
             .as_member_expression()
-            .and_then(oxc_ast::ast::MemberExpression::static_property_info)
+            .and_then(MemberExpression::static_property_info)
             .map_or(call_expr.span, |(span, _)| span);
         ctx.diagnostic(prefer_wait_to_then_diagnostic(span));
     }

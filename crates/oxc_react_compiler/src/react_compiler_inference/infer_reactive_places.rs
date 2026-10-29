@@ -17,11 +17,12 @@
 
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_index::IndexVec;
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 
 use crate::diagnostics;
 use crate::react_compiler_hir::dominator::{
-    PostDominatorFrontiers, compute_post_dominator_frontiers,
+    PostDominatorFrontiers, compute_normal_flow_post_dominator_frontiers,
+    compute_post_dominator_frontiers,
 };
 use crate::react_compiler_hir::environment::Environment;
 use crate::react_compiler_hir::object_shape::HookKind;
@@ -63,8 +64,22 @@ pub fn infer_reactive_places(
     // Collect block IDs for iteration
     let block_ids: Vec<BlockId> = func.body.blocks.keys().copied().collect();
 
-    let frontiers =
-        compute_post_dominator_frontiers(func, env.next_block_id().index() as u32, false)?;
+    let next_block_id = env.next_block_id().index() as u32;
+    let mut frontiers = compute_post_dominator_frontiers(func, next_block_id, false)?;
+    // Inside `try`, a store ends its block with a `MaybeThrow` whose handler edge skips
+    // the rest of the `try`, so the frontiers above stop at that `MaybeThrow` and miss
+    // the `If`/`Branch`/`Switch` that chose which store ran: a phi over the stores of
+    // a ternary or of `if`/`switch` branches would never become reactive. Also add the
+    // frontiers of normal control flow, keeping those through handler edges.
+    if func
+        .body
+        .blocks
+        .values()
+        .any(|block| matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }))
+    {
+        frontiers.extend(compute_normal_flow_post_dominator_frontiers(func, next_block_id, false)?);
+    }
+    let mut throwing_blocks = ThrowingBlocks::new(func, env, &frontiers);
 
     // Track phi operand reactive flags during fixpoint.
     // In TS, isReactive() sets place.reactive as a side effect. But when a phi
@@ -75,10 +90,16 @@ pub fn infer_reactive_places(
 
     // Fixpoint iteration — compute reactive set
     loop {
+        throwing_blocks.update(func, &frontiers, &mut reactive_map);
         for block_id in &block_ids {
             let block = func.body.blocks.get(block_id).unwrap();
-            let has_reactive_control =
-                is_reactive_controlled_block(block.id, func, &frontiers, &mut reactive_map);
+            let has_reactive_control = is_reactive_controlled_block(
+                block.id,
+                func,
+                &frontiers,
+                &throwing_blocks,
+                &mut reactive_map,
+            );
 
             // Process phi nodes
             let block = func.body.blocks.get(block_id).unwrap();
@@ -102,8 +123,13 @@ pub fn infer_reactive_places(
                     reactive_map.mark_reactive(phi.place.identifier);
                 } else {
                     for (pred, _operand) in &phi.operands {
-                        if is_reactive_controlled_block(*pred, func, &frontiers, &mut reactive_map)
-                        {
+                        if is_reactive_controlled_block(
+                            *pred,
+                            func,
+                            &frontiers,
+                            &throwing_blocks,
+                            &mut reactive_map,
+                        ) {
                             reactive_map.mark_reactive(phi.place.identifier);
                             break;
                         }
@@ -351,36 +377,124 @@ impl StableSidemap {
 // Control dominators (ported from ControlDominators.ts)
 // =============================================================================
 
+/// Returns whether a reactive value decides if `block_id` runs: a block in its
+/// post-dominator frontier ends in an `If`/`Branch`/`Switch` with a reactive test, or may
+/// throw to a `catch` and is decided by a reactive value (see [`ThrowingBlocks`]).
 fn is_reactive_controlled_block(
     block_id: BlockId,
     func: &HirFunction,
     frontiers: &PostDominatorFrontiers,
+    throwing_blocks: &ThrowingBlocks,
     reactive_map: &mut ReactivityMap,
 ) -> bool {
-    for frontier_block_id in frontiers.iter(block_id) {
-        let control_block = func.body.blocks.get(&frontier_block_id).unwrap();
-        match &control_block.terminal {
-            Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
-                if reactive_map.is_reactive(test.identifier) {
-                    return true;
+    frontiers.iter(block_id).any(|control_block_id| {
+        has_reactive_test(control_block_id, func, reactive_map)
+            || throwing_blocks.reactive.contains(&control_block_id)
+    })
+}
+
+/// Returns whether the block ends in an `If`/`Branch`/`Switch` with a reactive test.
+fn has_reactive_test(
+    block_id: BlockId,
+    func: &HirFunction,
+    reactive_map: &mut ReactivityMap,
+) -> bool {
+    let control_block = func.body.blocks.get(&block_id).unwrap();
+    match &control_block.terminal {
+        Terminal::If { test, .. } | Terminal::Branch { test, .. } => {
+            reactive_map.is_reactive(test.identifier)
+        }
+        Terminal::Switch { test, cases, .. } => {
+            reactive_map.is_reactive(test.identifier)
+                || cases.iter().any(|case| {
+                    case.test.as_ref().is_some_and(|test| reactive_map.is_reactive(test.identifier))
+                })
+        }
+        _ => false,
+    }
+}
+
+/// The blocks that may throw to a `catch` (end in a `MaybeThrow` with a handler), and
+/// which of them a reactive value decides.
+///
+/// Such a block decides whether the rest of the `try` runs or the `catch` does, so it
+/// controls the blocks whose frontier contains it, like a branch. Whether it throws
+/// depends on the values it reads, and on whether it runs at all, which the blocks in
+/// its own frontier decide.
+struct ThrowingBlocks {
+    /// The values each block reads.
+    operands: FxHashMap<BlockId, Vec<IdentifierId>>,
+    /// For each block, the blocks whose frontier contains it.
+    dependents: FxHashMap<BlockId, Vec<BlockId>>,
+    /// The blocks a reactive value decides, as of the last [`Self::update`].
+    reactive: FxHashSet<BlockId>,
+}
+
+impl ThrowingBlocks {
+    fn new(func: &HirFunction, env: &Environment, frontiers: &PostDominatorFrontiers) -> Self {
+        let operands: FxHashMap<BlockId, Vec<IdentifierId>> = func
+            .body
+            .blocks
+            .values()
+            .filter(|block| matches!(block.terminal, Terminal::MaybeThrow { handler: Some(_), .. }))
+            .map(|block| {
+                let operands = block
+                    .instructions
+                    .iter()
+                    .flat_map(|instr_id| {
+                        visitors::each_instruction_value_operand(
+                            &func.instructions[instr_id.index()].value,
+                            env,
+                        )
+                    })
+                    .map(|place| place.identifier)
+                    .collect();
+                (block.id, operands)
+            })
+            .collect();
+        let mut dependents: FxHashMap<BlockId, Vec<BlockId>> = FxHashMap::default();
+        for &block_id in operands.keys() {
+            for control_block_id in frontiers.iter(block_id) {
+                if operands.contains_key(&control_block_id) {
+                    dependents.entry(control_block_id).or_default().push(block_id);
                 }
             }
-            Terminal::Switch { test, cases, .. } => {
-                if reactive_map.is_reactive(test.identifier) {
-                    return true;
-                }
-                for case in cases {
-                    if let Some(ref case_test) = case.test
-                        && reactive_map.is_reactive(case_test.identifier)
-                    {
-                        return true;
-                    }
+        }
+        Self { operands, dependents, reactive: FxHashSet::default() }
+    }
+
+    /// Adds the blocks that read a reactive value or run under a reactive branch, and
+    /// the blocks they control in turn.
+    ///
+    /// Reactivity only grows, so the set only grows. It can lag behind values marked
+    /// reactive later in the same fixpoint iteration; those marks force another
+    /// iteration, which calls this again.
+    fn update(
+        &mut self,
+        func: &HirFunction,
+        frontiers: &PostDominatorFrontiers,
+        reactive_map: &mut ReactivityMap,
+    ) {
+        let mut worklist = Vec::new();
+        for (&block_id, operands) in &self.operands {
+            if !self.reactive.contains(&block_id)
+                && (operands.iter().any(|&id| reactive_map.is_reactive(id))
+                    || frontiers.iter(block_id).any(|control_block_id| {
+                        has_reactive_test(control_block_id, func, reactive_map)
+                    }))
+            {
+                self.reactive.insert(block_id);
+                worklist.push(block_id);
+            }
+        }
+        while let Some(block_id) = worklist.pop() {
+            for &dependent in self.dependents.get(&block_id).into_iter().flatten() {
+                if self.reactive.insert(dependent) {
+                    worklist.push(dependent);
                 }
             }
-            _ => {}
         }
     }
-    false
 }
 
 // =============================================================================

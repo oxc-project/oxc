@@ -7,7 +7,6 @@ use oxc_css_parser::ast::{
     LessNamespaceValueCallee, LessVariableDeclaration,
 };
 use oxc_formatter_core::{
-    Buffer,
     builders::{
         group, hard_line_break, indent, soft_line_break_or_space, soft_line_indent_or_space, space,
         text,

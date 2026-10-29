@@ -19,7 +19,7 @@ use oxc_allocator::{Allocator, ArenaVec};
 
 use crate::{
     FormatContext, FormatElement, FormatSession, Formatter, IndentWidth, InputKind, LineMode,
-    format_element::{BestFittingElement, Interned, TextWidth},
+    format_element::{BestFittingElement, Interned},
     write::formatter::intern_exact,
 };
 
@@ -34,8 +34,7 @@ pub struct DispatchRequest<'r> {
     pub input_kind: InputKind,
     /// Parent→child language-pair specific data,
     /// downcast by the implementation (`None` for most pairs; e.g. JS's `CssInJsTemplate`).
-    /// The borrowed counterpart of [`DispatchPayload::child_context`]
-    /// (borrowed because the parent outlives the dispatch call).
+    /// Only parent→child: a child formats what the parent asks for, it reports nothing back.
     pub parent_context: Option<&'r dyn Any>,
 }
 
@@ -55,8 +54,8 @@ impl DispatchRequest<'_> {
 /// optional-embed callers degrade the same way for both,
 /// but the two must never be conflated at the source.
 pub enum DispatchResponse<'a> {
-    /// The child formatted the request; consume [`DispatchPayload`].
-    Formatted(DispatchPayload<'a>),
+    /// The child formatted the request; the parent writes its IR as-is.
+    Formatted(EmbeddedIr<'a>),
     /// Deliberately not formatted; keep the original source untouched.
     PreserveOriginal,
 }
@@ -77,34 +76,16 @@ pub type FormatDispatcher = Arc<
         + Sync,
 >;
 
-/// IR built by a language crate's embedded entry point (`format_to_ir`) for one input text.
-/// The orchestrator's dispatcher wraps it into a [`DispatchPayload`].
+/// IR built by a language crate's embedded entry point (`format_to_ir`) for one input text,
+/// carried by [`DispatchResponse::Formatted`].
 ///
 /// Every language crate's `format_to_ir` returns this shape,
 /// so a new child language only has to fill in the fields (no per-crate tuple conventions).
 pub struct EmbeddedIr<'a> {
     /// The formatter IR, arena-allocated alongside its elements.
-    /// Its `FormatElement::TailwindClass` indices point into the session's class scope.
-    pub ir: ArenaVec<'a, FormatElement<'a>>,
-}
-
-impl<'a> From<EmbeddedIr<'a>> for DispatchPayload<'a> {
-    fn from(embedded: EmbeddedIr<'a>) -> Self {
-        Self { doc: embedded.ir, child_context: None }
-    }
-}
-
-/// The child's formatted product, carried by [`DispatchResponse::Formatted`].
-pub struct DispatchPayload<'a> {
-    /// The formatted IR, arena-allocated alongside its elements.
     /// Its `FormatElement::TailwindClass` indices already point into the parent's class scope
     /// (the child session shares it), so the parent writes it as-is.
-    pub doc: ArenaVec<'a, FormatElement<'a>>,
-    /// Child→parent language-pair specific data,
-    /// downcast by the parent (`None` for most pairs; e.g. HTML's `has_multiple_root_elements`).
-    /// The owned counterpart of [`DispatchRequest::parent_context`]
-    /// (owned because it outlives the child's stack frame).
-    pub child_context: Option<Box<dyn Any>>,
+    pub ir: ArenaVec<'a, FormatElement<'a>>,
 }
 
 /// Dispatches one embedded fragment and hands out its doc:
@@ -125,7 +106,6 @@ pub fn dispatch_fragment_ir<'a, C: FormatContext>(
 ///
 /// `None` covers [`DispatchResponse::PreserveOriginal`] and operational errors alike;
 /// the caller keeps its original source.
-/// Embed sites that must inspect [`DispatchPayload::child_context`] first stay manual.
 pub fn dispatch_ir<'a, C: FormatContext>(
     f: &Formatter<'_, 'a, C>,
     request: DispatchRequest<'_>,
@@ -133,7 +113,7 @@ pub fn dispatch_ir<'a, C: FormatContext>(
     let Ok(DispatchResponse::Formatted(result)) = f.session().dispatch(request) else {
         return None;
     };
-    Some(result.doc)
+    Some(result.ir)
 }
 
 /// Rebuild an embedded IR, descending into BestFitting variants and interned content.
@@ -142,7 +122,6 @@ pub fn dispatch_ir<'a, C: FormatContext>(
 /// it either pushes replacement elements into the output and returns `true`, or returns `false` to keep the element unchanged.
 /// A shared `Interned` subtree is rebuilt once and the rebuilt element re-shared.
 /// Nothing is rebuilt until the first change, an IR with none is returned as is.
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
 pub fn map_text_in_ir<'a, F>(
     ir: ArenaVec<'a, FormatElement<'a>>,
     allocator: &'a Allocator,
@@ -156,7 +135,6 @@ where
 }
 
 /// Returns `None` if no element changed.
-#[expect(clippy::mutable_key_type)] // `Interned` hashes by pointer identity
 #[expect(clippy::option_option)]
 fn map_text_in_ir_impl<'a, F>(
     ir: &[FormatElement<'a>],
@@ -174,7 +152,7 @@ where
     for (index, element) in ir.iter().enumerate() {
         let changed = match element {
             FormatElement::Text { text, .. } | FormatElement::Token { text } => {
-                map_text(text, &mut out)
+                map_text(text.as_str(), &mut out)
             }
             FormatElement::BestFitting(best_fitting) => {
                 let mut changed = false;
@@ -249,10 +227,7 @@ pub fn push_text_with_literal_lines<'a>(
             out.push(FormatElement::Line(LineMode::Literal));
         }
         if !line.is_empty() {
-            out.push(FormatElement::Text {
-                text: line,
-                width: TextWidth::from_text(line, indent_width),
-            });
+            out.push(FormatElement::text(line, indent_width));
         }
     }
 }

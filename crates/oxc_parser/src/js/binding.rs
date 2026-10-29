@@ -14,19 +14,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.context_add(Context::In, |p| p.parse_initializer(start, pattern))
     }
 
-    pub(super) fn parse_binding_pattern(&mut self) -> BindingPattern<'a> {
-        self.parse_binding_pattern_kind()
-    }
-
     pub(super) fn parse_binding_pattern_with_type_annotation(
         &mut self,
     ) -> (BindingPattern<'a>, Option<ArenaBox<'a, TSTypeAnnotation<'a>>>) {
-        let pattern = self.parse_binding_pattern_kind();
+        let pattern = self.parse_binding_pattern();
         let type_annotation = self.parse_ts_type_annotation();
         (pattern, type_annotation)
     }
 
-    pub(crate) fn parse_binding_pattern_kind(&mut self) -> BindingPattern<'a> {
+    pub(crate) fn parse_binding_pattern(&mut self) -> BindingPattern<'a> {
         match self.cur_kind() {
             Kind::LCurly => self.parse_object_binding_pattern(),
             Kind::LBrack => self.parse_array_binding_pattern(),
@@ -92,7 +88,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // advance `...`
         let init_start = self.cur_start();
 
-        let pattern = self.parse_binding_pattern_kind();
+        let pattern = self.parse_binding_pattern();
         // Rest element does not allow `?`, checked in checker/typescript.rs
         if self.at(Kind::Question) && self.is_ts {
             let span = self.cur_token().span();
@@ -127,7 +123,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.bump_any(); // advance `...`
         let init_start = self.cur_start();
 
-        let pattern = self.parse_binding_pattern_kind();
+        let pattern = self.parse_binding_pattern();
         // Rest element does not allow `?`, checked in checker/typescript.rs
         if self.at(Kind::Question) && self.is_ts {
             let span = self.cur_token().span();

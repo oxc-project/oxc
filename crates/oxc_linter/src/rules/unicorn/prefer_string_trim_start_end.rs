@@ -63,36 +63,25 @@ impl Rule for PreferStringTrimStartEnd {
             return;
         };
 
-        let (span, name) = match member_expr {
-            MemberExpression::StaticMemberExpression(v) => {
-                if !matches!(v.property.name.as_str(), "trimLeft" | "trimRight") {
-                    return;
-                }
-                (v.property.span, &v.property.name)
-            }
+        let MemberExpression::StaticMemberExpression(member_expr) = member_expr else {
+            return;
+        };
+        let name = member_expr.property.name.as_str();
+        let replacement = match name {
+            "trimLeft" => "trimStart",
+            "trimRight" => "trimEnd",
             _ => return,
         };
+        let span = member_expr.property.span;
 
         if !call_expr.arguments.is_empty() {
             return;
         }
 
         ctx.diagnostic_with_fix(
-            prefer_string_trim_start_end_diagnostic(
-                span,
-                get_replacement(name.as_str()),
-                name.as_str(),
-            ),
-            |fixer| fixer.replace(span, get_replacement(name.as_str())),
+            prefer_string_trim_start_end_diagnostic(span, replacement, name),
+            |fixer| fixer.replace(span, replacement),
         );
-    }
-}
-
-fn get_replacement(name: &str) -> &'static str {
-    match name {
-        "trimLeft" => "trimStart",
-        "trimRight" => "trimEnd",
-        _ => unreachable!(),
     }
 }
 

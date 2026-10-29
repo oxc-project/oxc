@@ -106,6 +106,7 @@ declare_oxc_lint!(
     NoDuplicates,
     import,
     style,
+    recommended,
     conditional_fix,
     config = NoDuplicates,
     version = "0.2.11",

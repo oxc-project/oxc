@@ -28,6 +28,22 @@
      background-color: var(--wa-color-surface-default);
    }
  
+@@ -188,11 +189,12 @@
+   [part~="body"] {
+     display: grid;
+     min-height: 100%;
+     align-items: flex-start;
+-    grid-template-columns:
+-      minmax(0, var(--menu-width)) minmax(0, var(--main-width))
+-      minmax(0, var(--aside-width));
++    grid-template-columns: minmax(0, var(--menu-width)) minmax(
++        0,
++        var(--main-width)
++      ) minmax(0, var(--aside-width));
+     grid-template-rows: minmax(0, 1fr);
+     grid-template-areas: "menu main aside";
+   }
+   [part~="main"] {
 
 `````
 
@@ -514,10 +530,9 @@ export default css`
     display: grid;
     min-height: 100%;
     align-items: flex-start;
-    grid-template-columns: minmax(0, var(--menu-width)) minmax(
-        0,
-        var(--main-width)
-      ) minmax(0, var(--aside-width));
+    grid-template-columns:
+      minmax(0, var(--menu-width)) minmax(0, var(--main-width))
+      minmax(0, var(--aside-width));
     grid-template-rows: minmax(0, 1fr);
     grid-template-areas: "menu main aside";
   }
