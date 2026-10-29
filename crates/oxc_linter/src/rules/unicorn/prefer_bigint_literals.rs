@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, AstType, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::IsGlobalReference;
@@ -65,6 +65,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferBigintLiterals {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const LITERALS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::BigIntLiteral,
+            AstType::StringLiteral,
+            AstType::NumericLiteral,
+        ]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::CallExpression) && nodes.contains_any(LITERALS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call) = node.kind() else { return };
         let Some(reference) = call.callee.get_identifier_reference() else {

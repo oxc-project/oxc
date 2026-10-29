@@ -1,6 +1,6 @@
 use schemars::JsonSchema;
 
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, AstType, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span, best_match};
@@ -97,6 +97,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidTypeof {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::UnaryExpression, AstType::BinaryExpression]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }

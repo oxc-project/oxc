@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -77,6 +77,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafeNegation {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::UnaryExpression, AstType::BinaryExpression]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }

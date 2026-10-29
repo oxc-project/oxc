@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{
         AssignmentTarget, BindingPattern, Expression, ForStatementInit, SimpleAssignmentTarget,
         match_member_expression,
@@ -107,6 +107,16 @@ impl ExpressionExt for Expression<'_> {
 }
 
 impl Rule for PreferForOf {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::ForStatement,
+            AstType::VariableDeclarator,
+            AstType::BinaryExpression,
+            AstType::NumericLiteral,
+        ]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ForStatement(for_stmt) = node.kind() else {
             return;

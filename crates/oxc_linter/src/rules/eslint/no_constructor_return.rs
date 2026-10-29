@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{MethodDefinition, MethodDefinitionKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -51,6 +51,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoConstructorReturn {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::ReturnStatement, AstType::MethodDefinition]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ReturnStatement(ret) = node.kind() else { return };
         if ret.argument.is_none() {

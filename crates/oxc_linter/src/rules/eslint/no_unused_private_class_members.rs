@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use oxc_ast::{AstKind, ast::AssignmentOperator};
+use oxc_ast::{AstKind, AstType, ast::AssignmentOperator};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::{AstNode, NodeId, Semantic};
@@ -123,6 +123,7 @@ impl Rule for NoUnusedPrivateClassMembers {
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
         ctx.semantic().classes().len() > 0
+            && ctx.semantic().nodes().contains(AstType::PrivateIdentifier)
     }
 }
 

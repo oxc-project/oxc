@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, AstType, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -69,6 +69,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCompareNegZero {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::UnaryExpression, AstType::BinaryExpression]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::UnaryExpression(unary) = node.kind() else {
             return;

@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind, MemberExpressionKind,
+    AstKind, AstType, MemberExpressionKind,
     ast::{BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -51,6 +51,20 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAwaitExpressionMember {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::AwaitExpression,
+            AstType::ParenthesizedExpression,
+        ]);
+        const MEMBERS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::StaticMemberExpression,
+            AstType::ComputedMemberExpression,
+            AstType::PrivateFieldExpression,
+        ]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains_all(TYPES) && nodes.contains_any(MEMBERS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::AwaitExpression(_) = node.kind() else {
             return;

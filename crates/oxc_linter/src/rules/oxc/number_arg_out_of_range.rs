@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -57,6 +57,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NumberArgOutOfRange {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::NumericLiteral, AstType::CallExpression]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::NumericLiteral(literal) = node.kind() else {
             return;

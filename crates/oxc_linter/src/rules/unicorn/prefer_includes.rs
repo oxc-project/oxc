@@ -1,7 +1,7 @@
 use itertools::Itertools;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{ChainElement, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -67,6 +67,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferIncludes {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::BinaryExpression, AstType::CallExpression]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::BinaryExpression(bin_expr) = node.kind() else {
             return;

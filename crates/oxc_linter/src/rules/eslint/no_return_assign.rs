@@ -1,4 +1,4 @@
-use oxc_ast::AstKind;
+use oxc_ast::{AstKind, AstType};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -74,6 +74,15 @@ fn is_sentinel_node(ast_kind: AstKind) -> bool {
 }
 
 impl Rule for NoReturnAssign {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const RETURNS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::ReturnStatement,
+            AstType::ArrowFunctionExpression,
+        ]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::AssignmentExpression) && nodes.contains_any(RETURNS)
+    }
+
     fn from_configuration(value: Value) -> Result<Self, serde_json::error::Error> {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }

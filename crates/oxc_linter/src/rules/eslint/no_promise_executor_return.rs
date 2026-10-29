@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Argument, ArrowFunctionExpression, Expression, Function, FunctionBody, ReturnStatement},
 };
 use oxc_ast_visit::VisitJs;
@@ -122,6 +122,15 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoPromiseExecutorReturn {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const RETURNS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::ReturnStatement,
+            AstType::ArrowFunctionExpression,
+        ]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::NewExpression) && nodes.contains_any(RETURNS)
+    }
+
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }

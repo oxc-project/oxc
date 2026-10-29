@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -48,6 +48,12 @@ declare_oxc_lint!(
     short_description = "Disallow the use of an object literal as a default value for a parameter.",
 );
 impl Rule for NoObjectAsDefaultParameter {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::FormalParameter, AstType::ObjectExpression]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::FormalParameter(formal_param) = node.kind() else {
             return;

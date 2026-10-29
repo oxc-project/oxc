@@ -1,7 +1,7 @@
 use rustc_hash::FxHashSet;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{
         ArrowFunctionExpression, DoWhileStatement, ForInStatement, ForOfStatement, ForStatement,
         Function, IdentifierReference, Statement, WhileStatement,
@@ -66,6 +66,20 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoLoopFunc {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const LOOPS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::ForStatement,
+            AstType::ForInStatement,
+            AstType::ForOfStatement,
+            AstType::WhileStatement,
+            AstType::DoWhileStatement,
+        ]);
+        const FUNCTIONS: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::Function, AstType::ArrowFunctionExpression]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains_any(LOOPS) && nodes.contains_any(FUNCTIONS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::ForStatement(statement) => Self::check_loop_body(node, &statement.body, ctx),

@@ -3,7 +3,7 @@ use std::borrow::Cow;
 use crate::{LintContext, ast_util::is_new_expression, rule::Rule};
 use cow_utils::CowUtils;
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{
         Expression, FormalParameter, ObjectExpression, ObjectPropertyKind, PropertyKey, TSLiteral,
         TSLiteralType, TSType, TSTypeAnnotation, TemplateLiteral,
@@ -60,6 +60,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoInvalidFetchOptions {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const CALLS: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::NewExpression]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::ObjectExpression) && nodes.contains_any(CALLS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ObjectExpression(expr) = node.kind() else {
             return;

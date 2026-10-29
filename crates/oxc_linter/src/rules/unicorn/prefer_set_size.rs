@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{ArrayExpressionElement, CallExpression, Expression, VariableDeclarationKind},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -56,6 +56,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferSetSize {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const CONVERSIONS: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::SpreadElement, AstType::CallExpression]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::StaticMemberExpression) && nodes.contains_any(CONVERSIONS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let conversion_node = match node.kind() {
             AstKind::SpreadElement(_) => {

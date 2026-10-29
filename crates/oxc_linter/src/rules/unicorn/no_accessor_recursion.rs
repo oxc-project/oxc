@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind, MemberExpressionKind, StaticPropertyName,
+    AstKind, AstType, MemberExpressionKind, StaticPropertyName,
     ast::{
         BindingPattern, MethodDefinition, ObjectProperty, PropertyKey, PropertyKind,
         SimpleAssignmentTarget, UpdateExpression,
@@ -78,6 +78,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAccessorRecursion {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const ACCESSORS: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::ObjectProperty, AstType::MethodDefinition]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::ThisExpression) && nodes.contains_any(ACCESSORS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ThisExpression(this_expr) = node.kind() else {
             return;

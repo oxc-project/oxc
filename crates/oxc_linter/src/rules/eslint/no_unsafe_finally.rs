@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{BreakStatement, ContinueStatement},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -59,6 +59,17 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUnsafeFinally {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const ABRUPT_COMPLETIONS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::BreakStatement,
+            AstType::ContinueStatement,
+            AstType::ReturnStatement,
+            AstType::ThrowStatement,
+        ]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::TryStatement) && nodes.contains_any(ABRUPT_COMPLETIONS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let sentinel_node_type = match node.kind() {
             AstKind::BreakStatement(stmt) if stmt.label.is_none() => SentinelNodeType::Break,

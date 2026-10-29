@@ -1,6 +1,6 @@
 // Based on https://github.com/rust-lang/rust-clippy//blob/c9a43b18f11219fa70fe632b29518581fcd589c8/clippy_lints/src/operators/misrefactored_assign_op.rs
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{AssignmentTarget, Expression, SimpleAssignmentTarget, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -59,6 +59,14 @@ declare_oxc_lint!(
 );
 
 impl Rule for MisrefactoredAssignOp {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::AssignmentExpression,
+            AstType::BinaryExpression,
+        ]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::AssignmentExpression(assignment_expr) = node.kind() else {
             return;

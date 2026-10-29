@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{CallExpression, Expression, RegExpFlags, RegExpLiteral},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -62,6 +62,15 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferStringStartsEndsWith {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::RegExpLiteral,
+            AstType::StaticMemberExpression,
+            AstType::CallExpression,
+        ]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::RegExpLiteral(regex) = node.kind() else {
             return;

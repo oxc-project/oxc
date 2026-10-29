@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{AssignmentTarget, BindingPattern, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -62,6 +62,15 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoThisAssignment {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const ASSIGNMENTS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::VariableDeclarator,
+            AstType::AssignmentExpression,
+        ]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::ThisExpression) && nodes.contains_any(ASSIGNMENTS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         match node.kind() {
             AstKind::VariableDeclarator(variable_decl) => {

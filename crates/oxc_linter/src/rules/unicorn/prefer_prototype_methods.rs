@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, AstType, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -57,6 +57,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferPrototypeMethods {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const LITERALS: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::ArrayExpression, AstType::ObjectExpression]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::CallExpression) && nodes.contains_any(LITERALS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

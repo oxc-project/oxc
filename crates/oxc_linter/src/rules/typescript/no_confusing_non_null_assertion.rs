@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{ChainElement, Expression, SimpleAssignmentTarget},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -198,7 +198,14 @@ impl Rule for NoConfusingNonNullAssertion {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
+        const OPERATIONS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::BinaryExpression,
+            AstType::AssignmentExpression,
+        ]);
+        let nodes = ctx.semantic().nodes();
         ctx.source_type().is_typescript()
+            && nodes.contains(AstType::TSNonNullExpression)
+            && nodes.contains_any(OPERATIONS)
     }
 }
 

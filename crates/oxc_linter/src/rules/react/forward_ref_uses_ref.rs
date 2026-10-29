@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{CallExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -67,6 +67,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for ForwardRefUsesRef {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const FUNCTIONS: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::Function, AstType::ArrowFunctionExpression]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::CallExpression) && nodes.contains_any(FUNCTIONS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let function_span = match node.kind() {
             AstKind::Function(function) => function.span,

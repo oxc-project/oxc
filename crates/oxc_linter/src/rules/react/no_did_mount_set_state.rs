@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, AstType, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -105,7 +105,9 @@ impl Rule for NoDidMountSetState {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_jsx()
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ThisExpression]);
+        ctx.source_type().is_jsx() && ctx.semantic().nodes().contains_all(TYPES)
     }
 }
 

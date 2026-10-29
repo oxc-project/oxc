@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::{AstKind, AstType, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::Span;
@@ -59,6 +59,16 @@ declare_oxc_lint!(
 );
 
 impl Rule for ConsistentEmptyArraySpread {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::ConditionalExpression,
+            AstType::SpreadElement,
+            AstType::ArrayExpression,
+            AstType::StringLiteral,
+        ]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::ConditionalExpression(conditional_expr) = node.kind() else {
             return;

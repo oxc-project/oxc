@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Expression, MemberExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -135,6 +135,15 @@ fn is_multiple_calls(node: &AstNode, ctx: &LintContext, root_scope_id: ScopeId) 
 }
 
 impl Rule for PreferSetHas {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::VariableDeclarator,
+            AstType::CallExpression,
+            AstType::StaticMemberExpression,
+        ]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::VariableDeclarator(declarator) = node.kind() else {
             return;

@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Expression, TSNonNullExpression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -106,7 +106,11 @@ impl Rule for NoNonNullAssertedNullishCoalescing {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
+        const TYPES: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::LogicalExpression,
+            AstType::TSNonNullExpression,
+        ]);
+        ctx.source_type().is_typescript() && ctx.semantic().nodes().contains_all(TYPES)
     }
 }
 

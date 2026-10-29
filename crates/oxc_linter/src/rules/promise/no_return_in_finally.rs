@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Expression, FunctionBody, Statement},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -49,6 +49,12 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoReturnInFinally {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::CallExpression, AstType::ReturnStatement]);
+        ctx.semantic().nodes().contains_all(TYPES)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;

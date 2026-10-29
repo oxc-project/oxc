@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{Argument, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -87,6 +87,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoAsyncPromiseExecutor {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const FUNCTIONS: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::Function, AstType::ArrowFunctionExpression]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::NewExpression) && nodes.contains_any(FUNCTIONS)
+    }
+
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::NewExpression(new_expression) = node.kind() else {
             return;

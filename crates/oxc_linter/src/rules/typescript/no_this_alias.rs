@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{AssignmentTarget, BindingPattern, match_simple_assignment_target},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -168,7 +168,14 @@ impl Rule for NoThisAlias {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
+        const ASSIGNMENTS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::VariableDeclarator,
+            AstType::AssignmentExpression,
+        ]);
+        let nodes = ctx.semantic().nodes();
         ctx.source_type().is_typescript()
+            && nodes.contains(AstType::ThisExpression)
+            && nodes.contains_any(ASSIGNMENTS)
     }
 }
 

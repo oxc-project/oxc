@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{ChainElement, Expression, match_member_expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -97,7 +97,9 @@ impl Rule for NoNonNullAssertedOptionalChain {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::TSNonNullExpression, AstType::ChainExpression]);
+        ctx.source_type().is_typescript() && ctx.semantic().nodes().contains_all(TYPES)
     }
 }
 

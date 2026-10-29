@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::BindingIdentifier};
+use oxc_ast::{AstKind, AstType, ast::BindingIdentifier};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_semantic::SymbolId;
@@ -75,7 +75,9 @@ impl Rule for NoUnsafeDeclarationMerging {
     }
 
     fn should_run(&self, ctx: &ContextHost) -> bool {
-        ctx.source_type().is_typescript()
+        const TYPES: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::Class, AstType::TSInterfaceDeclaration]);
+        ctx.source_type().is_typescript() && ctx.semantic().nodes().contains_all(TYPES)
     }
 }
 

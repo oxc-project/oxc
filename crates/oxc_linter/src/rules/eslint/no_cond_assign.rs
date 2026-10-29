@@ -1,5 +1,5 @@
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{AssignmentExpression, Expression},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -75,6 +75,18 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoCondAssign {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const CONDITIONS: &AstTypesBitset = &AstTypesBitset::from_types(&[
+            AstType::IfStatement,
+            AstType::WhileStatement,
+            AstType::DoWhileStatement,
+            AstType::ForStatement,
+            AstType::ConditionalExpression,
+        ]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::AssignmentExpression) && nodes.contains_any(CONDITIONS)
+    }
+
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }

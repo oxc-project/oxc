@@ -3,7 +3,7 @@ use schemars::JsonSchema;
 use serde::Deserialize;
 
 use oxc_ast::{
-    AstKind,
+    AstKind, AstType,
     ast::{BindingPattern, Expression, FormalParameter, FormalParameters},
 };
 use oxc_diagnostics::OxcDiagnostic;
@@ -87,6 +87,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for ParamNames {
+    fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
+        const FUNCTIONS: &AstTypesBitset =
+            &AstTypesBitset::from_types(&[AstType::Function, AstType::ArrowFunctionExpression]);
+        let nodes = ctx.semantic().nodes();
+        nodes.contains(AstType::NewExpression) && nodes.contains_any(FUNCTIONS)
+    }
+
     fn from_configuration(value: serde_json::Value) -> Result<Self, serde_json::error::Error> {
         DefaultRuleConfig::<ParamNamesConfig>::from_value(value)
             .map(DefaultRuleConfig::into_inner)
