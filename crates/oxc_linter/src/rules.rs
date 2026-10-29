@@ -689,6 +689,7 @@ pub(crate) mod unicorn {
     pub mod prefer_ternary;
     pub mod prefer_top_level_await;
     pub mod prefer_type_error;
+    pub mod name_replacements;
     pub mod relative_url_style;
     pub mod require_array_join_separator;
     pub mod require_module_attributes;
