@@ -48,6 +48,23 @@ pub use token::Token;
 use source::{Source, SourcePosition};
 use trivia_builder::TriviaBuilder;
 
+// Tokens whose spelling is always one ASCII byte. `Eof` marks bytes needing a handler.
+static SIMPLE_KINDS: [Kind; 256] = {
+    let mut table = [Kind::Eof; 256];
+    table[b'(' as usize] = Kind::LParen;
+    table[b')' as usize] = Kind::RParen;
+    table[b'[' as usize] = Kind::LBrack;
+    table[b']' as usize] = Kind::RBrack;
+    table[b'{' as usize] = Kind::LCurly;
+    table[b'}' as usize] = Kind::RCurly;
+    table[b';' as usize] = Kind::Semicolon;
+    table[b',' as usize] = Kind::Comma;
+    table[b':' as usize] = Kind::Colon;
+    table[b'~' as usize] = Kind::Tilde;
+    table[b'@' as usize] = Kind::At;
+    table
+};
+
 #[derive(Debug)]
 pub struct LexerCheckpoint<'a> {
     source_position: SourcePosition<'a>,
@@ -279,6 +296,29 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Read next token in file.
     /// Use `first_token` for first token, and this method for all further tokens.
     pub fn next_token(&mut self) -> Token {
+        // Avoid the indirect byte-handler call for punctuation, including a preceding space.
+        let mut pos = self.source.position();
+        // SAFETY: The source cursor is never beyond the end.
+        if unsafe { self.source.end().offset_from(pos) } >= 2 {
+            // SAFETY: At least two bytes remain, so skipping one space leaves a readable byte.
+            let byte = unsafe {
+                pos = pos.add(usize::from(pos.read() == b' '));
+                pos.read()
+            };
+            let kind = SIMPLE_KINDS[byte as usize];
+            if kind != Kind::Eof {
+                self.trivia_builder.clear_pure_comments();
+                self.trivia_builder.clear_no_side_effects_comments();
+                self.token.set_start(self.source.offset_of(pos));
+                // SAFETY: All entries in the table are single ASCII characters.
+                self.source.set_position(unsafe { pos.add(1) });
+                return self.finish_next(kind);
+            }
+        }
+        self.next_token_slow()
+    }
+
+    fn next_token_slow(&mut self) -> Token {
         let kind = self.read_next_token();
         self.finish_next(kind)
     }
@@ -290,13 +330,12 @@ impl<'a, C: Config> Lexer<'a, C> {
     }
 
     // This is a workaround for a problem where `next_token` is not inlined in lexer benchmark.
-    // Must be kept in sync with `next_token` above, and contain exactly the same code.
+    // Delegate to `next_token` so the benchmark includes the same fast path as the parser.
     #[cfg(feature = "benchmarking")]
     #[expect(clippy::inline_always)]
     #[inline(always)]
     pub fn next_token_for_benchmarks(&mut self) -> Token {
-        let kind = self.read_next_token();
-        self.finish_next(kind)
+        self.next_token()
     }
 
     #[inline]
@@ -649,4 +688,57 @@ impl<'a, C: Config> Lexer<'a, C> {
 #[cold]
 pub fn cold_branch<F: FnOnce() -> T, T>(f: F) -> T {
     f()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::{NoTokensLexerConfig, RuntimeLexerConfig, TokensLexerConfig};
+
+    fn lex<C: Config>(source: &str, config: C, fast: bool) -> (Vec<Token>, Vec<Token>) {
+        let allocator = Allocator::default();
+        let mut lexer = Lexer::new(
+            &allocator,
+            source,
+            SourceType::mjs(),
+            config,
+            UniquePromise::new_for_tests_and_benchmarks(),
+        );
+        let mut tokens = Vec::new();
+        loop {
+            let token = if fast {
+                lexer.next_token()
+            } else {
+                let kind = lexer.read_next_token();
+                lexer.finish_next(kind)
+            };
+            tokens.push(token);
+            if token.kind() == Kind::Eof {
+                break;
+            }
+        }
+        assert!(lexer.errors.is_empty(), "{source:?}");
+        (tokens, lexer.tokens.to_vec())
+    }
+
+    fn check<C: Config + Copy>(source: &str, config: C) {
+        assert_eq!(lex(source, config, true), lex(source, config, false), "{source:?}");
+    }
+
+    #[test]
+    fn punctuation_fast_path() {
+        for punctuation in "()[]{};,:~@".chars() {
+            for prefix in
+                ["", " ", "a", "a ", "a  ", "a\n", "a\r\n\t", "a/*c*/", "a//c\n", "a\u{2028}"]
+            {
+                for suffix in ["", " ", "\n", "α"] {
+                    let source = format!("{prefix}{punctuation}{suffix}");
+                    check(&source, NoTokensLexerConfig);
+                    check(&source, TokensLexerConfig);
+                    check(&source, RuntimeLexerConfig::new(false));
+                    check(&source, RuntimeLexerConfig::new(true));
+                }
+            }
+        }
+    }
 }
