@@ -2,7 +2,7 @@ use crate::token::tk;
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
-    find::{find, find_line_terminator},
+    find::find,
     lanes::Lanes,
 };
 
@@ -11,8 +11,8 @@ use super::{
         html_close_comment_at, html_open_comment_at, lex_html_close_comment, lex_html_open_comment,
     },
     common::{
-        OPENER_BYTES, OPENER8_BYTES, lex_slash, lex_string, lex_template_segment,
-        skip_unicode_brace_escape,
+        OPENER_BYTES, OPENER8_BYTES, find_line_terminator, lex_slash, lex_string,
+        lex_template_segment, skip_unicode_brace_escape,
     },
 };
 

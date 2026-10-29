@@ -1,27 +1,4 @@
-use super::find;
-
 use crate::pipeline::bytes;
-
-/// First ECMAScript LineTerminator at/after `i`: LF, CR, or the 3-byte LS/PS
-/// (U+2028/U+2029). Stops at LS/PS too, so the hashbang scan cannot run
-/// through one. A 0xE2 that isn't LS/PS keeps scanning; the 2-byte confirm
-/// past a trailing 0xE2 reads the pad, which can never match 0x80.
-#[inline]
-pub unsafe fn find_line_terminator(src: *const u8, n: usize, mut i: usize) -> usize {
-    loop {
-        let p = find(src, n, i, [b'\n', b'\r', 0xE2]);
-        if p >= n {
-            return n;
-        }
-        if *src.add(p) != 0xE2 {
-            return p;
-        }
-        if *src.add(p + 1) == 0x80 && (*src.add(p + 2) == 0xA8 || *src.add(p + 2) == 0xA9) {
-            return p;
-        }
-        i = p + 1;
-    }
-}
 
 /// Byte length (2 or 3) of the multi-byte ECMAScript WhiteSpace /
 /// LineTerminator at `p`, or 0. The non-ASCII set: U+0085, U+00A0, U+1680,

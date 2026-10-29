@@ -4,6 +4,7 @@ use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0},
     bytes::hex_val,
     disambiguate::not_operator_position,
+    find::find,
     lanes::Lanes,
     scan::{scan_quoted, scan_regex, scan_tmpl_text},
     token_view,
@@ -177,4 +178,25 @@ pub(super) unsafe fn skip_unicode_brace_escape(src: *const u8, n: usize, s: usiz
         j += 1;
     }
     j
+}
+
+/// First ECMAScript LineTerminator at/after `i`: LF, CR, or the 3-byte LS/PS
+/// (U+2028/U+2029). Stops at LS/PS too, so the hashbang scan cannot run
+/// through one. A 0xE2 that isn't LS/PS keeps scanning; the 2-byte confirm
+/// past a trailing 0xE2 reads the pad, which can never match 0x80.
+#[inline]
+pub(super) unsafe fn find_line_terminator(src: *const u8, n: usize, mut i: usize) -> usize {
+    loop {
+        let p = find(src, n, i, [b'\n', b'\r', 0xE2]);
+        if p >= n {
+            return n;
+        }
+        if *src.add(p) != 0xE2 {
+            return p;
+        }
+        if *src.add(p + 1) == 0x80 && (*src.add(p + 2) == 0xA8 || *src.add(p + 2) == 0xA9) {
+            return p;
+        }
+        i = p + 1;
+    }
 }

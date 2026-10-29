@@ -3,7 +3,8 @@ use std::ptr;
 use crate::pipeline::{
     bitmap::bm_next0,
     bytes::{is_word, is_ws},
-    find::{find_line_terminator, unicode_ws_len},
+    carve::common::find_line_terminator,
+    find::unicode_ws_len,
     scan::scan_block_comment,
 };
 

@@ -4,7 +4,7 @@ use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
     bytes::{is_digit, is_id_start, is_word},
     disambiguate::{not_operator_position, prev_sig},
-    find::{find, find_line_terminator},
+    find::find,
     lanes::Lanes,
     token_view,
 };
@@ -15,8 +15,8 @@ use super::{
         lex_html_open_comment, lex_line_comment,
     },
     common::{
-        OPENER_BYTES, OPENER8_BYTES, lex_slash, lex_string, lex_template_segment,
-        skip_unicode_brace_escape,
+        OPENER_BYTES, OPENER8_BYTES, find_line_terminator, lex_slash, lex_string,
+        lex_template_segment, skip_unicode_brace_escape,
     },
 };
 
