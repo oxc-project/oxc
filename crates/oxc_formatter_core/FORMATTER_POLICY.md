@@ -119,6 +119,7 @@ Printed text is measured by its display width (`TextWidth` / `text_width`, via `
 
 - East Asian wide and fullwidth characters, and emoji presentation sequences count as 2
 - Zero-width characters count as 0: nonspacing and enclosing marks (`Mn` / `Me`), and format characters (`U+200B..U+200F`, `U+FEFF`, ...)
+- A tab counts as `tabWidth` wherever it sits, not up to the next tab stop (Prettier counts it as 0, prettier/prettier#20381)
 - Everything else counts as 1, ambiguous width included
 
 This holds for the printer's line width and for every heuristic comparing text with a column budget (`tabWidth`, a share of `printWidth`, a short object key, ...),
