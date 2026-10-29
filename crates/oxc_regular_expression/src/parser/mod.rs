@@ -13,6 +13,40 @@ mod test {
     use crate::{ConstructorParser, LiteralParser, Options, ast::Term};
 
     #[test]
+    fn trailing_escape() {
+        let allocator = Allocator::default();
+        for flags in ["", "u", "v"] {
+            for pattern in [r"\", r"a\", r"a|\"] {
+                assert!(
+                    LiteralParser::new(&allocator, pattern, Some(flags), Options::default())
+                        .parse()
+                        .is_err(),
+                    "/{pattern}/{flags}"
+                );
+            }
+            let flags_source = format!("\"{flags}\"");
+            for source in [r#""\\""#, r#""a\\""#, r"`a\\`"] {
+                assert!(
+                    ConstructorParser::new(
+                        &allocator,
+                        source,
+                        Some(&flags_source),
+                        Options::default()
+                    )
+                    .parse()
+                    .is_err(),
+                    "new RegExp({source}, {flags_source})"
+                );
+            }
+            assert!(
+                LiteralParser::new(&allocator, r"\\", Some(flags), Options::default())
+                    .parse()
+                    .is_ok()
+            );
+        }
+    }
+
+    #[test]
     fn escaped_group_names() {
         let allocator = Allocator::default();
 

@@ -359,10 +359,12 @@ impl<'a> PatternParser<'a> {
         }
 
         // \ AtomEscape[?UnicodeMode, ?NamedCaptureGroups]
-        if self.reader.eat('\\')
-            && let Some(atom_escape) = self.parse_atom_escape(span_start)?
-        {
-            return Ok(Some(atom_escape));
+        if self.reader.eat('\\') {
+            return self.parse_atom_escape(span_start)?.map(Some).ok_or_else(|| {
+                diagnostics::invalid_atom_escape(
+                    self.span_factory.create(span_start, self.reader.offset()),
+                )
+            });
         }
 
         // CharacterClass[?UnicodeMode, ?UnicodeSetsMode]

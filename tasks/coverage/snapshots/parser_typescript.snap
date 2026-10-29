@@ -12373,14 +12373,14 @@ Expect to Parse: tasks/coverage/typescript/tsc/testdata/tests/cases/conformance/
     ╰────
   help: Duplicate names must be in different alternatives
 
-  × Invalid regular expression: Could not parse the entire pattern
-   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:7:5]
+  × Invalid regular expression: Invalid escape sequence
+   ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:7:4]
  6 │   // Compare to
  7 │   /\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s/u,
-   ·     ▲
+   ·    ─
  8 │   /[\q\u\i\c\k\_\f\o\x\-\j\u\m\p\s]/u,
    ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid regular expression: Invalid class atom
    ╭─[typescript/tsc/testdata/tests/cases/compiler/regularExpressionAnnexB.ts:8:5]
