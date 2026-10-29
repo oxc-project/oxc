@@ -6,6 +6,9 @@
 //!
 //! [`DynCpu`] is an enum of these types. [`DynCpu::detect`] returns the best one available.
 //!
+//! [`BASELINE`] is the feature set to use without detecting the CPU's features.
+//! It's the best one which is known at compile time to be available.
+//!
 //! Code which has SIMD implementations takes a type implementing [`Cpu`],
 //! and uses [`cpu_select!`] to pick an implementation.
 //! [`cpu_versions!`] turns a function into one with a separate entry point for each CPU feature set.
@@ -28,20 +31,31 @@
 //! These types are unforgeable.
 //!
 //! * Code outside this file can't create them.
-//! * Each has a private field, and `DynCpu::detect` is the only code which creates them.
-//!   It only creates an `Avx2` or a `Neon` if that feature set is available.
+//! * Each has a private field, and only 3 places create them:
+//!   - `DynCpu::detect` only creates an `Avx2` if that feature set is available.
+//!   - [`BASELINE`] is only a `Neon` when Neon is enabled at compile time, which guarantees it's available.
+//!     Otherwise it's a [`Generic`], which guarantees nothing.
+//!   - `CpuPrivate::DYN_CPU` holds an instance of the type.
+//!     The trait is private, so only code in this file can read it.
+//!     Only [`to_dyn`] reads it, and it takes an instance of the same type,
+//!     so it only gives one to code which already has one.
 //! * A [`DynCpu`] can only be built from one of these types, so it's unforgeable too.
 //! * [`Cpu`] trait is sealed, so no other type can implement it.
 //!
-//! Therefore, holding one of these types guarantees that that the CPU supports that feature set.
+//! Therefore, holding one of these types guarantees that the CPU supports that feature set.
 //!
 //! The rest of the lexer relies on this for safety. A function which takes `Avx2` or `Neon`
 //! can use instructions that rely on support for those features without any checks.
 //!
 //! DO NOT add any other way to create these types (e.g. a `Default` impl or a public constructor).
 
+use std::mem;
+
 mod select_macro;
 mod versions_macro;
+
+#[cfg(test)]
+mod tests;
 
 pub(super) use select_macro::cpu_select;
 pub(super) use versions_macro::{__cpu_versions, apply, cpu_versions};
@@ -50,12 +64,50 @@ pub(super) use versions_macro::{__cpu_versions, apply, cpu_versions};
 ///
 /// Implemented by all types representing specific CPU feature sets, and by [`DynCpu`].
 #[expect(private_bounds)]
-pub(super) trait Cpu: Sealed + Copy {
-    fn to_dyn(self) -> DynCpu;
+pub(super) trait Cpu: CpuPrivate + Copy {
+    /// Get the [`DynCpu`] for this type.
+    ///
+    /// Same as the [`to_dyn`] function, which works in `const` code too.
+    #[inline(always)]
+    fn to_dyn(self) -> DynCpu {
+        to_dyn(self)
+    }
 }
 
 /// Private trait to guarantee that only types defined in this file can implement [`Cpu`].
-trait Sealed {}
+///
+/// It also holds [`DYN_CPU`], for [`to_dyn`].
+///
+/// [`DYN_CPU`] is on this trait, not on [`Cpu`], so code outside this file can't read it.
+/// It holds an instance of the type, so if code outside this file could read it,
+/// that would allow bypassing CPU feature detection.
+///
+/// [`DYN_CPU`]: Self::DYN_CPU
+trait CpuPrivate {
+    /// The [`DynCpu`] which [`to_dyn`] returns for this type.
+    ///
+    /// `Avx2`, `Neon` and [`Generic`] each have only one value, so this can hold it.
+    /// `None` for [`DynCpu`] itself, and for [`Generic`] when it's uninhabited.
+    const DYN_CPU: Option<DynCpu>;
+}
+
+/// Get the [`DynCpu`] for a type implementing [`Cpu`].
+///
+/// Same as [`Cpu::to_dyn`], but this works in `const` code too.
+/// A `const fn` can't call a trait method on a generic type, so it can't call [`Cpu::to_dyn`].
+/// [`cpu_select!`] and [`cpu_versions!`] use this function, so they work in `const` code.
+///
+/// Only [`DynCpu`] needs `cpu`. It's taken for all types so that this can only be called
+/// by code which already has one of these types.
+#[inline(always)]
+pub(super) const fn to_dyn<C: Cpu>(cpu: C) -> DynCpu {
+    match C::DYN_CPU {
+        Some(dyn_cpu) => dyn_cpu,
+        // SAFETY: `DYN_CPU` is `None` only for `DynCpu`, and for `Generic` when it's uninhabited.
+        // No value of an uninhabited type exists, so `cpu` must be a `DynCpu`.
+        None => unsafe { mem::transmute_copy::<C, DynCpu>(&cpu) },
+    }
+}
 
 /// Enum representing a CPU feature set.
 ///
@@ -75,20 +127,15 @@ pub(super) enum DynCpu {
     Neon(Neon),
     /// Exists on all platforms, but can never be created on aarch64
     /// when Neon is enabled at compile time. See [`Generic`].
+    #[cfg_attr(all(target_arch = "aarch64", target_feature = "neon"), expect(dead_code))]
     Generic(Generic),
 }
 
-impl Cpu for DynCpu {
-    /// Get [`DynCpu`].
-    ///
-    /// Just returns itself.
-    #[inline(always)]
-    fn to_dyn(self) -> DynCpu {
-        self
-    }
-}
+impl Cpu for DynCpu {}
 
-impl Sealed for DynCpu {}
+impl CpuPrivate for DynCpu {
+    const DYN_CPU: Option<DynCpu> = None;
+}
 
 /// Generic implementation.
 mod generic {
@@ -113,28 +160,21 @@ mod generic {
     #[cfg(all(target_arch = "aarch64", target_feature = "neon"))]
     type GenericInner = std::convert::Infallible;
 
-    impl Cpu for Generic {
-        /// Get [`DynCpu`] representing generic CPU feature set.
-        #[inline(always)]
-        fn to_dyn(self) -> DynCpu {
-            DynCpu::Generic(self)
-        }
+    impl Cpu for Generic {}
+
+    impl CpuPrivate for Generic {
+        const DYN_CPU: Option<DynCpu> = cfg_select! {
+            all(target_arch = "aarch64", target_feature = "neon") => None,
+            _ => Some(DynCpu::Generic(GENERIC)),
+        };
     }
 
-    impl Sealed for Generic {}
-
-    impl DynCpu {
-        /// Create [`DynCpu::Generic`].
-        ///
-        /// Private within this file. Used only in [`detect`] implementations.
-        /// Not available on aarch64 with Neon enabled at compile time, where a `Generic` can't be created.
-        ///
-        /// [`detect`]: Self::detect
-        #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
-        pub(super) fn generic() -> Self {
-            Generic(()).to_dyn()
-        }
-    }
+    /// [`Generic`] feature set.
+    ///
+    /// Private within this file. Used only to define [`BASELINE`] and `CpuPrivate::DYN_CPU`.
+    /// Not available on aarch64 with Neon enabled at compile time, where a [`Generic`] can't be created.
+    #[cfg(not(all(target_arch = "aarch64", target_feature = "neon")))]
+    pub(super) const GENERIC: Generic = Generic(());
 }
 
 pub(super) use generic::Generic;
@@ -149,15 +189,16 @@ mod x86_64 {
     #[derive(Clone, Copy, Debug)]
     pub struct Avx2(());
 
-    impl Cpu for Avx2 {
-        /// Get [`DynCpu`] representing AVX2 CPU feature set.
-        #[inline(always)]
-        fn to_dyn(self) -> DynCpu {
-            DynCpu::Avx2(self)
-        }
+    impl Cpu for Avx2 {}
+
+    impl CpuPrivate for Avx2 {
+        const DYN_CPU: Option<DynCpu> = Some(DynCpu::Avx2(Avx2(())));
     }
 
-    impl Sealed for Avx2 {}
+    /// Feature set to use without detecting the CPU's features.
+    ///
+    /// Always [`Generic`] on x86_64.
+    pub const BASELINE: Generic = generic::GENERIC;
 
     impl DynCpu {
         /// Detect CPU feature set for x86_64 platform.
@@ -170,14 +211,15 @@ mod x86_64 {
             )) {
                 Avx2(()).to_dyn()
             } else {
-                DynCpu::generic()
+                BASELINE.to_dyn()
             }
         }
     }
 }
 
 #[cfg(target_arch = "x86_64")]
-pub(super) use x86_64::Avx2;
+#[cfg_attr(not(test), expect(unused_imports))]
+pub(super) use x86_64::{Avx2, BASELINE};
 
 /// aarch64 features.
 /// Neon or generic.
@@ -189,15 +231,23 @@ mod aarch64 {
     #[derive(Clone, Copy, Debug)]
     pub struct Neon(());
 
-    impl Cpu for Neon {
-        /// Get [`DynCpu`] representing Neon CPU feature set.
-        #[inline(always)]
-        fn to_dyn(self) -> DynCpu {
-            DynCpu::Neon(self)
-        }
+    impl Cpu for Neon {}
+
+    impl CpuPrivate for Neon {
+        const DYN_CPU: Option<DynCpu> = Some(DynCpu::Neon(Neon(())));
     }
 
-    impl Sealed for Neon {}
+    /// Feature set to use without detecting the CPU's features.
+    ///
+    /// Neon is enabled at compile time, which guarantees that it's available.
+    #[cfg(target_feature = "neon")]
+    pub const BASELINE: Neon = Neon(());
+
+    /// Feature set to use without detecting the CPU's features.
+    ///
+    /// Neon is disabled at compile time, so only the generic feature set is known to be available.
+    #[cfg(not(target_feature = "neon"))]
+    pub const BASELINE: Generic = generic::GENERIC;
 
     impl DynCpu {
         /// Detect CPU feature set for aarch64 platform.
@@ -205,26 +255,37 @@ mod aarch64 {
             // Neon is always enabled except on `aarch64*-unknown-none-softfloat` platforms
             // or when it's specifically disabled by compiling with `-C target-feature=-neon`.
             // Either way, it can be detected at compile time. No runtime feature check.
-            cfg_select! {
-                target_feature = "neon" => Neon(()).to_dyn(),
-                _ => DynCpu::generic(),
-            }
+            BASELINE.to_dyn()
         }
     }
 }
 
 #[cfg(target_arch = "aarch64")]
-pub(super) use aarch64::Neon;
+#[cfg_attr(not(test), expect(unused_imports))]
+pub(super) use aarch64::{BASELINE, Neon};
 
 /// Fallback implementation for other platforms.
 ///
 /// Only generic feature set is available.
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-impl DynCpu {
-    /// Detect CPU feature set for other platform.
+mod other {
+    use super::*;
+
+    /// Feature set to use without detecting the CPU's features.
     ///
-    /// Only generic feature set is available.
-    pub fn detect() -> Self {
-        DynCpu::generic()
+    /// Only the generic feature set is available on platforms other than x86_64 and aarch64.
+    pub const BASELINE: Generic = generic::GENERIC;
+
+    impl DynCpu {
+        /// Detect CPU feature set for other platform.
+        ///
+        /// Only generic feature set is available.
+        pub fn detect() -> Self {
+            BASELINE.to_dyn()
+        }
     }
 }
+
+#[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
+#[cfg_attr(not(test), expect(unused_imports))]
+pub(super) use other::BASELINE;

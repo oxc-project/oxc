@@ -4,6 +4,18 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- af0258d parser: Parse source imports named type (#28062) (camc314)
+- 83633a7 parser: Parse escaped class field names after initializers (#28061) (camc314)
+- 90c58ac parser: Parse postfix updates of sloppy `let` identifiers (#28060) (camc314)
+
+### ⚡ Performance
+
+- a22c9f2 parser: Move annotation comment handling out of hot paths (#28139) (camc314)
+
 ## [0.154.0] - 2026-10-13
 
 ### 💥 BREAKING CHANGES

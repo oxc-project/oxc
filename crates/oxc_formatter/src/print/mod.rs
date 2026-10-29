@@ -454,11 +454,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, AwaitExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_inner = format_with(|f| write!(f, ["await", space(), self.argument()]));
 
-        let is_callee_or_object = match self.parent() {
-            AstNodes::StaticMemberExpression(_) => true,
-            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
-            _ => self.parent().is_call_like_callee_span(self.span),
-        };
+        let is_callee_or_object = self.parent().is_member_object_span(self.span)
+            || self.parent().is_call_like_callee_span(self.span);
 
         if !is_callee_or_object {
             write!(f, [format_inner]);

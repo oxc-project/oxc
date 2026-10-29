@@ -782,7 +782,10 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = PatternParser::may_contain_strings_in_class_contents(kind, &body);
+                // Without UnicodeSetsMode, ClassContents is empty or NonemptyClassRanges,
+                // whose MayContainStrings is always false.
+                let strings = self.state.unicode_sets_mode
+                    && PatternParser::may_contain_strings_in_class_contents(kind, &body);
 
                 // [SS:EE] CharacterClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
@@ -993,7 +996,14 @@ impl<'a> PatternParser<'a> {
         }
 
         if self.reader.eat('\\') {
-            if self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32) {
+            if let Some(class_escape) = self.parse_class_escape(span_start)? {
+                return Ok(Some(class_escape));
+            }
+
+            // Annex B alternatives are tried in order, and do not extend Unicode patterns.
+            if !self.state.unicode_mode
+                && self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32)
+            {
                 return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                     ast::Character {
                         span: self.span_factory.create(span_start, self.reader.offset()),
@@ -1002,10 +1012,6 @@ impl<'a> PatternParser<'a> {
                     },
                     self,
                 ))));
-            }
-
-            if let Some(class_escape) = self.parse_class_escape(span_start)? {
-                return Ok(Some(class_escape));
             }
 
             return Err(diagnostics::invalid_class_atom(
@@ -1065,7 +1071,7 @@ impl<'a> PatternParser<'a> {
                 if let Some(cp) = self
                     .reader
                     .peek()
-                    .filter(|&cp| character::is_decimal_digit(cp) || cp == '-' as u32)
+                    .filter(|&cp| character::is_decimal_digit(cp) || cp == '_' as u32)
                 {
                     self.reader.advance();
 
@@ -1073,7 +1079,7 @@ impl<'a> PatternParser<'a> {
                         ast::Character {
                             span: self.span_factory.create(span_start, self.reader.offset()),
                             kind: ast::CharacterKind::ControlLetter,
-                            value: cp,
+                            value: cp % 0x20,
                         },
                         self,
                     ))));
@@ -1432,10 +1438,6 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        if body.is_empty() {
-            strings = true;
-        }
-
         Ok((body, strings))
     }
 
@@ -1777,7 +1779,7 @@ impl<'a> PatternParser<'a> {
                                 self.span_factory.create(span_start, self.reader.offset()),
                             ));
                         }
-                        if MAX_QUANTIFIER < min || MAX_QUANTIFIER < max {
+                        if MAX_QUANTIFIER < max {
                             return Err(diagnostics::too_large_number_in_braced_quantifier(
                                 self.span_factory.create(span_start, self.reader.offset()),
                             ));
@@ -1799,7 +1801,11 @@ impl<'a> PatternParser<'a> {
     //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
     fn consume_decimal_escape(&mut self) -> Option<u64> {
-        let checkpoint = self.reader.checkpoint();
+        // DecimalEscape starts with NonZeroDigit; leading zero belongs to CharacterEscape.
+        if !self.reader.peek().is_some_and(|cp| character::is_decimal_digit(cp) && cp != '0' as u32)
+        {
+            return None;
+        }
 
         let mut index = 0_u64;
         while let Some(cp) = self.reader.peek().filter(|&cp| character::is_decimal_digit(cp)) {
@@ -1813,13 +1819,7 @@ impl<'a> PatternParser<'a> {
             self.reader.advance();
         }
 
-        // \0 is CharacterEscape, not DecimalEscape
-        if index != 0 {
-            return Some(index);
-        }
-
-        self.reader.rewind(checkpoint);
-        None
+        Some(index)
     }
 
     // ```
@@ -1926,8 +1926,6 @@ impl<'a> PatternParser<'a> {
     }
 
     fn consume_unicode_property_name(&mut self) -> Option<Str<'a>> {
-        let span_start = self.reader.offset();
-
         let checkpoint = self.reader.checkpoint();
         while character::is_unicode_property_name_character(self.reader.peek()?) {
             self.reader.advance();
@@ -1937,12 +1935,10 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(self.reader.str(span_start, self.reader.offset()))
+        Some(self.unicode_property_text(checkpoint))
     }
 
     fn consume_unicode_property_value(&mut self) -> Option<Str<'a>> {
-        let span_start = self.reader.offset();
-
         let checkpoint = self.reader.checkpoint();
         while character::is_unicode_property_value_character(self.reader.peek()?) {
             self.reader.advance();
@@ -1952,7 +1948,23 @@ impl<'a> PatternParser<'a> {
             return None;
         }
 
-        Some(self.reader.str(span_start, self.reader.offset()))
+        Some(self.unicode_property_text(checkpoint))
+    }
+
+    fn unicode_property_text(&self, checkpoint: (usize, u32)) -> Str<'a> {
+        let raw = self.reader.str(checkpoint.1, self.reader.offset());
+        let units = self.reader.code_points_since(checkpoint);
+        // Property names and values are ASCII. Equal lengths mean no string-source
+        // escapes or line continuations need decoding, so keep borrowing the source.
+        if raw.as_str().len() == units.len() {
+            return raw;
+        }
+
+        let mut decoded = ArenaStringBuilder::with_capacity_in(units.len(), self.allocator);
+        for unit in units {
+            decoded.push(char::from_u32(unit.value).expect("validated Unicode property character"));
+        }
+        Str::from(decoded.into_str())
     }
 
     // ```
@@ -2201,11 +2213,11 @@ impl<'a> PatternParser<'a> {
             }
 
             if let Some(second) = self.consume_octal_digit() {
-                if let Some(third) = self.consume_octal_digit() {
-                    // ZeroToThree OctalDigit OctalDigit
-                    if first <= 3 {
-                        return Some(first * 64 + second * 8 + third);
-                    }
+                // Only ZeroToThree permits a third digit; FourToSeven consumes two.
+                if first <= 3
+                    && let Some(third) = self.consume_octal_digit()
+                {
+                    return Some(first * 64 + second * 8 + third);
                 }
 
                 // ZeroToThree OctalDigit [lookahead ∉ OctalDigit]

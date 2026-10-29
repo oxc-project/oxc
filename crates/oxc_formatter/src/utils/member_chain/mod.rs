@@ -107,8 +107,10 @@ impl<'a, 'b> MemberChain<'a, 'b> {
                 Expression::ThisExpression(_) => true,
                 _ => false,
             }
-        } else if let Some(ChainMember::StaticMember(expression)) = self.head.members().last() {
-            has_computed_property || is_factory(&expression.property().name)
+        } else if let Some((_, _, name)) =
+            self.head.members().last().and_then(ChainMember::as_non_computed_member)
+        {
+            has_computed_property || is_factory(name)
         } else {
             false
         }
@@ -185,11 +187,10 @@ impl<'a, 'b> MemberChain<'a, 'b> {
 
     /// Check if a member has comments between object and property or end-of-line comments after it
     fn has_comment_in_member(member: &ChainMember, comments: &Comments) -> bool {
-        matches!(
-            member,
-            ChainMember::StaticMember(member)
-                if comments.has_comment_in_range(member.object().span().end, member.property().span.start) || comments.has_end_of_line_comment_after(member.span.end)
-        )
+        member.as_non_computed_member().is_some_and(|(object, property_span, _)| {
+            comments.has_comment_in_range(object.span().end, property_span.start)
+                || comments.has_end_of_line_comment_after(member.span().end)
+        })
     }
 
     fn has_comment(&self, f: &JsFormatter<'_, 'a>) -> bool {
@@ -291,7 +292,9 @@ fn get_split_index_of_head_and_tail_groups(members: &[ChainMember<'_, '_>]) -> u
             .position(|member| {
                 !matches!(
                     member,
-                    ChainMember::StaticMember { .. } | ChainMember::ComputedMember { .. }
+                    ChainMember::StaticMember { .. }
+                        | ChainMember::PrivateField { .. }
+                        | ChainMember::ComputedMember { .. }
                 )
             })
             .map_or(rest.len(), |index| {
@@ -324,7 +327,9 @@ fn compute_remaining_groups<'a, 'b>(
             ChainMember::ComputedMember(_) if is_computed_array_member_access(&member) => {
                 groups_builder.start_or_continue_group(member);
             }
-            ChainMember::StaticMember(_) | ChainMember::ComputedMember(_) => {
+            ChainMember::StaticMember(_)
+            | ChainMember::PrivateField(_)
+            | ChainMember::ComputedMember(_) => {
                 // if we have seen a CallExpression, we want to close the group.
                 // The resultant group will be something like: [ . , then, () ];
                 // `.` and `then` belong to the previous StaticMemberExpression,
@@ -420,12 +425,7 @@ fn chain_members_iter<'a, 'b>(
              next: &mut Option<AstNode<'b, 'a, Expression<'a>>>| {
                 let callee = expr.callee();
 
-                let is_chain = matches!(
-                    callee.as_ref(),
-                    Expression::StaticMemberExpression(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::CallExpression(_)
-                );
+                let is_chain = callee.is_member_expression() || callee.is_call_expression();
 
                 if is_chain {
                     *next = Some(callee);
@@ -462,12 +462,7 @@ fn chain_members_iter<'a, 'b>(
         let member = match node {
             AstNodeKind::CallExpression(expr) => {
                 let callee = expr.callee();
-                let is_chain = matches!(
-                    callee.as_ref(),
-                    Expression::StaticMemberExpression(_)
-                        | Expression::ComputedMemberExpression(_)
-                        | Expression::CallExpression(_)
-                );
+                let is_chain = callee.is_member_expression() || callee.is_call_expression();
                 let position = if is_chain {
                     CallExpressionPosition::Middle
                 } else {
@@ -479,6 +474,11 @@ fn chain_members_iter<'a, 'b>(
                 let expr = expr.in_arena(allocator);
                 next = Some(expr.object());
                 ChainMember::StaticMember(expr)
+            }
+            AstNodeKind::PrivateFieldExpression(expr) => {
+                let expr = expr.in_arena(allocator);
+                next = Some(expr.object());
+                ChainMember::PrivateField(expr)
             }
             AstNodeKind::ComputedMemberExpression(expr) => {
                 let expr = expr.in_arena(allocator);

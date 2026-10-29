@@ -52,7 +52,7 @@ mod tests;
 ///
 /// The previous significant token decides most cases; `}`, `yield` / `await`, `of`, a TS `>` and
 /// the TS line-break cases depend on unbounded left context and ask [`context`].
-pub(crate) fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize) -> bool {
+pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize) -> bool {
     let ts = tokens.ts;
     let module = tokens.module;
     let src = tokens.src;

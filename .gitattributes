@@ -16,3 +16,8 @@ apps/oxlint/test/fixtures/** text=auto eol=lf
 crates/oxc_linter/src/generated/rules_enum.rs linguist-generated=true merge=ours
 crates/oxc_linter/src/generated/rule_runner_impls.rs linguist-generated=true merge=ours
 crates/oxc_linter/src/generated/assert_layouts.rs linguist-generated=true
+
+# Preserve the line terminators exercised by these parser regression fixtures.
+tasks/coverage/misc/pass/tagged-template-invalid-escape-cr.js -text whitespace=cr-at-eol
+tasks/coverage/misc/pass/tagged-template-invalid-escape-crlf.js -text whitespace=cr-at-eol
+tasks/coverage/misc/pass/regexp-constructor-line-endings.js -text whitespace=cr-at-eol

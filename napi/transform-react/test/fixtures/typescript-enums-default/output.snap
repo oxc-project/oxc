@@ -1,0 +1,27 @@
+## Code
+
+import { jsxs as _jsxs } from "react/jsx-runtime";
+var Direction = /* @__PURE__ */ function(Direction) {
+	Direction[Direction["Up"] = 1] = "Up";
+	Direction[Direction["Down"] = 2] = "Down";
+	return Direction;
+}(Direction || {});
+var Status = /* @__PURE__ */ function(Status) {
+	Status["Active"] = "active";
+	return Status;
+}(Status || {});
+export function App() {
+	return /* @__PURE__ */ _jsxs("div", { children: [
+		Direction.Up,
+		":",
+		Status.Active
+	] });
+}
+
+## Errors
+
+(none)
+
+## Fatal
+
+false

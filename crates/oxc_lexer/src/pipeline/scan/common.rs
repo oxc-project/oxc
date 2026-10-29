@@ -2,8 +2,11 @@ use std::slice;
 
 use crate::pipeline::{
     bytes::{hex_val, is_digit, is_word},
-    find::{find_regex, find_tmpl, find4},
+    find::find,
 };
+
+/// Regex-body scan. LF, CR and the 0xE2 lead are watched so line terminators in the body can be diagnosed.
+const REGEX_BYTES: [u8; 7] = [b'/', b'\\', b'[', b']', b'\n', b'\r', 0xE2];
 
 #[inline]
 pub unsafe fn scan_quoted(
@@ -15,7 +18,7 @@ pub unsafe fn scan_quoted(
 ) -> usize {
     loop {
         // LF/CR are watched too: raw line terminators in strings are diagnosed.
-        let p = find4(src, n, i, q, b'\\', b'\n', b'\r');
+        let p = find(src, n, i, [q, b'\\', b'\n', b'\r']);
         if p >= n {
             return n;
         }
@@ -41,7 +44,7 @@ pub unsafe fn scan_quoted(
 pub unsafe fn scan_regex(src: *const u8, n: usize, mut i: usize, nl_at: &mut usize) -> usize {
     let mut incl = false;
     loop {
-        let p = find_regex(src, n, i);
+        let p = find(src, n, i, REGEX_BYTES);
         if p >= n {
             return n;
         }
@@ -114,7 +117,7 @@ pub unsafe fn scan_regex(src: *const u8, n: usize, mut i: usize, nl_at: &mut usi
 #[inline]
 pub unsafe fn scan_tmpl_text(src: *const u8, n: usize, mut i: usize, term: &mut i32) -> usize {
     loop {
-        let p = find_tmpl(src, n, i);
+        let p = find(src, n, i, [b'`', b'\\', b'$']);
         if p >= n {
             *term = 0;
             return n;

@@ -1,0 +1,29 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-callable-branch-correlated-captures.js
+---
+function Component(t0) {
+	const { cond } = t0;
+	let count = 0;
+	let cb = _temp;
+	const safeAsync = _temp2;
+	const asyncUsingCb = async () => {
+		await 0;
+		cb();
+	};
+	let run;
+	if (cond) {
+		cb = () => count++;
+		run = safeAsync;
+	} else {
+		run = asyncUsingCb;
+	}
+	run();
+	return null;
+}
+async function _temp2() {
+	return null;
+}
+function _temp() {
+	return null;
+}

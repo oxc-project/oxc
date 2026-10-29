@@ -1,10 +1,16 @@
-commit: a56fe4a4
+commit: b835f0c6
 
 semantic_babel Summary:
-AST Parsed     : 2280/2280 (100.00%)
-Positive Passed: 2186/2280 (95.88%)
+AST Parsed     : 2304/2304 (100.00%)
+Positive Passed: 2197/2304 (95.36%)
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-keyword/input.js
+Identifier expected. 'if' is a reserved word that cannot be used here.
+
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
 Cannot use export statement outside a module
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-let-keyword/input.js
+Identifier expected. 'if' is a reserved word that cannot be used here.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js
 Identifier `f` has already been declared
@@ -19,6 +25,36 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/comment
 Symbol flags mismatch for "_default":
 after transform: SymbolId(3): SymbolFlags(Class)
 rebuilt        : SymbolId(3): SymbolFlags(BlockScopedVariable)
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/export-default-let-with-linebreak-and-keyword/input.js
+Cannot use export statement outside a module
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword/input.js
+Identifier expected. 'if' is a reserved word that cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-cr/input.js
+Identifier expected. 'if' is a reserved word that cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-declaration/input.js
+Identifier expected. 'function' is a reserved word that cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-expression/input.js
+Identifier expected. 'this' is a reserved word that cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-line-separator/input.js
+Identifier expected. 'if' is a reserved word that cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-nested/input.js
+Identifier expected. 'if' is a reserved word that cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-paragraph-separator/input.js
+Identifier expected. 'if' is a reserved word that cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-void/input.js
+Identifier expected. 'void' is a reserved word that cannot be used here.
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-multiline-comment-and-keyword/input.js
+Identifier expected. 'if' is a reserved word that cannot be used here.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2022/class-private-properties/await-in-private-property-in-params-of-async-arrow/input.js
 Bindings mismatch:
@@ -212,6 +248,9 @@ semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescr
 Bindings mismatch:
 after transform: ScopeId(0): ["E"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/let-with-linebreak/input.js
+Identifier expected. 'enum' is a reserved word that cannot be used here.
 
 semantic Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/export/declare/input.ts
 Bindings mismatch:

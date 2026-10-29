@@ -210,25 +210,18 @@ fn has_argument_leading_comments(argument: &AstNode<Expression>, f: &JsFormatter
         // This check is based on
         // <https://github.com/prettier/prettier/blob/7584432401a47a26943dd7a9ca9a8e032ead7285/src/language-js/comments/handle-comments.js#L335-L349>
         if let LeftSide::Expression(left_side) = left_side {
-            let has_leading_own_line_comment = match left_side {
-                Expression::ChainExpression(chain) => {
-                    if let ChainElement::StaticMemberExpression(member) = &chain.expression {
-                        let comments = f
-                            .comments()
-                            .comments_in_range(member.object.span().end, member.property.span.end);
-                        is_own_line_comment_or_multi_line_comment(comments)
-                    } else {
-                        false
-                    }
-                }
-                Expression::StaticMemberExpression(member) => {
-                    let comments = f
-                        .comments()
-                        .comments_in_range(member.object.span().end, member.property.span.end);
-                    is_own_line_comment_or_multi_line_comment(comments)
-                }
-                _ => false,
+            let member = match left_side {
+                Expression::ChainExpression(chain) => chain.expression.as_member_expression(),
+                _ => left_side.as_member_expression(),
             };
+            // `a.b` and `a.#b`, the comments after the object
+            let has_leading_own_line_comment = member.is_some_and(|member| {
+                !member.is_computed()
+                    && is_own_line_comment_or_multi_line_comment(
+                        f.comments()
+                            .comments_in_range(member.object().span().end, member.span().end),
+                    )
+            });
 
             if has_leading_own_line_comment {
                 return true;

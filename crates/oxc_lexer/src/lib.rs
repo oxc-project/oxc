@@ -7,21 +7,20 @@ use oxc_span::Span;
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
 pub mod arena;
-mod comment_meta;
 #[cfg(feature = "oxc_diagnostics")]
 pub mod diagnostics;
 pub mod error;
-mod lanes;
 pub mod options;
 mod pipeline;
 pub mod token;
 
 pub use arena::{Arena, LexResult, LineEntry};
 pub use error::{DiagCode, DiagSeverity, Diagnostic};
-pub use lanes::Lanes;
 pub use options::LexOptions;
 pub use pipeline::Lexer;
 pub use token::{KW_KIND_BASE, TRIVIA_MAX, TRIVIA_MIN, TokenKind, token_flags};
+
+use pipeline::{Lanes, decode_char_at};
 
 pub const PAD: usize = 64;
 
@@ -138,7 +137,6 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
         let n_atm = copy_lane(&l.atoms, arena.atoms, arena.atoms_capacity);
         let n_rxf =
             copy_lane(&l.regex_flags, arena.regex_flags.cast::<u8>(), arena.regex_flags_capacity);
-        let n_cm = copy_lane(&l.comment_meta, arena.comment_meta, arena.comment_meta_capacity);
         let n_cr = copy_lane(&l.comments, arena.comments, arena.comments_capacity);
         let n_diag = copy_lane(&l.diags, arena.diags, arena.diags_capacity);
 
@@ -160,7 +158,6 @@ fn lex_into_arena(src: &[u8], len: u32, options: LexOptions, arena: &mut Arena) 
             strings_count: n_str,
             templates_count: n_tpl,
             regex_flags_count: n_rxf,
-            comment_meta_count: n_cm,
             comments_count: n_cr,
             cooked_bytes_count: n_cb,
         }
@@ -186,7 +183,7 @@ fn resolve_unicode_leads(
         {
             continue;
         }
-        let Some(ch) = lanes::decode_char_at(src, off as usize) else { continue };
+        let Some(ch) = decode_char_at(src, off as usize) else { continue };
         let name_start = spans_all[ti].start
             + u32::from(matches!(
                 kinds_all[ti],
@@ -233,7 +230,6 @@ fn empty_result(arena: &Arena) -> LexResult {
         strings_count: 0,
         templates_count: 0,
         regex_flags_count: 0,
-        comment_meta_count: 0,
         comments_count: 0,
         cooked_bytes_count: 0,
     }

@@ -7,8 +7,9 @@ import { c as _c } from "react/compiler-runtime";
 function Component(props) {
 	const $ = _c(7);
 	let x = 0;
+	const t0 = x;
 	let values;
-	if ($[0] !== props.a || $[1] !== props.b || $[2] !== props.c || $[3] !== props.d || $[4] !== x) {
+	if ($[0] !== props.a || $[1] !== props.b || $[2] !== props.c || $[3] !== props.d || $[4] !== t0) {
 		values = [];
 		const y = props.a || props.b;
 		values.push(y);
@@ -24,7 +25,7 @@ function Component(props) {
 		$[1] = props.b;
 		$[2] = props.c;
 		$[3] = props.d;
-		$[4] = x;
+		$[4] = t0;
 		$[5] = values;
 		$[6] = x;
 	} else {

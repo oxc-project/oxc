@@ -292,6 +292,17 @@ fn redundant_keys() {
         config.clone(),
     );
 
+    // keeps the bare inject when the module still references it outside the member expression
+    test(
+        "typeof Buffer !== 'undefined' && Buffer.isBuffer('foo');",
+        "
+        import { default as Buffer } from 'Buffer';
+        import { default as $inject_Buffer_isBuffer } from 'is-buffer';
+        typeof Buffer !== 'undefined' && $inject_Buffer_isBuffer('foo');
+        ",
+        config.clone(),
+    );
+
     // not found
     test_same("Foo.Bar('foo');", config);
 }
@@ -497,4 +508,33 @@ fn import_meta_combined() {
         ",
         config,
     );
+}
+
+#[test]
+fn reused_transformer() {
+    // injects for one program must not be decided by state left over from an earlier one
+    let config = InjectGlobalVariablesConfig::new(vec![
+        InjectImport::default_specifier("buffer", "Buffer"),
+        InjectImport::default_specifier("foo-bar", "foo.bar"),
+    ]);
+    let source_type = SourceType::default();
+    let allocator = Allocator::default();
+    let mut transformer = InjectGlobalVariables::new(&allocator, config);
+
+    for (source_text, expected) in [
+        ("foo.bar();", "import $inject_foo_bar from 'foo-bar'; $inject_foo_bar();"),
+        ("Buffer();", "import Buffer from 'buffer'; Buffer();"),
+        ("42;", "42;"),
+    ] {
+        let ret = Parser::new(&allocator, source_text, source_type).parse();
+        let mut program = ret.program;
+        let scoping = SemanticBuilder::new().build(&program).semantic.into_scoping();
+        let ret = transformer.build(scoping, &mut program);
+        assert_eq!(ret.changed, source_text != expected, "for source {source_text}");
+        let result = Codegen::new()
+            .with_options(CodegenOptions { single_quote: true, ..CodegenOptions::default() })
+            .build(&program)
+            .code;
+        assert_eq!(result, codegen(expected, source_type), "for source {source_text}");
+    }
 }

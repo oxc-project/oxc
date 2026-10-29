@@ -26,15 +26,16 @@ function foo(props) {
 		t0 = $[4];
 	}
 	const header = t0;
+	const t3 = x;
 	let y;
-	if ($[5] !== props.b || $[6] !== props.c || $[7] !== x) {
+	if ($[5] !== props.b || $[6] !== props.c || $[7] !== t3) {
 		y = [x];
 		x = [];
 		y.push(props.b);
 		x.push(props.c);
 		$[5] = props.b;
 		$[6] = props.c;
-		$[7] = x;
+		$[7] = t3;
 		$[8] = y;
 		$[9] = x;
 	} else {

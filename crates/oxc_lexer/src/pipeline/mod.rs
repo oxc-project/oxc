@@ -5,11 +5,12 @@
 #![allow(clippy::pedantic, clippy::nursery)]
 #![allow(clippy::needless_range_loop, clippy::manual_range_contains)]
 
+use std::slice;
+
 use oxc_span::Span;
 
 use crate::{
     PAD,
-    lanes::Lanes,
     options::LexOptions,
     pipeline::compress::init_pair_luts,
     token::{SPAN_SENTINELS, TokenKind, debug_assert_kind_bytes, kinds_from_bytes},
@@ -26,17 +27,19 @@ mod cpu;
 mod disambiguate;
 mod find;
 mod keywords;
+mod lanes;
 mod misc;
 mod operators;
 mod scan;
 
-pub(crate) use disambiguate::State as DisambiguateState;
+pub(crate) use lanes::{Lanes, decode_char_at};
 
 use carve::carve;
 use classify::classify;
 use coalesce::{KWB, coalesce};
 use compress::{STAGE_CAP, compress, write_sentinels};
 use cpu::{Cpu, DynCpu, apply, cpu_versions};
+use disambiguate::{Brackets, Closers, Tokens};
 use misc::{misc_post, misc_pre};
 
 pub struct Lexer {
@@ -56,7 +59,7 @@ pub struct Lexer {
     sig_kinds: Vec<u8>,
     pub sig_len: usize,
     out_cap: usize,
-    pub lanes: Lanes,
+    pub(crate) lanes: Lanes,
     cpu: DynCpu,
 }
 
@@ -269,15 +272,15 @@ unsafe fn token_view<'a>(
     ts: bool,
     kw_final: usize,
     module: bool,
-    brackets: &'a disambiguate::Brackets,
-    closers: &'a disambiguate::Closers,
-) -> disambiguate::Tokens<'a> {
+    brackets: &'a Brackets,
+    closers: &'a Closers,
+) -> Tokens<'a> {
     let nb = n.div_ceil(64) + 1;
-    disambiguate::Tokens {
-        src: std::slice::from_raw_parts(src, n + PAD),
-        st: std::slice::from_raw_parts(st, nb),
-        opch: std::slice::from_raw_parts(opch, nb),
-        kind: std::slice::from_raw_parts(kind, nb * 64),
+    Tokens {
+        src: slice::from_raw_parts(src, n + PAD),
+        st: slice::from_raw_parts(st, nb),
+        opch: slice::from_raw_parts(opch, nb),
+        kind: slice::from_raw_parts(kind, nb * 64),
         n,
         ts,
         module,
