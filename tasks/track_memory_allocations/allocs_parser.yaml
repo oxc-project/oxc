@@ -33,25 +33,25 @@ RadixUIAdoptionSection.jsx:
 
 pdf.mjs:
   file size: 567296 # 567.30 kB
-  sys allocs: 67
+  sys allocs: 61
   sys reallocs: 67
-  sys deallocs: 67
+  sys deallocs: 61
   sys alloc bytes: 24020 # 24.02 kB
   sys peak growth: 12140 # 12.14 kB
-  arena allocs: 89436
+  arena allocs: 89079
   arena reallocs: 5904
-  arena size: 4510576 # 4.51 MB
+  arena size: 4492488 # 4.49 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
-  sys allocs: 185
+  sys allocs: 183
   sys reallocs: 221
-  sys deallocs: 185
-  sys alloc bytes: 109952 # 109.95 kB
-  sys peak growth: 48264 # 48.26 kB
-  arena allocs: 523271
+  sys deallocs: 183
+  sys alloc bytes: 94120 # 94.12 kB
+  sys peak growth: 38896 # 38.90 kB
+  arena allocs: 519986
   arena reallocs: 35629
-  arena size: 30069720 # 30.07 MB
+  arena size: 29903280 # 29.90 MB
 
 binder.ts:
   file size: 193077 # 193.08 kB

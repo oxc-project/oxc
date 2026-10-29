@@ -161,8 +161,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         }
                         Tristate::False
                     }
-                    // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
-                    Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
+                    // A single parameter is unambiguous once we see the token after `)`.
+                    // A TypeScript return type still needs speculative parsing.
+                    Kind::RParen => match self.lexer.next_token().kind() {
+                        // Preserve error recovery for an invalid `this` parameter.
+                        Kind::Arrow if second == Kind::This => Tristate::Maybe,
+                        Kind::Arrow => Tristate::True,
+                        Kind::Colon if self.is_ts => Tristate::Maybe,
+                        _ => Tristate::False,
+                    },
+                    // If we have "(a," or "(a=" this *could* be an arrow function
+                    Kind::Comma | Kind::Eq => Tristate::Maybe,
                     // It is definitely not an arrow function
                     _ => Tristate::False,
                 }
