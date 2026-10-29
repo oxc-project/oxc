@@ -26,24 +26,6 @@ pub unsafe fn find_avx2<const K: usize>(
     n
 }
 
-// The compares are OR-folded pairwise, level by level, so the tree stays shallow for 7 needles.
-#[inline(always)]
-unsafe fn any_of<const K: usize>(v: __m256i, needles: [u8; K]) -> __m256i {
-    let mut m = needles.map(|c| veq(v, c));
-    let mut len = K;
-    while len > 1 {
-        let half = len / 2;
-        for j in 0..half {
-            m[j] = _mm256_or_si256(m[2 * j], m[2 * j + 1]);
-        }
-        if len % 2 == 1 {
-            m[half] = m[len - 1];
-        }
-        len = half + len % 2;
-    }
-    m[0]
-}
-
 /// Bits of the 64 bytes at `base` that are brackets (`(){}[]`): bit `i` for byte `base + i`.
 #[inline]
 pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
@@ -60,4 +42,22 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize) -> u64 {
         out |= u64::from(mask) << (half * 32);
     }
     out
+}
+
+// The compares are OR-folded pairwise, level by level, so the tree stays shallow for 7 needles.
+#[inline(always)]
+unsafe fn any_of<const N: usize>(v: __m256i, needles: [u8; N]) -> __m256i {
+    let mut m = needles.map(|c| veq(v, c));
+    let mut len = N;
+    while len > 1 {
+        let half = len / 2;
+        for j in 0..half {
+            m[j] = _mm256_or_si256(m[2 * j], m[2 * j + 1]);
+        }
+        if len % 2 == 1 {
+            m[half] = m[len - 1];
+        }
+        len = half + len % 2;
+    }
+    m[0]
 }
