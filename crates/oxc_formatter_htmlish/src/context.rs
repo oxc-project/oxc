@@ -1,11 +1,10 @@
-use oxc_formatter_core::{FormatContext, SourceText};
+use oxc_formatter_core::FormatContext;
 
 use crate::{format::HtmlishEmbeddedIn, options::HtmlishFormatOptions, tree::Tree};
 
 /// Formatting context for htmlish.
 pub struct HtmlishFormatContext<'a> {
     options: HtmlishFormatOptions,
-    source_text: SourceText<'a>,
     tree: &'a Tree<'a>,
     embedded_in: Option<HtmlishEmbeddedIn>,
 }
@@ -16,7 +15,7 @@ impl<'a> HtmlishFormatContext<'a> {
         tree: &'a Tree<'a>,
         embedded_in: Option<HtmlishEmbeddedIn>,
     ) -> Self {
-        Self { options, source_text: SourceText::new(tree.source()), tree, embedded_in }
+        Self { options, tree, embedded_in }
     }
 
     pub fn embedded_in(&self) -> Option<HtmlishEmbeddedIn> {
@@ -37,6 +36,6 @@ impl FormatContext for HtmlishFormatContext<'_> {
     }
 
     fn source_code(&self) -> &str {
-        &self.source_text
+        self.tree.source()
     }
 }

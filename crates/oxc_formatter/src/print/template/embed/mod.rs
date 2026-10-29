@@ -363,10 +363,11 @@ fn split_on_placeholders<'a>(text: &'a str, prefix: &str, suffix: &str) -> Vec<&
 
 /// `haystack.find(needle)`, ASCII case-insensitively.
 fn find_ignore_ascii_case(haystack: &str, needle: &str) -> Option<usize> {
-    haystack
-        .as_bytes()
-        .windows(needle.len())
-        .position(|w| w.eq_ignore_ascii_case(needle.as_bytes()))
+    let (haystack, needle) = (haystack.as_bytes(), needle.as_bytes());
+    let first = *needle.first()?;
+    memchr::memchr2_iter(first.to_ascii_lowercase(), first.to_ascii_uppercase(), haystack).find(
+        |&i| haystack.get(i..i + needle.len()).is_some_and(|w| w.eq_ignore_ascii_case(needle)),
+    )
 }
 
 // ---

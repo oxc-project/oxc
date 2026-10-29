@@ -567,6 +567,34 @@ Prettier lowercases them in embedded HTML and XHTML too, by the language alone:
 
 Vue and Angular keep every name as written, as Prettier does.
 
+## known-attribute-names
+
+- Why: uniform-rule (same construct, same output: a global attribute on `div`, which Prettier lowercases; prettier/prettier#19709, prettier/prettier#19707)
+- Pin: `tests/fixtures/html/known-attribute-names.html`
+
+```html
+<!-- input -->
+<SPAN CLASS="a">x</SPAN>
+<P HEADINGOFFSET="1">x</P>
+<INPUT ISMAP>
+
+<!-- ours -->
+<span class="a">x</span>
+<p headingoffset="1">x</p>
+<input ISMAP />
+
+<!-- prettier -->
+<span CLASS="a">x</span>
+<p HEADINGOFFSET="1">x</p>
+<input ismap />
+```
+
+Where known names print lowercase (DIVERGENCES.md#tag-name-case), a global attribute does on every known element,
+and the known attributes are the HTML standard's current ones (`src/tree/names.rs`).
+Prettier lowercases a global attribute only on an element its table lists attributes of its own for, as `div` (`align`), but not `span`;
+that table predates the attributes HTML added since (`headingoffset`, `rel` on `form`) and still lists some it dropped (`ismap` on `input`).
+Fixed in Prettier `main` by prettier/prettier#19709 and prettier/prettier#19707, which we follow.
+
 ## prefixed-script-style
 
 - Why: uniform-rule (same construct, same output: `<html:p>` and every other prefixed name, which Prettier lays out as an unknown element)

@@ -438,6 +438,7 @@ impl Builder<'_> {
 
     /// Whether whitespace on one side of the node is significant, before the neighbor's side is combined in:
     /// the leading side looks at the previous sibling as `neighbor`, the trailing side at the next one.
+    /// Blocks are transparent: a whitespace run continues past their markers, and past hidden elements.
     fn side_sensitive(
         &self,
         id: NodeId,
@@ -445,21 +446,9 @@ impl Builder<'_> {
         neighbor: Option<NodeId>,
         leading: bool,
     ) -> bool {
-        if self.tree.rules.has_blocks {
-            return self.side_sensitive_around_blocks(id, parent_id, neighbor, leading);
+        if !self.tree.rules.has_blocks {
+            return self.side_sensitive_with(id, id, parent_id, neighbor, leading);
         }
-        let display = neighbor.map(|n| self.tree[n].display);
-        self.side_sensitive_with(id, id, parent_id, neighbor, display, leading)
-    }
-
-    /// Blocks are transparent: a whitespace run continues past their markers, and past hidden elements.
-    fn side_sensitive_around_blocks(
-        &self,
-        id: NodeId,
-        parent_id: NodeId,
-        neighbor: Option<NodeId>,
-        leading: bool,
-    ) -> bool {
         // Across a block, the run meets the content at its near edge, past empty blocks
         let neighbor = self.flow_past(neighbor, !leading);
         self.side_sensitive_through(
@@ -493,26 +482,16 @@ impl Builder<'_> {
             return if leading { block.leading_sensitive } else { block.trailing_sensitive };
         }
         // The rules are the nearest box's
-        let display = neighbor.map(|n| self.display_of(n));
-        self.side_sensitive_with(
-            id,
-            flow_item,
-            self.flow_parent(parent_id),
-            neighbor,
-            display,
-            leading,
-        )
+        self.side_sensitive_with(id, flow_item, self.flow_parent(parent_id), neighbor, leading)
     }
 
-    /// `flow_item` is the node the run meets on `id`'s side (`id` itself, unless it is a block),
-    /// `display` the neighbor's.
+    /// `flow_item` is the node the run meets on `id`'s side (`id` itself, unless it is a block).
     fn side_sensitive_with(
         &self,
         id: NodeId,
         flow_item: NodeId,
         parent_id: NodeId,
         neighbor: Option<NodeId>,
-        display: Option<Display>,
         leading: bool,
     ) -> bool {
         let t = &self.tree;
@@ -525,8 +504,8 @@ impl Builder<'_> {
                 false
             } else if parent.pre_like {
                 true
-            } else if let Some(display) = display {
-                display.sides_sensitive()
+            } else if let Some(neighbor) = neighbor {
+                self.display_of(neighbor).sides_sensitive()
             } else {
                 !(parent_id == NodeId::DOCUMENT
                     || item.pre_like

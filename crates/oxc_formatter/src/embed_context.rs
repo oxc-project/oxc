@@ -51,8 +51,9 @@ pub struct HtmlInJsTemplate {
     /// The backticks hug the content (no whitespace on both ends, whitespace sensitivity not `ignore`):
     /// the child indents its content when more than one node prints at the root.
     pub indent_multiple_roots: bool,
-    /// The prefix and suffix around the id of the placeholder standing in for a `${}` expression.
-    pub placeholder: (&'static str, &'static str),
+    /// The prefix of the placeholder standing in for a `${}` expression,
+    /// and the test for a whole one (`is_html_placeholder`).
+    pub placeholder: (&'static str, fn(&str) -> bool),
 }
 
 /// What a dispatched JS/TS program is embedded in, for the print rules that depend on it.

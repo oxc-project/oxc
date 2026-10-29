@@ -1,5 +1,6 @@
 //! The names Prettier's HTML parser lowercases (DIVERGENCES.md#tag-name-case):
-//! `@prettier/html-tags` 2.2.0 and `html-element-attributes` 3.5.0, as the pin bundles them.
+//! `@prettier/html-tags` 2.2.0 and `@prettier/html-attributes` 0.1.0, as Prettier `main` reads them
+//! (DIVERGENCES.md#known-attribute-names).
 //! Read only for a name holding an uppercase letter, so the tables are sorted slices.
 
 const ELEMENTS: &[&str] = &[
@@ -167,6 +168,8 @@ const GLOBAL_ATTRIBUTES: &[&str] = &[
     "draggable",
     "enterkeyhint",
     "exportparts",
+    "headingoffset",
+    "headingreset",
     "hidden",
     "id",
     "inert",
@@ -234,11 +237,28 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "type",
         ],
     ),
-    ("audio", &["autoplay", "controls", "crossorigin", "loop", "muted", "preload", "src"]),
+    (
+        "audio",
+        &["autoplay", "controls", "crossorigin", "loading", "loop", "muted", "preload", "src"],
+    ),
     ("base", &["href", "target"]),
     ("basefont", &["color", "face", "size"]),
     ("blockquote", &["cite"]),
-    ("body", &["alink", "background", "bgcolor", "link", "text", "vlink"]),
+    (
+        "body",
+        &[
+            "alink",
+            "background",
+            "bgcolor",
+            "bottommargin",
+            "leftmargin",
+            "link",
+            "rightmargin",
+            "text",
+            "topmargin",
+            "vlink",
+        ],
+    ),
     ("br", &["clear"]),
     (
         "button",
@@ -261,8 +281,8 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
     ),
     ("canvas", &["height", "width"]),
     ("caption", &["align"]),
-    ("col", &["align", "char", "charoff", "span", "valign", "width"]),
-    ("colgroup", &["align", "char", "charoff", "span", "valign", "width"]),
+    ("col", &["align", "bgcolor", "char", "charoff", "span", "valign", "width"]),
+    ("colgroup", &["align", "bgcolor", "char", "charoff", "span", "valign", "width"]),
     ("data", &["value"]),
     ("del", &["cite", "datetime"]),
     ("details", &["name", "open"]),
@@ -284,6 +304,7 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "method",
             "name",
             "novalidate",
+            "rel",
             "target",
         ],
     ),
@@ -308,8 +329,8 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
     ("h5", &["align"]),
     ("h6", &["align"]),
     ("head", &["profile"]),
-    ("hr", &["align", "noshade", "size", "width"]),
-    ("html", &["manifest", "version"]),
+    ("hr", &["align", "color", "noshade", "size", "width"]),
+    ("html", &["manifest", "version", "xmlns"]),
     (
         "iframe",
         &[
@@ -317,7 +338,6 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "allow",
             "allowfullscreen",
             "allowpaymentrequest",
-            "allowusermedia",
             "frameborder",
             "height",
             "loading",
@@ -339,8 +359,10 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "align",
             "alt",
             "border",
+            "controls",
             "crossorigin",
             "decoding",
+            "elementtiming",
             "fetchpriority",
             "height",
             "hspace",
@@ -376,7 +398,6 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "formnovalidate",
             "formtarget",
             "height",
-            "ismap",
             "list",
             "max",
             "maxlength",
@@ -394,13 +415,12 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "src",
             "step",
             "type",
-            "usemap",
             "value",
             "width",
         ],
     ),
     ("ins", &["cite", "datetime"]),
-    ("isindex", &["prompt"]),
+    ("isindex", &["action", "prompt"]),
     ("label", &["for", "form"]),
     ("legend", &["align"]),
     ("li", &["type", "value"]),
@@ -461,7 +481,7 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
     ("output", &["for", "form", "name"]),
     ("p", &["align"]),
     ("param", &["name", "type", "value", "valuetype"]),
-    ("pre", &["width"]),
+    ("pre", &["width", "wrap"]),
     ("progress", &["max", "value"]),
     ("q", &["cite"]),
     (
@@ -499,7 +519,7 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "width",
         ],
     ),
-    ("tbody", &["align", "char", "charoff", "valign"]),
+    ("tbody", &["align", "bgcolor", "char", "charoff", "valign"]),
     (
         "td",
         &[
@@ -510,11 +530,13 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
     (
         "template",
         &[
+            "for",
             "shadowrootclonable",
             "shadowrootcustomelementregistry",
             "shadowrootdelegatesfocus",
             "shadowrootmode",
             "shadowrootserializable",
+            "shadowrootslotassignment",
         ],
     ),
     (
@@ -535,7 +557,7 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "wrap",
         ],
     ),
-    ("tfoot", &["align", "char", "charoff", "valign"]),
+    ("tfoot", &["align", "bgcolor", "char", "charoff", "valign"]),
     (
         "th",
         &[
@@ -543,7 +565,7 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "nowrap", "rowspan", "scope", "valign", "width",
         ],
     ),
-    ("thead", &["align", "char", "charoff", "valign"]),
+    ("thead", &["align", "bgcolor", "char", "charoff", "valign"]),
     ("time", &["datetime"]),
     ("tr", &["align", "bgcolor", "char", "charoff", "valign"]),
     ("track", &["default", "kind", "label", "src", "srclang"]),
@@ -555,6 +577,7 @@ const ELEMENT_ATTRIBUTES: &[(&str, &[&str])] = &[
             "controls",
             "crossorigin",
             "height",
+            "loading",
             "loop",
             "muted",
             "playsinline",
@@ -571,11 +594,13 @@ pub fn is_known_element(lowercase: &str) -> bool {
     ELEMENTS.binary_search(&lowercase).is_ok()
 }
 
-/// The lowercase name of an attribute Prettier knows on `element` (lowercase), written `written` in any case:
-/// a global one, but only on an element the attribute table lists.
+/// The lowercase name of an attribute Prettier knows on a known `element` (lowercase), written `written` in any case:
+/// a global one, or one the attribute table lists for the element.
 pub fn known_attribute(element: &str, written: &str) -> Option<&'static str> {
-    let i = ELEMENT_ATTRIBUTES.binary_search_by_key(&element, |(name, _)| name).ok()?;
-    find(GLOBAL_ATTRIBUTES, written).or_else(|| find(ELEMENT_ATTRIBUTES[i].1, written))
+    find(GLOBAL_ATTRIBUTES, written).or_else(|| {
+        let i = ELEMENT_ATTRIBUTES.binary_search_by_key(&element, |(name, _)| name).ok()?;
+        find(ELEMENT_ATTRIBUTES[i].1, written)
+    })
 }
 
 fn find(names: &[&'static str], written: &str) -> Option<&'static str> {
