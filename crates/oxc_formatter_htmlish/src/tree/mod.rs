@@ -1,4 +1,4 @@
-//! The facts Prettier's `print-preprocess` attaches to its tree, as a table keyed by the parser's [`NodeId`].
+//! The facts the printer needs besides the AST, as a table keyed by the parser's [`NodeId`].
 //!
 //! The AST is not rewritten; names, kinds and the tag table's verdict are read from it.
 //! What the table adds:
@@ -24,7 +24,7 @@ pub use display::Display;
 
 #[derive(Clone, Copy, Default)]
 pub struct Facts {
-    /// Prettier's `sourceSpan`: a text in a whitespace-insensitive parent is trimmed.
+    /// The span the node prints: a text in a whitespace-insensitive parent is trimmed.
     pub span: Span,
     /// The parent, siblings and children that print.
     pub parent: Option<NodeId>,
@@ -35,7 +35,7 @@ pub struct Facts {
     pub display: Display,
     /// Text and comments: printed without tags whose markers could be borrowed.
     pub text_like: bool,
-    /// No children and no end tag: the start tag closes the node (Prettier's `isSelfClosing`).
+    /// No children and no end tag: the start tag closes the node.
     /// Text-like nodes count too.
     pub self_closing: bool,
     /// CSS `white-space: pre*`: `pre`, `textarea`, `listing`, `plaintext`, `xmp`, outside SVG;
@@ -160,7 +160,7 @@ impl<'a> Tree<'a> {
         matches!(self.kind(id), NodeKind::Interpolation(_))
     }
 
-    /// A text or a CDATA section, which Prettier merges into text (`mergeCdataIntoText`).
+    /// A text or a CDATA section, which print as one text next to each other.
     pub fn is_text(&self, id: NodeId) -> bool {
         matches!(self.kind(id), NodeKind::Text(_) | NodeKind::Cdata)
     }
@@ -245,7 +245,7 @@ impl<'a> Tree<'a> {
         std::iter::successors(self[id].first_child, move |&child| self[child].next)
     }
 
-    /// Where the content between the tags starts (Prettier's `startSourceSpan.end`).
+    /// Where the content between the tags starts.
     pub fn content_start(&self, id: NodeId) -> u32 {
         if self[id].condition.is_some()
             && let Some(end) = self.root[id].first_child
@@ -260,7 +260,7 @@ impl<'a> Tree<'a> {
         }
     }
 
-    /// Where the end tag starts, when there is one (Prettier's `endSourceSpan.start`).
+    /// Where the end tag starts, when there is one.
     pub fn end_tag_start(&self, id: NodeId) -> Option<u32> {
         match &self.root[id].kind {
             NodeKind::Element(el) => el.end_tag.map(|tag| tag.span.start),
@@ -276,7 +276,7 @@ impl<'a> Tree<'a> {
         self.element(id).is_some_and(|el| el.end_tag.is_none()) && !self[id].self_closing
     }
 
-    /// Where Prettier's `sourceSpan` of the node ends:
+    /// Where the node's own source ends:
     /// an element without an end tag ends at its start tag, children aside.
     pub fn source_end(&self, id: NodeId) -> u32 {
         match &self.root[id].kind {
@@ -286,7 +286,7 @@ impl<'a> Tree<'a> {
     }
 
     /// Line breaks in `[from, to)`, counted up to 2:
-    /// Prettier compares line numbers, so a gap is on the same line, the next line, or further.
+    /// a gap is on the same line, the next line, or further.
     pub fn line_breaks(&self, from: u32, to: u32) -> usize {
         if from >= to {
             return 0;

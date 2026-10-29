@@ -75,7 +75,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, IdentifierReference<'_>> {
             return false;
         }
         // An html-in-js placeholder (reaching JS through HTML's `<script>` or `on*` attributes)
-        // stands in for an expression of any precedence, as Prettier's `parentheses/identifier.js` does
+        // stands in for an expression of any precedence: the parens around it in the source stay
         if is_html_placeholder(self.name.as_str()) {
             return is_parenthesized_in_source(self, f);
         }

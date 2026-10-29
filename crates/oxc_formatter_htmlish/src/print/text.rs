@@ -63,7 +63,7 @@ pub fn write_text<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 
     fill.finish();
 }
 
-/// Writes `value`'s lines, trimmed and dedented (Prettier's `htmlTrimPreserveIndentation` + `dedentString`),
+/// Writes `value`'s lines, trimmed and dedented ([`trim_preserving_indentation`], [`dedent`]),
 /// joined by line breaks: every blank line is kept, and prints without indentation.
 pub fn write_dedented_lines<'a>(value: &'a str, f: &mut HtmlishFormatter<'_, 'a>) {
     let mut breaks = 0;
@@ -102,7 +102,7 @@ fn words(value: &str, cdata: bool) -> impl Iterator<Item = &str> {
     })
 }
 
-/// Prettier's `htmlTrimPreserveIndentation`: trailing whitespace and leading blank lines go.
+/// `value` without its trailing whitespace and leading blank lines.
 fn trim_preserving_indentation(value: &str) -> &str {
     let value = value.trim_ascii_end();
     let mut start = 0;
@@ -132,7 +132,7 @@ pub fn dedent_string<'a>(value: &'a str, f: &HtmlishFormatter<'_, 'a>) -> &'a st
     out.into_str()
 }
 
-/// Prettier's `dedentString`: the lines with their common indentation removed.
+/// The lines of `value` with their common indentation removed.
 fn dedent(value: &str) -> impl Iterator<Item = &str> {
     dedent_by(value, common_indentation(value))
 }

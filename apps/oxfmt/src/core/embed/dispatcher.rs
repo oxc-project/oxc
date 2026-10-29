@@ -342,8 +342,7 @@ pub fn build_dispatcher(
                         dispatch_config.toml_options(),
                     ),
                     NativeLanguage::Html(variant) => {
-                        // Every part is embedded in its parent (Prettier's `parentParser`),
-                        // but a JSDoc code block, formatted on its own
+                        // Every part is embedded in its parent, but a JSDoc code block, formatted on its own
                         let embedded_in =
                             if let Some(c) = request.parent_context_as::<HtmlInJsTemplate>() {
                                 Some(HtmlishEmbeddedIn {

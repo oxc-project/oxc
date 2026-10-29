@@ -19,7 +19,7 @@ a dialect adds a field there, not a `Dialect` check at the use site.
 
 ### Preprocess
 
-The facts Prettier's `print-preprocess` computes (CSS display, whitespace sensitivity, kept children, borrowed tag markers)
+The facts the printer needs besides the AST (CSS display, whitespace sensitivity, kept children, borrowed tag markers)
 are a table keyed by `NodeId` (`src/tree/`).
 The AST is never rewritten.
 

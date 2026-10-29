@@ -39,7 +39,7 @@ pub const HTML_PLACEHOLDER_SUFFIX: &str = "_IN_JS";
 
 /// `name` is an html-in-js placeholder, of any depth.
 /// One in a `<script>` stands in for an expression of any precedence (`f((${a + b}) / 2)`),
-/// so the parens around it in the source stay (Prettier's `parentheses/identifier.js`).
+/// so the parens around it in the source stay.
 pub fn is_html_placeholder(name: &str) -> bool {
     name.strip_prefix(HTML_PLACEHOLDER_PREFIX)
         .and_then(|id| id.strip_suffix(HTML_PLACEHOLDER_SUFFIX))

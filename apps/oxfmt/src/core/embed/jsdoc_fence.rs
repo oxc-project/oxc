@@ -17,7 +17,7 @@ use oxc_formatter_core::{
 use super::dispatcher::ResolvedDispatchConfig;
 
 /// Parent→child context for a JSDoc fenced code block:
-/// a part formatted on its own, as Prettier formats it (`prettier.format`, no `parentParser`),
+/// a part formatted on its own, as a file is,
 /// where every other dispatched part is embedded in its parent.
 pub struct XxxInJsdocFence;
 

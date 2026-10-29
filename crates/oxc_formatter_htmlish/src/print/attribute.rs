@@ -220,7 +220,7 @@ pub(super) fn quoted_piece<'a>(piece: &'a str, f: &HtmlishFormatter<'_, 'a>) -> 
     arena_cow_str(&piece.cow_replace('"', "&quot;"), f)
 }
 
-/// Prettier's `printExpand`: `content` on its own indented lines when the group breaks.
+/// `content` in quotes, on its own indented lines when the group breaks.
 pub(super) fn write_expanded<'a>(
     content: &impl Format<'a, HtmlishFormatContext<'a>>,
     f: &mut HtmlishFormatter<'_, 'a>,

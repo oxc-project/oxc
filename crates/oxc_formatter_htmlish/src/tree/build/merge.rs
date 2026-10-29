@@ -7,7 +7,7 @@ use oxc_htmlish_parser::ast::NodeId;
 use super::Builder;
 
 impl Builder<'_> {
-    /// Texts and CDATA sections next to each other print as one text (Prettier's `mergeCdataIntoText`);
+    /// Texts and CDATA sections next to each other print as one text;
     /// the source between them, whitespace included, is the merged value.
     pub(super) fn merge_cdata(&mut self, parent: NodeId) {
         let mut next = self.tree[parent].first_child;
@@ -38,7 +38,7 @@ impl Builder<'_> {
         }
     }
 
-    /// `a<b>x</b>c` prints as one text (Prettier's `mergeSimpleElementIntoText`):
+    /// `a<b>x</b>c` prints as one text:
     /// the text before absorbs the element and the text after.
     pub(super) fn merge_simple_elements(&mut self, parent: NodeId) {
         let mut next = self.tree[parent].first_child;
