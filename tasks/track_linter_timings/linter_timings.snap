@@ -67,7 +67,7 @@ eslint/no-eval                                          |  73005
 eslint/no-ex-assign                                     |    111
 eslint/no-extend-native                                 |      7
 eslint/no-extra-bind                                    |  62606
-eslint/no-extra-boolean-cast                            |  72504
+eslint/no-extra-boolean-cast                            |  71712
 eslint/no-extra-label                                   |    836
 eslint/no-fallthrough                                   |    284
 eslint/no-func-assign                                   |  14283
