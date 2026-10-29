@@ -482,7 +482,7 @@ impl<'a> PeepholeOptimizations {
 
     fn is_mergeable_string_addition_prefix(expr: &Expression<'a>) -> bool {
         match expr {
-            Expression::StringLiteral(literal) => !literal.lone_surrogates,
+            Expression::StringLiteral(literal) => !literal.value.has_lone_surrogate(),
             Expression::TemplateLiteral(_) => true,
             Expression::BinaryExpression(binary) if binary.operator == BinaryOperator::Addition => {
                 Self::is_mergeable_string_addition_prefix(&binary.left)
@@ -1875,7 +1875,10 @@ impl<'a> PeepholeOptimizations {
         let span = binary.span;
         let operator = binary.operator;
         let Expression::SequenceExpression(seq_expr) = &mut binary.right else { return };
-        if !Self::sequence_has_prefix(seq_expr) {
+        if !Self::sequence_has_prefix(seq_expr)
+            || Self::last_expression_in_sequence(seq_expr)
+                .is_some_and(|last| last.value_type(ctx).is_object())
+        {
             return;
         }
 
