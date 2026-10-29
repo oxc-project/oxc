@@ -996,7 +996,14 @@ impl<'a> PatternParser<'a> {
         }
 
         if self.reader.eat('\\') {
-            if self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32) {
+            if let Some(class_escape) = self.parse_class_escape(span_start)? {
+                return Ok(Some(class_escape));
+            }
+
+            // Annex B alternatives are tried in order, and do not extend Unicode patterns.
+            if !self.state.unicode_mode
+                && self.reader.peek().as_ref().is_some_and(|&cp| cp == 'c' as u32)
+            {
                 return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
                     ast::Character {
                         span: self.span_factory.create(span_start, self.reader.offset()),
@@ -1005,10 +1012,6 @@ impl<'a> PatternParser<'a> {
                     },
                     self,
                 ))));
-            }
-
-            if let Some(class_escape) = self.parse_class_escape(span_start)? {
-                return Ok(Some(class_escape));
             }
 
             return Err(diagnostics::invalid_class_atom(
@@ -1068,7 +1071,7 @@ impl<'a> PatternParser<'a> {
                 if let Some(cp) = self
                     .reader
                     .peek()
-                    .filter(|&cp| character::is_decimal_digit(cp) || cp == '-' as u32)
+                    .filter(|&cp| character::is_decimal_digit(cp) || cp == '_' as u32)
                 {
                     self.reader.advance();
 
@@ -1076,7 +1079,7 @@ impl<'a> PatternParser<'a> {
                         ast::Character {
                             span: self.span_factory.create(span_start, self.reader.offset()),
                             kind: ast::CharacterKind::ControlLetter,
-                            value: cp,
+                            value: cp % 0x20,
                         },
                         self,
                     ))));
@@ -1798,7 +1801,11 @@ impl<'a> PatternParser<'a> {
     //   NonZeroDigit DecimalDigits[~Sep][opt] [lookahead ∉ DecimalDigit]
     // ```
     fn consume_decimal_escape(&mut self) -> Option<u64> {
-        let checkpoint = self.reader.checkpoint();
+        // DecimalEscape starts with NonZeroDigit; leading zero belongs to CharacterEscape.
+        if !self.reader.peek().is_some_and(|cp| character::is_decimal_digit(cp) && cp != '0' as u32)
+        {
+            return None;
+        }
 
         let mut index = 0_u64;
         while let Some(cp) = self.reader.peek().filter(|&cp| character::is_decimal_digit(cp)) {
@@ -1812,13 +1819,7 @@ impl<'a> PatternParser<'a> {
             self.reader.advance();
         }
 
-        // \0 is CharacterEscape, not DecimalEscape
-        if index != 0 {
-            return Some(index);
-        }
-
-        self.reader.rewind(checkpoint);
-        None
+        Some(index)
     }
 
     // ```
@@ -2200,11 +2201,11 @@ impl<'a> PatternParser<'a> {
             }
 
             if let Some(second) = self.consume_octal_digit() {
-                if let Some(third) = self.consume_octal_digit() {
-                    // ZeroToThree OctalDigit OctalDigit
-                    if first <= 3 {
-                        return Some(first * 64 + second * 8 + third);
-                    }
+                // Only ZeroToThree permits a third digit; FourToSeven consumes two.
+                if first <= 3
+                    && let Some(third) = self.consume_octal_digit()
+                {
+                    return Some(first * 64 + second * 8 + third);
                 }
 
                 // ZeroToThree OctalDigit [lookahead ∉ OctalDigit]
