@@ -782,7 +782,10 @@ impl<'a> PatternParser<'a> {
             let (kind, body) = self.parse_class_contents()?;
 
             if self.reader.eat(']') {
-                let strings = PatternParser::may_contain_strings_in_class_contents(kind, &body);
+                // Without UnicodeSetsMode, ClassContents is empty or NonemptyClassRanges,
+                // whose MayContainStrings is always false.
+                let strings = self.state.unicode_sets_mode
+                    && PatternParser::may_contain_strings_in_class_contents(kind, &body);
 
                 // [SS:EE] CharacterClass :: [^ ClassContents ]
                 // It is a Syntax Error if MayContainStrings of the ClassContents is true.
@@ -1432,10 +1435,6 @@ impl<'a> PatternParser<'a> {
             }
         }
 
-        if body.is_empty() {
-            strings = true;
-        }
-
         Ok((body, strings))
     }
 
@@ -1777,7 +1776,7 @@ impl<'a> PatternParser<'a> {
                                 self.span_factory.create(span_start, self.reader.offset()),
                             ));
                         }
-                        if MAX_QUANTIFIER < min || MAX_QUANTIFIER < max {
+                        if MAX_QUANTIFIER < max {
                             return Err(diagnostics::too_large_number_in_braced_quantifier(
                                 self.span_factory.create(span_start, self.reader.offset()),
                             ));
