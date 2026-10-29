@@ -322,13 +322,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         self.bump_any(); // `bump` `(`
         let expr_start = self.cur_start();
-        let (mut expressions, comma_start) = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(
+        let (expression, comma_start) = self.context(Context::In, Context::Decorator, |p| {
+            if p.at(Kind::RParen) || p.has_fatal_error() {
+                return (None, None);
+            }
+            let first = p.parse_assignment_expression_or_higher();
+            // A single parenthesized expression does not need a temporary arena vector.
+            if p.at(Kind::RParen) || p.has_fatal_error() {
+                return (Some(first), None);
+            }
+            let mut expressions = ArenaVec::with_capacity_in(2, p);
+            expressions.push(first);
+            let comma_start = p.parse_delimited_list_rest(
+                &mut expressions,
                 Kind::RParen,
                 Kind::Comma,
                 opening_span,
                 Self::parse_assignment_expression_or_higher,
-            )
+            );
+            let expression = if expressions.len() == 1 {
+                expressions.remove(0)
+            } else {
+                Expression::new_sequence_expression(p.end_span(expr_start), expressions, p)
+            };
+            (Some(expression), comma_start)
         });
 
         if let Some(comma_start) = comma_start {
@@ -339,21 +356,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.fatal_error(error);
         }
 
-        if expressions.is_empty() {
+        let Some(mut expression) = expression else {
             self.expect(Kind::RParen);
             let error = diagnostics::empty_parenthesized_expression(self.end_span(start));
             return self.fatal_error(error);
-        }
-
-        let expr_span = self.end_span(expr_start);
-        self.expect(Kind::RParen);
-
-        // ParenthesizedExpression is from acorn --preserveParens
-        let mut expression = if expressions.len() == 1 {
-            expressions.remove(0)
-        } else {
-            Expression::new_sequence_expression(expr_span, expressions, self)
         };
+        self.expect(Kind::RParen);
 
         match &mut expression {
             Expression::ArrowFunctionExpression(arrow_expr) => {
