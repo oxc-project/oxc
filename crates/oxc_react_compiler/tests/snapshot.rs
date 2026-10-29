@@ -37,6 +37,17 @@ use oxc_span::SourceType;
 
 #[test]
 fn snapshots() {
+    // Deeply nested fixtures can overflow libtest's default 2 MiB stack during
+    // semantic analysis on s390x. Match the formatter conformance suite's stack size.
+    std::thread::Builder::new()
+        .stack_size(16 * 1024 * 1024)
+        .spawn(run_snapshots)
+        .unwrap()
+        .join()
+        .unwrap();
+}
+
+fn run_snapshots() {
     let fixtures = concat!(env!("CARGO_MANIFEST_DIR"), "/fixtures");
     insta::glob!(fixtures, "**/*.{js,cjs,mjs,ts,cts,mts,jsx,tsx}", |path| {
         let source = fs::read_to_string(path).unwrap();
