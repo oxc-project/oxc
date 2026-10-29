@@ -2825,7 +2825,7 @@ impl RuleRunner for crate::rules::react::no_array_index_key::NoArrayIndexKey {
 
 impl RuleRunner for crate::rules::react::no_children_prop::NoChildrenProp {
     const NODE_TYPES: Option<&AstTypesBitset> =
-        Some(&AstTypesBitset::from_types(&[AstType::CallExpression, AstType::JSXAttribute]));
+        Some(&AstTypesBitset::from_types(&[AstType::JSXAttribute, AstType::ObjectExpression]));
     const RUN_FUNCTIONS: RuleRunFunctionsImplemented = RuleRunFunctionsImplemented::Run;
 }
 
