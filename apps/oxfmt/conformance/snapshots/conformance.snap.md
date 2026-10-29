@@ -74,12 +74,14 @@
 
 ## html-in-js
 
-### Option 1: 173/201 (86.07%)
+### Option 1: 173/202 (85.64%)
 
 ```json
 {"printWidth":80}
 ```
 
+- [edge-cases/html-in-js/dynamic-tag-name.js](diffs/html-in-js/edge-cases__html-in-js__dynamic-tag-name.js.md)
+  - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [edge-cases/html-in-js/placeholder-case-in-child.js](diffs/html-in-js/edge-cases__html-in-js__placeholder-case-in-child.js.md)
   - apps/oxfmt/DIVERGENCES.md#placeholder-case-in-child
 - [edge-cases/html-in-js/pre-like-template-expression.js](diffs/html-in-js/edge-cases__html-in-js__pre-like-template-expression.js.md)
@@ -91,7 +93,7 @@
 - [externals/webawesome/badge/badge.ts](diffs/html-in-js/externals__webawesome__badge__badge.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/checkbox/checkbox.ts](diffs/html-in-js/externals__webawesome__checkbox__checkbox.ts.md)
@@ -137,12 +139,14 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-### Option 2: 187/201 (93.03%)
+### Option 2: 187/202 (92.57%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}
 ```
 
+- [edge-cases/html-in-js/dynamic-tag-name.js](diffs/html-in-js/edge-cases__html-in-js__dynamic-tag-name.js.md)
+  - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [edge-cases/html-in-js/placeholder-case-in-child.js](diffs/html-in-js/edge-cases__html-in-js__placeholder-case-in-child.js.md)
   - apps/oxfmt/DIVERGENCES.md#placeholder-case-in-child
 - [edge-cases/html-in-js/pre-like-template-expression.js](diffs/html-in-js/edge-cases__html-in-js__pre-like-template-expression.js.md)
@@ -152,7 +156,7 @@
 - [externals/prettier/js/embeded/indention/19518.js](diffs/html-in-js/externals__prettier__js__embeded__indention__19518.js.md)
   - apps/oxfmt/DIVERGENCES.md#pre-like-template-expression
 - [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md)
