@@ -128,7 +128,7 @@ impl Rule for NoDupeElseIf {
             return;
         }
 
-        let mut conditions_to_check = vec![&if_stmt.test];
+        let mut conditions_to_check: SmallVec<[_; 2]> = smallvec![&if_stmt.test];
 
         if let Expression::LogicalExpression(expr) = &if_stmt.test
             && expr.operator == LogicalOperator::And
@@ -136,7 +136,7 @@ impl Rule for NoDupeElseIf {
             conditions_to_check.extend(split_by_and(&if_stmt.test));
         }
 
-        let mut list_to_check: Vec<Vec<Vec<_>>> = conditions_to_check
+        let mut list_to_check: SmallVec<[Alternatives<'_, '_>; 1]> = conditions_to_check
             .iter()
             .map(|expr| split_by_or(expr).into_iter().map(split_by_and).collect())
             .collect();
@@ -155,24 +155,18 @@ impl Rule for NoDupeElseIf {
 
             current_node = parent_node;
 
-            let current_or_operands: Vec<_> =
+            let current_or_operands: Alternatives<'_, '_> =
                 split_by_or(&stmt.test).into_iter().map(split_by_and).collect();
 
-            list_to_check = list_to_check
-                .into_iter()
-                .map(|or_operands| {
-                    or_operands
-                        .into_iter()
-                        .filter(|or_operand| {
-                            !current_or_operands
-                                .iter()
-                                .any(|current_or_operand| is_subset(current_or_operand, or_operand))
-                        })
-                        .collect()
-                })
-                .collect();
+            for or_operands in &mut list_to_check {
+                or_operands.retain(|or_operand| {
+                    !current_or_operands
+                        .iter()
+                        .any(|current_or_operand| is_subset(current_or_operand, or_operand))
+                });
+            }
 
-            if list_to_check.iter().any(Vec::is_empty) {
+            if list_to_check.iter().any(SmallVec::is_empty) {
                 ctx.diagnostic(no_dupe_else_if_diagnostic(stmt.test.span(), if_stmt.test.span()));
                 break;
             }
@@ -180,29 +174,41 @@ impl Rule for NoDupeElseIf {
     }
 }
 
-fn split_by_or<'a, 'b>(expr: &'a Expression<'b>) -> Vec<&'a Expression<'b>> {
+type Operands<'a, 'b> = SmallVec<[&'a Expression<'b>; 2]>;
+type Alternatives<'a, 'b> = SmallVec<[Operands<'a, 'b>; 1]>;
+
+fn split_by_or<'a, 'b>(expr: &'a Expression<'b>) -> Operands<'a, 'b> {
     split_by_logical_operator(expr, LogicalOperator::Or)
 }
 
-fn split_by_and<'a, 'b>(expr: &'a Expression<'b>) -> Vec<&'a Expression<'b>> {
+fn split_by_and<'a, 'b>(expr: &'a Expression<'b>) -> Operands<'a, 'b> {
     split_by_logical_operator(expr, LogicalOperator::And)
 }
 
 fn split_by_logical_operator<'a, 'b>(
     expr: &'a Expression<'b>,
     operator: LogicalOperator,
-) -> Vec<&'a Expression<'b>> {
-    match expr {
-        Expression::LogicalExpression(expr) if expr.operator == operator => [
-            split_by_logical_operator(&expr.left, operator),
-            split_by_logical_operator(&expr.right, operator),
-        ]
-        .concat(),
-        Expression::ParenthesizedExpression(expr) => {
-            split_by_logical_operator(&expr.expression, operator)
+) -> Operands<'a, 'b> {
+    fn collect<'a, 'b>(
+        expr: &'a Expression<'b>,
+        operator: LogicalOperator,
+        result: &mut Operands<'a, 'b>,
+    ) {
+        match expr {
+            Expression::LogicalExpression(expr) if expr.operator == operator => {
+                collect(&expr.left, operator, result);
+                collect(&expr.right, operator, result);
+            }
+            Expression::ParenthesizedExpression(expr) => {
+                collect(&expr.expression, operator, result);
+            }
+            _ => result.push(expr),
         }
-        _ => vec![expr],
     }
+
+    let mut result = SmallVec::new();
+    collect(expr, operator, &mut result);
+    result
 }
 
 fn is_subset<'a, 'b>(a: &'a [&'a Expression<'b>], b: &'a [&'a Expression<'b>]) -> bool {
@@ -324,3 +330,4 @@ fn test() {
 
     Tester::new(NoDupeElseIf::NAME, NoDupeElseIf::PLUGIN, pass, fail).test_and_snapshot();
 }
+use smallvec::{SmallVec, smallvec};
