@@ -28,7 +28,8 @@ pub(super) unsafe fn lex_line_comment(
     if end < n {
         bm_set(st, end);
     }
-    let lic = lic_q >= 0 && (lic_q as usize) + 8 < end;
+    // `@license` is 8 bytes long, and can run right up to the end of the comment.
+    let lic = lic_q >= 0 && (lic_q as usize) + 8 <= end;
     let body = comment_body(&srcs[..n], s as u32, end as u32, false);
     let m = classify(body, false, lic);
     debug_assert_eq!(m, classify_exact(body, false), "LCOM content fused != exact at {s}");
@@ -60,7 +61,8 @@ pub(super) unsafe fn lex_block_comment(
 
     let body = comment_body(&srcs[..n], s as u32, end as u32, true);
     let m = if e < n {
-        let lic = lic_q >= 0 && (lic_q as usize) + 8 < e - 1;
+        // `@license` is 8 bytes long, and can run right up to the closing `*/` at `e - 1`.
+        let lic = lic_q >= 0 && (lic_q as usize) + 8 < e;
         let m = classify(body, true, lic);
         debug_assert_eq!(m, classify_exact(body, true), "BCOM content fused != exact at {s}");
         debug_assert_eq!(saw_nl, has_nl_cr(body), "BCOM saw_nl != exact at {s}");
@@ -243,23 +245,10 @@ fn comment_body(src: &[u8], start: u32, end: u32, is_block: bool) -> &[u8] {
 }
 
 fn contains_license_or_preserve(hay: &[u8]) -> bool {
-    if hay.len() < 9 {
-        return false;
-    }
-    let lim = hay.len() - 8;
-    let mut i = 0;
-    while i < lim {
-        if hay[i] == b'@' {
-            match hay[i + 1] {
-                // spellchecker:disable-next-line
-                b'l' if &hay[i + 2..i + 8] == b"icense" => return true,
-                b'p' if &hay[i + 2..i + 9] == b"reserve" => return true,
-                _ => {}
-            }
-        }
-        i += 1;
-    }
-    false
+    hay.iter().enumerate().any(|(i, &c)| {
+        let rest = &hay[i + 1..];
+        c == b'@' && (rest.starts_with(b"license") || rest.starts_with(b"preserve"))
+    })
 }
 
 #[inline]
@@ -409,7 +398,27 @@ fn is_lex_ws(c: u8) -> bool {
 mod tests {
     use oxc_ast::ast::CommentContent;
 
-    use super::classify;
+    use super::{classify, contains_license_or_preserve};
+
+    #[test]
+    fn license_or_preserve() {
+        for source in [
+            b"@license".as_slice(),
+            b"@preserve",
+            b" foo @license",
+            b" foo @preserve",
+            b" foo @license bar",
+            b"@licensed",
+        ] {
+            assert!(contains_license_or_preserve(source));
+        }
+
+        // spellchecker:off
+        for source in [b"".as_slice(), b"@", b"@licens", b"@preserv", b" foo @licens", b"license"] {
+            assert!(!contains_license_or_preserve(source));
+        }
+        // spellchecker:on
+    }
 
     #[test]
     fn coverage_ignore_file() {
