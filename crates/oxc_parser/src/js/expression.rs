@@ -93,6 +93,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         Expression::Identifier(self.alloc(IdentifierReference::new(span, name, self)))
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
         // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
@@ -156,6 +158,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         LabelIdentifier::new(span, name, self)
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_identifier_name(&mut self) -> IdentifierName<'a> {
         if !self.cur_kind().is_identifier_name() {
             return self.unexpected();
@@ -266,23 +270,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `RegularExpressionLiteral`
     ///     `TemplateLiteral`[?Yield, ?Await, ~Tagged]
     ///     `CoverParenthesizedExpressionAndArrowParameterList`[?Yield, ?Await]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_primary_expression(&mut self) -> Expression<'a> {
         // Ordinary identifiers do not need async-function or contextual-keyword disambiguation.
         if self.at(Kind::Ident) {
             return self.parse_identifier_expression();
         }
-        // FunctionExpression, GeneratorExpression
-        // AsyncFunctionExpression, AsyncGeneratorExpression
-        if self.at_function_with_async() {
-            let start = self.cur_start();
-            let r#async = self.eat(Kind::Async);
-            return self.parse_function_expression(start, r#async);
-        }
-
         let kind = self.cur_kind();
         match kind {
             // Fast path: `Ident` is already classified as a valid identifier reference.
             Kind::Ident => self.parse_plain_identifier_expression(),
+            Kind::Function => self.parse_function_expression(self.cur_start(), false),
+            Kind::Async
+                if {
+                    let token = self.lexer.peek_token();
+                    token.kind() == Kind::Function && !token.is_on_new_line()
+                } =>
+            {
+                let start = self.cur_start();
+                self.bump_any();
+                self.parse_function_expression(start, true)
+            }
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
@@ -802,6 +811,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.with_pure_comments(Self::parse_lhs_expression_or_higher_impl)
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_lhs_expression_or_higher_impl(&mut self) -> Expression<'a> {
         let start = self.cur_start();
         // `MemberExpression`
@@ -842,6 +853,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn with_pure_comments(
         &mut self,
         parse: impl FnOnce(&mut Self) -> Expression<'a>,
@@ -912,6 +925,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// parse rhs of a member expression, starting from lhs
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_member_expression_rest(
         &mut self,
         lhs_start: u32,
@@ -1015,6 +1030,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.3 `MemberExpression`
     /// static member `a.b`
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_static_member_expression(
         &mut self,
         lhs_start: u32,
@@ -1219,6 +1236,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_call_arguments(
         &mut self,
         lhs_start: u32,
@@ -1258,6 +1277,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 13.4 Update Expression
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_update_expression(&mut self, lhs_start: u32) -> Expression<'a> {
         let kind = self.cur_kind();
         // ++ -- prefix update expressions
@@ -1308,6 +1329,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 13.5 Unary Expression
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_unary_expression_or_higher(&mut self, lhs_start: u32) -> Expression<'a> {
         match self.cur_kind() {
             // `UnaryExpression : (delete | void | typeof | + | - | ~ | !) UnaryExpression`
@@ -1365,6 +1388,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         Expression::new_unary_expression(self.end_span(start), operator, argument, self)
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_binary_expression_or_higher(
         &mut self,
         lhs_precedence: Precedence,
@@ -1560,6 +1585,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `ConditionalExpression`[In, Yield, Await] :
     ///     `ShortCircuitExpression`[?In, ?Yield, ?Await]
     ///     `ShortCircuitExpression`[?In, ?Yield, ?Await] ? `AssignmentExpression`[+In, ?Yield, ?Await] : `AssignmentExpression`[?In, ?Yield, ?Await]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_conditional_expression_rest(
         &mut self,
         lhs_start: u32,
