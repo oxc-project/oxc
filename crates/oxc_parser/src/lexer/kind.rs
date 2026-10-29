@@ -211,6 +211,16 @@ fieldless_enum! {
 #[allow(clippy::enum_glob_use, clippy::allow_attributes)]
 use Kind::*;
 
+// The range used by `is_identifier` must keep matching the grammar if keywords are reordered.
+const _: () = {
+    let mut i = 0;
+    while i < Kind::VARIANTS.len() {
+        let kind = Kind::VARIANTS[i];
+        assert!(kind.is_identifier() == (kind.is_identifier_name() && !kind.is_reserved_keyword()));
+        i += 1;
+    }
+};
+
 impl Kind {
     #[inline]
     pub const fn is_eof(self) -> bool {
@@ -267,9 +277,10 @@ impl Kind {
 
     /// Identifier
     /// `IdentifierName` but not `ReservedWord`
+    /// Contextual and strict mode keywords occupy the contiguous `Async..=Static` range.
     #[inline]
     pub const fn is_identifier(self) -> bool {
-        self.is_identifier_name() && !self.is_reserved_keyword()
+        matches!(self, Ident) || matches!(self as u8, x if x >= Async as u8 && x <= Static as u8)
     }
 
     /// TypeScript Identifier
