@@ -82,6 +82,8 @@ pub struct Lexer<'a, C: Config> {
     source_type: SourceType,
 
     /// The token currently being built.
+    /// Only its start and flags are written here; its kind and end remain zero until
+    /// `Token::finish` constructs the completed token.
     ///
     /// Between lexer calls, `token` is always `Token::default()`. Every method which produces a token
     /// ends in `finish_next_inner` or `finish_re_lex`, and both reset it.
@@ -314,9 +316,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     #[expect(clippy::inline_always)]
     #[inline(always)]
     fn finish_next_inner(&mut self, kind: Kind, mode: FinishTokenMode) -> Token {
-        self.token.set_kind(kind);
-        self.token.set_end(self.offset());
-        let token = self.token;
+        let token = self.token.finish(kind, self.offset());
         if self.config.tokens() {
             match mode {
                 FinishTokenMode::Push => {
@@ -342,9 +342,7 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// Finish a re-lexed token used only for parser disambiguation.
     /// This must not mutate the externally collected token stream.
     fn finish_re_lex(&mut self, kind: Kind) -> Token {
-        self.token.set_kind(kind);
-        self.token.set_end(self.offset());
-        let token = self.token;
+        let token = self.token.finish(kind, self.offset());
         self.token = Token::default();
         token
     }
