@@ -27,7 +27,7 @@ pub(super) unsafe fn carve_js(
     word: *const u64,
     ts: bool,
     lanes: &mut Lanes,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) {
     let src = srcs.as_ptr();
     let mut depth: Vec<u32> = Vec::with_capacity(64);
@@ -51,7 +51,7 @@ pub(super) unsafe fn carve_js(
         let c = *src.add(s);
         match c {
             b'"' | b'\'' => {
-                i = lex_string(src, srcs, n, st, kind, s, c, lanes);
+                i = lex_string(src, srcs, n, st, kind, s, c, lanes, cpu);
             }
             b'`' => {
                 let (end, opened_sub) = lex_template_segment(
@@ -64,6 +64,7 @@ pub(super) unsafe fn carve_js(
                     tk!(TemplateHead),
                     tk!(TemplateNoSub),
                     lanes,
+                    cpu,
                 );
                 if opened_sub {
                     depth.push(0);
@@ -96,6 +97,7 @@ pub(super) unsafe fn carve_js(
                         tk!(TemplateMiddle),
                         tk!(TemplateTail),
                         lanes,
+                        cpu,
                     );
                     if opened_sub {
                         depth.push(0);
@@ -104,7 +106,7 @@ pub(super) unsafe fn carve_js(
                 }
             }
             b'/' => {
-                i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes);
+                i = lex_slash(src, srcs, n, st, kind, opch, word, ts, s, lanes, cpu);
             }
             b'<' => {
                 // Annex B B.1.1: `<!--` begins a line comment.
