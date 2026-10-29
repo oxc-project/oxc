@@ -8,7 +8,7 @@ use proc_macro2::TokenStream;
 use quote::quote;
 use rustc_hash::FxHashSet;
 
-use oxc_allocator::{Allocator, ReplaceWith, Vec as ArenaVec};
+use oxc_allocator::{Allocator, ArenaBox, ArenaVec, GetAllocator, ReplaceWith};
 use oxc_ast::{
     ast::{
         Argument, AssignmentOperator, AssignmentTarget, BindingIdentifier, BindingPattern,
@@ -20,6 +20,7 @@ use oxc_ast::{
 };
 use oxc_ast_visit::{VisitMut, walk_mut};
 use oxc_span::SPAN;
+use oxc_str::{Ident, format_ident, static_ident};
 use oxc_syntax::scope::ScopeFlags;
 
 use crate::{
@@ -1848,7 +1849,6 @@ fn get_constants(schema: &Schema) -> Constants {
 /// Works on AST pre-minification.
 struct LocFieldAdder<'a> {
     ast: AstBuilder<'a>,
-    allocator: &'a Allocator,
     /// Nesting depth of object literals being converted
     depth: usize,
     /// Number of temp vars required in current function. `None` if not in a function.
@@ -1857,12 +1857,23 @@ struct LocFieldAdder<'a> {
 
 impl<'a> LocFieldAdder<'a> {
     fn new(allocator: &'a Allocator) -> Self {
-        Self { ast: AstBuilder::new(allocator), allocator, depth: 0, temp_count: None }
+        Self { ast: AstBuilder::new(allocator), depth: 0, temp_count: None }
+    }
+
+    /// Get name of temp var for object literals at nesting depth `index`.
+    fn temp_name(&self, index: usize) -> Ident<'a> {
+        // In practice, nested object literals don't occur, so `index` is always 0.
+        // Use a static `Ident` for that case, with hash calculated at compile time.
+        if index == 0 {
+            static_ident!("node$0")
+        } else {
+            format_ident!(self.ast.allocator(), "node${index}")
+        }
     }
 
     /// Create sequence expression which creates object with `NodeProto` as prototype,
     /// and assigns properties of `obj_expr` to it, using temp var `temp`.
-    fn create_node(&self, obj_expr: ObjectExpression<'a>, temp: &'a str) -> Expression<'a> {
+    fn create_node(&self, obj_expr: ObjectExpression<'a>, temp: Ident<'a>) -> Expression<'a> {
         let mut exprs = ArenaVec::new_in(&self.ast);
 
         // `node$0 = Object.create(NodeProto)`
@@ -1943,11 +1954,7 @@ impl<'a> LocFieldAdder<'a> {
     /// * `foo: value` -> `node$0.foo = value`
     /// * `get foo() {}` ->
     ///   `Object.defineProperty(node$0, 'foo', { get() {}, enumerable: true, configurable: true })`
-    fn define(
-        &self,
-        prop: oxc_allocator::Box<'a, ObjectProperty<'a>>,
-        temp: &'a str,
-    ) -> Expression<'a> {
+    fn define(&self, prop: ArenaBox<'a, ObjectProperty<'a>>, temp: Ident<'a>) -> Expression<'a> {
         assert!(!prop.computed && !prop.method, "Unsupported property in object literal");
         let PropertyKey::StaticIdentifier(key) = &prop.key else {
             panic!("Unsupported property in object literal");
@@ -2051,7 +2058,7 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
                         SPAN,
                         BindingPattern::new_binding_identifier(
                             SPAN,
-                            temp_name(index, self.allocator),
+                            self.temp_name(index),
                             &self.ast,
                         ),
                         None,
@@ -2109,7 +2116,7 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
         walk_mut::walk_expression(self, expr);
         self.depth -= 1;
 
-        let temp = temp_name(index, self.allocator);
+        let temp = self.temp_name(index);
         expr.replace_with(|expr| {
             let Expression::ObjectExpression(obj_expr) = expr else { unreachable!() };
             self.create_node(obj_expr.unbox(), temp)
@@ -2119,9 +2126,4 @@ impl<'a> VisitMut<'a> for LocFieldAdder<'a> {
     fn visit_binding_identifier(&mut self, ident: &mut BindingIdentifier<'a>) {
         assert!(!ident.name.starts_with("node$"), "`{}` clashes with temp vars", ident.name);
     }
-}
-
-/// Get name of temp var for object literals at nesting depth `index`.
-fn temp_name(index: usize, allocator: &Allocator) -> &str {
-    allocator.alloc_str(&format!("node${index}"))
 }
