@@ -172,7 +172,8 @@ for (const name of command === "all" ? packages : [command]) {
     ...process.env,
     NAPI_RS_FORCE_WASI: "false",
     RUN_RAW_RANGE_TESTS: "true",
-    RUN_LAZY_TESTS: "true",
+    // Match compiler CI on Windows, where lazy buffers exhaust commit limits.
+    RUN_LAZY_TESTS: process.platform === "win32" ? "false" : "true",
     RUN_RAW_TOKENS_TESTS: "false",
   };
   delete validationEnv.LLVM_PROFILE_FILE;
