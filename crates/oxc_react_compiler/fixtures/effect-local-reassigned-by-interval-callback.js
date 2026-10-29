@@ -1,7 +1,9 @@
+// @validateNoImpureFunctionsInRender
 import {useEffect, useState} from 'react';
 
 // `last` is declared inside the effect, so reassigning it from the interval
-// callback never crosses a render.
+// callback never crosses a render. Oxlint enables this validation, and with it
+// the old code reported `last`.
 function useTicker(isPlaying) {
   const [total, setTotal] = useState(0);
   useEffect(() => {
