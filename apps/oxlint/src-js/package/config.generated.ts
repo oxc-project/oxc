@@ -807,6 +807,16 @@ export interface OxlintOptions {
    */
   maxWarnings?: number;
   /**
+   * Ignore all supported inline disable and enable directives
+   * (`oxlint-*` and `eslint-*`).
+   *
+   * Defaults to `false`.
+   * Equivalent to passing `--no-inline-config` on the CLI.
+   * Takes precedence over `respectEslintDisableDirectives`.
+   * Only supported in the root configuration file.
+   */
+  noInlineConfig?: boolean;
+  /**
    * Report unused disable directives (e.g. `// oxlint-disable-line` or `// eslint-disable-line`).
    *
    * Equivalent to passing `--report-unused-disable-directives-severity` on the CLI.
@@ -819,6 +829,8 @@ export interface OxlintOptions {
    * directives in addition to its native `oxlint-*` directives.
    *
    * Defaults to `true`.
+   *
+   * Has no effect when `noInlineConfig` is `true`.
    * Only supported in the root configuration file.
    */
   respectEslintDisableDirectives?: boolean;
