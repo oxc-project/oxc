@@ -4,6 +4,7 @@ crates/oxc_parser/src/lexer/mod.rs
   s_aa2b8ec570ef89::t_e5239fc99b5cfd 56,61-67,222,244,262
 crates/oxc_parser/src/lib.rs
   s_aa2b8ec570ef89::t_e841e22c1979e0 97,884-889,903-911
+  s_aa2b8ec570ef89::t_1fbee4fef9a0fa 97,903-911
 crates/oxc_parser/src/module_record.rs
   s_aa2b8ec570ef89::t_259bba942f36d2 10-17,54-67
 ---
