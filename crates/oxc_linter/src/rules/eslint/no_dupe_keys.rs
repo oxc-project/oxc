@@ -72,10 +72,10 @@ declare_oxc_lint!(
     short_description = "Disallow duplicate keys in object literals.",
 );
 
+const INLINE_CAPACITY: usize = 8;
+
 impl Rule for NoDupeKeys {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        const INLINE_CAPACITY: usize = 8;
-
         let AstKind::ObjectExpression(obj_expr) = node.kind() else {
             return;
         };
