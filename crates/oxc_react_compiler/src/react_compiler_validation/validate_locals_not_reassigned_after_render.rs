@@ -57,6 +57,9 @@ pub fn validate_locals_not_reassigned_after_render(func: &HirFunction, env: &mut
     let mut context_variables: FxHashSet<IdentifierId> = FxHashSet::default();
     let mut diagnostics: Vec<OxcDiagnostic> = Vec::new();
 
+    // Only bindings of the component or hook are tracked. Bindings declared
+    // inside a nested function are fresh on each call of that function, so
+    // reassigning them never crosses a render.
     for param in &func.params {
         let place = match param {
             ParamPattern::Place(place) => place,
@@ -718,21 +721,6 @@ fn get_context_reassignment(
     let mut returned_loaded_contexts = CapturedContexts::default();
     let (initial_context_values, context_values_by_block, hoisted_function_values) =
         infer_context_values_by_block(func, functions);
-    // Only bindings of the outer component or hook are tracked. They are
-    // ordinary locals while it renders, but become context variables for child
-    // closures. Bindings declared inside a nested function are fresh on each
-    // call of that function, so reassigning them never crosses a render.
-    let mut child_context_variables = context_variables.clone();
-    if !is_function_expression {
-        for param in &func.params {
-            let place = match param {
-                ParamPattern::Place(place) => place,
-                ParamPattern::Spread(spread) => &spread.place,
-            };
-            child_context_variables.insert(place.identifier);
-        }
-        collect_outer_context_variables(func, &mut child_context_variables);
-    }
 
     for (&block_id, block) in &func.body.blocks {
         let mut context_values = context_values_at_block_entry(
@@ -778,7 +766,7 @@ fn get_context_reassignment(
                         identifiers,
                         functions,
                         env,
-                        &mut child_context_variables,
+                        context_variables,
                         true,
                         inner_is_async && !inner_function.generator,
                         diagnostics,
