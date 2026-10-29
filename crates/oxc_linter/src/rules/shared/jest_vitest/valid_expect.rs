@@ -63,7 +63,7 @@ pub struct ValidExpectConfig {
     min_args: u32,
     /// Maximum number of arguments `expect` should be called with.
     max_args: u32,
-    /// When `true`, allow a string or template literal second argument as a custom message.
+    /// When `true`, allow common expressions as a custom message second argument.
     #[serde(skip)]
     allow_string_message_arg: bool,
     /// When `true`, async assertions must be awaited in all contexts (not just return statements).
@@ -174,7 +174,16 @@ impl ValidExpectConfig {
         let allow_message_arg = self.allow_string_message_arg
             && call_expr.arguments.len() == 2
             && call_expr.arguments.get(1).and_then(|arg| arg.as_expression()).is_some_and(|expr| {
-                matches!(expr, Expression::StringLiteral(_) | Expression::TemplateLiteral(_))
+                matches!(
+                    expr.get_inner_expression(),
+                    Expression::StringLiteral(_)
+                        | Expression::TemplateLiteral(_)
+                        | Expression::Identifier(_)
+                        | Expression::StaticMemberExpression(_)
+                        | Expression::ComputedMemberExpression(_)
+                        | Expression::CallExpression(_)
+                        | Expression::ChainExpression(_)
+                )
             });
 
         if (call_expr.arguments.len() as u32) > self.max_args && !allow_message_arg {
