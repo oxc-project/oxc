@@ -17,11 +17,32 @@ impl<C: Config> Lexer<'_, C> {
     /// * `byte` must be next byte of source code, corresponding to current position of `lexer.source`.
     /// * Only byte handlers for ASCII characters may use the `ascii_byte_handler!()` macro.
     // `#[inline(always)]` to ensure is inlined into `read_next_token`
-    #[expect(clippy::inline_always)]
     #[inline(always)]
     pub(super) unsafe fn handle_byte(&mut self, byte: u8) -> Kind {
+        const PUNCTUATION: [Kind; 256] = {
+            let mut kinds = [Kind::Eof; 256];
+            kinds[b'(' as usize] = Kind::LParen;
+            kinds[b')' as usize] = Kind::RParen;
+            kinds[b'[' as usize] = Kind::LBrack;
+            kinds[b']' as usize] = Kind::RBrack;
+            kinds[b'{' as usize] = Kind::LCurly;
+            kinds[b'}' as usize] = Kind::RCurly;
+            kinds[b',' as usize] = Kind::Comma;
+            kinds[b':' as usize] = Kind::Colon;
+            kinds[b';' as usize] = Kind::Semicolon;
+            kinds[b'@' as usize] = Kind::At;
+            kinds[b'~' as usize] = Kind::Tilde;
+            kinds
+        };
+        let kind = PUNCTUATION[byte as usize];
+        if kind != Kind::Eof {
+            // SAFETY: The caller guarantees that `byte` is present, and all table
+            // entries other than the sentinel are single-byte ASCII punctuation.
+            self.source.set_position(unsafe { self.source.position().add(1) });
+            return kind;
+        }
         let byte_handlers = self.config.byte_handlers();
-        // SAFETY: Caller guarantees to uphold safety invariants
+        // SAFETY: Caller guarantees to uphold safety invariants.
         unsafe { byte_handlers[byte as usize](self) }
     }
 }
