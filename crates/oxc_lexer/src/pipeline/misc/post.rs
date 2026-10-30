@@ -35,15 +35,12 @@ unsafe fn misc_post_impl(
 ) {
     let nw = (n + 63) >> 6;
     for w in 0..nw {
-        let mut m = *misc.add(w);
+        let mut m = *misc.add(w) & *st.add(w);
         while m != 0 {
             let bit = m.trailing_zeros() as usize;
             m &= m - 1;
             let p = (w << 6) + bit;
             if *src.add(p) != b'\\' || *src.add(p + 1) != b'u' {
-                continue;
-            }
-            if !bm_get(st, p) {
                 continue;
             }
             if p == 0 || !bm_get(word, p - 1) {
