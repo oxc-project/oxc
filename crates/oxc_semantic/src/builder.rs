@@ -5,7 +5,7 @@ use std::{
     mem,
 };
 
-use rustc_hash::FxHashMap;
+use rustc_hash::{FxHashMap, FxHashSet};
 use smallvec::SmallVec;
 
 use oxc_allocator::{Address, ArenaVec};
@@ -92,6 +92,14 @@ pub struct SemanticBuilder<'a> {
     /// declarations in that scope can still detect redeclarations via `check_redeclaration`.
     /// A single flat map avoids allocating a per-scope inner map for every hoisting scope.
     pub(crate) hoisting_variables: FxHashMap<(ScopeId, Ident<'a>), SymbolId>,
+    /// Function declarations that contribute to `LexicallyDeclaredNames` for redeclaration
+    /// checks, including block scopes and module top level.
+    ///
+    /// A `var` declaration hoisted across or into one of these bindings is an early error.
+    /// Legacy Annex B functions used directly as an `if` branch are intentionally excluded
+    /// because Annex B.3.3 places them in a synthetic block instead of the surrounding
+    /// StatementList.
+    pub(crate) lexical_function_bindings: FxHashSet<(ScopeId, Ident<'a>)>,
 
     // builders
     /// Node-id counter, current-node cursor/flags, and the node storage (full
@@ -158,6 +166,7 @@ impl<'a> SemanticBuilder<'a> {
             module_instance_state_cache: FxHashMap::default(),
             node_store: AstNodeStore::default(),
             hoisting_variables: FxHashMap::default(),
+            lexical_function_bindings: FxHashSet::default(),
             scoping,
             unresolved_references: UnresolvedReferences::new(),
             unused_labels: UnusedLabels::default(),
@@ -223,6 +232,11 @@ impl<'a> SemanticBuilder<'a> {
     pub fn with_check_syntax_error(mut self, yes: bool) -> Self {
         self.check_syntax_error = yes;
         self
+    }
+
+    #[inline]
+    pub(crate) fn check_syntax_error(&self) -> bool {
+        self.check_syntax_error
     }
 
     /// Enable or disable building the full [`AstNodes`](crate::AstNodes) store.
