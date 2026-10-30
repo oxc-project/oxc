@@ -171,8 +171,8 @@ fn dependency_changes_on_every_render_diagnostic(
         "React hook {hook_name} depends on `{dep_name}`, which changes every render"
     ))
     .with_labels([
-        span.primary_label("it will always cause this hook to re-evaluate"),
-        dep_decl_span.label(format!("`{dep_name}` is declared here")),
+        dep_decl_span.primary_label(format!("`{dep_name}` is declared here")),
+        span.label("it will always cause this hook to re-evaluate"),
     ])
     .with_help("Try memoizing this variable with `useRef` or `useCallback`.")
     .with_error_code_scope(SCOPE)
@@ -1552,6 +1552,68 @@ fn invalid_configs_error_in_from_configuration() {
 
     let valid_regex = serde_json::json!([{ "additionalHooks": "useSpecialEffect" }]);
     assert!(ExhaustiveDeps::from_configuration(valid_regex).is_ok());
+}
+
+#[test]
+fn test_unstable_dependency_location() {
+    use crate::tester::Tester;
+
+    let pass = vec![
+        r"function MyComponent(integration) {
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          const deductionCodesMap = integration.connection?.metadata?.employee_navigator?.deductionCodesMap || {};
+          return useMemo(() => Object.keys(deductionCodesMap), [deductionCodesMap]);
+        }",
+        r"function MyComponent() {
+          // oxlint-disable-next-line react/exhaustive-deps
+          const items = [];
+          useEffect(() => console.log(items), [items]);
+        }",
+        r"function MyComponent() {
+          const options = {}; // eslint-disable-line react-hooks/exhaustive-deps
+          useEffect(() => console.log(options), [options]);
+        }",
+        r"function MyComponent() {
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          function handleChange() {}
+          useEffect(() => handleChange(), [handleChange]);
+        }",
+        // Missing dependencies still report at the dependency array.
+        r"function MyComponent(props) {
+          useEffect(() => {
+            console.log(props.value);
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          }, []);
+        }",
+    ];
+
+    let fail = vec![
+        r"function MyComponent(integration) {
+          const deductionCodesMap = integration.connection?.metadata?.employee_navigator?.deductionCodesMap || {};
+          return useMemo(() => Object.keys(deductionCodesMap), [deductionCodesMap]);
+        }",
+        r"function MyComponent() {
+          const options = {};
+          useEffect(() => {
+            console.log(options);
+          // eslint-disable-next-line react-hooks/exhaustive-deps
+          }, [options]);
+        }",
+        r"function MyComponent() {
+          function handleChange() {}
+          useEffect(() => handleChange(), [handleChange]);
+        }",
+    ];
+
+    let fix = vec![(
+        "function MyComponent() { const options = {}; useEffect(() => console.log(options), [options]); }",
+        "function MyComponent() { const options = {}; useEffect(() => console.log(options), []); }",
+    )];
+
+    Tester::new(ExhaustiveDeps::NAME, ExhaustiveDeps::PLUGIN, pass, fail)
+        .expect_fix(fix)
+        .with_snapshot_suffix("unstable-dependency-location")
+        .test_and_snapshot();
 }
 
 #[test]
