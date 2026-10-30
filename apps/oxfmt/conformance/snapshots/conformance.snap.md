@@ -74,7 +74,7 @@
 
 ## html-in-js
 
-### Option 1: 172/200 (86.00%)
+### Option 1: 173/201 (86.07%)
 
 ```json
 {"printWidth":80}
@@ -137,7 +137,7 @@
 - [externals/webawesome/textarea/textarea.ts](diffs/html-in-js/externals__webawesome__textarea__textarea.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 
-### Option 2: 186/200 (93.00%)
+### Option 2: 187/201 (93.03%)
 
 ```json
 {"printWidth":100,"htmlWhitespaceSensitivity":"ignore"}

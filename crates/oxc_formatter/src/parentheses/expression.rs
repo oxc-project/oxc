@@ -144,23 +144,33 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, IdentifierReference<'_>> {
 
 /// Whether the source wraps `node` in parentheses of its own (the AST keeps none),
 /// besides those of the syntax around it (a sole call argument, an `if` test, ...).
+/// Comments between them are skipped (`f((a) /* c */)`).
+#[expect(clippy::cast_possible_truncation)] // Offsets fit in `u32`, source length does
 fn is_parenthesized_in_source(
     node: &AstNode<'_, '_, IdentifierReference<'_>>,
     f: &JsFormatter<'_, '_>,
 ) -> bool {
     let bytes = f.source_text().as_str().as_bytes();
-    let (mut start, mut end) = (node.span.start as usize, node.span.end as usize);
-    let mut pairs = 0;
-    loop {
-        let before = bytes[..start].iter().rposition(|b| !b.is_ascii_whitespace());
-        let after = bytes[end..].iter().position(|b| !b.is_ascii_whitespace()).map(|i| end + i);
-        match (before, after) {
-            (Some(before), Some(after)) if bytes[before] == b'(' && bytes[after] == b')' => {
-                pairs += 1;
-                (start, end) = (before, after + 1);
+    let comments = f.context().comments();
+    // The last byte before `pos` that is neither whitespace nor in a comment
+    let before = |mut pos: u32| -> Option<u32> {
+        loop {
+            let i = bytes[..pos as usize].iter().rposition(|b| !b.is_ascii_whitespace())? as u32;
+            match comments.all_comments_before(pos).last() {
+                Some(comment) if comment.span.end > i => pos = comment.span.start,
+                _ => return Some(i),
             }
-            _ => break,
         }
+    };
+    let (mut start, mut end) = (node.span.start, node.span.end);
+    let mut pairs = 0;
+    while let Some(open) = before(start)
+        && bytes[open as usize] == b'('
+        && comments.is_followed_by_closing_paren(end)
+    {
+        pairs += 1;
+        start = open;
+        end = comments.position_after_character(end, b')');
     }
     let span = node.span;
     let syntax_parens = match node.parent() {
