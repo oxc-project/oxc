@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 131/131 (100.00%)
 Positive Passed: 131/131 (100.00%)
-Negative Passed: 269/269 (100.00%)
+Negative Passed: 270/270 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -507,6 +507,14 @@ Negative Passed: 269/269 (100.00%)
         If you're having merge conflicts after pulling new code, the top section is the code you already had and the bottom section is the remote code.
         If you're in the middle of a rebase, the top section is the code being rebased onto and the bottom section is the code coming from the current commit being rebased.
         If you have nested conflicts, resolve the outermost conflict first.
+
+  × Identifier `value` has already been declared
+   ╭─[misc/fail/duplicate-parameter-after-nested-default.cjs:1:16]
+ 1 │ function outer(value = function (inner, inner) {}, value) {}
+   ·                ──┬──                               ──┬──
+   ·                  │                                   ╰── It can not be redeclared here
+   ·                  ╰── `value` has already been declared here
+   ╰────
 
   × Identifier `#x` has already been declared
    ╭─[misc/fail/duplicate-private-declarations.js:1:24]
