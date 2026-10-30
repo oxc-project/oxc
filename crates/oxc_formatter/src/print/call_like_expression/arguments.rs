@@ -165,7 +165,7 @@ impl<'a> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
                 ]
             );
         } else {
-            // Written in place rather than interned, the group expanding when its content will break
+            // The group's mode depends on its content: written flat, it expands when the content will break
             let start = f.elements().len();
             write!(
                 f,
@@ -184,11 +184,11 @@ impl<'a> AstNode<'_, 'a, ArenaVec<'a, Argument<'a>>> {
                     ")",
                 ))
             );
-            let elements = f.elements();
-            if elements[start..].will_break()
-                && let FormatElement::Tag(Tag::StartGroup(group)) = &elements[start]
+            if let [FormatElement::Tag(Tag::StartGroup(group)), content @ ..] =
+                &f.elements()[start..]
+                && content.will_break()
             {
-                group.expand();
+                group.propagate_expand();
             }
         }
     }
