@@ -291,6 +291,15 @@ impl Runtime {
         self.disable_directives_map = map;
     }
 
+    pub(super) fn release_module_graph(&mut self) {
+        // `clear` defers reclamation. Drop the old map to release both records and table storage
+        // before type-aware linting begins, after all native lint tasks have joined.
+        self.modules_by_path = papaya::HashMap::builder()
+            .hasher(BuildHasherDefault::default())
+            .resize_mode(papaya::ResizeMode::Blocking)
+            .build();
+    }
+
     fn get_resolver(tsconfig_path: Option<PathBuf>) -> Resolver {
         use oxc_resolver::{
             ResolveOptions, TsconfigDiscovery, TsconfigOptions, TsconfigReferences,
@@ -1181,5 +1190,58 @@ impl Runtime {
                 .collect();
         }
         Ok((ResolvedModuleRecord { module_record, resolved_module_requests }, semantic, tokens))
+    }
+}
+
+#[cfg(test)]
+mod lifecycle_tests {
+    use super::*;
+    use crate::{ConfigStore, ConfigStoreBuilder, ExternalPluginStore, LintOptions};
+
+    #[test]
+    fn release_module_graph_reclaims_records_and_allows_reuse() {
+        let cwd = Path::new(env!("CARGO_MANIFEST_DIR"));
+        let path = cwd.join("fixtures/module_graph_lifecycle/a.js");
+        let mut plugins = ExternalPluginStore::default();
+        let config = ConfigStoreBuilder::empty().build(&mut plugins).unwrap();
+        let config = ConfigStore::new(config, FxHashMap::default(), plugins);
+        let linter = Linter::new(LintOptions::default(), config, None);
+        let mut runtime =
+            Runtime::new(linter, LintServiceOptions::new(cwd).with_cross_module(true));
+        let directives = Arc::clone(&runtime.disable_directives_map);
+        let (tx, _rx) = mpsc::channel();
+        let diff = Arc::new(DiffManager::new(Arc::default(), false, true, false));
+        runtime.run::<false>(&OsFileSystem, vec![Arc::from(path.as_os_str())], &tx, &diff, None);
+
+        let records: Vec<_> = runtime
+            .modules_by_path
+            .pin()
+            .values()
+            .flat_map(|records| records.iter().map(Arc::downgrade))
+            .collect();
+        assert_eq!(records.len(), 2, "the cyclic import fixture must populate both modules");
+        assert!(records.iter().all(|record| record.upgrade().is_some()));
+        assert!(directives.lock().unwrap().contains_key(&path));
+        runtime.release_module_graph();
+        assert!(runtime.modules_by_path.is_empty());
+        assert!(
+            records.iter().all(|record| record.upgrade().is_none()),
+            "module records must be reclaimed before type-aware linting, not only removed from the map"
+        );
+        assert!(Arc::ptr_eq(&directives, &runtime.disable_directives_map));
+        assert!(directives.lock().unwrap().contains_key(&path));
+
+        let paths = vec![Arc::from(path.as_os_str())];
+        for _ in 0..2 {
+            let messages = runtime.run_source(&OsFileSystem, paths.clone());
+            assert!(messages.is_empty(), "reused runtime returned diagnostics: {messages:?}");
+            let graph = runtime.modules_by_path.pin();
+            assert_eq!(graph.len(), 2);
+            let root = &graph.get(path.as_os_str()).unwrap()[0];
+            assert!(
+                root.get_loaded_module("./b.js").is_some(),
+                "the dependency must stay alive while the source runner is reused"
+            );
+        }
     }
 }
