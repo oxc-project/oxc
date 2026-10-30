@@ -1,0 +1,31 @@
+crates/oxc_minifier/tests/peephole/inline.rs
+  s_9055c76e466968::t_584678461e7459 605-616
+crates/oxc_ecmascript/src/constant_evaluation/mod.rs
+  s_9055c76e466968::t_078c6db4668dd6 237-266,443-468
+tasks/track_memory_allocations/allocs_minifier.yaml
+  s_6f0b288ed627ac::t_6f5d91ba220d24 69,71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8798421fffed2a3375b900716fef73d8a121c7ba",
+  "prompts": {},
+  "sessions": {
+    "s_6f0b288ed627ac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1842f-5540-74a3-8f97-8636cf10ae64",
+        "model": "unknown"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    },
+    "s_9055c76e466968": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18e6d-49cc-7ec0-8806-e6bd01f6b786",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
