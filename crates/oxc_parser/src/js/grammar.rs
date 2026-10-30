@@ -97,6 +97,11 @@ impl<'a, C: Config> CoverGrammar<'a, ArrayExpression<'a>, C> for ArrayAssignment
     // would otherwise carry this body's large stack frame + callee-saved spills on every call.
     #[inline(never)]
     fn cover(expr: ArrayExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        // Comments may be assigned to elements discarded by the conversion. Calls and functions
+        // are moved to the target, so annotation comments keep their owners.
+        if p.assigned_comments != 0 {
+            p.unassign_comments_keeping_annotations(expr.span);
+        }
         let len = expr.elements.len();
         // A final spread becomes `rest`, so it needs no slot in `elements`.
         let capacity = len
@@ -180,6 +185,11 @@ impl<'a, C: Config> CoverGrammar<'a, ObjectExpression<'a>, C> for ObjectAssignme
     // inlining this large body into the hot `AssignmentTarget::cover` dispatcher.
     #[inline(never)]
     fn cover(expr: ObjectExpression<'a>, p: &mut ParserImpl<'a, C>) -> Self {
+        // Comments may be assigned to elements discarded by the conversion. Calls and functions
+        // are moved to the target, so annotation comments keep their owners.
+        if p.assigned_comments != 0 {
+            p.unassign_comments_keeping_annotations(expr.span);
+        }
         let len = expr.properties.len();
         // A final spread becomes `rest`, so it needs no slot in `properties`.
         let capacity = len

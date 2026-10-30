@@ -2479,6 +2479,7 @@ version = "0.156.0"
 dependencies = [
  "bitflags",
  "cow-utils",
+ "insta",
  "memchr",
  "num-bigint",
  "num-traits",

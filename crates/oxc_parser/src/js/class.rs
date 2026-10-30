@@ -230,16 +230,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     fn parse_class_body(&mut self) -> ArenaBox<'a, ClassBody<'a>> {
         let start = self.cur_start();
-        let class_elements = self.parse_normal_list_breakable(Kind::LCurly, Kind::RCurly, |p| {
-            // Skip empty class element `;`
-            if p.eat(Kind::Semicolon) {
-                while p.eat(Kind::Semicolon) {}
-                if p.at(Kind::RCurly) {
-                    return None;
-                }
-            }
-            Some(Self::parse_class_element(p))
-        });
+        let class_elements = self.parse_braced_list::<true, _>(Self::parse_class_element);
         ClassBody::boxed(self.end_span(start), class_elements, self)
     }
 

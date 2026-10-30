@@ -24,8 +24,20 @@ static MULTILINE_COMMENT_START_TABLE: SafeByteMatchTable =
     safe_byte_match_table!(|b| matches!(b, b'*' | b'\r' | b'\n' | LS_OR_PS_FIRST));
 
 impl<'a, C: Config> Lexer<'a, C> {
+    /// Record that the current token follows a comment, and the number of comments before it.
+    #[inline]
+    fn set_follows_comment(&mut self) {
+        if !self.token.follows_comment() {
+            self.token.set_follows_comment(true);
+            #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
+            let len = self.trivia_builder.comments.len() as u32;
+            self.trivia_builder.token_comments_start = len;
+        }
+    }
+
     /// Section 12.4 Single Line Comment
     pub(super) fn skip_single_line_comment(&mut self, kind: CommentKind) -> Kind {
+        self.set_follows_comment();
         byte_search! {
             lexer: self,
             table: LINE_BREAK_TABLE,
@@ -82,6 +94,7 @@ impl<'a, C: Config> Lexer<'a, C> {
 
     /// Section 12.4 Multi Line Comment
     pub(super) fn skip_multi_line_comment(&mut self) -> Kind {
+        self.set_follows_comment();
         // We need to identify if comment contains line breaks or not
         // (`CommentKind::SingleLineBlock` or `CommentKind::MultiLineBlock`).
         // So we have to use the loop below for the first line of the comment even if

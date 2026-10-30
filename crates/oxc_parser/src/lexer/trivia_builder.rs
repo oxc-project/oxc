@@ -17,6 +17,14 @@ pub struct TriviaBuilder<'a> {
 
     pub(crate) irregular_whitespaces: Vec<Span>,
 
+    /// Sorted indices of comments whose preceding token is a comma on the same line, with only
+    /// comments between them.
+    pub(crate) comma_comments: Vec<u32>,
+
+    /// Number of comments lexed before the first comment preceding the current token, if the
+    /// token follows a comment. It may be higher after lookahead.
+    pub(crate) token_comments_start: u32,
+
     // states
     /// index of processed comments
     processed: usize,
@@ -53,6 +61,8 @@ impl<'a> TriviaBuilder<'a> {
         Self {
             comments: ArenaVec::new_in(&allocator),
             irregular_whitespaces: vec![],
+            comma_comments: vec![],
+            token_comments_start: 0,
             processed: 0,
             saw_newline: true,
             saw_newline_for_comment: true,
@@ -332,6 +342,7 @@ impl<'a> TriviaBuilder<'a> {
         // Use `saw_newline_for_comment` which tracks newlines since the last comment or token,
         // not just since the last token.
         comment.set_preceded_by_newline(self.saw_newline_for_comment);
+        let follows_comma = !self.saw_newline && self.previous_token.kind() == Kind::Comma;
         let becomes_trailing = if comment.is_line() {
             // A line comment is always followed by a newline. This is never set in `handle_newline`.
             comment.set_followed_by_newline(true);
@@ -350,6 +361,10 @@ impl<'a> TriviaBuilder<'a> {
         // Set annotation flags here (not in `parse_annotation`) so the index is correct
         // even when the dedup check above skips a duplicate from parser lookahead/rewind.
         self.set_annotation_flags(comment.content, self.comments.len());
+        if follows_comma {
+            #[expect(clippy::cast_possible_truncation, reason = "Comment counts fit within u32")]
+            self.comma_comments.push(self.comments.len() as u32);
+        }
         self.comments.push(comment);
         if becomes_trailing {
             self.attach_pending_comments(
@@ -629,19 +644,27 @@ mod test {
     }
 
     fn get_comments(source_text: &str) -> Vec<Comment> {
-        let allocator = Allocator::default();
-        let source_type = SourceType::default();
-        let ret = Parser::new(&allocator, source_text, source_type).parse();
-        assert!(ret.diagnostics.is_empty());
-        ret.program.comments.into_iter().collect::<Vec<_>>()
+        parse_comments(source_text, SourceType::default())
     }
 
     fn get_comments_typescript(source_text: &str) -> Vec<Comment> {
+        parse_comments(source_text, SourceType::default().with_typescript(true))
+    }
+
+    /// Parse comments, clearing their owners, which `tests/comment_attachment.rs` covers.
+    fn parse_comments(source_text: &str, source_type: SourceType) -> Vec<Comment> {
         let allocator = Allocator::default();
-        let source_type = SourceType::default().with_typescript(true);
         let ret = Parser::new(&allocator, source_text, source_type).parse();
         assert!(ret.diagnostics.is_empty());
-        ret.program.comments.into_iter().collect::<Vec<_>>()
+        ret.program
+            .comments
+            .into_iter()
+            .map(|comment| Comment {
+                node_id: Cell::new(NodeId::DUMMY),
+                placement: CommentPlacement::Leading,
+                ..comment
+            })
+            .collect()
     }
 
     #[test]

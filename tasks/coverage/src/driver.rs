@@ -195,6 +195,15 @@ impl<'a> CheckASTNodes<'a> {
 
     fn check(&mut self, program: &Program<'a>) {
         self.visit_program(program);
+        // Parser comment attachment is also an AST invariant.
+        for comment in &program.comments {
+            assert!(
+                self.node_ids.contains(&comment.node_id.get()),
+                "Comment owner is not in the AST: {:?} in {}",
+                comment.span.source_text(self.source_text),
+                self.driver.path.display()
+            );
+        }
     }
 }
 
