@@ -250,7 +250,7 @@ unsafe fn glue_number(
     cpu: impl Cpu,
 ) -> usize {
     loop {
-        let e2 = scan_number(src, n, p);
+        let e2 = scan_number(src, n, p, cpu);
         *kind.add(p) = tk!(Number) + (*src.add(e2 - 1) == b'n') as u8;
         if e2 > p + 1 {
             bm_clear_range(st, p + 1, e2 - 1);

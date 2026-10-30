@@ -2,6 +2,7 @@ use std::slice;
 
 use crate::pipeline::{
     bytes::{hex_val, is_digit, is_word},
+    cpu::{Cpu, apply, cpu_versions},
     find::find,
 };
 
@@ -12,6 +13,7 @@ use crate::pipeline::{
 /// into a range check, which is 1 op shorter but makes the chain to the exit branch 1 op longer.
 const REGEX_BYTES: [u8; 7] = [b'\\', b']', b'\n', b'\r', b'/', b'[', 0xE2];
 
+#[apply(cpu_versions)]
 #[inline]
 pub unsafe fn scan_quoted(
     src: *const u8,
@@ -19,6 +21,7 @@ pub unsafe fn scan_quoted(
     mut i: usize,
     q: u8,
     saw_nl: &mut bool,
+    _cpu: impl Cpu,
 ) -> usize {
     loop {
         // LF/CR are watched too: raw line terminators in strings are diagnosed.
@@ -44,8 +47,15 @@ pub unsafe fn scan_quoted(
     }
 }
 
+#[apply(cpu_versions)]
 #[inline]
-pub unsafe fn scan_regex(src: *const u8, n: usize, mut i: usize, nl_at: &mut usize) -> usize {
+pub unsafe fn scan_regex(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    nl_at: &mut usize,
+    _cpu: impl Cpu,
+) -> usize {
     let mut incl = false;
     loop {
         let p = find(src, n, i, REGEX_BYTES);
@@ -118,8 +128,15 @@ pub unsafe fn scan_regex(src: *const u8, n: usize, mut i: usize, nl_at: &mut usi
     }
 }
 
+#[apply(cpu_versions)]
 #[inline]
-pub unsafe fn scan_tmpl_text(src: *const u8, n: usize, mut i: usize, term: &mut i32) -> usize {
+pub unsafe fn scan_tmpl_text(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    term: &mut i32,
+    _cpu: impl Cpu,
+) -> usize {
     loop {
         let p = find(src, n, i, [b'`', b'\\', b'$']);
         if p >= n {
@@ -143,8 +160,9 @@ pub unsafe fn scan_tmpl_text(src: *const u8, n: usize, mut i: usize, term: &mut 
     }
 }
 
+#[apply(cpu_versions)]
 #[inline]
-pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize) -> usize {
+pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize, _cpu: impl Cpu) -> usize {
     let mut i = p;
     while i < n {
         if *src.add(i) == b'\\' && i + 1 < n && *src.add(i + 1) == b'u' {
@@ -174,8 +192,9 @@ pub unsafe fn scan_ident_esc(src: *const u8, n: usize, p: usize) -> usize {
     i
 }
 
+#[apply(cpu_versions)]
 #[inline]
-pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize) -> usize {
+pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize, cpu: impl Cpu) -> usize {
     if *src.add(pos) == b'0' && pos + 1 < n {
         let c1 = *src.add(pos + 1);
         let c = c1 | 0x20;
@@ -220,22 +239,28 @@ pub unsafe fn scan_number(src: *const u8, n: usize, pos: usize) -> usize {
             if octal {
                 return i;
             }
-            return scan_fraction_exponent(src, n, i).0;
+            return scan_fraction_exponent(src, n, i, cpu).0;
         }
     }
     let mut i = pos;
     while i < n && (is_digit(*src.add(i)) || *src.add(i) == b'_') {
         i += 1;
     }
-    let (i, is_float) = scan_fraction_exponent(src, n, i);
+    let (i, is_float) = scan_fraction_exponent(src, n, i, cpu);
     if !is_float && i < n && *src.add(i) == b'n' {
         return i + 1;
     }
     i
 }
 
+#[apply(cpu_versions)]
 #[inline]
-unsafe fn scan_fraction_exponent(src: *const u8, n: usize, mut i: usize) -> (usize, bool) {
+unsafe fn scan_fraction_exponent(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    _cpu: impl Cpu,
+) -> (usize, bool) {
     let mut is_float = false;
     if i < n && *src.add(i) == b'.' {
         is_float = true;

@@ -27,9 +27,9 @@ pub unsafe fn misc_pre(
     }
 
     if vutf8 {
-        misc_pre_impl::<true>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<true>(src, n, st, word, misc, kind, lanes, cpu)
     } else {
-        misc_pre_impl::<false>(src, n, st, word, misc, kind, lanes)
+        misc_pre_impl::<false>(src, n, st, word, misc, kind, lanes, cpu)
     }
 }
 
@@ -47,6 +47,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
     misc: *const u64,
     kind: *mut u8,
     lanes: &mut Lanes,
+    cpu: impl Cpu,
 ) -> usize {
     let mut nesc = 0usize;
     let nw = (n + 63) >> 6;
@@ -123,7 +124,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 let e0 = bm_next0(word, p + 1, n);
                 let e = if *src.add(e0) == b'\\' && *src.add(e0 + 1) == b'u' {
                     *kind.add(p) = tk!(PrivateIdentEscaped);
-                    scan_ident_esc(src, n, e0)
+                    scan_ident_esc(src, n, e0, cpu)
                 } else {
                     *kind.add(p) = tk!(PrivateIdent);
                     e0
@@ -135,7 +136,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
                 }
                 *kind.add(p) = tk!(IdentEscaped);
                 nesc += 1;
-                let e = scan_ident_esc(src, n, p);
+                let e = scan_ident_esc(src, n, p, cpu);
                 bm_clear_range(st, p + 1, e - 1);
             }
         }
