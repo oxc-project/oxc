@@ -4,7 +4,7 @@ use oxc_ast::ast::{
 use oxc_formatter_core::{
     Format, FormatContext, arena_cow_str,
     builders::{group, soft_block_indent_with_maybe_space, text},
-    spec::{format_trimmed_number, is_simple_number, normalize_string},
+    spec::{is_simple_number, normalize_string},
     write,
 };
 use oxc_span::{GetSpan, Span};
@@ -23,8 +23,9 @@ use crate::{
 
 use super::{
     FmtJsonValue, FormatInvalidJson, JsonFormatter, format_with,
-    literal::write_string_unless_verbatim, number_string_round_trips, write_glued_token,
-    write_key_separator, write_quoted_str,
+    literal::{printed_number, write_string_unless_verbatim},
+    number_string_round_trips, scalar_prints_verbatim, write_glued_token, write_key_separator,
+    write_quoted_str,
 };
 
 pub struct FmtJsonObject<'a, 'b> {
@@ -67,7 +68,12 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
                             } else {
                                 write_object_key(&prop.key, f)
                             };
-                            if !write_key_separator(verbatim_key, &prop.value, f) {
+                            if !write_key_separator(
+                                verbatim_key,
+                                &prop.value,
+                                scalar_prints_verbatim,
+                                f,
+                            ) {
                                 FmtJsonValue { expression: &prop.value }.fmt(f);
                             }
                         }
@@ -128,7 +134,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
 ///
 /// Identifier keys (`a:`, `null:`, `true:`) are always quoted: `"a":`/`"null":`/`"true":`.
 ///
-/// Numeric keys are normalized via [`format_trimmed_number`];
+/// Numeric keys are normalized like number values ([`printed_number`]);
 /// whether the result is quoted follows Prettier's `shouldQuotePropertyKey` rule
 /// (mirrors `language-js/print/property.js:shouldQuotePropertyKey`):
 /// a number key is quoted only when its normalized form is:
@@ -145,6 +151,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
 /// - `0xdecaf` → `0xdecaf:`
 ///
 /// `json5` diverges (see [`json5_write_object_key`]): keys may stay unquoted.
+#[must_use]
 fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) -> Option<Span> {
     match key {
         PropertyKey::StringLiteral(lit) => return write_string_unless_verbatim(lit, f),
@@ -174,6 +181,7 @@ fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) ->
 ///   - `preserve` and a forced `consistent` keep it quoted
 /// - Number key (`{ 1: 1 }`): bare normalized number,
 ///   - except a forced `consistent` quotes it when it is safe to quote ([`should_quote_numeric_key`])
+#[must_use]
 fn json5_write_object_key<'a>(
     key: &PropertyKey<'a>,
     force_quote: bool,
@@ -267,10 +275,7 @@ fn json5_consistent_force_quote(object: &ObjectExpression<'_>, f: &JsonFormatter
 /// The normalized, arena-resident text of a numeric key (`x.00000` -> `x.0`, etc.).
 /// Shared by the `json` and `json5` key writers, which differ only in the quoting decision.
 fn normalized_numeric_key<'a>(lit: &NumericLiteral<'a>, f: &JsonFormatter<'_, 'a>) -> &'a str {
-    let raw = lit.raw.as_ref().map_or("", oxc_ast::ast::Str::as_str);
-    // JSON keeps one trailing decimal zero (`x.00000` -> `x.0`); see `format_trimmed_number`.
-    let printed = format_trimmed_number(raw, /* keep_one_trailing_decimal_zero */ true);
-    arena_cow_str(&printed, f)
+    arena_cow_str(&printed_number(lit), f)
 }
 
 /// Returns `true` if a normalized numeric key should be wrapped in double quotes.

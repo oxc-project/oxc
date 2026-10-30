@@ -41,26 +41,29 @@ pub fn write_quoted_str<'a>(f: &mut JsonFormatter<'_, 'a>, quote_byte: u8, body:
 /// `verbatim_key` is the span of a key that prints as its own source text and is not written yet.
 /// Where the source reads `<key>: `, the key and `: ` are written as one source slice,
 /// extended over `value` when it starts right after the `: ` (no comment in between)
-/// and also prints as its own source text. This saves IR elements, the printed text is the same.
+/// and `value_prints_verbatim` (the value printer's own predicate) says it prints as its own source text.
+/// This saves IR elements, the printed text is the same.
 ///
 /// Returns `true` if `value` has been written too.
-pub fn write_key_separator(
+pub fn write_key_separator<'a>(
     verbatim_key: Option<Span>,
-    value: &Expression<'_>,
-    f: &mut JsonFormatter<'_, '_>,
+    value: &Expression<'a>,
+    value_prints_verbatim: fn(&Expression<'a>, &JsonFormatter<'_, 'a>) -> bool,
+    f: &mut JsonFormatter<'_, 'a>,
 ) -> bool {
     let Some(key_span) = verbatim_key else {
         write!(f, ": ");
         return false;
     };
     let source = f.context().source_text();
+    // In bounds: a key is always followed by the `:` and a value
     let colon_end = key_span.end + 2;
-    if source.as_str().as_bytes().get(key_span.end as usize..colon_end as usize) != Some(b": ") {
+    if source.bytes_range(key_span.end, colon_end) != b": " {
         write!(f, [text(source.text_for(&key_span)), ": "]);
         return false;
     }
     let value_span = value.span();
-    if value_span.start == colon_end && scalar_prints_verbatim(value, f) {
+    if value_span.start == colon_end && value_prints_verbatim(value, f) {
         write!(f, text(source.slice_range(key_span.start, value_span.end)));
         return true;
     }
@@ -68,15 +71,14 @@ pub fn write_key_separator(
     false
 }
 
-/// Whether `value` is a scalar that both [`FmtJsonValue`] and [`FmtJsonStringifyValue`]
-/// print as its own source text (when no comment precedes it).
-fn scalar_prints_verbatim(value: &Expression<'_>, f: &JsonFormatter<'_, '_>) -> bool {
+/// Whether `value` is a scalar that [`FmtJsonValue`] prints as its own source text
+/// (when no comment precedes it), see [`write_key_separator`].
+fn scalar_prints_verbatim<'a>(value: &Expression<'a>, f: &JsonFormatter<'_, 'a>) -> bool {
     match value {
         Expression::StringLiteral(lit) => literal::string_prints_verbatim(lit, f),
         Expression::NumericLiteral(lit) => literal::number_prints_verbatim(lit),
-        // Keywords cannot contain escapes, their source is exactly `true` / `false`
-        Expression::BooleanLiteral(lit) => lit.span.size() == if lit.value { 4 } else { 5 },
-        Expression::NullLiteral(lit) => lit.span.size() == 4,
+        // The parser rejects escaped keywords, so the source is exactly `true` / `false` / `null`
+        Expression::BooleanLiteral(_) | Expression::NullLiteral(_) => true,
         _ => false,
     }
 }
@@ -86,6 +88,7 @@ fn scalar_prints_verbatim(value: &Expression<'_>, f: &JsonFormatter<'_, '_>) -> 
 /// When the last written element is a text slicing the source up to `pos`
 /// and the source continues with `token` (`"a": {`, `"a": 1,`),
 /// the text is extended over the token instead: the same output in one IR element less.
+/// The extended text is a plain [`text`], like every source slice this crate writes.
 pub fn write_glued_token(pos: u32, token: &'static str, f: &mut JsonFormatter<'_, '_>) {
     let source = f.context().source_text().as_str();
     let pos = pos as usize;
@@ -93,15 +96,34 @@ pub fn write_glued_token(pos: u32, token: &'static str, f: &mut JsonFormatter<'_
         // Ending exactly at `pos` inside the source buffer, the text is that memory:
         // no other allocation can end inside it.
         && last.as_bytes().as_ptr_range().end == source.as_ptr().wrapping_add(pos)
-        && source.as_bytes().get(pos..).is_some_and(|rest| rest.starts_with(token.as_bytes()))
-        && let Some(start) = pos.checked_sub(last.len())
-        && let Some(extended) = source.get(start..pos + token.len())
+        && let Some(extended) =
+            pos.checked_sub(last.len()).and_then(|start| source.get(start..pos + token.len()))
+        && extended.ends_with(token)
     {
         let last = f.elements().len() - 1;
         f.replace_end(last, &[]);
         write!(f, text(extended));
     } else {
         write!(f, token);
+    }
+}
+
+/// Writes the `,` right after an entry that ends at `entry_end`,
+/// merged into the entry's last element where that prints the same in one IR element less:
+/// - a closing bracket token becomes the static token with the comma (`},`)
+/// - a source-slice text extends over a glued comma, see [`write_glued_token`]
+pub fn write_comma_after(entry_end: u32, f: &mut JsonFormatter<'_, '_>) {
+    if let Some(FormatElement::Token { text: last }) = f.elements().last()
+        && let Some(with_comma) = match last.as_str() {
+            "}" => Some("},"),
+            "]" => Some("],"),
+            _ => None,
+        }
+    {
+        let last = f.elements().len() - 1;
+        f.replace_end(last, &[FormatElement::token(with_comma)]);
+    } else {
+        write_glued_token(entry_end, ",", f);
     }
 }
 

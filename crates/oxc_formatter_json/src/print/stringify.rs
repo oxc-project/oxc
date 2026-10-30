@@ -19,12 +19,13 @@ use oxc_formatter_core::{
 use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::{context::JsonFormatContext, separated::write_comma_after};
+use crate::context::JsonFormatContext;
 
 use super::{
     FormatInvalidJson, JsonFormatter, format_with, is_signed_number,
-    literal::{FmtJsonString, write_string_unless_verbatim},
-    number_string_round_trips, write_glued_token, write_key_separator, write_quoted_str,
+    literal::{FmtJsonString, string_prints_verbatim, write_string_unless_verbatim},
+    number_string_round_trips, write_comma_after, write_glued_token, write_key_separator,
+    write_quoted_str,
 };
 
 /// Top-level wrapper around an [`Expression`] for the `json-stringify` variant.
@@ -74,22 +75,33 @@ fn write_string<'a>(lit: &StringLiteral<'a>, f: &mut JsonFormatter<'_, 'a>) {
     FmtJsonString { lit }.fmt(f);
 }
 
+/// Whether `value` is a scalar that [`FmtJsonStringifyValue`] prints as its own source text,
+/// see [`write_key_separator`].
+fn scalar_prints_verbatim<'a>(value: &Expression<'a>, f: &JsonFormatter<'_, 'a>) -> bool {
+    match value {
+        Expression::StringLiteral(lit) => string_prints_verbatim(lit, f),
+        // Numbers print as `raw`, and the parser rejects escaped keywords
+        Expression::NumericLiteral(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_) => true,
+        _ => false,
+    }
+}
+
 /// The always-expanded layout shared by arrays and objects: a [`block_indent`]
-/// whose body is `len` entries joined by `,` + hard line break.
-/// `entry_end(i)` is where entry `i` ends in the source.
-fn write_hard_broken_entries<'a>(
+/// whose body is the entries joined by `,` + hard line break.
+fn write_hard_broken_entries<'a, T: GetSpan>(
     f: &mut JsonFormatter<'_, 'a>,
-    len: usize,
-    entry_end: impl Fn(usize) -> u32,
-    write_entry: impl Fn(usize, &mut JsonFormatter<'_, 'a>),
+    entries: &[T],
+    write_entry: impl Fn(&T, &mut JsonFormatter<'_, 'a>),
 ) {
     let body = format_with(|f| {
-        for i in 0..len {
+        for (i, entry) in entries.iter().enumerate() {
             if i > 0 {
-                write_comma_after(entry_end(i - 1), f);
+                write_comma_after(entries[i - 1].span().end, f);
                 write!(f, hard_line_break());
             }
-            write_entry(i, f);
+            write_entry(entry, f);
         }
     });
     write!(f, block_indent(&body));
@@ -105,9 +117,7 @@ fn write_array<'a>(array: &ArrayExpression<'a>, f: &mut JsonFormatter<'_, 'a>) {
         return;
     }
 
-    let entry_end = |i: usize| array.elements[i].span().end;
-    write_hard_broken_entries(f, array.elements.len(), entry_end, |i, f| {
-        let element = &array.elements[i];
+    write_hard_broken_entries(f, &array.elements, |element, f| {
         if matches!(element, ArrayExpressionElement::Elision(_)) {
             write!(f, "null");
         } else if let Some(expression) = element.as_expression() {
@@ -128,18 +138,15 @@ fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>
         return;
     }
 
-    let entry_end = |i: usize| object.properties[i].span().end;
-    write_hard_broken_entries(f, object.properties.len(), entry_end, |i, f| {
-        match &object.properties[i] {
-            ObjectPropertyKind::ObjectProperty(prop) => {
-                let verbatim_key = write_object_key(&prop.key, f);
-                if !write_key_separator(verbatim_key, &prop.value, f) {
-                    FmtJsonStringifyValue { expression: &prop.value }.fmt(f);
-                }
+    write_hard_broken_entries(f, &object.properties, |property, f| match property {
+        ObjectPropertyKind::ObjectProperty(prop) => {
+            let verbatim_key = write_object_key(&prop.key, f);
+            if !write_key_separator(verbatim_key, &prop.value, scalar_prints_verbatim, f) {
+                FmtJsonStringifyValue { expression: &prop.value }.fmt(f);
             }
-            ObjectPropertyKind::SpreadProperty(spread) => {
-                write!(f, FormatInvalidJson(spread.span));
-            }
+        }
+        ObjectPropertyKind::SpreadProperty(spread) => {
+            write!(f, FormatInvalidJson(spread.span));
         }
     });
     write!(f, "}");
@@ -154,9 +161,9 @@ fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>
 ///
 /// A key that prints as its own source text is not written but returned as its span,
 /// for [`write_key_separator`] to write together with the following source.
+#[must_use]
 fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) -> Option<Span> {
     match key {
-        // `preferred_quote` already pins `json-stringify` to `"`.
         PropertyKey::StringLiteral(lit) => return write_string_unless_verbatim(lit, f),
         PropertyKey::StaticIdentifier(ident) => {
             write_quoted_str(f, b'"', ident.name.as_str());
