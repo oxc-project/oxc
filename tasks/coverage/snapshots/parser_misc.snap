@@ -1,6 +1,6 @@
 parser_misc Summary:
-AST Parsed     : 129/129 (100.00%)
-Positive Passed: 129/129 (100.00%)
+AST Parsed     : 130/130 (100.00%)
+Positive Passed: 130/130 (100.00%)
 Negative Passed: 265/265 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
