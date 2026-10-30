@@ -115,7 +115,7 @@ fn collect_raw_children<'a>(
     for child in children {
         match child {
             Inline::SoftBreak(_) => {
-                words::push_whitespace(true, &cx, parts, f);
+                words::push_whitespace("\n", &cx, parts, f);
             }
             _ => words::push_text(f.context().slice(child.span()), cx, parts, f),
         }
