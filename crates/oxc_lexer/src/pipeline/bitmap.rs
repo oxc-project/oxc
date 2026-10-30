@@ -1,10 +1,7 @@
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
-
 use crate::cpu::{Cpu, cpu_select};
 
 #[cfg(target_arch = "x86_64")]
-use crate::cpu::Avx2;
+use crate::{cpu::Avx2, simd::avx2::Vec256};
 
 /// Get bit `i`.
 ///
@@ -160,11 +157,11 @@ pub(super) unsafe fn bm_any(bm: *const u64, nw: usize, cpu: impl Cpu) -> bool {
 #[cfg(target_arch = "x86_64")]
 #[inline]
 #[target_feature(enable = "avx2,bmi2,popcnt")]
-unsafe fn bm_any_avx2(bm: *const u64, nw: usize, _cpu: Avx2) -> bool {
+unsafe fn bm_any_avx2(bm: *const u64, nw: usize, cpu: Avx2) -> bool {
     let mut w = 0usize;
     while w + 4 <= nw {
-        let v = _mm256_loadu_si256(bm.add(w) as *const __m256i);
-        if _mm256_testz_si256(v, v) == 0 {
+        let v = Vec256::load_unaligned(bm.add(w).cast::<u8>(), cpu);
+        if !v.is_zero() {
             return true;
         }
         w += 4;

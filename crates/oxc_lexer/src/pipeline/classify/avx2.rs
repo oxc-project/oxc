@@ -1,12 +1,12 @@
-use std::arch::x86_64::*;
-
-use crate::{cpu::Avx2, token::tk};
-
-use crate::pipeline::chunk::{load256, mm, veq};
+use crate::{
+    cpu::Avx2,
+    simd::avx2::{Vec128, Vec256},
+    token::tk,
+};
 
 use super::{
     luts::{DIGIT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK},
-    punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
+    punct1_luts::{PH_A, PH_B, PH_T},
 };
 
 #[inline(never)]
@@ -38,85 +38,63 @@ pub(super) unsafe fn classify_avx2(
     // which cost ~18 cyc per tail byte (up to ~1.1k cyc when n mod 64 is
     // near 63) and dominated small-file lexing.
     let nb_ceil = n.div_ceil(64);
-    let v_pha = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_A.as_ptr() as *const __m128i));
-    let v_phb = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_B.as_ptr() as *const __m128i));
-    let v_pht0 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T0.as_ptr() as *const __m128i));
-    let v_pht1 = _mm256_broadcastsi128_si256(_mm_loadu_si128(PH_T1.as_ptr() as *const __m128i));
-    let v_96 = _mm256_set1_epi8(tk!(Invalid) as i8);
-    let v_ws = _mm256_set1_epi8(tk!(Whitespace) as i8);
-    let v_ident = _mm256_set1_epi8(tk!(Ident) as i8);
-    let v_num = _mm256_set1_epi8(tk!(Number) as i8);
-    let v_mlo = _mm256_broadcastsi128_si256(_mm_loadu_si128(mrg_lo.as_ptr() as *const __m128i));
-    let v_mhi =
-        _mm256_broadcastsi128_si256(_mm_loadu_si128(MERGED_LUTS.hi.as_ptr() as *const __m128i));
-    let v_wblo =
-        _mm256_broadcastsi128_si256(_mm_loadu_si128(WORD_LUTS.lo.as_ptr() as *const __m128i));
-    let v_wbhi =
-        _mm256_broadcastsi128_si256(_mm_loadu_si128(WORD_LUTS.hi.as_ptr() as *const __m128i));
-    let v_kwpl = _mm256_set1_epi8(KWINIT_MASK as i8);
-    let v_oppl = _mm256_set1_epi8(OPCH_MASK as i8);
-    let v_wdpl = _mm256_set1_epi8(WORD_MASK as i8);
-    let v_wspl = _mm256_set1_epi8(WS_MASK as i8);
-    let v_dgpl = _mm256_set1_epi8(DIGIT_MASK as i8);
-    let v_ones = _mm256_set1_epi8(0xffu8 as i8);
-    let v_zero = _mm256_setzero_si256();
-    let v_x0f = _mm256_set1_epi8(0x0f);
+    let v_pha = Vec256::splat_v128(Vec128::read_unaligned(&PH_A, cpu));
+    let v_phb = Vec256::splat_v128(Vec128::read_unaligned(&PH_B, cpu));
+    let (pht, _) = PH_T.as_chunks::<16>();
+    let v_pht0 = Vec256::splat_v128(Vec128::read_unaligned(&pht[0], cpu));
+    let v_pht1 = Vec256::splat_v128(Vec128::read_unaligned(&pht[1], cpu));
+    let v_mlo = Vec256::splat_v128(Vec128::read_unaligned(&mrg_lo, cpu));
+    let v_mhi = Vec256::splat_v128(Vec128::read_unaligned(&MERGED_LUTS.hi, cpu));
+    let v_wblo = Vec256::splat_v128(Vec128::read_unaligned(&WORD_LUTS.lo, cpu));
+    let v_wbhi = Vec256::splat_v128(Vec128::read_unaligned(&WORD_LUTS.hi, cpu));
     while b < nb_ceil {
-        let v0 = load256(src, i, cpu);
-        let v1 = load256(src, i + 32, cpu);
-        let hn0 = _mm256_and_si256(_mm256_srli_epi16::<4>(v0), v_x0f);
-        let hn1 = _mm256_and_si256(_mm256_srli_epi16::<4>(v1), v_x0f);
-        let tb0 =
-            _mm256_and_si256(_mm256_shuffle_epi8(v_wblo, v0), _mm256_shuffle_epi8(v_wbhi, hn0));
-        let tb1 =
-            _mm256_and_si256(_mm256_shuffle_epi8(v_wblo, v1), _mm256_shuffle_epi8(v_wbhi, hn1));
-        let nw0 = _mm256_cmpeq_epi8(_mm256_and_si256(tb0, v_wdpl), v_zero);
-        let nw1 = _mm256_cmpeq_epi8(_mm256_and_si256(tb1, v_wdpl), v_zero);
+        let v0 = Vec256::load_unaligned(src.add(i), cpu);
+        let v1 = Vec256::load_unaligned(src.add(i + 32), cpu);
+        let hn0 = v0.shr_u16::<4>() & 0x0f;
+        let hn1 = v1.shr_u16::<4>() & 0x0f;
+        let tb0 = v_wblo.shuffle_u8s(v0) & v_wbhi.shuffle_u8s(hn0);
+        let tb1 = v_wblo.shuffle_u8s(v1) & v_wbhi.shuffle_u8s(hn1);
         // Non-ASCII bytes count as identifier chars in `word` and are folded
         // into `misc` so `misc_pre` can re-classify Unicode whitespace.
-        let na0 = _mm256_cmpgt_epi8(v_zero, v0);
-        let na1 = _mm256_cmpgt_epi8(v_zero, v1);
-        let w0 = _mm256_or_si256(_mm256_xor_si256(nw0, v_ones), na0);
-        let w1 = _mm256_or_si256(_mm256_xor_si256(nw1, v_ones), na1);
-        let nws0 = _mm256_cmpeq_epi8(_mm256_and_si256(tb0, v_wspl), v_zero);
-        let nws1 = _mm256_cmpeq_epi8(_mm256_and_si256(tb1, v_wspl), v_zero);
-        let d0 = _mm256_cmpgt_epi8(_mm256_and_si256(tb0, v_dgpl), v_zero);
-        let d1 = _mm256_cmpgt_epi8(_mm256_and_si256(tb1, v_dgpl), v_zero);
-        let wordm = (mm(w0, cpu) as u64) | ((mm(w1, cpu) as u64) << 32);
-        let wsm = ((!mm(nws0, cpu)) as u64) | (((!mm(nws1, cpu)) as u64) << 32);
+        let na0 = v0.lt_i8(0);
+        let na1 = v1.lt_i8(0);
+        let w0 = (tb0 & WORD_MASK).gt_i8(0) | na0;
+        let w1 = (tb1 & WORD_MASK).gt_i8(0) | na1;
+        let nws0 = (tb0 & WS_MASK).eq_u8(0);
+        let nws1 = (tb1 & WS_MASK).eq_u8(0);
+        let d0 = (tb0 & DIGIT_MASK).gt_i8(0);
+        let d1 = (tb1 & DIGIT_MASK).gt_i8(0);
+        let wordm = (w0.movemask() as u64) | ((w1.movemask() as u64) << 32);
+        let wsm = ((!nws0.movemask()) as u64) | (((!nws1.movemask()) as u64) << 32);
         *word.add(b) = wordm;
-        *digit.add(b) = (mm(d0, cpu) as u64) | ((mm(d1, cpu) as u64) << 32);
-        *misc.add(b) = (mm(
-            _mm256_or_si256(_mm256_or_si256(veq(v0, b'#', cpu), veq(v0, b'\\', cpu)), na0),
-            cpu,
-        ) as u64)
-            | ((mm(
-                _mm256_or_si256(_mm256_or_si256(veq(v1, b'#', cpu), veq(v1, b'\\', cpu)), na1),
-                cpu,
-            ) as u64)
-                << 32);
-        let t0 = _mm256_and_si256(_mm256_shuffle_epi8(v_mlo, v0), _mm256_shuffle_epi8(v_mhi, hn0));
-        let t1 = _mm256_and_si256(_mm256_shuffle_epi8(v_mlo, v1), _mm256_shuffle_epi8(v_mhi, hn1));
-        *dot.add(b) = (mm(t0, cpu) as u64) | ((mm(t1, cpu) as u64) << 32);
-        *kwinit.add(b) = (mm(_mm256_cmpgt_epi8(_mm256_and_si256(t0, v_kwpl), v_zero), cpu) as u64)
-            | ((mm(_mm256_cmpgt_epi8(_mm256_and_si256(t1, v_kwpl), v_zero), cpu) as u64) << 32);
-        *opch.add(b) = (mm(_mm256_cmpgt_epi8(_mm256_and_si256(t0, v_oppl), v_zero), cpu) as u64)
-            | ((mm(_mm256_cmpgt_epi8(_mm256_and_si256(t1, v_oppl), v_zero), cpu) as u64) << 32);
+        *digit.add(b) = (d0.movemask() as u64) | ((d1.movemask() as u64) << 32);
+        let misc0 = (v0.eq_u8(b'#') | v0.eq_u8(b'\\') | na0).movemask() as u64;
+        let misc1 = (v1.eq_u8(b'#') | v1.eq_u8(b'\\') | na1).movemask() as u64;
+        *misc.add(b) = misc0 | (misc1 << 32);
+        let t0 = v_mlo.shuffle_u8s(v0) & v_mhi.shuffle_u8s(hn0);
+        let t1 = v_mlo.shuffle_u8s(v1) & v_mhi.shuffle_u8s(hn1);
+        *dot.add(b) = (t0.movemask() as u64) | ((t1.movemask() as u64) << 32);
+        let kw0 = (t0 & KWINIT_MASK).gt_i8(0).movemask() as u64;
+        let kw1 = (t1 & KWINIT_MASK).gt_i8(0).movemask() as u64;
+        *kwinit.add(b) = kw0 | (kw1 << 32);
+        let op0 = (t0 & OPCH_MASK).gt_i8(0).movemask() as u64;
+        let op1 = (t1 & OPCH_MASK).gt_i8(0).movemask() as u64;
+        *opch.add(b) = op0 | (op1 << 32);
         let wprev = (wordm << 1) | cw;
         let sprev = (wsm << 1) | cs;
         cw = wordm >> 63;
         cs = wsm >> 63;
         *st.add(b) = (wsm & !sprev) | (wordm & !wprev) | (!wsm & !wordm);
-        let mut k0 = vpunct1(v0, hn0, v_pha, v_phb, v_pht0, v_pht1, v_96, cpu);
-        k0 = _mm256_blendv_epi8(v_ws, k0, nws0);
-        k0 = _mm256_blendv_epi8(k0, v_ident, w0);
-        k0 = _mm256_blendv_epi8(k0, v_num, d0);
-        let mut k1 = vpunct1(v1, hn1, v_pha, v_phb, v_pht0, v_pht1, v_96, cpu);
-        k1 = _mm256_blendv_epi8(v_ws, k1, nws1);
-        k1 = _mm256_blendv_epi8(k1, v_ident, w1);
-        k1 = _mm256_blendv_epi8(k1, v_num, d1);
-        _mm256_storeu_si256(kind.add(b * 64) as *mut __m256i, k0);
-        _mm256_storeu_si256(kind.add(b * 64 + 32) as *mut __m256i, k1);
+        let k0 = vpunct1(v0, hn0, v_pha, v_phb, v_pht0, v_pht1)
+            .blend(tk!(Whitespace), !nws0)
+            .blend(tk!(Ident), w0)
+            .blend(tk!(Number), d0);
+        let k1 = vpunct1(v1, hn1, v_pha, v_phb, v_pht0, v_pht1)
+            .blend(tk!(Whitespace), !nws1)
+            .blend(tk!(Ident), w1)
+            .blend(tk!(Number), d1);
+        k0.store_unaligned(kind.add(b * 64));
+        k1.store_unaligned(kind.add(b * 64 + 32));
         i += 64;
         b += 1;
     }
@@ -143,23 +121,11 @@ pub(super) unsafe fn classify_avx2(
 }
 
 #[inline(always)]
-fn vpunct1(
-    v: __m256i,
-    hn: __m256i,
-    pa: __m256i,
-    pb: __m256i,
-    pt0: __m256i,
-    pt1: __m256i,
-    v96: __m256i,
-    _cpu: Avx2,
-) -> __m256i {
-    // SAFETY: `Avx2` type guarantees required target features are present
-    unsafe {
-        let h = _mm256_xor_si256(_mm256_shuffle_epi8(pa, v), _mm256_shuffle_epi8(pb, hn));
-        let o0 = _mm256_shuffle_epi8(pt0, h);
-        let o1 = _mm256_shuffle_epi8(pt1, h);
-        let ord = _mm256_blendv_epi8(o0, o1, _mm256_slli_epi16::<3>(h));
-        let ctl = _mm256_cmpgt_epi8(_mm256_set1_epi8(0x20), v);
-        _mm256_blendv_epi8(ord, v96, ctl)
-    }
+fn vpunct1(v: Vec256, hn: Vec256, pa: Vec256, pb: Vec256, pt0: Vec256, pt1: Vec256) -> Vec256 {
+    let h = pa.shuffle_u8s(v) ^ pb.shuffle_u8s(hn);
+    let o0 = pt0.shuffle_u8s(h);
+    let o1 = pt1.shuffle_u8s(h);
+    let ord = o0.blend(o1, h.shl_u16::<3>());
+    let ctl = v.lt_i8(0x20);
+    ord.blend(tk!(Invalid), ctl)
 }

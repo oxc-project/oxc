@@ -5,9 +5,6 @@
 
 use std::{ptr, str};
 
-#[cfg(target_arch = "x86_64")]
-use std::arch::x86_64::*;
-
 use oxc_ast::ast::{Comment, RegExpFlags};
 use oxc_syntax::identifier::{is_identifier_part, is_identifier_start};
 
@@ -17,10 +14,10 @@ use crate::{
     token::StringSpan,
 };
 
-use crate::pipeline::disambiguate::DisambiguateState;
-
 #[cfg(target_arch = "x86_64")]
-use crate::cpu::Avx2;
+use crate::{cpu::Avx2, simd::avx2::Vec256};
+
+use crate::pipeline::disambiguate::DisambiguateState;
 
 #[derive(Default)]
 pub(crate) struct Lanes {
@@ -479,15 +476,15 @@ fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
     diags: &mut Vec<Diagnostic>,
     cpu: Avx2,
 ) -> (u32, bool, bool) {
-    let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(bs as usize) as *const __m256i) };
-    let mut hit = _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8));
+    let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(bs as usize), cpu) };
+    let mut hit = v.eq_u8(b'\\');
     if CRLF {
         // Templates also decode when a raw CR needs LF-normalizing.
-        hit = _mm256_or_si256(hit, _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\r' as i8)));
+        hit |= v.eq_u8(b'\r');
     }
-    let bs_mask = (_mm256_movemask_epi8(hit) as u32) & ((1u32 << body_len) - 1);
+    let bs_mask = hit.movemask() & ((1u32 << body_len) - 1);
     if bs_mask == 0 {
-        unsafe { _mm256_storeu_si256(base.add(ss as usize) as *mut __m256i, v) };
+        unsafe { v.store_unaligned(base.add(ss as usize)) };
         (ss + (be - bs), false, false)
     } else {
         unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
@@ -543,11 +540,11 @@ fn span_has_bs(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2,bmi2,popcnt")]
 #[inline]
-fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, _cpu: Avx2) -> bool {
+fn span_has_bs_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
     let mut i = bs;
     while i + 32 <= be {
-        let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(i) as *const __m256i) };
-        let m = _mm256_movemask_epi8(_mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8)));
+        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
+        let m = v.eq_u8(b'\\').movemask();
         if m != 0 {
             return true;
         }
@@ -585,14 +582,11 @@ fn span_has_bs_or_cr(src: &[u8], bs: usize, be: usize, cpu: impl Cpu) -> bool {
 #[cfg(target_arch = "x86_64")]
 #[target_feature(enable = "avx2,bmi2,popcnt")]
 #[inline]
-fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, _cpu: Avx2) -> bool {
+fn span_has_bs_or_cr_avx2(src: &[u8], bs: usize, be: usize, cpu: Avx2) -> bool {
     let mut i = bs;
     while i + 32 <= be {
-        let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(i) as *const __m256i) };
-        let m = _mm256_movemask_epi8(_mm256_or_si256(
-            _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8)),
-            _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\r' as i8)),
-        ));
+        let v = unsafe { Vec256::load_unaligned(src.as_ptr().add(i), cpu) };
+        let m = (v.eq_u8(b'\\') | v.eq_u8(b'\r')).movemask();
         if m != 0 {
             return true;
         }

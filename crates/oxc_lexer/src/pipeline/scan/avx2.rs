@@ -1,8 +1,4 @@
-use std::arch::x86_64::*;
-
-use crate::cpu::Avx2;
-
-use crate::pipeline::chunk::{load256, mm, veq};
+use crate::{cpu::Avx2, simd::avx2::Vec256};
 
 use super::common::lic_verify_at;
 
@@ -16,15 +12,11 @@ pub unsafe fn scan_block_comment_avx2(
     let mut saw_nl = false;
     let mut lic_q: i64 = -1;
     while i + 32 <= n {
-        let v = load256(src, i, cpu);
-        let vn = load256(src, i + 1, cpu);
-        let term = mm(_mm256_and_si256(veq(v, b'*', cpu), veq(vn, b'/', cpu)), cpu);
-        let nl = if saw_nl {
-            0
-        } else {
-            mm(_mm256_or_si256(veq(v, b'\n', cpu), veq(v, b'\r', cpu)), cpu)
-        };
-        let at = if lic_q < 0 { mm(veq(v, b'@', cpu), cpu) } else { 0 };
+        let v = Vec256::load_unaligned(src.add(i), cpu);
+        let vn = Vec256::load_unaligned(src.add(i + 1), cpu);
+        let term = (v.eq_u8(b'*') & vn.eq_u8(b'/')).movemask();
+        let nl = if saw_nl { 0 } else { (v.eq_u8(b'\n') | v.eq_u8(b'\r')).movemask() };
+        let at = if lic_q < 0 { v.eq_u8(b'@').movemask() } else { 0 };
         if term != 0 {
             let j = term.trailing_zeros() as usize;
             let bodymask: u32 = if j > 0 { (1u32 << j) - 1 } else { 0 };
@@ -73,13 +65,9 @@ pub unsafe fn scan_line_comment_avx2(
 ) -> (usize, i64) {
     let mut lic_q: i64 = -1;
     while i + 32 <= n {
-        let v = load256(src, i, cpu);
-        let term_v = _mm256_or_si256(
-            _mm256_or_si256(veq(v, b'\n', cpu), veq(v, b'\r', cpu)),
-            veq(v, 0xE2, cpu),
-        );
-        let mut term = mm(term_v, cpu);
-        let at = mm(veq(v, b'@', cpu), cpu);
+        let v = Vec256::load_unaligned(src.add(i), cpu);
+        let mut term = (v.eq_u8(b'\n') | v.eq_u8(b'\r') | v.eq_u8(0xE2)).movemask();
+        let at = v.eq_u8(b'@').movemask();
         while term != 0 {
             let t = term.trailing_zeros() as usize;
             let c = *src.add(i + t);

@@ -1,9 +1,8 @@
-use std::arch::x86_64::*;
-
 use oxc_span::Span;
 
 use crate::{
     cpu::Avx2,
+    simd::avx2::{Vec128, Vec256},
     token::{TRIVIA_MAX, TRIVIA_MIN, is_trivia_byte, tk},
 };
 
@@ -69,10 +68,9 @@ pub(super) unsafe fn compress_blocks_avx2(
 ) -> usize {
     // SAFETY: `Lexer::new` calls `init_pair_luts`, which initializes `PairLuts` if the CPU supports AVX2
     let pair_luts = unsafe { get_pair_luts(cpu) };
-    let lut0z = pair_luts.lut0z.as_ptr().cast::<u8>();
+    let lut0z = &pair_luts.lut0z;
     let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
 
-    let step16 = _mm256_set1_epi32(16);
     let mut m = 0usize;
     for b in b0..b1 {
         let mword = *st.add(b);
@@ -85,32 +83,32 @@ pub(super) unsafe fn compress_blocks_avx2(
         let o2 = o1 + ((mword >> 16) & 0xffff).count_ones();
         let o3 = o2 + ((mword >> 32) & 0xffff).count_ones();
         let o4 = o3 + (mword >> 48).count_ones();
-        let mut basev = _mm256_set1_epi32(base as i32);
+        let mut basev = Vec256::splat_u32(base as u32, cpu);
         macro_rules! pair {
             ($p:expr, $off:expr) => {{
                 let sub0 = ((mword >> (16 * $p)) & 0xff) as usize;
                 let sub1 = ((mword >> (16 * $p + 8)) & 0xff) as usize;
                 let pc0 = sub0.count_ones() as usize;
-                let row0 = _mm_loadl_epi64(lut0z.add(sub0 * 8) as *const __m128i);
-                let row1 = _mm_loadu_si128(lutpad.add(sub1 * 32 + 8 - pc0) as *const __m128i);
-                let ctrl = _mm_or_si128(row0, row1);
-                let kw = _mm_loadu_si128(kind.add(base + 16 * $p) as *const __m128i);
-                let lo = _mm256_add_epi32(basev, _mm256_cvtepu8_epi32(ctrl));
-                _mm256_storeu_si256(starts.add(m + $off as usize) as *mut __m256i, lo);
-                let hi = _mm256_add_epi32(basev, _mm256_cvtepu8_epi32(_mm_srli_si128(ctrl, 8)));
-                _mm256_storeu_si256(starts.add(m + $off as usize + 8) as *mut __m256i, hi);
-                basev = _mm256_add_epi32(basev, step16);
-                _mm_shuffle_epi8(kw, ctrl)
+                let row0 = Vec128::read_low_unaligned(&lut0z[sub0], cpu);
+                let row1 = Vec128::load_unaligned(lutpad.add(sub1 * 32 + 8 - pc0), cpu);
+                let ctrl = row0 | row1;
+                let kw = Vec128::load_unaligned(kind.add(base + 16 * $p), cpu);
+                let lo = basev.add_u32(Vec256::widen_u8_to_u32(ctrl));
+                lo.store_unaligned(starts.add(m + $off as usize).cast::<u8>());
+                let hi = basev.add_u32(Vec256::widen_u8_to_u32(ctrl.shr_bytes::<8>()));
+                hi.store_unaligned(starts.add(m + $off as usize + 8).cast::<u8>());
+                basev = basev.add_u32(16);
+                kw.shuffle_u8s(ctrl)
             }};
         }
         let ka = pair!(0, o0);
         let kb = pair!(1, o1);
-        _mm_storeu_si128(kinds.add(m + o0 as usize) as *mut __m128i, ka);
-        _mm_storeu_si128(kinds.add(m + o1 as usize) as *mut __m128i, kb);
+        ka.store_unaligned(kinds.add(m + o0 as usize));
+        kb.store_unaligned(kinds.add(m + o1 as usize));
         let kc = pair!(2, o2);
         let kd = pair!(3, o3);
-        _mm_storeu_si128(kinds.add(m + o2 as usize) as *mut __m128i, kc);
-        _mm_storeu_si128(kinds.add(m + o3 as usize) as *mut __m128i, kd);
+        kc.store_unaligned(kinds.add(m + o2 as usize));
+        kd.store_unaligned(kinds.add(m + o3 as usize));
         m += o4 as usize;
     }
     m
@@ -123,48 +121,35 @@ pub(super) unsafe fn build_spans_avx2(
     m: usize,
     spans: *mut Span,
     sig_kinds: *mut u8,
-    _cpu: Avx2,
+    cpu: Avx2,
 ) -> usize {
     let sp = spans.cast::<u64>();
     let mut w = 0usize;
     let mut j = 0usize;
 
     // AVX2-specific code
-    let v_min = _mm_set1_epi8(TRIVIA_MIN as i8);
-    let v_span = _mm_set1_epi8((TRIVIA_MAX - TRIVIA_MIN) as i8);
-    let v_hb = _mm_set1_epi8(tk!(Hashbang) as i8);
-    let zero = _mm_setzero_si128();
     while j + 8 <= m {
-        let k8 = _mm_loadl_epi64(stage_kind.add(j) as *const __m128i);
-        let triv = _mm_cmpeq_epi8(_mm_subs_epu8(_mm_sub_epi8(k8, v_min), v_span), zero);
-        let drop = _mm_andnot_si128(_mm_cmpeq_epi8(k8, v_hb), triv);
-        let sig = (!(_mm_movemask_epi8(drop) as u32)) & 0xff;
+        let k8 = Vec128::load_low_unaligned(stage_kind.add(j), cpu);
+        let triv = k8.sub_u8(TRIVIA_MIN).saturating_sub_u8(TRIVIA_MAX - TRIVIA_MIN).eq_u8(0);
+        let drop = triv & !k8.eq_u8(tk!(Hashbang));
+        let sig = !drop.movemask() & 0xff;
 
-        let v0 = _mm256_loadu_si256(stage_pos.add(j) as *const __m256i);
-        let v1 = _mm256_loadu_si256(stage_pos.add(j + 1) as *const __m256i);
-        let lo = _mm256_unpacklo_epi32(v0, v1);
-        let hi = _mm256_unpackhi_epi32(v0, v1);
-        let a = _mm256_permute2x128_si256(lo, hi, 0x20);
-        let b = _mm256_permute2x128_si256(lo, hi, 0x31);
+        let v0 = Vec256::load_unaligned(stage_pos.add(j).cast::<u8>(), cpu);
+        let v1 = Vec256::load_unaligned(stage_pos.add(j + 1).cast::<u8>(), cpu);
+        let lo = v0.unpack_lo_u32(v1);
+        let hi = v0.unpack_hi_u32(v1);
+        let a = lo.join_lo_halves(hi);
+        let b = lo.join_hi_halves(hi);
 
         let ma = (sig & 0xf) as usize;
         let mb = (sig >> 4) as usize;
-        let ca = _mm256_permutevar8x32_epi32(
-            a,
-            _mm256_loadu_si256(QCOMPACT[ma].as_ptr() as *const __m256i),
-        );
-        _mm256_storeu_si256(sp.add(w) as *mut __m256i, ca);
-        let cb = _mm256_permutevar8x32_epi32(
-            b,
-            _mm256_loadu_si256(QCOMPACT[mb].as_ptr() as *const __m256i),
-        );
-        _mm256_storeu_si256(sp.add(w + ma.count_ones() as usize) as *mut __m256i, cb);
+        let ca = a.shuffle_u32s(Vec256::read_unaligned(&QCOMPACT[ma], cpu));
+        ca.store_unaligned(sp.add(w).cast::<u8>());
+        let cb = b.shuffle_u32s(Vec256::read_unaligned(&QCOMPACT[mb], cpu));
+        cb.store_unaligned(sp.add(w + ma.count_ones() as usize).cast::<u8>());
 
-        let kc = _mm_shuffle_epi8(
-            k8,
-            _mm_loadu_si128(BCOMPACT[sig as usize].as_ptr() as *const __m128i),
-        );
-        _mm_storel_epi64(sig_kinds.add(w) as *mut __m128i, kc);
+        let kc = k8.shuffle_u8s(Vec128::read_unaligned(&BCOMPACT[sig as usize], cpu));
+        kc.store_low_unaligned(sig_kinds.add(w));
         w += sig.count_ones() as usize;
         j += 8;
     }
@@ -191,48 +176,30 @@ pub(super) unsafe fn lanes_post_avx2(
     lanes: &mut Lanes,
     cpu: Avx2,
 ) {
-    let v_num = _mm256_set1_epi8(tk!(Number) as i8);
-    let v_big = _mm256_set1_epi8(tk!(BigInt) as i8);
-    let v_esc = _mm256_set1_epi8(tk!(IdentEscaped) as i8);
-    let v_pesc = _mm256_set1_epi8(tk!(PrivateIdentEscaped) as i8);
-    macro_rules! hits {
-        ($v:expr) => {{
-            let v = $v;
-            _mm256_or_si256(
-                _mm256_or_si256(_mm256_cmpeq_epi8(v, v_num), _mm256_cmpeq_epi8(v, v_big)),
-                _mm256_or_si256(_mm256_cmpeq_epi8(v, v_esc), _mm256_cmpeq_epi8(v, v_pesc)),
-            )
-        }};
-    }
     // `tk!(Invalid)` is the byte-class default for stray/control bytes and
     // reaches the output as a 1-byte token. Track "any seen" alongside the
     // value sweep; localize cold.
-    let v_inv = _mm256_set1_epi8(tk!(Invalid) as i8);
-    let mut inv = _mm256_setzero_si256();
+    let mut inv = Vec256::zero(cpu);
     let mut i = 0usize;
     while i + 64 <= m {
-        let v0 = _mm256_loadu_si256(out_kinds.add(i) as *const __m256i);
-        let v1 = _mm256_loadu_si256(out_kinds.add(i + 32) as *const __m256i);
-        let h0 = hits!(v0);
-        let h1 = hits!(v1);
-        inv = _mm256_or_si256(
-            inv,
-            _mm256_or_si256(_mm256_cmpeq_epi8(v0, v_inv), _mm256_cmpeq_epi8(v1, v_inv)),
-        );
-        let mut mask = (_mm256_movemask_epi8(h0) as u32 as u64)
-            | ((_mm256_movemask_epi8(h1) as u32 as u64) << 32);
+        let v0 = Vec256::load_unaligned(out_kinds.add(i), cpu);
+        let v1 = Vec256::load_unaligned(out_kinds.add(i + 32), cpu);
+        let h0 = hits(v0);
+        let h1 = hits(v1);
+        inv |= v0.eq_u8(tk!(Invalid)) | v1.eq_u8(tk!(Invalid));
+        let mut mask = (h0.movemask() as u64) | ((h1.movemask() as u64) << 32);
         while mask != 0 {
             emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
             mask &= mask - 1;
         }
         i += 64;
     }
-    let mut inv_dirty = _mm256_movemask_epi8(inv) != 0;
+    let mut inv_dirty = inv.movemask() != 0;
     while i < m {
-        let v = _mm256_loadu_si256(out_kinds.add(i) as *const __m256i);
-        let hit = hits!(v);
-        let mut mask = _mm256_movemask_epi8(hit) as u32;
-        let mut invm = _mm256_movemask_epi8(_mm256_cmpeq_epi8(v, v_inv)) as u32;
+        let v = Vec256::load_unaligned(out_kinds.add(i), cpu);
+        let hit = hits(v);
+        let mut mask = hit.movemask();
+        let mut invm = v.eq_u8(tk!(Invalid)).movemask();
         let rem = m - i;
         if rem < 32 {
             mask &= (1u32 << rem) - 1;
@@ -248,4 +215,11 @@ pub(super) unsafe fn lanes_post_avx2(
     if inv_dirty {
         invalid_diags(src, out_kinds, out_spans, m, nn, lanes);
     }
+}
+
+/// Get a mask of the bytes of `v` which are token kinds that [`emit_value`] handles.
+#[inline(always)]
+fn hits(v: Vec256) -> Vec256 {
+    (v.eq_u8(tk!(Number)) | v.eq_u8(tk!(BigInt)))
+        | (v.eq_u8(tk!(IdentEscaped)) | v.eq_u8(tk!(PrivateIdentEscaped)))
 }

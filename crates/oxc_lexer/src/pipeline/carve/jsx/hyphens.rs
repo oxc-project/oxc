@@ -1,12 +1,9 @@
 use crate::cpu::{Cpu, cpu_select};
 
-use crate::pipeline::bitmap::{bm_clear, bm_get};
-
 #[cfg(target_arch = "x86_64")]
-use crate::{
-    cpu::Avx2,
-    pipeline::chunk::{load256, mm, veq},
-};
+use crate::{cpu::Avx2, simd::avx2::Vec256};
+
+use crate::pipeline::bitmap::{bm_clear, bm_get};
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run
@@ -50,7 +47,7 @@ unsafe fn jsx_glue_hyphens_avx2(
     let mut i = a;
     let mut last = usize::MAX;
     while i < b {
-        let mut m = mm(veq(load256(src, i, cpu), b'-', cpu), cpu);
+        let mut m = Vec256::load_unaligned(src.add(i), cpu).eq_u8(b'-').movemask();
         let rem = b - i;
         if rem < 32 {
             m &= (1u32 << rem) - 1;

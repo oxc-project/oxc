@@ -42,9 +42,9 @@ use crate::{
 };
 
 #[cfg(target_arch = "x86_64")]
-use crate::cpu::Avx2;
+use crate::{cpu::Avx2, simd::avx2::Vec128};
 #[cfg(target_arch = "aarch64")]
-use crate::cpu::Neon;
+use crate::{cpu::Neon, simd::neon::Vec128};
 
 const KWINIT_LO: [u8; 16] = [0, 1, 3, 3, 3, 1, 3, 3, 0, 3, 0, 0, 1, 0, 1, 1];
 const KWINIT_HI: [u8; 16] = [0, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -513,15 +513,12 @@ unsafe fn text_matches(ptr: *const u8, len: usize, text: &[u64; 2], cpu: impl Cp
 /// Same as [`text_matches`].
 #[cfg(target_arch = "x86_64")]
 #[inline(always)]
-unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: Avx2) -> bool {
-    use std::arch::x86_64::{_mm_and_si128, _mm_cmpeq_epi8, _mm_loadu_si128, _mm_movemask_epi8};
-
-    let word = _mm_loadu_si128(ptr.cast());
-    let mask = _mm_loadu_si128(len_mask_ptr(len).cast());
-    let text = _mm_loadu_si128(text.as_ptr().cast());
-    let masked_word = _mm_and_si128(word, mask);
-    let eq = _mm_cmpeq_epi8(masked_word, text);
-    _mm_movemask_epi8(eq) == 0xFFFF
+unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Avx2) -> bool {
+    let word = Vec128::load_unaligned(ptr, cpu);
+    let mask = Vec128::read_unaligned(len_mask(len), cpu);
+    let text = Vec128::read_unaligned(text, cpu);
+    let masked_word = word & mask;
+    masked_word.all_eq_u8(text)
 }
 
 /// [`text_matches`] for Neon.
@@ -531,16 +528,12 @@ unsafe fn text_matches_avx2(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: A
 /// Same as [`text_matches`].
 #[cfg(target_arch = "aarch64")]
 #[inline(always)]
-unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], _cpu: Neon) -> bool {
-    use std::arch::aarch64::{vandq_u8, veorq_u8, vgetq_lane_u64, vld1q_u8, vreinterpretq_u64_u8};
-
-    let word = vld1q_u8(ptr);
-    let mask = vld1q_u8(len_mask_ptr(len));
-    let text = vld1q_u8(text.as_ptr().cast());
-    let masked_word = vandq_u8(word, mask);
-    let diff = vreinterpretq_u64_u8(veorq_u8(masked_word, text));
-    // NEON has no equivalent of x86's `ptest`, so combine the 2 halves, and test the result for 0
-    (vgetq_lane_u64::<0>(diff) | vgetq_lane_u64::<1>(diff)) == 0
+unsafe fn text_matches_neon(ptr: *const u8, len: usize, text: &[u64; 2], cpu: Neon) -> bool {
+    let word = Vec128::load_unaligned(ptr, cpu);
+    let mask = Vec128::read_unaligned(len_mask(len), cpu);
+    let text = Vec128::read_unaligned(text, cpu);
+    let masked_word = word & mask;
+    masked_word.all_eq_u8(text)
 }
 
 /// [`text_matches`] for all other CPUs.
@@ -553,23 +546,23 @@ unsafe fn text_matches_generic(ptr: *const u8, len: usize, text: &[u64; 2]) -> b
     use ptr::read_unaligned;
 
     let ptr = ptr as *const u64;
-    let mask_ptr = len_mask_ptr(len) as *const u64;
+    let mask_ptr = len_mask(len).as_ptr() as *const u64;
     let masked_first_8 = read_unaligned(ptr) & read_unaligned(mask_ptr);
     let masked_second_8 = read_unaligned(ptr.add(1)) & read_unaligned(mask_ptr.add(1));
     ((masked_first_8 ^ text[0]) | (masked_second_8 ^ text[1])) == 0
 }
 
-/// Get a pointer to 16 bytes which are a mask with the first `len` bytes set to `0xFF`, and the rest 0.
+/// Get 16 bytes which are a mask with the first `len` bytes set to `0xFF`, and the rest 0.
 ///
-/// # SAFETY
+/// # Panics
 ///
-/// `len` must be between 0 and 16 (inclusive).
+/// Panics if `len` is greater than 16.
 #[inline(always)]
-unsafe fn len_mask_ptr(len: usize) -> *const u8 {
-    LEN_MASK_WINDOW.0.as_ptr().add(16 - len)
+fn len_mask(len: usize) -> &'static [u8; 16] {
+    LEN_MASK_WINDOW.0[16 - len..].first_chunk::<16>().unwrap()
 }
 
-/// 16 x `0xFF` bytes followed by 16 x 0 bytes, for [`len_mask_ptr`].
+/// 16 x `0xFF` bytes followed by 16 x 0 bytes, for [`len_mask`].
 static LEN_MASK_WINDOW: Aligned32<[u8; 32]> = {
     let mut window = [0; 32];
 

@@ -1,11 +1,6 @@
-use std::{
-    arch::x86_64::*,
-    mem::{self, MaybeUninit},
-};
+use std::mem::{self, MaybeUninit};
 
-use crate::cpu::Avx2;
-
-use crate::pipeline::chunk::{load256, mm, veq};
+use crate::{cpu::Avx2, simd::avx2::Vec256};
 
 /// Ordered for speed, pairing `(` with `)`, `[` with `{` and `]` with `}` (see [`any_of`]).
 const BRACKET_BYTES: [u8; 6] = [b'(', b')', b'[', b'{', b']', b'}'];
@@ -23,7 +18,7 @@ pub unsafe fn find_avx2<const K: usize>(
     cpu: Avx2,
 ) -> usize {
     while i + 32 <= n {
-        let m = mm(any_of(load256(src, i, cpu), needles, cpu), cpu);
+        let m = any_of(Vec256::load_unaligned(src.add(i), cpu), needles).movemask();
         if m != 0 {
             return i + m.trailing_zeros() as usize;
         }
@@ -43,14 +38,11 @@ pub unsafe fn find_avx2<const K: usize>(
 #[target_feature(enable = "avx2,bmi2,popcnt")]
 pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
     let block = &src[base..base + 64];
+    let (chunks, _) = block.as_chunks::<32>();
     let mut out = 0u64;
-    for half in 0..2 {
-        // SAFETY: `block` holds 64 bytes, so a 32-byte load at offset 0 or 32 stays inside it;
-        // the OR-fold touches no memory and needs only `avx2`, which this function's
-        // `#[target_feature]` enables.
-        let v = unsafe { load256(block.as_ptr(), half * 32, cpu) };
-        let m = unsafe { any_of(v, BRACKET_BYTES, cpu) };
-        let mask = mm(m, cpu);
+    for (half, chunk) in chunks.iter().enumerate() {
+        let v = Vec256::read_unaligned(chunk, cpu);
+        let mask = any_of(v, BRACKET_BYTES).movemask();
         out |= u64::from(mask) << (half * 32);
     }
     out
@@ -71,13 +63,13 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
 // i.e. when the bytes are at indexes `2 * j` and `2 * j + 1` in `needles`.
 // The byte sets passed to `find` are ordered to make such pairs.
 #[inline(always)]
-unsafe fn any_of<const N: usize>(v: __m256i, needles: [u8; N], cpu: Avx2) -> __m256i {
-    let mut m = array_map(needles, |c| veq(v, c, cpu));
+fn any_of<const N: usize>(v: Vec256, needles: [u8; N]) -> Vec256 {
+    let mut m = array_map(needles, |c| v.eq_u8(c));
     let mut len = N;
     while len > 1 {
         let half = len / 2;
         for j in 0..half {
-            m[j] = _mm256_or_si256(m[2 * j], m[2 * j + 1]);
+            m[j] = m[2 * j] | m[2 * j + 1];
         }
         if len % 2 == 1 {
             m[half] = m[len - 1];
