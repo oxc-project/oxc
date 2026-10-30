@@ -305,7 +305,7 @@ Between blocks, where it usually sits, the output is the same.
 ## nul-as-written
 
 - Why: semantics (Prettier drops everything after a NUL between tags)
-- Pin: `tests/fixtures/html/nul/nul-as-written.html`
+- Pin: `tests/fixtures/html/nul-byte/nul-as-written.html`
 
 ```html
 <!-- input (`␀` is U+0000) -->
