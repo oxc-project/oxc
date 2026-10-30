@@ -49,7 +49,7 @@ fn gt_follower(tokens: &Tokens, i: usize, cpu: impl Cpu) -> bool {
         b'\\' => nx != b'u',
         _ if is_digit(c) => false,
         _ if is_id_start(c) => {
-            let kw = kw_match_at(true, src, i, word_len(src, i)) as u8;
+            let kw = kw_match_at(true, src, i, word_len(src, i), cpu) as u8;
             matches_tk!(kw, KwIn | KwInstanceof | KwAs | KwSatisfies | KwExtends)
         }
         b'{' | b'[' | b'>' | b'~' | b'@' | b'#' | b'"' | b'\'' => false,
@@ -135,7 +135,8 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
         if matches_tk!(k, Ident | IdentEscaped) {
             // A qualified name's part is a name (z.infer, a.typeof).
             let dotted = prev != usize::MAX && tokens.member_dot(prev, cpu);
-            let kk = if dotted { 0 } else { kw_match_at(true, src, w, word_len(src, w)) as u8 };
+            let kk =
+                if dotted { 0 } else { kw_match_at(true, src, w, word_len(src, w), cpu) as u8 };
             // A keyword type (`this`, `any`, `null`, ...) takes no type arguments; in a type
             // query it names a value, which may (`typeof this<A>`).
             this_head = keyword_type(kk, cpu) && last_kw != tk!(KwTypeof);
