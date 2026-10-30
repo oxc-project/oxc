@@ -6,7 +6,8 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 - Why: invariant
 - Pin: `tests/fixtures/js/comments/array-holes.js`
-- Conformance: `js/arrays/numbers-with-holes.js`
+- Conformance:
+  - `externals/prettier/js/arrays/numbers-with-holes.js`
 
 ```js
 // input
@@ -156,7 +157,9 @@ Binary-like chains hoist the comment in both formatters; the own-line invariant 
 
 - Why: uniform-rule (same construct, same output: any other node after the same suppression comment, see #eol-suppression-after-assign-colon)
 - Pin: `tests/fixtures/ts/union/suppression.ts`
-- Conformance: `typescript/union/comments/18379.ts`, `typescript/union/consistent-with-flow/prettier-ignore.ts`
+- Conformance:
+  - `externals/prettier/typescript/union/comments/18379.ts`
+  - `externals/prettier/typescript/union/consistent-with-flow/prettier-ignore.ts`
 
 A suppression comment before a union covers the whole union, wherever it sits: own-line, on the operator's line, or inline.
 One after a `|` covers that member (both formatters).
@@ -230,7 +233,11 @@ Prettier moves the comment inside for `keyof`/type-operator operands while keepi
 
 - Why: invariant (prettier/prettier#14617)
 - Pin: `tests/fixtures/js/comments/assignment-eol-line-comment.js`, `tests/fixtures/ts/comments/operator-eol-line-comment.ts`
-- Conformance: `js/comments/array-and-object.js`, `js/comments/assignment/variable-declarator.js`, `js/comments/variable-declarator.js`, `typescript/comments/type-literals.ts`
+- Conformance:
+  - `externals/prettier/js/comments/array-and-object.js`
+  - `externals/prettier/js/comments/assignment/variable-declarator.js`
+  - `externals/prettier/js/comments/variable-declarator.js`
+  - `externals/prettier/typescript/comments/type-literals.ts`
 
 Prettier's output crosses user content (the value the comment precedes, then the `;`) or changes line (own-lined).
 An end-of-line line comment right after `=`/`:` keeps its position (`= // c` + mandatory break).
@@ -520,9 +527,33 @@ The shapes, each pinned by its fixture:
 
 - Why: style-hold (oxc#25841)
 - Pin: `tests/fixtures/ts/union/annotation-flat-retry.ts`
-- Oxfmt: `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`, `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`,
-  `externals/webawesome/badge/badge.ts`, `externals/webawesome/button/button.ts`, `externals/webawesome/callout/callout.ts`, `externals/webawesome/checkbox/checkbox.ts`, `externals/webawesome/color-picker/color-picker.ts`, `externals/webawesome/copy-button/copy-button.ts`, `externals/webawesome/details/details.ts`, `externals/webawesome/dropdown/dropdown.ts`, `externals/webawesome/dropdown-item/dropdown-item.ts`, `externals/webawesome/format-number/format-number.ts`, `externals/webawesome/icon/icon.ts`, `externals/webawesome/input/input.ts`,
-  `externals/webawesome/number-input/number-input.ts`, `externals/webawesome/page/page.ts`, `externals/webawesome/popup/popup.ts`, `externals/webawesome/qr-code/qr-code.ts`, `externals/webawesome/radio/radio.ts`, `externals/webawesome/radio-group/radio-group.ts`, `externals/webawesome/rating/rating.ts`, `externals/webawesome/select/select.ts`, `externals/webawesome/slider/slider.ts`, `externals/webawesome/switch/switch.ts`, `externals/webawesome/tag/tag.ts`, `externals/webawesome/textarea/textarea.ts`
+- Conformance:
+  - `externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue`
+  - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
+  - `externals/webawesome/badge/badge.ts`
+  - `externals/webawesome/button/button.ts`
+  - `externals/webawesome/callout/callout.ts`
+  - `externals/webawesome/checkbox/checkbox.ts`
+  - `externals/webawesome/color-picker/color-picker.ts`
+  - `externals/webawesome/copy-button/copy-button.ts`
+  - `externals/webawesome/details/details.ts`
+  - `externals/webawesome/dropdown/dropdown.ts`
+  - `externals/webawesome/dropdown-item/dropdown-item.ts`
+  - `externals/webawesome/format-number/format-number.ts`
+  - `externals/webawesome/icon/icon.ts`
+  - `externals/webawesome/input/input.ts`
+  - `externals/webawesome/number-input/number-input.ts`
+  - `externals/webawesome/page/page.ts`
+  - `externals/webawesome/popup/popup.ts`
+  - `externals/webawesome/qr-code/qr-code.ts`
+  - `externals/webawesome/radio/radio.ts`
+  - `externals/webawesome/radio-group/radio-group.ts`
+  - `externals/webawesome/rating/rating.ts`
+  - `externals/webawesome/select/select.ts`
+  - `externals/webawesome/slider/slider.ts`
+  - `externals/webawesome/switch/switch.ts`
+  - `externals/webawesome/tag/tag.ts`
+  - `externals/webawesome/textarea/textarea.ts`
 - Drop when: the wait-and-see on Prettier 3.9's union style resolves (follow, or re-classify)
 
 ```ts
@@ -602,7 +633,9 @@ In the head the declaration has no terminator of its own; we keep it verbatim an
 
 - Why: uniform-rule (same construct, same output: suppressed statement)
 - Pin: `tests/fixtures/js/semicolons/suppressed-statement.js`, `tests/fixtures/ts/semicolons/suppressed-class-member.ts`
-- Conformance: `js/ignore/issue-11077.js`, `markdown/markdown/real-world-case.md`
+- Conformance:
+  - `externals/prettier/js/ignore/issue-11077.js`
+  - `externals/prettier/markdown/markdown/real-world-case.md`
 
 ```js
 // input (semi: true)
@@ -813,7 +846,9 @@ The full callee list is `contains_a_test_pattern` in `src/utils/call_expression.
 
 - Why: invariant
 - Pin: `tests/fixtures/js/calls/callee-opener-comment.js`, `tests/fixtures/ts/calls/callee-opener-comment.ts`
-- Conformance: `js/last-argument-expansion/edge_case.js`, `typescript/call/callee-comments.ts`
+- Conformance:
+  - `externals/prettier/js/last-argument-expansion/edge_case.js`
+  - `externals/prettier/typescript/call/callee-comments.ts`
 
 A call's `(` and `<` are delimiters (see AGENTS.md "Head-body and operator gaps (class 3)"), so a comment between the callee and the opener stays on the callee side (except AGENTS.md "Open debts").
 
@@ -933,7 +968,15 @@ A function type without type parameters, a constructor type (`<new <T>() => T>f`
 
 - Why: uniform-rule (same construct, same output: expression statement)
 - Pin: `tests/fixtures/ts/parenthesis/export-default-leftmost-parens.ts`
-- Conformance: `js/export-default/class_instance.js`, `js/export-default/function_tostring.js`, `typescript/as/export_default_as.ts`, `typescript/export-default/function_as.ts`, `typescript/satisfies-operators/export-default-as.ts`
+- Conformance:
+  - `externals/prettier/js/export-default/class_instance.js`
+  - `externals/prettier/js/export-default/function_tostring.js`
+  - `externals/prettier/js/export-default/parentheses/snippet: #9`
+  - `externals/prettier/js/export-default/parentheses/snippet: #11`
+  - `externals/prettier/js/export-default/parentheses/snippet: #12`
+  - `externals/prettier/typescript/as/export_default_as.ts`
+  - `externals/prettier/typescript/export-default/function_as.ts`
+  - `externals/prettier/typescript/satisfies-operators/export-default-as.ts`
 
 ```ts
 // input
@@ -960,7 +1003,8 @@ Prettier's wrapping came from a syntax fix (prettier/prettier#6133), whose chang
 
 - Why: uniform-rule (same construct, same output: `export default` and sequence arrow body)
 - Pin: `tests/fixtures/ts/parenthesis/start-token-no-double-parens.ts`
-- Conformance: `js/identifier/parentheses/let.js`
+- Conformance:
+  - `externals/prettier/js/identifier/parentheses/let.js`
 
 ```ts
 // input
@@ -1204,7 +1248,8 @@ Prettier moves it before the object for `.b`, and after the `.` for `.#b`; both 
 
 - Why: uniform-rule (same construct, same output: `(a + b).c` and `(await a)[c]`)
 - Pin: `tests/fixtures/js/parenthesis/computed-member-object-paren-break.js`
-- Conformance: `js/ternaries/indent-after-paren.js`
+- Conformance:
+  - `externals/prettier/js/ternaries/indent-after-paren.js`
 
 ```js
 // input (printWidth: 80)

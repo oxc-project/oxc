@@ -1,29 +1,24 @@
 // oxlint-disable no-console, no-await-in-loop
 
 import { createTwoFilesPatch } from "diff";
-import {
-  existsSync,
-  globSync,
-  mkdirSync,
-  readdirSync,
-  readFileSync,
-  rmSync,
-  writeFileSync,
-} from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { join, relative } from "node:path";
 import prettier from "prettier";
 import * as astroPlugin from "prettier-plugin-astro";
 import * as sveltePlugin from "prettier-plugin-svelte";
 import { format } from "../dist/index.js";
+import { assertDownloaded, sources } from "./download-fixtures.ts";
+import {
+  collectDivergences,
+  type Divergence,
+  divergencesOf,
+  listDivergences,
+  FIXTURES_DIR,
+  SNAPSHOTS_DIR,
+  checkStaleDivergences,
+} from "./shared.ts";
 
-const CONFORMANCE_DIR = import.meta.dirname;
-const FIXTURES_DIR = join(CONFORMANCE_DIR, "fixtures");
 const EXTERNALS_DIR = join(FIXTURES_DIR, "externals");
-const SNAPSHOTS_DIR = join(CONFORMANCE_DIR, "snapshots");
-const REPO_ROOT = join(CONFORMANCE_DIR, "..", "..", "..");
-const DIVERGENCES_FILES = globSync("{apps/oxfmt,crates/oxc_formatter*}/DIVERGENCES.md", {
-  cwd: REPO_ROOT,
-});
 
 type Category = {
   name: string;
@@ -229,6 +224,7 @@ const categories: Category[] = [
 
 // ---
 
+assertDownloaded(sources.map(({ name }) => name).filter((name) => name !== "prettier"));
 const divergences = collectDivergences();
 const results: CategoryResult[] = [];
 
@@ -255,38 +251,19 @@ for (const category of categories) {
 
 writeReport(results, divergences);
 
-const failedNames = new Set(
-  results.flatMap((r) => r.optionSetResults.flatMap((o) => o.failures.map((f) => f.name))),
-);
+const failedNames = [
+  ...new Set(
+    results.flatMap((r) => r.optionSetResults.flatMap((o) => o.failures.map((f) => f.name))),
+  ),
+];
 for (const name of failedNames) {
-  if (!divergences.has(name)) {
+  if (divergencesOf(divergences, name).length === 0) {
     console.warn(`WARNING: "${name}" fails and no DIVERGENCES.md entry lists it (unclassified)`);
   }
 }
-for (const [name, refs] of divergences) {
-  if (!failedNames.has(name)) {
-    console.warn(`WARNING: "${name}" passes but ${refs.join(", ")} lists it, remove it?`);
-  }
-}
+checkStaleDivergences(divergences, failedNames, { prettierSuite: false });
 
 // ---
-
-/** Fixture name -> `<file>#<slug>` for every backticked `externals/` / `edge-cases/` path in a DIVERGENCES.md entry. */
-function collectDivergences(): Map<string, string[]> {
-  const map = new Map<string, string[]>();
-  for (const file of DIVERGENCES_FILES) {
-    let slug = "";
-    for (const line of readFileSync(join(REPO_ROOT, file), "utf8").split("\n")) {
-      if (line.startsWith("## ")) slug = line.slice(3).trim();
-      for (const [, name] of line.matchAll(
-        /`(?:conformance\/fixtures\/)?((?:externals|edge-cases)\/[^`]+)`/g,
-      )) {
-        map.set(name, [...(map.get(name) ?? []), `${file}#${slug}`]);
-      }
-    }
-  }
-  return map;
-}
 
 type Fixture = { name: string; fullPath: string; isProject: boolean };
 
@@ -400,7 +377,7 @@ async function formatWithOxfmt(
   return res.errors.length === 0 ? res.code : "ERROR";
 }
 
-function writeReport(results: CategoryResult[], divergences: Map<string, string[]>) {
+function writeReport(results: CategoryResult[], divergences: Divergence[]) {
   const lines: string[] = [];
   const diffsDir = join(SNAPSHOTS_DIR, "diffs");
 
@@ -451,14 +428,11 @@ function writeReport(results: CategoryResult[], divergences: Map<string, string[
       lines.push("");
 
       if (r.failures.length > 0) {
-        for (const failure of r.failures) {
-          const safeName = failure.name.replaceAll("/", "__");
-          const diffRelPath = `diffs/${result.name}/${safeName}.md`;
-          const refs = divergences.get(failure.name)?.join(", ") ?? "unclassified";
-          lines.push(`- [${failure.name}](${diffRelPath})`);
-          lines.push(`  - ${refs}`);
-        }
-        lines.push("");
+        const items = r.failures.map(({ name }): [string, string] => {
+          const diffRelPath = `diffs/${result.name}/${name.replaceAll("/", "__")}.md`;
+          return [name, `- [${name}](${diffRelPath})`];
+        });
+        lines.push(...listDivergences(divergences, items), "");
       }
     }
   }

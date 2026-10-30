@@ -11,7 +11,8 @@
 - [externals/vue-vben-admin/@core/ui-kit/shadcn-ui/src/components/render-content/render-content.vue](diffs/js-in-vue/externals__vue-vben-admin__@core__ui-kit__shadcn-ui__src__components__render-content__render-content.vue.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+  - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 
 ### Option 2: 332/334 (99.40%)
 
@@ -22,7 +23,8 @@
 - [edge-cases/js-in-vue/generic-trailing-comma.vue](diffs/js-in-vue/edge-cases__js-in-vue__generic-trailing-comma.vue.md)
   - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 - [externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue](diffs/js-in-vue/externals__vue-vben-admin__effects__common-ui__src__components__api-component__api-component.vue.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+  - apps/oxfmt/DIVERGENCES.md#ts-in-vue-generic-trailing-comma
 
 ## gql-in-js
 
@@ -87,7 +89,8 @@
 - [externals/webawesome/badge/badge.ts](diffs/html-in-js/externals__webawesome__badge__badge.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+  - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/checkbox/checkbox.ts](diffs/html-in-js/externals__webawesome__checkbox__checkbox.ts.md)
@@ -111,7 +114,8 @@
 - [externals/webawesome/number-input/number-input.ts](diffs/html-in-js/externals__webawesome__number-input__number-input.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/page/page.styles.ts](diffs/html-in-js/externals__webawesome__page__page.styles.ts.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position, crates/oxc_formatter_css/DIVERGENCES.md#grid-value-broken-in-function
+  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
+  - crates/oxc_formatter_css/DIVERGENCES.md#grid-value-broken-in-function
 - [externals/webawesome/popup/popup.ts](diffs/html-in-js/externals__webawesome__popup__popup.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/qr-code/qr-code.ts](diffs/html-in-js/externals__webawesome__qr-code__qr-code.ts.md)
@@ -148,7 +152,8 @@
 - [edge-cases/html-in-js/template-expression-indent.js](diffs/html-in-js/edge-cases__html-in-js__template-expression-indent.js.md)
   - apps/oxfmt/DIVERGENCES.md#pre-like-template-expression
 - [externals/webawesome/button/button.ts](diffs/html-in-js/externals__webawesome__button__button.ts.md)
-  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry, apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
+  - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
+  - apps/oxfmt/DIVERGENCES.md#dynamic-tag-name-end-tag
 - [externals/webawesome/callout/callout.ts](diffs/html-in-js/externals__webawesome__callout__callout.ts.md)
   - crates/oxc_formatter/DIVERGENCES.md#union-annotation-flat-retry
 - [externals/webawesome/copy-button/copy-button.ts](diffs/html-in-js/externals__webawesome__copy-button__copy-button.ts.md)
@@ -232,10 +237,10 @@
 {"printWidth":80,"astro":{}}
 ```
 
+- [externals/plugin-astro/other/prettier-ignore-js/input.astro](diffs/astro/externals__plugin-astro__other__prettier-ignore-js__input.astro.md)
+  - ❓unclassified
 - [edge-cases/astro/style-lang-sass.astro](diffs/astro/edge-cases__astro__style-lang-sass.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
-- [externals/plugin-astro/other/prettier-ignore-js/input.astro](diffs/astro/externals__plugin-astro__other__prettier-ignore-js__input.astro.md)
-  - unclassified
 - [externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro](diffs/astro/externals__plugin-astro__styles__format-nested-sass-style-tag-content__input.astro.md)
   - apps/oxfmt/DIVERGENCES.md#astro-style-lang-sass
 - [externals/plugin-astro/styles/with-indented-sass/input.astro](diffs/astro/externals__plugin-astro__styles__with-indented-sass__input.astro.md)
@@ -392,9 +397,11 @@
 - [externals/ng-zorro-antd/components/style/themes/dark.less](diffs/less/externals__ng-zorro-antd__components__style__themes__dark.less.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
 - [externals/ng-zorro-antd/components/style/themes/default.less](diffs/less/externals__ng-zorro-antd__components__style__themes__default.less.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width, crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
+  - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
+  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/ng-zorro-antd/components/style/themes/variable.less](diffs/less/externals__ng-zorro-antd__components__style__themes__variable.less.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width, crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
+  - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
+  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/ng-zorro-antd/components/table/style/index.less](diffs/less/externals__ng-zorro-antd__components__table__style__index.less.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#signed-value-resplit
 - [externals/ng-zorro-antd/components/table/style/rtl.less](diffs/less/externals__ng-zorro-antd__components__table__style__rtl.less.md)
@@ -409,9 +416,11 @@
 - [externals/ng-zorro-antd/components/style/mixins/customize.less](diffs/less/externals__ng-zorro-antd__components__style__mixins__customize.less.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#less-guard-list-inline
 - [externals/ng-zorro-antd/components/style/themes/default.less](diffs/less/externals__ng-zorro-antd__components__style__themes__default.less.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width, crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
+  - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
+  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/ng-zorro-antd/components/style/themes/variable.less](diffs/less/externals__ng-zorro-antd__components__style__themes__variable.less.md)
-  - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width, crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
+  - crates/oxc_formatter_css/DIVERGENCES.md#trailing-line-comment-print-width
+  - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 - [externals/ng-zorro-antd/components/table/style/rtl.less](diffs/less/externals__ng-zorro-antd__components__table__style__rtl.less.md)
   - crates/oxc_formatter_css/DIVERGENCES.md#fill-break-position
 
@@ -535,4 +544,4 @@
 ```
 
 - [externals/svelte/compiler/print/index.js](diffs/jsdoc/externals__svelte__compiler__print__index.js.md)
-  - unclassified
+  - ❓unclassified

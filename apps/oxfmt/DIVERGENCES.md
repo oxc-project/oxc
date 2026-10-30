@@ -6,7 +6,8 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 - Why: uniform-rule (embedded script formats like its standalone file)
 - Pin: `conformance/fixtures/edge-cases/js-in-vue/generic-trailing-comma.vue`
-- Conformance: `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
+- Conformance:
+  - `externals/vue-vben-admin/effects/common-ui/src/components/api-component/api-component.vue`
 
 ```vue
 <!-- input -->
@@ -33,7 +34,8 @@ in ts-in-md and plain `.ts` — one rule over that internal inconsistency, the s
 
 - Why: cost
 - Pin: `conformance/fixtures/edge-cases/css-in-js/styled-extend-tag.js`
-- Conformance: `js/multiparser-css/styled-components.js`
+- Conformance:
+  - `externals/prettier/js/multiparser-css/styled-components.js`
 
 ```js
 /* input */
@@ -124,7 +126,8 @@ Under `embeddedLanguageFormatting: off`, the source shape still decides, like Pr
 
 - Why: semantics (prettier/prettier#19908)
 - Pin: `conformance/fixtures/edge-cases/xxx-in-md/nested-fence-length.md`
-- Conformance: `js/multiparser-markdown/codeblock.js`
+- Conformance:
+  - `externals/prettier/js/multiparser-markdown/codeblock.js`
 
 `````markdown
 <!-- input -->
@@ -193,7 +196,8 @@ Prettier formats it when a space separates the language, and keeps `js{1,3}` as 
 
 - Why: uniform-rule (code fence names follow Shiki's vocabulary)
 - Pin: `conformance/fixtures/edge-cases/xxx-in-md/lwc-code-block.md`
-- Conformance: `markdown/code/lwc/lwc.md`
+- Conformance:
+  - `externals/prettier/markdown/code/lwc/lwc.md`
 
 ````markdown
 <!-- input -->
@@ -249,7 +253,10 @@ Prettier keeps `json` / `json5` blocks as written: their parser rejects a blank 
 
 - Why: cost
 - Pin: `conformance/fixtures/edge-cases/astro/style-lang-sass.astro`
-- Conformance: `externals/plugin-astro/styles/with-sass/input.astro`, `externals/plugin-astro/styles/with-indented-sass/input.astro`, `externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro`
+- Conformance:
+  - `externals/plugin-astro/styles/with-sass/input.astro`
+  - `externals/plugin-astro/styles/with-indented-sass/input.astro`
+  - `externals/plugin-astro/styles/format-nested-sass-style-tag-content/input.astro`
 
 ```astro
 <!-- input -->
@@ -374,7 +381,9 @@ Prettier looks for the placeholder as it wrote it, so the lowercased one stays i
 
 - Why: uniform-rule (same construct, same output: an expression outside `pre`-like content, whose lines indent from the line its `${` starts on; prettier/prettier#20355)
 - Pin: `conformance/fixtures/edge-cases/html-in-js/pre-like-template-expression.js`
-- Conformance: `edge-cases/html-in-js/template-expression-indent.js`, `js/embeded/indention/19518.js`
+- Conformance:
+  - `edge-cases/html-in-js/template-expression-indent.js`
+  - `externals/prettier/js/embeded/indention/19518.js`
 
 ```js
 // input
@@ -420,7 +429,8 @@ Reformatting the expression changes no content: its source is code, not text in 
 
 - Why: uniform-rule (same construct, same output: an element htm's `<//>` closes, which Prettier formats; prettier/prettier#17849)
 - Pin: `conformance/fixtures/edge-cases/html-in-js/dynamic-tag-name.js`
-- Conformance: `externals/webawesome/button/button.ts`
+- Conformance:
+  - `externals/webawesome/button/button.ts`
 
 ```js
 // input

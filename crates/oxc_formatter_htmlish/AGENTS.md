@@ -42,10 +42,4 @@ DUMP_IR=1 cargo run -p oxc_formatter_htmlish --example htmlish_formatter [filena
 node apps/oxfmt/node_modules/prettier/bin/prettier.cjs [filename]
 ```
 
-### Prettier conformance
-
-Every failing file is accounted for by a DIVERGENCES.md entry's `Conformance:` line, except this unclassified one:
-
-- `misc/filename-matters/html-doctype/xhtml-doctype.xhtml` (run as `.html`, also as `.xhtml`) fails to parse: `missing end tag of raw text element` for its self-closing `<script />`
-
 Fixtures and the example read `.vue` as Vue, `.xhtml` / `.xht` as XHTML and `*.component.html` as Angular.

@@ -5,13 +5,22 @@ import { globSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, extname, join, relative } from "node:path";
 import { parseArgs } from "node:util";
 import { format, type Language } from "../dist/index.js";
+import { assertDownloaded } from "./download-fixtures.ts";
+import {
+  PRETTIER_SUITE,
+  FIXTURES_DIR,
+  SNAPSHOTS_DIR,
+  collectDivergences,
+  type Divergence,
+  listDivergences,
+  checkStaleDivergences,
+} from "./shared.ts";
 
 // Compares oxfmt with the committed outputs of Prettier's own test suite (`tests/format/**/__snapshots__`),
 // so Prettier itself never runs here.
 // `--filter <substring>` runs only the matching paths and prints their diffs instead of writing the report.
 
-const SUITE_DIR = join(import.meta.dirname, "fixtures", "externals", "prettier");
-const SNAPSHOTS_DIR = join(import.meta.dirname, "snapshots");
+const SUITE_DIR = join(FIXTURES_DIR, PRETTIER_SUITE);
 
 /** Extension of the filename oxfmt is given → its language (the `associations` name), in the report's order */
 const LANGUAGES: Record<string, Language> = {
@@ -46,6 +55,7 @@ const jsLike = (ext: string) => (name: string) =>
 /**
  * Prettier parser → the filename oxfmt routes to that language.
  * A section runs once per distinct filename of its listed `parsers`, unlisted parsers are not run.
+ * A section listing none (Prettier infers it from the filepath, `misc/parser-inference/`) is not run either.
  */
 const PARSERS: Record<string, (name: string) => string> = {
   babel: jsLike(".js"),
@@ -155,6 +165,10 @@ const IGNORE = [
   "typescript/tsx/comma/snippet: test.js",
   "typescript/tsx/comma/snippet: test.cjs",
   "typescript/tsx/comma/snippet: test.mjs",
+  // No known filepath for Prettier, which keeps `<T,>` and the doctype case, but run here as `.ts` / `.html`
+  "typescript/tsx/comma/snippet: test.unknown",
+  "typescript/tsx/comma/snippet: unnamed",
+  "misc/filename-matters/html-doctype/snippet: #0",
   "js/babel-plugins/typescript.js",
   // Ambiguous await
   "js/top-level-await",
@@ -179,9 +193,9 @@ const IGNORE = [
   "css/atrule/if-else.css",
 
   // Depends on Prettier's test-only plugins (`tests/config/prettier-plugins/`)
+  "vue/with-plugins/",
   "misc/front-matter/with-plugins/",
   "misc/plugins/",
-  "vue/with-plugins/",
 ];
 
 /** Sections not run, by their options */
@@ -190,6 +204,8 @@ const skipSection = (options: Options) =>
   "cursorOffset" in options
   // Rejected by oxfmt's config, not supported yet
   || options.experimentalTernaries === true
+  // Deprecated alias of `bracketSameLine`, which oxfmt's config does not take
+  || "jsxBracketSameLine" in options
   // Beyond what oxfmt's config holds (a `u8`), like `printWidth: Infinity` in `parseSection()`
   || (typeof options.tabWidth === "number" && options.tabWidth > 255)
   // No pragma options in oxfmt
@@ -226,6 +242,8 @@ type Row = {
 };
 
 const { filter } = parseArgs({ options: { filter: { type: "string" } } }).values;
+
+assertDownloaded(["prettier"]);
 const rowsByLanguage = new Map<Language, Map<string, Row>>();
 
 for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
@@ -249,7 +267,7 @@ for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
     const name = title.replace(/ - \{.*\}$/, "");
     const path = `${dir}/${name}`;
     if (IGNORE.some((ignore) => path.startsWith(ignore))) continue;
-    if (filter && !path.includes(filter)) continue;
+    if (filter && !(PRETTIER_SUITE + path).includes(filter)) continue;
 
     const { parsers, options, expected } = section;
     const input = name.startsWith("snippet: ")
@@ -274,7 +292,9 @@ for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
       const language = LANGUAGES[extname(filename)];
       const rows = rowsByLanguage.get(language) ?? new Map<string, Row>();
       rowsByLanguage.set(language, rows);
-      const row = rows.get(path) ?? {
+      // Named by its fixture path, as DIVERGENCES.md lists it
+      const fixture = PRETTIER_SUITE + path;
+      const row = rows.get(fixture) ?? {
         total: 0,
         passed: 0,
         failed: 0,
@@ -283,7 +303,7 @@ for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
         nonIdempotent: null,
         variants: new Set(),
       };
-      rows.set(path, row);
+      rows.set(fixture, row);
 
       row.total++;
       if (result.error !== undefined) {
@@ -299,7 +319,10 @@ for (const snapPath of globSync("**/__snapshots__/format.test.js.snap", {
   }
 }
 
-if (!filter) writeReport();
+if (!filter) {
+  const divergences = collectDivergences();
+  checkStaleDivergences(divergences, writeReport(divergences), { prettierSuite: true });
+}
 
 // ---
 
@@ -425,7 +448,9 @@ function printResult(
   console.log();
 }
 
-function writeReport() {
+/** Returns the rows given `listDivergences` lines, all a DIVERGENCES.md entry may list. */
+function writeReport(divergences: Divergence[]) {
+  const listable: string[] = [];
   const lines: string[] = [];
   for (const language of new Set(Object.values(LANGUAGES))) {
     const rows = rowsByLanguage.get(language);
@@ -441,19 +466,16 @@ function writeReport() {
     console.log(`[${language}] ${summary}`);
     lines.push(`## ${language}`, "", summary, "");
 
-    const failed = sorted.filter(([, row]) => row.failed > 0);
-    if (failed.length > 0) {
-      lines.push("### Failed", "");
-      lines.push("| Spec path | Failed or Passed | Match ratio |");
-      lines.push("| :-------- | :--------------: | :---------: |");
-      for (const [path, row] of failed) {
-        const marks = "💥".repeat(row.failed) + "✨".repeat(row.passed);
-        lines.push(`| ${path} | ${marks} | ${((row.ratio / row.total) * 100).toFixed(2)}% |`);
-      }
-      lines.push("");
-    }
-
-    const lists: [string, (row: Row) => string | null][] = [
+    const lists: [string, (row: Row) => string | null, withRefs?: boolean][] = [
+      [
+        "Failed",
+        (r) => {
+          if (r.failed === 0) return null;
+          const marks = "💥".repeat(r.failed) + "✨".repeat(r.passed);
+          return ` (${marks}, ${((r.ratio / r.total) * 100).toFixed(2)}%)`;
+        },
+        true,
+      ],
       [
         "Not idempotent",
         (r) => (r.nonIdempotent === null ? null : r.nonIdempotent ? " (second pass errored)" : ""),
@@ -462,14 +484,19 @@ function writeReport() {
         "Input variants differ",
         (r) => (r.variants.size > 0 ? ` (${[...r.variants].join(", ")})` : null),
       ],
-      ["Error", (r) => (r.error === null ? null : `: ${r.error}`)],
+      ["Error", (r) => (r.error === null ? null : `: ${r.error}`), true],
     ];
-    for (const [heading, note] of lists) {
-      const entries = sorted.flatMap(([path, row]) => {
+    for (const [heading, note, withRefs] of lists) {
+      const items = sorted.flatMap(([path, row]): [string, string][] => {
         const text = note(row);
-        return text === null ? [] : [`- ${path}${text}`];
+        return text === null ? [] : [[path, `- ${path}${text}`]];
       });
-      if (entries.length > 0) lines.push(`### ${heading}`, "", ...entries, "");
+      if (items.length === 0) continue;
+      if (withRefs) listable.push(...items.map(([path]) => path));
+      const entries = withRefs
+        ? listDivergences(divergences, items)
+        : items.map(([, line]) => line);
+      lines.push(`### ${heading}`, "", ...entries, "");
     }
   }
 
@@ -477,4 +504,5 @@ function writeReport() {
   const outPath = join(SNAPSHOTS_DIR, "prettier.snap.md");
   writeFileSync(outPath, lines.join("\n"));
   console.log(`Report written to ${relative(process.cwd(), outPath)}`);
+  return listable;
 }

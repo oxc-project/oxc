@@ -29,8 +29,9 @@ which changes what `pre` renders and what `textarea` submits.
 
 - Why: uniform-rule (same construct, same output: the doctype of a `.html` file, which Prettier lowercases)
 - Pin: `tests/fixtures/vue/doctype-case.vue`
-- Conformance: `misc/filename-matters/html-doctype/snippet: #0`
-- Oxfmt: `externals/mdn-learn/css_layout/multiple-column_layout/index.md`, `externals/mdn-learn/css_layout/positioning/index.md`
+- Conformance:
+  - `externals/mdn-learn/css_layout/multiple-column_layout/index.md`
+  - `externals/mdn-learn/css_layout/positioning/index.md`
 
 ```vue
 <!-- input -->
@@ -213,7 +214,8 @@ Prettier prints `class` and `srcset` in its embed step, which `off` skips togeth
 
 - Why: semantics (whitespace added on both sides of a `script` renders between its inline neighbors)
 - Pin: `tests/fixtures/html/script-display-none.html`
-- Conformance: `html/tags/tags.html`
+- Conformance:
+  - `externals/prettier/html/tags/tags.html`
 
 ```html
 <!-- input -->
@@ -331,7 +333,8 @@ Prettier lays the content out as blocks, adding and removing whitespace that ren
 
 - Why: semantics (whitespace added on both sides of a `dialog` renders between its inline neighbors)
 - Pin: `tests/fixtures/html/dialog-out-of-flow.html`
-- Conformance: `html/tags/tags2.html`
+- Conformance:
+  - `externals/prettier/html/tags/tags2.html`
 
 ```html
 <!-- input -->
@@ -489,7 +492,9 @@ An email template pads its preview text this way, NBSP alternating with zero-wid
 
 - Why: semantics (an end tag added where a fragment ends changes the page it is joined into; prettier/prettier#17761, prettier/prettier#5665)
 - Pin: `tests/fixtures/html/omitted-end-tag-at-eof.html`
-- Conformance: `html/basics/broken-html.html`, `html/prettier_ignore/unclosed2.html`
+- Conformance:
+  - `externals/prettier/html/basics/broken-html.html`
+  - `externals/prettier/html/prettier_ignore/unclosed2.html`
 
 ```html
 <!-- input (header.html, closed by footer.html) -->
@@ -650,7 +655,8 @@ Fixed in Prettier `main` by prettier/prettier#19709 and prettier/prettier#19707,
 
 - Why: uniform-rule (same construct, same output: `<html:p>` and every other prefixed name, which Prettier lays out as an unknown element)
 - Pin: `tests/fixtures/html/prefixed-script-style.html`
-- Conformance: `html/basics/with-colon.html`
+- Conformance:
+  - `externals/prettier/html/basics/with-colon.html`
 
 ```html
 <!-- input -->
@@ -680,7 +686,9 @@ Angular's compiler reads a prefix as a namespace (`svg:rect`), and so does the A
 
 - Why: semantics (Prettier ends an unquoted value at `/`: `src=a.png/` becomes `src="a.png"`, another URL)
 - Pin: `tests/fixtures/html/unquoted-value-with-slash.html`
-- Oxfmt: `externals/mdn-learn/structuring_content/basic_html_syntax/index.md`, `externals/vite/html/valid.html`
+- Conformance:
+  - `externals/mdn-learn/structuring_content/basic_html_syntax/index.md`
+  - `externals/vite/html/valid.html`
 
 ```html
 <!-- input -->

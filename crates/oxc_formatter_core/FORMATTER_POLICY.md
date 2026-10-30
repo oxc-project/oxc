@@ -64,21 +64,20 @@ Rules:
   - The owning layer decides the behavior: a language crate for single-language behavior, `apps/oxfmt` for embedding
     - A behavior core decides for every language (see "Text width") is a rule in this document;
       each language crate where it shows has its own entry and pin fixture, citing that section
-  - The pin fixture is minimal and lives in the owning layer, distilled from whatever exposed the divergence; a conformance file is never the pin fixture, it stays a regression net
+  - The pin fixture is minimal and lives in the owning layer, distilled from whatever exposed the divergence; a file of an external suite (`conformance/fixtures/externals/`) is never the pin fixture, it stays a regression net
   - The entry's `Pin:` names the fixture, which needs no link back; the why and the deviating lines live in the entry
 - `DIVERGENCES.md#<slug>` is the one form for referring to an entry (docs, source, fixtures); never a quoted or bare slug, never an upstream issue alone
 - Entry format, with OUR behavior as the spec
   - H2 slug: the stable anchor
   - `Why:` required; the reason keyword, its parenthetical, then upstream issues as bare references: `uniform-rule (same construct, same output: X; prettier/prettier#NNNN)`
   - `Pin:` required; the fixture path
-  - `Conformance:` optional; the failing files in Prettier's suite (`apps/oxfmt`'s `conformance:prettier`)
-  - `Oxfmt:` optional, language crates only; the oxfmt externals failing on the entry
+  - `Conformance:` optional; the files failing `apps/oxfmt`'s conformance on the entry, one per sub-item (a note may follow it), as paths under `apps/oxfmt/conformance/fixtures/`; a path ending in `*` covers every path it starts with (e.g. a group of snippets)
   - `Drop when:` optional; only for a condition more specific than the pin-bump default
   - Body: an input/ours/prettier code example
   - No status, dates, or authors: listed = accepted, condition met = delete (git holds history)
 - Lifecycle
   - A new conformance failure is acceptable only under this policy; it stays counted as a failure
-  - A failing file no entry lists is unclassified; the crate's `AGENTS.md` conformance section holds only those
+  - A failing file no entry lists is unclassified
   - At a pin bump (`apps/oxfmt/package.json`, then `download-fixtures`), re-run conformance: an entry no longer observed is deleted, the rest are re-checked against their reason
 - A documented divergence is never "fixed" by following Prettier
 - `DIVERGENCES.md` holds entries only, opening with one back-reference to this section; `AGENTS.md` keeps policy translations and mechanism prose
@@ -155,7 +154,7 @@ node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <parser> --print
 
 NOTE: Prettier's default `printWidth` is `80`, but Oxfmt is `100`.
 
-Fixture tests and Prettier conformance re-format every output and record idempotency violations in their snapshots/reports.
+Fixture tests and `conformance:prettier` re-format every output and record idempotency violations in their snapshots/reports.
 Fixture tests also assert the lossless contract through `FixtureFormatter::fingerprint` (`oxc_formatter_tests`): a loss fails the test instead of being pinned.
 
 ### Fixture tests

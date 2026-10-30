@@ -3,7 +3,8 @@
 //! (a divergence needs its own pin; the big conformance file is only a regression net).
 //!
 //! Expected outputs were verified against `prettier` by hand;
-//! when adding a fixture, do the same (`npx prettier@<oxfmt-bundle-version> --parser <variant>`).
+//! when adding a fixture, do the same with the oxfmt-bundled one
+//! (`node apps/oxfmt/node_modules/prettier/bin/prettier.cjs --parser <variant>`, see `FORMATTER_POLICY.md` "Verification").
 
 use std::path::Path;
 

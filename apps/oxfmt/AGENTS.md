@@ -81,21 +81,14 @@ Known divergences live in DIVERGENCES.md (embedding / dispatch layer only); sing
 - The pin is a minimal repro in `conformance/fixtures/edge-cases/`
 - `conformance/run_prettier.ts` compares Prettier's own test suite with its committed jest snapshots, so Prettier never runs
   - Its `PARSERS` table maps a Prettier parser to the filename oxfmt routes to that language, parsers not listed are not run
-  - Each input runs under its spec's own options only
+  - Each input runs under its spec's own options only, and is also checked for idempotency and its CRLF / CR / BOM variants
 - `conformance/run_live.ts` compares with Prettier run on the spot
   - A category's `projects` (real-world repositories) are compared on Prettier's output of each file, the code a Prettier user hands over,
     so the divergences that keep what was written do not fire in bulk; its `fixtures` stay as written, raw shapes are their job
-- `conformance/run_live.ts` derives the file-to-entry map from every backticked `externals/` / `edge-cases/` path in every `DIVERGENCES.md`, prints the ref next to each failure,
-  and warns on a failure no entry lists (unclassified) and on a listed file that passes (stale)
+- Both runners name a file as its report prints it (its path under `conformance/fixtures/`, `<dir>/snippet: <title>` for a snippet), as `DIVERGENCES.md` lists it in `Pin:` / `Conformance:` lines (`conformance/shared.ts`), and fail on a listed path that passes (stale)
+  - Both reports list the entries under each failing file, `❓unclassified` when none does (those files first); `run_live.ts` also warns on an unclassified one
 - All current entries are embedding-layer decisions that outlive the Prettier delegation;
   if an entry about the Prettier-fallback boundary itself is ever added, group it under a separate heading in DIVERGENCES.md so the removal scope stays obvious when the fallback goes away
-
-Conformance failures (`conformance/snapshots/`) no entry accounts for, to fix rather than admit:
-
-- `jsdoc`: `externals/svelte/compiler/print/index.js`
-  - `if (!(a && b))` hugs `!(` to the head paren since prettier/prettier#18401, not ported yet (Prettier conformance `js/if/condition-break/unary-expression.js`; unrelated to JSDoc)
-- `astro`: `externals/plugin-astro/other/prettier-ignore-js/input.astro`
-  - A `// prettier-ignore`d expression statement without `;` gets `;` appended (`oxc_formatter` itself, reproducible in plain `.ts`; unrelated to Astro)
 
 ### Embedded language formatting
 
@@ -115,7 +108,7 @@ The pure Rust build runs fallback-less, so non-native embeds (angular-in-js, cus
 The roots install `SessionServices`, all via `embed/services.rs::for_root` (one definition per build; the napi one takes the `ExternalServices` transport, and adds the Prettier fallback / string embedder / Tailwind sorter to the registry dispatcher): the JS/TS, CSS, Markdown and HTML file roots (`core/format.rs`, `PhysicalFile` sessions, both builds) and the Vue/Svelte/Astro `<script>` and Astro frontmatter root (`api/text_to_doc_api.rs`, `VirtualDocument` session, napi only).
 
 Which languages may dispatch AT ALL from a given host is the host crate's own gate (e.g. `oxc_formatter_css` dispatches only `yaml`/`toml` front matter, `oxc_formatter_markdown` every fenced code block's language); the shared `route_embedded()` table then decides who serves the language.
-Adding a dispatch call to a host crate is therefore a routing decision (check `route_embedded()` and the embedded conformance when doing so. A root needing a bespoke service set would assemble the `SessionServices` struct literally), none does today.
+Adding a dispatch call to a host crate is therefore a routing decision (check `route_embedded()` and the xxx-in-yyy categories of `conformance:live` when doing so. A root needing a bespoke service set would assemble the `SessionServices` struct literally), none does today.
 `embeddedLanguageFormatting: off` installs no dispatcher, every builder consults the same off-gate, `ResolvedDispatchConfig::is_embedded_formatting_enabled`.
 Tracing span namespaces: `oxfmt::embed::` = pure Rust work, `oxfmt::external::` = napi-crossing calls.
 
