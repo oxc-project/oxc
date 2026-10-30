@@ -161,7 +161,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                         }
                         Tristate::False
                     }
-                    // If we have "(a," or "(a=" or "(a)" this *could* be an arrow function
+                    // A single identifier needs no speculative parameter parse. Keep `await`,
+                    // `yield`, and `this` on the existing contextual/error-recovery paths.
+                    // A TS return type can still be ambiguous with a conditional's colon.
+                    Kind::RParen if second.is_identifier() => {
+                        match self.lexer.next_token().kind() {
+                            Kind::Arrow => Tristate::True,
+                            Kind::Colon if self.is_ts => Tristate::Maybe,
+                            _ => Tristate::False,
+                        }
+                    }
+                    // If we have "(a," or "(a=" or a context-sensitive keyword in "(a)",
+                    // this *could* be an arrow function.
                     Kind::Comma | Kind::Eq | Kind::RParen => Tristate::Maybe,
                     // It is definitely not an arrow function
                     _ => Tristate::False,
