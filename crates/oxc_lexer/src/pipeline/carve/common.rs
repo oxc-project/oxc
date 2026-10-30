@@ -3,7 +3,7 @@ use crate::{error::DiagCode, token::tk};
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_get, bm_next0},
     bytes::hex_val,
-    cpu::Cpu,
+    cpu::{Cpu, apply, cpu_versions},
     disambiguate::not_operator_position,
     find::find,
     lanes::Lanes,
@@ -192,8 +192,14 @@ pub(super) unsafe fn skip_unicode_brace_escape(src: *const u8, n: usize, s: usiz
 /// (U+2028/U+2029). Stops at LS/PS too, so the hashbang scan cannot run
 /// through one. A 0xE2 that isn't LS/PS keeps scanning; the 2-byte confirm
 /// past a trailing 0xE2 reads the pad, which can never match 0x80.
+#[apply(cpu_versions)]
 #[inline]
-pub(super) unsafe fn find_line_terminator(src: *const u8, n: usize, mut i: usize) -> usize {
+pub(super) unsafe fn find_line_terminator(
+    src: *const u8,
+    n: usize,
+    mut i: usize,
+    _cpu: impl Cpu,
+) -> usize {
     loop {
         let p = find(src, n, i, [b'\n', b'\r', 0xE2]);
         if p >= n {

@@ -33,7 +33,7 @@ pub(super) unsafe fn carve_js(
     let mut depth: Vec<u32> = Vec::with_capacity(64);
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
-        let end = find_line_terminator(src, n, 2);
+        let end = find_line_terminator(src, n, 2, cpu);
         *kind = tk!(Hashbang);
         bm_clear_range(st, 1, end - 1);
         if end < n {

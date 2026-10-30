@@ -142,7 +142,7 @@ pub(super) unsafe fn lex_html_open_comment(
     if lanes.module {
         lanes.push_diag(s as u32, 4, DiagCode::HtmlCommentInModule);
     }
-    let end = find_line_terminator(src, n, s + 4);
+    let end = find_line_terminator(src, n, s + 4, cpu);
     *kind.add(s) = tk!(LineComment);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
@@ -193,7 +193,7 @@ pub(super) unsafe fn lex_html_close_comment(
     let cpu = BASELINE;
 
     let start = s - 2;
-    let end = find_line_terminator(src, n, s + 1);
+    let end = find_line_terminator(src, n, s + 1, cpu);
     *kind.add(start) = tk!(LineComment);
     bm_set(st, start);
     if end > start + 1 {

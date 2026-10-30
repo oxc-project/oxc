@@ -78,7 +78,7 @@ pub(super) unsafe fn jsx_skip_trivia(
     src: *const u8,
     n: usize,
     mut i: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> usize {
     loop {
         if i >= n {
@@ -100,7 +100,7 @@ pub(super) unsafe fn jsx_skip_trivia(
                     continue;
                 }
                 b'/' => {
-                    i = find_line_terminator(src, n, i + 2);
+                    i = find_line_terminator(src, n, i + 2, cpu);
                     continue;
                 }
                 _ => {}
