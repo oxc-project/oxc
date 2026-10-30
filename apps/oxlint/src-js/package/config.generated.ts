@@ -5139,6 +5139,11 @@ export interface HookUseStateConfig {
    * When true the rule will ignore the name of the destructured value.
    */
   allowDestructuredState?: boolean;
+  /**
+   * When true the rule will allow a `useState` call destructured into a
+   * value only, without a setter, such as `const [value] = useState(init)`.
+   */
+  allowMissingSetter?: boolean;
 }
 export interface JsxBooleanValueOptions {
   /**

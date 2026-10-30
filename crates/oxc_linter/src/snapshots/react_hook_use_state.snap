@@ -55,3 +55,30 @@ source: crates/oxc_linter/src/tester.rs
  5 │                 return [res, {}];
    ╰────
   help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export default function useEventBus() {
+ 4 │                 const [eventBus] = React.useState(() => new EventEmitter());
+   ·                       ──────────
+ 5 │                 return eventBus;
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call is not destructured into value + setter pair
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export default function useReq() {
+ 4 │                 const [{ res, error }] = React.useState({ res: '', error: '' });
+   ·                       ────────────────
+ 5 │                 return { res, error };
+   ╰────
+  help: Destructure useState call into value + setter pair follow the [thing, setThing] naming convention
+
+  ⚠ react(hook-use-state): useState call does not follow the [thing, setThing] naming convention
+   ╭─[hook_use_state.tsx:4:23]
+ 3 │             export default function useEventBus() {
+ 4 │                 const [eventBus, setBus] = React.useState(() => new EventEmitter());
+   ·                       ──────────────────
+ 5 │                 return [eventBus, setBus];
+   ╰────
+  help: Follow the [thing, setThing] naming convention
