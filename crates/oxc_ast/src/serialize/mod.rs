@@ -44,7 +44,8 @@ impl Program<'_> {
     /// Serialize AST to ESTree JSON.
     pub fn to_estree_json(&self, include_ts_fields: bool, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let mut serializer = CompactSerializer::with_capacity(capacity, include_ts_fields, ranges);
+        let mut serializer = CompactSerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_source_text(self.source_text);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
@@ -52,7 +53,8 @@ impl Program<'_> {
     /// Serialize AST to pretty-printed ESTree JSON.
     pub fn to_pretty_estree_json(&self, include_ts_fields: bool, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
-        let mut serializer = PrettySerializer::with_capacity(capacity, include_ts_fields, ranges);
+        let mut serializer = PrettySerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_source_text(self.source_text);
         self.serialize(&mut serializer);
         serializer.into_string()
     }
@@ -60,7 +62,8 @@ impl Program<'_> {
     /// Serialize AST to ESTree JSON, with list of fixes.
     pub fn to_estree_json_with_fixes(&self, include_ts_fields: bool, ranges: bool) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_COMPACT;
-        let serializer = CompactFixesSerializer::with_capacity(capacity, include_ts_fields, ranges);
+        let serializer = CompactFixesSerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_source_text(self.source_text);
         serializer.serialize_with_fixes(self)
     }
 
@@ -71,7 +74,8 @@ impl Program<'_> {
         ranges: bool,
     ) -> String {
         let capacity = self.source_text.len() * JSON_CAPACITY_RATIO_PRETTY;
-        let serializer = PrettyFixesSerializer::with_capacity(capacity, include_ts_fields, ranges);
+        let serializer = PrettyFixesSerializer::with_capacity(capacity, include_ts_fields, ranges)
+            .with_source_text(self.source_text);
         serializer.serialize_with_fixes(self)
     }
 }
