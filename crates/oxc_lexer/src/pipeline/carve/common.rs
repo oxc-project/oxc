@@ -123,6 +123,7 @@ pub(super) unsafe fn lex_slash(
         ),
         &mut lanes.disambiguate.walks,
         s,
+        cpu,
     ) {
         lex_regex(src, srcs, n, st, kind, word, s, lanes, cpu)
     } else if s + 1 < n && *src.add(s + 1) == b'=' {
