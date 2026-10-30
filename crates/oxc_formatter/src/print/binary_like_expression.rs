@@ -378,7 +378,7 @@ fn format_flattened_logical_expression<'a>(
     }
 
     // Format the left terminal
-    write!(f, [group(&current.left())]);
+    write_left_terminal(current, f);
 
     // Format the right sides with operator, from the innermost one back up `depth` levels to `binary`
     BinaryLeftOrRightSide::Right { parent: current, inside_condition }.fmt(f);
@@ -395,7 +395,7 @@ fn format_flattened_logical_expression<'a>(
 impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self {
-            Self::Left { parent } => write!(f, group(&parent.left())),
+            Self::Left { parent } => write_left_terminal(*parent, f),
             Self::Right {
                 parent: binary_like_expression,
                 inside_condition: inside_parenthesis,
@@ -553,6 +553,43 @@ impl<'a> Format<'a, JsFormatContext<'a>> for BinaryLeftOrRightSide<'a, '_> {
             }
         }
     }
+}
+
+/// Writes the leftmost operand of a flattened chain, grouped like Prettier (`group(print("left"))`),
+/// unless the group is a no-op:
+/// an inert operand (see [`is_inert_operand`]) with no comment to print inside it.
+fn write_left_terminal<'a>(binary: BinaryLikeExpression<'a, '_>, f: &mut JsFormatter<'_, 'a>) {
+    let left = binary.left();
+    if is_inert_operand(&left, f) && !f.comments().has_comment_before(binary.span().end) {
+        write!(f, left);
+    } else {
+        write!(f, group(&left));
+    }
+}
+
+/// Whether `expression` prints as tokens and texts only (no line break, no group),
+/// provided that no comment is printed inside it.
+fn is_inert_operand(expression: &Expression<'_>, f: &JsFormatter<'_, '_>) -> bool {
+    let is_inert = match expression {
+        Expression::Identifier(_)
+        | Expression::ThisExpression(_)
+        | Expression::BooleanLiteral(_)
+        | Expression::NullLiteral(_)
+        | Expression::NumericLiteral(_)
+        | Expression::BigIntLiteral(_)
+        | Expression::StringLiteral(_)
+        | Expression::RegExpLiteral(_) => true,
+        // `!a`, `-1`, `typeof a`: without comments, the operator only prefixes the argument
+        Expression::UnaryExpression(unary) => is_inert_operand(&unary.argument, f),
+        // A single word object never breaks from its property (see `member_expression.rs`)
+        Expression::StaticMemberExpression(member) => {
+            matches!(member.object, Expression::Identifier(_) | Expression::ThisExpression(_))
+                && !is_cast_target(member.object.span(), f)
+        }
+        _ => false,
+    };
+    // A cast target is wrapped in a breakable group of parentheses
+    is_inert && !is_cast_target(expression.span(), f)
 }
 
 impl BinaryLeftOrRightSide<'_, '_> {

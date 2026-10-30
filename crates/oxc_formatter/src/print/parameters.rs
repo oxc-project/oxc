@@ -108,6 +108,12 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameters<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameter<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // With no comment left to print before the parameter's end, its inner nodes print none,
+        // so an identifier with an inert type (if any) writes no line, and the groups around it are no-ops.
+        let is_inert_left = self.pattern.is_binding_identifier()
+            && self.type_annotation.as_ref().is_none_or(|ann| is_inert_type(&ann.type_annotation))
+            && !f.comments().has_comment_before(self.span.end);
+
         let content = format_with(|f| {
             let left = format_with(|f| {
                 if let Some(accessibility) = self.accessibility() {
@@ -130,12 +136,17 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameter<'a>> {
                     }
                     write!(f, type_ann);
                 }
-            })
-            .memoized();
+            });
 
             if let Some(initializer) = self.initializer() {
+                if is_inert_left {
+                    write!(f, [left, space(), "=", space(), initializer]);
+                    return;
+                }
+
                 // Format `left` early before writing leading comments, so that comments
                 // inside `left` are not treated as leading comments of `= right`
+                let left = left.memoized();
                 left.inspect(f);
 
                 let leading_comments =
@@ -158,7 +169,9 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameter<'a>> {
 
         let decorators = self.decorators();
 
-        if is_hug_parameter && decorators.is_empty() {
+        if (is_hug_parameter || (is_inert_left && self.initializer.is_none()))
+            && decorators.is_empty()
+        {
             write!(f, [&content]);
         } else if decorators.is_empty() {
             write!(f, [group(&content)]);
@@ -457,6 +470,30 @@ fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: 
     parameter.pattern.is_binding_identifier()
         && parameter.initializer.is_none()
         && (allow_type_annotations || parameter.type_annotation.is_none())
+}
+
+/// Whether `ty` prints as tokens and texts only (no line break, no group), whatever the print width.
+/// Assumes no comment is printed inside it.
+fn is_inert_type(ty: &TSType<'_>) -> bool {
+    match ty {
+        TSType::TSAnyKeyword(_)
+        | TSType::TSBigIntKeyword(_)
+        | TSType::TSBooleanKeyword(_)
+        | TSType::TSIntrinsicKeyword(_)
+        | TSType::TSNeverKeyword(_)
+        | TSType::TSNullKeyword(_)
+        | TSType::TSNumberKeyword(_)
+        | TSType::TSObjectKeyword(_)
+        | TSType::TSStringKeyword(_)
+        | TSType::TSSymbolKeyword(_)
+        | TSType::TSUndefinedKeyword(_)
+        | TSType::TSUnknownKeyword(_)
+        | TSType::TSVoidKeyword(_)
+        | TSType::TSThisType(_) => true,
+        TSType::TSTypeReference(reference) => reference.type_arguments.is_none(),
+        TSType::TSArrayType(array) => is_inert_type(&array.element_type),
+        _ => false,
+    }
 }
 
 /// Checks if an expression allows parameter hugging.
