@@ -1,0 +1,147 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-shadow): 'value' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:15]
+ 1 │ declare const value: number;
+   ·               ──┬──
+   ·                 ╰── shadowed declaration is here
+ 2 │ declare namespace Example { const value: string; }
+   ·                                   ──┬──
+   ·                                     ╰── 'value' is declared here
+   ╰────
+  help: Consider renaming 'value' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'value' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:15]
+ 1 │ declare const value: number;
+   ·               ──┬──
+   ·                 ╰── shadowed declaration is here
+ 2 │ declare module 'example' { export const value: boolean; }
+   ·                                         ──┬──
+   ·                                           ╰── 'value' is declared here
+   ╰────
+  help: Consider renaming 'value' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'value' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:15]
+ 1 │ declare const value: number;
+   ·               ──┬──
+   ·                 ╰── shadowed declaration is here
+ 2 │ declare namespace A { namespace B { const value: string; } }
+   ·                                           ──┬──
+   ·                                             ╰── 'value' is declared here
+   ╰────
+  help: Consider renaming 'value' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'value' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:22]
+ 1 │ export declare const value: number;
+   ·                      ──┬──
+   ·                        ╰── shadowed declaration is here
+ 2 │ export declare namespace Example { const value: string; }
+   ·                                          ──┬──
+   ·                                            ╰── 'value' is declared here
+   ╰────
+  help: Consider renaming 'value' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'value' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:15]
+ 1 │ declare const value: number;
+   ·               ──┬──
+   ·                 ╰── shadowed declaration is here
+ 2 │ declare namespace Example { export const value: string; }
+   ·                                          ──┬──
+   ·                                            ╰── 'value' is declared here
+   ╰────
+  help: Consider renaming 'value' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:15]
+ 1 │ declare const Foo: number;
+   ·               ─┬─
+   ·                ╰── shadowed declaration is here
+ 2 │ declare namespace Example { class Foo {} }
+   ·                                   ─┬─
+   ·                                    ╰── 'Foo' is declared here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:15]
+ 1 │ declare const Foo: number;
+   ·               ─┬─
+   ·                ╰── shadowed declaration is here
+ 2 │ declare namespace Example { enum Foo {} }
+   ·                                  ─┬─
+   ·                                   ╰── 'Foo' is declared here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:19]
+ 1 │ declare interface Foo {}
+   ·                   ─┬─
+   ·                    ╰── shadowed declaration is here
+ 2 │ declare namespace Example { interface Foo {} }
+   ·                                       ─┬─
+   ·                                        ╰── 'Foo' is declared here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'Foo' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:14]
+ 1 │ declare type Foo = 1;
+   ·              ─┬─
+   ·               ╰── shadowed declaration is here
+ 2 │ declare namespace Example { type Foo = 2; }
+   ·                                  ─┬─
+   ·                                   ╰── 'Foo' is declared here
+   ╰────
+  help: Consider renaming 'Foo' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:14]
+ 1 │ declare type T = 1;
+   ·              ┬
+   ·              ╰── shadowed declaration is here
+ 2 │ declare interface I<T> { x: T }
+   ·                     ┬
+   ·                     ╰── 'T' is declared here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:14]
+ 1 │ declare type T = 1;
+   ·              ┬
+   ·              ╰── shadowed declaration is here
+ 2 │ declare class C<T> { x: T }
+   ·                 ┬
+   ·                 ╰── 'T' is declared here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'A' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:15]
+ 1 │ declare const A: number;
+   ·               ┬
+   ·               ╰── shadowed declaration is here
+ 2 │ declare enum E { A }
+   ·                  ┬
+   ·                  ╰── 'A' is declared here
+   ╰────
+  help: Consider renaming 'A' to avoid shadowing the variable from the outer scope.
+  note: Enum members are added to the enum scope, so references to 'A' in enum member initializers resolve to this member instead of the declaration in the upper scope.
+
+  ⚠ eslint(no-shadow): 'value' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:15]
+ 1 │ declare const value: number;
+   ·               ──┬──
+   ·                 ╰── shadowed declaration is here
+ 2 │ declare namespace Example { const value: string; }
+   ·                                   ──┬──
+   ·                                     ╰── 'value' is declared here
+   ╰────
+  help: Consider renaming 'value' to avoid shadowing the variable from the outer scope.
