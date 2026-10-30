@@ -363,6 +363,50 @@ mod tests {
     }
 
     #[test]
+    fn rendering_does_not_request_full_line_index() {
+        struct Source;
+
+        impl crate::SourceCode for Source {
+            fn data(&self) -> &[u8] {
+                b"first();\nsecond();\nthird();\n"
+            }
+
+            fn line_starts(&self) -> Option<&[u32]> {
+                panic!("graphical rendering builds its own incremental index")
+            }
+        }
+
+        let source = Arc::new(Source);
+        let diagnostics: Vec<Error> = vec![
+            OxcDiagnostic::warn("first")
+                .with_label(Span::new(0, 5))
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::warn("third")
+                .with_label(Span::new(19, 24))
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::warn("unlabelled").with_source_code(source),
+        ];
+        let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none()).with_links(false);
+        let mut expected = String::new();
+        for diagnostic in &diagnostics {
+            handler.render_report(&mut expected, diagnostic.as_ref()).unwrap();
+        }
+        let reports =
+            || diagnostics.iter().map(|diagnostic| diagnostic.as_ref() as &dyn Diagnostic);
+        let mut actual = String::new();
+        handler.render_reports(&mut actual, reports()).unwrap();
+        assert_eq!(actual, expected);
+        actual.clear();
+        handler
+            .render_reports_until(reports(), &mut |_, rendered| {
+                actual.push_str(rendered);
+                true
+            })
+            .unwrap();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
     #[cfg_attr(
         miri,
         ignore = "exhaustive equivalence check over safe text wrapping code; interpreting every \

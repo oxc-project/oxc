@@ -803,6 +803,64 @@ impl<T: ?Sized + SourceCode> SourceCode for Arc<T> {
     fn line_starts(&self) -> Option<&[u32]> {
         self.as_ref().line_starts()
     }
+
+    fn cached_line_starts(&self) -> Option<&[u32]> {
+        self.as_ref().cached_line_starts()
+    }
+}
+
+/// Resolve zero-context span locations without retaining the starts of unqueried lines.
+/// Queries are scanned in source order and returned in their original order.
+pub fn span_locations(
+    input: &[u8],
+    line_starts: Option<&[u32]>,
+    spans: impl Iterator<Item = Span>,
+) -> smallvec::SmallVec<[Option<(usize, usize)>; 2]> {
+    let mut spans: smallvec::SmallVec<[(usize, Span); 2]> = spans.enumerate().collect();
+    let mut locations = smallvec::smallvec![None; spans.len()];
+    if u32::try_from(input.len()).is_err() {
+        for (index, span) in spans {
+            locations[index] =
+                SpanReader::new(input, SpanRequest::new(span), ContextLines::new(0, 0))
+                    .read()
+                    .map(|contents| (contents.line(), contents.column()));
+        }
+        return locations;
+    }
+    if line_starts.is_none() {
+        spans.sort_unstable_by_key(|&(_, span)| span.start);
+    }
+    let mut scanned = 0;
+    let mut line = 0;
+    let mut line_start = 0;
+    for (index, span) in spans {
+        let request = SpanRequest::new(span);
+        // Match SpanReader's acceptance, including its one-byte tolerance at the span end.
+        if request.offset > input.len() || request.end_threshold() > input.len() {
+            continue;
+        }
+        let mut offset = request.offset;
+        if offset > 0
+            && offset < input.len()
+            && input[offset - 1] == b'\r'
+            && input[offset] == b'\n'
+        {
+            offset -= 1;
+        }
+        if let Some(starts) = line_starts {
+            line = starts.partition_point(|&start| start as usize <= offset) - 1;
+            line_start = starts[line] as usize;
+        } else {
+            let gap = PrefixScan::new(&input[scanned..], offset - scanned, 0);
+            line += gap.line_count;
+            if gap.line_count > 0 {
+                line_start = scanned + gap.current_line_start;
+            }
+            scanned = offset;
+        }
+        locations[index] = Some((line, offset - line_start));
+    }
+    locations
 }
 
 /// Byte offsets at which each line of `input` starts, with CRLF counted as one line break.
@@ -1156,6 +1214,33 @@ mod scanner_tests {
                     .take(6)
                     .collect();
 
+                    if before == 0 && after == 0 {
+                        let requests: Vec<_> = spans
+                            .iter()
+                            .map(|&(offset, len)| Span::sized(offset as u32, len as u32))
+                            .collect();
+                        let expected: Vec<_> = requests
+                            .iter()
+                            .map(|&span| {
+                                SpanReader::new(
+                                    input,
+                                    SpanRequest::new(span),
+                                    ContextLines::new(0, 0),
+                                )
+                                .read()
+                                .map(|contents| (contents.line(), contents.column()))
+                            })
+                            .collect();
+                        let starts = line_starts(input).unwrap();
+                        for cached in [None, Some(starts.as_ref())] {
+                            assert_eq!(
+                                span_locations(input, cached, requests.iter().copied()).as_slice(),
+                                expected,
+                                "input={input:?}, spans={spans:?}"
+                            );
+                        }
+                    }
+
                     // Random order: queries may jump backwards past the
                     // index origin.
                     let mut scanner = SpanScanner::new(input, before, after);
@@ -1180,6 +1265,35 @@ mod scanner_tests {
             }
         }
         assert!(checked > 100_000, "expected a broad sweep, only checked {checked}");
+    }
+
+    #[test]
+    fn sparse_locations_match_span_reader() {
+        for input in [b"".as_slice(), b"a", b"\r\n", b"a\r\nb\rc\n\n", "é\r\n🦀\nend".as_bytes()]
+        {
+            let starts = line_starts(input).unwrap();
+            let spans: Vec<_> = (0..input.len() + 4)
+                .rev()
+                .flat_map(|start| {
+                    (0..input.len() + 4).map(move |len| Span::sized(start as u32, len as u32))
+                })
+                .collect();
+            let expected: Vec<_> = spans
+                .iter()
+                .map(|&span| {
+                    SpanReader::new(input, SpanRequest::new(span), ContextLines::new(0, 0))
+                        .read()
+                        .map(|contents| (contents.line(), contents.column()))
+                })
+                .collect();
+            for cached in [None, Some(starts.as_ref())] {
+                assert_eq!(
+                    span_locations(input, cached, spans.iter().copied()).as_slice(),
+                    expected,
+                    "input={input:?}, cached={cached:?}"
+                );
+            }
+        }
     }
 
     /// The empty-source and just-past-EOF edge cases `SpanReader` special

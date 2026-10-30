@@ -139,12 +139,7 @@ impl JsonReporter {
 fn format_json(diagnostics: &mut Vec<Error>) -> String {
     let handler = JSONReportHandler::new();
     let mut output = String::from("[");
-    for (index, error) in diagnostics.drain(..).enumerate() {
-        if index > 0 {
-            output.push_str(",\n");
-        }
-        handler.render_report(&mut output, error.as_ref()).unwrap();
-    }
+    handler.render_reports(&mut output, diagnostics).unwrap();
     output.push(']');
     output
 }
