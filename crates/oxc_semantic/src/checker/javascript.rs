@@ -83,11 +83,22 @@ pub fn check_import_value_redeclarations(ctx: &SemanticBuilder<'_>) {
 
 pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
     let classes = &ctx.class_table_builder.classes;
+    let is_typescript = ctx.source_type.is_typescript();
     classes.iter_enumerated().for_each(|(class_id, _)| {
         let elements = &classes.elements[class_id];
-        let mut defined_elements =
-            FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher);
+        if elements.len() < 2 {
+            return;
+        }
+        let mut defined_elements = None;
         for (element_id, element) in elements.iter_enumerated() {
+            // JavaScript permits duplicate public names. Constructors are checked separately.
+            if !element.is_private && !is_typescript {
+                continue;
+            }
+            // All-public JavaScript classes need no duplicate-name map.
+            let defined_elements = defined_elements.get_or_insert_with(|| {
+                FxHashMap::with_capacity_and_hasher(elements.len(), FxBuildHasher)
+            });
             // Public and private names belong to separate namespaces.
             let previous =
                 defined_elements.entry((&element.name, element.is_private)).or_insert([None; 2]);
@@ -104,15 +115,13 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
             if let Some(prev_element_id) = prev_element_id {
                 let prev_element = &elements[prev_element_id];
 
-                let mut is_duplicate = element.is_private == prev_element.is_private
-                    && if element.kind.is_setter_or_getter()
-                        && prev_element.kind.is_setter_or_getter()
-                    {
-                        element.kind == prev_element.kind
-                            || element.r#static != prev_element.r#static
-                    } else {
-                        true
-                    };
+                let mut is_duplicate = if element.kind.is_setter_or_getter()
+                    && prev_element.kind.is_setter_or_getter()
+                {
+                    element.kind == prev_element.kind || element.r#static != prev_element.r#static
+                } else {
+                    true
+                };
 
                 // * It is a Syntax Error if PrivateBoundIdentifiers of ClassElementList contains any duplicate entries,
                 // unless the name is used once for a getter and once for a setter and in no other entries,
@@ -120,13 +129,9 @@ pub fn check_duplicate_class_elements(ctx: &SemanticBuilder<'_>) {
                 // For TypeScript, public elements with different static status are allowed (overloads, etc.),
                 // but private identifiers follow the same rules as JavaScript - static and instance
                 // elements cannot share the same private name.
-                is_duplicate = if element.is_private {
-                    is_duplicate
-                } else if ctx.source_type.is_typescript() {
-                    element.r#static == prev_element.r#static && is_duplicate
-                } else {
-                    false
-                };
+                if !element.is_private {
+                    is_duplicate &= element.r#static == prev_element.r#static;
+                }
 
                 if is_duplicate {
                     #[cold]
