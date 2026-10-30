@@ -9,35 +9,22 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_let(&mut self, stmt_ctx: StatementContext) -> Statement<'a> {
         let start = self.cur_start();
 
-        let peeked = self.lexer.peek_token().kind();
+        let next = self.lexer.peek_token();
+        let peeked = next.kind();
 
-        // Fast path: avoid rewind.
-        if !stmt_ctx.is_single_statement() && peeked.is_after_let() {
+        // `let [` cannot start an expression statement, even in a single-statement
+        // position. Otherwise, a declaration needs a binding after `let`.
+        if peeked == Kind::LBrack
+            || (!stmt_ctx.is_single_statement()
+                && (peeked == Kind::LCurly
+                    || peeked.is_binding_identifier()
+                    || (!next.is_on_new_line() && peeked.is_after_let())))
+        {
             self.bump_any(); // bump `let`
             return self.parse_variable_statement(start, VariableDeclarationKind::Let, stmt_ctx);
         }
 
-        // let = foo, let instanceof x, let + 1
-        if peeked.is_assignment_operator() || peeked.is_binary_operator() {
-            let expr = self.parse_assignment_expression_or_higher();
-            self.parse_expression_statement(start, expr)
-        // let.a = 1, let?.a = 1, let()[a] = 1, let++, let--
-        } else if matches!(
-            peeked,
-            Kind::Dot | Kind::QuestionDot | Kind::LParen | Kind::Plus2 | Kind::Minus2
-        ) {
-            let expr = self.parse_expr();
-            self.parse_expression_statement(start, expr)
-        // single statement let declaration: while (0) let
-        } else if (stmt_ctx.is_single_statement() && peeked != Kind::LBrack)
-            || peeked == Kind::Semicolon
-        {
-            let expr = self.parse_identifier_expression();
-            self.parse_expression_statement(start, expr)
-        } else {
-            self.bump_any();
-            self.parse_variable_statement(start, VariableDeclarationKind::Let, stmt_ctx)
-        }
+        self.parse_expression_or_labeled_statement()
     }
 
     pub(crate) fn is_using_statement(&mut self) -> bool {

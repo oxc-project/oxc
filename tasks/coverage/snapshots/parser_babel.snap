@@ -1,8 +1,8 @@
 commit: b835f0c6
 
 parser_babel Summary:
-AST Parsed     : 2292/2304 (99.48%)
-Positive Passed: 2271/2304 (98.57%)
+AST Parsed     : 2304/2304 (100.00%)
+Positive Passed: 2283/2304 (99.09%)
 Negative Passed: 1828/1843 (99.19%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
@@ -34,15 +34,6 @@ Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/ty
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/module-namespace/module-identifier-invalid/input.ts
 
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-keyword/input.js
-
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-close-let-keyword/input.js:3:1]
- 2 │ */ --> c
- 3 │ if (x) {}
-   · ──
-   ╰────
-
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-export-default-from/input.js
 
   × Cannot use export statement outside a module
@@ -50,15 +41,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-
  1 │ export default from <!-- c
    · ──────
  2 │ "x";
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-let-keyword/input.js
-
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/annex-b/enabled/1.1-html-comments-open-let-keyword/input.js:2:1]
- 1 │ let <!-- c
- 2 │ if (x) {}
-   · ──
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-b/enabled/3.3-function-in-if-body-lexical-redeclaration/input.js
@@ -88,87 +70,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015
  1 │ export default let
    · ──────
  2 │ if (x) {}
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword/input.js
-
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword/input.js:2:1]
- 1 │ let
- 2 │ if (x) {}
-   · ──
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-cr/input.js
-
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-cr/input.js:2:1]
- 1 │ letif (x) {}
-   ·     ──
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-declaration/input.js
-
-  × Identifier expected. 'function' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-declaration/input.js:2:1]
- 1 │ let
- 2 │ function f() {}
-   · ────────
- 3 │ let
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-expression/input.js
-
-  × Identifier expected. 'this' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-expression/input.js:2:1]
- 1 │ let // comment
- 2 │ this.x = 1;
-   · ────
- 3 │ let /*
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-line-separator/input.js
-
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-line-separator/input.js:1:7]
- 1 │ let if (x) {}
-   ·     ──
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-nested/input.js
-
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-nested/input.js:3:3]
- 2 │   let
- 3 │   if (x) {}
-   ·   ──
- 4 │ }
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-paragraph-separator/input.js
-
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-paragraph-separator/input.js:1:7]
- 1 │ let if (x) {}
-   ·     ──
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-void/input.js
-
-  × Identifier expected. 'void' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-void/input.js:2:1]
- 1 │ let
- 2 │ void 0;
-   · ────
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/let-with-multiline-comment-and-keyword/input.js
-
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-multiline-comment-and-keyword/input.js:2:4]
- 1 │ let /*
- 2 │ */ if (x) {}
-   ·    ──
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
@@ -422,15 +323,6 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  5 │     private static f();
    ·                    ─
  6 │ }
-   ╰────
-
-Fatal error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/enum/let-with-linebreak/input.js
-
-  × Identifier expected. 'enum' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/typescript/enum/let-with-linebreak/input.js:2:1]
- 1 │ let
- 2 │ enum E {}
-   · ────
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/function/declare-pattern-parameters/input.ts
@@ -3771,33 +3663,36 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
-  × Identifier expected. 'enum' is a reserved word that cannot be used here.
+  × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-enum/input.js:2:1]
  1 │ let
  2 │ enum;
    · ────
    ╰────
 
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
+  × Keywords cannot contain escape characters
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-escaped-keyword/input.js:2:1]
  1 │ let
  2 │ i\u0066 (x) {}
    · ───────
    ╰────
 
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-module/input.js:2:1]
+  × The keyword 'let' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-module/input.js:1:1]
  1 │ let
+   · ───
  2 │ if (x) {}
-   · ──
    ╰────
+  note: Modules are always strict mode code
 
-  × Identifier expected. 'if' is a reserved word that cannot be used here.
-   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-strict/input.js:3:1]
+  × The keyword 'let' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-strict/input.js:2:1]
+ 1 │ "use strict";
  2 │ let
+   · ───
  3 │ if (x) {}
-   · ──
    ╰────
+  note: This identifier is reserved in strict mode code
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-yield/input.js:3:8]
