@@ -9,7 +9,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
   {
     "description": "Function 'foo' is declared but never used.",
     "check_name": "eslint(no-unused-vars)",
-    "fingerprint": "b1e9b343a9c1e457",
+    "fingerprint": "62e780597e453391",
     "severity": "major",
     "location": {
       "path": "apps/oxlint/test.js",
@@ -22,7 +22,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
   {
     "description": "Parameter 'b' is declared but never used. Unused parameters should start with a '_'.",
     "check_name": "eslint(no-unused-vars)",
-    "fingerprint": "53ecf7c08335f91",
+    "fingerprint": "2907a4c638474e6c",
     "severity": "major",
     "location": {
       "path": "apps/oxlint/test.js",
@@ -35,7 +35,7 @@ working directory: fixtures/cli/output_formatter_diagnostic
   {
     "description": "`debugger` statement is not allowed",
     "check_name": "eslint(no-debugger)",
-    "fingerprint": "9333a3278325994",
+    "fingerprint": "1506c15e875d60c7",
     "severity": "critical",
     "location": {
       "path": "apps/oxlint/test.js",

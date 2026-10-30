@@ -1,0 +1,7 @@
+function Component({cond}) {
+  let count = 0;
+  const bad = () => count++;
+  const callbacks = [() => true, async () => { await 0; bad(); }];
+  [0].filter(...callbacks);
+  return null;
+}

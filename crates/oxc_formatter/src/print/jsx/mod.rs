@@ -17,7 +17,7 @@ use crate::{
     formatter::{
         TailwindContextEntry,
         prelude::*,
-        trivia::{DanglingIndentMode, FormatDanglingComments, FormatTrailingComments},
+        trivia::{DanglingIndentMode, FormatDanglingComments},
     },
     utils::{
         expression::as_call_expression_without_chain_wrappers,
@@ -187,15 +187,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXExpressionContainer<'a>> {
                     if should_inline {
                         write!(f, self.expression());
                     } else {
-                        write!(
-                            f,
-                            soft_block_indent(&format_with(|f| {
-                                write!(f, [self.expression()]);
-                                let comments =
-                                    f.context().comments().comments_before(self.span.end);
-                                write!(f, [FormatTrailingComments::Comments(comments)]);
-                            }))
-                        );
+                        write!(f, soft_block_indent(&self.expression()));
                     }
                 });
 
@@ -215,11 +207,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXExpressionContainer<'a>> {
                     f,
                     [group(&format_args!(
                         "{",
-                        soft_block_indent(&format_with(|f| {
-                            write!(f, [self.expression()]);
-                            let comments = f.context().comments().comments_before(self.span.end);
-                            write!(f, [FormatTrailingComments::Comments(comments)]);
-                        })),
+                        soft_block_indent(&self.expression()),
                         line_suffix_boundary(),
                         "}"
                     ))]
@@ -336,23 +324,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXAttribute<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXSpreadAttribute<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let comments = f.context().comments();
-        let has_comment = comments.has_comment_before(self.argument.span().start)
-            || comments.has_comment_in_range(self.argument.span().end, self.span.end);
-        let format_inner = format_with(|f| {
-            write!(f, [format_leading_comments(self.argument.span()), "..."]);
-            self.argument().fmt(f);
-        });
-
-        write!(f, ["{"]);
-
-        if has_comment {
-            write!(f, [soft_block_indent(&format_inner)]);
-        } else {
-            write!(f, [format_inner]);
-        }
-
-        write!(f, "}");
+        write_jsx_spread(self.span, self.argument(), f);
     }
 }
 
@@ -364,24 +336,33 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXIdentifier<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXSpreadChild<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        let comments = f.context().comments();
-        let has_comment = comments.has_comment_before(self.expression.span().start)
-            || comments.has_comment_in_range(self.expression.span().end, self.span.end);
-        let format_inner = format_with(|f| {
-            write!(f, [format_leading_comments(self.expression.span()), "..."]);
-            self.expression().fmt(f);
-        });
-
-        write!(f, "{");
-
-        if has_comment {
-            write!(f, [soft_block_indent(&format_inner)]);
-        } else {
-            write!(f, [format_inner]);
-        }
-
-        write!(f, "}");
+        write_jsx_spread(self.span, self.expression(), f);
     }
+}
+
+/// Writes `{...argument}` for a spread attribute or child.
+fn write_jsx_spread<'a>(
+    span: Span,
+    argument: AstNode<'_, 'a, Expression<'a>>,
+    f: &mut JsFormatter<'_, 'a>,
+) {
+    let argument_span = argument.span();
+    let comments = f.context().comments();
+    let has_comment = comments.has_comment_before(argument_span.start)
+        || comments.has_comment_in_range(argument_span.end, span.end);
+    let format_inner = format_with(|f| {
+        write!(f, [format_leading_comments(argument_span), "...", argument]);
+    });
+
+    write!(f, "{");
+
+    if has_comment {
+        write!(f, [soft_block_indent(&format_inner)]);
+    } else {
+        write!(f, [format_inner]);
+    }
+
+    write!(f, "}");
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, JSXText<'a>> {

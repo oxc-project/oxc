@@ -72,7 +72,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     fn parse_ts_enum_member_name(&mut self) -> TSEnumMemberName<'a> {
         match self.cur_kind() {
             Kind::Str => {
-                let literal = self.parse_literal_string();
+                let literal = self.parse_known_literal_string();
                 TSEnumMemberName::String(self.alloc(literal))
             }
             Kind::LBrack => match self.parse_computed_property_name() {
@@ -459,7 +459,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         start: u32,
         modifiers: &Modifiers,
     ) -> ArenaBox<'a, TSExternalModuleDeclaration<'a>> {
-        let id = self.parse_literal_string();
+        let id = self.parse_known_literal_string();
         if !self.ctx.has_ambient() {
             self.error(diagnostics::quoted_module_name_only_allowed_in_ambient_module(id.span()));
         }
@@ -715,7 +715,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     && self.cur_kind().is_binding_identifier()
                 {
                     // `import type something ...`
-                    identifier = self.parse_binding_identifier();
+                    identifier = self.parse_known_binding_identifier();
                     import_kind = ImportOrExportKind::Type;
                 }
                 self.parse_ts_import_equals_declaration(import_kind, identifier, start)

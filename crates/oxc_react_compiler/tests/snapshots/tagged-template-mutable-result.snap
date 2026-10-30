@@ -16,7 +16,9 @@ function Component(t0) {
 	"use memo";
 	const { tag } = t0;
 	const result = tag`value`;
-	result.value = result.value + 1;
+	let t1 = result.value;
+	t1++;
+	result.value = t1;
 	return result + "";
 }
 export const FIXTURE_ENTRYPOINT = {

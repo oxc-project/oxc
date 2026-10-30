@@ -72,7 +72,7 @@ fn local_walk<R>(
 }
 
 /// Context at the token starting at `pos` (not through it).
-pub(crate) fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
+pub fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
     if let Some(s) = local_walk(tokens, walks, pos, pos, Walk::site) {
         return s;
     }
@@ -80,7 +80,7 @@ pub(crate) fn before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> Site {
 }
 
 /// Open < lists a > run at pos would close.
-pub(crate) fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
+pub fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> usize {
     if let Some(n) = local_walk(tokens, walks, pos, pos, Walk::open_angles) {
         return n;
     }
@@ -88,7 +88,7 @@ pub(crate) fn angles_before(tokens: &Tokens, walks: &mut Walks, pos: usize) -> u
 }
 
 /// What the significant token at `pos` leaves behind.
-pub(crate) fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
+pub fn after(tokens: &Tokens, walks: &mut Walks, pos: usize) -> After {
     // The scan takes in the token, skipping a closer's group whole; a word here is never an anchor.
     let from = if tokens.base_kind(pos) == tk!(Ident) { pos } else { pos + 1 };
     if let Some(a) = local_walk(tokens, walks, from, pos + 1, Walk::classify_after) {

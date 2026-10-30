@@ -42,10 +42,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, CallExpression<'a>> {
                 None
             };
 
-        if matches!(
-            callee.as_ref(),
-            Expression::StaticMemberExpression(_) | Expression::ComputedMemberExpression(_)
-        ) && !is_verbatim_multiline_template_sole_arg(arguments.as_slice(), Some(self), f)
+        if callee.is_member_expression()
+            && !is_verbatim_multiline_template_sole_arg(arguments.as_slice(), Some(self), f)
             && !is_simple_module_import(&self.arguments(), f.comments())
             && !is_test_call_expression(self, f.comments())
         {

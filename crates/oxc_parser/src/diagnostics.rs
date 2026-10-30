@@ -87,13 +87,6 @@ macro_rules! parser_diagnostics {
 }
 
 parser_diagnostics! {
-    redeclaration(name: &'a str, declare_span: Span, redeclare_span: Span) => {
-        OxcDiagnostic::error(format!("Identifier `{name}` has already been declared")).with_labels([
-            declare_span.label(format!("`{name}` has already been declared here")),
-            redeclare_span.label("It can not be redeclared here"),
-        ])
-    };
-
     overlong_source() => {
         OxcDiagnostic::error("Source length exceeds 4 GiB limit")
     };
@@ -476,11 +469,6 @@ parser_diagnostics! {
         .with_label(span)
     };
 
-    new_optional_chain(span: Span) => {
-        OxcDiagnostic::error("Optional chaining cannot appear in the callee of new expressions")
-            .with_label(span)
-    };
-
     invalid_new_optional_chain(span: Span) => {
         OxcDiagnostic::error("Invalid optional chain from new expression.").with_label(span)
     };
@@ -841,10 +829,6 @@ parser_diagnostics! {
         OxcDiagnostic::error("Unexpected import.meta expression")
             .with_help("import.meta is only allowed in module code")
             .with_label(span)
-    };
-
-    private_in_private(span: Span) => {
-        OxcDiagnostic::error("Unexpected right-hand side of private-in expression").with_label(span)
     };
 
     unexpected_private_identifier(span: Span) => {
@@ -1357,6 +1341,15 @@ parser_diagnostics! {
         OxcDiagnostic::error("Only string literals are allowed as module attribute values.")
             .with_label(span)
             .with_help("Wrap this with quotes")
+    };
+
+    duplicate_import_attribute_key(name: &'a str, previous_span: Span, duplicate_span: Span) => {
+        OxcDiagnostic::error(format!("Duplicate import attribute key `{name}`"))
+            .with_labels([
+                previous_span.label(format!("`{name}` was already specified here")),
+                duplicate_span.label("This key is repeated"),
+            ])
+            .with_help("Each import attribute key must be unique")
     };
 
     // TS18058

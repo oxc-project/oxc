@@ -37,8 +37,7 @@ impl<'a, C: Config> Lexer<'a, C> {
             '\u{FFFD}' => self.handle_binary_file(),
             c if is_identifier_start_unicode(c) => {
                 let start_pos = self.source.position();
-                self.consume_char();
-                self.identifier_tail_after_unicode(start_pos);
+                self.identifier_tail_after_unicode(start_pos, c);
                 Kind::Ident
             }
             c if is_irregular_whitespace(c) => self.handle_irregular_whitespace(c),
@@ -330,8 +329,14 @@ impl<'a, C: Config> Lexer<'a, C> {
                             let value2 = self.hex_digit()?;
                             Some((value1, value2))
                         })
-                        .map(|(value1, value2)| (value1 << 4) | value2)
-                        .and_then(|value| char::try_from(value).ok())
+                        .map(|(value1, value2)| {
+                            #[expect(
+                                clippy::cast_possible_truncation,
+                                reason = "Two hex digits are at most 0xFF"
+                            )]
+                            let value = ((value1 << 4) | value2) as u8;
+                            char::from(value)
+                        })
                         .map_or_else(
                             || {
                                 *is_valid_escape_sequence = false;
@@ -365,7 +370,11 @@ impl<'a, C: Config> Lexer<'a, C> {
 
                     text.push(char::from(value));
                 }
-                '0' if in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit()) => {
+                '0' => {
+                    // The previous zero and octal arms handled every other case.
+                    debug_assert!(
+                        in_template && self.peek_byte().is_some_and(|b| b.is_ascii_digit())
+                    );
                     self.consume_char();
                     // error raised within the parser by `diagnostics::template_literal`
                     *is_valid_escape_sequence = false;

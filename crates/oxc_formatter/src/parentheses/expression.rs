@@ -198,10 +198,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, NumericLiteral<'_>> {
             return false;
         }
 
-        if let AstNodes::StaticMemberExpression(member) = self.parent() {
-            return member.object.span() == self.span();
-        }
-        false
+        self.parent().is_member_object_span(self.span())
     }
 }
 
@@ -677,6 +674,7 @@ fn chain_expression_needs_parens(span: Span, parent: &AstNodes<'_, '_>) -> bool 
         AstNodes::NewExpression(new) => new.is_callee_span(span),
         AstNodes::CallExpression(call) => call.is_callee_span(span) && !call.optional,
         AstNodes::StaticMemberExpression(member) => !member.optional,
+        AstNodes::PrivateFieldExpression(member) => !member.optional,
         AstNodes::ComputedMemberExpression(member) => {
             !member.optional && member.object.span() == span
         }
@@ -847,20 +845,17 @@ fn type_cast_like_needs_parens(span: Span, parent: &AstNodes<'_, '_>) -> bool {
         // in spread
         | AstNodes::JSXSpreadChild(_)
         | AstNodes::SpreadElement(_)
-        | AstNodes::JSXSpreadAttribute(_)
-        // static member
-        | AstNodes::StaticMemberExpression(_)
-        // private field member
-        | AstNodes::PrivateFieldExpression(_) => true,
-        AstNodes::ComputedMemberExpression(member) => {
-            member.object.span() == span
-        }
+        | AstNodes::JSXSpreadAttribute(_) => true,
         // assignment left hand side
         AstNodes::UpdateExpression(_) | AstNodes::AssignmentTargetWithDefault(_) => true,
         AstNodes::AssignmentExpression(assignment) => {
             assignment.left.span() == span
         }
-        _ => parent.is_call_like_callee_span(span) || is_class_extends(span, parent),
+        _ => {
+            parent.is_member_object_span(span)
+                || parent.is_call_like_callee_span(span)
+                || is_class_extends(span, parent)
+        }
     }
 }
 
@@ -908,11 +903,9 @@ fn class_extends_needs_parens_through_non_null(expression: &Expression<'_>) -> b
 }
 
 impl NeedsParentheses<'_> for AstNode<'_, '_, TSInstantiationExpression<'_>> {
-    fn needs_parentheses(&self, _f: &JsFormatter<'_, '_>) -> bool {
+    fn needs_parentheses(&self, f: &JsFormatter<'_, '_>) -> bool {
         let object = match self.parent() {
-            AstNodes::StaticMemberExpression(expr) => &expr.object,
-            AstNodes::ComputedMemberExpression(expr) => &expr.object,
-            AstNodes::PrivateFieldExpression(expr) => &expr.object,
+            parent if parent.is_member_object_span(self.span) => return true,
             // `(f<T>)!`, `(f<T>)<U>` and `(f<T>)<U>()`, since `f<T>!`, `f<T><U>` and `f<T><U>()` do not parse
             AstNodes::TSNonNullExpression(_) | AstNodes::TSInstantiationExpression(_) => {
                 return true;
@@ -920,7 +913,7 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, TSInstantiationExpression<'_>> {
             AstNodes::CallExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
             AstNodes::NewExpression(expr) if expr.type_arguments.is_some() => &expr.callee,
             AstNodes::TaggedTemplateExpression(expr) if expr.type_arguments.is_some() => &expr.tag,
-            _ => return is_followed_by_comparison_or_sign(self),
+            _ => return is_followed_by_comparison_or_sign(self, f),
         };
 
         self.span == object.span()
@@ -929,34 +922,43 @@ impl NeedsParentheses<'_> for AstNode<'_, '_, TSInstantiationExpression<'_>> {
 
 /// Whether the instantiation expression ends the left operand of `+`, `-`, `<` or `>`-led operators:
 /// TypeScript reads `f<T> + x` as `f < T > +x` and rejects `f<T> < x`,
-/// also when `f<T>` only ends the operand (`(a + f<T>) - x`, `(typeof f<T>) + x`).
+/// also when `f<T>` only ends that operand without parentheses (`(a + f<T>) - x`, `(<A>await f<T>) + x`).
 fn is_followed_by_comparison_or_sign(
     node: &AstNode<'_, '_, TSInstantiationExpression<'_>>,
+    f: &JsFormatter<'_, '_>,
 ) -> bool {
     let mut span = node.span;
-    let mut parent = node.parent();
-    loop {
-        match parent {
-            AstNodes::BinaryExpression(expr) if expr.right.span() == span => {
-                (span, parent) = (expr.span, expr.parent());
-            }
-            AstNodes::UnaryExpression(expr) => (span, parent) = (expr.span, expr.parent()),
-            AstNodes::BinaryExpression(expr) => {
-                return expr.left.span() == span
-                    && matches!(
-                        expr.operator,
-                        BinaryOperator::Addition
-                            | BinaryOperator::Subtraction
-                            | BinaryOperator::LessThan
-                            | BinaryOperator::GreaterThan
-                            | BinaryOperator::GreaterEqualThan
-                            | BinaryOperator::ShiftRight
-                            | BinaryOperator::ShiftRightZeroFill
-                    );
-            }
-            _ => return false,
+    for ancestor in node.ancestors() {
+        if let AstNodes::BinaryExpression(expr) = ancestor
+            && expr.left.span() == span
+        {
+            return matches!(
+                expr.operator,
+                BinaryOperator::Addition
+                    | BinaryOperator::Subtraction
+                    | BinaryOperator::LessThan
+                    | BinaryOperator::GreaterThan
+                    | BinaryOperator::GreaterEqualThan
+                    | BinaryOperator::ShiftRight
+                    | BinaryOperator::ShiftRightZeroFill
+            );
         }
+        // `f<T>` still ends these as the right or only operand, unless their own parentheses close it.
+        // Looser ones (`a && f<T>`, `yield f<T>`, ...) always print them before a binary operator.
+        if !matches!(
+            ancestor,
+            AstNodes::BinaryExpression(_)
+                | AstNodes::PrivateInExpression(_)
+                | AstNodes::UnaryExpression(_)
+                | AstNodes::AwaitExpression(_)
+                | AstNodes::TSTypeAssertion(_)
+        ) || prints_own_parens(ancestor, f)
+        {
+            return false;
+        }
+        span = ancestor.span();
     }
+    false
 }
 
 fn binary_like_needs_parens(
@@ -982,11 +984,7 @@ fn binary_like_needs_parens(
         | AstNodes::SpreadElement(_)
         | AstNodes::JSXSpreadAttribute(_)
         | AstNodes::ChainExpression(_)
-        | AstNodes::StaticMemberExpression(_)
         | AstNodes::TaggedTemplateExpression(_) => return true,
-        AstNodes::ComputedMemberExpression(computed) => {
-            return computed.object.span() == span;
-        }
         AstNodes::Class(class) => {
             return class.heritage().is_some_and(|heritage| {
                 let super_class = heritage.expression();
@@ -998,8 +996,7 @@ fn binary_like_needs_parens(
         AstNodes::PrivateInExpression(private_in) => {
             (BinaryOperator::In.into(), private_in.right.span())
         }
-        parent if parent.is_call_like_callee_span(span) => return true,
-        _ => return false,
+        _ => return parent.is_member_object_span(span) || parent.is_call_like_callee_span(span),
     };
 
     let parent_precedence = parent_operator.precedence();
@@ -1081,21 +1078,14 @@ fn unary_like_expression_needs_parens(node: UnaryLike<'_, '_>) -> bool {
 ///
 /// This is generally the case if the expression is used in a left hand side, or primary expression context.
 fn update_or_lower_expression_needs_parens(span: Span, parent: &AstNodes<'_, '_>) -> bool {
-    match parent {
+    matches!(
+        parent,
         AstNodes::TSNonNullExpression(_)
-        | AstNodes::TSInstantiationExpression(_)
-        | AstNodes::StaticMemberExpression(_)
-        | AstNodes::PrivateFieldExpression(_)
-        | AstNodes::TaggedTemplateExpression(_) => return true,
-        _ if is_class_extends(span, parent) || parent.is_call_like_callee_span(span) => {
-            return true;
-        }
-        _ => {}
-    }
-    if let AstNodes::ComputedMemberExpression(computed_member_expr) = parent {
-        return computed_member_expr.object.span() == span;
-    }
-    false
+            | AstNodes::TSInstantiationExpression(_)
+            | AstNodes::TaggedTemplateExpression(_)
+    ) || is_class_extends(span, parent)
+        || parent.is_member_object_span(span)
+        || parent.is_call_like_callee_span(span)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -1206,8 +1196,6 @@ fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_, '_>) ->
         AstNodes::TSAsExpression(_)
         | AstNodes::TSSatisfiesExpression(_)
         | AstNodes::AwaitExpression(_)
-        | AstNodes::StaticMemberExpression(_)
-        | AstNodes::ComputedMemberExpression(_)
         | AstNodes::SequenceExpression(_)
         | AstNodes::UnaryExpression(_)
         | AstNodes::TSNonNullExpression(_)
@@ -1215,8 +1203,7 @@ fn jsx_element_or_fragment_needs_paren(span: Span, parent: &AstNodes<'_, '_>) ->
         | AstNodes::TaggedTemplateExpression(_)
         | AstNodes::JSXSpreadAttribute(_)
         | AstNodes::JSXSpreadChild(_) => true,
-        _ if parent.is_call_like_callee_span(span) => true,
-        _ => false,
+        _ => parent.is_member_expression() || parent.is_call_like_callee_span(span),
     }
 }
 

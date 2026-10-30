@@ -530,6 +530,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         generator: bool,
     ) -> Option<BindingIdentifier<'a>> {
         let kind = self.cur_kind();
+        if kind == Kind::Ident {
+            return Some(self.parse_plain_binding_identifier());
+        }
         if kind.is_binding_identifier() {
             let mut ctx = self.ctx;
             if func_kind.is_expression() {

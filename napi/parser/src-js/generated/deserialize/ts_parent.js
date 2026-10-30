@@ -56,38 +56,19 @@ export function resetBuffer() {
 }
 
 function deserializeProgram(pos) {
-  let end = deserializeI32(pos + 4),
+  let start = deserializeI32(pos),
+    end = deserializeI32(pos + 4),
     program = (parent = {
       type: "Program",
       body: null,
       sourceType: deserializeModuleKind(pos + 137),
       hashbang: null,
-      start: 0,
+      start,
       end,
       parent: null,
     });
   program.hashbang = deserializeOptionHashbang(pos + 56);
-  let body = (program.body = deserializeVecDirective(pos + 88));
-  body.push(...deserializeVecStatement(pos + 112));
-  {
-    let start;
-    if (body.length > 0) {
-      let first = body[0];
-      start = first.start;
-      if (first.type === "ExportNamedDeclaration" || first.type === "ExportDefaultDeclaration") {
-        let { declaration } = first;
-        if (
-          declaration !== null
-          && declaration.type === "ClassDeclaration"
-          && declaration.decorators.length > 0
-        ) {
-          let decoratorStart = declaration.decorators[0].start;
-          decoratorStart < start && (start = decoratorStart);
-        }
-      }
-    } else start = end;
-    program.start = start;
-  }
+  (program.body = deserializeVecDirective(pos + 88)).push(...deserializeVecStatement(pos + 112));
   parent = null;
   return program;
 }

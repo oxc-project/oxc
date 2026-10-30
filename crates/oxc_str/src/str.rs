@@ -341,7 +341,8 @@ impl ESTree for Str<'_> {
 #[macro_export]
 macro_rules! static_str {
     ($s:literal) => {
-        $crate::Str::new_const($s)
+        // `const { ... }` block guarantees evaluation at compile time
+        const { $crate::Str::new_const($s) }
     };
 }
 

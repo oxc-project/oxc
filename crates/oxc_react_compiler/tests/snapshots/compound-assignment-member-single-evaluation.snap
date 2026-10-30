@@ -1,0 +1,70 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/compound-assignment-member-single-evaluation.js
+---
+import { c as _c } from "react/compiler-runtime";
+// The object and key of a compound assignment or update on a member are
+// evaluated once.
+function Component(t0) {
+	const $ = _c(8);
+	const { events } = t0;
+	let calls;
+	let totals;
+	if ($[0] !== events) {
+		calls = {
+			keys: 0,
+			targets: 0
+		};
+		const keyOf = (event) => {
+			calls.keys = calls.keys + 1;
+			return event.key;
+		};
+		totals = {
+			a: 0,
+			b: 0
+		};
+		const getTotals = () => {
+			calls.targets = calls.targets + 1;
+			return totals;
+		};
+		for (const event_0 of events) {
+			const t1 = keyOf(event_0);
+			totals[t1] = totals[t1] + event_0.amount;
+		}
+		const t1 = getTotals();
+		t1.a = t1.a * 10;
+		const t2 = getTotals();
+		const t3 = keyOf({ key: "b" });
+		let t4 = t2[t3];
+		t4++;
+		t2[t3] = t4;
+		$[0] = events;
+		$[1] = calls;
+		$[2] = totals;
+	} else {
+		calls = $[1];
+		totals = $[2];
+	}
+	let t1;
+	if ($[3] !== calls.keys || $[4] !== calls.targets || $[5] !== totals.a || $[6] !== totals.b) {
+		t1 = <div>{calls.keys}|{calls.targets}|{totals.a}|{totals.b}</div>;
+		$[3] = calls.keys;
+		$[4] = calls.targets;
+		$[5] = totals.a;
+		$[6] = totals.b;
+		$[7] = t1;
+	} else {
+		t1 = $[7];
+	}
+	return t1;
+}
+export const FIXTURE_ENTRYPOINT = {
+	fn: Component,
+	params: [{ events: [{
+		key: "a",
+		amount: 1
+	}, {
+		key: "b",
+		amount: 2
+	}] }]
+};

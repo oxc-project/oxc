@@ -28,9 +28,9 @@ use crate::react_compiler_hir::visitors::{
     for_each_instruction_value_operand_mut, for_each_terminal_operand_mut,
 };
 use crate::react_compiler_hir::{
-    AliasingEffect, BlockId, Effect, EvaluationOrder, FunctionId, HirFunction, IdentifierId,
-    InstructionValue, MutationReason, ParamPattern, Place, Terminal, is_jsx_type,
-    is_primitive_type,
+    AliasingEffect, BlockId, DeclarationId, Effect, EvaluationOrder, FunctionId, HirFunction,
+    IdentifierId, InstructionValue, MutationReason, ParamPattern, Place, Terminal, Type,
+    is_jsx_type, is_primitive_type,
 };
 use oxc_span::Span;
 
@@ -88,6 +88,10 @@ struct Node {
     last_mutated: usize,
     mutation_reason: Option<MutationReason>,
     value: NodeValue,
+    /// Whether a mutation that may call this value has reached it. A captured
+    /// callback is mutated along with the closure that captures it, but is only
+    /// called when that closure calls it directly.
+    called: bool,
 }
 
 impl Node {
@@ -104,17 +108,19 @@ impl Node {
             last_mutated: 0,
             mutation_reason: None,
             value,
+            called: false,
         }
     }
 }
 
 struct AliasingState {
     nodes: FxHashMap<IdentifierId, Node>,
+    called_declarations: FxHashMap<FunctionId, FxHashSet<DeclarationId>>,
 }
 
 impl AliasingState {
     fn new() -> Self {
-        AliasingState { nodes: FxHashMap::default() }
+        AliasingState { nodes: FxHashMap::default(), called_declarations: FxHashMap::default() }
     }
 
     fn create(&mut self, place: &Place, value: NodeValue) {
@@ -188,7 +194,7 @@ impl AliasingState {
                 Some(n) => n,
                 None => continue,
             };
-            if node.transitive.is_some() || node.local.is_some() {
+            if node.called {
                 continue;
             }
             if let NodeValue::Function { function_id } = &node.value {
@@ -234,6 +240,7 @@ impl AliasingState {
             transitive: bool,
             direction: Direction,
             kind: MutationKind,
+            may_call: bool,
         }
         #[derive(Clone, Copy, PartialEq)]
         enum Direction {
@@ -241,23 +248,30 @@ impl AliasingState {
             Forwards,
         }
 
-        let mut seen: FxHashMap<IdentifierId, MutationKind> = FxHashMap::default();
+        let mut seen: FxHashMap<IdentifierId, (MutationKind, bool)> = FxHashMap::default();
         let mut queue: Vec<QueueEntry> = vec![QueueEntry {
             place: start,
             transitive,
             direction: Direction::Backwards,
             kind: start_kind,
+            may_call: true,
         }];
 
         while let Some(entry) = queue.pop() {
             let current = entry.place;
-            let previous_kind = seen.get(&current).copied();
-            if let Some(prev) = previous_kind
-                && prev >= entry.kind
+            let previous = seen.get(&current).copied();
+            if let Some((prev_kind, prev_may_call)) = previous
+                && prev_kind >= entry.kind
+                && (prev_may_call || !entry.may_call)
             {
                 continue;
             }
-            seen.insert(current, entry.kind);
+            seen.insert(
+                current,
+                previous.map_or((entry.kind, entry.may_call), |(prev_kind, prev_may_call)| {
+                    (prev_kind.max(entry.kind), prev_may_call || entry.may_call)
+                }),
+            );
 
             let node = match self.nodes.get_mut(&current) {
                 Some(n) => n,
@@ -275,12 +289,13 @@ impl AliasingState {
             }
 
             if let NodeValue::Function { function_id } = &node.value
-                && node.transitive.is_none()
-                && node.local.is_none()
+                && entry.may_call
+                && !node.called
                 && should_record_errors
             {
                 append_function_errors(env, *function_id);
             }
+            node.called |= entry.may_call;
 
             if entry.transitive {
                 match &node.transitive {
@@ -311,6 +326,10 @@ impl AliasingState {
                 NodeValue::Phi => "Phi",
                 _ => "Other",
             };
+            let capturing_function = match &node.value {
+                NodeValue::Function { function_id } => Some(*function_id),
+                _ => None,
+            };
             let node_aliases: Vec<(IdentifierId, usize)> =
                 node.aliases.iter().map(|(&k, &v)| (k, v)).collect();
             let node_maybe_aliases: Vec<(IdentifierId, usize)> =
@@ -334,6 +353,7 @@ impl AliasingState {
                     } else {
                         entry.kind
                     },
+                    may_call: entry.may_call,
                 });
             }
 
@@ -346,6 +366,7 @@ impl AliasingState {
                     transitive: true,
                     direction: Direction::Backwards,
                     kind: entry.kind,
+                    may_call: entry.may_call,
                 });
             }
 
@@ -360,6 +381,7 @@ impl AliasingState {
                         transitive: entry.transitive,
                         direction: Direction::Backwards,
                         kind: entry.kind,
+                        may_call: entry.may_call,
                     });
                 }
                 // MaybeAlias backward edges (downgrade to conditional)
@@ -372,6 +394,7 @@ impl AliasingState {
                         transitive: entry.transitive,
                         direction: Direction::Backwards,
                         kind: MutationKind::Conditional,
+                        may_call: entry.may_call,
                     });
                 }
             }
@@ -382,16 +405,59 @@ impl AliasingState {
                     if *when >= index {
                         continue;
                     }
+                    // Capturing a callback does not call it: an invoked closure (for
+                    // example a `map` callback) that only passes a captured `onClick`
+                    // handler along still mutates it, but does not run it.
+                    let may_call = entry.may_call
+                        && (!matches!(
+                            env.types[env.identifiers[*capture].type_],
+                            Type::Function { .. }
+                        ) || capturing_function.is_some_and(|function_id| {
+                            self.called_declarations
+                                .entry(function_id)
+                                .or_insert_with(|| directly_called_declarations(env, function_id))
+                                .contains(&env.identifiers[*capture].declaration_id)
+                        }));
                     queue.push(QueueEntry {
                         place: *capture,
                         transitive: entry.transitive,
                         direction: Direction::Backwards,
                         kind: entry.kind,
+                        may_call,
                     });
                 }
             }
         }
     }
+}
+
+/// Declarations that `function_id` calls directly. A call's callee is the temporary
+/// that loads the binding, so resolve it through `LoadLocal`/`LoadContext`.
+fn directly_called_declarations(
+    env: &Environment,
+    function_id: FunctionId,
+) -> FxHashSet<DeclarationId> {
+    let instructions = &env.functions[function_id].instructions;
+    let loaded: FxHashMap<IdentifierId, IdentifierId> = instructions
+        .iter()
+        .filter_map(|instr| match &instr.value {
+            InstructionValue::LoadLocal { place, .. }
+            | InstructionValue::LoadContext { place, .. } => {
+                Some((instr.lvalue.identifier, place.identifier))
+            }
+            _ => None,
+        })
+        .collect();
+    instructions
+        .iter()
+        .filter_map(|instr| match &instr.value {
+            InstructionValue::CallExpression { callee, .. } => {
+                let callee = loaded.get(&callee.identifier).copied().unwrap_or(callee.identifier);
+                Some(env.identifiers[callee].declaration_id)
+            }
+            _ => None,
+        })
+        .collect()
 }
 
 // =============================================================================

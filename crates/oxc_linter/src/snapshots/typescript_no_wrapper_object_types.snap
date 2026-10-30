@@ -127,3 +127,11 @@ source: crates/oxc_linter/src/tester.rs
    ╰────
   help: Replace `String` with `string`.
   note: `String` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `string` for values, and in `extends`/`implements` use an interface/object shape instead.
+
+  ⚠ typescript(no-wrapper-object-types): Do not use wrapper object types.
+   ╭─[no_wrapper_object_types.tsx:1:18]
+ 1 │ let globalValue: Number; function f() { type Number = string; let localValue: Number; }
+   ·                  ──────
+   ╰────
+  help: Replace `Number` with `number`.
+  note: `Number` is a boxed object type, not a primitive. Boxed types have object semantics (identity/truthiness) that can be surprising. Use `number` for values, and in `extends`/`implements` use an interface/object shape instead.
