@@ -1,6 +1,6 @@
 use oxc_ast::ast::*;
 use oxc_formatter_core::Format;
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 
 use crate::{
     JsLabels,
@@ -15,7 +15,7 @@ use crate::{
     write,
 };
 
-use super::FormatWrite;
+use super::{FormatWrite, word_source_span};
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ComputedMemberExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
@@ -26,45 +26,94 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ComputedMemberExpression<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, StaticMemberExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write_non_computed_member(self.object(), self.optional(), self.property(), f);
+        let printed_len = self.property.name.len();
+        write_non_computed_member(self.object(), self.optional(), self.property(), printed_len, f);
     }
 }
 
 /// `a.#b` is laid out the same as `a.b`.
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, PrivateFieldExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write_non_computed_member(self.object(), self.optional(), self.field(), f);
+        // `#` + name
+        let printed_len = self.field.name.len() + 1;
+        write_non_computed_member(self.object(), self.optional(), self.field(), printed_len, f);
     }
 }
 
 /// Writes `a.b` or `a.#b`.
+///
+/// `printed_len` is the byte length the property prints with;
+/// it equals the property's source length exactly when the source has no escape.
 fn write_non_computed_member<'b, 'a, P: GetSpan>(
     object: AstNode<'b, 'a, Expression<'a>>,
     optional: bool,
     property: AstNode<'b, 'a, P>,
+    printed_len: usize,
     f: &mut JsFormatter<'_, 'a>,
 ) where
     AstNode<'b, 'a, P>: Format<'a, JsFormatContext<'a>>,
 {
-    // Before the recording: printing the object consumes its cast comment
-    let object_is_cast_target = is_cast_target(object.span(), f);
-    let is_member_chain = {
-        let start = f.elements().len();
-        write!(f, [object]);
-        f.elements()[start..].has_label(LabelId::of(JsLabels::MemberChain))
-    };
     let property_start = property.span().start;
     // The member expression itself
     let member = property.parent();
 
-    match layout(&object, property_start, member, is_member_chain, object_is_cast_target, f) {
-        StaticMemberLayout::NoBreak => {
-            let format_no_break = format_with(|f| write!(f, [operator_token(optional), property]));
+    // A single word object printing its source text right before the operator and the property printing theirs:
+    // it prints no comment, so it is neither a cast target nor a member chain,
+    // and the operator and the property still print their source text after it
+    let word_object = word_source_span(&object, f).and_then(|object_span| {
+        operator_and_property_span(optional, property, printed_len, f)
+            .filter(|operator_and_property| operator_and_property.start == object_span.end)
+    });
 
+    let (layout, is_member_chain) = if let Some(operator_and_property) = word_object {
+        let layout = layout(&object, property_start, member, false, false, f);
+        if matches!(layout, StaticMemberLayout::NoBreak) {
+            // The whole member as its source text
+            let start = object.span().start;
+            write!(
+                f,
+                text_without_whitespace(
+                    f.source_text().slice_range(start, operator_and_property.end)
+                )
+            );
+            return;
+        }
+        write!(f, [object]);
+        (layout, false)
+    } else {
+        // Before the recording: printing the object consumes its cast comment
+        let object_is_cast_target = is_cast_target(object.span(), f);
+        let is_member_chain = {
+            let start = f.elements().len();
+            write!(f, [object]);
+            f.elements()[start..].has_label(LabelId::of(JsLabels::MemberChain))
+        };
+        (
+            layout(&object, property_start, member, is_member_chain, object_is_cast_target, f),
+            is_member_chain,
+        )
+    };
+
+    // The operator and the property, printed as their source text in one element when it is the same text
+    let format_operator_and_property = format_with(|f| {
+        if let Some(span) =
+            word_object.or_else(|| operator_and_property_span(optional, property, printed_len, f))
+        {
+            write!(f, text_without_whitespace(f.source_text().slice_range(span.start, span.end)));
+        } else {
+            write!(f, [operator_token(optional), property]);
+        }
+    });
+
+    match layout {
+        StaticMemberLayout::NoBreak => {
             if is_member_chain {
-                write!(f, [labelled(LabelId::of(JsLabels::MemberChain), &format_no_break)]);
+                write!(
+                    f,
+                    [labelled(LabelId::of(JsLabels::MemberChain), &format_operator_and_property)]
+                );
             } else {
-                write!(f, [format_no_break]);
+                write!(f, [format_operator_and_property]);
             }
         }
         StaticMemberLayout::BreakAfterObject => {
@@ -81,12 +130,37 @@ fn write_non_computed_member<'b, 'a, P: GetSpan>(
                             );
                         }
                     }),
-                    operator_token(optional),
-                    property,
+                    format_operator_and_property,
                 )))]
             );
         }
     }
+}
+
+/// The span of the operator and the property (`.b`, `?.#b`),
+/// when the property prints exactly their source text right after the operator:
+/// - the operator directly precedes the property in the source
+/// - the property's source has no escape (`printed_len` is its whole span)
+/// - the property prints no comment, like its generated `fmt`'s quiet path
+fn operator_and_property_span<P: GetSpan>(
+    optional: bool,
+    property: AstNode<'_, '_, P>,
+    printed_len: usize,
+    f: &JsFormatter<'_, '_>,
+) -> Option<Span> {
+    let property_span = property.span();
+    let operator = operator_token(optional);
+    #[expect(clippy::cast_possible_truncation)] // The operator is at most 2 bytes
+    let start = property_span.start.checked_sub(operator.len() as u32)?;
+    (property_span.size() as usize == printed_len
+        && f.source_text().bytes_range(start, property_span.start) == operator.as_bytes()
+        && f.comments().is_quiet(
+            property_span,
+            || property.parent().span(),
+            property.following_span_start(),
+            false,
+        ))
+    .then_some(Span::new(start, property_span.end))
 }
 
 #[derive(Debug, Copy, Clone)]
