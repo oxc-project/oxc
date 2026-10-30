@@ -46,9 +46,7 @@ impl GraphicalReportHandler {
         diagnostic: &dyn Diagnostic,
     ) -> fmt::Result {
         let source = diagnostic.source_code();
-        let mut scanner = source.map(|source| {
-            SpanScanner::new(source.data(), 1, 1).with_line_starts(source.line_starts())
-        });
+        let mut scanner = source.map(|source| SpanScanner::new(source.data(), 1, 1));
         let source_name = source.and_then(|source| source.name());
         self.render_report_with_scanner(f, diagnostic, scanner.as_mut(), source_name)
     }
@@ -69,12 +67,7 @@ impl GraphicalReportHandler {
             match source {
                 Some(source)
                     if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
-                Some(source) => {
-                    scanner = Some(
-                        SpanScanner::new(source.data(), 1, 1)
-                            .with_line_starts(source.line_starts()),
-                    );
-                }
+                Some(source) => scanner = Some(SpanScanner::new(source.data(), 1, 1)),
                 None => scanner = None,
             }
             let source_name = source.and_then(|source| source.name());
@@ -100,12 +93,7 @@ impl GraphicalReportHandler {
             match source {
                 Some(source)
                     if scanner.as_ref().is_some_and(|scanner| scanner.is_for(source.data())) => {}
-                Some(source) => {
-                    scanner = Some(
-                        SpanScanner::new(source.data(), 1, 1)
-                            .with_line_starts(source.line_starts()),
-                    );
-                }
+                Some(source) => scanner = Some(SpanScanner::new(source.data(), 1, 1)),
                 None => scanner = None,
             }
             let source_name = source.and_then(|source| source.name());
@@ -371,6 +359,50 @@ mod tests {
             )
             .unwrap();
 
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn rendering_does_not_request_full_line_index() {
+        struct Source;
+
+        impl crate::SourceCode for Source {
+            fn data(&self) -> &[u8] {
+                b"first();\nsecond();\nthird();\n"
+            }
+
+            fn line_starts(&self) -> Option<&[u32]> {
+                panic!("graphical rendering builds its own incremental index")
+            }
+        }
+
+        let source = Arc::new(Source);
+        let diagnostics: Vec<Error> = vec![
+            OxcDiagnostic::warn("first")
+                .with_label(Span::new(0, 5))
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::warn("third")
+                .with_label(Span::new(19, 24))
+                .with_source_code(Arc::clone(&source)),
+            OxcDiagnostic::warn("unlabelled").with_source_code(source),
+        ];
+        let handler = GraphicalReportHandler::new_themed(GraphicalTheme::none()).with_links(false);
+        let mut expected = String::new();
+        for diagnostic in &diagnostics {
+            handler.render_report(&mut expected, diagnostic.as_ref()).unwrap();
+        }
+        let reports =
+            || diagnostics.iter().map(|diagnostic| diagnostic.as_ref() as &dyn Diagnostic);
+        let mut actual = String::new();
+        handler.render_reports(&mut actual, reports()).unwrap();
+        assert_eq!(actual, expected);
+        actual.clear();
+        handler
+            .render_reports_until(reports(), &mut |_, rendered| {
+                actual.push_str(rendered);
+                true
+            })
+            .unwrap();
         assert_eq!(actual, expected);
     }
 

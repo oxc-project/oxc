@@ -45,4 +45,8 @@ impl<S: SourceCode> SourceCode for NamedSource<S> {
     fn line_starts(&self) -> Option<&[u32]> {
         self.line_starts.get_or_init(|| source_impls::line_starts(self.source.data())).as_deref()
     }
+
+    fn cached_line_starts(&self) -> Option<&[u32]> {
+        self.line_starts.get().and_then(Option::as_deref)
+    }
 }

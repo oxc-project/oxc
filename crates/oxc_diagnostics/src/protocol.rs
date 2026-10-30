@@ -84,4 +84,12 @@ pub trait SourceCode: Send + Sync {
     fn line_starts(&self) -> Option<&[u32]> {
         None
     }
+
+    /// Returns an existing line-start index without building one.
+    ///
+    /// Renderers that only need a few locations use this to reuse a cache without
+    /// scanning the entire source for a single diagnostic.
+    fn cached_line_starts(&self) -> Option<&[u32]> {
+        None
+    }
 }
