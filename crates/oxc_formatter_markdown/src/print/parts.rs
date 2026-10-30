@@ -69,6 +69,8 @@ enum Item<'a> {
 /// runs of atoms are grouped when the fill is written.
 pub struct Parts<'a> {
     items: ArenaVec<'a, Item<'a>>,
+    /// The source the texts are sliced from: adjacent slices of it join into one atom.
+    source: &'a str,
     /// Bytes of `flat` pushed so far: the printed offset of what comes next.
     len: u32,
     /// The delimiter nodes, opaque text and link texts pushed, by printed offset (`pairing`).
@@ -87,8 +89,8 @@ impl<'a> Item<'a> {
 }
 
 impl<'a> Parts<'a> {
-    pub fn new(allocator: &'a Allocator) -> Self {
-        Self { items: ArenaVec::new_in(&allocator), len: 0, marks: Vec::new() }
+    pub fn new(allocator: &'a Allocator, source: &'a str) -> Self {
+        Self { items: ArenaVec::new_in(&allocator), source, len: 0, marks: Vec::new() }
     }
 
     pub fn len(&self) -> u32 {
@@ -118,6 +120,14 @@ impl<'a> Parts<'a> {
 
     fn push(&mut self, item: Item<'a>) {
         self.len += u32::try_from(item.flat().len()).unwrap_or(u32::MAX);
+        // Words and the spaces between them as written print as one text
+        if let Item::Atom(Atom::Str(s)) = item
+            && let Some(Item::Atom(Atom::Str(last))) = self.items.last_mut()
+            && let Some(joined) = join_in_source(self.source, last, s)
+        {
+            *last = joined;
+            return;
+        }
         self.items.push(item);
     }
 
@@ -160,6 +170,11 @@ impl<'a> Parts<'a> {
     }
 
     pub fn write_fill(self, f: &mut MarkdownFormatter<'_, 'a>) {
+        // One line of text: a fill with no separator and no line break decides nothing
+        if self.items.iter().all(|item| matches!(item, Item::Atom(Atom::Str(_)))) {
+            write_atoms(&self.items, f);
+            return;
+        }
         let mut fill = f.fill();
         let mut sep = Sep::Line;
         let mut run_start = 0;
@@ -179,6 +194,27 @@ impl<'a> Parts<'a> {
         }
         fill.finish();
     }
+}
+
+/// `a` and `b` as one slice of `source`, when `b` follows `a` there,
+/// and the joined text prints and measures exactly as the two did.
+///
+/// The width: an ASCII character other than a keycap base (`#`, `*`, a digit) on either side of the boundary
+/// ends every Unicode width sequence, so the widths add up.
+/// A host escapes each text on its own (markdown-in-js doubles the `\`s before a backtick, `${` in a template),
+/// so a `\` or `$` never ends the first.
+fn join_in_source<'a>(source: &'a str, a: &str, b: &str) -> Option<&'a str> {
+    let start = a.as_ptr().addr().checked_sub(source.as_ptr().addr())?;
+    let end = start + a.len();
+    if b.as_ptr().addr() != source.as_ptr().addr() + end {
+        return None;
+    }
+    let (&last, &first) = (a.as_bytes().last()?, b.as_bytes().first()?);
+    let ends_sequence = |byte: u8| byte.is_ascii() && !matches!(byte, b'#' | b'*' | b'0'..=b'9');
+    if !(ends_sequence(last) || ends_sequence(first)) || matches!(last, b'\\' | b'$') {
+        return None;
+    }
+    source.get(start..end + b.len())
 }
 
 fn write_atoms<'a>(items: &[Item<'a>], f: &mut MarkdownFormatter<'_, 'a>) {

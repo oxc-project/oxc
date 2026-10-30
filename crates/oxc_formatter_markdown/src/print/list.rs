@@ -102,7 +102,9 @@ fn write_list_item<'a>(
     loose: bool,
     f: &mut MarkdownFormatter<'_, 'a>,
 ) {
-    write!(f, token(checkbox));
+    if !checkbox.is_empty() {
+        write!(f, token(checkbox));
+    }
 
     // Non-first children (and a first child that is a list) sit `tabWidth - prefix` further in,
     // capped at 3 (4+ would read as indented code).
@@ -147,7 +149,11 @@ fn write_list_item<'a>(
         if i == 0 && !matches!(child, Block::List(_)) {
             write!(f, space_align(checkbox.len(), &body));
         } else {
-            write!(f, [token(&"   "[..alignment]), space_align(alignment, &body)]);
+            // Every block starts with a text, which prints the pending indention an empty token would
+            if alignment > 0 {
+                write!(f, token(&"   "[..alignment]));
+            }
+            write!(f, space_align(alignment, &body));
         }
     }
 }
