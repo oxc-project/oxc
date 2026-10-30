@@ -12,6 +12,7 @@ use oxc_graphql_parser::ast::{
     FieldDefinition, FragmentDefinition, Name, OperationDefinition, OperationType,
     RootOperationTypeDefinition, SchemaDefinition, SchemaExtension, StringValue,
 };
+use oxc_span::Span;
 
 use crate::comments::{flush_trailing_comment_before, flush_trailing_inside_comments};
 
@@ -476,25 +477,24 @@ fn write_union_like<'a>(
 fn write_field_definition<'a>(field: &'a FieldDefinition<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     common::write_description(field.description.as_deref(), f);
     let ty = field.ty.as_ref().and_then(|ty| common::verbatim_type_span(ty, f));
-    if field.arguments.is_some()
-        || !common::write_verbatim_colon_pair(to_span(field.name.span), ty, f)
-    {
-        common::write_name(&field.name, f);
-        write_arguments_definition(field.arguments.as_ref(), f);
-        // The `:` has no node; scan from the `)` (or the name without arguments)
-        let colon_from =
-            field.arguments.as_ref().map_or(to_span(field.name.span).end, |a| to_span(a.span).end);
-        // `): Type` likewise, unless a comment is pending for the type's own claim
-        if let Some(slice) = common::verbatim_colon_slice(colon_from, colon_from, ty, f)
-            && f.context().comments().peek().is_none_or(|c| c.end > colon_from)
-        {
-            write!(f, text(slice));
-        } else {
-            flush_trailing_before_literal(colon_from, f);
-            write!(f, ": ");
-            if let Some(ty) = field.ty.as_ref() {
-                common::write_type(ty, f);
-            }
+    // The `:` has no node; it follows the `)` (or the name without arguments)
+    let head = match field.arguments.as_ref() {
+        Some(arguments) => {
+            common::write_name(&field.name, f);
+            write_arguments_definition(Some(arguments), f);
+            Span::empty(to_span(arguments.span).end)
+        }
+        None => to_span(field.name.span),
+    };
+    // `name: Type`, or `): Type` after the arguments
+    if !common::write_verbatim_colon_pair(head, ty, f) {
+        if field.arguments.is_none() {
+            common::write_name(&field.name, f);
+        }
+        flush_trailing_before_literal(head.end, f);
+        write!(f, ": ");
+        if let Some(ty) = field.ty.as_ref() {
+            common::write_type(ty, f);
         }
     }
     common::write_directives(&field.directives, DirectivesStyle::Attached, f);

@@ -7,7 +7,7 @@ use oxc_formatter_core::{
     builders::{group, soft_block_indent, soft_block_indent_with_maybe_space, text},
     write,
 };
-use oxc_graphql_parser::ast::{ListValue, ObjectValue, Value};
+use oxc_graphql_parser::ast::{ListValue, Name, ObjectValue, Value};
 use oxc_span::Span;
 
 use crate::comments::{flush_leading_comments, flush_trailing_inside_comments};
@@ -42,11 +42,29 @@ pub(super) fn verbatim_value_span(value: &Value<'_>) -> Option<Span> {
         }
         Value::String(sv) => string::is_verbatim(sv),
         Value::Variable(variable) => {
-            common::verbatim_sigil_span(variable.span, 1, &variable.name).is_some()
+            common::verbatim_sigil_span(variable.span, "$", &variable.name).is_some()
         }
         Value::List(_) | Value::Object(_) | Value::Missing(_) => false,
     };
     verbatim.then(|| to_span(value.span()))
+}
+
+/// `name: value` of an argument or an object field, one source slice when it reads as printed.
+pub(super) fn write_name_value<'a>(
+    name: &Name<'a>,
+    value: Option<&'a Value<'a>>,
+    f: &mut GraphqlFormatter<'_, 'a>,
+) {
+    let name_span = to_span(name.span);
+    if common::write_verbatim_colon_pair(name_span, value.and_then(verbatim_value_span), f) {
+        return;
+    }
+    common::write_name(name, f);
+    flush_trailing_before_literal(name_span.end, f);
+    write!(f, ": ");
+    if let Some(value) = value {
+        write_value(value, f);
+    }
 }
 
 fn write_list_value<'a>(list: &'a ListValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
@@ -86,17 +104,7 @@ fn write_object_value<'a>(object: &'a ObjectValue<'a>, f: &mut GraphqlFormatter<
     let bracket_spacing = f.context().options().bracket_spacing.value();
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end = write_sequence(f, fields, SeparatorKind::CommaSoftline, false, |i, f| {
-            let field = &fields[i];
-            let value = field.value.as_ref().and_then(verbatim_value_span);
-            if common::write_verbatim_colon_pair(to_span(field.name.span), value, f) {
-                return;
-            }
-            common::write_name(&field.name, f);
-            flush_trailing_before_literal(to_span(field.name.span).end, f);
-            write!(f, ": ");
-            if let Some(v) = field.value.as_ref() {
-                write_value(v, f);
-            }
+            write_name_value(&fields[i].name, fields[i].value.as_ref(), f);
         });
         if let Some(last_end) = last_end {
             flush_trailing_inside_comments(last_end, r_curly, f);

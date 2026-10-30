@@ -22,9 +22,7 @@ pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormat
     let raw = sv.raw;
     if let Some(body) = block_string_body(raw) {
         write_block_string(body, f);
-    } else if let Some(body) = regular_string_body(raw)
-        && body.contains('\\')
-    {
+    } else if let Some(body) = escaped_string_body(raw) {
         write_escaped_string(body, f);
     } else {
         // No escapes: the body cannot contain `"` or raw line terminators either,
@@ -36,16 +34,16 @@ pub(super) fn write_string_value<'a>(sv: &StringValue<'a>, f: &mut GraphqlFormat
 
 /// Whether [write_string_value] prints `sv` as its raw source text.
 pub(super) fn is_verbatim(sv: &StringValue<'_>) -> bool {
-    block_string_body(sv.raw).is_none()
-        && regular_string_body(sv.raw).is_none_or(|body| !body.contains('\\'))
+    block_string_body(sv.raw).is_none() && escaped_string_body(sv.raw).is_none()
 }
 
 fn block_string_body(raw: &str) -> Option<&str> {
     raw.strip_prefix("\"\"\"").and_then(|r| r.strip_suffix("\"\"\""))
 }
 
-fn regular_string_body(raw: &str) -> Option<&str> {
-    raw.strip_prefix('"').and_then(|r| r.strip_suffix('"'))
+/// The body of a regular string with escapes.
+fn escaped_string_body(raw: &str) -> Option<&str> {
+    raw.strip_prefix('"').and_then(|r| r.strip_suffix('"')).filter(|body| body.contains('\\'))
 }
 
 /// Block string: cook per the GraphQL `BlockStringValue` algorithm, re-escape `"""`,
