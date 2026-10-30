@@ -193,6 +193,11 @@ pub fn flush_leading_comments(value_start: u32, f: &mut YamlFormatter<'_, '_>) {
     write_leading_comments(leading, value_start, f);
 }
 
+/// Is there any pending comment ending at or before `bound` (e.g. a leading comment of a value)?
+pub fn has_pending_comment_before(bound: u32, f: &YamlFormatter<'_, '_>) -> bool {
+    f.context().comments().peek().is_some_and(|c| c.span.end <= bound)
+}
+
 /// The next pending comment when it sits on the same line after `pos`
 /// (nothing but spaces/tabs between), without consuming it.
 pub fn pending_same_line_comment(pos: u32, f: &YamlFormatter<'_, '_>) -> Option<SourceComment> {
