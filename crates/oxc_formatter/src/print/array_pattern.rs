@@ -11,7 +11,7 @@ use crate::{
     write,
 };
 
-use super::FormatWrite;
+use super::{FormatWrite, array_like::ArrayLike};
 
 struct FormatArrayPattern<'a, 'b>(&'b AstNode<'b, 'a, ArrayPattern<'a>>);
 
@@ -30,6 +30,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
         if self.elements.is_empty() && self.rest.is_none() {
             write!(f, [format_dangling_comments(self.span()).with_soft_block_indent()]);
         } else {
+            let should_expand = ArrayLike::ArrayPattern(self.0).should_wrap(f);
+
             write!(
                 f,
                 group(&soft_block_indent(&format_with(|f| {
@@ -46,6 +48,7 @@ impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayPattern<'a, '_> {
                         write!(f, [has_element.then_some(soft_line_break_or_space()), rest]);
                     }
                 })))
+                .should_expand(should_expand)
             );
         }
 

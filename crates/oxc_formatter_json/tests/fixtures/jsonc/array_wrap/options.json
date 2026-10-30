@@ -1,0 +1,4 @@
+[
+  { "variant": "jsonc", "arrayWrap": { "linePattern": "2", "wrapThreshold": 3 } },
+  { "variant": "jsonc", "trailingComma": "none", "arrayWrap": { "linePattern": "2", "wrapThreshold": 3 } }
+]

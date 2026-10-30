@@ -1,11 +1,12 @@
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 use oxc_formatter_json::{
-    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
+    ArrayExpand, ArrayLinePattern, BracketSpacing, Expand, JsonFormatOptions, JsonVariant,
+    QuoteProps, TrailingCommas,
 };
 
 use super::super::oxfmtrc::{
-    FormatConfig, ObjectWrapConfig, QuotePropsConfig, SortPackageJsonConfig,
-    SortPackageJsonUserConfig, TrailingCommaConfig,
+    ArrayWrapConfig, ArrayWrapMode, FormatConfig, ObjectWrapConfig, QuotePropsConfig,
+    SortPackageJsonConfig, SortPackageJsonUserConfig, TrailingCommaConfig,
 };
 
 /// Convert `FormatConfig` into `JsonFormatOptions` for `oxc_formatter_json`.
@@ -13,11 +14,12 @@ use super::super::oxfmtrc::{
 /// Most JSON-specific output options are fixed by [`oxc_formatter_json::JsonVariant`].
 ///
 /// NOTE: Pure field translation:
-/// `core` comes pre-validated from the config-resolution gate (`validate()`), so this cannot fail.
+/// `core` and `array_line_pattern` come pre-validated from the config-resolution gate (`validate()`), so this cannot fail.
 pub fn to_oxc_formatter_json(
     config: &FormatConfig,
     core_options: CoreFormatOptions,
     variant: JsonVariant,
+    array_line_pattern: Option<Vec<u32>>,
 ) -> JsonFormatOptions {
     let mut options = JsonFormatOptions { variant, ..JsonFormatOptions::default() };
     options.apply_core(core_options);
@@ -53,6 +55,22 @@ pub fn to_oxc_formatter_json(
             QuotePropsConfig::Preserve => QuoteProps::Preserve,
         };
     }
+
+    // Below are our own extensions
+
+    // arrayWrap: "auto" | "preserve" | "collapse" | { wrapThreshold?, linePattern? }
+    if let Some(array_wrap) = &config.array_wrap {
+        options.array_expand = match array_wrap {
+            ArrayWrapConfig::Mode(ArrayWrapMode::Auto) => ArrayExpand::Auto,
+            ArrayWrapConfig::Mode(ArrayWrapMode::Preserve) => ArrayExpand::Preserve,
+            ArrayWrapConfig::Mode(ArrayWrapMode::Collapse) => ArrayExpand::Never,
+            // A pattern without a threshold applies to arrays kept expanded by preserve
+            ArrayWrapConfig::Options(options) => options
+                .wrap_threshold
+                .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold),
+        };
+    }
+    options.array_line_pattern = array_line_pattern.and_then(ArrayLinePattern::new);
 
     options
 }

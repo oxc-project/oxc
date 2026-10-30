@@ -188,6 +188,8 @@ pub struct OxcFormatterOptions {
     pub bracket_same_line: Option<bool>,
     /// Object wrapping style: "preserve" | "collapse" | "always" (default: "preserve")
     pub object_wrap: Option<String>,
+    /// Array wrapping style: "auto" | "preserve" | "collapse" (default: "auto")
+    pub array_wrap: Option<String>,
     /// Put each attribute on its own line (default: false)
     pub single_attribute_per_line: Option<bool>,
     /// Where to print operators when binary expressions wrap lines: "start" | "end" (default: "end")

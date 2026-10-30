@@ -2,8 +2,8 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter_json::{
-    BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas, format,
-    parse_for_format,
+    ArrayExpand, ArrayLinePattern, BracketSpacing, Expand, JsonFormatOptions, JsonVariant,
+    QuoteProps, TrailingCommas, format, parse_for_format,
 };
 use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
@@ -72,6 +72,34 @@ impl FixtureFormatter for JsonHarness {
                     };
                 }
             }
+            // NOTE: Not a Prettier option
+            "arrayWrap" => {
+                if let Some(s) = value.as_str() {
+                    options.array_expand = match s {
+                        "auto" => ArrayExpand::Auto,
+                        "preserve" => ArrayExpand::Preserve,
+                        "collapse" => ArrayExpand::Never,
+                        _ => options.array_expand,
+                    };
+                } else if let Some(object) = value.as_object() {
+                    options.array_expand = object
+                        .get("wrapThreshold")
+                        .and_then(OptionValue::as_u64)
+                        .and_then(|threshold| u32::try_from(threshold).ok())
+                        .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold);
+                    options.array_line_pattern = object
+                        .get("linePattern")
+                        .and_then(OptionValue::as_str)
+                        .and_then(|pattern| {
+                            pattern
+                                .split_whitespace()
+                                .map(str::parse)
+                                .collect::<Result<_, _>>()
+                                .ok()
+                        })
+                        .and_then(ArrayLinePattern::new);
+                }
+            }
             _ => return false,
         }
         true
@@ -79,7 +107,7 @@ impl FixtureFormatter for JsonHarness {
 
     fn format(source: &str, _path: &Path, options: &Self::Options) -> String {
         let allocator = Allocator::default();
-        format(&allocator, source, *options)
+        format(&allocator, source, options.clone())
             .expect("format should succeed")
             .print()
             .expect("print should succeed")
@@ -88,7 +116,7 @@ impl FixtureFormatter for JsonHarness {
 
     fn fingerprint(source: &str, _path: &Path, options: &Self::Options) -> Fingerprint {
         let allocator = Allocator::default();
-        let parsed = parse_for_format(&allocator, source, *options).expect("source should parse");
+        let parsed = parse_for_format(&allocator, source, options).expect("source should parse");
         Fingerprint { comments: parsed.comments.len() }
     }
 }
@@ -121,7 +149,10 @@ fn invalid_json_is_err() {
         // Unary other than `+` / `-` before a number, `Infinity` or `NaN`
         for source in ["!true", "typeof Infinity", "-true", "-undefined", "-(-1)", "+ +1"] {
             let allocator = Allocator::default();
-            assert!(format(&allocator, source, options).is_err(), "{variant:?}: {source:?}");
+            assert!(
+                format(&allocator, source, options.clone()).is_err(),
+                "{variant:?}: {source:?}"
+            );
         }
     }
 }
