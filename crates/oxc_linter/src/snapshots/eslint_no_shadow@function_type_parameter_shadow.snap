@@ -1,0 +1,111 @@
+---
+source: crates/oxc_linter/src/tester.rs
+---
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; declare function f<T>(x: T): void;
+   ·      ┬                         ┬
+   ·      │                         ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; type F = <T>(x: T) => void;
+   ·      ┬                ┬
+   ·      │                ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; interface I { m<T>(x: T): void; }
+   ·      ┬                      ┬
+   ·      │                      ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; interface I { <T>(x: T): void; }
+   ·      ┬                     ┬
+   ·      │                     ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; interface I { new <T>(x: T): object; }
+   ·      ┬                         ┬
+   ·      │                         ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; type F = new <T>(x: T) => object;
+   ·      ┬                    ┬
+   ·      │                    ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; declare class C { m<T>(x: T): void; }
+   ·      ┬                          ┬
+   ·      │                          ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:11]
+ 1 │ interface T {} type F = <T>(x: T) => void;
+   ·           ┬              ┬
+   ·           │              ╰── 'T' is declared here
+   ·           ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:8]
+ 1 │ type F<T> = <T>(x: T) => void;
+   ·        ┬     ┬
+   ·        │     ╰── 'T' is declared here
+   ·        ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; type F = <T>(x: T) => void;
+   ·      ┬                ┬
+   ·      │                ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'x' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:7]
+ 1 │ const x = 1; type F = (x: string) => void;
+   ·       ┬                ┬
+   ·       │                ╰── 'x' is declared here
+   ·       ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'x' to avoid shadowing the variable from the outer scope.
+
+  ⚠ eslint(no-shadow): 'T' is already declared in the upper scope.
+   ╭─[no_shadow.tsx:1:6]
+ 1 │ type T = 1; type F = (T: string) => void;
+   ·      ┬                ┬
+   ·      │                ╰── 'T' is declared here
+   ·      ╰── shadowed declaration is here
+   ╰────
+  help: Consider renaming 'T' to avoid shadowing the variable from the outer scope.
