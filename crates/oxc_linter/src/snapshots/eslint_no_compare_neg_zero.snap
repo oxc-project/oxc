@@ -92,3 +92,17 @@ source: crates/oxc_linter/src/tester.rs
    · ────────
    ╰────
   help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+
+  ⚠ eslint(no-compare-neg-zero): Do not use the === operator to compare against -0.
+   ╭─[no_compare_neg_zero.tsx:1:1]
+ 1 │ -0 === -0
+   · ─────────
+   ╰────
+  help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases
+
+  ⚠ eslint(no-compare-neg-zero): Do not use the < operator to compare against -0.
+   ╭─[no_compare_neg_zero.tsx:1:1]
+ 1 │ (-0 as number) < (-0 satisfies number)
+   · ──────────────────────────────────────
+   ╰────
+  help: Use Object.is(x, -0) to test equality with -0 and use 0 for other cases

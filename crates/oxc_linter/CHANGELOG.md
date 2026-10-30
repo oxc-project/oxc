@@ -4,6 +4,25 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [1.90.0] - 2026-10-27
+
+### 🚀 Features
+
+- d1b00f4 linter/typescript: Implement no-unsafe-enum-assignment rule (#28117) (camc314)
+- 165c91f linter/typescript/await-thenable: Support `allowMixedPromiseArrays` option (#28116) (camc314)
+
+### 🐛 Bug Fixes
+
+- 7f3c908 linter/eslint/array-callback-return: Check callbacks passed with extra arguments (#28133) (sarankumar)
+- 53be530 linter: Filter by type aware rules when looking up tsgolint rule severity (#28138) (NavpreetSSidhu)
+- e0f8937 react-compiler: Compile a `try` whose `catch` is unreachable instead of panicking (#28066) (Dunqing)
+- f5b625f linter/eslint/no-useless-concat: See through parenthesized expressions (#27984) (Rahul Kashyap)
+- 4629bb2 linter/jest/no-conditional-expect: Check function expression callbacks (#28055) (camc314)
+- 5c84098 semantic,linter: Report names with lone surrogates in enum and lint checks (#27991) (Dunqing)
+- f3705a9 linter/eslint/prefer-const: Skip fixers if any declarator is reassigned (#28008) (Prince Jain)
+- 4c0fa90 minifier,linter: Keep `delete` of constant members and later JSX keys (#27990) (Dunqing)
+- 0298062 linter/arrow-body-style: Keep type assertions when adding a block body (#27978) (Yan Almeida)
+
 ## [1.89.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

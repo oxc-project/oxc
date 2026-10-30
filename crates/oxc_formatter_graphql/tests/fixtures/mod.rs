@@ -2,10 +2,7 @@ use std::path::Path;
 
 use oxc_allocator::Allocator;
 use oxc_formatter_graphql::{GraphqlFormatOptions, format, parse_for_format};
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
-
-mod options;
-use options::apply_graphql_options;
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
 struct GraphqlHarness;
 
@@ -19,10 +16,8 @@ impl FixtureFormatter for GraphqlHarness {
     type Options = GraphqlFormatOptions;
     type Fingerprint = Fingerprint;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = GraphqlFormatOptions::default();
-        apply_graphql_options(&mut options, json);
-        options
+    fn apply_option(_options: &mut Self::Options, _key: &str, _value: &OptionValue) -> bool {
+        false
     }
 
     fn format(source: &str, _path: &Path, options: &Self::Options) -> String {

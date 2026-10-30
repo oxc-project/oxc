@@ -350,7 +350,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize) -> bool {
 
 /// A keyword that is a whole type by itself, as any, null or this, and takes no type arguments.
 #[rustfmt::skip::macros(matches_tk)]
-pub(crate) fn keyword_type(kw: u8) -> bool {
+pub fn keyword_type(kw: u8) -> bool {
     matches_tk!(
         kw,
         KwAny | KwBigInt | KwBoolean | KwNever | KwNumber | KwObject | KwString | KwSymbol
@@ -374,7 +374,7 @@ fn type_illegal_kind(k: u8) -> bool {
 /// position: a balanced list whose contents are types and whose closer is followed by a token that
 /// cannot start an expression. In a type, every `<` after a name opens a list, so a `<` this
 /// accepts opens one in any context.
-pub(crate) fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
+pub fn type_args_at(tokens: &Tokens, lt: usize) -> bool {
     let closers = tokens.closers;
     if let Some(yes) = closers.get(lt).and_then(|r| r.args) {
         return yes;

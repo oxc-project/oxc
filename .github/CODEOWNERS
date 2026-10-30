@@ -31,6 +31,7 @@ pnpm-lock.yaml
 /crates/oxc_formatter_core @leaysgur
 /crates/oxc_formatter_json @leaysgur
 /crates/oxc_formatter_graphql @leaysgur
+/crates/oxc_formatter_htmlish @leaysgur
 /crates/oxc_formatter_css @leaysgur
 /crates/oxc_formatter_yaml @leaysgur
 /crates/oxc_formatter_markdown @leaysgur

@@ -1,10 +1,11 @@
 use oxc_ast::{AstKind, ast::Expression};
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     utils::{PossibleJestNode, parse_expect_and_typeof_vitest_fn_call},
 };
@@ -57,17 +58,18 @@ declare_oxc_lint!(
 );
 
 impl Rule for PreferStrictBooleanMatchers {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_vitest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        let AstKind::CallExpression(call_expr) = possible_vitest_node.node.kind() else {
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
 
+        let Some(possible_vitest_node) =
+            PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         let Some(vitest_expect_fn_call) =
-            parse_expect_and_typeof_vitest_fn_call(call_expr, possible_vitest_node, ctx)
+            parse_expect_and_typeof_vitest_fn_call(call_expr, &possible_vitest_node, ctx)
         else {
             return;
         };
@@ -98,6 +100,10 @@ impl Rule for PreferStrictBooleanMatchers {
             let call_name = if is_cmp_mem_expr { "\"toBe\"]" } else { "toBe" };
             fixer.replace(span, format!("{call_name}({value})"))
         });
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 

@@ -4,6 +4,13 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.156.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- f4dac9e semantic: Separate hoisted vars from block type bindings (#27936) (limadog9)
+- 5c84098 semantic,linter: Report names with lone surrogates in enum and lint checks (#27991) (Dunqing)
+
 ## [0.155.0] - 2026-10-19
 
 ### 💥 BREAKING CHANGES

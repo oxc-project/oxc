@@ -5,5 +5,6 @@ pub struct CodeActionParams {
     pub uri: Uri,
     pub range: Range,
     pub context: CodeActionContext,
-    pub is_open_document: bool,
+    /// Version of the open document, `None` when the document is not open.
+    pub document_version: Option<i32>,
 }

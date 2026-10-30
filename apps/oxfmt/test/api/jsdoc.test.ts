@@ -22,7 +22,7 @@ describe("JSDoc", () => {
  * \`\`\`
  *
  * \`\`\`html
- * <div class="body"  >   </   div>
+ * <div class="body"  >   </div>
  * \`\`\`
  */
 `.trim();
@@ -181,9 +181,8 @@ describe("JSDoc", () => {
     );
   });
 
-  it("should pass the fence's effective width to the Prettier string path too", async () => {
-    // Same 93-char boundary as the native case, exercised through the Prettier
-    // branch (html fences go to Prettier with `printWidth` injected):
+  it("should pass the fence's effective width to an html fence too", async () => {
+    // Same 93-char boundary as the native case, exercised through an html fence:
     // the 96-char element must break, the 93-char one must not.
     const source = `
 /**

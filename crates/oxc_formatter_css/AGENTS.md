@@ -25,7 +25,7 @@ The fork adds:
   - the css-in-js parse mode, enabled only by `format_to_ir`
   - Rationale, gating and per-position coverage: see "css-in-js specifics" below
 - Bug fixes toward the reference compilers for valid CSS/SCSS/Less syntax `raffia` miss parses or rejects;
-- The acceptance line: the fork's README "Acceptance", see "Acceptance" below
+- The acceptance line: see "Acceptance" below
 
 Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
 
@@ -36,7 +36,7 @@ Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `
 The shared policy applies; CSS specifics:
 
 - `oxc-css-parser` is error-tolerant via `parser.recoverable_errors()`, but any parse error still bails out
-- `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (README "Acceptance")
+- `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (oxc-css-parser AGENTS.md "Acceptance")
   - `format_to_ir()` parses a fragment (`CssRoot::Fragment`, the parser's `block_contents`): the root follows the rules inside a block, so it is a statement
     - `` css`display: flex;` `` is the dominant css-in-js shape, and MDN-style property snippets in Markdown code blocks
   - Less parses and formats it: less.js accepts it at parse time and fails only at eval
@@ -129,7 +129,7 @@ FM behavior is verified through oxfmt; this crate carries no dispatcher-wired FM
 
 ### Acceptance
 
-What the parser takes in is the oxc-css-parser's README "Acceptance": one grammar owner per variant.
+What the parser takes in is oxc-css-parser AGENTS.md "Acceptance": one grammar owner per variant.
 Never "postcss keeps the bytes", never "Prettier prints it".
 
 The formatter's side: postcss gives Prettier statements whose selectors, values and params are strings, and Prettier re-tokenizes those with its own sub-parsers and word rules.
@@ -200,17 +200,6 @@ NOT covered: `$(var)` interpolation inside values and selectors (`.icon.is-$(net
 ### Fixture tests
 
 The harness snapshots both `--print-width 80` and `100`; verify fixtures at both widths.
-
-### Prettier conformance
-
-Every failing file is accounted for by a DIVERGENCES.md entry's `Conformance:` line, except these unclassified hunks:
-
-- `css/parens/parens.css` (~93% match) token-soup math spacing; besides the css-glued-minus-paren / unary-plus-glue hunks:
-  - normalization-direction difference (open question, low value)
-    - a math operator adjacent to a function/paren boundary gets uniform `op` spacing from Prettier regardless of source (`round(1.5)+2` -> `round(1.5) + 2`, calc `*`/`/`);
-    - ours preserves the source spacing per token (`prop13/14`, `prop57-60`, `prop73/74`)
-  - within-a-word runs (`1+1+1+1`, `calc(100%+2px)`) match
-    - glued number-ish runs are ONE postcss word and print raw (see `is_word_glued_number`)
 
 ### Manual checks
 

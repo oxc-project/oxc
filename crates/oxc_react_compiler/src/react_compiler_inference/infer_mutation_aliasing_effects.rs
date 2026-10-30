@@ -115,8 +115,10 @@ pub fn infer_mutation_aliasing_effects<'a>(
         initial_state.define(self_binding.identifier, value_id);
     }
 
+    let mutable_param_kind =
+        AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) };
     let param_kind: AbstractValue = if is_function_expression {
-        AbstractValue { kind: ValueKind::Mutable, reason: ReasonSet::single(ValueReason::Other) }
+        mutable_param_kind
     } else {
         AbstractValue {
             kind: ValueKind::Frozen,
@@ -131,26 +133,20 @@ pub fn infer_mutation_aliasing_effects<'a>(
             infer_param(&func.params[0], &mut initial_state, &param_kind);
         }
         if params_len > 1 {
-            let ref_place = match &func.params[1] {
-                ParamPattern::Place(p) => p,
-                ParamPattern::Spread(s) => &s.place,
-            };
-            let value_id = ValueId::new();
-            initial_state.initialize(
-                value_id,
-                AbstractValue {
-                    kind: ValueKind::Mutable,
-                    reason: ReasonSet::single(ValueReason::Other),
-                },
-            );
-            initial_state.define(ref_place.identifier, value_id);
+            infer_param(&func.params[1], &mut initial_state, &mutable_param_kind);
         }
     } else {
         for param in &func.params {
             infer_param(param, &mut initial_state, &param_kind);
         }
     }
-
+    infer_context_parameter_bindings(
+        func,
+        env,
+        &mut initial_state,
+        &param_kind,
+        &mutable_param_kind,
+    );
     let mut queued_states: FxIndexMap<BlockId, InferenceState> = FxIndexMap::default();
 
     // Queue helper
@@ -1205,6 +1201,59 @@ fn infer_param(param: &ParamPattern, state: &mut InferenceState, param_kind: &Ab
     let value_id = ValueId::new();
     state.initialize(value_id, *param_kind);
     state.define(place.identifier, value_id);
+}
+
+/// Non-plain parameters use temporary entries in `func.params`; their named bindings
+/// are initialized by stores in the parameter prologue. Seed the declaration identifiers
+/// behind those SSA stores before interpreting the prologue so earlier default-value
+/// closures can read or update a later parameter binding.
+fn infer_context_parameter_bindings(
+    func: &HirFunction,
+    env: &Environment,
+    state: &mut InferenceState,
+    param_kind: &AbstractValue,
+    mutable_param_kind: &AbstractValue,
+) {
+    for (_, block) in &func.body.blocks {
+        for &instruction_id in &block.instructions {
+            let lvalue = match &func.instructions[instruction_id.index()].value {
+                InstructionValue::StoreContext { lvalue, .. }
+                | InstructionValue::StoreLocal { lvalue, .. } => lvalue,
+                _ => continue,
+            };
+            let declaration_id = env.identifiers[lvalue.place.identifier].declaration_id;
+            let identifier = IdentifierId::from_usize(declaration_id.index());
+            if !matches!(env.identifiers[identifier].name, Some(IdentifierName::Named(_))) {
+                continue;
+            }
+            let parameter_kind = env.identifiers[identifier].span.and_then(|binding_span| {
+                func.params.iter().enumerate().find_map(|(index, param)| {
+                    let parameter = match param {
+                        ParamPattern::Place(place) => place,
+                        ParamPattern::Spread(spread) => &spread.place,
+                    };
+                    env.identifiers[parameter.identifier].span.and_then(|parameter_span| {
+                        (binding_span.start >= parameter_span.start
+                            && binding_span.end <= parameter_span.end)
+                            .then_some(
+                                if func.fn_type == ReactFunctionType::Component && index == 1 {
+                                    mutable_param_kind
+                                } else {
+                                    param_kind
+                                },
+                            )
+                    })
+                })
+            });
+            if state.is_defined(identifier) {
+                continue;
+            }
+            let Some(parameter_kind) = parameter_kind else { continue };
+            let value_id = ValueId::new();
+            state.initialize(value_id, *parameter_kind);
+            state.define(identifier, value_id);
+        }
+    }
 }
 
 // =============================================================================
@@ -2394,8 +2443,8 @@ fn compute_signature_for_instruction<'a>(
             effects.push(AliasingEffect::Assign { from: *sl_value, into: sl.place });
             effects.push(AliasingEffect::Assign { from: *sl_value, into: *lvalue });
         }
-        InstructionValue::PostfixUpdate { lvalue: pf_lvalue, .. }
-        | InstructionValue::PrefixUpdate { lvalue: pf_lvalue, .. } => {
+        InstructionValue::PostfixUpdateLocal { lvalue: pf_lvalue, .. }
+        | InstructionValue::PrefixUpdateLocal { lvalue: pf_lvalue, .. } => {
             effects.push(AliasingEffect::Create {
                 into: *lvalue,
                 value: ValueKind::Primitive,
@@ -2406,6 +2455,15 @@ fn compute_signature_for_instruction<'a>(
                 value: ValueKind::Primitive,
                 reason: ValueReason::Other,
             });
+        }
+        InstructionValue::PostfixUpdateContext { value: pf_value, .. }
+        | InstructionValue::PrefixUpdateContext { value: pf_value, .. } => {
+            effects.push(AliasingEffect::Create {
+                into: *lvalue,
+                value: ValueKind::Primitive,
+                reason: ValueReason::Other,
+            });
+            effects.push(AliasingEffect::Mutate { value: *pf_value, reason: None });
         }
         InstructionValue::StoreGlobal { name, value: sg_value, .. } => {
             let variable = format!("`{}`", name);

@@ -549,14 +549,14 @@ mod tests_slow_path_validation {
         let resolver = resolver_from_json(serde_json::json!({
             "printWidth": 80,
             "overrides": [
-                { "files": ["*.html"], "options": { "printWidth": 1000 } }
+                { "files": ["*.vue"], "options": { "printWidth": 1000 } }
             ]
         }));
 
         // Slow path triggers because the override matches.
-        let path = Path::new("index.html");
+        let path = Path::new("App.vue");
         let err =
-            resolver.resolve(path, FormatStrategy::Prettier(PrettierLanguage::Html)).unwrap_err();
+            resolver.resolve(path, FormatStrategy::Prettier(PrettierLanguage::Vue)).unwrap_err();
         assert!(err.contains("printWidth"), "expected printWidth validation error, got: {err}");
     }
 

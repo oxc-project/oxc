@@ -4,6 +4,33 @@ All notable changes to this package will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0).
 
+## [0.75.0] - 2026-10-27
+
+### 🐛 Bug Fixes
+
+- 5042019 formatter: Keep fill layout for array with comment after [ (#28170) (leaysgur)
+- 9d37ff6 formatter: Use position-based comment checks for concise arrays (#28169) (leaysgur)
+- 016c4a2 formatter: Keep a comment before `}` inside a JSX spread child (#28103) (vidigoat)
+- 190bb1e formatter: Keep parens around an instantiation expression ending an operand through any tight parent (#28168) (leaysgur)
+- a5314a1 formatter: Keep `;` before `in` and `instanceof` class members (#28166) (leaysgur)
+- 3a56e7c formatter: Keep closing HTML comments at the start of a line (#28064) (Cameron)
+- 5f1fd3d formatter: Measure width heuristics by display width (#28098) (leaysgur)
+- a5a52cf formatter: Keep parens around private `in` expressions (#28096) (leaysgur)
+- 999496e formatter: Measure a short key by its display width (#28026) (vidigoat)
+- 7e9aa44 formatter: Keep parens around a looser operand of an instantiation expression (#28025) (vidigoat)
+- 6912d1f formatter: Keep an arrow signature that exactly fills the line for any body (#27989) (leaysgur)
+
+### ⚡ Performance
+
+- 7948f0b formatter_core: Shrink `FormatElement` to 16B (#28012) (leaysgur)
+- 788af22 formatter: Keep `AstNode`s on the stack, and only chain links in the arena (#27963) (leaysgur)
+
+### 📚 Documentation
+
+- 068a8ea formatter: Fix up wording (#28167) (leaysgur)
+- db55461 formatter_core: Document text width divergence (#28095) (leaysgur)
+- 880d229 formatter: Add vitest-test-call to known divergences (#28006) (leaysgur)
+
 ## [0.74.0] - 2026-10-19
 
 ### 🐛 Bug Fixes

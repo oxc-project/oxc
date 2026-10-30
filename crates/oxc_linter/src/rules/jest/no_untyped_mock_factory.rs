@@ -4,6 +4,7 @@ use oxc_ast::{
 };
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_str::JSStr;
 
@@ -92,22 +93,18 @@ declare_oxc_lint!(
 );
 
 impl Rule for NoUntypedMockFactory {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        Self::run(jest_node, ctx);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        Self::run(node, ctx);
     }
 
     fn should_run(&self, ctx: &crate::context::ContextHost) -> bool {
-        ctx.source_type().is_typescript()
+        ctx.source_type().is_typescript() && ctx.frameworks().is_test()
     }
 }
 
 impl NoUntypedMockFactory {
-    fn run<'a>(possible_jest_node: &PossibleJestNode<'a, '_>, ctx: &LintContext<'a>) {
-        let node = possible_jest_node.node;
+    fn run<'a>(node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
@@ -128,6 +125,10 @@ impl NoUntypedMockFactory {
         };
 
         if call_expr.type_arguments.is_some() || Self::has_return_type(factory_node) {
+            return;
+        }
+
+        if PossibleJestNode::from_call_expression(node, call_expr, ctx).is_none() {
             return;
         }
 

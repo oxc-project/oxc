@@ -238,10 +238,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Tell lexer to read a regex
-    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags, bool) {
-        let (token, pattern_end, flags, flags_error) = self.lexer.next_regex(self.cur_kind());
+    pub(crate) fn read_regex(&mut self) -> (u32, RegExpFlags) {
+        let (token, pattern_end, flags) = self.lexer.next_regex(self.cur_kind());
         self.token = token;
-        (pattern_end, flags, flags_error)
+        (pattern_end, flags)
     }
 
     /// Tell lexer to read a template substitution tail
@@ -408,7 +408,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     #[expect(clippy::inline_always)]
     #[inline(always)]
-    fn parse_normal_list_into<F, T>(
+    pub(crate) fn parse_normal_list_into<F, T>(
         &mut self,
         list: &mut ArenaVec<'a, T>,
         close: Kind,
@@ -469,13 +469,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         close: Kind,
         separator: Kind,
         opening_span: Span,
-        parse_element: F,
+        mut parse_element: F,
     ) -> (ArenaVec<'a, T>, Option<u32>)
     where
         F: FnMut(&mut Self) -> T,
     {
-        let mut list = ArenaVec::new_in(self);
-        let trailing_separator = self.parse_delimited_list_into(
+        if self.at(close) || self.has_fatal_error() {
+            return (ArenaVec::new_in(self), None);
+        }
+        let first = parse_element(self);
+        if self.at(close) || self.has_fatal_error() {
+            let mut list = ArenaVec::with_capacity_in(1, self);
+            list.push(first);
+            return (list, None);
+        }
+        let mut list = ArenaVec::with_capacity_in(2, self);
+        list.push(first);
+        let trailing_separator = self.parse_delimited_list_rest(
             &mut list,
             close,
             separator,
@@ -503,6 +513,20 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         let element = parse_element(self);
         list.push(element);
+        self.parse_delimited_list_rest(list, close, separator, opening_span, parse_element)
+    }
+
+    pub(crate) fn parse_delimited_list_rest<F, T>(
+        &mut self,
+        list: &mut ArenaVec<'a, T>,
+        close: Kind,
+        separator: Kind,
+        opening_span: Span,
+        mut parse_element: F,
+    ) -> Option<u32>
+    where
+        F: FnMut(&mut Self) -> T,
+    {
         loop {
             let kind = self.cur_kind();
             if kind == close || self.has_fatal_error() {

@@ -447,6 +447,9 @@ impl<'a> Comments<'a> {
 
         let mut comment_index = 0;
         let mut type_cast_comment = None;
+        // The following node starts at or after the enclosing end (spans are half-open),
+        // so every comment inside the enclosing node is trailing.
+        let following_is_outside = following_span_start >= enclosing_span.end;
 
         while let Some(comment) = comments.get(comment_index) {
             // Stop if the comment:
@@ -456,9 +459,8 @@ impl<'a> Comments<'a> {
                 break;
             }
 
-            if following_span_start > enclosing_span.end && comment.span.end <= enclosing_span.end {
-                // Do nothing; this comment is inside the enclosing node, and the following node is outside the enclosing node.
-                // So it must be a trailing comment, continue checking the next comment.
+            if following_is_outside {
+                // Inside the enclosing node by the check above, so continue checking the next comment.
             } else if self.is_type_cast_comment(comment) {
                 // `A || /* @type {Number} */ (B)`:
                 //      ^^^^^^^^^^^^^^^^^^^^^^^^

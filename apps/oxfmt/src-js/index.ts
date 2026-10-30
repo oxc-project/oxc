@@ -1,11 +1,6 @@
 // napi-JS `oxfmt` API entry point
 
-import {
-  formatFile,
-  formatEmbeddedCode,
-  formatEmbeddedDoc,
-  sortTailwindClasses,
-} from "./libs/apis";
+import { formatFile, formatEmbeddedDoc, sortTailwindClasses } from "./libs/apis";
 import { toFormatFileResult, toNullable } from "./libs/napi-callbacks";
 // Types are auto-generated from the JSON Schema.
 import type {
@@ -95,7 +90,6 @@ export async function format(fileName: string, sourceText: string, options?: For
     sourceText,
     options ?? {},
     (options, code) => toFormatFileResult(formatFile({ options, code })),
-    (options, code) => toNullable(formatEmbeddedCode({ options, code })),
     (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );
@@ -117,7 +111,6 @@ export async function jsTextToDoc(
     oxfmtPluginOptionsJson,
     parentContext,
     () => toFormatFileResult(Promise.reject("formatFile is unavailable for jsTextToDoc")),
-    (options, code) => toNullable(formatEmbeddedCode({ options, code })),
     (options, code) => toNullable(formatEmbeddedDoc({ options, code })),
     (options, classes) => toNullable(sortTailwindClasses({ options, classes })),
   );

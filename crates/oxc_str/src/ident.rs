@@ -581,7 +581,8 @@ pub type ArenaIdentHashSet<'alloc> =
 #[macro_export]
 macro_rules! static_ident {
     ($s:literal) => {
-        $crate::__internal::new_const_ident($s)
+        // `const { ... }` block guarantees evaluation at compile time
+        const { $crate::__internal::new_const_ident($s) }
     };
 }
 

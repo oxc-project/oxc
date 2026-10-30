@@ -68,11 +68,11 @@ impl Rule for NoVar {
             let var_keyword_span = Span::sized(var_start, 3);
             ctx.diagnostic_with_fix(no_var_diagnostic(var_keyword_span), |fixer| {
                 let parent_span = ctx.nodes().parent_kind(node.id()).span();
-                if dec.declarations.iter().any(|decl| {
-                    decl.id.get_binding_identifiers().iter().any(|ident| {
-                        !ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
-                            || ctx.symbol_references(ident.symbol_id()).any(|id| {
-                                !parent_span
+                if !dec.declarations.iter().all(|decl| {
+                    decl.id.all_binding_identifiers(&mut |ident| {
+                        ctx.scoping().symbol_redeclarations(ident.symbol_id()).is_empty()
+                            && ctx.symbol_references(ident.symbol_id()).all(|id| {
+                                parent_span
                                     .contains_inclusive(ctx.nodes().get_node(id.node_id()).span())
                             })
                     })

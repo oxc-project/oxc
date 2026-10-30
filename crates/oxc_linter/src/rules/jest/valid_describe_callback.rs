@@ -1,10 +1,11 @@
+use oxc_ast::AstKind;
 use oxc_macros::declare_oxc_lint;
+use oxc_semantic::AstNode;
 
 use crate::{
-    context::LintContext,
+    context::{ContextHost, LintContext},
     rule::Rule,
     rules::shared::valid_describe_callback::{ValidDescribeCallbackOptions, run},
-    utils::PossibleJestNode,
 };
 
 #[derive(Debug, Default, Clone)]
@@ -54,12 +55,13 @@ declare_oxc_lint!(
 );
 
 impl Rule for ValidDescribeCallback {
-    fn run_on_jest_node<'a, 'c>(
-        &self,
-        jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        run(jest_node, ctx, ValidDescribeCallbackOptions::JEST);
+    fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::CallExpression(_) = node.kind() else { return };
+        run(node, ctx, ValidDescribeCallbackOptions::JEST);
+    }
+
+    fn should_run(&self, ctx: &ContextHost) -> bool {
+        ctx.frameworks().is_test()
     }
 }
 

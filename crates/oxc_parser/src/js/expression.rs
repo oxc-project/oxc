@@ -77,10 +77,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// `PrimaryExpression`: Identifier Reference
     pub(crate) fn parse_identifier_expression(&mut self) -> Expression<'a> {
+        if self.at(Kind::Ident) {
+            let (span, name) = self.parse_identifier_kind(Kind::Ident);
+            return Expression::Identifier(IdentifierReference::boxed(span, name, self));
+        }
         let ident = self.parse_identifier_reference();
         Expression::Identifier(self.alloc(ident))
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    pub(super) fn parse_plain_identifier_expression(&mut self) -> Expression<'a> {
+        debug_assert!(self.at(Kind::Ident));
+        let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        Expression::Identifier(self.alloc(IdentifierReference::new(span, name, self)))
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_identifier_reference(&mut self) -> IdentifierReference<'a> {
         // allow `await` and `yield`, let semantic analysis report error
         let kind = self.cur_kind();
@@ -111,7 +125,25 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                 self.unexpected()
             };
         }
-        self.check_identifier(cur, self.ctx);
+        self.parse_known_binding_identifier()
+    }
+
+    /// Parse a token already known to be a `BindingIdentifier`.
+    /// Membership alone does not rule out the `Await` and `Yield` early errors.
+    #[inline]
+    pub(crate) fn parse_known_binding_identifier(&mut self) -> BindingIdentifier<'a> {
+        let kind = self.cur_kind();
+        debug_assert!(kind.is_binding_identifier());
+        self.check_identifier(kind, self.ctx);
+        let (span, name) = self.parse_identifier_kind(Kind::Ident);
+        BindingIdentifier::new(span, name, self)
+    }
+
+    /// Ordinary identifiers cannot trigger the parser's `Await`/`Yield` checks.
+    /// Strict-mode binding restrictions are still checked by semantic analysis.
+    #[inline]
+    pub(crate) fn parse_plain_binding_identifier(&mut self) -> BindingIdentifier<'a> {
+        debug_assert!(self.at(Kind::Ident));
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         BindingIdentifier::new(span, name, self)
     }
@@ -121,15 +153,24 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !kind.is_label_identifier(self.ctx.has_yield(), self.ctx.has_await()) {
             return self.unexpected();
         }
-        self.check_identifier(kind, self.ctx);
+        // The grammar predicate already excludes `yield`/`await` in those contexts.
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         LabelIdentifier::new(span, name, self)
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_identifier_name(&mut self) -> IdentifierName<'a> {
         if !self.cur_kind().is_identifier_name() {
             return self.unexpected();
         }
+        self.parse_known_identifier_name()
+    }
+
+    /// Parse an `IdentifierName` whose token kind has already been checked.
+    #[inline]
+    pub(crate) fn parse_known_identifier_name(&mut self) -> IdentifierName<'a> {
+        debug_assert!(self.cur_kind().is_identifier_name());
         let (span, name) = self.parse_identifier_kind(Kind::Ident);
         IdentifierName::new(span, name, self)
     }
@@ -209,9 +250,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
         self.expect(Kind::In);
         let right = self.parse_binary_expression_or_higher(Precedence::Compare);
-        if let Expression::PrivateInExpression(private_in_expr) = right {
-            return self.fatal_error(diagnostics::private_in_private(private_in_expr.span));
-        }
+        // The precedence check rejects an unparenthesized private-in on the right.
+        // A parenthesized one is valid, even when its parentheses are omitted from the AST.
         Expression::new_private_in_expression(self.end_span(lhs_start), left, right, self)
     }
 
@@ -230,18 +270,28 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     `RegularExpressionLiteral`
     ///     `TemplateLiteral`[?Yield, ?Await, ~Tagged]
     ///     `CoverParenthesizedExpressionAndArrowParameterList`[?Yield, ?Await]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_primary_expression(&mut self) -> Expression<'a> {
-        // FunctionExpression, GeneratorExpression
-        // AsyncFunctionExpression, AsyncGeneratorExpression
-        if self.at_function_with_async() {
-            let start = self.cur_start();
-            let r#async = self.eat(Kind::Async);
-            return self.parse_function_expression(start, r#async);
+        // Ordinary identifiers do not need async-function or contextual-keyword disambiguation.
+        if self.at(Kind::Ident) {
+            return self.parse_identifier_expression();
         }
-
         let kind = self.cur_kind();
         match kind {
-            Kind::Ident => self.parse_identifier_expression(), // fast path, keywords are checked at the end
+            // Fast path: `Ident` is already classified as a valid identifier reference.
+            Kind::Ident => self.parse_plain_identifier_expression(),
+            Kind::Function => self.parse_function_expression(self.cur_start(), false),
+            Kind::Async
+                if {
+                    let token = self.lexer.peek_token();
+                    token.kind() == Kind::Function && !token.is_on_new_line()
+                } =>
+            {
+                let start = self.cur_start();
+                self.bump_any();
+                self.parse_function_expression(start, true)
+            }
             // ArrayLiteral
             Kind::LBrack => self.parse_array_expression(),
             // ObjectLiteral
@@ -281,13 +331,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
         self.bump_any(); // `bump` `(`
         let expr_start = self.cur_start();
-        let (mut expressions, comma_start) = self.context(Context::In, Context::Decorator, |p| {
-            p.parse_delimited_list(
+        let (expression, comma_start) = self.context(Context::In, Context::Decorator, |p| {
+            if p.at(Kind::RParen) || p.has_fatal_error() {
+                return (None, None);
+            }
+            let first = p.parse_assignment_expression_or_higher();
+            // A single parenthesized expression does not need a temporary arena vector.
+            if p.at(Kind::RParen) || p.has_fatal_error() {
+                return (Some(first), None);
+            }
+            let mut expressions = ArenaVec::with_capacity_in(2, p);
+            expressions.push(first);
+            let comma_start = p.parse_delimited_list_rest(
+                &mut expressions,
                 Kind::RParen,
                 Kind::Comma,
                 opening_span,
                 Self::parse_assignment_expression_or_higher,
-            )
+            );
+            let expression = if expressions.len() == 1 {
+                expressions.remove(0)
+            } else {
+                Expression::new_sequence_expression(p.end_span(expr_start), expressions, p)
+            };
+            (Some(expression), comma_start)
         });
 
         if let Some(comma_start) = comma_start {
@@ -298,21 +365,12 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             return self.fatal_error(error);
         }
 
-        if expressions.is_empty() {
+        let Some(mut expression) = expression else {
             self.expect(Kind::RParen);
             let error = diagnostics::empty_parenthesized_expression(self.end_span(start));
             return self.fatal_error(error);
-        }
-
-        let expr_span = self.end_span(expr_start);
-        self.expect(Kind::RParen);
-
-        // ParenthesizedExpression is from acorn --preserveParens
-        let mut expression = if expressions.len() == 1 {
-            expressions.remove(0)
-        } else {
-            Expression::new_sequence_expression(expr_span, expressions, self)
         };
+        self.expect(Kind::RParen);
 
         match &mut expression {
             Expression::ArrowFunctionExpression(arrow_expr) => {
@@ -352,7 +410,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let kind = self.cur_kind();
         match kind {
             Kind::Str => {
-                let lit = self.parse_literal_string();
+                let lit = self.parse_known_literal_string();
                 Expression::StringLiteral(self.alloc(lit))
             }
             Kind::True | Kind::False => Expression::BooleanLiteral(self.parse_literal_boolean()),
@@ -367,11 +425,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     pub(crate) fn parse_literal_boolean(&mut self) -> ArenaBox<'a, BooleanLiteral> {
         let start = self.cur_start();
-        let value = match self.cur_kind() {
-            Kind::True => true,
-            Kind::False => false,
-            _ => return self.unexpected(),
-        };
+        let kind = self.cur_kind();
+        debug_assert!(matches!(kind, Kind::True | Kind::False));
+        let value = kind == Kind::True;
         self.bump_any();
         BooleanLiteral::boxed(self.end_span(start), value, self)
     }
@@ -441,7 +497,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     pub(crate) fn parse_literal_regexp(&mut self) -> ArenaBox<'a, RegExpLiteral<'a>> {
-        let (pattern_end, flags, flags_error) = self.read_regex();
+        let (pattern_end, flags) = self.read_regex();
         if !self.lexer.errors.is_empty() {
             return self.unexpected();
         }
@@ -453,16 +509,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let raw = self.cur_src();
         self.bump_any();
 
-        // Parse pattern if options is enabled and also flags are valid
+        // Invalid or duplicate flags produce lexer errors, which were rejected above.
         #[cfg(feature = "regular_expression")]
-        let pattern = if self.options.parse_regular_expression && !flags_error {
+        let pattern = if self.options.parse_regular_expression {
             self.parse_regex_pattern(pattern_start, pattern_text, flags_start, flags_text)
         } else {
             None
         };
         #[cfg(not(feature = "regular_expression"))]
         let pattern = {
-            let _ = (flags_text, flags_error);
+            let _ = flags_text;
             None
         };
 
@@ -504,6 +560,13 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if !self.at(Kind::Str) {
             return self.unexpected();
         }
+        self.parse_known_literal_string()
+    }
+
+    /// Parse a string literal whose `Str` token kind has already been checked.
+    #[inline]
+    pub(crate) fn parse_known_literal_string(&mut self) -> StringLiteral<'a> {
+        debug_assert!(self.at(Kind::Str));
         let span = self.cur_token().span();
         let raw = Str::from(self.cur_src());
         let value = self.cur_js_string();
@@ -517,9 +580,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ///     [ `ElementList`[?Yield, ?Await] ]
     ///     [ `ElementList`[?Yield, ?Await] , Elisionopt ]
     pub(crate) fn parse_array_expression(&mut self) -> Expression<'a> {
+        debug_assert!(self.at(Kind::LBrack));
         let start = self.cur_start();
         let opening_span = self.cur_token().span();
-        self.expect(Kind::LBrack);
+        self.advance(Kind::LBrack);
         let (elements, comma_start) = self.context_add(Context::In, |p| {
             p.parse_delimited_list(
                 Kind::RBrack,
@@ -647,7 +711,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let cooked = if self.cur_token().escaped() {
             // `cooked = None` when template literal has invalid escape sequence
             let cooked = self.cur_template_string();
-            if cooked.is_some() && raw.contains('\r') {
+            // TRV normalizes line endings even when an invalid escape makes TV undefined.
+            if raw.contains('\r') {
                 raw =
                     Str::from_str_in(&raw.cow_replace("\r\n", "\n").cow_replace('\r', "\n"), self);
             }
@@ -746,11 +811,18 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         self.with_pure_comments(Self::parse_lhs_expression_or_higher_impl)
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_lhs_expression_or_higher_impl(&mut self) -> Expression<'a> {
         let start = self.cur_start();
-        let mut in_optional_chain = false;
         // `MemberExpression`
         let primary = self.parse_primary_expression();
+        self.parse_lhs_expression_rest(start, primary)
+    }
+
+    #[inline]
+    fn parse_lhs_expression_rest(&mut self, start: u32, primary: Expression<'a>) -> Expression<'a> {
+        let mut in_optional_chain = false;
         let member_expression = self.parse_member_expression_rest(
             start,
             primary,
@@ -781,6 +853,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         }
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn with_pure_comments(
         &mut self,
         parse: impl FnOnce(&mut Self) -> Expression<'a>,
@@ -851,6 +925,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// parse rhs of a member expression, starting from lhs
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_member_expression_rest(
         &mut self,
         lhs_start: u32,
@@ -954,6 +1030,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
     /// Section 13.3 `MemberExpression`
     /// static member `a.b`
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_static_member_expression(
         &mut self,
         lhs_start: u32,
@@ -1075,9 +1153,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let span = self.end_span(start);
 
-        if optional {
-            self.error(diagnostics::new_optional_chain(span));
-        }
+        // Member parsing above disallows optional chains; `?.` is rejected before arguments.
+        debug_assert!(!optional);
 
         Expression::new_new_expression(span, callee, type_arguments, arguments, self)
     }
@@ -1159,6 +1236,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         lhs
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_call_arguments(
         &mut self,
         lhs_start: u32,
@@ -1198,6 +1277,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 13.4 Update Expression
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_update_expression(&mut self, lhs_start: u32) -> Expression<'a> {
         let kind = self.cur_kind();
         // ++ -- prefix update expressions
@@ -1221,6 +1302,16 @@ impl<'a, C: Config> ParserImpl<'a, C> {
 
         let start = self.cur_start();
         let lhs = self.parse_lhs_expression_or_higher();
+        self.parse_postfix_update_expression(start, lhs)
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn parse_postfix_update_expression(
+        &mut self,
+        start: u32,
+        lhs: Expression<'a>,
+    ) -> Expression<'a> {
         // ++ -- postfix update expressions
         let post_kind = self.cur_kind();
         if post_kind.is_update_operator() && !self.cur_token().is_on_new_line() {
@@ -1239,6 +1330,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     }
 
     /// Section 13.5 Unary Expression
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_unary_expression_or_higher(&mut self, lhs_start: u32) -> Expression<'a> {
         match self.cur_kind() {
             // `UnaryExpression : (delete | void | typeof | + | - | ~ | !) UnaryExpression`
@@ -1296,6 +1389,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         Expression::new_unary_expression(self.end_span(start), operator, argument, self)
     }
 
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     pub(crate) fn parse_binary_expression_or_higher(
         &mut self,
         lhs_precedence: Precedence,
@@ -1303,14 +1398,62 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs_start = self.cur_start();
 
         let lhs_parenthesized = self.at(Kind::LParen);
-        // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
-        let lhs = if self.ctx.has_in() && self.at(Kind::PrivateIdentifier) {
+        let kind = self.cur_kind();
+        let lhs = if kind == Kind::Ident {
+            // Identifiers cannot start a unary or prefix-update expression. Parse their
+            // suffixes directly, keeping pure annotations inside the postfix update.
+            let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+            let primary = self.parse_identifier_expression();
+            self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
+        } else if self.ctx.has_in() && kind == Kind::PrivateIdentifier {
+            // [+In] PrivateIdentifier in ShiftExpression[?Yield, ?Await]
             self.parse_private_in_expression(lhs_start, lhs_precedence)
-        } else {
+        } else if kind.is_unary_operator()
+            || kind.is_update_operator()
+            || matches!(kind, Kind::Await | Kind::LAngle)
+        {
             self.parse_unary_expression_or_higher(lhs_start)
+        } else {
+            // Most operands start with a primary expression. Skip unary/update dispatch.
+            let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+            let primary = self.parse_primary_expression();
+            self.parse_primary_expression_rest(lhs_start, primary, pure_comments)
         };
 
+        if kind_to_precedence(self.cur_kind()).is_none() {
+            return lhs;
+        }
         self.parse_binary_expression_rest(lhs_start, lhs, lhs_parenthesized, lhs_precedence)
+    }
+
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
+    fn parse_primary_expression_rest(
+        &mut self,
+        start: u32,
+        primary: Expression<'a>,
+        pure_comments: Option<(u32, NonZeroU32)>,
+    ) -> Expression<'a> {
+        let mut lhs = if matches!(
+            self.cur_kind(),
+            Kind::Dot
+                | Kind::LBrack
+                | Kind::LParen
+                | Kind::QuestionDot
+                | Kind::NoSubstitutionTemplate
+                | Kind::TemplateHead
+                | Kind::Bang
+                | Kind::LAngle
+                | Kind::ShiftLeft
+        ) {
+            self.parse_lhs_expression_rest(start, primary)
+        } else {
+            primary
+        };
+        if let Some(comments) = pure_comments {
+            self.apply_pure_comments_to_call(comments, &mut lhs);
+        }
+        self.parse_postfix_update_expression(start, lhs)
     }
 
     /// Section 13.6 - 13.13 Binary Expression
@@ -1413,7 +1556,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 Expression::new_logical_expression(span, lhs, op, rhs, self)
-            } else if kind.is_binary_operator() {
+            } else {
+                // The precedence table contains only binary/logical operators and `as`/`satisfies`.
+                // The other categories have already been handled above.
+                debug_assert!(kind.is_binary_operator());
                 let span = self.end_span(lhs_start);
                 let op = map_binary_operator(kind);
                 if op == BinaryOperator::Exponential && !lhs_parenthesized {
@@ -1437,8 +1583,6 @@ impl<'a, C: Config> ParserImpl<'a, C> {
                     }
                 }
                 Expression::new_binary_expression(span, lhs, op, rhs, self)
-            } else {
-                break;
             };
             last_operand_precedence = Some(left_precedence);
         }
@@ -1450,6 +1594,8 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     /// `ConditionalExpression`[In, Yield, Await] :
     ///     `ShortCircuitExpression`[?In, ?Yield, ?Await]
     ///     `ShortCircuitExpression`[?In, ?Yield, ?Await] ? `AssignmentExpression`[+In, ?Yield, ?Await] : `AssignmentExpression`[?In, ?Yield, ?Await]
+    #[expect(clippy::inline_always)]
+    #[inline(always)]
     fn parse_conditional_expression_rest(
         &mut self,
         lhs_start: u32,
@@ -1490,38 +1636,94 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         let no_side_effects_comments =
             self.lexer.trivia_builder.previous_token_no_side_effects_comments();
-        // [+Yield] YieldExpression
-        if self.is_yield_expression() {
-            return self.parse_yield_expression();
-        }
-        // `() => {}`, `(x) => {}`
-        if let Some(mut arrow_expr) = self
-            .try_parse_parenthesized_arrow_function_expression(allow_return_type_in_arrow_function)
-        {
-            if let Some(comments) = no_side_effects_comments
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-            {
-                func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
-            }
-            return arrow_expr;
-        }
-        // `async x => {}`
-        if let Some(mut arrow_expr) = self
-            .try_parse_async_simple_arrow_function_expression(allow_return_type_in_arrow_function)
-        {
-            if let Some(comments) = no_side_effects_comments
-                && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-            {
-                func.pure = true;
-                self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
-            }
-            return arrow_expr;
-        }
-
         let start = self.cur_start();
         let lhs_parenthesized = self.at(Kind::LParen);
-        let lhs = self.parse_binary_expression_or_higher(Precedence::Comma);
+        let kind = self.cur_kind();
+        let lhs = if matches!(kind, Kind::Ident | Kind::This) || kind.is_literal() {
+            let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
+            let primary = match kind {
+                Kind::Ident => {
+                    let (span, name) = self.parse_identifier_kind(Kind::Ident);
+                    // Only allocate an identifier reference once the following token
+                    // establishes that this is an expression rather than an arrow head.
+                    if self.at(Kind::Arrow) {
+                        let binding = BindingIdentifier::new(span, name, self);
+                        let mut arrow_expr = self.parse_simple_arrow_function_expression(
+                            start,
+                            binding,
+                            /* async */ false,
+                            allow_return_type_in_arrow_function,
+                        );
+                        if let Some(comments) = no_side_effects_comments
+                            && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                        {
+                            func.pure = true;
+                            self.lexer
+                                .trivia_builder
+                                .mark_no_side_effects_comments_applied(comments);
+                        }
+                        return arrow_expr;
+                    }
+                    Expression::new_identifier(span, name, self)
+                }
+                Kind::This => self.parse_this_expression(),
+                _ => self.parse_literal_expression(),
+            };
+            // The leaf is complete when the next token is an expression delimiter.
+            if matches!(
+                self.cur_kind(),
+                Kind::Comma
+                    | Kind::RParen
+                    | Kind::RBrack
+                    | Kind::RCurly
+                    | Kind::Semicolon
+                    | Kind::Colon
+            ) {
+                return primary;
+            }
+            let lhs = self.parse_primary_expression_rest(start, primary, pure_comments);
+            if kind_to_precedence(self.cur_kind()).is_none() {
+                lhs
+            } else {
+                self.parse_binary_expression_rest(start, lhs, false, Precedence::Comma)
+            }
+        } else {
+            // [+Yield] YieldExpression
+            if self.is_yield_expression() {
+                return self.parse_yield_expression();
+            }
+            // `() => {}`, `(x) => {}`
+            if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Async)
+                && let Some(mut arrow_expr) = self
+                    .try_parse_parenthesized_arrow_function_expression(
+                        allow_return_type_in_arrow_function,
+                    )
+            {
+                if let Some(comments) = no_side_effects_comments
+                    && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                {
+                    func.pure = true;
+                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                }
+                return arrow_expr;
+            }
+            // `async x => {}`
+            if self.at(Kind::Async)
+                && let Some(mut arrow_expr) = self.try_parse_async_simple_arrow_function_expression(
+                    allow_return_type_in_arrow_function,
+                )
+            {
+                if let Some(comments) = no_side_effects_comments
+                    && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                {
+                    func.pure = true;
+                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
+                }
+                return arrow_expr;
+            }
+
+            self.parse_binary_expression_or_higher(Precedence::Comma)
+        };
         let lhs_parenthesized_span = lhs_parenthesized.then(|| self.end_span(start));
         let kind = self.cur_kind();
 
@@ -1529,9 +1731,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if kind == Kind::Arrow
             && let Expression::Identifier(ident) = &lhs
         {
+            let binding = BindingIdentifier::new(ident.span, ident.name, self);
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 start,
-                ident,
+                binding,
                 /* async */ false,
                 allow_return_type_in_arrow_function,
             );
@@ -1553,8 +1756,11 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             );
         }
 
-        let mut expr =
-            self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function);
+        let mut expr = if self.at(Kind::Question) {
+            self.parse_conditional_expression_rest(start, lhs, allow_return_type_in_arrow_function)
+        } else {
+            lhs
+        };
 
         if let Some(comments) = no_side_effects_comments {
             self.apply_no_side_effects_comments_to_function(comments, &mut expr);

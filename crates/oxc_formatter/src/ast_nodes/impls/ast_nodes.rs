@@ -46,6 +46,26 @@ impl<'parent, 'a> AstNodes<'parent, 'a> {
         }
     }
 
+    /// Check if the passing span is the object of a member expression: `a.b`, `a[b]`, or `a.#b`
+    pub fn is_member_object_span(&self, span: Span) -> bool {
+        match self {
+            AstNodes::StaticMemberExpression(expr) => expr.object.span() == span,
+            AstNodes::ComputedMemberExpression(expr) => expr.object.span() == span,
+            AstNodes::PrivateFieldExpression(expr) => expr.object.span() == span,
+            _ => false,
+        }
+    }
+
+    /// Check if this is a member expression: `a.b`, `a[b]`, or `a.#b`
+    pub fn is_member_expression(&self) -> bool {
+        matches!(
+            self,
+            AstNodes::StaticMemberExpression(_)
+                | AstNodes::ComputedMemberExpression(_)
+                | AstNodes::PrivateFieldExpression(_)
+        )
+    }
+
     /// Check if this is a binary-like expression: `a || b`, `a + b`, or `#x in b`
     pub fn is_binary_like(&self) -> bool {
         matches!(

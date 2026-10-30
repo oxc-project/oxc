@@ -1,20 +1,23 @@
-use crate::{error::DiagCode, lanes::Lanes, token::tk};
+use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear, bm_clear_range, bm_set},
     bytes::{is_digit, is_id_start, is_word},
     disambiguate::{not_operator_position, prev_sig},
-    find::{
-        find_jsx_tag, find_jsx_text, find_line_terminator, find_opener, find_opener_jsx5,
-        find_opener_jsx7, find_opener6, find1, find2,
-    },
+    find::find,
+    lanes::Lanes,
     token_view,
 };
 
-use super::common::{
-    html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
-    lex_html_open_comment, lex_line_comment, lex_slash, lex_string, lex_template_segment,
-    skip_unicode_brace_escape,
+use super::{
+    comments::{
+        html_close_comment_at, html_open_comment_at, lex_block_comment, lex_html_close_comment,
+        lex_html_open_comment, lex_line_comment,
+    },
+    common::{
+        OPENER_BYTES, OPENER8_BYTES, find_line_terminator, lex_slash, lex_string,
+        lex_template_segment, skip_unicode_brace_escape,
+    },
 };
 
 mod angle_brackets;
@@ -23,6 +26,18 @@ mod names;
 use angle_brackets::jsx_over_type_params;
 use hyphens::jsx_glue_hyphens;
 use names::{jsx_name_end, jsx_names_equal_fast, jsx_skip_trivia, jsx_skip_trivia_fast};
+
+/// Ordered for speed, pairing `'` with `/` (see `any_of` in `find/avx2.rs`).
+const OPENER_JSX5_BYTES: [u8; 5] = [b'"', b'`', b'\'', b'/', b'<'];
+
+/// Ordered for speed, pairing `'` with `/` (see `any_of` in `find/avx2.rs`).
+const OPENER_JSX7_BYTES: [u8; 7] = [b'"', b'`', b'\'', b'/', b'{', b'}', b'<'];
+
+/// Ordered for speed, pairing `'` with `/` and `<` with `>` (see `any_of` in `find/avx2.rs`).
+const JSX_TAG_BYTES: [u8; 6] = [b'"', b'{', b'\'', b'/', b'<', b'>'];
+
+/// Ordered for speed, pairing `<` with `>` (see `any_of` in `find/avx2.rs`).
+const JSX_TEXT_BYTES: [u8; 4] = [b'<', b'>', b'{', b'}'];
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum JMode {
@@ -103,10 +118,10 @@ pub(super) unsafe fn carve_jsx(
                 // The finders that also stop at `>` are only switched on by a `<!--` in a
                 // script (see `html_close`).
                 let s = match (in_brace, html_close) {
-                    (true, false) => find_opener_jsx7(src, n, i),
-                    (true, true) => find_opener6(src, n, i),
-                    (false, false) => find_opener_jsx5(src, n, i),
-                    (false, true) => find_opener(src, n, i),
+                    (true, false) => find(src, n, i, OPENER_JSX7_BYTES),
+                    (true, true) => find(src, n, i, OPENER8_BYTES),
+                    (false, false) => find(src, n, i, OPENER_JSX5_BYTES),
+                    (false, true) => find(src, n, i, OPENER_BYTES),
                 };
                 if s >= n {
                     break;
@@ -278,7 +293,7 @@ pub(super) unsafe fn carve_jsx(
                 }
             }
             JMode::Tag => {
-                let s = find_jsx_tag(src, n, i);
+                let s = find(src, n, i, JSX_TAG_BYTES);
                 if s >= n {
                     break;
                 }
@@ -334,9 +349,9 @@ pub(super) unsafe fn carve_jsx(
                     let mut sub: Vec<u32> = Vec::new();
                     while p < n && depth != 0 {
                         let q = if !sub.is_empty() {
-                            find_opener6(src, n, p)
+                            find(src, n, p, OPENER8_BYTES)
                         } else {
-                            find_opener(src, n, p)
+                            find(src, n, p, OPENER_BYTES)
                         };
                         if q >= n {
                             p = n;
@@ -375,7 +390,7 @@ pub(super) unsafe fn carve_jsx(
                                     sub.push(0);
                                 }
                             }
-                            // Braces only reach here through `find_opener6`,
+                            // Braces only reach here through the OPENER8_BYTES search,
                             // which is only selected while a substitution is
                             // open - the guards say so rather than leaving it
                             // to the finder choice.
@@ -433,7 +448,7 @@ pub(super) unsafe fn carve_jsx(
                 match c {
                     b'"' | b'\'' => {
                         // JSX attribute string: no escapes, ends at next quote.
-                        let e = find1(src, n, s + 1, c);
+                        let e = find(src, n, s + 1, [c]);
                         if e >= n {
                             lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedString);
                         }
@@ -525,7 +540,7 @@ pub(super) unsafe fn carve_jsx(
                 }
             }
             JMode::Text => {
-                let s = find_jsx_text(src, n, i);
+                let s = find(src, n, i, JSX_TEXT_BYTES);
                 let runend = if s < n { s } else { n };
                 if runend > text_start {
                     // One JTEXT token for the run; neutralize its start byte
@@ -585,7 +600,7 @@ pub(super) unsafe fn carve_jsx(
                         }
                         let mut gp = tpos + 1;
                         loop {
-                            gp = find2(src, n, gp, b'>', b'/');
+                            gp = find(src, n, gp, [b'>', b'/']);
                             if gp >= n || *src.add(gp) == b'>' {
                                 break;
                             }

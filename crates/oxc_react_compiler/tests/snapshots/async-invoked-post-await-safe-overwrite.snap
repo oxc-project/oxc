@@ -1,0 +1,18 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-invoked-post-await-safe-overwrite.js
+---
+function Component(t0) {
+	let count = 0;
+	let cb = () => count++;
+	const run = async () => {
+		await 0;
+		cb();
+	};
+	run();
+	cb = _temp;
+	return null;
+}
+function _temp() {
+	return null;
+}

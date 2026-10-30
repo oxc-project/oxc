@@ -28,8 +28,10 @@ function useFoo() {
 	let t0;
 	if ($[0] === Symbol.for("react.memo_cache_sentinel")) {
 		t0 = () => {
-			count.current = count.current + 1;
-			const id = count.current;
+			let t1 = count.current;
+			const t2 = t1++;
+			count.current = t1;
+			const id = t2;
 			return id;
 		};
 		$[0] = t0;
@@ -40,7 +42,10 @@ function useFoo() {
 	let t1;
 	if ($[1] === Symbol.for("react.memo_cache_sentinel")) {
 		t1 = () => {
-			const id_0 = count.current = count.current + 1;
+			let t2 = count.current;
+			const t3 = ++t2;
+			count.current = t2;
+			const id_0 = t3;
 			return id_0;
 		};
 		$[1] = t1;

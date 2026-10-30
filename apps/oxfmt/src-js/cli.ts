@@ -3,7 +3,6 @@ import {
   initExternalServices,
   disposeExternalServices,
   formatFile,
-  formatEmbeddedCode,
   formatEmbeddedDoc,
   sortTailwindClasses,
 } from "./cli/worker-proxy";
@@ -47,7 +46,6 @@ void (async () => {
     process.env.VP_VERSION ? loadVitePlusConfig : loadJsConfig,
     initExternalServices,
     formatFile,
-    formatEmbeddedCode,
     formatEmbeddedDoc,
     sortTailwindClasses,
   );

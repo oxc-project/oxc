@@ -2,6 +2,7 @@ use std::borrow::Cow;
 
 use oxc_ast::{AstKind, ast::Argument};
 use oxc_diagnostics::OxcDiagnostic;
+use oxc_semantic::AstNode;
 use oxc_span::Span;
 use oxc_str::{CompactStr, JSChar, JSStr};
 use schemars::JsonSchema;
@@ -149,17 +150,16 @@ impl PreferLowercaseTitleConfig {
         DefaultRuleConfig::<Self>::from_value(value).map(DefaultRuleConfig::into_inner)
     }
 
-    pub fn run_on_jest_node<'a, 'c>(
-        &self,
-        possible_jest_node: &PossibleJestNode<'a, 'c>,
-        ctx: &'c LintContext<'a>,
-    ) {
-        let node = possible_jest_node.node;
+    pub fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
         let AstKind::CallExpression(call_expr) = node.kind() else {
             return;
         };
+        let Some(possible_jest_node) = PossibleJestNode::from_call_expression(node, call_expr, ctx)
+        else {
+            return;
+        };
         let Some(ParsedJestFnCallNew::GeneralJest(jest_fn_call)) =
-            parse_jest_fn_call(call_expr, possible_jest_node, ctx)
+            parse_jest_fn_call(call_expr, &possible_jest_node, ctx)
         else {
             return;
         };

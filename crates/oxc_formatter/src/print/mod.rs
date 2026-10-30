@@ -144,7 +144,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, IdentifierName<'a>> {
                 | AstNodes::TSEnumMember(_)
         );
         if is_property_key_parent && f.context().is_quote_needed() {
-            let quote_str = f.options().quote_style.as_str();
+            let quote_str = f.context().string_quote_style().as_str();
             write!(f, [quote_str, text, quote_str]);
         } else {
             write!(f, text);
@@ -454,11 +454,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, AwaitExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         let format_inner = format_with(|f| write!(f, ["await", space(), self.argument()]));
 
-        let is_callee_or_object = match self.parent() {
-            AstNodes::StaticMemberExpression(_) => true,
-            AstNodes::ComputedMemberExpression(member) => member.object.span() == self.span(),
-            _ => self.parent().is_call_like_callee_span(self.span),
-        };
+        let is_callee_or_object = self.parent().is_member_object_span(self.span)
+            || self.parent().is_call_like_callee_span(self.span);
 
         if !is_callee_or_object {
             write!(f, [format_inner]);
@@ -1226,7 +1223,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, NumericLiteral<'a>> {
                 };
 
             if should_quote {
-                let quote_str = f.options().quote_style.as_str();
+                let quote_str = f.context().string_quote_style().as_str();
                 write!(f, [quote_str, text(f.allocator().alloc_str(&formatted)), quote_str]);
                 return;
             }

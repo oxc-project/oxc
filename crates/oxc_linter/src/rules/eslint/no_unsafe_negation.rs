@@ -1,4 +1,4 @@
-use oxc_ast::{AstKind, ast::Expression};
+use oxc_ast::AstKind;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_macros::declare_oxc_lint;
 use oxc_span::{GetSpan, Span};
@@ -82,35 +82,39 @@ impl Rule for NoUnsafeNegation {
     }
 
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        let AstKind::BinaryExpression(expr) = node.kind() else {
+        let AstKind::UnaryExpression(left) = node.kind() else {
             return;
         };
+        if left.operator != UnaryOperator::LogicalNot {
+            return;
+        }
+        let AstKind::BinaryExpression(expr) = ctx.nodes().parent_kind(node.id()) else {
+            return;
+        };
+        if expr.left.span() != left.span {
+            return;
+        }
 
         let should_check = expr.operator.is_relational()
             || (self.enforce_for_ordering_relations && expr.operator.is_compare());
         if should_check {
-            let Expression::UnaryExpression(left) = &expr.left else {
-                return;
-            };
-            if left.operator == UnaryOperator::LogicalNot {
-                // Diagnostic points at the unexpected negation
-                let diagnostic =
-                    no_unsafe_negation_diagnostic(expr.operator.as_str(), expr.left.span());
+            // Diagnostic points at the unexpected negation
+            let diagnostic =
+                no_unsafe_negation_diagnostic(expr.operator.as_str(), expr.left.span());
 
-                let fix_producer = |fixer: RuleFixer<'_, 'a>| {
-                    // modify `!a instance of B` to `!(a instanceof B)`
-                    let modified_code = {
-                        let left = ctx.source_range(left.argument.span());
-                        let operator = expr.operator.as_str();
-                        let right = ctx.source_range(expr.right.span());
+            let fix_producer = |fixer: RuleFixer<'_, 'a>| {
+                // modify `!a instance of B` to `!(a instanceof B)`
+                let modified_code = {
+                    let left = ctx.source_range(left.argument.span());
+                    let operator = expr.operator.as_str();
+                    let right = ctx.source_range(expr.right.span());
 
-                        format!("!({left} {operator} {right})")
-                    };
-                    fixer.replace(expr.span, modified_code)
+                    format!("!({left} {operator} {right})")
                 };
+                fixer.replace(expr.span, modified_code)
+            };
 
-                ctx.diagnostic_with_fix(diagnostic, fix_producer);
-            }
+            ctx.diagnostic_with_fix(diagnostic, fix_producer);
         }
     }
 }
@@ -124,6 +128,9 @@ fn test() {
         ("a in b === false", None),
         ("!(a in b)", None),
         ("(!a) in b", None),
+        ("a in !b", None),
+        ("(!a as boolean) in b", None),
+        ("a < !b", Some(serde_json::json!([{ "enforceForOrderingRelations": true }]))),
         ("a instanceof b", None),
         ("a instanceof b === false", None),
         ("!(a instanceof b)", None),
@@ -157,6 +164,8 @@ fn test() {
 
     let fix = vec![
         ("!a in b", "!(a in b)", None),
+        ("!a in !b", "!(a in !b)", None),
+        ("!!a in b", "!(!a in b)", None),
         ("(!a in b)", "(!(a in b))", None),
         ("!(a) in b", "!((a) in b)", None),
         ("!a instanceof b", "!(a instanceof b)", None),
