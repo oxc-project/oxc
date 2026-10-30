@@ -419,7 +419,9 @@ pub fn check_string_literal(lit: &StringLiteral, ctx: &SemanticBuilder<'_>) {
     }
     let raw = lit.span.source_text(ctx.source_text);
     let raw_len = raw.len();
-    if raw_len != lit.value.len() {
+    // Quotes contribute two bytes, and every escape contracts the cooked WTF-8 value.
+    // Equal content lengths therefore prove that there are no escapes to check.
+    if raw_len != lit.value.len() + 2 {
         if raw_len >= MIN_STRING_SIZE_FOR_BATCH_CHECK {
             let raw_bytes = raw.as_bytes();
             // Exclude the last byte (closing quote) from the search haystack.
