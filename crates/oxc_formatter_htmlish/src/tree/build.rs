@@ -384,7 +384,7 @@ impl Builder<'_> {
             }
             NodeKind::Element(el) => {
                 self_closing = closes_at_start_tag(node);
-                pre_like = is_pre_like(el);
+                pre_like = is_pre_like(el) || self.preserves_svg_text(id, el);
                 script_like = matches!(el.key, "script" | "style");
             }
             _ => {}
@@ -429,11 +429,31 @@ impl Builder<'_> {
         }
     }
 
+    /// An SVG `<text>`, or an element in one, under `xml:space="preserve"` on it or an SVG ancestor:
+    /// its whitespace renders as written (DIVERGENCES.md#svg-xml-space-preserve).
+    fn preserves_svg_text(&self, id: NodeId, el: &Element<'_>) -> bool {
+        let source = self.tree.source;
+        el.namespace == Namespace::Svg
+            && (el.key == "text" || self.in_svg_text(id))
+            && self.svg_elements(Some(id)).any(|el| {
+                el.attributes.iter().any(|attribute| {
+                    self.tree.attribute_is(attribute.name.slice(source), "xml:space")
+                        && attribute
+                            .value
+                            .is_some_and(|value| value.span.slice(source) == "preserve")
+                })
+            })
+    }
+
     /// Whether an SVG element is inside a `<text>`, whose content lays out as inline text.
     fn in_svg_text(&self, id: NodeId) -> bool {
-        std::iter::successors(self.tree.root[id].parent, |&p| self.tree.root[p].parent)
+        self.svg_elements(self.tree.root[id].parent).any(|el| el.key == "text")
+    }
+
+    /// The SVG elements from `from` up, until one that is not.
+    fn svg_elements(&self, from: Option<NodeId>) -> impl Iterator<Item = &Element<'_>> {
+        std::iter::successors(from, |&p| self.tree.root[p].parent)
             .map_while(|p| self.tree.element(p).filter(|el| el.namespace == Namespace::Svg))
-            .any(|el| el.key == "text")
     }
 
     /// Whether whitespace on one side of the node is significant, before the neighbor's side is combined in:
@@ -495,7 +515,7 @@ impl Builder<'_> {
         leading: bool,
     ) -> bool {
         let t = &self.tree;
-        let (item, parent) = (&t[id], &t[parent_id]);
+        let parent = &t[parent_id];
         let text_or_interpolation = |id: NodeId| t.is_text(id) || t.is_interpolation(id);
         let sensitive =
             if text_or_interpolation(flow_item) && neighbor.is_some_and(text_or_interpolation) {
@@ -507,8 +527,9 @@ impl Builder<'_> {
             } else if let Some(neighbor) = neighbor {
                 self.display_of(neighbor).sides_sensitive()
             } else {
+                // An HTML `pre`'s own edges, not those of all pre-like content
                 !(parent_id == NodeId::DOCUMENT
-                    || item.pre_like
+                    || t.element(id).is_some_and(is_pre_like)
                     || parent.script_like
                     || !parent.display.edges_sensitive())
             };
@@ -619,7 +640,7 @@ fn is_whitespace_text(node: &Node<'_>) -> bool {
     matches!(&node.kind, NodeKind::Text(text) if text.is_whitespace_only())
 }
 
-/// CSS `white-space: pre*`.
+/// An HTML element whose default style is `white-space: pre*`.
 fn is_pre_like(el: &Element<'_>) -> bool {
     el.namespace != Namespace::Svg
         && matches!(el.key, "pre" | "textarea" | "listing" | "plaintext" | "xmp")
