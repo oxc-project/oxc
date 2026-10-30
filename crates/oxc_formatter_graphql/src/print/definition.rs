@@ -43,7 +43,7 @@ pub(super) fn write_definition<'a>(
         Definition::ObjectType(d) => write_object_like(
             d.description.as_deref(),
             false,
-            "type",
+            "type ",
             &d.name,
             d.implements.as_ref(),
             &d.directives,
@@ -53,7 +53,7 @@ pub(super) fn write_definition<'a>(
         Definition::ObjectTypeExtension(d) => write_object_like(
             None,
             true,
-            "type",
+            "type ",
             &d.name,
             d.implements.as_ref(),
             &d.directives,
@@ -63,7 +63,7 @@ pub(super) fn write_definition<'a>(
         Definition::InterfaceType(d) => write_object_like(
             d.description.as_deref(),
             false,
-            "interface",
+            "interface ",
             &d.name,
             d.implements.as_ref(),
             &d.directives,
@@ -73,7 +73,7 @@ pub(super) fn write_definition<'a>(
         Definition::InterfaceTypeExtension(d) => write_object_like(
             None,
             true,
-            "interface",
+            "interface ",
             &d.name,
             d.implements.as_ref(),
             &d.directives,
@@ -354,7 +354,7 @@ fn write_object_like<'a>(
     if extend {
         write!(f, "extend ");
     }
-    write!(f, [keyword, space()]);
+    write!(f, keyword);
     common::write_name(name, f);
     common::write_implements_interfaces(implements, f);
     common::write_directives(directives, DirectivesStyle::Attached, f);
@@ -475,15 +475,27 @@ fn write_union_like<'a>(
 
 fn write_field_definition<'a>(field: &'a FieldDefinition<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     common::write_description(field.description.as_deref(), f);
-    common::write_name(&field.name, f);
-    write_arguments_definition(field.arguments.as_ref(), f);
-    // The `:` has no node; scan from the `)` (or the name without arguments)
-    let colon_from =
-        field.arguments.as_ref().map_or(to_span(field.name.span).end, |a| to_span(a.span).end);
-    flush_trailing_before_literal(colon_from, f);
-    write!(f, ": ");
-    if let Some(ty) = field.ty.as_ref() {
-        common::write_type(ty, f);
+    let ty = field.ty.as_ref().and_then(|ty| common::verbatim_type_span(ty, f));
+    if field.arguments.is_some()
+        || !common::write_verbatim_colon_pair(to_span(field.name.span), ty, f)
+    {
+        common::write_name(&field.name, f);
+        write_arguments_definition(field.arguments.as_ref(), f);
+        // The `:` has no node; scan from the `)` (or the name without arguments)
+        let colon_from =
+            field.arguments.as_ref().map_or(to_span(field.name.span).end, |a| to_span(a.span).end);
+        // `): Type` likewise, unless a comment is pending for the type's own claim
+        if let Some(slice) = common::verbatim_colon_slice(colon_from, colon_from, ty, f)
+            && f.context().comments().peek().is_none_or(|c| c.end > colon_from)
+        {
+            write!(f, text(slice));
+        } else {
+            flush_trailing_before_literal(colon_from, f);
+            write!(f, ": ");
+            if let Some(ty) = field.ty.as_ref() {
+                common::write_type(ty, f);
+            }
+        }
     }
     common::write_directives(&field.directives, DirectivesStyle::Attached, f);
 }

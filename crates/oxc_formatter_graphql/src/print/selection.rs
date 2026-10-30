@@ -1,12 +1,14 @@
 //! Selection set printers: fields, fragment spreads, inline fragments.
 
 use oxc_formatter_core::{
-    builders::{block_indent, group, space},
+    builders::{block_indent, group, space, text},
     write,
 };
 use oxc_graphql_parser::ast::{Field, FragmentSpread, InlineFragment, Selection, SelectionSet};
 
-use crate::comments::{flush_trailing_comment_before, flush_trailing_inside_comments};
+use crate::comments::{
+    flush_leading_comments, flush_trailing_comment_before, flush_trailing_inside_comments,
+};
 
 use super::{
     GraphqlFormatter, SeparatorKind, common,
@@ -52,13 +54,37 @@ fn write_selection<'a>(selection: &'a Selection<'a>, f: &mut GraphqlFormatter<'_
 }
 
 fn write_field<'a>(field: &'a Field<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
+    let name = to_span(field.name.span);
+    // A bare `name` (or `alias: name` reading as printed) with no comment to claim in front
+    // leaves the group nothing to break
+    if field.arguments.is_none()
+        && field.directives.is_empty()
+        && field.selection_set.is_none()
+        && f.context().comments().peek().is_none_or(|c| c.end > to_span(field.span).start)
+    {
+        match field.alias.as_ref() {
+            None => {
+                write!(f, text(field.name.value));
+                return;
+            }
+            Some(alias) => {
+                if common::write_verbatim_colon_pair(to_span(alias.span), Some(name), f) {
+                    return;
+                }
+            }
+        }
+    }
     let content = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         if let Some(alias) = field.alias.as_ref() {
-            common::write_name(alias, f);
-            flush_trailing_before_literal(to_span(alias.span).end, f);
-            write!(f, ": ");
+            if !common::write_verbatim_colon_pair(to_span(alias.span), Some(name), f) {
+                common::write_name(alias, f);
+                flush_trailing_before_literal(to_span(alias.span).end, f);
+                write!(f, ": ");
+                common::write_name(&field.name, f);
+            }
+        } else {
+            common::write_name(&field.name, f);
         }
-        common::write_name(&field.name, f);
         common::write_arguments(field.arguments.as_ref(), f);
         common::write_directives(&field.directives, DirectivesStyle::Attached, f);
         if let Some(selection_set) = field.selection_set.as_ref() {
@@ -71,8 +97,14 @@ fn write_field<'a>(field: &'a Field<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
 }
 
 fn write_fragment_spread<'a>(spread: &'a FragmentSpread<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
-    write!(f, "...");
-    common::write_name(&spread.name, f);
+    if let Some(span) = common::verbatim_sigil_span(spread.span, 3, &spread.name) {
+        // The claim the name would make, with nothing between it and the `...`
+        flush_leading_comments(span.start, f);
+        write!(f, text(f.context().source_text().text_for(&span)));
+    } else {
+        write!(f, "...");
+        common::write_name(&spread.name, f);
+    }
     common::write_arguments(spread.arguments.as_ref(), f);
     common::write_directives(&spread.directives, DirectivesStyle::Attached, f);
 }

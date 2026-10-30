@@ -8,6 +8,7 @@ use oxc_formatter_core::{
     write,
 };
 use oxc_graphql_parser::ast::{ListValue, ObjectValue, Value};
+use oxc_span::Span;
 
 use crate::comments::{flush_leading_comments, flush_trailing_inside_comments};
 
@@ -31,6 +32,21 @@ pub(super) fn write_value<'a>(value: &'a Value<'a>, f: &mut GraphqlFormatter<'_,
         Value::Object(object) => write_object_value(object, f),
         Value::Missing(_) => {}
     }
+}
+
+/// Source span of `value` when [write_value] prints it as its own source text (see `common::write_verbatim_colon_pair`).
+pub(super) fn verbatim_value_span(value: &Value<'_>) -> Option<Span> {
+    let verbatim = match value {
+        Value::Int(_) | Value::Float(_) | Value::Boolean(_) | Value::Null(_) | Value::Enum(_) => {
+            true
+        }
+        Value::String(sv) => string::is_verbatim(sv),
+        Value::Variable(variable) => {
+            common::verbatim_sigil_span(variable.span, 1, &variable.name).is_some()
+        }
+        Value::List(_) | Value::Object(_) | Value::Missing(_) => false,
+    };
+    verbatim.then(|| to_span(value.span()))
 }
 
 fn write_list_value<'a>(list: &'a ListValue<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
@@ -71,6 +87,10 @@ fn write_object_value<'a>(object: &'a ObjectValue<'a>, f: &mut GraphqlFormatter<
     let body = format_with(|f: &mut GraphqlFormatter<'_, 'a>| {
         let last_end = write_sequence(f, fields, SeparatorKind::CommaSoftline, false, |i, f| {
             let field = &fields[i];
+            let value = field.value.as_ref().and_then(verbatim_value_span);
+            if common::write_verbatim_colon_pair(to_span(field.name.span), value, f) {
+                return;
+            }
             common::write_name(&field.name, f);
             flush_trailing_before_literal(to_span(field.name.span).end, f);
             write!(f, ": ");
