@@ -58,12 +58,58 @@ pub const SEARCH_BATCH_SIZE: usize = 16;
 /// }
 /// ```
 #[repr(C, align(64))]
-pub struct SafeByteMatchTable([bool; 256]);
+pub struct SafeByteMatchTable {
+    bytes: [bool; 256],
+    // A nonzero delimiter identifies an exact string-end table. Other tables keep scalar scanning.
+    #[cfg(all(target_arch = "aarch64", target_feature = "neon", target_endian = "little"))]
+    string_delimiter: u8,
+}
 
 impl SafeByteMatchTable {
+    #[cfg(all(target_arch = "aarch64", target_feature = "neon", target_endian = "little"))]
+    #[inline]
+    pub(super) const fn is_string_end_table(&self) -> bool {
+        self.string_delimiter != 0
+    }
+
+    /// Return the first string delimiter, escape, or line break, or 16 if none is present.
+    #[cfg(all(target_arch = "aarch64", target_feature = "neon", target_endian = "little"))]
+    #[inline(always)]
+    pub(super) fn first_string_end_in_batch(&self, batch: &[u8; 16]) -> usize {
+        use std::arch::aarch64::{
+            vceqq_u8, vdupq_n_u8, vget_lane_u64, vld1q_u8, vorrq_u8, vreinterpret_u64_u8,
+            vreinterpretq_u16_u8, vshrn_n_u16,
+        };
+
+        const { assert!(SEARCH_BATCH_SIZE == 16) };
+        debug_assert!(self.is_string_end_table());
+        // SAFETY: The target supports NEON, and `batch` contains 16 initialized bytes.
+        unsafe {
+            let bytes = vld1q_u8(batch.as_ptr());
+            let ends = vorrq_u8(
+                vceqq_u8(bytes, vdupq_n_u8(self.string_delimiter)),
+                vceqq_u8(bytes, vdupq_n_u8(b'\\')),
+            );
+            let lines =
+                vorrq_u8(vceqq_u8(bytes, vdupq_n_u8(b'\n')), vceqq_u8(bytes, vdupq_n_u8(b'\r')));
+            // Each matching byte is 0xFF. Narrow pairs into four bits per input byte,
+            // then count zero bits to locate the first match on a little-endian target.
+            let nibbles = vshrn_n_u16::<4>(vreinterpretq_u16_u8(vorrq_u8(ends, lines)));
+            (vget_lane_u64::<0>(vreinterpret_u64_u8(nibbles)).trailing_zeros() / 4) as usize
+        }
+    }
+
     // Create new `SafeByteMatchTable`.
     pub const fn new(bytes: [bool; 256]) -> Self {
-        let mut table = Self([false; 256]);
+        let mut table = Self {
+            bytes: [false; 256],
+            #[cfg(all(
+                target_arch = "aarch64",
+                target_feature = "neon",
+                target_endian = "little"
+            ))]
+            string_delimiter: 0,
+        };
 
         // Check if contains either:
         // 1. `true` for all byte values 192..248
@@ -74,7 +120,7 @@ impl SafeByteMatchTable {
         let mut i = 0;
         loop {
             let matches = bytes[i];
-            table.0[i] = matches;
+            table.bytes[i] = matches;
 
             if matches {
                 if i >= 128 && i < 192 {
@@ -95,6 +141,31 @@ impl SafeByteMatchTable {
             "Cannot create a `SafeByteMatchTable` with an unsafe pattern"
         );
 
+        // Classify the two string-end tables at compile time. Exact equality matters:
+        // the SIMD search must preserve the UTF-8 guarantees of the original table.
+        #[cfg(all(target_arch = "aarch64", target_feature = "neon", target_endian = "little"))]
+        {
+            let mut double_quote = true;
+            let mut single_quote = true;
+            let mut index = 0;
+            while index < 256 {
+                // The loop only visits byte values 0 through 255.
+                #[expect(clippy::cast_possible_truncation)]
+                let byte = index as u8;
+                let special = matches!(byte, b'\\' | b'\r' | b'\n');
+                double_quote &= bytes[index] == (special || byte == b'"');
+                single_quote &= bytes[index] == (special || byte == b'\'');
+                index += 1;
+            }
+            table.string_delimiter = if double_quote {
+                b'"'
+            } else if single_quote {
+                b'\''
+            } else {
+                0
+            };
+        }
+
         table
     }
 
@@ -107,7 +178,7 @@ impl SafeByteMatchTable {
     /// Test a value against this `SafeByteMatchTable`.
     #[inline]
     pub const fn matches(&self, b: u8) -> bool {
-        self.0[b as usize]
+        self.bytes[b as usize]
     }
 }
 
@@ -343,6 +414,20 @@ macro_rules! byte_search {
                 // So `$pos.add()` in this loop cannot go out of bounds.
                 let batch = unsafe { $pos.slice(crate::lexer::search::SEARCH_BATCH_SIZE) };
                 'inner: loop {
+                    #[cfg(all(target_arch = "aarch64", target_feature = "neon", target_endian = "little"))]
+                    if $table.is_string_end_table() {
+                        let index = $table.first_string_end_in_batch(batch.try_into().unwrap());
+                        if index < crate::lexer::search::SEARCH_BATCH_SIZE {
+                            // SAFETY: `index` is inside the readable batch and identifies
+                            // an ASCII delimiter, so it is also a UTF-8 character boundary.
+                            $pos = unsafe { $pos.add(index) };
+                            // SAFETY: The matched index is inside the readable batch.
+                            break 'inner unsafe { $pos.read() };
+                        }
+                        // SAFETY: The complete batch is readable and contains no match.
+                        $pos = unsafe { $pos.add(crate::lexer::search::SEARCH_BATCH_SIZE) };
+                        continue 'outer;
+                    }
                     for (i, &byte) in batch.iter().enumerate() {
                         if $table.matches(byte) {
                             // SAFETY: Cannot go out of bounds (see above).
@@ -412,3 +497,81 @@ macro_rules! byte_search {
     }};
 }
 pub(crate) use byte_search;
+
+#[cfg(all(test, target_arch = "aarch64", target_feature = "neon", target_endian = "little"))]
+mod tests {
+    use super::{SEARCH_BATCH_SIZE, SafeByteMatchTable};
+
+    #[test]
+    fn string_batch_matches_scalar_table() {
+        for delimiter in [b'"', b'\''] {
+            let mut entries = [false; 256];
+            for byte in [delimiter, b'\\', b'\r', b'\n'] {
+                entries[byte as usize] = true;
+            }
+            let table = SafeByteMatchTable::new(entries);
+            assert!(table.is_string_end_table());
+            for lane in 0..SEARCH_BATCH_SIZE {
+                for byte in 0..=u8::MAX {
+                    let mut batch = [b'a'; SEARCH_BATCH_SIZE];
+                    batch[lane] = byte;
+                    let expected = batch
+                        .iter()
+                        .position(|&byte| table.matches(byte))
+                        .unwrap_or(SEARCH_BATCH_SIZE);
+                    assert_eq!(table.first_string_end_in_batch(&batch), expected);
+                }
+            }
+            assert_eq!(table.first_string_end_in_batch(&[delimiter; SEARCH_BATCH_SIZE]), 0);
+
+            // A table with any additional match must retain its scalar implementation.
+            entries[b'a' as usize] = true;
+            assert!(!SafeByteMatchTable::new(entries).is_string_end_table());
+        }
+    }
+
+    #[test]
+    fn string_search_crosses_batch_and_utf8_boundaries() {
+        use crate::{UniquePromise, lexer::source::Source};
+
+        struct TestLexer<'a> {
+            source: Source<'a>,
+        }
+
+        for delimiter in [b'"', b'\''] {
+            let mut entries = [false; 256];
+            for byte in [delimiter, b'\\', b'\r', b'\n'] {
+                entries[byte as usize] = true;
+            }
+            let table = SafeByteMatchTable::new(entries);
+            for padding in 0..=SEARCH_BATCH_SIZE * 3 {
+                for content in ["", "a", "é", "中", "😀", "aé中😀"] {
+                    for end in [None, Some(delimiter), Some(b'\\'), Some(b'\r'), Some(b'\n')] {
+                        let mut text = "a".repeat(padding);
+                        text.push_str(content);
+                        let expected_offset = text.len();
+                        if let Some(byte) = end {
+                            text.push(char::from(byte));
+                            text.push_str("after the first delimiter");
+                            text.push(char::from(delimiter));
+                        }
+                        // Only one Source is alive at a time on this thread.
+                        let mut lexer = TestLexer {
+                            source: Source::new(
+                                &text,
+                                UniquePromise::new_for_tests_and_benchmarks(),
+                            ),
+                        };
+                        let matched = byte_search! {
+                            lexer: lexer,
+                            table: table,
+                            handle_eof: { 0xFF },
+                        };
+                        assert_eq!(matched, end.unwrap_or(0xFF));
+                        assert_eq!(lexer.source.remaining(), &text[expected_offset..]);
+                    }
+                }
+            }
+        }
+    }
+}
