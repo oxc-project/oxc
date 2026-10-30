@@ -149,6 +149,8 @@ impl Walk {
     }
 
     pub(super) fn less_than(&mut self, tokens: &Tokens, pos: usize) {
+        let cpu = BASELINE;
+
         // Declaration type parameters, an assertion or generic arrow, type arguments, or less-than.
         let list = if !tokens.ts {
             0
@@ -156,7 +158,7 @@ impl Walk {
             A_VALUE
         } else if self.operand_allowed() {
             A_ASSERT
-        } else if !self.no_type_args && type_args_at(tokens, pos) {
+        } else if !self.no_type_args && type_args_at(tokens, pos, cpu) {
             A_VALUE
         } else {
             0

@@ -37,6 +37,8 @@ impl Walk {
 
     /// A word inside a type: a prefix or infix type keyword, else a type atom.
     fn type_word(&mut self, kw: u8) {
+        let cpu = BASELINE;
+
         match kw {
             tk!(
                 KwKeyof | KwTypeof | KwReadonly | KwUnique | KwInfer | KwAbstract | KwNew
@@ -58,7 +60,7 @@ impl Walk {
                 let query = self.prev_kw == tk!(KwTypeof);
                 self.type_atom(false);
                 // A name takes type arguments, a keyword type only in a type query.
-                self.no_type_args = keyword_type(kw) && !query;
+                self.no_type_args = keyword_type(kw, cpu) && !query;
             }
         }
     }
