@@ -54,7 +54,7 @@ pub(super) unsafe fn jsx_over_type_params(
                 &lanes.disambiguate.closers,
             );
             let (jsx, unterminated) =
-                jsx_over_generic(&tokens, &mut lanes.disambiguate.walks, lt, lp);
+                jsx_over_generic(&tokens, &mut lanes.disambiguate.walks, lt, lp, cpu);
             if unterminated {
                 lanes.push_diag(lt as u32, (gt + 1 - lt) as u32, DiagCode::UnterminatedJsxElement);
             }
