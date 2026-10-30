@@ -293,39 +293,17 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
 
     //  Static Semantics: AssignmentTargetType
     //  1. If this IdentifierReference is contained in strict mode code and StringValue of Identifier is "eval" or "arguments", return invalid.
-    if matches!(ident.name.as_str(), "arguments" | "eval") && ctx.strict_mode() {
-        for node_kind in ctx.ancestry().ancestor_kinds() {
-            match node_kind {
-                // Only check for actual assignment contexts, not member expression access
-                AstKind::ObjectAssignmentTarget(_)
-                | AstKind::AssignmentTargetPropertyIdentifier(_)
-                | AstKind::UpdateExpression(_)
-                | AstKind::ArrayAssignmentTarget(_) => {
-                    return ctx.error(diagnostics::unexpected_identifier_assign(
-                        &ident.name,
-                        ident.span,
-                        unexpected_identifier_assign_context(ctx),
-                    ));
-                }
-                AstKind::AssignmentExpression(assign_expr) => {
-                    // only throw error if arguments or eval are being assigned to
-                    if let AssignmentTarget::AssignmentTargetIdentifier(target_ident) =
-                        &assign_expr.left
-                        && target_ident.name == ident.name
-                    {
-                        return ctx.error(diagnostics::unexpected_identifier_assign(
-                            &ident.name,
-                            ident.span,
-                            unexpected_identifier_assign_context(ctx),
-                        ));
-                    }
-                }
-                m if m.is_member_expression_kind() => {
-                    break;
-                }
-                _ => {}
-            }
-        }
+    if matches!(ident.name.as_str(), "arguments" | "eval")
+        && ctx.strict_mode()
+        // Reference flags distinguish assignment targets (including for-in/of) from
+        // reads in computed keys and default initializers within the same pattern.
+        && ctx.scoping.get_reference(ident.reference_id.get().unwrap()).flags().is_write()
+    {
+        return ctx.error(diagnostics::unexpected_identifier_assign(
+            &ident.name,
+            ident.span,
+            unexpected_identifier_assign_context(ctx),
+        ));
     }
 
     // FieldDefinition : ClassElementName Initializeropt
