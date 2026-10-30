@@ -1,0 +1,3 @@
+{
+  "args": ["-A", "all", "-A", "custom/rule"]
+}
