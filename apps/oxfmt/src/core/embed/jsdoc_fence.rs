@@ -16,6 +16,11 @@ use oxc_formatter_core::{
 
 use super::dispatcher::ResolvedDispatchConfig;
 
+/// Parent→child context for a JSDoc fenced code block:
+/// a part formatted on its own, as Prettier formats it (`prettier.format`, no `parentParser`),
+/// where every other dispatched part is embedded in its parent.
+pub struct XxxInJsdocFence;
+
 /// The session's string embedder: [`format_native_fence`] over `fence_dispatcher`,
 /// a fallback-less registry (a native fence never falls back to Prettier).
 /// `sort_tailwind` is the root's pre-bound sorter, for the `@apply` classes a CSS fence collects.
@@ -76,7 +81,7 @@ fn format_native_fence(
                     language,
                     text: code,
                     input_kind: InputKind::Fragment,
-                    parent_context: None,
+                    parent_context: Some(&XxxInJsdocFence),
                 },
                 printer_options,
             )?
