@@ -327,12 +327,12 @@ fn unresolved_initializer_reference_declaration_span(
 
 fn binding_pattern_name_span(pattern: &BindingPattern<'_>, name: &str) -> Option<Span> {
     let mut declaration_span = None;
-    pattern.all_binding_identifiers(&mut |identifier| {
+    pattern.any_binding_identifiers(&mut |identifier| {
         if identifier.name == name {
             declaration_span = Some(identifier.span);
-            false
-        } else {
             true
+        } else {
+            false
         }
     });
     declaration_span

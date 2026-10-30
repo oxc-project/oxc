@@ -1401,6 +1401,17 @@ impl<'a> BindingPattern<'a> {
         }
     }
 
+    /// Returns `true` if any binding identifier in this pattern satisfies the given predicate.
+    ///
+    /// Does not allocate and short-circuits on the first `true` result.
+    /// If the pattern contains no binding identifiers, returns `false`.
+    pub fn any_binding_identifiers<F>(&self, predicate: &mut F) -> bool
+    where
+        F: FnMut(&BindingIdentifier<'a>) -> bool,
+    {
+        !self.all_binding_identifiers(&mut |ident| !predicate(ident))
+    }
+
     /// Returns `true` if this binding pattern is destructuring.
     ///
     /// ## Example

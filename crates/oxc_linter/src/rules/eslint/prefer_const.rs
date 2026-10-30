@@ -137,8 +137,8 @@ impl Rule for PreferConst {
         if is_for_statement_init && decl.declarations.len() > 1 {
             let any_reassigned = decl.declarations.iter().any(|declarator| {
                 let has_init = declarator.init.is_some();
-                !declarator.id.all_binding_identifiers(&mut |ident| {
-                    self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx)
+                declarator.id.any_binding_identifiers(&mut |ident| {
+                    !self.should_be_const(ident.symbol_id(), has_init, is_for_in_of_init, ctx)
                 })
             });
 

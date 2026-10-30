@@ -757,7 +757,7 @@ fn declaration_or_parent_id(ctx: &LintContext, declaration_id: NodeId) -> NodeId
 }
 
 fn binding_pattern_contains_symbol(pattern: &BindingPattern, symbol_span: Span) -> bool {
-    !pattern.all_binding_identifiers(&mut |ident| ident.span != symbol_span)
+    pattern.any_binding_identifiers(&mut |ident| ident.span == symbol_span)
 }
 
 fn pattern_initializer_contains_location(
