@@ -473,7 +473,7 @@ pub(super) unsafe fn carve_jsx(
                         } else {
                             n
                         };
-                        lanes.push_string_raw(srcs, s + 1, be);
+                        lanes.push_string_raw(srcs, s + 1, be, cpu);
                         i = end;
                     }
                     b'{' => {
