@@ -7,7 +7,7 @@ Test infrastructure shared by the formatter crates (e.g. `oxc_formatter`, `oxc_f
 - `harness`: fixture runtime
   - Consumers implement `FixtureFormatter` in `tests/fixtures/mod.rs` via `[dev-dependencies]`
   - Asserts `FixtureFormatter::fingerprint` is the same for input and output; consumers take it from the crate's own parse (`parse_for_format`), what it captures is consumer-owned
-  - Option-set → typed-options mapping is per crate, in `tests/fixtures/options.rs`
+  - Consumers map their own `options.json` keys in `FixtureFormatter::apply_option`; the harness applies the core ones and fails the test on any other key or a malformed `options.json`
 
 ## Dependency rule
 
