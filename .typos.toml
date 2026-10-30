@@ -11,7 +11,6 @@ extend-exclude = [
   "apps/oxfmt/test/**/fixtures/**",
   "apps/oxfmt/conformance/snapshots/diffs/**/",
   "apps/oxfmt/conformance/snapshots/prettier.snap.md",
-  "crates/oxc_formatter_tests/prettier",
   "crates/oxc_formatter/tests/jsdoc",
   "crates/oxc_linter/fixtures",
   "crates/oxc_react_compiler/fixtures",

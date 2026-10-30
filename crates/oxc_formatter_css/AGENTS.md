@@ -211,6 +211,7 @@ Every failing file is accounted for by a DIVERGENCES.md entry's `Conformance:` l
     - ours preserves the source spacing per token (`prop13/14`, `prop57-60`, `prop73/74`)
   - within-a-word runs (`1+1+1+1`, `calc(100%+2px)`) match
     - glued number-ish runs are ONE postcss word and print raw (see `is_word_glued_number`)
+- `css/font/font.css` run as SCSS (its spec also lists `scss`): `--custom(1px)/2` gets a space after `/` (`--custom(1px)/ 2`)
 
 ### Manual checks
 

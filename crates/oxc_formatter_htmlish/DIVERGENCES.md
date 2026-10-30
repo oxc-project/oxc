@@ -29,6 +29,7 @@ which changes what `pre` renders and what `textarea` submits.
 
 - Why: uniform-rule (same construct, same output: the doctype of a `.html` file, which Prettier lowercases)
 - Pin: `tests/fixtures/vue/doctype-case.vue`
+- Conformance: `misc/filename-matters/html-doctype/snippet: #0`
 - Oxfmt: `externals/mdn-learn/css_layout/multiple-column_layout/index.md`, `externals/mdn-learn/css_layout/positioning/index.md`
 
 ```vue

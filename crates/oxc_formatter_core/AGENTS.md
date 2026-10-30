@@ -38,7 +38,7 @@ end-of-line whitespace never appearing in the output is guaranteed by constructi
 Text/Token content is the emitter's responsibility, language crates write their values pre-trimmed.
 
 NOTE: The printer's runtime optimizations (pending-space dedup, consecutive-hardline merging, this no-trim rule, ...) are mirrored downstream by `apps/oxfmt`'s `prettier_compat` (IR ↔ Prettier Doc interop; kept there because core never learns Prettier-as-a-system).
-When changing printer runtime behavior, update that mirror in the same PR; oxfmt's embedded/E2E conformance is the backstop that catches drift.
+When changing printer runtime behavior, update that mirror in the same PR; oxfmt's conformance is the backstop that catches drift.
 
 ### Choosing a staging buffer
 
@@ -175,5 +175,5 @@ Quote-style options, comment rules, and the like are likewise consumer-owned.
 cargo c -p oxc_formatter_core
 ```
 
-This crate has basic tests only of its own, it is exercised through the conformance/snapshot tests of its consumers.
+This crate has basic tests only of its own, it is exercised through its consumers' fixture tests and oxfmt's conformance.
 The fixture-test infrastructure those consumers use lives in `crates/oxc_formatter_tests`.

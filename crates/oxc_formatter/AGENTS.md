@@ -255,5 +255,5 @@ cargo test -p oxc_formatter fixtures::js::comments
 
 ### Prettier conformance
 
-The failing files in `tests/snapshots/conformance__prettier-{js,ts}.snap` are only partly audited:
+The failing JS/TS files in `apps/oxfmt/conformance/snapshots/prettier.snap.md` are only partly audited:
 some are covered by an existing DIVERGENCES.md entry, the rest are unclassified, and no per-file list exists yet.

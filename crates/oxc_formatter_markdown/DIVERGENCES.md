@@ -87,6 +87,7 @@ so an indent written as spaces plus a tab becomes a fenced block.
 
 - Why: uniform-rule (same construct, same output: a blockquote's trailing blank `>` line under `proseWrap: preserve`)
 - Pin: `tests/fixtures/markdown/prose-wrap/ignored-block-trailing-quote-line.md`
+- Conformance: `markdown/blockquote/ignore-code.md`
 - Oxfmt: `externals/prettier/markdown/blockquote/ignore-code.md`
 
 ```markdown

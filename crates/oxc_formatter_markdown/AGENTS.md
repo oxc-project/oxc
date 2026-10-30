@@ -44,7 +44,7 @@ A fenced code block with a language dispatches its content as a `VirtualDocument
 the child IR is wrapped in `mark_as_root` with every newline in its texts made a literal line, so continuation lines keep the fence's column,
 and the fence outnumbers the backtick runs of the printed content (printed once to count them when a text holds a backtick).
 No dispatcher, an unknown language or a failed parse keeps the block verbatim, as does a meta with line ranges (`apps/oxfmt/DIVERGENCES.md#line-ranged-code-block`).
-Embedding is verified end to end by oxfmt's conformance (`markdown` / `md-in-js` categories), not here.
+Embedding is verified end to end by oxfmt's conformance (`conformance:prettier`, and `md-in-js` in `conformance:live`), not here.
 
 ## Dialects
 
