@@ -681,6 +681,26 @@ impl<'a> Printer<'a> {
         args: PrintElementArgs,
         separator_mode: PrintMode,
     ) -> PrintResult<()> {
+        // A text alone prints the same in any mode, and starts no measurement that the hint below is for
+        if let [
+            FormatElement::Tag(Tag::StartEntry),
+            content @ (FormatElement::Token { .. } | FormatElement::Text { .. }),
+            FormatElement::Tag(Tag::EndEntry),
+            ..,
+        ] = queue.current()
+        {
+            for _ in 0..3 {
+                queue.pop();
+            }
+            match content {
+                FormatElement::Token { text } => self.print_text(Text::Token(text)),
+                FormatElement::Text { text, width } => {
+                    self.print_text(Text::Text { text, width: *width });
+                }
+                _ => unreachable!(),
+            }
+            return Ok(());
+        }
         self.state.fill_separator_mode = Some(separator_mode);
         let result = self.print_entry(queue, stack, indent_stack, args);
         self.state.fill_separator_mode = None;
@@ -695,6 +715,23 @@ impl<'a> Printer<'a> {
         indent_stack: &mut PrintIndentStack,
         args: PrintElementArgs,
     ) -> PrintResult<()> {
+        // A flat soft line alone, as `print_element` prints it
+        if args.mode().is_flat()
+            && let [
+                FormatElement::Tag(Tag::StartEntry),
+                FormatElement::Line(line_mode @ (LineMode::Soft | LineMode::SoftOrSpace)),
+                FormatElement::Tag(Tag::EndEntry),
+                ..,
+            ] = queue.current()
+        {
+            for _ in 0..3 {
+                queue.pop();
+            }
+            if *line_mode == LineMode::SoftOrSpace && self.state.line_width > 0 {
+                self.state.pending_space = true;
+            }
+            return Ok(());
+        }
         self.print_entry(queue, stack, indent_stack, args)
     }
 
@@ -1223,6 +1260,10 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
     /// Returns `Err` if the queue isn't positioned at a [Tag::StartEntry] or if
     /// the matching [Tag::EndEntry] is missing.
     fn fill_entry_fits(&mut self, mode: PrintMode) -> PrintResult<bool> {
+        if let Some(fits) = self.simple_fill_entry_fits(mode) {
+            return Ok(fits);
+        }
+
         let start_entry = self.queue.top();
 
         if !matches!(start_entry, Some(&FormatElement::Tag(Tag::StartEntry))) {
@@ -1238,6 +1279,36 @@ impl<'a, 'print> FitsMeasurer<'a, 'print> {
         }
 
         Ok(fits)
+    }
+
+    /// [`Self::fill_entry_fits`] of an entry holding a single-line text alone, or a soft line alone measured flat
+    /// (the words and separators of a filled paragraph): the same measurement, without the frames and the walk.
+    /// `None` for any other entry.
+    ///
+    /// When it doesn't fit, the measurement ends there, like the walk's early `Fits::No` exit.
+    fn simple_fill_entry_fits(&mut self, mode: PrintMode) -> Option<bool> {
+        let [FormatElement::Tag(Tag::StartEntry), content, FormatElement::Tag(Tag::EndEntry), ..] =
+            self.queue.current()
+        else {
+            return None;
+        };
+        let fits = match content {
+            FormatElement::Token { text } => self.fits_text(Text::Token(text)) != Fits::No,
+            FormatElement::Text { text, width } if !width.is_multiline() => {
+                self.fits_text(Text::Text { text, width: *width }) != Fits::No
+            }
+            FormatElement::Line(LineMode::SoftOrSpace) if mode.is_flat() => {
+                self.state.pending_line_space = true;
+                true
+            }
+            FormatElement::Line(LineMode::Soft) if mode.is_flat() => true,
+            _ => return None,
+        };
+        for _ in 0..3 {
+            self.queue.pop();
+        }
+        // The check at the end of the entry, see `fits`
+        Some(fits && self.state.line_width <= usize::from(self.options().print_width))
     }
 
     /// Tests if the passed element fits on the current line or not.
