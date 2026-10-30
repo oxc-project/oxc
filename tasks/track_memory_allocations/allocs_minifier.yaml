@@ -7,7 +7,7 @@ checker.ts:
   sys peak growth: 10169560 # 10.17 MB
   arena allocs: 56228
   arena reallocs: 5084
-  arena size: 16339184 # 16.34 MB
+  arena size: 16321744 # 16.32 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
@@ -40,7 +40,7 @@ pdf.mjs:
   sys peak growth: 3693355 # 3.69 MB
   arena allocs: 19582
   arena reallocs: 2574
-  arena size: 5666384 # 5.67 MB
+  arena size: 5661936 # 5.66 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
