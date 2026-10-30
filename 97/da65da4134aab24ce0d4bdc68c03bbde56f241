@@ -1,0 +1,33 @@
+crates/oxc_formatter_htmlish/src/print/attribute.rs
+  s_cac1c0af6b5088::t_4c1cb6e67540b7 18,60,158,165,169
+crates/oxc_formatter_htmlish/src/print/children.rs
+  s_cac1c0af6b5088::t_5ecd5936cd3f05 11,248-250,256
+crates/oxc_formatter_htmlish/src/print/element.rs
+  s_cac1c0af6b5088::t_c06df95f6d8d1f 11,199-206,216
+crates/oxc_formatter_htmlish/src/print/embed.rs
+  s_cac1c0af6b5088::t_1e070e782183bc 11,177,227-229
+crates/oxc_formatter_htmlish/src/tree/build/mod.rs
+  s_cac1c0af6b5088::t_8fa473fa267e9c 5,249,291-298
+crates/oxc_formatter_htmlish/src/tree/build/sensitivity.rs
+  s_cac1c0af6b5088::t_a794aba04ccf93 4,28,40,54,67
+crates/oxc_formatter_htmlish/src/tree/display.rs
+  s_cac1c0af6b5088::t_00d1aceaf0d6d1 1-2,51-52,56-60,63,66
+crates/oxc_formatter_htmlish/src/tree/mod.rs
+  s_cac1c0af6b5088::t_396a3541f45ede 18,207,239-244
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "97da65da4134aab24ce0d4bdc68c03bbde56f241",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
