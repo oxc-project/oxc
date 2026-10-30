@@ -1,0 +1,19 @@
+crates/oxc_str/src/ident.rs
+  s_ccb8a335f18d79::t_75d81453163741 399,404-405,407
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "f855fd6de38a1ae44267b3701a8b18f13774050d",
+  "prompts": {},
+  "sessions": {
+    "s_ccb8a335f18d79": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18f1c-5b87-7142-8ad7-d3f4dc6d3a78",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
