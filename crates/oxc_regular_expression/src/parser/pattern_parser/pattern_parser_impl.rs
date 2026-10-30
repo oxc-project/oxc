@@ -1746,7 +1746,7 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.offset();
         let checkpoint = self.reader.checkpoint();
         if self.reader.eat('{') {
-            if let Some(min) = self.consume_decimal_digits()? {
+            if let Some(min) = self.consume_decimal_digits() {
                 if self.reader.eat('}') {
                     if MAX_QUANTIFIER < min {
                         return Err(diagnostics::too_large_number_in_braced_quantifier(
@@ -1768,7 +1768,7 @@ impl<'a> PatternParser<'a> {
                         return Ok(Some(((min, None), is_greedy(&mut self.reader))));
                     }
 
-                    if let Some(max) = self.consume_decimal_digits()?
+                    if let Some(max) = self.consume_decimal_digits()
                         && self.reader.eat('}')
                     {
                         if max < min {
@@ -1828,8 +1828,7 @@ impl<'a> PatternParser<'a> {
     //   [+Sep] DecimalDigits[+Sep] NumericLiteralSeparator DecimalDigit
     // ```
     // ([Sep] is disabled for `QuantifierPrefix` and `DecimalEscape`, skip it)
-    fn consume_decimal_digits(&mut self) -> Result<Option<u64>> {
-        let span_start = self.reader.offset();
+    fn consume_decimal_digits(&mut self) -> Option<u64> {
         let checkpoint = self.reader.checkpoint();
 
         let mut value: u64 = 0;
@@ -1838,23 +1837,18 @@ impl<'a> PatternParser<'a> {
             #[expect(clippy::cast_lossless)]
             let d = (cp - '0' as u32) as u64;
 
-            // To prevent panic on overflow cases like `\999999999999999999999`, `a{999999999999999999999}`
-            if let Some(v) = value.checked_mul(10).and_then(|v| v.checked_add(d)) {
-                value = v;
-                self.reader.advance();
-            } else {
-                return Err(diagnostics::too_large_number_digits(
-                    self.span_factory.create(span_start, self.reader.offset()),
-                    "decimal",
-                ));
-            }
+            // A large digit sequence may be literal text in Annex B when no complete
+            // quantifier follows. Defer the size diagnostic until its syntax is known.
+            // Saturation preserves the comparison against MAX_QUANTIFIER.
+            value = value.saturating_mul(10).saturating_add(d);
+            self.reader.advance();
         }
 
         if self.reader.checkpoint() != checkpoint {
-            return Ok(Some(value));
+            return Some(value);
         }
 
-        Ok(None)
+        None
     }
 
     // ```
