@@ -387,7 +387,53 @@ impl PartialEq for Ident<'_> {
     /// Fast-reject equality: compare packed len+hash first, then bytes.
     #[inline]
     fn eq(&self, other: &Ident<'_>) -> bool {
-        self.len_and_hash == other.len_and_hash && self.as_str() == other.as_str()
+        self.len_and_hash == other.len_and_hash
+            // SAFETY: Both strings have length `self.ident_len()`, because `len_and_hash` is equal.
+            && unsafe { bytes_eq(self.ptr, other.ptr, self.ident_len() as usize) }
+    }
+}
+
+/// Compare `len` bytes starting at `a` and `b`.
+///
+/// After a packed len+hash match, the bytes almost always match, and identifiers are usually short.
+/// Overlapping unaligned loads compare up to 16 bytes inline, avoiding an out-of-line `memcmp` call.
+///
+/// # SAFETY
+/// `a` and `b` must both be valid for reads of `len` bytes.
+#[expect(clippy::inline_always)]
+#[inline(always)]
+unsafe fn bytes_eq(a: NonNull<u8>, b: NonNull<u8>, len: usize) -> bool {
+    #[inline(always)]
+    unsafe fn load<T: Copy>(ptr: NonNull<u8>, offset: usize) -> T {
+        // SAFETY: Caller guarantees `offset + size_of::<T>()` bytes at `ptr` are readable.
+        unsafe { ptr.add(offset).cast::<T>().read_unaligned() }
+    }
+
+    // SAFETY: Every load reads within the first `len` bytes of `a` and `b`.
+    unsafe {
+        if len >= 8 {
+            if len > 16 {
+                return slice::from_raw_parts(a.as_ptr(), len)
+                    == slice::from_raw_parts(b.as_ptr(), len);
+            }
+            let last = len - 8;
+            let first_diff = load::<u64>(a, 0) ^ load::<u64>(b, 0);
+            let last_diff = load::<u64>(a, last) ^ load::<u64>(b, last);
+            (first_diff | last_diff) == 0
+        } else if len >= 4 {
+            let last = len - 4;
+            let first_diff = load::<u32>(a, 0) ^ load::<u32>(b, 0);
+            let last_diff = load::<u32>(a, last) ^ load::<u32>(b, last);
+            (first_diff | last_diff) == 0
+        } else if len > 0 {
+            let middle = len / 2;
+            let last = len - 1;
+            load::<u8>(a, 0) == load::<u8>(b, 0)
+                && load::<u8>(a, middle) == load::<u8>(b, middle)
+                && load::<u8>(a, last) == load::<u8>(b, last)
+        } else {
+            true
+        }
     }
 }
 
@@ -646,6 +692,28 @@ mod test {
     #[test]
     fn ident_copy() {
         assert!(implements!(Ident: Copy));
+    }
+
+    #[test]
+    fn ident_bytes_eq() {
+        for len in 0..=40 {
+            let left = (b'a'..=b'z').cycle().take(len).collect::<Vec<_>>();
+            let left_ptr = NonNull::from_ref(left.as_slice()).cast::<u8>();
+            // SAFETY: Both buffers contain `len` bytes.
+            assert!(unsafe { bytes_eq(left_ptr, left_ptr, len) });
+            let same = left.clone();
+            let same_ptr = NonNull::from_ref(same.as_slice()).cast::<u8>();
+            // SAFETY: Both buffers contain `len` bytes.
+            assert!(unsafe { bytes_eq(left_ptr, same_ptr, len) });
+
+            for index in 0..len {
+                let mut right = left.clone();
+                right[index] = b'_';
+                let right_ptr = NonNull::from_ref(right.as_slice()).cast::<u8>();
+                // SAFETY: Both buffers contain `len` bytes.
+                assert!(!unsafe { bytes_eq(left_ptr, right_ptr, len) }, "len {len}, index {index}");
+            }
+        }
     }
 
     #[test]
