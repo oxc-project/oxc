@@ -25,7 +25,7 @@ The fork adds:
   - the css-in-js parse mode, enabled only by `format_to_ir`
   - Rationale, gating and per-position coverage: see "css-in-js specifics" below
 - Bug fixes toward the reference compilers for valid CSS/SCSS/Less syntax `raffia` miss parses or rejects;
-- The acceptance line: the fork's README "Acceptance", see "Acceptance" below
+- The acceptance line: see "Acceptance" below
 
 Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `postcss-values-parser`, `postcss-media-query-parser`) and depends on `raws` (source gaps).
 
@@ -36,7 +36,7 @@ Prettier operates on `postcss` + three sub-parsers (`postcss-selector-parser`, `
 The shared policy applies; CSS specifics:
 
 - `oxc-css-parser` is error-tolerant via `parser.recoverable_errors()`, but any parse error still bails out
-- `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (README "Acceptance")
+- `TopLevelDeclaration`: a root declaration in Css and Scss, so standalone `format()` rejects it (oxc-css-parser AGENTS.md "Acceptance")
   - `format_to_ir()` parses a fragment (`CssRoot::Fragment`, the parser's `block_contents`): the root follows the rules inside a block, so it is a statement
     - `` css`display: flex;` `` is the dominant css-in-js shape, and MDN-style property snippets in Markdown code blocks
   - Less parses and formats it: less.js accepts it at parse time and fails only at eval
@@ -129,7 +129,7 @@ FM behavior is verified through oxfmt; this crate carries no dispatcher-wired FM
 
 ### Acceptance
 
-What the parser takes in is the oxc-css-parser's README "Acceptance": one grammar owner per variant.
+What the parser takes in is oxc-css-parser AGENTS.md "Acceptance": one grammar owner per variant.
 Never "postcss keeps the bytes", never "Prettier prints it".
 
 The formatter's side: postcss gives Prettier statements whose selectors, values and params are strings, and Prettier re-tokenizes those with its own sub-parsers and word rules.
