@@ -218,7 +218,6 @@ mod x86_64 {
 }
 
 #[cfg(target_arch = "x86_64")]
-#[cfg_attr(not(test), expect(unused_imports))]
 pub(super) use x86_64::{Avx2, BASELINE};
 
 /// aarch64 features.
@@ -261,7 +260,6 @@ mod aarch64 {
 }
 
 #[cfg(target_arch = "aarch64")]
-#[cfg_attr(not(test), expect(unused_imports))]
 pub(super) use aarch64::{BASELINE, Neon};
 
 /// Fallback implementation for other platforms.
@@ -287,5 +285,4 @@ mod other {
 }
 
 #[cfg(not(any(target_arch = "x86_64", target_arch = "aarch64")))]
-#[cfg_attr(not(test), expect(unused_imports))]
 pub(super) use other::BASELINE;
