@@ -9,7 +9,9 @@ use crate::{
         prelude::*,
         trivia::{DanglingIndentMode, FormatDanglingComments},
     },
-    print::semicolon::{OptionalSemicolon, assignment_chain_leaf_end},
+    print::semicolon::{
+        KeywordWithOptionalSemicolon, OptionalSemicolon, assignment_chain_leaf_end,
+    },
     utils::{
         expression::LeftSide,
         format_node_without_trailing_comments::format_content_without_comments_after,
@@ -65,9 +67,15 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, self.keyword());
+        let argument = self.argument();
+        if argument.is_none() {
+            // `return;` in one token: nothing comes between them (the dangling comments go after, see below)
+            write!(f, KeywordWithOptionalSemicolon("return;"));
+        } else {
+            write!(f, self.keyword());
+        }
 
-        if let Some(argument) = self.argument() {
+        if let Some(argument) = argument {
             write!(f, space());
             let argument_leaf_end = assignment_chain_leaf_end(argument.as_ref(), f);
             if f.comments().has_comment_in_range(argument_leaf_end, self.span().end) {
@@ -113,7 +121,9 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
             dangling_comments.iter().take_while(|c| !c.preceded_by_newline()).count();
         let dangling_comments = &dangling_comments[..same_line_count];
 
-        write!(f, OptionalSemicolon);
+        if argument.is_some() {
+            write!(f, OptionalSemicolon);
+        }
 
         if !dangling_comments.is_empty() {
             write!(

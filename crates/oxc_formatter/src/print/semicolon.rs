@@ -32,6 +32,21 @@ impl<'a> Format<'a, JsFormatContext<'a>> for OptionalSemicolon {
     }
 }
 
+/// A keyword directly followed by [`OptionalSemicolon`], in one token.
+/// The keyword is given with its semicolon (`"break;"`).
+pub struct KeywordWithOptionalSemicolon(pub &'static str);
+
+impl<'a> Format<'a, JsFormatContext<'a>> for KeywordWithOptionalSemicolon {
+    fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        debug_assert!(self.0.ends_with(';'));
+        let text = match f.options().semicolons {
+            Semicolons::Always => self.0,
+            Semicolons::AsNeeded => &self.0[..self.0.len() - 1],
+        };
+        write!(f, text);
+    }
+}
+
 /// The Prettier >= 3.9 rule shared by every semicolon-terminated context:
 /// same-line trailing comments between the content end and the source `;`
 /// are printed behind the semicolon (`foo = 1 /* c */;` -> `foo = 1; /* c */`).

@@ -79,6 +79,14 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameters<'a>> {
             ParameterLayout::Default
         };
 
+        // Without dangling comments, empty parens are a single token
+        if matches!(layout, ParameterLayout::NoParameters)
+            && !f.comments().has_comment_before(self.span.end)
+        {
+            write!(f, "()");
+            return;
+        }
+
         if !parentheses_not_needed {
             write!(f, "(");
         }

@@ -50,9 +50,12 @@ impl<'a, 'b> FormatFunction<'a, 'b> {
                     self.generator().then_some("*"),
                     space(),
                     self.id(),
-                    group(&self.type_parameters()),
                 ]
             );
+            // No empty group without type parameters
+            if let Some(type_parameters) = self.type_parameters() {
+                write!(f, group(&type_parameters));
+            }
         });
         FormatContentWithCacheMode::new(self.span, head, self.cache_mode).fmt(f);
 

@@ -23,9 +23,16 @@ impl<'a, 'b> FormatArrayExpression<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
+        let is_empty = self.array.elements().is_empty();
+        // Without dangling comments, the brackets are a single token
+        if is_empty && !f.comments().has_comment_before(self.array.span.end) {
+            write!(f, "[]");
+            return;
+        }
+
         write!(f, "[");
 
-        if self.array.elements().is_empty() {
+        if is_empty {
             write!(f, format_dangling_comments(self.array.span).with_soft_block_indent());
         } else {
             let group_id = f.group_id("array");

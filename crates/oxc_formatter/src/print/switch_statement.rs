@@ -39,13 +39,9 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, SwitchStatement<'a>> {
         write!(
             f,
             [
-                "switch",
-                space(),
-                "(",
+                "switch (",
                 group(&soft_block_indent(&discriminant)),
-                ")",
-                space(),
-                "{",
+                ") {",
                 block_indent(&format_cases),
                 "}"
             ]
@@ -80,7 +76,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, SwitchCase<'a>> {
             }
             false
         } else {
-            write!(f, ["default", ":"]);
+            write!(f, "default:");
             true
         };
 

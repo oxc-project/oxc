@@ -104,8 +104,8 @@ use self::{
     program::FormatStatementsWithImports,
     return_or_throw_statement::FormatAdjacentArgument,
     semicolon::{
-        FormatContentWithSemicolon, OptionalSemicolon, semicolon_terminated_expression_content_end,
-        write_trailing_comments_inside_parens,
+        FormatContentWithSemicolon, KeywordWithOptionalSemicolon, OptionalSemicolon,
+        semicolon_terminated_expression_content_end, write_trailing_comments_inside_parens,
     },
     type_parameters::{FormatTSTypeParameters, FormatTSTypeParametersOptions},
 };
@@ -725,7 +725,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, DoWhileStatement<'a>> {
             test_end
         };
         let content = format_with(|f| {
-            write!(f, ["while", space(), "(", group(&soft_block_indent(&self.test())), ")"]);
+            write!(f, ["while (", group(&soft_block_indent(&self.test())), ")"]);
         });
         write!(f, FormatContentWithSemicolon::new(&content, rparen_end, node_end));
     }
@@ -779,9 +779,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, WhileStatement<'a>> {
         write!(
             f,
             group(&format_args!(
-                "while",
-                space(),
-                "(",
+                "while (",
                 group(&soft_block_indent(&FormatParenHeadExpression {
                     expression: &self.test(),
                     body_start: body.span().start
@@ -875,9 +873,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ForStatement<'a>> {
         write!(
             f,
             group(&format_args!(
-                "for",
-                space(),
-                "(",
+                "for (",
                 group(&soft_block_indent(&format_head)),
                 ")",
                 FormatStatementBody::new(&body)
@@ -901,9 +897,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ForInStatement<'a>> {
         write!(
             f,
             group(&format_args!(
-                "for",
-                space(),
-                "(",
+                "for (",
                 left,
                 space(),
                 "in",
@@ -935,15 +929,10 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ForOfStatement<'a>> {
         let right = self.right();
         let body = self.body();
         let format_inner = format_with(|f| {
-            write!(f, "for");
-            if r#await {
-                write!(f, [space(), "await"]);
-            }
+            write!(f, if r#await { "for await (" } else { "for (" });
             write!(
                 f,
                 [
-                    space(),
-                    "(",
                     left,
                     space(),
                     "of",
@@ -990,9 +979,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, IfStatement<'a>> {
         write!(
             f,
             group(&format_args!(
-                "if",
-                space(),
-                "(",
+                "if (",
                 group(&soft_block_indent(&FormatParenHeadExpression {
                     expression: &test,
                     body_start: consequent.span().start
@@ -1034,7 +1021,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ContinueStatement<'a>> {
             let content = format_with(|f| write!(f, ["continue", space(), label]));
             write!(f, FormatContentWithSemicolon::new(&content, label.span().end, self.span().end));
         } else {
-            write!(f, ["continue", OptionalSemicolon]);
+            write!(f, KeywordWithOptionalSemicolon("continue;"));
         }
     }
 }
@@ -1045,7 +1032,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BreakStatement<'a>> {
             let content = format_with(|f| write!(f, ["break", space(), label]));
             write!(f, FormatContentWithSemicolon::new(&content, label.span().end, self.span().end));
         } else {
-            write!(f, ["break", OptionalSemicolon]);
+            write!(f, KeywordWithOptionalSemicolon("break;"));
         }
     }
 }
@@ -1056,9 +1043,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, WithStatement<'a>> {
         write!(
             f,
             group(&format_args!(
-                "with",
-                space(),
-                "(",
+                "with (",
                 group(&soft_block_indent(&FormatParenHeadExpression {
                     expression: &self.object(),
                     body_start: body.span().start
@@ -1088,7 +1073,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, LabeledStatement<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, DebuggerStatement> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, ["debugger", OptionalSemicolon]);
+        write!(f, KeywordWithOptionalSemicolon("debugger;"));
     }
 }
 

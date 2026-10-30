@@ -43,12 +43,17 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Argume
         let arguments = self.as_ref();
 
         if self.is_empty() {
+            let span = self.parent().span();
+            // Without dangling comments, the parens are a single token
+            if !f.comments().has_comment_before(span.end) {
+                return write!(f, "()");
+            }
             return write!(
                 f,
                 [
                     l_paren_token,
                     // `call/* comment1 */(/* comment2 */)` Both comments are dangling comments.
-                    format_dangling_comments(self.parent().span()).with_soft_block_indent(),
+                    format_dangling_comments(span).with_soft_block_indent(),
                     r_paren_token
                 ]
             );

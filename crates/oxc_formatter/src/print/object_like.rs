@@ -86,9 +86,16 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         let members = format_with(|f| self.write_members(f));
 
+        let is_empty = self.members_are_empty();
+        // Without dangling comments, the braces are a single token
+        if is_empty && !f.comments().has_comment_before(self.span().end) {
+            write!(f, "{}");
+            return;
+        }
+
         write!(f, "{");
 
-        if self.members_are_empty() {
+        if is_empty {
             // Soft indent so the object can stay on one line if it fits:
             // a single one-line block comment stays inline without bracket spacing
             // line comments and multiple comments still expand.
