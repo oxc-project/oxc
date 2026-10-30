@@ -38,14 +38,17 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             let start = self.cur_start();
             self.bump_any(); // bump `async`
             // Lookahead established a single binding identifier followed by `=>`.
-            // An ordinary identifier cannot extend into a member, call, or binary expression here.
-            let expr = if self.at(Kind::Ident) {
-                self.parse_plain_identifier_expression()
+            // Build the binding directly instead of allocating a temporary identifier reference.
+            let ident = if self.at(Kind::Ident) {
+                self.parse_plain_binding_identifier()
+            } else if self.cur_kind().is_identifier() {
+                self.parse_known_binding_identifier()
             } else {
-                self.parse_binary_expression_or_higher(Precedence::Comma)
-            };
-            let Expression::Identifier(ident) = &expr else {
-                return self.unexpected();
+                let expr = self.parse_binary_expression_or_higher(Precedence::Comma);
+                let Expression::Identifier(ident) = &expr else {
+                    return self.unexpected();
+                };
+                BindingIdentifier::new(ident.span, ident.name, self)
             };
             // It is a Syntax Error if ArrowParameters Contains AwaitExpression is true.
             if ident.name == "await" {
@@ -256,14 +259,15 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(crate) fn parse_simple_arrow_function_expression(
         &mut self,
         start: u32,
-        ident: &IdentifierReference<'a>,
+        ident: BindingIdentifier<'a>,
         r#async: bool,
         allow_return_type_in_arrow_function: bool,
     ) -> Expression<'a> {
-        let pattern = BindingPattern::new_binding_identifier(ident.span, ident.name, self);
-        let formal_parameter = FormalParameter::new_plain(ident.span, pattern, self);
+        let span = ident.span;
+        let pattern = BindingPattern::BindingIdentifier(self.alloc(ident));
+        let formal_parameter = FormalParameter::new_plain(span, pattern, self);
         let params = FormalParameters::boxed(
-            ident.span,
+            span,
             FormalParameterKind::ArrowFormalParameters,
             [formal_parameter],
             None,

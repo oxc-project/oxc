@@ -1642,7 +1642,30 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         let lhs = if matches!(kind, Kind::Ident | Kind::This) || kind.is_literal() {
             let pure_comments = self.lexer.trivia_builder.previous_token_pure_comments();
             let primary = match kind {
-                Kind::Ident => self.parse_plain_identifier_expression(),
+                Kind::Ident => {
+                    let (span, name) = self.parse_identifier_kind(Kind::Ident);
+                    // Only allocate an identifier reference once the following token
+                    // establishes that this is an expression rather than an arrow head.
+                    if self.at(Kind::Arrow) {
+                        let binding = BindingIdentifier::new(span, name, self);
+                        let mut arrow_expr = self.parse_simple_arrow_function_expression(
+                            start,
+                            binding,
+                            /* async */ false,
+                            allow_return_type_in_arrow_function,
+                        );
+                        if let Some(comments) = no_side_effects_comments
+                            && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
+                        {
+                            func.pure = true;
+                            self.lexer
+                                .trivia_builder
+                                .mark_no_side_effects_comments_applied(comments);
+                        }
+                        return arrow_expr;
+                    }
+                    Expression::new_identifier(span, name, self)
+                }
                 Kind::This => self.parse_this_expression(),
                 _ => self.parse_literal_expression(),
             };
@@ -1708,9 +1731,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         if kind == Kind::Arrow
             && let Expression::Identifier(ident) = &lhs
         {
+            let binding = BindingIdentifier::new(ident.span, ident.name, self);
             let mut arrow_expr = self.parse_simple_arrow_function_expression(
                 start,
-                ident,
+                binding,
                 /* async */ false,
                 allow_return_type_in_arrow_function,
             );
