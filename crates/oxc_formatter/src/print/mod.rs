@@ -335,6 +335,11 @@ pub fn unary_argument_takes_comment_parens(
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, UnaryExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
+        // The operator and the argument in one element
+        if let Some(text) = unary_single_word_source(self, f) {
+            write!(f, text_without_whitespace(text));
+            return;
+        }
         write!(f, self.operator().as_str());
         if self.operator().is_keyword() {
             write!(f, space());
@@ -348,6 +353,39 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, UnaryExpression<'a>> {
             write!(f, self.argument());
         }
     }
+}
+
+/// The source text of a whole `!a` / `-this` (a non-keyword operator only),
+/// when the argument is a single word printing its source text right after the operator:
+/// no escape, no parentheses, no comment, like its generated `fmt`'s quiet path.
+fn unary_single_word_source<'a>(
+    unary: &AstNode<'_, 'a, UnaryExpression<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> Option<&'a str> {
+    let operator = unary.operator();
+    if operator.is_keyword() {
+        return None;
+    }
+    let argument = unary.argument();
+    let word_len = match argument.as_ref() {
+        Expression::Identifier(identifier) => identifier.name.len(),
+        Expression::ThisExpression(_) => "this".len(),
+        _ => return None,
+    };
+    let unary_span = unary.span();
+    let argument_span = argument.span();
+    let operator = operator.as_str();
+    (argument_span.size() as usize == word_len
+        && f.source_text().bytes_range(unary_span.start, argument_span.start)
+            == operator.as_bytes()
+        && f.comments().is_quiet(
+            argument_span,
+            || unary_span,
+            argument.following_span_start(),
+            true,
+        )
+        && !argument.needs_parentheses(f))
+    .then(|| f.source_text().slice_range(unary_span.start, argument_span.end))
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, BinaryExpression<'a>> {
@@ -1384,10 +1422,83 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeAnnotation<'a>> {
                 // Line comment after the `:` drops the type to column 0 (`let v: // c` + `Foo`, Prettier too);
                 // a break + indent as after `=` would keep it under the name.
                 // See AGENTS.md "Open debts".
-                write!(f, [":", space(), self.type_annotation()]);
+                let type_annotation = self.type_annotation();
+                // `: boolean` in one token, when the keyword type prints no comment (its quiet `fmt`)
+                if let Some(text) = colon_and_keyword_type(type_annotation.as_ref())
+                    && f.comments().is_quiet(
+                        type_annotation.span(),
+                        || self.span(),
+                        type_annotation.following_span_start(),
+                        false,
+                    )
+                {
+                    write!(f, text);
+                } else if let Some(name_span) =
+                    plain_type_name_span(&type_annotation, self.span(), f)
+                    && f.source_text().bytes_range(self.span().start, name_span.start) == b": "
+                {
+                    // `: Foo` as its source text
+                    write!(f, text(f.source_text().slice_range(self.span().start, name_span.end)));
+                } else {
+                    write!(f, [":", space(), type_annotation]);
+                }
             }
         }
     }
+}
+
+/// The span of a plain type reference's name (`Foo`), when the reference prints exactly its source text:
+/// no escape, no type arguments, no comment, no parentheses, like the quiet `fmt`s of the reference and its name.
+/// `enclosing_span` is the span of the reference's parent.
+fn plain_type_name_span(
+    ty: &AstNode<'_, '_, TSType<'_>>,
+    enclosing_span: Span,
+    f: &JsFormatter<'_, '_>,
+) -> Option<Span> {
+    let AstNodeKind::TSTypeReference(reference) = ty.as_kind() else {
+        return None;
+    };
+    if reference.type_arguments.is_some() || is_leftmost_intrinsic_in_type_alias(&reference) {
+        return None;
+    }
+    let type_name = reference.type_name();
+    let AstNodeKind::IdentifierReference(identifier) = type_name.as_kind() else {
+        return None;
+    };
+    let reference_span = reference.span();
+    let name_span = identifier.span();
+    let comments = f.comments();
+    (name_span.size() as usize == identifier.name.len()
+        && comments.is_quiet(
+            reference_span,
+            || enclosing_span,
+            reference.following_span_start(),
+            false,
+        )
+        && comments.is_quiet(name_span, || reference_span, identifier.following_span_start(), true)
+        && !identifier.needs_parentheses(f))
+    .then_some(name_span)
+}
+
+/// `: ` and a keyword type (printed as is), in one token
+fn colon_and_keyword_type(ty: &TSType) -> Option<&'static str> {
+    Some(match ty {
+        TSType::TSAnyKeyword(_) => ": any",
+        TSType::TSBigIntKeyword(_) => ": bigint",
+        TSType::TSBooleanKeyword(_) => ": boolean",
+        TSType::TSIntrinsicKeyword(_) => ": intrinsic",
+        TSType::TSNeverKeyword(_) => ": never",
+        TSType::TSNullKeyword(_) => ": null",
+        TSType::TSNumberKeyword(_) => ": number",
+        TSType::TSObjectKeyword(_) => ": object",
+        TSType::TSStringKeyword(_) => ": string",
+        TSType::TSSymbolKeyword(_) => ": symbol",
+        TSType::TSThisType(_) => ": this",
+        TSType::TSUndefinedKeyword(_) => ": undefined",
+        TSType::TSUnknownKeyword(_) => ": unknown",
+        TSType::TSVoidKeyword(_) => ": void",
+        _ => return None,
+    })
 }
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSLiteralType<'a>> {
@@ -1416,7 +1527,16 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeOperator<'a>> {
 
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSArrayType<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
-        write!(f, [self.element_type(), "[]"]);
+        let element_type = self.element_type();
+        if let Some(name_span) = plain_type_name_span(&element_type, self.span(), f)
+            && f.source_text().bytes_range(name_span.end, self.span().end) == b"[]"
+        {
+            // `Foo[]` as its source text
+            let source = f.source_text().slice_range(name_span.start, self.span().end);
+            write!(f, text_without_whitespace(source));
+        } else {
+            write!(f, [element_type, "[]"]);
+        }
     }
 }
 
