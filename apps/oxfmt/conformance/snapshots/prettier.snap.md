@@ -419,3 +419,18 @@
 ### Error
 
 - misc/filename-matters/html-doctype/xhtml-doctype.xhtml: Syntax error: missing end tag of raw text element at 16..74
+
+## vue
+
+175/184 (95.11%)
+
+### Failed
+
+| Spec path | Failed or Passed | Match ratio |
+| :-------- | :--------------: | :---------: |
+| vue/bracket-same-line/vue.html | 💥💥 | 98.22% |
+| vue/html-vue/elastic-header.html | 💥 | 99.18% |
+| vue/html-vue/hello-world.html | 💥 | 95.45% |
+| vue/html-vue/upper-case-2.html | 💥 | 90.91% |
+| vue/html-vue/upper-case-html-tag-2.html | 💥 | 88.89% |
+| vue/vue/template-dom.html | 💥💥💥 | 88.89% |

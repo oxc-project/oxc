@@ -27,7 +27,7 @@ const DIVERGENCES_FILES = globSync("{apps/oxfmt,crates/oxc_formatter*}/DIVERGENC
 
 type Category = {
   name: string;
-  /** Test suites (Prettier's own, the plugins', `edge-cases/`): compared as written. */
+  /** Test suites (the plugins', `edge-cases/`): compared as written. */
   fixtures: Source[];
   /** Real-world projects: compared on Prettier's output of the file, as written when it has no stable one. */
   projects: Source[];
@@ -37,7 +37,7 @@ type Category = {
 type Source = {
   dir: string;
   ext?: string;
-  /** Files to exclude (e.g. test runner files that are not fixtures) */
+  /** Path substrings to skip (e.g. deliberately broken inputs) */
   excludes?: string[];
   /** Transform relative path to a filepath for formatting (e.g. "xxx/input.html" → "xxx.svelte") */
   resolveFilePath?: (name: string) => string;
@@ -46,15 +46,7 @@ type Source = {
 const categories: Category[] = [
   {
     name: "js-in-vue",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier"),
-        ext: ".vue",
-        // Parser error messages and range formatting are not formatter concerns
-        excludes: ["/_errors_/", "vue/range/"],
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "js-in-vue") },
-    ],
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "js-in-vue") }],
     projects: [{ dir: join(EXTERNALS_DIR, "vue-vben-admin"), ext: ".vue" }],
     optionSets: [
       { printWidth: 80 },
@@ -63,93 +55,37 @@ const categories: Category[] = [
   },
   {
     name: "gql-in-js",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-graphql"),
-        ext: ".js",
-        excludes: ["format.test.js"],
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") },
-    ],
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "gql-in-js") }],
     projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
     name: "css-in-js",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-css"),
-        ext: ".js",
-        excludes: ["format.test.js"],
-      },
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "jsx/embed"),
-        ext: ".js",
-        excludes: ["format.test.js"],
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "css-in-js") },
-    ],
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "css-in-js") }],
     projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
   {
     name: "html-in-js",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-html"),
-        ext: ".js",
-        excludes: ["format.test.js"],
-      },
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "js/embeded"),
-        ext: ".js",
-        excludes: ["format.test.js"],
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "html-in-js") },
-    ],
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "html-in-js") }],
     projects: [{ dir: join(EXTERNALS_DIR, "webawesome"), ext: ".ts" }],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
   },
   {
     name: "angular-in-js",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "typescript/angular-component-examples"),
-        ext: ".ts",
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "angular-in-js") },
-    ],
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "angular-in-js") }],
     projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, htmlWhitespaceSensitivity: "ignore" }],
   },
   {
     name: "md-in-js",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-markdown"),
-        ext: ".js",
-        excludes: ["format.test.js"],
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "md-in-js") },
-    ],
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "md-in-js") }],
     projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
   },
   {
     name: "xxx-in-js-comment",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-html/language-comment"),
-        ext: ".js",
-        excludes: ["format.test.js"],
-      },
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "js/multiparser-comments"),
-        ext: ".js",
-        excludes: ["format.test.js"],
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") },
-    ],
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-js-comment") }],
     projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100 }],
   },
@@ -204,16 +140,8 @@ const categories: Category[] = [
     ],
   },
   {
-    name: "markdown",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "markdown"),
-        ext: ".md",
-        // Cursor offsets and plugin loading are not formatter concerns
-        excludes: ["markdown/cursor/", "markdown/broken-plugins/"],
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-md") },
-    ],
+    name: "xxx-in-md",
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "xxx-in-md") }],
     projects: [],
     optionSets: [{ printWidth: 80 }, { printWidth: 100, proseWrap: "always" }],
   },
@@ -226,21 +154,13 @@ const categories: Category[] = [
       { dir: join(EXTERNALS_DIR, "mdn-css-guides"), ext: ".md" },
     ],
     // mdn's own `.prettierrc` first: the documents are already formatted by it.
-    // `proseWrap: always` is left to the `markdown` category,
+    // `proseWrap: always` is left to `run_prettier.ts` (Prettier's own markdown suite),
     // mdn's GitHub alerts and macros would fail on known divergences (`line-shapes`) in bulk.
     optionSets: [{ printWidth: 80, bracketSameLine: true }, { printWidth: 100 }],
   },
   {
     name: "html",
-    fixtures: [
-      {
-        dir: join(EXTERNALS_DIR, "prettier", "html"),
-        ext: ".html",
-        // Parser error messages, cursor offsets and pragma insertion are not formatter concerns
-        excludes: ["/_errors_/", "html/cursor/", "html/pragma/"],
-      },
-      { dir: join(FIXTURES_DIR, "edge-cases", "html") },
-    ],
+    fixtures: [{ dir: join(FIXTURES_DIR, "edge-cases", "html") }],
     // Real-world pages: demos and playgrounds, dense with `<script>` / `<style>`
     projects: [
       // vite's `invalid*.html` are deliberately broken, both sides error

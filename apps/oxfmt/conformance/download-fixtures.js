@@ -15,7 +15,7 @@ const externalsDir = join(import.meta.dirname, "fixtures", "externals");
 
 // `repo` is `<owner>/<name>` plus the directory to take, `version` is any ref (a tag or a commit)
 const sources = [
-  // xxx-in-js
+  // Prettier's own suite (`run_prettier.ts`)
   {
     name: "prettier",
     repo: "prettier/prettier/tests/format",
