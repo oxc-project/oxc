@@ -1,0 +1,19 @@
+crates/oxc_formatter_core/src/printer/mod.rs
+  s_d0c1383d2a4ca2::t_a9ecde5fc2fbb8 684-703,718-734,1263-1266,1284-1313
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "2a70ba2571ae83c277ef6044ad287a7c6bc0f875",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
