@@ -18,7 +18,7 @@ A conflict between the two is a bug in one of them: until it is fixed, the crate
 - The goal is CONSISTENT, PREDICTABLE, EXPLAINABLE behavior, not 100% parity with Prettier
   - Consistency and a sound rationale win over parity: the `DIVERGENCES.md` files record where they already did
   - Conformance is a measure, not a target: a deliberate divergence lowers it and is still correct
-- The single oracle is Prettier's OUTPUT at the pin, the version in `apps/oxfmt/package.json`: the bundle, the conformance suite (`oxc_formatter_tests`) and fixture verification all use it
+- The single oracle is Prettier's OUTPUT at the pin, the version in `apps/oxfmt/package.json`: the bundle, the conformance suites (`oxc_formatter_tests`, `apps/oxfmt`) and fixture verification all use it
   - Its source code is an analysis aid, never a porting target: pin behavior with fixtures, do not mirror its logic
   - A mismatch is fixed to match the pin, unless an admission reason decides otherwise (see "Known divergences")
 - Prettier `main` and its issues are evidence, not an oracle: they show whether the pin's output is Prettier's intent, a known bug, or a bug already fixed there
@@ -189,8 +189,15 @@ It is gitignored, so use `rg --no-ignore` (or `-u`) when searching it.
 
 ### E2E conformance (`apps/oxfmt`)
 
-The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt.
+The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt, and so is Prettier's suite as a whole, embedded parts included.
 Requires a dev build first.
 A language crate's fixtures cover only its own side (e.g. `format_to_ir` on a fragment): they run without a dispatcher, so an embedded body stays verbatim.
+
+```sh
+pnpm --dir apps/oxfmt build-dev && pnpm --dir apps/oxfmt download-fixtures
+pnpm --dir apps/oxfmt conformance
+# Debug Prettier's suite for a path
+pnpm --dir apps/oxfmt conformance:prettier --filter <path>
+```
 
 Some categories also run on real-world repositories; see `apps/oxfmt`'s `AGENTS.md`.

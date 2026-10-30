@@ -79,9 +79,12 @@ NOTE: Rust written formatters never fall back to Prettier, since they exist to r
 Known divergences live in DIVERGENCES.md (embedding / dispatch layer only); single-language ones live in the owning crate's.
 
 - The pin is a minimal repro in `conformance/fixtures/edge-cases/`
-- `conformance/run.ts` compares a category's `projects` (real-world repositories) on Prettier's output of each file, the code a Prettier user hands over,
-  so the divergences that keep what was written do not fire in bulk; its `fixtures` (Prettier's own, the plugins', `edge-cases/`) stay as written, raw shapes are their job
-- `conformance/run.ts` derives the file-to-entry map from every `DIVERGENCES.md` (this one's `Pin:` / `Conformance:`, the crates' `Oxfmt:`), prints the ref next to each failure,
+- `conformance/run_prettier.ts` compares Prettier's own test suite with its committed jest snapshots, so Prettier never runs
+  - Its `PARSERS` table maps a Prettier parser to the filename oxfmt routes to that language, parsers not listed are not run
+- `conformance/run_live.ts` compares with Prettier run on the spot
+  - A category's `projects` (real-world repositories) are compared on Prettier's output of each file, the code a Prettier user hands over,
+    so the divergences that keep what was written do not fire in bulk; its `fixtures` (Prettier's own, the plugins', `edge-cases/`) stay as written, raw shapes are their job
+- `conformance/run_live.ts` derives the file-to-entry map from every `DIVERGENCES.md` (this one's `Pin:` / `Conformance:`, the crates' `Oxfmt:`), prints the ref next to each failure,
   and warns on a failure no entry lists (unclassified) and on a listed file that passes (stale)
 - All current entries are embedding-layer decisions that outlive the Prettier delegation;
   if an entry about the Prettier-fallback boundary itself is ever added, group it under a separate heading in DIVERGENCES.md so the removal scope stays obvious when the fallback goes away
@@ -162,8 +165,10 @@ pnpm build-dev && pnpm t
 # Update snapshots
 pnpm t -u
 
-# Run conformance test for xxx-in-js and js-in-xxx
+# Run conformance tests (`conformance:prettier` and `conformance:live`)
 pnpm build-dev && pnpm download-fixtures && pnpm conformance
+# Print the diffs of Prettier's test suite matching a path substring, without writing the report
+pnpm conformance:prettier --filter <substring>
 ```
 
 To manually verify the CLI behavior after building:

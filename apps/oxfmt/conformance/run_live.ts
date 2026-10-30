@@ -544,7 +544,7 @@ function writeReport(results: CategoryResult[], divergences: Map<string, string[
   }
 
   mkdirSync(SNAPSHOTS_DIR, { recursive: true });
-  const outPath = join(SNAPSHOTS_DIR, "conformance.snap.md");
+  const outPath = join(SNAPSHOTS_DIR, "live.snap.md");
   writeFileSync(outPath, lines.join("\n"));
   console.log("=".repeat(60));
   console.log(`Report written to ${relative(process.cwd(), outPath)}`);
