@@ -13,17 +13,18 @@ use oxc_ast::ast::{
 };
 use oxc_formatter_core::{
     Format, arena_cow_str,
-    builders::{block_indent, hard_line_break, space, text},
+    builders::{block_indent, hard_line_break, text},
     write,
 };
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::operator::UnaryOperator;
 
-use crate::context::JsonFormatContext;
+use crate::{context::JsonFormatContext, separated::write_comma_after};
 
 use super::{
-    FormatInvalidJson, JsonFormatter, format_with, is_signed_number, literal::FmtJsonString,
-    number_string_round_trips, write_quoted_str,
+    FormatInvalidJson, JsonFormatter, format_with, is_signed_number,
+    literal::{FmtJsonString, write_string_unless_verbatim},
+    number_string_round_trips, write_glued_token, write_key_separator, write_quoted_str,
 };
 
 /// Top-level wrapper around an [`Expression`] for the `json-stringify` variant.
@@ -75,15 +76,18 @@ fn write_string<'a>(lit: &StringLiteral<'a>, f: &mut JsonFormatter<'_, 'a>) {
 
 /// The always-expanded layout shared by arrays and objects: a [`block_indent`]
 /// whose body is `len` entries joined by `,` + hard line break.
+/// `entry_end(i)` is where entry `i` ends in the source.
 fn write_hard_broken_entries<'a>(
     f: &mut JsonFormatter<'_, 'a>,
     len: usize,
+    entry_end: impl Fn(usize) -> u32,
     write_entry: impl Fn(usize, &mut JsonFormatter<'_, 'a>),
 ) {
     let body = format_with(|f| {
         for i in 0..len {
             if i > 0 {
-                write!(f, [",", hard_line_break()]);
+                write_comma_after(entry_end(i - 1), f);
+                write!(f, hard_line_break());
             }
             write_entry(i, f);
         }
@@ -95,13 +99,14 @@ fn write_hard_broken_entries<'a>(
 /// Holes print as `null`,
 /// this matches the Babel AST's `null` elements, which Prettier's printer turns into the string `"null"`).
 fn write_array<'a>(array: &ArrayExpression<'a>, f: &mut JsonFormatter<'_, 'a>) {
-    write!(f, "[");
+    write_glued_token(array.span.start, "[", f);
     if array.elements.is_empty() {
         write!(f, "]");
         return;
     }
 
-    write_hard_broken_entries(f, array.elements.len(), |i, f| {
+    let entry_end = |i: usize| array.elements[i].span().end;
+    write_hard_broken_entries(f, array.elements.len(), entry_end, |i, f| {
         let element = &array.elements[i];
         if matches!(element, ArrayExpressionElement::Elision(_)) {
             write!(f, "null");
@@ -117,20 +122,24 @@ fn write_array<'a>(array: &ArrayExpression<'a>, f: &mut JsonFormatter<'_, 'a>) {
 
 /// `{` + one `key: value` per line + `}`.
 fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>) {
-    write!(f, "{");
+    write_glued_token(object.span.start, "{", f);
     if object.properties.is_empty() {
         write!(f, "}");
         return;
     }
 
-    write_hard_broken_entries(f, object.properties.len(), |i, f| match &object.properties[i] {
-        ObjectPropertyKind::ObjectProperty(prop) => {
-            write_object_key(&prop.key, f);
-            write!(f, [":", space()]);
-            FmtJsonStringifyValue { expression: &prop.value }.fmt(f);
-        }
-        ObjectPropertyKind::SpreadProperty(spread) => {
-            write!(f, FormatInvalidJson(spread.span));
+    let entry_end = |i: usize| object.properties[i].span().end;
+    write_hard_broken_entries(f, object.properties.len(), entry_end, |i, f| {
+        match &object.properties[i] {
+            ObjectPropertyKind::ObjectProperty(prop) => {
+                let verbatim_key = write_object_key(&prop.key, f);
+                if !write_key_separator(verbatim_key, &prop.value, f) {
+                    FmtJsonStringifyValue { expression: &prop.value }.fmt(f);
+                }
+            }
+            ObjectPropertyKind::SpreadProperty(spread) => {
+                write!(f, FormatInvalidJson(spread.span));
+            }
         }
     });
     write!(f, "}");
@@ -142,9 +151,13 @@ fn write_object<'a>(object: &ObjectExpression<'a>, f: &mut JsonFormatter<'_, 'a>
 ///   (identifier names cannot contain characters `JSON.stringify` would escape)
 /// - Numeric key: see the module table for the mode split; in compat mode `String()`
 ///   (unlike value position's `JSON.stringify()`) has no `null` fallback, so non-finite quotes as `"Infinity"`
-fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
+///
+/// A key that prints as its own source text is not written but returned as its span,
+/// for [`write_key_separator`] to write together with the following source.
+fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) -> Option<Span> {
     match key {
-        PropertyKey::StringLiteral(lit) => write_string(lit, f),
+        // `preferred_quote` already pins `json-stringify` to `"`.
+        PropertyKey::StringLiteral(lit) => return write_string_unless_verbatim(lit, f),
         PropertyKey::StaticIdentifier(ident) => {
             write_quoted_str(f, b'"', ident.name.as_str());
         }
@@ -159,6 +172,7 @@ fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
         }
         _ => write!(f, FormatInvalidJson(key.span())),
     }
+    None
 }
 
 /// A template literal is JSON-printable only without substitutions:

@@ -3,11 +3,11 @@ use oxc_ast::ast::{
 };
 use oxc_formatter_core::{
     Format, FormatContext, arena_cow_str,
-    builders::{group, soft_block_indent_with_maybe_space, space, text},
+    builders::{group, soft_block_indent_with_maybe_space, text},
     spec::{format_trimmed_number, is_simple_number, normalize_string},
     write,
 };
-use oxc_span::GetSpan;
+use oxc_span::{GetSpan, Span};
 use oxc_syntax::identifier::is_identifier_name_patched;
 
 use crate::{
@@ -22,8 +22,9 @@ use crate::{
 };
 
 use super::{
-    FmtJsonValue, FormatInvalidJson, JsonFormatter, format_with, literal::FmtJsonString,
-    number_string_round_trips, write_quoted_str,
+    FmtJsonValue, FormatInvalidJson, JsonFormatter, format_with,
+    literal::write_string_unless_verbatim, number_string_round_trips, write_glued_token,
+    write_key_separator, write_quoted_str,
 };
 
 pub struct FmtJsonObject<'a, 'b> {
@@ -32,7 +33,7 @@ pub struct FmtJsonObject<'a, 'b> {
 
 impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
-        write!(f, "{");
+        write_glued_token(self.object.span.start, "{", f);
 
         if self.object.properties.is_empty() {
             let dangling = f.context().comments().take_before(self.object.span.end);
@@ -61,13 +62,14 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
                             write!(f, FormatSuppressedNode(prop.span));
                         } else {
                             write!(f, FormatLeadingComments(prop.span));
-                            if is_json5 {
-                                json5_write_object_key(&prop.key, force_quote, f);
+                            let verbatim_key = if is_json5 {
+                                json5_write_object_key(&prop.key, force_quote, f)
                             } else {
-                                write_object_key(&prop.key, f);
+                                write_object_key(&prop.key, f)
+                            };
+                            if !write_key_separator(verbatim_key, &prop.value, f) {
+                                FmtJsonValue { expression: &prop.value }.fmt(f);
                             }
-                            write!(f, [":", space()]);
-                            FmtJsonValue { expression: &prop.value }.fmt(f);
                         }
                     }
                     ObjectPropertyKind::SpreadProperty(spread) => {
@@ -121,6 +123,9 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
 
 /// Emits an object property's key, applying Prettier's `json`-parser conventions.
 ///
+/// A key that prints as its own source text is not written but returned as its span,
+/// for [`write_key_separator`] to write together with the following source.
+///
 /// Identifier keys (`a:`, `null:`, `true:`) are always quoted: `"a":`/`"null":`/`"true":`.
 ///
 /// Numeric keys are normalized via [`format_trimmed_number`];
@@ -140,9 +145,9 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonObject<'a, '_> {
 /// - `0xdecaf` → `0xdecaf:`
 ///
 /// `json5` diverges (see [`json5_write_object_key`]): keys may stay unquoted.
-fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
+fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) -> Option<Span> {
     match key {
-        PropertyKey::StringLiteral(lit) => FmtJsonString { lit: lit.as_ref() }.fmt(f),
+        PropertyKey::StringLiteral(lit) => return write_string_unless_verbatim(lit, f),
         PropertyKey::StaticIdentifier(ident) => {
             write!(f, [text("\""), text(ident.name.as_str()), text("\"")]);
         }
@@ -156,9 +161,11 @@ fn write_object_key<'a>(key: &PropertyKey<'a>, f: &mut JsonFormatter<'_, 'a>) {
         }
         _ => write!(f, FormatInvalidJson(key.span())),
     }
+    None
 }
 
 /// `json5` object-key printing, mirroring Prettier's `language-js/print/key.js`.
+/// Returns the span of a key left unwritten, like [`write_object_key`].
 ///
 /// Unlike `json`/`jsonc` (which always quote keys), `json5` keeps keys unquoted where safe:
 /// - Identifier key (`{ a: 1 }`): stays bare, unless `force_quote` (consistent) re-quotes it
@@ -171,12 +178,15 @@ fn json5_write_object_key<'a>(
     key: &PropertyKey<'a>,
     force_quote: bool,
     f: &mut JsonFormatter<'_, 'a>,
-) {
+) -> Option<Span> {
     match key {
         PropertyKey::StaticIdentifier(ident) => {
             let name = ident.name.as_str();
             if force_quote {
                 json5_write_quoted_key(name, f);
+            } else if f.context().source_text().text_for(ident.as_ref()) == name {
+                // Escape-free, so the bare name is its own source text
+                return Some(ident.span);
             } else {
                 write!(f, text(name));
             }
@@ -189,9 +199,9 @@ fn json5_write_object_key<'a>(
             };
             if may_unquote && let Some(unquoted) = json5_unquoted_key(lit) {
                 write!(f, text(unquoted));
-                return;
+                return None;
             }
-            FmtJsonString { lit: lit.as_ref() }.fmt(f);
+            return write_string_unless_verbatim(lit, f);
         }
         PropertyKey::NumericLiteral(lit) => {
             let printed_str = normalized_numeric_key(lit, f);
@@ -203,6 +213,7 @@ fn json5_write_object_key<'a>(
         }
         _ => write!(f, FormatInvalidJson(key.span())),
     }
+    None
 }
 
 /// For a `json5` string-literal key,
