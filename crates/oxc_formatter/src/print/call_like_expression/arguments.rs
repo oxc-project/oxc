@@ -13,7 +13,7 @@ use crate::{
             FormatElements, best_fitting_variant, empty_line, expand_parent, format_once,
             format_with, group, soft_block_indent, soft_line_break_or_space, space,
         },
-        trivia::format_dangling_comments,
+        trivia::write_empty_delimited,
     },
     print::{
         FormatJsArrowFunctionExpression, FormatJsArrowFunctionExpressionOptions,
@@ -43,20 +43,8 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Argume
         let arguments = self.as_ref();
 
         if self.is_empty() {
-            let span = self.parent().span();
-            // Without dangling comments, the parens are a single token
-            if !f.comments().has_comment_before(span.end) {
-                return write!(f, "()");
-            }
-            return write!(
-                f,
-                [
-                    l_paren_token,
-                    // `call/* comment1 */(/* comment2 */)` Both comments are dangling comments.
-                    format_dangling_comments(span).with_soft_block_indent(),
-                    r_paren_token
-                ]
-            );
+            // `call/* comment1 */(/* comment2 */)` Both comments are dangling comments.
+            return write_empty_delimited("()", self.parent().span(), f);
         }
 
         let is_simple_module_import = is_simple_module_import(self, f.comments());

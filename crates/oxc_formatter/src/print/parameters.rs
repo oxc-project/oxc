@@ -44,6 +44,13 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameters<'a>> {
             write!(f, [space(), FormatTrailingComments::Comments(comments)]);
         }
 
+        let this_param = get_this_param(self.parent());
+
+        if !self.has_parameter() && this_param.is_none() {
+            write_empty_delimited("()", self.span, f);
+            return;
+        }
+
         let parentheses_not_needed = if let AstNodes::ArrowFunctionExpression(arrow) = self.parent()
         {
             can_avoid_parentheses(arrow, f)
@@ -51,17 +58,13 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameters<'a>> {
             false
         };
 
-        let this_param = get_this_param(self.parent());
-
         let has_any_decorated_parameter =
             self.items.iter().any(|param| !param.decorators.is_empty());
 
         let can_hug = should_hug_function_parameters(self, this_param, parentheses_not_needed, f)
             && !has_any_decorated_parameter;
 
-        let layout = if !self.has_parameter() && this_param.is_none() {
-            ParameterLayout::NoParameters
-        } else if can_hug || {
+        let layout = if can_hug || {
             // `self`: FormalParameters
             // `self.parent()`: ArrowFunctionExpression/Function
             // `self.grand_parent()`: CallExpression
@@ -79,22 +82,11 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameters<'a>> {
             ParameterLayout::Default
         };
 
-        // Without dangling comments, empty parens are a single token
-        if matches!(layout, ParameterLayout::NoParameters)
-            && !f.comments().has_comment_before(self.span.end)
-        {
-            write!(f, "()");
-            return;
-        }
-
         if !parentheses_not_needed {
             write!(f, "(");
         }
 
         match layout {
-            ParameterLayout::NoParameters => {
-                write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
-            }
             ParameterLayout::Hug => {
                 write!(f, ParameterList::with_layout(self, this_param, layout));
             }
@@ -261,11 +253,6 @@ pub struct ParameterList<'a, 'b> {
 
 #[derive(Debug, Copy, Clone)]
 pub enum ParameterLayout {
-    /// ```javascript
-    /// function test() {}
-    /// ```
-    NoParameters,
-
     /// Enforce that the opening and closing parentheses aren't separated from the first token of the parameter.
     /// For example, to enforce that the `{`  and `}` of an object expression are formatted on the same line
     /// as the `(` and `)` tokens even IF the object expression itself breaks across multiple lines.
@@ -314,7 +301,7 @@ impl<'a, 'b> ParameterList<'a, 'b> {
 impl<'a> Format<'a, JsFormatContext<'a>> for ParameterList<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
         match self.layout {
-            None | Some(ParameterLayout::Default | ParameterLayout::NoParameters) => {
+            None | Some(ParameterLayout::Default) => {
                 let has_trailing_rest = self.list.rest().is_some();
 
                 // If it's a rest parameter, the assumption is no more

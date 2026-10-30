@@ -8,7 +8,7 @@ use crate::{
     formatter::{
         JsFormatContext, JsFormatter, JsFormatterExt as _,
         prelude::{format_with, group, soft_block_indent_with_maybe_space},
-        trivia::format_dangling_comments,
+        trivia::write_empty_delimited,
     },
     options::Expand,
     print::parameters::{get_this_param, should_hug_function_parameters},
@@ -84,45 +84,39 @@ impl<'a> ObjectLike<'a, '_> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for ObjectLike<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let members = format_with(|f| self.write_members(f));
-
-        let is_empty = self.members_are_empty();
-        // Without dangling comments, the braces are a single token
-        if is_empty && !f.comments().has_comment_before(self.span().end) {
-            write!(f, "{}");
-            return;
-        }
-
-        write!(f, "{");
-
-        if is_empty {
+        if self.members_are_empty() {
             // Soft indent so the object can stay on one line if it fits:
             // a single one-line block comment stays inline without bracket spacing
             // line comments and multiple comments still expand.
-            write!(f, format_dangling_comments(self.span()).with_soft_block_indent());
+            write_empty_delimited("{}", self.span(), f);
+            return;
+        }
+
+        let members = format_with(|f| self.write_members(f));
+
+        write!(f, "{");
+
+        let should_insert_space_around_brackets = f.options().bracket_spacing.value();
+        let should_expand =
+            f.options().expand == Expand::Auto && self.members_have_leading_newline(f);
+
+        // If the object type is the type annotation of the only parameter in a function,
+        // try to hug the parameter; we don't create a group and inline the contents here.
+        //
+        // For example:
+        // ```ts
+        // const fn = ({ foo }: { foo: string }) => { ... };
+        //                      ^ do not break properties here
+        // ```
+        let should_hug = self.should_hug(f);
+
+        let inner =
+            soft_block_indent_with_maybe_space(&members, should_insert_space_around_brackets);
+
+        if should_hug {
+            write!(f, inner);
         } else {
-            let should_insert_space_around_brackets = f.options().bracket_spacing.value();
-            let should_expand =
-                f.options().expand == Expand::Auto && self.members_have_leading_newline(f);
-
-            // If the object type is the type annotation of the only parameter in a function,
-            // try to hug the parameter; we don't create a group and inline the contents here.
-            //
-            // For example:
-            // ```ts
-            // const fn = ({ foo }: { foo: string }) => { ... };
-            //                      ^ do not break properties here
-            // ```
-            let should_hug = self.should_hug(f);
-
-            let inner =
-                soft_block_indent_with_maybe_space(&members, should_insert_space_around_brackets);
-
-            if should_hug {
-                write!(f, inner);
-            } else {
-                write!(f, [group(&inner).should_expand(should_expand)]);
-            }
+            write!(f, [group(&inner).should_expand(should_expand)]);
         }
 
         write!(f, "}");

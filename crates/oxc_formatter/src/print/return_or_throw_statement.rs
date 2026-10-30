@@ -67,16 +67,8 @@ impl<'a, 'b> ReturnAndThrowStatement<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let argument = self.argument();
-        if argument.is_none() {
-            // `return;` in one token: nothing comes between them (the dangling comments go after, see below)
-            write!(f, KeywordWithOptionalSemicolon("return;"));
-        } else {
-            write!(f, self.keyword());
-        }
-
-        if let Some(argument) = argument {
-            write!(f, space());
+        if let Some(argument) = self.argument() {
+            write!(f, [self.keyword(), space()]);
             let argument_leaf_end = assignment_chain_leaf_end(argument.as_ref(), f);
             if f.comments().has_comment_in_range(argument_leaf_end, self.span().end) {
                 // Comments inside the argument's source parentheses belong to the argument
@@ -109,6 +101,10 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
                 // no comment between the argument and the end of the statement, nothing to relocate.
                 write!(f, FormatAdjacentArgument(&argument));
             }
+            write!(f, OptionalSemicolon);
+        } else {
+            // Only `return` has no argument
+            write!(f, KeywordWithOptionalSemicolon("return;"));
         }
 
         // The semicolon goes before the dangling comments, like Prettier:
@@ -120,10 +116,6 @@ impl<'a> Format<'a, JsFormatContext<'a>> for ReturnAndThrowStatement<'a, '_> {
         let same_line_count =
             dangling_comments.iter().take_while(|c| !c.preceded_by_newline()).count();
         let dangling_comments = &dangling_comments[..same_line_count];
-
-        if argument.is_some() {
-            write!(f, OptionalSemicolon);
-        }
 
         if !dangling_comments.is_empty() {
             write!(

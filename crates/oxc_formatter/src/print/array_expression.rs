@@ -23,42 +23,36 @@ impl<'a, 'b> FormatArrayExpression<'a, 'b> {
 
 impl<'a> Format<'a, JsFormatContext<'a>> for FormatArrayExpression<'a, '_> {
     fn fmt(&self, f: &mut JsFormatter<'_, 'a>) {
-        let is_empty = self.array.elements().is_empty();
-        // Without dangling comments, the brackets are a single token
-        if is_empty && !f.comments().has_comment_before(self.array.span.end) {
-            write!(f, "[]");
+        if self.array.elements().is_empty() {
+            write_empty_delimited("[]", self.array.span, f);
             return;
         }
 
         write!(f, "[");
 
-        if is_empty {
-            write!(f, format_dangling_comments(self.array.span).with_soft_block_indent());
-        } else {
-            let group_id = f.group_id("array");
-            // A line comment after the last element (e.g. after a trailing hole)
-            // is printed right before the `]` and needs the array to break
-            let has_trailing_line_comment = || {
-                self.array.elements().last().is_some_and(|last| {
-                    f.comments()
-                        .comments_in_range(last.span().end, self.array.span.end)
-                        .iter()
-                        .any(Comment::is_line)
-                })
-            };
-            let should_expand = !self.options.is_force_flat_mode
-                && (should_break(self.array) || has_trailing_line_comment());
+        let group_id = f.group_id("array");
+        // A line comment after the last element (e.g. after a trailing hole)
+        // is printed right before the `]` and needs the array to break
+        let has_trailing_line_comment = || {
+            self.array.elements().last().is_some_and(|last| {
+                f.comments()
+                    .comments_in_range(last.span().end, self.array.span.end)
+                    .iter()
+                    .any(Comment::is_line)
+            })
+        };
+        let should_expand = !self.options.is_force_flat_mode
+            && (should_break(self.array) || has_trailing_line_comment());
 
-            let array_elements = self.array.elements();
-            let elements = ArrayElementList::new(&array_elements, group_id);
+        let array_elements = self.array.elements();
+        let elements = ArrayElementList::new(&array_elements, group_id);
 
-            write!(
-                f,
-                group(&soft_block_indent(&elements))
-                    .with_group_id(Some(group_id))
-                    .should_expand(should_expand)
-            );
-        }
+        write!(
+            f,
+            group(&soft_block_indent(&elements))
+                .with_group_id(Some(group_id))
+                .should_expand(should_expand)
+        );
 
         write!(f, "]");
     }

@@ -929,10 +929,10 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ForOfStatement<'a>> {
         let right = self.right();
         let body = self.body();
         let format_inner = format_with(|f| {
-            write!(f, if r#await { "for await (" } else { "for (" });
             write!(
                 f,
                 [
+                    if r#await { "for await (" } else { "for (" },
                     left,
                     space(),
                     "of",

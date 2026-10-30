@@ -358,6 +358,18 @@ pub const fn format_dangling_comments<'a>(span: Span) -> FormatDanglingComments<
     FormatDanglingComments::Node { span, indent: DanglingIndentMode::None }
 }
 
+/// Writes an empty container spanning `span`: its `delimiters` (`"[]"`, `"{}"`, `"()"`)
+/// around its [soft](DanglingIndentMode::Soft) indented dangling comments,
+/// a single token when there are none.
+pub fn write_empty_delimited(delimiters: &'static str, span: Span, f: &mut JsFormatter<'_, '_>) {
+    if f.comments().has_comment_before(span.end) {
+        let (open, close) = delimiters.split_at(1);
+        write!(f, [open, format_dangling_comments(span).with_soft_block_indent(), close]);
+    } else {
+        write!(f, delimiters);
+    }
+}
+
 /// Formats the dangling trivia of `token`.
 pub enum FormatDanglingComments<'a> {
     Node { span: Span, indent: DanglingIndentMode },
