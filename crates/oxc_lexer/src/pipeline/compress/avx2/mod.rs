@@ -62,10 +62,10 @@ pub(super) unsafe fn compress_blocks_avx2(
     b1: usize,
     starts: *mut u32,
     kinds: *mut u8,
-    _cpu: Avx2,
+    cpu: Avx2,
 ) -> usize {
     // SAFETY: `Lexer::new` calls `init_pair_luts`, which initializes `PairLuts` if the CPU supports AVX2
-    let pair_luts = unsafe { get_pair_luts() };
+    let pair_luts = unsafe { get_pair_luts(cpu) };
     let lut0z = pair_luts.lut0z.as_ptr().cast::<u8>();
     let lutpad = pair_luts.lutpad.as_ptr().cast::<u8>();
 
