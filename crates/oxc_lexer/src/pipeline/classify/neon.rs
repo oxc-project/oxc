@@ -3,7 +3,9 @@ use std::arch::aarch64::*;
 use crate::{cpu::Neon, token::tk};
 
 use super::{
-    luts::{MERGED_LUTS, WORD_LUTS},
+    luts::{
+        DIGIT_MASK, DOT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK,
+    },
     punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
 };
 
@@ -117,9 +119,9 @@ fn chunk(v: uint8x16_t, l: &Luts, cpu: Neon) -> Classified {
         let t = vandq_u8(vqtbl1q_u8(l.mrg_lo, lo), vqtbl1q_u8(l.mrg_hi, hn));
 
         let na = vtstq_u8(v, vdupq_n_u8(0x80));
-        let word = vorrq_u8(vtstq_u8(tb, vdupq_n_u8(0x3f)), na);
-        let ws = vtstq_u8(tb, vdupq_n_u8(0xc0));
-        let digit = vtstq_u8(tb, vdupq_n_u8(0x02));
+        let word = vorrq_u8(vtstq_u8(tb, vdupq_n_u8(WORD_MASK)), na);
+        let ws = vtstq_u8(tb, vdupq_n_u8(WS_MASK));
+        let digit = vtstq_u8(tb, vdupq_n_u8(DIGIT_MASK));
         let misc = vorrq_u8(vorrq_u8(veq(v, b'#', cpu), veq(v, b'\\', cpu)), na);
 
         let mut kind = punct1(v, lo, hn, l, cpu);
@@ -131,9 +133,9 @@ fn chunk(v: uint8x16_t, l: &Luts, cpu: Neon) -> Classified {
             word,
             ws,
             digit,
-            dot: vtstq_u8(t, vdupq_n_u8(0x80)),
-            kwinit: vtstq_u8(t, vdupq_n_u8(0x03)),
-            opch: vtstq_u8(t, vdupq_n_u8(0x3c)),
+            dot: vtstq_u8(t, vdupq_n_u8(DOT_MASK)),
+            kwinit: vtstq_u8(t, vdupq_n_u8(KWINIT_MASK)),
+            opch: vtstq_u8(t, vdupq_n_u8(OPCH_MASK)),
             misc,
             kind,
         }

@@ -5,7 +5,7 @@ use crate::{cpu::Avx2, token::tk};
 use crate::pipeline::chunk::{load256, mm, veq};
 
 use super::{
-    luts::{MERGED_LUTS, WORD_LUTS},
+    luts::{DIGIT_MASK, KWINIT_MASK, MERGED_LUTS, OPCH_MASK, WORD_LUTS, WORD_MASK, WS_MASK},
     punct1_luts::{PH_A, PH_B, PH_T0, PH_T1},
 };
 
@@ -53,11 +53,11 @@ pub(super) unsafe fn classify_avx2(
         _mm256_broadcastsi128_si256(_mm_loadu_si128(WORD_LUTS.lo.as_ptr() as *const __m128i));
     let v_wbhi =
         _mm256_broadcastsi128_si256(_mm_loadu_si128(WORD_LUTS.hi.as_ptr() as *const __m128i));
-    let v_kwpl = _mm256_set1_epi8(0x03);
-    let v_oppl = _mm256_set1_epi8(0x3c);
-    let v_wdpl = _mm256_set1_epi8(0x3f);
-    let v_wspl = _mm256_set1_epi8(0xc0u8 as i8);
-    let v_dgpl = _mm256_set1_epi8(0x02);
+    let v_kwpl = _mm256_set1_epi8(KWINIT_MASK as i8);
+    let v_oppl = _mm256_set1_epi8(OPCH_MASK as i8);
+    let v_wdpl = _mm256_set1_epi8(WORD_MASK as i8);
+    let v_wspl = _mm256_set1_epi8(WS_MASK as i8);
+    let v_dgpl = _mm256_set1_epi8(DIGIT_MASK as i8);
     let v_ones = _mm256_set1_epi8(0xffu8 as i8);
     let v_zero = _mm256_setzero_si256();
     let v_x0f = _mm256_set1_epi8(0x0f);
