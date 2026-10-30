@@ -23,7 +23,7 @@ pub(super) unsafe fn lex_line_comment(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    let (end, lic_q) = scan_line_comment(src, n, s + 2);
+    let (end, lic_q) = scan_line_comment(src, n, s + 2, cpu);
     *kind.add(s) = tk!(LineComment);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
@@ -52,7 +52,7 @@ pub(super) unsafe fn lex_block_comment(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) -> usize {
-    let (e, mut saw_nl, lic_q) = scan_block_comment(src, n, s + 2);
+    let (e, mut saw_nl, lic_q) = scan_block_comment(src, n, s + 2, cpu);
     let end = if e < n { e + 1 } else { n };
     if e >= n {
         lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedBlockComment);

@@ -92,7 +92,7 @@ pub(super) unsafe fn jsx_skip_trivia(
         if c == b'/' && i + 1 < n {
             match *src.add(i + 1) {
                 b'*' => {
-                    let e = scan_block_comment(src, n, i + 2).0;
+                    let e = scan_block_comment(src, n, i + 2, cpu).0;
                     if e >= n {
                         return n;
                     }
