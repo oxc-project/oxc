@@ -99,29 +99,47 @@ pub fn write_block_scalar<'a>(
     // Blank runs are the scalar's VALUE
     let chomping_keep = block.chomping == Chomping::Keep;
     let contents = format_with(move |f: &mut YamlFormatter<'_, 'a>| {
-        let mut blanks = 0usize;
-        let mut wrote_any = false;
-        for words in &line_groups {
-            if words.is_empty() {
-                blanks += 1;
-                continue;
+        // The trailing blank run is the tail below, everything before it the lines
+        let blanks = line_groups.iter().rev().take_while(|words| words.is_empty()).count();
+        let lines = &line_groups[..line_groups.len() - blanks];
+        let wrote_any = !lines.is_empty();
+        let write_lines = format_with(|f: &mut YamlFormatter<'_, 'a>| {
+            let mut blanks = 0usize;
+            let mut wrote_any = false;
+            for words in lines {
+                if words.is_empty() {
+                    blanks += 1;
+                    continue;
+                }
+                if blanks > 0 {
+                    // One newline entering this segment
+                    // (after the header for the first, the separator otherwise) + one per blank line.
+                    write!(f, exact_line_breaks(blanks + 1));
+                } else if wrote_any {
+                    write!(f, literal_line_break());
+                } else {
+                    write!(f, hard_line_break());
+                }
+                blanks = 0;
+                wrote_any = true;
+                // A single word has no separator to fill: the fill would print just its text
+                if let [word] = words.as_slice() {
+                    write!(f, text(word));
+                    continue;
+                }
+                let mut fill = f.fill();
+                for &word in words {
+                    fill.entry(&soft_line_break_or_space(), &text(word));
+                }
+                fill.finish();
             }
-            if blanks > 0 {
-                // One newline entering this segment
-                // (after the header for the first, the separator otherwise) + one per blank line.
-                write!(f, exact_line_breaks(blanks + 1));
-            } else if wrote_any {
-                write!(f, mark_as_root(&literal_line_break()));
-            } else {
-                write!(f, hard_line_break());
-            }
-            blanks = 0;
-            wrote_any = true;
-            let mut fill = f.fill();
-            for &word in words {
-                fill.entry(&soft_line_break_or_space(), &text(word));
-            }
-            fill.finish();
+        });
+        // A literal line (between two adjacent content lines) returns to the scalar's own indention:
+        // one `mark_as_root` around all the lines marks it, nothing inside changes the indention
+        if lines.windows(2).any(|pair| !pair[0].is_empty() && !pair[1].is_empty()) {
+            write!(f, mark_as_root(&write_lines));
+        } else {
+            write!(f, write_lines);
         }
         if chomping_keep {
             // Keep chomping: the trailing newlines are the VALUE
