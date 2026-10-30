@@ -1,0 +1,23 @@
+Cargo.lock
+  s_cac1c0af6b5088::t_b7f575a1e64608 2177
+crates/oxc_formatter_markdown/Cargo.toml
+  s_cac1c0af6b5088::t_df668d9c327f66 21
+crates/oxc_formatter_markdown/src/format.rs
+  s_cac1c0af6b5088::t_1d5d05470099c8 157,184-199
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ab871b7bd46e74dfc9080e0c77f17091deb0dd4b",
+  "prompts": {},
+  "sessions": {
+    "s_cac1c0af6b5088": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6a061f52-14ed-4bcd-b1ae-2c3600f4477c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
