@@ -1450,7 +1450,7 @@ a {
 /* prettier: CssSyntaxError: Missed semicolon, the input is left as-is */
 ```
 
-A `;`-less declaration runs to the next `;`: `oxc-css-parser` reads one declaration, a value being any component-value run (css-syntax-3; its README "Acceptance");
+A `;`-less declaration runs to the next `;`: `oxc-css-parser` reads one declaration, a value being any component-value run (css-syntax-3; oxc-css-parser AGENTS.md "Acceptance");
 postcss rejects a value with a `word:` after its first word.
 Same tokens, so same meaning: a browser drops the declaration,
 or keeps it the same way when the value holds an arbitrary substitution function (`var()`, `env()`).

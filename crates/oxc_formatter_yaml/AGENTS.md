@@ -38,7 +38,7 @@ A leading BOM is stripped before parsing and re-emitted by `format()`.
 
 ### Line starts
 
-A line the printer starts at column 0 must not read back as stream-level syntax (see the parser README "Input acceptance"):
+A line the printer starts at column 0 must not read back as stream-level syntax (see the parser's AGENTS.md "Input acceptance"):
 
 - `---`/`...` followed by a blank or the end is a document marker
 - U+FEFF outside a document is a BOM
