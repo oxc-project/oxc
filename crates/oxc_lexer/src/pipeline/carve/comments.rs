@@ -4,6 +4,7 @@ use crate::{error::DiagCode, token::tk};
 
 use crate::pipeline::{
     bitmap::{bm_clear_range, bm_set},
+    bytes::{unicode_ws_len, unicode_ws_len_at},
     lanes::Lanes,
     scan::{scan_block_comment, scan_line_comment},
 };
@@ -74,15 +75,7 @@ pub(super) unsafe fn lex_block_comment(
     let comment_kind =
         if saw_nl { CommentKind::MultiLineBlock } else { CommentKind::SingleLineBlock };
 
-    let mut q = end;
-    let mut followed_by_newline = false;
-    while q < n && is_lex_ws(srcs[q]) {
-        if srcs[q] == b'\n' || srcs[q] == b'\r' {
-            followed_by_newline = true;
-            break;
-        }
-        q += 1;
-    }
+    let followed_by_newline = followed_by_line_terminator(srcs, n, end);
 
     push_comment_record(srcs, n, s as u32, end as u32, comment_kind, followed_by_newline, m, lanes);
     end
@@ -381,21 +374,7 @@ fn push_comment_record(
     let mut c = Comment::new(start, end.min(sl as u32), kind);
     c.content = content;
 
-    let mut q = (start as usize).min(sl);
-    let preceded_by_newline = loop {
-        if q == 0 {
-            break true;
-        }
-        let b = src[q - 1];
-        if b == b'\n' || b == b'\r' {
-            break true;
-        }
-        if !is_lex_ws(b) {
-            break false;
-        }
-        q -= 1;
-    };
-    c.set_preceded_by_newline(preceded_by_newline);
+    c.set_preceded_by_newline(preceded_by_line_terminator(src, (start as usize).min(sl)));
     c.set_followed_by_newline(followed_by_newline);
 
     lanes.comments.push(c);
@@ -404,6 +383,78 @@ fn push_comment_record(
 #[inline]
 fn is_lex_ws(c: u8) -> bool {
     matches!(c, b' ' | b'\t' | b'\n' | b'\r' | 0x0b | 0x0c)
+}
+
+/// LS (U+2028) or PS (U+2029).
+#[inline]
+fn is_ls_ps(c0: u8, c1: u8, c2: u8) -> bool {
+    c0 == 0xE2 && c1 == 0x80 && (c2 == 0xA8 || c2 == 0xA9)
+}
+
+/// Scan forward from `q` over WhiteSpace. `src` carries PAD bytes past `n`.
+#[inline]
+fn followed_by_line_terminator(src: &[u8], n: usize, mut q: usize) -> bool {
+    while q < n {
+        let b = src[q];
+        if b == b'\n' || b == b'\r' {
+            return true;
+        }
+        if is_lex_ws(b) {
+            q += 1;
+            continue;
+        }
+        if b < 0x80 {
+            return false;
+        }
+        let len = unicode_ws_len_at(src, q);
+        if len == 0 {
+            return false;
+        }
+        if is_ls_ps(src[q], src[q + 1], src[q + 2]) {
+            return true;
+        }
+        q += len;
+    }
+    false
+}
+
+/// Scan backward from `q` over WhiteSpace. Start of input counts as a newline.
+#[inline]
+fn preceded_by_line_terminator(src: &[u8], mut q: usize) -> bool {
+    loop {
+        if q == 0 {
+            return true;
+        }
+        let b = src[q - 1];
+        if b == b'\n' || b == b'\r' {
+            return true;
+        }
+        if is_lex_ws(b) {
+            q -= 1;
+            continue;
+        }
+        if b < 0x80 {
+            return false;
+        }
+        if q >= 3 {
+            let (c0, c1, c2) = (src[q - 3], src[q - 2], src[q - 1]);
+            if unicode_ws_len(c0, c1, c2) == 3 {
+                if is_ls_ps(c0, c1, c2) {
+                    return true;
+                }
+                q -= 3;
+                continue;
+            }
+        }
+        if q >= 2 {
+            let (c0, c1) = (src[q - 2], src[q - 1]);
+            if unicode_ws_len(c0, c1, 0) == 2 {
+                q -= 2;
+                continue;
+            }
+        }
+        return false;
+    }
 }
 
 #[cfg(test)]
