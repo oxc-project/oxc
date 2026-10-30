@@ -12,7 +12,7 @@ use crate::{
     separated::{TrailingSeparator, blank_line_after_comma, write_separated},
 };
 
-use super::{FmtJsonValue, FormatInvalidJson, JsonFormatter, format_with};
+use super::{FmtJsonValue, FormatInvalidJson, JsonFormatter, format_with, write_glued_token};
 
 pub struct FmtJsonArray<'a, 'b> {
     pub array: &'b ArrayExpression<'a>,
@@ -20,7 +20,7 @@ pub struct FmtJsonArray<'a, 'b> {
 
 impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
-        write!(f, "[");
+        write_glued_token(self.array.span.start, "[", f);
 
         if self.array.elements.is_empty() {
             let dangling = f.context().comments().take_before(self.array.span.end);
@@ -75,7 +75,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonArray<'a, '_> {
                     let item = format_with(move |f| {
                         write_array_element(element, f);
                         if i < last_idx {
-                            write!(f, ",");
+                            write_glued_token(element.span().end, ",", f);
                         } else if allow_trailing {
                             write!(f, if_group_breaks(&",").with_group_id(group_id));
                         }
