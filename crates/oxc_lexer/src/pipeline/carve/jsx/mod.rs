@@ -248,7 +248,7 @@ pub(super) unsafe fn carve_jsx(
                         ) {
                             // Operand position: candidate JSX. Whitespace (Unicode too) and
                             // comments may separate `<` from the name.
-                            let tpos = jsx_skip_trivia_fast(src, n, s + 1);
+                            let tpos = jsx_skip_trivia_fast(src, n, s + 1, cpu);
                             let tc = if tpos < n { *src.add(tpos) } else { 0 };
                             if tc == b'>' {
                                 // fragment `<>`
@@ -323,7 +323,7 @@ pub(super) unsafe fn carve_jsx(
                         &lanes.disambiguate.closers,
                     );
                     if prev_sig(tokens.st, tokens.kind, s).is_some_and(|q| *src.add(q) == b'=') {
-                        let tpos = jsx_skip_trivia(src, n, s + 1);
+                        let tpos = jsx_skip_trivia(src, n, s + 1, cpu);
                         jsx_punct(kind, opch, s, tk!(JsxLt));
                         stack.push(JFrame {
                             kind: JFrameKind::JsxTag,
@@ -500,7 +500,7 @@ pub(super) unsafe fn carve_jsx(
                             let gp = if d == b'>' {
                                 Some(s + 1)
                             } else {
-                                let w = jsx_skip_trivia(src, n, s + 1);
+                                let w = jsx_skip_trivia(src, n, s + 1, cpu);
                                 (w < n && *src.add(w) == b'>').then_some(w)
                             };
                             if let Some(gp) = gp {
@@ -593,7 +593,7 @@ pub(super) unsafe fn carve_jsx(
                     let direct = c1 == b'>'
                         || (c1 == b'/' && c2 != b'*' && c2 != b'/')
                         || (c1 < 0x80 && is_id_start(c1));
-                    let tpos = if direct { s + 1 } else { jsx_skip_trivia(src, n, s + 1) };
+                    let tpos = if direct { s + 1 } else { jsx_skip_trivia(src, n, s + 1, cpu) };
                     let tc = if tpos < n { *src.add(tpos) } else { 0 };
                     if tc == b'/' {
                         // closing tag `</name>` or `</>`; the name stays IDENT
@@ -642,9 +642,9 @@ pub(super) unsafe fn carve_jsx(
                             let cs = if (c2 < 0x80 && is_word(c2)) || c2 == b'>' {
                                 tpos + 1
                             } else {
-                                jsx_skip_trivia(src, gp, tpos + 1)
+                                jsx_skip_trivia(src, gp, tpos + 1, cpu)
                             };
-                            if !jsx_names_equal_fast(src, word, n, f.name_s as usize, cs, gp) {
+                            if !jsx_names_equal_fast(src, word, n, f.name_s as usize, cs, gp, cpu) {
                                 lanes.push_diag(
                                     s as u32,
                                     (after - s) as u32,
@@ -687,7 +687,7 @@ pub(super) unsafe fn carve_jsx(
                 lanes.push_diag(f.start, n as u32 - f.start, DiagCode::UnterminatedJsxTag);
             }
             JFrameKind::JsxElem => {
-                let ne = jsx_name_end(src, n, f.name_s as usize) as u32;
+                let ne = jsx_name_end(src, n, f.name_s as usize, cpu) as u32;
                 lanes.push_diag(f.start, ne - f.start, DiagCode::UnterminatedJsxElement);
             }
             JFrameKind::JsxCont => {
