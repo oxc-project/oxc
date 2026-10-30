@@ -12,16 +12,20 @@ pub unsafe fn scan_block_comment_avx2(
     src: *const u8,
     n: usize,
     mut i: usize,
-    _cpu: Avx2,
+    cpu: Avx2,
 ) -> (usize, bool, i64) {
     let mut saw_nl = false;
     let mut lic_q: i64 = -1;
     while i + 32 <= n {
-        let v = load256(src, i);
-        let vn = load256(src, i + 1);
-        let term = mm(_mm256_and_si256(veq(v, b'*'), veq(vn, b'/')));
-        let nl = if saw_nl { 0 } else { mm(_mm256_or_si256(veq(v, b'\n'), veq(v, b'\r'))) };
-        let at = if lic_q < 0 { mm(veq(v, b'@')) } else { 0 };
+        let v = load256(src, i, cpu);
+        let vn = load256(src, i + 1, cpu);
+        let term = mm(_mm256_and_si256(veq(v, b'*', cpu), veq(vn, b'/', cpu)), cpu);
+        let nl = if saw_nl {
+            0
+        } else {
+            mm(_mm256_or_si256(veq(v, b'\n', cpu), veq(v, b'\r', cpu)), cpu)
+        };
+        let at = if lic_q < 0 { mm(veq(v, b'@', cpu), cpu) } else { 0 };
         if term != 0 {
             let j = term.trailing_zeros() as usize;
             let bodymask: u32 = if j > 0 { (1u32 << j) - 1 } else { 0 };
@@ -66,14 +70,17 @@ pub unsafe fn scan_line_comment_avx2(
     src: *const u8,
     n: usize,
     mut i: usize,
-    _cpu: Avx2,
+    cpu: Avx2,
 ) -> (usize, i64) {
     let mut lic_q: i64 = -1;
     while i + 32 <= n {
-        let v = load256(src, i);
-        let term_v = _mm256_or_si256(_mm256_or_si256(veq(v, b'\n'), veq(v, b'\r')), veq(v, 0xE2));
-        let mut term = mm(term_v);
-        let at = mm(veq(v, b'@'));
+        let v = load256(src, i, cpu);
+        let term_v = _mm256_or_si256(
+            _mm256_or_si256(veq(v, b'\n', cpu), veq(v, b'\r', cpu)),
+            veq(v, 0xE2, cpu),
+        );
+        let mut term = mm(term_v, cpu);
+        let at = mm(veq(v, b'@', cpu), cpu);
         while term != 0 {
             let t = term.trailing_zeros() as usize;
             let c = *src.add(i + t);

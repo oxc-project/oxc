@@ -65,8 +65,8 @@ pub(super) unsafe fn classify_avx2(
     let v_zero = _mm256_setzero_si256();
     let v_x0f = _mm256_set1_epi8(0x0f);
     while b < nb_ceil {
-        let v0 = load256(src, i);
-        let v1 = load256(src, i + 32);
+        let v0 = load256(src, i, cpu);
+        let v1 = load256(src, i + 32, cpu);
         let hn0 = _mm256_and_si256(_mm256_srli_epi16::<4>(v0), v_x0f);
         let hn1 = _mm256_and_si256(_mm256_srli_epi16::<4>(v1), v_x0f);
         let tb0 =
@@ -85,21 +85,26 @@ pub(super) unsafe fn classify_avx2(
         let nws1 = _mm256_cmpeq_epi8(_mm256_and_si256(tb1, v_wspl), v_zero);
         let d0 = _mm256_cmpgt_epi8(_mm256_and_si256(tb0, v_dgpl), v_zero);
         let d1 = _mm256_cmpgt_epi8(_mm256_and_si256(tb1, v_dgpl), v_zero);
-        let wordm = (mm(w0) as u64) | ((mm(w1) as u64) << 32);
-        let wsm = ((!mm(nws0)) as u64) | (((!mm(nws1)) as u64) << 32);
+        let wordm = (mm(w0, cpu) as u64) | ((mm(w1, cpu) as u64) << 32);
+        let wsm = ((!mm(nws0, cpu)) as u64) | (((!mm(nws1, cpu)) as u64) << 32);
         *word.add(b) = wordm;
-        *digit.add(b) = (mm(d0) as u64) | ((mm(d1) as u64) << 32);
-        *misc.add(b) = (mm(_mm256_or_si256(_mm256_or_si256(veq(v0, b'#'), veq(v0, b'\\')), na0))
-            as u64)
-            | ((mm(_mm256_or_si256(_mm256_or_si256(veq(v1, b'#'), veq(v1, b'\\')), na1)) as u64)
+        *digit.add(b) = (mm(d0, cpu) as u64) | ((mm(d1, cpu) as u64) << 32);
+        *misc.add(b) = (mm(
+            _mm256_or_si256(_mm256_or_si256(veq(v0, b'#', cpu), veq(v0, b'\\', cpu)), na0),
+            cpu,
+        ) as u64)
+            | ((mm(
+                _mm256_or_si256(_mm256_or_si256(veq(v1, b'#', cpu), veq(v1, b'\\', cpu)), na1),
+                cpu,
+            ) as u64)
                 << 32);
         let t0 = _mm256_and_si256(_mm256_shuffle_epi8(v_mlo, v0), _mm256_shuffle_epi8(v_mhi, hn0));
         let t1 = _mm256_and_si256(_mm256_shuffle_epi8(v_mlo, v1), _mm256_shuffle_epi8(v_mhi, hn1));
-        *dot.add(b) = (mm(t0) as u64) | ((mm(t1) as u64) << 32);
-        *kwinit.add(b) = (mm(_mm256_cmpgt_epi8(_mm256_and_si256(t0, v_kwpl), v_zero)) as u64)
-            | ((mm(_mm256_cmpgt_epi8(_mm256_and_si256(t1, v_kwpl), v_zero)) as u64) << 32);
-        *opch.add(b) = (mm(_mm256_cmpgt_epi8(_mm256_and_si256(t0, v_oppl), v_zero)) as u64)
-            | ((mm(_mm256_cmpgt_epi8(_mm256_and_si256(t1, v_oppl), v_zero)) as u64) << 32);
+        *dot.add(b) = (mm(t0, cpu) as u64) | ((mm(t1, cpu) as u64) << 32);
+        *kwinit.add(b) = (mm(_mm256_cmpgt_epi8(_mm256_and_si256(t0, v_kwpl), v_zero), cpu) as u64)
+            | ((mm(_mm256_cmpgt_epi8(_mm256_and_si256(t1, v_kwpl), v_zero), cpu) as u64) << 32);
+        *opch.add(b) = (mm(_mm256_cmpgt_epi8(_mm256_and_si256(t0, v_oppl), v_zero), cpu) as u64)
+            | ((mm(_mm256_cmpgt_epi8(_mm256_and_si256(t1, v_oppl), v_zero), cpu) as u64) << 32);
         let wprev = (wordm << 1) | cw;
         let sprev = (wsm << 1) | cs;
         cw = wordm >> 63;

@@ -24,7 +24,7 @@ pub unsafe fn find_avx2<const K: usize>(
     cpu: Avx2,
 ) -> usize {
     while i + 32 <= n {
-        let m = mm(any_of(load256(src, i), needles, cpu));
+        let m = mm(any_of(load256(src, i, cpu), needles, cpu), cpu);
         if m != 0 {
             return i + m.trailing_zeros() as usize;
         }
@@ -49,10 +49,9 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
         // SAFETY: `block` holds 64 bytes, so a 32-byte load at offset 0 or 32 stays inside it;
         // the OR-fold touches no memory and needs only `avx2`, which this function's
         // `#[target_feature]` enables.
-        let v = unsafe { load256(block.as_ptr(), half * 32) };
+        let v = unsafe { load256(block.as_ptr(), half * 32, cpu) };
         let m = unsafe { any_of(v, BRACKET_BYTES, cpu) };
-        // SAFETY: This function's `#[target_feature]` enables AVX2
-        let mask = unsafe { mm(m) };
+        let mask = mm(m, cpu);
         out |= u64::from(mask) << (half * 32);
     }
     out
@@ -73,8 +72,8 @@ pub fn bracket_bits_avx2(src: &[u8], base: usize, cpu: Avx2) -> u64 {
 // i.e. when the bytes are at indexes `2 * j` and `2 * j + 1` in `needles`.
 // The byte sets passed to `find` are ordered to make such pairs.
 #[inline(always)]
-unsafe fn any_of<const N: usize>(v: __m256i, needles: [u8; N], _cpu: Avx2) -> __m256i {
-    let mut m = array_map(needles, |c| veq(v, c));
+unsafe fn any_of<const N: usize>(v: __m256i, needles: [u8; N], cpu: Avx2) -> __m256i {
+    let mut m = array_map(needles, |c| veq(v, c, cpu));
     let mut len = N;
     while len > 1 {
         let half = len / 2;
