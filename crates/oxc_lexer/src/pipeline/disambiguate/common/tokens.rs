@@ -146,8 +146,8 @@ impl Tokens<'_> {
     /// The significant token start before `pos` (skipping trivia), or `None` at the start.
     #[apply(cpu_versions)]
     #[inline]
-    pub fn prev_sig(&self, pos: usize, _cpu: impl Cpu) -> Option<usize> {
-        walk::prev_sig(self.st, self.kind, pos)
+    pub fn prev_sig(&self, pos: usize, cpu: impl Cpu) -> Option<usize> {
+        walk::prev_sig(self.st, self.kind, pos, cpu)
     }
 
     /// The significant token before `p`.
@@ -264,20 +264,20 @@ impl Tokens<'_> {
     /// Does the identifier at `pos` equal exactly `kw`?
     #[apply(cpu_versions)]
     #[inline]
-    pub fn ident_is(&self, pos: usize, kw: &[u8], _cpu: impl Cpu) -> bool {
-        walk::ident_is(self.src, pos, kw)
+    pub fn ident_is(&self, pos: usize, kw: &[u8], cpu: impl Cpu) -> bool {
+        walk::ident_is(self.src, pos, kw, cpu)
     }
 
     /// The opener of the `)`, `]` or `}` at `from`, or `None` if unbalanced
     /// (see [`walk::match_delim_back`]).
     #[apply(cpu_versions)]
     #[inline]
-    pub fn match_delim_back(&self, from: usize, _cpu: impl Cpu) -> Option<usize> {
+    pub fn match_delim_back(&self, from: usize, cpu: impl Cpu) -> Option<usize> {
         let (open, close) = match self.src[from] {
             b')' => (b'(', b')'),
             b']' => (b'[', b']'),
             _ => (b'{', b'}'),
         };
-        walk::match_delim_back(self, from, open, close)
+        walk::match_delim_back(self, from, open, close, cpu)
     }
 }
