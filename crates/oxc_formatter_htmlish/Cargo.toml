@@ -1,0 +1,39 @@
+[package]
+name = "oxc_formatter_htmlish"
+version = "0.75.0"
+authors.workspace = true
+categories.workspace = true
+edition.workspace = true
+homepage.workspace = true
+include = ["/src"]
+keywords.workspace = true
+license.workspace = true
+publish = false
+repository.workspace = true
+rust-version.workspace = true
+description.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]
+cow-utils = { workspace = true }
+zmij_ecma = { workspace = true }
+memchr = { workspace = true }
+oxc-htmlish-parser = { workspace = true }
+oxc_allocator = { workspace = true }
+oxc_diagnostics = { workspace = true }
+oxc_formatter_core = { workspace = true }
+oxc_span = { workspace = true }
+
+[dev-dependencies]
+insta = { workspace = true }
+oxc_formatter_tests = { workspace = true, features = ["conformance"] }
+pico-args = { workspace = true }
+
+[build-dependencies]
+oxc_formatter_tests = { workspace = true }
+
+[lib]
+doctest = false
+test = false

@@ -5,6 +5,10 @@ crates/oxc_formatter_json/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter_json/tests/fixtures/jsonc/crlf/** text=auto eol=crlf
 crates/oxc_formatter_graphql/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter_graphql/tests/fixtures/graphql/crlf/** text=auto eol=crlf
+crates/oxc_formatter_htmlish/tests/fixtures/** text=auto eol=lf
+crates/oxc_formatter_htmlish/tests/fixtures/html/crlf/** text=auto eol=crlf
+# NUL bytes would make git read these as binary
+crates/oxc_formatter_htmlish/tests/fixtures/html/nul/** text eol=lf diff
 crates/oxc_formatter_yaml/tests/fixtures/** text=auto eol=lf
 crates/oxc_formatter_yaml/tests/fixtures/yaml/crlf/** text=auto eol=crlf
 crates/oxc_formatter_markdown/tests/fixtures/** text=auto eol=lf

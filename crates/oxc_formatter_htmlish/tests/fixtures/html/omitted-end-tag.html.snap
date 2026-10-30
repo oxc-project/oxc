@@ -1,0 +1,33 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<ul>
+  <li>one
+  <li>two
+</ul>
+<p>para
+<div>block</div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<ul>
+  <li>one
+  <li>two
+</ul>
+<p>para
+<div>block</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<ul>
+  <li>one
+  <li>two
+</ul>
+<p>para
+<div>block</div>
+
+===================== End =====================

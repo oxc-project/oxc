@@ -1,0 +1,69 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<div><p><![CDATA[x]]></p></div>
+<div><p><![CDATA[x]]> here</p></div>
+<div>
+<![CDATA[x]]>
+</div>
+<div>
+  <![CDATA[x]]> here
+</div>
+<pre class="aaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccc"><![CDATA[x]]> a
+b</pre>
+<div>
+  <pre><![CDATA[x]]> a
+  </pre>
+</div>
+<div>
+  <pre>a <![CDATA[x]]>
+  </pre>
+</div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<div><p><![CDATA[x]]></p></div>
+<div><p><![CDATA[x]]> here</p></div>
+<div><![CDATA[x]]></div>
+<div><![CDATA[x]]> here</div>
+<pre
+  class="aaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccc"
+>
+<![CDATA[x]]> a
+b</pre>
+<div>
+  <pre>
+<![CDATA[x]]> a
+  </pre>
+</div>
+<div>
+  <pre>
+a <![CDATA[x]]>
+  </pre>
+</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<div><p><![CDATA[x]]></p></div>
+<div><p><![CDATA[x]]> here</p></div>
+<div><![CDATA[x]]></div>
+<div><![CDATA[x]]> here</div>
+<pre class="aaaaaaaaaaaaaaaaaaaaaa bbbbbbbbbbbbbbbbbbbbbbbbbbbbbb cccccccccccccccccccccccccccc">
+<![CDATA[x]]> a
+b</pre>
+<div>
+  <pre>
+<![CDATA[x]]> a
+  </pre>
+</div>
+<div>
+  <pre>
+a <![CDATA[x]]>
+  </pre>
+</div>
+
+===================== End =====================

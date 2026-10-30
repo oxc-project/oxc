@@ -1,0 +1,45 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<SPAN CLASS="a" ID="b">x</SPAN>
+<DIV CLASS="a" ALIGN="c" xml:Lang="en">x</DIV>
+<SVG VIEWBOX="0 0 1 1"><RECT WIDTH="1"/><foreignObject><DIV CLASS="z">y</DIV></foreignObject></SVG>
+<MY-EL CLASS="a"></MY-EL>
+<INPUT AUTOCOMPLETE="off" Type="text">
+<MATH><MI>x</MI></MATH>
+<DIV>x<//>
+<div>a<B>x</B>c</div>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<span CLASS="a" ID="b">x</span>
+<div class="a" align="c" xml:Lang="en">x</div>
+<svg VIEWBOX="0 0 1 1">
+  <RECT WIDTH="1" />
+  <foreignObject><DIV CLASS="z">y</DIV></foreignObject>
+</svg>
+<MY-EL CLASS="a"></MY-EL>
+<input autocomplete="off" type="text" />
+<math><MI>x</MI></math>
+<div>x<//>
+<div>a<b>x</b>c</div>
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<span CLASS="a" ID="b">x</span>
+<div class="a" align="c" xml:Lang="en">x</div>
+<svg VIEWBOX="0 0 1 1">
+  <RECT WIDTH="1" />
+  <foreignObject><DIV CLASS="z">y</DIV></foreignObject>
+</svg>
+<MY-EL CLASS="a"></MY-EL>
+<input autocomplete="off" type="text" />
+<math><MI>x</MI></math>
+<div>x<//>
+<div>a<b>x</b>c</div>
+
+===================== End =====================

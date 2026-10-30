@@ -1,0 +1,15 @@
+---
+source: crates/oxc_formatter_htmlish/tests/conformance.rs
+expression: report
+---
+html compatibility: 162/168 (96.43%), 0 files skipped
+
+# Failed
+
+| Spec path | Failed or Passed | Match ratio |
+| :-------- | :--------------: | :---------: |
+| html/basics/broken-html.html | 💥 | 88.89% |
+| html/basics/with-colon.html | 💥 | 93.33% |
+| html/prettier_ignore/unclosed2.html | 💥 | 80.00% |
+| html/tags/tags.html | 💥✨✨✨ | 99.82% |
+| html/tags/tags2.html | 💥💥✨✨ | 97.17% |
