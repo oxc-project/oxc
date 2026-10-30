@@ -5144,12 +5144,12 @@ Negative Passed: 265/265 (100.00%)
    ╰────
   help: This character or escape sequence is not valid inside a character class
 
-  × Invalid regular expression: Could not parse the entire pattern
-   ╭─[misc/fail/regexp-unicode-leading-zero-reference.js:1:5]
+  × Invalid regular expression: Invalid escape sequence
+   ╭─[misc/fail/regexp-unicode-leading-zero-reference.js:1:4]
  1 │ /()\01/u;
-   ·     ▲
+   ·    ─
    ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
   × Invalid rest element target in destructuring assignment
    ╭─[misc/fail/rest-assignment-target.js:1:6]
