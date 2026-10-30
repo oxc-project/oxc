@@ -276,7 +276,7 @@ pub fn check_binding_identifier(ident: &BindingIdentifier, ctx: &SemanticBuilder
                         }
                         break;
                     }
-                    AstKind::Function(_) => break,
+                    AstKind::Function(_) | AstKind::ArrowFunctionExpression(_) => break,
                     _ => {}
                 }
             }
