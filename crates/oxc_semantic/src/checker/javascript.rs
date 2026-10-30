@@ -316,7 +316,7 @@ pub fn check_identifier_reference(ident: &IdentifierReference, ctx: &SemanticBui
     // ClassStaticBlockBody : ClassStaticBlockStatementList
     //   It is a Syntax Error if ContainsArguments of ClassStaticBlockStatementList is true.
 
-    if ident.name == "arguments" {
+    if ident.name == "arguments" && ctx.class_table_builder.current_class_id.is_some() {
         let mut previous_node_address = ctx.ancestry().current_address();
         for node_kind in ctx.ancestry().ancestor_kinds() {
             match node_kind {
