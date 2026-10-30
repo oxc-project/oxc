@@ -12,6 +12,7 @@ use oxc_graphql_parser::ast::{
     FieldDefinition, FragmentDefinition, Name, OperationDefinition, OperationType,
     RootOperationTypeDefinition, SchemaDefinition, SchemaExtension, StringValue,
 };
+use oxc_span::Span;
 
 use crate::comments::{flush_trailing_comment_before, flush_trailing_inside_comments};
 
@@ -43,7 +44,7 @@ pub(super) fn write_definition<'a>(
         Definition::ObjectType(d) => write_object_like(
             d.description.as_deref(),
             false,
-            "type",
+            "type ",
             &d.name,
             d.implements.as_ref(),
             &d.directives,
@@ -53,7 +54,7 @@ pub(super) fn write_definition<'a>(
         Definition::ObjectTypeExtension(d) => write_object_like(
             None,
             true,
-            "type",
+            "type ",
             &d.name,
             d.implements.as_ref(),
             &d.directives,
@@ -63,7 +64,7 @@ pub(super) fn write_definition<'a>(
         Definition::InterfaceType(d) => write_object_like(
             d.description.as_deref(),
             false,
-            "interface",
+            "interface ",
             &d.name,
             d.implements.as_ref(),
             &d.directives,
@@ -73,7 +74,7 @@ pub(super) fn write_definition<'a>(
         Definition::InterfaceTypeExtension(d) => write_object_like(
             None,
             true,
-            "interface",
+            "interface ",
             &d.name,
             d.implements.as_ref(),
             &d.directives,
@@ -354,7 +355,7 @@ fn write_object_like<'a>(
     if extend {
         write!(f, "extend ");
     }
-    write!(f, [keyword, space()]);
+    write!(f, keyword);
     common::write_name(name, f);
     common::write_implements_interfaces(implements, f);
     common::write_directives(directives, DirectivesStyle::Attached, f);
@@ -475,15 +476,26 @@ fn write_union_like<'a>(
 
 fn write_field_definition<'a>(field: &'a FieldDefinition<'a>, f: &mut GraphqlFormatter<'_, 'a>) {
     common::write_description(field.description.as_deref(), f);
-    common::write_name(&field.name, f);
-    write_arguments_definition(field.arguments.as_ref(), f);
-    // The `:` has no node; scan from the `)` (or the name without arguments)
-    let colon_from =
-        field.arguments.as_ref().map_or(to_span(field.name.span).end, |a| to_span(a.span).end);
-    flush_trailing_before_literal(colon_from, f);
-    write!(f, ": ");
-    if let Some(ty) = field.ty.as_ref() {
-        common::write_type(ty, f);
+    let ty = field.ty.as_ref().and_then(|ty| common::verbatim_type_span(ty, f));
+    // The `:` has no node; it follows the `)` (or the name without arguments)
+    let head = match field.arguments.as_ref() {
+        Some(arguments) => {
+            common::write_name(&field.name, f);
+            write_arguments_definition(Some(arguments), f);
+            Span::empty(to_span(arguments.span).end)
+        }
+        None => to_span(field.name.span),
+    };
+    // `name: Type`, or `): Type` after the arguments
+    if !common::write_verbatim_colon_pair(head, ty, f) {
+        if field.arguments.is_none() {
+            common::write_name(&field.name, f);
+        }
+        flush_trailing_before_literal(head.end, f);
+        write!(f, ": ");
+        if let Some(ty) = field.ty.as_ref() {
+            common::write_type(ty, f);
+        }
     }
     common::write_directives(&field.directives, DirectivesStyle::Attached, f);
 }

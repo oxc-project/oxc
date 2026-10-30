@@ -248,6 +248,11 @@ pub fn is_suppressed_before(f: &GraphqlFormatter<'_, '_>, before: u32) -> bool {
     f.context().comments().iter_before(before).copied().any(|c| is_suppression_comment(source, c))
 }
 
+/// Returns `true` if a comment ending at or before `before` is still pending.
+pub fn has_comment_before(f: &GraphqlFormatter<'_, '_>, before: u32) -> bool {
+    f.context().comments().iter_before(before).next().is_some()
+}
+
 /// Emits a node's leading comments, then the node's source verbatim,
 /// then advances the comment cursor past the span.
 pub fn write_suppressed_node(span: Span, f: &mut GraphqlFormatter<'_, '_>) {
