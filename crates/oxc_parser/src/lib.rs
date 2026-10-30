@@ -996,11 +996,10 @@ impl<'a, C: ParserConfig> ParserImpl<'a, C> {
     }
 
     fn check_unfinished_errors(&mut self) {
-        use oxc_span::GetSpan;
         // PropertyDefinition : cover_initialized_name
         // It is a Syntax Error if any source text is matched by this production.
-        for expr in self.state.cover_initialized_name.values() {
-            self.errors.push(diagnostics::cover_initialized_name(expr.span()));
+        for cover in self.state.cover_initialized_name.values() {
+            self.errors.push(diagnostics::cover_initialized_name(cover.span));
         }
     }
 
