@@ -186,7 +186,7 @@ pub(super) unsafe fn lanes_post_avx2(
     m: usize,
     nn: u32,
     lanes: &mut Lanes,
-    _cpu: Avx2,
+    cpu: Avx2,
 ) {
     let v_num = _mm256_set1_epi8(tk!(Number) as i8);
     let v_big = _mm256_set1_epi8(tk!(BigInt) as i8);
@@ -219,7 +219,7 @@ pub(super) unsafe fn lanes_post_avx2(
         let mut mask = (_mm256_movemask_epi8(h0) as u32 as u64)
             | ((_mm256_movemask_epi8(h1) as u32 as u64) << 32);
         while mask != 0 {
-            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes);
+            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
             mask &= mask - 1;
         }
         i += 64;
@@ -237,7 +237,7 @@ pub(super) unsafe fn lanes_post_avx2(
         }
         inv_dirty |= invm != 0;
         while mask != 0 {
-            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes);
+            emit_value(src, out_kinds, out_spans, i + mask.trailing_zeros() as usize, lanes, cpu);
             mask &= mask - 1;
         }
         i += 32;
