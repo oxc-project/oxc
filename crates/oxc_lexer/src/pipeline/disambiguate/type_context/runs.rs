@@ -19,28 +19,39 @@ use crate::token::{OP_KIND_BASE, matches_tk, tk};
 use super::type_list::type_args_at;
 
 pub use super::bytes::lt_run_split;
-use crate::pipeline::disambiguate::{
-    RULE_SCAN_CAP,
-    common::{Prev, Tokens},
-    context::{self, Walks},
+use crate::pipeline::{
+    cpu::{Cpu, apply, cpu_versions},
+    disambiguate::{
+        RULE_SCAN_CAP,
+        common::{Prev, Tokens},
+        context::{self, Walks},
+    },
 };
 
 /// `coalesce` entry for a `>` run (`>>`, `>>>`, and a `>` glued to `=`): how many leading `>` bytes
 /// to leave unfused (each closes an open `<` list), or 0 to fuse.
+#[apply(cpu_versions)]
 #[inline(never)]
-pub fn gt_run_split(tokens: &Tokens, walks: &mut Walks, p: usize, run: usize) -> usize {
+pub fn gt_run_split(
+    tokens: &Tokens,
+    walks: &mut Walks,
+    p: usize,
+    run: usize,
+    cpu: impl Cpu,
+) -> usize {
     let mut g = 0usize;
     while g < run && tokens.src[p + g] == b'>' {
         g += 1;
     }
-    let quick = if walks.run_rules() { run_shortcut(tokens, p, g) } else { None };
+    let quick = if walks.run_rules() { run_shortcut(tokens, p, g, cpu) } else { None };
     quick.unwrap_or_else(|| context::angles_before(tokens, walks, p)).min(g)
 }
 
 /// The lists a `>` run of `run` bytes at `pos` closes, when its context cannot matter: the run
 /// closes no list on its level, or the list that would take the whole run opens in every context
 /// ([`list_in_any_context`]). None when the context matters (the walk decides).
-fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
+#[apply(cpu_versions)]
+fn run_shortcut(tokens: &Tokens, pos: usize, run: usize, cpu: impl Cpu) -> Option<usize> {
     let mut pending = 0i32;
     let mut found = 0usize;
     let mut lt = 0usize;
@@ -98,7 +109,7 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
     if found == 0 {
         return if bounded || q.is_none() { Some(0) } else { None };
     }
-    if list_in_any_context(tokens, lt) { Some(found) } else { None }
+    if list_in_any_context(tokens, lt, cpu) { Some(found) } else { None }
 }
 
 /// Does the `<` at `lt` open a list whatever the context? Three shapes leave no expression
@@ -111,7 +122,8 @@ fn run_shortcut(tokens: &Tokens, pos: usize, run: usize) -> Option<usize> {
 /// - A list after a name that must be a type reference ([`type_reference_head`]) on the same
 ///   line (a type reference takes no arguments across a line break), or after `function` or
 ///   `class`.
-fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
+#[apply(cpu_versions)]
+fn list_in_any_context(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     let t = tokens.peek(lt + 1);
     if t.kind == tk!(Ident) {
         let x = tokens.peek(t.pos + 1);
@@ -124,7 +136,7 @@ fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
         Prev::Word(head, 0) => {
             type_args_at(tokens, lt)
                 || (!tokens.line_break_between(tokens.next_start(head + 1), lt)
-                    && type_reference_head(tokens, head))
+                    && type_reference_head(tokens, head, cpu))
         }
         _ => false,
     }
@@ -132,7 +144,8 @@ fn list_in_any_context(tokens: &Tokens, lt: usize) -> bool {
 
 /// Is the name at `head` (the last part of a dotted name) a type reference by the tokens before
 /// it: a keyword only a type follows on the same line, or the `:` of a return type?
-fn type_reference_head(tokens: &Tokens, head: usize) -> bool {
+#[apply(cpu_versions)]
+fn type_reference_head(tokens: &Tokens, head: usize, cpu: impl Cpu) -> bool {
     let mut h = head;
     let mut prev = tokens.prev_token(h);
     while let Prev::Op(d, b'.') = prev {
@@ -152,7 +165,7 @@ fn type_reference_head(tokens: &Tokens, head: usize) -> bool {
         Prev::Word(k, tk!(KwImplements | KwAs | KwSatisfies | KwKeyof | KwInterface | KwType)) => {
             !tokens.property_name(k) && !tokens.line_break_between(tokens.next_start(k + 1), h)
         }
-        Prev::Op(c, b':') => return_type_colon(tokens, c),
+        Prev::Op(c, b':') => return_type_colon(tokens, c, cpu),
         _ => false,
     }
 }
@@ -160,8 +173,9 @@ fn type_reference_head(tokens: &Tokens, head: usize) -> bool {
 /// Is the `:` at `c` the start of a return type: `function (...): ` or `name(...): ` where the
 /// token before `name` leaves no room for a call? `case (x): ` is the one keyword before `(` an
 /// expression follows.
+#[apply(cpu_versions)]
 #[rustfmt::skip::macros(tk)]
-fn return_type_colon(tokens: &Tokens, c: usize) -> bool {
+fn return_type_colon(tokens: &Tokens, c: usize, _cpu: impl Cpu) -> bool {
     let Prev::Op(rp, b')') = tokens.prev_token(c) else {
         return false;
     };
