@@ -47,15 +47,12 @@ impl<'a> FormatLiteralStringToken<'a> {
         let source_type = f.context().source_type();
 
         // In an HTML attribute, `'` always (Prettier's `__isInHtmlAttribute`), but a directive as usual
-        let in_html_attribute = !self.jsx
-            && self.parent_kind != StringLiteralParentKind::Directive
-            && f.context().in_html_attribute();
-        let chosen_quote_style = if in_html_attribute {
-            QuoteStyle::Single
-        } else if self.jsx {
-            options.jsx_quote_style
+        let (chosen_quote_style, force_chosen_quote) = if self.jsx {
+            (options.jsx_quote_style, false)
+        } else if self.parent_kind == StringLiteralParentKind::Directive {
+            (options.quote_style, false)
         } else {
-            options.quote_style
+            (f.context().string_quote_style(), f.context().in_html_attribute())
         };
 
         let is_quote_needed = match options.quote_properties {
@@ -67,7 +64,7 @@ impl<'a> FormatLiteralStringToken<'a> {
         let string_cleaner = LiteralStringNormalizer {
             token: *self,
             chosen_quote_style,
-            force_chosen_quote: in_html_attribute,
+            force_chosen_quote,
             is_quote_needed,
             allocator: f.allocator(),
         };

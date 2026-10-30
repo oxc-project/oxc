@@ -144,7 +144,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, IdentifierName<'a>> {
                 | AstNodes::TSEnumMember(_)
         );
         if is_property_key_parent && f.context().is_quote_needed() {
-            let quote_str = f.options().quote_style.as_str();
+            let quote_str = f.context().string_quote_style().as_str();
             write!(f, [quote_str, text, quote_str]);
         } else {
             write!(f, text);
@@ -1223,7 +1223,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, NumericLiteral<'a>> {
                 };
 
             if should_quote {
-                let quote_str = f.options().quote_style.as_str();
+                let quote_str = f.context().string_quote_style().as_str();
                 write!(f, [quote_str, text(f.allocator().alloc_str(&formatted)), quote_str]);
                 return;
             }
