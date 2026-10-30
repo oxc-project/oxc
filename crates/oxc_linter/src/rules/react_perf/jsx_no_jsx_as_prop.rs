@@ -10,8 +10,8 @@ use crate::{
     context::ContextHost,
     rule::Rule,
     utils::{
-        NativeAllowList, ReactPerfConfig, react_perf_from_configuration, run_react_perf_rule,
-        should_run_react_perf,
+        NativeAllowList, ReactPerfConfig, find_initialized_binding, react_perf_from_configuration,
+        run_react_perf_rule, should_run_react_perf,
     },
 };
 
@@ -74,11 +74,25 @@ impl JsxNoJsxAsProp {
 
     fn check_for_violation_on_ast_kind(
         kind: &AstKind<'_>,
-        _symbol_id: SymbolId,
+        symbol_id: SymbolId,
     ) -> Option<(/* decl */ Span, /* init */ Option<Span>)> {
-        let decl = kind.as_variable_declarator()?;
-        let init_span = decl.init.as_ref().and_then(check_expression)?;
-        Some((decl.id.span(), Some(init_span)))
+        match kind {
+            AstKind::VariableDeclarator(decl) => {
+                if let Some(init_span) = decl.init.as_ref().and_then(check_expression) {
+                    return Some((decl.id.span(), Some(init_span)));
+                }
+                // look for destructuring defaults, e.g. `const { x = <div /> } = props`
+                let (id, init) = find_initialized_binding(&decl.id, symbol_id)?;
+                let init_span = check_expression(init)?;
+                Some((id.span(), Some(init_span)))
+            }
+            AstKind::FormalParameter(param) => {
+                let (id, init) = find_initialized_binding(&param.pattern, symbol_id)?;
+                let init_span = check_expression(init)?;
+                Some((id.span(), Some(init_span)))
+            }
+            _ => None,
+        }
     }
 }
 
@@ -139,6 +153,12 @@ fn test() {
         ),
         (r"const Icon = <svg />; const Foo = () => (<IconButton icon={Icon} />)", None),
         (
+            r"const Foo = (props) => { const { x = <div />, y } = props; return <Item jsx={y} /> }",
+            None,
+        ),
+        (r"const Foo = (props) => { const { x = 5 } = props; return <Item jsx={x} /> }", None),
+        (r"const Foo = ({ x = 5 }) => <Item jsx={x} />", None),
+        (
             r"const Foo = () => <div jsx={<SubItem />} />",
             Some(json!([{ "nativeAllowList": "all" }])),
         ),
@@ -157,6 +177,16 @@ fn test() {
             None,
         ),
         (r"const Foo = () => { const Icon = <svg />; return (<IconButton icon={Icon} />) }", None),
+        (r"const Foo = ({ x = <div /> }) => <Item jsx={x} />", None),
+        (
+            r"const Foo = (props) => { const { x = <div /> } = props; return <Item jsx={x} /> }",
+            None,
+        ),
+        (r"const Foo = (props) => { const [x = <div />] = props; return <Item jsx={x} /> }", None),
+        (
+            r"const Foo = (props) => { const { a: { x = <div /> } } = props; return <Item jsx={x} /> }",
+            None,
+        ),
         (
             r"const Foo = () => <div jsx={<SubItem />} />",
             Some(json!([{ "nativeAllowList": ["icon"] }])),
