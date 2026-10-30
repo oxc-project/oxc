@@ -40,7 +40,7 @@ pub unsafe fn coalesce(
     lanes: &mut Lanes,
     cpu: impl Cpu,
 ) {
-    lanes.disambiguate.restart(lanes.module);
+    lanes.disambiguate.restart(lanes.module, cpu);
     let nw = (n + 63) >> 6;
     let mut opprev: u64 = 0;
     let mut dtprev: u64 = 0;
