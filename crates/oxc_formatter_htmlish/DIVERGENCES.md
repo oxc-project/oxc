@@ -185,6 +185,29 @@ A `0x` (or `-0x`) descriptor is kept, printed as `0x`.
 Authors must write a density above zero, but the HTML srcset parser reads `0x` as density 0 (infinite natural dimensions), not as the default `1x`.
 Prettier's srcset parser treats a zero density as absent and drops it.
 
+## class-srcset-embedded-off
+
+- Why: uniform-rule (`embeddedLanguageFormatting` governs embedded languages only)
+- Pin: `tests/fixtures/html/class-srcset-embedded-off.html`
+
+```html
+<!-- input (embeddedLanguageFormatting: off) -->
+<div class="  a   b  "></div>
+<img srcset="a.png 1x,b.png   2x">
+
+<!-- ours -->
+<div class="a b"></div>
+<img srcset="a.png 1x, b.png 2x" />
+
+<!-- prettier -->
+<div class="  a   b  "></div>
+<img srcset="a.png 1x,b.png   2x" />
+```
+
+`class` and `srcset` values are HTML's own syntax, so they format under `embeddedLanguageFormatting: off` too.
+Only embedded languages stay as written: `<script>` / `<style>` bodies, `style` / `on*` attributes and a front matter body.
+Prettier prints `class` and `srcset` in its embed step, which `off` skips together with the embedded languages.
+
 ## script-display-none
 
 - Why: semantics (whitespace added on both sides of a `script` renders between its inline neighbors)
