@@ -12,7 +12,8 @@ impl<C: Config> Lexer<'_, C> {
             return Kind::Dot3;
         }
         if self.peek_byte().is_some_and(|b| b.is_ascii_digit()) {
-            self.decimal_literal_after_decimal_point()
+            // Keep numeric parsing out of the common property-access and spread paths.
+            cold_branch(|| self.decimal_literal_after_decimal_point())
         } else {
             Kind::Dot
         }
@@ -36,7 +37,11 @@ impl<C: Config> Lexer<'_, C> {
             // `<!--` HTML comment (Annex B.1.1). Rare legacy syntax, so handle out of line:
             // it builds/pushes a diagnostic, whose `OxcDiagnostic` buffer would otherwise inflate
             // the `<` byte-handler's stack frame on the common `<`/`<<`/`<=` path.
-            Some(b'!') if self.remaining().starts_with("!--") => cold_branch(|| {
+            // Include the prefix comparison so its call frame stays off the common path.
+            Some(b'!') => cold_branch(|| {
+                if !self.remaining().starts_with("!--") {
+                    return Some(Kind::LAngle);
+                }
                 if self.source_type.is_module() {
                     if self.token.is_on_new_line() {
                         let span = Span::sized(self.token.start(), 4);
