@@ -71,7 +71,7 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
             // Continuation bytes and non-ws leads fall through cheaply.
             if c >= 0x80 {
                 if VUTF8 {
-                    let (ok, cont) = utf8_seq_check(src, p, n);
+                    let (ok, cont) = utf8_seq_check(src, p, n, cpu);
                     if ok {
                         // Consume the verified continuation bits so they are
                         // not re-visited; a continuation still visible to the
@@ -149,8 +149,9 @@ unsafe fn misc_pre_impl<const VUTF8: bool>(
 /// bytes after the lead. Second-byte ranges are per-lead, so overlongs,
 /// surrogates, and out-of-range sequences report the same maximal subpart
 /// as `std::str::from_utf8`'s `error_len`.
+#[apply(cpu_versions)]
 #[inline]
-unsafe fn utf8_seq_check(src: *const u8, p: usize, n: usize) -> (bool, usize) {
+unsafe fn utf8_seq_check(src: *const u8, p: usize, n: usize, _cpu: impl Cpu) -> (bool, usize) {
     let (need, lo, hi): (usize, u8, u8) = match *src.add(p) {
         0xC2..=0xDF => (1, 0x80, 0xBF),
         0xE0 => (2, 0xA0, 0xBF),
