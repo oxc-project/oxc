@@ -1,4 +1,4 @@
-use std::{borrow::Cow, cmp::Ordering};
+use std::borrow::Cow;
 
 use cow_utils::CowUtils;
 
@@ -358,19 +358,7 @@ pub struct ExpectFnCallOptions<'a, 'b> {
 // If find a match in `VALID_JEST_FN_CALL_CHAINS`, return true.
 fn is_valid_jest_call(members: &[Cow<str>]) -> bool {
     VALID_JEST_FN_CALL_CHAINS
-        .binary_search_by(|chain| {
-            chain
-                .iter()
-                .zip(members.iter())
-                .find_map(|(&chain, member)| {
-                    let ordering = chain.cmp(member.as_ref());
-                    if ordering != Ordering::Equal {
-                        return Some(ordering);
-                    }
-                    None
-                })
-                .unwrap_or(Ordering::Equal)
-        })
+        .binary_search_by(|chain| chain.iter().copied().cmp(members.iter().map(AsRef::as_ref)))
         .is_ok()
 }
 
@@ -646,66 +634,83 @@ fn recurse_extend_node_chain<'a>(
 }
 
 // sorted list for binary search.
-static VALID_JEST_FN_CALL_CHAINS: &[[&str; 4]] = &[
-    ["afterAll", "", "", ""],
-    ["afterEach", "", "", ""],
-    ["beforeAll", "", "", ""],
-    ["beforeEach", "", "", ""],
-    ["bench", "", "", ""],
-    ["describe", "", "", ""],
-    ["describe", "each", "", ""],
-    ["describe", "only", "", ""],
-    ["describe", "only", "each", ""],
-    ["describe", "skip", "", ""],
-    ["describe", "skip", "each", ""],
-    ["fdescribe", "", "", ""],
-    ["fdescribe", "each", "", ""],
-    ["fit", "", "", ""],
-    ["fit", "each", "", ""],
-    ["fit", "failing", "", ""],
-    ["fit", "fails", "", ""],
-    ["it", "", "", ""],
-    ["it", "concurrent", "", ""],
-    ["it", "concurrent", "each", ""],
-    ["it", "concurrent", "only", "each"],
-    ["it", "concurrent", "skip", "each"],
-    ["it", "each", "", ""],
-    ["it", "failing", "", ""],
-    ["it", "fails", "", ""],
-    ["it", "only", "", ""],
-    ["it", "only", "each", ""],
-    ["it", "only", "failing", ""],
-    ["it", "only", "fails", ""],
-    ["it", "skip", "", ""],
-    ["it", "skip", "each", ""],
-    ["it", "skip", "failing", ""],
-    ["it", "skip", "fails", ""],
-    ["it", "todo", "", ""],
-    ["test", "", "", ""],
-    ["test", "concurrent", "", ""],
-    ["test", "concurrent", "each", ""],
-    ["test", "concurrent", "only", "each"],
-    ["test", "concurrent", "skip", "each"],
-    ["test", "each", "", ""],
-    ["test", "failing", "", ""],
-    ["test", "fails", "", ""],
-    ["test", "only", "", ""],
-    ["test", "only", "each", ""],
-    ["test", "only", "failing", ""],
-    ["test", "only", "fails", ""],
-    ["test", "skip", "", ""],
-    ["test", "skip", "each", ""],
-    ["test", "skip", "failing", ""],
-    ["test", "skip", "fails", ""],
-    ["test", "todo", "", ""],
-    ["xdescribe", "", "", ""],
-    ["xdescribe", "each", "", ""],
-    ["xit", "", "", ""],
-    ["xit", "each", "", ""],
-    ["xit", "failing", "", ""],
-    ["xit", "fails", "", ""],
-    ["xtest", "", "", ""],
-    ["xtest", "each", "", ""],
-    ["xtest", "failing", "", ""],
-    ["xtest", "fails", "", ""],
+static VALID_JEST_FN_CALL_CHAINS: &[&[&str]] = &[
+    &["afterAll"],
+    &["afterEach"],
+    &["beforeAll"],
+    &["beforeEach"],
+    &["bench"],
+    &["describe"],
+    &["describe", "each"],
+    &["describe", "only"],
+    &["describe", "only", "each"],
+    &["describe", "skip"],
+    &["describe", "skip", "each"],
+    &["fdescribe"],
+    &["fdescribe", "each"],
+    &["fit"],
+    &["fit", "each"],
+    &["fit", "failing"],
+    &["fit", "failing", "each"],
+    &["fit", "fails"],
+    &["it"],
+    &["it", "concurrent"],
+    &["it", "concurrent", "each"],
+    &["it", "concurrent", "failing"],
+    &["it", "concurrent", "failing", "each"],
+    &["it", "concurrent", "failing", "only", "each"],
+    &["it", "concurrent", "failing", "skip", "each"],
+    &["it", "concurrent", "only", "each"],
+    &["it", "concurrent", "skip", "each"],
+    &["it", "each"],
+    &["it", "failing"],
+    &["it", "failing", "each"],
+    &["it", "fails"],
+    &["it", "only"],
+    &["it", "only", "each"],
+    &["it", "only", "failing"],
+    &["it", "only", "failing", "each"],
+    &["it", "only", "fails"],
+    &["it", "skip"],
+    &["it", "skip", "each"],
+    &["it", "skip", "failing"],
+    &["it", "skip", "failing", "each"],
+    &["it", "skip", "fails"],
+    &["it", "todo"],
+    &["test"],
+    &["test", "concurrent"],
+    &["test", "concurrent", "each"],
+    &["test", "concurrent", "failing"],
+    &["test", "concurrent", "failing", "each"],
+    &["test", "concurrent", "failing", "only", "each"],
+    &["test", "concurrent", "failing", "skip", "each"],
+    &["test", "concurrent", "only", "each"],
+    &["test", "concurrent", "skip", "each"],
+    &["test", "each"],
+    &["test", "failing"],
+    &["test", "failing", "each"],
+    &["test", "fails"],
+    &["test", "only"],
+    &["test", "only", "each"],
+    &["test", "only", "failing"],
+    &["test", "only", "failing", "each"],
+    &["test", "only", "fails"],
+    &["test", "skip"],
+    &["test", "skip", "each"],
+    &["test", "skip", "failing"],
+    &["test", "skip", "failing", "each"],
+    &["test", "skip", "fails"],
+    &["test", "todo"],
+    &["xdescribe"],
+    &["xdescribe", "each"],
+    &["xit"],
+    &["xit", "each"],
+    &["xit", "failing"],
+    &["xit", "failing", "each"],
+    &["xit", "fails"],
+    &["xtest"],
+    &["xtest", "each"],
+    &["xtest", "failing"],
+    &["xtest", "failing", "each"],
+    &["xtest", "fails"],
 ];
