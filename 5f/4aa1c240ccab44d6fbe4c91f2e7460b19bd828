@@ -1,0 +1,27 @@
+crates/oxc_formatter_markdown/src/print/inline.rs
+  s_d0c1383d2a4ca2::t_7994541d9fcfa6 82,388
+crates/oxc_formatter_markdown/src/print/link.rs
+  s_d0c1383d2a4ca2::t_ac93e80ca91641 118
+crates/oxc_formatter_markdown/src/print/list.rs
+  s_d0c1383d2a4ca2::t_835f40c6964eae 105-107,152-156
+crates/oxc_formatter_markdown/src/print/parts.rs
+  s_d0c1383d2a4ca2::t_b0f219f1633eb8 72-73,92-93,123-130,173-177,199-219
+crates/oxc_formatter_markdown/src/print/text.rs
+  s_d0c1383d2a4ca2::t_ee7455de4c9933 133,135,179-180,183,189,193,240,244-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5f4aa1c240ccab44d6fbe4c91f2e7460b19bd828",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
