@@ -6,7 +6,14 @@ Admission reasons and rules: see `crates/oxc_formatter_core/FORMATTER_POLICY.md`
 
 - Why: semantics (prettier/prettier#19839)
 - Pin: `tests/fixtures/markdown/leading-thematic-break.md`
-- Conformance: `markdown/thematicBreak/simple.md`, `markdown/commonmark-test-suite/snippet: example-11.md`, `example-50.md` to `example-54.md`
+- Conformance:
+  - `externals/prettier/markdown/thematicBreak/simple.md`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-11.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-50.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-51.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-52.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-53.md*`
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-54.md*`
 
 ```markdown
 <!-- input -->
@@ -40,7 +47,8 @@ Prettier `main` prints `***` since #19839; the pin (3.9.10) still prints `---`.
 
 - Why: semantics (prettier/prettier#19482, prettier/prettier#19849, prettier/prettier#19891)
 - Pin: `tests/fixtures/markdown/url-escaping.md`
-- Conformance: `markdown/link/encodedLink.md`
+- Conformance:
+  - `externals/prettier/markdown/link/encodedLink.md`
 
 ```markdown
 <!-- input -->
@@ -62,7 +70,8 @@ Titles get the same `\&` treatment.
 
 - Why: uniform-rule (same construct, same output: space-indented code block)
 - Pin: `tests/fixtures/markdown/indented-code-tab.md`
-- Conformance: `markdown/commonmark-test-suite/snippet: example-2.md`
+- Conformance:
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-2.md*`
 
 ````markdown
 <!-- input: two spaces, a tab -->
@@ -85,7 +94,8 @@ so an indent written as spaces plus a tab becomes a fenced block.
 
 - Why: uniform-rule (same construct, same output: a blockquote's trailing blank `>` line under `proseWrap: preserve`)
 - Pin: `tests/fixtures/markdown/prose-wrap/ignored-block-trailing-quote-line.md`
-- Conformance: `markdown/blockquote/ignore-code.md`
+- Conformance:
+  - `externals/prettier/markdown/blockquote/ignore-code.md`
 
 ```markdown
 <!-- input -->
@@ -289,7 +299,8 @@ Prettier alternates from the marker it would have printed (`-`), prints `*` next
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/container-directive.md`
-- Conformance: `markdown/paragraph/cjk.md`
+- Conformance:
+  - `externals/prettier/markdown/paragraph/cjk.md`
 
 ```markdown
 <!-- input -->
@@ -323,7 +334,8 @@ so the closing fence is printed explicitly: a reader without directives (CommonM
 
 - Why: semantics
 - Pin: `tests/fixtures/markdown/prose-wrap/line-shapes.md`
-- Conformance: `markdown/blockquote/notext-end.md`
+- Conformance:
+  - `externals/prettier/markdown/blockquote/notext-end.md`
 
 ```markdown
 <!-- input -->
@@ -403,7 +415,8 @@ which its regex takes for a list marker (a marker has at most 9 digits).
 
 - Why: semantics (prettier/prettier#6035, prettier/prettier#17303, prettier/prettier#17353)
 - Pin: `tests/fixtures/markdown/prose-wrap/stray-delimiters.md`
-- Conformance: `markdown/commonmark-test-suite/snippet: example-412.md`
+- Conformance:
+  - `externals/prettier/markdown/commonmark-test-suite/snippet: example-412.md*`
 
 ```markdown
 <!-- input -->
@@ -518,7 +531,8 @@ Prettier prints it as written (the leading blank line that kept it out of front 
 
 - Why: semantics (prettier/prettier#20143)
 - Pin: `tests/fixtures/markdown/prose-wrap/cj-line-break.md`
-- Conformance: `markdown/splitCjkText/symbolSpaceNewLine.md`
+- Conformance:
+  - `externals/prettier/markdown/splitCjkText/symbolSpaceNewLine.md`
 
 ```markdown
 <!-- input, proseWrap always -->

@@ -346,7 +346,7 @@ jobs:
         id: conformance-fixtures
         if: steps.filter-conformance.outputs.changed == 'true'
         with:
-          # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.js)
+          # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.ts)
           path: ./apps/oxfmt/conformance/fixtures/externals
         background: true
       - if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'

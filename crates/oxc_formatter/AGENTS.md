@@ -252,8 +252,3 @@ cargo test -p oxc_formatter --test mod
 # Run a subset by module path (directory structure = module hierarchy)
 cargo test -p oxc_formatter fixtures::js::comments
 ```
-
-### Prettier conformance
-
-The failing JS/TS files in `apps/oxfmt/conformance/snapshots/prettier.snap.md` are only partly audited:
-some are covered by an existing DIVERGENCES.md entry, the rest are unclassified, and no per-file list exists yet.
