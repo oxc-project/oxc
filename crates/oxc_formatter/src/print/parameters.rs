@@ -109,7 +109,8 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameters<'a>> {
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameter<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         // With no comment left to print before the parameter's end, its inner nodes print none,
-        // so an identifier with an inert type (if any) writes no line, and the groups around it are no-ops.
+        // so an identifier with an inert type (if any) writes no line:
+        // the group around `left` (and around `content` without an initializer) is a no-op.
         let is_inert_left = self.pattern.is_binding_identifier()
             && self.type_annotation.as_ref().is_none_or(|ann| is_inert_type(&ann.type_annotation))
             && !f.comments().has_comment_before(self.span.end);
@@ -140,43 +141,42 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, FormalParameter<'a>> {
 
             if let Some(initializer) = self.initializer() {
                 if is_inert_left {
-                    write!(f, [left, space(), "=", space(), initializer]);
-                    return;
+                    write!(f, left);
+                } else {
+                    // Format `left` early before writing leading comments, so that comments
+                    // inside `left` are not treated as leading comments of `= right`
+                    let left = left.memoized();
+                    left.inspect(f);
+
+                    let leading_comments =
+                        f.context().comments().own_line_comments_before(initializer.span().start);
+                    write!(f, [FormatLeadingComments::Comments(leading_comments), group(&left)]);
                 }
-
-                // Format `left` early before writing leading comments, so that comments
-                // inside `left` are not treated as leading comments of `= right`
-                let left = left.memoized();
-                left.inspect(f);
-
-                let leading_comments =
-                    f.context().comments().own_line_comments_before(initializer.span().start);
-                write!(f, [FormatLeadingComments::Comments(leading_comments)]);
-                write!(f, [group(&left), space(), "=", space(), initializer]);
+                write!(f, [space(), "=", space(), initializer]);
             } else {
                 write!(f, [left]);
             }
         });
 
-        let is_hug_parameter = matches!(self.parent(), AstNodes::FormalParameters(params) if {
-            let (parentheses_not_needed, this_param) = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent() {
-                (can_avoid_parentheses(arrow, f), None)
-            } else {
-                (false, get_this_param(params.parent()))
-            };
-            should_hug_function_parameters(params, this_param, parentheses_not_needed, f)
-        });
+        let is_hug_parameter = || {
+            matches!(self.parent(), AstNodes::FormalParameters(params) if {
+                let (parentheses_not_needed, this_param) = if let AstNodes::ArrowFunctionExpression(arrow) = params.parent() {
+                    (can_avoid_parentheses(arrow, f), None)
+                } else {
+                    (false, get_this_param(params.parent()))
+                };
+                should_hug_function_parameters(params, this_param, parentheses_not_needed, f)
+            })
+        };
 
         let decorators = self.decorators();
 
-        if (is_hug_parameter || (is_inert_left && self.initializer.is_none()))
-            && decorators.is_empty()
-        {
-            write!(f, [&content]);
-        } else if decorators.is_empty() {
-            write!(f, [group(&content)]);
-        } else {
+        if !decorators.is_empty() {
             write!(f, [group(&decorators), group(&content)]);
+        } else if (is_inert_left && self.initializer.is_none()) || is_hug_parameter() {
+            write!(f, [&content]);
+        } else {
+            write!(f, [group(&content)]);
         }
     }
 }
@@ -476,23 +476,9 @@ fn is_simple_parameter(parameter: &FormalParameter<'_>, allow_type_annotations: 
 /// Assumes no comment is printed inside it.
 fn is_inert_type(ty: &TSType<'_>) -> bool {
     match ty {
-        TSType::TSAnyKeyword(_)
-        | TSType::TSBigIntKeyword(_)
-        | TSType::TSBooleanKeyword(_)
-        | TSType::TSIntrinsicKeyword(_)
-        | TSType::TSNeverKeyword(_)
-        | TSType::TSNullKeyword(_)
-        | TSType::TSNumberKeyword(_)
-        | TSType::TSObjectKeyword(_)
-        | TSType::TSStringKeyword(_)
-        | TSType::TSSymbolKeyword(_)
-        | TSType::TSUndefinedKeyword(_)
-        | TSType::TSUnknownKeyword(_)
-        | TSType::TSVoidKeyword(_)
-        | TSType::TSThisType(_) => true,
         TSType::TSTypeReference(reference) => reference.type_arguments.is_none(),
         TSType::TSArrayType(array) => is_inert_type(&array.element_type),
-        _ => false,
+        _ => ty.is_keyword(),
     }
 }
 
