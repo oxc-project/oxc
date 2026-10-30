@@ -2168,18 +2168,13 @@ impl<'a> PatternParser<'a> {
         let span_start = self.reader.offset();
         match decode(self.reader.remaining_code_points(), unicode_mode) {
             UnicodeEscape::Value { code_point, length } => {
-                for _ in 0..length {
-                    self.reader.advance();
-                }
+                self.reader.advance_by(length);
                 Ok(Some(code_point))
             }
             UnicodeEscape::Overflow { digits } => {
-                self.reader.advance(); // u
-                self.reader.advance(); // {
+                self.reader.advance_by(2); // u{
                 let digits_start = self.reader.offset();
-                for _ in 0..digits {
-                    self.reader.advance();
-                }
+                self.reader.advance_by(digits);
                 Err(diagnostics::too_large_number_digits(
                     self.span_factory.create(digits_start, self.reader.offset()),
                     "hex",
