@@ -41,6 +41,7 @@ oxc_semantic = { workspace = true }
 oxc_span = { workspace = true }
 oxc_str = { workspace = true }
 
+bitflags = { workspace = true }
 bpaf = { workspace = true, features = ["autocomplete", "bright-color", "derive"] }
 cow-utils = { workspace = true }
 ignore = { workspace = true, features = ["simd-accel"] }

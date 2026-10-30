@@ -1,0 +1,37 @@
+---
+source: apps/oxlint/src/tester.rs
+---
+########## 
+arguments: --format=gitlab
+working directory: fixtures/cli/nested_root_only_option
+----------
+[
+  {
+    "description": "`debugger` statement is not allowed",
+    "check_name": "eslint(no-debugger)",
+    "fingerprint": "2ea4fdeefbe1f511",
+    "severity": "critical",
+    "location": {
+      "path": "apps/oxlint/index.js",
+      "lines": {
+        "begin": 1,
+        "end": 1
+      }
+    }
+  },
+  {
+    "description": "`debugger` statement is not allowed",
+    "check_name": "eslint(no-debugger)",
+    "fingerprint": "1b645624592b9be7",
+    "severity": "major",
+    "location": {
+      "path": "apps/oxlint/nested/index.js",
+      "lines": {
+        "begin": 1,
+        "end": 1
+      }
+    }
+  }
+]----------
+CLI result: LintFoundErrors
+----------
