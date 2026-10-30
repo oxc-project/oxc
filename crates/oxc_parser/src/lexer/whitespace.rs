@@ -23,6 +23,13 @@ impl<C: Config> Lexer<'_, C> {
             handle_eof: 0, // Fall through to below
         };
 
-        Kind::Skip
+        self.token.set_start(self.offset());
+        match self.peek_byte() {
+            // Let the caller select its string scanner, including JSX attribute strings.
+            Some(b'\'' | b'"') => Kind::Skip,
+            // SAFETY: `byte` is the current source byte, before EOF.
+            Some(byte) => unsafe { self.handle_byte(byte) },
+            None => Kind::Eof,
+        }
     }
 }
