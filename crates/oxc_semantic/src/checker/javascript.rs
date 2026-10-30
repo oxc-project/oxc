@@ -358,7 +358,11 @@ fn check_private_identifier(ctx: &SemanticBuilder<'_>) {
     if let Some(class_id) = ctx.class_table_builder.current_class_id {
         let mut available_names: Option<Vec<&str>> = None;
         for reference in ctx.class_table_builder.classes.iter_private_identifiers(class_id) {
-            if !ctx.class_table_builder.classes.ancestors(class_id).any(|class_id| {
+            // Reference creation already searched this class's complete element table.
+            if !reference.element_ids.is_empty() {
+                continue;
+            }
+            if !ctx.class_table_builder.classes.ancestors(class_id).skip(1).any(|class_id| {
                 ctx.class_table_builder.classes.has_private_definition(class_id, reference.name)
             }) {
                 let names = available_names.get_or_insert_with(|| {
