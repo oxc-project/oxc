@@ -3,6 +3,7 @@ use oxc_formatter_core::{
     builders::{FormatWith, group, hard_line_break, space, text, token},
     write,
 };
+use oxc_span::Span;
 use oxc_yaml_parser::ast::{Content, Node, Props};
 
 use crate::{
@@ -116,6 +117,29 @@ pub fn write_node_or_suppressed<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_
     flush_leading_comments(suppression_flush_bound(is_block_collection, start, f), f);
     write_node(node, f);
     false
+}
+
+/// Source span of `node` when [write_node] prints it as exactly that source text, on one line:
+/// a prop-less alias or flow scalar printing verbatim ([scalar::prints_verbatim]),
+/// with no comment pending in front (it would be a middle comment).
+pub fn verbatim_node_span(node: &Node<'_>, f: &YamlFormatter<'_, '_>) -> Option<Span> {
+    if node.props.anchor.is_some() || node.props.tag.is_some() {
+        return None;
+    }
+    let span = to_span(node.content.span());
+    let verbatim = match &node.content {
+        Content::Alias(_) => true,
+        Content::Plain(_) => scalar::prints_verbatim(scalar::FlowScalarKind::Plain, span, f),
+        Content::QuoteSingle(_) => {
+            scalar::prints_verbatim(scalar::FlowScalarKind::QuoteSingle, span, f)
+        }
+        Content::QuoteDouble(_) => {
+            scalar::prints_verbatim(scalar::FlowScalarKind::QuoteDouble, span, f)
+        }
+        _ => false,
+    };
+    (verbatim && f.context().comments().peek().is_none_or(|c| c.span.end > span.start))
+        .then_some(span)
 }
 
 pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {

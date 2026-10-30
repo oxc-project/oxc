@@ -1,7 +1,8 @@
 use oxc_formatter_core::{
     Format, GroupId, MemoizeFormat, best_fitting,
     builders::{
-        align, expand_parent, group, hard_line_break, if_group_breaks, if_group_fits_on_line, space,
+        align, expand_parent, group, hard_line_break, if_group_breaks, if_group_fits_on_line,
+        space, text,
     },
     format_args, write,
 };
@@ -16,7 +17,7 @@ use crate::{
     options::ProseWrap,
     print::{
         YamlFormatter, column_of, format_with, source_starts_with_document_marker, to_span,
-        write_node, write_node_or_suppressed,
+        verbatim_node_span, write_node, write_node_or_suppressed,
     },
 };
 
@@ -88,11 +89,12 @@ pub fn write_mapping_item<'a>(
             && !key_content_trailing_comment
             && !key_starts_with_marker
         {
-            write_key(item, f);
             if space_before_colon {
-                write!(f, space());
+                write_key(item, f);
+                write!(f, [space(), ":"]);
+            } else {
+                write_key_colon(item, ":", f);
             }
-            write!(f, ":");
             return;
         }
         write!(f, "? ");
@@ -179,6 +181,10 @@ pub fn write_mapping_item<'a>(
         && key_absolutely_single_line
         && is_absolutely_single_line(value_content, f)
     {
+        if let Some(slice) = verbatim_pair_slice(key_node, value_node, f) {
+            write!(f, text(slice));
+            return;
+        }
         write_key(item, f);
         if space_before_colon {
             write!(f, space());
@@ -233,8 +239,7 @@ pub fn write_mapping_item<'a>(
         // A trailing comment drops the implicit guarantee like everywhere else
         // (Prettier's `!hasTrailingComment(key.content)` beside its `isAbsolutelyPrintedAsSingleLineNode`).
         if key_absolutely_single_line && !key_trailing_same_line {
-            write_key(item, f);
-            write!(f, colon);
+            write_key_colon(item, colon, f);
             let value = format_with(|f| {
                 write_node_or_suppressed(value_node, f);
             });
@@ -279,7 +284,7 @@ pub fn write_mapping_item<'a>(
     //   variant 1 fits = `: ` + the value's FIRST line fit after the key
     //   (a multiline value's own hardlines don't re-flow the key line, Prettier's `conditionalGroup` boundary;
     //   for a block scalar that first line is just the `| ` / `>` header, sans any line-suffix trailing comment)
-    let key = format_with(|f: &mut YamlFormatter<'_, 'a>| write_key(item, f)).memoized();
+    //
     // The group wrapper mirrors Prettier's `genericPrint` (`group(printNode())`)
     // and is what decides variant 1 for a multi-paragraph value:
     // the paragraph hardline expands the group,
@@ -294,6 +299,15 @@ pub fn write_mapping_item<'a>(
 
     // A definitely-single-line key never flips to the explicit form, no matter how long
     if key_absolutely_single_line && !key_trailing_same_line {
+        // Both variants start with `key:`, one slice for a verbatim key
+        // (only then: a two-element key would be interned, the colon token is cheaper outside)
+        let key_colon = verbatim_key_colon(item, colon, f);
+        let key = format_with(|f: &mut YamlFormatter<'_, 'a>| match key_colon {
+            Some(slice) => write!(f, text(slice)),
+            None => write_key(item, f),
+        })
+        .memoized();
+        let colon = key_colon.is_none().then_some(colon);
         write!(
             f,
             best_fitting![
@@ -308,6 +322,7 @@ pub fn write_mapping_item<'a>(
         return;
     }
 
+    let key = format_with(|f: &mut YamlFormatter<'_, 'a>| write_key(item, f)).memoized();
     let group_id = write_grouped_key(&key, f);
     write_explicit_value(group_id, &value_content_fmt, f);
     write!(
@@ -323,6 +338,24 @@ pub fn write_mapping_item<'a>(
         ])
         .with_group_id(Some(group_id))
     );
+}
+
+/// `key: value` as one source slice:
+/// both sides print as their source text with exactly `: ` between them
+/// (never for an alias key, whose colon is spaced).
+fn verbatim_pair_slice<'a>(
+    key: &Node<'_>,
+    value: &Node<'_>,
+    f: &YamlFormatter<'_, 'a>,
+) -> Option<&'a str> {
+    if matches!(key.content, Content::Alias(_)) {
+        return None;
+    }
+    let source = f.context().source_text();
+    let key = verbatim_node_span(key, f)?;
+    let value = verbatim_node_span(value, f)?;
+    (value.start == key.end + 2 && source.bytes_range(key.end, value.start) == b": ")
+        .then(|| source.slice_range(key.start, value.end))
 }
 
 /// Prettier's `groupedKey` (`group([ifBreak("? "), group(align(2, key), {id})])`):
@@ -368,6 +401,32 @@ fn write_key<'a>(item: &'a MappingItem<'a>, f: &mut YamlFormatter<'_, 'a>) {
     if let Some(key) = item.key_content() {
         write_node(key, f);
     }
+}
+
+/// [write_key] followed by `colon`, as one [verbatim_key_colon] slice when possible.
+fn write_key_colon<'a>(
+    item: &'a MappingItem<'a>,
+    colon: &'static str,
+    f: &mut YamlFormatter<'_, 'a>,
+) {
+    if let Some(slice) = verbatim_key_colon(item, colon, f) {
+        write!(f, text(slice));
+    } else {
+        write_key(item, f);
+        write!(f, colon);
+    }
+}
+
+/// The source text of `key:` when the key prints as its source text and the source has the `:` right after it.
+fn verbatim_key_colon<'a>(
+    item: &MappingItem<'_>,
+    colon: &'static str,
+    f: &YamlFormatter<'_, 'a>,
+) -> Option<&'a str> {
+    let source = f.context().source_text();
+    let key = item.key_content().and_then(|key| verbatim_node_span(key, f))?;
+    (colon == ":" && source.as_str().as_bytes().get(key.end as usize) == Some(&b':'))
+        .then(|| source.slice_range(key.start, key.end + 1))
 }
 
 fn write_value<'a>(item: &'a MappingItem<'a>, f: &mut YamlFormatter<'_, 'a>) {
