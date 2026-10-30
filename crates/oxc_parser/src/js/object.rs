@@ -1,6 +1,5 @@
 use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
-use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
@@ -109,19 +108,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             // CoverInitializedName ({ foo = bar })
             if self.eat(Kind::Eq) {
                 let right = self.parse_assignment_expression_or_higher();
-                let left = AssignmentTarget::new_assignment_target_identifier(
-                    identifier_name.span,
-                    identifier_name.name,
-                    self,
-                );
-                let expr = AssignmentExpression::new(
-                    self.end_span(start),
-                    AssignmentOperator::Assign,
-                    left,
-                    right,
-                    self,
-                );
-                self.state.cover_initialized_name.insert(start, expr);
+                self.state.cover_initialized_name.insert(start, (self.end_span(start), right));
             }
             Expression::new_identifier(identifier_name.span, identifier_name.name, self)
         } else {
