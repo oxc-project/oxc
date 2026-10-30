@@ -139,7 +139,7 @@ pub fn format_to_ir<'a>(
 ///
 /// The host translates the parent's request into this;
 /// `None` is a part formatted on its own (e.g. a JSDoc code block).
-/// Embedded HTML leaves `class` and `allow` values as written (as Prettier does with a `parentParser`).
+/// Embedded HTML leaves `style`, `on*`, `class` and `allow` values as written, as Prettier does.
 #[derive(Clone, Copy, Debug, Default)]
 pub struct HtmlishEmbeddedIn {
     /// Indent the content when more than one node prints at the root

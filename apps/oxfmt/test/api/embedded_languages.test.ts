@@ -284,9 +284,8 @@ describe("Embedded languages", () => {
 `);
     });
 
-    // (css-in-html)-in-js: For now, HTML is handled by Prettier, so CSS is also handled by Prettier too.
-    // The CSS `Doc` carries a trailing space after `prop: ` that only materializes when the value fits flat;
-    // when the value breaks, it must not leak (the Doc→IR conversion maps it to a pending space, dropped at the break).
+    // (css-in-html)-in-js: the space after `prop:` belongs to a value that fits on the line,
+    // so a value that breaks must not leave it at the end of the line.
     it("should not leak a trailing space when a css-in-html declaration value breaks", async () => {
       const input = `\
 export const BaseStyles = html\`

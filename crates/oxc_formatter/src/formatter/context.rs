@@ -258,7 +258,7 @@ impl<'ast> JsFormatContext<'ast> {
         self.embedded_in == Some(JsEmbeddedIn::HtmlEventHandler)
     }
 
-    /// The quote a string prints in (Prettier's `printString`), the formatter's own too (a quoted property key):
+    /// The quote a string prints in, the formatter's own too (a quoted property key):
     /// the configured one, but `'` in an HTML attribute.
     /// A JSX attribute and a directive have their own (`FormatLiteralStringToken`).
     pub(crate) fn string_quote_style(&self) -> QuoteStyle {

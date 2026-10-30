@@ -1,4 +1,4 @@
-//! What separates siblings (Prettier's `printChildren`), and the line break facts it reads from the source.
+//! What separates siblings, and the line break facts it reads from the source.
 
 use oxc_formatter_core::{
     Format, GroupId,
@@ -16,7 +16,7 @@ use super::{
 };
 use crate::{context::HtmlishFormatContext, tree::Tree};
 
-/// What separates two siblings (Prettier's `printBetweenLine`).
+/// What separates two siblings.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub enum Between {
     Nothing,
@@ -218,7 +218,7 @@ pub fn write_children<'a>(
 }
 
 /// A separator between siblings; a kept blank line is `empty_line`
-/// (Prettier's two `hardline`s, which would collapse into one here).
+/// (two hard line breaks would collapse into one).
 fn write_between(between: Between, blank: bool, f: &mut HtmlishFormatter<'_, '_>) {
     match between {
         Between::Nothing => {}

@@ -175,7 +175,7 @@ fn should_preserve_content(t: &Tree<'_>, id: NodeId) -> bool {
     }
 }
 
-/// The source between the tags, adjusted for markers the edges borrow (Prettier's `getNodeContent`).
+/// The source between the tags, adjusted for markers the edges borrow.
 fn node_content<'a>(t: &'a Tree<'a>, id: NodeId) -> &'a str {
     let item = &t[id];
     let mut start = t.content_start(id) as usize;

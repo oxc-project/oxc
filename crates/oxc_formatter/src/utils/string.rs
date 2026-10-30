@@ -46,7 +46,7 @@ impl<'a> FormatLiteralStringToken<'a> {
         let options = f.options();
         let source_type = f.context().source_type();
 
-        // In an HTML attribute, `'` always (Prettier's `__isInHtmlAttribute`), but a directive as usual
+        // In an HTML attribute, `'` whatever the string holds, but a directive as usual
         let (chosen_quote_style, force_chosen_quote) = if self.jsx {
             (options.jsx_quote_style, false)
         } else if self.parent_kind == StringLiteralParentKind::Directive {

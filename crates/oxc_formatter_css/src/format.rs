@@ -177,7 +177,7 @@ pub enum CssEmbeddedIn {
     /// A css-in-js template: SCSS grammar with `${}` placeholder markers ([`CssRoot::CssInJsTemplate`]).
     CssInJsTemplate,
     /// An HTML `style` attribute's value: its declarations print on one line when they fit,
-    /// the last `;` only when they do not (Prettier's `__isHTMLStyleAttribute`).
+    /// the last `;` only when they do not.
     HtmlStyleAttribute,
 }
 

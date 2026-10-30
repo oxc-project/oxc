@@ -163,7 +163,7 @@ pub fn write_embedded_content<'a>(
     f: &mut HtmlishFormatter<'_, 'a>,
 ) -> bool {
     let Some(language) = content_language(t, id) else { return false };
-    // A Markdown body starts at the line after the tag, dedented (Prettier's `dedentString`)
+    // A Markdown body starts at the line after the tag, dedented
     let value = if language == "markdown" {
         let value = value
             .find('\n')
@@ -213,8 +213,8 @@ fn escape_script_end<'a>(
     })
 }
 
-/// The language of the body of `<script>` / `<style>` element `id`, a name the dispatcher resolves
-/// (Prettier's `inferScriptParser` / `inferStyleParser`); `None` for none (`<script src>`, a template type).
+/// The language of the body of `<script>` / `<style>` element `id`, a name the dispatcher resolves;
+/// `None` for none (`<script src>`, a template type).
 fn content_language<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
     let el = t.element(id)?;
     let attribute = |name: &str| {
@@ -235,7 +235,7 @@ fn content_language<'a>(t: &'a Tree<'a>, id: NodeId) -> Option<&'a str> {
     }
 }
 
-/// A `<script type>` (Prettier's `inferParserByTypeAttribute`).
+/// The language a `<script type>` names.
 fn script_type_language(kind: &str) -> Option<&str> {
     Some(match kind {
         "module" | "text/javascript" | "application/javascript" => "js",
