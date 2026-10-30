@@ -55,6 +55,9 @@ declare_oxc_lint!(
     /// if (typeof globalThis.Buffer !== "undefined") {}
     ///
     /// globalThis.postMessage("done");
+    ///
+    /// // Existence checks on the alias itself are allowed
+    /// if (typeof window !== "undefined") {}
     /// ```
     PreferGlobalThis,
     unicorn,
@@ -76,50 +79,45 @@ impl Rule for PreferGlobalThis {
             return;
         }
 
+        // `typeof window !== "undefined"` is a portable existence check; rewriting it to
+        // `typeof globalThis.window` changes nothing and defeats bundlers' dead-code elimination.
+        if is_typeof_legacy_global(node, ctx) {
+            return;
+        }
+
         if let AstKind::StaticMemberExpression(e) = ctx.nodes().parent_kind(node.id())
             && let Expression::Identifier(ident) = &e.object
+            && ident.name == "window"
+            && WINDOW_SPECIFIC_APIS.contains(&e.property.name.as_str())
         {
-            if ident.name == "self" && WEB_WORKER_SPECIFIC_APIS.contains(&e.property.name.as_str())
-            {
-                return;
-            }
-
-            if ident.name == "window" && WINDOW_SPECIFIC_APIS.contains(&e.property.name.as_str()) {
-                if matches!(
-                    e.property.name.as_str(),
-                    "addEventListener" | "removeEventListener" | "dispatchEvent"
-                ) {
-                    let Some(AstKind::CallExpression(call_expr)) =
-                        ctx.nodes().ancestor_kinds(node.id()).nth(1)
-                    else {
-                        return;
-                    };
-                    if call_expr.callee.span() != e.span() {
-                        return;
-                    }
-                    if let Some(Expression::StringLiteral(lit)) =
-                        call_expr.arguments.first().and_then(|arg| arg.as_expression())
-                        && lit
-                            .value
-                            .as_str()
-                            .is_some_and(|value| WINDOW_SPECIFIC_EVENTS.contains(&value))
-                    {
-                        return;
-                    }
-                } else {
+            if matches!(
+                e.property.name.as_str(),
+                "addEventListener" | "removeEventListener" | "dispatchEvent"
+            ) {
+                let Some(AstKind::CallExpression(call_expr)) =
+                    ctx.nodes().ancestor_kinds(node.id()).nth(1)
+                else {
+                    return;
+                };
+                if call_expr.callee.span() != e.span() {
                     return;
                 }
+                if let Some(Expression::StringLiteral(lit)) =
+                    call_expr.arguments.first().and_then(|arg| arg.as_expression())
+                    && lit
+                        .value
+                        .as_str()
+                        .is_some_and(|value| WINDOW_SPECIFIC_EVENTS.contains(&value))
+                {
+                    return;
+                }
+            } else {
+                return;
             }
         }
 
         ctx.diagnostic_with_suggestion(prefer_global_this_diagnostic(ident.span), |fixer| {
-            let is_typeof = is_typeof_legacy_global(node, ctx);
-            let replacement = if is_typeof {
-                format!("globalThis.{}", ident.name)
-            } else {
-                "globalThis".to_string()
-            };
-            fixer.replace(ident.span, replacement)
+            fixer.replace(ident.span, "globalThis")
         });
     }
 }
@@ -144,26 +142,6 @@ fn is_computed_member_expression_object(node: &AstNode<'_>, ctx: &LintContext<'_
     };
     obj_ident.span == node.kind().span()
 }
-
-const WEB_WORKER_SPECIFIC_APIS: &[&str] = &[
-    // https://html.spec.whatwg.org/multipage/workers.html#the-workerglobalscope-common-interface
-    "addEventListener",
-    "removeEventListener",
-    "dispatchEvent",
-    "self",
-    "location",
-    "navigator",
-    "onerror",
-    "onlanguagechange",
-    "onoffline",
-    "ononline",
-    "onrejectionhandled",
-    "onunhandledrejection",
-    // https://html.spec.whatwg.org/multipage/workers.html#dedicated-workers-and-the-dedicatedworkerglobalscope-interface
-    "name",
-    "postMessage",
-    "onconnect",
-];
 
 const WINDOW_SPECIFIC_APIS: &[&str] = &[
     // Properties and methods
@@ -296,8 +274,6 @@ fn test() {
         "window.addEventListener",
         "window.innerWidth",
         "window.innerHeight",
-        "self.location",
-        "self.navigator",
         r#"window.addEventListener("resize", () => {})"#,
         "window.onresize = function () {}",
         // TODO: Get this passing.
@@ -313,6 +289,9 @@ fn test() {
         "expect(window.addEventListener).toHaveBeenCalled();",
         "expect(window.removeEventListener).toHaveBeenCalled();",
         "expect(window.dispatchEvent).toHaveBeenCalled();",
+        r#"typeof window !== "undefined""#,
+        r#"typeof self !== "undefined""#,
+        r#"typeof global !== "undefined""#,
     ];
 
     let fail = vec![
@@ -394,15 +373,17 @@ fn test() {
         "foo[window.foo]",
         "'foo' in window",
         "'foo' in global",
-        r#"typeof window !== "undefined""#,
-        r#"typeof self !== "undefined""#,
-        r#"typeof global !== "undefined""#,
         r#"typeof window.something === "function""#,
         r#"typeof self.something === "function""#,
         r#"typeof global.something === "function""#,
         "global.global_did_not_declare_in_language_options",
         "window.window_did_not_declare_in_language_options",
         "self.self_did_not_declare_in_language_options",
+        "self.location",
+        "self.navigator",
+        r#"self.postMessage("done")"#,
+        "self.name",
+        r#"self.addEventListener("message", () => {})"#,
     ];
 
     let fix = vec![
@@ -553,9 +534,6 @@ fn test() {
         ("[window.foo] = []", "[globalThis.foo] = []"),
         ("foo[window]", "foo[globalThis]"),
         ("foo[window.foo]", "foo[globalThis.foo]"),
-        (r#"typeof window !== "undefined""#, r#"typeof globalThis.window !== "undefined""#),
-        (r#"typeof self !== "undefined""#, r#"typeof globalThis.self !== "undefined""#),
-        (r#"typeof global !== "undefined""#, r#"typeof globalThis.global !== "undefined""#),
         (
             r#"typeof window.something === "function""#,
             r#"typeof globalThis.something === "function""#,
@@ -579,6 +557,14 @@ fn test() {
         (
             "self.self_did_not_declare_in_language_options",
             "globalThis.self_did_not_declare_in_language_options",
+        ),
+        ("self.location", "globalThis.location"),
+        ("self.navigator", "globalThis.navigator"),
+        (r#"self.postMessage("done")"#, r#"globalThis.postMessage("done")"#),
+        ("self.name", "globalThis.name"),
+        (
+            r#"self.addEventListener("message", () => {})"#,
+            r#"globalThis.addEventListener("message", () => {})"#,
         ),
     ];
 
