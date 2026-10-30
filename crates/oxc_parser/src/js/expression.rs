@@ -1669,26 +1669,10 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             if self.is_yield_expression() {
                 return self.parse_yield_expression();
             }
-            // `() => {}`, `(x) => {}`
+            // `() => {}`, `(x) => {}`, `async x => {}`
             if matches!(self.cur_kind(), Kind::LParen | Kind::LAngle | Kind::Async)
-                && let Some(mut arrow_expr) = self
-                    .try_parse_parenthesized_arrow_function_expression(
-                        allow_return_type_in_arrow_function,
-                    )
-            {
-                if let Some(comments) = no_side_effects_comments
-                    && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
-                {
-                    func.pure = true;
-                    self.lexer.trivia_builder.mark_no_side_effects_comments_applied(comments);
-                }
-                return arrow_expr;
-            }
-            // `async x => {}`
-            if self.at(Kind::Async)
-                && let Some(mut arrow_expr) = self.try_parse_async_simple_arrow_function_expression(
-                    allow_return_type_in_arrow_function,
-                )
+                && let Some(mut arrow_expr) =
+                    self.try_parse_arrow_function_expression(allow_return_type_in_arrow_function)
             {
                 if let Some(comments) = no_side_effects_comments
                     && let Expression::ArrowFunctionExpression(func) = &mut arrow_expr
