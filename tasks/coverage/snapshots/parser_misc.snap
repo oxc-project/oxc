@@ -1,7 +1,7 @@
 parser_misc Summary:
 AST Parsed     : 130/130 (100.00%)
 Positive Passed: 130/130 (100.00%)
-Negative Passed: 265/265 (100.00%)
+Negative Passed: 267/267 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -1191,6 +1191,20 @@ Negative Passed: 265/265 (100.00%)
  1 │ type T<X> = X extends infer string ? string : never;
    ·                             ──────
    ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/js-export-default-abstract-class.js:1:24]
+ 1 │ export default abstract class C {}
+   ·                        ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[misc/fail/js-export-default-interface.js:1:25]
+ 1 │ export default interface I {}
+   ·                         ▲
+   ╰────
+  help: Try inserting a semicolon here
 
   × Adjacent JSX elements must be wrapped in an enclosing tag.
    ╭─[misc/fail/jsx-adjacent-elements.jsx:3:3]
