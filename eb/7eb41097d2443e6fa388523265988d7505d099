@@ -1,0 +1,19 @@
+crates/oxc_formatter_graphql/examples/phases_graphql.rs
+  s_1047a67c7cb80f::t_ab0c1b8a549155 1-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "eb7eb41097d2443e6fa388523265988d7505d099",
+  "prompts": {},
+  "sessions": {
+    "s_1047a67c7cb80f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a232c9509f41a128d",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
