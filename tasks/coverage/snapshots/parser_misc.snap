@@ -1,7 +1,7 @@
 parser_misc Summary:
-AST Parsed     : 130/130 (100.00%)
-Positive Passed: 130/130 (100.00%)
-Negative Passed: 267/267 (100.00%)
+AST Parsed     : 131/131 (100.00%)
+Positive Passed: 131/131 (100.00%)
+Negative Passed: 269/269 (100.00%)
 
   × TS(1275): 'accessor' modifier can only appear on a property declaration.
    ╭─[misc/fail/accessor-modifier-abstract-method.ts:1:29]
@@ -5210,6 +5210,22 @@ Negative Passed: 267/267 (100.00%)
    ·       ───────────────────────────
  5 │     }
    ╰────
+
+  × Cannot assign to 'arguments' in strict mode
+   ╭─[misc/fail/strict-arguments-for-of.js:2:6]
+ 1 │ "use strict";
+ 2 │ for (arguments of []) {}
+   ·      ─────────
+   ╰────
+  note: This is strict mode code
+
+  × Cannot assign to 'eval' in strict mode
+   ╭─[misc/fail/strict-eval-for-in.js:2:6]
+ 1 │ "use strict";
+ 2 │ for (eval in {}) {}
+   ·      ────
+   ╰────
+  note: This is strict mode code
 
   × Expected switch clause
    ╭─[misc/fail/switch-invalid-clause.js:2:3]

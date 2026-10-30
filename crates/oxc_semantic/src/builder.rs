@@ -2919,6 +2919,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
+        let kind = AstKind::TSTypeAssertion(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        // The type annotation must not consume the asserted expression's reference flags.
+        let reference_flags = mem::take(&mut self.current_reference_flags);
+        self.visit_ts_type(&it.type_annotation);
+        self.current_reference_flags = reference_flags;
+        self.visit_expression(&it.expression);
+        self.leave_node(kind);
+    }
+
     fn visit_ts_type_reference(&mut self, ty: &TSTypeReference<'a>) {
         let kind = AstKind::TSTypeReference(self.alloc(ty));
         self.enter_node(kind);
