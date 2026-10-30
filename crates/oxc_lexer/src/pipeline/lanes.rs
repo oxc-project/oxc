@@ -5,12 +5,7 @@
 
 use std::{ptr, str};
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
+#[cfg(target_arch = "x86_64")]
 use std::arch::x86_64::*;
 
 use oxc_ast::ast::{Comment, RegExpFlags};
@@ -22,9 +17,12 @@ use crate::{
 };
 
 use crate::pipeline::{
-    cpu::{Cpu, apply, cpu_versions},
+    cpu::{Cpu, apply, cpu_select, cpu_versions},
     disambiguate::DisambiguateState,
 };
+
+#[cfg(target_arch = "x86_64")]
+use crate::pipeline::cpu::Avx2;
 
 #[derive(Default)]
 pub(crate) struct Lanes {
@@ -157,6 +155,7 @@ impl Lanes {
         self.push_diag(e2 as u32, (end - e2) as u32, DiagCode::InvalidNumericLiteral);
     }
 
+    #[apply(cpu_versions)]
     #[inline]
     /// `EMIT`: report malformed escapes while cooking - strings only, since
     /// template escapes are legal when tagged (the parser owns that error).
@@ -167,6 +166,7 @@ impl Lanes {
         src: &[u8],
         bs: u32,
         be: u32,
+        cpu: impl Cpu,
     ) -> (StringSpan, bool) {
         let ss = self.cooked.len() as u32;
         if be <= bs {
@@ -178,14 +178,16 @@ impl Lanes {
         let base = self.cooked.as_mut_ptr();
 
         let needs_decode = if body_len < 32 {
-            return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len);
+            return self.cook_short_dispatch::<EMIT, CRLF>(src, bs, be, base, ss, body_len, cpu);
         } else if CRLF {
             span_has_bs_or_cr(src, bs as usize, be as usize)
         } else {
             span_has_bs(src, bs as usize, be as usize)
         };
         let (wi, lone, nes) = if needs_decode {
-            unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags) }
+            unsafe {
+                cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, &mut self.diags, cpu)
+            }
         } else {
             unsafe {
                 ptr::copy_nonoverlapping(
@@ -200,6 +202,7 @@ impl Lanes {
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
     }
 
+    #[apply(cpu_versions)]
     #[inline]
     fn cook_short_dispatch<const EMIT: bool, const CRLF: bool>(
         &mut self,
@@ -209,24 +212,25 @@ impl Lanes {
         base: *mut u8,
         ss: u32,
         body_len: usize,
+        cpu: impl Cpu,
     ) -> (StringSpan, bool) {
         let (wi, lone, nes) =
-            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags);
+            cook_short::<EMIT, CRLF>(src, bs, be, base, ss, body_len, &mut self.diags, cpu);
         unsafe { self.cooked.set_len(wi as usize) };
         (StringSpan::new(ss, wi & StringSpan::END_MASK, lone), nes)
     }
 
     #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, _cpu: impl Cpu) {
-        let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32);
+    pub(super) fn push_string(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+        let (sp, _) = self.cook::<true, false>(src, bs as u32, be as u32, cpu);
         self.strings.push(sp);
     }
 
     #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, _cpu: impl Cpu) {
-        let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32);
+    pub(super) fn push_template(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
+        let (sp, nes) = self.cook::<false, true>(src, bs as u32, be as u32, cpu);
         // A NotEscapeSequence means cooked = None per the grammar; legality
         // depends on tagged-ness (parser context), so the span carries a
         // marker instead of a diagnostic.
@@ -256,11 +260,11 @@ impl Lanes {
 
     #[apply(cpu_versions)]
     #[inline]
-    pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, _cpu: impl Cpu) {
+    pub(super) fn push_atom(&mut self, src: &[u8], bs: usize, be: usize, cpu: impl Cpu) {
         // Escaped-identifier atoms are the one funnel every code-level
         // identifier escape passes through, so validation rides here.
         self.validate_ident_escapes(src, bs, be);
-        let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32);
+        let (sp, _) = self.cook::<false, false>(src, bs as u32, be as u32, cpu);
         self.atoms.push(sp);
     }
 
@@ -444,13 +448,7 @@ static KEEP: [u64; 9] = [
     0xffff_ffff_ffff_ffff,
 ];
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-#[inline]
+#[inline(always)]
 fn cook_short<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
     bs: u32,
@@ -459,30 +457,51 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     ss: u32,
     body_len: usize,
     diags: &mut Vec<Diagnostic>,
+    cpu: impl Cpu,
+) -> (u32, bool, bool) {
+    cpu_select!(cpu, {
+        Avx2(cpu) => {
+            // SAFETY: `Avx2` type guarantees required target features are present
+            unsafe { cook_short_avx2::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu) }
+        }
+        Neon(cpu) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu),
+        Generic(cpu) => cook_short_generic::<EMIT, CRLF>(src, bs, be, base, ss, body_len, diags, cpu),
+    })
+}
+
+/// [`cook_short`] for AVX2.
+#[cfg(target_arch = "x86_64")]
+#[target_feature(enable = "avx2,bmi2,popcnt")]
+#[inline]
+fn cook_short_avx2<const EMIT: bool, const CRLF: bool>(
+    src: &[u8],
+    bs: u32,
+    be: u32,
+    base: *mut u8,
+    ss: u32,
+    body_len: usize,
+    diags: &mut Vec<Diagnostic>,
+    cpu: Avx2,
 ) -> (u32, bool, bool) {
     let v = unsafe { _mm256_loadu_si256(src.as_ptr().add(bs as usize) as *const __m256i) };
-    let mut hit = unsafe { _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8)) };
+    let mut hit = _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\\' as i8));
     if CRLF {
         // Templates also decode when a raw CR needs LF-normalizing.
-        hit = unsafe { _mm256_or_si256(hit, _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\r' as i8))) };
+        hit = _mm256_or_si256(hit, _mm256_cmpeq_epi8(v, _mm256_set1_epi8(b'\r' as i8)));
     }
-    let bs_mask = unsafe { _mm256_movemask_epi8(hit) as u32 } & ((1u32 << body_len) - 1);
+    let bs_mask = (_mm256_movemask_epi8(hit) as u32) & ((1u32 << body_len) - 1);
     if bs_mask == 0 {
         unsafe { _mm256_storeu_si256(base.add(ss as usize) as *mut __m256i, v) };
         (ss + (be - bs), false, false)
     } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags) }
+        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
     }
 }
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
+/// [`cook_short`] for all other CPUs.
+#[apply(cpu_versions)]
 #[inline]
-fn cook_short<const EMIT: bool, const CRLF: bool>(
+fn cook_short_generic<const EMIT: bool, const CRLF: bool>(
     src: &[u8],
     bs: u32,
     be: u32,
@@ -490,6 +509,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
     ss: u32,
     body_len: usize,
     diags: &mut Vec<Diagnostic>,
+    cpu: impl Cpu,
 ) -> (u32, bool, bool) {
     let body = &src[bs as usize..be as usize];
     let plain = if CRLF {
@@ -507,7 +527,7 @@ fn cook_short<const EMIT: bool, const CRLF: bool>(
         }
         (ss + (be - bs), false, false)
     } else {
-        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags) }
+        unsafe { cook_decode::<EMIT, CRLF>(src.as_ptr(), bs, be, base, ss, diags, cpu) }
     }
 }
 
@@ -823,8 +843,9 @@ fn validate_number(src: &[u8], s: usize, e: usize) -> DiagCode {
     DiagCode::Ok
 }
 
+#[apply(cpu_versions)]
 #[inline]
-unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool) -> u32 {
+unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool, _cpu: impl Cpu) -> u32 {
     if cp <= 0x7F {
         *out.add(wi as usize) = cp as u8;
         wi += 1;
@@ -858,6 +879,7 @@ unsafe fn push_cp(out: *mut u8, mut wi: u32, cp: u32, lone: &mut bool) -> u32 {
     wi
 }
 
+#[apply(cpu_versions)]
 #[inline]
 unsafe fn emit_oct(
     src: *const u8,
@@ -866,6 +888,7 @@ unsafe fn emit_oct(
     mut i: u32,
     be: u32,
     mut val: u32,
+    _cpu: impl Cpu,
 ) -> (u32, u32) {
     let mut cnt = 1;
     while cnt < 3 && i < be {
@@ -905,6 +928,7 @@ fn push_escape_diag(diags: &mut Vec<Diagnostic>, off: u32, end: u32) {
     });
 }
 
+#[apply(cpu_versions)]
 unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
     src: *const u8,
     bs: u32,
@@ -912,6 +936,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
     out: *mut u8,
     ss: u32,
     diags: &mut Vec<Diagnostic>,
+    cpu: impl Cpu,
 ) -> (u32, bool, bool) {
     let mut wi = ss;
     let mut i = bs;
@@ -980,7 +1005,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                     wi += 1;
                 } else {
                     nes = true; // octal after backslash-0: NotEscapeSequence in templates
-                    let (nwi, ni) = emit_oct(src, out, wi, i, be, 0);
+                    let (nwi, ni) = emit_oct(src, out, wi, i, be, 0, cpu);
                     wi = nwi;
                     i = ni;
                 }
@@ -1053,7 +1078,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                         }
                     }
                     if k < be && *src.add(k as usize) == b'}' && any {
-                        wi = push_cp(out, wi, cp, &mut lone);
+                        wi = push_cp(out, wi, cp, &mut lone, cpu);
                         i = k + 1;
                         if over_end != 0 {
                             nes = true;
@@ -1107,7 +1132,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
                                 }
                             }
                         }
-                        wi = push_cp(out, wi, cp, &mut lone);
+                        wi = push_cp(out, wi, cp, &mut lone, cpu);
                     } else {
                         *out.add(wi as usize) = b'u';
                         wi += 1;
@@ -1135,7 +1160,7 @@ unsafe fn cook_decode<const EMIT: bool, const CRLF: bool>(
             }
             b'1'..=b'7' => {
                 nes = true; // octal escape: NotEscapeSequence in templates
-                let (nwi, ni) = emit_oct(src, out, wi, i, be, (nb - b'0') as u32);
+                let (nwi, ni) = emit_oct(src, out, wi, i, be, (nb - b'0') as u32, cpu);
                 wi = nwi;
                 i = ni;
             }
@@ -1211,6 +1236,7 @@ mod tests {
                 out.as_mut_ptr(),
                 0,
                 &mut diags,
+                BASELINE,
             )
         };
         out.truncate(wi as usize);
@@ -1244,6 +1270,7 @@ mod tests {
                     out_t.as_mut_ptr(),
                     0,
                     &mut diags,
+                    BASELINE,
                 )
             };
             let (wf, _, _) = unsafe {
@@ -1254,6 +1281,7 @@ mod tests {
                     out_f.as_mut_ptr(),
                     0,
                     &mut Vec::new(),
+                    BASELINE,
                 )
             };
             assert_eq!(wt, wf);
@@ -1375,6 +1403,7 @@ mod tests {
                     out.as_mut_ptr(),
                     0,
                     &mut Vec::new(),
+                    BASELINE,
                 )
             };
             out.truncate(wi as usize);
