@@ -4851,15 +4851,10 @@ fn lower_jsx_element_expr<'a>(
             _ => Ident::from("fbt"),
         };
         // Get the opening element's name identifier and resolve any local binding.
-        let jsx_id_name = match &jsx_element.opening_element.name {
-            oxc::JSXElementName::Identifier(id) => Some((id.name.as_str(), id.span)),
-            oxc::JSXElementName::IdentifierReference(id) => Some((id.name.as_str(), id.span)),
-            _ => None,
-        };
-        if let Some((name, span)) = jsx_id_name {
-            let id_span = Some(span);
+        if let Some(name) = jsx_element.opening_element.name.get_identifier_name() {
+            let id_span = Some(jsx_element.opening_element.name.span());
             // JSX identifiers have no semantic reference, so resolve by name.
-            if builder.resolve_local_binding_by_name(name, id_span)?.is_some() {
+            if builder.resolve_local_binding_by_name(name.as_str(), id_span)?.is_some() {
                 return Err(diagnostics::local_fbt_tag(&tag_name, id_span));
             }
         }
