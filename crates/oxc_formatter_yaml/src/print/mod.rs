@@ -8,8 +8,8 @@ use oxc_yaml_parser::ast::{Content, Node, Props};
 
 use crate::{
     comments::{
-        FormatCommentBeforeContent, flush_leading_comments, is_suppressed_last_before,
-        suppression_flush_bound, write_suppressed_node,
+        FormatCommentBeforeContent, flush_leading_comments, has_pending_comment_before,
+        is_suppressed_last_before, suppression_flush_bound, write_suppressed_node,
     },
     context::YamlFormatContext,
 };
@@ -138,8 +138,7 @@ pub fn verbatim_node_span(node: &Node<'_>, f: &YamlFormatter<'_, '_>) -> Option<
         }
         _ => false,
     };
-    (verbatim && f.context().comments().peek().is_none_or(|c| c.span.end > span.start))
-        .then_some(span)
+    (verbatim && !has_pending_comment_before(span.start, f)).then_some(span)
 }
 
 pub fn write_node<'a>(node: &'a Node<'a>, f: &mut YamlFormatter<'_, 'a>) {

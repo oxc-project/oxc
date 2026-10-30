@@ -30,12 +30,13 @@ pub fn write_plain(span: Span, f: &mut YamlFormatter<'_, '_>) {
 
 /// Emits a quoted scalar with Prettier's `quoteDouble`/`quoteSingle` case.
 pub fn write_quoted(kind: FlowScalarKind, span: Span, f: &mut YamlFormatter<'_, '_>) {
-    if prints_verbatim(kind, span, f) {
+    let raw = quoted_inner(span, f);
+    let (quote, reencode) = printed_quote(kind, raw, f);
+    // Keeping its quote, nothing is re-encoded: the source text itself when the content prints as written
+    if quote == source_quote(kind) && single_line_prints_verbatim(raw, f) {
         write!(f, text(f.context().source_text().text_for(&span)));
         return;
     }
-    let raw = quoted_inner(span, f);
-    let (quote, reencode) = printed_quote(kind, raw, f);
     let content = if !reencode {
         raw
     } else if kind == FlowScalarKind::QuoteDouble {
@@ -92,30 +93,22 @@ fn source_quote(kind: FlowScalarKind) -> &'static str {
 }
 
 /// Whether a flow scalar spanning `span` (quotes included) prints exactly as its source text:
-/// one line, a quoted one keeping its quote and content.
-/// - `preserve`: [write_flow_scalar_content]'s verbatim fast path
-/// - `never`: the line's words rejoin with the single spaces they were split at
-/// - `always`: only a single word (no space) is safe from wrapping
-///
-/// A line-end backslash is rejected outside `preserve`:
-/// the mapping-item single-line checks read it as a continuation.
+/// a quoted one keeping its quote (so nothing is re-encoded), with content [single_line_prints_verbatim].
 pub fn prints_verbatim(kind: FlowScalarKind, span: Span, f: &YamlFormatter<'_, '_>) -> bool {
-    let source = f.context().source_text().text_for(&span);
-    let single_line = match f.options().prose_wrap {
-        ProseWrap::Preserve => !source.contains('\n'),
-        ProseWrap::Never => !source.contains('\n') && !source.ends_with('\\'),
-        ProseWrap::Always => {
-            !source.contains('\n') && !source.contains(' ') && !source.ends_with('\\')
-        }
-    };
-    if !single_line {
-        return false;
-    }
     if kind == FlowScalarKind::Plain {
-        return true;
+        return single_line_prints_verbatim(f.context().source_text().text_for(&span), f);
     }
     let raw = quoted_inner(span, f);
-    printed_quote(kind, raw, f) == (source_quote(kind), false)
+    printed_quote(kind, raw, f).0 == source_quote(kind) && single_line_prints_verbatim(raw, f)
+}
+
+/// Whether [write_flow_scalar_content] prints `content` as written, on one line:
+/// - `preserve`: its verbatim fast path
+/// - `never`: the line's words rejoin with the single spaces they were split at
+/// - `always`: only a single word (no space) is safe from wrapping
+fn single_line_prints_verbatim(content: &str, f: &YamlFormatter<'_, '_>) -> bool {
+    !content.contains('\n')
+        && (f.options().prose_wrap != ProseWrap::Always || !content.contains(' '))
 }
 
 /// Prettier's `printFlowScalarContent`:
