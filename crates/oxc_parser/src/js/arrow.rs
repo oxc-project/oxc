@@ -6,6 +6,11 @@ use oxc_syntax::precedence::Precedence;
 use super::{FunctionKind, Tristate};
 use crate::{Context, ParserConfig as Config, ParserImpl, diagnostics, lexer::Kind};
 
+pub(super) enum ArrowOrExpression<'a> {
+    Arrow(Expression<'a>),
+    Expression(Expression<'a>),
+}
+
 struct ArrowFunctionHead<'a> {
     type_parameters: Option<ArenaBox<'a, TSTypeParameterDeclaration<'a>>>,
     params: ArenaBox<'a, FormalParameters<'a>>,
@@ -18,15 +23,32 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     pub(super) fn try_parse_parenthesized_arrow_function_expression(
         &mut self,
         allow_return_type_in_arrow_function: bool,
-    ) -> Option<Expression<'a>> {
+    ) -> Option<ArrowOrExpression<'a>> {
+        // A simple async generic prefix is shared by a call and an arrow. Intercept it
+        // before JSX lookahead commits to either interpretation.
+        if let Some(result) =
+            self.parse_cover_generic_async_arrow(allow_return_type_in_arrow_function)
+        {
+            return Some(result);
+        }
         match self.is_parenthesized_arrow_function_expression() {
             Tristate::False => None,
-            Tristate::True => Some(self.parse_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            )),
-            Tristate::Maybe => self.parse_possible_parenthesized_arrow_function_expression(
-                allow_return_type_in_arrow_function,
-            ),
+            Tristate::True => {
+                Some(ArrowOrExpression::Arrow(self.parse_parenthesized_arrow_function_expression(
+                    allow_return_type_in_arrow_function,
+                )))
+            }
+            Tristate::Maybe => {
+                if let Some(result) =
+                    self.parse_cover_parenthesized_arrow(allow_return_type_in_arrow_function)
+                {
+                    return Some(result);
+                }
+                self.parse_possible_parenthesized_arrow_function_expression(
+                    allow_return_type_in_arrow_function,
+                )
+                .map(ArrowOrExpression::Arrow)
+            }
         }
     }
 
@@ -340,6 +362,23 @@ impl<'a, C: Config> ParserImpl<'a, C> {
     ) -> Expression<'a> {
         let ArrowFunctionHead { type_parameters, params, return_type, r#async, start } =
             arrow_function_head;
+        let body = self.parse_cover_arrow_body(r#async, allow_return_type_in_arrow_function);
+        Expression::new_arrow_function_expression(
+            self.end_span(start),
+            r#async,
+            type_parameters,
+            params,
+            return_type,
+            body,
+            self,
+        )
+    }
+
+    pub(super) fn parse_cover_arrow_body(
+        &mut self,
+        r#async: bool,
+        allow_return_type_in_arrow_function: bool,
+    ) -> ArrowFunctionBody<'a> {
         let has_await = self.ctx.has_await();
         let has_yield = self.ctx.has_yield();
         self.ctx = self.ctx.and_await(r#async).and_yield(false);
@@ -356,16 +395,7 @@ impl<'a, C: Config> ParserImpl<'a, C> {
         };
 
         self.ctx = self.ctx.and_await(has_await).and_yield(has_yield);
-
-        Expression::new_arrow_function_expression(
-            self.end_span(start),
-            r#async,
-            type_parameters,
-            params,
-            return_type,
-            body,
-            self,
-        )
+        body
     }
 
     /// Section [Arrow Function](https://tc39.es/ecma262/#sec-arrow-function-definitions)

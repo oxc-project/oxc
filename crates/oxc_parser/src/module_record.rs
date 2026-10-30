@@ -424,6 +424,20 @@ impl<'a> ModuleRecordBuilder<'a> {
     pub fn set_module_syntax(&mut self) {
         self.module_record.has_module_syntax = true;
     }
+
+    pub(crate) fn expression_checkpoint(&self) -> (bool, usize, usize) {
+        (
+            self.module_record.has_module_syntax,
+            self.module_record.dynamic_imports.len(),
+            self.module_record.import_metas.len(),
+        )
+    }
+
+    pub(crate) fn rewind_expression(&mut self, checkpoint: (bool, usize, usize)) {
+        self.module_record.has_module_syntax = checkpoint.0;
+        self.module_record.dynamic_imports.truncate(checkpoint.1);
+        self.module_record.import_metas.truncate(checkpoint.2);
+    }
 }
 
 fn iter_binding_identifiers_of_declaration<'a, F>(decl: &Declaration<'a>, f: &mut F)

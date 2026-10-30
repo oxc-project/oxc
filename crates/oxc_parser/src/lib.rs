@@ -1121,6 +1121,73 @@ mod test {
     }
 
     #[test]
+    fn shared_arrow_prefix_annotations() {
+        for source in [
+            "/*#__NO_SIDE_EFFECTS__*/ (x = 1, y) => x",
+            "/*#__NO_SIDE_EFFECTS__*/ (x, y: T): T => x",
+            "/*#__NO_SIDE_EFFECTS__*/ async<T>(x, y) => x",
+        ] {
+            let allocator = Allocator::default();
+            let expression =
+                Parser::new(&allocator, source, SourceType::ts()).parse_expression().unwrap();
+            let Expression::ArrowFunctionExpression(arrow) = expression else { panic!("{source}") };
+            assert!(arrow.pure, "{source}");
+        }
+
+        for source in
+            ["/*#__PURE__*/ async(x, y)", "/*#__PURE__*/ async<T>(x, y)", "/*#__PURE__*/ (x, y)()"]
+        {
+            let allocator = Allocator::default();
+            let expression =
+                Parser::new(&allocator, source, SourceType::ts()).parse_expression().unwrap();
+            let Expression::CallExpression(call) = expression else { panic!("{source}") };
+            assert!(call.pure, "{source}");
+        }
+    }
+
+    #[test]
+    fn shared_arrow_prefix_module_records() {
+        for source in [
+            "(x = import('x'))",
+            "async(x = import('x'))",
+            "async(x = function(await) { return import('x'); }) => x",
+            "a ? (x) : T => import('x')",
+        ] {
+            let allocator = Allocator::default();
+            let result =
+                Parser::new(&allocator, source, SourceType::ts().with_module(false)).parse();
+            assert!(result.diagnostics.is_empty(), "{source}: {:?}", result.diagnostics);
+            assert_eq!(result.module_record.dynamic_imports.len(), 1, "{source}");
+        }
+
+        let allocator = Allocator::default();
+        let result =
+            Parser::new(&allocator, "a ? (x, y): T => import.meta", SourceType::ts()).parse();
+        assert!(result.diagnostics.is_empty(), "{:?}", result.diagnostics);
+        assert_eq!(result.module_record.import_metas.len(), 1);
+
+        let allocator = Allocator::default();
+        let result = Parser::new(
+            &allocator,
+            "const f = async(x = await value) => x;",
+            SourceType::unambiguous(),
+        )
+        .parse();
+        assert!(!result.module_record.has_module_syntax);
+        assert!(result.program.source_type.is_script());
+
+        let allocator = Allocator::default();
+        let result =
+            Parser::new(&allocator, "(await) => 0; export {};", SourceType::unambiguous()).parse();
+        assert!(result.program.source_type.is_module());
+        assert_eq!(result.diagnostics.len(), 1);
+        assert_eq!(
+            result.diagnostics[0].to_string(),
+            "Cannot use `await` as an identifier in an async context"
+        );
+    }
+
+    #[test]
     fn flow_error() {
         let allocator = Allocator::default();
         let source_type = SourceType::default();

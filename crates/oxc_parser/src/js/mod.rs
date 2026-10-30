@@ -3,11 +3,14 @@
 mod grammar;
 
 mod arrow;
+mod arrow_cover;
 mod binding;
 mod class;
+mod cover;
 mod declaration;
 mod expression;
 mod function;
+mod generic_cover;
 mod module;
 mod object;
 mod operator;
