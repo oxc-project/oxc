@@ -280,3 +280,43 @@ source: crates/oxc_linter/src/tester.rs
    ·               ╰── 'U+001F' is a control character.
    ╰────
   help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:11]
+ 1 │ var re = /import/;
+   ·           ┬
+   ·           ╰── 'U+0008' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:22]
+ 1 │ var re = new RegExp("import");
+   ·                      ┬
+   ·                      ╰── 'U+0008' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:12]
+ 1 │ var re = /ab/;
+   ·            ┬
+   ·            ╰── 'U+0001' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:12]
+ 1 │ var re = /ab/;
+   ·            ┬
+   ·            ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.
+
+  ⚠ eslint(no-control-regex): Unexpected control character
+   ╭─[no_control_regex.tsx:1:23]
+ 1 │ var re = new RegExp(`ab`);
+   ·                       ┬
+   ·                       ╰── 'U+001F' is a control character.
+   ╰────
+  help: Avoid matching control characters in regular expressions. If intentional, disable this rule for the expression.

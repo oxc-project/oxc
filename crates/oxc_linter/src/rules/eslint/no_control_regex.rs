@@ -143,7 +143,12 @@ impl<'a> Visit<'a> for ControlCharacterFinder<'a> {
                 .chars()
                 .nth(0)
                 .is_some_and(|c| c.to_digit(16) == Some(ch.value));
+            // The control character itself is written in the source, e.g. a
+            // raw U+0008 byte inside a regex literal or a string passed to
+            // `RegExp`.
+            let is_raw_char = text.chars().next().is_some_and(|c| u32::from(c) == ch.value);
             if is_code_point_match
+                || is_raw_char
                 || text.starts_with("\\x")
                 || text.starts_with("\\\\x")
                 || text.starts_with("\\u")
@@ -319,6 +324,13 @@ mod tests {
             "new RegExp(('\\x1f'))",
             "new RegExp((('\\x1f')))",
             "new RegExp('\\x1f' as string)",
+            // https://github.com/oxc-project/oxc/issues/28276
+            // raw control characters written directly in the source
+            "var re = /\u{8}import/;",
+            "var re = new RegExp(\"\u{8}import\");",
+            "var re = /a\u{1}b/;",
+            "var re = /a\u{1f}b/;",
+            "var re = new RegExp(`a\u{1f}b`);",
         ];
 
         // test cases taken from eslint. See:
