@@ -176,6 +176,25 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ThisExpression> {
     }
 }
 
+/// The span of `word`, an identifier or `this`, when it prints exactly its source text
+/// (the `write`s above, through its generated `fmt`'s quiet path):
+/// no escape, no parentheses, no comment.
+fn word_source_span<'a>(
+    word: &AstNode<'_, 'a, Expression<'a>>,
+    f: &JsFormatter<'_, 'a>,
+) -> Option<Span> {
+    let printed_len = match word.as_ref() {
+        Expression::Identifier(identifier) => identifier.name.len(),
+        Expression::ThisExpression(_) => "this".len(),
+        _ => return None,
+    };
+    let span = word.span();
+    (span.size() as usize == printed_len
+        && f.comments().is_quiet(span, || word.parent().span(), word.following_span_start(), true)
+        && !word.needs_parentheses(f))
+    .then_some(span)
+}
+
 impl<'a> FormatWrite<'a> for AstNode<'_, 'a, ArrayExpression<'a>> {
     fn write(&self, f: &mut JsFormatter<'_, 'a>) {
         FormatArrayExpression::new(self).fmt(f);
@@ -356,8 +375,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, UnaryExpression<'a>> {
 }
 
 /// The source text of a whole `!a` / `-this` (a non-keyword operator only),
-/// when the argument is a single word printing its source text right after the operator:
-/// no escape, no parentheses, no comment, like its generated `fmt`'s quiet path.
+/// when the argument is a single word printing its source text right after the operator.
 fn unary_single_word_source<'a>(
     unary: &AstNode<'_, 'a, UnaryExpression<'a>>,
     f: &JsFormatter<'_, 'a>,
@@ -366,25 +384,10 @@ fn unary_single_word_source<'a>(
     if operator.is_keyword() {
         return None;
     }
-    let argument = unary.argument();
-    let word_len = match argument.as_ref() {
-        Expression::Identifier(identifier) => identifier.name.len(),
-        Expression::ThisExpression(_) => "this".len(),
-        _ => return None,
-    };
+    let argument_span = word_source_span(&unary.argument(), f)?;
     let unary_span = unary.span();
-    let argument_span = argument.span();
-    let operator = operator.as_str();
-    (argument_span.size() as usize == word_len
-        && f.source_text().bytes_range(unary_span.start, argument_span.start)
-            == operator.as_bytes()
-        && f.comments().is_quiet(
-            argument_span,
-            || unary_span,
-            argument.following_span_start(),
-            true,
-        )
-        && !argument.needs_parentheses(f))
+    (f.source_text().bytes_range(unary_span.start, argument_span.start)
+        == operator.as_str().as_bytes())
     .then(|| f.source_text().slice_range(unary_span.start, argument_span.end))
 }
 
@@ -1424,7 +1427,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeAnnotation<'a>> {
                 // See AGENTS.md "Open debts".
                 let type_annotation = self.type_annotation();
                 // `: boolean` in one token, when the keyword type prints no comment (its quiet `fmt`)
-                if let Some(text) = colon_and_keyword_type(type_annotation.as_ref())
+                if let Some(keyword) = colon_and_keyword_type(type_annotation.as_ref())
                     && f.comments().is_quiet(
                         type_annotation.span(),
                         || self.span(),
@@ -1432,7 +1435,7 @@ impl<'a> FormatWrite<'a> for AstNode<'_, 'a, TSTypeAnnotation<'a>> {
                         false,
                     )
                 {
-                    write!(f, text);
+                    write!(f, keyword);
                 } else if let Some(name_span) =
                     plain_type_name_span(&type_annotation, self.span(), f)
                     && f.source_text().bytes_range(self.span().start, name_span.start) == b": "
