@@ -276,8 +276,7 @@ unsafe impl<const MIN_ALIGN: usize> Send for Arena<MIN_ALIGN> {}
 pub(crate) struct ChunkFooter {
     /// Pointer to the start of the allocation backing this chunk.
     ///
-    /// This pointer is passed to `alloc::dealloc` (or `System.dealloc` if `is_fixed_size` is `true`)
-    /// when deallocating the chunk.
+    /// This pointer is passed to the allocator that owns the chunk when deallocating it.
     backing_alloc_ptr: NonNull<u8>,
 
     /// The layout of this chunk's backing allocation.
@@ -294,15 +293,13 @@ pub(crate) struct ChunkFooter {
     /// This field is only used in `ChunkIter` and `ChunkRawIter` iterators, and `used_bytes` method.
     cursor_ptr: Cell<NonNull<u8>>,
 
-    /// `true` if backing allocation was made via [`System`] allocator (rather than the global allocator).
-    ///
-    /// `Arena`'s [`Drop`] impl uses this to know whether to free the backing allocation via [`System`]
-    /// or the global allocator.
-    ///
-    /// Set to `true` for chunks created via [`Arena::from_raw_parts`], `false` otherwise.
-    ///
-    /// [`System`]: std::alloc::System
+    /// `true` for a fixed-size chunk, which cannot acquire another chunk.
+    /// Fixed-size chunks use `System` or platform virtual memory rather than the global allocator.
     is_fixed_size: bool,
+
+    /// `true` if the backing allocation is a virtual-memory reservation owned by the arena.
+    /// Only set by `Arena::new_fixed_size` on Unix; externally supplied chunks use `System`.
+    is_mapped: bool,
 }
 
 /// We only support alignments of up to 16 bytes for `iter_allocated_chunks`.
