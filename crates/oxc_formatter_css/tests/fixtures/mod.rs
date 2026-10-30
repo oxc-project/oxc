@@ -8,11 +8,10 @@
 use std::path::Path;
 
 use oxc_allocator::{Allocator, ArenaVec};
-use oxc_formatter_css::{CssFormatOptions, CssRoot, CssVariant, format, parse_for_format};
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
-
-mod options;
-use options::apply_css_options;
+use oxc_formatter_css::{
+    CssFormatOptions, CssRoot, CssVariant, TrailingCommas, format, parse_for_format,
+};
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
 struct CssHarness;
 
@@ -26,10 +25,17 @@ impl FixtureFormatter for CssHarness {
     type Options = CssFormatOptions;
     type Fingerprint = Fingerprint;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = CssFormatOptions::default();
-        apply_css_options(&mut options, json);
-        options
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
+        match key {
+            "trailingComma" => {
+                if let Some(s) = value.as_str() {
+                    options.trailing_commas =
+                        if s == "none" { TrailingCommas::Never } else { TrailingCommas::Always };
+                }
+            }
+            _ => return false,
+        }
+        true
     }
 
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {

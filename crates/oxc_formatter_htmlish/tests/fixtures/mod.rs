@@ -1,12 +1,12 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_htmlish::{HtmlishFormatOptions, HtmlishVariant, format, parse_for_format};
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+use oxc_formatter_htmlish::{
+    HtmlishFormatOptions, HtmlishVariant, WhitespaceSensitivity, format, parse_for_format,
+};
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
 mod fingerprint;
-mod options;
-use options::apply_htmlish_options;
 
 /// `.vue` reads as Vue, `.xhtml` / `.xht` as XHTML, `.component.html` as Angular (as the example reads them).
 fn variant_of(path: &Path) -> HtmlishVariant {
@@ -24,10 +24,20 @@ impl FixtureFormatter for HtmlishHarness {
     type Options = HtmlishFormatOptions;
     type Fingerprint = String;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = HtmlishFormatOptions::default();
-        apply_htmlish_options(&mut options, json);
-        options
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
+        match key {
+            "htmlWhitespaceSensitivity" => {
+                if let Some(s) = value.as_str() {
+                    options.whitespace_sensitivity = match s {
+                        "strict" => WhitespaceSensitivity::Strict,
+                        "ignore" => WhitespaceSensitivity::Ignore,
+                        _ => WhitespaceSensitivity::Css,
+                    };
+                }
+            }
+            _ => return false,
+        }
+        true
     }
 
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {

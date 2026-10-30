@@ -2184,7 +2184,6 @@ dependencies = [
  "oxc_span",
  "oxc_tasks_common",
  "pico-args",
- "serde_json",
 ]
 
 [[package]]

@@ -29,7 +29,6 @@ insta = { workspace = true }
 oxc_formatter_tests = { workspace = true }
 oxc_tasks_common = { workspace = true }
 pico-args = { workspace = true }
-serde_json = { workspace = true }
 
 [build-dependencies]
 oxc_formatter_tests = { workspace = true }
