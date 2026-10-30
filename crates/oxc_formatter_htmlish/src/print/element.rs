@@ -66,12 +66,9 @@ pub fn write_element<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'
         return;
     };
 
-    let hug = item.only_child().is_some()
-        && t.is_interpolation(first)
-        && t[first].leading_sensitive
-        && !t[first].has_leading_spaces
-        && t[last].trailing_sensitive
-        && !t[last].has_trailing_spaces;
+    let hug = item.only_child().is_some_and(|only| {
+        t.is_interpolation(only) && t[only].glued_before() && t[only].glued_after()
+    });
 
     let line_before = format_with(|f| {
         if hug {
@@ -195,10 +192,10 @@ fn node_content<'a>(t: &'a Tree<'a>, id: NodeId) -> &'a str {
     &t.source()[start..end]
 }
 
+/// Called only for a node with children, as is `force_break_content`.
 fn force_break_children(t: &Tree<'_>, id: NodeId) -> bool {
     let item = &t[id];
     t.element(id).is_some()
-        && item.first_child.is_some()
         && (matches!(t.tag(id), "html" | "head" | "ul" | "ol" | "select")
             || item.display == Display::Table)
 }
@@ -208,7 +205,6 @@ fn force_break_children(t: &Tree<'_>, id: NodeId) -> bool {
 fn force_break_content(t: &Tree<'_>, id: NodeId) -> bool {
     let item = &t[id];
     if t.element(id).is_some()
-        && item.first_child.is_some()
         && (item.script_like
             || t.tag(id) == "body"
             || t.children(id)

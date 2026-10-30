@@ -1,0 +1,24 @@
+---
+source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
+---
+==================== Input ====================
+<SPAN CLASS="a">x</SPAN>
+<P HEADINGOFFSET="1">x</P>
+<INPUT ISMAP>
+
+==================== Output ====================
+------------------
+{ printWidth: 80 }
+------------------
+<span class="a">x</span>
+<p headingoffset="1">x</p>
+<input ISMAP />
+
+-------------------
+{ printWidth: 100 }
+-------------------
+<span class="a">x</span>
+<p headingoffset="1">x</p>
+<input ISMAP />
+
+===================== End =====================

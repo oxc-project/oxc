@@ -5,6 +5,7 @@ use std::{any::Any, borrow::Cow};
 
 use cow_utils::CowUtils;
 
+use oxc_allocator::{Allocator, StringBuilder};
 use oxc_formatter_core::{
     Format, FormatElement, arena_cow_str,
     builders::{
@@ -127,11 +128,14 @@ fn write_attribute<'a>(
         write!(f, text(value));
         return;
     }
+    let raw = unescaped(value, f);
+    let class = is("class");
     // A placeholder would hide in the sorted class list, out of the parent's reach
-    let tailwind = f.options().sort_tailwindcss.as_ref().is_some_and(|attributes| {
-        is("class") || attributes.iter().any(|attribute| attribute == name)
-    }) && !embedded_in.is_some_and(|e| e.has_placeholder(value));
-    if tailwind && write_tailwind_classes(value, is("class") && embedded_in.is_none(), f) {
+    let tailwind =
+        f.options().sort_tailwindcss.as_ref().is_some_and(|attributes| {
+            class || attributes.iter().any(|attribute| attribute == name)
+        }) && !embedded_in.is_some_and(|e| e.has_placeholder(value));
+    if tailwind && write_tailwind_classes(raw, class && embedded_in.is_none(), f) {
         return;
     }
     // `{{` may be a template's interpolation: those values print as written.
@@ -147,29 +151,29 @@ fn write_attribute<'a>(
         None
     };
     if let Some((language, parent_context)) = embedded
-        && write_attribute_value(language, parent_context, unescaped(value, f), f)
+        && write_attribute_value(language, parent_context, raw, f)
     {
         return;
     }
     let tag = t.tag(element);
     // A class list that collapses to nothing prints as written;
     // the names are split at ASCII whitespace only (DIVERGENCES.md#class-ascii-whitespace).
-    if is("class") && reformat && !value.trim_ascii().is_empty() {
-        let names = collapse_whitespace(f.allocator(), unescaped(value, f));
+    if class && reformat && !value.trim_ascii().is_empty() {
+        let names = collapse_whitespace(f.allocator(), raw);
         write!(f, ["\"", text(quoted_piece(names, f)), "\""]);
     } else if is("srcset")
         && matches!(tag, "img" | "source")
-        && let Some(candidates) = parse_srcset(unescaped(value, f))
+        && let Some(candidates) = parse_srcset(raw, f.allocator())
     {
         write_srcset(&candidates, f);
     } else if is("allow") && tag == "iframe" && reformat {
-        write_permissions_policy(unescaped(value, f), f);
+        write_permissions_policy(raw, f);
     } else {
-        write!(f, AttributeValue(value));
+        write_quoted_value(raw, f);
     }
 }
 
-/// A class list for the session's Tailwind sorter, which collapses its whitespace unless told to preserve it;
+/// A class list (unescaped) for the session's Tailwind sorter, which collapses its whitespace unless told to preserve it;
 /// `class` collapses it anyway when printed on its own (`collapse`).
 /// Returns `false` for a value the sorter leaves alone (`{{`, whitespace only),
 /// or holding a `"`, whose quote is chosen by content.
@@ -178,7 +182,6 @@ fn write_tailwind_classes<'a>(
     collapse: bool,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) -> bool {
-    let value = unescaped(value, f);
     if value.contains('"') || value.contains("{{") || value.trim_ascii().is_empty() {
         return false;
     }
@@ -190,19 +193,14 @@ fn write_tailwind_classes<'a>(
     true
 }
 
-/// A quoted attribute value: `"` unless the value holds more `"` than `'`, the chosen quote escaped.
-/// Quote entities are read back first, so the choice does not depend on how the source quoted.
-pub struct AttributeValue<'a>(pub &'a str);
-
-impl<'a> Format<'a, HtmlishFormatContext<'a>> for AttributeValue<'a> {
-    fn fmt(&self, f: &mut HtmlishFormatter<'_, 'a>) {
-        let raw = unescaped(self.0, f);
-        let doubles = raw.bytes().filter(|&b| b == b'"').count();
-        let singles = raw.bytes().filter(|&b| b == b'\'').count();
-        let (quote, escaped) = if doubles > singles { ("'", "&apos;") } else { ("\"", "&quot;") };
-        let printed = arena_cow_str(&raw.cow_replace(quote, escaped), f);
-        write!(f, [text(quote), text(printed), text(quote)]);
-    }
+/// A quoted attribute value, its quote entities read back (`raw`), so the choice does not depend on how the source quoted:
+/// `"` unless the value holds more `"` than `'`, the chosen quote escaped.
+fn write_quoted_value<'a>(raw: &'a str, f: &mut HtmlishFormatter<'_, 'a>) {
+    let doubles = raw.bytes().filter(|&b| b == b'"').count();
+    let singles = raw.bytes().filter(|&b| b == b'\'').count();
+    let (quote, escaped) = if doubles > singles { ("'", "&apos;") } else { ("\"", "&quot;") };
+    let printed = arena_cow_str(&raw.cow_replace(quote, escaped), f);
+    write!(f, [text(quote), text(printed), text(quote)]);
 }
 
 /// `&apos;` and `&quot;` read back.
@@ -233,17 +231,18 @@ pub(super) fn write_expanded<'a>(
 struct Candidate<'a> {
     url: &'a str,
     /// The descriptor's number as printed, and its unit (`w` / `h` / `x`).
-    descriptor: Option<(String, &'a str)>,
+    descriptor: Option<(&'a str, &'a str)>,
 }
 
 /// One candidate per line when long, descriptors aligned on their decimal point.
 fn write_srcset<'a>(candidates: &[Candidate<'a>], f: &mut HtmlishFormatter<'_, 'a>) {
     let max_url = candidates.iter().map(|c| c.url.len()).max().unwrap_or(0);
     let left = |number: &str| number.find('.').unwrap_or(number.len());
-    let max_left =
-        candidates.iter().filter_map(|c| c.descriptor.as_ref().map(|d| left(&d.0))).max();
+    let max_left = candidates.iter().filter_map(|c| c.descriptor.map(|d| left(d.0))).max();
     let max_left = max_left.unwrap_or(0);
-    let padding: &'a str = f.allocator().alloc_str(&" ".repeat(max_url + 1 + max_left));
+    let mut padding = StringBuilder::new_in(f.allocator());
+    padding.push_ascii_byte_repeat(b' ', max_url + 1 + max_left);
+    let padding = padding.into_str();
     write_expanded(
         &format_with(|f| {
             for (i, c) in candidates.iter().enumerate() {
@@ -252,9 +251,8 @@ fn write_srcset<'a>(candidates: &[Candidate<'a>], f: &mut HtmlishFormatter<'_, '
                 }
                 let url = quoted_piece(c.url, f);
                 write!(f, text(url));
-                if let Some((number, unit)) = &c.descriptor {
+                if let Some((number, unit)) = c.descriptor {
                     let padding = &padding[..max_url - c.url.len() + 1 + max_left - left(number)];
-                    let number = f.allocator().alloc_str(number);
                     write!(
                         f,
                         [
@@ -273,7 +271,7 @@ fn write_srcset<'a>(candidates: &[Candidate<'a>], f: &mut HtmlishFormatter<'_, '
 
 /// `@prettier/parse-srcset`: `None` for what it rejects (a bad descriptor, or no candidate),
 /// and for mixed descriptor kinds, which Prettier does not print either.
-fn parse_srcset(input: &str) -> Option<Vec<Candidate<'_>>> {
+fn parse_srcset<'a>(input: &'a str, allocator: &'a Allocator) -> Option<Vec<Candidate<'a>>> {
     let is_ws = |c: char| c.is_ascii_whitespace();
     let mut candidates = vec![];
     let mut kind = None;
@@ -312,7 +310,7 @@ fn parse_srcset(input: &str) -> Option<Vec<Candidate<'_>>> {
         let mut descriptor = None;
         for d in descriptors.split_ascii_whitespace() {
             let unit = d.chars().last()?;
-            let value = &d[..d.len() - unit.len_utf8()];
+            let (value, unit_str) = d.split_at(d.len() - unit.len_utf8());
             let parsed = match unit {
                 'w' | 'h' if value.bytes().all(|b| b.is_ascii_digit()) => {
                     value.parse::<f64>().ok().filter(|&v| v > 0.0)
@@ -321,14 +319,14 @@ fn parse_srcset(input: &str) -> Option<Vec<Candidate<'_>>> {
                 'x' if is_floating_point(value) => value.parse::<f64>().ok().filter(|&v| v >= 0.0),
                 _ => None,
             }?;
-            let parsed = zmij_ecma::Buffer::new().format(parsed).to_owned();
             // One descriptor per candidate and one kind per list:
             // a second is an error to Prettier or a mix it rejects.
             if descriptor.is_some() || kind.is_some_and(|kind| kind != unit) {
                 return None;
             }
             kind = Some(unit);
-            descriptor = Some((parsed, &d[d.len() - unit.len_utf8()..]));
+            descriptor =
+                Some((allocator.alloc_str(zmij_ecma::Buffer::new().format(parsed)), unit_str));
         }
         candidates.push(Candidate { url, descriptor });
     }

@@ -6,7 +6,9 @@ use oxc_formatter_core::{
 
 use crate::{
     ast_nodes::AstNode,
-    embed_context::{HTML_PLACEHOLDER_PREFIX, HTML_PLACEHOLDER_SUFFIX, HtmlInJsTemplate},
+    embed_context::{
+        HTML_PLACEHOLDER_PREFIX, HTML_PLACEHOLDER_SUFFIX, HtmlInJsTemplate, is_html_placeholder,
+    },
     format_args,
     formatter::prelude::*,
     print::template::{
@@ -160,7 +162,7 @@ fn html_in_js_template(
 ) -> HtmlInJsTemplate {
     HtmlInJsTemplate {
         indent_multiple_roots: !(ws_ignore || has_leading_ws && has_trailing_ws),
-        placeholder: (HTML_PLACEHOLDER_PREFIX, HTML_PLACEHOLDER_SUFFIX),
+        placeholder: (HTML_PLACEHOLDER_PREFIX, is_html_placeholder),
     }
 }
 

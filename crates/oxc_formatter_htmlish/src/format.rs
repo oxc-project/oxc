@@ -145,20 +145,19 @@ pub struct HtmlishEmbeddedIn {
     /// Indent the content when more than one node prints at the root
     /// (html-in-js, whose backticks hug the content).
     pub indent_multiple_roots: bool,
-    /// The parent's placeholder for an expression (html-in-js's `${}`), as the prefix and suffix around its ASCII digits and `_`:
+    /// The parent's placeholder for an expression (html-in-js's `${}`):
     /// a value that is one stays unquoted (`attr=${value}` passes a value, not a string),
     /// and a value holding one is no class list to sort.
-    pub placeholder: Option<(&'static str, &'static str)>,
+    pub placeholder: Option<Placeholder>,
 }
+
+/// A placeholder's prefix, and the parent's test for a whole one.
+pub type Placeholder = (&'static str, fn(&str) -> bool);
 
 impl HtmlishEmbeddedIn {
     /// `value` is the parent's placeholder as a whole.
     pub(crate) fn is_placeholder(&self, value: &str) -> bool {
-        self.placeholder.is_some_and(|(prefix, suffix)| {
-            value.strip_prefix(prefix).and_then(|id| id.strip_suffix(suffix)).is_some_and(|id| {
-                !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit() || b == b'_')
-            })
-        })
+        self.placeholder.is_some_and(|(_, is_placeholder)| is_placeholder(value))
     }
 
     /// `value` holds the parent's placeholder.

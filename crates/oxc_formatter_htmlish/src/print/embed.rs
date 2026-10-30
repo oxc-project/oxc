@@ -27,7 +27,7 @@ pub struct CssInHtmlStyleAttribute;
 /// The host translates it into JS's `JsEmbeddedIn`.
 pub struct JsInHtmlEventHandler;
 
-/// The event handler attributes (Prettier's `@prettier/html-event-attributes`).
+/// The event handler attributes, sorted (Prettier's `@prettier/html-event-attributes` 0.0.2).
 const EVENT_HANDLERS: [&str; 90] = [
     "onabort",
     "onafterprint",
@@ -124,7 +124,7 @@ const EVENT_HANDLERS: [&str; 90] = [
 /// An event handler attribute (`onclick`), whose value is JS.
 /// The name matches as written, as Prettier does (`onClick` stays as written).
 pub fn is_event_handler(name: &str) -> bool {
-    name.starts_with("on") && EVENT_HANDLERS.contains(&name)
+    name.starts_with("on") && EVENT_HANDLERS.binary_search(&name).is_ok()
 }
 
 /// Writes an attribute's (unescaped) `value` formatted in `language`, quoted, a `"` in it as `&quot;`;

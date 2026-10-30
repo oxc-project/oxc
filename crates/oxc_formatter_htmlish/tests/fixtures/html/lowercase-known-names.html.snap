@@ -15,7 +15,7 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 ------------------
 { printWidth: 80 }
 ------------------
-<span CLASS="a" ID="b">x</span>
+<span class="a" id="b">x</span>
 <div class="a" align="c" xml:Lang="en">x</div>
 <svg VIEWBOX="0 0 1 1">
   <RECT WIDTH="1" />
@@ -30,7 +30,7 @@ source: crates/oxc_formatter_htmlish/tests/fixtures/mod.rs
 -------------------
 { printWidth: 100 }
 -------------------
-<span CLASS="a" ID="b">x</span>
+<span class="a" id="b">x</span>
 <div class="a" align="c" xml:Lang="en">x</div>
 <svg VIEWBOX="0 0 1 1">
   <RECT WIDTH="1" />

@@ -3,7 +3,7 @@
 use oxc_formatter_core::{
     Format, GroupId,
     builders::{
-        empty_line, expand_parent, group, hard_line_break, if_group_fits_on_line, soft_line_break,
+        empty_line, group, hard_line_break, if_group_fits_on_line, soft_line_break,
         soft_line_break_or_space, space,
     },
     write,
@@ -45,20 +45,18 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
     }
     let (p, n) = (&t[prev], &t[next]);
     if p.text_like && n.text_like {
-        if p.trailing_sensitive {
-            if p.has_trailing_spaces {
-                return if prefer_hard_line_as_leading(t, next) {
-                    Between::Hard
-                } else {
-                    Between::Line
-                };
-            }
-            return Between::Nothing;
-        }
-        return if prefer_hard_line_as_leading(t, next) { Between::Hard } else { Between::Soft };
+        return if p.glued_after() {
+            Between::Nothing
+        } else if prefer_hard_line_as_leading(t, next) {
+            Between::Hard
+        } else if p.trailing_sensitive {
+            Between::Line
+        } else {
+            Between::Soft
+        };
     }
 
-    if t[next].borrows.prev_closing_end
+    if n.borrows.prev_closing_end
         && t.element(prev).is_some()
         && p.only_child().is_some_and(|only| t.is_interpolation(only))
         && p.has_leading_spaces
@@ -66,7 +64,7 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
         return Between::Nothing;
     }
 
-    if (t[prev].borrows.next_opening_start
+    if (p.borrows.next_opening_start
         && (n.prettier_ignore
             // 123<a
             //      ~
@@ -84,15 +82,14 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
         //   src="long"
         //             ~
         // />123
-        || (t.element(prev).is_some() && p.self_closing && t[next].borrows.prev_closing_end)
+        || (t.element(prev).is_some() && p.self_closing && n.borrows.prev_closing_end)
     {
         return Between::Nothing;
     }
 
     // <div>{{ x }}<!-- comment --></div>
     //             ~
-    if matches!(t.kind(next), NodeKind::Comment(_)) && n.leading_sensitive && !n.has_leading_spaces
-    {
+    if matches!(t.kind(next), NodeKind::Comment(_)) && n.glued_before() {
         return Between::Soft;
     }
 
@@ -113,7 +110,7 @@ fn between(t: &Tree<'_>, prev: NodeId, next: NodeId) -> Between {
         //   ><b><a>mailing address</a></b></a
         //                                    ~
         // >.
-        || (t[next].borrows.prev_closing_end
+        || (n.borrows.prev_closing_end
             && p.last_child.is_some_and(|last| {
                 t[last].borrows.parent_closing_start && closing_start_borrowed(t, last)
             }))
@@ -139,7 +136,6 @@ pub fn write_children<'a>(
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
     if force_break {
-        write!(f, expand_parent());
         for child in t.children(id) {
             if let Some(prev) = t[child].prev {
                 write_between(between(t, prev, child), force_next_empty_line(t, prev), f);
