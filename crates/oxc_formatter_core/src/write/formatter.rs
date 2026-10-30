@@ -261,8 +261,8 @@ impl<'buf, 'ast, C> Formatter<'buf, 'ast, C> {
 
     /// Replaces the elements from `start` (of [`Formatter::elements`]) on with `replacement`.
     ///
-    /// Used by streaming IR transforms (currently `SortImportsTransform`)
-    /// to splice a reordered chunk back.
+    /// Used by streaming IR transforms (`SortImportsTransform`) to splice a reordered chunk back,
+    /// and to merge the last element with what follows it (`oxc_formatter_json`).
     ///
     /// # Panics
     ///

@@ -32,6 +32,7 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonString<'a, '_> {
 /// Writes a string literal like [`FmtJsonString`], except one that prints as its own source text:
 /// that one is left unwritten and its span returned,
 /// so the caller can write it as part of a longer source slice.
+#[must_use]
 pub fn write_string_unless_verbatim<'a>(
     lit: &StringLiteral<'a>,
     f: &mut JsonFormatter<'_, 'a>,
@@ -103,18 +104,23 @@ pub struct FmtJsonNumber<'a, 'b> {
 
 impl<'a> Format<'a, JsonFormatContext<'a>> for FmtJsonNumber<'a, '_> {
     fn fmt(&self, f: &mut JsonFormatter<'_, 'a>) {
-        let raw = self.lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
-        // Apply Prettier's number normalization: `.1` → `0.1`, `1.0e+2` → `1.0e2`,
-        // `1e00` → `1`, `1.00000` → `1.0`, trailing `.` removal, etc.
-        // `keep_one_trailing_decimal_zero` matches Prettier's JS/JSON behavior (`1.00000` → `1.0`, not `1`).
-        let normalized =
-            format_trimmed_number(raw.as_str(), /* keep_one_trailing_decimal_zero */ true);
+        let normalized = printed_number(self.lit);
         write!(f, text(arena_cow_str(&normalized, f)));
     }
 }
 
+/// The text [`FmtJsonNumber`] prints for `lit`, Prettier's number normalization:
+/// `.1` → `0.1`, `1.0e+2` → `1.0e2`, `1e00` → `1`, `1.00000` → `1.0`, trailing `.` removal, etc.
+/// `keep_one_trailing_decimal_zero` matches Prettier's JS/JSON behavior (`1.00000` → `1.0`, not `1`).
+pub fn printed_number<'a>(lit: &NumericLiteral<'a>) -> Cow<'a, str> {
+    format_trimmed_number(raw_number(lit), /* keep_one_trailing_decimal_zero */ true)
+}
+
 /// Whether [`FmtJsonNumber`] prints `lit` as its own source text.
 pub fn number_prints_verbatim(lit: &NumericLiteral<'_>) -> bool {
-    let raw = lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`"));
-    format_trimmed_number(raw.as_str(), /* keep_one_trailing_decimal_zero */ true) == raw.as_str()
+    printed_number(lit) == raw_number(lit)
+}
+
+fn raw_number<'a>(lit: &NumericLiteral<'a>) -> &'a str {
+    lit.raw.as_ref().unwrap_or_else(|| unreachable!("parser always sets `raw`")).as_str()
 }
