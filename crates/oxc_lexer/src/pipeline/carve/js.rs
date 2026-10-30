@@ -43,8 +43,11 @@ pub(super) unsafe fn carve_js(
     }
     loop {
         let nsub = depth.len();
-        let s =
-            if nsub != 0 { find(src, n, i, OPENER8_BYTES) } else { find(src, n, i, OPENER_BYTES) };
+        let s = if nsub != 0 {
+            find(src, n, i, OPENER8_BYTES, cpu)
+        } else {
+            find(src, n, i, OPENER_BYTES, cpu)
+        };
         if s >= n {
             break;
         }
