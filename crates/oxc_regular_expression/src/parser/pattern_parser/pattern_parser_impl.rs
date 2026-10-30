@@ -873,21 +873,21 @@ impl<'a> PatternParser<'a> {
                 continue;
             }
 
-            let dash = ast::CharacterClassContents::Character(ArenaBox::new_in(
-                ast::Character {
-                    span: self.span_factory.create(span_start, self.reader.offset()),
-                    kind: ast::CharacterKind::Symbol,
-                    value: '-' as u32,
-                },
-                self,
-            ));
+            let dash_span = self.span_factory.create(span_start, self.reader.offset());
 
             let Some(class_atom_to) = self.parse_class_atom()? else {
                 // ClassAtom[?UnicodeMode] NonemptyClassRangesNoDash[?UnicodeMode]
                 // => ClassAtom[?UnicodeMode] ClassAtom[?UnicodeMode]
                 // => ClassAtom[?UnicodeMode] -
                 body.push(class_atom);
-                body.push(dash);
+                body.push(ast::CharacterClassContents::Character(ArenaBox::new_in(
+                    ast::Character {
+                        span: dash_span,
+                        kind: ast::CharacterKind::Symbol,
+                        value: '-' as u32,
+                    },
+                    self,
+                )));
                 continue;
             };
 
@@ -937,7 +937,14 @@ impl<'a> PatternParser<'a> {
             }
 
             body.push(class_atom);
-            body.push(dash);
+            body.push(ast::CharacterClassContents::Character(ArenaBox::new_in(
+                ast::Character {
+                    span: dash_span,
+                    kind: ast::CharacterKind::Symbol,
+                    value: '-' as u32,
+                },
+                self,
+            )));
             body.push(class_atom_to);
         }
 
