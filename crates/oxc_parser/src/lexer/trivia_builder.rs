@@ -8,6 +8,49 @@ use oxc_span::Span;
 
 use super::{Kind, Token};
 
+const CAN_END_EXPRESSION: u8 = 1;
+const CONTINUES_EXPRESSION: u8 = 2;
+
+// Classify token kinds once at compile time for comment attachment.
+// `Kind` is `repr(u8)`, so indexing this table never requires a bounds check.
+static COMMENT_TOKEN_FLAGS: [u8; 256] = {
+    let mut flags = [0; 256];
+    let mut i = 0;
+    while i < Kind::VARIANTS.len() {
+        let kind = Kind::VARIANTS[i];
+        let can_end = kind.is_identifier()
+            || kind.is_literal()
+            || matches!(
+                kind,
+                Kind::PrivateIdentifier
+                    | Kind::This
+                    | Kind::Super
+                    | Kind::RParen
+                    | Kind::RBrack
+                    | Kind::RCurly
+                    | Kind::RAngle
+                    | Kind::Plus2
+                    | Kind::Minus2
+                    | Kind::NoSubstitutionTemplate
+                    | Kind::TemplateTail
+                    | Kind::JSXText
+            );
+        let continues = kind.is_binary_operator()
+            || kind.is_logical_operator()
+            || kind.is_assignment_operator();
+        let mut token_flags = 0;
+        if can_end {
+            token_flags |= CAN_END_EXPRESSION;
+        }
+        if continues {
+            token_flags |= CONTINUES_EXPRESSION;
+        }
+        flags[kind as usize] = token_flags;
+        i += 1;
+    }
+    flags
+};
+
 #[derive(Debug)]
 pub struct TriviaBuilder<'a> {
     // This is a set of unique comments. Duplicated
@@ -199,30 +242,14 @@ impl<'a> TriviaBuilder<'a> {
     /// Whether a token can form the completed left-hand side of an infix or suffix boundary.
     #[inline]
     fn can_end_expression(kind: Kind) -> bool {
-        kind.is_identifier()
-            || kind.is_literal()
-            || matches!(
-                kind,
-                Kind::PrivateIdentifier
-                    | Kind::This
-                    | Kind::Super
-                    | Kind::RParen
-                    | Kind::RBrack
-                    | Kind::RCurly
-                    | Kind::RAngle
-                    | Kind::Plus2
-                    | Kind::Minus2
-                    | Kind::NoSubstitutionTemplate
-                    | Kind::TemplateTail
-                    | Kind::JSXText
-            )
+        COMMENT_TOKEN_FLAGS[kind as usize] & CAN_END_EXPRESSION != 0
     }
 
     /// Whether trivia before `kind` belongs after a completed expression rather than before the
     /// next operand. This only runs when comments are present; parser hot paths are unaffected.
     #[inline]
     fn continues_previous_expression(kind: Kind) -> bool {
-        kind.is_binary_operator() || kind.is_logical_operator() || kind.is_assignment_operator()
+        COMMENT_TOKEN_FLAGS[kind as usize] & CONTINUES_EXPRESSION != 0
     }
 
     /// Determines if the current line comment should be treated as a trailing comment.
