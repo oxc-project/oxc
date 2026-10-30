@@ -76,6 +76,21 @@
    private constructLightDOMButton() {
      const button = document.createElement("button");
  
+@@ -351,9 +372,13 @@
+         @invalid=${this.isButton() ? this.handleInvalid : null}
+         @click=${this.handleClick}
+       >
+         <slot name="start" part="start" class="start"></slot>
+-        <slot part="label" class="label" @slotchange=${this.handleLabelSlotChange}></slot>
++        <slot
++          part="label"
++          class="label"
++          @slotchange=${this.handleLabelSlotChange}
++        ></slot>
+         <slot name="end" part="end" class="end"></slot>
+         ${
+           this.withCaret
+             ? html`
 
 `````
 
@@ -457,7 +472,11 @@ export default class WaButton extends WebAwesomeFormAssociatedElement {
         @click=${this.handleClick}
       >
         <slot name="start" part="start" class="start"></slot>
-        <slot part="label" class="label" @slotchange=${this.handleLabelSlotChange}></slot>
+        <slot
+          part="label"
+          class="label"
+          @slotchange=${this.handleLabelSlotChange}
+        ></slot>
         <slot name="end" part="end" class="end"></slot>
         ${
           this.withCaret
