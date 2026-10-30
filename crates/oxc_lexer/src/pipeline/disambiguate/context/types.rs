@@ -31,9 +31,11 @@ impl Walk {
 
     /// Can the token at pos, of base kind k, continue the type the region on top completed?
     pub(super) fn continues_type(&self, tokens: &Tokens, pos: usize, k: u8) -> bool {
+        let cpu = BASELINE;
+
         if k == tk!(Ident) {
             // A conditional type or a type predicate.
-            return matches_tk!(tokens.ident_kw(pos), KwExtends | KwIs);
+            return matches_tk!(tokens.ident_kw(pos, cpu), KwExtends | KwIs);
         }
         if k < OP_KIND_BASE {
             return false;

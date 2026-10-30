@@ -68,11 +68,11 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
             continue;
         }
         if k == tk!(String) {
-            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p, cpu);
+            return ends_decl(tokens, walks, qi, tokens.next_start(qi + 1, cpu), p, cpu);
         }
         if matches_tk!(k, Number | TemplateNoSub | TemplateTail) {
             // A literal ends a value: division, unless TS ASI applies.
-            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1), p, cpu);
+            return ts && ends_decl(tokens, walks, qi, tokens.next_start(qi + 1, cpu), p, cpu);
         }
         if matches_tk!(k, RegExp | PrivateIdent | PrivateIdentEscaped | JsxTagEnd | JsxLt) {
             return false;
@@ -81,12 +81,12 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
             return true;
         }
         if matches_tk!(k, Ident | IdentEscaped) {
-            let e = tokens.next_start(qi + 1);
-            let newline = tokens.line_break_between(e, p);
-            if tokens.property_name(qi) {
+            let e = tokens.next_start(qi + 1, cpu);
+            let newline = tokens.line_break_between(e, p, cpu);
+            if tokens.property_name(qi, cpu) {
                 return ts && newline && context::after(tokens, walks, qi) == After::EndsDecl;
             }
-            let kw = tokens.word_kw(qi, e - qi);
+            let kw = tokens.word_kw(qi, e - qi, cpu);
             if is_regex_keyword(kw) {
                 if ts && kw == tk!(KwVoid) {
                     // `x as void / 2` is division; `void /re/` is not.
@@ -110,10 +110,10 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
             // TS postfix non-null `!`: `x! / 2` is division, so look through the `!` unless a line
             // terminator precedes it (ASI makes it a prefix `!/re/`).
             if ts && ch == b'!' {
-                let Some(q2) = tokens.prev_sig(qi) else {
+                let Some(q2) = tokens.prev_sig(qi, cpu) else {
                     return true;
                 };
-                if tokens.line_break_between(tokens.next_start(q2 + 1), qi) {
+                if tokens.line_break_between(tokens.next_start(q2 + 1, cpu), qi, cpu) {
                     return true;
                 }
                 q = Some(q2);
@@ -122,7 +122,7 @@ pub fn not_operator_position(tokens: &Tokens, walks: &mut Walks, p: usize, cpu: 
             if ch == b'.' {
                 // Only a trailing-dot numeric literal (`1./2`) makes `.` end a value; member
                 // access, `...` and `?.` all precede an operand.
-                return !tokens.numeric_dot(qi);
+                return !tokens.numeric_dot(qi, cpu);
             }
             if ch == b'+' || ch == b'-' {
                 // The tail of a ++ or --: postfix ends a value, prefix does not.
@@ -159,20 +159,22 @@ fn ends_decl(
     q: usize,
     e: usize,
     p: usize,
-    _cpu: impl Cpu,
+    cpu: impl Cpu,
 ) -> bool {
-    tokens.line_break_between(e, p) && context::after(tokens, walks, q) == After::EndsDecl
+    tokens.line_break_between(e, p, cpu) && context::after(tokens, walks, q) == After::EndsDecl
 }
 
 #[apply(cpu_versions)]
-fn paren_close_is_regex(tokens: &Tokens, qi: usize, _cpu: impl Cpu) -> bool {
-    let word =
-        |p: Option<usize>| p.filter(|&w| tokens.kind[w] == tk!(Ident) && !tokens.property_name(w));
-    let Some(w) = tokens.match_delim_back(qi).and_then(|lp| word(tokens.prev_sig(lp))) else {
+fn paren_close_is_regex(tokens: &Tokens, qi: usize, cpu: impl Cpu) -> bool {
+    let word = |p: Option<usize>| {
+        p.filter(|&w| tokens.kind[w] == tk!(Ident) && !tokens.property_name(w, cpu))
+    };
+    let Some(w) = tokens.match_delim_back(qi, cpu).and_then(|lp| word(tokens.prev_sig(lp, cpu)))
+    else {
         return false;
     };
-    if tokens.ident_is(w, b"await") {
-        return word(tokens.prev_sig(w)).is_some_and(|f| tokens.ident_is(f, b"for"));
+    if tokens.ident_is(w, b"await", cpu) {
+        return word(tokens.prev_sig(w, cpu)).is_some_and(|f| tokens.ident_is(f, b"for", cpu));
     }
-    [b"if" as &[u8], b"while", b"for", b"with"].iter().any(|kw| tokens.ident_is(w, kw))
+    [b"if" as &[u8], b"while", b"for", b"with"].iter().any(|kw| tokens.ident_is(w, kw, cpu))
 }

@@ -9,8 +9,10 @@ use super::*;
 impl Walk {
     /// Step the word at `pos`; returns its end.
     pub(super) fn step_word(&mut self, tokens: &Tokens, pos: usize) -> usize {
-        let end = tokens.next_start(pos + 1);
-        let kw = if self.after_dot { 0 } else { tokens.word_kw(pos, end - pos) };
+        let cpu = BASELINE;
+
+        let end = tokens.next_start(pos + 1, cpu);
+        let kw = if self.after_dot { 0 } else { tokens.word_kw(pos, end - pos, cpu) };
 
         if self.in_type() {
             self.type_word(kw);
@@ -70,6 +72,8 @@ impl Walk {
     /// `satisfies`, `static`, `implements`, `from`) is a plain name (0) unless its position and
     /// the token after it say otherwise; every other code stands.
     fn resolve_keyword(&mut self, tokens: &Tokens, end: usize, kw: u8) -> u8 {
+        let cpu = BASELINE;
+
         let keyword = match kw {
             tk!(KwYield | KwAwait) => self.scoped_keyword(kw == tk!(KwYield)),
             tk!(KwOf) => {
@@ -79,34 +83,34 @@ impl Walk {
                     && !self.operand_allowed()
             }
             tk!(KwLet) => {
-                let nx = tokens.peek(end);
+                let nx = tokens.peek(end, cpu);
                 let binding = nx.kind == tk!(Ident)
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'[' | b'{'));
                 binding && (self.at_stmt_start() || self.top_kind() == FrameKind::Head)
             }
             tk!(KwUsing) => {
-                let nx = tokens.peek(end);
+                let nx = tokens.peek(end, cpu);
                 nx.kind == tk!(Ident)
-                    && !tokens.line_break_between(end, nx.pos)
+                    && !tokens.line_break_between(end, nx.pos, cpu)
                     && self.at_stmt_start()
             }
             tk!(KwAsync) => {
                 // `async` is a modifier only when the next token is on the same line and continues
                 // a function / arrow head.
-                let nx = tokens.peek(end);
+                let nx = tokens.peek(end, cpu);
                 (matches_tk!(nx.kind, Ident | String | Number | PrivateIdent)
                     || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'*' | b'[')))
-                    && !tokens.line_break_between(end, nx.pos)
+                    && !tokens.line_break_between(end, nx.pos, cpu)
             }
             tk!(KwType | KwInterface | KwNamespace | KwModule | KwDeclare) => {
                 // Statement-level TS declarations only.
-                let nx = tokens.peek(end);
+                let nx = tokens.peek(end, cpu);
                 let at_stmt = self.at_stmt_start()
                     || self.prev_kw == tk!(KwDefault)
                     || (kw == tk!(KwNamespace) && self.stmt_reg() == S_EXPORT_AS);
                 tokens.ts
                     && matches_tk!(nx.kind, Ident | String)
-                    && !tokens.line_break_between(end, nx.pos)
+                    && !tokens.line_break_between(end, nx.pos, cpu)
                     && at_stmt
             }
             tk!(KwAs | KwSatisfies) => {
@@ -149,6 +153,8 @@ impl Walk {
 
     /// The transition of the keyword `kw` (0: a plain name) in expression or statement position.
     fn keyword_word(&mut self, tokens: &Tokens, end: usize, kw: u8) {
+        let cpu = BASELINE;
+
         match kw {
             tk!(KwFunction) => {
                 let value = !self.at_stmt_start()
@@ -218,7 +224,7 @@ impl Walk {
                 self.keyword(kw);
             }
             tk!(KwImport) => {
-                let nx = tokens.peek(end);
+                let nx = tokens.peek(end, cpu);
                 if nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'(' | b'.') {
                     // `import(...)` / `import.meta`: an expression.
                     self.value_done();
@@ -230,9 +236,9 @@ impl Walk {
             }
             tk!(KwExport) => {
                 // Only a clause (export {, export *, export type {) keeps the register.
-                let mut nx = tokens.peek(end);
-                if nx.kind == tk!(Ident) && tokens.ident_is(nx.pos, b"type") {
-                    nx = tokens.peek(nx.pos + 4);
+                let mut nx = tokens.peek(end, cpu);
+                if nx.kind == tk!(Ident) && tokens.ident_is(nx.pos, b"type", cpu) {
+                    nx = tokens.peek(nx.pos + 4, cpu);
                 }
                 let clause = nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'{' | b'*');
                 self.set_stmt_reg(if clause { S_EXPORT } else { S_NONE });
@@ -292,13 +298,15 @@ impl Walk {
 
     /// A word at member-key position of an object literal or class body.
     fn member_word(&mut self, tokens: &Tokens, pos: usize, end: usize, kw: u8) -> usize {
+        let cpu = BASELINE;
+
         let is_class = self.top_kind() == FrameKind::ClassBody;
         // Modifiers apply when a key can follow on the same line.
-        let nx = tokens.peek(end);
+        let nx = tokens.peek(end, cpu);
         let key_follows_any_line =
             matches_tk!(nx.kind, Ident | String | Number | BigInt | PrivateIdent)
                 || (nx.kind >= OP_KIND_BASE && matches!(nx.byte, b'[' | b'*' | b'#'));
-        let key_follows = key_follows_any_line && !tokens.line_break_between(end, nx.pos);
+        let key_follows = key_follows_any_line && !tokens.line_break_between(end, nx.pos, cpu);
         if kw == tk!(KwAsync) && key_follows {
             self.top_mut().mods |= MOD_ASYNC;
             self.operand_done();
@@ -328,7 +336,7 @@ impl Walk {
             return end;
         }
         if kw == 0
-            && (tokens.ident_is(pos, b"get") || tokens.ident_is(pos, b"set"))
+            && (tokens.ident_is(pos, b"get", cpu) || tokens.ident_is(pos, b"set", cpu))
             && key_follows_any_line
         {
             self.operand_done();

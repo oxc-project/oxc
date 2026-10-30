@@ -52,7 +52,7 @@ impl Walk {
                 self.operand_done();
             }
             // The dot of a number such as 1. continues the literal.
-            b'.' if tokens.numeric_dot(pos) => self.set_value(),
+            b'.' if tokens.numeric_dot(pos, cpu) => self.set_value(),
             b'.' => {
                 self.operand_done();
                 self.after_dot = true;
@@ -107,9 +107,11 @@ impl Walk {
     }
 
     pub(super) fn arrow(&mut self, tokens: &Tokens, pos: usize) {
+        let cpu = BASELINE;
+
         let is_async = if self.closed_group { self.closed_group_async } else { self.arrow_async };
         // Concise body unless `{` follows.
-        let nx = tokens.peek(pos + 2);
+        let nx = tokens.peek(pos + 2, cpu);
         let block = nx.kind >= OP_KIND_BASE && nx.byte == b'{';
         if !block {
             self.push(FrameKind::Concise).is_async = is_async;
@@ -136,8 +138,10 @@ impl Walk {
     }
 
     pub(super) fn question(&mut self, tokens: &Tokens, pos: usize) {
+        let cpu = BASELINE;
+
         // Optional marker (`a?: T`, `a?,`, `a?)`) vs conditional.
-        let nx = tokens.peek(pos + 1);
+        let nx = tokens.peek(pos + 1, cpu);
         let member = self.top_kind() == FrameKind::ClassBody;
         let optional = nx.kind >= OP_KIND_BASE
             && (matches!(nx.byte, b':' | b',' | b')' | b']' | b'>')

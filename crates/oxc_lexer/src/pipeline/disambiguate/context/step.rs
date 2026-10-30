@@ -8,7 +8,9 @@ use super::*;
 /// Can `tok` (the token starting at `pos`) continue an expression that a value token ended on the
 /// previous line? Used for ASI.
 fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
-    let k = tokens.base_kind(pos);
+    let cpu = BASELINE;
+
+    let k = tokens.base_kind(pos, cpu);
     if k >= OP_KIND_BASE {
         let c = tokens.src[pos];
         let c1 = tokens.src[pos + 1];
@@ -19,19 +21,21 @@ fn continues_expression(tokens: &Tokens, pos: usize) -> bool {
     }
     // tsc ends the expression before an as or satisfies on a new line.
     if k == tk!(Ident) {
-        return matches_tk!(tokens.ident_kw(pos), KwIn | KwInstanceof);
+        return matches_tk!(tokens.ident_kw(pos, cpu), KwIn | KwInstanceof);
     }
     matches_tk!(k, TemplateHead | TemplateNoSub)
 }
 
 impl Walk {
     pub(super) fn step(&mut self, tokens: &Tokens, pos: usize) -> usize {
+        let cpu = BASELINE;
+
         self.last_start = pos;
-        let k = tokens.base_kind(pos);
+        let k = tokens.base_kind(pos, cpu);
         if is_trivia_byte(k) {
             return pos + 1;
         }
-        let newline = tokens.line_break_between(self.prev_end, pos);
+        let newline = tokens.line_break_between(self.prev_end, pos, cpu);
         self.stmt_done = false;
 
         // Skipping the inside of a closing JSX tag.
@@ -88,12 +92,12 @@ impl Walk {
         let end = match k {
             tk!(Ident) => self.step_word(tokens, pos),
             tk!(Number | BigInt | String | RegExp | TemplateNoSub | PrivateIdent) => {
-                let e = tokens.next_start(pos + 1);
+                let e = tokens.next_start(pos + 1, cpu);
                 self.literal(tokens, k, e);
                 e
             }
             tk!(TemplateHead | TemplateMiddle) => {
-                let e = tokens.next_start(pos + 1);
+                let e = tokens.next_start(pos + 1, cpu);
                 if k == tk!(TemplateMiddle) && self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }
@@ -104,7 +108,7 @@ impl Walk {
                 e
             }
             tk!(TemplateTail) => {
-                let e = tokens.next_start(pos + 1);
+                let e = tokens.next_start(pos + 1, cpu);
                 if self.pop_to(|k| k == FrameKind::Sub).is_none() {
                     self.unbalanced();
                 }
@@ -124,6 +128,8 @@ impl Walk {
     }
 
     fn asi(&mut self, tokens: &Tokens, pos: usize) {
+        let cpu = BASELINE;
+
         // Concise arrow bodies end with the statement.
         self.pop_concise();
         // An expression-embedded type region ends too.
@@ -137,12 +143,12 @@ impl Walk {
         // A head continues onto the next line when its body (or more head) follows; otherwise the
         // break ends a bodiless signature.
         if matches!(self.top_kind(), FrameKind::FnHead | FrameKind::ClassHead) {
-            let k = tokens.base_kind(pos);
+            let k = tokens.base_kind(pos, cpu);
             // Right after `function` / `class`, the name (or a generator's `*`) may follow a
             // line break: nothing has been declared yet, so there is no signature to end.
             let unnamed = matches_tk!(self.prev_kw, KwFunction | KwClass);
             let goes_on = if k == tk!(Ident) {
-                unnamed || matches_tk!(tokens.ident_kw(pos), KwExtends | KwImplements)
+                unnamed || matches_tk!(tokens.ident_kw(pos, cpu), KwExtends | KwImplements)
             } else {
                 k >= OP_KIND_BASE && tokens.src[pos] == b'{'
             };
@@ -165,7 +171,9 @@ impl Walk {
 
     /// Can the token at pos go on after a type that ended the previous line?
     fn continues_after_type_break(&self, tokens: &Tokens, pos: usize) -> bool {
-        if tokens.base_kind(pos) < OP_KIND_BASE {
+        let cpu = BASELINE;
+
+        if tokens.base_kind(pos, cpu) < OP_KIND_BASE {
             return false;
         }
         let (c, c1) = (tokens.src[pos], tokens.src[pos + 1]);
@@ -209,6 +217,8 @@ impl Walk {
     }
 
     fn literal(&mut self, tokens: &Tokens, k: u8, end: usize) {
+        let cpu = BASELINE;
+
         if self.in_type() {
             self.type_atom(false);
             return;
@@ -220,10 +230,11 @@ impl Walk {
                 || (reg == S_EXPORT && self.prev_kw == tk!(KwFrom))
             {
                 self.value_done();
-                let nx = tokens.peek(end);
+                let nx = tokens.peek(end, cpu);
                 let attrs = nx.kind == tk!(Ident)
-                    && !tokens.line_break_between(end, nx.pos)
-                    && (tokens.ident_is(nx.pos, b"with") || tokens.ident_is(nx.pos, b"assert"));
+                    && !tokens.line_break_between(end, nx.pos, cpu)
+                    && (tokens.ident_is(nx.pos, b"with", cpu)
+                        || tokens.ident_is(nx.pos, b"assert", cpu));
                 if attrs {
                     self.set_stmt_reg(S_ATTRS);
                     return;
