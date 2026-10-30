@@ -91,7 +91,7 @@ unsafe fn ts_angle_verdict(
         let qq = jsx_skip_trivia_fast(src.as_ptr(), n, p + 5, cpu);
         // A modifier must be on the same line as its parameter, so `const` followed by a line break
         // can only be a JSX tag name, e.g. `<const\nextends U>` is JSX.
-        if line_break_in(src, p + 5, qq) {
+        if line_break_in(src, p + 5, qq, cpu) {
             return AngleVerdict::Jsx;
         }
         if qq < n && is_id_start(src[qq]) {

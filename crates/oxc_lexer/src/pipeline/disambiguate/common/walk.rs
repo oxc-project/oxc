@@ -204,10 +204,10 @@ pub fn word_len(src: &[u8], w: usize) -> usize {
 /// rejects longer identifiers (the source pad makes it safe at EOF).
 #[apply(cpu_versions)]
 #[inline]
-pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], _cpu: impl Cpu) -> bool {
+pub(super) fn ident_is(src: &[u8], pos: usize, kw: &[u8], cpu: impl Cpu) -> bool {
     src[pos..].starts_with(kw) && {
         let after = pos + kw.len();
-        !is_word(src[after]) || unicode_ws_len_at(src, after) != 0
+        !is_word(src[after]) || unicode_ws_len_at(src, after, cpu) != 0
     }
 }
 

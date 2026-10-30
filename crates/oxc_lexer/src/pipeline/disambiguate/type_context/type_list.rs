@@ -92,7 +92,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
         // A line break after a member's type starts the next member unless the token continues it.
         if !start
             && open.last() == Some(&b':')
-            && line_break_in(src, prev, w)
+            && line_break_in(src, prev, w, cpu)
             && (k < OP_KIND_BASE
                 || matches!(src[w], b'[' | b'(' | b'<' | b'+' | b'-' | b'"' | b'\''))
         {
@@ -234,7 +234,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
                     if braces == 0 && type_prefix_kind(last_kw) && last_kw != tk!(KwNew) {
                         return false;
                     }
-                    if !start && prev != usize::MAX && line_break_in(src, prev, w) {
+                    if !start && prev != usize::MAX && line_break_in(src, prev, w, cpu) {
                         return false;
                     }
                     angle_bits = (angle_bits << 1) | u64::from(start);

@@ -257,8 +257,8 @@ impl Tokens<'_> {
     /// Does a line terminator lie in `a..b`?
     #[apply(cpu_versions)]
     #[inline]
-    pub fn line_break_between(&self, a: usize, b: usize, _cpu: impl Cpu) -> bool {
-        line_break_in(self.src, a, b)
+    pub fn line_break_between(&self, a: usize, b: usize, cpu: impl Cpu) -> bool {
+        line_break_in(self.src, a, b, cpu)
     }
 
     /// Does the identifier at `pos` equal exactly `kw`?
