@@ -5,9 +5,9 @@ checker.ts:
   sys deallocs: 19
   sys alloc bytes: 4820 # 4.82 kB
   sys peak growth: 2432 # 2.43 kB
-  arena allocs: 259857
+  arena allocs: 259312
   arena reallocs: 15233
-  arena size: 12892944 # 12.89 MB
+  arena size: 12875504 # 12.88 MB
 
 App.tsx:
   file size: 415342 # 415.34 kB
@@ -38,9 +38,9 @@ pdf.mjs:
   sys deallocs: 61
   sys alloc bytes: 24020 # 24.02 kB
   sys peak growth: 12140 # 12.14 kB
-  arena allocs: 89079
+  arena allocs: 88940
   arena reallocs: 5904
-  arena size: 4492488 # 4.49 MB
+  arena size: 4488040 # 4.49 MB
 
 antd.js:
   file size: 6686316 # 6.69 MB
@@ -60,7 +60,7 @@ binder.ts:
   sys deallocs: 0
   sys alloc bytes: 3016 # 3.02 kB
   sys peak growth: 251 # 251 B
-  arena allocs: 16465
+  arena allocs: 16454
   arena reallocs: 1093
   arena size: 915968 # 915.97 kB
 
