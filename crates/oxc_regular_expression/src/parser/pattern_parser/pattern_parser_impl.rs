@@ -1875,13 +1875,26 @@ impl<'a> PatternParser<'a> {
     ) -> Result<Option<(Str<'a>, Option<Str<'a>>, bool)>> {
         let checkpoint = self.reader.checkpoint();
 
+        // Both alternatives share this prefix. Delay materializing it until
+        // `=` selects a property name, or the whole lone value is consumed.
+        while let Some(cp) = self.reader.peek() {
+            if !character::is_unicode_property_name_character(cp) {
+                break;
+            }
+            self.reader.advance();
+        }
+        // Preserve the property scanners' EOF behavior, including partial names.
+        if self.reader.peek().is_none() {
+            return Ok(None);
+        }
+
         // UnicodePropertyName=UnicodePropertyValue
-        if let Some(name) = self.consume_unicode_property_name()
-            && self.reader.eat('=')
-        {
+        if self.reader.checkpoint() != checkpoint && self.reader.peek() == Some('=' as u32) {
+            let name = self.unicode_property_text(checkpoint);
+            self.reader.advance();
             let span_start = self.reader.offset();
 
-            if let Some(value) = self.consume_unicode_property_value() {
+            if let Some(value) = self.consume_unicode_property_value(self.reader.checkpoint()) {
                 // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
                 // It is a Syntax Error if the source text matched by UnicodePropertyName is not a Unicode property name or property alias listed in the “Property name and aliases” column of Table 65.
                 // [SS:EE] UnicodePropertyValueExpression :: UnicodePropertyName = UnicodePropertyValue
@@ -1895,12 +1908,13 @@ impl<'a> PatternParser<'a> {
 
                 return Ok(Some((name, Some(value), false)));
             }
+            // Keep malformed name=value inputs on the original lone-value fallback.
+            self.reader.rewind(checkpoint);
         }
-        self.reader.rewind(checkpoint);
 
-        let span_start = self.reader.offset();
+        let span_start = checkpoint.1;
         // LoneUnicodePropertyNameOrValue
-        if let Some(name_or_value) = self.consume_unicode_property_value() {
+        if let Some(name_or_value) = self.consume_unicode_property_value(checkpoint) {
             // [SS:EE] UnicodePropertyValueExpression :: LoneUnicodePropertyNameOrValue
             // It is a Syntax Error if the source text matched by LoneUnicodePropertyNameOrValue is not a Unicode property value or property value alias for the General_Category (gc) property listed in PropertyValueAliases.txt, nor a binary property or binary property alias listed in the “Property name and aliases” column of Table 66, nor a binary property of strings listed in the “Property name” column of Table 67.
             if unicode_property::is_valid_unicode_property("General_Category", &name_or_value) {
@@ -1931,21 +1945,7 @@ impl<'a> PatternParser<'a> {
         Ok(None)
     }
 
-    fn consume_unicode_property_name(&mut self) -> Option<Str<'a>> {
-        let checkpoint = self.reader.checkpoint();
-        while character::is_unicode_property_name_character(self.reader.peek()?) {
-            self.reader.advance();
-        }
-
-        if checkpoint == self.reader.checkpoint() {
-            return None;
-        }
-
-        Some(self.unicode_property_text(checkpoint))
-    }
-
-    fn consume_unicode_property_value(&mut self) -> Option<Str<'a>> {
-        let checkpoint = self.reader.checkpoint();
+    fn consume_unicode_property_value(&mut self, checkpoint: (usize, u32)) -> Option<Str<'a>> {
         while character::is_unicode_property_value_character(self.reader.peek()?) {
             self.reader.advance();
         }
