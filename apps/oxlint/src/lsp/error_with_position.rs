@@ -267,7 +267,11 @@ pub fn create_unused_directives_report(
                     span,
                     severity,
                     source_text,
-                    Some(Fix::delete(fix_span).with_message(fix_message)),
+                    Some(
+                        Fix::delete(fix_span)
+                            .with_kind(unused_comment.directive_prefix.unused_directive_fix_kind())
+                            .with_message(fix_message),
+                    ),
                 ));
             }
             RuleCommentType::Single(rules) => {

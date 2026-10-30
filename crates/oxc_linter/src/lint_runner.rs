@@ -6,12 +6,13 @@ use std::{
 
 use rustc_hash::FxHashMap;
 
-use oxc_diagnostics::{DiagnosticSender, DiagnosticService};
-use oxc_span::Span;
+use oxc_diagnostics::{DiagnosticSender, DiagnosticService, OxcDiagnostic};
+use oxc_span::{SourceType, Span};
 
 use crate::{
-    AllowWarnDeny, DisableDirectives, FixKind, LintService, LintServiceOptions, Linter, Message,
-    OsFileSystem, RuleTimingStore, TsGoLintState, suppression::DiffManager,
+    AllowWarnDeny, DisableDirectives, FixKind, Fixer, LintService, LintServiceOptions, Linter,
+    Message, OsFileSystem, RuleTimingStore, RuntimeFileSystem, TsGoLintState,
+    create_unused_directives_messages, suppression::DiffManager,
 };
 
 /// Unified runner that orchestrates both regular (oxc) and type-aware (tsgolint) linting
@@ -25,6 +26,7 @@ pub struct LintRunner {
     directives_store: DirectivesStore,
     /// Current working directory
     cwd: PathBuf,
+    fix_kind: FixKind,
     type_check_only: bool,
 }
 
@@ -84,24 +86,60 @@ impl DirectivesStore {
         self.map.lock().expect("DirectivesStore mutex poisoned in get").get(path).cloned()
     }
 
-    /// Report unused disable directives
+    /// Report unused disable directives, removing them according to `fix_kind`.
+    ///
+    /// Fixes are skipped for files that changed after their directives were collected
+    /// (e.g. by other fixes), because the directive spans would be stale.
     ///
     /// # Panics
     /// Panics if the mutex is poisoned or if sending to the error channel fails.
-    pub fn report_unused(&self, severity: AllowWarnDeny, cwd: &Path, tx_error: &DiagnosticSender) {
-        use crate::create_unused_directives_diagnostics;
-
+    pub fn report_unused(
+        &self,
+        severity: AllowWarnDeny,
+        fix_kind: FixKind,
+        cwd: &Path,
+        tx_error: &DiagnosticSender,
+    ) {
         let map = self.map.lock().expect("DirectivesStore mutex poisoned in report_unused");
         for (path, directives) in map.iter() {
-            let diagnostics = create_unused_directives_diagnostics(directives, severity);
+            let mut messages = create_unused_directives_messages(directives, severity, None);
+            if messages.is_empty() {
+                continue;
+            }
 
-            if !diagnostics.is_empty() {
-                let source_text = std::fs::read_to_string(path.as_path()).unwrap_or_default();
+            let source_text = std::fs::read_to_string(path.as_path()).unwrap_or_default();
+            if fix_kind.is_some() && directives.matches_source(&source_text) {
+                messages = create_unused_directives_messages(
+                    directives,
+                    severity,
+                    Some((fix_kind, &source_text)),
+                );
+                let source_type = SourceType::from_path(path)
+                    .ok()
+                    .map(|st| if st.is_javascript() { st.with_jsx(true) } else { st });
+                let fix_result = Fixer::new(&source_text, messages, source_type).fix();
+                if fix_result.fixed
+                    && let Err(error) = OsFileSystem.write_file(path, &fix_result.fixed_code)
+                {
+                    tx_error
+                        .send(vec![
+                            OxcDiagnostic::error(format!(
+                                "Failed to write file {} with error \"{error}\"",
+                                path.display()
+                            ))
+                            .into(),
+                        ])
+                        .expect("failed to send unused directive diagnostics");
+                }
+                messages = fix_result.messages;
+            }
+
+            if !messages.is_empty() {
                 let wrapped = DiagnosticService::wrap_diagnostics(
                     cwd,
                     path.clone(),
                     &source_text,
-                    diagnostics,
+                    messages.into_iter().map(Into::into).collect(),
                 );
                 tx_error.send(wrapped).expect("failed to send unused directive diagnostics");
             }
@@ -247,6 +285,7 @@ impl LintRunnerBuilder {
             type_aware_linter,
             directives_store: directives_coordinator,
             cwd,
+            fix_kind: self.fix_kind,
             type_check_only: self.type_check_only,
         })
     }
@@ -324,7 +363,7 @@ impl LintRunner {
         tx_error: &DiagnosticSender,
     ) {
         if let Some(severity) = severity {
-            self.directives_store.report_unused(severity, &self.cwd, tx_error);
+            self.directives_store.report_unused(severity, self.fix_kind, &self.cwd, tx_error);
         }
     }
 
