@@ -5,10 +5,11 @@ use crate::parser::reader::{
     Options,
     ast::{CodePoint, EscapeKind},
     characters::{
-        CR, LF, LS, PS, is_line_terminator, is_non_escape_character, is_single_escape_character,
+        CR, LF, LS, PS, is_line_terminator, is_non_escape_character, map_single_escape_character,
     },
     template_literal_parser::{ast, diagnostics},
 };
+use crate::surrogate_pair;
 
 // Internal representation of escape sequence resolved unit in a template literal.
 // ((start, end), code_point, escape_kind)
@@ -33,6 +34,18 @@ impl Parser {
         combine_surrogate_pair: bool,
     ) {
         let span = Span::new(span_offset + offsets.0, span_offset + offsets.1);
+
+        // Unicode patterns decode adjacent UTF-16 surrogate halves into one code point.
+        // Both halves came from Unicode escapes, so retain the leading escape kind.
+        if combine_surrogate_pair
+            && surrogate_pair::is_trail_surrogate(cp)
+            && let Some(previous) = body.last_mut()
+            && surrogate_pair::is_lead_surrogate(previous.value)
+        {
+            previous.value = surrogate_pair::combine_surrogate_pair(previous.value, cp);
+            previous.span = previous.span.merge(span);
+            return;
+        }
 
         if combine_surrogate_pair || (0..=0xffff).contains(&cp) {
             // If the code point is in the BMP or if forced, just push it
@@ -101,7 +114,14 @@ impl Parser {
     // ```
     fn parse_template_characters(&mut self) -> Result<Vec<CodePoint>> {
         let mut body = vec![];
-        while let Some(code_point) = self.parse_template_character()? {
+        loop {
+            // A LineContinuation contributes no code units to the cooked value.
+            if self.parse_line_continuation() {
+                continue;
+            }
+            let Some(code_point) = self.parse_template_character()? else {
+                break;
+            };
             Parser::handle_code_point(
                 &mut body,
                 code_point,
@@ -134,12 +154,12 @@ impl Parser {
             if let Some((cp, escape_kind)) = self.parse_template_escape_sequence(offset_start)? {
                 return Ok(Some(((offset_start, self.offset()), cp, escape_kind)));
             }
-            if let Some(cp) = self.parse_not_escape_sequence()? {
-                return Ok(Some(((offset_start, self.offset()), cp, EscapeKind::None)));
-            }
-        }
-        if let Some(cp) = self.parse_line_continuation() {
-            return Ok(Some(((offset_start, self.offset()), cp, EscapeKind::None)));
+            // NotEscapeSequence has no cooked value. Constructor arguments are
+            // untagged templates, so these escapes cannot form a pattern string.
+            return Err(diagnostics::invalid_input(Span::new(
+                self.options.span_offset + offset_start,
+                self.options.span_offset + self.offset(),
+            )));
         }
         if let Some(cp) = self.parse_line_terminator_sequence() {
             return Ok(Some(((offset_start, self.offset()), cp, EscapeKind::None)));
@@ -200,9 +220,9 @@ impl Parser {
     //   NonEscapeCharacter
     // ```
     fn parse_character_escape_sequence(&mut self) -> Option<u32> {
-        if let Some(ch) = self.peek().filter(|&ch| is_single_escape_character(ch)) {
+        if let Some(cp) = self.peek().and_then(map_single_escape_character) {
             self.advance();
-            return Some(ch as u32);
+            return Some(cp);
         }
         if let Some(ch) = self.peek().filter(|&ch| is_non_escape_character(ch)) {
             self.advance();
@@ -210,115 +230,6 @@ impl Parser {
         }
 
         None
-    }
-
-    // ```
-    // NotEscapeSequence ::
-    //   0 DecimalDigit
-    //   DecimalDigit but not 0
-    //   x [lookahead ∉ HexDigit]
-    //   x HexDigit [lookahead ∉ HexDigit]
-    //   u [lookahead ∉ HexDigit] [lookahead ≠ {]
-    //   u HexDigit [lookahead ∉ HexDigit]
-    //   u HexDigit HexDigit [lookahead ∉ HexDigit]
-    //   u HexDigit HexDigit HexDigit [lookahead ∉ HexDigit]
-    //   u { [lookahead ∉ HexDigit]
-    //   u { NotCodePoint [lookahead ∉ HexDigit]
-    //   u { CodePoint [lookahead ∉ HexDigit] [lookahead ≠ }]
-    // ```
-    fn parse_not_escape_sequence(&mut self) -> Result<Option<u32>> {
-        let checkpoint = self.checkpoint();
-
-        // 0 DecimalDigit
-        if self.eat('0') {
-            if let Some(ch) = self.peek()
-                && ch.is_ascii_digit()
-            {
-                self.advance();
-                return Ok(Some(ch as u32));
-            }
-            self.rewind(checkpoint);
-        }
-
-        // DecimalDigit but not 0
-        if let Some(ch) = self.peek()
-            && ch.is_ascii_digit()
-            && ch != '0'
-        {
-            self.advance();
-            return Ok(Some(ch as u32));
-        }
-
-        // x [lookahead ∉ HexDigit] or x HexDigit [lookahead ∉ HexDigit]
-        if self.eat('x') {
-            let offset_start = self.offset();
-            match self.consume_hex_digits(offset_start) {
-                Ok(Some(_)) => {
-                    self.rewind(checkpoint);
-                    return Ok(None);
-                }
-                Ok(None) => {
-                    return Ok(Some('x' as u32));
-                }
-                Err(e) => {
-                    return Err(e);
-                }
-            }
-        }
-
-        // u [lookahead ∉ HexDigit] [lookahead ≠ {]
-        // u HexDigit [lookahead ∉ HexDigit]
-        // u HexDigit HexDigit [lookahead ∉ HexDigit]
-        // u HexDigit HexDigit HexDigit [lookahead ∉ HexDigit]
-        // u { [lookahead ∉ HexDigit]
-        // u { NotCodePoint [lookahead ∉ HexDigit]
-        // u { CodePoint [lookahead ∉ HexDigit] [lookahead ≠ }]
-        if self.eat('u') {
-            let offset_start = self.offset();
-            if self.eat('{') {
-                match self.consume_hex_digits(offset_start) {
-                    Ok(Some(_)) => {
-                        if !self.eat('}') {
-                            return Ok(Some('u' as u32));
-                        }
-                        self.rewind(checkpoint);
-                        return Ok(None);
-                    }
-                    Ok(None) => {
-                        return Ok(Some('u' as u32));
-                    }
-                    Err(e) => {
-                        return Err(e);
-                    }
-                }
-            }
-            let mut hex_count = 0;
-            for _ in 0..4 {
-                if let Some(ch) = self.peek() {
-                    if ch.is_ascii_hexdigit() {
-                        self.advance();
-                        hex_count += 1;
-                    } else {
-                        break;
-                    }
-                } else {
-                    break;
-                }
-            }
-            if hex_count == 0 || hex_count < 4 {
-                return Ok(Some('u' as u32));
-            }
-            if let Some(ch) = self.peek()
-                && ch.is_ascii_hexdigit()
-            {
-                self.rewind(checkpoint);
-                return Ok(None);
-            }
-            self.rewind(checkpoint);
-            return Ok(None);
-        }
-
-        Ok(None)
     }
 
     // ```
@@ -400,17 +311,15 @@ impl Parser {
     //   \ LineTerminatorSequence
     //
     // ```
-    fn parse_line_continuation(&mut self) -> Option<u32> {
+    fn parse_line_continuation(&mut self) -> bool {
         let checkpoint = self.checkpoint();
 
-        if self.eat('\\')
-            && let Some(terminator) = self.parse_line_terminator_sequence()
-        {
-            return Some(terminator);
+        if self.eat('\\') && self.parse_line_terminator_sequence().is_some() {
+            return true;
         }
 
         self.rewind(checkpoint);
-        None
+        false
     }
 
     // ```
@@ -422,35 +331,19 @@ impl Parser {
     //   <CR> <LF>
     // ```
     fn parse_line_terminator_sequence(&mut self) -> Option<u32> {
-        let checkpoint = self.checkpoint();
-
-        if self.peek() == Some(LF) {
-            self.advance();
-            return Some(LF as u32);
+        match self.peek()? {
+            CR => {
+                self.advance();
+                self.eat(LF);
+                // TV normalizes both CR and CRLF to a single LF.
+                Some(LF as u32)
+            }
+            ch @ (LF | LS | PS) => {
+                self.advance();
+                Some(ch as u32)
+            }
+            _ => None,
         }
-        if self.peek() == Some(CR) && self.peek2() != Some(LF) {
-            self.advance();
-            return Some(CR as u32);
-        }
-        if self.peek() == Some(LS) {
-            self.advance();
-            return Some(LS as u32);
-        }
-        if self.peek() == Some(PS) {
-            self.advance();
-            return Some(PS as u32);
-        }
-        // NOTE: CR+LF can not represent as a single code point.
-        // I don't know the best way to handle this.
-        // To distinguish this from CR and LF, structural change is needed...
-        if self.peek() == Some(CR) && self.peek2() == Some(LF) {
-            self.advance();
-            self.advance();
-            return Some(LF as u32);
-        }
-
-        self.rewind(checkpoint);
-        None
     }
 
     // ---

@@ -1,9 +1,9 @@
-commit: a56fe4a4
+commit: b835f0c6
 
 parser_babel Summary:
-AST Parsed     : 2280/2280 (100.00%)
-Positive Passed: 2260/2280 (99.12%)
-Negative Passed: 1789/1804 (99.17%)
+AST Parsed     : 2304/2304 (100.00%)
+Positive Passed: 2283/2304 (99.09%)
+Negative Passed: 1828/1843 (99.19%)
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-assert-and-assign/input.ts
 
 Expect Syntax Error: tasks/coverage/babel/packages/babel-parser/test/fixtures/typescript/cast/unparenthesized-type-assertion-and-assign/input.ts
@@ -61,6 +61,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/annex-
    ·                   ┬          ┬
    ·                   │          ╰── It can not be redeclared here
    ·                   ╰── `g` has already been declared here
+   ╰────
+
+Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/es2015/let/export-default-let-with-linebreak-and-keyword/input.js
+
+  × Cannot use export statement outside a module
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/export-default-let-with-linebreak-and-keyword/input.js:1:1]
+ 1 │ export default let
+   · ──────
+ 2 │ if (x) {}
    ╰────
 
 Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/estree/class-private-method/typescript-invalid-abstract/input.ts
@@ -2792,6 +2801,27 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Try inserting a semicolon here
 
+  × Unterminated regular expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-expression-body-before-regexp-starting-with-equals/input.js:2:3]
+ 1 │ () => x
+ 2 │ /=/;
+   ·   ───
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-expression-body-before-regexp-starting-with-equals/input.js:2:3]
+ 1 │ () => x
+ 2 │ /=/;
+   ·   ───
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-no-asi-before-regexp-starting-with-equals/input.js:1:9]
+ 1 │ () => {} /=/;
+   ·         ▲
+   ╰────
+  help: Try inserting a semicolon here
+
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parens-await-argument/input.js:1:31]
  1 │ async function f() { await (x) => {} }
@@ -2830,6 +2860,20 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                    ──
    ╰────
 
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-alternate-before-regexp-starting-with-equals/input.js:1:10]
+ 1 │ a ? b : (c => {})
+   ·          ───────
+ 2 │ /=/;
+   ╰────
+
+  × Cannot assign to this expression
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-parenthesized-before-regexp-starting-with-equals/input.js:1:2]
+ 1 │ (() => {})
+   ·  ────────
+ 2 │ /=/;
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-rest-in-params/input.js:3:5]
  2 │     first,
@@ -2837,6 +2881,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ───
  4 │     third
    ╰────
+
+  × Invalid assignment in object literal
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-shorthand-in-conditional-before-regexp-starting-with-equals/input.js:1:5]
+ 1 │ x, {b = 1} ? c : () => {}
+   ·     ─────
+ 2 │ /=/;
+   ╰────
+  help: Did you mean to use a ':'? An '=' can only follow a property name when the containing object literal is part of a destructuring pattern.
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/arrow-functions/invalid-single-binding-await-argument/input.js:1:29]
@@ -3304,6 +3356,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ─────
    ╰────
 
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-const-no-initializer-multiple-declarators/input.js:1:6]
+ 1 │ for (const x = 1, y of z);
+   ·      ──────────────
+   ╰────
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-destructuring-no-initializer-multiple-declarators/input.js:1:6]
+ 1 │ for (const x = 1, [y] of z);
+   ·      ────────────────
+   ╰────
+
   × Keywords cannot contain escape characters
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-escape-of/input.js:1:8]
  1 │ for (x \u006ff y) {}
@@ -3338,6 +3402,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ for (let().bar of []);
  3 │ for (let``.bar of []);
    ·      ─────────
+   ╰────
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-let-no-initializer-multiple-declarators/input.js:1:6]
+ 1 │ for (let x = 1, y of z);
+   ·      ────────────
+   ╰────
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/for-of/invalid-var-no-initializer-multiple-declarators/input.js:1:6]
+ 1 │ for (var x = 1, y of z);
+   ·      ────────────
    ╰────
 
   × Keywords cannot contain escape characters
@@ -3416,6 +3492,34 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/identifiers/invalid-escape-seq-true/input.js:1:1]
  1 │ \u0074rue
    · ─────────
+   ╰────
+
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/export-let-with-linebreak-and-keyword/input.js:2:1]
+ 1 │ export let
+ 2 │ if (x) {}
+   · ──
+   ╰────
+
+  × Cannot use export statement outside a module
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/export-let-with-linebreak-and-keyword-script/input.js:1:1]
+ 1 │ export let
+   · ──────
+ 2 │ if (x) {}
+   ╰────
+
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/export-let-with-linebreak-and-keyword-script/input.js:2:1]
+ 1 │ export let
+ 2 │ if (x) {}
+   · ──
+   ╰────
+
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/for-let-with-linebreak-and-keyword/input.js:2:1]
+ 1 │ for (let
+ 2 │ if;;);
+   · ──
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -3520,6 +3624,102 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·       ───
  3 │ }
    ╰────
+
+  × Identifier expected. 'if' is a reserved word that cannot be used here.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-keyword-same-line/input.js:1:5]
+ 1 │ let if (x) {}
+   ·     ──
+   ╰────
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-await-async/input.js:3:3]
+ 2 │   let
+ 3 │   await 0;
+   ·   ─────
+ 4 │ }
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-await-async/input.js:3:8]
+ 2 │   let
+ 3 │   await 0;
+   ·        ▲
+ 4 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Cannot use `await` as an identifier in an async context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-await-module/input.js:2:1]
+ 1 │ let
+ 2 │ await 0;
+   · ─────
+   ╰────
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-await-module/input.js:2:6]
+ 1 │ let
+ 2 │ await 0;
+   ·      ▲
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-enum/input.js:2:1]
+ 1 │ let
+ 2 │ enum;
+   · ────
+   ╰────
+
+  × Keywords cannot contain escape characters
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-escaped-keyword/input.js:2:1]
+ 1 │ let
+ 2 │ i\u0066 (x) {}
+   · ───────
+   ╰────
+
+  × The keyword 'let' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-module/input.js:1:1]
+ 1 │ let
+   · ───
+ 2 │ if (x) {}
+   ╰────
+  note: Modules are always strict mode code
+
+  × The keyword 'let' is reserved
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-keyword-strict/input.js:2:1]
+ 1 │ "use strict";
+ 2 │ let
+   · ───
+ 3 │ if (x) {}
+   ╰────
+  note: This identifier is reserved in strict mode code
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-yield/input.js:3:8]
+ 2 │   let
+ 3 │   yield 0;
+   ·        ▲
+ 4 │ }
+   ╰────
+  help: Try inserting a semicolon here
+
+  × Cannot use `yield` as an identifier in a generator context
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-yield-generator/input.js:3:3]
+ 2 │   let
+ 3 │   yield 0;
+   ·   ─────
+ 4 │ }
+   ╰────
+  help: Wrap this in parentheses if you want to use a `yield` expression here
+
+  × Expected a semicolon or an implicit semicolon after a statement, but found none
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/let/let-with-linebreak-and-yield-generator/input.js:3:8]
+ 2 │   let
+ 3 │   yield 0;
+   ·        ▲
+ 4 │ }
+   ╰────
+  help: Try inserting a semicolon here
 
   × Unexpected new.target expression
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/meta-properties/invalid-arrow-function/input.js:2:3]
@@ -5291,6 +5491,52 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ 0b19
    ·    ─
    ╰────
+
+  × Missing initializer in const declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-const-no-initializer-linebreak-in/input.js:1:7]
+ 1 │ const x
+   ·       ─
+ 2 │ in y
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-const-no-initializer-linebreak-in/input.js:2:1]
+ 1 │ const x
+ 2 │ in y
+   · ──
+   ╰────
+
+  × Missing initializer in const declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-const-no-initializer-linebreak-in-errorRecovery-false/input.js:1:7]
+ 1 │ const x
+   ·       ─
+ 2 │ in y
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-const-no-initializer-linebreak-in-errorRecovery-false/input.js:2:1]
+ 1 │ const x
+ 2 │ in y
+   · ──
+   ╰────
+
+  × Missing initializer in const declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-const-no-initializer-linebreak-of/input.js:1:7]
+ 1 │ const x
+   ·       ─
+ 2 │ of
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Missing initializer in const declaration
+   ╭─[babel/packages/babel-parser/test/fixtures/es2015/uncategorised/invalid-const-no-initializer-linebreak-of-module/input.js:1:7]
+ 1 │ const x
+   ·       ─
+ 2 │ of
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Cannot use `yield` as an identifier in a generator context
    ╭─[babel/packages/babel-parser/test/fixtures/es2015/yield/function-name-function-declaration-inside-generator/input.js:2:12]
@@ -7987,6 +8233,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │ 09.5e-_1;
    ╰────
 
+  × Invalid characters after number
+   ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-separator-after-exponent-sign-non-octal-decimal/input.js:1:5]
+ 1 │ 08e+_1;
+   ·     ─
+ 2 │ 09.5e-_1;
+   ╰────
+
   × Invalid Character `_`
    ╭─[babel/packages/babel-parser/test/fixtures/es2021/numeric-separator/invalid-separator-before-exponent-sign/input.js:1:3]
  1 │ 1e_+1;
@@ -9171,6 +9424,15 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Assign the 'arguments' variable to a temporary variable outside
 
+  × 'arguments' is not allowed in static initialization block
+   ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-arguments-label-reference/input.js:3:16]
+ 2 │   static {
+ 3 │     arguments: arguments;
+   ·                ─────────
+ 4 │   }
+   ╰────
+  help: Assign the 'arguments' variable to a temporary variable outside
+
   × Cannot use await in class static initialization block
    ╭─[babel/packages/babel-parser/test/fixtures/es2022/class-static-block/invalid-await/input.js:5:7]
  4 │     static {
@@ -9493,13 +9755,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                      ───
    ╰────
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-export-with-repeated-type/input.js:1:50]
  1 │ export { default as foo } from "foo.json" with { type: "json", type: "html" };
    ·                                                  ──┬─          ──┬─
-   ·                                                    │             ╰── It can not be redeclared here
-   ·                                                    ╰── `type` has already been declared here
+   ·                                                    │             ╰── This key is repeated
+   ·                                                    ╰── `type` was already specified here
    ╰────
+  help: Each import attribute key must be unique
 
   × Expected `{` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-export-without-attributes-identifier/input.js:1:29]
@@ -9508,29 +9771,32 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                             ╰── `{` expected
    ╰────
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-with-repeated-type/input.js:1:35]
  1 │ import foo from "foo.json" with { type: "json", type: "html" };
    ·                                   ──┬─          ──┬─
-   ·                                     │             ╰── It can not be redeclared here
-   ·                                     ╰── `type` has already been declared here
+   ·                                     │             ╰── This key is repeated
+   ·                                     ╰── `type` was already specified here
    ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-with-repeated-type-string/input.js:1:35]
  1 │ import foo from "foo.json" with { "type": "json", type: "html", "type": "js" };
    ·                                   ───┬──          ──┬─
-   ·                                      │              ╰── It can not be redeclared here
-   ·                                      ╰── `type` has already been declared here
+   ·                                      │              ╰── This key is repeated
+   ·                                      ╰── `type` was already specified here
    ╰────
+  help: Each import attribute key must be unique
 
-  × Identifier `type` has already been declared
+  × Duplicate import attribute key `type`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-with-repeated-type-string/input.js:1:51]
  1 │ import foo from "foo.json" with { "type": "json", type: "html", "type": "js" };
    ·                                                   ──┬─          ───┬──
-   ·                                                     │              ╰── It can not be redeclared here
-   ·                                                     ╰── `type` has already been declared here
+   ·                                                     │              ╰── This key is repeated
+   ·                                                     ╰── `type` was already specified here
    ╰────
+  help: Each import attribute key must be unique
 
   × Expected `{` but found `;`
    ╭─[babel/packages/babel-parser/test/fixtures/es2025/import-attributes/invalid-syntax-without-attributes-identifier/input.js:1:16]
@@ -9559,6 +9825,49 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                                                       ────
    ╰────
   help: Wrap this with quotes
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-await-using-no-initializer-linebreak-in/input.js:2:15]
+ 1 │ async function f() {
+ 2 │   await using x
+   ·               ─
+ 3 │   in y
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-await-using-no-initializer-linebreak-in/input.js:3:3]
+ 2 │   await using x
+ 3 │   in y
+   ·   ──
+ 4 │ }
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-await-using-no-initializer-linebreak-in-errorRecovery-false/input.js:2:15]
+ 1 │ async function f() {
+ 2 │   await using x
+   ·               ─
+ 3 │   in y
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-await-using-no-initializer-linebreak-in-errorRecovery-false/input.js:3:3]
+ 2 │   await using x
+ 3 │   in y
+   ·   ──
+ 4 │ }
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-await-using-no-initializer-linebreak-of/input.js:2:15]
+ 1 │ async function f() {
+ 2 │   await using x
+   ·               ─
+ 3 │   of
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
 
   × Identifier `f` has already been declared
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-duplicate-using-bindings/input.js:3:17]
@@ -9595,6 +9904,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                           ▲
    ╰────
   help: Try inserting a semicolon here
+
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-for-await-using-no-initializer-multiple-declarators/input.js:2:8]
+ 1 │ async function f() {
+ 2 │   for (await using x = a, y of z);
+   ·        ────────────────────
+ 3 │ }
+   ╰────
 
   × Expected `;` but found `Identifier`
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/async-explicit-resource-management/invalid-for-of-await-linebreak-using/input.js:3:11]
@@ -10076,6 +10393,14 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·     ╰── Opened here
    ╰────
 
+  × Only a single declaration is allowed in a `for...of` statement
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-no-initializer-multiple-declarators/input.js:2:8]
+ 1 │ {
+ 2 │   for (using x = a, y of z);
+   ·        ──────────────
+ 3 │ }
+   ╰────
+
   × Unexpected token
    ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-for-using-of-equal-equal/input.js:1:15]
  1 │ for (using of == {};;);
@@ -10300,6 +10625,49 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │   using f;
    ·         ─
  3 │ }
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-no-initializer-linebreak-in/input.js:2:9]
+ 1 │ {
+ 2 │   using x
+   ·         ─
+ 3 │   in y
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-no-initializer-linebreak-in/input.js:3:3]
+ 2 │   using x
+ 3 │   in y
+   ·   ──
+ 4 │ }
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-no-initializer-linebreak-in-errorRecovery-false/input.js:2:9]
+ 1 │ {
+ 2 │   using x
+   ·         ─
+ 3 │   in y
+   ╰────
+  help: Add an initializer (e.g. ` = undefined`) here
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-no-initializer-linebreak-in-errorRecovery-false/input.js:3:3]
+ 2 │   using x
+ 3 │   in y
+   ·   ──
+ 4 │ }
+   ╰────
+
+  × Using declarations must have an initializer.
+   ╭─[babel/packages/babel-parser/test/fixtures/es2026/explicit-resource-management/invalid-using-no-initializer-linebreak-of/input.js:2:9]
+ 1 │ {
+ 2 │   using x
+   ·         ─
+ 3 │   of
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
@@ -13206,12 +13574,11 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ╰────
   help: Add an initializer (e.g. ` = undefined`) here
 
-  × Expected a semicolon or an implicit semicolon after a statement, but found none
+  × Invalid characters after number
    ╭─[babel/packages/babel-parser/test/fixtures/estree/bigInt/invalid-float/input.js:1:4]
  1 │ 0e0n;
-   ·    ▲
+   ·    ─
    ╰────
-  help: Try inserting a semicolon here
 
   × TS(18019): 'abstract' modifier cannot be used with a private identifier.
    ╭─[babel/packages/babel-parser/test/fixtures/estree/class-private-property/typescript-invalid-abstract/input.ts:2:3]
@@ -13219,6 +13586,17 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  2 │   abstract #foo: boolean;
    ·   ────────
  3 │ }
+   ╰────
+
+  × Duplicated export 'z'
+   ╭─[babel/packages/babel-parser/test/fixtures/estree/export/duplicate-ns-locations-false/input.js:2:15]
+ 1 │ let x;
+ 2 │ export { x as z };
+   ·               ┬
+   ·               ╰── Export has already been declared here
+ 3 │ export * as z from "y";
+   ·             ┬
+   ·             ╰── It cannot be redeclared here
    ╰────
 
   × TS(1049): A 'set' accessor must have exactly one parameter.
@@ -13506,6 +13884,18 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·      ┬
    ·      ╰── `=>` expected
  2 │ (a:b,c:d);
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid-new-callee-lt/input.ts:1:5]
+ 1 │ new < a;
+   ·     ─
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/cast/invalid-new-callee-lt-sequence/input.ts:1:6]
+ 1 │ (new < a, 1);
+   ·      ─
    ╰────
 
   × Expected a semicolon or an implicit semicolon after a statement, but found none
@@ -13928,6 +14318,12 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
  1 │ class Foo extends Bar implements {
    ·                                  ─
  2 │ }
+   ╰────
+
+  × Unexpected token
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/class/extends-invalid-fragment/input.ts:1:17]
+ 1 │ class C extends <>D {}
+   ·                 ─
    ╰────
 
   × TS(1245): Method 'd' cannot have an implementation because it is marked abstract.
@@ -15013,6 +15409,13 @@ Expect to Parse: tasks/coverage/babel/packages/babel-parser/test/fixtures/typesc
    ·                ───────
    ╰────
   help: Remove the duplicate modifier.
+
+  × Expected `from` but found `{`
+   ╭─[babel/packages/babel-parser/test/fixtures/typescript/export/invalid-export-type-star-as-and-named/input.ts:1:21]
+ 1 │ export type * as ns { a } from "x";
+   ·                     ┬
+   ·                     ╰── `from` expected
+   ╰────
 
   × TS(1098): Type parameter list cannot be empty.
    ╭─[babel/packages/babel-parser/test/fixtures/typescript/function/empty-type-parameters/input.ts:1:13]

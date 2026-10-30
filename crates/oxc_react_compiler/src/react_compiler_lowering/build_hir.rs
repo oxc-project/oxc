@@ -204,6 +204,20 @@ fn collect_binding_names_from_pattern(
 ///
 /// Implements the TS BlockStatement hoisting pass: identifies forward references to
 /// block-scoped bindings and emits DeclareContext instructions to hoist them.
+/// Lower the `finally` block of a `try` statement after the rest of it. The
+/// `finally` clause is not supported, so the function is not compiled, but lint
+/// rules still need to see the values the block uses.
+fn lower_finally_block<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    try_stmt: &oxc::TryStatement<'a>,
+    parent_scope: Option<ScopeId>,
+) -> Result<(), OxcDiagnostic> {
+    if let Some(finalizer) = &try_stmt.finalizer {
+        lower_block_statement(builder, &finalizer.body, finalizer.scope_id.get(), parent_scope)?;
+    }
+    Ok(())
+}
+
 fn lower_block_statement<'a>(
     builder: &mut HirBuilder<'a, '_>,
     statements: &[oxc::Statement<'a>],
@@ -273,6 +287,7 @@ fn lower_block_statement_inner<'a>(
             // "Unsupported declaration type for hoisting". See
             // `ScopeResolver::is_type_only_binding`.
             !scope.is_type_only_binding(sid)
+                && !scope.is_ambient_binding(sid)
                 && !matches!(
                     scope.binding_kind(sid),
                     AstBindingKind::Param | AstBindingKind::Module
@@ -540,6 +555,15 @@ pub fn lower<'a>(
     // Note: `id` param may include inferred names (e.g., from `const Foo = () => {}`),
     // but the HIR function's `id` field should only include the function's own AST id
     // (FunctionDeclaration.id or FunctionExpression.id, NOT arrow functions).
+    // Outlined declarations are inserted as siblings of a declaration root,
+    // so references to bindings in the containing lexical scope remain valid.
+    // Arrow and function-expression roots are appended to the program body and
+    // must keep any such function inline.
+    env.allow_outer_lexical_outlining = match func {
+        FunctionNode::Function(f) => f.is_declaration(),
+        FunctionNode::Arrow(_) => false,
+    };
+
     let (params, body, generator, is_async, span, ast_id, ast_id_span) = match func {
         FunctionNode::Function(f) => {
             let body_ref = f.body.as_deref().expect("component function has a body");
@@ -812,6 +836,7 @@ fn lower_inner<'a>(
     );
 
     // Build the HIR
+    let has_outer_lexical_reference = builder.has_outer_lexical_reference();
     let (hir_body, instructions, used_names, child_bindings) = builder.build()?;
     let instructions = ArenaVec::from_iter_in(instructions, &env.allocator);
 
@@ -831,6 +856,7 @@ fn lower_inner<'a>(
             params: hir_params,
             returns,
             context,
+            has_outer_lexical_reference,
             body: hir_body,
             instructions,
             generator,
@@ -935,19 +961,52 @@ fn lower_member_expression<'a>(
     lower_member_expression_impl(builder, member, None)
 }
 
+/// The longest member expression chain the compiler lowers. Each member's
+/// dependency path extends its object's, so later passes take quadratic time
+/// and memory in the chain length. Longer chains come from generated code; the
+/// function is left as written, as Babel does once its stack runs out.
+const MAX_MEMBER_CHAIN_LENGTH: usize = 500;
+
+/// Lower the object of `member` to a temporary. A member chain `a.b.c` is
+/// walked iteratively rather than recursing once per member, so long
+/// generated chains cannot overflow the stack.
+fn lower_member_object<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    member: &oxc::MemberExpression<'a>,
+) -> Result<Place, OxcDiagnostic> {
+    let mut chain = Vec::new();
+    let mut object = member.object();
+    while let Some(inner) = object.as_member_expression() {
+        if chain.len() + 1 == MAX_MEMBER_CHAIN_LENGTH {
+            return Err(diagnostics::todo_member_expression_chain_too_long(
+                member.span(),
+                MAX_MEMBER_CHAIN_LENGTH,
+            ));
+        }
+        chain.push(inner);
+        object = inner.object();
+    }
+    let mut place = lower_expression_to_temporary(builder, object)?;
+    for inner in chain.into_iter().rev() {
+        let lowered = lower_member_expression_impl(builder, inner, Some(place))?;
+        place = lower_value_to_temporary(builder, lowered.value)?;
+    }
+    Ok(place)
+}
+
 fn lower_member_expression_impl<'a>(
     builder: &mut HirBuilder<'a, '_>,
     member: &oxc::MemberExpression<'a>,
     lowered_object: Option<Place>,
 ) -> Result<LoweredMemberExpression<'a>, OxcDiagnostic> {
+    let object = match lowered_object {
+        Some(object) => object,
+        None => lower_member_object(builder, member)?,
+    };
     match member {
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let property_span = Some(m.property.span);
-            let object = match lowered_object {
-                Some(obj) => obj,
-                None => lower_expression_to_temporary(builder, &m.object)?,
-            };
             let prop_literal = PropertyLiteral::String(m.property.name);
             let value = InstructionValue::PropertyLoad {
                 object,
@@ -966,10 +1025,6 @@ fn lower_member_expression_impl<'a>(
         }
         oxc::MemberExpression::ComputedMemberExpression(m) => {
             let span = Some(m.span);
-            let object = match lowered_object {
-                Some(obj) => obj,
-                None => lower_expression_to_temporary(builder, &m.object)?,
-            };
             // A numeric computed index is treated as a PropertyLoad (matches TS).
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
                 let property_span = Some(lit.span);
@@ -1001,10 +1056,6 @@ fn lower_member_expression_impl<'a>(
         }
         oxc::MemberExpression::PrivateFieldExpression(m) => {
             let span = Some(m.span);
-            let object = match lowered_object {
-                Some(obj) => obj,
-                None => lower_expression_to_temporary(builder, &m.object)?,
-            };
             // TODO(stage1a-arms): private field access needs a private-name property
             // load + OriginalNode bail; defer to a later batch.
             builder.record_error(
@@ -1120,8 +1171,50 @@ fn lower_type_cast_expression<'a>(
     Ok(InstructionValue::TypeCastExpression { value, cast: cast(type_annotation), span })
 }
 
-/// Lower a member-expression update target into a receiver place + property +
-/// load value, mirroring `lower_member_expression_impl`.
+/// Bind `value` to a promoted temporary so that codegen emits it as a
+/// declaration at this point instead of inlining it at each use.
+fn bind_temporary(
+    builder: &mut HirBuilder<'_, '_>,
+    kind: InstructionKind,
+    value: Place,
+    span: Option<Span>,
+) -> Result<Place, OxcDiagnostic> {
+    let binding = build_temporary_place(builder, span);
+    promote_temporary(builder, binding.identifier);
+    lower_value_to_temporary(
+        builder,
+        InstructionValue::StoreLocal { lvalue: LValue { kind, place: binding }, value, span },
+    )?;
+    Ok(binding)
+}
+
+/// Lower an operand that a read-modify-write such as `obj[key()] += v` uses
+/// twice, once for the load and once for the store. Codegen inlines
+/// temporaries at each use, so anything but a plain identifier or literal is
+/// first bound to a constant and evaluated once.
+fn lower_reused_operand<'a>(
+    builder: &mut HirBuilder<'a, '_>,
+    expr: &oxc::Expression<'a>,
+) -> Result<Place, OxcDiagnostic> {
+    let value = lower_expression_to_temporary(builder, expr)?;
+    if matches!(
+        expr,
+        oxc::Expression::Identifier(_)
+            | oxc::Expression::StringLiteral(_)
+            | oxc::Expression::NumericLiteral(_)
+            | oxc::Expression::BigIntLiteral(_)
+            | oxc::Expression::BooleanLiteral(_)
+            | oxc::Expression::NullLiteral(_)
+    ) {
+        return Ok(value);
+    }
+    let span = Some(expr.span());
+    let binding = bind_temporary(builder, InstructionKind::Const, value, span)?;
+    lower_value_to_temporary(builder, InstructionValue::LoadLocal { place: binding, span })
+}
+
+/// Lower the target of an update or compound assignment, whose object and
+/// computed key are each evaluated once and used by both the load and the store.
 fn lower_member_expression_for_update<'a>(
     builder: &mut HirBuilder<'a, '_>,
     target: &oxc::MemberExpression<'a>,
@@ -1130,7 +1223,7 @@ fn lower_member_expression_for_update<'a>(
         oxc::MemberExpression::StaticMemberExpression(m) => {
             let span = Some(m.span);
             let property_span = Some(m.property.span);
-            let object = lower_expression_to_temporary(builder, &m.object)?;
+            let object = lower_reused_operand(builder, &m.object)?;
             let prop_literal = PropertyLiteral::String(m.property.name);
             let value = InstructionValue::PropertyLoad {
                 object,
@@ -1149,7 +1242,7 @@ fn lower_member_expression_for_update<'a>(
         }
         oxc::MemberExpression::ComputedMemberExpression(m) => {
             let span = Some(m.span);
-            let object = lower_expression_to_temporary(builder, &m.object)?;
+            let object = lower_reused_operand(builder, &m.object)?;
             if let oxc::Expression::NumericLiteral(lit) = &m.expression {
                 let property_span = Some(lit.span);
                 let prop_literal = PropertyLiteral::Number(FloatValue::new(lit.value));
@@ -1168,7 +1261,7 @@ fn lower_member_expression_for_update<'a>(
                     value,
                 });
             }
-            let property = lower_expression_to_temporary(builder, &m.expression)?;
+            let property = lower_reused_operand(builder, &m.expression)?;
             let value = InstructionValue::ComputedLoad { object, property, span };
             Ok(LoweredMemberExpression {
                 object,
@@ -3220,6 +3313,9 @@ fn lower_function<'a>(
         ident_spans,
     )?;
 
+    if hir_func.has_outer_lexical_reference {
+        builder.note_outer_lexical_reference();
+    }
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3282,6 +3378,9 @@ fn lower_function_declaration<'a>(
         ident_spans,
     )?;
 
+    if hir_func.has_outer_lexical_reference {
+        builder.note_outer_lexical_reference();
+    }
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3451,6 +3550,9 @@ fn lower_function_for_object_method<'a>(
         ident_spans,
     )?;
 
+    if hir_func.has_outer_lexical_reference {
+        builder.note_outer_lexical_reference();
+    }
     builder.merge_used_names(child_used_names);
     builder.merge_bindings(child_bindings);
 
@@ -3481,15 +3583,18 @@ fn gather_captured_context(
     > = rustc_hash::FxHashMap::default();
 
     for symbol_id in scope.symbols() {
+        if !pure_scopes.contains(&scope.symbol_scope(symbol_id)) {
+            continue;
+        }
+        if scope.is_ambient_binding(symbol_id) {
+            continue;
+        }
         // Inline enums are opaque pass-through nodes, matching upstream's
         // `UnsupportedNode`, so their bindings are not context operands.
         if matches!(
             scope.decl_kind(symbol_id),
             DeclKind::TSTypeAliasDeclaration | DeclKind::TSEnumDeclaration
         ) {
-            continue;
-        }
-        if !pure_scopes.contains(&scope.symbol_scope(symbol_id)) {
             continue;
         }
         let declaration_start = scope.declaration_ident(symbol_id).map(|id| id.span.start);
@@ -3630,6 +3735,10 @@ fn lower_expression<'a>(
         }),
         oxc::Expression::StringLiteral(lit) => Ok(InstructionValue::Primitive {
             value: PrimitiveValue::String(lit.value),
+            span: Some(lit.span),
+        }),
+        oxc::Expression::BigIntLiteral(lit) => Ok(InstructionValue::Primitive {
+            value: PrimitiveValue::BigInt { value: lit.value, raw: lit.raw, base: lit.base },
             span: Some(lit.span),
         }),
         oxc::Expression::RegExpLiteral(regexp) => Ok(InstructionValue::RegExpLiteral {
@@ -4066,78 +4175,67 @@ fn lower_expression<'a>(
             let span = Some(update.span);
             match simple_assignment_target_ref_from_simple(&update.argument) {
                 Some(SimpleAssignmentTargetRef::Member(member)) => {
-                    let binary_op = match update.operator {
-                        oxc::UpdateOperator::Increment => BinaryOperator::Addition,
-                        oxc::UpdateOperator::Decrement => BinaryOperator::Subtraction,
-                    };
-                    // Use the member expression's span (not the update expression's)
-                    // to match TS behavior where the inner operations use leftExpr.node.span
                     let member_span = Some(member.span());
                     let lowered = lower_member_expression_for_update(builder, member)?;
-                    let object = lowered.object;
-                    let lowered_property = lowered.property;
-                    let computed = lowered.computed;
-                    let property_span = lowered.property_span;
-                    let prev_value = lower_value_to_temporary(builder, lowered.value)?;
+                    let previous = lower_value_to_temporary(builder, lowered.value)?;
 
-                    let one = lower_value_to_temporary(
+                    // `++` and `--` convert the operand with ToNumeric and add a one
+                    // of the same type, which `previous + 1` does not do for strings
+                    // and BigInts. Update a local copy instead and store it back.
+                    let local =
+                        bind_temporary(builder, InstructionKind::Let, previous, member_span)?;
+                    let operation = update.operator;
+                    let update_value = lower_value_to_temporary(
                         builder,
-                        InstructionValue::Primitive {
-                            value: PrimitiveValue::Number(FloatValue::new(1.0)),
-                            span: None,
+                        if update.prefix {
+                            InstructionValue::PrefixUpdateLocal {
+                                lvalue: local,
+                                operation,
+                                value: local,
+                                span,
+                            }
+                        } else {
+                            InstructionValue::PostfixUpdateLocal {
+                                lvalue: local,
+                                operation,
+                                value: local,
+                                span,
+                            }
                         },
                     )?;
+                    let result =
+                        bind_temporary(builder, InstructionKind::Const, update_value, span)?;
                     let updated = lower_value_to_temporary(
                         builder,
-                        InstructionValue::BinaryExpression {
-                            operator: binary_op,
-                            left: prev_value,
-                            right: one,
-                            span: member_span,
-                        },
+                        InstructionValue::LoadLocal { place: local, span: member_span },
                     )?;
-
-                    // Store back using the property from the lowered member expression.
-                    // For prefix, the result is the PropertyStore/ComputedStore lvalue
-                    // (matching TS which uses newValuePlace). For postfix, it's prev_value.
-                    let new_value_place = match lowered_property {
-                        MemberProperty::Literal(prop_literal) => lower_value_to_temporary(
+                    match lowered.property {
+                        MemberProperty::Literal(property) => lower_value_to_temporary(
                             builder,
                             InstructionValue::PropertyStore {
-                                object,
-                                property: prop_literal,
-                                computed,
-                                property_span,
+                                object: lowered.object,
+                                property,
+                                computed: lowered.computed,
+                                property_span: lowered.property_span,
                                 value: updated,
                                 span: member_span,
                             },
                         )?,
-                        MemberProperty::Computed(prop_place) => lower_value_to_temporary(
+                        MemberProperty::Computed(property) => lower_value_to_temporary(
                             builder,
                             InstructionValue::ComputedStore {
-                                object,
-                                property: prop_place,
+                                object: lowered.object,
+                                property,
                                 value: updated,
                                 span: member_span,
                             },
                         )?,
                     };
-
-                    // Return previous for postfix, newValuePlace for prefix
-                    let result_place = if update.prefix { new_value_place } else { prev_value };
-                    Ok(InstructionValue::LoadLocal { place: result_place, span: result_place.span })
+                    Ok(InstructionValue::LoadLocal { place: result, span: result.span })
                 }
                 Some(SimpleAssignmentTargetRef::Identifier(ident)) => {
                     let symbol = builder.scope().resolve_reference(ident);
-                    if builder.is_context_identifier(symbol) {
-                        builder.record_error(
-                            diagnostics::todo_build_hir_lower_expression_handle_update_expression_variables_captured_within_lambdas(span),
-                        )?;
-                        return Ok(InstructionValue::Primitive {
-                            value: PrimitiveValue::Undefined,
-                            span,
-                        });
-                    }
+                    let is_context = builder.is_context_identifier(symbol);
 
                     let ident_span = ident.span;
                     let binding = builder.resolve_identifier(ident.name, ident_span, symbol)?;
@@ -4180,14 +4278,30 @@ fn lower_expression<'a>(
                     let operation = update.operator;
 
                     if update.prefix {
-                        Ok(InstructionValue::PrefixUpdate {
+                        if is_context {
+                            Ok(InstructionValue::PrefixUpdateContext {
+                                lvalue: lvalue_place,
+                                operation,
+                                value,
+                                span,
+                            })
+                        } else {
+                            Ok(InstructionValue::PrefixUpdateLocal {
+                                lvalue: lvalue_place,
+                                operation,
+                                value,
+                                span,
+                            })
+                        }
+                    } else if is_context {
+                        Ok(InstructionValue::PostfixUpdateContext {
                             lvalue: lvalue_place,
                             operation,
                             value,
                             span,
                         })
                     } else {
-                        Ok(InstructionValue::PostfixUpdate {
+                        Ok(InstructionValue::PostfixUpdateLocal {
                             lvalue: lvalue_place,
                             operation,
                             value,
@@ -4327,11 +4441,6 @@ fn lower_expression<'a>(
         ),
         oxc::Expression::AssignmentExpression(assign) => {
             lower_assignment_expression(builder, assign)
-        }
-        _ => {
-            // not-yet-ported arms bail to undefined (differential green-set grows as arms land)
-            let span = Some(expr.span());
-            Ok(InstructionValue::Primitive { value: PrimitiveValue::Undefined, span })
         }
     }
 }
@@ -4603,7 +4712,7 @@ fn lower_assignment_expression<'a>(
             }
             Some(SimpleAssignmentTargetRef::Member(member)) => {
                 let member_span = Some(member.span());
-                let lowered = lower_member_expression(builder, member)?;
+                let lowered = lower_member_expression_for_update(builder, member)?;
                 let object = lowered.object;
                 let lowered_property = lowered.property;
                 let computed = lowered.computed;
@@ -5579,7 +5688,9 @@ fn lower_object_property_key<'a>(
     computed: bool,
 ) -> Result<Option<ObjectPropertyKey<'a>>, OxcDiagnostic> {
     match key {
-        oxc::PropertyKey::StringLiteral(lit) => {
+        // `{ ["__proto__"]: v }` defines an own property, while the non-computed
+        // `"__proto__": v` sets the prototype, so the key must stay computed.
+        oxc::PropertyKey::StringLiteral(lit) if !(computed && lit.value == "__proto__") => {
             let Some(name) = lit.value.as_str() else {
                 // Record the diagnostic so the compiler discards this function's partial HIR.
                 let error =
@@ -6389,6 +6500,15 @@ fn lower_statement<'a>(
                             finally_keyword_span,
                         ),
                     )?;
+                    // The function is not compiled, but lint rules still analyze it, so
+                    // lower both blocks for them to see the values they use.
+                    lower_block_statement(
+                        builder,
+                        &try_stmt.block.body,
+                        try_stmt.block.scope_id.get(),
+                        parent_scope,
+                    )?;
+                    lower_finally_block(builder, try_stmt, parent_scope)?;
                     return Ok(());
                 }
             };
@@ -6517,6 +6637,7 @@ fn lower_statement<'a>(
                 },
                 continuation_block,
             );
+            lower_finally_block(builder, try_stmt, parent_scope)?;
         }
         oxc::Statement::BreakStatement(brk) => {
             let span = Some(brk.span);
@@ -6660,6 +6781,9 @@ fn lower_variable_declaration<'a>(
     var_decl: &oxc::VariableDeclaration<'a>,
 ) -> Result<(), OxcDiagnostic> {
     use oxc::VariableDeclarationKind as VK;
+    if var_decl.declare {
+        return Ok(());
+    }
     if matches!(var_decl.kind, VK::Var) {
         builder.record_error(
             diagnostics::todo_build_hir_lower_statement_handle_var_kinds_variable_declaration(

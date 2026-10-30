@@ -57,7 +57,7 @@ static GT_SCAN_DELIM: [bool; 256] = {
 /// reject path returns false, i.e. today's fused `<<`, so a wrong answer can
 /// never split a real shift.
 #[inline(never)]
-pub(crate) fn lt_run_split(tokens: &Tokens, lt: usize) -> bool {
+pub fn lt_run_split(tokens: &Tokens, lt: usize) -> bool {
     let Tokens { src, st, n, .. } = *tokens;
     // A TypeParameter starts with an identifier (or the `const` modifier),
     // which is what makes `<<=` cost two bytes to reject.

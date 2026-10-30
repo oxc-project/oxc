@@ -1,3 +1,5 @@
+use std::cell::LazyCell;
+
 use lazy_regex::{Regex, RegexBuilder};
 use schemars::JsonSchema;
 use serde::Deserialize;
@@ -207,7 +209,7 @@ impl Rule for CapitalizedComments {
 
             // Normalize the content: remove leading whitespace and JSDoc-style * markers
             // This is what ESLint calls "getTextWithoutAsterisks"
-            let normalized = normalize_comment_text(content);
+            let normalized = LazyCell::new(|| normalize_comment_text(content));
 
             // Find the first letter position in original content
             let Some((first_letter_offset, first_letter)) = find_first_letter(content) else {

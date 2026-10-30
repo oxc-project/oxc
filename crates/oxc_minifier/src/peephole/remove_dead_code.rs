@@ -49,7 +49,19 @@ impl<'a> PeepholeOptimizations {
                 }
 
                 let new_stmt = s.body.remove(0);
-                ctx.replace_statement(stmt, new_stmt);
+                // The unwrap drops no references and preserves side effects,
+                // and the enclosing nodes exit later in this pass, so it needs
+                // no extra pass on its own. A direct body-list item is the
+                // exception: `var` symbol values and the constructor `super()`
+                // scan depend on that position, and a later pass sees it.
+                if matches!(
+                    ctx.parent(),
+                    Ancestor::ProgramBody(_) | Ancestor::FunctionBodyStatements(_)
+                ) {
+                    ctx.replace_statement(stmt, new_stmt);
+                } else {
+                    ctx.replace_statement_settled(stmt, new_stmt);
+                }
             }
             _ => {}
         }

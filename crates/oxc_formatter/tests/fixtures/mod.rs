@@ -1,12 +1,12 @@
-use std::path::Path;
+use std::{path::Path, str::FromStr};
 
 use oxc_allocator::Allocator;
-use oxc_formatter::JsFormatOptions;
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
+use oxc_formatter::{
+    ArrayExpand, ArrayLinePattern, BracketSpacing, JsFormatOptions, JsdocOptions, OperatorPosition,
+    QuoteProperties, QuoteStyle, Semicolons, TrailingCommas,
+};
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 use oxc_span::SourceType;
-
-mod options;
-use options::apply_js_options;
 
 struct JsHarness;
 
@@ -20,10 +20,82 @@ impl FixtureFormatter for JsHarness {
     type Options = JsFormatOptions;
     type Fingerprint = Fingerprint;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = JsFormatOptions::default();
-        apply_js_options(&mut options, json);
-        options
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
+        match key {
+            "semi" => {
+                if let Some(b) = value.as_bool() {
+                    options.semicolons = if b { Semicolons::Always } else { Semicolons::AsNeeded };
+                }
+            }
+            "bracketSpacing" => {
+                if let Some(b) = value.as_bool() {
+                    options.bracket_spacing = BracketSpacing::from(b);
+                }
+            }
+            "singleQuote" => {
+                if let Some(b) = value.as_bool() {
+                    options.quote_style = if b { QuoteStyle::Single } else { QuoteStyle::Double };
+                }
+            }
+            "trailingComma" => {
+                if let Some(s) = value.as_str() {
+                    options.trailing_commas = match s {
+                        "none" => TrailingCommas::None,
+                        "es5" => TrailingCommas::Es5,
+                        "all" => TrailingCommas::All,
+                        _ => options.trailing_commas,
+                    };
+                }
+            }
+            "quoteProps" => {
+                if let Some(s) = value.as_str() {
+                    options.quote_properties = QuoteProperties::from_str(s).unwrap_or_default();
+                }
+            }
+            "experimentalOperatorPosition" => {
+                if let Some(s) = value.as_str() {
+                    options.operator_position = OperatorPosition::from_str(s).unwrap_or_default();
+                }
+            }
+            // NOTE: Not a Prettier option
+            "arrayWrap" => {
+                if let Some(s) = value.as_str() {
+                    options.array_expand = match s {
+                        "auto" => ArrayExpand::Auto,
+                        "preserve" => ArrayExpand::Preserve,
+                        "collapse" => ArrayExpand::Never,
+                        _ => options.array_expand,
+                    };
+                } else if let Some(object) = value.as_object() {
+                    options.array_expand = object
+                        .get("wrapThreshold")
+                        .and_then(OptionValue::as_u64)
+                        .and_then(|threshold| u32::try_from(threshold).ok())
+                        .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold);
+                    options.array_line_pattern = object
+                        .get("linePattern")
+                        .and_then(OptionValue::as_str)
+                        .and_then(|pattern| {
+                            pattern
+                                .split_whitespace()
+                                .map(str::parse)
+                                .collect::<Result<_, _>>()
+                                .ok()
+                        })
+                        .and_then(ArrayLinePattern::new);
+                }
+            }
+            // NOTE: Not a Prettier option
+            // fixture test only toggle enabling JSDoc formatting for the fixtures under `js/jsdoc/`.
+            // Deliberately a bool, an object form not yet supported.
+            "jsdoc" => {
+                if value.as_bool() == Some(true) {
+                    options.jsdoc = Some(JsdocOptions::default());
+                }
+            }
+            _ => return false,
+        }
+        true
     }
 
     fn format(source: &str, path: &Path, options: &Self::Options) -> String {

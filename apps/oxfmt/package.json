@@ -15,8 +15,10 @@
     "build-napi-release": "pnpm run build-napi --release --features allocator",
     "build-js": "node scripts/build.js",
     "test": "vitest run",
-    "conformance": "node conformance/run.ts",
-    "download-fixtures": "node conformance/download-fixtures.js",
+    "conformance": "pnpm run conformance:prettier && pnpm run conformance:live",
+    "conformance:live": "node conformance/run_live.ts",
+    "conformance:prettier": "node conformance/run_prettier.ts",
+    "download-fixtures": "node conformance/download-fixtures.ts",
     "generate-config-types": "node scripts/generate-config-types.ts"
   },
   "dependencies": {

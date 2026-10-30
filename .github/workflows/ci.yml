@@ -27,9 +27,7 @@ jobs:
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
         with:
-          path: |
-            /home/runner/.rustup
-            ./crates/oxc_formatter_tests/prettier
+          path: /home/runner/.rustup
           cache: |
             rust
             pnpm
@@ -149,8 +147,7 @@ jobs:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      # `--skip prettier_conformance`: suite provisioning needs curl/tar, absent in the cross container
-      - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu -- --skip prettier_conformance
+      - run: cross test --lib --bins --tests --all-features --target s390x-unknown-linux-gnu
 
   test-32bit:
     if: ${{ github.ref_name == 'main' }}
@@ -167,8 +164,7 @@ jobs:
           tool: cross
       # `--lib --bins --tests` to skip doctests which are very slow to run via `cross`.
       # https://github.com/cross-rs/cross/issues/1703
-      # `--skip prettier_conformance`: suite provisioning needs curl/tar, absent in the cross container
-      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf -- --skip prettier_conformance
+      - run: cross test --workspace --lib --bins --tests --all-features --exclude oxc_language_server --exclude oxc_linter --exclude oxlint --target armv7-unknown-linux-gnueabihf
 
   test-wasm32-wasip1-threads:
     name: Test wasm32-wasip1-threads
@@ -325,19 +321,21 @@ jobs:
       - uses: $/.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_htmlish/,crates/oxc_formatter_toml/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: $/.github/actions/check-changes
         id: filter-conformance
         with:
-          paths: apps/oxfmt/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,pnpm-lock.yaml,package.json
+          # Every crate oxfmt formats with (parsers, AST, ...), not only the formatters
+          packages: oxfmt
+          paths: apps/oxfmt/,npm/oxfmt/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
         if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
       - uses: namespacelabs/nscloud-cache-action@1124a6f3ce44e5cf84cc22111530961f4d2a15f9 # v1.7.0
-        if: steps.filter.outputs.changed == 'true'
+        if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
         with:
           path: /home/runner/.rustup
           cache: |
@@ -348,7 +346,7 @@ jobs:
         id: conformance-fixtures
         if: steps.filter-conformance.outputs.changed == 'true'
         with:
-          # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.js)
+          # Warm fixtures skip download entirely (`.version` stamps in download-fixtures.ts)
           path: ./apps/oxfmt/conformance/fixtures/externals
         background: true
       - if: steps.filter.outputs.changed == 'true' || steps.filter-conformance.outputs.changed == 'true'
@@ -374,6 +372,7 @@ jobs:
     name: Test NAPI Compiler (windows)
     runs-on: windows-latest
     if: ${{ github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
+    # Keep steps sequential to avoid event.json locking: https://github.com/actions/runner/issues/4641
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -394,19 +393,18 @@ jobs:
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
-      - parallel:
-          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-            if: steps.filter.outputs.changed == 'true'
-          - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              cache-key: napi
-              save-cache: ${{ github.ref_name == 'main' }}
-          - uses: $/.github/actions/clone-submodules
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              babel: false
-              node-compat-table: false
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - uses: $/.github/actions/clone-submodules
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          babel: false
+          node-compat-table: false
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -437,19 +435,18 @@ jobs:
             test -f "$source"
             cp "$source" "$destination"
           done
-      - parallel:
-          - if: steps.filter.outputs.changed == 'true'
-            name: Run tests
-            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-            env:
-              RUN_RAW_RANGE_TESTS: "true"
-            run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
-          - if: steps.filter.outputs.changed == 'true'
-            name: Run e2e tests
-            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
-            run: |
-              pnpm install --frozen-lockfile
-              pnpm run test
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        env:
+          RUN_RAW_RANGE_TESTS: "true"
+        run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run e2e tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run test
       - if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: |
@@ -511,7 +508,7 @@ jobs:
       - uses: $/.github/actions/check-changes
         id: filter
         with:
-          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_toml/,crates/oxc_config/,pnpm-lock.yaml,package.json
+          paths: apps/oxfmt/,apps/shared/,npm/oxfmt/,crates/oxc_formatter/,crates/oxc_formatter_core/,crates/oxc_formatter_css/,crates/oxc_formatter_graphql/,crates/oxc_formatter_json/,crates/oxc_formatter_yaml/,crates/oxc_formatter_markdown/,crates/oxc_formatter_htmlish/,crates/oxc_formatter_toml/,crates/oxc_config/,pnpm-lock.yaml,package.json
           token: ${{ secrets.GITHUB_TOKEN }}
           pr-number: ${{ github.event.pull_request.number }}
       - uses: samypr100/setup-dev-drive@562171fe8df7401fdf582d766cd3b6ab80d5b1a0 # v4.1.0

@@ -1,0 +1,19 @@
+---
+source: crates/oxc_react_compiler/tests/snapshot.rs
+input_file: crates/oxc_react_compiler/fixtures/async-set-deferred-clear.js
+---
+function Component() {
+	let count = 0;
+	const cb = () => count++;
+	const callbacks = new Set([cb]);
+	const run = async () => {
+		await 0;
+		callbacks.forEach(_temp);
+	};
+	run();
+	callbacks.clear();
+	return null;
+}
+function _temp(fn) {
+	return fn();
+}

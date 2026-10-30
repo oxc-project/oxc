@@ -96,6 +96,15 @@ impl<'a> Reader<'a> {
         }
     }
 
+    /// Advance over units whose presence the caller has already checked.
+    pub fn advance_by(&mut self, count: usize) {
+        if count != 0 {
+            let index = self.index + count;
+            self.offset = self.units[index - 1].span.end;
+            self.index = index;
+        }
+    }
+
     fn peek_nth(&self, n: usize) -> Option<u32> {
         let nth = self.index + n;
         self.units.get(nth).map(|cp| cp.value)

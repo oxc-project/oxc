@@ -1,8 +1,8 @@
-commit: 5237fd46
+commit: 8a62bbe7
 
 semantic_typescript Summary:
-AST Parsed     : 5721/5721 (100.00%)
-Positive Passed: 4157/5721 (72.66%)
+AST Parsed     : 5726/5726 (100.00%)
+Positive Passed: 4159/5726 (72.63%)
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/acceptableAlias1.ts
 Bindings mismatch:
 after transform: ScopeId(1): ["N", "X", "_M"]
@@ -9919,6 +9919,61 @@ Bindings mismatch:
 after transform: ScopeId(0): ["ArrayValidator"]
 rebuilt        : ScopeId(0): []
 
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/lateBoundMemberLayoutReentrancy.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["RC", "k", "o", "rC", "rC2", "rI", "rI2", "v1", "v2", "w1", "w2"]
+rebuilt        : ScopeId(0): ["k", "o", "v1", "v2", "w1", "w2"]
+Reference symbol mismatch for "rI":
+after transform: SymbolId(0) "rI"
+rebuilt        : <None>
+Reference symbol mismatch for "rI2":
+after transform: SymbolId(3) "rI2"
+rebuilt        : <None>
+Reference symbol mismatch for "rI":
+after transform: SymbolId(0) "rI"
+rebuilt        : <None>
+Reference symbol mismatch for "rC":
+after transform: SymbolId(9) "rC"
+rebuilt        : <None>
+Reference symbol mismatch for "rC2":
+after transform: SymbolId(12) "rC2"
+rebuilt        : <None>
+Reference symbol mismatch for "rC":
+after transform: SymbolId(9) "rC"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["rC", "rC2", "rI", "rI2"]
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/lazyInheritedMemberLookup.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["C", "D", "_defineProperty", "_objectSpread", "all", "allE", "d", "declared", "e", "fixed", "grand", "keys", "mixin", "shared"]
+rebuilt        : ScopeId(0): ["C", "D", "_defineProperty", "_objectSpread", "all", "allE", "declared", "fixed", "grand", "mixin", "shared"]
+Reference symbol mismatch for "d":
+after transform: SymbolId(13) "d"
+rebuilt        : <None>
+Reference symbol mismatch for "d":
+after transform: SymbolId(13) "d"
+rebuilt        : <None>
+Reference symbol mismatch for "d":
+after transform: SymbolId(13) "d"
+rebuilt        : <None>
+Reference symbol mismatch for "d":
+after transform: SymbolId(13) "d"
+rebuilt        : <None>
+Reference symbol mismatch for "d":
+after transform: SymbolId(13) "d"
+rebuilt        : <None>
+Reference symbol mismatch for "e":
+after transform: SymbolId(21) "e"
+rebuilt        : <None>
+Reference symbol mismatch for "e":
+after transform: SymbolId(21) "e"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: ["require"]
+rebuilt        : ["d", "e", "require"]
+
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/legacyDecoratorClassWithoutModifiers.ts
 Bindings mismatch:
 after transform: ScopeId(0): ["C", "_decorate", "classDec"]
@@ -13742,6 +13797,20 @@ semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/self
 Bindings mismatch:
 after transform: ScopeId(0): ["f", "g", "h"]
 rebuilt        : ScopeId(0): []
+
+semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/sharedMemberLayoutGenericBase2.ts
+Bindings mismatch:
+after transform: ScopeId(0): ["ensureQueryData", "queryOptions", "resume"]
+rebuilt        : ScopeId(0): ["resume"]
+Reference symbol mismatch for "ensureQueryData":
+after transform: SymbolId(14) "ensureQueryData"
+rebuilt        : <None>
+Reference symbol mismatch for "queryOptions":
+after transform: SymbolId(0) "queryOptions"
+rebuilt        : <None>
+Unresolved references mismatch:
+after transform: []
+rebuilt        : ["ensureQueryData", "queryOptions"]
 
 semantic Error: tasks/coverage/typescript/tsc/testdata/tests/cases/compiler/shebangBeforeReferences.ts
 Bindings mismatch:

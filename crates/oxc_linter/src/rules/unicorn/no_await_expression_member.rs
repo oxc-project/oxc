@@ -52,15 +52,21 @@ declare_oxc_lint!(
 
 impl Rule for NoAwaitExpressionMember {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
+        let AstKind::AwaitExpression(_) = node.kind() else {
+            return;
+        };
+
+        let parent = ctx.nodes().parent_node(node.id());
+        let AstKind::ParenthesizedExpression(paren_expr) = parent.kind() else {
+            return;
+        };
+
+        let node = ctx.nodes().parent_node(parent.id());
         let Some(member_expr) = node.kind().as_member_expression_kind() else {
             return;
         };
 
-        let Expression::ParenthesizedExpression(paren_expr) = member_expr.object() else {
-            return;
-        };
-
-        if matches!(paren_expr.expression, Expression::AwaitExpression(_)) {
+        if member_expr.object().span() == paren_expr.span {
             let node_span = member_expr.span();
             ctx.diagnostic_with_dangerous_fix(
                 no_await_expression_member_diagnostic(node_span),
@@ -139,6 +145,8 @@ fn test() {
         "const foo = typeof await promise",
         "const foo = await notPromise.method()",
         "const foo = foo[await promise]",
+        "const foo = foo[(await promise)]",
+        "const foo = ((await promise)).property",
         // These await expression need parenthesized, but rarely used
         "new (await promiseReturnsAClass)",
         "(await promiseReturnsAFunction)()",
@@ -193,6 +201,7 @@ fn test() {
         ("const foo: Type = (await promise)[0]", "const foo: Type = (await promise)[0]"),
         ("const a = (await b())?.a", "const a = (await b())?.a"),
         ("const a = (await b())?.[0]", "const a = (await b())?.[0]"),
+        ("const a = (await b())[(await key)]", "const a = (await b())[(await key)]"),
     ];
 
     Tester::new(NoAwaitExpressionMember::NAME, NoAwaitExpressionMember::PLUGIN, pass, fail)

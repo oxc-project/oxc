@@ -64,7 +64,13 @@ declare_oxc_lint!(
 
 impl Rule for PreferAsConst {
     fn run<'a>(&self, node: &AstNode<'a>, ctx: &LintContext<'a>) {
-        match node.kind() {
+        let AstKind::TSLiteralType(_) = node.kind() else { return };
+        let parent = ctx.nodes().parent_node(node.id());
+        let owner = match parent.kind() {
+            AstKind::TSTypeAnnotation(_) => ctx.nodes().parent_kind(parent.id()),
+            kind => kind,
+        };
+        match owner {
             AstKind::VariableDeclarator(variable_declarator) => {
                 let Some(type_annotation) = &variable_declarator.type_annotation else {
                     return;
@@ -189,6 +195,10 @@ fn test() {
         "let foo: 2 = 3;",
         "let foo = 'bar';",
         "let foo: 'bar';",
+        "let foo: 'bar' | 'baz' = 'bar';",
+        "let foo = 'bar' as ('bar' | 'baz');",
+        "function foo(value: 'bar' = 'bar') {}",
+        "class Foo { accessor value: 'bar' = 'bar'; }",
         "let foo = { bar };",
         "let foo: 'baz' = 'baz' as const;",
         "
@@ -307,6 +317,7 @@ fn test() {
     ];
 
     let fix = vec![
+        ("let a: 'a' = 'a', b: 'b' = 'b';", "let a = 'a' as const, b = 'b' as const;"),
         ("let foo = { bar: 'baz' as 'baz' };", "let foo = { bar: 'baz' as const };"),
         ("let foo = { bar: 1 as 1 };", "let foo = { bar: 1 as const };"),
         ("let foo: 'bar' = 'bar' as 'bar';", "let foo: 'bar' = 'bar' as const;"),

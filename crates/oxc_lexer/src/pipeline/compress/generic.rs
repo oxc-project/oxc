@@ -1,11 +1,11 @@
 use oxc_span::Span;
 
-use crate::{
-    lanes::Lanes,
-    token::{is_trivia_byte, matches_tk, tk},
-};
+use crate::token::{is_trivia_byte, matches_tk, tk};
 
-use crate::pipeline::chunk::{eqm, load64};
+use crate::pipeline::{
+    chunk::{eqm, load64},
+    lanes::Lanes,
+};
 
 use super::common::{emit_value, invalid_diags};
 

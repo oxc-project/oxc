@@ -2,7 +2,6 @@ use std::{ptr, slice};
 
 use crate::{
     error::DiagCode,
-    lanes::Lanes,
     token::{TokenKind, tk},
 };
 
@@ -11,6 +10,7 @@ use crate::pipeline::{
     bytes::{is_digit, is_word, is_ws},
     cpu::{Cpu, apply, cpu_select, cpu_versions},
     disambiguate::{gt_run_split, lt_run_split},
+    lanes::Lanes,
     operators::{is_op_char, opmap_longest, opmap_pack2, opmap_pack3},
     scan::scan_number,
     token_view,

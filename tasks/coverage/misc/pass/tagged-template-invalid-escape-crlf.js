@@ -1,0 +1,10 @@
+function tag(strings) {
+  return strings;
+}
+
+tag`\xZ
+`;
+tag`head\xZ
+${0}middle\u{}
+${1}tail\8
+`;

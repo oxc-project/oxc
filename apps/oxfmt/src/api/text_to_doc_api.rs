@@ -11,8 +11,7 @@ use oxc_span::SourceType;
 
 use crate::{
     core::{
-        ExternalServices, JsFormatEmbeddedCb, JsFormatEmbeddedDocCb, JsFormatFileCb,
-        JsSortTailwindClassesCb,
+        ExternalServices, JsFormatEmbeddedDocCb, JsFormatFileCb, JsSortTailwindClassesCb,
         embed::{self, dispatcher::ResolvedDispatchConfig},
         options::{ValidatedOptions, to_oxc_formatter, validate},
         oxfmtrc::FormatConfig,
@@ -50,7 +49,6 @@ pub fn run(
     oxfmt_plugin_options_json: &str,
     parent_context: &str,
     format_file_cb: JsFormatFileCb,
-    format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<String> {
@@ -88,7 +86,6 @@ pub fn run(
             source_text,
             oxfmt_plugin_options_json,
             format_file_cb,
-            format_embedded_cb,
             format_embedded_doc_cb,
             sort_tailwind_classes_cb,
         )?
@@ -116,7 +113,6 @@ fn run_full(
     source_text: &str,
     oxfmt_plugin_options_json: &str,
     format_file_cb: JsFormatFileCb,
-    format_embedded_cb: JsFormatEmbeddedCb,
     format_embedded_doc_cb: JsFormatEmbeddedDocCb,
     sort_tailwind_classes_cb: JsSortTailwindClassesCb,
 ) -> Option<Value> {
@@ -124,12 +120,8 @@ fn run_full(
     // so no `cwd` is threaded through here.
     let (config, validated, parent_filepath) = parse_payload(oxfmt_plugin_options_json);
 
-    let external_services = ExternalServices::new(
-        format_file_cb,
-        format_embedded_cb,
-        format_embedded_doc_cb,
-        sort_tailwind_classes_cb,
-    );
+    let external_services =
+        ExternalServices::new(format_file_cb, format_embedded_doc_cb, sort_tailwind_classes_cb);
     let _cleanup = external_services.cleanup_guard();
 
     // Per-language options (and the Prettier options JSON with the Tailwind payload)

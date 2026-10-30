@@ -17,6 +17,7 @@ use oxc_cfg::{
     IterationInstructionKind, ReturnInstructionKind,
 };
 use oxc_diagnostics::{Diagnostics, OxcDiagnostic};
+use oxc_ecmascript::IsSimpleParameterList;
 use oxc_span::{SourceType, Span};
 use oxc_str::Ident;
 use oxc_syntax::{
@@ -81,6 +82,8 @@ pub struct SemanticBuilder<'a> {
     pub(crate) current_scope_id: ScopeId,
     pub(crate) module_instance_state_cache: FxHashMap<Address, ModuleInstanceState>,
     current_reference_flags: ReferenceFlags,
+    /// Duplicate-binding exclusions for the parameter list currently being visited.
+    pub(crate) formal_parameter_excludes: SymbolFlags,
     /// Nesting depth of TypeScript ambient contexts.
     ambient_depth: u32,
     /// Symbols that have been hoisted out of a scope (e.g. `var` declarations hoisted to
@@ -149,6 +152,7 @@ impl<'a> SemanticBuilder<'a> {
             source_type: SourceType::default(),
             errors: RefCell::new(Diagnostics::new()),
             current_reference_flags: ReferenceFlags::empty(),
+            formal_parameter_excludes: SymbolFlags::FunctionScopedVariableExcludes,
             ambient_depth: 0,
             current_scope_id,
             module_instance_state_cache: FxHashMap::default(),
@@ -2283,6 +2287,25 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         self.leave_node(kind);
     }
 
+    fn visit_formal_parameters(&mut self, it: &FormalParameters<'a>) {
+        // Checking whether a list is simple scans its parameters. Do this once per
+        // list, rather than once per parameter when binding each name.
+        let mut excludes = SymbolFlags::FunctionScopedVariableExcludes;
+        if matches!(
+            it.kind,
+            FormalParameterKind::ArrowFormalParameters
+                | FormalParameterKind::UniqueFormalParameters
+        ) || self.strict_mode()
+            || !it.is_simple_parameter_list()
+        {
+            excludes |= SymbolFlags::FunctionScopedVariable;
+        }
+        let previous = mem::replace(&mut self.formal_parameter_excludes, excludes);
+        oxc_ast_visit::walk::walk_formal_parameters(self, it);
+        // Default values and type annotations can contain nested parameter lists.
+        self.formal_parameter_excludes = previous;
+    }
+
     fn visit_update_expression(&mut self, it: &UpdateExpression<'a>) {
         let kind = AstKind::UpdateExpression(self.alloc(it));
         self.enter_node(kind);
@@ -2916,6 +2939,18 @@ impl<'a> Visit<'a> for SemanticBuilder<'a> {
         if let Some(type_arguments) = &implements.type_arguments {
             self.visit_ts_type_parameter_instantiation(type_arguments);
         }
+        self.leave_node(kind);
+    }
+
+    fn visit_ts_type_assertion(&mut self, it: &TSTypeAssertion<'a>) {
+        let kind = AstKind::TSTypeAssertion(self.alloc(it));
+        self.enter_node(kind);
+        self.visit_span(&it.span);
+        // The type annotation must not consume the asserted expression's reference flags.
+        let reference_flags = mem::take(&mut self.current_reference_flags);
+        self.visit_ts_type(&it.type_annotation);
+        self.current_reference_flags = reference_flags;
+        self.visit_expression(&it.expression);
         self.leave_node(kind);
     }
 

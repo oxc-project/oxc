@@ -76,12 +76,12 @@ expression: snapshot
 
 # too_large_number_in_braced_quantifier
 
-  × Invalid regular expression: Number is too large in decimal digits
-   ╭─[/x{99999999999999999999999999999999999999999999999999}/:1:4]
+  × Invalid regular expression: Number is too large in braced quantifier
+   ╭─[/x{99999999999999999999999999999999999999999999999999}/:1:3]
  1 │ /x{99999999999999999999999999999999999999999999999999}/
-   ·    ───────────────────
+   ·   ────────────────────────────────────────────────────
    ╰────
-  help: The number exceeds the maximum allowed value
+  help: Use a smaller number in the quantifier
 
 # braced_quantifier_out_of_order
 
@@ -283,12 +283,12 @@ expression: snapshot
 
 # invalid_extended_atom_escape
 
-  × Invalid regular expression: Could not parse the entire pattern
-   ╭─[/\c0/u:1:3]
+  × Invalid regular expression: Invalid escape sequence
+   ╭─[/\c0/u:1:2]
  1 │ /\c0/u
-   ·   ▲
+   ·  ─
    ╰────
-  help: Check for unbalanced brackets or invalid escape sequences
+  help: Use a valid escape sequence or escape the backslash with `\\`
 
 # duplicated_modifiers
 

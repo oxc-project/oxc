@@ -1,11 +1,11 @@
 use std::path::Path;
 
 use oxc_allocator::Allocator;
-use oxc_formatter_json::{JsonFormatOptions, JsonVariant, format, parse_for_format};
-use oxc_formatter_tests::{FixtureFormatter, OptionSet, build_fixture_snapshot};
-
-mod options;
-use options::apply_json_options;
+use oxc_formatter_json::{
+    ArrayExpand, ArrayLinePattern, BracketSpacing, Expand, JsonFormatOptions, JsonVariant,
+    QuoteProps, TrailingCommas, format, parse_for_format,
+};
+use oxc_formatter_tests::{FixtureFormatter, OptionValue, build_fixture_snapshot};
 
 struct JsonHarness;
 
@@ -19,10 +19,90 @@ impl FixtureFormatter for JsonHarness {
     type Options = JsonFormatOptions;
     type Fingerprint = Fingerprint;
 
-    fn parse_options(json: &OptionSet) -> Self::Options {
-        let mut options = JsonFormatOptions::default();
-        apply_json_options(&mut options, json);
-        options
+    fn apply_option(options: &mut Self::Options, key: &str, value: &OptionValue) -> bool {
+        match key {
+            // Fixture-only key, Prettier has no `variant` option
+            "variant" => {
+                if let Some(s) = value.as_str() {
+                    options.variant = match s {
+                        "json" => JsonVariant::Json,
+                        "jsonc" => JsonVariant::Jsonc,
+                        "json5" => JsonVariant::Json5,
+                        "json-stringify" => JsonVariant::JsonStringify,
+                        _ => options.variant,
+                    };
+                }
+            }
+            "trailingComma" => {
+                if let Some(s) = value.as_str() {
+                    // Translate Prettier's vocabulary into JSON's neutral two states here,
+                    // in the harness, the JSON type itself knows no "es5".
+                    options.trailing_commas = match s {
+                        "all" | "es5" => TrailingCommas::Always,
+                        "none" => TrailingCommas::Never,
+                        _ => options.trailing_commas,
+                    };
+                }
+            }
+            "bracketSpacing" => {
+                if let Some(b) = value.as_bool() {
+                    options.bracket_spacing = BracketSpacing::from(b);
+                }
+            }
+            "singleQuote" => {
+                if let Some(b) = value.as_bool() {
+                    options.single_quote = b.into();
+                }
+            }
+            "quoteProps" => {
+                if let Some(s) = value.as_str() {
+                    options.quote_props = match s {
+                        "preserve" => QuoteProps::Preserve,
+                        "consistent" => QuoteProps::Consistent,
+                        _ => QuoteProps::AsNeeded,
+                    };
+                }
+            }
+            "objectWrap" => {
+                if let Some(s) = value.as_str() {
+                    options.expand = match s {
+                        "preserve" => Expand::Auto,
+                        "collapse" => Expand::Never,
+                        _ => options.expand,
+                    };
+                }
+            }
+            // NOTE: Not a Prettier option
+            "arrayWrap" => {
+                if let Some(s) = value.as_str() {
+                    options.array_expand = match s {
+                        "auto" => ArrayExpand::Auto,
+                        "preserve" => ArrayExpand::Preserve,
+                        "collapse" => ArrayExpand::Never,
+                        _ => options.array_expand,
+                    };
+                } else if let Some(object) = value.as_object() {
+                    options.array_expand = object
+                        .get("wrapThreshold")
+                        .and_then(OptionValue::as_u64)
+                        .and_then(|threshold| u32::try_from(threshold).ok())
+                        .map_or(ArrayExpand::Preserve, ArrayExpand::ForceAboveThreshold);
+                    options.array_line_pattern = object
+                        .get("linePattern")
+                        .and_then(OptionValue::as_str)
+                        .and_then(|pattern| {
+                            pattern
+                                .split_whitespace()
+                                .map(str::parse)
+                                .collect::<Result<_, _>>()
+                                .ok()
+                        })
+                        .and_then(ArrayLinePattern::new);
+                }
+            }
+            _ => return false,
+        }
+        true
     }
 
     fn format(source: &str, _path: &Path, options: &Self::Options) -> String {
@@ -69,7 +149,10 @@ fn invalid_json_is_err() {
         // Unary other than `+` / `-` before a number, `Infinity` or `NaN`
         for source in ["!true", "typeof Infinity", "-true", "-undefined", "-(-1)", "+ +1"] {
             let allocator = Allocator::default();
-            assert!(format(&allocator, source, options.clone()).is_err(), "{variant:?}: {source:?}");
+            assert!(
+                format(&allocator, source, options.clone()).is_err(),
+                "{variant:?}: {source:?}"
+            );
         }
     }
 }

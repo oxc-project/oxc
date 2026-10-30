@@ -50,14 +50,14 @@ async function loadPrettier(): Promise<typeof import("prettier")> {
     // there should be no side effects on other calls that don't set these fields.
     // @ts-expect-error: Use internal API
     const { formatOptionsHiddenDefaults } = prettier.__internal;
-    // For every embedded call (html-in-js, xxx-in-md), as Prettier's `textToDoc()` always sets it.
+    // For every embedded call (angular-in-js, xxx-in-md), as Prettier's `textToDoc()` always sets it.
     // For html-family children, this prevents attribute level formatting from running.
     // (e.g., CSS in `style="..."` attributes, JS in `onclick="..."` event handlers)
     // This does NOT affect `<style>`/`<script>` tags, they are always formatted.
     // Ideally we'd only block JS attributes while allowing CSS attributes (because no nesting is possible in CSS),
     // but Prettier's `!options.parentParser` check is all-or-nothing.
     formatOptionsHiddenDefaults.parentParser = null;
-    // For html(angular)-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
+    // For angular-in-js: Capture `htmlHasMultipleRootElements` from the HTML AST root during `__debug.printToDoc()`.
     // This is used to decide whether to wrap content with `indent`.
     // Without this, we'd need either:
     // - double parse AST
@@ -129,35 +129,6 @@ function hasTsxScriptBlock(sourceText: string): boolean {
 
 // ---
 
-export type FormatEmbeddedCodeParam = {
-  code: string;
-  options: Options;
-};
-
-/**
- * Format non-js code snippets into formatted string.
- * Used for formatting code fences within JSDoc.
- *
- * @returns Formatted code snippet
- */
-export async function formatEmbeddedCode({
-  code,
-  options,
-}: FormatEmbeddedCodeParam): Promise<string> {
-  const prettier = CACHES.prettier ?? (await loadPrettier());
-
-  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
-  if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
-
-  // NOTE: This will throw if:
-  // - Specified parser is not available
-  // - Or, code has syntax errors
-  // In such cases, Rust side will fallback to original code
-  return prettier.format(code, options);
-}
-
-// ---
-
 export type FormatEmbeddedDocParam = {
   code: string;
   options: Options;
@@ -180,7 +151,7 @@ export async function formatEmbeddedDoc({
   if ("_useSveltePlugin" in options) await setupSveltePlugin(options);
   // Add `astro` parser for ` ```astro ` code blocks in Markdown
   if ("_useAstroPlugin" in options) await setupAstroPlugin(options);
-  // Enable Tailwind CSS plugin for embedded code (e.g., html`...` in JS) if needed
+  // Enable Tailwind CSS plugin for embedded code (e.g., Angular `@Component({ template })` in JS) if needed
   if ("_useTailwindPlugin" in options) await setupTailwindPlugin(options);
 
   const metadata: Record<string, unknown> = {};
@@ -189,8 +160,8 @@ export async function formatEmbeddedDoc({
   // see the comment in `loadPrettier()` for rationale. Any truthy value works
   options.parentParser = "OXFMT";
 
-  // html(angular)-in-js specific options
-  if (options.parser === "html" || options.parser === "angular") {
+  // angular-in-js specific options
+  if (options.parser === "angular") {
     // https://github.com/prettier/prettier/blob/90983f40dce5e20beea4e5618b5e0426a6a7f4f0/src/language-js/embed/html.js#L42-L44
     options.__onHtmlRoot = (root: { children?: unknown[] }) =>
       (metadata.htmlHasMultipleRootElements = (root.children?.length ?? 0) > 1);
