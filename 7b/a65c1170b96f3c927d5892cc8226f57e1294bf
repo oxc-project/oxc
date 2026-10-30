@@ -1,0 +1,19 @@
+crates/oxc_formatter_markdown/src/print/parts.rs
+  s_d0c1383d2a4ca2::t_ba9e99f180481b 191-192,200-203,205-206,210,213-220,230-269
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7ba65c1170b96f3c927d5892cc8226f57e1294bf",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+crates/oxc_parser/src/lib.rs
+  s_aa2b8ec570ef89::t_5d793e9f25aece 884-888
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d5e0a8f9c04f7d65db52a11b9530fb8be7e97ca0",
+  "prompts": {},
+  "sessions": {
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

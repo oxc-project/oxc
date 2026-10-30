@@ -1,0 +1,20 @@
+crates/oxc_parser/src/ts/types.rs
+  s_aa2b8ec570ef89::t_fdf76dae5d13b7 925-928
+  s_aa2b8ec570ef89::t_bca39f1f6cab21 925-928
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "3098aa719c7549a655235e67467d14608d6025df",
+  "prompts": {},
+  "sessions": {
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

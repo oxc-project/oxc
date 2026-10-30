@@ -1,0 +1,19 @@
+tasks/track_memory_allocations/allocs_formatter.yaml
+  s_d0c1383d2a4ca2::t_719eb05671afe0 8,10,19,21,36,38,41,43,47,49,52,54,63,74-76
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "5a608e4c57aa46b2848e5a414b78075f4f5f8a7b",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

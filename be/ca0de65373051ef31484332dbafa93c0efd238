@@ -1,0 +1,21 @@
+crates/oxc_formatter/src/print/member_expression.rs
+  s_d0c1383d2a4ca2::t_2eb5030a0beea0 3,7,10,30-31,38-40,45-47,52,59-70,76-86,90,112,119-179
+crates/oxc_formatter/src/print/mod.rs
+  s_d0c1383d2a4ca2::t_dcae05b16036e4 338-342,358-390,1410-1429,1435-1488,1515-1524
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "beca0de65373051ef31484332dbafa93c0efd238",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

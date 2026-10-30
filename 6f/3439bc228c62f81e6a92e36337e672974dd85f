@@ -1,0 +1,21 @@
+crates/oxc_formatter_core/src/printer/queue.rs
+  s_d0c1383d2a4ca2::t_07e6103def1551 77-100
+crates/oxc_formatter_core/src/printer/mod.rs
+  s_d0c1383d2a4ca2::t_722c4c0082c727 712-739,1214,1232-1237,1287,1299-1300
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "6f3439bc228c62f81e6a92e36337e672974dd85f",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

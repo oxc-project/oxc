@@ -1,0 +1,19 @@
+crates/oxc_formatter/src/print/call_like_expression/arguments.rs
+  s_d0c1383d2a4ca2::t_f85150a4e32371 148,167-169,171
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "be1b4c2d7602152112d7c849aff14fe8f5ce66bb",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

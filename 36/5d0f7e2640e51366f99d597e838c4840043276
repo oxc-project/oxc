@@ -1,0 +1,53 @@
+tasks/coverage/misc/fail/jsx-html-comment-after-text.jsx
+  s_aa2b8ec570ef89::t_393049e2452ee2 1-8
+tasks/coverage/misc/pass/jsx-text-followed-by-child.jsx
+  s_aa2b8ec570ef89::t_5b680d2f2afc37 1-8
+tasks/coverage/snapshots/lexer_misc.snap
+  s_aa2b8ec570ef89::t_87afa4784f3b75 2-3
+tasks/coverage/snapshots/parser_misc.snap
+  s_aa2b8ec570ef89::t_b81aa0d533d7a6 2-4,1212-1219
+tasks/coverage/snapshots/parser_typescript.snap
+  s_aa2b8ec570ef89::t_773dc45b6ff3f8 5207,5210
+crates/oxc_parser/src/jsx/mod.rs
+  s_3c53aabecc8cb0::t_3d2bc7b52ba843 535-537
+tasks/coverage/snapshots/codegen_misc.snap
+  s_df695876789e9f::t_b56080b67fd0d8 2-3
+tasks/coverage/snapshots/formatter_misc.snap
+  s_df695876789e9f::t_b8caae899bb702 2-3
+tasks/coverage/snapshots/semantic_misc.snap
+  s_df695876789e9f::t_361aca1b3194e7 2-3
+tasks/coverage/snapshots/transformer_misc.snap
+  s_df695876789e9f::t_7d6143802ee0fd 2-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "365d0f7e2640e51366f99d597e838c4840043276",
+  "prompts": {},
+  "sessions": {
+    "s_3c53aabecc8cb0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aa4dd340c2c2fc7c3",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    },
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    },
+    "s_df695876789e9f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a040f879251f31e63",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

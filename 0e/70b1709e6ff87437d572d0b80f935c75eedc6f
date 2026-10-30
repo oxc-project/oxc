@@ -1,0 +1,23 @@
+crates/oxc_parser/src/js/class.rs
+  s_aa2b8ec570ef89::t_8f9c05cf0b2320 759,763
+  s_aa2b8ec570ef89::t_5be750eb415217 759,763
+crates/oxc_parser/src/js/function.rs
+  s_aa2b8ec570ef89::t_c9be108032b13a 62-70
+  s_aa2b8ec570ef89::t_1e6bbd52f0eebe 62-70
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0e70b1709e6ff87437d572d0b80f935c75eedc6f",
+  "prompts": {},
+  "sessions": {
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

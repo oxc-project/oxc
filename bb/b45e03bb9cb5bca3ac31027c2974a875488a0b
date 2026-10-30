@@ -1,0 +1,33 @@
+crates/oxc_parser/src/js/expression.rs
+  s_aa2b8ec570ef89::t_6c2361636aeb4c 444-445,447
+crates/oxc_parser/src/ts/types.rs
+  s_aa2b8ec570ef89::t_c272afc286199b 925-928
+  s_aa2b8ec570ef89::t_fdf76dae5d13b7 925-928
+  s_aa2b8ec570ef89::t_bca39f1f6cab21 925-928
+tasks/coverage/misc/fail/regexp-after-html-comment-in-module.mjs
+  s_aa2b8ec570ef89::t_ca09f38d0a5e33 1-2
+tasks/coverage/misc/fail/regexp-after-prior-lexer-error.js
+  s_aa2b8ec570ef89::t_cf6b146d93e137 1-2
+tasks/coverage/misc/fail/shift-left-after-prior-lexer-error.ts
+  s_aa2b8ec570ef89::t_cd8a464bdba34e 1-3
+tasks/coverage/snapshots/lexer_misc.snap
+  s_aa2b8ec570ef89::t_047ffadee5940e 2-3
+tasks/coverage/snapshots/parser_misc.snap
+  s_aa2b8ec570ef89::t_65a3fd0e2330b6 4,5100-5113,5160-5166
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "bbb45e03bb9cb5bca3ac31027c2974a875488a0b",
+  "prompts": {},
+  "sessions": {
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

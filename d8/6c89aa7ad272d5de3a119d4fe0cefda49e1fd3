@@ -1,0 +1,21 @@
+.gitattributes
+  s_c10534189063e4::t_7d51f332ce177f 11
+crates/oxc_formatter_htmlish/DIVERGENCES.md
+  s_c10534189063e4::t_65001e56021300 308
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "d86c89aa7ad272d5de3a119d4fe0cefda49e1fd3",
+  "prompts": {},
+  "sessions": {
+    "s_c10534189063e4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a2fa3878-120a-46e1-bf4a-d4fd0a21bd79",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

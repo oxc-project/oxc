@@ -1,0 +1,35 @@
+tasks/coverage/snapshots/formatter_misc.snap
+  s_d0c1383d2a4ca2::t_d7b43bd25a0115 2-3
+tasks/coverage/snapshots/semantic_misc.snap
+  s_d0c1383d2a4ca2::t_2a36358bc6afdb 2-3
+tasks/coverage/snapshots/transformer_misc.snap
+  s_565b8dca35de67::t_218ca0b1fcef38 2-3
+tasks/coverage/snapshots/codegen_misc.snap
+  s_d0c1383d2a4ca2::t_85ff1a19610efc 2-3
+tasks/coverage/snapshots/parser_misc.snap
+  s_d0c1383d2a4ca2::t_98f47244dcdb74 2-3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "cc8c676e493db1efd1d2fbcc9449fdc7ac9046e3",
+  "prompts": {},
+  "sessions": {
+    "s_565b8dca35de67": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b75730f3-3627-457b-a6c0-5728820f93ae",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    },
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

@@ -1,0 +1,59 @@
+crates/oxc_formatter_core/src/printer/mod.rs
+  s_d0c1383d2a4ca2::t_a9ecde5fc2fbb8 1260-1263,1281-1286,1288-1298,1301-1302
+crates/oxc_formatter_graphql/src/print/common.rs
+  s_d0c1383d2a4ca2::t_f34ed8ccd2dc19 16,34-94,184-189,260-263,291-301,311-316,343-349,376-384,402-408
+crates/oxc_formatter_graphql/src/print/definition.rs
+  s_d0c1383d2a4ca2::t_7419c298269b3f 46,56,66,76,357,478-498
+crates/oxc_formatter_graphql/src/print/selection.rs
+  s_d0c1383d2a4ca2::t_52c979863a3070 4,9-11,57-76,79-86,100-107
+crates/oxc_formatter_graphql/src/print/string.rs
+  s_d0c1383d2a4ca2::t_e1b2d1d8bb03ac 23,25-28,30-32,37-50,157,159
+crates/oxc_formatter_graphql/src/print/value.rs
+  s_d0c1383d2a4ca2::t_4adbcaa64423bb 11,37-51,90-93
+crates/oxc_formatter_json/src/print/array.rs
+  s_d0c1383d2a4ca2::t_eab883b93c1834 15,23,78
+crates/oxc_formatter_json/src/print/literal.rs
+  s_d0c1383d2a4ca2::t_346f55af60ddda 11-12,23-27,29-30,32-44,48-88,115-120
+crates/oxc_formatter_json/src/print/mod.rs
+  s_d0c1383d2a4ca2::t_2ddf569c4ebe77 2-4,39-107
+crates/oxc_formatter_json/src/print/object.rs
+  s_d0c1383d2a4ca2::t_ea5c666c662aec 6,10,25-27,36,65-66,68-71,126-128,148,150,164,168,181,187-189,202,204,216
+crates/oxc_formatter_json/src/print/stringify.rs
+  s_d0c1383d2a4ca2::t_36fffb2a69f8e4 16,19,22,25-27,79,83,89-90,102,108-109,125,131-142,154-157,159-160,175
+crates/oxc_formatter_json/src/separated.rs
+  s_d0c1383d2a4ca2::t_4c0c21535ae416 9,17,130,173-193
+crates/oxc_formatter_yaml/src/print/block.rs
+  s_d0c1383d2a4ca2::t_401a0d3e581055 102-134,136-142
+crates/oxc_formatter_yaml/src/print/mapping_item.rs
+  s_d0c1383d2a4ca2::t_c41c95f3f521c8 4-5,20,93-96,184-187,242,287,302-310,325,343-360,406-431
+crates/oxc_formatter_yaml/src/print/mod.rs
+  s_d0c1383d2a4ca2::t_768778ebba1a43 6,122-144
+crates/oxc_formatter_yaml/src/print/scalar.rs
+  s_d0c1383d2a4ca2::t_9e07748b8c93c1 33-56,58-69,80-86,88,90-92,94-108,110-112,114-118
+crates/oxc_formatter_markdown/src/print/inline.rs
+  s_d0c1383d2a4ca2::t_7994541d9fcfa6 82,388
+crates/oxc_formatter_markdown/src/print/link.rs
+  s_d0c1383d2a4ca2::t_ac93e80ca91641 118
+crates/oxc_formatter_markdown/src/print/list.rs
+  s_d0c1383d2a4ca2::t_835f40c6964eae 105-107,152-156
+crates/oxc_formatter_markdown/src/print/parts.rs
+  s_d0c1383d2a4ca2::t_b0f219f1633eb8 72-73,92-93,123-130,173-177,199-219
+crates/oxc_formatter_markdown/src/print/text.rs
+  s_d0c1383d2a4ca2::t_ee7455de4c9933 133,135,179-180,183,189,193,240,244-249
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "ed273e691ec0a3d8b6d205dea5b691e2f812831f",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

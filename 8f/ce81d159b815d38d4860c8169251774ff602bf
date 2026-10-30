@@ -1,0 +1,35 @@
+crates/oxc_formatter/src/print/array_expression.rs
+  s_d0c1383d2a4ca2::t_cdbd4c0d1724ef 26-32,35
+crates/oxc_formatter/src/print/call_like_expression/arguments.rs
+  s_d0c1383d2a4ca2::t_aa945bb1e53206 46-50,56
+crates/oxc_formatter/src/print/function.rs
+  s_d0c1383d2a4ca2::t_bf439db599ba2c 55-58
+crates/oxc_formatter/src/print/mod.rs
+  s_d0c1383d2a4ca2::t_a1657dcca6b3e9 107-108,728,782,876,900,932,982,1024,1035,1046,1076
+crates/oxc_formatter/src/print/object_like.rs
+  s_d0c1383d2a4ca2::t_9141617e6b60d5 89-95,98
+crates/oxc_formatter/src/print/parameters.rs
+  s_d0c1383d2a4ca2::t_e4deba583441fa 82-89
+crates/oxc_formatter/src/print/return_or_throw_statement.rs
+  s_d0c1383d2a4ca2::t_388e56afbd44cc 12-14,70-76,78,124-126
+crates/oxc_formatter/src/print/semicolon.rs
+  s_d0c1383d2a4ca2::t_3beb837ff2d820 35-49
+crates/oxc_formatter/src/print/switch_statement.rs
+  s_d0c1383d2a4ca2::t_40747de79556ab 42,44,79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "8fce81d159b815d38d4860c8169251774ff602bf",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

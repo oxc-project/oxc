@@ -1,0 +1,41 @@
+tasks/coverage/snapshots/lexer_misc.snap
+  s_aa2b8ec570ef89::t_047ffadee5940e 2-3
+crates/oxc_parser/src/js/expression.rs
+  s_aa2b8ec570ef89::t_6c2361636aeb4c 444-445,447
+tasks/coverage/snapshots/parser_misc.snap
+  s_aa2b8ec570ef89::t_65a3fd0e2330b6 4,5074-5080,5107-5113,5160-5173
+tasks/coverage/misc/fail/shift-left-after-prior-lexer-error.ts
+  s_aa2b8ec570ef89::t_cd8a464bdba34e 1-3
+tasks/coverage/misc/fail/regexp-after-prior-lexer-error.js
+  s_aa2b8ec570ef89::t_cf6b146d93e137 1-2
+tasks/coverage/misc/fail/parenthesized-type-after-prior-lexer-error.ts
+  s_aa2b8ec570ef89::t_5f3cdf7bcad19c 1-2
+tasks/coverage/misc/fail/speculation-at-eof-after-prior-lexer-error.ts
+  s_aa2b8ec570ef89::t_97297bcc8bd347 1-2
+crates/oxc_parser/src/error_handler.rs
+  s_aa2b8ec570ef89::t_de6f58f50e883d 19-20,26-29,32-33,35,37-40,97-98
+crates/oxc_parser/src/js/arrow.rs
+  s_aa2b8ec570ef89::t_75df0f3b5c4b50 364
+crates/oxc_parser/src/lexer/mod.rs
+  s_aa2b8ec570ef89::t_a9e9f5aef89d97 51,54,199,211
+crates/oxc_parser/src/lib.rs
+  s_aa2b8ec570ef89::t_27197b9ff4710a 720-723
+tasks/coverage/snapshots/parser_test262.snap
+  s_aa2b8ec570ef89::t_8b608338d82fad 2876-2895,2897-2902
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "0b38e57b6a14280d80e5d3b16a967afa8e5440ce",
+  "prompts": {},
+  "sessions": {
+    "s_aa2b8ec570ef89": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6d200169-b8f7-48d4-91bb-a289f0e19379",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}

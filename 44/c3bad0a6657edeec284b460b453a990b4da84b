@@ -1,0 +1,33 @@
+crates/oxc_formatter/src/formatter/prelude.rs
+  s_d0c1383d2a4ca2::t_3b959660bc4f1d 4-7
+crates/oxc_formatter/src/formatter/trivia.rs
+  s_d0c1383d2a4ca2::t_c608504d9d52f0 361-372
+crates/oxc_formatter/src/print/array_expression.rs
+  s_d0c1383d2a4ca2::t_3085fb9a6f2ddb 26-27,33-45,47-48,50-55
+crates/oxc_formatter/src/print/call_like_expression/arguments.rs
+  s_d0c1383d2a4ca2::t_2e04909c263c11 16,46-47
+crates/oxc_formatter/src/print/object_like.rs
+  s_d0c1383d2a4ca2::t_5c5a469268f39c 11,87-91,95-96,99-117,119
+crates/oxc_formatter/src/print/parameters.rs
+  s_d0c1383d2a4ca2::t_da0ee802219cfb 47-53,67,304
+crates/oxc_formatter/src/print/mod.rs
+  s_d0c1383d2a4ca2::t_3602cb365bf742 935
+crates/oxc_formatter/src/print/return_or_throw_statement.rs
+  s_d0c1383d2a4ca2::t_6a7bd9809f50dc 70-71,104-107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "44c3bad0a6657edeec284b460b453a990b4da84b",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "unknown"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
