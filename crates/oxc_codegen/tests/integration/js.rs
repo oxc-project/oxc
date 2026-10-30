@@ -793,6 +793,78 @@ fn big_int() {
     test_minify("function a() { return 1n }", "function a(){return 1n}");
 }
 
+#[test]
+fn preserve_numeric_literals() {
+    for minify in [false, true] {
+        let options =
+            CodegenOptions { minify, preserve_numeric_literals: true, ..CodegenOptions::default() };
+        for literal in [
+            "5000",
+            "1_000",
+            "0xCA_FE",
+            "0b1010_0000",
+            "0o7_000",
+            "1E3",
+            "1e+3",
+            "0.000_001",
+            ".50",
+            "5.",
+            "-5000",
+            "-0",
+            "1e999",
+        ] {
+            let source = format!("{literal};");
+            let expected = if minify { source.clone() } else { format!("{source}\n") };
+            test_options(&source, &expected, options.clone());
+            crate::test_idempotency_options(&source, &options);
+        }
+
+        for (literal, expected) in [
+            ("5000", "5000 .toString();"),
+            ("1_000", "1_000 .toString();"),
+            ("0xCA_FE", "0xCA_FE.toString();"),
+            ("0b1010_0000", "0b1010_0000.toString();"),
+            ("0o7_000", "0o7_000.toString();"),
+            ("1E3", "1E3.toString();"),
+            (".50", ".50.toString();"),
+            ("5.", "5..toString();"),
+            ("-5000", "(-5000).toString();"),
+        ] {
+            let source = format!("({literal}).toString();");
+            let expected = if minify { expected.to_string() } else { format!("{expected}\n") };
+            test_options(&source, &expected, options.clone());
+            crate::test_idempotency_options(&source, &options);
+        }
+
+        test_options(
+            "function f() { return 5000; }",
+            if minify {
+                "function f(){return 5000}"
+            } else {
+                "function f() {\n\treturn 5000;\n}\n"
+            },
+            options,
+        );
+    }
+
+    // Generated literals without raw text still use the normal number printer.
+    let allocator = Allocator::default();
+    let ast = AstBuilder::new(&allocator);
+    let literal = Expression::new_numeric_literal(
+        SPAN,
+        5000.0,
+        None,
+        oxc_syntax::number::NumberBase::Decimal,
+        &ast,
+    );
+    let mut codegen = Codegen::new().with_options(CodegenOptions {
+        preserve_numeric_literals: true,
+        ..CodegenOptions::default()
+    });
+    codegen.print_expression(&literal);
+    assert_eq!(codegen.into_source_text(), "5e3");
+}
+
 /// A negative `BigIntLiteral` never comes from the parser (`-1n` parses as a unary minus around `1n`),
 /// but the minifier creates one when it folds e.g. `~0n` to `-1n`.
 /// Its `-` must not run into a `-` printed before it, which would make `--`.
