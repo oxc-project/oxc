@@ -1135,12 +1135,11 @@ impl<'a> PatternParser<'a> {
         &mut self,
     ) -> Result<(ast::CharacterClassContentsKind, ArenaVec<'a, ast::CharacterClassContents<'a>>)>
     {
-        // ClassUnion :: ClassSetRange ClassUnion[opt]
-        if let Some(class_set_range) = self.parse_class_set_range()? {
-            return self.parse_class_set_union(class_set_range);
-        }
-
-        if let Some(class_set_operand) = self.parse_class_set_operand()? {
+        if let Some(class_set_operand) = self.parse_class_set_range_or_operand()? {
+            // A range can only start a union, not an intersection or subtraction.
+            if matches!(class_set_operand, ast::CharacterClassContents::CharacterClassRange(_)) {
+                return self.parse_class_set_union(class_set_operand);
+            }
             // ClassIntersection
             if self.reader.peek().as_ref().is_some_and(|&cp| cp == '&' as u32)
                 && self.reader.peek2().as_ref().is_some_and(|&cp| cp == '&' as u32)
@@ -1178,11 +1177,7 @@ impl<'a> PatternParser<'a> {
         body.push(class_set_range_or_class_set_operand);
 
         loop {
-            if let Some(class_set_range) = self.parse_class_set_range()? {
-                body.push(class_set_range);
-                continue;
-            }
-            if let Some(class_set_operand) = self.parse_class_set_operand()? {
+            if let Some(class_set_operand) = self.parse_class_set_range_or_operand()? {
                 body.push(class_set_operand);
                 continue;
             }
@@ -1274,34 +1269,45 @@ impl<'a> PatternParser<'a> {
     // ClassSetRange ::
     //   ClassSetCharacter - ClassSetCharacter
     // ```
-    fn parse_class_set_range(&mut self) -> Result<Option<ast::CharacterClassContents<'a>>> {
+    fn parse_class_set_range_or_operand(
+        &mut self,
+    ) -> Result<Option<ast::CharacterClassContents<'a>>> {
         let checkpoint = self.reader.checkpoint();
 
-        if let Some(class_set_character) = self.parse_class_set_character()?
-            && self.reader.eat('-')
-            && let Some(class_set_character_to) = self.parse_class_set_character()?
-        {
-            // [SS:EE] ClassSetRange :: ClassSetCharacter - ClassSetCharacter
-            // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
-            if class_set_character_to.value < class_set_character.value {
-                return Err(diagnostics::character_class_range_out_of_order(
-                    class_set_character.span.merge(class_set_character_to.span),
-                    "class set",
-                ));
+        if let Some(class_set_character) = self.parse_class_set_character()? {
+            if !self.reader.eat('-') {
+                return Ok(Some(ast::CharacterClassContents::Character(ArenaBox::new_in(
+                    class_set_character,
+                    self,
+                ))));
             }
 
-            return Ok(Some(ast::CharacterClassContents::CharacterClassRange(ArenaBox::new_in(
-                ast::CharacterClassRange {
-                    span: class_set_character.span.merge(class_set_character_to.span),
-                    min: class_set_character,
-                    max: class_set_character_to,
-                },
-                self,
-            ))));
+            if let Some(class_set_character_to) = self.parse_class_set_character()? {
+                // [SS:EE] ClassSetRange :: ClassSetCharacter - ClassSetCharacter
+                // It is a Syntax Error if the CharacterValue of the first ClassSetCharacter is strictly greater than the CharacterValue of the second ClassSetCharacter.
+                if class_set_character_to.value < class_set_character.value {
+                    return Err(diagnostics::character_class_range_out_of_order(
+                        class_set_character.span.merge(class_set_character_to.span),
+                        "class set",
+                    ));
+                }
+
+                return Ok(Some(ast::CharacterClassContents::CharacterClassRange(
+                    ArenaBox::new_in(
+                        ast::CharacterClassRange {
+                            span: class_set_character.span.merge(class_set_character_to.span),
+                            min: class_set_character,
+                            max: class_set_character_to,
+                        },
+                        self,
+                    ),
+                )));
+            }
         }
+        // Failed ranges retain the original operand parse and diagnostic order.
         self.reader.rewind(checkpoint);
 
-        Ok(None)
+        self.parse_class_set_operand()
     }
 
     // ```
