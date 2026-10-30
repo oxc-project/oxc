@@ -399,17 +399,23 @@ impl PartialEq for Ident<'_> {
 /// Overlapping unaligned loads compare up to 16 bytes inline, avoiding an out-of-line `memcmp` call.
 ///
 /// # SAFETY
-/// `a` and `b` must both be valid for reads of `len` bytes.
+/// `a` and `b` must both point to initialized bytes and be valid for reads of `len` bytes.
+/// `len` must not exceed `isize::MAX`.
 #[expect(clippy::inline_always)]
 #[inline(always)]
 unsafe fn bytes_eq(a: NonNull<u8>, b: NonNull<u8>, len: usize) -> bool {
     #[inline(always)]
-    unsafe fn load<T: Copy>(ptr: NonNull<u8>, offset: usize) -> T {
-        // SAFETY: Caller guarantees `offset + size_of::<T>()` bytes at `ptr` are readable.
+    unsafe fn load<T: Copy>(ptr: NonNull<u8>, offset: usize, len: usize) -> T {
+        debug_assert!(size_of::<T>() <= len && offset <= len - size_of::<T>());
+        // SAFETY: Caller guarantees `ptr` is readable for `len` bytes and the loaded bytes
+        // form an initialized, valid `T`. The load is within those bounds.
         unsafe { ptr.add(offset).cast::<T>().read_unaligned() }
     }
 
+    debug_assert!(isize::try_from(len).is_ok());
+
     // SAFETY: Every load reads within the first `len` bytes of `a` and `b`.
+    // All loads use unsigned integers, for which every initialized bit pattern is valid.
     unsafe {
         if len >= 8 {
             if len > 16 {
@@ -417,20 +423,20 @@ unsafe fn bytes_eq(a: NonNull<u8>, b: NonNull<u8>, len: usize) -> bool {
                     == slice::from_raw_parts(b.as_ptr(), len);
             }
             let last = len - 8;
-            let first_diff = load::<u64>(a, 0) ^ load::<u64>(b, 0);
-            let last_diff = load::<u64>(a, last) ^ load::<u64>(b, last);
+            let first_diff = load::<u64>(a, 0, len) ^ load::<u64>(b, 0, len);
+            let last_diff = load::<u64>(a, last, len) ^ load::<u64>(b, last, len);
             (first_diff | last_diff) == 0
         } else if len >= 4 {
             let last = len - 4;
-            let first_diff = load::<u32>(a, 0) ^ load::<u32>(b, 0);
-            let last_diff = load::<u32>(a, last) ^ load::<u32>(b, last);
+            let first_diff = load::<u32>(a, 0, len) ^ load::<u32>(b, 0, len);
+            let last_diff = load::<u32>(a, last, len) ^ load::<u32>(b, last, len);
             (first_diff | last_diff) == 0
         } else if len > 0 {
             let middle = len / 2;
             let last = len - 1;
-            load::<u8>(a, 0) == load::<u8>(b, 0)
-                && load::<u8>(a, middle) == load::<u8>(b, middle)
-                && load::<u8>(a, last) == load::<u8>(b, last)
+            load::<u8>(a, 0, len) == load::<u8>(b, 0, len)
+                && load::<u8>(a, middle, len) == load::<u8>(b, middle, len)
+                && load::<u8>(a, last, len) == load::<u8>(b, last, len)
         } else {
             true
         }
