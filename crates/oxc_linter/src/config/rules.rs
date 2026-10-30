@@ -197,7 +197,7 @@ impl OxlintRules {
                     }
                 } else {
                     // Plugin name is not a built-in plugin. If external plugins are enabled,
-                    // try to resolve it as an external JS plugin; otherwise ignore it.
+                    // try to resolve it as an external JS plugin; otherwise record it as skipped.
                     if external_plugin_store.is_enabled() {
                         match external_plugin_store.lookup_rule_id(plugin_name, rule_name) {
                             Ok(external_rule_id) => {
@@ -219,6 +219,8 @@ impl OxlintRules {
                                 }
                             }
                         }
+                    } else {
+                        external_plugin_store.record_ignored_rule(plugin_name, rule_name);
                     }
                 }
             }

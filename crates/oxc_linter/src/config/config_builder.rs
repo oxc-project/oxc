@@ -1800,6 +1800,47 @@ mod test {
         assert_eq!(err.to_string(), "Rule 'no-console-typo' not found in plugin 'eslint'");
     }
 
+    #[test]
+    fn test_disabled_external_plugin_store_records_skipped_rules() {
+        // Skipped plugin rules are recorded from the base config and overrides, once each.
+        let oxlintrc: Oxlintrc = serde_json::from_str(
+            r#"
+            {
+                "jsPlugins": ["./my-plugin.js"],
+                "rules": {
+                    "no-console": "error",
+                    "my-plugin/no-foo": "error"
+                },
+                "overrides": [
+                    {
+                        "files": ["*.test.js"],
+                        "rules": {
+                            "my-plugin/no-foo": "off",
+                            "my-plugin/no-bar": "error"
+                        }
+                    }
+                ]
+            }
+            "#,
+        )
+        .unwrap();
+
+        let mut external_plugin_store = ExternalPluginStore::new(false);
+        let config = ConfigStoreBuilder::from_oxlintrc(
+            true,
+            oxlintrc,
+            None,
+            &mut external_plugin_store,
+            None,
+        )
+        .unwrap()
+        .build(&mut external_plugin_store)
+        .unwrap();
+
+        assert_eq!(config.number_of_rules(), 1);
+        assert_eq!(external_plugin_store.ignored_rules(), ["my-plugin/no-foo", "my-plugin/no-bar"]);
+    }
+
     fn config_store_from_path(path: &str) -> Config {
         let mut external_plugin_store = ExternalPluginStore::default();
         ConfigStoreBuilder::from_oxlintrc(
