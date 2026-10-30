@@ -1,6 +1,7 @@
 import { setCwd } from "./context.ts";
 import { setRegisteredPluginNames, setRegisteredRules } from "./load.ts";
 import { setAllOptions } from "./options.ts";
+import { resetSettingsCache } from "./settings.ts";
 import {
   workspaces,
   currentWorkspace,
@@ -28,6 +29,7 @@ export function switchWorkspace(workspaceUri: string): void {
   setRegisteredRules(workspace.rules);
   setRegisteredPluginNames(workspace.pluginNames);
   setAllOptions(workspace.allOptions);
+  resetSettingsCache();
 
   // Set this workspace as the current one
   setCurrentWorkspace(workspace, workspaceUri);
