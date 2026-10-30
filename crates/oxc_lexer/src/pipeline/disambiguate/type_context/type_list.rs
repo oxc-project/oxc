@@ -25,9 +25,9 @@ use super::bytes::{
 };
 
 #[apply(cpu_versions)]
-fn gt_follower(tokens: &Tokens, i: usize, _cpu: impl Cpu) -> bool {
+fn gt_follower(tokens: &Tokens, i: usize, cpu: impl Cpu) -> bool {
     let (src, n) = (tokens.src, tokens.n);
-    let (i, broke) = skip_trivia_nl(src, n, i);
+    let (i, broke) = skip_trivia_nl(src, n, i, cpu);
     if i >= n {
         return true;
     }
@@ -103,7 +103,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
         }
         // Text carve has not reached yet: a raw comment is trivia, a raw string or template is a
         // literal type.
-        let j = skip_raw_literal(src, kind, hi, w);
+        let j = skip_raw_literal(src, kind, hi, w, cpu);
         if j != w {
             let c0 = src[w];
             if c0 == b'/' {
@@ -164,7 +164,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
             start = if start {
                 type_prefix_kind(kk)
                     || (kk == tk!(KwAbstract)
-                        && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8), b"new"))
+                        && tokens.ident_is(skip_trivia_fwd(src, hi, w + 8, cpu), b"new"))
             } else {
                 matches_tk!(kk, KwExtends | KwIs | KwIn | KwAs)
             };
@@ -181,7 +181,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
             // text; its substitution `}` is still a punctuator. Read the literal as a whole then
             // (a template type), instead of its tail as tokens.
             if k == tk!(TemplateHead) {
-                let (close, end) = raw_template_end(src, hi, w);
+                let (close, end) = raw_template_end(src, hi, w, cpu);
                 if close < hi && tokens.base_kind(close) >= OP_KIND_BASE {
                     if end > hi {
                         return false;
@@ -303,7 +303,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
                         return false;
                     }
                     // An optional member, parameter or tuple element; else the ? of a conditional.
-                    let after = src[skip_trivia_fwd(src, hi, w + 1)];
+                    let after = src[skip_trivia_fwd(src, hi, w + 1, cpu)];
                     let optional = match open.last() {
                         Some(b'{') => true,
                         Some(b'(') => matches!(after, b':' | b',' | b')'),
@@ -330,7 +330,7 @@ fn type_list_legal(tokens: &Tokens, lo: usize, hi: usize, cpu: impl Cpu) -> bool
                 }
                 b'-' | b'+' => {
                     // A sign before a numeric literal, or a mapped type's readonly or ? modifier.
-                    let a = skip_trivia_fwd(src, hi, w + 1);
+                    let a = skip_trivia_fwd(src, hi, w + 1, cpu);
                     let number = c == b'-' && start && (is_digit(src[a]) || src[a] == b'.');
                     let modifier = open.last() == Some(&b'{')
                         && (src[a] == b'?' || (start && tokens.ident_is(a, b"readonly")));
@@ -384,7 +384,7 @@ pub fn type_args_at(tokens: &Tokens, lt: usize, cpu: impl Cpu) -> bool {
     if let Some(yes) = closers.get(lt).and_then(|r| r.args) {
         return yes;
     }
-    let yes = list_closer(tokens, lt).is_some_and(|gt| list_is_type_args(tokens, lt, gt, cpu));
+    let yes = list_closer(tokens, lt, cpu).is_some_and(|gt| list_is_type_args(tokens, lt, gt, cpu));
     closers.set_args(lt, yes);
     yes
 }

@@ -176,7 +176,7 @@ pub unsafe fn coalesce(
                         &lanes.disambiguate.brackets,
                         &lanes.disambiguate.closers,
                     );
-                    if lt_run_split(&tokens, p) {
+                    if lt_run_split(&tokens, p, cpu) {
                         cursor = munch_walk(src, n, st, opch, kind, p + 2, cpu);
                         continue;
                     }
