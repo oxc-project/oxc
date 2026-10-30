@@ -6,6 +6,7 @@
 //!   plus blank-line preservation between entries.
 
 use oxc_formatter_core::{
+    FormatElement,
     builders::{empty_line, hard_line_break, if_group_breaks, soft_line_break_or_space, space},
     write,
 };
@@ -13,7 +14,7 @@ use oxc_span::Span;
 
 use crate::{
     comments::{FormatCommentBeforeContent, FormatLineCommentSuffix, count_newlines},
-    print::JsonFormatter,
+    print::{JsonFormatter, write_glued_token},
 };
 
 /// Whether a trailing `,` should follow the last entry.
@@ -126,7 +127,7 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
     let keep_blank = !prev_is_hole && !is_hole(curr, f);
 
     let Some(trailing_end) = trailing_comments_end(curr.start, f) else {
-        write!(f, ",");
+        write_comma_after(prev.end, f);
         write_break_after(prev.end, curr.start, keep_blank, f);
         return;
     };
@@ -167,6 +168,27 @@ fn write_inter_entry_separator(prev: Span, curr: Span, f: &mut JsonFormatter<'_,
     } else {
         write_break_after(trailing_end, curr.start, keep_blank, f);
     }
+}
+
+/// Writes the `,` right after an entry that ends at `entry_end`,
+/// merged into the entry's last element where that prints the same in one IR element less:
+/// - a closing bracket token becomes the static token with the comma (`},`)
+/// - a source-slice text extends over a glued comma, see [`write_glued_token`]
+pub fn write_comma_after(entry_end: u32, f: &mut JsonFormatter<'_, '_>) {
+    if let Some(FormatElement::Token { text: last }) = f.elements().last() {
+        let with_comma = match last.as_str() {
+            "}" => Some("},"),
+            "]" => Some("],"),
+            _ => None,
+        };
+        if let Some(with_comma) = with_comma {
+            let last = f.elements().len() - 1;
+            f.replace_end(last, &[]);
+            write!(f, with_comma);
+            return;
+        }
+    }
+    write_glued_token(entry_end, ",", f);
 }
 
 /// An array hole (`Elision`) spans exactly its own `,`,

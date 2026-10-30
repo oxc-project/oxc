@@ -1,5 +1,7 @@
 use oxc_ast::ast::{Expression, UnaryExpression};
-use oxc_formatter_core::{Format, Formatter, builders::FormatWith, builders::text, write};
+use oxc_formatter_core::{
+    Format, FormatElement, Formatter, builders::FormatWith, builders::text, write,
+};
 use oxc_span::{GetSpan, Span};
 
 use crate::{
@@ -32,6 +34,75 @@ impl<'a> Format<'a, JsonFormatContext<'a>> for &'static str {
 pub fn write_quoted_str<'a>(f: &mut JsonFormatter<'_, 'a>, quote_byte: u8, body: &'a str) {
     let quote = if quote_byte == b'\'' { "'" } else { "\"" };
     write!(f, [text(quote), text(body), text(quote)]);
+}
+
+/// Writes the `: ` that follows an object key.
+///
+/// `verbatim_key` is the span of a key that prints as its own source text and is not written yet.
+/// Where the source reads `<key>: `, the key and `: ` are written as one source slice,
+/// extended over `value` when it starts right after the `: ` (no comment in between)
+/// and also prints as its own source text. This saves IR elements, the printed text is the same.
+///
+/// Returns `true` if `value` has been written too.
+pub fn write_key_separator(
+    verbatim_key: Option<Span>,
+    value: &Expression<'_>,
+    f: &mut JsonFormatter<'_, '_>,
+) -> bool {
+    let Some(key_span) = verbatim_key else {
+        write!(f, ": ");
+        return false;
+    };
+    let source = f.context().source_text();
+    let colon_end = key_span.end + 2;
+    if source.as_str().as_bytes().get(key_span.end as usize..colon_end as usize) != Some(b": ") {
+        write!(f, [text(source.text_for(&key_span)), ": "]);
+        return false;
+    }
+    let value_span = value.span();
+    if value_span.start == colon_end && scalar_prints_verbatim(value, f) {
+        write!(f, text(source.slice_range(key_span.start, value_span.end)));
+        return true;
+    }
+    write!(f, text(source.slice_range(key_span.start, colon_end)));
+    false
+}
+
+/// Whether `value` is a scalar that both [`FmtJsonValue`] and [`FmtJsonStringifyValue`]
+/// print as its own source text (when no comment precedes it).
+fn scalar_prints_verbatim(value: &Expression<'_>, f: &JsonFormatter<'_, '_>) -> bool {
+    match value {
+        Expression::StringLiteral(lit) => literal::string_prints_verbatim(lit, f),
+        Expression::NumericLiteral(lit) => literal::number_prints_verbatim(lit),
+        // Keywords cannot contain escapes, their source is exactly `true` / `false`
+        Expression::BooleanLiteral(lit) => lit.span.size() == if lit.value { 4 } else { 5 },
+        Expression::NullLiteral(lit) => lit.span.size() == 4,
+        _ => false,
+    }
+}
+
+/// Writes the static `token`, which sits at `pos` in the source.
+///
+/// When the last written element is a text slicing the source up to `pos`
+/// and the source continues with `token` (`"a": {`, `"a": 1,`),
+/// the text is extended over the token instead: the same output in one IR element less.
+pub fn write_glued_token(pos: u32, token: &'static str, f: &mut JsonFormatter<'_, '_>) {
+    let source = f.context().source_text().as_str();
+    let pos = pos as usize;
+    if let Some(FormatElement::Text { text: last, .. }) = f.elements().last()
+        // Ending exactly at `pos` inside the source buffer, the text is that memory:
+        // no other allocation can end inside it.
+        && last.as_bytes().as_ptr_range().end == source.as_ptr().wrapping_add(pos)
+        && source.as_bytes().get(pos..).is_some_and(|rest| rest.starts_with(token.as_bytes()))
+        && let Some(start) = pos.checked_sub(last.len())
+        && let Some(extended) = source.get(start..pos + token.len())
+    {
+        let last = f.elements().len() - 1;
+        f.replace_end(last, &[]);
+        write!(f, text(extended));
+    } else {
+        write!(f, token);
+    }
 }
 
 /// Emulates JS `String(Number(s)) === s`: `true` when `s` parses as a finite `f64`
