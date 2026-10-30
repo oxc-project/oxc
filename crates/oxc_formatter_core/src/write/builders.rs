@@ -542,8 +542,8 @@ where
 /// inside `content` return to (Prettier's `markAsRoot`).
 ///
 /// Without an enclosing `mark_as_root`, the root is column 0.
-/// e.g. YAML block scalars wrap each line boundary in `mark_as_root(&literal_line_break())`
-/// so continuation lines keep the block's base indention.
+/// One `mark_as_root` covers every literal line break in a region whose indention doesn't change,
+/// e.g. a YAML block scalar wraps all its lines once so continuation lines keep the block's base indention.
 #[inline]
 pub fn mark_as_root<'ast, C, Content>(content: &Content) -> MarkAsRoot<'_, 'ast, C>
 where
