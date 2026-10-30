@@ -207,12 +207,6 @@ impl Group {
         }
     }
 
-    /// Expands an already written group, as `should_expand(true)` would have:
-    /// for a group whose expansion depends on its content, decided once the content is written.
-    pub fn expand(&self) {
-        self.mode.set(GroupMode::Expand);
-    }
-
     pub fn id(&self) -> Option<GroupId> {
         self.id
     }
