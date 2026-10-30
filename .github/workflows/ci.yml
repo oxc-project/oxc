@@ -374,6 +374,7 @@ jobs:
     name: Test NAPI Compiler (windows)
     runs-on: windows-latest
     if: ${{ github.ref_name == 'main' || github.event_name == 'workflow_dispatch' }}
+    # Keep steps sequential to avoid event.json locking: https://github.com/actions/runner/issues/4641
     steps:
       - run: git config --system core.longpaths true
       - uses: taiki-e/checkout-action@7d1e50e93dc4fb3bba58f85018fadf77898aee8b # v1.4.2
@@ -394,19 +395,18 @@ jobs:
             CARGO_HOME,{{ DEV_DRIVE }}/.cargo
             RUSTUP_HOME,{{ DEV_DRIVE }}/.rustup
       # Copy before installing: the Dev Drive action does not preserve pnpm 12 directory symlinks.
-      - parallel:
-          - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
-            if: steps.filter.outputs.changed == 'true'
-          - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              cache-key: napi
-              save-cache: ${{ github.ref_name == 'main' }}
-          - uses: $/.github/actions/clone-submodules
-            if: steps.filter.outputs.changed == 'true'
-            with:
-              babel: false
-              node-compat-table: false
+      - uses: oxc-project/setup-node@f46a72f95efdc55273fcd042d61c84e723b2892c # v1.4.1
+        if: steps.filter.outputs.changed == 'true'
+      - uses: oxc-project/setup-rust@3d6fb132fbe7cdcb66bf8ec193911c2945369d12 # v1.0.17
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          cache-key: napi
+          save-cache: ${{ github.ref_name == 'main' }}
+      - uses: $/.github/actions/clone-submodules
+        if: steps.filter.outputs.changed == 'true'
+        with:
+          babel: false
+          node-compat-table: false
       - name: Install dependencies on Dev Drive
         if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
@@ -437,19 +437,18 @@ jobs:
             test -f "$source"
             cp "$source" "$destination"
           done
-      - parallel:
-          - if: steps.filter.outputs.changed == 'true'
-            name: Run tests
-            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
-            env:
-              RUN_RAW_RANGE_TESTS: "true"
-            run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
-          - if: steps.filter.outputs.changed == 'true'
-            name: Run e2e tests
-            working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
-            run: |
-              pnpm install --frozen-lockfile
-              pnpm run test
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
+        env:
+          RUN_RAW_RANGE_TESTS: "true"
+        run: pnpm --workspace-concurrency=1 --filter "./napi/parser" --filter "./napi/minify" --filter "./napi/transform" --filter "./napi/transform-react" --filter "./napi/transform-relay" test
+      - if: steps.filter.outputs.changed == 'true'
+        name: Run e2e tests
+        working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}/tasks/e2e
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm run test
       - if: steps.filter.outputs.changed == 'true'
         working-directory: ${{ env.DEV_DRIVE_WORKSPACE }}
         run: |
