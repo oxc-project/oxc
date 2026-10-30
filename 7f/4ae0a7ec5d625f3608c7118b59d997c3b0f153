@@ -1,0 +1,21 @@
+crates/oxc_ecmascript/src/constant_evaluation/mod.rs
+  s_9055c76e466968::t_078c6db4668dd6 237-266,443-468
+crates/oxc_minifier/tests/peephole/inline.rs
+  s_9055c76e466968::t_584678461e7459 605-616
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "7f4ae0a7ec5d625f3608c7118b59d997c3b0f153",
+  "prompts": {},
+  "sessions": {
+    "s_9055c76e466968": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a18e6d-49cc-7ec0-8806-e6bd01f6b786",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Cameron <cameron.clark@hey.com>"
+    }
+  }
+}
