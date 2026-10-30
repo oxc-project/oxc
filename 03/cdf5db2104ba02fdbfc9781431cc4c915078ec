@@ -1,0 +1,29 @@
+crates/oxc_formatter_graphql/src/print/common.rs
+  s_d0c1383d2a4ca2::t_694e14e8bc0286 20,40,42,45-63,80-82,89-92,96,186,256,280,295,324,383,385
+crates/oxc_formatter_graphql/src/print/definition.rs
+  s_d0c1383d2a4ca2::t_683b1db22f1919 15,480-497
+crates/oxc_formatter_graphql/src/print/selection.rs
+  s_d0c1383d2a4ca2::t_dd1400b3bcbf0b 4,9,56-57,60,63-66,68,94
+crates/oxc_formatter_graphql/src/comments.rs
+  s_d0c1383d2a4ca2::t_9391a74410c8d4 251-255
+crates/oxc_formatter_graphql/src/print/string.rs
+  s_d0c1383d2a4ca2::t_6c891cfecdabbc 25,37,44-46
+crates/oxc_formatter_graphql/src/print/value.rs
+  s_d0c1383d2a4ca2::t_be04b0cbcfc436 10,45,52-69,107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "03cdf5db2104ba02fdbfc9781431cc4c915078ec",
+  "prompts": {},
+  "sessions": {
+    "s_d0c1383d2a4ca2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "763d2914-9839-4581-bff0-826465930778",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "leaysgur <6259812+leaysgur@users.noreply.github.com>"
+    }
+  }
+}
