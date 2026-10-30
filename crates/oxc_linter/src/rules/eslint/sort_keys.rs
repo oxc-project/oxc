@@ -309,13 +309,32 @@ fn build_object_fix<'a>(
         }
     }
 
+    let orig_last = props.last()?;
+    let new_last = &props[*indices.last()?];
+
     // Preserve a trailing comma that was absorbed by the original last prop
     // when the new last prop wouldn't otherwise emit one.
     if preserve_trailing_comma {
         sorted_text.push(',');
     }
 
-    Some((Span::new(props[0].span.start, props[props.len() - 1].span.end), sorted_text))
+    // The new last prop already ends with its comma (lifted with a `// ...`
+    // comment), so the object's own trailing comma is replaced too. Left in
+    // place, it would land after that comment.
+    let trailing_comma_end = (!orig_last.consumed_trailing_comma
+        && new_last.consumed_trailing_comma)
+        .then(|| {
+            let rest = ctx.source_range(Span::new(orig_last.span.end, object.span.end));
+            let after_ws = rest.trim_start();
+            let after_comma = after_ws.strip_prefix(',')?;
+            (after_comma.trim() == "}").then(|| {
+                orig_last.span.end + u32::try_from(rest.len() - after_ws.len() + 1).unwrap()
+            })
+        })
+        .flatten();
+
+    let end = trailing_comma_end.unwrap_or(orig_last.span.end);
+    Some((Span::new(props[0].span.start, end), sorted_text))
 }
 
 fn collect_fixable_properties<'a>(
@@ -1665,6 +1684,31 @@ fn test() {
             "const values = { b: 2, /** inline jsdoc on a */ a: 1}",
             "const values = { /** inline jsdoc on a */ a: 1, b: 2}",
         ),
+        // The object's trailing comma stays outside a `//` comment that moves to the end
+        (
+            "const o = {
+  b: 1, // note
+  a: 2,
+};",
+            "const o = {
+  a: 2,
+  b: 1, // note
+};",
+        ),
+        (
+            "const o = {
+  c: 3, // c
+  b: 2,
+  a: 1,
+};",
+            "const o = {
+  a: 1,
+  b: 2,
+  c: 3, // c
+};",
+        ),
+        ("const o = { b: 1, a: 2, }", "const o = { a: 2, b: 1, }"),
+        ("const o = { b: 1, a: 2 }", "const o = { a: 2, b: 1 }"),
         // '/*' and '//' comments currently not autofixed
         (
             "const values = {
