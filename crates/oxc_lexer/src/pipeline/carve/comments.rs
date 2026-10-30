@@ -49,27 +49,22 @@ pub(super) unsafe fn lex_block_comment(
     s: usize,
     lanes: &mut Lanes,
 ) -> usize {
-    let (e, mut saw_nl, lic_q) = scan_block_comment(src, n, s + 2);
+    let (e, saw_nl, lic_q) = scan_block_comment(src, n, s + 2);
     let end = if e < n { e + 1 } else { n };
-    if e >= n {
-        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedBlockComment);
-    }
     *kind.add(s) = tk!(BlockComment);
     if end > s + 1 {
         bm_clear_range(st, s + 1, end - 1);
     }
+    if e >= n {
+        lanes.push_diag(s as u32, (n - s) as u32, DiagCode::UnterminatedBlockComment);
+        return end;
+    }
 
     let body = comment_body(&srcs[..n], s as u32, end as u32, true);
-    let m = if e < n {
-        let lic = lic_q >= 0 && (lic_q as usize) + 8 < e - 1;
-        let m = classify(body, true, lic);
-        debug_assert_eq!(m, classify_exact(body, true), "BCOM content fused != exact at {s}");
-        debug_assert_eq!(saw_nl, has_nl_cr(body), "BCOM saw_nl != exact at {s}");
-        m
-    } else {
-        saw_nl = has_nl_cr(body);
-        classify_exact(body, true)
-    };
+    let lic = lic_q >= 0 && (lic_q as usize) + 8 < e - 1;
+    let m = classify(body, true, lic);
+    debug_assert_eq!(m, classify_exact(body, true), "BCOM content fused != exact at {s}");
+    debug_assert_eq!(saw_nl, has_nl_cr(body), "BCOM saw_nl != exact at {s}");
 
     let comment_kind =
         if saw_nl { CommentKind::MultiLineBlock } else { CommentKind::SingleLineBlock };
