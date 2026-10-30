@@ -74,6 +74,30 @@ pub(super) trait Queue<'a> {
         top
     }
 
+    /// Returns the content of the next entry when it is a single element
+    /// (`[StartEntry, element, EndEntry]`, like a word or a separator of a filled paragraph),
+    /// not traversing into [FormatElement::Interned].
+    #[inline]
+    fn single_element_entry(&self) -> Option<&'a FormatElement<'a>> {
+        match self.current() {
+            [
+                FormatElement::Tag(Tag::StartEntry),
+                element,
+                FormatElement::Tag(Tag::EndEntry),
+                ..,
+            ] => Some(element),
+            _ => None,
+        }
+    }
+
+    /// Skips the entry found by [`Queue::single_element_entry`].
+    #[inline]
+    fn skip_single_element_entry(&mut self) {
+        for _ in 0..3 {
+            self.pop();
+        }
+    }
+
     /// Queues a single element to process before the other elements in this queue.
     fn push(&mut self, element: &'a FormatElement) {
         self.extend_back(std::slice::from_ref(element));
