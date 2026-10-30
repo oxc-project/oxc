@@ -771,6 +771,7 @@ mod tests {
                 range: Range::default(),
                 context: CodeActionContext::default(),
                 document_version: None,
+                document_text: None,
             })
             .await;
 
@@ -782,6 +783,7 @@ mod tests {
                 range: Range::default(),
                 context: CodeActionContext::default(),
                 document_version: None,
+                document_text: None,
             })
             .await;
 

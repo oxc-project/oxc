@@ -797,13 +797,15 @@ impl LanguageServer for Backend {
             return Ok(None);
         };
 
-        let document_version = self.file_system.get_version(&uri);
+        let document = self.file_system.get_document(&uri);
+        let (document_version, document_text) = (document.version, document.text);
 
         let params = crate::CodeActionParams {
             uri,
             range: params.range,
             context: params.context,
             document_version,
+            document_text,
         };
 
         let code_actions = worker.get_code_actions_or_commands(params).await;

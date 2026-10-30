@@ -203,7 +203,11 @@ impl Tool for FakeTool {
 
         if params.uri.as_ref().ends_with("code_action_version.config") {
             return vec![CodeActionResponse::CodeAction(CodeAction {
-                title: format!("Document version {:?}", params.document_version),
+                title: format!(
+                    "Document version {:?} of {:?}",
+                    params.document_version,
+                    params.document_text.as_deref()
+                ),
                 kind: Some(CodeActionKind::QuickFix),
                 edit: Some(WorkspaceEdit::default()),
                 ..Default::default()
@@ -1931,11 +1935,17 @@ mod test_suite {
         // `did_open` reports version 1, `did_change` version 2 and `did_save` carries none.
         let mut id = 3;
         for (notification, expected) in [
-            (None, "Document version None"),
-            (Some(did_open(&file, "some text")), "Document version Some(1)"),
-            (Some(did_change(&file, "changed text")), "Document version Some(2)"),
-            (Some(did_save(&file, "saved text")), "Document version Some(2)"),
-            (Some(did_close(&file)), "Document version None"),
+            (None, "Document version None of None"),
+            (Some(did_open(&file, "some text")), "Document version Some(1) of Some(\"some text\")"),
+            (
+                Some(did_change(&file, "changed text")),
+                "Document version Some(2) of Some(\"changed text\")",
+            ),
+            (
+                Some(did_save(&file, "saved text")),
+                "Document version Some(2) of Some(\"saved text\")",
+            ),
+            (Some(did_close(&file)), "Document version None of None"),
         ] {
             if let Some(notification) = notification {
                 server.send_request(notification).await;
