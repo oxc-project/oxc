@@ -102,6 +102,15 @@ fn operator_token(optional: bool) -> &'static str {
     if optional { "?." } else { "." }
 }
 
+/// An identifier, `this` or `super`: a member of it is not split unless nested (see [`layout`]),
+/// which `is_inert_operand` (`binary_like_expression.rs`) relies on.
+pub(super) fn is_single_word_object(object: &Expression<'_>) -> bool {
+    matches!(
+        object,
+        Expression::Identifier(_) | Expression::ThisExpression(_) | Expression::Super(_)
+    )
+}
+
 /// `object_is_cast_target`:
 /// a cast-target object is neither a call nor an identifier to the rules below (see `is_cast_target`).
 fn layout<'a>(
@@ -144,13 +153,7 @@ fn layout<'a>(
     // A longer path (`a.b.c`) can break into a list of properties instead.
     // NOTE: `import.meta` and `new.target` cannot break inside either, so the same reasoning applies to them.
     // They are not included yet, and break like Prettier (`import.meta` + break + `.resolve(...)`).
-    if !is_nested
-        && !object_is_cast_target
-        && matches!(
-            object,
-            Expression::Identifier(_) | Expression::ThisExpression(_) | Expression::Super(_)
-        )
-    {
+    if !is_nested && !object_is_cast_target && is_single_word_object(object) {
         return StaticMemberLayout::NoBreak;
     }
 
