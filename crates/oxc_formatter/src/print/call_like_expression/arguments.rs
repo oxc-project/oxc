@@ -1,6 +1,6 @@
 use oxc_allocator::ArenaVec;
 use oxc_ast::ast::*;
-use oxc_formatter_core::{FormatElement, format_element};
+use oxc_formatter_core::{FormatElement, Tag, format_element};
 use oxc_span::GetSpan;
 
 use crate::{
@@ -145,29 +145,30 @@ impl<'a> Format<'a, JsFormatContext<'a>> for AstNode<'_, 'a, ArenaVec<'a, Argume
                 ]
             );
         } else {
-            let interned = f.intern(&format_args!(
-                "(",
-                soft_block_indent(&format_with(move |f| {
-                    let separator = format_with(|f| write!(f, [",", soft_line_break_or_space()]));
-                    f.join_with(&separator).entries(self.iter());
-                    write!(
-                        f,
-                        [(!matches!(self.parent(), AstNodes::ImportExpression(_)))
-                            .then_some(FormatTrailingCommas::All)]
-                    );
-                })),
-                ")",
-            ));
-
-            if let Some(element) = interned {
-                let should_expand = element.will_break();
-                write!(
-                    f,
-                    group(&format_once(|f| {
-                        f.write_element(element);
-                    }))
-                    .should_expand(should_expand)
-                );
+            // Written in place rather than interned, the group expanding when its content will break
+            let start = f.elements().len();
+            write!(
+                f,
+                group(&format_args!(
+                    "(",
+                    soft_block_indent(&format_with(move |f| {
+                        let separator =
+                            format_with(|f| write!(f, [",", soft_line_break_or_space()]));
+                        f.join_with(&separator).entries(self.iter());
+                        write!(
+                            f,
+                            [(!matches!(self.parent(), AstNodes::ImportExpression(_)))
+                                .then_some(FormatTrailingCommas::All)]
+                        );
+                    })),
+                    ")",
+                ))
+            );
+            let elements = f.elements();
+            if elements[start..].will_break()
+                && let FormatElement::Tag(Tag::StartGroup(group)) = &elements[start]
+            {
+                group.expand();
             }
         }
     }
