@@ -307,7 +307,7 @@ pub(super) unsafe fn carve_jsx(
                 // clear their `kwinit` so the `keywords` pass skips them.
                 if s > i {
                     bm_clear_range(kwinit, i, s - 1);
-                    jsx_glue_hyphens(src, n, st, opch, word, i, s);
+                    jsx_glue_hyphens(src, n, st, opch, word, i, s, cpu);
                 }
                 let c = *src.add(s);
                 if c == b'<' {
@@ -630,7 +630,7 @@ pub(super) unsafe fn carve_jsx(
                             // `</data-x>`: the name region holds no
                             // expression container, so hyphens in it are
                             // always part of the JSXIdentifier.
-                            jsx_glue_hyphens(src, n, st, opch, word, tpos + 1, gp);
+                            jsx_glue_hyphens(src, n, st, opch, word, tpos + 1, gp, cpu);
                         }
                         jsx_punct(kind, opch, s, tk!(JsxLt));
                         if gp < n {

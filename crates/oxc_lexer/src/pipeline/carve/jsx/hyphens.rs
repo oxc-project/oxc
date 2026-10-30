@@ -1,12 +1,13 @@
-use crate::pipeline::bitmap::{bm_clear, bm_get};
+use crate::pipeline::{
+    bitmap::{bm_clear, bm_get},
+    cpu::{Cpu, cpu_select},
+};
 
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
-use crate::pipeline::chunk::{load256, mm, veq};
+#[cfg(target_arch = "x86_64")]
+use crate::pipeline::{
+    chunk::{load256, mm, veq},
+    cpu::Avx2,
+};
 
 /// JSXIdentifier admits `-`, so `data-x` and `aria-label` are one name token
 /// where JS would read three. Fuse every hyphen in `[a, b)` into the run
@@ -16,12 +17,6 @@ use crate::pipeline::chunk::{load256, mm, veq};
 /// The caller only ever passes name/attribute regions: strings and `{}`
 /// containers are consumed whole before the next region begins, so a hyphen
 /// reached here is never a minus.
-#[cfg(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-))]
 #[inline(always)]
 pub(super) unsafe fn jsx_glue_hyphens(
     src: *const u8,
@@ -31,6 +26,27 @@ pub(super) unsafe fn jsx_glue_hyphens(
     word: *const u64,
     a: usize,
     b: usize,
+    cpu: impl Cpu,
+) {
+    cpu_select!(cpu, {
+        Avx2(cpu) => jsx_glue_hyphens_avx2(src, n, st, opch, word, a, b, cpu),
+        Neon(_) => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
+        Generic(_) => jsx_glue_hyphens_generic(src, n, st, opch, word, a, b),
+    })
+}
+
+/// [`jsx_glue_hyphens`] for AVX2.
+#[cfg(target_arch = "x86_64")]
+#[inline(always)]
+unsafe fn jsx_glue_hyphens_avx2(
+    src: *const u8,
+    n: usize,
+    st: *mut u64,
+    opch: *mut u64,
+    word: *const u64,
+    a: usize,
+    b: usize,
+    _cpu: Avx2,
 ) {
     let mut i = a;
     let mut last = usize::MAX;
@@ -49,14 +65,9 @@ pub(super) unsafe fn jsx_glue_hyphens(
     }
 }
 
-#[cfg(not(all(
-    target_arch = "x86_64",
-    target_feature = "avx2",
-    target_feature = "bmi2",
-    target_feature = "popcnt"
-)))]
+/// [`jsx_glue_hyphens`] for all other CPUs.
 #[inline(always)]
-pub(super) unsafe fn jsx_glue_hyphens(
+unsafe fn jsx_glue_hyphens_generic(
     src: *const u8,
     n: usize,
     st: *mut u64,
