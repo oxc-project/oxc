@@ -1,11 +1,11 @@
 use oxc_allocator::ArenaBox;
 use oxc_ast::ast::*;
-use oxc_syntax::operator::AssignmentOperator;
 
 use crate::{
     Context, ParserConfig as Config, ParserImpl, diagnostics,
     lexer::Kind,
     modifiers::{ModifierKind, ModifierKinds, Modifiers},
+    state::CoverInitializedName,
 };
 
 use super::FunctionKind;
@@ -108,20 +108,9 @@ impl<'a, C: Config> ParserImpl<'a, C> {
             };
             // CoverInitializedName ({ foo = bar })
             if self.eat(Kind::Eq) {
-                let right = self.parse_assignment_expression_or_higher();
-                let left = AssignmentTarget::new_assignment_target_identifier(
-                    identifier_name.span,
-                    identifier_name.name,
-                    self,
-                );
-                let expr = AssignmentExpression::new(
-                    self.end_span(start),
-                    AssignmentOperator::Assign,
-                    left,
-                    right,
-                    self,
-                );
-                self.state.cover_initialized_name.insert(start, expr);
+                let initializer = self.parse_assignment_expression_or_higher();
+                let cover = CoverInitializedName { span: self.end_span(start), initializer };
+                self.state.cover_initialized_name.insert(start, cover);
             }
             Expression::new_identifier(identifier_name.span, identifier_name.name, self)
         } else {
