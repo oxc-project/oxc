@@ -18,7 +18,7 @@ A conflict between the two is a bug in one of them: until it is fixed, the crate
 - The goal is CONSISTENT, PREDICTABLE, EXPLAINABLE behavior, not 100% parity with Prettier
   - Consistency and a sound rationale win over parity: the `DIVERGENCES.md` files record where they already did
   - Conformance is a measure, not a target: a deliberate divergence lowers it and is still correct
-- The single oracle is Prettier's OUTPUT at the pin, the version in `apps/oxfmt/package.json`: the bundle, the conformance suites (`oxc_formatter_tests`, `apps/oxfmt`) and fixture verification all use it
+- The single oracle is Prettier's OUTPUT at the pin, the version in `apps/oxfmt/package.json`: the bundle, `apps/oxfmt`'s conformance and fixture verification all use it
   - Its source code is an analysis aid, never a porting target: pin behavior with fixtures, do not mirror its logic
   - A mismatch is fixed to match the pin, unless an admission reason decides otherwise (see "Known divergences")
 - Prettier `main` and its issues are evidence, not an oracle: they show whether the pin's output is Prettier's intent, a known bug, or a bug already fixed there
@@ -71,7 +71,7 @@ Rules:
   - H2 slug: the stable anchor
   - `Why:` required; the reason keyword, its parenthetical, then upstream issues as bare references: `uniform-rule (same construct, same output: X; prettier/prettier#NNNN)`
   - `Pin:` required; the fixture path
-  - `Conformance:` optional; the failing files of the owner's own suite
+  - `Conformance:` optional; the failing files in Prettier's suite (`apps/oxfmt`'s `conformance:prettier`)
   - `Oxfmt:` optional, language crates only; the oxfmt externals failing on the entry
   - `Drop when:` optional; only for a condition more specific than the pin-bump default
   - Body: an input/ours/prettier code example
@@ -79,7 +79,7 @@ Rules:
 - Lifecycle
   - A new conformance failure is acceptable only under this policy; it stays counted as a failure
   - A failing file no entry lists is unclassified; the crate's `AGENTS.md` conformance section holds only those
-  - At a pin bump, re-run conformance: an entry no longer observed is deleted, the rest are re-checked against their reason
+  - At a pin bump (`apps/oxfmt/package.json`, then `download-fixtures`), re-run conformance: an entry no longer observed is deleted, the rest are re-checked against their reason
 - A documented divergence is never "fixed" by following Prettier
 - `DIVERGENCES.md` holds entries only, opening with one back-reference to this section; `AGENTS.md` keeps policy translations and mechanism prose
 
@@ -161,6 +161,7 @@ Fixture tests also assert the lossless contract through `FixtureFormatter::finge
 ### Fixture tests
 
 Snapshot tests driven by fixture files under `tests/fixtures/`; they cover what the Prettier conformance suite does not (suppression, divergence pins, embedded shapes, ...).
+A language crate's fixtures cover only its own side (e.g. `format_to_ir` on a fragment): they run without a dispatcher, so an embedded body stays verbatim.
 `build.rs` generates a test per fixture file: add a case by dropping a file in, no registration needed.
 Options are resolved from the nearest `options.json` up the directory tree.
 
@@ -172,32 +173,20 @@ cargo insta test --accept -p <crate>
 
 Every expected output must be verified against the oracle; in a pin fixture, every line except the ones its entry shows as deviating.
 
-### Prettier conformance
+### Prettier conformance (`apps/oxfmt`)
 
-Compares output against Prettier's snapshots and tracks failures (not passes).
-
-Every language crate owns its conformance as a `tests/conformance.rs` target (via `oxc_formatter_tests::conformance`, report pinned with `insta`), part of the crate's regular `cargo test`:
-
-```sh
-cargo test -p <crate> --test conformance
-# Debug a specific test
-PRETTIER_FILTER=<path> cargo test -p <crate> --test conformance -- --nocapture
-```
-
-The Prettier suite lives under `crates/oxc_formatter_tests/prettier/` and is self-provisioned on the first conformance run.
-It is gitignored, so use `rg --no-ignore` (or `-u`) when searching it.
-
-### E2E conformance (`apps/oxfmt`)
-
-The embedded-language features (e.g. xxx-in-js / js-in-xxx) are validated end-to-end through Oxfmt, and so is Prettier's suite as a whole, embedded parts included.
+Every formatter is checked through Oxfmt, so embedded parts are formatted as users get them; failures are tracked, not passes.
+`conformance:prettier` runs Prettier's own suite and reports per language in `conformance/snapshots/prettier.snap.md`; `conformance:live` runs the rest, see `apps/oxfmt`'s `AGENTS.md`.
 Requires a dev build first.
-A language crate's fixtures cover only its own side (e.g. `format_to_ir` on a fragment): they run without a dispatcher, so an embedded body stays verbatim.
 
 ```sh
-pnpm --dir apps/oxfmt build-dev && pnpm --dir apps/oxfmt download-fixtures
-pnpm --dir apps/oxfmt conformance
+pnpm --dir apps/oxfmt build-dev
+# Prettier's suite only, `download-fixtures` with no name fetches every source `conformance:live` needs too
+pnpm --dir apps/oxfmt download-fixtures prettier
+pnpm --dir apps/oxfmt conformance:prettier
 # Debug Prettier's suite for a path
 pnpm --dir apps/oxfmt conformance:prettier --filter <path>
 ```
 
-Some categories also run on real-world repositories; see `apps/oxfmt`'s `AGENTS.md`.
+The suite is downloaded to `apps/oxfmt/conformance/fixtures/externals/prettier/`, at the pin.
+It is gitignored, so use `rg --no-ignore` (or `-u`) when searching it.

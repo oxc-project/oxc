@@ -1,7 +1,4 @@
 //! Prettier option-set → `JsFormatOptions` mapping.
-//!
-//! Shared by the fixture harness and the conformance target via `#[path]`
-//! (one source, no drift; see `oxc_formatter_tests`'s AGENTS.md).
 
 use std::str::FromStr;
 

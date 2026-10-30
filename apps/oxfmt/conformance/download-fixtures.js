@@ -118,16 +118,18 @@ const sources = [
   },
 ];
 
+// Names given as arguments (e.g. `prettier`) narrow the download, none means every source
+const names = process.argv.slice(2);
+
 // Group sources by archive, so an archive shared by several sources downloads once.
 const sourcesByArchive = Map.groupBy(
-  sources,
+  names.length === 0 ? sources : sources.filter(({ name }) => names.includes(name)),
   ({ repo, version }) => `${repo.split("/").slice(0, 2).join("/")}#${version}`,
 );
 
 await Promise.all(
   [...sourcesByArchive.values()].map(async (group) => {
-    // Stamp-based skip (same scheme as `oxc_formatter_tests`' suite provisioning):
-    // the stamp is written last, so a half-downloaded tree is always re-done.
+    // Stamp-based skip: the stamp is written last, so a half-downloaded tree is always re-done.
     const stale = group.filter(({ name, repo, version }) => {
       const stamp = join(externalsDir, name, ".version");
       const upToDate =

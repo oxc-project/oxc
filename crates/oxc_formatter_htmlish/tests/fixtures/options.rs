@@ -1,6 +1,4 @@
 //! Prettier option-set → `HtmlishFormatOptions` mapping.
-//!
-//! Shared by the fixture harness and the conformance target via `#[path]`.
 
 use oxc_formatter_htmlish::{HtmlishFormatOptions, WhitespaceSensitivity};
 use oxc_formatter_tests::{OptionSet, apply_core_options};

@@ -1,7 +1,4 @@
 //! Prettier option-set → `JsonFormatOptions` mapping.
-//!
-//! Shared by the fixture harness and the conformance target via `#[path]`
-//! (one source, no drift; see `oxc_formatter_tests`'s AGENTS.md).
 
 use oxc_formatter_json::{
     BracketSpacing, Expand, JsonFormatOptions, JsonVariant, QuoteProps, TrailingCommas,
@@ -15,8 +12,7 @@ pub fn apply_json_options(options: &mut JsonFormatOptions, json: &OptionSet) {
 
     for (key, value) in json {
         match key.as_str() {
-            // Fixture-only key: conformance selects the variant via its config
-            // (Prettier specs never pass `variant`).
+            // Fixture-only key, Prettier has no `variant` option
             "variant" => {
                 if let Some(s) = value.as_str() {
                     options.variant = match s {

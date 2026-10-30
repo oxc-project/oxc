@@ -67,8 +67,7 @@ const PARSERS: Record<string, (name: string) => string> = {
 };
 
 /**
- * Suite-relative path prefixes not run,
- * mostly carried over from the crates' conformance minus the ones needing the dispatcher.
+ * Suite-relative path prefixes not run.
  * "Experimental syntax" is a proposal before stage 3, which oxc does not parse.
  */
 const IGNORE = [
@@ -381,7 +380,7 @@ async function runCase(filename: string, input: string, options: Options, expect
   };
 }
 
-/** Line similarity in `0..=1`, like `similar`'s `TextDiff::ratio()` the crates' conformance used. */
+/** Line similarity in `0..=1`, like `similar`'s `TextDiff::ratio()`. */
 function similarity(a: string, b: string) {
   let common = 0;
   let total = 0;
