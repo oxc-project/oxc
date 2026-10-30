@@ -75,8 +75,10 @@ impl<'a, C: Config> Lexer<'a, C> {
                 }
             },
             handle_eof: {
-                self.error(diagnostics::unterminated_string(self.unterminated_range()));
-                return Kind::Undetermined;
+                return cold_branch(|| {
+                    self.error(diagnostics::unterminated_string(self.unterminated_range()));
+                    Kind::Undetermined
+                });
             },
         };
 
@@ -88,6 +90,9 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// # SAFETY
     /// * Byte at `pos` must be `\r`.
     /// * `pos` must not be before `self.source.position()`.
+    // Keep normalization and allocation out of the common template scan.
+    #[cold]
+    #[inline(never)]
     unsafe fn template_literal_carriage_return(
         &mut self,
         mut pos: SourcePosition<'a>,
@@ -141,6 +146,9 @@ impl<'a, C: Config> Lexer<'a, C> {
     /// # SAFETY
     /// * Byte at `pos` must be `\`.
     /// * `pos` must not be before `self.source.position()`.
+    // Keep escape decoding and allocation out of the common template scan.
+    #[cold]
+    #[inline(never)]
     unsafe fn template_literal_backslash(
         &mut self,
         pos: SourcePosition<'a>,
