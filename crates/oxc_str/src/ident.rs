@@ -396,14 +396,15 @@ impl PartialEq for Ident<'_> {
 /// Compare `len` bytes starting at `a` and `b`.
 ///
 /// After a packed len+hash match, the bytes almost always match, and identifiers are usually short.
-/// Overlapping unaligned loads compare up to 16 bytes inline, avoiding an out-of-line `memcmp` call.
+/// Overlapping unaligned loads compare up to 16 bytes without calling `memcmp`.
 ///
 /// # SAFETY
 /// `a` and `b` must both point to initialized bytes and be valid for reads of `len` bytes.
 /// `len` must not exceed `isize::MAX`.
-#[expect(clippy::inline_always)]
-#[inline(always)]
+// Keep length dispatch out of hash-table probe loops so those lookups stay small enough to inline.
+#[inline(never)]
 unsafe fn bytes_eq(a: NonNull<u8>, b: NonNull<u8>, len: usize) -> bool {
+    #[expect(clippy::inline_always)]
     #[inline(always)]
     unsafe fn load<T: Copy>(ptr: NonNull<u8>, offset: usize, len: usize) -> T {
         debug_assert!(size_of::<T>() <= len && offset <= len - size_of::<T>());
