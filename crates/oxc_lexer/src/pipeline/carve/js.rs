@@ -27,7 +27,7 @@ pub(super) unsafe fn carve_js(
     lanes: &mut Lanes,
 ) {
     let src = srcs.as_ptr();
-    let mut depth: Vec<u32> = Vec::with_capacity(64);
+    let mut depth: Vec<u32> = Vec::new();
     let mut i = 0usize;
     if n >= 2 && *src == b'#' && *src.add(1) == b'!' {
         let end = find_line_terminator(src, n, 2);
