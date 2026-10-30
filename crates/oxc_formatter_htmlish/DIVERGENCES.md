@@ -214,7 +214,6 @@ Prettier prints `class` and `srcset` in its embed step, which `off` skips togeth
 - Why: semantics (whitespace added on both sides of a `script` renders between its inline neighbors)
 - Pin: `tests/fixtures/html/script-display-none.html`
 - Conformance: `html/tags/tags.html`
-- Oxfmt: `externals/prettier/html/script/script.html`
 
 ```html
 <!-- input -->
@@ -333,7 +332,6 @@ Prettier lays the content out as blocks, adding and removing whitespace that ren
 - Why: semantics (whitespace added on both sides of a `dialog` renders between its inline neighbors)
 - Pin: `tests/fixtures/html/dialog-out-of-flow.html`
 - Conformance: `html/tags/tags2.html`
-- Oxfmt: `externals/prettier/html/tags/tags2.html`
 
 ```html
 <!-- input -->
@@ -492,7 +490,6 @@ An email template pads its preview text this way, NBSP alternating with zero-wid
 - Why: semantics (an end tag added where a fragment ends changes the page it is joined into; prettier/prettier#17761, prettier/prettier#5665)
 - Pin: `tests/fixtures/html/omitted-end-tag-at-eof.html`
 - Conformance: `html/basics/broken-html.html`, `html/prettier_ignore/unclosed2.html`
-- Oxfmt: `externals/prettier/html/basics/broken-html.html`, `externals/prettier/html/prettier_ignore/unclosed2.html`
 
 ```html
 <!-- input (header.html, closed by footer.html) -->
@@ -654,7 +651,6 @@ Fixed in Prettier `main` by prettier/prettier#19709 and prettier/prettier#19707,
 - Why: uniform-rule (same construct, same output: `<html:p>` and every other prefixed name, which Prettier lays out as an unknown element)
 - Pin: `tests/fixtures/html/prefixed-script-style.html`
 - Conformance: `html/basics/with-colon.html`
-- Oxfmt: `externals/prettier/html/basics/with-colon.html`
 
 ```html
 <!-- input -->
