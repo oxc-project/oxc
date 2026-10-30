@@ -612,6 +612,7 @@ impl<'a> SlotAssignment<'a> {
         let mut reusable_slots = ArenaVec::new_in(&allocator);
         // Pre-computed BitSet for ancestor membership tests - reused across iterations
         let mut ancestor_set = BitSet::new_in(scoping.scopes_len(), allocator);
+        let catch_param_outer_bindings = collect_catch_param_outer_bindings(allocator, scoping);
 
         // Walk down the scope tree and assign a slot number for each symbol. Doing it as a scope
         // walk (rather than a flat symbol loop) generates better code.
@@ -680,8 +681,18 @@ impl<'a> SlotAssignment<'a> {
             }
 
             let scope_id_index = scope_id.index();
-            for (&symbol_id, &assigned_slot) in tmp_bindings.iter().zip(&reusable_slots) {
+            for (&symbol_id, &reusable_slot) in tmp_bindings.iter().zip(&reusable_slots) {
                 debug_assert!(constraints.is_mangle_candidate(symbol_id, scoping));
+                let assigned_slot = match catch_param_outer_bindings
+                    .iter()
+                    .find(|&&(catch_param, _)| catch_param == symbol_id)
+                {
+                    // The catch parameter must use the name of the outer binding, because the
+                    // printed `var` declares that name in the outer scope as well.
+                    Some(&(_, outer)) if slots[outer.index()] == SLOT_UNASSIGNED => continue,
+                    Some(&(_, outer)) => slots[outer.index()],
+                    None => reusable_slot,
+                };
                 slots[symbol_id.index()] = assigned_slot;
 
                 // `var` is hoisted, so include the scope where it is declared
@@ -694,12 +705,19 @@ impl<'a> SlotAssignment<'a> {
                     .map(|r| ast_nodes.get_node(r.declaration).scope_id());
                 let referenced_scope_ids =
                     scoping.get_resolved_references(symbol_id).map(Reference::scope_id);
+                // The `var` in `catch (e) { var e }` also declares the outer binding `e`, so
+                // the outer binding is live from that catch clause up to its own scope.
+                let catch_scope_ids = catch_param_outer_bindings
+                    .iter()
+                    .filter(|&&(_, outer)| outer == symbol_id)
+                    .map(|&(catch_param, _)| scoping.symbol_scope_id(catch_param));
 
                 // The scopes this symbol is alive in: for each use, walk up to (but not including)
                 // `scope_id`, marking the descendant scopes it passes through.
                 let slot_liveness_bitset = &mut slot_liveness[assigned_slot as usize];
                 for used_scope_id in referenced_scope_ids
                     .chain(redeclared_scope_ids)
+                    .chain(catch_scope_ids)
                     .chain([scope_id, declared_scope_id])
                 {
                     for ancestor_id in scoping.scope_ancestors(used_scope_id) {
@@ -749,6 +767,40 @@ impl<'a> SlotAssignment<'a> {
         let total_slots = slot_liveness.len();
         Self { slots, total_slots, eval_reserved_names }
     }
+}
+
+/// Returns `(catch parameter, outer binding)` pairs for `catch (e) { var e }` where the enclosing
+/// var scope already has a binding `e`. The `var` declares `e` in that scope too (Annex B.3.4),
+/// so both symbols must get the same name.
+fn collect_catch_param_outer_bindings<'a>(
+    allocator: &'a Allocator,
+    scoping: &Scoping,
+) -> ArenaVec<'a, (SymbolId, SymbolId)> {
+    let mut pairs = ArenaVec::new_in(&allocator);
+    for symbol_id in scoping.symbol_ids() {
+        if !scoping.symbol_flags(symbol_id).is_catch_variable() {
+            continue;
+        }
+        let catch_scope_id = scoping.symbol_scope_id(symbol_id);
+        // A catch parameter in a var scope was hoisted there and has no separate outer binding.
+        if scoping.scope_flags(catch_scope_id).is_var()
+            || !scoping
+                .symbol_redeclarations(symbol_id)
+                .iter()
+                .any(|r| r.flags.is_function_scoped_declaration() && !r.flags.is_catch_variable())
+        {
+            continue;
+        }
+        let outer = scoping
+            .scope_ancestors(catch_scope_id)
+            .skip(1)
+            .find(|&scope_id| scoping.scope_flags(scope_id).is_var())
+            .and_then(|scope_id| scoping.get_binding(scope_id, scoping.symbol_ident(symbol_id)));
+        if let Some(outer) = outer {
+            pairs.push((symbol_id, outer));
+        }
+    }
+    pairs
 }
 
 impl<'a> SlotRanking<'a> {
