@@ -21,6 +21,9 @@ pub struct TriviaBuilder<'a> {
     /// index of processed comments
     processed: usize,
 
+    /// Whether comments remain to be attached to the next token.
+    pending_comments: bool,
+
     /// Saw a newline before this position (since last token).
     /// Used to determine if comments are trailing comments of the previous token.
     saw_newline: bool,
@@ -54,6 +57,7 @@ impl<'a> TriviaBuilder<'a> {
             comments: ArenaVec::new_in(&allocator),
             irregular_whitespaces: vec![],
             processed: 0,
+            pending_comments: false,
             saw_newline: true,
             saw_newline_for_comment: true,
             previous_token,
@@ -133,7 +137,7 @@ impl<'a> TriviaBuilder<'a> {
     pub fn handle_newline(&mut self) {
         // The last unprocessed comment is on a newline.
         let len = self.comments.len();
-        if self.processed < len {
+        if self.pending_comments {
             let becomes_trailing = {
                 let comment = &mut self.comments[len - 1];
                 comment.set_followed_by_newline(true);
@@ -158,7 +162,7 @@ impl<'a> TriviaBuilder<'a> {
         // Cold path: attach any unprocessed comments between the previous token and this one.
         // For files with no comments (or once all comments are consumed), this branch is skipped.
         let len = self.comments.len();
-        if self.processed < len {
+        if self.pending_comments {
             self.attach_pending_comments_to_token(token, len);
         }
         self.previous_token = token;
@@ -185,6 +189,7 @@ impl<'a> TriviaBuilder<'a> {
             }
         }
         self.processed = len;
+        self.pending_comments = false;
     }
 
     #[cold]
@@ -194,6 +199,7 @@ impl<'a> TriviaBuilder<'a> {
             comment.attached_to = attached_to;
         }
         self.processed = len;
+        self.pending_comments = false;
     }
 
     /// Whether a token can form the completed left-hand side of an infix or suffix boundary.
@@ -351,6 +357,7 @@ impl<'a> TriviaBuilder<'a> {
         // even when the dedup check above skips a duplicate from parser lookahead/rewind.
         self.set_annotation_flags(comment.content, self.comments.len());
         self.comments.push(comment);
+        self.pending_comments = true;
         if becomes_trailing {
             self.attach_pending_comments(
                 CommentPosition::Trailing,
