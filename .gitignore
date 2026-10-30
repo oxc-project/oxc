@@ -1,6 +1,7 @@
 # Rust
 target/
 **/*.rs.bk
+/tasks/track_memory_allocations/allocs_linter.yaml
 
 # Wasm
 **/*.wasm
