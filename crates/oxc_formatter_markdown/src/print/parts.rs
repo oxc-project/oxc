@@ -188,10 +188,8 @@ impl<'a> Parts<'a> {
                 run_start = i + 1;
             }
         }
-        if !self.items.is_empty() {
-            let run = &self.items[run_start..];
-            fill.entry(&sep, &format_with(|f| write_atoms(run, f)));
-        }
+        let run = &self.items[run_start..];
+        fill.entry(&sep, &format_with(|f| write_atoms(run, f)));
         fill.finish();
     }
 }
@@ -199,28 +197,73 @@ impl<'a> Parts<'a> {
 /// `a` and `b` as one slice of `source`, when `b` follows `a` there,
 /// and the joined text prints and measures exactly as the two did.
 ///
-/// The width: an ASCII character other than a keycap base (`#`, `*`, a digit) on either side of the boundary
-/// ends every Unicode width sequence, so the widths add up.
-/// A host escapes each text on its own (markdown-in-js doubles the `\`s before a backtick, `${` in a template),
-/// so a `\` or `$` never ends the first.
+/// The width: a character [ending every width sequence](ends_width_sequence) on either side of the boundary
+/// makes the widths add up.
+/// A host escapes each text on its own (markdown-in-js's `escape_backticks_raw` doubles the `\`s before a backtick,
+/// other template guests get `${` escaped likewise), so a `\` or `$` never ends the first.
 fn join_in_source<'a>(source: &'a str, a: &str, b: &str) -> Option<&'a str> {
-    let start = a.as_ptr().addr().checked_sub(source.as_ptr().addr())?;
-    let end = start + a.len();
-    if b.as_ptr().addr() != source.as_ptr().addr() + end {
+    // `b` starts where `a` ends in memory: within `source` (bounds-checked by `get`), the source continuing
+    if a.as_bytes().as_ptr_range().end != b.as_ptr() {
         return None;
     }
     let (&last, &first) = (a.as_bytes().last()?, b.as_bytes().first()?);
-    let ends_sequence = |byte: u8| byte.is_ascii() && !matches!(byte, b'#' | b'*' | b'0'..=b'9');
-    if !(ends_sequence(last) || ends_sequence(first)) || matches!(last, b'\\' | b'$') {
+    if !(ends_width_sequence(last) || ends_width_sequence(first)) || matches!(last, b'\\' | b'$') {
         return None;
     }
-    source.get(start..end + b.len())
+    let start = a.as_ptr().addr().checked_sub(source.as_ptr().addr())?;
+    source.get(start..start + a.len() + b.len())
+}
+
+/// An ASCII character other than a keycap base (`#`, `*`, a digit) ends every Unicode width sequence:
+/// nothing next to it changes its width, and it changes no neighbor's.
+fn ends_width_sequence(byte: u8) -> bool {
+    byte.is_ascii() && !matches!(byte, b'#' | b'*' | b'0'..=b'9')
 }
 
 fn write_atoms<'a>(items: &[Item<'a>], f: &mut MarkdownFormatter<'_, 'a>) {
     for item in items {
         if let Item::Atom(atom) = item {
             atom.fmt(f);
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use oxc_formatter_core::{IndentWidth, text_width};
+
+    use super::ends_width_sequence;
+
+    /// The width rule `join_in_source` relies on, against the measurement itself
+    #[test]
+    fn widths_add_up_next_to_a_sequence_end() {
+        let width = |s: &str| text_width(s, IndentWidth::default());
+        // Variation selector, keycap, ZWJ, skin tone, combining mark, regional indicator, emoji, keycap bases
+        let neighbors = [
+            "\u{FE0F}",
+            "\u{20E3}",
+            "\u{200D}",
+            "\u{1F3FB}",
+            "\u{301}",
+            "\u{1F1E6}",
+            "\u{1F600}",
+            "#",
+            "1",
+        ];
+        for byte in (0x20..0x7F).filter(|&byte| ends_width_sequence(byte)) {
+            let c = char::from(byte).to_string();
+            for neighbor in neighbors {
+                assert_eq!(
+                    width(&(c.clone() + neighbor)),
+                    width(&c) + width(neighbor),
+                    "{c:?}{neighbor:?}"
+                );
+                assert_eq!(
+                    width(&(neighbor.to_string() + &c)),
+                    width(neighbor) + width(&c),
+                    "{neighbor:?}{c:?}"
+                );
+            }
         }
     }
 }
