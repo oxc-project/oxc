@@ -231,6 +231,30 @@ const categories: Category[] = [
     optionSets: [{ printWidth: 80, bracketSameLine: true }, { printWidth: 100 }],
   },
   {
+    name: "html",
+    fixtures: [
+      {
+        dir: join(EXTERNALS_DIR, "prettier", "html"),
+        ext: ".html",
+        // Parser error messages, cursor offsets and pragma insertion are not formatter concerns
+        excludes: ["/_errors_/", "html/cursor/", "html/pragma/"],
+      },
+      { dir: join(FIXTURES_DIR, "edge-cases", "html") },
+    ],
+    // Real-world pages: demos and playgrounds, dense with `<script>` / `<style>`
+    projects: [
+      // vite's `invalid*.html` are deliberately broken, both sides error
+      { dir: join(EXTERNALS_DIR, "vite"), ext: ".html", excludes: ["html/invalid"] },
+      { dir: join(EXTERNALS_DIR, "mdn-learning-area"), ext: ".html" },
+      { dir: join(EXTERNALS_DIR, "mdn-dom-examples"), ext: ".html" },
+    ],
+    optionSets: [
+      { printWidth: 80 },
+      { printWidth: 100, htmlWhitespaceSensitivity: "ignore", singleAttributePerLine: true },
+      { printWidth: 120, htmlWhitespaceSensitivity: "strict", bracketSameLine: true },
+    ],
+  },
+  {
     name: "graphql",
     fixtures: [],
     projects: [{ dir: join(EXTERNALS_DIR, "gitlab"), ext: ".graphql" }],

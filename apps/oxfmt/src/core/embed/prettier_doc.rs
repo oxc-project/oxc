@@ -3,7 +3,7 @@
 //! Sends the text to JS `printToDoc()`, then converts the returned Doc JSON into formatter IR
 //! that integrates into the parent's arena / `GroupId` space.
 //! Fills the dispatcher's optional [`PrettierDocFallback`] slot;
-//! the string twin is [`super::prettier_string`].
+//! the JSDoc fences' string channel is native only ([`super::jsdoc_fence`]).
 
 use std::sync::Arc;
 
@@ -68,7 +68,7 @@ pub fn build_prettier_fallback(
                         session.group_id_builder(),
                     )?;
                     from_prettier_doc::postprocess(&mut ir, allocator);
-                    // html(angular)-in-js: indent the content when more than one node prints at the root
+                    // angular-in-js: what the native HTML formatter does on the same request
                     let indent = request
                         .parent_context_as::<HtmlInJsTemplate>()
                         .is_some_and(|c| c.indent_multiple_roots)

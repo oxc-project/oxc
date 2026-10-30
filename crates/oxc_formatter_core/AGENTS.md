@@ -125,7 +125,7 @@ Output targets Prettier compatibility, but the domain is defined by what it is, 
 
 Admission: core stores the service and hands it back (or applies it mechanically at finalize);
 every value crossing the closure boundary is an opaque string/vec, never a language enum or an option type, and core makes no decision from the result.
-`string_embedder` additionally carries an exit criterion: it is removed when (a) html gains an IR-capable formatter AND (b) the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half); until then it is the string-out channel's transport.
+`string_embedder` additionally carries an exit criterion: it is removed when the host's string-out consumers (JSDoc fences) can express their re-embedding in IR (see `apps/oxfmt`'s AGENTS.md for that half; html, the other half, has an IR-capable formatter now); until then it is the string-out channel's transport.
 
 - (5) `envelope/`: IR-composing behavior shared by document-envelope hosts (`write_front_matter`)
 

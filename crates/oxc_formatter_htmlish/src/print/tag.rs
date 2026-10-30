@@ -13,12 +13,12 @@
 //! which neighbor prints a marker is the output itself, and matching that output leaves no other structure.
 
 use oxc_formatter_core::{Format, builders::text, write};
-
-use super::{HtmlishFormatter, attribute::write_attributes};
 use oxc_htmlish_parser::{
     Span,
     ast::{NodeId, NodeKind},
 };
+
+use super::{HtmlishFormatter, attribute::write_attributes};
 
 use crate::{context::HtmlishFormatContext, tree::Tree};
 
@@ -50,8 +50,7 @@ impl<'a> Format<'a, HtmlishFormatContext<'a>> for Marker<'a> {
     }
 }
 
-// ---
-// Owner side
+// --- Owner side
 
 /// The node's closing `>` is printed by its next sibling or its parent.
 pub fn closing_end_borrowed(t: &Tree<'_>, id: NodeId) -> bool {
@@ -76,8 +75,7 @@ pub fn closing_start_borrowed(t: &Tree<'_>, id: NodeId) -> bool {
     t[id].last_child.is_some_and(|last| t[last].borrows.parent_closing_start)
 }
 
-// ---
-// Markers
+// --- Markers
 
 pub fn opening_start_marker<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
     match t.kind(id) {
@@ -124,12 +122,17 @@ pub fn closing_start_marker<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
         // The end tag as written, its name lowercase with the start tag's (DIVERGENCES.md#tag-name-case);
         // an omitted one is never added (DIVERGENCES.md#omitted-end-tag).
         // What HTML ignores after the name (`</div foo>`) is kept too, and so is htm's `<//>`.
+        // As written it is one text: an enclosing `<script>` (html-in-js in it) sees a `</script` whole to escape it;
+        // lowercase names print only in a `.html` file, embedded in nothing.
         NodeKind::Element(el) => el.end_tag.map_or(Marker::default(), |tag| {
-            let name = t.printed_name(id, el, tag.name.slice(t.source()));
-            let ignored = tag
-                .ignored
-                .map_or("", |ignored| Span::new(tag.name.end, ignored.end).slice(t.source()));
-            Marker(["</", name, ignored, ""])
+            let written = tag.name.slice(t.source());
+            let name = t.printed_name(id, el, written);
+            let end = tag.ignored.map_or(tag.name.end, |ignored| ignored.end);
+            if std::ptr::eq(name, written) {
+                Marker::one(Span::new(tag.span.start, end).slice(t.source()))
+            } else {
+                Marker(["</", name, Span::new(tag.name.end, end).slice(t.source()), ""])
+            }
         }),
         _ => Marker::two("</", t.name(id)),
     }
@@ -154,8 +157,7 @@ pub fn after_html_word(value: &str) -> Option<&str> {
     (!rest.starts_with(|c: char| c.is_ascii_alphanumeric() || c == '_')).then_some(rest)
 }
 
-// ---
-// Prefixes and suffixes: what a node prints for its neighbors
+// --- Prefixes and suffixes: what a node prints for its neighbors
 
 pub fn opening_tag_prefix<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
     if t[id].borrows.parent_opening_end {
@@ -177,8 +179,7 @@ pub fn closing_tag_suffix<'a>(t: &'a Tree<'a>, id: NodeId) -> Marker<'a> {
     }
 }
 
-// ---
-// Tags
+// --- Tags
 
 pub fn write_opening_tag_start<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatter<'_, 'a>) {
     if !opening_start_borrowed(t, id) {

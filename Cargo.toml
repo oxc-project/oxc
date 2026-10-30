@@ -164,6 +164,7 @@ oxc_formatter = { path = "crates/oxc_formatter" } # Code formatting
 oxc_formatter_core = { path = "crates/oxc_formatter_core" } # Language-agnostic formatter core
 oxc_formatter_css = { path = "crates/oxc_formatter_css" } # CSS formatter
 oxc_formatter_graphql = { path = "crates/oxc_formatter_graphql" } # GraphQL formatter
+oxc_formatter_htmlish = { path = "crates/oxc_formatter_htmlish" } # HTML (and HTML-based template languages) formatter
 oxc_formatter_json = { path = "crates/oxc_formatter_json" } # JSON formatter
 oxc_formatter_markdown = { path = "crates/oxc_formatter_markdown" } # Markdown formatter
 oxc_formatter_tests = { path = "crates/oxc_formatter_tests" } # Formatter test infrastructure (fixture codegen + harness)

@@ -64,8 +64,7 @@ pub fn format_with_session<'a>(
     let ParsedCss { stylesheet, comments, source, has_bom, front_matter } =
         parse_for_format(session.allocator(), source_text, options, CssRoot::Stylesheet)?;
 
-    let context =
-        CssFormatContext::new(options, source, comments, /* template_placeholders */ false);
+    let context = CssFormatContext::new(options, source, comments, None);
     // A root `Document` owns a fresh Tailwind class scope
     let session = session.with_new_tailwind_scope();
     let mut state = FormatState::new_with_session(context, session.clone());
@@ -132,8 +131,8 @@ pub fn parse_for_format<'a>(
 /// - allocates from the session's shared arena and `GroupId` space
 /// - emits neither a BOM nor the trailing newline
 /// - parses a fragment ([`CssRoot::Fragment`]), so root declarations are statements
-/// - `template_placeholders` enables the css-in-js parse mode ([`CssRoot::CssInJsTemplate`]);
-///   JSDoc / Markdown code blocks pass `false`
+/// - `embedded_in` is what the part is embedded in, for the parse mode and print rules that depend on it ([`CssEmbeddedIn`]);
+///   JSDoc / Markdown code blocks pass `None`
 ///
 /// `@apply` Tailwind classes go into the session's class scope (shared with the parent),
 /// the parent document owns the batch sort.
@@ -144,11 +143,15 @@ pub fn format_to_ir<'a>(
     session: &FormatSession<'a>,
     source_text: &str,
     options: CssFormatOptions,
-    template_placeholders: bool,
+    embedded_in: Option<CssEmbeddedIn>,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part,
     // so the BOM split inside `parse_for_format` is a no-op here.
-    let root = if template_placeholders { CssRoot::CssInJsTemplate } else { CssRoot::Fragment };
+    let root = if embedded_in == Some(CssEmbeddedIn::CssInJsTemplate) {
+        CssRoot::CssInJsTemplate
+    } else {
+        CssRoot::Fragment
+    };
     let ParsedCss { stylesheet, comments, source, front_matter, .. } =
         parse_for_format(session.allocator(), source_text, options, root)?;
     if front_matter.is_some() && !session.input_kind().owns_front_matter() {
@@ -159,13 +162,23 @@ pub fn format_to_ir<'a>(
         ));
     }
 
-    let context = CssFormatContext::new(options, source, comments, template_placeholders);
+    let context = CssFormatContext::new(options, source, comments, embedded_in);
     let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatCssEmbedded { stylesheet: &stylesheet, front_matter });
 
     Ok(EmbeddedIr { ir: buffer.into_vec() })
+}
+
+/// What an embedded CSS part is embedded in (the host translates the parent's request into this).
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CssEmbeddedIn {
+    /// A css-in-js template: SCSS grammar with `${}` placeholder markers ([`CssRoot::CssInJsTemplate`]).
+    CssInJsTemplate,
+    /// An HTML `style` attribute's value: its declarations print on one line when they fit,
+    /// the last `;` only when they do not (Prettier's `__isHTMLStyleAttribute`).
+    HtmlStyleAttribute,
 }
 
 /// What a CSS source is parsed as.

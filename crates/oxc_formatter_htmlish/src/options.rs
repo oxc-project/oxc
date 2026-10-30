@@ -29,7 +29,7 @@ impl HtmlishVariant {
 }
 
 /// Format options for htmlish (HTML and the template languages built on it).
-#[derive(Debug, Default, Clone, Copy, Eq, PartialEq)]
+#[derive(Debug, Default, Clone, Eq, PartialEq)]
 pub struct HtmlishFormatOptions {
     pub indent_style: IndentStyle,
     pub indent_width: IndentWidth,
@@ -42,6 +42,9 @@ pub struct HtmlishFormatOptions {
     pub bracket_same_line: bool,
     /// Mirrors Prettier's `singleAttributePerLine`.
     pub single_attribute_per_line: bool,
+    /// Sort Tailwind CSS classes (by the session's sorter, as prettier-plugin-tailwindcss does):
+    /// those of `class`, and of the attributes listed here; `None` leaves them as they are.
+    pub sort_tailwindcss: Option<Vec<String>>,
 }
 
 /// Which whitespace between elements is significant.

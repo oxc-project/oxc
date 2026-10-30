@@ -1,12 +1,12 @@
 //! Attributes: the list in the start tag (line breaks, `prettier-ignore-attribute`),
 //! each one's name as written, then the value, which a few attributes get re-printed by their own grammar.
 
-use std::borrow::Cow;
+use std::{any::Any, borrow::Cow};
 
 use cow_utils::CowUtils;
 
 use oxc_formatter_core::{
-    Format, arena_cow_str,
+    Format, FormatElement, arena_cow_str,
     builders::{
         group, hard_line_break, if_group_breaks, if_group_fits_on_line, indent, soft_block_indent,
         soft_line_break, soft_line_break_or_space, space, text,
@@ -14,9 +14,16 @@ use oxc_formatter_core::{
     spec::is_suppression_marker,
     write,
 };
-use oxc_htmlish_parser::ast::{Attribute, NodeId, NodeKind};
+use oxc_htmlish_parser::ast::{Attribute, NodeId, NodeKind, Quote};
 
-use super::{HtmlishFormatter, format_with, tag::opening_end_borrowed};
+use super::{
+    HtmlishFormatter,
+    embed::{
+        CssInHtmlStyleAttribute, JsInHtmlEventHandler, is_event_handler, write_attribute_value,
+    },
+    format_with,
+    tag::opening_end_borrowed,
+};
 use crate::{
     context::HtmlishFormatContext,
     tree::{Tree, collapse_whitespace},
@@ -46,12 +53,13 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
         }
         return;
     }
-    let options = *f.options();
+    let (single_attribute_per_line, bracket_same_line) =
+        (f.options().single_attribute_per_line, f.options().bracket_same_line);
 
     let force_not_to_break = t.tag(id) == "script"
         && matches!(el.attributes.as_slice(), [only] if t.attribute_is(only.name.slice(t.source()), "src"))
         && item.first_child.is_none();
-    let per_line = options.single_attribute_per_line && el.attributes.len() > 1;
+    let per_line = single_attribute_per_line && el.attributes.len() > 1;
     let ignored = ignored_attributes(t, id);
     let is_ignored = |name: &str| {
         ignored.is_some_and(|names| {
@@ -88,7 +96,7 @@ pub fn write_attributes<'a>(t: &'a Tree<'a>, id: NodeId, f: &mut HtmlishFormatte
     let hug_end = opening_end_borrowed(t, id)
         || (item.self_closing && t[t.parent(id)].borrows.last_child_closing_end)
         || force_not_to_break;
-    if hug_end || options.bracket_same_line {
+    if hug_end || bracket_same_line {
         if slash {
             write!(f, space());
         }
@@ -110,13 +118,43 @@ fn write_attribute<'a>(
     let is = |known| t.attribute_is(name, known);
     write!(f, text(t.attribute_name(element, name)));
     let Some(value) = attribute.value else { return };
+    let quoted = value.quote != Quote::None;
     let value = value.span.slice(source);
     write!(f, "=");
 
+    let embedded_in = f.context().embedded_in();
+    if !quoted && embedded_in.is_some_and(|e| e.is_placeholder(value)) {
+        write!(f, text(value));
+        return;
+    }
+    // A placeholder would hide in the sorted class list, out of the parent's reach
+    let tailwind = f.options().sort_tailwindcss.as_ref().is_some_and(|attributes| {
+        is("class") || attributes.iter().any(|attribute| attribute == name)
+    }) && !embedded_in.is_some_and(|e| e.has_placeholder(value));
+    if tailwind && write_tailwind_classes(value, is("class") && embedded_in.is_none(), f) {
+        return;
+    }
+    // `{{` may be a template's interpolation: those values print as written.
+    // Prettier formats the values below only in a document of its own.
+    let reformat = embedded_in.is_none() && !value.contains("{{");
+    let embedded = if !reformat {
+        None
+    } else if is("style") {
+        Some(("css", &CssInHtmlStyleAttribute as &dyn Any))
+    } else if is_event_handler(name) {
+        Some(("js", &JsInHtmlEventHandler as &dyn Any))
+    } else {
+        None
+    };
+    if let Some((language, parent_context)) = embedded
+        && write_attribute_value(language, parent_context, unescaped(value, f), f)
+    {
+        return;
+    }
     let tag = t.tag(element);
     // A class list that collapses to nothing prints as written;
     // the names are split at ASCII whitespace only (DIVERGENCES.md#class-ascii-whitespace).
-    if is("class") && !value.contains("{{") && !value.trim_ascii().is_empty() {
+    if is("class") && reformat && !value.trim_ascii().is_empty() {
         let names = collapse_whitespace(f.allocator(), unescaped(value, f));
         write!(f, ["\"", text(quoted_piece(names, f)), "\""]);
     } else if is("srcset")
@@ -124,11 +162,32 @@ fn write_attribute<'a>(
         && let Some(candidates) = parse_srcset(unescaped(value, f))
     {
         write_srcset(&candidates, f);
-    } else if is("allow") && tag == "iframe" && !value.contains("{{") {
+    } else if is("allow") && tag == "iframe" && reformat {
         write_permissions_policy(unescaped(value, f), f);
     } else {
         write!(f, AttributeValue(value));
     }
+}
+
+/// A class list for the session's Tailwind sorter, which collapses its whitespace unless told to preserve it;
+/// `class` collapses it anyway when printed on its own (`collapse`).
+/// Returns `false` for a value the sorter leaves alone (`{{`, whitespace only),
+/// or holding a `"`, whose quote is chosen by content.
+fn write_tailwind_classes<'a>(
+    value: &'a str,
+    collapse: bool,
+    f: &mut HtmlishFormatter<'_, 'a>,
+) -> bool {
+    let value = unescaped(value, f);
+    if value.contains('"') || value.contains("{{") || value.trim_ascii().is_empty() {
+        return false;
+    }
+    let classes = if collapse { collapse_whitespace(f.allocator(), value) } else { value };
+    let index = f.session().add_tailwind_class(classes.to_string());
+    write!(f, "\"");
+    f.write_element(FormatElement::TailwindClass(index));
+    write!(f, "\"");
+    true
 }
 
 /// A quoted attribute value: `"` unless the value holds more `"` than `'`, the chosen quote escaped.
@@ -159,12 +218,12 @@ fn unescaped<'a>(value: &'a str, f: &HtmlishFormatter<'_, 'a>) -> &'a str {
 }
 
 /// `"` re-escaped for a value printed in `"`.
-fn quoted_piece<'a>(piece: &'a str, f: &HtmlishFormatter<'_, 'a>) -> &'a str {
+pub(super) fn quoted_piece<'a>(piece: &'a str, f: &HtmlishFormatter<'_, 'a>) -> &'a str {
     arena_cow_str(&piece.cow_replace('"', "&quot;"), f)
 }
 
 /// Prettier's `printExpand`: `content` on its own indented lines when the group breaks.
-fn write_expanded<'a>(
+pub(super) fn write_expanded<'a>(
     content: &impl Format<'a, HtmlishFormatContext<'a>>,
     f: &mut HtmlishFormatter<'_, 'a>,
 ) {
@@ -231,7 +290,7 @@ fn parse_srcset(input: &str) -> Option<Vec<Candidate<'_>>> {
             url = url.trim_end_matches(',');
             ""
         } else {
-            // Descriptors up to the next `,` outside parentheses.
+            // Descriptors up to the next `,` outside parentheses
             rest = rest.trim_ascii_start();
             let mut depth = 0;
             let mut end = rest.len();
@@ -258,7 +317,7 @@ fn parse_srcset(input: &str) -> Option<Vec<Candidate<'_>>> {
                 'w' | 'h' if value.bytes().all(|b| b.is_ascii_digit()) => {
                     value.parse::<f64>().ok().filter(|&v| v > 0.0)
                 }
-                // A zero density is kept (DIVERGENCES.md#srcset-zero-density).
+                // A zero density is kept (DIVERGENCES.md#srcset-zero-density)
                 'x' if is_floating_point(value) => value.parse::<f64>().ok().filter(|&v| v >= 0.0),
                 _ => None,
             }?;

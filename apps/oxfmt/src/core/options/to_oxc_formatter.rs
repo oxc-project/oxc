@@ -8,8 +8,6 @@ use oxc_formatter::{
 };
 use oxc_formatter_core::{CoreFormatOptions, FormatOptions};
 
-#[cfg(feature = "napi")]
-use super::super::oxfmtrc::SortTailwindcssUserConfig;
 use super::super::oxfmtrc::{
     ArrowParensConfig, CommentLineStrategyConfig, FormatConfig, HtmlWhitespaceSensitivityConfig,
     ImportModifierConfig, ImportSelectorConfig, JsdocUserConfig, LineWrappingStyleConfig,
@@ -124,9 +122,7 @@ pub fn to_oxc_formatter(
     // so enabling it without the JS-side sorter would apply half the feature
     // (normalized but unsorted classes).
     #[cfg(feature = "napi")]
-    if let Some(tw_config) =
-        config.sort_tailwindcss.clone().and_then(SortTailwindcssUserConfig::into_config)
-    {
+    if let Some(tw_config) = config.tailwind_config() {
         // `config` / `stylesheet` / `preserve_duplicates` are JS-sorter-only
         // and travel through `to_prettier::inject_tailwind_plugin_payload`,
         // not the Rust formatter options.

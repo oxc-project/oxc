@@ -34,6 +34,7 @@ oxc_formatter = { workspace = true }
 oxc_formatter_core = { workspace = true }
 oxc_formatter_css = { workspace = true }
 oxc_formatter_graphql = { workspace = true }
+oxc_formatter_htmlish = { workspace = true }
 oxc_formatter_json = { workspace = true }
 oxc_formatter_markdown = { workspace = true }
 oxc_formatter_toml = { workspace = true }

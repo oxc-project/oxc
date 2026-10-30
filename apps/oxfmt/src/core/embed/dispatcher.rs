@@ -8,13 +8,19 @@ use std::sync::{Arc, OnceLock};
 
 use tracing::{debug, debug_span};
 
-use oxc_formatter::{CssInJsTemplate, JsEmbeddedIn, JsFormatOptions, MarkdownInJsTemplate};
+use oxc_formatter::{
+    CssInJsTemplate, HtmlInJsTemplate, JsEmbeddedIn, JsFormatOptions, MarkdownInJsTemplate,
+};
 use oxc_formatter_core::{
     DispatchRequest, DispatchResponse, EmbeddedIr, FormatDispatcher, FormatSession,
 };
 use oxc_formatter_core::{FormatOptions, PrinterOptions};
-use oxc_formatter_css::{CssFormatOptions, CssVariant};
+use oxc_formatter_css::{CssEmbeddedIn, CssFormatOptions, CssVariant};
 use oxc_formatter_graphql::GraphqlFormatOptions;
+use oxc_formatter_htmlish::{
+    CssInHtmlStyleAttribute, HtmlishEmbeddedIn, HtmlishFormatOptions, HtmlishVariant,
+    JsInHtmlEventHandler,
+};
 use oxc_formatter_json::{JsonFormatOptions, JsonVariant};
 use oxc_formatter_markdown::{MarkdownFormatOptions, XxxInMarkdownCodeBlock};
 use oxc_formatter_toml::TomlFormatOptions;
@@ -24,8 +30,8 @@ use crate::core::{
     language::{Route, route_embedded},
     options::{
         ValidatedOptions, to_oxc_formatter, to_oxc_formatter_css, to_oxc_formatter_graphql,
-        to_oxc_formatter_json, to_oxc_formatter_markdown, to_oxc_formatter_toml,
-        to_oxc_formatter_yaml,
+        to_oxc_formatter_htmlish, to_oxc_formatter_json, to_oxc_formatter_markdown,
+        to_oxc_formatter_toml, to_oxc_formatter_yaml,
     },
     oxfmtrc::FormatConfig,
     support::{NativeLanguage, PrettierLanguage},
@@ -56,13 +62,14 @@ pub struct ResolvedDispatchConfig {
     json: [OnceLock<JsonFormatOptions>; 4],
     markdown: OnceLock<MarkdownFormatOptions>,
     toml: OnceLock<TomlFormatOptions>,
+    htmlish: OnceLock<HtmlishFormatOptions>,
     /// The options handed to Prettier; see [`PrettierOptions`].
     #[cfg(feature = "napi")]
     prettier: PrettierOptions,
 }
 
 /// The lazily-built options JSON handed to Prettier (+ plugins),
-/// consumed by the Doc→IR / string paths and the Tailwind sorter.
+/// consumed by the Doc→IR path and the Tailwind sorter.
 /// `path` is an ingredient, not a sibling datum: it becomes the JSON's `filepath` at last
 /// (see [`crate::core::options::build_prettier_options`]).
 ///
@@ -90,6 +97,7 @@ impl ResolvedDispatchConfig {
             json: [OnceLock::new(), OnceLock::new(), OnceLock::new(), OnceLock::new()],
             markdown: OnceLock::new(),
             toml: OnceLock::new(),
+            htmlish: OnceLock::new(),
             #[cfg(feature = "napi")]
             prettier: PrettierOptions::default(),
         }
@@ -177,6 +185,13 @@ impl ResolvedDispatchConfig {
         *self.toml.get_or_init(|| to_oxc_formatter_toml(&self.config, self.validated.core))
     }
 
+    pub fn htmlish_options(&self, variant: HtmlishVariant) -> HtmlishFormatOptions {
+        let options = self
+            .htmlish
+            .get_or_init(|| to_oxc_formatter_htmlish(&self.config, self.validated.core));
+        HtmlishFormatOptions { variant, ..options.clone() }
+    }
+
     /// Printer options from the shared resolved core bundle;
     /// the fence adapter ([`super::jsdoc_fence`]) derives its per-fence options from these
     /// (width overridden to the fence's effective width).
@@ -227,7 +242,7 @@ impl ResolvedDispatchConfig {
 
 /// Fallback invoked for [`Route::Prettier`] languages.
 /// Same shape as `FormatDispatcher`, plus the routed language
-/// (the Doc path consumes `parent_context` only for html(angular)-in-js's [`oxc_formatter::HtmlInJsTemplate`], not `input_kind`;
+/// (the Doc path consumes `parent_context` only for angular-in-js's [`HtmlInJsTemplate`], not `input_kind`;
 /// re-examine if it ever serves envelope-bearing inputs).
 ///
 /// Assembled only in napi builds ([`super::prettier_doc`]);
@@ -257,7 +272,12 @@ pub fn build_dispatcher(
                     NativeLanguage::Js(source_type) => {
                         let embedded_in = request
                             .parent_context_as::<XxxInMarkdownCodeBlock>()
-                            .map(|_| JsEmbeddedIn::MarkdownCodeBlock);
+                            .map(|_| JsEmbeddedIn::MarkdownCodeBlock)
+                            .or_else(|| {
+                                request
+                                    .parent_context_as::<JsInHtmlEventHandler>()
+                                    .map(|_| JsEmbeddedIn::HtmlEventHandler)
+                            });
                         oxc_formatter::format_to_ir(
                             session,
                             text,
@@ -274,17 +294,21 @@ pub fn build_dispatcher(
                     NativeLanguage::Css(variant) => {
                         // css-in-js (typed `CssInJsTemplate` context) is always parsed as SCSS with `${}` placeholder markers.
                         // Any other caller gets the strict standalone grammar with the fence/request language's variant.
-                        let (variant, template_placeholders) =
-                            if request.parent_context_as::<CssInJsTemplate>().is_some() {
-                                (CssVariant::Scss, true)
-                            } else {
-                                (variant, false)
-                            };
+                        let (variant, embedded_in) = if request
+                            .parent_context_as::<CssInJsTemplate>()
+                            .is_some()
+                        {
+                            (CssVariant::Scss, Some(CssEmbeddedIn::CssInJsTemplate))
+                        } else if request.parent_context_as::<CssInHtmlStyleAttribute>().is_some() {
+                            (variant, Some(CssEmbeddedIn::HtmlStyleAttribute))
+                        } else {
+                            (variant, None)
+                        };
                         oxc_formatter_css::format_to_ir(
                             session,
                             text,
                             dispatch_config.css_options(variant),
-                            template_placeholders,
+                            embedded_in,
                         )
                     }
                     NativeLanguage::Yaml => oxc_formatter_yaml::format_to_ir(
@@ -316,6 +340,28 @@ pub fn build_dispatcher(
                         text,
                         dispatch_config.toml_options(),
                     ),
+                    NativeLanguage::Html(variant) => {
+                        // Embedded in a JS template literal or a Markdown code block;
+                        // `None` is a part formatted on its own (a JSDoc code block).
+                        // An HTML parent added later needs its marker here, or reads as standalone.
+                        let embedded_in = request
+                            .parent_context_as::<HtmlInJsTemplate>()
+                            .map(|c| HtmlishEmbeddedIn {
+                                indent_multiple_roots: c.indent_multiple_roots,
+                                placeholder: Some(c.placeholder),
+                            })
+                            .or_else(|| {
+                                request
+                                    .parent_context_as::<XxxInMarkdownCodeBlock>()
+                                    .map(|_| HtmlishEmbeddedIn::default())
+                            });
+                        oxc_formatter_htmlish::format_to_ir(
+                            session,
+                            text,
+                            dispatch_config.htmlish_options(variant),
+                            embedded_in,
+                        )
+                    }
                 }))
             }
 
@@ -418,6 +464,7 @@ mod tests {
             "markdown",
             "md",
             "toml",
+            "html",
         ] {
             let text = match language {
                 "graphql" | "gql" => "{ a }",
@@ -425,6 +472,7 @@ mod tests {
                 "yaml" | "yml" => "a: 1",
                 "json" | "jsonc" | "json5" => "{ \"a\": 1 }",
                 "markdown" | "md" => "#  a",
+                "html" => "<p>  a  </p>",
                 _ => "a  =  1",
             };
             let response = session.dispatch(DispatchRequest {
@@ -476,7 +524,7 @@ mod tests {
             },
         );
 
-        for (language, text) in [("html", "<div></div>"), ("ini", "a = 1")] {
+        for (language, text) in [("vue", "<template></template>"), ("ini", "a = 1")] {
             let response = session.dispatch(DispatchRequest {
                 language,
                 text,

@@ -2,7 +2,7 @@ use oxc_allocator::Allocator;
 use oxc_diagnostics::OxcDiagnostic;
 use oxc_formatter_core::{
     Document, EmbeddedIr, Format, FormatSession, FormatState, Formatted, Formatter, InputKind,
-    builders::{empty_line, hard_line_break, text},
+    builders::{empty_line, hard_line_break, indent, text},
     spec::{FrontMatter, blank_front_matter, parse_front_matter, split_bom},
     write, write_front_matter,
 };
@@ -14,7 +14,7 @@ use oxc_htmlish_parser::{
 use crate::{
     context::HtmlishFormatContext,
     options::HtmlishFormatOptions,
-    print::{self, HtmlishFormatter},
+    print::{self, HtmlishFormatter, format_with},
     tree::Tree,
 };
 
@@ -52,7 +52,7 @@ pub fn format_with_session<'a>(
     );
     let parsed = parse_for_format(session.allocator(), source_text, &options)?;
 
-    let context = build_context(session.allocator(), &parsed, options, true);
+    let context = build_context(session.allocator(), &parsed, options, true, None);
     // A root `Document` owns a fresh Tailwind class scope
     let session = session.with_new_tailwind_scope();
     let mut state = FormatState::new_with_session(context, session.clone());
@@ -114,6 +114,7 @@ pub fn format_to_ir<'a>(
     session: &FormatSession<'a>,
     source_text: &str,
     options: HtmlishFormatOptions,
+    embedded_in: Option<HtmlishEmbeddedIn>,
 ) -> Result<EmbeddedIr<'a>, OxcDiagnostic> {
     let allocator = session.allocator();
     // `FormatSession::dispatch` never hands a BOM-headed input to an embedded part
@@ -125,13 +126,45 @@ pub fn format_to_ir<'a>(
         ));
     }
 
-    let context = build_context(allocator, &parsed, options, false);
+    let context = build_context(allocator, &parsed, options, false, embedded_in);
     let mut state = FormatState::new_with_session(context, session.clone());
     let mut buffer = Formatter::new(&mut state);
 
     write!(&mut buffer, FormatHtmlishEmbedded { parsed: &parsed });
 
     Ok(EmbeddedIr { ir: buffer.into_vec() })
+}
+
+/// What the HTML is embedded in, for the print rules that depend on it.
+///
+/// The host translates the parent's request into this;
+/// `None` is a part formatted on its own (e.g. a JSDoc code block).
+/// Embedded HTML leaves `class` and `allow` values as written (as Prettier does with a `parentParser`).
+#[derive(Clone, Copy, Debug, Default)]
+pub struct HtmlishEmbeddedIn {
+    /// Indent the content when more than one node prints at the root
+    /// (html-in-js, whose backticks hug the content).
+    pub indent_multiple_roots: bool,
+    /// The parent's placeholder for an expression (html-in-js's `${}`), as the prefix and suffix around its ASCII digits and `_`:
+    /// a value that is one stays unquoted (`attr=${value}` passes a value, not a string),
+    /// and a value holding one is no class list to sort.
+    pub placeholder: Option<(&'static str, &'static str)>,
+}
+
+impl HtmlishEmbeddedIn {
+    /// `value` is the parent's placeholder as a whole.
+    pub(crate) fn is_placeholder(&self, value: &str) -> bool {
+        self.placeholder.is_some_and(|(prefix, suffix)| {
+            value.strip_prefix(prefix).and_then(|id| id.strip_suffix(suffix)).is_some_and(|id| {
+                !id.is_empty() && id.bytes().all(|b| b.is_ascii_digit() || b == b'_')
+            })
+        })
+    }
+
+    /// `value` holds the parent's placeholder.
+    pub(crate) fn has_placeholder(&self, value: &str) -> bool {
+        self.placeholder.is_some_and(|(prefix, _)| value.contains(prefix))
+    }
 }
 
 /// Parse the source into the AST, bailing out on any diagnostic.
@@ -168,6 +201,7 @@ fn build_context<'a>(
     parsed: &ParsedHtmlish<'a>,
     options: HtmlishFormatOptions,
     standalone: bool,
+    embedded_in: Option<HtmlishEmbeddedIn>,
 ) -> HtmlishFormatContext<'a> {
     let tree = allocator.alloc(Tree::build(
         allocator,
@@ -177,7 +211,7 @@ fn build_context<'a>(
         options.variant,
         standalone,
     ));
-    HtmlishFormatContext::new(options, tree)
+    HtmlishFormatContext::new(options, tree, embedded_in)
 }
 
 /// Emits the front matter and the nodes with the final newline.
@@ -213,16 +247,25 @@ impl<'a> Format<'a, HtmlishFormatContext<'a>> for FormatHtmlishEmbedded<'_, 'a> 
     }
 }
 
-/// The front matter (a blank line after it when a body follows) and the nodes.
+/// The front matter (a blank line after it when a body follows) and the nodes,
+/// indented when the parent asks for it and more than one prints at the root.
 fn write_document<'a>(parsed: &ParsedHtmlish<'a>, f: &mut HtmlishFormatter<'_, 'a>) {
-    let has_body = f.context().tree()[NodeId::DOCUMENT].first_child.is_some();
+    let document = &f.context().tree()[NodeId::DOCUMENT];
+    let has_body = document.first_child.is_some();
     if let Some(fm) = &parsed.front_matter {
         write_front_matter(fm, &["yaml", "toml"], f);
         if has_body {
             write!(f, empty_line());
         }
     }
-    if has_body {
+    if !has_body {
+        return;
+    }
+    let indent_body = f.context().embedded_in().is_some_and(|e| e.indent_multiple_roots)
+        && document.only_child().is_none();
+    if indent_body {
+        write!(f, indent(&format_with(print::write_root)));
+    } else {
         print::write_root(f);
     }
 }

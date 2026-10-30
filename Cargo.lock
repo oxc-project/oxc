@@ -2933,6 +2933,7 @@ dependencies = [
  "oxc_formatter_core",
  "oxc_formatter_css",
  "oxc_formatter_graphql",
+ "oxc_formatter_htmlish",
  "oxc_formatter_json",
  "oxc_formatter_markdown",
  "oxc_formatter_toml",

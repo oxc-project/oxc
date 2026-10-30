@@ -1,11 +1,8 @@
 //! Native-fence string adapter:
 //! a JSDoc fenced code block whose language has a Rust formatter branch
-//! formats through the dispatch registry, in EVERY build.
+//! formats through the dispatch registry, in EVERY build; any other fence stays verbatim.
 //!
-//! This is the build-independent half of the string-out channel;
-//! the profiles in [`super::services`] wire it into the session's string embedder
-//! (the napi one via [`super::prettier_string`], which routes native fences here
-//! before its Prettier string paths; the pure one directly, non-native fences stay verbatim).
+//! This is the whole string-out channel; [`super::services`] installs it as the session's string embedder.
 
 use std::sync::Arc;
 
@@ -14,10 +11,30 @@ use tracing::debug_span;
 use oxc_allocator::Allocator;
 use oxc_formatter_core::{
     DispatchRequest, FormatDispatcher, FormatSession, InputKind, PrintWidth, SessionServices,
-    TailwindSorter,
+    StringEmbedder, TailwindSorter,
 };
 
 use super::dispatcher::ResolvedDispatchConfig;
+
+/// The session's string embedder: [`format_native_fence`] over `fence_dispatcher`,
+/// a fallback-less registry (a native fence never falls back to Prettier).
+/// `sort_tailwind` is the root's pre-bound sorter, for the `@apply` classes a CSS fence collects.
+pub fn build_string_embedder(
+    fence_dispatcher: FormatDispatcher,
+    dispatch_config: Arc<ResolvedDispatchConfig>,
+    sort_tailwind: Option<TailwindSorter>,
+) -> StringEmbedder {
+    Arc::new(move |language: &str, code: &str, print_width: usize| {
+        format_native_fence(
+            language,
+            code,
+            print_width,
+            &fence_dispatcher,
+            &dispatch_config,
+            sort_tailwind.as_ref(),
+        )
+    })
+}
 
 /// Format a JSDoc fenced code block through the native dispatch registry:
 /// a string-in/string-out adapter over `FormatSession::dispatch_to_string`.
@@ -28,9 +45,9 @@ use super::dispatcher::ResolvedDispatchConfig;
 /// - `Err` keeps the fence verbatim, covering both the deliberate keep
 ///   (`Ok(None)`; a failed native language never re-routes to Prettier) and operational errors
 /// - The session-less `StringEmbedder` contract forces a fresh root session per fence,
-///   so `dispatch_depth` resets at this string boundary (inert today: no native fence language re-dispatches).
+///   so `dispatch_depth` resets at this string boundary (inert today: the fence prints to a string, its placeholders never meet the parent's).
 ///   Threading the parent session through the callback is the eventual fix.
-pub fn format_native_fence(
+fn format_native_fence(
     language: &str,
     code: &str,
     print_width: usize,
